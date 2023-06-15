@@ -4,7 +4,9 @@ import com.controllerface.bvge.Camera;
 import com.controllerface.bvge.GameObject;
 import com.controllerface.bvge.Transform;
 import com.controllerface.bvge.rendering.GridLines;
+import com.controllerface.bvge.rendering.Sprite;
 import com.controllerface.bvge.rendering.SpriteRenderer;
+import com.controllerface.bvge.util.AssetPool;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
@@ -24,22 +26,24 @@ public class GenericScene extends Scene
         sceneData.addComponent(new GridLines());
         sceneData.start();
 
+        // a single game object
+        GameObject obj1 = this.createGameObject("Box");
 
-        GameObject obj1 = this.createGameObject("Object 1");
+        // places the object in world co-ordinates
         obj1.getComponent(Transform.class).position.x = 200;
         obj1.getComponent(Transform.class).position.y = 200;
+
+        // scale must be applied or the object is effectively infinitely small
         obj1.getComponent(Transform.class).scale.x = 32;
         obj1.getComponent(Transform.class).scale.y = 32;
 
-//            new GameObject("Object 1",
-//            new Transform(new Vector2f(200, 100), new Vector2f(256, 256)), 2);
-        //obj1.addComponent(new SpriteRenderer(new Sprite(AssetPool.getTexture("assets/images/blendImage1.png"))));
-
-
+        // load in a basic square sprite
+        Sprite sprite = new Sprite();
+        sprite.setTexture(AssetPool.getTexture("assets/images/blendImage1.png"));
         SpriteRenderer obj1sprite = new SpriteRenderer();
+        obj1sprite.setSprite(sprite);
         obj1sprite.setColor(new Vector4f(1,0,0,1));
         obj1.addComponent(obj1sprite);
-        //obj1.addComponent(new RigidBody());
 
         this.addGameObjectToScene(obj1);
     }

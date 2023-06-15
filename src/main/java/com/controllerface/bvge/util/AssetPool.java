@@ -16,10 +16,9 @@ public class AssetPool
 
     public static Shader getShader(String resourceName)
     {
-        File file = new File(resourceName);
-        if (shaders.containsKey(file.getAbsolutePath()))
+        if (shaders.containsKey(resourceName))
         {
-            return shaders.get(file.getAbsolutePath());
+            return shaders.get(resourceName);
         }
         else
         {

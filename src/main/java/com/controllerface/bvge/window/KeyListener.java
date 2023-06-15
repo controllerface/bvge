@@ -1,4 +1,4 @@
-package com.controllerface.bvge.input;
+package com.controllerface.bvge.window;
 
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;

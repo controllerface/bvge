@@ -5,6 +5,8 @@ import com.controllerface.bvge.Transform;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
+// A basic wrapper that renders a sprite
+// todo: re-imagine how components work, and make this not be one as it is not basic data
 public class SpriteRenderer extends Component
 {
     private Vector4f color = new Vector4f(1,1,1,1);

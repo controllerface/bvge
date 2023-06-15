@@ -40,7 +40,6 @@ void main ()
     vec4 texColor = vec4(1,1,1,1);
     if (fTexId > 0)
     {
-        //color = vec4(fTexCoords, 0, 1);
         int id = int(fTexId);
         switch (id)
         {
@@ -72,7 +71,6 @@ void main ()
             texColor = texture(uTextures[7], fTexCoords);
             break;
         }
-        //texColor = fColor * texColor;
     }
 
     if (texColor.a < 0.5)

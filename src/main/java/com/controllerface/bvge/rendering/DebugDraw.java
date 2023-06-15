@@ -1,6 +1,6 @@
 package com.controllerface.bvge.rendering;
 
-import com.controllerface.bvge.Window;
+import com.controllerface.bvge.window.Window;
 import com.controllerface.bvge.util.AssetPool;
 import com.controllerface.bvge.util.JMath;
 import org.joml.Vector2f;
@@ -25,7 +25,7 @@ public class DebugDraw
     // 6 floats per vertex, 3 pos, 3 color
     private static float[] vertexArray = new float[MAX_LINES * 6 * 2];
 
-    private static Shader shader = AssetPool.getShader("assets/shaders/debugLine2D.glsl");
+    private static Shader shader = AssetPool.getShader("debugLine2D.glsl");
 
     private static int vaoId;
     private static int vboId;

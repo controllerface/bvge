@@ -5,6 +5,7 @@ import org.lwjgl.BufferUtils;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -26,7 +27,8 @@ public class Shader
         this.filepath = filePath;
         try
         {
-            String source = new String(Files.readAllBytes(Paths.get(filePath)));
+            var st= Shader.class.getResourceAsStream("/shaders/" + filePath);
+            String source = new String(st.readAllBytes(), StandardCharsets.UTF_8);//new String(Files.readAllBytes(Paths.get(filePath)));
             String[] splits = source.split("(#type)( )+([a-zA-Z]+)");
 
             int index = source.indexOf("#type") + 6;

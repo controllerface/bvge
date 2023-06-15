@@ -2,7 +2,7 @@ package com.controllerface.bvge.rendering;
 
 import com.controllerface.bvge.Camera;
 import com.controllerface.bvge.Component;
-import com.controllerface.bvge.Window;
+import com.controllerface.bvge.window.Window;
 import com.controllerface.bvge.util.Settings;
 import org.joml.Vector2f;
 import org.joml.Vector3f;

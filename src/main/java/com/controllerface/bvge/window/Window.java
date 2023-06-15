@@ -1,7 +1,5 @@
-package com.controllerface.bvge;
+package com.controllerface.bvge.window;
 
-import com.controllerface.bvge.input.KeyListener;
-import com.controllerface.bvge.input.MouseListener;
 import com.controllerface.bvge.rendering.*;
 import com.controllerface.bvge.scene.GenericScene;
 import com.controllerface.bvge.scene.Scene;
@@ -15,6 +13,9 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
+/**
+ * The Window is intended to be globally accessible
+ */
 public class Window
 {
     int width, height;
@@ -70,6 +71,44 @@ public class Window
 
         glfwTerminate();
         glfwSetErrorCallback(null).free();
+    }
+
+    private void windowUpkeep()
+    {
+        glfwPollEvents();
+
+        // todo: re-enable this as it is very helpful for clicking on stuff
+        //  basically, what this does is "color" all pixels on the screen with
+        //  the unique ID of the objects that are displayed, so when clicking
+        //  you can simply check what the ID is of the clicked pixel to tell
+        //  what object was the click target (if any)
+        // render pass 1: picking texture
+//            glDisable(GL_BLEND);
+//            pickingTexture.enableWriting();
+//
+//            glViewport(0,0, 1920, 1080);
+//            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+//            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//            Renderer.bindShader(pickingShader);
+//            currentScene.render();
+//
+//            pickingTexture.disableWriting();
+//            glEnable(GL_BLEND);
+        // pass 1 end
+
+
+        // render pass 2: normal render
+        //DebugDraw.beginFrame();
+
+        //this.frameBuffer.bind();
+        glClearColor(r, g, b, a);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+
+
+        //this.imGuiLayer.update(dt, currentScene);
+        //glfwSwapBuffers(glfwWindow);
     }
 
     public void init()
@@ -128,62 +167,6 @@ public class Window
         currentScene.start();
     }
 
-    // this is the main game loop
-    public void loop()
-    {
-        float startTime = (float) glfwGetTime();
-        float endTime;
-        float dt = -1.0f;
-
-        Shader defaultShader = AssetPool.getShader("assets/shaders/default.glsl");
-        //Shader pickingShader = AssetPool.getShader("assets/shaders/pickingShader.glsl");
-
-        while (!glfwWindowShouldClose(glfwWindow))
-        {
-            glfwPollEvents();
-
-            // render pass 1: picking texture
-//            glDisable(GL_BLEND);
-//            pickingTexture.enableWriting();
-//
-//            glViewport(0,0, 1920, 1080);
-//            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-//            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//            Renderer.bindShader(pickingShader);
-//            currentScene.render();
-//
-//            pickingTexture.disableWriting();
-//            glEnable(GL_BLEND);
-            // pass 1 end
-
-
-            // render pass 2: normal render
-            DebugDraw.beginFrame();
-
-            //this.frameBuffer.bind();
-            glClearColor(r, g, b, a);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            if (dt >= 0)
-            {
-                DebugDraw.draw();
-                Renderer.bindShader(defaultShader);
-                currentScene.update(dt);
-                currentScene.render();
-            }
-
-            //this.imGuiLayer.update(dt, currentScene);
-            glfwSwapBuffers(glfwWindow);
-            MouseListener.endFrame();
-
-            endTime = (float) glfwGetTime();
-            dt = endTime - startTime;
-            startTime = endTime;
-        }
-
-        currentScene.saveExit();
-    }
     public static int getWidth() {
         return get().width;
     }
@@ -208,6 +191,41 @@ public class Window
     public static float getTargetAspectRatio()
     {
         return 16.0f / 9.0f;
+    }
+
+
+    // this is the main game loop
+    public void loop()
+    {
+        float lastTime = (float) glfwGetTime();
+        float currentTime;
+        float dt = -1.0f;
+
+        Shader defaultShader = AssetPool.getShader("default.glsl");
+        //Shader pickingShader = AssetPool.getShader("assets/shaders/pickingShader.glsl");
+
+        while (!glfwWindowShouldClose(glfwWindow))
+        {
+            windowUpkeep();
+
+            if (dt >= 0)
+            {
+                //DebugDraw.draw();
+                Renderer.bindShader(defaultShader);
+                currentScene.update(dt);
+                currentScene.render();
+            }
+
+            //this.imGuiLayer.update(dt, currentScene);
+            glfwSwapBuffers(glfwWindow);
+            MouseListener.endFrame();
+
+            currentTime = (float) glfwGetTime();
+            dt = currentTime - lastTime;
+            lastTime = currentTime;
+        }
+
+        //todo: save data here if necessary
     }
 
 //    public static ImGuiLayer getImGuiLayer()

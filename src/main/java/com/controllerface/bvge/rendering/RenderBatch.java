@@ -1,6 +1,6 @@
 package com.controllerface.bvge.rendering;
 
-import com.controllerface.bvge.Window;
+import com.controllerface.bvge.window.Window;
 import org.joml.*;
 import org.joml.Math;
 
@@ -146,7 +146,7 @@ public class RenderBatch implements Comparable<RenderBatch>
         shader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
         shader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
 
-        for (int i =0; i< textures.size(); i++)
+        for (int i =0; i < textures.size(); i++)
         {
             glActiveTexture(GL_TEXTURE0 + i + 1); // this + 1 is to support using texture 0 as "empty"
             textures.get(i).bind();
