@@ -9,7 +9,7 @@ import java.util.List;
 public class Renderer
 {
     private final int MAX_BATCH_SIZE = 1000;
-    private List<RenderBatch> batches;
+    private List<SpriteRenderBatch> batches;
 
     private static Shader currentShader;
 
@@ -30,7 +30,7 @@ public class Renderer
     private void add(SpriteRenderer sprite)
     {
         boolean added = false;
-        for (RenderBatch batch : batches)
+        for (SpriteRenderBatch batch : batches)
         {
             if (batch.hasRoom() && batch.zIndex() == sprite.gameObject.transform.zIndex)
             {
@@ -46,7 +46,7 @@ public class Renderer
 
         if (!added)
         {
-            RenderBatch newBatch = new RenderBatch(MAX_BATCH_SIZE, sprite.gameObject.transform.zIndex);
+            SpriteRenderBatch newBatch = new SpriteRenderBatch(MAX_BATCH_SIZE, sprite.gameObject.transform.zIndex);
             newBatch.start();
             batches.add(newBatch);
             newBatch.addSprite(sprite);
@@ -67,7 +67,7 @@ public class Renderer
     public void render()
     {
         currentShader.use();
-        for (RenderBatch batch : batches)
+        for (SpriteRenderBatch batch : batches)
         {
             batch.render();
         }

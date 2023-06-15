@@ -14,7 +14,10 @@ import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
-public class RenderBatch implements Comparable<RenderBatch>
+/**
+ * Rendering batch specifically for sprites
+ */
+public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
 {
     // Vertex
     // ======
@@ -48,13 +51,13 @@ public class RenderBatch implements Comparable<RenderBatch>
 
     private int zIndex;
 
-    public RenderBatch(int maxBatchSize, int zIndex)
+    public SpriteRenderBatch(int maxBatchSize, int zIndex)
     {
         this.zIndex = zIndex;
         this.sprites = new SpriteRenderer[maxBatchSize];
         this.maxBatchSize = maxBatchSize;
 
-        // 4 vertices quads
+        // 4 vertices for quads, sprites are always rectangular
         vertices = new float[maxBatchSize * 4 * VERTEX_SIZE];
 
         this.numSprites = 0;
@@ -169,7 +172,6 @@ public class RenderBatch implements Comparable<RenderBatch>
         {
             textures.get(i).unbind();
         }
-
 
         shader.detach();
     }
@@ -312,7 +314,7 @@ public class RenderBatch implements Comparable<RenderBatch>
     }
 
     @Override
-    public int compareTo(RenderBatch o)
+    public int compareTo(SpriteRenderBatch o)
     {
         return Integer.compare(this.zIndex, o.zIndex());
     }

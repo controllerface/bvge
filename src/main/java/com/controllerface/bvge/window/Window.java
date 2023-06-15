@@ -1,5 +1,7 @@
 package com.controllerface.bvge.window;
 
+import com.controllerface.bvge.ecs.ComponentType;
+import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.rendering.*;
 import com.controllerface.bvge.scene.GenericScene;
 import com.controllerface.bvge.scene.Scene;

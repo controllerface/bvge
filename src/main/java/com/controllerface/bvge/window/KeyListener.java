@@ -1,7 +1,6 @@
 package com.controllerface.bvge.window;
 
-import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
-import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
+import static org.lwjgl.glfw.GLFW.*;
 
 public class KeyListener
 {
@@ -24,6 +23,24 @@ public class KeyListener
 
     public static void keyCallback(long window, int key, int scancode, int action, int mods)
     {
+        System.out.println(key);
+        if (key == GLFW_KEY_LEFT)
+        {
+            Window.getScene().camera().position.x+= 2;
+        }
+        if (key == GLFW_KEY_RIGHT)
+        {
+            Window.getScene().camera().position.x-= 2;
+        }
+        if (key == GLFW_KEY_UP)
+        {
+            Window.getScene().camera().position.y-= 2;
+        }
+        if (key == GLFW_KEY_DOWN)
+        {
+            Window.getScene().camera().position.y+= 2;
+        }
+
         if (action == GLFW_PRESS)
         {
             get().keypressed[key] = true;
