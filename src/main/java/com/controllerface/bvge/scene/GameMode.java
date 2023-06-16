@@ -3,12 +3,11 @@ package com.controllerface.bvge.scene;
 import com.controllerface.bvge.Camera;
 import com.controllerface.bvge.GameObject;
 import com.controllerface.bvge.Transform;
-import com.controllerface.bvge.rendering.Renderer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class Scene
+public abstract class GameMode
 {
     //protected Renderer renderer = new Renderer();
     protected Camera camera;
@@ -17,7 +16,7 @@ public abstract class Scene
 
     protected boolean levelLoaded = false;
 
-    public Scene ()
+    public GameMode()
     {
 
     }
@@ -25,16 +24,6 @@ public abstract class Scene
     public void init()
     {
 
-    }
-
-    public void start()
-    {
-//        for (GameObject go : gameObjects)
-//        {
-//            go.start();
-//            this.renderer.add(go);
-//        }
-//        isRunning = true;
     }
 
     public void addGameObjectToScene(GameObject go)

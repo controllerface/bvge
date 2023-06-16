@@ -1,5 +1,6 @@
 package com.controllerface.bvge.rendering;
 
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 import org.joml.Math;
 import org.joml.*;
@@ -47,20 +48,18 @@ public class SpriteRenderBatchEX implements Comparable<SpriteRenderBatchEX>
     private List<Texture> textures;
 
     private int vaoID, vboID;
-    private int maxBatchSize;
 
     private int zIndex;
 
     private final Shader currentShader;
 
-    public SpriteRenderBatchEX(int maxBatchSize, int zIndex, Shader currentShader)
+    public SpriteRenderBatchEX(int zIndex, Shader currentShader)
     {
         this.zIndex = zIndex;
-        this.sprites = new SpriteComponentEX[maxBatchSize];
-        this.maxBatchSize = maxBatchSize;
+        this.sprites = new SpriteComponentEX[Constants.Rendering.MAX_BATCH_SIZE];
 
         // 4 vertices for quads, sprites are always rectangular
-        vertices = new float[maxBatchSize * 4 * VERTEX_SIZE];
+        vertices = new float[Constants.Rendering.MAX_BATCH_SIZE * 4 * VERTEX_SIZE];
 
         this.numSprites = 0;
         this.hasRoom = true;
@@ -127,7 +126,7 @@ public class SpriteRenderBatchEX implements Comparable<SpriteRenderBatchEX>
         // Add properties to local vertices array
         loadVertexProperties(index);
 
-        if (numSprites >= this.maxBatchSize)
+        if (numSprites >= Constants.Rendering.MAX_BATCH_SIZE)
         {
             this.hasRoom = false;
         }
@@ -291,8 +290,8 @@ public class SpriteRenderBatchEX implements Comparable<SpriteRenderBatchEX>
     private int[] generateIndices()
     {
         // 6 indices per quad (3 per triangle)
-        int[] elements = new int[6 * maxBatchSize];
-        for (int i = 0; i < maxBatchSize; i++)
+        int[] elements = new int[6 * Constants.Rendering.MAX_BATCH_SIZE];
+        for (int i = 0; i < Constants.Rendering.MAX_BATCH_SIZE; i++)
         {
             loadElementIndices(elements, i);
         }
@@ -309,10 +308,10 @@ public class SpriteRenderBatchEX implements Comparable<SpriteRenderBatchEX>
         // Triangle 1
         elements[offsetArrayIndex] = offset + 3;
         elements[offsetArrayIndex + 1] = offset + 2;
-        elements[offsetArrayIndex + 2] = offset + 0;
+        elements[offsetArrayIndex + 2] = offset;
 
         // Triangle 2
-        elements[offsetArrayIndex + 3] = offset + 0;
+        elements[offsetArrayIndex + 3] = offset;
         elements[offsetArrayIndex + 4] = offset + 2;
         elements[offsetArrayIndex + 5] = offset + 1;
     }

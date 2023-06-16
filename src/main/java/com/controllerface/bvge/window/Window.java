@@ -1,10 +1,10 @@
 package com.controllerface.bvge.window;
 
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.PhysicsSystem;
 import com.controllerface.bvge.rendering.*;
-import com.controllerface.bvge.scene.GenericScene;
-import com.controllerface.bvge.scene.Scene;
-import com.controllerface.bvge.util.AssetPool;
+import com.controllerface.bvge.scene.GameRunning;
+import com.controllerface.bvge.scene.GameMode;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
@@ -26,15 +26,11 @@ public class Window
 
     private long glfwWindow;
 
-    //private ImGuiLayer imGuiLayer;
-
-//    private FrameBuffer frameBuffer;
-
-    private PickingTexture pickingTexture;
+    //private PickingTexture pickingTexture;
 
     public float r, g, b, a;
 
-    private static Scene currentScene;
+    private static GameMode currentGameMode;
 
     private ECS ecs = new ECS();
 
@@ -58,9 +54,9 @@ public class Window
         return Window.INSTANCE;
     }
 
-    public static Scene getScene()
+    public static GameMode getScene()
     {
-        return get().currentScene;
+        return get().currentGameMode;
     }
 
     public void run()
@@ -103,8 +99,6 @@ public class Window
             throw new IllegalStateException("could not create window");
         }
 
-
-
         glfwSetWindowSizeCallback(glfwWindow, (win, newWidth, newHeight)->
         {
             Window.setWidth(newWidth);
@@ -121,15 +115,7 @@ public class Window
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-
-//        this.frameBuffer = new FrameBuffer(1920, 1080);
-        //this.pickingTexture = new PickingTexture(1920, 1080);
         glViewport(0,0,1920, 1080);
-
-
-//        this.imGuiLayer = new ImGuiLayer(glfwWindow, pickingTexture);
-//        this.imGuiLayer.initImGui();
-
 
         glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
         glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
@@ -138,15 +124,15 @@ public class Window
         var is = new InputSystem(ecs);
 
         glfwSetKeyCallback(glfwWindow, is::keyCallback);
-        //glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
 
         ecs.registerSystem(is);
-        ecs.registerSystem(new RenderSystem(ecs));
+        ecs.registerSystem(new PhysicsSystem(ecs));
+        ecs.registerSystem(new RenderingSystem(ecs));
 
-        currentScene = new GenericScene(ecs);
-        currentScene.load();
-        currentScene.init();
-        currentScene.start();
+
+        currentGameMode = new GameRunning(ecs);
+        currentGameMode.load();
+        currentGameMode.init();
     }
 
     public static int getWidth() {
@@ -165,16 +151,10 @@ public class Window
         get().height = newHeight;
     }
 
-//    public static FrameBuffer getFrameBuffer()
-//    {
-//        return get().frameBuffer;
-//    }
-
     public static float getTargetAspectRatio()
     {
         return 16.0f / 9.0f;
     }
-
 
     // this is the main game loop
     public void loop()
@@ -190,7 +170,7 @@ public class Window
             if (dt >= 0)
             {
                 ecs.run(dt);
-                currentScene.update(dt);
+                currentGameMode.update(dt);
             }
 
             glfwSwapBuffers(glfwWindow);

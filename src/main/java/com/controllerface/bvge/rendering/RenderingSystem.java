@@ -10,14 +10,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class RenderSystem extends SystemEX
+public class RenderingSystem extends SystemEX
 {
-    private final int MAX_BATCH_SIZE = 1000;
+    public static final int MAX_BATCH_SIZE = 1000;
     private List<SpriteRenderBatchEX> batches;
 
     private Shader currentShader;
 
-    public RenderSystem(ECS ecs)
+    public RenderingSystem(ECS ecs)
     {
         super(ecs);
         this.batches = new ArrayList<>();
@@ -43,9 +43,7 @@ public class RenderSystem extends SystemEX
 
         if (!added)
         {
-            SpriteRenderBatchEX newBatch = new SpriteRenderBatchEX(MAX_BATCH_SIZE,
-                sprite.transform.zIndex,
-                currentShader);
+            SpriteRenderBatchEX newBatch = new SpriteRenderBatchEX(sprite.transform.zIndex, currentShader);
             newBatch.start();
             batches.add(newBatch);
             newBatch.addSprite(sprite);

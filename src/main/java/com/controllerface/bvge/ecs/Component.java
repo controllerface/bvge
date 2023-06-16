@@ -8,7 +8,8 @@ public enum Component
 {
     SpriteComponent(SpriteComponentEX.class),
     Transform(TransformEX.class),
-    PlayerControlled(PlayerControlled.class),
+    ControlPoints(ControlPoints.class),
+    RigidBody2D(RigidBody2D.class),
 
     ;
 
@@ -21,12 +22,14 @@ public enum Component
 
     public <T extends Component_EX> T coerce(Object componentClass)
     {
+        assert componentClass != null : "Attempted to coerce null component";
         if (_class.isAssignableFrom(componentClass.getClass()))
         {
             @SuppressWarnings("unchecked")
             T t = (T) _class.cast(componentClass);
             return t;
         }
+        assert false : "Attempted to coerce incompatible component";
         return null;
     }
 }
