@@ -1,7 +1,5 @@
 package com.controllerface.bvge.ecs;
 
-import com.controllerface.bvge.Component;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -9,16 +7,26 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ECS
 {
     private long count = 0;
-    private List<System> systems = new CopyOnWriteArrayList<>();
-    private Map<ComponentType, Map<String, Component>> components = new ConcurrentHashMap<>();
+    private List<SystemEX> systemEXES = new CopyOnWriteArrayList<>();
+    private Map<ComponentType, Map<String, Component_EX>> components = new ConcurrentHashMap<>();
     private Set<String> entities = ConcurrentHashMap.newKeySet();
 
     public ECS()
     {
-        // register all components
-        Arrays.stream(ComponentType.values())
-            .forEach(this::registerComponent);
+        // register all components at creation time. This is necessary to ensure all the
+        // available components can be used before any systems or entities make use of them
+        Arrays.stream(ComponentType.values()).forEach(this::registerComponent);
     }
+
+    private void registerComponent(ComponentType componentType)
+    {
+        // todo: define a "defaults" system that maps component enum type to a factory
+        //  of some kind that generates a proper initial or "empty" value to use here.
+        //  Then optionally, calling code may chose to provide a pre-constructed object
+        //  that can be used to override the default.
+        components.put(componentType, new HashMap<>());
+    }
+
 
     public String registerEntity()
     {
@@ -36,34 +44,36 @@ public class ECS
         return targetId;
     }
 
-    private void registerComponent(ComponentType componentType)
+
+    public void registerSystem(SystemEX systemEX)
     {
-        components.put(componentType, new HashMap<>());
+        systemEX.setup(this);
+        systemEXES.add(systemEX);
     }
 
-    public void registerSystem(System system)
-    {
-        system.setup(this);
-        systems.add(system);
-    }
-
-    public void attachComponent(String id, ComponentType type, Component component)
+    public void attachComponent(String id, ComponentType type, Component_EX component)
     {
         components.get(type).put(id, component);
     }
 
-    public Component getComponentFor(String id, ComponentType type)
+    public Component_EX getComponentFor(String id, ComponentType type)
     {
         return components.get(type).get(id);
     }
 
-    public Map<String, Component> getComponents(ComponentType type)
+    /**
+     * Retrieve the Map of components (by entity) for a given component.
+     *
+     * @param type the type of component map to retrieve
+     * @return the components map for the given component type. may be empty
+     */
+    public Map<String, Component_EX> getComponents(ComponentType type)
     {
         return components.get(type);
     }
 
     public void run(float dt)
     {
-        systems.forEach(system_ -> system_.run(dt));
+        systemEXES.forEach(system_EX_ -> system_EX_.run(dt));
     }
 }

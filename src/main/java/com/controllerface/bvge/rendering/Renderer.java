@@ -20,14 +20,14 @@ public class Renderer
 
     public void add(GameObject go)
     {
-        SpriteRenderer renderer = go.getComponent(SpriteRenderer.class);
+        SpriteComponentOLD renderer = go.getComponent(SpriteComponentOLD.class);
         if (renderer != null)
         {
             add(renderer);
         }
     }
 
-    private void add(SpriteRenderer sprite)
+    private void add(SpriteComponentOLD sprite)
     {
         boolean added = false;
         for (SpriteRenderBatch batch : batches)

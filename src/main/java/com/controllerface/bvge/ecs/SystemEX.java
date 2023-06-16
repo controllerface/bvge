@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs;
 
-public interface System
+public interface SystemEX
 {
     default void setup(ECS ecs){}
 

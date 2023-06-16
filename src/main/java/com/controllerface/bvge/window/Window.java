@@ -37,6 +37,8 @@ public class Window
 
     private static Scene currentScene;
 
+    private ECS ecs = new ECS();
+
     private Window()
     {
         this.width = 1920;
@@ -133,10 +135,7 @@ public class Window
             throw new IllegalStateException("could not create window");
         }
 
-        glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
-        glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
-        glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
-        glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
+
 
         glfwSetWindowSizeCallback(glfwWindow, (win, newWidth, newHeight)->
         {
@@ -156,14 +155,31 @@ public class Window
 
 
 //        this.frameBuffer = new FrameBuffer(1920, 1080);
-        this.pickingTexture = new PickingTexture(1920, 1080);
+        //this.pickingTexture = new PickingTexture(1920, 1080);
         glViewport(0,0,1920, 1080);
 
 
 //        this.imGuiLayer = new ImGuiLayer(glfwWindow, pickingTexture);
 //        this.imGuiLayer.initImGui();
 
-        currentScene = new GenericScene();
+
+        glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
+        glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
+        glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
+        glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
+
+
+        // test system
+//        ecs.registerSystem((dt) ->
+//        {
+//            var message = "testing: " + dt;
+//            var comps = ecs.getComponents(ComponentType.SpriteRenderer);
+//            message += " c: " + comps.size();
+//            System.out.println(message);
+//        });
+        ecs.registerSystem(new RendererEX());
+
+        currentScene = new GenericScene(ecs);
         currentScene.load();
         currentScene.init();
         currentScene.start();
@@ -212,10 +228,8 @@ public class Window
 
             if (dt >= 0)
             {
-                //DebugDraw.draw();
-                Renderer.bindShader(defaultShader);
+                ecs.run(dt);
                 currentScene.update(dt);
-                currentScene.render();
             }
 
             //this.imGuiLayer.update(dt, currentScene);

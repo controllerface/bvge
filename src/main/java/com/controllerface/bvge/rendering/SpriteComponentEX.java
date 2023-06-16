@@ -1,18 +1,17 @@
 package com.controllerface.bvge.rendering;
 
-import com.controllerface.bvge.Component;
 import com.controllerface.bvge.Transform;
+import com.controllerface.bvge.ecs.Component_EX;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 // A basic wrapper that renders a sprite
-// todo: re-imagine how components work, and make this not be one as it is not basic data
-public class SpriteRenderer extends Component
+public class SpriteComponentEX implements Component_EX
 {
     private Vector4f color = new Vector4f(1,1,1,1);
     private Sprite sprite = new Sprite();
-    private transient Transform lastTransform;
-    private transient boolean isDirty = true;
+    public Transform transform = new Transform();
+    private boolean isDirty = true;
 
     public Texture getTexture()
     {
@@ -29,30 +28,30 @@ public class SpriteRenderer extends Component
         return color;
     }
 
-    @Override
-    public void start()
-    {
-        this.lastTransform = gameObject.transform.copy();
-    }
-
-    @Override
-    public void update(float dt)
-    {
-        if (!this.lastTransform.equals(this.gameObject.transform))
-        {
-            this.gameObject.transform.copy(this.lastTransform);
-            isDirty = true;
-        }
-    }
-
-    @Override
-    public void imgui()
-    {
-//        if (JimGui.colorPicker4("Color Picker", this.color))
+//    @Override
+//    public void start()
+//    {
+//        this.lastTransform = gameObject.transform.copy();
+//    }
+//
+//    @Override
+//    public void update(float dt)
+//    {
+//        if (!this.lastTransform.equals(this.gameObject.transform))
 //        {
-//            this.isDirty = true;
+//            this.gameObject.transform.copy(this.lastTransform);
+//            isDirty = true;
 //        }
-    }
+//    }
+//
+//    @Override
+//    public void imgui()
+//    {
+////        if (JimGui.colorPicker4("Color Picker", this.color))
+////        {
+////            this.isDirty = true;
+////        }
+//    }
 
     public void setSprite(Sprite sprite)
     {

@@ -2,49 +2,56 @@ package com.controllerface.bvge.scene;
 
 import com.controllerface.bvge.Camera;
 import com.controllerface.bvge.GameObject;
+import com.controllerface.bvge.TransformEX;
 import com.controllerface.bvge.ecs.ComponentType;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.rendering.GridLines;
 import com.controllerface.bvge.rendering.Sprite;
-import com.controllerface.bvge.rendering.SpriteRenderer;
+import com.controllerface.bvge.rendering.SpriteComponentOLD;
+import com.controllerface.bvge.rendering.SpriteComponentEX;
 import com.controllerface.bvge.util.AssetPool;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 public class GenericScene extends Scene
 {
-    GameObject sceneData = this.createGameObject("generic stuff");
-    private ECS ecs = new ECS();
+    //GameObject sceneData = this.createGameObject("generic stuff");
+    private final ECS ecs;
 
-    public GenericScene()
+    public GenericScene(ECS ecs)
     {
+        this.ecs = ecs;
     }
 
     @Override
     public void load()
     {
-        ecs.registerSystem((dt) ->
-        {
-            var message = "testing: " + dt;
-            var comps = ecs.getComponents(ComponentType.SpriteRenderer);
-            message += " c: " + comps.size();
-            //System.out.println(message);
-        });
-
+        // test entity
         var player = ecs.registerEntity("player");
-        ecs.attachComponent(player, ComponentType.SpriteRenderer, new SpriteRenderer());
-        var comp = ecs.getComponentFor(player, ComponentType.SpriteRenderer);
-        SpriteRenderer r = ComponentType.SpriteRenderer.coerce(comp);
-        System.out.println("DEBUG: component = " + r);
+        var scomp = new SpriteComponentEX();
+        var sprite = new Sprite();
+        var transform =  new TransformEX();
+        transform.scale.x = 32f;
+        transform.scale.y = 32f;
+        transform.position.x = 5.0f;
+        transform.position.y = 5.0f;
+        sprite.setHeight(32);
+        sprite.setWidth(32);
+        scomp.setColor(new Vector4f(0,0,1,1));
+        ecs.attachComponent(player, ComponentType.SpriteComponent, scomp);
+        ecs.attachComponent(player, ComponentType.Transform, transform);
 
+        //var comp = ecs.getComponentFor(player, ComponentType.SpriteComponent);
+        //SpriteComponentEX r = ComponentType.SpriteComponent.coerce(comp);
+        //System.out.println("DEBUG: component = " + r);
     }
 
     @Override
     public void init()
     {
         this.camera = new Camera(new Vector2f(-250, 0));
-        sceneData.addComponent(new GridLines());
-        sceneData.start();
+        //sceneData.addComponent(new GridLines());
+        //sceneData.start();
 
         // a single game object
         GameObject obj1 = this.createGameObject("Box");
@@ -60,7 +67,7 @@ public class GenericScene extends Scene
         // load in a basic square sprite
         Sprite sprite = new Sprite();
         sprite.setTexture(AssetPool.getTexture("assets/images/blendImage1.png"));
-        SpriteRenderer obj1sprite = new SpriteRenderer();
+        SpriteComponentOLD obj1sprite = new SpriteComponentOLD();
         obj1sprite.setSprite(sprite);
         obj1sprite.setColor(new Vector4f(1,0,0,1));
         obj1.addComponent(obj1sprite);
@@ -71,20 +78,8 @@ public class GenericScene extends Scene
     @Override
     public void update(float dt)
     {
-        ecs.run(dt);
-
-        sceneData.update(dt);
+        //sceneData.update(dt);
         this.camera.adjustProjection();
-        for (GameObject go : this.gameObjects)
-        {
-            go.update(dt);
-        }
-    }
-
-    @Override
-    public void render()
-    {
-        this.renderer.render();
     }
 
     @Override

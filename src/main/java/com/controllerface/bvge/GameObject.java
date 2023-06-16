@@ -10,7 +10,7 @@ public class GameObject
     private static int ID_COUNTER = 0;
     private int uid = -1;
     private String name;
-    private List<Component> components;
+    private List<Component_OLD> components;
     public transient Transform transform;
     private boolean doSerialization = true;
 
@@ -21,14 +21,14 @@ public class GameObject
         this.uid = ID_COUNTER ++;
     }
 
-    public List<Component> getAllComponents()
+    public List<Component_OLD> getAllComponents()
     {
         return components;
     }
 
-    public <T extends Component> T getComponent(Class<T> componentClass)
+    public <T extends Component_OLD> T getComponent(Class<T> componentClass)
     {
-        for (Component c : components)
+        for (Component_OLD c : components)
         {
             if (componentClass.isAssignableFrom(c.getClass()))
             {
@@ -46,11 +46,11 @@ public class GameObject
         return null;
     }
 
-    public <T extends Component> void removeComponent(Class<T> componentClass)
+    public <T extends Component_OLD> void removeComponent(Class<T> componentClass)
     {
         for (int i=0; i < components.size(); i++)
         {
-            Component c = components.get(i);
+            Component_OLD c = components.get(i);
             if (componentClass.isAssignableFrom(c.getClass()))
             {
                 components.remove(i);
@@ -59,7 +59,7 @@ public class GameObject
         }
     }
 
-    public void addComponent(Component c)
+    public void addComponent(Component_OLD c)
     {
         c.generateId();
         this.components.add(c);
@@ -84,7 +84,7 @@ public class GameObject
 
     public void imgui()
     {
-        for (Component c : components)
+        for (Component_OLD c : components)
         {
             if (ImGui.collapsingHeader(c.getClass().getSimpleName()))
             {

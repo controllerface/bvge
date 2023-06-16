@@ -1,6 +1,6 @@
 package com.controllerface.bvge;
 
-public abstract class Component
+public abstract class Component_OLD
 {
     private static int ID_COUNTER = 0;
     private int uid = -1;

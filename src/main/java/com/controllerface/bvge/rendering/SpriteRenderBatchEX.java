@@ -1,8 +1,8 @@
 package com.controllerface.bvge.rendering;
 
 import com.controllerface.bvge.window.Window;
-import org.joml.*;
 import org.joml.Math;
+import org.joml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 /**
  * Rendering batch specifically for sprites
  */
-public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
+public class SpriteRenderBatchEX implements Comparable<SpriteRenderBatchEX>
 {
     // Vertex
     // ======
@@ -37,7 +37,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     private final int VERTEX_SIZE = 10;
     private final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
-    private SpriteComponentOLD[] sprites;
+    private SpriteComponentEX[] sprites;
     private int numSprites;
     private boolean hasRoom;
     private float[] vertices;
@@ -51,10 +51,12 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
 
     private int zIndex;
 
-    public SpriteRenderBatch(int maxBatchSize, int zIndex)
+    private final Shader currentShader;
+
+    public SpriteRenderBatchEX(int maxBatchSize, int zIndex, Shader currentShader)
     {
         this.zIndex = zIndex;
-        this.sprites = new SpriteComponentOLD[maxBatchSize];
+        this.sprites = new SpriteComponentEX[maxBatchSize];
         this.maxBatchSize = maxBatchSize;
 
         // 4 vertices for quads, sprites are always rectangular
@@ -63,6 +65,14 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         this.numSprites = 0;
         this.hasRoom = true;
         this.textures = new ArrayList<>();
+        this.currentShader = currentShader;
+    }
+
+    public void clear()
+    {
+        numSprites = 0;
+        //sprites = new SpriteComponentEX[maxBatchSize * 4 * VERTEX_SIZE];
+        textures.clear();
     }
 
     public void start()
@@ -99,7 +109,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         glEnableVertexAttribArray(4);
     }
 
-    public void addSprite(SpriteComponentOLD sprite)
+    public void addSprite(SpriteComponentEX sprite)
     {
         // Get index and add renderObject
         int index = this.numSprites;
@@ -128,7 +138,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         boolean rebuffer= false;
         for (int i = 0; i < numSprites; i++)
         {
-            SpriteComponentOLD rend = sprites[i];
+            SpriteComponentEX rend = sprites[i];
             if (rend.isDirty())
             {
                 loadVertexProperties(i);
@@ -138,6 +148,9 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
 
         }
 
+        // if the sprite data changes in any way, re-buffering is needed.
+        // This is actually probably pretty common depending on the types
+        // of game objects that are being drawn (animations, etc.)
         if (rebuffer)
         {
             glBindBuffer(GL_ARRAY_BUFFER, vboID);
@@ -145,13 +158,17 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         }
 
         // Use shader
-        Shader shader = Renderer.getBoundShader();
+        Shader shader = currentShader;
         shader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
         shader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
 
-        for (int i =0; i < textures.size(); i++)
+        // todo: this is bad, there's no check for the hardware texture slot max
+        for (int i = 0; i < textures.size(); i++)
         {
-            glActiveTexture(GL_TEXTURE0 + i + 1); // this + 1 is to support using texture 0 as "empty"
+            // todo: actually just set the correct index, bound by the max
+            //  and do -1 in the shader
+            // this + 1 is to support using texture 0 as "empty", allowing color to take
+            glActiveTexture(GL_TEXTURE0 + i + 1);
             textures.get(i).bind();
         }
 
@@ -176,9 +193,14 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         shader.detach();
     }
 
+    /**
+     * Updates the local buffer to reflect the current state of the indexed sprite.
+     *
+     * @param index the location of the sprite, within the sprite array
+     */
     private void loadVertexProperties(int index)
     {
-        SpriteComponentOLD sprite = this.sprites[index];
+        SpriteComponentEX sprite = this.sprites[index];
 
         // Find offset within array (4 vertices per sprite)
         int offset = index * 4 * VERTEX_SIZE;
@@ -199,17 +221,18 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             }
         }
 
-        boolean isRotated = sprite.gameObject.transform.rotation != 0.0f;
+        boolean isRotated = sprite.transform.rotation != 0.0f;
         Matrix4f transformMatrix = new Matrix4f().identity();
         if (isRotated)
         {
-            transformMatrix.translate(sprite.gameObject.transform.position.x,
-                sprite.gameObject.transform.position.y,0.0f);
+            transformMatrix.translate(sprite.transform.position.x,
+                sprite.transform.position.y,0.0f);
 
-            transformMatrix.rotate((float) Math.toRadians(sprite.gameObject.transform.rotation),
+            transformMatrix.rotate(Math.toRadians(sprite.transform.rotation),
                 new Vector3f(0,0,1));
-            transformMatrix.scale(sprite.gameObject.transform.scale.x,
-                sprite.gameObject.transform.scale.y, 1.0f);
+
+            transformMatrix.scale(sprite.transform.scale.x,
+                sprite.transform.scale.y, 1.0f);
         }
 
         // Add vertices with the appropriate properties
@@ -231,8 +254,8 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             }
 
             Vector4f currentPos =new Vector4f(
-                sprite.gameObject.transform.position.x + (xAdd * sprite.gameObject.transform.scale.x),
-                sprite.gameObject.transform.position.y + (yAdd * sprite.gameObject.transform.scale.y),
+                sprite.transform.position.x + (xAdd * sprite.transform.scale.x),
+                sprite.transform.position.y + (yAdd * sprite.transform.scale.y),
                 0, 1);
 
             if (isRotated)
@@ -258,7 +281,8 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             vertices[offset + 8] = texId;
 
             // entity ID
-            vertices[offset + 9] = sprite.gameObject.getUid() + 1;
+            vertices[offset + 9] = -1; //sprite.gameObject.getUid() + 1;
+            // todo: add back in a UID system for this, it is used for picking
 
             offset += VERTEX_SIZE;
         }
@@ -314,7 +338,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     }
 
     @Override
-    public int compareTo(SpriteRenderBatch o)
+    public int compareTo(SpriteRenderBatchEX o)
     {
         return Integer.compare(this.zIndex, o.zIndex());
     }
