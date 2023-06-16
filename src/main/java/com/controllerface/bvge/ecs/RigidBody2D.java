@@ -22,10 +22,12 @@ public class RigidBody2D implements Component_EX
     public static RigidBody2D simpleBox()
     {
         var verts = new ArrayList<Point2D>();
-        verts.add(new Point2D(new Vector2f( 100,100)));
-        verts.add(new Point2D(new Vector2f( 200,100)));
-        verts.add(new Point2D(new Vector2f( 200,200)));
-        verts.add(new Point2D(new Vector2f( 100,200)));
+
+        verts.add(new Point2D(new Vector2f( 100,100), new Vector2f( 100,100)));
+        verts.add(new Point2D(new Vector2f( 200,100), new Vector2f( 200,100)));
+        verts.add(new Point2D(new Vector2f( 200,100), new Vector2f( 200,100)));
+        verts.add(new Point2D(new Vector2f( 100,200), new Vector2f( 100,200)));
+
         var edges = new ArrayList<Edge2D>();
         var force = 500;
 

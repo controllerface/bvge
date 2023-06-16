@@ -58,11 +58,11 @@ public class VerletPhysics extends SystemEX
         {
             diffBuffer.zero();
             moveBuffer.zero();
-            point.getPos().sub(point.getPrv(), diffBuffer);
+            point.pos().sub(point.prv(), diffBuffer);
             diffBuffer.mul(FRICTION);
             displacement.add(diffBuffer, moveBuffer);
-            point.getPrv().set(point.getPos());
-            point.getPos().add(moveBuffer);
+            point.prv().set(point.pos());
+            point.pos().add(moveBuffer);
         }
         JMath.centroid(body2D.getVerts(), transform.position);
     }

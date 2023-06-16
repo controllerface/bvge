@@ -15,8 +15,8 @@ public class JMath
         float y_sum = 0;
         for (Point2D point : verts)
         {
-            x_sum += point.getPos().x;
-            y_sum += point.getPos().y;
+            x_sum += point.pos().x;
+            y_sum += point.pos().y;
         }
         float x = x_sum / points;
         float y = y_sum / points;
