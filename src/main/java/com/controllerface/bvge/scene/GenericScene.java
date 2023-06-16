@@ -3,9 +3,9 @@ package com.controllerface.bvge.scene;
 import com.controllerface.bvge.Camera;
 import com.controllerface.bvge.GameObject;
 import com.controllerface.bvge.TransformEX;
-import com.controllerface.bvge.ecs.ComponentType;
+import com.controllerface.bvge.ecs.Component;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.rendering.GridLines;
+import com.controllerface.bvge.ecs.PlayerControlled;
 import com.controllerface.bvge.rendering.Sprite;
 import com.controllerface.bvge.rendering.SpriteComponentOLD;
 import com.controllerface.bvge.rendering.SpriteComponentEX;
@@ -38,8 +38,9 @@ public class GenericScene extends Scene
         sprite.setHeight(32);
         sprite.setWidth(32);
         scomp.setColor(new Vector4f(0,0,1,1));
-        ecs.attachComponent(player, ComponentType.SpriteComponent, scomp);
-        ecs.attachComponent(player, ComponentType.Transform, transform);
+        ecs.attachComponent(player, Component.SpriteComponent, scomp);
+        ecs.attachComponent(player, Component.Transform, transform);
+        ecs.attachComponent(player, Component.PlayerControlled, new PlayerControlled());
 
         //var comp = ecs.getComponentFor(player, ComponentType.SpriteComponent);
         //SpriteComponentEX r = ComponentType.SpriteComponent.coerce(comp);

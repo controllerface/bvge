@@ -139,12 +139,12 @@ public class SpriteRenderBatchEX implements Comparable<SpriteRenderBatchEX>
         for (int i = 0; i < numSprites; i++)
         {
             SpriteComponentEX rend = sprites[i];
-            if (rend.isDirty())
-            {
+            //if (rend.isDirty())
+            //{
                 loadVertexProperties(i);
                 rend.setClean();
                 rebuffer = true;
-            }
+            //}
 
         }
 

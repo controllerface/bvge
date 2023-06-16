@@ -1,8 +1,13 @@
 package com.controllerface.bvge.ecs;
 
-public interface SystemEX
+public abstract class SystemEX
 {
-    default void setup(ECS ecs){}
+    protected final ECS ecs;
 
-    void run(float dt);
+    public SystemEX(ECS ecs)
+    {
+        this.ecs = ecs;
+    }
+
+    abstract public void run(float dt);
 }

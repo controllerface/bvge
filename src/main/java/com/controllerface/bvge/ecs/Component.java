@@ -4,16 +4,17 @@ package com.controllerface.bvge.ecs;
 import com.controllerface.bvge.TransformEX;
 import com.controllerface.bvge.rendering.SpriteComponentEX;
 
-public enum ComponentType
+public enum Component
 {
     SpriteComponent(SpriteComponentEX.class),
-    Transform(TransformEX.class)
+    Transform(TransformEX.class),
+    PlayerControlled(PlayerControlled.class),
 
     ;
 
     private final Class<? extends Component_EX> _class;
 
-    ComponentType(Class<? extends Component_EX> aClass)
+    Component(Class<? extends Component_EX> aClass)
     {
         _class = aClass;
     }

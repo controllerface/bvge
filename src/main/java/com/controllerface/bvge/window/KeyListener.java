@@ -26,19 +26,19 @@ public class KeyListener
         System.out.println(key);
         if (key == GLFW_KEY_LEFT)
         {
-            Window.getScene().camera().position.x+= 2;
+            Window.getScene().camera().position.x-= 2;
         }
         if (key == GLFW_KEY_RIGHT)
         {
-            Window.getScene().camera().position.x-= 2;
+            Window.getScene().camera().position.x+= 2;
         }
         if (key == GLFW_KEY_UP)
         {
-            Window.getScene().camera().position.y-= 2;
+            Window.getScene().camera().position.y+= 2;
         }
         if (key == GLFW_KEY_DOWN)
         {
-            Window.getScene().camera().position.y+= 2;
+            Window.getScene().camera().position.y-= 2;
         }
 
         if (action == GLFW_PRESS)

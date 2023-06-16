@@ -1,6 +1,5 @@
 package com.controllerface.bvge.window;
 
-import com.controllerface.bvge.ecs.ComponentType;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.rendering.*;
 import com.controllerface.bvge.scene.GenericScene;
@@ -80,39 +79,8 @@ public class Window
     private void windowUpkeep()
     {
         glfwPollEvents();
-
-        // todo: re-enable this as it is very helpful for clicking on stuff
-        //  basically, what this does is "color" all pixels on the screen with
-        //  the unique ID of the objects that are displayed, so when clicking
-        //  you can simply check what the ID is of the clicked pixel to tell
-        //  what object was the click target (if any)
-        // render pass 1: picking texture
-//            glDisable(GL_BLEND);
-//            pickingTexture.enableWriting();
-//
-//            glViewport(0,0, 1920, 1080);
-//            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-//            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//            Renderer.bindShader(pickingShader);
-//            currentScene.render();
-//
-//            pickingTexture.disableWriting();
-//            glEnable(GL_BLEND);
-        // pass 1 end
-
-
-        // render pass 2: normal render
-        //DebugDraw.beginFrame();
-
-        //this.frameBuffer.bind();
         glClearColor(r, g, b, a);
         glClear(GL_COLOR_BUFFER_BIT);
-
-
-
-        //this.imGuiLayer.update(dt, currentScene);
-        //glfwSwapBuffers(glfwWindow);
     }
 
     public void init()
@@ -166,18 +134,14 @@ public class Window
         glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
         glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
         glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
-        glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
 
+        var is = new InputSystem(ecs);
 
-        // test system
-//        ecs.registerSystem((dt) ->
-//        {
-//            var message = "testing: " + dt;
-//            var comps = ecs.getComponents(ComponentType.SpriteRenderer);
-//            message += " c: " + comps.size();
-//            System.out.println(message);
-//        });
-        ecs.registerSystem(new RendererEX());
+        glfwSetKeyCallback(glfwWindow, is::keyCallback);
+        //glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
+
+        ecs.registerSystem(is);
+        ecs.registerSystem(new RenderSystem(ecs));
 
         currentScene = new GenericScene(ecs);
         currentScene.load();
@@ -219,9 +183,6 @@ public class Window
         float currentTime;
         float dt = -1.0f;
 
-        Shader defaultShader = AssetPool.getShader("default.glsl");
-        //Shader pickingShader = AssetPool.getShader("assets/shaders/pickingShader.glsl");
-
         while (!glfwWindowShouldClose(glfwWindow))
         {
             windowUpkeep();
@@ -232,7 +193,6 @@ public class Window
                 currentScene.update(dt);
             }
 
-            //this.imGuiLayer.update(dt, currentScene);
             glfwSwapBuffers(glfwWindow);
             MouseListener.endFrame();
 
@@ -240,12 +200,5 @@ public class Window
             dt = currentTime - lastTime;
             lastTime = currentTime;
         }
-
-        //todo: save data here if necessary
     }
-
-//    public static ImGuiLayer getImGuiLayer()
-//    {
-//        return get().imGuiLayer;
-//    }
 }
