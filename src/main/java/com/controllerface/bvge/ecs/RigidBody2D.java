@@ -27,7 +27,7 @@ public class RigidBody2D implements Component_EX
         verts.add(new Point2D(new Vector2f( 200,200)));
         verts.add(new Point2D(new Vector2f( 100,200)));
         var edges = new ArrayList<Edge2D>();
-        var force = 1000;
+        var force = 500;
 
         edges.add(new Edge2D(0, 1));
         edges.add(new Edge2D(1, 2));

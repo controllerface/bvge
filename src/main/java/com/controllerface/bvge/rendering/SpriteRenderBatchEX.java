@@ -157,11 +157,12 @@ public class SpriteRenderBatchEX implements Comparable<SpriteRenderBatchEX>
         }
 
         // Use shader
-        Shader shader = currentShader;
-        shader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
-        shader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
+        currentShader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
+        currentShader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
 
         // todo: this is bad, there's no check for the hardware texture slot max
+        //  batches should be grouped by texture, if multiple objects use the same texture,
+        //  they should be preferably batched together
         for (int i = 0; i < textures.size(); i++)
         {
             // todo: actually just set the correct index, bound by the max
@@ -171,25 +172,22 @@ public class SpriteRenderBatchEX implements Comparable<SpriteRenderBatchEX>
             textures.get(i).bind();
         }
 
-        shader.uploadIntArray("uTextures", texSlots);
+        currentShader.uploadIntArray("uTextures", texSlots);
 
         glBindVertexArray(vaoID);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
-
         glDrawElements(GL_TRIANGLES, this.numSprites * 6, GL_UNSIGNED_INT, 0);
-
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glBindVertexArray(0);
 
-
-        for (int i =0; i< textures.size(); i++)
+        for (int i = 0; i < textures.size(); i++)
         {
             textures.get(i).unbind();
         }
 
-        shader.detach();
+        currentShader.detach();
     }
 
     /**

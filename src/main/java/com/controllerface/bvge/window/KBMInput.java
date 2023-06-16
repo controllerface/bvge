@@ -8,11 +8,11 @@ import com.controllerface.bvge.ecs.SystemEX;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
-public class InputSystem extends SystemEX
+public class KBMInput extends SystemEX
 {
     private final boolean[] keyDown = new boolean[350];
 
-    public InputSystem(ECS ecs)
+    public KBMInput(ECS ecs)
     {
         super(ecs);
     }
@@ -27,10 +27,10 @@ public class InputSystem extends SystemEX
             assert controlPoints != null : "Component was null";
             if (controlPoints.isDisabled()) return;
 
-            controlPoints.setLeft(keyDown[GLFW_KEY_LEFT]);
-            controlPoints.setRight(keyDown[GLFW_KEY_RIGHT]);
-            controlPoints.setUp(keyDown[GLFW_KEY_UP]);
-            controlPoints.setDown(keyDown[GLFW_KEY_DOWN]);
+            controlPoints.setUp(keyDown[GLFW_KEY_W]);
+            controlPoints.setLeft(keyDown[GLFW_KEY_A]);
+            controlPoints.setDown(keyDown[GLFW_KEY_S]);
+            controlPoints.setRight(keyDown[GLFW_KEY_D]);
         });
     }
 

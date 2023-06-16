@@ -1,8 +1,8 @@
 package com.controllerface.bvge.window;
 
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.PhysicsSystem;
-import com.controllerface.bvge.rendering.*;
+import com.controllerface.bvge.ecs.VerletPhysics;
+import com.controllerface.bvge.ecs.SpriteRendering;
 import com.controllerface.bvge.scene.GameRunning;
 import com.controllerface.bvge.scene.GameMode;
 import org.lwjgl.Version;
@@ -61,7 +61,7 @@ public class Window
 
     public void run()
     {
-        System.out.println("LWJGL started: " + Version.getVersion());
+        System.out.println("LWJGL version: " + Version.getVersion());
         init();
         loop();
 
@@ -79,7 +79,7 @@ public class Window
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    public void init()
+    private void initWindow()
     {
         GLFWErrorCallback.createPrint(System.err).set();
 
@@ -114,25 +114,32 @@ public class Window
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
         glViewport(0,0,1920, 1080);
+    }
 
+    private void initInput(KBMInput inputSystem)
+    {
         glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
         glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
         glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
+        glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback);
+    }
 
-        var is = new InputSystem(ecs);
+    public void init()
+    {
+        initWindow();
 
-        glfwSetKeyCallback(glfwWindow, is::keyCallback);
+        // order of system registry is important, systems run in the order they are added
+        var inputSystem = new KBMInput(ecs);
+        ecs.registerSystem(inputSystem);
+        ecs.registerSystem(new VerletPhysics(ecs));
+        ecs.registerSystem(new SpriteRendering(ecs));
 
-        ecs.registerSystem(is);
-        ecs.registerSystem(new PhysicsSystem(ecs));
-        ecs.registerSystem(new RenderingSystem(ecs));
-
+        initInput(inputSystem);
 
         currentGameMode = new GameRunning(ecs);
         currentGameMode.load();
-        currentGameMode.init();
+        currentGameMode.start();
     }
 
     public static int getWidth() {

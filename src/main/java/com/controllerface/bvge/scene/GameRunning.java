@@ -42,7 +42,7 @@ public class GameRunning extends GameMode
     }
 
     @Override
-    public void init()
+    public void start()
     {
         this.camera = new Camera(new Vector2f(0, 0));
     }
@@ -53,9 +53,4 @@ public class GameRunning extends GameMode
         this.camera.adjustProjection();
     }
 
-    @Override
-    public void imgui()
-    {
-
-    }
 }

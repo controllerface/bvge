@@ -21,7 +21,7 @@ public abstract class GameMode
 
     }
 
-    public void init()
+    public void start()
     {
 
     }
@@ -55,10 +55,6 @@ public abstract class GameMode
         return this.camera;
     }
 
-    public void imgui()
-    {
-        // custom scene stuff later
-    }
 
     public GameObject createGameObject(String name)
     {
