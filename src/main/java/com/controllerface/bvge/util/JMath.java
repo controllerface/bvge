@@ -1,8 +1,28 @@
 package com.controllerface.bvge.util;
 
+import com.controllerface.bvge.ecs.Point2D;
 import org.joml.Vector2f;
 
-public class JMath {
+import java.util.List;
+
+public class JMath
+{
+
+    public static void centroid(List<Point2D> verts, Vector2f target)
+    {
+        var points = verts.size();
+        float x_sum = 0;
+        float y_sum = 0;
+        for (Point2D point : verts)
+        {
+            x_sum += point.getPos().x;
+            y_sum += point.getPos().y;
+        }
+        float x = x_sum / points;
+        float y = y_sum / points;
+        target.x = x;
+        target.y = y;
+    }
 
     public static void rotate(Vector2f vec, float angleDeg, Vector2f origin) {
         float x = vec.x - origin.x;

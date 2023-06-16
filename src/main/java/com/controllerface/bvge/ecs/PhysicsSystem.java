@@ -1,6 +1,7 @@
 package com.controllerface.bvge.ecs;
 
 import com.controllerface.bvge.TransformEX;
+import com.controllerface.bvge.util.JMath;
 import org.joml.Vector2f;
 
 public class PhysicsSystem extends SystemEX
@@ -13,6 +14,9 @@ public class PhysicsSystem extends SystemEX
     private float accumulator = 0.0f;
 
     private final Vector2f accelBuffer = new Vector2f();
+    private final Vector2f diffBuffer = new Vector2f();
+    private final Vector2f moveBuffer = new Vector2f();
+
 
     public PhysicsSystem(ECS ecs)
     {
@@ -24,6 +28,7 @@ public class PhysicsSystem extends SystemEX
         var cp = ecs.getComponentFor(entity, Component.ControlPoints);
         ControlPoints controlPoints = Component.ControlPoints.coerce(cp);
         accelBuffer.zero();
+
         if (controlPoints.isLeft())
         {
             accelBuffer.x -= body2D.getForce();
@@ -49,13 +54,24 @@ public class PhysicsSystem extends SystemEX
         var t = ecs.getComponentFor(entitiy, Component.Transform);
         TransformEX transform = Component.Transform.coerce(t);
         //if (body.static) return;
-        var acc = body2D.getAcc();
-        if (acc.x != 0.0f || acc.y != 0)
+        var displacement = body2D.getAcc().mul(dt * dt);
+
+        for (Point2D point : body2D.getVerts())
         {
-            //var norm = acc.normalize();
-            var unit = acc.mul(dt * dt); //.mul(dt);
-            transform.position.add(unit);
+            diffBuffer.zero();
+            moveBuffer.zero();
+            point.getPos().sub(point.getPrv(), diffBuffer);
+            displacement.add(diffBuffer, moveBuffer);
+            point.getPrv().set(point.getPos());
+            point.getPos().add(moveBuffer);
         }
+        JMath.centroid(body2D.getVerts(), transform.position);
+
+//        if (acc.x != 0.0f || acc.y != 0)
+//        {
+//            //var norm = acc.normalize();
+//            transform.position.add(acc.mul(dt * dt));
+//        }
 
         //unit = vectors.multiply(unit, dt);
         //var movement_vector = vectors.multiply(unit, dt ^2);
