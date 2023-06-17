@@ -42,7 +42,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.Transform, transform);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
-        ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(50,50, 32));
+        ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(50,50, 32, player));
 
 
 
@@ -62,7 +62,7 @@ public class GameRunning extends GameMode
         //scomp.setColor(new Vector4f(0,0,0,1));
         ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
         ecs.attachComponent(npc, Component.Transform, transform2);
-        ecs.attachComponent(npc, Component.RigidBody2D, RigidBody2D.simpleBox(100, 100, 32));
+        ecs.attachComponent(npc, Component.RigidBody2D, RigidBody2D.simpleBox(100, 100, 32, npc));
     }
 
     @Override

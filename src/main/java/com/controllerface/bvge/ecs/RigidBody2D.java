@@ -7,19 +7,21 @@ import java.util.List;
 
 public class RigidBody2D implements GameComponent
 {
+    private String entitiy;
     private List<Point2D> verts;
     private List<Edge2D> edges;
     private Vector2f acc =  new Vector2f();
     private float force;
 
-    public RigidBody2D(List<Point2D> verts, List<Edge2D> edges, float force)
+    public RigidBody2D(List<Point2D> verts, List<Edge2D> edges, float force, String entitiy)
     {
         this.verts = verts;
         this.edges = edges;
         this.force = force;
+        this.entitiy = entitiy;
     }
 
-    public static RigidBody2D simpleBox(float x, float y, float size)
+    public static RigidBody2D simpleBox(float x, float y, float size, String entitiy)
     {
         var verts = new ArrayList<Point2D>();
 
@@ -54,7 +56,7 @@ public class RigidBody2D implements GameComponent
 
         var force = 500;
 
-        return new RigidBody2D(verts, edges, force);
+        return new RigidBody2D(verts, edges, force, entitiy);
     }
 
     public List<Point2D> getVerts()
@@ -80,5 +82,10 @@ public class RigidBody2D implements GameComponent
     public void setForce(float force)
     {
         this.force = force;
+    }
+
+    public String getEntitiy()
+    {
+        return entitiy;
     }
 }
