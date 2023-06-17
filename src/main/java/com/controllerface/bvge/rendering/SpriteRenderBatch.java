@@ -89,7 +89,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         int eboID = glGenBuffers();
         int[] indices = generateIndices();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_DYNAMIC_DRAW);
 
         // Enable the buffer attribute pointers
         glVertexAttribPointer(0, POS_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, POS_OFFSET);
@@ -157,6 +157,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         }
 
         // Use shader
+        currentShader.use();
         currentShader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
         currentShader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
 

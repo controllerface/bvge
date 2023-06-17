@@ -6,18 +6,15 @@ import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Vector2f;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
     private final float TICK_RATE = 1.0f / 60.0f;
-    private final int SUB_STEPS = 8;
-    private final int EDGE_STEPS = 8;
+    private final int SUB_STEPS = 3;
+    private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
-    private final float FRICTION = 0.997f;
+    private final float FRICTION = 0.991f;
     private float accumulator = 0.0f;
 
     /**
@@ -26,9 +23,8 @@ public class VerletPhysics extends GameSystem
      */
     private final Map<String, RigidBody2D> bodyBuffer = new HashMap<>();
     private final List<CollisionManifold> collisionBuffer = new ArrayList<>();
-    private final Vector2f accelBuffer = new Vector2f();
-    private final Vector2f diffBuffer = new Vector2f();
-    private final Vector2f moveBuffer = new Vector2f();
+    private final Vector2f vectorBuffer1 = new Vector2f();
+    private final Vector2f vectorBuffer2 = new Vector2f();
 
     public VerletPhysics(ECS ecs)
     {
@@ -42,26 +38,26 @@ public class VerletPhysics extends GameSystem
         if (cp == null) return;
 
         ControlPoints controlPoints = Component.ControlPoints.coerce(cp);
-        accelBuffer.zero();
+        vectorBuffer1.zero();
 
         if (controlPoints.isLeft())
         {
-            accelBuffer.x -= body2D.getForce();
+            vectorBuffer1.x -= body2D.getForce();
         }
         if (controlPoints.isRight())
         {
-            accelBuffer.x += body2D.getForce();
+            vectorBuffer1.x += body2D.getForce();
         }
         if (controlPoints.isUp())
         {
-            accelBuffer.y += body2D.getForce();
+            vectorBuffer1.y += body2D.getForce();
         }
         if (controlPoints.isDown())
         {
-            accelBuffer.y -= body2D.getForce();
+            vectorBuffer1.y -= body2D.getForce();
         }
-        body2D.getAcc().x = accelBuffer.x;
-        body2D.getAcc().y = accelBuffer.y;
+        body2D.getAcc().x = vectorBuffer1.x;
+        body2D.getAcc().y = vectorBuffer1.y;
     }
 
     private void integrate(String entitiy, RigidBody2D body2D, float dt)
@@ -71,13 +67,13 @@ public class VerletPhysics extends GameSystem
         var displacement = body2D.getAcc().mul(dt * dt);
         for (Point2D point : body2D.getVerts())
         {
-            diffBuffer.zero();
-            moveBuffer.zero();
-            point.pos().sub(point.prv(), diffBuffer);
-            diffBuffer.mul(FRICTION);
-            displacement.add(diffBuffer, moveBuffer);
+            vectorBuffer1.zero();
+            vectorBuffer2.zero();
+            point.pos().sub(point.prv(), vectorBuffer1);
+            vectorBuffer1.mul(FRICTION);
+            displacement.add(vectorBuffer1, vectorBuffer2);
             point.prv().set(point.pos());
-            point.pos().add(moveBuffer);
+            point.pos().add(vectorBuffer2);
         }
         MathEX.centroid(body2D.getVerts(), transform.position);
     }
@@ -117,9 +113,6 @@ public class VerletPhysics extends GameSystem
         }
     }
 
-    private final Vector2f edgeBuffer = new Vector2f();
-    private final Vector2f normalBuffer = new Vector2f();
-
     private CollisionManifold polygonCollision(RigidBody2D bodyA, RigidBody2D bodyB)
     {
         float min_distance = Float.MAX_VALUE;
@@ -142,12 +135,12 @@ public class VerletPhysics extends GameSystem
             var va = verts1.get(i);
             var vb = verts1.get(b_index);
 
-            vb.pos().sub(va.pos(), edgeBuffer);
-            edgeBuffer.perpendicular();
-            edgeBuffer.normalize();
+            vb.pos().sub(va.pos(), vectorBuffer1);
+            vectorBuffer1.perpendicular();
+            vectorBuffer1.normalize();
 
-            var proj_a = projectPolygon(verts1, edgeBuffer);
-            var proj_b = projectPolygon(verts2, edgeBuffer);
+            var proj_a = projectPolygon(verts1, vectorBuffer1);
+            var proj_b = projectPolygon(verts2, vectorBuffer1);
             var distance = polygonDistance(proj_a, proj_b);
             if (distance > 0)
             {
@@ -160,7 +153,7 @@ public class VerletPhysics extends GameSystem
                 invert = true;
                 edge_o = bodyA;
                 min_distance = abs_distance;
-                normalBuffer.set(edgeBuffer);
+                vectorBuffer2.set(vectorBuffer1);
                 edge_indexA = i;
                 edge_indexB = b_index;
             }
@@ -175,12 +168,12 @@ public class VerletPhysics extends GameSystem
             var va = verts2.get(i);
             var vb = verts2.get(b_index);
 
-            vb.pos().sub(va.pos(), edgeBuffer);
-            edgeBuffer.perpendicular();
-            edgeBuffer.normalize();
+            vb.pos().sub(va.pos(), vectorBuffer1);
+            vectorBuffer1.perpendicular();
+            vectorBuffer1.normalize();
 
-            var proj_a = projectPolygon(verts1, edgeBuffer);
-            var proj_b = projectPolygon(verts2, edgeBuffer);
+            var proj_a = projectPolygon(verts1, vectorBuffer1);
+            var proj_b = projectPolygon(verts2, vectorBuffer1);
             var distance = polygonDistance(proj_a, proj_b);
             if (distance > 0)
             {
@@ -193,17 +186,17 @@ public class VerletPhysics extends GameSystem
                 invert = false;
                 edge_o = bodyB;
                 min_distance = abs_distance;
-                normalBuffer.set(edgeBuffer);
+                vectorBuffer2.set(vectorBuffer1);
                 edge_indexA = i;
                 edge_indexB = b_index;
             }
         }
 
-        var pr = projectPolygon(vertex_o.getVerts(), normalBuffer);
+        var pr = projectPolygon(vertex_o.getVerts(), vectorBuffer2);
         vert_index = pr.index();
 
-        min_distance = min_distance / normalBuffer.length();
-        normalBuffer.normalize();
+        min_distance = min_distance / vectorBuffer2.length();
+        vectorBuffer2.normalize();
 
         var a = invert
             ? bodyB
@@ -220,12 +213,12 @@ public class VerletPhysics extends GameSystem
 
         var direction = new Vector2f();
         transformA.position.sub(transformB.position, direction);
-        var dirdot = direction.dot(normalBuffer);
+        var dirdot = direction.dot(vectorBuffer2);
         if (dirdot < 0)
         {
-            normalBuffer.mul(-1);
+            vectorBuffer2.mul(-1);
         }
-        direction.set(normalBuffer);
+        direction.set(vectorBuffer2);
         return new CollisionManifold(vertex_o,
             edge_o, direction, min_distance,
             edge_indexA, edge_indexB, vert_index);
@@ -237,11 +230,22 @@ public class VerletPhysics extends GameSystem
         return polygonCollision(bodyA, bodyB);
     }
 
+    private final Set<String> keyCache = new HashSet<>();
+
     private void findCollisions(RigidBody2D target)
     {
+        keyCache.clear();
         for (RigidBody2D candidate : bodyBuffer.values())
         {
             if (target == candidate) continue;
+            if (target.getEntitiy().equals(candidate.getEntitiy())) continue;
+            var k1 = target.getEntitiy() + candidate.getEntitiy();
+            var k2 = candidate.getEntitiy() + target.getEntitiy();
+            if (keyCache.contains(k1) || keyCache.contains(k2))
+            {
+                return;
+            }
+
             var collision = checkCollision(target, candidate);
             if (collision == null) continue;
             collisionBuffer.add(collision);
@@ -267,10 +271,6 @@ public class VerletPhysics extends GameSystem
         }
         return contact;
     }
-
-    private final Vector2f vectorBuffer1 = new Vector2f();
-    private final Vector2f vectorBuffer2 = new Vector2f();
-    private final Vector2f vectorBuffer3 = new Vector2f();
 
     private void reactPolygon(CollisionManifold collision)
     {
@@ -309,14 +309,12 @@ public class VerletPhysics extends GameSystem
             edge.p2().pos().sub(edge.p1().pos(), vectorBuffer1);
             var length = edge.p2().pos().sub(edge.p1().pos(), vectorBuffer2).length();
             float diff = length - edge.length();
-                vectorBuffer1.normalize();
-                vectorBuffer1.mul(diff * 0.5f);
+            vectorBuffer1.normalize();
+            vectorBuffer1.mul(diff * 0.5f);
             edge.p1().pos().add(vectorBuffer1);
             edge.p2().pos().sub(vectorBuffer1);
         }
     }
-
-
 
 
     private void tickSimulation(float dt)
@@ -340,6 +338,14 @@ public class VerletPhysics extends GameSystem
 
         for (RigidBody2D body : bodyBuffer.values())
         {
+            for (int i =0; i< EDGE_STEPS; i++)
+            {
+                resolveConstraints(body);
+            }
+        }
+
+        for (RigidBody2D body : bodyBuffer.values())
+        {
             findCollisions(body);
         }
 
@@ -348,25 +354,11 @@ public class VerletPhysics extends GameSystem
             reactPolygon(c);
         }
 
-        for (RigidBody2D body : bodyBuffer.values())
-        {
-            for (int i =0; i< EDGE_STEPS; i++)
-            {
-                resolveConstraints(body);
-            }
-        }
+
     }
 
     private void simulate(float dt)
     {
-//        if (!this.last_timestamp)
-//        {
-//            this.last_timestamp = 0.0;
-//        }
-
-        //let frameTime = (now - this.last_timestamp) / 1000;
-
-        //this.last_timestamp = now;
         this.accumulator += dt;
         while ( this.accumulator >= TICK_RATE )
         {

@@ -21,6 +21,34 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
+    private void genNPCs(int spacing, int size)
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            for (int j = 0; j < 12; j++)
+            {
+                var npc = ecs.registerEntity(null);
+                var scomp2 = new SpriteComponent();
+                var sprite2 = new Sprite();
+                var tex2 = AssetPool.getTexture("assets/images/blendImage2.png");
+                sprite2.setTexture(tex2);
+                var transform2 = new Transform();
+                transform2.scale.x = 32f;
+                transform2.scale.y = 32f;
+                transform2.position.x = 0f;
+                transform2.position.y = 0f;
+                sprite2.setHeight(32);
+                sprite2.setWidth(32);
+                scomp2.setSprite(sprite2);
+                //scomp.setColor(new Vector4f(0,0,0,1));
+                ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
+                ecs.attachComponent(npc, Component.Transform, transform2);
+                ecs.attachComponent(npc, Component.RigidBody2D,
+                    RigidBody2D.simpleBox(200 + i * spacing, 200 + j * spacing, size, npc));
+            }
+        }
+    }
+
     @Override
     public void load()
     {
@@ -31,12 +59,12 @@ public class GameRunning extends GameMode
         var tex = AssetPool.getTexture("assets/images/blendImage1.png");
         sprite.setTexture(tex);
         var transform =  new Transform();
-        transform.scale.x = 32f;
-        transform.scale.y = 32f;
+        transform.scale.x = 16f;
+        transform.scale.y = 16f;
         transform.position.x = 50f;
         transform.position.y = 50f;
-        sprite.setHeight(32);
-        sprite.setWidth(32);
+        sprite.setHeight(16);
+        sprite.setWidth(16);
         scomp.setSprite(sprite);
         //scomp.setColor(new Vector4f(0,0,0,1));
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
@@ -44,25 +72,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(50,50, 32, player));
 
-
-
-        var npc = ecs.registerEntity("npc");
-        var scomp2 = new SpriteComponent();
-        var sprite2 = new Sprite();
-        var tex2 = AssetPool.getTexture("assets/images/blendImage2.png");
-        sprite2.setTexture(tex2);
-        var transform2 =  new Transform();
-        transform2.scale.x = 32f;
-        transform2.scale.y = 32f;
-        transform2.position.x = 0f;
-        transform2.position.y = 0f;
-        sprite2.setHeight(32);
-        sprite2.setWidth(32);
-        scomp2.setSprite(sprite2);
-        //scomp.setColor(new Vector4f(0,0,0,1));
-        ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-        ecs.attachComponent(npc, Component.Transform, transform2);
-        ecs.attachComponent(npc, Component.RigidBody2D, RigidBody2D.simpleBox(100, 100, 32, npc));
+        genNPCs(16, 16);
     }
 
     @Override

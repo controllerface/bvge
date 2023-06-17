@@ -27,7 +27,7 @@ public class LineRendering extends GameSystem
         {
             if (batch.hasRoom())
             {
-                batch.addSprite(line);
+                batch.addLine(line);
                 added = true;
                 break;
             }
@@ -35,17 +35,15 @@ public class LineRendering extends GameSystem
 
         if (!added)
         {
-            LineRenderBatch newBatch = new LineRenderBatch();
+            LineRenderBatch newBatch = new LineRenderBatch(0, shader);
             newBatch.start();
             batches.add(newBatch);
-            newBatch.addSprite(line);
-            //Collections.sort(batches);
+            newBatch.addLine(line);
         }
     }
 
     private void render()
     {
-        shader.use();
         for (LineRenderBatch batch : batches)
         {
             batch.render();
@@ -56,6 +54,7 @@ public class LineRendering extends GameSystem
     @Override
     public void run(float dt)
     {
+        batches.clear();
         for (Map.Entry<String, GameComponent> entry : ecs.getComponents(Component.RigidBody2D).entrySet())
         {
             GameComponent component = entry.getValue();
