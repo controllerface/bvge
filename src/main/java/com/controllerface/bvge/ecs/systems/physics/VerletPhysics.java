@@ -17,7 +17,7 @@ public class VerletPhysics extends GameSystem
     private final int SUB_STEPS = 8;
     private final int EDGE_STEPS = 8;
     private final float GRAVITY = 9.8f;
-    private final float FRICTION = 0.980f;
+    private final float FRICTION = 0.997f;
     private float accumulator = 0.0f;
 
     /**
@@ -117,10 +117,12 @@ public class VerletPhysics extends GameSystem
         }
     }
 
+    private final Vector2f edgeBuffer = new Vector2f();
+    private final Vector2f normalBuffer = new Vector2f();
+
     private CollisionManifold polygonCollision(RigidBody2D bodyA, RigidBody2D bodyB)
     {
-        float min_distance = 10000;
-        Vector2f normal = null;
+        float min_distance = Float.MAX_VALUE;
 
         var verts1 = bodyA.getVerts();
         var verts2 = bodyB.getVerts();
@@ -140,12 +142,12 @@ public class VerletPhysics extends GameSystem
             var va = verts1.get(i);
             var vb = verts1.get(b_index);
 
-            var edge = vb.pos().sub(va.pos(), new Vector2f());
-            var axis = new Vector2f(edge).perpendicular();
-            axis.normalize();
+            vb.pos().sub(va.pos(), edgeBuffer);
+            edgeBuffer.perpendicular();
+            edgeBuffer.normalize();
 
-            var proj_a = projectPolygon(verts1, axis);
-            var proj_b = projectPolygon(verts2, axis);
+            var proj_a = projectPolygon(verts1, edgeBuffer);
+            var proj_b = projectPolygon(verts2, edgeBuffer);
             var distance = polygonDistance(proj_a, proj_b);
             if (distance > 0)
             {
@@ -158,7 +160,7 @@ public class VerletPhysics extends GameSystem
                 invert = true;
                 edge_o = bodyA;
                 min_distance = abs_distance;
-                normal = axis;
+                normalBuffer.set(edgeBuffer);
                 edge_indexA = i;
                 edge_indexB = b_index;
             }
@@ -173,12 +175,12 @@ public class VerletPhysics extends GameSystem
             var va = verts2.get(i);
             var vb = verts2.get(b_index);
 
-            var edge = vb.pos().sub(va.pos(), new Vector2f());
-            var axis = new Vector2f(edge).perpendicular();
-            axis.normalize();
+            vb.pos().sub(va.pos(), edgeBuffer);
+            edgeBuffer.perpendicular();
+            edgeBuffer.normalize();
 
-            var proj_a = projectPolygon(verts1, axis);
-            var proj_b = projectPolygon(verts2, axis);
+            var proj_a = projectPolygon(verts1, edgeBuffer);
+            var proj_b = projectPolygon(verts2, edgeBuffer);
             var distance = polygonDistance(proj_a, proj_b);
             if (distance > 0)
             {
@@ -191,21 +193,22 @@ public class VerletPhysics extends GameSystem
                 invert = false;
                 edge_o = bodyB;
                 min_distance = abs_distance;
-                normal = axis;
+                normalBuffer.set(edgeBuffer);
                 edge_indexA = i;
                 edge_indexB = b_index;
             }
         }
 
-        var pr = projectPolygon(vertex_o.getVerts(), normal);
+        var pr = projectPolygon(vertex_o.getVerts(), normalBuffer);
         vert_index = pr.index();
 
-        min_distance = min_distance / normal.length();
-        normal.normalize();
+        min_distance = min_distance / normalBuffer.length();
+        normalBuffer.normalize();
 
         var a = invert
             ? bodyB
             : bodyA;
+
         var b = invert
             ? bodyA
             : bodyB;
@@ -215,15 +218,16 @@ public class VerletPhysics extends GameSystem
         Transform transformA = Component.Transform.coerce(tA);
         Transform transformB = Component.Transform.coerce(tB);
 
-        var direction = new Vector2f();//centerA.sub(centerB);
+        var direction = new Vector2f();
         transformA.position.sub(transformB.position, direction);
-        var dirdot = direction.dot(normal);
+        var dirdot = direction.dot(normalBuffer);
         if (dirdot < 0)
         {
-            normal.mul(-1);
+            normalBuffer.mul(-1);
         }
+        direction.set(normalBuffer);
         return new CollisionManifold(vertex_o,
-            edge_o, normal, min_distance,
+            edge_o, direction, min_distance,
             edge_indexA, edge_indexB, vert_index);
     }
 
@@ -264,47 +268,23 @@ public class VerletPhysics extends GameSystem
         return contact;
     }
 
+    private final Vector2f vectorBuffer1 = new Vector2f();
+    private final Vector2f vectorBuffer2 = new Vector2f();
+    private final Vector2f vectorBuffer3 = new Vector2f();
 
     private void reactPolygon(CollisionManifold collision)
     {
-
-        var collision_vector = collision.normal().mul(collision.depth(), new Vector2f());
-        //vectors.multiply(collision.norm, collision.depth);
-
+        var collision_vector = collision.normal().mul(collision.depth());
         float vertex_magnitude = .5f;
-//            collision.edge_o.static
-//            ? 1
-//            : (collision.vertex_o.static)
-//                ? 0
-//                : .5;
-
         float edge_magnitude = .5f;
-//            collision.vertex_o.static
-//            ? 1
-//            : (collision.edge_o.static)
-//                ? 0
-//                : .5;
-
         var verts = collision.vertexObject().getVerts();
         var collision_vertex = verts.get(collision.vert());
-
-        var vt = ecs.getComponentFor(collision.vertexObject().getEntitiy(), Component.Transform);
-        var et = ecs.getComponentFor(collision.edgeObject().getEntitiy(), Component.Transform);
-        Transform vTransform = Component.Transform.coerce(vt);
-        Transform eTransform = Component.Transform.coerce(et);
 
         // vertex object
         if (vertex_magnitude > 0)
         {
-            var vertex_reaction = collision_vector.mul(vertex_magnitude, new Vector2f());
-                //vectors.multiply(collision_vector, vertex_magnitude);
-            var new_v = collision_vertex.pos().add(vertex_reaction, new Vector2f());
-                //vectors.add(collision_vertex.pos, vertex_reaction)
-            verts.get(collision.vert()).pos().set(new_v);
-                //verts[collision.vert_index].pos = new_v;
-            MathEX.centroid(verts, vTransform.position);
-                //collision.vertex_o.pos = vectors.centroid(verts);
-                //utils.clamp(verts[collision.vert_index]);
+            collision_vector.mul(vertex_magnitude, vectorBuffer1);
+            collision_vertex.pos().add(vectorBuffer1);
         }
 
         // edge object
@@ -314,25 +294,11 @@ public class VerletPhysics extends GameSystem
             var e1 = edge_verts.get(collision.edgeA());
             var e2 = edge_verts.get(collision.edgeB());
             var edge_contact = edgeContact(e1, e2, collision_vertex,collision_vector);
-            //utils.edge_contact(e1, e2, collision_vertex, collision_vector);
             float edge_scale = 1.0f / ( edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
-            var e1_reaction = collision_vector.mul((1 - edge_contact) * edge_magnitude * edge_scale, new Vector2f());
-                //vectors.multiply(collision_vector, (1 - edge_contact) * edge_magnitude * edge_scale);
-            var e2_reaction = collision_vector.mul(edge_contact * edge_magnitude *edge_scale, new Vector2f());
-                //vectors.multiply(collision_vector, edge_contact * edge_magnitude *edge_scale);
-            var new_e1 = e1.pos().sub(e1_reaction, new Vector2f());
-                //vectors.subtract(e1.pos, e1_reaction);
-            var new_e2 = e2.pos().sub(e2_reaction, new Vector2f());
-                //vectors.subtract(e2.pos, e2_reaction);
-
-            e1.pos().set(new_e1);
-            e2.pos().set(new_e2);
-
-//            edge_verts[edge_index.a].pos = new_e1;
-//            edge_verts[edge_index.b].pos = new_e2;
-//            collision.edge_o.pos = vectors.centroid(edge_verts);
-//            utils.clamp(edge_verts[edge_index.a]);
-//            utils.clamp(edge_verts[edge_index.b]);
+            collision_vector.mul((1 - edge_contact) * edge_magnitude * edge_scale, vectorBuffer1);
+            collision_vector.mul(edge_contact * edge_magnitude *edge_scale, vectorBuffer2);
+            e1.pos().sub(vectorBuffer1);
+            e2.pos().sub(vectorBuffer2);
         }
     }
 
@@ -340,64 +306,89 @@ public class VerletPhysics extends GameSystem
     {
         for (Edge2D edge : body2D.getEdges())
         {
-            var v1v2 = edge.p2().pos().sub(edge.p1().pos(), new Vector2f());
-                //vectors.subtract(object.verts[edge.b].pos, object.verts[edge.a].pos);
-            var length = edge.p2().pos().sub(edge.p1().pos(), new Vector2f()).length();
-                //vectors.magnitude(v1v2);
+            edge.p2().pos().sub(edge.p1().pos(), vectorBuffer1);
+            var length = edge.p2().pos().sub(edge.p1().pos(), vectorBuffer2).length();
             float diff = length - edge.length();
-            var vn = v1v2.normalize(new Vector2f());
-                //vectors.unit(v1v2);
-            var offset = vn.mul(diff * 0.5f, new Vector2f());
-                //vectors.multiply(vn, diff * 0.5);
-            var new_a = edge.p1().pos().add(offset, new Vector2f());
-                //vectors.add(object.verts[edge.a].pos, offset);
-            var new_b = edge.p2().pos().sub(offset, new Vector2f());
-                //vectors.subtract(object.verts[edge.b].pos, offset);
-            edge.p1().pos().set(new_a);
-            edge.p2().pos().set(new_b);
-            //object.verts[edge.a].pos = new_a;
-            //object.verts[edge.b].pos = new_b;
+                vectorBuffer1.normalize();
+                vectorBuffer1.mul(diff * 0.5f);
+            edge.p1().pos().add(vectorBuffer1);
+            edge.p2().pos().sub(vectorBuffer1);
         }
     }
 
-    @Override
-    public void run(float dt)
+
+
+
+    private void tickSimulation(float dt)
     {
-        // 0: get objects to calculate positions for
-//        var kdtree = new KDTree<String>(2);
+        //        var kdtree = new KDTree<String>(2);
         var bodies = ecs.getComponents(Component.RigidBody2D);
         if (bodies == null || bodies.isEmpty()) return;
 
-        // Pass 1: Resolve forces and integrate
+        bodyBuffer.clear();
         for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
         {
             String entity = entry.getKey();
             GameComponent component = entry.getValue();
             RigidBody2D body2D = Component.RigidBody2D.coerce(component);
-            resolveForces(entity, body2D); // 1: resolve forces
-            integrate(entity, body2D, dt); // 2: integrate
+            resolveForces(entity, body2D);
+            integrate(entity, body2D, dt);
             bodyBuffer.put(entity, body2D);
         }
 
         collisionBuffer.clear();
 
-        // Pass 2: Detect collisions
         for (RigidBody2D body : bodyBuffer.values())
         {
-            findCollisions(body); // 3: find collisions
+            findCollisions(body);
         }
 
-        // Pass 3: React to collisions
         for (CollisionManifold c : collisionBuffer)
         {
-            reactPolygon(c);         // 4: resolve collisions
+            reactPolygon(c);
         }
 
         for (RigidBody2D body : bodyBuffer.values())
         {
-            resolveConstraints(body); // 5: resolve constraints
+            for (int i =0; i< EDGE_STEPS; i++)
+            {
+                resolveConstraints(body);
+            }
+        }
+    }
+
+    private void simulate(float dt)
+    {
+//        if (!this.last_timestamp)
+//        {
+//            this.last_timestamp = 0.0;
+//        }
+
+        //let frameTime = (now - this.last_timestamp) / 1000;
+
+        //this.last_timestamp = now;
+        this.accumulator += dt;
+        while ( this.accumulator >= TICK_RATE )
+        {
+            float sub_step = TICK_RATE / SUB_STEPS;
+            for (int i = 0; i < SUB_STEPS; i++)
+            {
+                this.tickSimulation(sub_step);
+                this.accumulator -= sub_step;
+            }
         }
 
+        float drift = this.accumulator / TICK_RATE;
+        if (drift != 0)
+        {
+            //this.lerp(drift);
+        }
+    }
 
+
+    @Override
+    public void run(float dt)
+    {
+        simulate(dt);
     }
 }
