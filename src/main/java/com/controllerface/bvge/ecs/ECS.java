@@ -1,5 +1,7 @@
 package com.controllerface.bvge.ecs;
 
+import com.controllerface.bvge.ecs.systems.GameSystem;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -7,9 +9,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ECS
 {
     private long count = 0;
-    private List<SystemEX> systems = new CopyOnWriteArrayList<>();
-    private Map<Component, Map<String, Component_EX>> components = new ConcurrentHashMap<>();
-    private Set<String> entities = ConcurrentHashMap.newKeySet();
+    private final List<GameSystem> systems = new CopyOnWriteArrayList<>();
+    private final Map<Component, Map<String, GameComponent>> components = new ConcurrentHashMap<>();
+    private final Set<String> entities = ConcurrentHashMap.newKeySet();
 
     public ECS()
     {
@@ -45,17 +47,17 @@ public class ECS
     }
 
 
-    public void registerSystem(SystemEX systemEX)
+    public void registerSystem(GameSystem system)
     {
-        systems.add(systemEX);
+        systems.add(system);
     }
 
-    public void attachComponent(String id, Component type, Component_EX component)
+    public void attachComponent(String id, Component type, GameComponent component)
     {
         components.get(type).put(id, component);
     }
 
-    public Component_EX getComponentFor(String id, Component type)
+    public GameComponent getComponentFor(String id, Component type)
     {
         return components.get(type).get(id);
     }
@@ -66,7 +68,7 @@ public class ECS
      * @param type the type of component map to retrieve
      * @return the components map for the given component type. may be empty
      */
-    public Map<String, Component_EX> getComponents(Component type)
+    public Map<String, GameComponent> getComponents(Component type)
     {
         return components.get(type);
     }

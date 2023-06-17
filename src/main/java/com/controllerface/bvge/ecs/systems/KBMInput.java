@@ -1,14 +1,14 @@
-package com.controllerface.bvge.window;
+package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.ecs.Component;
 import com.controllerface.bvge.ecs.ControlPoints;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.SystemEX;
+import com.controllerface.bvge.ecs.systems.GameSystem;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
-public class KBMInput extends SystemEX
+public class KBMInput extends GameSystem
 {
     private final boolean[] keyDown = new boolean[350];
 

@@ -37,7 +37,7 @@ void main ()
     if (fTexId > 0)
     {
         //color = vec4(fTexCoords, 0, 1);
-        int id = int(fTexId);
+        int id = int(fTexId) - 1;
         switch (id)
         {
             case 0:

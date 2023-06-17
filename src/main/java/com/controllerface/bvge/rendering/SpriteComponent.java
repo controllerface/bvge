@@ -1,12 +1,12 @@
 package com.controllerface.bvge.rendering;
 
 import com.controllerface.bvge.Transform;
-import com.controllerface.bvge.ecs.Component_EX;
+import com.controllerface.bvge.ecs.GameComponent;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 // A basic wrapper that renders a sprite
-public class SpriteComponentEX implements Component_EX
+public class SpriteComponent implements GameComponent
 {
     private Vector4f color = new Vector4f(1,1,1,1);
     private Sprite sprite = new Sprite();
@@ -27,31 +27,6 @@ public class SpriteComponentEX implements Component_EX
     {
         return color;
     }
-
-//    @Override
-//    public void start()
-//    {
-//        this.lastTransform = gameObject.transform.copy();
-//    }
-//
-//    @Override
-//    public void update(float dt)
-//    {
-//        if (!this.lastTransform.equals(this.gameObject.transform))
-//        {
-//            this.gameObject.transform.copy(this.lastTransform);
-//            isDirty = true;
-//        }
-//    }
-//
-//    @Override
-//    public void imgui()
-//    {
-////        if (JimGui.colorPicker4("Color Picker", this.color))
-////        {
-////            this.isDirty = true;
-////        }
-//    }
 
     public void setSprite(Sprite sprite)
     {

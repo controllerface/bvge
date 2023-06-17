@@ -1,6 +1,7 @@
 package com.controllerface.bvge.rendering;
 
 
+import com.controllerface.bvge.ecs.GameComponent;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -11,6 +12,13 @@ public class Line2D
     private Vector3f color;
     private int lifetime;
 
+    public Line2D(Vector2f from, Vector2f to)
+    {
+        this.from = from;
+        this.to = to;
+        this.color = new Vector3f(0,0,0);
+        this.lifetime = lifetime;
+    }
     public Line2D(Vector2f from, Vector2f to, Vector3f color, int lifetime)
     {
         this.from = from;

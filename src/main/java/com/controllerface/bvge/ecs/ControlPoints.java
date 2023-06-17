@@ -2,7 +2,7 @@ package com.controllerface.bvge.ecs;
 
 import org.joml.Vector2f;
 
-public class ControlPoints implements Component_EX
+public class ControlPoints implements GameComponent
 {
     private boolean disabled = false;
 

@@ -1,8 +1,9 @@
 package com.controllerface.bvge.rendering;
 
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
-import org.joml.*;
 import org.joml.Math;
+import org.joml.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     private final int VERTEX_SIZE = 10;
     private final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
-    private SpriteComponentOLD[] sprites;
+    private SpriteComponent[] sprites;
     private int numSprites;
     private boolean hasRoom;
     private float[] vertices;
@@ -47,22 +48,30 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     private List<Texture> textures;
 
     private int vaoID, vboID;
-    private int maxBatchSize;
 
     private int zIndex;
 
-    public SpriteRenderBatch(int maxBatchSize, int zIndex)
+    private final Shader currentShader;
+
+    public SpriteRenderBatch(int zIndex, Shader currentShader)
     {
         this.zIndex = zIndex;
-        this.sprites = new SpriteComponentOLD[maxBatchSize];
-        this.maxBatchSize = maxBatchSize;
+        this.sprites = new SpriteComponent[Constants.Rendering.MAX_BATCH_SIZE];
 
         // 4 vertices for quads, sprites are always rectangular
-        vertices = new float[maxBatchSize * 4 * VERTEX_SIZE];
+        vertices = new float[Constants.Rendering.MAX_BATCH_SIZE * 4 * VERTEX_SIZE];
 
         this.numSprites = 0;
         this.hasRoom = true;
         this.textures = new ArrayList<>();
+        this.currentShader = currentShader;
+    }
+
+    public void clear()
+    {
+        numSprites = 0;
+        //sprites = new SpriteComponentEX[maxBatchSize * 4 * VERTEX_SIZE];
+        textures.clear();
     }
 
     public void start()
@@ -99,7 +108,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         glEnableVertexAttribArray(4);
     }
 
-    public void addSprite(SpriteComponentOLD sprite)
+    public void addSprite(SpriteComponent sprite)
     {
         // Get index and add renderObject
         int index = this.numSprites;
@@ -117,7 +126,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         // Add properties to local vertices array
         loadVertexProperties(index);
 
-        if (numSprites >= this.maxBatchSize)
+        if (numSprites >= Constants.Rendering.MAX_BATCH_SIZE)
         {
             this.hasRoom = false;
         }
@@ -128,16 +137,19 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         boolean rebuffer= false;
         for (int i = 0; i < numSprites; i++)
         {
-            SpriteComponentOLD rend = sprites[i];
-            if (rend.isDirty())
-            {
+            SpriteComponent rend = sprites[i];
+            //if (rend.isDirty())
+            //{
                 loadVertexProperties(i);
                 rend.setClean();
                 rebuffer = true;
-            }
+            //}
 
         }
 
+        // if the sprite data changes in any way, re-buffering is needed.
+        // This is actually probably pretty common depending on the types
+        // of game objects that are being drawn (animations, etc.)
         if (rebuffer)
         {
             glBindBuffer(GL_ARRAY_BUFFER, vboID);
@@ -145,40 +157,47 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         }
 
         // Use shader
-        Shader shader = Renderer.getBoundShader();
-        shader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
-        shader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
+        currentShader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
+        currentShader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
 
-        for (int i =0; i < textures.size(); i++)
+        // todo: this is bad, there's no check for the hardware texture slot max
+        //  batches should be grouped by texture, if multiple objects use the same texture,
+        //  they should be preferably batched together
+        for (int i = 0; i < textures.size(); i++)
         {
-            glActiveTexture(GL_TEXTURE0 + i + 1); // this + 1 is to support using texture 0 as "empty"
+            // todo: actually just set the correct index, bound by the max
+            //  and do -1 in the shader
+            // this + 1 is to support using texture 0 as "empty", allowing color to take
+            glActiveTexture(GL_TEXTURE0 + i);
             textures.get(i).bind();
         }
 
-        shader.uploadIntArray("uTextures", texSlots);
+        currentShader.uploadIntArray("uTextures", texSlots);
 
         glBindVertexArray(vaoID);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
-
         glDrawElements(GL_TRIANGLES, this.numSprites * 6, GL_UNSIGNED_INT, 0);
-
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glBindVertexArray(0);
 
-
-        for (int i =0; i< textures.size(); i++)
+        for (int i = 0; i < textures.size(); i++)
         {
             textures.get(i).unbind();
         }
 
-        shader.detach();
+        currentShader.detach();
     }
 
+    /**
+     * Updates the local buffer to reflect the current state of the indexed sprite.
+     *
+     * @param index the location of the sprite, within the sprite array
+     */
     private void loadVertexProperties(int index)
     {
-        SpriteComponentOLD sprite = this.sprites[index];
+        SpriteComponent sprite = this.sprites[index];
 
         // Find offset within array (4 vertices per sprite)
         int offset = index * 4 * VERTEX_SIZE;
@@ -199,17 +218,18 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             }
         }
 
-        boolean isRotated = sprite.gameObject.transform.rotation != 0.0f;
+        boolean isRotated = sprite.transform.rotation != 0.0f;
         Matrix4f transformMatrix = new Matrix4f().identity();
         if (isRotated)
         {
-            transformMatrix.translate(sprite.gameObject.transform.position.x,
-                sprite.gameObject.transform.position.y,0.0f);
+            transformMatrix.translate(sprite.transform.position.x,
+                sprite.transform.position.y,0.0f);
 
-            transformMatrix.rotate((float) Math.toRadians(sprite.gameObject.transform.rotation),
+            transformMatrix.rotate(Math.toRadians(sprite.transform.rotation),
                 new Vector3f(0,0,1));
-            transformMatrix.scale(sprite.gameObject.transform.scale.x,
-                sprite.gameObject.transform.scale.y, 1.0f);
+
+            transformMatrix.scale(sprite.transform.scale.x,
+                sprite.transform.scale.y, 1.0f);
         }
 
         // Add vertices with the appropriate properties
@@ -230,10 +250,14 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
                 yAdd = 1.0f;
             }
 
-            Vector4f currentPos =new Vector4f(
-                sprite.gameObject.transform.position.x + (xAdd * sprite.gameObject.transform.scale.x),
-                sprite.gameObject.transform.position.y + (yAdd * sprite.gameObject.transform.scale.y),
+            Vector4f currentPos = new Vector4f(
+                sprite.transform.position.x + (xAdd * sprite.transform.scale.x),
+                sprite.transform.position.y + (yAdd * sprite.transform.scale.y),
                 0, 1);
+
+            // make the quad center the central point instead of bottom left corner
+            currentPos.x -= sprite.transform.scale.x / 2;
+            currentPos.y -= sprite.transform.scale.y / 2;
 
             if (isRotated)
             {
@@ -258,7 +282,8 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             vertices[offset + 8] = texId;
 
             // entity ID
-            vertices[offset + 9] = sprite.gameObject.getUid() + 1;
+            vertices[offset + 9] = -1; //sprite.gameObject.getUid() + 1;
+            // todo: add back in a UID system for this, it is used for picking
 
             offset += VERTEX_SIZE;
         }
@@ -267,8 +292,8 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     private int[] generateIndices()
     {
         // 6 indices per quad (3 per triangle)
-        int[] elements = new int[6 * maxBatchSize];
-        for (int i = 0; i < maxBatchSize; i++)
+        int[] elements = new int[6 * Constants.Rendering.MAX_BATCH_SIZE];
+        for (int i = 0; i < Constants.Rendering.MAX_BATCH_SIZE; i++)
         {
             loadElementIndices(elements, i);
         }
@@ -285,10 +310,10 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         // Triangle 1
         elements[offsetArrayIndex] = offset + 3;
         elements[offsetArrayIndex + 1] = offset + 2;
-        elements[offsetArrayIndex + 2] = offset + 0;
+        elements[offsetArrayIndex + 2] = offset;
 
         // Triangle 2
-        elements[offsetArrayIndex + 3] = offset + 0;
+        elements[offsetArrayIndex + 3] = offset;
         elements[offsetArrayIndex + 4] = offset + 2;
         elements[offsetArrayIndex + 5] = offset + 1;
     }

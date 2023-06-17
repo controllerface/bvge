@@ -5,7 +5,7 @@ import org.joml.Vector2f;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RigidBody2D implements Component_EX
+public class RigidBody2D implements GameComponent
 {
     private List<Point2D> verts;
     private List<Edge2D> edges;
@@ -19,25 +19,40 @@ public class RigidBody2D implements Component_EX
         this.force = force;
     }
 
-    public static RigidBody2D simpleBox()
+    public static RigidBody2D simpleBox(float x, float y, float size)
     {
         var verts = new ArrayList<Point2D>();
 
-        verts.add(new Point2D(new Vector2f( 100,100), new Vector2f( 100,100)));
-        verts.add(new Point2D(new Vector2f( 200,100), new Vector2f( 200,100)));
-        verts.add(new Point2D(new Vector2f( 200,100), new Vector2f( 200,100)));
-        verts.add(new Point2D(new Vector2f( 100,200), new Vector2f( 100,200)));
+        var halfSize = size / 2;
+
+        var v1 = new Vector2f(x - halfSize, y - halfSize);
+        var v2 = new Vector2f(x + halfSize, y - halfSize);
+        var v3 = new Vector2f(x + halfSize, y + halfSize);
+        var v4 = new Vector2f(x - halfSize, y + halfSize);
+
+        var p1 = new Point2D(v1, new Vector2f(v1));
+        var p2 = new Point2D(v2, new Vector2f(v2));
+        var p3 = new Point2D(v3, new Vector2f(v3));
+        var p4 = new Point2D(v4, new Vector2f(v4));
+
+        verts.add(p1);
+        verts.add(p2);
+        verts.add(p3);
+        verts.add(p4);
 
         var edges = new ArrayList<Edge2D>();
+
+        // sides of the box
+        edges.add(new Edge2D(p1, p2));
+        edges.add(new Edge2D(p2, p3));
+        edges.add(new Edge2D(p3, p4));
+        edges.add(new Edge2D(p4, p1));
+
+        // corner to corner braces
+        edges.add(new Edge2D(p1, p3));
+        edges.add(new Edge2D(p2, p4));
+
         var force = 500;
-
-        edges.add(new Edge2D(0, 1));
-        edges.add(new Edge2D(1, 2));
-        edges.add(new Edge2D(2, 3));
-        edges.add(new Edge2D(3, 0));
-
-        edges.add(new Edge2D(0, 2));
-        edges.add(new Edge2D(1, 3));
 
         return new RigidBody2D(verts, edges, force);
     }

@@ -5,9 +5,14 @@ import org.joml.Vector2f;
 
 import java.util.List;
 
-public class JMath
+public class MathEX
 {
-
+    /**
+     * Calculates the centroid, i.e. center point, of a polygon and stores it in the target vector.
+     * This method is only tested with convex polygons.
+     * @param verts
+     * @param target
+     */
     public static void centroid(List<Point2D> verts, Vector2f target)
     {
         var points = verts.size();

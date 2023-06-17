@@ -1,27 +1,28 @@
 package com.controllerface.bvge.ecs;
 
-
-import com.controllerface.bvge.TransformEX;
-import com.controllerface.bvge.rendering.SpriteComponentEX;
+import com.controllerface.bvge.rendering.Line2D;
+import com.controllerface.bvge.rendering.SpriteComponent;
+import com.controllerface.bvge.Transform;
 
 public enum Component
 {
-    SpriteComponent(SpriteComponentEX.class),
-    Transform(TransformEX.class),
+    SpriteComponent(SpriteComponent.class),
+    Transform(Transform.class),
     ControlPoints(ControlPoints.class),
     RigidBody2D(RigidBody2D.class),
 
     ;
 
-    private final Class<? extends Component_EX> _class;
+    private final Class<? extends GameComponent> _class;
 
-    Component(Class<? extends Component_EX> aClass)
+    Component(Class<? extends GameComponent> aClass)
     {
         _class = aClass;
     }
 
-    public <T extends Component_EX> T coerce(Object componentClass)
+    public <T extends GameComponent> T coerce(Object componentClass)
     {
+        if (componentClass == null) return null;
         assert componentClass != null : "Attempted to coerce null component";
         if (_class.isAssignableFrom(componentClass.getClass()))
         {

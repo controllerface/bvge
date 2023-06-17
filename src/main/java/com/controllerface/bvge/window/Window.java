@@ -1,8 +1,10 @@
 package com.controllerface.bvge.window;
 
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.VerletPhysics;
-import com.controllerface.bvge.ecs.SpriteRendering;
+import com.controllerface.bvge.ecs.systems.KBMInput;
+import com.controllerface.bvge.ecs.systems.LineRendering;
+import com.controllerface.bvge.ecs.systems.VerletPhysics;
+import com.controllerface.bvge.ecs.systems.SpriteRendering;
 import com.controllerface.bvge.scene.GameRunning;
 import com.controllerface.bvge.scene.GameMode;
 import org.lwjgl.Version;
@@ -134,6 +136,7 @@ public class Window
         ecs.registerSystem(inputSystem);
         ecs.registerSystem(new VerletPhysics(ecs));
         ecs.registerSystem(new SpriteRendering(ecs));
+        ecs.registerSystem(new LineRendering(ecs));
 
         initInput(inputSystem);
 

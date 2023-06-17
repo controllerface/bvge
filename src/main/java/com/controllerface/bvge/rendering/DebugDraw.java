@@ -2,7 +2,7 @@ package com.controllerface.bvge.rendering;
 
 import com.controllerface.bvge.window.Window;
 import com.controllerface.bvge.util.AssetPool;
-import com.controllerface.bvge.util.JMath;
+import com.controllerface.bvge.util.MathEX;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -178,7 +178,7 @@ public class DebugDraw
         {
             for (Vector2f vert : verts)
             {
-                JMath.rotate(vert, rotation, center);
+                MathEX.rotate(vert, rotation, center);
             }
         }
 
@@ -201,7 +201,6 @@ public class DebugDraw
         addCircle2D(center, radius, color, 1);
     }
 
-
     public static void addCircle2D(Vector2f center, float radius, Vector3f color, int lifetime)
     {
         Vector2f[] points = new Vector2f[20];
@@ -211,7 +210,7 @@ public class DebugDraw
         for (int i = 0; i < points.length; i++)
         {
             Vector2f tmp = new Vector2f(radius, 0);
-            JMath.rotate(tmp, currentAngle, new Vector2f());
+            MathEX.rotate(tmp, currentAngle, new Vector2f());
             points[i] = new Vector2f(tmp).add(center);
 
             if (i > 0)
