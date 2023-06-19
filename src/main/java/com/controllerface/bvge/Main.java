@@ -16,11 +16,11 @@ public class Main
 {
     public static void main(String[] args)
     {
-        //test2();
-        CLInstance.init();
-        Window window = Window.get();
-        window.run();
-        CLInstance.destroy();
+        test2();
+//        CLInstance.init();
+//        Window window = Window.get();
+//        window.run();
+//        CLInstance.destroy();
     }
 
     private static String programSource =
@@ -107,58 +107,11 @@ public class Main
 
 
 
-
-
-
-
-
-
-
         // Create input- and output data
         int n = 6;
-//        float srcArrayA[] = new float[n];
-//        float srcArrayB[] = new float[n];
-//        float dstArray[] = new float[n];
-
-//        srcArrayA[0] = 1;
-//        srcArrayA[1] = 2;
-//        srcArrayA[2] = 0;
-//        srcArrayA[3] = 0;
-//        srcArrayA[4] = 10;
-//        srcArrayA[5] = 10;
-//
-//        srcArrayB[0] = 4;
-//        srcArrayB[1] = 3;
-//        srcArrayB[2] = 5;
-//        srcArrayB[3] = 5;
-//        srcArrayB[4] = 0;
-//        srcArrayB[5] = 0;
-
-//        Pointer srcA = Pointer.to(srcArrayA);
-//        Pointer srcB = Pointer.to(srcArrayB);
-//        Pointer dst = Pointer.to(dstArray);
-//
-//        // Allocate the memory objects for the input- and output data
-//        cl_mem srcMemA = clCreateBuffer(context,
-//            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-//            Sizeof.cl_float * n, srcA, null);
-//
-//        cl_mem srcMemB = clCreateBuffer(context,
-//            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-//            Sizeof.cl_float * n, srcB, null);
-//
-//        cl_mem dstMem = clCreateBuffer(context,
-//            CL_MEM_READ_WRITE,
-//            Sizeof.cl_float * n, null, null);
-
-
 
         // Set the work-item dimensions
         long global_work_size[] = new long[]{n};
-
-
-
-
 
 
         for (int i = 0; i < 5; i++)
@@ -245,11 +198,6 @@ public class Main
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
     }
-
-
-
-
-
 
 
 
