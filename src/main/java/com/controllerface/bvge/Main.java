@@ -8,6 +8,7 @@ import java.util.Arrays;
 import static com.controllerface.bvge.util.InfoUtil.getDeviceInfoStringUTF8;
 import static com.controllerface.bvge.util.InfoUtil.getPlatformInfoStringUTF8;
 import static org.jocl.CL.*;
+import static org.jocl.Sizeof.cl_float2;
 
 
 public class Main
@@ -44,15 +45,29 @@ public class Main
     private static void test2()
     {
         // Create input- and output data
-        int n = 3;
+        int n = 4;
         float srcArrayA[] = new float[n];
         float srcArrayB[] = new float[n];
         float dstArray[] = new float[n];
-        for (int i=0; i<n; i++)
-        {
-            srcArrayA[i] = i;
-            srcArrayB[i] = i;
-        }
+
+        srcArrayA[0] = 1;
+        srcArrayA[1] = 2;
+
+        srcArrayA[2] = 0;
+        srcArrayA[3] = 0;
+
+        srcArrayB[0] = 4;
+        srcArrayB[1] = 3;
+
+        srcArrayB[2] = 5;
+        srcArrayB[3] = 5;
+
+//        for (int i=0; i<n; i++)
+//        {
+//            srcArrayA[i] = i;
+//            srcArrayB[i] = i;
+//        }
+
         Pointer srcA = Pointer.to(srcArrayA);
         Pointer srcB = Pointer.to(srcArrayB);
         Pointer dst = Pointer.to(dstArray);
@@ -113,7 +128,7 @@ public class Main
 
         // Create the program from the source code
         cl_program program = clCreateProgramWithSource(context,
-            1, new String[]{ programSource }, null, null);
+            1, new String[]{ programSource2 }, null, null);
 
         // Build the program
         clBuildProgram(program, 0, null, null, null, null);
@@ -161,11 +176,11 @@ public class Main
                 break;
             }
         }
-        System.out.println("Test "+(passed?"PASSED":"FAILED"));
-        if (n <= 10)
-        {
+        //System.out.println("Test "+(passed?"PASSED":"FAILED"));
+        //if (n <= 10)
+        //{
             System.out.println("Result: "+ Arrays.toString(dstArray));
-        }
+        //}
     }
 
 
