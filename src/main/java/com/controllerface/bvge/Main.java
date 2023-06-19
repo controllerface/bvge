@@ -44,33 +44,8 @@ public class Main
 
     private static void test2()
     {
-        // Create input- and output data
-        int n = 4;
-        float srcArrayA[] = new float[n];
-        float srcArrayB[] = new float[n];
-        float dstArray[] = new float[n];
 
-        srcArrayA[0] = 1;
-        srcArrayA[1] = 2;
 
-        srcArrayA[2] = 0;
-        srcArrayA[3] = 0;
-
-        srcArrayB[0] = 4;
-        srcArrayB[1] = 3;
-
-        srcArrayB[2] = 5;
-        srcArrayB[3] = 5;
-
-//        for (int i=0; i<n; i++)
-//        {
-//            srcArrayA[i] = i;
-//            srcArrayB[i] = i;
-//        }
-
-        Pointer srcA = Pointer.to(srcArrayA);
-        Pointer srcB = Pointer.to(srcArrayB);
-        Pointer dst = Pointer.to(dstArray);
 
         // The platform, device type and device number
         // that will be used
@@ -115,16 +90,7 @@ public class Main
         cl_command_queue commandQueue = clCreateCommandQueueWithProperties(
             context, device, properties, null);
 
-        // Allocate the memory objects for the input- and output data
-        cl_mem srcMemA = clCreateBuffer(context,
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            Sizeof.cl_float * n, srcA, null);
-        cl_mem srcMemB = clCreateBuffer(context,
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            Sizeof.cl_float * n, srcB, null);
-        cl_mem dstMem = clCreateBuffer(context,
-            CL_MEM_READ_WRITE,
-            Sizeof.cl_float * n, null, null);
+
 
         // Create the program from the source code
         cl_program program = clCreateProgramWithSource(context,
@@ -136,51 +102,145 @@ public class Main
         // Create the kernel
         cl_kernel kernel = clCreateKernel(program, "sampleKernel", null);
 
-        // Set the arguments for the kernel
-        int a = 0;
-        clSetKernelArg(kernel, a++, Sizeof.cl_mem, Pointer.to(srcMemA));
-        clSetKernelArg(kernel, a++, Sizeof.cl_mem, Pointer.to(srcMemB));
-        clSetKernelArg(kernel, a++, Sizeof.cl_mem, Pointer.to(dstMem));
+
+
+
+
+
+
+
+
+
+        // Create input- and output data
+        int n = 6;
+//        float srcArrayA[] = new float[n];
+//        float srcArrayB[] = new float[n];
+//        float dstArray[] = new float[n];
+
+//        srcArrayA[0] = 1;
+//        srcArrayA[1] = 2;
+//        srcArrayA[2] = 0;
+//        srcArrayA[3] = 0;
+//        srcArrayA[4] = 10;
+//        srcArrayA[5] = 10;
+//
+//        srcArrayB[0] = 4;
+//        srcArrayB[1] = 3;
+//        srcArrayB[2] = 5;
+//        srcArrayB[3] = 5;
+//        srcArrayB[4] = 0;
+//        srcArrayB[5] = 0;
+
+//        Pointer srcA = Pointer.to(srcArrayA);
+//        Pointer srcB = Pointer.to(srcArrayB);
+//        Pointer dst = Pointer.to(dstArray);
+//
+//        // Allocate the memory objects for the input- and output data
+//        cl_mem srcMemA = clCreateBuffer(context,
+//            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+//            Sizeof.cl_float * n, srcA, null);
+//
+//        cl_mem srcMemB = clCreateBuffer(context,
+//            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+//            Sizeof.cl_float * n, srcB, null);
+//
+//        cl_mem dstMem = clCreateBuffer(context,
+//            CL_MEM_READ_WRITE,
+//            Sizeof.cl_float * n, null, null);
+
+
 
         // Set the work-item dimensions
         long global_work_size[] = new long[]{n};
 
-        // Execute the kernel
-        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
-            global_work_size, null, 0, null, null);
 
-        // Read the output data
-        clEnqueueReadBuffer(commandQueue, dstMem, CL_TRUE, 0,
-            n * Sizeof.cl_float, dst, 0, null, null);
+
+
+
+
+        for (int i = 0; i < 5; i++)
+        {
+
+            float srcArrayA[] = new float[n];
+            float srcArrayB[] = new float[n];
+            float dstArray[] = new float[n];
+
+            srcArrayA[0] = 1 + i;
+            srcArrayA[1] = 2 + i;
+            srcArrayA[2] = 0 + i;
+            srcArrayA[3] = 0 + i;
+            srcArrayA[4] = 10 + i;
+            srcArrayA[5] = 10 + i;
+
+            srcArrayB[0] = 4 - i;
+            srcArrayB[1] = 3 - i;
+            srcArrayB[2] = 5 - i;
+            srcArrayB[3] = 5 - i;
+            srcArrayB[4] = 0 - i;
+            srcArrayB[5] = 0 - i;
+
+            Pointer srcA = Pointer.to(srcArrayA);
+            Pointer srcB = Pointer.to(srcArrayB);
+            Pointer dst = Pointer.to(dstArray);
+
+            // Allocate the memory objects for the input- and output data
+            cl_mem srcMemA = clCreateBuffer(context,
+                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                Sizeof.cl_float * n, srcA, null);
+
+            cl_mem srcMemB = clCreateBuffer(context,
+                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                Sizeof.cl_float * n, srcB, null);
+
+            cl_mem dstMem = clCreateBuffer(context,
+                CL_MEM_READ_WRITE,
+                Sizeof.cl_float * n, null, null);
+
+
+            // Set the arguments for the kernel
+            int a = 0;
+            clSetKernelArg(kernel, a++, Sizeof.cl_mem, Pointer.to(srcMemA));
+            clSetKernelArg(kernel, a++, Sizeof.cl_mem, Pointer.to(srcMemB));
+            clSetKernelArg(kernel, a++, Sizeof.cl_mem, Pointer.to(dstMem));
+
+
+
+            // Execute the kernel
+            clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
+                global_work_size, null, 0, null, null);
+
+            // Read the output data
+            clEnqueueReadBuffer(commandQueue, dstMem, CL_TRUE, 0,
+                n * Sizeof.cl_float, dst, 0, null, null);
+
+
+
+
+
+
+            clReleaseMemObject(srcMemA);
+            clReleaseMemObject(srcMemB);
+            clReleaseMemObject(dstMem);
+
+            System.out.println("A: " + Arrays.toString(srcArrayA));
+            System.out.println("B: " + Arrays.toString(srcArrayB));
+            System.out.println("Result: " + Arrays.toString(dstArray));
+        }
+
+
+
+
+
+
 
         // Release kernel, program, and memory objects
-        clReleaseMemObject(srcMemA);
-        clReleaseMemObject(srcMemB);
-        clReleaseMemObject(dstMem);
+//        clReleaseMemObject(srcMemA);
+//        clReleaseMemObject(srcMemB);
+//        clReleaseMemObject(dstMem);
         clReleaseKernel(kernel);
         clReleaseProgram(program);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
-
-        // Verify the result
-        boolean passed = true;
-        final float epsilon = 1e-7f;
-        for (int i=0; i<n; i++)
-        {
-            float x = dstArray[i];
-            float y = srcArrayA[i] * srcArrayB[i];
-            boolean epsilonEqual = Math.abs(x - y) <= epsilon * Math.abs(x);
-            if (!epsilonEqual)
-            {
-                passed = false;
-                break;
-            }
-        }
-        //System.out.println("Test "+(passed?"PASSED":"FAILED"));
-        //if (n <= 10)
-        //{
-            System.out.println("Result: "+ Arrays.toString(dstArray));
-        //}
     }
 
 
