@@ -25,6 +25,9 @@ dependencies {
     implementation "io.github.spair:imgui-java-binding:$imguiVersion"
     implementation "io.github.spair:imgui-java-natives-windows-ft:$imguiVersion"
 
+    implementation group: 'org.jocl', name: 'jocl', version: '2.0.5'
+
+
     implementation "org.lwjgl:lwjgl"
     implementation "org.lwjgl:lwjgl-assimp"
     implementation "org.lwjgl:lwjgl-glfw"
