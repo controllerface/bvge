@@ -9,8 +9,8 @@ import com.controllerface.bvge.ecs.RigidBody2D;
 import com.controllerface.bvge.rendering.Sprite;
 import com.controllerface.bvge.rendering.SpriteComponent;
 import com.controllerface.bvge.util.AssetPool;
+import com.controllerface.bvge.util.quadtree.QuadRectangle;
 import org.joml.Vector2f;
-import org.joml.Vector4f;
 
 public class GameRunning extends GameMode
 {
@@ -21,11 +21,13 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
+    private int testBoxSize = 20;
+
     private void genNPCs(int spacing, int size)
     {
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < testBoxSize; i++)
         {
-            for (int j = 0; j < 12; j++)
+            for (int j = 0; j < testBoxSize; j++)
             {
                 var npc = ecs.registerEntity(null);
                 var scomp2 = new SpriteComponent();
@@ -33,8 +35,8 @@ public class GameRunning extends GameMode
                 var tex2 = AssetPool.getTexture("assets/images/blendImage2.png");
                 sprite2.setTexture(tex2);
                 var transform2 = new Transform();
-                transform2.scale.x = 32f;
-                transform2.scale.y = 32f;
+                transform2.scale.x = 8f;
+                transform2.scale.y = 8f;
                 transform2.position.x = 0f;
                 transform2.position.y = 0f;
                 sprite2.setHeight(32);
@@ -45,6 +47,8 @@ public class GameRunning extends GameMode
                 ecs.attachComponent(npc, Component.Transform, transform2);
                 ecs.attachComponent(npc, Component.RigidBody2D,
                     RigidBody2D.simpleBox(200 + i * spacing, 200 + j * spacing, size, npc));
+                ecs.attachComponent(npc, Component.BoundingBox, new QuadRectangle(0,0,0,0));
+
             }
         }
     }
@@ -71,6 +75,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.Transform, transform);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(50,50, 32, player));
+        ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
         genNPCs(16, 16);
     }

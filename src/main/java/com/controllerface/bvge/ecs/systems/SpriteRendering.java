@@ -64,10 +64,14 @@ public class SpriteRendering extends GameSystem
         }
     }
 
+    private boolean runyet = false;
+
     @Override
     public void run(float dt)
     {
-        for (Map.Entry<String, GameComponent> entry : ecs.getComponents(Component.SpriteComponent).entrySet())
+        var spriteComponents = ecs.getComponents(Component.SpriteComponent);
+
+        for (Map.Entry<String, GameComponent> entry : spriteComponents.entrySet())
         {
             String entity = entry.getKey();
             GameComponent component = entry.getValue();
@@ -78,8 +82,12 @@ public class SpriteRendering extends GameSystem
             sprite.transform.position.y = transform.position.y;
             sprite.transform.scale.x = transform.scale.x;
             sprite.transform.scale.y = transform.scale.y;
-            this.add(sprite);
+            if (!runyet)
+            {
+                this.add(sprite);
+            }
         }
+
         render();
     }
 }

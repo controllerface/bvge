@@ -20,7 +20,7 @@ public class LineRendering extends GameSystem
         this.shader = AssetPool.getShader("debugLine2D.glsl");
     }
 
-    private void add(Line2D line)
+    private void add(Edge2D line)
     {
         boolean added = false;
         for (LineRenderBatch batch : batches)
@@ -54,14 +54,13 @@ public class LineRendering extends GameSystem
     @Override
     public void run(float dt)
     {
-        batches.clear();
         for (Map.Entry<String, GameComponent> entry : ecs.getComponents(Component.RigidBody2D).entrySet())
         {
             GameComponent component = entry.getValue();
             RigidBody2D body = Component.RigidBody2D.coerce(component);
             for (Edge2D edge : body.getEdges())
             {
-                add(new Line2D(edge.p1().pos(), edge.p2().pos()));
+                add(edge);
             }
         }
         render();

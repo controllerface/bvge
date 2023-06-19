@@ -3,6 +3,7 @@ package com.controllerface.bvge.ecs;
 import com.controllerface.bvge.rendering.Line2D;
 import com.controllerface.bvge.rendering.SpriteComponent;
 import com.controllerface.bvge.Transform;
+import com.controllerface.bvge.util.quadtree.QuadRectangle;
 
 public enum Component
 {
@@ -10,6 +11,7 @@ public enum Component
     Transform(Transform.class),
     ControlPoints(ControlPoints.class),
     RigidBody2D(RigidBody2D.class),
+    BoundingBox(QuadRectangle.class),
 
     ;
 

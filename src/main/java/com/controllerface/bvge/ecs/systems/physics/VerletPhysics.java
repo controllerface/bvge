@@ -4,14 +4,19 @@ import com.controllerface.bvge.Transform;
 import com.controllerface.bvge.ecs.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.util.MathEX;
+import com.controllerface.bvge.util.quadtree.QuadRectangle;
+import com.controllerface.bvge.util.quadtree.QuadTree;
 import org.joml.Vector2f;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class VerletPhysics extends GameSystem
 {
     private final float TICK_RATE = 1.0f / 60.0f;
-    private final int SUB_STEPS = 3;
+    private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = 0.991f;
@@ -23,8 +28,12 @@ public class VerletPhysics extends GameSystem
      */
     private final Map<String, RigidBody2D> bodyBuffer = new HashMap<>();
     private final List<CollisionManifold> collisionBuffer = new ArrayList<>();
-    private final Vector2f vectorBuffer1 = new Vector2f();
-    private final Vector2f vectorBuffer2 = new Vector2f();
+    private final ThreadLocal<Vector2f> vectorBuffer1 = new ThreadLocal<>();
+    private final ThreadLocal<Vector2f> vectorBuffer2 = new ThreadLocal<>();
+//    private final Vector2f vectorBuffer1 = new Vector2f();
+//    private final Vector2f vectorBuffer2 = new Vector2f();
+//    private final Vector2f vectorBuffer3 = new Vector2f();
+//    private final Vector2f vectorBuffer4 = new Vector2f();
 
     public VerletPhysics(ECS ecs)
     {
@@ -38,26 +47,26 @@ public class VerletPhysics extends GameSystem
         if (cp == null) return;
 
         ControlPoints controlPoints = Component.ControlPoints.coerce(cp);
-        vectorBuffer1.zero();
+        vectorBuffer1.get().zero();
 
         if (controlPoints.isLeft())
         {
-            vectorBuffer1.x -= body2D.getForce();
+            vectorBuffer1.get().x -= body2D.getForce();
         }
         if (controlPoints.isRight())
         {
-            vectorBuffer1.x += body2D.getForce();
+            vectorBuffer1.get().x += body2D.getForce();
         }
         if (controlPoints.isUp())
         {
-            vectorBuffer1.y += body2D.getForce();
+            vectorBuffer1.get().y += body2D.getForce();
         }
         if (controlPoints.isDown())
         {
-            vectorBuffer1.y -= body2D.getForce();
+            vectorBuffer1.get().y -= body2D.getForce();
         }
-        body2D.getAcc().x = vectorBuffer1.x;
-        body2D.getAcc().y = vectorBuffer1.y;
+        body2D.getAcc().x = vectorBuffer1.get().x;
+        body2D.getAcc().y = vectorBuffer1.get().y;
     }
 
     private void integrate(String entitiy, RigidBody2D body2D, float dt)
@@ -67,13 +76,13 @@ public class VerletPhysics extends GameSystem
         var displacement = body2D.getAcc().mul(dt * dt);
         for (Point2D point : body2D.getVerts())
         {
-            vectorBuffer1.zero();
-            vectorBuffer2.zero();
-            point.pos().sub(point.prv(), vectorBuffer1);
-            vectorBuffer1.mul(FRICTION);
-            displacement.add(vectorBuffer1, vectorBuffer2);
+            vectorBuffer1.get().zero();
+            vectorBuffer2.get().zero();
+            point.pos().sub(point.prv(), vectorBuffer1.get());
+            vectorBuffer1.get().mul(FRICTION);
+            displacement.add(vectorBuffer1.get(), vectorBuffer2.get());
             point.prv().set(point.pos());
-            point.pos().add(vectorBuffer2);
+            point.pos().add(vectorBuffer2.get());
         }
         MathEX.centroid(body2D.getVerts(), transform.position);
     }
@@ -135,12 +144,12 @@ public class VerletPhysics extends GameSystem
             var va = verts1.get(i);
             var vb = verts1.get(b_index);
 
-            vb.pos().sub(va.pos(), vectorBuffer1);
-            vectorBuffer1.perpendicular();
-            vectorBuffer1.normalize();
+            vb.pos().sub(va.pos(), vectorBuffer1.get());
+            vectorBuffer1.get().perpendicular();
+            vectorBuffer1.get().normalize();
 
-            var proj_a = projectPolygon(verts1, vectorBuffer1);
-            var proj_b = projectPolygon(verts2, vectorBuffer1);
+            var proj_a = projectPolygon(verts1, vectorBuffer1.get());
+            var proj_b = projectPolygon(verts2, vectorBuffer1.get());
             var distance = polygonDistance(proj_a, proj_b);
             if (distance > 0)
             {
@@ -153,7 +162,7 @@ public class VerletPhysics extends GameSystem
                 invert = true;
                 edge_o = bodyA;
                 min_distance = abs_distance;
-                vectorBuffer2.set(vectorBuffer1);
+                vectorBuffer2.get().set(vectorBuffer1.get());
                 edge_indexA = i;
                 edge_indexB = b_index;
             }
@@ -168,12 +177,12 @@ public class VerletPhysics extends GameSystem
             var va = verts2.get(i);
             var vb = verts2.get(b_index);
 
-            vb.pos().sub(va.pos(), vectorBuffer1);
-            vectorBuffer1.perpendicular();
-            vectorBuffer1.normalize();
+            vb.pos().sub(va.pos(), vectorBuffer1.get());
+            vectorBuffer1.get().perpendicular();
+            vectorBuffer1.get().normalize();
 
-            var proj_a = projectPolygon(verts1, vectorBuffer1);
-            var proj_b = projectPolygon(verts2, vectorBuffer1);
+            var proj_a = projectPolygon(verts1, vectorBuffer1.get());
+            var proj_b = projectPolygon(verts2, vectorBuffer1.get());
             var distance = polygonDistance(proj_a, proj_b);
             if (distance > 0)
             {
@@ -186,17 +195,17 @@ public class VerletPhysics extends GameSystem
                 invert = false;
                 edge_o = bodyB;
                 min_distance = abs_distance;
-                vectorBuffer2.set(vectorBuffer1);
+                vectorBuffer2.get().set(vectorBuffer1.get());
                 edge_indexA = i;
                 edge_indexB = b_index;
             }
         }
 
-        var pr = projectPolygon(vertex_o.getVerts(), vectorBuffer2);
+        var pr = projectPolygon(vertex_o.getVerts(), vectorBuffer2.get());
         vert_index = pr.index();
 
-        min_distance = min_distance / vectorBuffer2.length();
-        vectorBuffer2.normalize();
+        min_distance = min_distance / vectorBuffer2.get().length();
+        vectorBuffer2.get().normalize();
 
         var a = invert
             ? bodyB
@@ -213,12 +222,12 @@ public class VerletPhysics extends GameSystem
 
         var direction = new Vector2f();
         transformA.position.sub(transformB.position, direction);
-        var dirdot = direction.dot(vectorBuffer2);
+        var dirdot = direction.dot(vectorBuffer2.get());
         if (dirdot < 0)
         {
-            vectorBuffer2.mul(-1);
+            vectorBuffer2.get().mul(-1);
         }
-        direction.set(vectorBuffer2);
+        direction.set(vectorBuffer2.get());
         return new CollisionManifold(vertex_o,
             edge_o, direction, min_distance,
             edge_indexA, edge_indexB, vert_index);
@@ -232,10 +241,17 @@ public class VerletPhysics extends GameSystem
 
     private final Set<String> keyCache = new HashSet<>();
 
-    private void findCollisions(RigidBody2D target)
+    private void findCollisions(RigidBody2D target, QuadTree<RigidBody2D> quadTree)
     {
         keyCache.clear();
-        for (RigidBody2D candidate : bodyBuffer.values())
+        var b = ecs.getComponentFor(target.getEntitiy(), Component.BoundingBox);
+        QuadRectangle targetBox = Component.BoundingBox.coerce(b);
+        var candidates = new ArrayList<RigidBody2D>();
+        quadTree.getElements(candidates, targetBox);
+        System.out.println("dropped: " + (bodyBuffer.size() - candidates.size()));
+
+        // todo: get candidates from quadtree
+        for (RigidBody2D candidate : candidates)
         {
             if (target == candidate) continue;
             if (target.getEntitiy().equals(candidate.getEntitiy())) continue;
@@ -283,8 +299,11 @@ public class VerletPhysics extends GameSystem
         // vertex object
         if (vertex_magnitude > 0)
         {
-            collision_vector.mul(vertex_magnitude, vectorBuffer1);
-            collision_vertex.pos().add(vectorBuffer1);
+
+            collision_vector.mul(vertex_magnitude, vectorBuffer1.get());
+            //collision_vertex.pos().sub(collision_vertex.prv(), vectorBuffer2.get()); // diff
+            collision_vertex.pos().add(vectorBuffer1.get());
+            //collision_vertex.pos().sub(vectorBuffer2.get(), collision_vertex.prv());
         }
 
         // edge object
@@ -295,10 +314,15 @@ public class VerletPhysics extends GameSystem
             var e2 = edge_verts.get(collision.edgeB());
             var edge_contact = edgeContact(e1, e2, collision_vertex,collision_vector);
             float edge_scale = 1.0f / ( edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
-            collision_vector.mul((1 - edge_contact) * edge_magnitude * edge_scale, vectorBuffer1);
-            collision_vector.mul(edge_contact * edge_magnitude *edge_scale, vectorBuffer2);
-            e1.pos().sub(vectorBuffer1);
-            e2.pos().sub(vectorBuffer2);
+            collision_vector.mul((1 - edge_contact) * edge_magnitude * edge_scale, vectorBuffer1.get());
+            collision_vector.mul(edge_contact * edge_magnitude *edge_scale, vectorBuffer2.get());
+            //e1.prv().sub( e1.pos(), vectorBuffer3);
+            //e2.prv().sub( e2.pos(), vectorBuffer4);
+            e1.pos().sub(vectorBuffer1.get());
+            e2.pos().sub(vectorBuffer2.get());
+            //e1.pos().sub(vectorBuffer3, e1.prv());
+            //e2.pos().sub(vectorBuffer4, e2.prv());
+
         }
     }
 
@@ -306,20 +330,73 @@ public class VerletPhysics extends GameSystem
     {
         for (Edge2D edge : body2D.getEdges())
         {
-            edge.p2().pos().sub(edge.p1().pos(), vectorBuffer1);
-            var length = edge.p2().pos().sub(edge.p1().pos(), vectorBuffer2).length();
+            edge.p2().pos().sub(edge.p1().pos(), vectorBuffer1.get());
+            var length = edge.p2().pos().sub(edge.p1().pos(), vectorBuffer2.get()).length();
             float diff = length - edge.length();
-            vectorBuffer1.normalize();
-            vectorBuffer1.mul(diff * 0.5f);
-            edge.p1().pos().add(vectorBuffer1);
-            edge.p2().pos().sub(vectorBuffer1);
+            vectorBuffer1.get().normalize();
+            vectorBuffer1.get().mul(diff * 0.5f);
+            edge.p1().pos().add(vectorBuffer1.get());
+            edge.p2().pos().sub(vectorBuffer1.get());
         }
     }
 
+    private void updateBoundBox(RigidBody2D body, QuadRectangle boundingBox)
+    {
+        var max_x = Float.MIN_VALUE;
+        var min_x = Float.MAX_VALUE;
+        var max_y = Float.MIN_VALUE;
+        var min_y = Float.MAX_VALUE;
+
+        var verts = body.getVerts();
+
+        for (Point2D vertex : verts)
+        {
+            if (vertex.pos().x > max_x)
+            {
+                max_x = vertex.pos().x;
+            }
+            if (vertex.pos().x < min_x)
+            {
+                min_x = vertex.pos().x;
+            }
+            if (vertex.pos().y > max_y)
+            {
+                max_y = vertex.pos().y;
+            }
+            if (vertex.pos().y < min_y)
+            {
+                min_y = vertex.pos().y;
+            }
+        }
+
+        var px = min_x;
+        var py = min_y;
+        var w = Math.abs(max_x - min_x) + 20;
+        var h = Math.abs(max_y - min_y) + 20;
+
+        boundingBox.setX(px);
+        boundingBox.setY(py);
+        boundingBox.setWidth(w);
+        boundingBox.setHeight(h);
+    }
+
+    private void setThreadvectorBuffers()
+    {
+        if (vectorBuffer1.get() == null)
+        {
+            vectorBuffer1.set(new Vector2f());
+        }
+        if (vectorBuffer2.get() == null)
+        {
+            vectorBuffer2.set(new Vector2f());
+        }
+    }
 
     private void tickSimulation(float dt)
     {
-        //        var kdtree = new KDTree<String>(2);
+        setThreadvectorBuffers();
+
+        QuadTree<RigidBody2D> quadTree = new QuadTree<>(new QuadRectangle(0, 0, 1920, 1080), 0);
         var bodies = ecs.getComponents(Component.RigidBody2D);
         if (bodies == null || bodies.isEmpty()) return;
 
@@ -327,14 +404,28 @@ public class VerletPhysics extends GameSystem
         for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
         {
             String entity = entry.getKey();
+            var b = ecs.getComponentFor(entity, Component.BoundingBox);
+            QuadRectangle box = Component.BoundingBox.coerce(b);
             GameComponent component = entry.getValue();
             RigidBody2D body2D = Component.RigidBody2D.coerce(component);
             resolveForces(entity, body2D);
             integrate(entity, body2D, dt);
             bodyBuffer.put(entity, body2D);
+            updateBoundBox(body2D, box);
+            quadTree.insert(box, body2D);
         }
 
         collisionBuffer.clear();
+
+        for (RigidBody2D body : bodyBuffer.values())
+        {
+            findCollisions(body, quadTree);
+        }
+
+        for (CollisionManifold c : collisionBuffer)
+        {
+            reactPolygon(c);
+        }
 
         for (RigidBody2D body : bodyBuffer.values())
         {
@@ -343,18 +434,6 @@ public class VerletPhysics extends GameSystem
                 resolveConstraints(body);
             }
         }
-
-        for (RigidBody2D body : bodyBuffer.values())
-        {
-            findCollisions(body);
-        }
-
-        for (CollisionManifold c : collisionBuffer)
-        {
-            reactPolygon(c);
-        }
-
-
     }
 
     private void simulate(float dt)

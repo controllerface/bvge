@@ -117,6 +117,7 @@ public class Window
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         glViewport(0,0,1920, 1080);
+
     }
 
     private void initInput(KBMInput inputSystem)
@@ -182,6 +183,7 @@ public class Window
                 ecs.run(dt);
                 currentGameMode.update(dt);
             }
+            System.out.println("FPS:" + (1000 / dt) / 1000);
 
             glfwSwapBuffers(glfwWindow);
             MouseListener.endFrame();

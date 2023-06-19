@@ -134,27 +134,15 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
 
     public void render()
     {
-        boolean rebuffer= false;
         for (int i = 0; i < numSprites; i++)
         {
             SpriteComponent rend = sprites[i];
-            //if (rend.isDirty())
-            //{
-                loadVertexProperties(i);
-                rend.setClean();
-                rebuffer = true;
-            //}
-
+            loadVertexProperties(i);
+            rend.setClean();
         }
 
-        // if the sprite data changes in any way, re-buffering is needed.
-        // This is actually probably pretty common depending on the types
-        // of game objects that are being drawn (animations, etc.)
-        if (rebuffer)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, vboID);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, vertices);
-        }
+        glBindBuffer(GL_ARRAY_BUFFER, vboID);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertices);
 
         // Use shader
         currentShader.use();

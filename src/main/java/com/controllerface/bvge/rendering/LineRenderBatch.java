@@ -1,5 +1,6 @@
 package com.controllerface.bvge.rendering;
 
+import com.controllerface.bvge.ecs.Edge2D;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
@@ -27,7 +28,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
     private final int VERTEX_SIZE = 6;
     private final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
-    private Line2D[] lines;
+    private Edge2D[] lines;
     private int numLines;
     private boolean hasRoom;
     private float[] vertices;
@@ -45,7 +46,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
     public LineRenderBatch(int zIndex, Shader currentShader)
     {
         this.zIndex = zIndex;
-        this.lines = new Line2D[Constants.Rendering.MAX_BATCH_SIZE];
+        this.lines = new Edge2D[Constants.Rendering.MAX_BATCH_SIZE];
 
         // 4 vertices for quads, sprites are always rectangular
         vertices = new float[Constants.Rendering.MAX_BATCH_SIZE * 2 * VERTEX_SIZE];
@@ -97,7 +98,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 //        glEnableVertexAttribArray(4);
     }
 
-    public void addLine(Line2D line)
+    public void addLine(Edge2D line)
     {
         // Get index and add renderObject
         int index = this.numLines;
@@ -187,30 +188,30 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
      */
     private void loadVertexProperties(int index)
     {
-        Line2D line = this.lines[index];
+        Edge2D line = this.lines[index];
 
         // Find offset within array (4 vertices per sprite)
         int offset = index * 2 * VERTEX_SIZE;
 
         // Load position
-        vertices[offset] = line.getFrom().x;
-        vertices[offset + 1] = line.getFrom().y;
+        vertices[offset] = line.p1().pos().x;
+        vertices[offset + 1] = line.p1().pos().y;
         vertices[offset + 2] = 0.0f;
 
         // Load color
-        vertices[offset + 3] = line.getColor().x;
-        vertices[offset + 4] = line.getColor().y;
-        vertices[offset + 5] = line.getColor().z;
+        vertices[offset + 3] = 0.0f;
+        vertices[offset + 4] = 0.0f;
+        vertices[offset + 5] = 0.0f;
 
 
-        vertices[offset + 6] = line.getTo().x;
-        vertices[offset + 7] = line.getTo().y;
+        vertices[offset + 6] = line.p2().pos().x;
+        vertices[offset + 7] = line.p2().pos().y;
         vertices[offset + 8] = 0.0f;
 
         // Load color
-        vertices[offset + 9] = line.getColor().x;
-        vertices[offset + 10] = line.getColor().y;
-        vertices[offset + 11] = line.getColor().z;
+        vertices[offset + 9] = 0.0f;
+        vertices[offset + 10] = 0.0f;
+        vertices[offset + 11] = 0.0f;
     }
 
     private int[] generateIndices()
