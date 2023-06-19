@@ -1,5 +1,6 @@
 package com.controllerface.bvge;
 
+import com.controllerface.bvge.window.Window;
 import org.jocl.*;
 import org.lwjgl.system.FunctionProviderLocal;
 
@@ -15,9 +16,11 @@ public class Main
 {
     public static void main(String[] args)
     {
-        test2();
-//        Window window = Window.get();
-//        window.run();
+        //test2();
+        CLInstance.init();
+        Window window = Window.get();
+        window.run();
+        CLInstance.destroy();
     }
 
     private static String programSource =

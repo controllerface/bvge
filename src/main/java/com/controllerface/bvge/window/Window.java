@@ -183,7 +183,7 @@ public class Window
                 ecs.run(dt);
                 currentGameMode.update(dt);
             }
-            System.out.println("FPS:" + (1000 / dt) / 1000);
+            //System.out.println("FPS:" + (1000 / dt) / 1000);
 
             glfwSwapBuffers(glfwWindow);
             MouseListener.endFrame();

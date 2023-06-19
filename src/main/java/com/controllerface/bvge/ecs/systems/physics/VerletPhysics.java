@@ -1,5 +1,6 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
+import com.controllerface.bvge.CLInstance;
 import com.controllerface.bvge.Transform;
 import com.controllerface.bvge.ecs.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
@@ -16,7 +17,7 @@ import java.util.concurrent.Executors;
 public class VerletPhysics extends GameSystem
 {
     private final float TICK_RATE = 1.0f / 60.0f;
-    private final int SUB_STEPS = 1;
+    private final int SUB_STEPS = 4;
     private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = 0.991f;
@@ -248,7 +249,7 @@ public class VerletPhysics extends GameSystem
         QuadRectangle targetBox = Component.BoundingBox.coerce(b);
         var candidates = new ArrayList<RigidBody2D>();
         quadTree.getElements(candidates, targetBox);
-        System.out.println("dropped: " + (bodyBuffer.size() - candidates.size()));
+        //System.out.println("dropped: " + (bodyBuffer.size() - candidates.size()));
 
         // todo: get candidates from quadtree
         for (RigidBody2D candidate : candidates)
@@ -392,6 +393,8 @@ public class VerletPhysics extends GameSystem
         }
     }
 
+    boolean runyet = false;
+
     private void tickSimulation(float dt)
     {
         setThreadvectorBuffers();
@@ -415,6 +418,60 @@ public class VerletPhysics extends GameSystem
             quadTree.insert(box, body2D);
         }
 
+        for (int i =0; i< EDGE_STEPS; i++)
+        {
+            float[] arr1 = new float[bodyBuffer.size() * 6 * 2];
+            float[] arr2 = new float[bodyBuffer.size() * 6 * 2];
+            float[] dest2 = new float[bodyBuffer.size() * 6 * 2];
+            float[] offsets = new float[bodyBuffer.size() * 6 * 2];
+
+            int offset = 0;
+            for (RigidBody2D body : bodyBuffer.values())
+            {
+                var edges = body.getEdges();
+                for (Edge2D e : edges)
+                {
+                    e.p2().pos().sub(e.p1().pos(), vectorBuffer1.get());
+                    offsets[offset] = vectorBuffer1.get().x;
+                    offsets[offset + 1] = vectorBuffer1.get().y;
+                    arr1[offset] = e.p1().pos().x;
+                    arr1[offset + 1] = e.p1().pos().y;
+                    arr2[offset] = e.p2().pos().x;
+                    arr2[offset + 1] = e.p2().pos().y;
+                }
+
+                CLInstance.execute(arr1, arr2, dest2);
+
+                //resolveConstraints(body);
+            }
+
+            for (RigidBody2D body : bodyBuffer.values())
+            {
+               offset = 0;
+                for (Edge2D edge : body.getEdges())
+                {
+                    edge.p2().pos().sub(edge.p1().pos(), vectorBuffer1.get());
+                    var length = vectorBuffer1.get().length();
+
+                    var x1 = dest2[offset];
+                    var x2 = dest2[offset];
+
+                    if (!runyet)
+                    {
+                        System.out.println("Diff: x1:" + (x1 - length) + " x2:" + (x2 - length));
+                    }
+
+                    float diff = length - edge.length();
+                    vectorBuffer1.get().normalize();
+                    vectorBuffer1.get().mul(diff * 0.5f);
+                    edge.p1().pos().add(vectorBuffer1.get());
+                    edge.p2().pos().sub(vectorBuffer1.get());
+                }
+            }
+        }
+
+        runyet = true;
+
         collisionBuffer.clear();
 
         for (RigidBody2D body : bodyBuffer.values())
@@ -425,14 +482,6 @@ public class VerletPhysics extends GameSystem
         for (CollisionManifold c : collisionBuffer)
         {
             reactPolygon(c);
-        }
-
-        for (RigidBody2D body : bodyBuffer.values())
-        {
-            for (int i =0; i< EDGE_STEPS; i++)
-            {
-                resolveConstraints(body);
-            }
         }
     }
 
