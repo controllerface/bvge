@@ -2,6 +2,8 @@ package com.controllerface.bvge;
 
 import org.jocl.*;
 
+import java.nio.FloatBuffer;
+
 import static org.jocl.CL.*;
 import static org.jocl.CL.clReleaseContext;
 
@@ -38,7 +40,7 @@ public class CLInstance
             "    c[gid] = (float)distance(a[gid], b[gid]);"+
             "}";
 
-    private static void commonInit()
+    private static cl_device_id[] commonInit()
     {
         // The platform, device type and device number
         // that will be used
@@ -73,9 +75,10 @@ public class CLInstance
         clGetDeviceIDs(platform, deviceType, numDevices, devices, null);
         cl_device_id device = devices[deviceIndex];
 
+        var x = new cl_device_id[]{device};
         // Create a context for the selected device
         context = clCreateContext(
-            contextProperties, 1, new cl_device_id[]{device},
+            contextProperties, 1, x,
             null, null, null);
 
         // Create a command-queue for the selected device
@@ -83,18 +86,20 @@ public class CLInstance
         commandQueue = clCreateCommandQueueWithProperties(
             context, device, properties, null);
 
+        return x;
+
     }
 
     public static void init()
     {
-        commonInit();
+        var x = commonInit();
 
         program = clCreateProgramWithSource(context, 1, new String[]{vectorDistance}, null, null);
-        clBuildProgram(program, 0, null, null, null, null);
+        clBuildProgram(program, 1, x, null, null, null);
         kernel = clCreateKernel(program, "vectorDistance", null);
 
         program2 = clCreateProgramWithSource(context, 1, new String[]{vectorDotproduct}, null, null);
-        clBuildProgram(program2, 0, null, null, null, null);
+        clBuildProgram(program2, 1, x, null, null, null);
         kernel2 = clCreateKernel(program2, "vectorDotProduct", null);
     }
 
@@ -108,12 +113,12 @@ public class CLInstance
         clReleaseContext(context);
     }
 
-    private static void vectorScalarFunction(float[] srcArrayA,
-                                             float[] srcArrayB,
-                                             float[] dstArray,
+    private static void vectorScalarFunction(FloatBuffer srcArrayA,
+                                             FloatBuffer srcArrayB,
+                                             FloatBuffer dstArray,
                                              cl_kernel kernel)
     {
-        int n = srcArrayA.length;
+        int n = srcArrayA.limit();
         assert n % 2 == 0 : "Invalid length";
         // Set the work-item dimensions
         long global_work_size[] = new long[]{n};
@@ -156,10 +161,21 @@ public class CLInstance
 
     public static void vectorDistance(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
     {
-        vectorScalarFunction(srcArrayA, srcArrayB, dstArray, kernel);
+        vectorScalarFunction(FloatBuffer.wrap(srcArrayA),
+            FloatBuffer.wrap(srcArrayB),
+            FloatBuffer.wrap(dstArray),
+            kernel);
     }
 
     public static void vectorDotProduct(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
+    {
+        vectorScalarFunction(FloatBuffer.wrap(srcArrayA),
+            FloatBuffer.wrap(srcArrayB),
+            FloatBuffer.wrap(dstArray),
+            kernel2);
+    }
+
+    public static void vectorDotProduct(FloatBuffer srcArrayA, FloatBuffer srcArrayB, FloatBuffer dstArray)
     {
         vectorScalarFunction(srcArrayA, srcArrayB, dstArray, kernel2);
     }

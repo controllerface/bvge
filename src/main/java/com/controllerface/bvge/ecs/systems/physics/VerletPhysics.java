@@ -9,7 +9,9 @@ import com.controllerface.bvge.util.quadtree.QuadRectangle;
 import com.controllerface.bvge.util.quadtree.QuadTree;
 import org.joml.Vector2f;
 
+import java.nio.FloatBuffer;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 public class VerletPhysics extends GameSystem
 {
@@ -509,11 +511,14 @@ public class VerletPhysics extends GameSystem
     }
 
     private Map<RigidBody2D, List<RigidBody2D>> checkMap = new LinkedHashMap<>();
-
+    FloatBuffer bA = FloatBuffer.allocate(125_000_000);
+    FloatBuffer bB = FloatBuffer.allocate(125_000_000);
     private void tickCollisions()
     {
-        List<float[]> bufferA = new ArrayList<>();
-        List<float[]> bufferB = new ArrayList<>();
+        //List<float[]> bufferA = new ArrayList<>();
+        //List<float[]> bufferB = new ArrayList<>();
+        bA.clear();
+        bB.clear();
 
         int runningCount = 0;
         for (RigidBody2D body : bodyBuffer.values())
@@ -614,8 +619,11 @@ public class VerletPhysics extends GameSystem
                     }
                 }
 
-                bufferA.add(arr1);
-                bufferB.add(arr2);
+                //bufferA.add(arr1);
+                //bufferB.add(arr2);
+
+                bA.put(arr1);
+                bB.put(arr2);
 
                 runningCount += resultCount;
                 filtered.add(candidate);
@@ -629,23 +637,30 @@ public class VerletPhysics extends GameSystem
         }
 
 
-        float[] a1 = new float[runningCount * 2];
-        float[] a2 = new float[runningCount * 2];
+//        float[] a1 = new float[runningCount * 2];
+//        float[] a2 = new float[runningCount * 2];
         float[] r = new float[runningCount];
 
-        assert bufferA.size() == bufferB.size() : "error, bad sizes";
+        //assert bufferA.size() == bufferB.size() : "error, bad sizes";
 
         int outerOffset = 0;
-        for (int i = 0; i < bufferA.size(); i++)
-        {
-            float[] cA = bufferA.get(i);
-            float[] cB = bufferB.get(i);
-            System.arraycopy(cA, 0, a1, outerOffset, cA.length);
-            System.arraycopy(cB, 0, a2, outerOffset, cB.length);
-            outerOffset += cA.length;
-        }
+//        for (int i = 0; i < bufferA.size(); i++)
+//        {
+//            float[] cA = bufferA.get(i);
+//            float[] cB = bufferB.get(i);
+//            System.arraycopy(cA, 0, a1, outerOffset, cA.length);
+//            System.arraycopy(cB, 0, a2, outerOffset, cB.length);
+//            outerOffset += cA.length;
+//        }
 
-        CLInstance.vectorDotProduct(a1, a2, r);
+//        FloatBuffer bA = FloatBuffer.wrap(a1);
+//        FloatBuffer bB = FloatBuffer.wrap(a2);
+
+        bA.flip();
+        bB.flip();
+
+        //CLInstance.vectorDotProduct(a1, a2, r);
+        CLInstance.vectorDotProduct(bA, bB, FloatBuffer.wrap(r));
 
         //System.out.println("lol");
 
@@ -1112,7 +1127,7 @@ public class VerletPhysics extends GameSystem
 
     private void tickSimulation(float dt)
     {
-        setThreadvectorBuffers();
+//        setThreadvectorBuffers();
         quadTree.clear();
 
         var bodies = ecs.getComponents(Component.RigidBody2D);
@@ -1131,15 +1146,15 @@ public class VerletPhysics extends GameSystem
             RigidBody2D body2D = Component.RigidBody2D.coerce(component);
             resolveForces(entity, body2D);
             integrate(entity, body2D, dt);
-            bodyBuffer.put(entity, body2D);
             updateBoundBox(body2D, box);
             quadTree.insert(box, body2D);
-        }
 
+            bodyBuffer.put(entity, body2D);
+        }
 
         collisionBuffer.clear();
 
-        tickCollisions2();
+        tickCollisions();
 //        for (RigidBody2D body2D : bodyBuffer.values())
 //        {
 //            findCollisions(body2D, quadTree);
