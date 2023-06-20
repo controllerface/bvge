@@ -7,15 +7,30 @@ import static org.jocl.CL.clReleaseContext;
 
 public class CLInstance
 {
-    static cl_kernel kernel;
-    static cl_program program;
+
     static cl_command_queue commandQueue;
     static cl_context context;
 
+    static cl_kernel kernel;
+    static cl_program program;
 
-    private static String programSource2 =
+    static cl_kernel kernel2;
+    static cl_program program2;
+
+
+    private static String vectorDotproduct =
         "__kernel void "+
-            "sampleKernel(__global const float2 *a,"+
+            "vectorDotProduct(__global const float2 *a,"+
+            "             __global const float2 *b,"+
+            "             __global float *c)"+
+            "{"+
+            "    int gid = get_global_id(0);"+
+            "    c[gid] = (float)dot(a[gid], b[gid]);"+
+            "}";
+
+    private static String vectorDistance =
+        "__kernel void "+
+            "vectorDistance(__global const float2 *a,"+
             "             __global const float2 *b,"+
             "             __global float *c)"+
             "{"+
@@ -23,7 +38,7 @@ public class CLInstance
             "    c[gid] = (float)distance(a[gid], b[gid]);"+
             "}";
 
-    public static void init()
+    private static void commonInit()
     {
         // The platform, device type and device number
         // that will be used
@@ -68,29 +83,38 @@ public class CLInstance
         commandQueue = clCreateCommandQueueWithProperties(
             context, device, properties, null);
 
-        // Create the program from the source code
-        program = clCreateProgramWithSource(context,
-            1, new String[]{ programSource2 }, null, null);
+    }
 
-        // Build the program
+    public static void init()
+    {
+        commonInit();
+
+        program = clCreateProgramWithSource(context, 1, new String[]{vectorDistance}, null, null);
         clBuildProgram(program, 0, null, null, null, null);
+        kernel = clCreateKernel(program, "vectorDistance", null);
 
-        // Create the kernel
-        kernel = clCreateKernel(program, "sampleKernel", null);
+        program2 = clCreateProgramWithSource(context, 1, new String[]{vectorDotproduct}, null, null);
+        clBuildProgram(program2, 0, null, null, null, null);
+        kernel2 = clCreateKernel(program2, "vectorDotProduct", null);
     }
 
     public static void destroy()
     {
         clReleaseKernel(kernel);
         clReleaseProgram(program);
+        clReleaseKernel(kernel2);
+        clReleaseProgram(program2);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
     }
 
-    public static void vectorDistance(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
+    private static void vectorScalarFunction(float[] srcArrayA,
+                                             float[] srcArrayB,
+                                             float[] dstArray,
+                                             cl_kernel kernel)
     {
         int n = srcArrayA.length;
-        assert n % 2 ==0 : "Invalid length";
+        assert n % 2 == 0 : "Invalid length";
         // Set the work-item dimensions
         long global_work_size[] = new long[]{n};
 
@@ -111,7 +135,6 @@ public class CLInstance
             CL_MEM_READ_WRITE,
             Sizeof.cl_float * (n / 2), null, null);
 
-
         // Set the arguments for the kernel
         int a = 0;
         clSetKernelArg(kernel, a++, Sizeof.cl_mem, Pointer.to(srcMemA));
@@ -129,5 +152,15 @@ public class CLInstance
         clReleaseMemObject(srcMemA);
         clReleaseMemObject(srcMemB);
         clReleaseMemObject(dstMem);
+    }
+
+    public static void vectorDistance(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
+    {
+        vectorScalarFunction(srcArrayA, srcArrayB, dstArray, kernel);
+    }
+
+    public static void vectorDotProduct(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
+    {
+        vectorScalarFunction(srcArrayA, srcArrayB, dstArray, kernel2);
     }
 }

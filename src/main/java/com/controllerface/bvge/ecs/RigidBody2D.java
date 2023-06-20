@@ -4,6 +4,7 @@ import org.joml.Vector2f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class RigidBody2D implements GameComponent
 {
@@ -87,5 +88,29 @@ public class RigidBody2D implements GameComponent
     public String getEntitiy()
     {
         return entitiy;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        RigidBody2D that = (RigidBody2D) o;
+        return Objects.equals(entitiy, that.entitiy);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = entitiy != null
+            ? entitiy.hashCode()
+            : 0;;
+        return result;
     }
 }

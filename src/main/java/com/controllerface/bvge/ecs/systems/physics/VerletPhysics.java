@@ -1,6 +1,5 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-import com.controllerface.bvge.CLInstance;
 import com.controllerface.bvge.Transform;
 import com.controllerface.bvge.ecs.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
@@ -112,6 +111,38 @@ public class VerletPhysics extends GameSystem
         return new PolygonProjection(min, max, minIndex);
     }
 
+    private PolygonProjection projectPolygon2(List<Point2D> verts, Vector2f normal, float[] dstTest)
+    {
+        boolean minYet = false;
+        boolean maxYet = false;
+        float min = 0;
+        float max = 0;
+        int minIndex = 0;
+        for (int i = 0; i < verts.size(); i++)
+        {
+            var v = verts.get(i);
+            //float dstTestVal = dstTest[offset];
+            float proj = v.pos().dot(normal);
+//            if (dstTestVal != proj)
+//            {
+//                System.out.println("error: expected: " + dstTestVal + " was: " + proj);
+//            }
+//            offset++;
+            if (proj < min || !minYet)
+            {
+                min = proj;
+                minIndex = i;
+                minYet = true;
+            }
+            if (proj > max || !maxYet)
+            {
+                max = proj;
+                maxYet = true;
+            }
+        }
+        return new PolygonProjection(min, max, minIndex);
+    }
+
     private float polygonDistance(PolygonProjection projA, PolygonProjection projB)
     {
         if (projA.min() < projB.min())
@@ -123,6 +154,7 @@ public class VerletPhysics extends GameSystem
             return projA.min() - projB.max();
         }
     }
+    int offset = 0;
 
     private CollisionManifold polygonCollision(RigidBody2D bodyA, RigidBody2D bodyB)
     {
@@ -138,6 +170,12 @@ public class VerletPhysics extends GameSystem
         int vert_index = 0;
         boolean invert = false;
 
+        int size = verts1.size() * (verts1.size() + verts2.size());
+        int size2 = size * 2;
+        float[] arr1 = new float[size2];
+        float[] arr2 = new float[size2];
+        float[] dest2 = new float[size];
+        offset = 0;
         for (int i = 0; i < verts1.size(); i++)
         {
             var b_index = (i + 1) == verts1.size()
@@ -150,8 +188,42 @@ public class VerletPhysics extends GameSystem
             vectorBuffer1.perpendicular();
             vectorBuffer1.normalize();
 
-            var proj_a = projectPolygon(verts1, vectorBuffer1);
-            var proj_b = projectPolygon(verts2, vectorBuffer1);
+            for (int j = 0; j < verts1.size(); j++)
+            {
+                arr1[offset] = verts1.get(j).pos().x;
+                arr1[offset + 1] = verts1.get(j).pos().y;
+                arr2[offset] = vectorBuffer1.x;
+                arr2[offset + 1] = vectorBuffer1.y;
+                offset += 2;
+            }
+
+            for (int j = 0; j < verts2.size(); j++)
+            {
+                arr1[offset] = verts2.get(j).pos().x;
+                arr1[offset + 1] = verts2.get(j).pos().y;
+                arr2[offset] = vectorBuffer1.x;
+                arr2[offset + 1] = vectorBuffer1.y;
+                offset += 2;
+            }
+        }
+
+        //CLInstance.vectorDotProduct(arr1, arr2, dest2);
+
+        offset = 0;
+        for (int i = 0; i < verts1.size(); i++)
+        {
+            var b_index = (i + 1) == verts1.size()
+                ? 0
+                : i + 1;
+            var va = verts1.get(i);
+            var vb = verts1.get(b_index);
+
+            vb.pos().sub(va.pos(), vectorBuffer1);
+            vectorBuffer1.perpendicular();
+            vectorBuffer1.normalize();
+
+            var proj_a = projectPolygon2(verts1, vectorBuffer1, dest2);
+            var proj_b = projectPolygon2(verts2, vectorBuffer1, dest2);
             var distance = polygonDistance(proj_a, proj_b);
             if (distance > 0)
             {
@@ -169,7 +241,6 @@ public class VerletPhysics extends GameSystem
                 edge_indexB = b_index;
             }
         }
-
 
         for (int i = 0; i < verts2.size(); i++)
         {
@@ -252,7 +323,6 @@ public class VerletPhysics extends GameSystem
         quadTree.getElements(candidates, targetBox);
         //System.out.println("dropped: " + (bodyBuffer.size() - candidates.size()));
 
-        // todo: get candidates from quadtree
         for (RigidBody2D candidate : candidates)
         {
             if (target == candidate) continue;
@@ -397,47 +467,12 @@ public class VerletPhysics extends GameSystem
     boolean runyet = false;
     QuadTree<RigidBody2D> quadTree = new QuadTree<>(new QuadRectangle(0, 0, 1920, 1080), 0);
 
-    private void tickSimulation(float dt)
+    private void tickEdges()
     {
-        setThreadvectorBuffers();
-        quadTree.clear();
-
-        var bodies = ecs.getComponents(Component.RigidBody2D);
-        if (bodies == null || bodies.isEmpty()) return;
-
-        bodyBuffer.clear();
-        for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
-        {
-            String entity = entry.getKey();
-            var b = ecs.getComponentFor(entity, Component.BoundingBox);
-            QuadRectangle box = Component.BoundingBox.coerce(b);
-            GameComponent component = entry.getValue();
-            RigidBody2D body2D = Component.RigidBody2D.coerce(component);
-            resolveForces(entity, body2D);
-            integrate(entity, body2D, dt);
-            bodyBuffer.put(entity, body2D);
-            updateBoundBox(body2D, box);
-            quadTree.insert(box, body2D);
-        }
-
-
-        collisionBuffer.clear();
-
-        for (RigidBody2D body : bodyBuffer.values())
-        {
-            findCollisions(body, quadTree);
-        }
-
-        for (CollisionManifold c : collisionBuffer)
-        {
-            reactPolygon(c);
-        }
-
         var buf = bodyBuffer.size() * 6;
         var buf2 = buf * 2;
 
-
-        for (int i =0; i< EDGE_STEPS; i++)
+        for (int i =0; i < EDGE_STEPS; i++)
         {
             float[] arr1 = new float[buf2];
             float[] arr2 = new float[buf2];
@@ -492,7 +527,76 @@ public class VerletPhysics extends GameSystem
         }
 
         runyet = true;
+    }
 
+    private Map<RigidBody2D, List<RigidBody2D>> checkMap = new LinkedHashMap<>();
+
+    private void tickCollisions()
+    {
+        for (RigidBody2D body : bodyBuffer.values())
+        {
+            keyCache.clear();
+            var b = ecs.getComponentFor(body.getEntitiy(), Component.BoundingBox);
+            QuadRectangle targetBox = Component.BoundingBox.coerce(b);
+            var candidates = new ArrayList<RigidBody2D>();
+            quadTree.getElements(candidates, targetBox);
+            //System.out.println("dropped: " + (bodyBuffer.size() - candidates.size()));
+
+            List<RigidBody2D> filtered = new ArrayList<>();
+
+            for (RigidBody2D candidate : candidates)
+            {
+                if (body == candidate) continue;
+                if (body.getEntitiy().equals(candidate.getEntitiy())) continue;
+                var k1 = body.getEntitiy() + candidate.getEntitiy();
+                var k2 = candidate.getEntitiy() + body.getEntitiy();
+                if (keyCache.contains(k1) || keyCache.contains(k2))
+                {
+                    return;
+                }
+
+                //filtered.add(filtered);
+                var collision = checkCollision(body, candidate);
+                if (collision == null) continue;
+                collisionBuffer.add(collision);
+            }
+        }
+    }
+
+    private void tickSimulation(float dt)
+    {
+        setThreadvectorBuffers();
+        quadTree.clear();
+
+        var bodies = ecs.getComponents(Component.RigidBody2D);
+        if (bodies == null || bodies.isEmpty()) return;
+
+        bodyBuffer.clear();
+        for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
+        {
+            String entity = entry.getKey();
+            var b = ecs.getComponentFor(entity, Component.BoundingBox);
+            QuadRectangle box = Component.BoundingBox.coerce(b);
+            GameComponent component = entry.getValue();
+            RigidBody2D body2D = Component.RigidBody2D.coerce(component);
+            resolveForces(entity, body2D);
+            integrate(entity, body2D, dt);
+            bodyBuffer.put(entity, body2D);
+            updateBoundBox(body2D, box);
+            quadTree.insert(box, body2D);
+        }
+
+
+        collisionBuffer.clear();
+
+        tickCollisions();
+
+        for (CollisionManifold c : collisionBuffer)
+        {
+            reactPolygon(c);
+        }
+
+        tickEdges();
     }
 
     private void simulate(float dt)
