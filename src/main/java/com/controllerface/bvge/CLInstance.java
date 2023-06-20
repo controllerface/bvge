@@ -2,8 +2,6 @@ package com.controllerface.bvge;
 
 import org.jocl.*;
 
-import java.util.Arrays;
-
 import static org.jocl.CL.*;
 import static org.jocl.CL.clReleaseContext;
 
@@ -89,15 +87,11 @@ public class CLInstance
         clReleaseContext(context);
     }
 
-    public static void execute(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
+    public static void vectorDistance(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
     {
         int n = srcArrayA.length;
         // Set the work-item dimensions
         long global_work_size[] = new long[]{n};
-
-//        float srcArrayA[] = new float[n];
-//        float srcArrayB[] = new float[n];
-//        float dstArray[] = new float[n];
 
         Pointer srcA = Pointer.to(srcArrayA);
         Pointer srcB = Pointer.to(srcArrayB);
@@ -134,10 +128,5 @@ public class CLInstance
         clReleaseMemObject(srcMemA);
         clReleaseMemObject(srcMemB);
         clReleaseMemObject(dstMem);
-
-//        System.out.println("A: " + Arrays.toString(srcArrayA));
-//        System.out.println("B: " + Arrays.toString(srcArrayB));
-//        System.out.println("Result: " + Arrays.toString(dstArray));
-        //return dstArray;
     }
 }

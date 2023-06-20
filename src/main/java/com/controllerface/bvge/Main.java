@@ -41,7 +41,10 @@ public class Main
             "             __global float *c)"+
             "{"+
             "    int gid = get_global_id(0);"+
-            "    printf(\"test %f\", b[gid].x);" +
+            // note: when printing to stdout, order is generally all over the place, the GPU
+            //  will parallelize extensively
+//            "    printf(\"test a x: %f y: %f\", a[gid].x, a[gid].y);" +
+//            "    printf(\"test b x: %f y: %f\", b[gid].x, b[gid].y);" +
 //            "    if (gid % 2 == 0)" +
 //            "    {" +
             "        c[gid] = (float)distance(a[gid], b[gid]);"+

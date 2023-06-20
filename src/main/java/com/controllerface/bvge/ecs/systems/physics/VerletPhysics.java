@@ -458,7 +458,7 @@ public class VerletPhysics extends GameSystem
                 //resolveConstraints(body);
             }
 
-            CLInstance.execute(arr1, arr2, dest2);
+            CLInstance.vectorDistance(arr1, arr2, dest2);
 
 
             for (RigidBody2D body : bodyBuffer.values())
