@@ -13,11 +13,11 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 60.0f;
+    private final float TICK_RATE = 1.0f / 30.0f;
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
-    private final float FRICTION = .991f;
+    private final float FRICTION = .930f;
     private float accumulator = 0.0f;
 
     /**
@@ -433,11 +433,16 @@ public class VerletPhysics extends GameSystem
             reactPolygon(c);
         }
 
+        var buf = bodyBuffer.size() * 6;
+        var buf2 = buf * 2;
+
+
         for (int i =0; i< EDGE_STEPS; i++)
         {
-            float[] arr1 = new float[bodyBuffer.size() * 6 * 2];
-            float[] arr2 = new float[bodyBuffer.size() * 6 * 2];
-            float[] dest2 = new float[bodyBuffer.size() * 6 * 2];
+            float[] arr1 = new float[buf2];
+            float[] arr2 = new float[buf2];
+            float[] dest2 = new float[buf];
+
             float[] offsets = new float[bodyBuffer.size() * 6 * 2];
 
             int offset = 0;
@@ -458,7 +463,7 @@ public class VerletPhysics extends GameSystem
                 //resolveConstraints(body);
             }
 
-            CLInstance.vectorDistance(arr1, arr2, dest2);
+            //CLInstance.vectorDistance(arr1, arr2, dest2);
 
 
             for (RigidBody2D body : bodyBuffer.values())
@@ -469,13 +474,13 @@ public class VerletPhysics extends GameSystem
                     edge.p2().pos().sub(edge.p1().pos(), vectorBuffer1);
                     var length = vectorBuffer1.length();
 
-                    var x1 = dest2[offset];
-                    var x2 = dest2[offset];
+//                    var x1 = dest2[offset];
+//                    var x2 = dest2[offset];
 
-                    if (!runyet)
-                    {
-                        System.out.println("Diff: x1:" + (x1 - length) + " x2:" + (x2 - length));
-                    }
+//                    if (!runyet)
+//                    {
+//                        System.out.println("Diff: x1:" + (x1 - length) + " x2:" + (x2 - length));
+//                    }
 
                     float diff = length - edge.length();
                     vectorBuffer1.normalize();

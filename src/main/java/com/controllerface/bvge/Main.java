@@ -16,11 +16,11 @@ public class Main
 {
     public static void main(String[] args)
     {
-        test2();
-//        CLInstance.init();
-//        Window window = Window.get();
-//        window.run();
-//        CLInstance.destroy();
+        //test2();
+        CLInstance.init();
+        Window window = Window.get();
+        window.run();
+        CLInstance.destroy();
     }
 
     private static String programSource =
@@ -100,8 +100,6 @@ public class Main
         cl_command_queue commandQueue = clCreateCommandQueueWithProperties(
             context, device, properties, null);
 
-
-
         // Create the program from the source code
         cl_program program = clCreateProgramWithSource(context,
             1, new String[]{ programSource2 }, null, null);
@@ -111,7 +109,6 @@ public class Main
 
         // Create the kernel
         cl_kernel kernel = clCreateKernel(program, "sampleKernel", null);
-
 
 
         // Create input- and output data

@@ -17,10 +17,10 @@ public class CLInstance
         "__kernel void "+
             "sampleKernel(__global const float2 *a,"+
             "             __global const float2 *b,"+
-            "             __global float2 *c)"+
+            "             __global float *c)"+
             "{"+
             "    int gid = get_global_id(0);"+
-            "    c[gid] = distance(a[gid], b[gid]);"+
+            "    c[gid] = (float)distance(a[gid], b[gid]);"+
             "}";
 
     public static void init()
@@ -90,6 +90,7 @@ public class CLInstance
     public static void vectorDistance(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
     {
         int n = srcArrayA.length;
+        assert n % 2 ==0 : "Invalid length";
         // Set the work-item dimensions
         long global_work_size[] = new long[]{n};
 
@@ -108,7 +109,7 @@ public class CLInstance
 
         cl_mem dstMem = clCreateBuffer(context,
             CL_MEM_READ_WRITE,
-            Sizeof.cl_float * n, null, null);
+            Sizeof.cl_float * (n / 2), null, null);
 
 
         // Set the arguments for the kernel
@@ -123,7 +124,7 @@ public class CLInstance
 
         // Read the output data
         clEnqueueReadBuffer(commandQueue, dstMem, CL_TRUE, 0,
-            n * Sizeof.cl_float, dst, 0, null, null);
+            (n / 2) * Sizeof.cl_float, dst, 0, null, null);
 
         clReleaseMemObject(srcMemA);
         clReleaseMemObject(srcMemB);
