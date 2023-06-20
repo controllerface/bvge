@@ -9,8 +9,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ECS
 {
     private long count = 0;
-    private final List<GameSystem> systems = new CopyOnWriteArrayList<>();
-    private final Map<Component, Map<String, GameComponent>> components = new ConcurrentHashMap<>();
+    private final List<GameSystem> systems = new ArrayList<>();
+    private final Map<Component, Map<String, GameComponent>> components = new HashMap<>();
     private final Set<String> entities = ConcurrentHashMap.newKeySet();
 
     public ECS()

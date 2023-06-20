@@ -38,10 +38,14 @@ public class Main
         "__kernel void "+
             "sampleKernel(__global const float2 *a,"+
             "             __global const float2 *b,"+
-            "             __global float2 *c)"+
+            "             __global float *c)"+
             "{"+
             "    int gid = get_global_id(0);"+
-            "    c[gid] = distance(a[gid], b[gid]);"+
+            "    printf(\"test %f\", b[gid].x);" +
+//            "    if (gid % 2 == 0)" +
+//            "    {" +
+            "        c[gid] = (float)distance(a[gid], b[gid]);"+
+//            "    }" +
             "}";
 
 
@@ -108,7 +112,9 @@ public class Main
 
 
         // Create input- and output data
-        int n = 6;
+        int n = 6; // this number must be 2x the number of vectors being checked, one for each X/Y component
+
+        assert n % 2 == 0 : "N must be divisible by 2";
 
         // Set the work-item dimensions
         long global_work_size[] = new long[]{n};
@@ -119,8 +125,11 @@ public class Main
 
             float srcArrayA[] = new float[n];
             float srcArrayB[] = new float[n];
-            float dstArray[] = new float[n];
 
+            // results are scalar, and so use the normal size float length
+            float dstArray[] = new float[n/2];
+
+            // X Axis points
             srcArrayA[0] = 1 + i;
             srcArrayA[1] = 2 + i;
             srcArrayA[2] = 0 + i;
@@ -128,6 +137,7 @@ public class Main
             srcArrayA[4] = 10 + i;
             srcArrayA[5] = 10 + i;
 
+            // Y Axis points
             srcArrayB[0] = 4 - i;
             srcArrayB[1] = 3 - i;
             srcArrayB[2] = 5 - i;

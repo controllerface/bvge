@@ -41,6 +41,12 @@ public class QuadTree<T>
         return this.zone;
     }
 
+    public void clear()
+    {
+        nodes.clear();
+        regions =null;
+    }
+
     private int findRegion(QuadRectangle r, boolean split)
     {
         int region = REGION_SELF;
@@ -81,7 +87,6 @@ public class QuadTree<T>
 
     private void split()
     {
-
         regions = new QuadTree[4];
 
         float newWidth = zone.width / 2;

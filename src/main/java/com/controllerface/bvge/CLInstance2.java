@@ -2,12 +2,9 @@ package com.controllerface.bvge;
 
 import org.jocl.*;
 
-import java.util.Arrays;
-
 import static org.jocl.CL.*;
-import static org.jocl.CL.clReleaseContext;
 
-public class CLInstance
+public class CLInstance2
 {
     static cl_kernel kernel;
     static cl_program program;
