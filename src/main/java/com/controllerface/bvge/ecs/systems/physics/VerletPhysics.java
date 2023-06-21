@@ -16,9 +16,9 @@ import java.util.concurrent.ExecutorService;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 30.0f;
-    private final int SUB_STEPS = 2;
-    private final int EDGE_STEPS = 2;
+    private final float TICK_RATE = 1.0f / 60.0f;
+    private final int SUB_STEPS = 1;
+    private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .950f;
     private float accumulator = 0.0f;
@@ -292,8 +292,10 @@ public class VerletPhysics extends GameSystem
         keyCache.clear();
         var b = ecs.getComponentFor(target.getEntitiy(), Component.BoundingBox);
         QuadRectangle targetBox = Component.BoundingBox.coerce(b);
+        var candidates = new ArrayList<RigidBody2D>();
+        quadTree.getElements(candidates, targetBox);
 
-        for (RigidBody2D candidate : bodyBuffer.values())
+        for (RigidBody2D candidate : candidates)
         {
             if (target == candidate)
             {
@@ -1172,26 +1174,54 @@ public class VerletPhysics extends GameSystem
         private int width = 1920;
         private int height = 1080;
         private int subdivisions = 10;
+        private float x_spacing = 0;
+        private float y_spacing = 0;
+        private float currentXoffset = 0;
+        private float currentYoffset = 0;
 
-        Set<BoxKey> validkeys = new HashSet<>();
+        Map<Integer, Map<Integer, BoxKey>> keyMap = new HashMap<>();
         Map<BoxKey, Set<RigidBody2D>> boxMap = new HashMap<>();
 
         public void init()
         {
+            x_spacing = width / subdivisions;
+            y_spacing = height / subdivisions;
 
+            for (int i = 0; i < subdivisions; i++)
+            {
+                for (int j = 0; j < subdivisions; j++)
+                {
+                    keyMap.computeIfAbsent(i, (_i) -> new HashMap<>())
+                        .put(j, new BoxKey(i, j));
+                }
+            }
         }
-
 
         public void add(RigidBody2D body, QuadRectangle box)
         {
+            var k1 = getKeyForPoint(box.x, box.y);
+            var k2 = getKeyForPoint(box.x + box.width, box.y);
+            var k3 = getKeyForPoint(box.x + box.width, box.y + box.height);
+            var k4 = getKeyForPoint(box.x, box.y + box.height);
+        }
 
+        private BoxKey getKeyForPoint(float px, float py)
+        {
+            int index_x = ((int) Math.floor(px / x_spacing));
+            int index_y = ((int) Math.floor(py / y_spacing));
+            if (!keyMap.containsKey(index_x)) return null;
+            var ymp = keyMap.get(index_x);
+            if (!ymp.containsKey(index_y)) return null;
+            return ymp.get(index_y);
         }
     }
 
     private void tickSimulation(float dt)
     {
 //        setThreadvectorBuffers();
-        //quadTree.clear();
+        quadTree.clear();
+
+        var spaceMap = new SpatialMap();
 
         var bodies = ecs.getComponents(Component.RigidBody2D);
         if (bodies == null || bodies.isEmpty())
@@ -1210,7 +1240,8 @@ public class VerletPhysics extends GameSystem
             resolveForces(entity, body2D);
             integrate(entity, body2D, dt);
             updateBoundBox(body2D, box);
-            //quadTree.insert(box, body2D);
+            quadTree.insert(box, body2D);
+
 
             bodyBuffer.put(entity, body2D);
         }

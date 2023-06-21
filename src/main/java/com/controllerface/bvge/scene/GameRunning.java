@@ -21,7 +21,7 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private int testBoxSize = 25;
+    private int testBoxSize = 30;
 
     private void genNPCs(int spacing, int size)
     {
@@ -77,7 +77,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(50,50, 32, player));
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
-        genNPCs(15, 15);
+        genNPCs(10, 10);
     }
 
     @Override
