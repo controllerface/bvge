@@ -129,17 +129,25 @@ public class Window
     }
 
     private static QuadTreeRendering quadTreeRendering;
+    private static SpacePartionRendering spacePartionRendering;
 
     public static void setQT(QuadTree<RigidBody2D> quadTree)
     {
         Window.quadTreeRendering.setQuadTree(quadTree);
     }
 
+    public static void setSP(VerletPhysics.SpatialMap spatialMap)
+    {
+        Window.spacePartionRendering.setSpatialMap(spatialMap);
+    }
+
+
     public void init()
     {
         initWindow();
 
         quadTreeRendering = new QuadTreeRendering(ecs);
+        spacePartionRendering = new SpacePartionRendering(ecs);
 
         // order of system registry is important, systems run in the order they are added
         var inputSystem = new KBMInput(ecs);
@@ -149,6 +157,7 @@ public class Window
         //ecs.registerSystem(new LineRendering(ecs));
         //ecs.registerSystem(new BoundingBoxRendering(ecs));
         //ecs.registerSystem(quadTreeRendering);
+        //ecs.registerSystem(spacePartionRendering);
 
         initInput(inputSystem);
 
