@@ -12,15 +12,14 @@ import org.joml.Vector2f;
 
 import java.nio.FloatBuffer;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 60.0f;
+    private final float TICK_RATE = 1.0f / 50.0f;
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
-    private final float FRICTION = .950f;
+    private final float FRICTION = .900f;
     private float accumulator = 0.0f;
 
     /**
@@ -1261,7 +1260,7 @@ public class VerletPhysics extends GameSystem
 
         //tickEdges();
 
-        //Window.setQT(quadTree);
+        Window.setQT(quadTree);
 
 
     }

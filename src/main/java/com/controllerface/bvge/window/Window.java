@@ -148,7 +148,7 @@ public class Window
         ecs.registerSystem(new SpriteRendering(ecs));
         ecs.registerSystem(new LineRendering(ecs));
         ecs.registerSystem(new BoundingBoxRendering(ecs));
-        //ecs.registerSystem(quadTreeRendering);
+        ecs.registerSystem(quadTreeRendering);
 
         initInput(inputSystem);
 
