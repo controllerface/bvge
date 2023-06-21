@@ -15,9 +15,9 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 60.0f;
+    private final float TICK_RATE = 1.0f / 24.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 12;
+    private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .930f;
     private float accumulator = 0.0f;
@@ -884,8 +884,8 @@ public class VerletPhysics extends GameSystem
     {
         private int width = 1920;
         private int height = 1080;
-        private int xsubdivisions = 150;
-        private int ysubdivisions = 120;
+        private int xsubdivisions = 300;
+        private int ysubdivisions = 270;
         private float x_spacing = 0;
         private float y_spacing = 0;
         public List<QuadRectangle> rects = new ArrayList<>();
