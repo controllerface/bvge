@@ -146,9 +146,9 @@ public class Window
         ecs.registerSystem(inputSystem);
         ecs.registerSystem(new VerletPhysics(ecs));
         ecs.registerSystem(new SpriteRendering(ecs));
-        ecs.registerSystem(new LineRendering(ecs));
-        ecs.registerSystem(new BoundingBoxRendering(ecs));
-        ecs.registerSystem(quadTreeRendering);
+        //ecs.registerSystem(new LineRendering(ecs));
+        //ecs.registerSystem(new BoundingBoxRendering(ecs));
+        //ecs.registerSystem(quadTreeRendering);
 
         initInput(inputSystem);
 

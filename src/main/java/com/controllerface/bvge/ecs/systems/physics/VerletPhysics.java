@@ -15,11 +15,11 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 50.0f;
+    private final float TICK_RATE = 1.0f / 60.0f;
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
-    private final float FRICTION = .900f;
+    private final float FRICTION = .990f;
     private float accumulator = 0.0f;
 
     /**
@@ -286,15 +286,17 @@ public class VerletPhysics extends GameSystem
 
     private final Set<String> keyCache = new HashSet<>();
 
-    private void findCollisions(RigidBody2D target, QuadTree<RigidBody2D> quadTree)
+    private void findCollisions(RigidBody2D target, QuadTree<RigidBody2D> quadTree, SpatialMap spatialMap)
     {
         keyCache.clear();
         var b = ecs.getComponentFor(target.getEntitiy(), Component.BoundingBox);
         QuadRectangle targetBox = Component.BoundingBox.coerce(b);
-        var candidates = new ArrayList<RigidBody2D>();
-        quadTree.getElements(candidates, targetBox);
+        //var candidates = new ArrayList<RigidBody2D>();
+        //quadTree.getElements(candidates, targetBox);
+        var c2s = spatialMap.getMatches(targetBox);
+        //System.out.println("c2: " + c2s.size() + " c1: " + candidates.size());
 
-        for (RigidBody2D candidate : candidates)
+        for (RigidBody2D candidate : c2s)
         {
             if (target == candidate)
             {
@@ -314,7 +316,10 @@ public class VerletPhysics extends GameSystem
             var bx = ecs.getComponentFor(candidate.getEntitiy(), Component.BoundingBox);
             QuadRectangle candidateBox = Component.BoundingBox.coerce(bx);
             boolean ch = doBoxesIntersect(targetBox, candidateBox);
-            if (!ch) continue;
+            if (!ch)
+            {
+                continue;
+            }
 
 
             var collision = checkCollision(target, candidate);
@@ -510,6 +515,7 @@ public class VerletPhysics extends GameSystem
     private Map<RigidBody2D, List<RigidBody2D>> checkMap = new LinkedHashMap<>();
     FloatBuffer bA = FloatBuffer.allocate(125_000_000);
     FloatBuffer bB = FloatBuffer.allocate(125_000_000);
+
     private void tickCollisions()
     {
         long start = System.nanoTime();
@@ -675,7 +681,7 @@ public class VerletPhysics extends GameSystem
 
                 int nextIncrease = resultCount;
 
-                secondCount+=nextIncrease;
+                secondCount += nextIncrease;
 
                 RigidBody2D vertex_o = null;
                 RigidBody2D edge_o = null;
@@ -935,7 +941,10 @@ public class VerletPhysics extends GameSystem
                 float[] r = new float[resultCount];
 
                 var x = polygonCollision(body, candidate);
-                if (x != null) collisionBuffer.add(x);
+                if (x != null)
+                {
+                    collisionBuffer.add(x);
+                }
 
 //                runningCount += resultCount;
                 //filtered.add(candidate);
@@ -1172,7 +1181,8 @@ public class VerletPhysics extends GameSystem
     {
         private int width = 1920;
         private int height = 1080;
-        private int subdivisions = 10;
+        private int subdivisions = 60;
+        private int ysubdivisions = 40;
         private float x_spacing = 0;
         private float y_spacing = 0;
         private float currentXoffset = 0;
@@ -1181,36 +1191,99 @@ public class VerletPhysics extends GameSystem
         Map<Integer, Map<Integer, BoxKey>> keyMap = new HashMap<>();
         Map<BoxKey, Set<RigidBody2D>> boxMap = new HashMap<>();
 
+        public SpatialMap()
+        {
+            init();
+        }
+
         public void init()
         {
-            x_spacing = width / subdivisions;
-            y_spacing = height / subdivisions;
+            x_spacing = (float)width / (float)subdivisions;
+            y_spacing = (float)height / (float)ysubdivisions;
+
+            //System.out.println("X: " + x_spacing + " Y:" + y_spacing);
 
             for (int i = 0; i < subdivisions; i++)
             {
-                for (int j = 0; j < subdivisions; j++)
+                for (int j = 0; j < ysubdivisions; j++)
                 {
-                    keyMap.computeIfAbsent(i, (_i) -> new HashMap<>())
-                        .put(j, new BoxKey(i, j));
+                    var k = new BoxKey(i, j);
+                    keyMap.computeIfAbsent(i, (_i) -> new HashMap<>()).put(j, k);
+                    boxMap.put(k, new HashSet<>());
                 }
             }
         }
 
+        public Set<RigidBody2D> getMatches(QuadRectangle box)
+        {
+            var rSet = new HashSet<RigidBody2D>();
+            for (BoxKey k : box.getKeys())
+            {
+                rSet.addAll(boxMap.get(k));
+            }
+            return rSet;
+        }
+
         public void add(RigidBody2D body, QuadRectangle box)
         {
+            box.resetKeys();
+
             var k1 = getKeyForPoint(box.x, box.y);
             var k2 = getKeyForPoint(box.x + box.width, box.y);
             var k3 = getKeyForPoint(box.x + box.width, box.y + box.height);
             var k4 = getKeyForPoint(box.x, box.y + box.height);
+
+            if (k1 == null
+                && k2 == null
+                && k3 == null
+                && k4 == null)
+            {
+                return;
+            }
+
+            // is within only one cell
+            if (k1 == k2 && k1 == k3 && k1 == k4)
+            {
+                boxMap.get(k1).add(body);
+                box.addkey(k1);
+                return;
+            }
+
+            if (k1 != null)
+            {
+                boxMap.get(k1).add(body);
+                box.addkey(k1);
+            }
+            if (k2 != null)
+            {
+                boxMap.get(k2).add(body);
+                box.addkey(k2);
+            }
+            if (k3 != null)
+            {
+                boxMap.get(k3).add(body);
+                box.addkey(k3);
+            }
+            if (k4 != null)
+            {
+                boxMap.get(k4).add(body);
+                box.addkey(k4);
+            }
         }
 
         private BoxKey getKeyForPoint(float px, float py)
         {
             int index_x = ((int) Math.floor(px / x_spacing));
             int index_y = ((int) Math.floor(py / y_spacing));
-            if (!keyMap.containsKey(index_x)) return null;
+            if (!keyMap.containsKey(index_x))
+            {
+                return null;
+            }
             var ymp = keyMap.get(index_x);
-            if (!ymp.containsKey(index_y)) return null;
+            if (!ymp.containsKey(index_y))
+            {
+                return null;
+            }
             return ymp.get(index_y);
         }
     }
@@ -1239,8 +1312,9 @@ public class VerletPhysics extends GameSystem
             resolveForces(entity, body2D);
             integrate(entity, body2D, dt);
             updateBoundBox(body2D, box);
-            quadTree.insert(box, body2D);
+            //quadTree.insert(box, body2D);
 
+            spaceMap.add(body2D, box);
 
             bodyBuffer.put(entity, body2D);
         }
@@ -1250,7 +1324,7 @@ public class VerletPhysics extends GameSystem
         //tickCollisions();
         for (RigidBody2D body2D : bodyBuffer.values())
         {
-            findCollisions(body2D, quadTree);
+            findCollisions(body2D, quadTree, spaceMap);
         }
 
         for (CollisionManifold c : collisionBuffer)
@@ -1260,7 +1334,7 @@ public class VerletPhysics extends GameSystem
 
         //tickEdges();
 
-        Window.setQT(quadTree);
+        //Window.setQT(quadTree);
 
 
     }

@@ -21,7 +21,7 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private int testBoxSize = 25;
+    private int testBoxSize = 50;
 
     private void genNPCs(int spacing, int size)
     {
@@ -35,8 +35,8 @@ public class GameRunning extends GameMode
                 var tex2 = AssetPool.getTexture("assets/images/blendImage2.png");
                 sprite2.setTexture(tex2);
                 var transform2 = new Transform();
-                transform2.scale.x = 8f;
-                transform2.scale.y = 8f;
+                transform2.scale.x = 10f;
+                transform2.scale.y = 10f;
                 transform2.position.x = 0f;
                 transform2.position.y = 0f;
                 sprite2.setHeight(32);
@@ -46,7 +46,7 @@ public class GameRunning extends GameMode
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
                 ecs.attachComponent(npc, Component.Transform, transform2);
                 ecs.attachComponent(npc, Component.RigidBody2D,
-                    RigidBody2D.simpleBox(200 + i * spacing, 200 + j * spacing, size, npc));
+                    RigidBody2D.simpleBox(100 + i * spacing, 100 + j * spacing, size, npc));
                 ecs.attachComponent(npc, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
             }
