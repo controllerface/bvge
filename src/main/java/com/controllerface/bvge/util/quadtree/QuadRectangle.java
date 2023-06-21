@@ -17,6 +17,8 @@ public class QuadRectangle implements GameComponent
 
     public float x, y, width, height;
 
+    public final boolean playerTouch;
+
     private Set<VerletPhysics.BoxKey> keys = new HashSet<>();
 
 
@@ -27,6 +29,17 @@ public class QuadRectangle implements GameComponent
         this.y = y;
         this.width = width;
         this.height = height;
+        this.playerTouch = false;
+    }
+
+    public QuadRectangle(float x, float y,
+                         float width, float height, boolean playerTouch)
+    {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.playerTouch = playerTouch;
     }
 
 
@@ -43,6 +56,7 @@ public class QuadRectangle implements GameComponent
         this.min_x = min_x;
         this.max_y = max_y;
         this.min_y = min_y;
+        this.playerTouch = false;
     }
 
     public void resetKeys()

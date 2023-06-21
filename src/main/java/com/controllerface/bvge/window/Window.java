@@ -95,7 +95,9 @@ public class Window
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
+        var prim = NULL; //glfwGetPrimaryMonitor();
+
+        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, prim, NULL);
         if (glfwWindow == NULL)
         {
             throw new IllegalStateException("could not create window");

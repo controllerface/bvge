@@ -10,7 +10,9 @@ import com.controllerface.bvge.rendering.Sprite;
 import com.controllerface.bvge.rendering.SpriteComponent;
 import com.controllerface.bvge.util.AssetPool;
 import com.controllerface.bvge.util.quadtree.QuadRectangle;
+import org.joml.Random;
 import org.joml.Vector2f;
+import org.joml.Vector4f;
 
 public class GameRunning extends GameMode
 {
@@ -25,24 +27,29 @@ public class GameRunning extends GameMode
 
     private void genNPCs(int spacing, int size)
     {
+        var rand = new Random();
         for (int i = 0; i < testBoxSize; i++)
         {
             for (int j = 0; j < testBoxSize; j++)
             {
+                float r = rand.nextFloat();
+                float g = rand.nextFloat();
+                float b = rand.nextFloat();
+
                 var npc = ecs.registerEntity(null);
                 var scomp2 = new SpriteComponent();
                 var sprite2 = new Sprite();
                 var tex2 = AssetPool.getTexture("assets/images/blendImage2.png");
                 sprite2.setTexture(tex2);
                 var transform2 = new Transform();
-                transform2.scale.x = 10f;
-                transform2.scale.y = 10f;
+                transform2.scale.x = size;
+                transform2.scale.y = size;
                 transform2.position.x = 0f;
                 transform2.position.y = 0f;
                 sprite2.setHeight(32);
                 sprite2.setWidth(32);
                 scomp2.setSprite(sprite2);
-                //scomp.setColor(new Vector4f(0,0,0,1));
+                scomp2.setColor(new Vector4f(r,g,b,1));
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
                 ecs.attachComponent(npc, Component.Transform, transform2);
                 ecs.attachComponent(npc, Component.RigidBody2D,
@@ -77,7 +84,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(50,50, 32, player));
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
-        genNPCs(10, 10);
+        genNPCs(5, 5);
     }
 
     @Override

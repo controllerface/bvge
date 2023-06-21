@@ -18,6 +18,8 @@ public class SpacePartionRendering extends GameSystem
     private Shader shader;
     private List<BoxRenderBatch> batches;
     private final Vector3f color = new Vector3f(0.3f,0.2f,0.8f);
+    private final Vector3f color2 = new Vector3f(0.9f,0.2f,0.3f);
+
 
     public SpacePartionRendering(ECS ecs)
     {
@@ -28,12 +30,13 @@ public class SpacePartionRendering extends GameSystem
 
     private void add(QuadRectangle box)
     {
+        var colorToUse = box.playerTouch ? color2 : color;
         boolean added = false;
         for (BoxRenderBatch batch : batches)
         {
             if (batch.hasRoom())
             {
-                batch.addLine(box, color);
+                batch.addLine(box, colorToUse);
                 added = true;
                 break;
             }
@@ -44,7 +47,7 @@ public class SpacePartionRendering extends GameSystem
             BoxRenderBatch newBatch = new BoxRenderBatch(0, shader);
             newBatch.start();
             batches.add(newBatch);
-            newBatch.addLine(box, color);
+            newBatch.addLine(box, colorToUse);
         }
     }
 
@@ -53,7 +56,7 @@ public class SpacePartionRendering extends GameSystem
         for (BoxRenderBatch batch : batches)
         {
             batch.render();
-            //batch.clear();
+            batch.clear();
         }
     }
 
@@ -71,14 +74,17 @@ public class SpacePartionRendering extends GameSystem
     {
         if (spatialMap == null) return;
 
-        if (!hasSet)
-        {
+        //if (!hasSet)
+        //{
+        var pr = new ArrayList<QuadRectangle>();
             for (QuadRectangle rect : spatialMap.rects)
             {
-                add(rect);
+                if (rect.playerTouch) pr.add(rect);
+                else add(rect);
             }
+            pr.forEach(p->this.add(p));
             hasSet = true;
-        }
+        //}
 
         render();
     }

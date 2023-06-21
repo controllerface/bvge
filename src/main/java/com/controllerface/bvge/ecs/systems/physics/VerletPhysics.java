@@ -17,9 +17,9 @@ public class VerletPhysics extends GameSystem
 {
     private final float TICK_RATE = 1.0f / 60.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 4;
+    private final int EDGE_STEPS = 12;
     private final float GRAVITY = 9.8f;
-    private final float FRICTION = .970f;
+    private final float FRICTION = .930f;
     private float accumulator = 0.0f;
 
     /**
@@ -291,12 +291,9 @@ public class VerletPhysics extends GameSystem
         keyCache.clear();
         var b = ecs.getComponentFor(target.getEntitiy(), Component.BoundingBox);
         QuadRectangle targetBox = Component.BoundingBox.coerce(b);
-        //var candidates = new ArrayList<RigidBody2D>();
-        //quadTree.getElements(candidates, targetBox);
-        var c2s = spatialMap.getMatches(targetBox);
-        //System.out.println("c2: " + c2s.size() + " c1: " + candidates.size());
+        var candidates = spatialMap.getMatches(targetBox);
 
-        for (RigidBody2D candidate : c2s)
+        for (RigidBody2D candidate : candidates)
         {
             if (target == candidate)
             {
@@ -457,36 +454,36 @@ public class VerletPhysics extends GameSystem
 
         for (int i = 0; i < EDGE_STEPS; i++)
         {
-            float[] arr1 = new float[buf2];
-            float[] arr2 = new float[buf2];
-            float[] dest2 = new float[buf];
-
-            float[] offsets = new float[bodyBuffer.size() * 6 * 2];
-
-            int offset = 0;
-            for (RigidBody2D body : bodyBuffer.values())
-            {
-                var edges = body.getEdges();
-                for (Edge2D e : edges)
-                {
-                    e.p2().pos().sub(e.p1().pos(), vectorBuffer1);
-                    offsets[offset] = vectorBuffer1.x;
-                    offsets[offset + 1] = vectorBuffer1.y;
-                    arr1[offset] = e.p1().pos().x;
-                    arr1[offset + 1] = e.p1().pos().y;
-                    arr2[offset] = e.p2().pos().x;
-                    arr2[offset + 1] = e.p2().pos().y;
-                }
-
-                //resolveConstraints(body);
-            }
+//            float[] arr1 = new float[buf2];
+//            float[] arr2 = new float[buf2];
+//            float[] dest2 = new float[buf];
+//
+//            float[] offsets = new float[bodyBuffer.size() * 6 * 2];
+//
+//            int offset = 0;
+//            for (RigidBody2D body : bodyBuffer.values())
+//            {
+//                var edges = body.getEdges();
+//                for (Edge2D e : edges)
+//                {
+//                    e.p2().pos().sub(e.p1().pos(), vectorBuffer1);
+//                    offsets[offset] = vectorBuffer1.x;
+//                    offsets[offset + 1] = vectorBuffer1.y;
+//                    arr1[offset] = e.p1().pos().x;
+//                    arr1[offset + 1] = e.p1().pos().y;
+//                    arr2[offset] = e.p2().pos().x;
+//                    arr2[offset + 1] = e.p2().pos().y;
+//                }
+//
+//                //resolveConstraints(body);
+//            }
 
             //CLInstance.vectorDistance(arr1, arr2, dest2);
 
 
             for (RigidBody2D body : bodyBuffer.values())
             {
-                offset = 0;
+                //offset = 0;
                 for (Edge2D edge : body.getEdges())
                 {
                     edge.p2().pos().sub(edge.p1().pos(), vectorBuffer1);
@@ -518,6 +515,7 @@ public class VerletPhysics extends GameSystem
 
     private void tickCollisions()
     {
+        checkMap.clear();
         long start = System.nanoTime();
         bA.clear();
         bB.clear();
@@ -528,8 +526,9 @@ public class VerletPhysics extends GameSystem
             keyCache.clear();
             var b = ecs.getComponentFor(body.getEntitiy(), Component.BoundingBox);
             QuadRectangle targetBox = Component.BoundingBox.coerce(b);
-            var candidates = new ArrayList<RigidBody2D>();
-            quadTree.getElements(candidates, targetBox);
+            var candidates = spaceMap.getMatches(targetBox);
+            //var candidates = new ArrayList<RigidBody2D>();
+            //quadTree.getElements(candidates, targetBox);
             //System.out.println("dropped: " + (bodyBuffer.size() - candidates.size()));
 
             List<RigidBody2D> filtered = new ArrayList<>();
@@ -547,6 +546,14 @@ public class VerletPhysics extends GameSystem
                 var k1 = body.getEntitiy() + candidate.getEntitiy();
                 var k2 = candidate.getEntitiy() + body.getEntitiy();
                 if (keyCache.contains(k1) || keyCache.contains(k2))
+                {
+                    continue;
+                }
+
+                var bx = ecs.getComponentFor(candidate.getEntitiy(), Component.BoundingBox);
+                QuadRectangle candidateBox = Component.BoundingBox.coerce(bx);
+                boolean ch = doBoxesIntersect(targetBox, candidateBox);
+                if (!ch)
                 {
                     continue;
                 }
@@ -830,311 +837,7 @@ public class VerletPhysics extends GameSystem
     }
 
 
-    private void tickCollisions2()
-    {
-        //List<float[]> bufferA = new ArrayList<>();
-        //List<float[]> bufferB = new ArrayList<>();
 
-        //int runningCount = 0;
-        for (RigidBody2D body : bodyBuffer.values())
-        {
-            keyCache.clear();
-            var b = ecs.getComponentFor(body.getEntitiy(), Component.BoundingBox);
-            QuadRectangle targetBox = Component.BoundingBox.coerce(b);
-            var candidates = new ArrayList<RigidBody2D>();
-            quadTree.getElements(candidates, targetBox);
-
-            List<RigidBody2D> filtered = new ArrayList<>();
-
-            for (RigidBody2D candidate : candidates)
-            {
-                if (body.equals(candidate))
-                {
-                    continue;
-                }
-                if (body.getEntitiy().equals(candidate.getEntitiy()))
-                {
-                    continue;
-                }
-                var k1 = body.getEntitiy() + candidate.getEntitiy();
-                var k2 = candidate.getEntitiy() + body.getEntitiy();
-                if (keyCache.contains(k1) || keyCache.contains(k2))
-                {
-                    continue;
-                }
-
-                int vertexCount = body.getVerts().size() + candidate.getVerts().size();
-                int resultCount = body.getVerts().size() * vertexCount;
-                resultCount += candidate.getVerts().size() * vertexCount;
-                int inputCount = resultCount * 2;
-                float[] arr1 = new float[inputCount];
-                float[] arr2 = new float[inputCount];
-                cl_buffer_offset = 0;
-                for (int i = 0; i < body.getVerts().size(); i++)
-                {
-                    var b_index = (i + 1) == body.getVerts().size()
-                        ? 0
-                        : i + 1;
-                    var va = body.getVerts().get(i);
-                    var vb = body.getVerts().get(b_index);
-
-                    vb.pos().sub(va.pos(), vectorBuffer1);
-                    vectorBuffer1.perpendicular();
-                    vectorBuffer1.normalize();
-
-                    for (int j = 0; j < body.getVerts().size(); j++)
-                    {
-                        arr1[cl_buffer_offset] = body.getVerts().get(j).pos().x;
-                        arr1[cl_buffer_offset + 1] = body.getVerts().get(j).pos().y;
-                        arr2[cl_buffer_offset] = vectorBuffer1.x;
-                        arr2[cl_buffer_offset + 1] = vectorBuffer1.y;
-                        cl_buffer_offset += 2;
-                    }
-
-                    for (int j = 0; j < candidate.getVerts().size(); j++)
-                    {
-                        arr1[cl_buffer_offset] = candidate.getVerts().get(j).pos().x;
-                        arr1[cl_buffer_offset + 1] = candidate.getVerts().get(j).pos().y;
-                        arr2[cl_buffer_offset] = vectorBuffer1.x;
-                        arr2[cl_buffer_offset + 1] = vectorBuffer1.y;
-                        cl_buffer_offset += 2;
-                    }
-                }
-
-                // 2nd
-                for (int i = 0; i < candidate.getVerts().size(); i++)
-                {
-                    var b_index = (i + 1) == candidate.getVerts().size()
-                        ? 0
-                        : i + 1;
-                    var va = candidate.getVerts().get(i);
-                    var vb = candidate.getVerts().get(b_index);
-
-                    vb.pos().sub(va.pos(), vectorBuffer1);
-                    vectorBuffer1.perpendicular();
-                    vectorBuffer1.normalize();
-
-                    for (int j = 0; j < body.getVerts().size(); j++)
-                    {
-                        arr1[cl_buffer_offset] = body.getVerts().get(j).pos().x;
-                        arr1[cl_buffer_offset + 1] = body.getVerts().get(j).pos().y;
-                        arr2[cl_buffer_offset] = vectorBuffer1.x;
-                        arr2[cl_buffer_offset + 1] = vectorBuffer1.y;
-                        cl_buffer_offset += 2;
-                    }
-
-                    for (int j = 0; j < candidate.getVerts().size(); j++)
-                    {
-                        arr1[cl_buffer_offset] = candidate.getVerts().get(j).pos().x;
-                        arr1[cl_buffer_offset + 1] = candidate.getVerts().get(j).pos().y;
-                        arr2[cl_buffer_offset] = vectorBuffer1.x;
-                        arr2[cl_buffer_offset + 1] = vectorBuffer1.y;
-                        cl_buffer_offset += 2;
-                    }
-                }
-
-                //bufferA.add(arr1);
-                //bufferB.add(arr2);
-
-                float[] a1 = new float[resultCount * 2];
-                float[] a2 = new float[resultCount * 2];
-                float[] r = new float[resultCount];
-
-                var x = polygonCollision(body, candidate);
-                if (x != null)
-                {
-                    collisionBuffer.add(x);
-                }
-
-//                runningCount += resultCount;
-                //filtered.add(candidate);
-            }
-//            if (filtered.isEmpty())
-//            {
-//                continue;
-//            }
-
-            //checkMap.put(body, filtered);
-        }
-
-//
-//        float[] a1 = new float[runningCount * 2];
-//        float[] a2 = new float[runningCount * 2];
-//        float[] r = new float[runningCount];
-//
-//        assert bufferA.size() == bufferB.size() : "error, bad sizes";
-//
-//        int outerOffset = 0;
-//        for (int i = 0; i < bufferA.size(); i++)
-//        {
-//            float[] cA = bufferA.get(i);
-//            float[] cB = bufferB.get(i);
-//            System.arraycopy(cA, 0, a1, outerOffset, cA.length);
-//            System.arraycopy(cB, 0, a2, outerOffset, cB.length);
-//            outerOffset += cA.length;
-//        }
-//
-//        CLInstance.vectorDotProduct(a1, a2, r);
-//
-//        //System.out.println("lol");
-//
-//        int secondCount = 0;
-//
-//        outerOffset = 0;
-//        for (Map.Entry<RigidBody2D, List<RigidBody2D>> entry : checkMap.entrySet())
-//        {
-//            RigidBody2D body = entry.getKey();
-//            List<RigidBody2D> candidates = entry.getValue();
-//
-//            for (RigidBody2D candidate : candidates)
-//            {
-//                int middleOffset = outerOffset;
-//
-//                float min_distance = Float.MAX_VALUE;
-//
-//                var verts1 = body.getVerts();
-//                var verts2 = candidate.getVerts();
-//
-//
-//
-//                int vertexCount = body.getVerts().size() + candidate.getVerts().size();
-//                int resultCount = body.getVerts().size() * vertexCount;
-//                resultCount += candidate.getVerts().size() * vertexCount;
-//
-//                int nextIncrease = resultCount;
-//
-//                secondCount+=nextIncrease;
-//
-//                RigidBody2D vertex_o = null;
-//                RigidBody2D edge_o = null;
-//                int edge_indexA = 0;
-//                int edge_indexB = 0;
-//                int vert_index = 0;
-//                boolean invert = false;
-//
-//                boolean breakOut = false;
-//
-//                for (int i = 0; i < verts1.size(); i++)
-//                {
-//                    var b_index = (i + 1) == verts1.size()
-//                        ? 0
-//                        : i + 1;
-//                    var va = verts1.get(i);
-//                    var vb = verts1.get(b_index);
-//
-//                    vb.pos().sub(va.pos(), vectorBuffer1);
-//                    vectorBuffer1.perpendicular();
-//                    vectorBuffer1.normalize();
-//
-//                    var proj_a = projectPolygon2(verts1, vectorBuffer1, r, middleOffset);
-//                    middleOffset += verts1.size();
-//                    var proj_b = projectPolygon2(verts2, vectorBuffer1, r, middleOffset);
-//                    middleOffset += verts2.size();
-//                    var distance = polygonDistance(proj_a, proj_b);
-//                    if (distance > 0)
-//                    {
-//                        breakOut = true;
-//                        break;
-//                    }
-//                    var abs_distance = Math.abs(distance);
-//                    if (abs_distance < min_distance)
-//                    {
-//                        vertex_o = candidate;
-//                        invert = true;
-//                        edge_o = body;
-//                        min_distance = abs_distance;
-//                        vectorBuffer2.set(vectorBuffer1);
-//                        edge_indexA = i;
-//                        edge_indexB = b_index;
-//                    }
-//                }
-//
-//                if (breakOut)
-//                {
-//                    outerOffset += nextIncrease;
-//                    continue;
-//                }
-//
-//                for (int i = 0; i < verts2.size(); i++)
-//                {
-//                    var b_index = (i + 1) == verts2.size()
-//                        ? 0
-//                        : i + 1;
-//                    var va = verts2.get(i);
-//                    var vb = verts2.get(b_index);
-//
-//                    vb.pos().sub(va.pos(), vectorBuffer1);
-//                    vectorBuffer1.perpendicular();
-//                    vectorBuffer1.normalize();
-//
-//                    var proj_a = projectPolygon2(verts1, vectorBuffer1, r, middleOffset);
-//                    middleOffset += verts1.size();
-//                    var proj_b = projectPolygon2(verts2, vectorBuffer1, r, middleOffset);
-//                    middleOffset += verts2.size();
-//                    var distance = polygonDistance(proj_a, proj_b);
-//                    if (distance > 0)
-//                    {
-//                        breakOut = true;
-//                        break;
-//                    }
-//                    var abs_distance = Math.abs(distance);
-//                    if (abs_distance < min_distance)
-//                    {
-//                        vertex_o = body;
-//                        invert = false;
-//                        edge_o = candidate;
-//                        min_distance = abs_distance;
-//                        vectorBuffer2.set(vectorBuffer1);
-//                        edge_indexA = i;
-//                        edge_indexB = b_index;
-//                    }
-//                }
-//
-//                if (breakOut)
-//                {
-//                    outerOffset += nextIncrease;
-//                    continue;
-//                }
-//
-//                var pr = projectPolygon(vertex_o.getVerts(), vectorBuffer2);
-//                vert_index = pr.index();
-//
-//                min_distance = min_distance / vectorBuffer2.length();
-//                vectorBuffer2.normalize();
-//
-//                var a = invert
-//                    ? candidate
-//                    : body;
-//
-//                var b = invert
-//                    ? body
-//                    : candidate;
-//
-//                var tA = ecs.getComponentFor(a.getEntitiy(), Component.Transform);
-//                var tB = ecs.getComponentFor(b.getEntitiy(), Component.Transform);
-//                Transform transformA = Component.Transform.coerce(tA);
-//                Transform transformB = Component.Transform.coerce(tB);
-//
-//                var direction = new Vector2f();
-//                transformA.position.sub(transformB.position, direction);
-//                var dirdot = direction.dot(vectorBuffer2);
-//                if (dirdot < 0)
-//                {
-//                    vectorBuffer2.mul(-1);
-//                }
-//                direction.set(vectorBuffer2);
-//                collisionBuffer.add(new CollisionManifold(vertex_o,
-//                    edge_o, direction, min_distance,
-//                    edge_indexA, edge_indexB, vert_index));
-//                outerOffset += nextIncrease;
-//            }
-//        }
-//
-//        if (secondCount != runningCount)
-//        {
-//            System.out.println("diff: " + (runningCount - secondCount));
-//        }
-    }
 
     public static class BoxKey
     {
@@ -1181,11 +884,12 @@ public class VerletPhysics extends GameSystem
     {
         private int width = 1920;
         private int height = 1080;
-        private int xsubdivisions = 80;
-        private int ysubdivisions = 55;
+        private int xsubdivisions = 150;
+        private int ysubdivisions = 120;
         private float x_spacing = 0;
         private float y_spacing = 0;
         public List<QuadRectangle> rects = new ArrayList<>();
+        private Set<BoxKey> playerkeys = new HashSet<>();
 
         Map<Integer, Map<Integer, BoxKey>> keyMap = new HashMap<>();
         Map<BoxKey, Set<RigidBody2D>> boxMap = new HashMap<>();
@@ -1193,6 +897,37 @@ public class VerletPhysics extends GameSystem
         public SpatialMap()
         {
             init();
+        }
+
+        public void clear()
+        {
+            boxMap.values().forEach(Set::clear);
+            playerkeys.clear();
+        }
+
+        public void rebuildRects()
+        {
+            rects.clear();
+            var currentX = 0;
+            var currentY = 0;
+            for (int i = 0; i < xsubdivisions; i++)
+            {
+                for (int j = 0; j < ysubdivisions; j++)
+                {
+                    var k =keyMap.get(i).get(j);
+                    if (playerkeys.contains(k))
+                    {
+                        rects.add(new QuadRectangle(currentX, currentY, x_spacing, y_spacing, true));
+                    }
+                    else
+                    {
+                        rects.add(new QuadRectangle(currentX, currentY, x_spacing, y_spacing));
+                    }
+                    currentY+=y_spacing;
+                }
+                currentX+=x_spacing;
+                currentY=0;
+            }
         }
 
         public void init()
@@ -1206,10 +941,12 @@ public class VerletPhysics extends GameSystem
             {
                 for (int j = 0; j < ysubdivisions; j++)
                 {
+
                     var k = new BoxKey(i, j);
                     keyMap.computeIfAbsent(i, (_i) -> new HashMap<>()).put(j, k);
                     boxMap.put(k, new HashSet<>());
                     rects.add(new QuadRectangle(currentX, currentY, x_spacing, y_spacing));
+
                     currentY+=y_spacing;
                 }
                 currentX+=x_spacing;
@@ -1281,10 +1018,23 @@ public class VerletPhysics extends GameSystem
                 boxMap.get(k4).add(body);
                 box.addkey(k4);
             }
+
+            if (body.getEntitiy().equals("player"))
+            {
+                playerkeys.add(k0);
+                playerkeys.add(k1);
+                playerkeys.add(k2);
+                playerkeys.add(k3);
+                playerkeys.add(k4);
+                rebuildRects();
+            }
         }
 
         private BoxKey getKeyForPoint(float px, float py)
         {
+//            int index_x = px - (px % x_spacing);
+//            int index_y = py - (py % y_spacing);
+
             int index_x = ((int) Math.floor(px / x_spacing));
             int index_y = ((int) Math.floor(py / y_spacing));
             if (!keyMap.containsKey(index_x))
@@ -1299,13 +1049,13 @@ public class VerletPhysics extends GameSystem
             return ymp.get(index_y);
         }
     }
-
+    SpatialMap spaceMap = new SpatialMap();
     private void tickSimulation(float dt)
     {
 //        setThreadvectorBuffers();
-        quadTree.clear();
+        //quadTree.clear();
+        spaceMap.clear();
 
-        var spaceMap = new SpatialMap();
 
         var bodies = ecs.getComponents(Component.RigidBody2D);
         if (bodies == null || bodies.isEmpty())
@@ -1332,7 +1082,7 @@ public class VerletPhysics extends GameSystem
         }
 
         collisionBuffer.clear();
-        tickEdges();
+        //tickEdges();
         //tickCollisions();
         for (RigidBody2D body2D : bodyBuffer.values())
         {
@@ -1344,7 +1094,7 @@ public class VerletPhysics extends GameSystem
             reactPolygon(c);
         }
 
-        //tickEdges();
+        tickEdges();
 
         //Window.setQT(quadTree);
         Window.setSP(spaceMap);
