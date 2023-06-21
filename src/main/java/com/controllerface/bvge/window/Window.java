@@ -1,12 +1,12 @@
 package com.controllerface.bvge.window;
 
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.systems.KBMInput;
-import com.controllerface.bvge.ecs.systems.LineRendering;
+import com.controllerface.bvge.ecs.RigidBody2D;
+import com.controllerface.bvge.ecs.systems.*;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
-import com.controllerface.bvge.ecs.systems.SpriteRendering;
 import com.controllerface.bvge.scene.GameRunning;
 import com.controllerface.bvge.scene.GameMode;
+import com.controllerface.bvge.util.quadtree.QuadTree;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
@@ -128,9 +128,18 @@ public class Window
         glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback);
     }
 
+    private static QuadTreeRendering quadTreeRendering;
+
+    public static void setQT(QuadTree<RigidBody2D> quadTree)
+    {
+        Window.quadTreeRendering.setQuadTree(quadTree);
+    }
+
     public void init()
     {
         initWindow();
+
+        quadTreeRendering = new QuadTreeRendering(ecs);
 
         // order of system registry is important, systems run in the order they are added
         var inputSystem = new KBMInput(ecs);
@@ -138,6 +147,8 @@ public class Window
         ecs.registerSystem(new VerletPhysics(ecs));
         ecs.registerSystem(new SpriteRendering(ecs));
         ecs.registerSystem(new LineRendering(ecs));
+        ecs.registerSystem(new BoundingBoxRendering(ecs));
+        //ecs.registerSystem(quadTreeRendering);
 
         initInput(inputSystem);
 

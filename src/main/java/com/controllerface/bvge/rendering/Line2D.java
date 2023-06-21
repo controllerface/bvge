@@ -17,7 +17,13 @@ public class Line2D
         this.from = from;
         this.to = to;
         this.color = new Vector3f(0,0,0);
-        this.lifetime = lifetime;
+    }
+
+    public Line2D(Vector2f from, Vector2f to, Vector3f color)
+    {
+        this.from = from;
+        this.to = to;
+        this.color = color;
     }
     public Line2D(Vector2f from, Vector2f to, Vector3f color, int lifetime)
     {
