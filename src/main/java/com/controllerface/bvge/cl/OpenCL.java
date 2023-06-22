@@ -265,6 +265,8 @@ public class OpenCL
         clReleaseProgram(p_vectorDistance);
         clReleaseKernel(k_vectorDotProduct);
         clReleaseProgram(p_vectorDotProduct);
+        clReleaseKernel(k_vectorNormalize);
+        clReleaseProgram(p_vectorNormalize);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
     }
@@ -350,7 +352,7 @@ public class OpenCL
 
         // Read the output data
         clEnqueueReadBuffer(commandQueue, dstMem, CL_TRUE, 0,
-            (n / 2) * Sizeof.cl_float, dst, 0, null, null);
+            n * Sizeof.cl_float, dst, 0, null, null);
 
         clReleaseMemObject(srcMem);
         clReleaseMemObject(dstMem);

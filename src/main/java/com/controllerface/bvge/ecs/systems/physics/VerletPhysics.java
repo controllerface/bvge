@@ -495,8 +495,8 @@ public class VerletPhysics extends GameSystem
 
 
 
-        // board phase collision check to filter in worthwhile collision checks
-        Map<RigidBody2D, List<RigidBody2D>> innerMap = new HashMap<>();
+        // broad phase collision check to filter in worthwhile collision checks
+        Map<RigidBody2D, List<RigidBody2D>> broadPhaseHits = new HashMap<>();
         for (RigidBody2D body : bodyBuffer.values())
         {
             var b = ecs.getComponentFor(body.getEntitiy(), Component.BoundingBox);
@@ -536,18 +536,16 @@ public class VerletPhysics extends GameSystem
                 continue;
             }
 
-            innerMap.put(body, filtered);
+            broadPhaseHits.put(body, filtered);
         }
 
 
-        Map<RigidBody2D, List<RigidBody2D>> innerMap2 = new LinkedHashMap<>();
         // new method starts here
-
-        for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : innerMap.entrySet())
+        Map<RigidBody2D, List<RigidBody2D>> normalStage = new LinkedHashMap<>();
+        for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : broadPhaseHits.entrySet())
         {
             RigidBody2D body = e.getKey();
             List<RigidBody2D> candidates = e.getValue();
-
 
             for (RigidBody2D candidate : candidates)
             {
@@ -599,7 +597,7 @@ public class VerletPhysics extends GameSystem
                 v_norm_buffer.put(arr1);
                 runningNormCount += inputCount;
             }
-            innerMap2.put(body, candidates);
+            normalStage.put(body, candidates);
         }
 
 
@@ -610,12 +608,10 @@ public class VerletPhysics extends GameSystem
 
         int result2Offset = 0;
         // next new method here
-        for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : innerMap2.entrySet())
+        for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : normalStage.entrySet())
         {
             RigidBody2D body = e.getKey();
             List<RigidBody2D> candidates = e.getValue();
-
-            int middleOffset = result2Offset;
 
             for (RigidBody2D candidate : candidates)
             {
@@ -631,26 +627,10 @@ public class VerletPhysics extends GameSystem
                 // first object
                 for (int i = 0; i < body.getVerts().size(); i++)
                 {
-                    var b_index = (i + 1) == body.getVerts().size()
-                        ? 0
-                        : i + 1;
-                    var va = body.getVerts().get(i);
-                    var vb = body.getVerts().get(b_index);
+                    var x = v_norm_results[result2Offset];
+                    var y = v_norm_results[result2Offset + 1];
 
-                    // todo: parallelize these steps as a first stage
-                    vb.pos().sub(va.pos(), vectorBuffer1);
-                    vectorBuffer1.perpendicular();
-                    vectorBuffer1.normalize();
-
-                    var x = v_norm_results[middleOffset];
-                    var y = v_norm_results[middleOffset + 1];
-
-                    if (x != vectorBuffer1.x || y != vectorBuffer1.y)
-                    {
-                        System.out.println("HEY!" + x + " : " + vectorBuffer1.x);
-                    }
-
-                    middleOffset += 2;
+                    result2Offset += 2;
 
                     for (int j = 0; j < body.getVerts().size(); j++)
                     {
@@ -659,8 +639,8 @@ public class VerletPhysics extends GameSystem
 
                         arr1[xOffset] = body.getVerts().get(j).pos().x;
                         arr1[yOffset] = body.getVerts().get(j).pos().y;
-                        arr2[xOffset] = vectorBuffer1.x;
-                        arr2[yOffset] = vectorBuffer1.y;
+                        arr2[xOffset] = x;
+                        arr2[yOffset] = y;
 
                         local_buffer_offset += 2;
                     }
@@ -669,8 +649,8 @@ public class VerletPhysics extends GameSystem
                     {
                         arr1[local_buffer_offset] = candidate.getVerts().get(j).pos().x;
                         arr1[local_buffer_offset + 1] = candidate.getVerts().get(j).pos().y;
-                        arr2[local_buffer_offset] = vectorBuffer1.x;
-                        arr2[local_buffer_offset + 1] = vectorBuffer1.y;
+                        arr2[local_buffer_offset] = x;
+                        arr2[local_buffer_offset + 1] = y;
                         local_buffer_offset += 2;
                     }
                 }
@@ -678,29 +658,16 @@ public class VerletPhysics extends GameSystem
                 // second object
                 for (int i = 0; i < candidate.getVerts().size(); i++)
                 {
-                    var b_index = (i + 1) == candidate.getVerts().size()
-                        ? 0
-                        : i + 1;
-                    var va = candidate.getVerts().get(i);
-                    var vb = candidate.getVerts().get(b_index);
 
-                    vb.pos().sub(va.pos(), vectorBuffer1);
-                    vectorBuffer1.perpendicular();
-                    vectorBuffer1.normalize();
-
-                    var x = v_norm_results[middleOffset];
-                    var y = v_norm_results[middleOffset + 1];
-                    middleOffset += 2;
-                    if (x != vectorBuffer1.x || y != vectorBuffer1.y)
-                    {
-                        System.out.println("HEY!");
-                    }
+                    var x = v_norm_results[result2Offset];
+                    var y = v_norm_results[result2Offset + 1];
+                    result2Offset += 2;
                     for (int j = 0; j < body.getVerts().size(); j++)
                     {
                         arr1[local_buffer_offset] = body.getVerts().get(j).pos().x;
                         arr1[local_buffer_offset + 1] = body.getVerts().get(j).pos().y;
-                        arr2[local_buffer_offset] = vectorBuffer1.x;
-                        arr2[local_buffer_offset + 1] = vectorBuffer1.y;
+                        arr2[local_buffer_offset] = x;
+                        arr2[local_buffer_offset + 1] = y;
                         local_buffer_offset += 2;
                     }
 
@@ -708,8 +675,8 @@ public class VerletPhysics extends GameSystem
                     {
                         arr1[local_buffer_offset] = candidate.getVerts().get(j).pos().x;
                         arr1[local_buffer_offset + 1] = candidate.getVerts().get(j).pos().y;
-                        arr2[local_buffer_offset] = vectorBuffer1.x;
-                        arr2[local_buffer_offset + 1] = vectorBuffer1.y;
+                        arr2[local_buffer_offset] = x;
+                        arr2[local_buffer_offset + 1] = y;
                         local_buffer_offset += 2;
                     }
                 }
@@ -1028,11 +995,11 @@ public class VerletPhysics extends GameSystem
 
         collisionBuffer.clear();
         keyCache.clear();
-        tickCollisions();
-//        for (RigidBody2D body2D : bodyBuffer.values())
-//        {
-//            findCollisions(body2D, spatialMap);
-//        }
+        //tickCollisions();
+        for (RigidBody2D body2D : bodyBuffer.values())
+        {
+            findCollisions(body2D, spatialMap);
+        }
         for (CollisionManifold c : collisionBuffer)
         {
             reactPolygon(c);
