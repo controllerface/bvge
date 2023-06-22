@@ -479,24 +479,23 @@ public class VerletPhysics extends GameSystem
     FloatBuffer v_dot_bufferA = FloatBuffer.allocate(125_000_000);
     FloatBuffer v_dot_bufferB = FloatBuffer.allocate(125_000_000);
 
-    FloatBuffer v_norm_bufferA = FloatBuffer.allocate(125_000_000);
-    FloatBuffer v_norm_bufferB = FloatBuffer.allocate(125_000_000);
-//
-    //ExecutorService colliderPool = Executors.newFixedThreadPool(4);
+    FloatBuffer v_norm_buffer = FloatBuffer.allocate(125_000_000);
+
     private void tickCollisions()
     {
         checkMap.clear();
 
         v_dot_bufferA.clear();
         v_dot_bufferB.clear();
-        v_norm_bufferA.clear();
-        v_norm_bufferB.clear();
+        v_norm_buffer.clear();
 
-        int runningCount = 0;
+        int runningVDotCount = 0;
+        int runningNormCount = 0;
         keyCache.clear();
 
 
 
+        // board phase collision check to filter in worthwhile collision checks
         Map<RigidBody2D, List<RigidBody2D>> innerMap = new HashMap<>();
         for (RigidBody2D body : bodyBuffer.values())
         {
@@ -541,10 +540,82 @@ public class VerletPhysics extends GameSystem
         }
 
 
+        Map<RigidBody2D, List<RigidBody2D>> innerMap2 = new LinkedHashMap<>();
+        // new method starts here
+
         for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : innerMap.entrySet())
         {
             RigidBody2D body = e.getKey();
             List<RigidBody2D> candidates = e.getValue();
+
+
+            for (RigidBody2D candidate : candidates)
+            {
+                var test_buffer_offset = 0;
+                int inputCount = (body.getVerts().size() * 2) + (candidate.getVerts().size() * 2);
+                //inputCount *= 2;
+                float[] arr1 = new float[inputCount];
+
+
+                // first object
+                for (int i = 0; i < body.getVerts().size(); i++)
+                {
+                    var b_index = (i + 1) == body.getVerts().size()
+                        ? 0
+                        : i + 1;
+                    var va = body.getVerts().get(i);
+                    var vb = body.getVerts().get(b_index);
+
+                    int xOffset = test_buffer_offset;
+                    int yOffset = test_buffer_offset + 1;
+
+                    vb.pos().sub(va.pos(), vectorBuffer1);
+                    vectorBuffer1.perpendicular();
+                    arr1[xOffset] = vectorBuffer1.x;
+                    arr1[yOffset] = vectorBuffer1.y;
+                    test_buffer_offset += 2;
+                }
+
+                // second object
+                for (int i = 0; i < candidate.getVerts().size(); i++)
+                {
+                    var b_index = (i + 1) == candidate.getVerts().size()
+                        ? 0
+                        : i + 1;
+                    var va = candidate.getVerts().get(i);
+                    var vb = candidate.getVerts().get(b_index);
+
+                    int xOffset = test_buffer_offset;
+                    int yOffset = test_buffer_offset + 1;
+
+                    vb.pos().sub(va.pos(), vectorBuffer1);
+                    vectorBuffer1.perpendicular();
+                    arr1[xOffset] = vectorBuffer1.x;
+                    arr1[yOffset] = vectorBuffer1.y;
+                    test_buffer_offset += 2;
+                }
+
+                // add all of the vector data to the global buffers
+                v_norm_buffer.put(arr1);
+                runningNormCount += inputCount;
+            }
+            innerMap2.put(body, candidates);
+        }
+
+
+        v_norm_buffer.flip();
+        float[] v_norm_results = new float[runningNormCount];
+        OpenCL.vectorNormalize(v_norm_buffer, FloatBuffer.wrap(v_norm_results));
+
+
+        int result2Offset = 0;
+        // next new method here
+        for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : innerMap2.entrySet())
+        {
+            RigidBody2D body = e.getKey();
+            List<RigidBody2D> candidates = e.getValue();
+
+            int middleOffset = result2Offset;
 
             for (RigidBody2D candidate : candidates)
             {
@@ -570,6 +641,16 @@ public class VerletPhysics extends GameSystem
                     vb.pos().sub(va.pos(), vectorBuffer1);
                     vectorBuffer1.perpendicular();
                     vectorBuffer1.normalize();
+
+                    var x = v_norm_results[middleOffset];
+                    var y = v_norm_results[middleOffset + 1];
+
+                    if (x != vectorBuffer1.x || y != vectorBuffer1.y)
+                    {
+                        System.out.println("HEY!" + x + " : " + vectorBuffer1.x);
+                    }
+
+                    middleOffset += 2;
 
                     for (int j = 0; j < body.getVerts().size(); j++)
                     {
@@ -607,6 +688,13 @@ public class VerletPhysics extends GameSystem
                     vectorBuffer1.perpendicular();
                     vectorBuffer1.normalize();
 
+                    var x = v_norm_results[middleOffset];
+                    var y = v_norm_results[middleOffset + 1];
+                    middleOffset += 2;
+                    if (x != vectorBuffer1.x || y != vectorBuffer1.y)
+                    {
+                        System.out.println("HEY!");
+                    }
                     for (int j = 0; j < body.getVerts().size(); j++)
                     {
                         arr1[local_buffer_offset] = body.getVerts().get(j).pos().x;
@@ -630,19 +718,124 @@ public class VerletPhysics extends GameSystem
                 v_dot_bufferA.put(arr1);
                 v_dot_bufferB.put(arr2);
 
-                runningCount += resultCount;
+                runningVDotCount += resultCount;
             }
             checkMap.put(body, candidates);
         }
+
+
+
+
+
+
+
+
+        // todo: refactor to use pre-computed normals
+//        for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : innerMap.entrySet())
+//        {
+//            RigidBody2D body = e.getKey();
+//            List<RigidBody2D> candidates = e.getValue();
+//
+//            for (RigidBody2D candidate : candidates)
+//            {
+//                int vertexCount = body.getVerts().size() + candidate.getVerts().size();
+//                int resultCount = body.getVerts().size() * vertexCount;
+//                resultCount += candidate.getVerts().size() * vertexCount;
+//                int inputCount = resultCount * 2;
+//                float[] arr1 = new float[inputCount];
+//                float[] arr2 = new float[inputCount];
+//
+//                var local_buffer_offset = 0;
+//
+//                // first object
+//                for (int i = 0; i < body.getVerts().size(); i++)
+//                {
+//                    var b_index = (i + 1) == body.getVerts().size()
+//                        ? 0
+//                        : i + 1;
+//                    var va = body.getVerts().get(i);
+//                    var vb = body.getVerts().get(b_index);
+//
+//                    // todo: parallelize these steps as a first stage
+//                    vb.pos().sub(va.pos(), vectorBuffer1);
+//                    vectorBuffer1.perpendicular();
+//                    vectorBuffer1.normalize();
+//
+//                    for (int j = 0; j < body.getVerts().size(); j++)
+//                    {
+//                        int xOffset = local_buffer_offset;
+//                        int yOffset = local_buffer_offset + 1;
+//
+//                        arr1[xOffset] = body.getVerts().get(j).pos().x;
+//                        arr1[yOffset] = body.getVerts().get(j).pos().y;
+//                        arr2[xOffset] = vectorBuffer1.x;
+//                        arr2[yOffset] = vectorBuffer1.y;
+//
+//                        local_buffer_offset += 2;
+//                    }
+//
+//                    for (int j = 0; j < candidate.getVerts().size(); j++)
+//                    {
+//                        arr1[local_buffer_offset] = candidate.getVerts().get(j).pos().x;
+//                        arr1[local_buffer_offset + 1] = candidate.getVerts().get(j).pos().y;
+//                        arr2[local_buffer_offset] = vectorBuffer1.x;
+//                        arr2[local_buffer_offset + 1] = vectorBuffer1.y;
+//                        local_buffer_offset += 2;
+//                    }
+//                }
+//
+//                // second object
+//                for (int i = 0; i < candidate.getVerts().size(); i++)
+//                {
+//                    var b_index = (i + 1) == candidate.getVerts().size()
+//                        ? 0
+//                        : i + 1;
+//                    var va = candidate.getVerts().get(i);
+//                    var vb = candidate.getVerts().get(b_index);
+//
+//                    vb.pos().sub(va.pos(), vectorBuffer1);
+//                    vectorBuffer1.perpendicular();
+//                    vectorBuffer1.normalize();
+//
+//                    for (int j = 0; j < body.getVerts().size(); j++)
+//                    {
+//                        arr1[local_buffer_offset] = body.getVerts().get(j).pos().x;
+//                        arr1[local_buffer_offset + 1] = body.getVerts().get(j).pos().y;
+//                        arr2[local_buffer_offset] = vectorBuffer1.x;
+//                        arr2[local_buffer_offset + 1] = vectorBuffer1.y;
+//                        local_buffer_offset += 2;
+//                    }
+//
+//                    for (int j = 0; j < candidate.getVerts().size(); j++)
+//                    {
+//                        arr1[local_buffer_offset] = candidate.getVerts().get(j).pos().x;
+//                        arr1[local_buffer_offset + 1] = candidate.getVerts().get(j).pos().y;
+//                        arr2[local_buffer_offset] = vectorBuffer1.x;
+//                        arr2[local_buffer_offset + 1] = vectorBuffer1.y;
+//                        local_buffer_offset += 2;
+//                    }
+//                }
+//
+//                // add all of the vector data to the global buffers
+//                v_dot_bufferA.put(arr1);
+//                v_dot_bufferB.put(arr2);
+//
+//                runningVDotCount += resultCount;
+//            }
+//            checkMap.put(body, candidates);
+//        }
 
         // Open CL: flip the buffers and create the result array with the matching size
         // for the dot product results.
         v_dot_bufferA.flip();
         v_dot_bufferB.flip();
-        float[] v_dot_results = new float[runningCount];
+        float[] v_dot_results = new float[runningVDotCount];
         OpenCL.vectorDotProduct(v_dot_bufferA, v_dot_bufferB, FloatBuffer.wrap(v_dot_results));
 
         int secondCount = 0;
+
+        // this offset maps to the pre-computed results array, as the map entries
+        // are traversed, it is updated to point to the next offset into the array
         int outerOffset = 0;
 
         for (Map.Entry<RigidBody2D, List<RigidBody2D>> entry : checkMap.entrySet())
@@ -792,9 +985,9 @@ public class VerletPhysics extends GameSystem
             }
         }
 
-        if (secondCount != runningCount)
+        if (secondCount != runningVDotCount)
         {
-            System.out.println("diff: " + (runningCount - secondCount));
+            System.out.println("diff: " + (runningVDotCount - secondCount));
         }
     }
 

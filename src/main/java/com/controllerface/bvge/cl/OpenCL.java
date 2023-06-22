@@ -15,17 +15,17 @@ public class OpenCL
     static cl_command_queue commandQueue;
     static cl_context context;
 
-    static cl_kernel kernel;
-    static cl_program program;
+    static cl_kernel k_vectorDistance;
+    static cl_program p_vectorDistance;
 
-    static cl_kernel kernel2;
-    static cl_program program2;
+    static cl_kernel k_vectorDotProduct;
+    static cl_program p_vectorDotProduct;
 
-    static cl_kernel kernel3;
-    static cl_program program3;
+    static cl_kernel k_vectorNormalize;
+    static cl_program p_vectorNormalize;
 
 
-    private static String vectorDotproduct =
+    private static String vectorDotProduct =
         "__kernel void "+
             "vectorDotProduct(__global const float2 *a,"+
             "             __global const float2 *b,"+
@@ -246,27 +246,25 @@ public class OpenCL
     {
         var x = commonInit();
 
-        program = clCreateProgramWithSource(context, 1, new String[]{vectorDistance}, null, null);
-        clBuildProgram(program, 1, x, null, null, null);
-        kernel = clCreateKernel(program, "vectorDistance", null);
+        p_vectorDistance = clCreateProgramWithSource(context, 1, new String[]{vectorDistance}, null, null);
+        clBuildProgram(p_vectorDistance, 1, x, null, null, null);
+        k_vectorDistance = clCreateKernel(p_vectorDistance, "vectorDistance", null);
 
-        program2 = clCreateProgramWithSource(context, 1, new String[]{vectorDotproduct}, null, null);
-        clBuildProgram(program2, 1, x, null, null, null);
-        kernel2 = clCreateKernel(program2, "vectorDotProduct", null);
+        p_vectorDotProduct = clCreateProgramWithSource(context, 1, new String[]{vectorDotProduct}, null, null);
+        clBuildProgram(p_vectorDotProduct, 1, x, null, null, null);
+        k_vectorDotProduct = clCreateKernel(p_vectorDotProduct, "vectorDotProduct", null);
 
-        program3 = clCreateProgramWithSource(context, 1, new String[]{vectorNormalize}, null, null);
-        clBuildProgram(program3, 1, x, null, null, null);
-        kernel3 = clCreateKernel(program3, "vectorNormalize", null);
+        p_vectorNormalize = clCreateProgramWithSource(context, 1, new String[]{vectorNormalize}, null, null);
+        clBuildProgram(p_vectorNormalize, 1, x, null, null, null);
+        k_vectorNormalize = clCreateKernel(p_vectorNormalize, "vectorNormalize", null);
     }
 
     public static void destroy()
     {
-        clReleaseKernel(kernel);
-        clReleaseProgram(program);
-        clReleaseKernel(kernel2);
-        clReleaseProgram(program2);
-        clReleaseKernel(kernel3);
-        clReleaseProgram(program3);
+        clReleaseKernel(k_vectorDistance);
+        clReleaseProgram(p_vectorDistance);
+        clReleaseKernel(k_vectorDotProduct);
+        clReleaseProgram(p_vectorDotProduct);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
     }
@@ -287,11 +285,11 @@ public class OpenCL
 
         // Allocate the memory objects for the input- and output data
         cl_mem srcMemA = clCreateBuffer(context,
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
             Sizeof.cl_float * n, srcA, null);
 
         cl_mem srcMemB = clCreateBuffer(context,
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, // todo: determine if this should be CL_MEM_COPY_HOST_PTR?
             Sizeof.cl_float * n, srcB, null);
 
         cl_mem dstMem = clCreateBuffer(context,
@@ -318,6 +316,8 @@ public class OpenCL
     }
 
 
+
+
     private static void vectorTransformFunction(FloatBuffer srcArray,
                                                 FloatBuffer dstArray,
                                                 cl_kernel kernel)
@@ -332,7 +332,7 @@ public class OpenCL
 
         // Allocate the memory objects for the input- and output data
         cl_mem srcMem = clCreateBuffer(context,
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
             Sizeof.cl_float * n, src, null);
 
         cl_mem dstMem = clCreateBuffer(context,
@@ -350,13 +350,11 @@ public class OpenCL
 
         // Read the output data
         clEnqueueReadBuffer(commandQueue, dstMem, CL_TRUE, 0,
-            n * Sizeof.cl_float, dst, 0, null, null);
+            (n / 2) * Sizeof.cl_float, dst, 0, null, null);
 
         clReleaseMemObject(srcMem);
         clReleaseMemObject(dstMem);
     }
-
-
 
 
 
@@ -365,28 +363,22 @@ public class OpenCL
         vectorScalarFunction(FloatBuffer.wrap(srcArrayA),
             FloatBuffer.wrap(srcArrayB),
             FloatBuffer.wrap(dstArray),
-            kernel);
+            k_vectorDistance);
     }
 
-    public static void vectorDotProduct(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
+
+    public static void vectorDotProduct(FloatBuffer srcArrayA,
+                                        FloatBuffer srcArrayB,
+                                        FloatBuffer dstArrayA)
     {
-        vectorScalarFunction(FloatBuffer.wrap(srcArrayA),
-            FloatBuffer.wrap(srcArrayB),
-            FloatBuffer.wrap(dstArray),
-            kernel2);
+        vectorScalarFunction(srcArrayA, srcArrayB, dstArrayA, k_vectorDotProduct);
     }
 
-    public static void vectorDotProduct(FloatBuffer srcArrayA, FloatBuffer srcArrayB, FloatBuffer dstArray)
+    public static void vectorNormalize(FloatBuffer srcArray,
+                                        FloatBuffer dstArray)
     {
-        vectorScalarFunction(srcArrayA, srcArrayB, dstArray, kernel2);
+        vectorTransformFunction(srcArray, dstArray, k_vectorNormalize);
     }
-
-    public static void vectorNormalize(FloatBuffer srcArray, FloatBuffer dstArray)
-    {
-        vectorTransformFunction(srcArray, dstArray, kernel3);
-    }
-
-
 
 
 
