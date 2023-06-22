@@ -22,7 +22,7 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private int testBoxSize = 40;
+    private int testBoxSize = 5;
 
     private void genNPCs(float spacing, float size)
     {
@@ -31,9 +31,9 @@ public class GameRunning extends GameMode
         {
             for (int j = 0; j < testBoxSize; j++)
             {
-                float r = 0f;//rand.nextFloat();
-                float g = rand.nextFloat();
-                float b = 0f;//rand.nextFloat();
+                float r = rand.nextFloat() / 3.0f;
+                float g = rand.nextFloat() / 2.0f;
+                float b = rand.nextFloat();
 
                 float x = 100 + i * spacing;
                 float y = 100 + j * spacing;

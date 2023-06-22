@@ -9,7 +9,7 @@ import java.nio.FloatBuffer;
 import static org.jocl.CL.*;
 import static org.jocl.CL.clReleaseContext;
 
-public class CLInstance
+public class OpenCL
 {
 
     static cl_command_queue commandQueue;
@@ -20,6 +20,9 @@ public class CLInstance
 
     static cl_kernel kernel2;
     static cl_program program2;
+
+    static cl_kernel kernel3;
+    static cl_program program3;
 
 
     private static String vectorDotproduct =
@@ -40,6 +43,15 @@ public class CLInstance
             "{"+
             "    int gid = get_global_id(0);"+
             "    c[gid] = (float)distance(a[gid], b[gid]);"+
+            "}";
+
+    private static String vectorNormalize =
+        "__kernel void "+
+            "vectorNormalize(__global const float2 *a,"+
+            "             __global float2 *b)"+
+            "{"+
+            "    int gid = get_global_id(0);"+
+            "    b[gid] = normalize(a[gid]);"+
             "}";
 
 
@@ -241,6 +253,10 @@ public class CLInstance
         program2 = clCreateProgramWithSource(context, 1, new String[]{vectorDotproduct}, null, null);
         clBuildProgram(program2, 1, x, null, null, null);
         kernel2 = clCreateKernel(program2, "vectorDotProduct", null);
+
+        program3 = clCreateProgramWithSource(context, 1, new String[]{vectorNormalize}, null, null);
+        clBuildProgram(program3, 1, x, null, null, null);
+        kernel3 = clCreateKernel(program3, "vectorNormalize", null);
     }
 
     public static void destroy()
@@ -249,6 +265,8 @@ public class CLInstance
         clReleaseProgram(program);
         clReleaseKernel(kernel2);
         clReleaseProgram(program2);
+        clReleaseKernel(kernel3);
+        clReleaseProgram(program3);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
     }
@@ -299,6 +317,49 @@ public class CLInstance
         clReleaseMemObject(dstMem);
     }
 
+
+    private static void vectorTransformFunction(FloatBuffer srcArray,
+                                                FloatBuffer dstArray,
+                                                cl_kernel kernel)
+    {
+        int n = srcArray.limit();
+        assert n % 2 == 0 : "Invalid length";
+        // Set the work-item dimensions
+        long global_work_size[] = new long[]{n};
+
+        Pointer src = Pointer.to(srcArray);
+        Pointer dst = Pointer.to(dstArray);
+
+        // Allocate the memory objects for the input- and output data
+        cl_mem srcMem = clCreateBuffer(context,
+            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            Sizeof.cl_float * n, src, null);
+
+        cl_mem dstMem = clCreateBuffer(context,
+            CL_MEM_READ_WRITE,
+            Sizeof.cl_float * n, null, null);
+
+        // Set the arguments for the kernel
+        int a = 0;
+        clSetKernelArg(kernel, a++, Sizeof.cl_mem, Pointer.to(srcMem));
+        clSetKernelArg(kernel, a++, Sizeof.cl_mem, Pointer.to(dstMem));
+
+        // Execute the kernel
+        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
+            global_work_size, null, 0, null, null);
+
+        // Read the output data
+        clEnqueueReadBuffer(commandQueue, dstMem, CL_TRUE, 0,
+            n * Sizeof.cl_float, dst, 0, null, null);
+
+        clReleaseMemObject(srcMem);
+        clReleaseMemObject(dstMem);
+    }
+
+
+
+
+
     public static void vectorDistance(float[] srcArrayA, float[] srcArrayB, float[] dstArray)
     {
         vectorScalarFunction(FloatBuffer.wrap(srcArrayA),
@@ -318,6 +379,11 @@ public class CLInstance
     public static void vectorDotProduct(FloatBuffer srcArrayA, FloatBuffer srcArrayB, FloatBuffer dstArray)
     {
         vectorScalarFunction(srcArrayA, srcArrayB, dstArray, kernel2);
+    }
+
+    public static void vectorNormalize(FloatBuffer srcArray, FloatBuffer dstArray)
+    {
+        vectorTransformFunction(srcArray, dstArray, kernel3);
     }
 
 
