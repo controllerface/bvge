@@ -31,9 +31,9 @@ public class GameRunning extends GameMode
         {
             for (int j = 0; j < testBoxSize; j++)
             {
-                float r = rand.nextFloat();
+                float r = 0f;//rand.nextFloat();
                 float g = rand.nextFloat();
-                float b = rand.nextFloat();
+                float b = 0f;//rand.nextFloat();
 
                 float x = 100 + i * spacing;
                 float y = 100 + j * spacing;
@@ -50,7 +50,7 @@ public class GameRunning extends GameMode
                 transform2.position.y = y;
                 sprite2.setHeight(32);
                 sprite2.setWidth(32);
-                scomp2.setSprite(sprite2);
+                //scomp2.setSprite(sprite2);
                 scomp2.setColor(new Vector4f(r,g,b,1));
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
                 ecs.attachComponent(npc, Component.Transform, transform2);
@@ -85,7 +85,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(500,50, 32, player));
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
-        genNPCs(1.5f, 1.5f);
+        genNPCs(4.5f, 4.5f);
     }
 
     @Override

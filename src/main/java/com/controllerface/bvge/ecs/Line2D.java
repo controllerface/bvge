@@ -6,17 +6,10 @@ import org.joml.Vector3f;
 
 public class Line2D
 {
-    private Vector2f from;
-    private Vector2f to;
-    private Vector3f color;
+    private final Vector2f from;
+    private final Vector2f to;
+    private final Vector3f color;
     private int lifetime;
-
-    public Line2D(Vector2f from, Vector2f to)
-    {
-        this.from = from;
-        this.to = to;
-        this.color = new Vector3f(0,0,0);
-    }
 
     public Line2D(Vector2f from, Vector2f to, Vector3f color)
     {

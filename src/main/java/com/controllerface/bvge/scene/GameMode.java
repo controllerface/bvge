@@ -4,9 +4,6 @@ public abstract class GameMode
 {
     //protected Renderer renderer = new Renderer();
     protected Camera camera;
-    private boolean isRunning = false;
-
-    protected boolean levelLoaded = false;
 
     public GameMode()
     {
@@ -17,8 +14,6 @@ public abstract class GameMode
     {
 
     }
-
-
 
     public abstract void update(float dt);
 

@@ -9,7 +9,10 @@ public class Camera
     float projWidth = 32.0f * 40.0f;
     float projHeight = 32.0f * 21.0f;
 
-    private Matrix4f projectionMatrix, viewMatrix, inverseProjection, inverseView;
+    private final Matrix4f projectionMatrix;
+    private final Matrix4f viewMatrix;
+    private final Matrix4f inverseProjection;
+    private final Matrix4f inverseView;
     public Vector2f position;
     public Vector2f projectionSize = new Vector2f(projWidth, projHeight);
 
