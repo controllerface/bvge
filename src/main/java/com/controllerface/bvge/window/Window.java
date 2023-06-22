@@ -1,13 +1,13 @@
 package com.controllerface.bvge.window;
 
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.RigidBody2D;
-import com.controllerface.bvge.ecs.systems.*;
+import com.controllerface.bvge.ecs.systems.KBMInput;
 import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
-import com.controllerface.bvge.scene.GameRunning;
+import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
+import com.controllerface.bvge.ecs.systems.renderers.SpriteRenderer;
 import com.controllerface.bvge.scene.GameMode;
-import com.controllerface.bvge.util.quadtree.QuadTree;
+import com.controllerface.bvge.scene.GameRunning;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
@@ -132,17 +132,11 @@ public class Window
         glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback);
     }
 
-    private static QuadTreeRendering quadTreeRendering;
-    private static SpacePartionRendering spacePartionRendering;
-
-    public static void setQT(QuadTree<RigidBody2D> quadTree)
-    {
-        Window.quadTreeRendering.setQuadTree(quadTree);
-    }
+    private static SpacePartitionRenderer spacePartitionRenderer;
 
     public static void setSP(SpatialMap spatialMap)
     {
-        Window.spacePartionRendering.setSpatialMap(spatialMap);
+        Window.spacePartitionRenderer.setSpatialMap(spatialMap);
     }
 
 
@@ -150,14 +144,13 @@ public class Window
     {
         initWindow();
 
-        quadTreeRendering = new QuadTreeRendering(ecs);
-        spacePartionRendering = new SpacePartionRendering(ecs);
+        spacePartitionRenderer = new SpacePartitionRenderer(ecs);
 
         // order of system registry is important, systems run in the order they are added
         var inputSystem = new KBMInput(ecs);
         ecs.registerSystem(inputSystem);
         ecs.registerSystem(new VerletPhysics(ecs));
-        ecs.registerSystem(new SpriteRendering(ecs));
+        ecs.registerSystem(new SpriteRenderer(ecs));
         //ecs.registerSystem(new LineRendering(ecs));
         //ecs.registerSystem(new BoundingBoxRendering(ecs));
         //ecs.registerSystem(quadTreeRendering);

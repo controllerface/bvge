@@ -1,11 +1,15 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-import com.controllerface.bvge.CLInstance;
-import com.controllerface.bvge.Transform;
+import com.controllerface.bvge.cl.CLInstance;
+import com.controllerface.bvge.ecs.components.Transform;
 import com.controllerface.bvge.ecs.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ControlPoints;
+import com.controllerface.bvge.ecs.components.GameComponent;
+import com.controllerface.bvge.ecs.components.RigidBody2D;
 import com.controllerface.bvge.util.MathEX;
-import com.controllerface.bvge.util.quadtree.QuadRectangle;
+import com.controllerface.bvge.ecs.components.QuadRectangle;
 import com.controllerface.bvge.util.quadtree.QuadTree;
 import com.controllerface.bvge.window.Window;
 import org.joml.Vector2f;
@@ -21,6 +25,9 @@ public class VerletPhysics extends GameSystem
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .970f;
     private float accumulator = 0.0f;
+
+    private SpatialMap spatialMap = new SpatialMap();
+
 
     /**
      * These buffers are reused each tick to avoid creating a new one every frame and for each object.
@@ -286,9 +293,8 @@ public class VerletPhysics extends GameSystem
 
     private final Set<String> keyCache = new HashSet<>();
 
-    private void findCollisions(RigidBody2D target, QuadTree<RigidBody2D> quadTree, SpatialMap spatialMap)
+    private void findCollisions(RigidBody2D target, SpatialMap spatialMap)
     {
-        keyCache.clear();
         var b = ecs.getComponentFor(target.getEntitiy(), Component.BoundingBox);
         QuadRectangle targetBox = Component.BoundingBox.coerce(b);
         var candidates = spatialMap.getMatches(targetBox);
@@ -386,20 +392,6 @@ public class VerletPhysics extends GameSystem
         }
     }
 
-    private void resolveConstraints(RigidBody2D body2D)
-    {
-        for (Edge2D edge : body2D.getEdges())
-        {
-            edge.p2().pos().sub(edge.p1().pos(), vectorBuffer1);
-            var length = edge.p2().pos().sub(edge.p1().pos(), vectorBuffer2).length();
-            float diff = length - edge.length();
-            vectorBuffer1.normalize();
-            vectorBuffer1.mul(diff * 0.5f);
-            edge.p1().pos().add(vectorBuffer1);
-            edge.p2().pos().sub(vectorBuffer1);
-        }
-    }
-
     private void updateBoundBox(RigidBody2D body, QuadRectangle boundingBox)
     {
         var max_x = Float.MIN_VALUE;
@@ -444,14 +436,10 @@ public class VerletPhysics extends GameSystem
         boundingBox.setMin_y(min_y);
     }
 
-    boolean runyet = false;
-    QuadTree<RigidBody2D> quadTree = new QuadTree<>(new QuadRectangle(0, 0, 1920, 1080), 0);
-
     private void tickEdges()
     {
-        var buf = bodyBuffer.size() * 6;
-        var buf2 = buf * 2;
-
+//        var buf = bodyBuffer.size() * 6;
+//        var buf2 = buf * 2;
         for (int i = 0; i < EDGE_STEPS; i++)
         {
 //            float[] arr1 = new float[buf2];
@@ -478,25 +466,14 @@ public class VerletPhysics extends GameSystem
 //                //resolveConstraints(body);
 //            }
 
+            // todo: come back to doing this with CL after getting SAT stuff further along
             //CLInstance.vectorDistance(arr1, arr2, dest2);
-
-
             for (RigidBody2D body : bodyBuffer.values())
             {
-                //offset = 0;
                 for (Edge2D edge : body.getEdges())
                 {
                     edge.p2().pos().sub(edge.p1().pos(), vectorBuffer1);
                     var length = vectorBuffer1.length();
-
-//                    var x1 = dest2[offset];
-//                    var x2 = dest2[offset];
-
-//                    if (!runyet)
-//                    {
-//                        System.out.println("Diff: x1:" + (x1 - length) + " x2:" + (x2 - length));
-//                    }
-
                     float diff = length - edge.length();
                     vectorBuffer1.normalize();
                     vectorBuffer1.mul(diff * 0.5f);
@@ -505,14 +482,14 @@ public class VerletPhysics extends GameSystem
                 }
             }
         }
-
-        runyet = true;
     }
 
+    //region WORKING AREA
+
+    // this is the CL enabled variant of the collision check todo: explore this more
     private Map<RigidBody2D, List<RigidBody2D>> checkMap = new LinkedHashMap<>();
     FloatBuffer bA = FloatBuffer.allocate(125_000_000);
     FloatBuffer bB = FloatBuffer.allocate(125_000_000);
-
     private void tickCollisions()
     {
         checkMap.clear();
@@ -521,16 +498,12 @@ public class VerletPhysics extends GameSystem
         bB.clear();
 
         int runningCount = 0;
+        keyCache.clear();
         for (RigidBody2D body : bodyBuffer.values())
         {
-            keyCache.clear();
             var b = ecs.getComponentFor(body.getEntitiy(), Component.BoundingBox);
             QuadRectangle targetBox = Component.BoundingBox.coerce(b);
-            var candidates = spaceMap.getMatches(targetBox);
-            //var candidates = new ArrayList<RigidBody2D>();
-            //quadTree.getElements(candidates, targetBox);
-            //System.out.println("dropped: " + (bodyBuffer.size() - candidates.size()));
-
+            var candidates = spatialMap.getMatches(targetBox);
             List<RigidBody2D> filtered = new ArrayList<>();
 
             for (RigidBody2D candidate : candidates)
@@ -627,9 +600,6 @@ public class VerletPhysics extends GameSystem
                         cl_buffer_offset += 2;
                     }
                 }
-
-                //bufferA.add(arr1);
-                //bufferB.add(arr2);
 
                 bA.put(arr1);
                 bB.put(arr2);
@@ -827,6 +797,7 @@ public class VerletPhysics extends GameSystem
         }
     }
 
+    //endregion
 
     private static boolean doBoxesIntersect(QuadRectangle a, QuadRectangle b)
     {
@@ -836,57 +807,9 @@ public class VerletPhysics extends GameSystem
             a.min_y > b.max_y);
     }
 
-
-
-
-    public static class BoxKey
-    {
-        public final int x;
-        public final int y;
-
-        public BoxKey(int x, int y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-
-        @Override
-        public boolean equals(Object o)
-        {
-            if (this == o)
-            {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass())
-            {
-                return false;
-            }
-
-            BoxKey boxKey = (BoxKey) o;
-
-            if (x != boxKey.x)
-            {
-                return false;
-            }
-            return y == boxKey.y;
-        }
-
-        @Override
-        public int hashCode()
-        {
-            int result = x;
-            result = 31 * result + y;
-            return result;
-        }
-    }
-
-    SpatialMap spaceMap = new SpatialMap(this);
     private void tickSimulation(float dt)
     {
-//        setThreadvectorBuffers();
-        //quadTree.clear();
-        spaceMap.clear();
-
+        spatialMap.clear();
 
         var bodies = ecs.getComponents(Component.RigidBody2D);
         if (bodies == null || bodies.isEmpty())
@@ -905,32 +828,23 @@ public class VerletPhysics extends GameSystem
             resolveForces(entity, body2D);
             integrate(entity, body2D, dt);
             updateBoundBox(body2D, box);
-            //quadTree.insert(box, body2D);
-
-            spaceMap.add(body2D, box);
-
+            spatialMap.add(body2D, box);
             bodyBuffer.put(entity, body2D);
         }
 
         collisionBuffer.clear();
-        //tickEdges();
-        //tickCollisions();
+        keyCache.clear();
         for (RigidBody2D body2D : bodyBuffer.values())
         {
-            findCollisions(body2D, quadTree, spaceMap);
+            findCollisions(body2D, spatialMap);
         }
-
         for (CollisionManifold c : collisionBuffer)
         {
             reactPolygon(c);
         }
-
         tickEdges();
 
-        //Window.setQT(quadTree);
-        Window.setSP(spaceMap);
-
-
+        Window.setSP(spatialMap);
     }
 
     private void simulate(float dt)

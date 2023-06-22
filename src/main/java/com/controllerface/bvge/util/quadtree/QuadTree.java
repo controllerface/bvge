@@ -1,5 +1,7 @@
 package com.controllerface.bvge.util.quadtree;
 
+import com.controllerface.bvge.ecs.components.QuadRectangle;
+
 import java.util.ArrayList;
 
 public class QuadTree<T>

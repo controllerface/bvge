@@ -1,9 +1,8 @@
 package com.controllerface.bvge.ecs.systems;
 
-import com.controllerface.bvge.ecs.Component;
-import com.controllerface.bvge.ecs.ControlPoints;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.systems.GameSystem;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;

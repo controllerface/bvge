@@ -1,15 +1,14 @@
 package com.controllerface.bvge.scene;
 
-import com.controllerface.bvge.Camera;
-import com.controllerface.bvge.Transform;
-import com.controllerface.bvge.ecs.Component;
-import com.controllerface.bvge.ecs.ControlPoints;
+import com.controllerface.bvge.ecs.components.Transform;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.RigidBody2D;
-import com.controllerface.bvge.rendering.Sprite;
-import com.controllerface.bvge.rendering.SpriteComponent;
+import com.controllerface.bvge.ecs.components.RigidBody2D;
+import com.controllerface.bvge.ecs.Sprite;
+import com.controllerface.bvge.ecs.components.SpriteComponent;
 import com.controllerface.bvge.util.AssetPool;
-import com.controllerface.bvge.util.quadtree.QuadRectangle;
+import com.controllerface.bvge.ecs.components.QuadRectangle;
 import org.joml.Random;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -25,7 +24,7 @@ public class GameRunning extends GameMode
 
     private int testBoxSize = 40;
 
-    private void genNPCs(int spacing, int size)
+    private void genNPCs(float spacing, float size)
     {
         var rand = new Random();
         for (int i = 0; i < testBoxSize; i++)
@@ -86,7 +85,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(500,50, 32, player));
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
-        genNPCs(3, 3);
+        genNPCs(1.5f, 1.5f);
     }
 
     @Override

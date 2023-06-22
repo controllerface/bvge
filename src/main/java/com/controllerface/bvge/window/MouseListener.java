@@ -1,6 +1,6 @@
 package com.controllerface.bvge.window;
 
-import com.controllerface.bvge.Camera;
+import com.controllerface.bvge.scene.Camera;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;

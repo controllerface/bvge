@@ -1,7 +1,5 @@
 package com.controllerface.bvge.scene;
 
-import com.controllerface.bvge.Camera;
-
 public abstract class GameMode
 {
     //protected Renderer renderer = new Renderer();

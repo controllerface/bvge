@@ -1,5 +1,7 @@
 package com.controllerface.bvge.util.quadtree;
 
+import com.controllerface.bvge.ecs.components.QuadRectangle;
+
 public class QuadNode<T>
 {
     QuadRectangle r;

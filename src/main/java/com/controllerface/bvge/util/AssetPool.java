@@ -1,8 +1,8 @@
 package com.controllerface.bvge.util;
 
-import com.controllerface.bvge.rendering.Shader;
-import com.controllerface.bvge.rendering.SpriteSheet;
-import com.controllerface.bvge.rendering.Texture;
+import com.controllerface.bvge.gl.Shader;
+import com.controllerface.bvge.old.SpriteSheet;
+import com.controllerface.bvge.gl.Texture;
 
 import java.io.File;
 import java.util.HashMap;

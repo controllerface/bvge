@@ -1,10 +1,11 @@
 package com.controllerface.bvge.ecs;
 
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.GameComponent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ECS
 {
