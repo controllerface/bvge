@@ -23,7 +23,7 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private int testBoxSize = 20;
+    private int testBoxSize = 40;
 
     private void genNPCs(int spacing, int size)
     {
@@ -36,6 +36,9 @@ public class GameRunning extends GameMode
                 float g = rand.nextFloat();
                 float b = rand.nextFloat();
 
+                float x = 100 + i * spacing;
+                float y = 100 + j * spacing;
+
                 var npc = ecs.registerEntity(null);
                 var scomp2 = new SpriteComponent();
                 var sprite2 = new Sprite();
@@ -44,16 +47,15 @@ public class GameRunning extends GameMode
                 var transform2 = new Transform();
                 transform2.scale.x = size;
                 transform2.scale.y = size;
-                transform2.position.x = 0f;
-                transform2.position.y = 0f;
+                transform2.position.x = x;
+                transform2.position.y = y;
                 sprite2.setHeight(32);
                 sprite2.setWidth(32);
                 scomp2.setSprite(sprite2);
                 scomp2.setColor(new Vector4f(r,g,b,1));
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
                 ecs.attachComponent(npc, Component.Transform, transform2);
-                ecs.attachComponent(npc, Component.RigidBody2D,
-                    RigidBody2D.simpleBox(100 + i * spacing, 100 + j * spacing, size, npc));
+                ecs.attachComponent(npc, Component.RigidBody2D, RigidBody2D.simpleBox(x, y, size, npc));
                 ecs.attachComponent(npc, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
             }
@@ -72,7 +74,7 @@ public class GameRunning extends GameMode
         var transform =  new Transform();
         transform.scale.x = 32f;
         transform.scale.y = 32f;
-        transform.position.x = 50f;
+        transform.position.x = 500f;
         transform.position.y = 50f;
         sprite.setHeight(16);
         sprite.setWidth(16);
@@ -81,10 +83,10 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.Transform, transform);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
-        ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(50,50, 32, player));
+        ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(500,50, 32, player));
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
-        genNPCs(5, 5);
+        genNPCs(3, 3);
     }
 
     @Override

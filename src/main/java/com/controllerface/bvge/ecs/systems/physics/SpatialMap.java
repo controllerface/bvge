@@ -8,10 +8,10 @@ import java.util.*;
 public class SpatialMap
 {
     private final VerletPhysics verletPhysics;
-    private float width = 1280;
-    private float height = 628;
-    private float xsubdivisions = 1;
-    private float ysubdivisions = 1;
+    private float width = 1920;
+    private float height = 1080;
+    private float xsubdivisions = 300;
+    private float ysubdivisions = 300;
     private float x_spacing = 0;
     private float y_spacing = 0;
     public List<QuadRectangle> rects = new ArrayList<>();

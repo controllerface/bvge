@@ -96,7 +96,7 @@ public class Window
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-        var prim = glfwGetPrimaryMonitor();
+        var prim = NULL; //glfwGetPrimaryMonitor();
 
         glfwWindow = glfwCreateWindow(this.width, this.height, this.title, prim, NULL);
         if (glfwWindow == NULL)
@@ -157,11 +157,15 @@ public class Window
         var inputSystem = new KBMInput(ecs);
         ecs.registerSystem(inputSystem);
         ecs.registerSystem(new VerletPhysics(ecs));
-        //ecs.registerSystem(new SpriteRendering(ecs));
-        ecs.registerSystem(new LineRendering(ecs));
-        ecs.registerSystem(new BoundingBoxRendering(ecs));
+        ecs.registerSystem(new SpriteRendering(ecs));
+        //ecs.registerSystem(new LineRendering(ecs));
+        //ecs.registerSystem(new BoundingBoxRendering(ecs));
         //ecs.registerSystem(quadTreeRendering);
-        ecs.registerSystem(spacePartionRendering);
+
+
+        //ecs.registerSystem(spacePartionRendering);
+        // note: the display is wrong for this renderer, it's not scaled correctly for some reason.
+        // todo: look into that
 
         initInput(inputSystem);
 
