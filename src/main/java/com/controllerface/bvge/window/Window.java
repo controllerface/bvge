@@ -3,6 +3,7 @@ package com.controllerface.bvge.window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.RigidBody2D;
 import com.controllerface.bvge.ecs.systems.*;
+import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
 import com.controllerface.bvge.scene.GameRunning;
 import com.controllerface.bvge.scene.GameMode;
@@ -95,14 +96,13 @@ public class Window
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-        var prim = NULL; //glfwGetPrimaryMonitor();
+        var prim = glfwGetPrimaryMonitor();
 
         glfwWindow = glfwCreateWindow(this.width, this.height, this.title, prim, NULL);
         if (glfwWindow == NULL)
         {
             throw new IllegalStateException("could not create window");
         }
-
         glfwSetWindowSizeCallback(glfwWindow, (win, newWidth, newHeight)->
         {
             Window.setWidth(newWidth);
@@ -115,9 +115,11 @@ public class Window
 
         // note: this must be called or nothing will work
         GL.createCapabilities();
+        glLoadIdentity();
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
         glViewport(0,0,1920, 1080);
 
     }
@@ -138,7 +140,7 @@ public class Window
         Window.quadTreeRendering.setQuadTree(quadTree);
     }
 
-    public static void setSP(VerletPhysics.SpatialMap spatialMap)
+    public static void setSP(SpatialMap spatialMap)
     {
         Window.spacePartionRendering.setSpatialMap(spatialMap);
     }
@@ -155,11 +157,11 @@ public class Window
         var inputSystem = new KBMInput(ecs);
         ecs.registerSystem(inputSystem);
         ecs.registerSystem(new VerletPhysics(ecs));
-        ecs.registerSystem(new SpriteRendering(ecs));
-        //ecs.registerSystem(new LineRendering(ecs));
-        //ecs.registerSystem(new BoundingBoxRendering(ecs));
+        //ecs.registerSystem(new SpriteRendering(ecs));
+        ecs.registerSystem(new LineRendering(ecs));
+        ecs.registerSystem(new BoundingBoxRendering(ecs));
         //ecs.registerSystem(quadTreeRendering);
-        //ecs.registerSystem(spacePartionRendering);
+        ecs.registerSystem(spacePartionRendering);
 
         initInput(inputSystem);
 

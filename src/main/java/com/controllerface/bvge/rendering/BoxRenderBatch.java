@@ -99,7 +99,7 @@ public class BoxRenderBatch implements Comparable<BoxRenderBatch>
 //        glEnableVertexAttribArray(4);
     }
 
-    public void addLine(QuadRectangle rectangle, Vector3f color)
+    public void addBox(QuadRectangle rectangle, Vector3f color)
     {
         // Get index and add renderObject
         int index = this.numLines;

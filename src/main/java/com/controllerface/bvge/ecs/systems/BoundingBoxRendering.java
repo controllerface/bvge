@@ -5,7 +5,6 @@ import com.controllerface.bvge.rendering.BoxRenderBatch;
 import com.controllerface.bvge.rendering.Shader;
 import com.controllerface.bvge.util.AssetPool;
 import com.controllerface.bvge.util.quadtree.QuadRectangle;
-import com.controllerface.bvge.util.quadtree.QuadTree;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -32,7 +31,7 @@ public class BoundingBoxRendering extends GameSystem
         {
             if (batch.hasRoom())
             {
-                batch.addLine(box, color);
+                batch.addBox(box, color);
                 added = true;
                 break;
             }
@@ -43,7 +42,7 @@ public class BoundingBoxRendering extends GameSystem
             BoxRenderBatch newBatch = new BoxRenderBatch(0, shader);
             newBatch.start();
             batches.add(newBatch);
-            newBatch.addLine(box, color);
+            newBatch.addBox(box, color);
         }
     }
 

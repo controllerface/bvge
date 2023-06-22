@@ -31,7 +31,7 @@ public class QuadTreeRendering extends GameSystem
         {
             if (batch.hasRoom())
             {
-                batch.addLine(box, color);
+                batch.addBox(box, color);
                 added = true;
                 break;
             }
@@ -42,7 +42,7 @@ public class QuadTreeRendering extends GameSystem
             BoxRenderBatch newBatch = new BoxRenderBatch(0, shader);
             newBatch.start();
             batches.add(newBatch);
-            newBatch.addLine(box, color);
+            newBatch.addBox(box, color);
         }
     }
 

@@ -15,11 +15,11 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 24.0f;
+    private final float TICK_RATE = 1.0f / 30.0f;
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
-    private final float FRICTION = .930f;
+    private final float FRICTION = .970f;
     private float accumulator = 0.0f;
 
     /**
@@ -880,176 +880,7 @@ public class VerletPhysics extends GameSystem
         }
     }
 
-    public class SpatialMap
-    {
-        private int width = 1920;
-        private int height = 1080;
-        private int xsubdivisions = 300;
-        private int ysubdivisions = 270;
-        private float x_spacing = 0;
-        private float y_spacing = 0;
-        public List<QuadRectangle> rects = new ArrayList<>();
-        private Set<BoxKey> playerkeys = new HashSet<>();
-
-        Map<Integer, Map<Integer, BoxKey>> keyMap = new HashMap<>();
-        Map<BoxKey, Set<RigidBody2D>> boxMap = new HashMap<>();
-
-        public SpatialMap()
-        {
-            init();
-        }
-
-        public void clear()
-        {
-            boxMap.values().forEach(Set::clear);
-            playerkeys.clear();
-        }
-
-        public void rebuildRects()
-        {
-            rects.clear();
-            var currentX = 0;
-            var currentY = 0;
-            for (int i = 0; i < xsubdivisions; i++)
-            {
-                for (int j = 0; j < ysubdivisions; j++)
-                {
-                    var k =keyMap.get(i).get(j);
-                    if (playerkeys.contains(k))
-                    {
-                        rects.add(new QuadRectangle(currentX, currentY, x_spacing, y_spacing, true));
-                    }
-                    else
-                    {
-                        rects.add(new QuadRectangle(currentX, currentY, x_spacing, y_spacing));
-                    }
-                    currentY+=y_spacing;
-                }
-                currentX+=x_spacing;
-                currentY=0;
-            }
-        }
-
-        public void init()
-        {
-            x_spacing = (float)width / (float) xsubdivisions;
-            y_spacing = (float)height / (float)ysubdivisions;
-
-            var currentX = 0;
-            var currentY = 0;
-            for (int i = 0; i < xsubdivisions; i++)
-            {
-                for (int j = 0; j < ysubdivisions; j++)
-                {
-
-                    var k = new BoxKey(i, j);
-                    keyMap.computeIfAbsent(i, (_i) -> new HashMap<>()).put(j, k);
-                    boxMap.put(k, new HashSet<>());
-                    rects.add(new QuadRectangle(currentX, currentY, x_spacing, y_spacing));
-
-                    currentY+=y_spacing;
-                }
-                currentX+=x_spacing;
-                currentY=0;
-            }
-        }
-
-        public Set<RigidBody2D> getMatches(QuadRectangle box)
-        {
-            var rSet = new HashSet<RigidBody2D>();
-            for (BoxKey k : box.getKeys())
-            {
-                rSet.addAll(boxMap.get(k));
-            }
-            return rSet;
-        }
-
-        public void add(RigidBody2D body, QuadRectangle box)
-        {
-            box.resetKeys();
-            var t = ecs.getComponentFor(body.getEntitiy(), Component.Transform);
-            Transform transform = Component.Transform.coerce(t);
-            var k0 = getKeyForPoint(transform.position.x, transform.position.y);
-            var k1 = getKeyForPoint(box.x, box.y);
-            var k2 = getKeyForPoint(box.x + box.width, box.y);
-            var k3 = getKeyForPoint(box.x + box.width, box.y + box.height);
-            var k4 = getKeyForPoint(box.x, box.y + box.height);
-
-            if (k0 == null
-                && k1 == null
-                && k2 == null
-                && k3 == null
-                && k4 == null)
-            {
-                return;
-            }
-
-            // is within only one cell
-            if (k0 == k1 && k0 == k2 && k0 == k3 && k0 == k4)
-            {
-                boxMap.get(k0).add(body);
-                box.addkey(k0);
-                return;
-            }
-
-            if (k0 != null)
-            {
-                boxMap.get(k0).add(body);
-                box.addkey(k0);
-            }
-
-            if (k1 != null)
-            {
-                boxMap.get(k1).add(body);
-                box.addkey(k1);
-            }
-            if (k2 != null)
-            {
-                boxMap.get(k2).add(body);
-                box.addkey(k2);
-            }
-            if (k3 != null)
-            {
-                boxMap.get(k3).add(body);
-                box.addkey(k3);
-            }
-            if (k4 != null)
-            {
-                boxMap.get(k4).add(body);
-                box.addkey(k4);
-            }
-
-            if (body.getEntitiy().equals("player"))
-            {
-                playerkeys.add(k0);
-                playerkeys.add(k1);
-                playerkeys.add(k2);
-                playerkeys.add(k3);
-                playerkeys.add(k4);
-                rebuildRects();
-            }
-        }
-
-        private BoxKey getKeyForPoint(float px, float py)
-        {
-//            int index_x = px - (px % x_spacing);
-//            int index_y = py - (py % y_spacing);
-
-            int index_x = ((int) Math.floor(px / x_spacing));
-            int index_y = ((int) Math.floor(py / y_spacing));
-            if (!keyMap.containsKey(index_x))
-            {
-                return null;
-            }
-            var ymp = keyMap.get(index_x);
-            if (!ymp.containsKey(index_y))
-            {
-                return null;
-            }
-            return ymp.get(index_y);
-        }
-    }
-    SpatialMap spaceMap = new SpatialMap();
+    SpatialMap spaceMap = new SpatialMap(this);
     private void tickSimulation(float dt)
     {
 //        setThreadvectorBuffers();

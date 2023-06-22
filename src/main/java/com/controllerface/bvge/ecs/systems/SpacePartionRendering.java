@@ -1,13 +1,11 @@
 package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.RigidBody2D;
-import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
+import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
 import com.controllerface.bvge.rendering.BoxRenderBatch;
 import com.controllerface.bvge.rendering.Shader;
 import com.controllerface.bvge.util.AssetPool;
 import com.controllerface.bvge.util.quadtree.QuadRectangle;
-import com.controllerface.bvge.util.quadtree.QuadTree;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -17,8 +15,8 @@ public class SpacePartionRendering extends GameSystem
 {
     private Shader shader;
     private List<BoxRenderBatch> batches;
-    private final Vector3f color = new Vector3f(0.3f,0.2f,0.8f);
-    private final Vector3f color2 = new Vector3f(0.9f,0.2f,0.3f);
+    private final Vector3f color = new Vector3f(0f,0f,1f);
+    private final Vector3f color2 = new Vector3f(1f,0f,0f);
 
 
     public SpacePartionRendering(ECS ecs)
@@ -36,7 +34,7 @@ public class SpacePartionRendering extends GameSystem
         {
             if (batch.hasRoom())
             {
-                batch.addLine(box, colorToUse);
+                batch.addBox(box, colorToUse);
                 added = true;
                 break;
             }
@@ -47,7 +45,7 @@ public class SpacePartionRendering extends GameSystem
             BoxRenderBatch newBatch = new BoxRenderBatch(0, shader);
             newBatch.start();
             batches.add(newBatch);
-            newBatch.addLine(box, colorToUse);
+            newBatch.addBox(box, colorToUse);
         }
     }
 
@@ -60,9 +58,9 @@ public class SpacePartionRendering extends GameSystem
         }
     }
 
-    private VerletPhysics.SpatialMap spatialMap;
+    private SpatialMap spatialMap;
 
-    public void setSpatialMap( VerletPhysics.SpatialMap spatialMap)
+    public void setSpatialMap( SpatialMap spatialMap)
     {
         this.spatialMap = spatialMap;
     }
