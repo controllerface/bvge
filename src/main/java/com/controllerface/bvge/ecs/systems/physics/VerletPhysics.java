@@ -12,12 +12,15 @@ import org.joml.Vector2f;
 
 import java.nio.FloatBuffer;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 60.0f;
+    private final float TICK_RATE = 1.0f / 24.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 1;
+    private final int EDGE_STEPS = 4;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .970f;
     private float accumulator = 0.0f;
@@ -33,10 +36,6 @@ public class VerletPhysics extends GameSystem
     private final List<CollisionManifold> collisionBuffer = new ArrayList<>();
     private final Vector2f vectorBuffer1 = new Vector2f();
     private final Vector2f vectorBuffer2 = new Vector2f();
-//    private final Vector2f vectorBuffer1 = new Vector2f();
-//    private final Vector2f vectorBuffer2 = new Vector2f();
-//    private final Vector2f vectorBuffer3 = new Vector2f();
-//    private final Vector2f vectorBuffer4 = new Vector2f();
 
     public VerletPhysics(ECS ecs)
     {
@@ -275,7 +274,6 @@ public class VerletPhysics extends GameSystem
         return polygonCollision(bodyA, bodyB);
     }
 
-    private final Set<String> keyCache = new HashSet<>();
 
     private void findCollisions(RigidBody2D target, SpatialMap spatialMap)
     {
@@ -290,12 +288,6 @@ public class VerletPhysics extends GameSystem
                 continue;
             }
             if (target.getEntitiy().equals(candidate.getEntitiy()))
-            {
-                continue;
-            }
-            var k1 = target.getEntitiy() + candidate.getEntitiy();
-            var k2 = candidate.getEntitiy() + target.getEntitiy();
-            if (keyCache.contains(k1) || keyCache.contains(k2))
             {
                 continue;
             }
@@ -468,11 +460,16 @@ public class VerletPhysics extends GameSystem
         }
     }
 
+    private record CheckHit(RigidBody2D body2D, List<RigidBody2D> candidates)
+    {
+    }
+
     //region WORKING AREA
 
     // this is the CL enabled variant of the collision check todo: explore this more
     // a linked map is used now to ensure order is preserved, but this is expensive
-    private Map<RigidBody2D, List<RigidBody2D>> checkMap = new LinkedHashMap<>();
+    //private Map<RigidBody2D, List<RigidBody2D>> checkMap = new LinkedHashMap<>();
+    private List<CheckHit> checkList = new ArrayList<>();
 
     private Map<RigidBody2D, List<RigidBody2D>> normalMap = new LinkedHashMap<>();
 
@@ -483,7 +480,8 @@ public class VerletPhysics extends GameSystem
 
     private void tickCollisions()
     {
-        checkMap.clear();
+        //checkMap.clear();
+        checkList.clear();
 
         v_dot_bufferA.clear();
         v_dot_bufferB.clear();
@@ -491,12 +489,13 @@ public class VerletPhysics extends GameSystem
 
         int runningVDotCount = 0;
         int runningNormCount = 0;
-        keyCache.clear();
 
 
 
         // broad phase collision check to filter in worthwhile collision checks
-        Map<RigidBody2D, List<RigidBody2D>> broadPhaseHits = new HashMap<>();
+        //Map<RigidBody2D, List<RigidBody2D>> broadPhaseHits = new HashMap<>();
+        List<CheckHit> broadPhaseHits = new ArrayList<>();
+
         for (RigidBody2D body : bodyBuffer.values())
         {
             var b = ecs.getComponentFor(body.getEntitiy(), Component.BoundingBox);
@@ -511,12 +510,6 @@ public class VerletPhysics extends GameSystem
                     continue;
                 }
                 if (body.getEntitiy().equals(candidate.getEntitiy()))
-                {
-                    continue;
-                }
-                var k1 = body.getEntitiy() + candidate.getEntitiy();
-                var k2 = candidate.getEntitiy() + body.getEntitiy();
-                if (keyCache.contains(k1) || keyCache.contains(k2))
                 {
                     continue;
                 }
@@ -536,16 +529,19 @@ public class VerletPhysics extends GameSystem
                 continue;
             }
 
-            broadPhaseHits.put(body, filtered);
+            //broadPhaseHits.put(body, filtered);
+            broadPhaseHits.add(new CheckHit(body, filtered));
         }
 
 
         // new method starts here
-        Map<RigidBody2D, List<RigidBody2D>> normalStage = new LinkedHashMap<>();
-        for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : broadPhaseHits.entrySet())
+        //Map<RigidBody2D, List<RigidBody2D>> normalStage = new LinkedHashMap<>();
+        List<CheckHit> normalStage = new ArrayList<>();
+        for (CheckHit e : broadPhaseHits)
+        //for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : broadPhaseHits.entrySet())
         {
-            RigidBody2D body = e.getKey();
-            List<RigidBody2D> candidates = e.getValue();
+            RigidBody2D body = e.body2D();
+            List<RigidBody2D> candidates = e.candidates();
 
             for (RigidBody2D candidate : candidates)
             {
@@ -597,7 +593,8 @@ public class VerletPhysics extends GameSystem
                 v_norm_buffer.put(arr1);
                 runningNormCount += inputCount;
             }
-            normalStage.put(body, candidates);
+            //normalStage.put(body, candidates);
+            normalStage.add(new CheckHit(body, candidates));
         }
 
 
@@ -608,10 +605,11 @@ public class VerletPhysics extends GameSystem
 
         int result2Offset = 0;
         // next new method here
-        for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : normalStage.entrySet())
+        for (CheckHit e : normalStage)
+        //for (Map.Entry<RigidBody2D, List<RigidBody2D>> e : normalStage.entrySet())
         {
-            RigidBody2D body = e.getKey();
-            List<RigidBody2D> candidates = e.getValue();
+            RigidBody2D body = e.body2D();
+            List<RigidBody2D> candidates = e.candidates();
 
             for (RigidBody2D candidate : candidates)
             {
@@ -687,7 +685,8 @@ public class VerletPhysics extends GameSystem
 
                 runningVDotCount += resultCount;
             }
-            checkMap.put(body, candidates);
+            checkList.add(new CheckHit(body, candidates));
+            //checkMap.put(body, candidates);
         }
 
 
@@ -805,10 +804,11 @@ public class VerletPhysics extends GameSystem
         // are traversed, it is updated to point to the next offset into the array
         int outerOffset = 0;
 
-        for (Map.Entry<RigidBody2D, List<RigidBody2D>> entry : checkMap.entrySet())
+        for (CheckHit entry : checkList)
+        //for (Map.Entry<RigidBody2D, List<RigidBody2D>> entry : checkMap.entrySet())
         {
-            RigidBody2D body = entry.getKey();
-            List<RigidBody2D> candidates = entry.getValue();
+            RigidBody2D body = entry.body2D();
+            List<RigidBody2D> candidates = entry.candidates();
 
             for (RigidBody2D candidate : candidates)
             {
@@ -968,6 +968,10 @@ public class VerletPhysics extends GameSystem
             a.min_y > b.max_y);
     }
 
+    //private CountDownLatch collLatch;
+
+    //private ExecutorService collThreads = Executors.newFixedThreadPool(2);
+
     private void tickSimulation(float dt)
     {
         spatialMap.clear();
@@ -986,24 +990,29 @@ public class VerletPhysics extends GameSystem
             QuadRectangle box = Component.BoundingBox.coerce(b);
             GameComponent component = entry.getValue();
             RigidBody2D body2D = Component.RigidBody2D.coerce(component);
+
             resolveForces(entity, body2D);
             integrate(entity, body2D, dt);
             updateBoundBox(body2D, box);
+
             spatialMap.add(body2D, box);
             bodyBuffer.put(entity, body2D);
         }
 
         collisionBuffer.clear();
-        keyCache.clear();
+
         //tickCollisions();
+
         for (RigidBody2D body2D : bodyBuffer.values())
         {
             findCollisions(body2D, spatialMap);
         }
+
         for (CollisionManifold c : collisionBuffer)
         {
             reactPolygon(c);
         }
+
         tickEdges();
 
         Window.setSP(spatialMap);

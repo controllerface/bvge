@@ -85,7 +85,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(500,50, 32, player));
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
-        genNPCs(2, 2);
+        genNPCs(5f, 5f);
     }
 
     @Override
