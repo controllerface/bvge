@@ -166,8 +166,8 @@ public class MouseListener
 
     public static float getScreenY()
     {
-        float currentY = getY() - get().gameViewPortPos.y; // we have to account for the texture flip here
-        // flipping the Y here is needed because ImGui has Y co-ordinates flipped relative to OpenGL
+        float currentY = getY() - get().gameViewPortPos.y; // we have p2 account for the texture flip here
+        // flipping the Y here is needed because ImGui has Y co-ordinates flipped relative p2 OpenGL
         currentY = 1080.0f - ((currentY / get().gameViewPortSize.y) * 1080.0f);
         return currentY;
     }

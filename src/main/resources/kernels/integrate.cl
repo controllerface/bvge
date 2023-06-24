@@ -1,5 +1,5 @@
-__kernel void integrate(__global float16 *bodies,
-        __global float4 *points,
+__kernel void integrate(__global const float16 *bodies,
+        __global const float4 *points,
         __global float16 *r_bodies,
         __global float4 *r_points,
         __global float *dt)

@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-import com.controllerface.bvge.ecs.components.RigidBody2D;
+import com.controllerface.bvge.data.FBody2D;
 import com.controllerface.bvge.ecs.components.QuadRectangle;
 
 import java.util.*;
@@ -17,7 +17,7 @@ public class SpatialMap
     private Set<BoxKey> playerkeys = new HashSet<>();
 
     Map<Integer, Map<Integer, BoxKey>> keyMap = new HashMap<>();
-    Map<BoxKey, Set<RigidBody2D>> boxMap = new HashMap<>();
+    Map<BoxKey, Set<FBody2D>> boxMap = new HashMap<>();
 
     public SpatialMap()
     {
@@ -79,9 +79,9 @@ public class SpatialMap
         }
     }
 
-    public Set<RigidBody2D> getMatches(QuadRectangle box)
+    public Set<FBody2D> getMatches(QuadRectangle box)
     {
-        var rSet = new HashSet<RigidBody2D>();
+        var rSet = new HashSet<FBody2D>();
         for (BoxKey k : box.getKeys())
         {
             rSet.addAll(boxMap.get(k));
@@ -89,7 +89,7 @@ public class SpatialMap
         return rSet;
     }
 
-    public void add(RigidBody2D body, QuadRectangle box)
+    public void add(FBody2D body, QuadRectangle box)
     {
         box.resetKeys();
 
@@ -114,7 +114,7 @@ public class SpatialMap
             return;
         }
 
-        // otherwise, we need to loop and get all of the keys that overlap this box
+        // otherwise, we need p2 loop and get all of the keys that overlap this box
         var keys = new BoxKey[]{k1, k2, k3, k4};
         var min_x = Integer.MAX_VALUE;
         var max_x = Integer.MIN_VALUE;
@@ -146,7 +146,7 @@ public class SpatialMap
             }
         }
         boolean isPlayer = false;
-        if (body.getEntitiy().equals("player"))
+        if (body.entity().equals("player"))
         {
             isPlayer = true;
         }

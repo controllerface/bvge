@@ -138,7 +138,7 @@ public class BoxRenderBatch implements Comparable<BoxRenderBatch>
 //            }
 //        }
 
-        // Add properties to local vertices array
+        // Add properties p2 local vertices array
         //loadVertexProperties(index);
 
         if (numLines >= Constants.Rendering.MAX_BATCH_SIZE)
@@ -182,7 +182,7 @@ public class BoxRenderBatch implements Comparable<BoxRenderBatch>
 //        {
 //            // todo: actually just set the correct index, bound by the max
 //            //  and do -1 in the shader
-//            // this + 1 is to support using texture 0 as "empty", allowing color to take
+//            // this + 1 is p2 support using texture 0 as "empty", allowing color p2 take
 //            glActiveTexture(GL_TEXTURE0 + i);
 //            textures.get(i).bind();
 //        }
@@ -207,7 +207,7 @@ public class BoxRenderBatch implements Comparable<BoxRenderBatch>
     }
 
     /**
-     * Updates the local buffer to reflect the current state of the indexed sprite.
+     * Updates the local buffer p2 reflect the current state of the indexed sprite.
      *
      * @param index the location of the sprite, within the sprite array
      */

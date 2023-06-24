@@ -1,14 +1,10 @@
 package com.controllerface.bvge.scene;
 
-import com.controllerface.bvge.ecs.components.Transform;
-import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.components.ControlPoints;
+import com.controllerface.bvge.data.Archetypes;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.RigidBody2D;
 import com.controllerface.bvge.ecs.Sprite;
-import com.controllerface.bvge.ecs.components.SpriteComponent;
+import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.util.AssetPool;
-import com.controllerface.bvge.ecs.components.QuadRectangle;
 import org.joml.Random;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -54,7 +50,7 @@ public class GameRunning extends GameMode
                 scomp2.setColor(new Vector4f(r,g,b,1));
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
                 ecs.attachComponent(npc, Component.Transform, transform2);
-                ecs.attachComponent(npc, Component.RigidBody2D, RigidBody2D.simpleBox(x, y, size, npc));
+                ecs.attachComponent(npc, Component.RigidBody2D, Archetypes.simpleBox(x, y, size, npc));
                 ecs.attachComponent(npc, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
             }
@@ -82,10 +78,10 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.Transform, transform);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
-        ecs.attachComponent(player, Component.RigidBody2D, RigidBody2D.simpleBox(500,50, 32, player));
+        ecs.attachComponent(player, Component.RigidBody2D, Archetypes.simpleBox(500,50, 32, player));
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
-        genNPCs(5f, 5f);
+        //genNPCs(5f, 5f);
     }
 
     @Override

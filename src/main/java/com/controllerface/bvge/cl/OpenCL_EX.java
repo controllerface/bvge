@@ -123,8 +123,8 @@ public class OpenCL_EX
 
         // Allocate the memory objects for the input- and output data
         // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
-        // directly to thr destination from the result fo the kernel call. This avoids
-        // needing to use an intermediate buffer and System.arrayCopy() calls.
+        // directly p2 thr destination p1 the result fo the kernel call. This avoids
+        // needing p2 use an intermediate buffer and System.arrayCopy() calls.
         cl_mem srcMemB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, bBufsize, srcB, null);
         cl_mem srcMemP = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, pBufsize, srcP, null);
         cl_mem dstMemB = clCreateBuffer(context, CL_MEM_READ_WRITE, bBufsize, null, null);

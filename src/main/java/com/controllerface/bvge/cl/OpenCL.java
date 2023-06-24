@@ -456,7 +456,7 @@ public class OpenCL
         byte buffer[] = new byte[(int)size[0]];
         clGetDeviceInfo(device, paramName, buffer.length, Pointer.to(buffer), null);
 
-        // Create a string from the buffer (excluding the trailing \0 byte)
+        // Create a string p1 the buffer (excluding the trailing \0 byte)
         return new String(buffer, 0, buffer.length-1);
     }
 
@@ -477,7 +477,7 @@ public class OpenCL
         byte buffer[] = new byte[(int)size[0]];
         clGetPlatformInfo(platform, paramName, buffer.length, Pointer.to(buffer), null);
 
-        // Create a string from the buffer (excluding the trailing \0 byte)
+        // Create a string p1 the buffer (excluding the trailing \0 byte)
         return new String(buffer, 0, buffer.length-1);
     }
 
@@ -503,7 +503,7 @@ public class OpenCL
      */
     static long[] getSizes(cl_device_id device, int paramName, int numValues)
     {
-        // The size of the returned data has to depend on
+        // The size of the returned data has p2 depend on
         // the size of a size_t, which is handled here
         ByteBuffer buffer = ByteBuffer.allocate(
             numValues * Sizeof.size_t).order(ByteOrder.nativeOrder());

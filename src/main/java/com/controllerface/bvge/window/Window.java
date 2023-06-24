@@ -19,7 +19,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
- * The Window is intended to be globally accessible
+ * The Window is intended p2 be globally accessible
  */
 public class Window
 {
@@ -151,7 +151,7 @@ public class Window
         var inputSystem = new KBMInput(ecs);
         ecs.registerSystem(inputSystem);
         ecs.registerSystem(new VerletPhysics(ecs));
-        ecs.registerSystem(new SpriteRenderer(ecs));
+        //ecs.registerSystem(new SpriteRenderer(ecs));
         ecs.registerSystem(new LineRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRendering(ecs));
 

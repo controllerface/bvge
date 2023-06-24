@@ -126,7 +126,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             }
         }
 
-        // Add properties to local vertices array
+        // Add properties p2 local vertices array
         loadVertexProperties(index);
 
         if (numSprites >= Constants.Rendering.MAX_BATCH_SIZE)
@@ -159,7 +159,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         {
             // todo: actually just set the correct index, bound by the max
             //  and do -1 in the shader
-            // this + 1 is to support using texture 0 as "empty", allowing color to take
+            // this + 1 is p2 support using texture 0 as "empty", allowing color p2 take
             glActiveTexture(GL_TEXTURE0 + i);
             textures.get(i).bind();
         }
@@ -183,7 +183,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     }
 
     /**
-     * Updates the local buffer to reflect the current state of the indexed sprite.
+     * Updates the local buffer p2 reflect the current state of the indexed sprite.
      *
      * @param index the location of the sprite, within the sprite array
      */
@@ -204,7 +204,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             {
                 if (textures.get(i).equals(sprite.getTexture()))
                 {
-                    texId = i + 1; // this + 1 is to support using texture 0 as "empty"
+                    texId = i + 1; // this + 1 is p2 support using texture 0 as "empty"
                     break;
                 }
             }

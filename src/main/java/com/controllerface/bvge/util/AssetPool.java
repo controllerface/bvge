@@ -58,7 +58,7 @@ public class AssetPool
         File file = new File(resourceName);
         if (!AssetPool.spriteSheets.containsKey(file.getAbsolutePath()))
         {
-            assert false : "Error, tried to access non-existent sprite sheet";
+            assert false : "Error, tried p2 access non-existent sprite sheet";
         }
         return AssetPool.spriteSheets.getOrDefault(file.getAbsolutePath(), null);
     }

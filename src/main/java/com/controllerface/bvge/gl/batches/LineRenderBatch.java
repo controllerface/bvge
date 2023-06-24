@@ -1,5 +1,6 @@
 package com.controllerface.bvge.gl.batches;
 
+import com.controllerface.bvge.data.FEdge2D;
 import com.controllerface.bvge.ecs.Edge2D;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.util.Constants;
@@ -29,7 +30,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
     private final int VERTEX_SIZE = 6;
     private final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
-    private Edge2D[] lines;
+    private FEdge2D[] lines;
     private int numLines;
     private boolean hasRoom;
     private float[] vertices;
@@ -47,7 +48,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
     public LineRenderBatch(int zIndex, Shader currentShader)
     {
         this.zIndex = zIndex;
-        this.lines = new Edge2D[Constants.Rendering.MAX_BATCH_SIZE];
+        this.lines = new FEdge2D[Constants.Rendering.MAX_BATCH_SIZE];
 
         // 4 vertices for quads, sprites are always rectangular
         vertices = new float[Constants.Rendering.MAX_BATCH_SIZE * 2 * VERTEX_SIZE];
@@ -99,7 +100,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 //        glEnableVertexAttribArray(4);
     }
 
-    public void addLine(Edge2D line)
+    public void addLine(FEdge2D line)
     {
         // Get index and add renderObject
         int index = this.numLines;
@@ -114,7 +115,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 //            }
 //        }
 
-        // Add properties to local vertices array
+        // Add properties p2 local vertices array
         loadVertexProperties(index);
 
         if (numLines >= Constants.Rendering.MAX_BATCH_SIZE)
@@ -158,7 +159,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 //        {
 //            // todo: actually just set the correct index, bound by the max
 //            //  and do -1 in the shader
-//            // this + 1 is to support using texture 0 as "empty", allowing color to take
+//            // this + 1 is p2 support using texture 0 as "empty", allowing color p2 take
 //            glActiveTexture(GL_TEXTURE0 + i);
 //            textures.get(i).bind();
 //        }
@@ -183,20 +184,20 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
     }
 
     /**
-     * Updates the local buffer to reflect the current state of the indexed sprite.
+     * Updates the local buffer p2 reflect the current state of the indexed sprite.
      *
      * @param index the location of the sprite, within the sprite array
      */
     private void loadVertexProperties(int index)
     {
-        Edge2D line = this.lines[index];
+        FEdge2D line = this.lines[index];
 
         // Find offset within array (4 vertices per sprite)
         int offset = index * 2 * VERTEX_SIZE;
 
         // Load position
-        vertices[offset] = line.p1().pos().x;
-        vertices[offset + 1] = line.p1().pos().y;
+        vertices[offset] = line.p1().pos_x();
+        vertices[offset + 1] = line.p1().pos_y();
         vertices[offset + 2] = 0.0f;
 
         // Load color
@@ -205,8 +206,8 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
         vertices[offset + 5] = 0.0f;
 
 
-        vertices[offset + 6] = line.p2().pos().x;
-        vertices[offset + 7] = line.p2().pos().y;
+        vertices[offset + 6] = line.p2().pos_x();
+        vertices[offset + 7] = line.p2().pos_y();
         vertices[offset + 8] = 0.0f;
 
         // Load color

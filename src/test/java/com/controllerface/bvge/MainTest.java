@@ -79,9 +79,9 @@ class MainTest
         body_buffer[9] = 0f; // bounds h
         body_buffer[10] = (float) 0; // point index start (int cast);
         body_buffer[11] = (float) 3; // point index end (int cast);
-        body_buffer[12] = (float) 0; // self index (int cast)
-        // empty for now, but needed to pad out float16 data type
-        body_buffer[13] = 0f;
+        body_buffer[12] = (float) 0; // edge index start (int cast)
+        body_buffer[13] = (float) 0; // edge index end (int cast)
+        // empty for now, but needed p2 pad out float16 data type
         body_buffer[14] = 0f;
         body_buffer[15] = 0f;
 
@@ -99,9 +99,9 @@ class MainTest
         body_buffer[25] = 0f; // bounds h
         body_buffer[26] = (float) 4; // point index start (int cast);
         body_buffer[27] = (float) 7; // point index end (int cast);
-        body_buffer[28] = (float) 0; // self index (int cast)
-        // empty for now, but needed to pad out float16 data type
-        body_buffer[29] = 0f;
+        body_buffer[28] = (float) 0; // edge index start (int cast)
+        body_buffer[29] = (float) 0; // edge index end (int cast)
+        // empty for now, but needed p2 pad out float16 data type
         body_buffer[30] = 0f;
         body_buffer[31] = 0f;
 

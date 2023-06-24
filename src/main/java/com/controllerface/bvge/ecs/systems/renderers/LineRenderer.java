@@ -1,11 +1,12 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
-import com.controllerface.bvge.ecs.*;
-import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.data.FBody2D;
+import com.controllerface.bvge.data.FEdge2D;
+import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.GameComponent;
-import com.controllerface.bvge.ecs.components.RigidBody2D;
-import com.controllerface.bvge.gl.*;
+import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.batches.LineRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
 
@@ -25,7 +26,7 @@ public class LineRenderer extends GameSystem
         this.shader = AssetPool.getShader("debugLine2D.glsl");
     }
 
-    private void add(Edge2D line)
+    private void add(FEdge2D line)
     {
         boolean added = false;
         for (LineRenderBatch batch : batches)
@@ -62,8 +63,8 @@ public class LineRenderer extends GameSystem
         for (Map.Entry<String, GameComponent> entry : ecs.getComponents(Component.RigidBody2D).entrySet())
         {
             GameComponent component = entry.getValue();
-            RigidBody2D body = Component.RigidBody2D.coerce(component);
-            for (Edge2D edge : body.getEdges())
+            FBody2D body = Component.RigidBody2D.coerce(component);
+            for (FEdge2D edge : body.edges())
             {
                 add(edge);
             }

@@ -53,7 +53,7 @@ public class RigidBody2D implements GameComponent
         edges.add(new Edge2D(p3, p4));
         edges.add(new Edge2D(p4, p1));
 
-        // corner to corner braces
+        // corner p2 corner braces
         edges.add(new Edge2D(p1, p3));
         edges.add(new Edge2D(p2, p4));
 

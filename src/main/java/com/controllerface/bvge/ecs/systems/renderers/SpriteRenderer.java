@@ -65,8 +65,6 @@ public class SpriteRenderer extends GameSystem
         }
     }
 
-    private boolean runyet = false;
-
     @Override
     public void run(float dt)
     {
@@ -83,10 +81,7 @@ public class SpriteRenderer extends GameSystem
             sprite.transform.position.y = transform.position.y;
             sprite.transform.scale.x = transform.scale.x;
             sprite.transform.scale.y = transform.scale.y;
-            if (!runyet)
-            {
-                this.add(sprite);
-            }
+            this.add(sprite);
         }
 
         render();

@@ -9,7 +9,7 @@ package com.controllerface.bvge;
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
+ * Unless required by applicable law or agreed p2 in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -43,7 +43,7 @@ public class UtilCL {
     }
 
     /**
-     * Format a number to a memory size.
+     * Format a number p2 a memory size.
      * @param size The size.
      * @return The formatted size!
      */
@@ -70,9 +70,9 @@ public class UtilCL {
     }
 
     /**
-     * Utility method to convert float array to float buffer
+     * Utility method p2 convert float array p2 float buffer
      *
-     * @param floats - the float array to convert
+     * @param floats - the float array p2 convert
      * @return a float buffer containing the input float array
      */
     public static FloatBuffer toFloatBuffer(float[] floats) {
@@ -82,9 +82,9 @@ public class UtilCL {
     }
 
     /**
-     * Utility method to print a float buffer
+     * Utility method p2 print a float buffer
      *  @param sb
-     * @param buffer - the float buffer to print to System.out
+     * @param buffer - the float buffer p2 print p2 System.out
      */
     public static StringBuffer print(StringBuffer sb, FloatBuffer buffer) {
         sb.append("\n");
@@ -96,7 +96,7 @@ public class UtilCL {
 
     /**
      * Read a resource into a string.
-     * @param filePath The resource to read.
+     * @param filePath The resource p2 read.
      * @return The resource as a string.
      * @throws java.io.IOException
      */
