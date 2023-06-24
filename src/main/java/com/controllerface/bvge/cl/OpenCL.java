@@ -55,7 +55,7 @@ public class OpenCL
             "}";
 
 
-    private static void printStuff(cl_device_id[] devices)
+    public static void printDeviceDetails(cl_device_id[] devices)
     {
         for (cl_device_id device : devices)
         {
@@ -227,7 +227,7 @@ public class OpenCL
         cl_device_id device = devices[deviceIndex];
 
         var x = new cl_device_id[]{device};
-        printStuff(x);
+        printDeviceDetails(x);
         // Create a context for the selected device
         context = clCreateContext(
             contextProperties, 1, x,
