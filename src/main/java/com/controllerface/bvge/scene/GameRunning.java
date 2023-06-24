@@ -1,6 +1,6 @@
 package com.controllerface.bvge.scene;
 
-import com.controllerface.bvge.data.Archetypes;
+import com.controllerface.bvge.data.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.Sprite;
 import com.controllerface.bvge.ecs.components.*;
@@ -18,7 +18,7 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private int testBoxSize = 60;
+    private int testBoxSize = 50;
 
     private void genNPCs(float spacing, float size)
     {
@@ -46,13 +46,12 @@ public class GameRunning extends GameMode
                 transform2.position.y = y;
                 sprite2.setHeight(32);
                 sprite2.setWidth(32);
-                //scomp2.setSprite(sprite2);
+                scomp2.setSprite(sprite2);
                 scomp2.setColor(new Vector4f(r,g,b,1));
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
                 ecs.attachComponent(npc, Component.Transform, transform2);
-                ecs.attachComponent(npc, Component.RigidBody2D, Archetypes.simpleBox(x, y, size, npc));
+                ecs.attachComponent(npc, Component.RigidBody2D, PhysicsObjects.simpleBox(x, y, size, npc));
                 ecs.attachComponent(npc, Component.BoundingBox, new QuadRectangle(0,0,0,0));
-
             }
         }
     }
@@ -78,7 +77,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.Transform, transform);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
-        ecs.attachComponent(player, Component.RigidBody2D, Archetypes.simpleBox(500,50, 32, player));
+        ecs.attachComponent(player, Component.RigidBody2D, PhysicsObjects.simpleBox(500,50, 32, player));
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
         genNPCs(5f, 5f);

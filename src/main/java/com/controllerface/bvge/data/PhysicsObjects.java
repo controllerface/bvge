@@ -4,7 +4,7 @@ import com.controllerface.bvge.Main;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Vector2f;
 
-public class Archetypes
+public class PhysicsObjects
 {
     private static Vector2f vectorBuffer = new Vector2f();
 
