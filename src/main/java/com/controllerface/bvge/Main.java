@@ -1,6 +1,7 @@
 package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.OpenCL_EX;
 import com.controllerface.bvge.data.FBody2D;
 import com.controllerface.bvge.data.FEdge2D;
 import com.controllerface.bvge.data.FPoint2D;
@@ -29,6 +30,27 @@ public class Main
         private static int body_index = 0;
         private static int point_index = 0;
         private static int edge_index = 0;
+
+        public static int bodyCount()
+        {
+            return body_index / Width.BODY;
+        }
+
+        public static int bodyLength()
+        {
+            return body_index + 1;
+        }
+
+        public static int pointCount()
+        {
+            return point_index / Width.POINT;
+        }
+
+        public static int pointLength()
+        {
+            return point_index + 1;
+        }
+
 
         public static FEdge2D newEdge(int p1, int p2, float l, FPoint2D from, FPoint2D to)
         {
@@ -88,10 +110,10 @@ public class Main
 
     public static void main(String[] args)
     {
-        OpenCL.init();
+        OpenCL_EX.init();
         Window window = Window.get();
         window.run();
-        OpenCL.destroy();
+        OpenCL_EX.destroy();
     }
 }
 

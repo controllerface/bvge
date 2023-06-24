@@ -4,6 +4,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.KBMInput;
 import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
+import com.controllerface.bvge.ecs.systems.renderers.BoundingBoxRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.SpriteRenderer;
@@ -153,7 +154,7 @@ public class Window
         ecs.registerSystem(new VerletPhysics(ecs));
         ecs.registerSystem(new SpriteRenderer(ecs));
         ecs.registerSystem(new LineRenderer(ecs));
-        //ecs.registerSystem(new BoundingBoxRendering(ecs));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs));
 
         //ecs.registerSystem(spacePartionRendering);
         // note: the display is wrong for this renderer, it's not scaled correctly for some reason.

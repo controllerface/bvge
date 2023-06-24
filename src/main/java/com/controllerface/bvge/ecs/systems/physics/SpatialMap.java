@@ -9,8 +9,8 @@ public class SpatialMap
 {
     private float width = 1920;
     private float height = 1080;
-    private float xsubdivisions = 200;
-    private float ysubdivisions = 200;
+    private float xsubdivisions = 250;
+    private float ysubdivisions = 250;
     private float x_spacing = 0;
     private float y_spacing = 0;
     public List<QuadRectangle> rects = new ArrayList<>();

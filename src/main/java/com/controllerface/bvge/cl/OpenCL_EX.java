@@ -1,5 +1,6 @@
 package com.controllerface.bvge.cl;
 
+import com.controllerface.bvge.Main;
 import org.jocl.*;
 
 import java.io.IOException;
@@ -100,17 +101,18 @@ public class OpenCL_EX
         clReleaseContext(context);
     }
 
-    public static void integrate(float[] bodies, float[] points)
+    public static void integrate(float[] bodies, float[] points, float tick_rate)
     {
-        var bBuf = FloatBuffer.wrap(bodies);
-        var pBuf = FloatBuffer.wrap(points);
+        int bSize = Main.Memory.bodyLength();
+        int pSize = Main.Memory.pointLength();
 
-        int bSize = bodies.length;
-        int pSize = points.length;
+        var bBuf = FloatBuffer.wrap(bodies, 0, bSize);
+        var pBuf = FloatBuffer.wrap(points, 0, pSize);
+
         //assert n % 2 == 0 : "Invalid length";
         // Set the work-item dimensions
         long global_work_size[] = new long[]{bSize / 16};
-        float tick_rate = (1f / 60f);
+        //float[] dt = { (1/60) * (1/60) };
         float[] dt = { tick_rate * tick_rate };
 
         Pointer srcB = Pointer.to(bBuf);

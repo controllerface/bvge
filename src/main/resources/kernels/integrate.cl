@@ -16,6 +16,8 @@ __kernel void integrate(__global const float16 *bodies,
    	acc.x = acc.x * dt[0];
    	acc.y = acc.y * dt[0];
 
+    printf("dt: %f", dt[0]);
+
     // get start/end vertex indices
     int start = (int)body.sA;
     int end   = (int)body.sB;
@@ -43,6 +45,8 @@ __kernel void integrate(__global const float16 *bodies,
         // subtract prv from pos to get the difference this frame
         float2 diff = pos - prv;
         diff = acc + diff;
+        // diff.x *= .10;
+        // diff.y *= .10;
 
         // todo: add friction component
 

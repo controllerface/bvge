@@ -18,10 +18,11 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private int testBoxSize = 50;
+    private int testBoxSize = 1;
 
     private void genNPCs(float spacing, float size)
     {
+        System.out.println("generating: " + testBoxSize * testBoxSize + " NPCs..");
         var rand = new Random();
         for (int i = 0; i < testBoxSize; i++)
         {

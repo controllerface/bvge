@@ -1,6 +1,8 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
+import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.OpenCL_EX;
 import com.controllerface.bvge.data.FBody2D;
 import com.controllerface.bvge.data.FEdge2D;
 import com.controllerface.bvge.data.FPoint2D;
@@ -33,7 +35,7 @@ public class VerletPhysics extends GameSystem
      */
     private final Map<String, FBody2D> bodyBuffer = new HashMap<>();
     private final List<CollisionManifold> collisionBuffer = new ArrayList<>();
-    private final Set<String> collisionProgress = new HashSet<>();
+    private final Map<String, Set<String>> collisionProgress = new HashMap<>();
     private final Vector2f vectorBuffer1 = new Vector2f();
     private final Vector2f vectorBuffer2 = new Vector2f();
     private final Vector2f vectorBuffer3 = new Vector2f();
@@ -309,17 +311,28 @@ public class VerletPhysics extends GameSystem
                 continue;
             }
 
-            var key = target.entity().compareTo(candidate.entity()) < 0
-                ? target.entity() + candidate.entity()
-                : candidate.entity() + target.entity();
+            var keyA = "";
+            var keyB = "";
+            if (target.entity().compareTo(candidate.entity()) < 0)
+            {
+                keyA = target.entity();
+                keyB = candidate.entity();
+            }
+            else
+            {
+                keyA = candidate.entity();
+                keyB = target.entity();
+            }
 
-            if (collisionProgress.contains(key))
+
+
+            if (collisionProgress.computeIfAbsent(keyA, (k)-> new HashSet<>()).contains(keyB))
             {
                 continue;
             }
 
-            collisionProgress.add(key);
-            //System.out.println("key: " + key + "target: "+ target.entity() + " candidate: " + candidate.entity());
+            collisionProgress.get(keyA).add(keyB);
+            //System.out.println("keyA: " + keyA + " keyB: " + keyB);
 
             var bx = ecs.getComponentFor(candidate.entity(), Component.BoundingBox);
             QuadRectangle candidateBox = Component.BoundingBox.coerce(bx);
@@ -1016,7 +1029,12 @@ public class VerletPhysics extends GameSystem
             return;
         }
 
+        var bd = ecs.getComponentFor("player", Component.RigidBody2D);
+        FBody2D body = Component.RigidBody2D.coerce(bd);
+        resolveForces(body.entity(), body);
+
         bodyBuffer.clear();
+        OpenCL_EX.integrate(Main.Memory.body_buffer, Main.Memory.point_buffer, dt);
         for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
         {
             String entity = entry.getKey();
@@ -1024,9 +1042,17 @@ public class VerletPhysics extends GameSystem
             QuadRectangle box = Component.BoundingBox.coerce(b);
             GameComponent component = entry.getValue();
             FBody2D body2D = Component.RigidBody2D.coerce(component);
+            var t = ecs.getComponentFor(entity, Component.Transform);
+            Transform transform = Component.Transform.coerce(t);
+            transform.position.x = body2D.pos_x();
+            transform.position.y = body2D.pos_y();
+            box.setX(body2D.bounds_x());
+            box.setY(body2D.bounds_y());
+            box.setWidth(body2D.bounds_w());
+            box.setHeight(body2D.bounds_h());
 
-            resolveForces(entity, body2D);
-            integrate(entity, body2D, dt);
+            //resolveForces(entity, body2D);
+            //integrate(entity, body2D, dt);
             updateBoundBox(body2D, box);
 
             spatialMap.add(body2D, box);

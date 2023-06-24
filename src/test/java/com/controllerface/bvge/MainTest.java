@@ -122,7 +122,7 @@ class MainTest
         System.out.println(Arrays.toString(body_buffer));
         System.out.println(Arrays.toString(point_buffer));
 
-        OpenCL_EX.integrate(body_buffer, point_buffer);
+        OpenCL_EX.integrate(body_buffer, point_buffer, 1f/60f);
 
         System.out.println("After:");
         System.out.println(Arrays.toString(body_buffer));
