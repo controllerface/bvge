@@ -18,7 +18,7 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private int testBoxSize = 1;
+    private int testBoxSize = 20;
 
     private void genNPCs(float spacing, float size)
     {

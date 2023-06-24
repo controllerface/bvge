@@ -16,8 +16,6 @@ __kernel void integrate(__global const float16 *bodies,
    	acc.x = acc.x * dt[0];
    	acc.y = acc.y * dt[0];
 
-    printf("dt: %f", dt[0]);
-
     // get start/end vertex indices
     int start = (int)body.sA;
     int end   = (int)body.sB;
@@ -60,6 +58,8 @@ __kernel void integrate(__global const float16 *bodies,
         // finally, update the pos
         point.x = pos.x;
         point.y = pos.y;
+        point.z = prv.x;
+        point.w = prv.y;
 
         // update center sum
         x_sum += pos.x;
