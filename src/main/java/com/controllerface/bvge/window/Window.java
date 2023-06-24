@@ -151,8 +151,8 @@ public class Window
         var inputSystem = new KBMInput(ecs);
         ecs.registerSystem(inputSystem);
         ecs.registerSystem(new VerletPhysics(ecs));
-        //ecs.registerSystem(new SpriteRenderer(ecs));
-        ecs.registerSystem(new LineRenderer(ecs));
+        ecs.registerSystem(new SpriteRenderer(ecs));
+        //ecs.registerSystem(new LineRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRendering(ecs));
 
         //ecs.registerSystem(spacePartionRendering);

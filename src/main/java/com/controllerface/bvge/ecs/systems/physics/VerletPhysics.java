@@ -17,11 +17,11 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 24.0f;
+    private final float TICK_RATE = 1.0f / 60.0f;
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 4;
     private final float GRAVITY = 9.8f;
-    private final float FRICTION = .970f;
+    private final float FRICTION = .980f;
     private float accumulator = 0.0f;
 
     private SpatialMap spatialMap = new SpatialMap();
@@ -33,6 +33,7 @@ public class VerletPhysics extends GameSystem
      */
     private final Map<String, FBody2D> bodyBuffer = new HashMap<>();
     private final List<CollisionManifold> collisionBuffer = new ArrayList<>();
+    private final Set<String> collisionProgress = new HashSet<>();
     private final Vector2f vectorBuffer1 = new Vector2f();
     private final Vector2f vectorBuffer2 = new Vector2f();
     private final Vector2f vectorBuffer3 = new Vector2f();
@@ -289,6 +290,8 @@ public class VerletPhysics extends GameSystem
     }
 
 
+
+
     private void findCollisions(FBody2D target, SpatialMap spatialMap)
     {
         var b = ecs.getComponentFor(target.entity(), Component.BoundingBox);
@@ -306,6 +309,18 @@ public class VerletPhysics extends GameSystem
                 continue;
             }
 
+            var key = target.entity().compareTo(candidate.entity()) < 0
+                ? target.entity() + candidate.entity()
+                : candidate.entity() + target.entity();
+
+            if (collisionProgress.contains(key))
+            {
+                continue;
+            }
+
+            collisionProgress.add(key);
+            //System.out.println("key: " + key + "target: "+ target.entity() + " candidate: " + candidate.entity());
+
             var bx = ecs.getComponentFor(candidate.entity(), Component.BoundingBox);
             QuadRectangle candidateBox = Component.BoundingBox.coerce(bx);
             boolean ch = doBoxesIntersect(targetBox, candidateBox);
@@ -313,7 +328,6 @@ public class VerletPhysics extends GameSystem
             {
                 continue;
             }
-
 
             var collision = checkCollision(target, candidate);
             if (collision == null)
@@ -1019,6 +1033,7 @@ public class VerletPhysics extends GameSystem
             bodyBuffer.put(entity, body2D);
         }
 
+        collisionProgress.clear();
         collisionBuffer.clear();
 
         //tickCollisions();

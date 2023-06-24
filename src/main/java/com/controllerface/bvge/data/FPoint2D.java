@@ -45,7 +45,7 @@ public record FPoint2D(int index)
 
     public float distance(FPoint2D other)
     {
-        return Vector2f.distance(other.pos_x(), other.pos_y(), pos_x(), pos_y());
+        return Vector2f.distance(pos_x(), pos_y(), other.pos_x(), other.pos_y());
     }
 
     public void addPos(Vector2f other)

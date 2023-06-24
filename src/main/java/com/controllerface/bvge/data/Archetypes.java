@@ -12,7 +12,7 @@ public class Archetypes
     {
         var halfSize = size / 2;
 
-        var v1 = Main.Memory.newPoint(x + halfSize, y - halfSize);
+        var v1 = Main.Memory.newPoint(x - halfSize, y - halfSize);
         var v2 = Main.Memory.newPoint(x + halfSize, y - halfSize);
         var v3 = Main.Memory.newPoint(x + halfSize, y + halfSize);
         var v4 = Main.Memory.newPoint(x - halfSize, y + halfSize);

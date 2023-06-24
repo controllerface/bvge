@@ -18,9 +18,9 @@ public class Main
             public static final int EDGE = 3;
         }
 
-        private static final int body_buffer_size = Width.BODY * 10000;
-        private static final int point_buffer_size = Width.POINT * 10000;
-        private static final int edge_buffer_size = Width.EDGE * 10000;
+        private static final int body_buffer_size = Width.BODY * 100000;
+        private static final int point_buffer_size = Width.POINT * 100000;
+        private static final int edge_buffer_size = Width.EDGE * 100000;
 
         public static float[] body_buffer = new float[body_buffer_size];
         public static float[] point_buffer = new float[point_buffer_size];
