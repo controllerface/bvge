@@ -6,6 +6,7 @@ import com.controllerface.bvge.cl.OpenCL_EX;
 import com.controllerface.bvge.data.FBody2D;
 import com.controllerface.bvge.data.FEdge2D;
 import com.controllerface.bvge.data.FPoint2D;
+import com.controllerface.bvge.data.FTransform;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.Point2D;
 import com.controllerface.bvge.ecs.components.*;
@@ -21,7 +22,7 @@ public class VerletPhysics extends GameSystem
 {
     private final float TICK_RATE = 1.0f / 60.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 4;
+    private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .980f;
     private float accumulator = 0.0f;
@@ -81,7 +82,7 @@ public class VerletPhysics extends GameSystem
     private void integrate(String entitiy, FBody2D body2D, float dt)
     {
         var t = ecs.getComponentFor(entitiy, Component.Transform);
-        Transform transform = Component.Transform.coerce(t);
+        FTransform transform = Component.Transform.coerce(t);
 
         body2D.mulAcc(dt * dt);
         vectorBuffer3.x = body2D.acc_x();
@@ -103,8 +104,8 @@ public class VerletPhysics extends GameSystem
             point.addPos(vectorBuffer2);
             //point.pos().add(vectorBuffer2);
         }
-        MathEX.centroid(body2D.points(), transform.position);
-        body2D.setPos(transform.position);
+        //MathEX.centroid(body2D.points(), transform.position);
+        //body2D.setPos(transform.position);
     }
 
 
@@ -269,11 +270,12 @@ public class VerletPhysics extends GameSystem
 
         var tA = ecs.getComponentFor(a.entity(), Component.Transform);
         var tB = ecs.getComponentFor(b.entity(), Component.Transform);
-        Transform transformA = Component.Transform.coerce(tA);
-        Transform transformB = Component.Transform.coerce(tB);
+        FTransform transformA = Component.Transform.coerce(tA);
+        FTransform transformB = Component.Transform.coerce(tB);
 
         var direction = new Vector2f();
-        transformA.position.sub(transformB.position, direction);
+        transformA.subPos(transformB, direction);
+        //transformA.position.sub(transformB.position, direction);
         var dirdot = direction.dot(vectorBuffer2);
         if (dirdot < 0)
         {
@@ -516,11 +518,9 @@ public class VerletPhysics extends GameSystem
     private List<CheckHit> checkList = new ArrayList<>();
 
 
-    FloatBuffer v_dot_bufferA = FloatBuffer.allocate(125_000_000);
-    FloatBuffer v_dot_bufferB = FloatBuffer.allocate(125_000_000);
-
-    FloatBuffer v_norm_buffer = FloatBuffer.allocate(125_000_000);
-
+    FloatBuffer v_dot_bufferA = FloatBuffer.allocate(0);
+    FloatBuffer v_dot_bufferB = FloatBuffer.allocate(0);
+    FloatBuffer v_norm_buffer = FloatBuffer.allocate(0);
     private void tickCollisions()
     {
         //checkMap.clear();
@@ -981,11 +981,11 @@ public class VerletPhysics extends GameSystem
 
                 var tA = ecs.getComponentFor(a.entity(), Component.Transform);
                 var tB = ecs.getComponentFor(b.entity(), Component.Transform);
-                Transform transformA = Component.Transform.coerce(tA);
-                Transform transformB = Component.Transform.coerce(tB);
+                FTransform transformA = Component.Transform.coerce(tA);
+                FTransform transformB = Component.Transform.coerce(tB);
 
                 var direction = new Vector2f();
-                transformA.position.sub(transformB.position, direction);
+                transformA.subPos(transformB, direction);
                 var dirdot = direction.dot(vectorBuffer2);
                 if (dirdot < 0)
                 {
@@ -1009,15 +1009,11 @@ public class VerletPhysics extends GameSystem
 
     private static boolean doBoxesIntersect(QuadRectangle a, QuadRectangle b)
     {
-        return !(a.max_x < b.min_x ||
-            a.max_y < b.min_y ||
-            a.min_x > b.max_x ||
-            a.min_y > b.max_y);
+        return !(a.max_x < b.x ||
+            a.max_y < b.y ||
+            a.x > b.max_x ||
+            a.y > b.max_y);
     }
-
-    //private CountDownLatch collLatch;
-
-    //private ExecutorService collThreads = Executors.newFixedThreadPool(2);
 
     private void tickSimulation(float dt)
     {
@@ -1034,26 +1030,31 @@ public class VerletPhysics extends GameSystem
         resolveForces(body.entity(), body);
 
         bodyBuffer.clear();
-        OpenCL_EX.integrate(Main.Memory.body_buffer, Main.Memory.point_buffer, dt);
+        OpenCL_EX.integrate(dt);
         for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
         {
             String entity = entry.getKey();
+
+            // todo: replace quad rect with FBounds
             var b = ecs.getComponentFor(entity, Component.BoundingBox);
             QuadRectangle box = Component.BoundingBox.coerce(b);
+
             GameComponent component = entry.getValue();
             FBody2D body2D = Component.RigidBody2D.coerce(component);
-            var t = ecs.getComponentFor(entity, Component.Transform);
-            Transform transform = Component.Transform.coerce(t);
-            transform.position.x = body2D.pos_x();
-            transform.position.y = body2D.pos_y();
-            box.setX(body2D.bounds_x());
-            box.setY(body2D.bounds_y());
-            box.setWidth(body2D.bounds_w());
-            box.setHeight(body2D.bounds_h());
 
-            //resolveForces(entity, body2D);
-            //integrate(entity, body2D, dt);
-            updateBoundBox(body2D, box);
+//            var t = ecs.getComponentFor(entity, Component.Transform);
+//            FTransform transform = Component.Transform.coerce(t);
+//            transform.position.x = body2D.pos_x();
+//            transform.position.y = body2D.pos_y();
+
+            box.setX(body2D.bounds().x());
+            box.setY(body2D.bounds().y());
+            box.setWidth(body2D.bounds().w());
+            box.setHeight(body2D.bounds().h());
+            box.setMin_x(body2D.bounds().min_x());
+            box.setMax_x(body2D.bounds().max_x());
+            box.setMin_y(body2D.bounds().min_y());
+            box.setMax_y(body2D.bounds().max_y());
 
             spatialMap.add(body2D, box);
             bodyBuffer.put(entity, body2D);

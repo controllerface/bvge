@@ -1,8 +1,11 @@
-__kernel void integrate(__global const float16 *bodies,
-        __global const float4 *points,
-        __global float16 *r_bodies,
-        __global float4 *r_points,
-        __global float *dt)
+__kernel void integrate(
+    __global const float16 *bodies,
+    __global const float4 *points,
+    __global const float8 *bounds,
+    __global float16 *r_bodies,
+    __global float4 *r_points,
+    __global float8 *r_bounds,
+    __global float *dt)
 {
     int gid = get_global_id(0);
 
@@ -17,8 +20,8 @@ __kernel void integrate(__global const float16 *bodies,
    	acc.y = acc.y * dt[0];
 
     // get start/end vertex indices
-    int start = (int)body.sA;
-    int end   = (int)body.sB;
+    int start = (int)body.s7;
+    int end   = (int)body.s8;
 
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;
@@ -43,9 +46,9 @@ __kernel void integrate(__global const float16 *bodies,
         // subtract prv from pos to get the difference this frame
         float2 diff = pos - prv;
         diff = acc + diff;
-        // diff.x *= .10;
-        // diff.y *= .10;
 
+        diff.x *= .980;
+        diff.y *= .980;
         // todo: add friction component
 
         // set the prv to current pos
@@ -55,7 +58,7 @@ __kernel void integrate(__global const float16 *bodies,
         // update pos
         pos = pos + diff;
 
-        // finally, update the pos
+        // finally, update the pos and prv in the object
         point.x = pos.x;
         point.y = pos.y;
         point.z = prv.x;
@@ -90,10 +93,20 @@ __kernel void integrate(__global const float16 *bodies,
     // calculate centroid
     body.s0 = x_sum / point_count;
     body.s1 = y_sum / point_count;
-    body.s6 = min_x;
-    body.s7 = min_y;
-    body.s8 = fabs(max_x - min_x);
-    body.s9 = fabs(max_y - min_y);
+
+    int bound_index = (int)body.s6;
+
+    float8 bounding_box = bounds[bound_index];
+
+    // calculate bounding box
+    bounding_box.s0 = min_x;
+    bounding_box.s1 = min_y;
+    bounding_box.s2 = fabs(max_x - min_x);
+    bounding_box.s3 = fabs(max_y - min_y);
+    bounding_box.s4 = max_x;
+    bounding_box.s5 = max_y;
+
+    r_bounds[bound_index] = bounding_box;
 
     // store updated body in result buffer
     r_bodies[gid] = body;

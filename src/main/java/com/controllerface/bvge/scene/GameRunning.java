@@ -18,7 +18,7 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private int testBoxSize = 20;
+    private int testBoxSize = 40;
 
     private void genNPCs(float spacing, float size)
     {
@@ -40,18 +40,14 @@ public class GameRunning extends GameMode
                 var sprite2 = new Sprite();
                 var tex2 = AssetPool.getTexture("assets/images/blendImage2.png");
                 sprite2.setTexture(tex2);
-                var transform2 = new Transform();
-                transform2.scale.x = size;
-                transform2.scale.y = size;
-                transform2.position.x = x;
-                transform2.position.y = y;
                 sprite2.setHeight(32);
                 sprite2.setWidth(32);
                 scomp2.setSprite(sprite2);
                 scomp2.setColor(new Vector4f(r,g,b,1));
+                var physicsObject = PhysicsObjects.simpleBox(x, y, size, npc);
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-                ecs.attachComponent(npc, Component.Transform, transform2);
-                ecs.attachComponent(npc, Component.RigidBody2D, PhysicsObjects.simpleBox(x, y, size, npc));
+                ecs.attachComponent(npc, Component.Transform, physicsObject.transform());
+                ecs.attachComponent(npc, Component.RigidBody2D, physicsObject);
                 ecs.attachComponent(npc, Component.BoundingBox, new QuadRectangle(0,0,0,0));
             }
         }
@@ -66,19 +62,15 @@ public class GameRunning extends GameMode
         var sprite = new Sprite();
         var tex = AssetPool.getTexture("assets/images/blendImage1.png");
         sprite.setTexture(tex);
-        var transform =  new Transform();
-        transform.scale.x = 32f;
-        transform.scale.y = 32f;
-        transform.position.x = 500f;
-        transform.position.y = 50f;
         sprite.setHeight(16);
         sprite.setWidth(16);
         scomp.setSprite(sprite);
         //scomp.setColor(new Vector4f(0,0,0,1));
+        var physicsObject = PhysicsObjects.simpleBox(500,50, 32, player);
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
-        ecs.attachComponent(player, Component.Transform, transform);
+        ecs.attachComponent(player, Component.Transform, physicsObject.transform());
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
-        ecs.attachComponent(player, Component.RigidBody2D, PhysicsObjects.simpleBox(500,50, 32, player));
+        ecs.attachComponent(player, Component.RigidBody2D, physicsObject);
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
         genNPCs(5f, 5f);

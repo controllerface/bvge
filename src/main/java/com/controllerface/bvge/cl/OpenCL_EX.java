@@ -101,60 +101,74 @@ public class OpenCL_EX
         clReleaseContext(context);
     }
 
-    public static void integrate(float[] bodies, float[] points, float tick_rate)
+    public static void integrate(float tick_rate)
     {
-        int bSize = Main.Memory.bodyLength();
-        int pSize = Main.Memory.pointLength();
+        int bodiesSize = Main.Memory.bodyLength();
+        int pointsSize = Main.Memory.pointLength();
+        int boundsSize = Main.Memory.boundsLength();
 
-        var bBuf = FloatBuffer.wrap(bodies, 0, bSize);
-        var pBuf = FloatBuffer.wrap(points, 0, pSize);
+        var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
+        var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
+        var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
 
-        //assert n % 2 == 0 : "Invalid length";
         // Set the work-item dimensions
-        long global_work_size[] = new long[]{bSize / 16};
-        //float[] dt = { (1/60) * (1/60) };
+        long global_work_size[] = new long[]{Main.Memory.bodyCount()};
         float[] dt = { tick_rate * tick_rate };
 
-        Pointer srcB = Pointer.to(bBuf);
-        Pointer srcP = Pointer.to(pBuf);
+        Pointer srcBodies = Pointer.to(bodyBuffer);
+        Pointer srcPoints = Pointer.to(pointBuffer);
+        Pointer srcBounds = Pointer.to(boundsBuffer);
         Pointer srcDt = Pointer.to(FloatBuffer.wrap(dt));
 
-
-        long bBufsize = Sizeof.cl_float * bSize;
-        long pBufsize = Sizeof.cl_float * pSize;
+        long bodyBufsize = Sizeof.cl_float * bodiesSize;
+        long pointBufsize = Sizeof.cl_float * pointsSize;
+        long boundsBufsize = Sizeof.cl_float * boundsSize;
 
         // Allocate the memory objects for the input- and output data
         // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
         // directly p2 thr destination p1 the result fo the kernel call. This avoids
         // needing p2 use an intermediate buffer and System.arrayCopy() calls.
-        cl_mem srcMemB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, bBufsize, srcB, null);
-        cl_mem srcMemP = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, pBufsize, srcP, null);
-        cl_mem dstMemB = clCreateBuffer(context, CL_MEM_READ_WRITE, bBufsize, null, null);
-        cl_mem dstMemP = clCreateBuffer(context, CL_MEM_READ_WRITE, bBufsize, null, null);
+        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, bodyBufsize, srcBodies, null);
+        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, pointBufsize, srcPoints, null);
+        cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, boundsBufsize, srcBounds, null);
+
+        cl_mem dstMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE, bodyBufsize, null, null);
+        cl_mem dstMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE, pointBufsize, null, null);
+        cl_mem dstMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE, boundsBufsize, null, null);
+
         cl_mem dtMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, Sizeof.cl_float, srcDt, null);
 
         // Set the arguments for the kernel
         int a = 0;
-
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemB));
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemP));
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dstMemB));
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dstMemP));
+        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
+        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
+        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBounds));
+        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dstMemBodies));
+        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dstMemPoints));
+        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dstMemBounds));
         clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dtMem));
+
 
         // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, k_verletIntegrate, 1, null,
             global_work_size, null, 0, null, null);
 
         // Read the output data
-        clEnqueueReadBuffer(commandQueue, dstMemB, CL_TRUE, 0,
-            bBufsize, srcB, 0, null, null);
+        clEnqueueReadBuffer(commandQueue, dstMemBodies, CL_TRUE, 0,
+            bodyBufsize, srcBodies, 0, null, null);
 
-        clEnqueueReadBuffer(commandQueue, dstMemP, CL_TRUE, 0,
-            pBufsize, srcP, 0, null, null);
+        clEnqueueReadBuffer(commandQueue, dstMemPoints, CL_TRUE, 0,
+            pointBufsize, srcPoints, 0, null, null);
 
-        clReleaseMemObject(srcMemB);
-        clReleaseMemObject(srcMemP);
+        clEnqueueReadBuffer(commandQueue, dstMemBounds, CL_TRUE, 0,
+            boundsBufsize, srcBounds, 0, null, null);
+
+        clReleaseMemObject(srcMemBodies);
+        clReleaseMemObject(srcMemPoints);
+        clReleaseMemObject(srcMemBounds);
+        clReleaseMemObject(dstMemBodies);
+        clReleaseMemObject(dstMemPoints);
+        clReleaseMemObject(dstMemBounds);
         clReleaseMemObject(dtMem);
     }
 }

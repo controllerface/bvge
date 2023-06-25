@@ -7,7 +7,6 @@ import java.util.Set;
 
 public class QuadRectangle implements GameComponent
 {
-
     public float max_x = Float.MIN_VALUE;
     public float min_x = Float.MAX_VALUE;
     public float max_y = Float.MIN_VALUE;

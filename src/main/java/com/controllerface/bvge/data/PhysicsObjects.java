@@ -12,65 +12,66 @@ public class PhysicsObjects
     {
         var halfSize = size / 2;
 
-        var v1 = Main.Memory.newPoint(x - halfSize, y - halfSize);
-        var v2 = Main.Memory.newPoint(x + halfSize, y - halfSize);
-        var v3 = Main.Memory.newPoint(x + halfSize, y + halfSize);
-        var v4 = Main.Memory.newPoint(x - halfSize, y + halfSize);
+        var p1 = Main.Memory.newPoint(x - halfSize, y - halfSize);
+        var p2 = Main.Memory.newPoint(x + halfSize, y - halfSize);
+        var p3 = Main.Memory.newPoint(x + halfSize, y + halfSize);
+        var p4 = Main.Memory.newPoint(x - halfSize, y + halfSize);
 
-        var verts = new FPoint2D[]{ v1, v2, v3, v4 };
+        var points = new FPoint2D[]{ p1, p2, p3, p4 };
 
         // box sides
         var e1 = Main.Memory.newEdge(
-            v1.index() / Main.Memory.Width.POINT,
-            v2.index() / Main.Memory.Width.POINT,
-            v2.distance(v1),
-            v1, v2);
+            p1.index() / Main.Memory.Width.POINT,
+            p2.index() / Main.Memory.Width.POINT,
+            p2.distance(p1),
+            p1, p2);
 
         var e2 = Main.Memory.newEdge(
-            v2.index() / Main.Memory.Width.POINT,
-            v3.index() / Main.Memory.Width.POINT,
-            v3.distance(v2),
-            v2, v3);
+            p2.index() / Main.Memory.Width.POINT,
+            p3.index() / Main.Memory.Width.POINT,
+            p3.distance(p2),
+            p2, p3);
 
         var e3 = Main.Memory.newEdge(
-            v3.index() / Main.Memory.Width.POINT,
-            v4.index() / Main.Memory.Width.POINT,
-            v4.distance(v3),
-            v3, v4);
+            p3.index() / Main.Memory.Width.POINT,
+            p4.index() / Main.Memory.Width.POINT,
+            p4.distance(p3),
+            p3, p4);
 
         var e4 = Main.Memory.newEdge(
-            v4.index() / Main.Memory.Width.POINT,
-            v1.index() / Main.Memory.Width.POINT,
-            v1.distance(v4),
-            v4, v1);
+            p4.index() / Main.Memory.Width.POINT,
+            p1.index() / Main.Memory.Width.POINT,
+            p1.distance(p4),
+            p4, p1);
 
         // corner braces
         var e5 = Main.Memory.newEdge(
-            v1.index() / Main.Memory.Width.POINT,
-            v3.index() / Main.Memory.Width.POINT,
-            v3.distance(v1),
-            v1, v3);
+            p1.index() / Main.Memory.Width.POINT,
+            p3.index() / Main.Memory.Width.POINT,
+            p3.distance(p1),
+            p1, p3);
 
         var e6 = Main.Memory.newEdge(
-            v2.index() / Main.Memory.Width.POINT,
-            v4.index() / Main.Memory.Width.POINT,
-            v4.distance(v2),
-            v2, v4);
+            p2.index() / Main.Memory.Width.POINT,
+            p4.index() / Main.Memory.Width.POINT,
+            p4.distance(p2),
+            p2, p4);
 
         var edges = new FEdge2D[]{ e1, e2, e3, e4, e5, e6 };
 
         var force = 500;
 
-        MathEX.centroid(verts, vectorBuffer);
+        var bounds = Main.Memory.newBounds();
+
+        MathEX.centroid(points, vectorBuffer);
 
         return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
-            size, size,
-            0,0,
-            0,0,0,0,
-            v1.index() / Main.Memory.Width.POINT,
-            v4.index() / Main.Memory.Width.POINT,
+            size, size, 0,0,
+            p1.index() / Main.Memory.Width.POINT,
+            p4.index() / Main.Memory.Width.POINT,
             e1.index() / Main.Memory.Width.EDGE,
             e6.index() / Main.Memory.Width.EDGE,
-            verts, edges, force, entity);
+            bounds.index() / Main.Memory.Width.BOUNDS,
+            points, edges, bounds, force, entity);
     }
 }

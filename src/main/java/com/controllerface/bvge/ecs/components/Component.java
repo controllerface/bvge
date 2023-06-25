@@ -1,11 +1,12 @@
 package com.controllerface.bvge.ecs.components;
 
 import com.controllerface.bvge.data.FBody2D;
+import com.controllerface.bvge.data.FTransform;
 
 public enum Component
 {
     SpriteComponent(SpriteComponent.class),
-    Transform(Transform.class),
+    Transform(FTransform.class),
     ControlPoints(ControlPoints.class),
     RigidBody2D(FBody2D.class),
     BoundingBox(QuadRectangle.class),

@@ -6,23 +6,39 @@ import org.joml.Vector2f;
 
 public record FBody2D(int index, float force,
                       FPoint2D[] points, FEdge2D[] edges,
+                      FBounds2D bounds, FTransform transform,
                       String entity) implements GameComponent
 {
-
+    /*
+     * Memory layout: float16
+     *  0: x position (transform)
+     *  1: y position (transform)
+     *  2: scale x    (transform)
+     *  3: scale y    (transform)
+     *  4: acceleration x component
+     *  5: acceleration y component
+     *  6: bounding box index (int cast)
+     *  7: start point index  (int cast)
+     *  8: end point index    (int cast)
+     *  9: start edge index   (int cast)
+     * 10: end edge index     (int cast)
+     * 11: [empty]
+     * 12: [empty]
+     * 13: [empty]
+     * 14: [empty]
+     * 15: [empty]
+     *  */
     private static int x_offset = 0;
     private static int y_offset = 1;
     private static int sx_offset = 2;
     private static int sy_offset = 3;
     private static int acc_x_offset = 4;
     private static int acc_y_offset = 5;
-    private static int bx_offset = 6;
-    private static int by_offset = 7;
-    private static int bw_offset = 8;
-    private static int bh_offset = 9;
-    private static int sp_offset = 10;
-    private static int ep_offset = 11;
-    private static int se_offset = 12;
-    private static int ee_offset = 13;
+    private static int bi_offset = 6;
+    private static int sp_offset = 7;
+    private static int ep_offset = 8;
+    private static int se_offset = 9;
+    private static int ee_offset = 10;
 
     public float pos_x()
     {
@@ -54,24 +70,9 @@ public record FBody2D(int index, float force,
         return Main.Memory.body_buffer[index() + acc_y_offset];
     }
 
-    public float bounds_x()
+    public float bounds_i()
     {
-        return Main.Memory.body_buffer[index() + bx_offset];
-    }
-
-    public float bounds_y()
-    {
-        return Main.Memory.body_buffer[index() + by_offset];
-    }
-
-    public float bounds_w()
-    {
-        return Main.Memory.body_buffer[index() + bw_offset];
-    }
-
-    public float bounds_h()
-    {
-        return Main.Memory.body_buffer[index() + bh_offset];
+        return Main.Memory.body_buffer[index() + bi_offset];
     }
 
     public int start_point()

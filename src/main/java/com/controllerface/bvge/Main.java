@@ -2,10 +2,11 @@ package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.cl.OpenCL_EX;
-import com.controllerface.bvge.data.FBody2D;
-import com.controllerface.bvge.data.FEdge2D;
-import com.controllerface.bvge.data.FPoint2D;
+import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.window.Window;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class Main
@@ -17,19 +18,23 @@ public class Main
             public static final int BODY = 16;
             public static final int POINT = 4;
             public static final int EDGE = 3;
+            public static final int BOUNDS = 8;
         }
 
-        private static final int body_buffer_size = Width.BODY * 100000;
-        private static final int point_buffer_size = Width.POINT * 100000;
-        private static final int edge_buffer_size = Width.EDGE * 100000;
+        private static final int body_buffer_size   = Width.BODY   * 100_000;
+        private static final int point_buffer_size  = Width.POINT  * 100_000;
+        private static final int edge_buffer_size   = Width.EDGE   * 100_000;
+        private static final int bounds_buffer_size = Width.BOUNDS * 100_000;
 
-        public static float[] body_buffer = new float[body_buffer_size];
-        public static float[] point_buffer = new float[point_buffer_size];
-        public static float[] edge_buffer = new float[edge_buffer_size];
+        public static float[] body_buffer   = new float[body_buffer_size];
+        public static float[] point_buffer  = new float[point_buffer_size];
+        public static float[] edge_buffer   = new float[edge_buffer_size];
+        public static float[] bounds_buffer = new float[bounds_buffer_size];
 
-        private static int body_index = 0;
-        private static int point_index = 0;
-        private static int edge_index = 0;
+        private static int body_index   = 0;
+        private static int point_index  = 0;
+        private static int edge_index   = 0;
+        private static int bounds_index = 0;
 
         public static int bodyCount()
         {
@@ -51,6 +56,23 @@ public class Main
             return point_index + 1;
         }
 
+        public static int boundsLength()
+        {
+            return bounds_index + 1;
+        }
+
+        public static FBounds2D newBounds()
+        {
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            return new FBounds2D(bounds_index - Width.BOUNDS);
+        }
 
         public static FEdge2D newEdge(int p1, int p2, float l, FPoint2D from, FPoint2D to)
         {
@@ -79,11 +101,12 @@ public class Main
         public static FBody2D newBody(float x, float y,
                                       float sx, float sy,
                                       float ax, float ay,
-                                      float bx, float by,
-                                      float bw, float bh,
                                       float ps, float pe,
                                       float es, float ee,
-                                      FPoint2D[] points, FEdge2D edges[],
+                                      float bi,
+                                      FPoint2D[] points,
+                                      FEdge2D edges[],
+                                      FBounds2D bounds,
                                       float force, String entity)
         {
             body_buffer[body_index++] = x;
@@ -92,17 +115,19 @@ public class Main
             body_buffer[body_index++] = sy;
             body_buffer[body_index++] = ax;
             body_buffer[body_index++] = ay;
-            body_buffer[body_index++] = bx;
-            body_buffer[body_index++] = by;
-            body_buffer[body_index++] = bw;
-            body_buffer[body_index++] = bh;
+            body_buffer[body_index++] = bi;
             body_buffer[body_index++] = ps;
             body_buffer[body_index++] = pe;
             body_buffer[body_index++] = es;
             body_buffer[body_index++] = ee;
             body_buffer[body_index++] = 0f;
             body_buffer[body_index++] = 0f;
-            return new FBody2D(body_index - Width.BODY, force, points, edges, entity);
+            body_buffer[body_index++] = 0f;
+            body_buffer[body_index++] = 0f;
+            body_buffer[body_index++] = 0f;
+            var idx = body_index - Width.BODY;
+            var transform = new FTransform(idx);
+            return new FBody2D(idx, force, points, edges, bounds, transform, entity);
             // todo: add cleaner and log/or possibly compact, if these go out of scope
         }
 
@@ -110,6 +135,23 @@ public class Main
 
     public static void main(String[] args)
     {
+        int x2 = 0;
+        int z = 0;
+        Integer y = 0;
+
+        if (x2 == z)
+        {
+            System.out.println("woudl fire");
+        }
+
+        if (y == x2)
+        {
+            System.out.println("fire?");
+        }
+
+        Integer[] x = new Integer[10];
+        x[0] = 1;
+        List<Integer> Allowed = new ArrayList<>();
         OpenCL_EX.init();
         Window window = Window.get();
         window.run();
