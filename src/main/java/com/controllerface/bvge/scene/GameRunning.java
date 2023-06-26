@@ -48,7 +48,7 @@ public class GameRunning extends GameMode
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
                 ecs.attachComponent(npc, Component.Transform, physicsObject.transform());
                 ecs.attachComponent(npc, Component.RigidBody2D, physicsObject);
-                ecs.attachComponent(npc, Component.BoundingBox, new QuadRectangle(0,0,0,0));
+                ecs.attachComponent(npc, Component.BoundingBox, physicsObject.bounds());
             }
         }
     }
@@ -71,7 +71,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.Transform, physicsObject.transform());
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.RigidBody2D, physicsObject);
-        ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
+        ecs.attachComponent(player, Component.BoundingBox, physicsObject.bounds());
 
         genNPCs(3f, 3f);
     }

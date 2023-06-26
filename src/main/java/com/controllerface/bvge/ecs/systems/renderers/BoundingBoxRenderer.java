@@ -1,5 +1,6 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
+import com.controllerface.bvge.data.FBounds2D;
 import com.controllerface.bvge.ecs.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.components.Component;
@@ -27,7 +28,7 @@ public class BoundingBoxRenderer extends GameSystem
         this.shader = AssetPool.getShader("debugLine2D.glsl");
     }
 
-    private void add(QuadRectangle box)
+    private void add(FBounds2D box)
     {
         boolean added = false;
         for (BoxRenderBatch batch : batches)
@@ -64,7 +65,7 @@ public class BoundingBoxRenderer extends GameSystem
         for (Map.Entry<String, GameComponent> entry : ecs.getComponents(Component.BoundingBox).entrySet())
         {
             GameComponent component = entry.getValue();
-            QuadRectangle box = Component.BoundingBox.coerce(component);
+            FBounds2D box = Component.BoundingBox.coerce(component);
             this.add(box);
         }
         render();

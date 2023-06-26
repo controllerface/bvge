@@ -1,5 +1,6 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
+import com.controllerface.bvge.data.FBounds2D;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
@@ -27,9 +28,9 @@ public class SpacePartitionRenderer extends GameSystem
         this.shader = AssetPool.getShader("debugLine2D.glsl");
     }
 
-    private void add(QuadRectangle box)
+    private void add(FBounds2D box)
     {
-        var colorToUse = box.playerTouch ? color2 : color;
+        var colorToUse = color; //box.playerTouch ? color2 : color;
         boolean added = false;
         for (BoxRenderBatch batch : batches)
         {
@@ -75,14 +76,15 @@ public class SpacePartitionRenderer extends GameSystem
 
         //if (!hasSet)
         //{
-        var pr = new ArrayList<QuadRectangle>();
-            for (QuadRectangle rect : spatialMap.rects)
-            {
-                if (rect.playerTouch) pr.add(rect);
-                else add(rect);
-            }
-            pr.forEach(p->this.add(p));
-            hasSet = true;
+//        var pr = new ArrayList<QuadRectangle>();
+//            for (FBounds2D rect : spatialMap.rects)
+//            {
+//                //if (rect.playerTouch) pr.add(rect);
+//                //else
+//                    add(rect);
+//            }
+//            pr.forEach(p->this.add(p));
+//            hasSet = true;
         //}
 
         render();

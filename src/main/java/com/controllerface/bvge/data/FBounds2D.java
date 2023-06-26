@@ -1,8 +1,9 @@
 package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
+import com.controllerface.bvge.ecs.components.GameComponent;
 
-public record FBounds2D(int index)
+public record FBounds2D(int index) implements GameComponent
 {
     /*
     * Memory layout: float8

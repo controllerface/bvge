@@ -1,5 +1,6 @@
 package com.controllerface.bvge.gl.batches;
 
+import com.controllerface.bvge.data.FBounds2D;
 import com.controllerface.bvge.ecs.Line2D;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.util.Constants;
@@ -63,6 +64,7 @@ public class BoxRenderBatch implements Comparable<BoxRenderBatch>
     public void clear()
     {
         numLines = 0;
+        hasRoom = true;
         //sprites = new SpriteComponentEX[maxBatchSize * 4 * VERTEX_SIZE];
         //textures.clear();
     }
@@ -101,14 +103,14 @@ public class BoxRenderBatch implements Comparable<BoxRenderBatch>
 //        glEnableVertexAttribArray(4);
     }
 
-    public void addBox(QuadRectangle rectangle, Vector3f color)
+    public void addBox(FBounds2D rectangle, Vector3f color)
     {
         // Get index and add renderObject
         int index = this.numLines;
-        var v1 = new Vector2f(rectangle.x, rectangle.y);
-        var v2 = new Vector2f(rectangle.x + rectangle.width, rectangle.y);
-        var v3 = new Vector2f(rectangle.x + rectangle.width, rectangle.y + rectangle.height);
-        var v4 = new Vector2f(rectangle.x, rectangle.y + rectangle.height);
+        var v1 = new Vector2f(rectangle.x(), rectangle.y());
+        var v2 = new Vector2f(rectangle.x() + rectangle.w(), rectangle.y());
+        var v3 = new Vector2f(rectangle.x() + rectangle.w(), rectangle.y() + rectangle.h());
+        var v4 = new Vector2f(rectangle.x(), rectangle.y() + rectangle.h());
 
         var l1 = new Line2D(v1, v2, color);
         var l2 = new Line2D(v2, v3, color);

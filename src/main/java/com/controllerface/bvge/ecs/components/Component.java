@@ -1,6 +1,7 @@
 package com.controllerface.bvge.ecs.components;
 
 import com.controllerface.bvge.data.FBody2D;
+import com.controllerface.bvge.data.FBounds2D;
 import com.controllerface.bvge.data.FTransform;
 
 public enum Component
@@ -9,7 +10,7 @@ public enum Component
     Transform(FTransform.class),
     ControlPoints(ControlPoints.class),
     RigidBody2D(FBody2D.class),
-    BoundingBox(QuadRectangle.class),
+    BoundingBox(FBounds2D.class),
 
     ;
 
