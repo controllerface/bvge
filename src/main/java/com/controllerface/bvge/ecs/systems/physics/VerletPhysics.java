@@ -13,9 +13,9 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 60.0f;
+    private final float TICK_RATE = 1.0f / 24.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 1;
+    private final int EDGE_STEPS = 2;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
@@ -505,11 +505,6 @@ public class VerletPhysics extends GameSystem
     }
     private static boolean doBoxesIntersect(QuadRectangle a, QuadRectangle b)
     {
-//        return !(a.max_x < b.x ||
-//            a.max_y < b.y ||
-//            a.x > b.max_x ||
-//            a.y > b.max_y);
-
         return a.x < b.x + b.width &&
             a.x + a.width > b.x &&
             a.y < b.y + b.height &&
@@ -518,15 +513,10 @@ public class VerletPhysics extends GameSystem
 
     private static boolean doBoxesIntersect(FBounds2D a, FBounds2D b)
     {
-//        return !(a.max_x < b.x ||
-//            a.max_y < b.y ||
-//            a.x > b.max_x ||
-//            a.y > b.max_y);
-
-        return a.x() < b.x() + b.w() &&
-            a.x() + a.w() > b.x() &&
-            a.y() < b.y() + b.h() &&
-            a.y() + a.h() > b.y();
+        return a.x() < b.x() + b.w()
+            && a.x() + a.w() > b.x()
+            && a.y() < b.y() + b.h()
+            && a.y() + a.h() > b.y();
     }
 
     private SpatialMapEX testMap =  new SpatialMapEX();

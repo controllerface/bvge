@@ -1,34 +1,36 @@
+// gets the extents of a spatial index for an axis-aligned bounding box
 int4 getExtents(int2 corners[])
 {
     int4 r;
-    r[0] = INT_MAX; // min_x
-    r[1] = INT_MIN; // max_x
-    r[2] = INT_MAX; // min_y
-    r[3] = INT_MIN; // max_y
+    r.x = INT_MAX; // min_x
+    r.y = INT_MIN; // max_x
+    r.z = INT_MAX; // min_y
+    r.w = INT_MIN; // max_y
     for (int i = 0; i < sizeof(corners); i++)
     {
         int2 corner = corners[i];
-        if (corner.x < r[0])
+        if (corner.x < r.x)
         {
-            r[0] = corner.x;
+            r.x = corner.x;
         }
-        if (corner.x > r[1])
+        if (corner.x > r.y)
         {
-            r[1] = corner.x;
+            r.y = corner.x;
         }
-        if (corner.y < r[2])
+        if (corner.y < r.z)
         {
-            r[2] = corner.y;
+            r.z = corner.y;
         }
-        if (corner.y > r[3])
+        if (corner.y > r.w)
         {
-            r[3] = corner.y;
+            r.w = corner.y;
         }
     }
     return r;
 }
 
-
+// calculates a spatial index cell for a given point
+// todo: the x/y sizing should be provided to the kernel in a arg like dt
 int2 getKeyForPoint(float px, float py)
 {
     int index_x = ((int) floor(px / 7.68));
@@ -89,8 +91,8 @@ __kernel void integrate(
         diff = acc + diff;
 
         // add friction component
-        diff.x *= .990;
-        diff.y *= .990;
+        diff.x *= .980;
+        diff.y *= .980;
 
         // set the prv to current pos
         prv.x = pos.x;
@@ -136,7 +138,6 @@ __kernel void integrate(
     body.s1 = y_sum / point_count;
 
     int bound_index = (int)body.s6;
-
     float8 bounding_box = bounds[bound_index];
 
     // calculate bounding box
@@ -147,21 +148,19 @@ __kernel void integrate(
     bounding_box.s4 = max_x;
     bounding_box.s5 = max_y;
 
+    // calculate spatial index boundary
     int2 keys[4];
     keys[0] = getKeyForPoint(bounding_box.s0, bounding_box.s1);
     keys[1] = getKeyForPoint(bounding_box.s0 + bounding_box.s2, bounding_box.s1);
     keys[2] = getKeyForPoint(bounding_box.s0 + bounding_box.s2, bounding_box.s1 + bounding_box.s3);
     keys[3] = getKeyForPoint(bounding_box.s0, bounding_box.s1 + bounding_box.s3);
-
     int4 k = getExtents(keys);
-
     body.sb = (float) k.x;
     body.sc = (float) k.y;
     body.sd = (float) k.z;
     body.se = (float) k.w;
 
+    // store updated body and bounds data in result buffers
     r_bounds[bound_index] = bounding_box;
-
-    // store updated body in result buffer
     r_bodies[gid] = body;
 }

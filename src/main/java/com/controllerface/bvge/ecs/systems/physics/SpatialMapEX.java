@@ -14,15 +14,13 @@ public class SpatialMapEX
     private float ysubdivisions = 250;
     private float x_spacing = 0;
     private float y_spacing = 0;
-    public List<QuadRectangle> rects = new ArrayList<>();
-
     Map<Integer, Map<Integer, BoxKey>> keyMap = new HashMap<>();
     Map<BoxKey, Set<Integer>> boxMap = new HashMap<>();
     Map<Integer, Set<BoxKey>> bodyKeys = new HashMap<>();
 
     public SpatialMapEX()
     {
-        //init();
+        init();
     }
 
     private static Set<BoxKey> newBoxSet(int _k)
@@ -44,30 +42,12 @@ public class SpatialMapEX
     {
         x_spacing = width / xsubdivisions;
         y_spacing = height / ysubdivisions;
-
-        float currentX = 0;
-        float currentY = 0;
-        for (int i = 0; i < xsubdivisions; i++)
-        {
-            for (int j = 0; j < ysubdivisions; j++)
-            {
-
-                var k = new BoxKey(i, j);
-                keyMap.computeIfAbsent(i, (_i) -> new HashMap<>()).put(j, k);
-                boxMap.put(k, new HashSet<>());
-                rects.add(new QuadRectangle(currentX, currentY, x_spacing, y_spacing));
-
-                currentY += y_spacing;
-            }
-            currentX += x_spacing;
-            currentY = 0;
-        }
     }
 
     public void rebuildMatches()
     {
-        boxMap.values().forEach(Set::clear);
-        bodyKeys.values().forEach(Set::clear);
+        boxMap.clear();
+        bodyKeys.clear();
         // todo: this might work in an executor or fork/join pool
         for (int location = 0; location < Main.Memory.bodyCount(); location++)
         {
