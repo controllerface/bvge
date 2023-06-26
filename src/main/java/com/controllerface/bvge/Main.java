@@ -1,18 +1,19 @@
 package com.controllerface.bvge;
 
-import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.cl.OpenCL_EX;
 import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.window.Window;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 public class Main
 {
     public static class Memory
     {
+        // todo: actually add the cleaner/tracking mechanism for keeping track of
+        //  all points, bodies, etc. This will be needed when the arrays need to compact
+        //  because of this, those objects won't be able to be records.
         public static class Width
         {
             public static final int BODY = 16;
@@ -21,10 +22,15 @@ public class Main
             public static final int BOUNDS = 8;
         }
 
-        private static final int body_buffer_size   = Width.BODY   * 100_000;
-        private static final int point_buffer_size  = Width.POINT  * 100_000;
-        private static final int edge_buffer_size   = Width.EDGE   * 100_000;
-        private static final int bounds_buffer_size = Width.BOUNDS * 100_000;
+        private static final Map<Integer, FBody2D> bodies = new HashMap<>();
+
+        private static final int MAX_BODIES = 100_000;
+        private static final int MAX_POINTS = 1_000_000;
+
+        private static final int body_buffer_size   = Width.BODY   * MAX_BODIES;
+        private static final int point_buffer_size  = Width.POINT  * MAX_POINTS;
+        private static final int edge_buffer_size   = Width.EDGE   * MAX_POINTS;
+        private static final int bounds_buffer_size = Width.BOUNDS * MAX_BODIES;
 
         public static float[] body_buffer   = new float[body_buffer_size];
         public static float[] point_buffer  = new float[point_buffer_size];
@@ -35,6 +41,11 @@ public class Main
         private static int point_index  = 0;
         private static int edge_index   = 0;
         private static int bounds_index = 0;
+
+        public static FBody2D bodyByIndex(int index)
+        {
+            return bodies.get(index);
+        }
 
         public static int bodyCount()
         {
@@ -127,7 +138,9 @@ public class Main
             body_buffer[body_index++] = 0f;
             var idx = body_index - Width.BODY;
             var transform = new FTransform(idx);
-            return new FBody2D(idx, force, points, edges, bounds, transform, entity);
+            var newBody = new FBody2D(idx, force, points, edges, bounds, transform, entity);
+            bodies.put(idx / Width.BODY, newBody);
+            return newBody;
             // todo: add cleaner and log/or possibly compact, if these go out of scope
         }
 

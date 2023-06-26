@@ -60,6 +60,8 @@ public class SpatialMap
         x_spacing = width / xsubdivisions;
         y_spacing = height / ysubdivisions;
 
+        System.out.println(x_spacing + ":" + y_spacing);
+
         float currentX = 0;
         float currentY = 0;
         for (int i = 0; i < xsubdivisions; i++)

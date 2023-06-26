@@ -73,6 +73,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     public void clear()
     {
         numSprites = 0;
+        this.hasRoom = true;
         //sprites = new SpriteComponentEX[maxBatchSize * 4 * VERTEX_SIZE];
         textures.clear();
     }

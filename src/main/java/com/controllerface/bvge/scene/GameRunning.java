@@ -18,7 +18,7 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private int testBoxSize = 80;
+    private int testBoxSize = 50;
 
     private void genNPCs(float spacing, float size)
     {
@@ -73,7 +73,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.RigidBody2D, physicsObject);
         ecs.attachComponent(player, Component.BoundingBox, new QuadRectangle(0,0,0,0));
 
-        genNPCs(1.5f, 1.5f);
+        genNPCs(3f, 3f);
     }
 
     @Override

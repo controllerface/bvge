@@ -40,6 +40,15 @@ public record FBody2D(int index, float force,
     public static int se_offset = 9;
     public static int ee_offset = 10;
 
+    // note: these could be moved to the bounding box later if needed, but here since the body
+    // had extra space
+    public static int si_min_x_offset = 11;
+    public static int si_max_x_offset = 12;
+    public static int si_min_y_offset = 13;
+    public static int si_max_y_offset = 14;
+
+    public int bodyIndex() { return index() / Main.Memory.Width.BODY; }
+
     public float pos_x()
     {
         return Main.Memory.body_buffer[index() + x_offset];
@@ -93,6 +102,26 @@ public record FBody2D(int index, float force,
     public int end_edge()
     {
         return (int)Main.Memory.body_buffer[index() + ee_offset];
+    }
+
+    public int si_min_x()
+    {
+        return (int)Main.Memory.body_buffer[index() + si_min_x_offset];
+    }
+
+    public int si_max_x()
+    {
+        return (int)Main.Memory.body_buffer[index() + si_max_x_offset];
+    }
+
+    public int si_min_y()
+    {
+        return (int)Main.Memory.body_buffer[index() + si_min_y_offset];
+    }
+
+    public int si_max_y()
+    {
+        return (int)Main.Memory.body_buffer[index() + si_max_y_offset];
     }
 
     public void setPos(Vector2f newPos)

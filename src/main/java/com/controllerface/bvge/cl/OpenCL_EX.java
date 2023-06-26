@@ -148,7 +148,6 @@ public class OpenCL_EX
         clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dstMemBounds));
         clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dtMem));
 
-
         // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, k_verletIntegrate, 1, null,
             global_work_size, null, 0, null, null);

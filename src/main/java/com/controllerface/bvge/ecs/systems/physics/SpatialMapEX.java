@@ -18,11 +18,22 @@ public class SpatialMapEX
     private Set<BoxKey> playerkeys = new HashSet<>();
 
     Map<Integer, Map<Integer, BoxKey>> keyMap = new HashMap<>();
-    Map<BoxKey, Set<FBody2D>> boxMap = new HashMap<>();
+    Map<BoxKey, Set<Integer>> boxMap = new HashMap<>();
+    Map<Integer, Set<BoxKey>> bodyKeys = new HashMap<>();
 
     public SpatialMapEX()
     {
-        init();
+        //init();
+    }
+
+    private static Set<BoxKey> newBoxSet(int _k)
+    {
+        return new HashSet<>();
+    }
+
+    private static Set<Integer> newIntSet(BoxKey _k)
+    {
+        return new HashSet<>();
     }
 
     public void clear()
@@ -82,126 +93,132 @@ public class SpatialMapEX
 
     public void rebuildMatches()
     {
-        // todo: this might work in an executor
-        for (int i = 0; i < Main.Memory.bodyCount(); i++)
+        boxMap.clear();
+        bodyKeys.clear();
+        // todo: this might work in an executor or fork/join pool
+        for (int location = 0; location < Main.Memory.bodyCount(); location++)
         {
-            int index = i * Main.Memory.Width.BODY;
+            int bodyOffset = location * Main.Memory.Width.BODY;
+            int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
 
-            // todo: get bounding grid x,y,w,h from object, to compute in kernel
-            float x_index = Main.Memory.body_buffer[index + FBody2D.x_offset];
-            float y_index = Main.Memory.body_buffer[index + FBody2D.x_offset];
-            float w_index = Main.Memory.body_buffer[index + FBody2D.x_offset];
-            float h_index = Main.Memory.body_buffer[index + FBody2D.x_offset];
+            int min_x = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_min_x_offset];
+            int max_x = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_max_x_offset];
+            int min_y = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_min_y_offset];
+            int max_y = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_max_y_offset];
+
+            for (int i2 = min_x; i2 <= max_x; i2++)
+            {
+                for (int j2 = min_y; j2 <= max_y; j2++)
+                {
+                    var bodyKey = getKeyByIndex(i2, j2);
+                    boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newIntSet)
+                        .add(bodyIndex);
+                    bodyKeys.computeIfAbsent(bodyIndex, SpatialMapEX::newBoxSet)
+                        .add(bodyKey);
+                }
+            }
         }
     }
 
-    public Set<FBody2D> getMatches(QuadRectangle box)
+    public Set<Integer> getMatches(Integer boxId)
     {
-        var rSet = new HashSet<FBody2D>();
-        for (BoxKey k : box.getKeys())
+        var keys = bodyKeys.get(boxId);
+        var rSet = new HashSet<Integer>();
+        for (BoxKey k : keys)
         {
             rSet.addAll(boxMap.get(k));
         }
         return rSet;
     }
 
-    public void add(FBody2D body, QuadRectangle box)
-    {
-        box.resetKeys();
-
-        var k1 = getKeyForPoint(box.x, box.y);
-        var k2 = getKeyForPoint(box.x + box.width, box.y);
-        var k3 = getKeyForPoint(box.x + box.width, box.y + box.height);
-        var k4 = getKeyForPoint(box.x, box.y + box.height);
-
-        if (k1 == null
-            && k2 == null
-            && k3 == null
-            && k4 == null)
-        {
-            return;
-        }
-
-        // is within only one cell, so just add that key
-        if (k1 == k2 && k1 == k3 && k1 == k4)
-        {
-            boxMap.get(k1).add(body);
-            box.addkey(k1);
-            return;
-        }
-
-        // otherwise, we need p2 loop and get all of the keys that overlap this box
-        var keys = new BoxKey[]{k1, k2, k3, k4};
-        var min_x = Integer.MAX_VALUE;
-        var max_x = Integer.MIN_VALUE;
-        var min_y = Integer.MAX_VALUE;
-        var max_y = Integer.MIN_VALUE;
-        for (BoxKey k : keys)
-        {
-            if (k == null)
-            {
-                continue;
-            }
-
-            if (k.x > max_x)
-            {
-                max_x = k.x;
-            }
-            if (k.x < min_x)
-            {
-                min_x = k.x;
-            }
-
-            if (k.y > max_y)
-            {
-                max_y = k.y;
-            }
-            if (k.y < min_y)
-            {
-                min_y = k.y;
-            }
-        }
-        boolean isPlayer = false;
-        if (body.entity().equals("player"))
-        {
-            isPlayer = true;
-        }
-        for (int i = min_x; i <= max_x; i++)
-        {
-            for (int j = min_y; j <= max_y; j++)
-            {
-                var k = getKeyByIndex(i, j);
-                if (k == null)
-                {
-                    continue;
-                }
-                boxMap.get(k).add(body);
-                box.addkey(k);
-                if (isPlayer)
-                {
-                    playerkeys.add(k);
-                }
-            }
-        }
-        if (isPlayer)
-        {
-            rebuildRects();
-        }
-    }
-
+//    public void add(FBody2D body, QuadRectangle box)
+//    {
+//        box.resetKeys();
+//
+//        var k1 = getKeyForPoint(box.x, box.y);
+//        var k2 = getKeyForPoint(box.x + box.width, box.y);
+//        var k3 = getKeyForPoint(box.x + box.width, box.y + box.height);
+//        var k4 = getKeyForPoint(box.x, box.y + box.height);
+//
+//        if (k1 == null
+//            && k2 == null
+//            && k3 == null
+//            && k4 == null)
+//        {
+//            return;
+//        }
+//
+//        // is within only one cell, so just add that key
+//        if (k1 == k2 && k1 == k3 && k1 == k4)
+//        {
+//            boxMap.get(k1).add(body);
+//            box.addkey(k1);
+//            return;
+//        }
+//
+//        // otherwise, we need p2 loop and get all of the keys that overlap this box
+//        var keys = new BoxKey[]{k1, k2, k3, k4};
+//        var min_x = Integer.MAX_VALUE;
+//        var max_x = Integer.MIN_VALUE;
+//        var min_y = Integer.MAX_VALUE;
+//        var max_y = Integer.MIN_VALUE;
+//        for (BoxKey k : keys)
+//        {
+//            if (k == null)
+//            {
+//                continue;
+//            }
+//
+//            if (k.x > max_x)
+//            {
+//                max_x = k.x;
+//            }
+//            if (k.x < min_x)
+//            {
+//                min_x = k.x;
+//            }
+//
+//            if (k.y > max_y)
+//            {
+//                max_y = k.y;
+//            }
+//            if (k.y < min_y)
+//            {
+//                min_y = k.y;
+//            }
+//        }
+//        boolean isPlayer = false;
+//        if (body.entity().equals("player"))
+//        {
+//            isPlayer = true;
+//        }
+//        for (int i = min_x; i <= max_x; i++)
+//        {
+//            for (int j = min_y; j <= max_y; j++)
+//            {
+//                var k = getKeyByIndex(i, j);
+//                if (k == null)
+//                {
+//                    continue;
+//                }
+//                boxMap.get(k).add(body);
+//                box.addkey(k);
+//                if (isPlayer)
+//                {
+//                    playerkeys.add(k);
+//                }
+//            }
+//        }
+//        if (isPlayer)
+//        {
+//            rebuildRects();
+//        }
+//    }
 
     private BoxKey getKeyByIndex(int index_x, int index_y)
     {
-        if (!keyMap.containsKey(index_x))
-        {
-            return null;
-        }
-        var ymp = keyMap.get(index_x);
-        if (!ymp.containsKey(index_y))
-        {
-            return null;
-        }
-        return ymp.get(index_y);
+        return keyMap.computeIfAbsent(index_x, _k -> new HashMap<>())
+            .computeIfAbsent(index_y, _k -> new BoxKey(index_x, index_y));
     }
 
     private BoxKey getKeyForPoint(float px, float py)

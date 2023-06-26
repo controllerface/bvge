@@ -62,6 +62,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
     public void clear()
     {
         numLines = 0;
+        this.hasRoom = true;
         //sprites = new SpriteComponentEX[maxBatchSize * 4 * VERTEX_SIZE];
         //textures.clear();
     }

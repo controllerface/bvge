@@ -1,30 +1,23 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.cl.OpenCL_EX;
-import com.controllerface.bvge.data.FBody2D;
-import com.controllerface.bvge.data.FEdge2D;
-import com.controllerface.bvge.data.FPoint2D;
-import com.controllerface.bvge.data.FTransform;
+import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.Point2D;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.util.MathEX;
 import com.controllerface.bvge.window.Window;
 import org.joml.Vector2f;
 
-import java.nio.FloatBuffer;
 import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 24.0f;
+    private final float TICK_RATE = 1.0f / 60.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 1;
+    private final int EDGE_STEPS = 2;
     private final float GRAVITY = 9.8f;
-    private final float FRICTION = .980f;
+    private final float FRICTION = .995f;
     private float accumulator = 0.0f;
 
     private SpatialMap spatialMap = new SpatialMap();
@@ -297,12 +290,14 @@ public class VerletPhysics extends GameSystem
 
     private void findCollisions(FBody2D target, SpatialMap spatialMap)
     {
-        var b = ecs.getComponentFor(target.entity(), Component.BoundingBox);
-        QuadRectangle targetBox = Component.BoundingBox.coerce(b);
-        var candidates = spatialMap.getMatches(targetBox);
+        //var b = ecs.getComponentFor(target.entity(), Component.BoundingBox);
+        //QuadRectangle targetBox = Component.BoundingBox.coerce(b);
+        //var candidates = spatialMap.getMatches(targetBox);
+        var testC = testMap.getMatches(target.bodyIndex());
 
-        for (FBody2D candidate : candidates)
+        for (Integer candidateIndex : testC)
         {
+            var candidate = Main.Memory.bodyByIndex(candidateIndex);
             if (target == candidate)
             {
                 continue;
@@ -335,9 +330,9 @@ public class VerletPhysics extends GameSystem
             collisionProgress.get(keyA).add(keyB);
             //System.out.println("keyA: " + keyA + " keyB: " + keyB);
 
-            var bx = ecs.getComponentFor(candidate.entity(), Component.BoundingBox);
-            QuadRectangle candidateBox = Component.BoundingBox.coerce(bx);
-            boolean ch = doBoxesIntersect(targetBox, candidateBox);
+           // var bx = ecs.getComponentFor(candidate.entity(), Component.BoundingBox);
+            //QuadRectangle candidateBox = Component.BoundingBox.coerce(bx);
+            boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
             if (!ch)
             {
                 continue;
@@ -521,9 +516,25 @@ public class VerletPhysics extends GameSystem
             a.y + a.height > b.y;
     }
 
+    private static boolean doBoxesIntersect(FBounds2D a, FBounds2D b)
+    {
+//        return !(a.max_x < b.x ||
+//            a.max_y < b.y ||
+//            a.x > b.max_x ||
+//            a.y > b.max_y);
+
+        return a.x() < b.x() + b.w() &&
+            a.x() + a.w() > b.x() &&
+            a.y() < b.y() + b.h() &&
+            a.y() + a.h() > b.y();
+    }
+
+    private SpatialMapEX testMap =  new SpatialMapEX();
+
     private void tickSimulation(float dt)
     {
         spatialMap.clear();
+        testMap.clear();
 
         var bodies = ecs.getComponents(Component.RigidBody2D);
         if (bodies == null || bodies.isEmpty())
@@ -531,55 +542,30 @@ public class VerletPhysics extends GameSystem
             return;
         }
 
-
-
         var bd = ecs.getComponentFor("player", Component.RigidBody2D);
         FBody2D body = Component.RigidBody2D.coerce(bd);
         resolveForces(body.entity(), body);
 
-        var start = System.nanoTime();
         OpenCL_EX.integrate(dt);
-        System.out.println("Frame time: " + (System.nanoTime() - start));
 
-        for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
-        {
-            String entity = entry.getKey();
-
-            // todo: replace quad rect with FBounds
-            var b = ecs.getComponentFor(entity, Component.BoundingBox);
-            QuadRectangle box = Component.BoundingBox.coerce(b);
-
-            GameComponent component = entry.getValue();
-            FBody2D body2D = Component.RigidBody2D.coerce(component);
-
-//            var t = ecs.getComponentFor(entity, Component.Transform);
-//            FTransform transform = Component.Transform.coerce(t);
-//            transform.position.x = body2D.pos_x();
-//            transform.position.y = body2D.pos_y();
-
-            box.setX(body2D.bounds().x());
-            box.setY(body2D.bounds().y());
-            box.setWidth(body2D.bounds().w());
-            box.setHeight(body2D.bounds().h());
-            box.setMin_x(body2D.bounds().min_x());
-            box.setMax_x(body2D.bounds().max_x());
-            box.setMin_y(body2D.bounds().min_y());
-            box.setMax_y(body2D.bounds().max_y());
-
-            spatialMap.add(body2D, box);
-        }
-
+        testMap.rebuildMatches();
 
         collisionProgress.clear();
         collisionBuffer.clear();
 
         //tickCollisions();
 
-        for (GameComponent component : bodies.values())
+        for (int x = 0; x < Main.Memory.bodyCount(); x++)
         {
-            FBody2D body2D = Component.RigidBody2D.coerce(component);
+            FBody2D body2D = Main.Memory.bodyByIndex(x);
             findCollisions(body2D, spatialMap);
         }
+
+//        for (GameComponent component : bodies.values())
+//        {
+//            FBody2D body2D = Component.RigidBody2D.coerce(component);
+//            findCollisions(body2D, spatialMap);
+//        }
 
         for (CollisionManifold c : collisionBuffer)
         {

@@ -1,3 +1,44 @@
+int4 getExtents(int2 corners[])
+{
+    int4 r;
+    r[0] = INT_MAX; // min_x
+    r[1] = INT_MIN; // max_x
+    r[2] = INT_MAX; // min_y
+    r[3] = INT_MIN; // max_y
+    for (int i = 0; i < sizeof(corners); i++)
+    {
+        int2 corner = corners[i];
+        if (corner.x < r[0])
+        {
+            r[0] = corner.x;
+        }
+        if (corner.x > r[1])
+        {
+            r[1] = corner.x;
+        }
+        if (corner.y < r[2])
+        {
+            r[2] = corner.y;
+        }
+        if (corner.y > r[3])
+        {
+            r[3] = corner.y;
+        }
+    }
+    return r;
+}
+
+
+int2 getKeyForPoint(float px, float py)
+{
+    int index_x = ((int) floor(px / 7.68));
+    int index_y = ((int) floor(py / 4.32));
+    int2 out;
+    out.x = index_x;
+    out.y = index_y;
+    return out;
+}
+
 __kernel void integrate(
     __global const float16 *bodies,
     __global const float4 *points,
@@ -48,8 +89,8 @@ __kernel void integrate(
         diff = acc + diff;
 
         // add friction component
-        diff.x *= .980;
-        diff.y *= .980;
+        diff.x *= .990;
+        diff.y *= .990;
 
         // set the prv to current pos
         prv.x = pos.x;
@@ -105,6 +146,19 @@ __kernel void integrate(
     bounding_box.s3 = fabs(max_y - min_y);
     bounding_box.s4 = max_x;
     bounding_box.s5 = max_y;
+
+    int2 keys[4];
+    keys[0] = getKeyForPoint(bounding_box.s0, bounding_box.s1);
+    keys[1] = getKeyForPoint(bounding_box.s0 + bounding_box.s2, bounding_box.s1);
+    keys[2] = getKeyForPoint(bounding_box.s0 + bounding_box.s2, bounding_box.s1 + bounding_box.s3);
+    keys[3] = getKeyForPoint(bounding_box.s0, bounding_box.s1 + bounding_box.s3);
+
+    int4 k = getExtents(keys);
+
+    body.sb = (float) k.x;
+    body.sc = (float) k.y;
+    body.sd = (float) k.z;
+    body.se = (float) k.w;
 
     r_bounds[bound_index] = bounding_box;
 
