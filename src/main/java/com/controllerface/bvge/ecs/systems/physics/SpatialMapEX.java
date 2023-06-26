@@ -1,5 +1,6 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
+import com.controllerface.bvge.Main;
 import com.controllerface.bvge.data.FBody2D;
 import com.controllerface.bvge.ecs.components.QuadRectangle;
 
@@ -76,6 +77,21 @@ public class SpatialMapEX
             }
             currentX += x_spacing;
             currentY = 0;
+        }
+    }
+
+    public void rebuildMatches()
+    {
+        // todo: this might work in an executor
+        for (int i = 0; i < Main.Memory.bodyCount(); i++)
+        {
+            int index = i * Main.Memory.Width.BODY;
+
+            // todo: get bounding grid x,y,w,h from object, to compute in kernel
+            float x_index = Main.Memory.body_buffer[index + FBody2D.x_offset];
+            float y_index = Main.Memory.body_buffer[index + FBody2D.x_offset];
+            float w_index = Main.Memory.body_buffer[index + FBody2D.x_offset];
+            float h_index = Main.Memory.body_buffer[index + FBody2D.x_offset];
         }
     }
 

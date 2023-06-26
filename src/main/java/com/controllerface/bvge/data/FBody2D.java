@@ -28,17 +28,17 @@ public record FBody2D(int index, float force,
      * 14: [empty]
      * 15: [empty]
      *  */
-    private static int x_offset = 0;
-    private static int y_offset = 1;
-    private static int sx_offset = 2;
-    private static int sy_offset = 3;
-    private static int acc_x_offset = 4;
-    private static int acc_y_offset = 5;
-    private static int bi_offset = 6;
-    private static int sp_offset = 7;
-    private static int ep_offset = 8;
-    private static int se_offset = 9;
-    private static int ee_offset = 10;
+    public static int x_offset = 0;
+    public static int y_offset = 1;
+    public static int sx_offset = 2;
+    public static int sy_offset = 3;
+    public static int acc_x_offset = 4;
+    public static int acc_y_offset = 5;
+    public static int bi_offset = 6;
+    public static int sp_offset = 7;
+    public static int ep_offset = 8;
+    public static int se_offset = 9;
+    public static int ee_offset = 10;
 
     public float pos_x()
     {
