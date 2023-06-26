@@ -531,11 +531,16 @@ public class VerletPhysics extends GameSystem
             return;
         }
 
+
+
         var bd = ecs.getComponentFor("player", Component.RigidBody2D);
         FBody2D body = Component.RigidBody2D.coerce(bd);
         resolveForces(body.entity(), body);
 
+        var start = System.nanoTime();
         OpenCL_EX.integrate(dt);
+        System.out.println("Frame time: " + (System.nanoTime() - start));
+
         for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
         {
             String entity = entry.getKey();
@@ -563,6 +568,7 @@ public class VerletPhysics extends GameSystem
 
             spatialMap.add(body2D, box);
         }
+
 
         collisionProgress.clear();
         collisionBuffer.clear();
