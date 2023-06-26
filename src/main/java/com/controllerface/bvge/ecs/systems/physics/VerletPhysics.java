@@ -983,6 +983,9 @@ public class VerletPhysics extends GameSystem
         }
 
         bodyBuffer.clear();
+
+        var start = System.nanoTime();
+
         for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
         {
             String entity = entry.getKey();
@@ -998,6 +1001,8 @@ public class VerletPhysics extends GameSystem
             spatialMap.add(body2D, box);
             bodyBuffer.put(entity, body2D);
         }
+
+        System.out.println("Frame time: " + (System.nanoTime() - start));
 
         collisionBuffer.clear();
 
