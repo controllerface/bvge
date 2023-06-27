@@ -23,7 +23,7 @@ public class OpenCL_EX
 
     static cl_kernel k_collide;
     static cl_program p_collide;
-    private static String src_collide = readSrc("collide.cl");
+    private static String src_collide = readSrc("collide_2.cl");
 
     private static String readSrc(String file)
     {

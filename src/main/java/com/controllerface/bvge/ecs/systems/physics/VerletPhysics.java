@@ -171,6 +171,8 @@ public class VerletPhysics extends GameSystem
     {
         float min_distance = Float.MAX_VALUE;
 
+        System.out.println("body a: " + bodyA.index() + " body b: " + bodyB.index());
+
         var verts1 = bodyA.points();
         var verts2 = bodyB.points();
 
@@ -190,20 +192,30 @@ public class VerletPhysics extends GameSystem
             var vb = verts1[b_index];
 
             vb.subPos(va, vectorBuffer1);
+
             //vb.pos().sub(va.pos(), vectorBuffer1);
             vectorBuffer1.perpendicular();
+
             vectorBuffer1.normalize();
+
+//            System.out.println("buffer test java: " + vectorBuffer1.x + ":" + vectorBuffer1.y);
+
 
             var proj_a = projectPolygon(verts1, vectorBuffer1);
             var proj_b = projectPolygon(verts2, vectorBuffer1);
             var distance = polygonDistance(proj_a, proj_b);
+
+
             if (distance > 0)
             {
                 return null;
             }
             var abs_distance = Math.abs(distance);
+            //System.out.println("buffer test java: distance" + abs_distance);
+
             if (abs_distance < min_distance)
             {
+                System.out.println("Setting invert (J)");
                 vertex_o = bodyB;
                 invert = true;
                 edge_o = bodyA;
@@ -221,11 +233,13 @@ public class VerletPhysics extends GameSystem
                 : i + 1;
             var va = verts2[i];
             var vb = verts2[b_index];
+//            System.out.println("buffer test java: " + vb.pos_x() + ":" + vb.pos_y() + ":" + b_index);
 
             vb.subPos(va, vectorBuffer1);
             //vb.pos().sub(va.pos(), vectorBuffer1);
             vectorBuffer1.perpendicular();
             vectorBuffer1.normalize();
+//            System.out.println("buffer test java: " + vectorBuffer1.x + ":" + vectorBuffer1.y);
 
             var proj_a = projectPolygon(verts1, vectorBuffer1);
             var proj_b = projectPolygon(verts2, vectorBuffer1);
@@ -237,6 +251,7 @@ public class VerletPhysics extends GameSystem
             var abs_distance = Math.abs(distance);
             if (abs_distance < min_distance)
             {
+                System.out.println("Setting non-invert (J)");
                 vertex_o = bodyA;
                 invert = false;
                 edge_o = bodyB;
@@ -246,6 +261,8 @@ public class VerletPhysics extends GameSystem
                 edge_indexB = b_index;
             }
         }
+
+        System.out.println("invert? " + invert);
 
         var pr = projectPolygon(vertex_o.points(), vectorBuffer2);
         vert_index = pr.index();
@@ -268,6 +285,11 @@ public class VerletPhysics extends GameSystem
 
         var direction = new Vector2f();
         transformA.subPos(transformB, direction);
+
+        System.out.println("buffer test 1 java: " + transformA.pos_x() + ":" + transformA.pos_y());
+        System.out.println("buffer test 2 java: " + transformB.pos_x() + ":" + transformB.pos_y());
+
+
         //transformA.position.sub(transformB.position, direction);
         var dirdot = direction.dot(vectorBuffer2);
         if (dirdot < 0)
@@ -583,52 +605,65 @@ public class VerletPhysics extends GameSystem
 
         OpenCL_EX.integrate(dt);
 
-        //var start = System.nanoTime();
         testMap.rebuildIndex();
-        //System.out.println("time: " + (System.nanoTime() - start) + " ms");
-
         var candidates = testMap.computeCandidates();
-//        var sz = (candidates.limit() / 2) * 8;
-//        var manifolds = new float[sz];
-//
-//        if (candidates.limit() > 0)
-//        {
-//            var buffer = FloatBuffer.wrap(manifolds);
-//            OpenCL_EX.collide(candidates, buffer);
-//        }
 
+
+
+        var count = candidates.limit() / 2; // the number of PAIRS of indices, each pair produces one manifold
+        var manifold_size = count * 8;
+        var manifolds = new float[manifold_size];
+
+        if (candidates.limit() > 0)
+        {
+            var buffer = FloatBuffer.wrap(manifolds);
+            OpenCL_EX.collide(candidates, buffer);
+        }
+
+        for (int i =0; i < count; i++)
+        {
+            var next = i * 8;
+            float manifold[] = new float[8];
+            manifold[0] = manifolds[next];
+            manifold[1] = manifolds[next + 1];
+
+            if (manifold[0] == -1 || manifold[1]  == -1)
+            {
+                continue;
+            }
+
+            manifold[2] = manifolds[next + 2];
+            manifold[3] = manifolds[next + 3];
+            manifold[4] = manifolds[next + 4];
+            manifold[5] = manifolds[next + 5];
+            manifold[6] = manifolds[next + 6];
+            manifold[7] = manifolds[next + 7];
+            var vo = Main.Memory.bodyByIndex((int)manifold[0]);
+            var eo = Main.Memory.bodyByIndex((int)manifold[1]);
+            var norm = new Vector2f(manifold[2], manifold[3]);
+            var _manifold = new CollisionManifold(vo, eo, norm, manifold[4], (int)manifold[5], (int)manifold[6],
+                (int)manifold[7]);
+            //reactPolygonEX(manifold);
+            reactPolygon(_manifold);
+        }
 
 
         collisionProgress.clear();
         collisionBuffer.clear();
 
-        while (candidates.position() < candidates.limit())
-        {
-            int x1 = candidates.get();
-            int x2 = candidates.get();
-            var b1 = Main.Memory.bodyByIndex(x1);
-            var b2 = Main.Memory.bodyByIndex(x2);
-            findCollisionsEX(b1, b2);
-        }
-
-//        for (int i =0; i < (sz / 8); i+=8)
+//        while (candidates.position() < candidates.limit())
 //        {
-//            float manifold[] = new float[8];
-//            manifold[0] = manifolds[i];
-//            manifold[1] = manifolds[i + 1];
-//            manifold[2] = manifolds[i + 2];
-//            manifold[3] = manifolds[i + 3];
-//            manifold[4] = manifolds[i + 4];
-//            manifold[5] = manifolds[i + 5];
-//            manifold[6] = manifolds[i + 6];
-//            manifold[7] = manifolds[i + 7];
-//            reactPolygonEX(manifold);
+//            int x1 = candidates.get();
+//            int x2 = candidates.get();
+//            var b1 = Main.Memory.bodyByIndex(x1);
+//            var b2 = Main.Memory.bodyByIndex(x2);
+//            findCollisionsEX(b1, b2);
 //        }
-
-        for (CollisionManifold c : collisionBuffer)
-        {
-            reactPolygon(c);
-        }
+//
+//        for (CollisionManifold c : collisionBuffer)
+//        {
+//            reactPolygon(c);
+//        }
 
         tickEdges();
 
