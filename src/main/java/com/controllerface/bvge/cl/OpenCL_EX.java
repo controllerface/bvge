@@ -20,6 +20,10 @@ public class OpenCL_EX
     static cl_program p_verletIntegrate;
     private static String src_verletIntegrate = readSrc("integrate.cl");
 
+    static cl_kernel k_collide;
+    static cl_program p_collide;
+    private static String src_collide = readSrc("collide.cl");
+
     private static String readSrc(String file)
     {
         var stream = OpenCL_EX.class.getResourceAsStream("/kernels/" + file);
@@ -88,9 +92,15 @@ public class OpenCL_EX
     public static void init()
     {
         var x = commonInit();
+
         p_verletIntegrate = clCreateProgramWithSource(context, 1, new String[]{src_verletIntegrate}, null, null);
         clBuildProgram(p_verletIntegrate, 1, x, null, null, null);
         k_verletIntegrate = clCreateKernel(p_verletIntegrate, "integrate", null);
+
+        p_collide = clCreateProgramWithSource(context, 1, new String[]{src_collide}, null, null);
+        clBuildProgram(p_collide, 1, x, null, null, null);
+        k_collide = clCreateKernel(p_collide, "collide", null);
+
     }
 
     public static void destroy()

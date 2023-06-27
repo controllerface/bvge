@@ -152,9 +152,9 @@ public class Window
         var inputSystem = new KBMInput(ecs);
         ecs.registerSystem(inputSystem);
         ecs.registerSystem(new VerletPhysics(ecs));
-        ecs.registerSystem(new SpriteRenderer(ecs));
-        //ecs.registerSystem(new LineRenderer(ecs));
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        //ecs.registerSystem(new SpriteRenderer(ecs));
+        ecs.registerSystem(new LineRenderer(ecs));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs));
 
         //ecs.registerSystem(spacePartionRendering);
         // note: the display is wrong for this renderer, it's not scaled correctly for some reason.

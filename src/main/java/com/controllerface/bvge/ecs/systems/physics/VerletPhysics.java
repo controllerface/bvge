@@ -287,8 +287,19 @@ public class VerletPhysics extends GameSystem
 
 
 
+    private void findCollisionsEX(FBody2D target, FBody2D candidate)
+    {
+        var collision = checkCollision(target, candidate);
+        if (collision == null)
+        {
+            return;
+        }
+        collisionBuffer.add(collision);
+    }
 
-    private void findCollisions(FBody2D target, SpatialMap spatialMap)
+
+
+    private void findCollisions(FBody2D target)
     {
         //var b = ecs.getComponentFor(target.entity(), Component.BoundingBox);
         //QuadRectangle targetBox = Component.BoundingBox.coerce(b);
@@ -319,8 +330,6 @@ public class VerletPhysics extends GameSystem
                 keyA = candidate.entity();
                 keyB = target.entity();
             }
-
-
 
             if (collisionProgress.computeIfAbsent(keyA, (k)-> new HashSet<>()).contains(keyB))
             {
@@ -378,11 +387,8 @@ public class VerletPhysics extends GameSystem
         // vertex object
         if (vertex_magnitude > 0)
         {
-
             collision_vector.mul(vertex_magnitude, vectorBuffer1);
-            //collision_vertex.pos().sub(collision_vertex.prv(), vectorBuffer2); // diff
             collision_vertex.addPos(vectorBuffer1);
-            //collision_vertex.pos().sub(vectorBuffer2, collision_vertex.prv());
         }
 
         // edge object
@@ -395,13 +401,8 @@ public class VerletPhysics extends GameSystem
             float edge_scale = 1.0f / (edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
             collision_vector.mul((1 - edge_contact) * edge_magnitude * edge_scale, vectorBuffer1);
             collision_vector.mul(edge_contact * edge_magnitude * edge_scale, vectorBuffer2);
-            //e1.prv().sub( e1.pos(), vectorBuffer3);
-            //e2.prv().sub( e2.pos(), vectorBuffer4);
             e1.subPos(vectorBuffer1);
             e2.subPos(vectorBuffer2);
-            //e1.pos().sub(vectorBuffer3, e1.prv());
-            //e2.pos().sub(vectorBuffer4, e2.prv());
-
         }
     }
 
@@ -524,7 +525,6 @@ public class VerletPhysics extends GameSystem
     private void tickSimulation(float dt)
     {
         spatialMap.clear();
-        testMap.clear();
 
         var bodies = ecs.getComponents(Component.RigidBody2D);
         if (bodies == null || bodies.isEmpty())
@@ -538,24 +538,21 @@ public class VerletPhysics extends GameSystem
 
         OpenCL_EX.integrate(dt);
 
-        testMap.rebuildMatches();
+        testMap.rebuildIndex();
+
+        var candidates = testMap.computeCandidates();
 
         collisionProgress.clear();
         collisionBuffer.clear();
 
-        //tickCollisions();
-
-        for (int x = 0; x < Main.Memory.bodyCount(); x++)
+        while (candidates.position() < candidates.limit())
         {
-            FBody2D body2D = Main.Memory.bodyByIndex(x);
-            findCollisions(body2D, spatialMap);
+            int x1 = candidates.get();
+            int x2 = candidates.get();
+            var b1 = Main.Memory.bodyByIndex(x1);
+            var b2 = Main.Memory.bodyByIndex(x2);
+            findCollisionsEX(b1, b2);
         }
-
-//        for (GameComponent component : bodies.values())
-//        {
-//            FBody2D body2D = Component.RigidBody2D.coerce(component);
-//            findCollisions(body2D, spatialMap);
-//        }
 
         for (CollisionManifold c : collisionBuffer)
         {

@@ -35,6 +35,12 @@ public class KBMInput extends GameSystem
 
     public void keyCallback(long window, int key, int scancode, int action, int mods)
     {
+        if (key < 0)
+        {
+            System.out.println("Ignoring invalid keycode: " + key + " for action: " + action);
+            return;
+        }
+
         if (action == GLFW_PRESS)
         {
             keyDown[key] = true;

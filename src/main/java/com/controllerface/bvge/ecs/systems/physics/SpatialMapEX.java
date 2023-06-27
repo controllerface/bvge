@@ -2,8 +2,12 @@ package com.controllerface.bvge.ecs.systems.physics;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.data.FBody2D;
-import com.controllerface.bvge.ecs.components.QuadRectangle;
+import com.controllerface.bvge.data.FBounds2D;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.*;
 
 public class SpatialMapEX
@@ -28,14 +32,14 @@ public class SpatialMapEX
         return new HashSet<>();
     }
 
-    private static Set<Integer> newIntSet(BoxKey _k)
+    private static Set<Integer> newKeySet(BoxKey _k)
     {
         return new HashSet<>();
     }
 
-    public void clear()
+    private static Map<Integer, BoxKey> newKeyMap(Integer _k)
     {
-        boxMap.values().forEach(Set::clear);
+        return new HashMap<>();
     }
 
     public void init()
@@ -44,8 +48,9 @@ public class SpatialMapEX
         y_spacing = height / ysubdivisions;
     }
 
-    public void rebuildMatches()
+    public void rebuildIndex()
     {
+        keyMap.clear();
         boxMap.clear();
         bodyKeys.clear();
         // todo: this might work in an executor or fork/join pool
@@ -59,18 +64,96 @@ public class SpatialMapEX
             int min_y = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_min_y_offset];
             int max_y = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_max_y_offset];
 
-            for (int i2 = min_x; i2 <= max_x; i2++)
+            for (int currentX = min_x; currentX <= max_x; currentX++)
             {
-                for (int j2 = min_y; j2 <= max_y; j2++)
+                for (int currentY = min_y; currentY <= max_y; currentY++)
                 {
-                    var bodyKey = getKeyByIndex(i2, j2);
-                    boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newIntSet)
-                        .add(bodyIndex);
-                    bodyKeys.computeIfAbsent(bodyIndex, SpatialMapEX::newBoxSet)
-                        .add(bodyKey);
+                    var bodyKey = getKeyByIndex(currentX, currentY);
+                    boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newKeySet).add(bodyIndex);
+                    bodyKeys.computeIfAbsent(bodyIndex, SpatialMapEX::newBoxSet).add(bodyKey);
                 }
             }
         }
+    }
+    private final Map<String, Set<String>> collisionProgress = new HashMap<>();
+
+    private static byte[] intToBytes(final int data) {
+        return new byte[] {
+            (byte)((data >> 24) & 0xff),
+            (byte)((data >> 16) & 0xff),
+            (byte)((data >> 8) & 0xff),
+            (byte)((data >> 0) & 0xff),
+        };
+    }
+
+    private static boolean doBoxesIntersect(FBounds2D a, FBounds2D b)
+    {
+        return a.x() < b.x() + b.w()
+            && a.x() + a.w() > b.x()
+            && a.y() < b.y() + b.h()
+            && a.y() + a.h() > b.y();
+    }
+
+    public IntBuffer computeCandidates()
+    {
+        ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
+        collisionProgress.clear();
+        for (int location = 0; location < Main.Memory.bodyCount(); location++)
+        {
+            int bodyOffset = location * Main.Memory.Width.BODY;
+            int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
+
+            var target = Main.Memory.bodyByIndex(bodyIndex);
+            var c = getMatches(bodyIndex);
+
+            for (Integer candidateIndex : c)
+            {
+                var candidate = Main.Memory.bodyByIndex(candidateIndex);
+                if (target == candidate)
+                {
+                    continue;
+                }
+                if (target.entity().equals(candidate.entity()))
+                {
+                    continue;
+                }
+
+                var keyA = "";
+                var keyB = "";
+                if (target.entity().compareTo(candidate.entity()) < 0)
+                {
+                    keyA = target.entity();
+                    keyB = candidate.entity();
+                }
+                else
+                {
+                    keyA = candidate.entity();
+                    keyB = target.entity();
+                }
+
+                if (collisionProgress.computeIfAbsent(keyA, (k)-> new HashSet<>()).contains(keyB))
+                {
+                    continue;
+                }
+
+                collisionProgress.get(keyA).add(keyB);
+                boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
+                if (!ch)
+                {
+                    continue;
+                }
+                try
+                {
+                    outBuffer.write(intToBytes(bodyIndex));
+                    outBuffer.write(intToBytes(candidateIndex));
+                }
+                catch (IOException e)
+                {
+                    assert false : "could not allocate collision buffer space";
+                }
+            }
+        }
+        return ByteBuffer.wrap(outBuffer.toByteArray()).asIntBuffer();
     }
 
     public Set<Integer> getMatches(Integer boxId)
@@ -86,7 +169,7 @@ public class SpatialMapEX
 
     private BoxKey getKeyByIndex(int index_x, int index_y)
     {
-        return keyMap.computeIfAbsent(index_x, _k -> new HashMap<>())
-            .computeIfAbsent(index_y, _k -> new BoxKey(index_x, index_y));
+        return keyMap.computeIfAbsent(index_x, SpatialMapEX::newKeyMap)
+            .computeIfAbsent(index_y, (_k) -> new BoxKey(index_x, index_y));
     }
 }
