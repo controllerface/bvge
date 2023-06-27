@@ -96,7 +96,7 @@ public class SpatialMapEX
 
     public IntBuffer computeCandidates()
     {
-        ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
+        List<Integer> outBuffer = new ArrayList<>();
         collisionProgress.clear();
         for (int location = 0; location < Main.Memory.bodyCount(); location++)
         {
@@ -142,18 +142,18 @@ public class SpatialMapEX
                 {
                     continue;
                 }
-                try
-                {
-                    outBuffer.write(intToBytes(bodyIndex));
-                    outBuffer.write(intToBytes(candidateIndex));
-                }
-                catch (IOException e)
-                {
-                    assert false : "could not allocate collision buffer space";
-                }
+
+                outBuffer.add(bodyIndex);
+                outBuffer.add(candidateIndex);
+
             }
         }
-        return ByteBuffer.wrap(outBuffer.toByteArray()).asIntBuffer();
+        int[] ob = new int[outBuffer.size()];
+        for (int i = 0; i < outBuffer.size(); i++)
+        {
+            ob[i] = outBuffer.get(i);
+        }
+        return IntBuffer.wrap(ob);
     }
 
     public Set<Integer> getMatches(Integer boxId)

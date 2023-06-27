@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 
 import static org.jocl.CL.*;
@@ -180,4 +181,59 @@ public class OpenCL_EX
         clReleaseMemObject(dstMemBounds);
         clReleaseMemObject(dtMem);
     }
+
+
+
+
+
+    public static void collide(IntBuffer candidates, FloatBuffer manifolds)
+    {
+        int candidatesSize = candidates.limit();
+        int bodiesSize = Main.Memory.bodyLength();
+        int pointsSize = Main.Memory.pointLength();
+        int manifoldsSize = manifolds.limit();
+
+        var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
+        var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
+
+        // Set the work-item dimensions
+        long global_work_size[] = new long[]{candidates.limit() / 2};
+
+        Pointer srcCandidates = Pointer.to(candidates);
+        Pointer srcBodies = Pointer.to(bodyBuffer);
+        Pointer srcPoints = Pointer.to(pointBuffer);
+        Pointer dstManifolds = Pointer.to(manifolds);
+
+        long candidateBufSize = Sizeof.cl_int * candidatesSize;
+        long bodyBufsize = Sizeof.cl_float * bodiesSize;
+        long pointBufsize = Sizeof.cl_float * pointsSize;
+        long manifoldBufsize = Sizeof.cl_float * manifoldsSize;
+
+        cl_mem srcMemCandidates = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, candidateBufSize, srcCandidates, null);
+        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, bodyBufsize, srcBodies, null);
+        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, pointBufsize, srcPoints, null);
+        cl_mem dstMemManifolds = clCreateBuffer(context, CL_MEM_READ_WRITE, manifoldBufsize, null, null);
+
+
+        // Set the arguments for the kernel
+        int a = 0;
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemCandidates));
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(dstMemManifolds));
+
+        // Execute the kernel
+        clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
+            global_work_size, null, 0, null, null);
+
+        // Read the output data
+        clEnqueueReadBuffer(commandQueue, dstMemManifolds, CL_TRUE, 0,
+            manifoldBufsize, dstManifolds, 0, null, null);
+
+        clReleaseMemObject(srcMemCandidates);
+        clReleaseMemObject(srcMemBodies);
+        clReleaseMemObject(srcMemPoints);
+        clReleaseMemObject(dstMemManifolds);
+    }
+
 }
