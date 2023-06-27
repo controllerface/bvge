@@ -9,6 +9,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SpatialMapEX
 {
@@ -18,9 +23,9 @@ public class SpatialMapEX
     private float ysubdivisions = 250;
     private float x_spacing = 0;
     private float y_spacing = 0;
-    Map<Integer, Map<Integer, BoxKey>> keyMap = new HashMap<>();
-    Map<BoxKey, Set<Integer>> boxMap = new HashMap<>();
-    Map<Integer, Set<BoxKey>> bodyKeys = new HashMap<>();
+    Map<Integer, Map<Integer, BoxKey>> keyMap = new ConcurrentHashMap<>();
+    Map<BoxKey, Set<Integer>> boxMap = new ConcurrentHashMap<>();
+    Map<Integer, Set<BoxKey>> bodyKeys = new ConcurrentHashMap<>();
 
     public SpatialMapEX()
     {
@@ -53,16 +58,19 @@ public class SpatialMapEX
         keyMap.clear();
         boxMap.clear();
         bodyKeys.clear();
+        var bodyCount = Main.Memory.bodyCount();
+        var counter = new AtomicInteger(bodyCount);
         // todo: this might work in an executor or fork/join pool
-        for (int location = 0; location < Main.Memory.bodyCount(); location++)
+        for (int location = 0; location < bodyCount; location++)
         {
             int bodyOffset = location * Main.Memory.Width.BODY;
             int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
+            var body = Main.Memory.bodyByIndex(bodyIndex);
 
-            int min_x = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_min_x_offset];
-            int max_x = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_max_x_offset];
-            int min_y = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_min_y_offset];
-            int max_y = (int)Main.Memory.body_buffer[bodyOffset + FBody2D.si_max_y_offset];
+            int min_x = body.si_min_x();
+            int max_x = body.si_max_x();
+            int min_y = body.si_min_y();
+            int max_y = body.si_max_y();
 
             for (int currentX = min_x; currentX <= max_x; currentX++)
             {
@@ -73,9 +81,10 @@ public class SpatialMapEX
                     bodyKeys.computeIfAbsent(bodyIndex, SpatialMapEX::newBoxSet).add(bodyKey);
                 }
             }
+            //System.out.println(counter.decrementAndGet());
         }
+        //System.out.println("AT End" + counter.get());
     }
-    private final Map<String, Set<String>> collisionProgress = new HashMap<>();
 
     private static byte[] intToBytes(final int data) {
         return new byte[] {
@@ -94,59 +103,77 @@ public class SpatialMapEX
             && a.y() + a.h() > b.y();
     }
 
-    public IntBuffer computeCandidates()
+    private void doX(int location)
     {
-        List<Integer> outBuffer = new ArrayList<>();
-        collisionProgress.clear();
-        for (int location = 0; location < Main.Memory.bodyCount(); location++)
+        int bodyOffset = location * Main.Memory.Width.BODY;
+        int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
+
+        var target = Main.Memory.bodyByIndex(bodyIndex);
+        var c = getMatches(bodyIndex);
+
+        for (Integer candidateIndex : c)
         {
-            int bodyOffset = location * Main.Memory.Width.BODY;
-            int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
-
-            var target = Main.Memory.bodyByIndex(bodyIndex);
-            var c = getMatches(bodyIndex);
-
-            for (Integer candidateIndex : c)
+            var candidate = Main.Memory.bodyByIndex(candidateIndex);
+            if (target == candidate)
             {
-                var candidate = Main.Memory.bodyByIndex(candidateIndex);
-                if (target == candidate)
+                continue;
+            }
+            if (target.entity().equals(candidate.entity()))
+            {
+                continue;
+            }
+
+            var keyA = "";
+            var keyB = "";
+            if (target.entity().compareTo(candidate.entity()) < 0)
+            {
+                keyA = target.entity();
+                keyB = candidate.entity();
+            }
+            else
+            {
+                keyA = candidate.entity();
+                keyB = target.entity();
+            }
+
+            synchronized (collisionProgress)
+            {
+                if (collisionProgress.computeIfAbsent(keyA, (k) -> new HashSet<>()).contains(keyB))
                 {
                     continue;
                 }
-                if (target.entity().equals(candidate.entity()))
-                {
-                    continue;
-                }
-
-                var keyA = "";
-                var keyB = "";
-                if (target.entity().compareTo(candidate.entity()) < 0)
-                {
-                    keyA = target.entity();
-                    keyB = candidate.entity();
-                }
-                else
-                {
-                    keyA = candidate.entity();
-                    keyB = target.entity();
-                }
-
-                if (collisionProgress.computeIfAbsent(keyA, (k)-> new HashSet<>()).contains(keyB))
-                {
-                    continue;
-                }
-
                 collisionProgress.get(keyA).add(keyB);
-                boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
-                if (!ch)
-                {
-                    continue;
-                }
+            }
 
+            boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
+            if (!ch)
+            {
+                continue;
+            }
+
+            synchronized (outBuffer)
+            {
                 outBuffer.add(bodyIndex);
                 outBuffer.add(candidateIndex);
-
             }
+        }
+    }
+
+
+    private final Map<String, Set<String>> collisionProgress = new HashMap<>();
+
+
+    private final List<Integer> outBuffer = new ArrayList<>();
+
+    public IntBuffer computeCandidates()
+    {
+        var bodyCount = Main.Memory.bodyCount();
+        outBuffer.clear();
+        collisionProgress.clear();
+        for (int location = 0; location < bodyCount; location++)
+        {
+            final int next = location;
+            this.doX(next);
         }
         int[] ob = new int[outBuffer.size()];
         for (int i = 0; i < outBuffer.size(); i++)

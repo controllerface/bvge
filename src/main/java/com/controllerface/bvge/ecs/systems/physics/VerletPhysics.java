@@ -388,10 +388,8 @@ public class VerletPhysics extends GameSystem
         float edge_magnitude = .5f;
         var body = Main.Memory.bodyByIndex((int)collision[0]);
         var verts = body.points(); //collision.vertexObject().points();
-        var index = (int)collision[7]*Main.Memory.Width.POINT;
-        var collision_vertex = Arrays.stream(verts)
-            .filter(v->v.index()==index).findAny()
-            .orElse(null);
+        var index = (int)collision[7];
+        var collision_vertex = verts[index];
 
         if (collision_vertex == null) return;
 
@@ -407,15 +405,11 @@ public class VerletPhysics extends GameSystem
         {
             var edge_verts = Main.Memory.bodyByIndex((int)collision[1]).points();
 
-            var index1 = (int)collision[5]*Main.Memory.Width.POINT;
-            var index2 = (int)collision[6]*Main.Memory.Width.POINT;
+            var index1 = (int)collision[5];
+            var index2 = (int)collision[6];
 
-            var e1 = Arrays.stream(edge_verts)
-                .filter(v->v.index()==index1).findAny()
-                .orElse(null);
-            var e2 = Arrays.stream(edge_verts)
-                .filter(v->v.index()==index2).findAny()
-                .orElse(null);
+            var e1 = edge_verts[index1];
+            var e2 = edge_verts[index2];
 
             var edge_contact = edgeContact(e1, e2, collision_vertex, collision_vector);
             float edge_scale = 1.0f / (edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
@@ -589,45 +583,47 @@ public class VerletPhysics extends GameSystem
 
         OpenCL_EX.integrate(dt);
 
+        //var start = System.nanoTime();
         testMap.rebuildIndex();
+        //System.out.println("time: " + (System.nanoTime() - start) + " ms");
 
         var candidates = testMap.computeCandidates();
-        var sz = (candidates.limit() / 2) * 8;
-        var manifolds = new float[sz];
-        var buffer = FloatBuffer.wrap(manifolds);
-
-        if (candidates.limit() > 0)
-        {
-            OpenCL_EX.collide(candidates, buffer);
-        }
+//        var sz = (candidates.limit() / 2) * 8;
+//        var manifolds = new float[sz];
+//
+//        if (candidates.limit() > 0)
+//        {
+//            var buffer = FloatBuffer.wrap(manifolds);
+//            OpenCL_EX.collide(candidates, buffer);
+//        }
 
 
 
         collisionProgress.clear();
         collisionBuffer.clear();
 
-//        while (candidates.position() < candidates.limit())
-//        {
-//            int x1 = candidates.get();
-//            int x2 = candidates.get();
-//            var b1 = Main.Memory.bodyByIndex(x1);
-//            var b2 = Main.Memory.bodyByIndex(x2);
-//            findCollisionsEX(b1, b2);
-//        }
-
-        for (int i =0; i < (sz / 8); i+=8)
+        while (candidates.position() < candidates.limit())
         {
-            float manifold[] = new float[8];
-            manifold[0] = manifolds[i];
-            manifold[1] = manifolds[i + 1];
-            manifold[2] = manifolds[i + 2];
-            manifold[3] = manifolds[i + 3];
-            manifold[4] = manifolds[i + 4];
-            manifold[5] = manifolds[i + 5];
-            manifold[6] = manifolds[i + 6];
-            manifold[7] = manifolds[i + 7];
-            reactPolygonEX(manifold);
+            int x1 = candidates.get();
+            int x2 = candidates.get();
+            var b1 = Main.Memory.bodyByIndex(x1);
+            var b2 = Main.Memory.bodyByIndex(x2);
+            findCollisionsEX(b1, b2);
         }
+
+//        for (int i =0; i < (sz / 8); i+=8)
+//        {
+//            float manifold[] = new float[8];
+//            manifold[0] = manifolds[i];
+//            manifold[1] = manifolds[i + 1];
+//            manifold[2] = manifolds[i + 2];
+//            manifold[3] = manifolds[i + 3];
+//            manifold[4] = manifolds[i + 4];
+//            manifold[5] = manifolds[i + 5];
+//            manifold[6] = manifolds[i + 6];
+//            manifold[7] = manifolds[i + 7];
+//            reactPolygonEX(manifold);
+//        }
 
         for (CollisionManifold c : collisionBuffer)
         {

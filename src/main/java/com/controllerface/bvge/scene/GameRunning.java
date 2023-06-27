@@ -73,7 +73,7 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.RigidBody2D, physicsObject);
         ecs.attachComponent(player, Component.BoundingBox, physicsObject.bounds());
 
-        genNPCs(3f, 3f);
+        genNPCs(5f, 5f);
     }
 
     @Override
