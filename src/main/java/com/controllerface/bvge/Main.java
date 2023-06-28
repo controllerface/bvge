@@ -31,18 +31,27 @@ public class Main
         {
             // float16
             public static final int BODY = 16;
+            // Individual objects, including the player are a single body
 
             // float4
             public static final int POINT = 4;
+            // Bodies are composed of one or more points
 
             // float3
             public static final int EDGE = 3;
+            // Edges define constraints that are set between two vertices
 
             // float8
             public static final int BOUNDS = 8;
+            // Bounding boxes are used for proximity checks on bodies
 
             // int2
             public static final int KEY = 2;
+            // A spatial index key is calculated for each body to aid in collision checks
+
+            // int
+            public static final int POINTER = 1;
+            // A pointer index used for referencing spatial key matches
         }
 
         private static final Map<Integer, FBody2D> bodies = new HashMap<>();
@@ -51,36 +60,50 @@ public class Main
         private static final int MAX_POINTS  = 1_000_000;
         private static final int MAX_KEYS    = MAX_BODIES * 50;
 
-        private static final int body_buffer_size   = Width.BODY   * MAX_BODIES;
-        private static final int point_buffer_size  = Width.POINT  * MAX_POINTS;
-        private static final int edge_buffer_size   = Width.EDGE   * MAX_POINTS;
-        private static final int bounds_buffer_size = Width.BOUNDS * MAX_BODIES;
-        private static final int key_buffer_size    = Width.KEY * MAX_KEYS;
+        private static final int BODY_BUFFER_SIZE    = Width.BODY    * MAX_BODIES;
+        private static final int POINT_BUFFER_SIZE   = Width.POINT   * MAX_POINTS;
+        private static final int EDGE_BUFFER_SIZE    = Width.EDGE    * MAX_POINTS;
+        private static final int BOUNDS_BUFFER_SIZE  = Width.BOUNDS  * MAX_BODIES;
+        private static final int KEY_BUFFER_SIZE     = Width.KEY     * MAX_KEYS;
+        private static final int POINTER_BUFFER_SIZE = Width.POINTER * MAX_KEYS;
 
-        public static float[] body_buffer   = new float[body_buffer_size];
-        public static float[] point_buffer  = new float[point_buffer_size];
-        public static float[] edge_buffer   = new float[edge_buffer_size];
-        public static float[] bounds_buffer = new float[bounds_buffer_size];
-        public static int[] key_buffer      = new int[key_buffer_size];
+        public static float[] body_buffer   = new float[BODY_BUFFER_SIZE];
+        public static float[] point_buffer  = new float[POINT_BUFFER_SIZE];
+        public static float[] edge_buffer   = new float[EDGE_BUFFER_SIZE];
+        public static float[] bounds_buffer = new float[BOUNDS_BUFFER_SIZE];
+        public static int[] key_buffer      = new int[KEY_BUFFER_SIZE];
+        public static int[] pointer_buffer  = new int[POINTER_BUFFER_SIZE];
 
-        private static int body_index   = 0;
-        private static int point_index  = 0;
-        private static int edge_index   = 0;
-        private static int bounds_index = 0;
-        private static int key_index    = 0;
+
+        private static int body_index    = 0;
+        private static int point_index   = 0;
+        private static int edge_index    = 0;
+        private static int bounds_index  = 0;
+        private static int key_index     = 0;
+        private static int pointer_index = 0;
 
         public static void startKeyRebuild()
         {
             key_index = 0;
+            pointer_index = 0;
         }
 
         public static int[] storeKeyBank(int[] key_bank)
         {
-            System.arraycopy(key_bank, 0, key_buffer, key_index, key_bank.length);
             int[] out = new int[2];
             out[0] = key_index;
-            out[1] = key_bank.length / 2;
+            out[1] = key_bank.length;
+            System.arraycopy(key_bank, 0, key_buffer, key_index, key_bank.length);
             key_index += key_bank.length;
+            return out;
+        }
+
+        public static int storeKeyPointer(int[] key_data)
+        {
+            int out = pointer_index;
+            pointer_buffer[pointer_index++] = key_data.length; // the first value is the length of data
+            System.arraycopy(key_data, 0, pointer_buffer, pointer_index, key_data.length);
+            pointer_index += key_data.length;
             return out;
         }
 

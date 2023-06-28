@@ -14,8 +14,8 @@ public class SpatialMapEX
 {
     private float width = 1920;
     private float height = 1080;
-    private float xsubdivisions = 250;
-    private float ysubdivisions = 250;
+    private int xsubdivisions = 250;
+    private int ysubdivisions = 250;
     private float x_spacing = 0;
     private float y_spacing = 0;
     Map<Integer, Map<Integer, BoxKey>> keyMap = new ConcurrentHashMap<>();
@@ -72,6 +72,7 @@ public class SpatialMapEX
                 key_bank[current_index++] = current_x;
                 key_bank[current_index++] = current_y;
                 var bodyKey = getKeyByIndex(current_x, current_y);
+
                 // todo: remove the class based components
                 boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newKeySet).add(bodyIndex);
 
@@ -83,19 +84,31 @@ public class SpatialMapEX
         body.bounds().setSpatialIndex(si_data);
     }
 
-    public void rebuildIndex()
+    public int[] rebuildIndex()
     {
         keyMap.clear();
         boxMap.clear();
         bodyKeys.clear();
         Main.Memory.startKeyRebuild();
         var bodyCount = Main.Memory.bodyCount();
+        int[] keyDirectory = new int[xsubdivisions * ysubdivisions];
         for (int location = 0; location < bodyCount; location++)
         {
             int bodyOffset = location * Main.Memory.Width.BODY;
             int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
             rebuildLocation(bodyIndex);
         }
+
+        for (Map.Entry<BoxKey, Set<Integer>> entry : boxMap.entrySet())
+        {
+            BoxKey key = entry.getKey();
+            Set<Integer> value = entry.getValue();
+            int[] matches = value.stream().mapToInt(i->i).toArray();
+            int index = Main.Memory.storeKeyPointer(matches);
+            int i = xsubdivisions * key.y + key.x;
+            keyDirectory[i] = index;
+        }
+        return keyDirectory;
     }
 
     private static boolean doBoxesIntersect(FBounds2D a, FBounds2D b)
@@ -106,18 +119,50 @@ public class SpatialMapEX
             && a.y() + a.h() > b.y();
     }
 
-    private void doX(int location)
+    private int[] matches(int[] keys, int[] key_directory)
+    {
+        var rSet = new HashSet<Integer>();
+        for (int i = 0; i < keys.length; i += Main.Memory.Width.KEY)
+        {
+            int x = keys[i];
+            int y = keys[i + 1];
+            int pointer = key_directory[xsubdivisions * y + x];
+            int len = Main.Memory.pointer_buffer[pointer];
+            int endIndex = pointer + len;
+            for (int j = pointer + 1; j <= endIndex; j++)
+            {
+                int next = Main.Memory.pointer_buffer[j];
+                rSet.add(next);
+            }
+        }
+        int[] out = rSet.stream().mapToInt(i->i).toArray();
+        return out;
+    }
+
+    private void doX(int location, int[] key_directory)
     {
         int bodyOffset = location * Main.Memory.Width.BODY;
         int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
 
         var target = Main.Memory.bodyByIndex(bodyIndex);
-        var c = getMatches(bodyIndex);
+        var bounds = target.bounds();
+        var spatial_index = (int) bounds.si_index();
+        var spatial_length = (int) bounds.si_length();
 
-        for (Integer candidateIndex : c)
+        var keys = new int[spatial_length];
+        System.arraycopy(Main.Memory.key_buffer, spatial_index, keys, 0, spatial_length);
+
+        var m = matches(keys, key_directory);
+        //var c = getMatches(bodyIndex);
+
+        for (int candidateIndex : m)
         {
             var candidate = Main.Memory.bodyByIndex(candidateIndex);
             if (target == candidate)
+            {
+                continue;
+            }
+            if (target.index() > candidate.index())
             {
                 continue;
             }
@@ -125,29 +170,6 @@ public class SpatialMapEX
             {
                 continue;
             }
-
-            var keyA = "";
-            var keyB = "";
-            if (target.entity().compareTo(candidate.entity()) < 0)
-            {
-                keyA = target.entity();
-                keyB = candidate.entity();
-            }
-            else
-            {
-                keyA = candidate.entity();
-                keyB = target.entity();
-            }
-
-            //synchronized (collisionProgress)
-            //{
-                if (collisionProgress.computeIfAbsent(keyA, (k) -> new HashSet<>()).contains(keyB))
-                {
-                    continue;
-                }
-                collisionProgress.get(keyA).add(keyB);
-            //}
-
             boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
             if (!ch)
             {
@@ -163,20 +185,20 @@ public class SpatialMapEX
     }
 
 
-    private final Map<String, Set<String>> collisionProgress = new HashMap<>();
+    //private final Map<String, Set<String>> collisionProgress = new HashMap<>();
 
 
     private final List<Integer> outBuffer = new ArrayList<>();
 
-    public IntBuffer computeCandidates()
+    public IntBuffer computeCandidates(int[] key_directory)
     {
         var bodyCount = Main.Memory.bodyCount();
         outBuffer.clear();
-        collisionProgress.clear();
+        //collisionProgress.clear();
         for (int location = 0; location < bodyCount; location++)
         {
             final int next = location;
-            this.doX(next);
+            this.doX(next, key_directory);
         }
         int[] ob = new int[outBuffer.size()];
         for (int i = 0; i < outBuffer.size(); i++)
@@ -188,6 +210,7 @@ public class SpatialMapEX
 
     public Set<Integer> getMatches(Integer boxId)
     {
+        //var body =
         var keys = bodyKeys.get(boxId);
         var rSet = new HashSet<Integer>();
         for (BoxKey k : keys)

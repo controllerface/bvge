@@ -14,9 +14,9 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 60.0f;
+    private final float TICK_RATE = 1.0f / 30.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 1;
+    private final int EDGE_STEPS = 2;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
@@ -603,8 +603,8 @@ public class VerletPhysics extends GameSystem
 
         OpenCL_EX.integrate(dt);
 
-        testMap.rebuildIndex();
-        var candidates = testMap.computeCandidates();
+        var key_directory = testMap.rebuildIndex();
+        var candidates = testMap.computeCandidates(key_directory);
 
         var count = candidates.limit() / 2; // the number of PAIRS of indices, each pair produces one manifold
         var manifold_size = count * 8;

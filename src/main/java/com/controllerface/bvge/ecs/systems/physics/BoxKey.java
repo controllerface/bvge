@@ -12,6 +12,12 @@ public class BoxKey
     }
 
     @Override
+    public String toString()
+    {
+        return "[x:" + x + ", y:" + y + "]";
+    }
+
+    @Override
     public boolean equals(Object o)
     {
         if (this == o)
