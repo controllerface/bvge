@@ -14,12 +14,34 @@ public class Main
         // todo: actually add the cleaner/tracking mechanism for keeping track of
         //  all points, bodies, etc. This will be needed when the arrays need to compact
         //  because of this, those objects won't be able to be records.
+
+        // Memory layout notes:
+        //---------------------
+        // Objects managed by this class are laid out as 1 dimensional arrays for interoperability
+        // with OpenGL and OpenCL. Each object type is mapped to a corresponding OpenCL vector type,
+        // and when the elements are used within cl kernel code, these arrays are indexed based on
+        // their "vector width" within the kernel environment. For example, in the Java environment,
+        // an integer array declared like this:
+        //     int[] test_array= new int[10];
+        // may be accessed in the kernel code as an int2 (i.e. a 2D vector of ints) as an *int2 pointer.
+        // This in this scenario, the int[] of size 10, is treated as an int2[] of size 5. I.e., indexing
+        // into the array from within kernel code, the maximum index would be 4. The Width class below will
+        // contain comments describing the kernel side structure used for each.
         public static class Width
         {
+            // float16
             public static final int BODY = 16;
+
+            // float4
             public static final int POINT = 4;
+
+            // float3
             public static final int EDGE = 3;
+
+            // float8
             public static final int BOUNDS = 8;
+
+            // int2
             public static final int KEY = 2;
         }
 
@@ -39,13 +61,28 @@ public class Main
         public static float[] point_buffer  = new float[point_buffer_size];
         public static float[] edge_buffer   = new float[edge_buffer_size];
         public static float[] bounds_buffer = new float[bounds_buffer_size];
-        public static float[] key_buffer    = new float[key_buffer_size];
+        public static int[] key_buffer      = new int[key_buffer_size];
 
         private static int body_index   = 0;
         private static int point_index  = 0;
         private static int edge_index   = 0;
         private static int bounds_index = 0;
         private static int key_index    = 0;
+
+        public static void startKeyRebuild()
+        {
+            key_index = 0;
+        }
+
+        public static int[] storeKeyBank(int[] key_bank)
+        {
+            System.arraycopy(key_bank, 0, key_buffer, key_index, key_bank.length);
+            int[] out = new int[2];
+            out[0] = key_index;
+            out[1] = key_bank.length / 2;
+            key_index += key_bank.length;
+            return out;
+        }
 
         public static FBody2D bodyByIndex(int index)
         {

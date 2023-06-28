@@ -63,21 +63,24 @@ public class SpatialMapEX
         var count = x_count * y_count;
         var size = count * 2;
 //
-        int currentIndex = 0;
-        int[] keyBank = new int[size];
-        for (int currentX = min_x; currentX <= max_x; currentX++)
+        int current_index = 0;
+        int[] key_bank = new int[size];
+        for (int current_x = min_x; current_x <= max_x; current_x++)
         {
-            for (int currentY = min_y; currentY <= max_y; currentY++)
+            for (int current_y = min_y; current_y <= max_y; current_y++)
             {
-                keyBank[currentIndex++] = currentX;
-                keyBank[currentIndex++] = currentY;
-                var bodyKey = getKeyByIndex(currentX, currentY);
-                // todo: collect key vectors array and store start/length
+                key_bank[current_index++] = current_x;
+                key_bank[current_index++] = current_y;
+                var bodyKey = getKeyByIndex(current_x, current_y);
+                // todo: remove the class based components
                 boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newKeySet).add(bodyIndex);
+
+                // this is replaced by the main memory bank
                 bodyKeys.computeIfAbsent(bodyIndex, SpatialMapEX::newBoxSet).add(bodyKey);
             }
         }
-        // todo: write keybank to main memory
+        var si_data = Main.Memory.storeKeyBank(key_bank);
+        body.bounds().setSpatialIndex(si_data);
     }
 
     public void rebuildIndex()
@@ -85,6 +88,7 @@ public class SpatialMapEX
         keyMap.clear();
         boxMap.clear();
         bodyKeys.clear();
+        Main.Memory.startKeyRebuild();
         var bodyCount = Main.Memory.bodyCount();
         for (int location = 0; location < bodyCount; location++)
         {
@@ -92,16 +96,6 @@ public class SpatialMapEX
             int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
             rebuildLocation(bodyIndex);
         }
-    }
-
-    private static byte[] intToBytes(final int data)
-    {
-        return new byte[]{
-            (byte) ((data >> 24) & 0xff),
-            (byte) ((data >> 16) & 0xff),
-            (byte) ((data >> 8) & 0xff),
-            (byte) ((data >> 0) & 0xff),
-        };
     }
 
     private static boolean doBoxesIntersect(FBounds2D a, FBounds2D b)
