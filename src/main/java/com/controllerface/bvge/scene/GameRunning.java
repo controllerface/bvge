@@ -28,8 +28,8 @@ public class GameRunning extends GameMode
         {
             for (int j = 0; j < testBoxSize; j++)
             {
-                float r = rand.nextFloat() / 3.0f;
-                float g = rand.nextFloat() / 2.0f;
+                float r = rand.nextFloat() / 5.0f;
+                float g = rand.nextFloat() / 5.0f;
                 float b = rand.nextFloat();
 
                 float x = 100 + i * spacing;
@@ -42,7 +42,7 @@ public class GameRunning extends GameMode
                 sprite2.setTexture(tex2);
                 sprite2.setHeight(32);
                 sprite2.setWidth(32);
-                scomp2.setSprite(sprite2);
+                //scomp2.setSprite(sprite2);
                 scomp2.setColor(new Vector4f(r,g,b,1));
                 var physicsObject = PhysicsObjects.simpleBox(x, y, size, npc);
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);

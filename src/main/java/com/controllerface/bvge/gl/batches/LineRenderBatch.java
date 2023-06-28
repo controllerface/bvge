@@ -6,6 +6,8 @@ import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
+import java.util.Random;
+
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
@@ -184,6 +186,9 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
         currentShader.detach();
     }
 
+
+    private Random rand = new Random();
+
     /**
      * Updates the local buffer p2 reflect the current state of the indexed sprite.
      *
@@ -191,6 +196,10 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
      */
     private void loadVertexProperties(int index)
     {
+        float r = rand.nextFloat() / 5.0f;
+        float g = rand.nextFloat() / 2.0f;
+        float b = rand.nextFloat() / 5.0f;
+
         FEdge2D line = this.lines[index];
 
         // Find offset within array (4 vertices per sprite)
@@ -202,9 +211,9 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
         vertices[offset + 2] = 0.0f;
 
         // Load color
-        vertices[offset + 3] = 0.0f;
-        vertices[offset + 4] = 0.0f;
-        vertices[offset + 5] = 0.0f;
+        vertices[offset + 3] = r;
+        vertices[offset + 4] = g;
+        vertices[offset + 5] = b;
 
 
         vertices[offset + 6] = line.p2().pos_x();
@@ -212,9 +221,9 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
         vertices[offset + 8] = 0.0f;
 
         // Load color
-        vertices[offset + 9] = 0.0f;
-        vertices[offset + 10] = 0.0f;
-        vertices[offset + 11] = 0.0f;
+        vertices[offset + 9] = r;
+        vertices[offset + 10] = g;
+        vertices[offset + 11] = b;
     }
 
     private int[] generateIndices()
