@@ -14,9 +14,9 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 24.0f;
+    private final float TICK_RATE = 1.0f / 60.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 2;
+    private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
@@ -591,8 +591,6 @@ public class VerletPhysics extends GameSystem
 
     private void tickSimulation(float dt)
     {
-        spatialMap.clear();
-
         var bodies = ecs.getComponents(Component.RigidBody2D);
         if (bodies == null || bodies.isEmpty())
         {
@@ -607,8 +605,6 @@ public class VerletPhysics extends GameSystem
 
         testMap.rebuildIndex();
         var candidates = testMap.computeCandidates();
-
-
 
         var count = candidates.limit() / 2; // the number of PAIRS of indices, each pair produces one manifold
         var manifold_size = count * 8;
@@ -648,8 +644,8 @@ public class VerletPhysics extends GameSystem
         }
 
 
-        collisionProgress.clear();
-        collisionBuffer.clear();
+//        collisionProgress.clear();
+//        collisionBuffer.clear();
 
 //        while (candidates.position() < candidates.limit())
 //        {

@@ -11,134 +11,131 @@ public record FBody2D(int index, float force,
 {
     /*
      * Memory layout: float16
-     *  0: x position (transform)
-     *  1: y position (transform)
-     *  2: scale x    (transform)
-     *  3: scale y    (transform)
+     *  0: x position                 (transform)
+     *  1: y position                 (transform)
+     *  2: scale x                    (transform)
+     *  3: scale y                    (transform)
      *  4: acceleration x component
      *  5: acceleration y component
-     *  6: bounding box index (int cast)
-     *  7: start point index  (int cast)
-     *  8: end point index    (int cast)
-     *  9: start edge index   (int cast)
-     * 10: end edge index     (int cast)
-     * 11: [empty]
-     * 12: [empty]
-     * 13: [empty]
-     * 14: [empty]
+     *  6: bounding box index         (int cast)
+     *  7: start point index          (int cast)
+     *  8: end point index            (int cast)
+     *  9: start edge index           (int cast)
+     * 10: end edge index             (int cast)
+     * 11: spatial index min x offset (int cast)
+     * 12: spatial index max x offset (int cast)
+     * 13: spatial index min y offset (int cast)
+     * 14: spatial index max y offset (int cast)
      * 15: [empty]
      *  */
-    public static int x_offset = 0;
-    public static int y_offset = 1;
-    public static int sx_offset = 2;
-    public static int sy_offset = 3;
-    public static int acc_x_offset = 4;
-    public static int acc_y_offset = 5;
-    public static int bi_offset = 6;
-    public static int sp_offset = 7;
-    public static int ep_offset = 8;
-    public static int se_offset = 9;
-    public static int ee_offset = 10;
-
-    // note: these could be moved to the bounding box later if needed, but here since the body
-    // had extra space
-    public static int si_min_x_offset = 11;
-    public static int si_max_x_offset = 12;
-    public static int si_min_y_offset = 13;
-    public static int si_max_y_offset = 14;
+    public static final int X_OFFSET = 0;
+    public static final int Y_OFFSET = 1;
+    public static final int SX_OFFSET = 2;
+    public static final int SY_OFFSET = 3;
+    public static final int ACC_X_OFFSET = 4;
+    public static final int ACC_Y_OFFSET = 5;
+    public static final int BI_OFFSET = 6;
+    public static final int SP_OFFSET = 7;
+    public static final int EP_OFFSET = 8;
+    public static final int SE_OFFSET = 9;
+    public static final int EE_OFFSET = 10;
+    public static final int SI_MIN_X_OFFSET = 11;
+    public static final int SI_MAX_X_OFFSET = 12;
+    public static final int SI_MIN_Y_OFFSET = 13;
+    public static final int SI_MAX_Y_OFFSET = 14;
 
     public int bodyIndex() { return index() / Main.Memory.Width.BODY; }
 
     public float pos_x()
     {
-        return Main.Memory.body_buffer[index() + x_offset];
+        return Main.Memory.body_buffer[index() + X_OFFSET];
     }
 
     public float pos_y()
     {
-        return Main.Memory.body_buffer[index() + y_offset];
+        return Main.Memory.body_buffer[index() + Y_OFFSET];
     }
 
     public float scale_x()
     {
-        return Main.Memory.body_buffer[index() + sx_offset];
+        return Main.Memory.body_buffer[index() + SX_OFFSET];
     }
 
     public float scale_y()
     {
-        return Main.Memory.body_buffer[index() + sy_offset];
+        return Main.Memory.body_buffer[index() + SY_OFFSET];
     }
 
     public float acc_x()
     {
-        return Main.Memory.body_buffer[index() + acc_x_offset];
+        return Main.Memory.body_buffer[index() + ACC_X_OFFSET];
     }
 
     public float acc_y()
     {
-        return Main.Memory.body_buffer[index() + acc_y_offset];
+        return Main.Memory.body_buffer[index() + ACC_Y_OFFSET];
     }
 
     public float bounds_i()
     {
-        return Main.Memory.body_buffer[index() + bi_offset];
+        return Main.Memory.body_buffer[index() + BI_OFFSET];
     }
 
     public int start_point()
     {
-        return (int)Main.Memory.body_buffer[index() + sp_offset];
+        return (int)Main.Memory.body_buffer[index() + SP_OFFSET];
     }
 
     public int end_point()
     {
-        return (int)Main.Memory.body_buffer[index() + ep_offset];
+        return (int)Main.Memory.body_buffer[index() + EP_OFFSET];
     }
 
     public int start_edge()
     {
-        return (int)Main.Memory.body_buffer[index() + se_offset];
+        return (int)Main.Memory.body_buffer[index() + SE_OFFSET];
     }
 
     public int end_edge()
     {
-        return (int)Main.Memory.body_buffer[index() + ee_offset];
+        return (int)Main.Memory.body_buffer[index() + EE_OFFSET];
     }
 
     public int si_min_x()
     {
-        return (int)Main.Memory.body_buffer[index() + si_min_x_offset];
+        return (int)Main.Memory.body_buffer[index() + SI_MIN_X_OFFSET];
     }
 
     public int si_max_x()
     {
-        return (int)Main.Memory.body_buffer[index() + si_max_x_offset];
+        return (int)Main.Memory.body_buffer[index() + SI_MAX_X_OFFSET];
     }
 
     public int si_min_y()
     {
-        return (int)Main.Memory.body_buffer[index() + si_min_y_offset];
+        return (int)Main.Memory.body_buffer[index() + SI_MIN_Y_OFFSET];
     }
 
     public int si_max_y()
     {
-        return (int)Main.Memory.body_buffer[index() + si_max_y_offset];
+        return (int)Main.Memory.body_buffer[index() + SI_MAX_Y_OFFSET];
     }
 
     public void setPos(Vector2f newPos)
     {
-        Main.Memory.body_buffer[index() + x_offset] = newPos.x;
-        Main.Memory.body_buffer[index() + y_offset] = newPos.y;
+        Main.Memory.body_buffer[index() + X_OFFSET] = newPos.x;
+        Main.Memory.body_buffer[index() + Y_OFFSET] = newPos.y;
     }
 
     public void setAcc(Vector2f newAcc)
     {
-        Main.Memory.body_buffer[index() + acc_x_offset] = newAcc.x;
-        Main.Memory.body_buffer[index() + acc_y_offset] = newAcc.y;
+        Main.Memory.body_buffer[index() + ACC_X_OFFSET] = newAcc.x;
+        Main.Memory.body_buffer[index() + ACC_Y_OFFSET] = newAcc.y;
     }
 
     public void mulAcc(float scalar)
     {
-        Main.Memory.body_buffer[index() + acc_x_offset] = acc_x() * scalar;
-        Main.Memory.body_buffer[index() + acc_y_offset] = acc_y() * scalar;
+        Main.Memory.body_buffer[index() + ACC_X_OFFSET] = acc_x() * scalar;
+        Main.Memory.body_buffer[index() + ACC_Y_OFFSET] = acc_y() * scalar;
     }
 }

@@ -1,19 +1,14 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.data.FBody2D;
 import com.controllerface.bvge.data.FBounds2D;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.*;
 
 public class SpatialMapEX
 {
@@ -47,10 +42,42 @@ public class SpatialMapEX
         return new HashMap<>();
     }
 
-    public void init()
+    void init()
     {
         x_spacing = width / xsubdivisions;
         y_spacing = height / ysubdivisions;
+    }
+
+    private void rebuildLocation(int bodyIndex)
+    {
+        var body = Main.Memory.bodyByIndex(bodyIndex);
+
+        int min_x = body.si_min_x();
+        int max_x = body.si_max_x();
+        int min_y = body.si_min_y();
+        int max_y = body.si_max_y();
+
+        // calculate size needed for the backing lookup table
+        var x_count = (max_x - min_x) + 1;
+        var y_count = (max_y - min_y) + 1;
+        var count = x_count * y_count;
+        var size = count * 2;
+//
+        int currentIndex = 0;
+        int[] keyBank = new int[size];
+        for (int currentX = min_x; currentX <= max_x; currentX++)
+        {
+            for (int currentY = min_y; currentY <= max_y; currentY++)
+            {
+                keyBank[currentIndex++] = currentX;
+                keyBank[currentIndex++] = currentY;
+                var bodyKey = getKeyByIndex(currentX, currentY);
+                // todo: collect key vectors array and store start/length
+                boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newKeySet).add(bodyIndex);
+                bodyKeys.computeIfAbsent(bodyIndex, SpatialMapEX::newBoxSet).add(bodyKey);
+            }
+        }
+        // todo: write keybank to main memory
     }
 
     public void rebuildIndex()
@@ -59,39 +86,21 @@ public class SpatialMapEX
         boxMap.clear();
         bodyKeys.clear();
         var bodyCount = Main.Memory.bodyCount();
-        var counter = new AtomicInteger(bodyCount);
-        // todo: this might work in an executor or fork/join pool
         for (int location = 0; location < bodyCount; location++)
         {
             int bodyOffset = location * Main.Memory.Width.BODY;
             int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
-            var body = Main.Memory.bodyByIndex(bodyIndex);
-
-            int min_x = body.si_min_x();
-            int max_x = body.si_max_x();
-            int min_y = body.si_min_y();
-            int max_y = body.si_max_y();
-
-            for (int currentX = min_x; currentX <= max_x; currentX++)
-            {
-                for (int currentY = min_y; currentY <= max_y; currentY++)
-                {
-                    var bodyKey = getKeyByIndex(currentX, currentY);
-                    boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newKeySet).add(bodyIndex);
-                    bodyKeys.computeIfAbsent(bodyIndex, SpatialMapEX::newBoxSet).add(bodyKey);
-                }
-            }
-            //System.out.println(counter.decrementAndGet());
+            rebuildLocation(bodyIndex);
         }
-        //System.out.println("AT End" + counter.get());
     }
 
-    private static byte[] intToBytes(final int data) {
-        return new byte[] {
-            (byte)((data >> 24) & 0xff),
-            (byte)((data >> 16) & 0xff),
-            (byte)((data >> 8) & 0xff),
-            (byte)((data >> 0) & 0xff),
+    private static byte[] intToBytes(final int data)
+    {
+        return new byte[]{
+            (byte) ((data >> 24) & 0xff),
+            (byte) ((data >> 16) & 0xff),
+            (byte) ((data >> 8) & 0xff),
+            (byte) ((data >> 0) & 0xff),
         };
     }
 
@@ -136,14 +145,14 @@ public class SpatialMapEX
                 keyB = target.entity();
             }
 
-            synchronized (collisionProgress)
-            {
+            //synchronized (collisionProgress)
+            //{
                 if (collisionProgress.computeIfAbsent(keyA, (k) -> new HashSet<>()).contains(keyB))
                 {
                     continue;
                 }
                 collisionProgress.get(keyA).add(keyB);
-            }
+            //}
 
             boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
             if (!ch)
@@ -151,11 +160,11 @@ public class SpatialMapEX
                 continue;
             }
 
-            synchronized (outBuffer)
-            {
+            //synchronized (outBuffer)
+            //{
                 outBuffer.add(bodyIndex);
                 outBuffer.add(candidateIndex);
-            }
+            //}
         }
     }
 
@@ -196,7 +205,8 @@ public class SpatialMapEX
 
     private BoxKey getKeyByIndex(int index_x, int index_y)
     {
-        return keyMap.computeIfAbsent(index_x, SpatialMapEX::newKeyMap)
-            .computeIfAbsent(index_y, (_k) -> new BoxKey(index_x, index_y));
+        var one = keyMap.computeIfAbsent(index_x, SpatialMapEX::newKeyMap);
+        var two = one.computeIfAbsent(index_y, (_k) -> new BoxKey(index_x, index_y));
+        return two;
     }
 }

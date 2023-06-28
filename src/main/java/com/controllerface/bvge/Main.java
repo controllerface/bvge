@@ -20,27 +20,32 @@ public class Main
             public static final int POINT = 4;
             public static final int EDGE = 3;
             public static final int BOUNDS = 8;
+            public static final int KEY = 2;
         }
 
         private static final Map<Integer, FBody2D> bodies = new HashMap<>();
 
-        private static final int MAX_BODIES = 100_000;
-        private static final int MAX_POINTS = 1_000_000;
+        private static final int MAX_BODIES  = 100_000;
+        private static final int MAX_POINTS  = 1_000_000;
+        private static final int MAX_KEYS    = MAX_BODIES * 50;
 
         private static final int body_buffer_size   = Width.BODY   * MAX_BODIES;
         private static final int point_buffer_size  = Width.POINT  * MAX_POINTS;
         private static final int edge_buffer_size   = Width.EDGE   * MAX_POINTS;
         private static final int bounds_buffer_size = Width.BOUNDS * MAX_BODIES;
+        private static final int key_buffer_size    = Width.KEY * MAX_KEYS;
 
         public static float[] body_buffer   = new float[body_buffer_size];
         public static float[] point_buffer  = new float[point_buffer_size];
         public static float[] edge_buffer   = new float[edge_buffer_size];
         public static float[] bounds_buffer = new float[bounds_buffer_size];
+        public static float[] key_buffer    = new float[key_buffer_size];
 
         private static int body_index   = 0;
         private static int point_index  = 0;
         private static int edge_index   = 0;
         private static int bounds_index = 0;
+        private static int key_index    = 0;
 
         public static FBody2D bodyByIndex(int index)
         {
@@ -148,23 +153,6 @@ public class Main
 
     public static void main(String[] args)
     {
-        int x2 = 0;
-        int z = 0;
-        Integer y = 0;
-
-        if (x2 == z)
-        {
-            System.out.println("woudl fire");
-        }
-
-        if (y == x2)
-        {
-            System.out.println("fire?");
-        }
-
-        Integer[] x = new Integer[10];
-        x[0] = 1;
-        List<Integer> Allowed = new ArrayList<>();
         OpenCL_EX.init();
         Window window = Window.get();
         window.run();
