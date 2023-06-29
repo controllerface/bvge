@@ -25,6 +25,10 @@ public class OpenCL_EX
     static cl_program p_collide;
     private static String src_collide = readSrc("collide.cl");
 
+    static cl_kernel k_react;
+    static cl_program p_react;
+    private static String src_react = readSrc("react.cl");
+
     private static String readSrc(String file)
     {
         var stream = OpenCL_EX.class.getResourceAsStream("/kernels/" + file);
@@ -101,6 +105,10 @@ public class OpenCL_EX
         p_collide = clCreateProgramWithSource(context, 1, new String[]{src_collide}, null, null);
         clBuildProgram(p_collide, 1, x, null, null, null);
         k_collide = clCreateKernel(p_collide, "collide", null);
+
+        p_react = clCreateProgramWithSource(context, 1, new String[]{src_react}, null, null);
+        clBuildProgram(p_react, 1, x, null, null, null);
+        k_react = clCreateKernel(p_react, "react", null);
 
     }
 
@@ -182,10 +190,6 @@ public class OpenCL_EX
         clReleaseMemObject(dtMem);
     }
 
-
-
-
-
     public static void collide(IntBuffer candidates, FloatBuffer manifolds)
     {
         int candidatesSize = candidates.limit();
@@ -197,7 +201,7 @@ public class OpenCL_EX
         var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
 
         // Set the work-item dimensions
-        long global_work_size[] = new long[]{candidates.limit() / 2};
+        long global_work_size[] = new long[]{candidates.limit() / Main.Memory.Width.COLLISION};
 
         Pointer srcCandidates = Pointer.to(candidates);
         Pointer srcBodies = Pointer.to(bodyBuffer);
@@ -234,6 +238,56 @@ public class OpenCL_EX
         clReleaseMemObject(srcMemBodies);
         clReleaseMemObject(srcMemPoints);
         clReleaseMemObject(dstMemManifolds);
+    }
+
+    public static void react(FloatBuffer manifolds, FloatBuffer reactions)
+    {
+        int manifoldsSize = manifolds.limit();
+        int bodiesSize = Main.Memory.bodyLength();
+        int pointsSize = Main.Memory.pointLength();
+        int reactionsSize = reactions.limit();
+
+        var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
+        var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
+
+        // Set the work-item dimensions
+        long global_work_size[] = new long[]{manifolds.limit() / Main.Memory.Width.MANIFOLD};
+
+        Pointer srcManifolds = Pointer.to(manifolds);
+        Pointer srcBodies = Pointer.to(bodyBuffer);
+        Pointer srcPoints = Pointer.to(pointBuffer);
+        Pointer dstReactions = Pointer.to(reactions);
+
+        long manifoldBufSize = Sizeof.cl_int * manifoldsSize;
+        long bodyBufsize = Sizeof.cl_float * bodiesSize;
+        long pointBufsize = Sizeof.cl_float * pointsSize;
+        long reactionBufsize = Sizeof.cl_float * reactionsSize;
+
+        cl_mem srcMemManifolds = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, manifoldBufSize, srcManifolds, null);
+        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, bodyBufsize, srcBodies, null);
+        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, pointBufsize, srcPoints, null);
+        cl_mem dstMemReactions = clCreateBuffer(context, CL_MEM_READ_WRITE, reactionBufsize, null, null);
+
+
+        // Set the arguments for the kernel
+        int a = 0;
+        clSetKernelArg(k_react, a++, Sizeof.cl_mem, Pointer.to(srcMemManifolds));
+        clSetKernelArg(k_react, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
+        clSetKernelArg(k_react, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
+        clSetKernelArg(k_react, a++, Sizeof.cl_mem, Pointer.to(dstMemReactions));
+
+        // Execute the kernel
+        clEnqueueNDRangeKernel(commandQueue, k_react, 1, null,
+            global_work_size, null, 0, null, null);
+
+        // Read the output data
+        clEnqueueReadBuffer(commandQueue, dstMemReactions, CL_TRUE, 0,
+            reactionBufsize, dstReactions, 0, null, null);
+
+        clReleaseMemObject(srcMemManifolds);
+        clReleaseMemObject(srcMemBodies);
+        clReleaseMemObject(srcMemPoints);
+        clReleaseMemObject(dstMemReactions);
     }
 
 }

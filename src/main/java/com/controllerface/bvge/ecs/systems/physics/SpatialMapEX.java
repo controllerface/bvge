@@ -20,16 +20,10 @@ public class SpatialMapEX
     private float y_spacing = 0;
     Map<Integer, Map<Integer, BoxKey>> keyMap = new ConcurrentHashMap<>();
     Map<BoxKey, Set<Integer>> boxMap = new ConcurrentHashMap<>();
-    Map<Integer, Set<BoxKey>> bodyKeys = new ConcurrentHashMap<>();
 
     public SpatialMapEX()
     {
         init();
-    }
-
-    private static Set<BoxKey> newBoxSet(int _k)
-    {
-        return new HashSet<>();
     }
 
     private static Set<Integer> newKeySet(BoxKey _k)
@@ -75,9 +69,6 @@ public class SpatialMapEX
 
                 // todo: remove the class based components
                 boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newKeySet).add(bodyIndex);
-
-                // this is replaced by the main memory bank
-                bodyKeys.computeIfAbsent(bodyIndex, SpatialMapEX::newBoxSet).add(bodyKey);
             }
         }
         var si_data = Main.Memory.storeKeyBank(key_bank);
@@ -88,7 +79,6 @@ public class SpatialMapEX
     {
         keyMap.clear();
         boxMap.clear();
-        bodyKeys.clear();
         Main.Memory.startKeyRebuild();
         var bodyCount = Main.Memory.bodyCount();
         int[] keyDirectory = new int[xsubdivisions * ysubdivisions];
@@ -206,18 +196,6 @@ public class SpatialMapEX
             ob[i] = outBuffer.get(i);
         }
         return IntBuffer.wrap(ob);
-    }
-
-    public Set<Integer> getMatches(Integer boxId)
-    {
-        //var body =
-        var keys = bodyKeys.get(boxId);
-        var rSet = new HashSet<Integer>();
-        for (BoxKey k : keys)
-        {
-            rSet.addAll(boxMap.get(k));
-        }
-        return rSet;
     }
 
     private BoxKey getKeyByIndex(int index_x, int index_y)

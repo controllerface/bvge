@@ -52,6 +52,18 @@ public class Main
             // int
             public static final int POINTER = 1;
             // A pointer index used for referencing spatial key matches
+
+            // int2
+            public static final int COLLISION = 2;
+            // Collisions are represented as a pair of indices, one for each object
+
+            // float8
+            public static final int MANIFOLD = 8;
+            // Collision manifolds are used when resolving collisions
+
+            // float8
+            public static final int REACTION = 16;
+            // Collision reactions are generated from collision manifolds
         }
 
         private static final Map<Integer, FBody2D> bodies = new HashMap<>();

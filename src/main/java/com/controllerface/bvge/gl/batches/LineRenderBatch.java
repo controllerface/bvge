@@ -196,9 +196,9 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
      */
     private void loadVertexProperties(int index)
     {
-        float r = rand.nextFloat() / 5.0f;
-        float g = rand.nextFloat() / 2.0f;
-        float b = rand.nextFloat() / 5.0f;
+        float r = rand.nextFloat() / 7.0f;
+        float g = rand.nextFloat() / 5.0f;
+        float b = rand.nextFloat() / 3.0f;
 
         FEdge2D line = this.lines[index];
 
