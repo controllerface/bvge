@@ -68,20 +68,20 @@ public class VerletPhysics extends GameSystem
         //body2D.getAcc().y = vectorBuffer1.y;
     }
 
-    private float edgeContact(FPoint2D e1, FPoint2D e2, FPoint2D collision_vertex, Vector2f collision_vector)
+    private float edgeContact(FPoint2D e1, FPoint2D e2, Vector2f collision_vertex, Vector2f collision_vector)
     {
         float contact;
         float x_dist = e1.pos_x() - e2.pos_x();
         float y_dist = e1.pos_y() - e2.pos_y();
         if (Math.abs(x_dist) > Math.abs(y_dist))
         {
-            float x_offset = (collision_vertex.pos_x() - collision_vector.x - e1.pos_x());
+            float x_offset = (collision_vertex.x() - collision_vector.x - e1.pos_x());
             float x_diff = (e2.pos_x() - e1.pos_x());
             contact = x_offset / x_diff;
         }
         else
         {
-            float y_offset = (collision_vertex.pos_y() - collision_vector.y - e1.pos_y());
+            float y_offset = (collision_vertex.y() - collision_vector.y - e1.pos_y());
             float y_diff = (e2.pos_y() - e1.pos_y());
             contact = y_offset / y_diff;
         }
@@ -93,14 +93,19 @@ public class VerletPhysics extends GameSystem
         var collision_vector = collision.normal().mul(collision.depth());
         float vertex_magnitude = .5f;
         float edge_magnitude = .5f;
-        var verts = collision.vertexObject().points();
-        var collision_vertex = verts[collision.vert()];
+        var x_index = collision.vert() * Main.Memory.Width.POINT;
+        var y_index = x_index + 1;
+        var collision_vertex_x = Main.Memory.point_buffer[x_index];
+        var collision_vertex_y = Main.Memory.point_buffer[y_index];
+
+        //System.out.println("DEBUG V X: " + collision_vertex_x + " Y: " + collision_vertex_y);
 
         // vertex object
         if (vertex_magnitude > 0)
         {
             collision_vector.mul(vertex_magnitude, vectorBuffer1);
-            collision_vertex.addPos(vectorBuffer1);
+            Main.Memory.point_buffer[x_index] += vectorBuffer1.x;
+            Main.Memory.point_buffer[y_index] += vectorBuffer1.y;
         }
 
         // edge object
@@ -109,7 +114,12 @@ public class VerletPhysics extends GameSystem
             var edge_verts = collision.edgeObject().points();
             var e1 = edge_verts[collision.edgeA()];
             var e2 = edge_verts[collision.edgeB()];
-            var edge_contact = edgeContact(e1, e2, collision_vertex, collision_vector);
+            vectorBuffer1.x = collision_vertex_x;
+            vectorBuffer1.y = collision_vertex_y;
+            var edge_contact = edgeContact(e1, e2, vectorBuffer1, collision_vector);
+            //System.out.println("DEBUG E1 X: " + e1.pos_x() + " Y: " + e1.pos_y());
+            //System.out.println("DEBUG E2 X: " + e2.pos_x() + " Y: " + e2.pos_y());
+
             float edge_scale = 1.0f / (edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
             collision_vector.mul((1 - edge_contact) * edge_magnitude * edge_scale, vectorBuffer1);
             collision_vector.mul(edge_contact * edge_magnitude * edge_scale, vectorBuffer2);
@@ -232,8 +242,8 @@ public class VerletPhysics extends GameSystem
                 var _manifold = new CollisionManifold(vo, eo, norm, manifold[4], (int)manifold[5], (int)manifold[6],
                     (int)manifold[7]);
                 reactPolygon(_manifold); // todo: cut out the intermediate manifold object
-                //System.out.println("----");
             }
+            //System.out.println("----");
         }
 
         tickEdges();

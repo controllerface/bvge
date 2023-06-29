@@ -50,6 +50,9 @@ __kernel void react(
     float2 e2 = points[(int)manifold[6]].xy;
     float2 collision_vertex = points[(int)manifold[7]].xy;
     float edge_contact = edgeContact(e1, e2, collision_vertex, collision_vector);
+    //printf("debug: e1 x: %f y: %f", e1.x, e1.y);
+    //printf("debug: e2 x: %f y: %f", e2.x, e2.y);
+    //printf("debug: v  x: %f y: %f", collision_vertex.x, collision_vertex.y);
 
     float edge_scale = 1.0f / (edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
     float2 e1_reaction = collision_vector * ((1 - edge_contact) * edge_magnitude * edge_scale);

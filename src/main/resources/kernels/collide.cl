@@ -18,7 +18,7 @@ float3 projectPolygon(__global const float4 *points, float16 body, float2 normal
         if (proj < result.x || !minYet)
         {
             result.x = proj;
-            result.z = i;
+            result.z = n;
             minYet = true;
         }
         if (proj > result.y || !maxYet)
