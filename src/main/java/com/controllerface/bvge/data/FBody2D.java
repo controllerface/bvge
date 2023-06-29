@@ -26,23 +26,24 @@ public record FBody2D(int index, float force,
      * 12: spatial index max x offset (int cast)
      * 13: spatial index min y offset (int cast)
      * 14: spatial index max y offset (int cast)
-     * 15: [empty]
+     * 15: spatial index key bank size
      *  */
-    public static final int X_OFFSET = 0;
-    public static final int Y_OFFSET = 1;
-    public static final int SX_OFFSET = 2;
-    public static final int SY_OFFSET = 3;
-    public static final int ACC_X_OFFSET = 4;
-    public static final int ACC_Y_OFFSET = 5;
-    public static final int BI_OFFSET = 6;
-    public static final int SP_OFFSET = 7;
-    public static final int EP_OFFSET = 8;
-    public static final int SE_OFFSET = 9;
-    public static final int EE_OFFSET = 10;
-    public static final int SI_MIN_X_OFFSET = 11;
-    public static final int SI_MAX_X_OFFSET = 12;
-    public static final int SI_MIN_Y_OFFSET = 13;
-    public static final int SI_MAX_Y_OFFSET = 14;
+    public static final int X_OFFSET            = 0;
+    public static final int Y_OFFSET            = 1;
+    public static final int SX_OFFSET           = 2;
+    public static final int SY_OFFSET           = 3;
+    public static final int ACC_X_OFFSET        = 4;
+    public static final int ACC_Y_OFFSET        = 5;
+    public static final int BI_OFFSET           = 6;
+    public static final int SP_OFFSET           = 7;
+    public static final int EP_OFFSET           = 8;
+    public static final int SE_OFFSET           = 9;
+    public static final int EE_OFFSET           = 10;
+    public static final int SI_MIN_X_OFFSET     = 11;
+    public static final int SI_MAX_X_OFFSET     = 12;
+    public static final int SI_MIN_Y_OFFSET     = 13;
+    public static final int SI_MAX_Y_OFFSET     = 14;
+    public static final int SI_BANK_SIZE_OFFSET = 15;
 
     public int bodyIndex() { return index() / Main.Memory.Width.BODY; }
 
@@ -119,6 +120,11 @@ public record FBody2D(int index, float force,
     public int si_max_y()
     {
         return (int)Main.Memory.body_buffer[index() + SI_MAX_Y_OFFSET];
+    }
+
+    public int si_bank_size()
+    {
+        return (int)Main.Memory.body_buffer[index() + SI_BANK_SIZE_OFFSET];
     }
 
     public void setPos(Vector2f newPos)

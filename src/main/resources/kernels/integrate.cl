@@ -160,6 +160,12 @@ __kernel void integrate(
     body.sd = (float) k.z;
     body.se = (float) k.w;
 
+    int x_count = (k.y - k.x) + 1;
+    int y_count = (k.w - k.z) + 1;
+    int count = x_count * y_count;
+    int size = count * 2;
+    body.sf = (float) size;
+
     // store updated body and bounds data in result buffers
     r_bounds[bound_index] = bounding_box;
     r_bodies[gid] = body;

@@ -20,6 +20,7 @@ public class SpatialMapEX
     private float y_spacing = 0;
     Map<Integer, Map<Integer, BoxKey>> keyMap = new ConcurrentHashMap<>();
     Map<BoxKey, Set<Integer>> boxMap = new ConcurrentHashMap<>();
+    int[] keyDirectory = new int[xsubdivisions * ysubdivisions];
 
     public SpatialMapEX()
     {
@@ -51,14 +52,8 @@ public class SpatialMapEX
         int min_y = body.si_min_y();
         int max_y = body.si_max_y();
 
-        // calculate size needed for the backing lookup table
-        var x_count = (max_x - min_x) + 1;
-        var y_count = (max_y - min_y) + 1;
-        var count = x_count * y_count;
-        var size = count * 2;
-//
         int current_index = 0;
-        int[] key_bank = new int[size];
+        int[] key_bank = new int[body.si_bank_size()];
         for (int current_x = min_x; current_x <= max_x; current_x++)
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
@@ -81,7 +76,6 @@ public class SpatialMapEX
         boxMap.clear();
         Main.Memory.startKeyRebuild();
         var bodyCount = Main.Memory.bodyCount();
-        int[] keyDirectory = new int[xsubdivisions * ysubdivisions];
         for (int location = 0; location < bodyCount; location++)
         {
             int bodyOffset = location * Main.Memory.Width.BODY;

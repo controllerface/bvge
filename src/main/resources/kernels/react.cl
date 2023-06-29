@@ -26,8 +26,11 @@ __kernel void react(
 {
     int gid = get_global_id(0);
     float8 manifold = manifolds[gid];
+    float16 reaction;
+    reaction[0] = -1;
     if (manifold[0] == -1)
     {
+        reactions[gid] = reaction;
         return;
     }
 
@@ -50,16 +53,12 @@ __kernel void react(
     float2 e2 = points[(int)manifold[6]].xy;
     float2 collision_vertex = points[(int)manifold[7]].xy;
     float edge_contact = edgeContact(e1, e2, collision_vertex, collision_vector);
-    //printf("debug: e1 x: %f y: %f", e1.x, e1.y);
-    //printf("debug: e2 x: %f y: %f", e2.x, e2.y);
-    //printf("debug: v  x: %f y: %f", collision_vertex.x, collision_vertex.y);
 
     float edge_scale = 1.0f / (edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
     float2 e1_reaction = collision_vector * ((1 - edge_contact) * edge_magnitude * edge_scale);
     float2 e2_reaction = collision_vector * (edge_contact * edge_magnitude * edge_scale);
 
     // todo: detemine if everything is needed, if not may fit into smaller data type
-    float16 reaction;
     reaction[0]  = (float)manifold[0];  // vertex object index
     reaction[1]  = (float)manifold[1];  // edge object index
     reaction[2]  = (float)manifold[2];  // normal x

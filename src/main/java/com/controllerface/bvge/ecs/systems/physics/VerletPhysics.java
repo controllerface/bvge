@@ -15,7 +15,7 @@ public class VerletPhysics extends GameSystem
 {
     private final float TICK_RATE = 1.0f / 60.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 2;
+    private final int EDGE_STEPS = 1;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
@@ -201,6 +201,11 @@ public class VerletPhysics extends GameSystem
         OpenCL_EX.integrate(dt);
 
         // broad phase collision
+        // todo: split this up into two phases, one that calculates the space needed
+        //  for each object, storing it in the object's structure, then a quick pass
+        //  locally to create the appropriately sized buffer, then push that back up
+        //  to be calculated on the GPU. Essentially, only return to the CPU when we
+        //  need to dynamically generate a sized buffer.
         var key_directory = spatialMap.rebuildIndex();
         var candidates = spatialMap.computeCandidates(key_directory);
 
