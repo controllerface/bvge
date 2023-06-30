@@ -76,14 +76,14 @@ __kernel void collide(
  
     // manifold object
     float8 manifold;
-    manifold[0] = (float)-1; // vertex object index
-    manifold[1] = (float)-1; // edge obejct index
-    manifold[2] = (float)0;  // normal x
-    manifold[3] = (float)0;  // normal y
-    manifold[4] = FLT_MAX;   // min distance
-    manifold[5] = (float)0;  // edge point A
-    manifold[6] = (float)0;  // edge point B
-    manifold[7] = (float)0;  // vertex point
+    manifold.s0 = (float)-1; // vertex object index
+    manifold.s1 = (float)-1; // edge obejct index
+    manifold.s2 = (float)0;  // normal x
+    manifold.s3 = (float)0;  // normal y
+    manifold.s4 = FLT_MAX;   // min distance
+    manifold.s5 = (float)0;  // edge point A
+    manifold.s6 = (float)0;  // edge point B
+    manifold.s7 = (float)0;  // vertex point
 
     // object 1
     for (int i = 0; i < b1_vert_count; i++)
@@ -125,8 +125,8 @@ __kernel void collide(
             vertex_object_id = (float)b2_id;
             edge_object_id   = (float)b1_id;
             min_distance = abs_distance;
-            edge_index_a = i;
-            edge_index_b = b_index == start_1 ? 0 : i + 1;
+            edge_index_a = a_index;
+            edge_index_b = b_index;
         }
     }
 
@@ -168,8 +168,8 @@ __kernel void collide(
             vertex_object_id = (float)b1_id;
             edge_object_id   = (float)b2_id;
             min_distance = abs_distance;
-            edge_index_a = i;
-            edge_index_b = b_index == start_2 ? 0 : i + 1;
+            edge_index_a = a_index;
+            edge_index_b = b_index;
         }
     }
 
@@ -203,14 +203,14 @@ __kernel void collide(
         vectorBuffer2.y = vectorBuffer2.y * -1;
     }
 
-    manifold[0] = (float)vertex_object_id; // vertex object index
-    manifold[1] = (float)edge_object_id; // edge obejct index
-    manifold[2] = vectorBuffer2.x;  // normal x
-    manifold[3] = vectorBuffer2.y;  // normal y
-    manifold[4] = min_distance;   // min distance
-    manifold[5] = (float)edge_index_a;  // edge point A
-    manifold[6] = (float)edge_index_b;  // edge point B
-    manifold[7] = (float)vert_index;  // vertex point
+    manifold.s0 = (float)vertex_object_id; // vertex object index
+    manifold.s1 = (float)edge_object_id; // edge obejct index
+    manifold.s2 = vectorBuffer2.x;  // normal x
+    manifold.s3 = vectorBuffer2.y;  // normal y
+    manifold.s4 = min_distance;   // min distance
+    manifold.s5 = (float)edge_index_a;  // edge point A
+    manifold.s6 = (float)edge_index_b;  // edge point B
+    manifold.s7 = (float)vert_index;  // vertex point
 
     manifolds[gid] = manifold;
 }

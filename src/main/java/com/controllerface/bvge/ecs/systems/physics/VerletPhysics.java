@@ -88,45 +88,25 @@ public class VerletPhysics extends GameSystem
         return contact;
     }
 
-    private void reactPolygon(CollisionManifold collision)
+    private void reactPolygon(float[] reaction)
     {
-        var collision_vector = collision.normal().mul(collision.depth());
-        float vertex_magnitude = .5f;
-        float edge_magnitude = .5f;
-        var x_index = collision.vert() * Main.Memory.Width.POINT;
-        var y_index = x_index + 1;
-        var collision_vertex_x = Main.Memory.point_buffer[x_index];
-        var collision_vertex_y = Main.Memory.point_buffer[y_index];
-
-        //System.out.println("DEBUG V X: " + collision_vertex_x + " Y: " + collision_vertex_y);
-
         // vertex object
-        if (vertex_magnitude > 0)
-        {
-            collision_vector.mul(vertex_magnitude, vectorBuffer1);
-            Main.Memory.point_buffer[x_index] += vectorBuffer1.x;
-            Main.Memory.point_buffer[y_index] += vectorBuffer1.y;
-        }
+        var x_index = (int)reaction[7] * Main.Memory.Width.POINT;
+        var y_index = x_index + 1;
+        Main.Memory.point_buffer[x_index] += reaction[8];
+        Main.Memory.point_buffer[y_index] += reaction[9];
 
         // edge object
-        if (edge_magnitude > 0)
-        {
-            var edge_verts = collision.edgeObject().points();
-            var e1 = edge_verts[collision.edgeA()];
-            var e2 = edge_verts[collision.edgeB()];
-            vectorBuffer1.x = collision_vertex_x;
-            vectorBuffer1.y = collision_vertex_y;
-            var edge_contact = edgeContact(e1, e2, vectorBuffer1, collision_vector);
-            //System.out.println("DEBUG E1 X: " + e1.pos_x() + " Y: " + e1.pos_y());
-            //System.out.println("DEBUG E2 X: " + e2.pos_x() + " Y: " + e2.pos_y());
-
-            float edge_scale = 1.0f / (edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
-            collision_vector.mul((1 - edge_contact) * edge_magnitude * edge_scale, vectorBuffer1);
-            collision_vector.mul(edge_contact * edge_magnitude * edge_scale, vectorBuffer2);
-            e1.subPos(vectorBuffer1);
-            e2.subPos(vectorBuffer2);
-        }
+        var x_index_a = (int)reaction[5] * Main.Memory.Width.POINT;
+        var y_index_a = x_index_a + 1;
+        var x_index_b = (int)reaction[6] * Main.Memory.Width.POINT;
+        var y_index_b = x_index_b + 1;
+        Main.Memory.point_buffer[x_index_a] -= reaction[10];
+        Main.Memory.point_buffer[y_index_a] -= reaction[11];
+        Main.Memory.point_buffer[x_index_b] -= reaction[12];
+        Main.Memory.point_buffer[y_index_b] -= reaction[13];
     }
+
 
     private void tickEdges()
     {
@@ -226,27 +206,23 @@ public class VerletPhysics extends GameSystem
             // todo: replace loop below with CL call
             for (int i = 0; i < count; i++)
             {
-                var next = i * Main.Memory.Width.MANIFOLD;
-                if (manifolds[next] == -1) // separating axis was found
+                var next_manifold = i * Main.Memory.Width.MANIFOLD;
+                if (manifolds[next_manifold] == -1) // separating axis was found
                 {
                     continue;
                 }
-
                 float[] manifold = new float[Main.Memory.Width.MANIFOLD];
-                manifold[0] = manifolds[next];
-                manifold[1] = manifolds[next + 1];
-                manifold[2] = manifolds[next + 2];
-                manifold[3] = manifolds[next + 3];
-                manifold[4] = manifolds[next + 4];
-                manifold[5] = manifolds[next + 5];
-                manifold[6] = manifolds[next + 6];
-                manifold[7] = manifolds[next + 7];
-                var vo = Main.Memory.bodyByIndex((int)manifold[0]);
-                var eo = Main.Memory.bodyByIndex((int)manifold[1]);
-                var norm = new Vector2f(manifold[2], manifold[3]);
-                var _manifold = new CollisionManifold(vo, eo, norm, manifold[4], (int)manifold[5], (int)manifold[6],
-                    (int)manifold[7]);
-                reactPolygon(_manifold); // todo: cut out the intermediate manifold object
+                System.arraycopy(manifolds, next_manifold, manifold, 0, Main.Memory.Width.MANIFOLD);
+
+                var next_reaction = i * Main.Memory.Width.REACTION;
+                if (reactions[next_reaction] == -1) // separating axis was found
+                {
+                    continue;
+                }
+                float[] reaction = new float[Main.Memory.Width.REACTION];
+                System.arraycopy(reactions, next_reaction, reaction, 0, Main.Memory.Width.REACTION);
+
+                reactPolygon(reaction); // todo: cut out the intermediate manifold object
             }
             //System.out.println("----");
         }

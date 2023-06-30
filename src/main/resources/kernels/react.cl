@@ -27,21 +27,21 @@ __kernel void react(
     int gid = get_global_id(0);
     float8 manifold = manifolds[gid];
     float16 reaction;
-    reaction[0] = -1;
-    if (manifold[0] == -1)
+    reaction.s0 = -1;
+    if (manifold.s0 == -1)
     {
         reactions[gid] = reaction;
         return;
     }
 
     // vertex and edge objects
-    float16 vo = bodies[(int)manifold[0]];
-    float16 eo = bodies[(int)manifold[1]];
+    float16 vo = bodies[(int)manifold.s0];
+    float16 eo = bodies[(int)manifold.s1];
     float2 normal;
-    normal.x = manifold[2];
-    normal.y = manifold[3];
+    normal.x = manifold.s2;
+    normal.y = manifold.s3;
 
-    float2 collision_vector = normal * manifold[4];
+    float2 collision_vector = normal * manifold.s4;
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 
@@ -49,9 +49,9 @@ __kernel void react(
     float2 v_reaction = collision_vector * vertex_magnitude;
 
     // now do edge reactions
-    float2 e1 = points[(int)manifold[5]].xy; 
-    float2 e2 = points[(int)manifold[6]].xy;
-    float2 collision_vertex = points[(int)manifold[7]].xy;
+    float2 e1 = points[(int)manifold.s5].xy;
+    float2 e2 = points[(int)manifold.s6].xy;
+    float2 collision_vertex = points[(int)manifold.s7].xy;
     float edge_contact = edgeContact(e1, e2, collision_vertex, collision_vector);
 
     float edge_scale = 1.0f / (edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
@@ -59,22 +59,22 @@ __kernel void react(
     float2 e2_reaction = collision_vector * (edge_contact * edge_magnitude * edge_scale);
 
     // todo: detemine if everything is needed, if not may fit into smaller data type
-    reaction[0]  = (float)manifold[0];  // vertex object index
-    reaction[1]  = (float)manifold[1];  // edge object index
-    reaction[2]  = (float)manifold[2];  // normal x
-    reaction[3]  = (float)manifold[3];  // normal y
-    reaction[4]  = (float)manifold[4];  // min distance
-    reaction[5]  = (float)manifold[5];  // edge point A
-    reaction[6]  = (float)manifold[6];  // edge point B
-    reaction[7]  = (float)manifold[7];  // vertex point
-    reaction[8]  = v_reaction.x;        // vertex object reaction x1
-    reaction[9]  = v_reaction.y;        // vertex object reaction y1
-    reaction[10] = e1_reaction.x;       // edge object reaction x1
-    reaction[11] = e1_reaction.y;       // edge object reaction y1
-    reaction[12] = e2_reaction.x;       // edge object reaction x2
-    reaction[13] = e2_reaction.y;       // edge object reaction y2            
-    reaction[14] = (float)0;            // [empty]          
-    reaction[15] = (float)0;            // [empty]        
+    reaction.s0  = (float)manifold.s0;  // vertex object index
+    reaction.s1  = (float)manifold.s1;  // edge object index
+    reaction.s2  = (float)manifold.s2;  // normal x
+    reaction.s3  = (float)manifold.s3;  // normal y
+    reaction.s4  = (float)manifold.s4;  // min distance
+    reaction.s5  = (float)manifold.s5;  // edge point A
+    reaction.s6  = (float)manifold.s6;  // edge point B
+    reaction.s7  = (float)manifold.s7;  // vertex point
+    reaction.s8  = v_reaction.x;        // vertex object reaction x1
+    reaction.s9  = v_reaction.y;        // vertex object reaction y1
+    reaction.sa = e1_reaction.x;       // edge object reaction x1
+    reaction.sb = e1_reaction.y;       // edge object reaction y1
+    reaction.sc = e2_reaction.x;       // edge object reaction x2
+    reaction.sd = e2_reaction.y;       // edge object reaction y2
+    reaction.se = (float)0;            // [empty]
+    reaction.sf = (float)0;            // [empty]
     
     reactions[gid] = reaction;
 }
