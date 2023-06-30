@@ -6,7 +6,7 @@ import org.joml.Vector2f;
 
 public class PhysicsObjects
 {
-    private static Vector2f vectorBuffer = new Vector2f();
+    private static final Vector2f vectorBuffer = new Vector2f();
 
     public static FBody2D simpleBox(float x, float y, float size, String entity)
     {
@@ -66,12 +66,15 @@ public class PhysicsObjects
         MathEX.centroid(points, vectorBuffer);
 
         return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
-            size, size, 0,0,
-            p1.index() / Main.Memory.Width.POINT,
-            p4.index() / Main.Memory.Width.POINT,
-            e1.index() / Main.Memory.Width.EDGE,
-            e6.index() / Main.Memory.Width.EDGE,
-            bounds.index() / Main.Memory.Width.BOUNDS,
-            points, edges, bounds, force, entity);
+            size, size,
+            0,0,
+            (float) p1.index() / Main.Memory.Width.POINT,
+            (float) p4.index() / Main.Memory.Width.POINT,
+            (float) e1.index() / Main.Memory.Width.EDGE,
+            (float) e6.index() / Main.Memory.Width.EDGE,
+            (float) bounds.index() / Main.Memory.Width.BOUNDS,
+            points, edges,
+            bounds, force,
+            entity);
     }
 }

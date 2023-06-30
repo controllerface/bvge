@@ -3,9 +3,6 @@ package com.controllerface.bvge.ecs.systems.physics;
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.data.FBounds2D;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.*;
 import java.util.concurrent.*;
@@ -19,8 +16,14 @@ public class SpatialMapEX
     private float x_spacing = 0;
     private float y_spacing = 0;
     Map<Integer, Map<Integer, BoxKey>> keyMap = new ConcurrentHashMap<>();
+
+    // maps all box keys within the tracked area to a set of body IDs
+    // that have that box key in their key bank
     Map<BoxKey, Set<Integer>> boxMap = new ConcurrentHashMap<>();
-    int[] keyDirectory = new int[xsubdivisions * ysubdivisions];
+
+    // after the map is built, this directory is updated, which effectively
+    // duplicates it in memory, making it queryable as a raw structure
+    private final int[] keyDirectory = new int[xsubdivisions * ysubdivisions];
 
     public SpatialMapEX()
     {
@@ -70,7 +73,29 @@ public class SpatialMapEX
         body.bounds().setSpatialIndex(si_data);
     }
 
-    public int[] rebuildIndex()
+    public int[] keyDirectory()
+    {
+        return keyDirectory;
+    }
+
+    public void updateKeyDirectory()
+    {
+        for (Map.Entry<BoxKey, Set<Integer>> entry : boxMap.entrySet())
+        {
+            // here, the 2D grid of the spatial map is packed into a 1D array
+            // so it can be used in OpenCL.
+            BoxKey key = entry.getKey();
+            Set<Integer> value = entry.getValue();
+            int[] matches = value.stream().mapToInt(i->i).toArray();
+            int index = Main.Memory.storeKeyPointer(matches);
+            int i = xsubdivisions * key.y + key.x;
+            keyDirectory[i] = index;
+        }
+    }
+
+
+
+    public void rebuildIndex()
     {
         keyMap.clear();
         boxMap.clear();
@@ -82,17 +107,6 @@ public class SpatialMapEX
             int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
             rebuildLocation(bodyIndex);
         }
-
-        for (Map.Entry<BoxKey, Set<Integer>> entry : boxMap.entrySet())
-        {
-            BoxKey key = entry.getKey();
-            Set<Integer> value = entry.getValue();
-            int[] matches = value.stream().mapToInt(i->i).toArray();
-            int index = Main.Memory.storeKeyPointer(matches);
-            int i = xsubdivisions * key.y + key.x;
-            keyDirectory[i] = index;
-        }
-        return keyDirectory;
     }
 
     private static boolean doBoxesIntersect(FBounds2D a, FBounds2D b)
@@ -103,8 +117,16 @@ public class SpatialMapEX
             && a.y() + a.h() > b.y();
     }
 
-    private int[] matches(int[] keys, int[] key_directory)
+    /**
+     * For a set of keys, belonging to an object, find all of the other objects that share at least
+     * one key.
+     * @param keys keys for the target object
+     * @param key_directory directory of potential matches
+     * @return
+     */
+    private int[] findMatches(int target, int[] keys, int[] key_directory)
     {
+        // use a set as a buffer for matches todo: can this size be pre-calculated?
         var rSet = new HashSet<Integer>();
         for (int i = 0; i < keys.length; i += Main.Memory.Width.KEY)
         {
@@ -115,20 +137,26 @@ public class SpatialMapEX
             int endIndex = pointer + len;
             for (int j = pointer + 1; j <= endIndex; j++)
             {
+                // get the next potential match
                 int next = Main.Memory.pointer_buffer[j];
+                // if this would be a self collision, or a duplicate to an earlier match,
+                // discard this match.
+                if (target >= next)
+                {
+                    continue;
+                }
                 rSet.add(next);
             }
         }
-        int[] out = rSet.stream().mapToInt(i->i).toArray();
-        return out;
+        // dump the buffer to an array todo: see above, can this be pre-sized?
+        return rSet.stream().mapToInt(i->i).toArray();
     }
 
-    private void doX(int location, int[] key_directory)
-    {
-        int bodyOffset = location * Main.Memory.Width.BODY;
-        int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
+    private final List<Integer> outBuffer = new ArrayList<>();
 
-        var target = Main.Memory.bodyByIndex(bodyIndex);
+    private void findCandidates(int targetIndex, int[] key_directory)
+    {
+        var target = Main.Memory.bodyByIndex(targetIndex);
         var bounds = target.bounds();
         var spatial_index = (int) bounds.si_index();
         var spatial_length = (int) bounds.si_length();
@@ -136,53 +164,28 @@ public class SpatialMapEX
         var keys = new int[spatial_length];
         System.arraycopy(Main.Memory.key_buffer, spatial_index, keys, 0, spatial_length);
 
-        var m = matches(keys, key_directory);
-        //var c = getMatches(bodyIndex);
+        var matches = findMatches(targetIndex, keys, key_directory);
 
-        for (int candidateIndex : m)
+        for (int candidateIndex : matches)
         {
             var candidate = Main.Memory.bodyByIndex(candidateIndex);
-            if (target == candidate)
-            {
-                continue;
-            }
-            if (target.index() > candidate.index())
-            {
-                continue;
-            }
-            if (target.entity().equals(candidate.entity()))
-            {
-                continue;
-            }
             boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
             if (!ch)
             {
                 continue;
             }
-
-            //synchronized (outBuffer)
-            //{
-                outBuffer.add(bodyIndex);
-                outBuffer.add(candidateIndex);
-            //}
+            outBuffer.add(targetIndex);
+            outBuffer.add(candidateIndex);
         }
     }
-
-
-    //private final Map<String, Set<String>> collisionProgress = new HashMap<>();
-
-
-    private final List<Integer> outBuffer = new ArrayList<>();
 
     public IntBuffer computeCandidates(int[] key_directory)
     {
         var bodyCount = Main.Memory.bodyCount();
         outBuffer.clear();
-        //collisionProgress.clear();
         for (int location = 0; location < bodyCount; location++)
         {
-            final int next = location;
-            this.doX(next, key_directory);
+            this.findCandidates(location, key_directory);
         }
         int[] ob = new int[outBuffer.size()];
         for (int i = 0; i < outBuffer.size(); i++)

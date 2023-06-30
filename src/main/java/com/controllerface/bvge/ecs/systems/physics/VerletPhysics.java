@@ -20,15 +20,11 @@ public class VerletPhysics extends GameSystem
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
 
-
     /**
      * These buffers are reused each tick p2 avoid creating a new one every frame and for each object.
      * They should always be zeroed before each use.
      */
-    private final List<CollisionManifold> collisionBuffer = new ArrayList<>();
-    private final Map<String, Set<String>> collisionProgress = new HashMap<>();
     private final Vector2f vectorBuffer1 = new Vector2f();
-    private final Vector2f vectorBuffer2 = new Vector2f();
 
     public VerletPhysics(ECS ecs)
     {
@@ -64,28 +60,6 @@ public class VerletPhysics extends GameSystem
             vectorBuffer1.y -= body2D.force();
         }
         body2D.setAcc(vectorBuffer1);
-        //body2D.getAcc().x = vectorBuffer1.x;
-        //body2D.getAcc().y = vectorBuffer1.y;
-    }
-
-    private float edgeContact(FPoint2D e1, FPoint2D e2, Vector2f collision_vertex, Vector2f collision_vector)
-    {
-        float contact;
-        float x_dist = e1.pos_x() - e2.pos_x();
-        float y_dist = e1.pos_y() - e2.pos_y();
-        if (Math.abs(x_dist) > Math.abs(y_dist))
-        {
-            float x_offset = (collision_vertex.x() - collision_vector.x - e1.pos_x());
-            float x_diff = (e2.pos_x() - e1.pos_x());
-            contact = x_offset / x_diff;
-        }
-        else
-        {
-            float y_offset = (collision_vertex.y() - collision_vector.y - e1.pos_y());
-            float y_diff = (e2.pos_y() - e1.pos_y());
-            contact = y_offset / y_diff;
-        }
-        return contact;
     }
 
     private void reactPolygon(float[] reaction)
@@ -181,13 +155,13 @@ public class VerletPhysics extends GameSystem
         OpenCL_EX.integrate(dt);
 
         // broad phase collision
-        // todo: split this up into two phases, one that calculates the space needed
-        //  for each object, storing it in the object's structure, then a quick pass
-        //  locally to create the appropriately sized buffer, then push that back up
-        //  to be calculated on the GPU. Essentially, only return to the CPU when we
-        //  need to dynamically generate a sized buffer.
-        var key_directory = spatialMap.rebuildIndex();
-        var candidates = spatialMap.computeCandidates(key_directory);
+        // todo: split some of these into two phases, one that calculates the space needed
+        //  for a phase, then a quick pass locally to create the appropriately sized buffer,
+        //  then push that back up to be calculated on the GPU. Essentially, only return to
+        //  the CPU when we need to generate a dynamically sized buffer.
+        spatialMap.rebuildIndex();
+        spatialMap.updateKeyDirectory();
+        var candidates = spatialMap.computeCandidates(spatialMap.keyDirectory());
 
         // narrow phase collision
         if (candidates.limit() > 0)
@@ -206,14 +180,6 @@ public class VerletPhysics extends GameSystem
             // todo: replace loop below with CL call
             for (int i = 0; i < count; i++)
             {
-                var next_manifold = i * Main.Memory.Width.MANIFOLD;
-                if (manifolds[next_manifold] == -1) // separating axis was found
-                {
-                    continue;
-                }
-                float[] manifold = new float[Main.Memory.Width.MANIFOLD];
-                System.arraycopy(manifolds, next_manifold, manifold, 0, Main.Memory.Width.MANIFOLD);
-
                 var next_reaction = i * Main.Memory.Width.REACTION;
                 if (reactions[next_reaction] == -1) // separating axis was found
                 {
@@ -221,10 +187,8 @@ public class VerletPhysics extends GameSystem
                 }
                 float[] reaction = new float[Main.Memory.Width.REACTION];
                 System.arraycopy(reactions, next_reaction, reaction, 0, Main.Memory.Width.REACTION);
-
-                reactPolygon(reaction); // todo: cut out the intermediate manifold object
+                reactPolygon(reaction);
             }
-            //System.out.println("----");
         }
 
         tickEdges();

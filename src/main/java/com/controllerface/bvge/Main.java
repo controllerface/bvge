@@ -86,7 +86,6 @@ public class Main
         public static int[] key_buffer      = new int[KEY_BUFFER_SIZE];
         public static int[] pointer_buffer  = new int[POINTER_BUFFER_SIZE];
 
-
         private static int body_index    = 0;
         private static int point_index   = 0;
         private static int edge_index    = 0;
@@ -168,7 +167,6 @@ public class Main
             edge_buffer[edge_index++] = (float) p2;
             edge_buffer[edge_index++] = l;
             return new FEdge2D(edge_index - Width.EDGE, from, to);
-            // todo: add cleaner and log/or possibly compact, if these go out of scope
         }
 
         public static FPoint2D newPoint(float x, float y)
@@ -183,7 +181,6 @@ public class Main
             point_buffer[point_index++] = px;
             point_buffer[point_index++] = py;
             return new FPoint2D(point_index - Width.POINT);
-            // todo: add cleaner and log/or possibly compact, if these go out of scope
         }
 
         public static FBody2D newBody(float x, float y,
@@ -218,7 +215,6 @@ public class Main
             var newBody = new FBody2D(idx, force, points, edges, bounds, transform, entity);
             bodies.put(idx / Width.BODY, newBody);
             return newBody;
-            // todo: add cleaner and log/or possibly compact, if these go out of scope
         }
 
     }

@@ -11,19 +11,17 @@ public record FBounds2D(int index) implements GameComponent
     * 1: y position
     * 2: width
     * 3: height
-    * 4: max x value
-    * 5: max y value
-    * 6: spatial index location
-    * 7: spatial index length
+    * 4: spatial index location
+    * 5: spatial index length
+    * 6:
+    * 7:
     *  */
     private static final int X_OFFSET     = 0;
     private static final int Y_OFFSET     = 1;
     private static final int W_OFFSET     = 2;
     private static final int H_OFFSET     = 3;
-    private static final int MAX_X_OFFSET = 4;
-    private static final int MAX_Y_OFFSET = 5;
-    private static final int SI_INDEX     = 6;
-    private static final int SI_LENGTH    = 7;
+    private static final int SI_INDEX     = 4;
+    private static final int SI_LENGTH    = 5;
 
     public float x()
     {
@@ -43,26 +41,6 @@ public record FBounds2D(int index) implements GameComponent
     public float h()
     {
         return Main.Memory.bounds_buffer[index() + H_OFFSET];
-    }
-
-    public float min_x()
-    {
-        return Main.Memory.bounds_buffer[index() + X_OFFSET];
-    } // min x == x
-
-    public float min_y()
-    {
-        return Main.Memory.bounds_buffer[index() + Y_OFFSET];
-    } // min y == y
-
-    public float max_x()
-    {
-        return Main.Memory.bounds_buffer[index() + MAX_X_OFFSET];
-    }
-
-    public float max_y()
-    {
-        return Main.Memory.bounds_buffer[index() + MAX_Y_OFFSET];
     }
 
     public float si_index()

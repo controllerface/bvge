@@ -25,6 +25,7 @@ public class Shader
         this.filepath = filePath;
         try
         {
+            // todo: stop this string split stuff and just put the shaders in their own files
             var st= Shader.class.getResourceAsStream("/shaders/" + filePath);
             String source = new String(st.readAllBytes(), StandardCharsets.UTF_8);//new String(Files.readAllBytes(Paths.get(filePath)));
             String[] splits = source.split("(#type)( )+([a-zA-Z]+)");

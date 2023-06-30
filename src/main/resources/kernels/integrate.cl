@@ -145,21 +145,20 @@ __kernel void integrate(
     bounding_box.s1 = min_y;
     bounding_box.s2 = fabs(max_x - min_x);
     bounding_box.s3 = fabs(max_y - min_y);
-    bounding_box.s4 = max_x;
-    bounding_box.s5 = max_y;
 
     // calculate spatial index boundary
     int2 keys[4];
     keys[0] = getKeyForPoint(bounding_box.s0, bounding_box.s1);
-    keys[1] = getKeyForPoint(bounding_box.s0 + bounding_box.s2, bounding_box.s1);
-    keys[2] = getKeyForPoint(bounding_box.s0 + bounding_box.s2, bounding_box.s1 + bounding_box.s3);
-    keys[3] = getKeyForPoint(bounding_box.s0, bounding_box.s1 + bounding_box.s3);
+    keys[1] = getKeyForPoint(max_x, bounding_box.s1);
+    keys[2] = getKeyForPoint(max_x, max_y);
+    keys[3] = getKeyForPoint(bounding_box.s0, max_y);
     int4 k = getExtents(keys);
     body.sb = (float) k.x;
     body.sc = (float) k.y;
     body.sd = (float) k.z;
     body.se = (float) k.w;
 
+    // claculate spatial index key bank size
     int x_count = (k.y - k.x) + 1;
     int y_count = (k.w - k.z) + 1;
     int count = x_count * y_count;
