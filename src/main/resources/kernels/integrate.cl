@@ -158,7 +158,7 @@ __kernel void integrate(
     body.sd = (float) k.z;
     body.se = (float) k.w;
 
-    // claculate spatial index key bank size
+    // calculate spatial index key bank size
     int x_count = (k.y - k.x) + 1;
     int y_count = (k.w - k.z) + 1;
     int count = x_count * y_count;

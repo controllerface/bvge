@@ -159,8 +159,33 @@ public class VerletPhysics extends GameSystem
         //  for a phase, then a quick pass locally to create the appropriately sized buffer,
         //  then push that back up to be calculated on the GPU. Essentially, only return to
         //  the CPU when we need to generate a dynamically sized buffer.
+
+
+        // 1: calculate needed size and offset for each body from the si_key_bank_size values
+        var keyBufferSize = spatialMap.calculateKeyBufferSize();
+
+        // 2: create a buffer of the required size, this takes the place of the local key buffer
+        int[] keyBankBuffer = new int[keyBufferSize];
+
+        // 3: fill the key buffer using the pre-computed sizes and offsets
+        SpatialMapEX.IndexEx mapCounts = spatialMap.rebuildIndexEX(keyBankBuffer);
+
+        // this takes the place of the local pointer buffer, will hold the computed mapping data
+        int[] keyMapBuffer = new int[mapCounts.keyTotal()];
+
+        // 4: calculate the mappings for the key offsets
+        int[] mapOffsets = spatialMap.calculateMapOffsets(mapCounts);
+
+
+
+
+
+
+
         spatialMap.rebuildIndex();
+
         spatialMap.updateKeyDirectory();
+
         var candidates = spatialMap.computeCandidates(spatialMap.keyDirectory());
 
         // narrow phase collision

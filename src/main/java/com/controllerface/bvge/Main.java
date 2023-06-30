@@ -133,9 +133,19 @@ public class Main
             return body_index + 1;
         }
 
-        public static int pointCount()
+        public static int pointerCount()
         {
-            return point_index / Width.POINT;
+            return point_index;
+        }
+
+        public static int keyBankCount()
+        {
+            return key_index;
+        }
+
+        public static int keyBankLength()
+        {
+            return key_index + 1;
         }
 
         public static int pointLength()

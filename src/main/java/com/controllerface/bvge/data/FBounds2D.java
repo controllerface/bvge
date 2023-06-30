@@ -13,7 +13,7 @@ public record FBounds2D(int index) implements GameComponent
     * 3: height
     * 4: spatial index location
     * 5: spatial index length
-    * 6:
+    * 6: key bank offset
     * 7:
     *  */
     private static final int X_OFFSET     = 0;
@@ -22,6 +22,7 @@ public record FBounds2D(int index) implements GameComponent
     private static final int H_OFFSET     = 3;
     private static final int SI_INDEX     = 4;
     private static final int SI_LENGTH    = 5;
+    private static final int BANK_OFFSET  = 6;
 
     public float x()
     {
@@ -43,14 +44,24 @@ public record FBounds2D(int index) implements GameComponent
         return Main.Memory.bounds_buffer[index() + H_OFFSET];
     }
 
-    public float si_index()
+    public int si_index()
     {
-        return Main.Memory.bounds_buffer[index() + SI_INDEX];
+        return (int) Main.Memory.bounds_buffer[index() + SI_INDEX];
     }
 
-    public float si_length()
+    public int si_length()
     {
-        return Main.Memory.bounds_buffer[index() + SI_LENGTH];
+        return (int) Main.Memory.bounds_buffer[index() + SI_LENGTH];
+    }
+
+    public int bank_offset()
+    {
+        return (int) Main.Memory.bounds_buffer[index() + BANK_OFFSET];
+    }
+
+    public void setBankOffset(int offset)
+    {
+        Main.Memory.bounds_buffer[index() + BANK_OFFSET] = (float)offset;
     }
 
     public void setSpatialIndex(int[] indexData)

@@ -63,14 +63,40 @@ public class SpatialMapEX
             {
                 key_bank[current_index++] = current_x;
                 key_bank[current_index++] = current_y;
-                var bodyKey = getKeyByIndex(current_x, current_y);
 
+                var bodyKey = getKeyByIndex(current_x, current_y);
                 // todo: remove the class based components
                 boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newKeySet).add(bodyIndex);
             }
         }
         var si_data = Main.Memory.storeKeyBank(key_bank);
         body.bounds().setSpatialIndex(si_data);
+    }
+
+    private int rebuildBodyEX(int bodyIndex, int[] keyBankBuffer, int[] mapCounts)
+    {
+        var body = Main.Memory.bodyByIndex(bodyIndex);
+
+        var offset = body.bounds().bank_offset();
+
+        int min_x = body.si_min_x();
+        int max_x = body.si_max_x();
+        int min_y = body.si_min_y();
+        int max_y = body.si_max_y();
+
+        int current_index = offset;
+        int totalCount = 0;
+        for (int current_x = min_x; current_x <= max_x; current_x++)
+        {
+            for (int current_y = min_y; current_y <= max_y; current_y++)
+            {
+                keyBankBuffer[current_index++] = current_x;
+                keyBankBuffer[current_index++] = current_y;
+                int i = xsubdivisions * current_y + current_x;
+                mapCounts[i] = totalCount++; // increment the map count for this key
+            }
+        }
+        return totalCount;
     }
 
     public int[] keyDirectory()
@@ -94,6 +120,45 @@ public class SpatialMapEX
     }
 
 
+    public int calculateKeyBufferSize()
+    {
+        int size = 0;
+        for (int bodyindex = 0; bodyindex < Main.Memory.bodyCount(); bodyindex++)
+        {
+            var body = Main.Memory.bodyByIndex(bodyindex);
+            // write the rolling offset into the body for use later
+            body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
+            size += body.si_bank_size();
+        }
+        return size;
+    }
+
+    public record IndexEx(int[] mapCounts, int keyTotal) { }
+
+    public IndexEx rebuildIndexEX(int[] keyBankBuffer)
+    {
+        var bodyCount = Main.Memory.bodyCount();
+        int[] mapCounts = new int[keyDirectory.length];
+        int keyCount = 0;
+        for (int bodyIndex = 0; bodyIndex < bodyCount; bodyIndex++)
+        {
+            keyCount += rebuildBodyEX(bodyIndex, keyBankBuffer, mapCounts);
+        }
+        return new IndexEx(mapCounts, keyCount);
+    }
+
+    public int[] calculateMapOffsets(SpatialMapEX.IndexEx indexEx)
+    {
+        int[] offsetmap = new int[indexEx.mapCounts.length];
+        int currentOffset = 0;
+        for (int i = 0; i < indexEx.mapCounts.length; i++)
+        {
+            offsetmap[i] = currentOffset;
+            currentOffset += indexEx.mapCounts[i];
+        }
+        return offsetmap;
+    }
+
 
     public void rebuildIndex()
     {
@@ -103,9 +168,7 @@ public class SpatialMapEX
         var bodyCount = Main.Memory.bodyCount();
         for (int location = 0; location < bodyCount; location++)
         {
-            int bodyOffset = location * Main.Memory.Width.BODY;
-            int bodyIndex = bodyOffset / Main.Memory.Width.BODY;
-            rebuildLocation(bodyIndex);
+            rebuildLocation(location);
         }
     }
 
@@ -158,8 +221,8 @@ public class SpatialMapEX
     {
         var target = Main.Memory.bodyByIndex(targetIndex);
         var bounds = target.bounds();
-        var spatial_index = (int) bounds.si_index();
-        var spatial_length = (int) bounds.si_length();
+        var spatial_index = bounds.si_index();
+        var spatial_length = bounds.si_length();
 
         var keys = new int[spatial_length];
         System.arraycopy(Main.Memory.key_buffer, spatial_index, keys, 0, spatial_length);
@@ -183,9 +246,9 @@ public class SpatialMapEX
     {
         var bodyCount = Main.Memory.bodyCount();
         outBuffer.clear();
-        for (int location = 0; location < bodyCount; location++)
+        for (int targetIndex = 0; targetIndex < bodyCount; targetIndex++)
         {
-            this.findCandidates(location, key_directory);
+            this.findCandidates(targetIndex, key_directory);
         }
         int[] ob = new int[outBuffer.size()];
         for (int i = 0; i < outBuffer.size(); i++)
@@ -197,8 +260,7 @@ public class SpatialMapEX
 
     private BoxKey getKeyByIndex(int index_x, int index_y)
     {
-        var one = keyMap.computeIfAbsent(index_x, SpatialMapEX::newKeyMap);
-        var two = one.computeIfAbsent(index_y, (_k) -> new BoxKey(index_x, index_y));
-        return two;
+        var y_map = keyMap.computeIfAbsent(index_x, SpatialMapEX::newKeyMap);
+        return y_map.computeIfAbsent(index_y, (_k) -> new BoxKey(index_x, index_y));
     }
 }
