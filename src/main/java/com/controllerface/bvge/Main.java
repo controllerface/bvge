@@ -76,37 +76,23 @@ public class Main
         private static final int POINT_BUFFER_SIZE   = Width.POINT   * MAX_POINTS;
         private static final int EDGE_BUFFER_SIZE    = Width.EDGE    * MAX_POINTS;
         private static final int BOUNDS_BUFFER_SIZE  = Width.BOUNDS  * MAX_BODIES;
-        private static final int KEY_BUFFER_SIZE     = Width.KEY     * MAX_KEYS;
         private static final int POINTER_BUFFER_SIZE = Width.POINTER * MAX_KEYS;
 
         public static float[] body_buffer   = new float[BODY_BUFFER_SIZE];
         public static float[] point_buffer  = new float[POINT_BUFFER_SIZE];
         public static float[] edge_buffer   = new float[EDGE_BUFFER_SIZE];
         public static float[] bounds_buffer = new float[BOUNDS_BUFFER_SIZE];
-        public static int[] key_buffer      = new int[KEY_BUFFER_SIZE];
         public static int[] pointer_buffer  = new int[POINTER_BUFFER_SIZE];
 
         private static int body_index    = 0;
         private static int point_index   = 0;
         private static int edge_index    = 0;
         private static int bounds_index  = 0;
-        private static int key_index     = 0;
         private static int pointer_index = 0;
 
         public static void startKeyRebuild()
         {
-            key_index = 0;
             pointer_index = 0;
-        }
-
-        public static int[] storeKeyBank(int[] key_bank)
-        {
-            int[] out = new int[2];
-            out[0] = key_index;
-            out[1] = key_bank.length;
-            System.arraycopy(key_bank, 0, key_buffer, key_index, key_bank.length);
-            key_index += key_bank.length;
-            return out;
         }
 
         public static int storeKeyPointer(int[] key_data)
@@ -136,16 +122,6 @@ public class Main
         public static int pointerCount()
         {
             return point_index;
-        }
-
-        public static int keyBankCount()
-        {
-            return key_index;
-        }
-
-        public static int keyBankLength()
-        {
-            return key_index + 1;
         }
 
         public static int pointLength()

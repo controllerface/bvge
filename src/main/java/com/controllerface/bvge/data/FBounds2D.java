@@ -64,6 +64,7 @@ public record FBounds2D(int index) implements GameComponent
         Main.Memory.bounds_buffer[index() + BANK_OFFSET] = (float)offset;
     }
 
+    // todo: this should be removed in favor of the offset value
     public void setSpatialIndex(int[] indexData)
     {
         Main.Memory.bounds_buffer[index() + SI_INDEX]  = (float)indexData[0];

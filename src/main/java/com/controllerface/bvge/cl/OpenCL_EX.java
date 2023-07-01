@@ -139,9 +139,9 @@ public class OpenCL_EX
         Pointer srcBounds = Pointer.to(boundsBuffer);
         Pointer srcDt = Pointer.to(FloatBuffer.wrap(dt));
 
-        long bodyBufsize = Sizeof.cl_float * bodiesSize;
-        long pointBufsize = Sizeof.cl_float * pointsSize;
-        long boundsBufsize = Sizeof.cl_float * boundsSize;
+        long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
+        long pointBufsize = (long)Sizeof.cl_float * pointsSize;
+        long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
 
         // Allocate the memory objects for the input- and output data
         // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred

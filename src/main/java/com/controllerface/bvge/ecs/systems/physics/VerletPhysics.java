@@ -142,51 +142,75 @@ public class VerletPhysics extends GameSystem
     private void tickSimulation(float dt)
     {
         var bodies = ecs.getComponents(Component.RigidBody2D);
+
+        // if somehow there are no bodies, just bail. something is probably really wrong
         if (bodies == null || bodies.isEmpty())
         {
             return;
         }
 
+        // update the player's acc values, don't bother doing this in the CL call
+        // as it only applies to one object and would waste cycles on all other objects
         var bd = ecs.getComponentFor("player", Component.RigidBody2D);
         FBody2D body = Component.RigidBody2D.coerce(bd);
         resolveForces(body.entity(), body);
 
-        // integrate
+        // integrate in CL
         OpenCL_EX.integrate(dt);
 
         // broad phase collision
+
+        // NEW way (WIP)
         // todo: split some of these into two phases, one that calculates the space needed
         //  for a phase, then a quick pass locally to create the appropriately sized buffer,
         //  then push that back up to be calculated on the GPU. Essentially, only return to
         //  the CPU when we need to generate a dynamically sized buffer.
 
+        // 1: calculate needed size and offset for each body from the si_key_bank_size values.
+        // the offsets are stored within the body's associated bounds object
+        var keyBankSize = spatialMap.calculateKeyBankSize();
 
-        // 1: calculate needed size and offset for each body from the si_key_bank_size values
-        var keyBufferSize = spatialMap.calculateKeyBufferSize();
+        // 2: create a buffer of the required size, this takes the place of the local key buffer,
+        // and will contain the keys for each object. the layout should be identical as well
+        int[] keyBank = new int[keyBankSize];
 
-        // 2: create a buffer of the required size, this takes the place of the local key buffer
-        int[] keyBankBuffer = new int[keyBufferSize];
+        // 3: fill the key buffer using the pre-computed sizes and offsets from previous steps.
+        // after this method completes, the key buffer will contain all the keys for each object.
+        // The returned object contains two important things:
+        // 1. a fixed size array that matches
+        // the size of the key directory and contains the total count of keys (among all objects)
+        // that is stored for each cell index.
+        // 2. a count of the total number of keys that were stored in the key bank buffer. This
+        // can be used to size the final array that should replace the hashmap
+        SpatialMapEX.IndexEx mapCounts = spatialMap.rebuildKeyBank(keyBank);
 
-        // 3: fill the key buffer using the pre-computed sizes and offsets
-        SpatialMapEX.IndexEx mapCounts = spatialMap.rebuildIndexEX(keyBankBuffer);
+        // store in a variable for easier debugging/visibility for implementation
+        int[] keyMapCounts = mapCounts.mapCounts();
 
-        // this takes the place of the local pointer buffer, will hold the computed mapping data
+        // 4: in addition to the counts, we also need to know the offset into the key map buffer
+        // where the body indices for each key will be stored. Together with the map counts,
+        // these structures will provide a means to determine how many bodies are a match for a given
+        // key, replicating the functionality of a HashMap but with a fixed size array
+        int[] keyMapOffsets = spatialMap.calculateMapOffsets(mapCounts);
+
+        // 5: create a buffer that will contain the raw data that will take the place of the local pointer
+        // buffer, it will hold the computed mapping data instead, allowing removal of the Java Map object
         int[] keyMapBuffer = new int[mapCounts.keyTotal()];
 
-        // 4: calculate the mappings for the key offsets
-        int[] mapOffsets = spatialMap.calculateMapOffsets(mapCounts);
+        // 6: todo: figure out how to get the key matches into the map buffer matching the current pointer
+        //     buffer functionality (updateKeyDirectory)
 
 
 
+        // OLD way
 
-
-
-
+        // todo: this only sets up the map for the next step now,
         spatialMap.rebuildIndex();
 
+        // this should be replaced by the key map structure
         spatialMap.updateKeyDirectory();
 
-        var candidates = spatialMap.computeCandidates(spatialMap.keyDirectory());
+        var candidates = spatialMap.computeCandidates(spatialMap.keyDirectory(), keyBank);
 
         // narrow phase collision
         if (candidates.limit() > 0)
@@ -202,7 +226,9 @@ public class VerletPhysics extends GameSystem
             var reactionBuffer = FloatBuffer.wrap(reactions);
             OpenCL_EX.react(manifoldBuffer, reactionBuffer);
 
-            // todo: replace loop below with CL call
+            // todo: replace loop below with CL call. will need to calculate offsets for
+            //  each collision pair and store the reactions, then sum them into a single
+            //  reaction, before finally adding them to the appropriate objects
             for (int i = 0; i < count; i++)
             {
                 var next_reaction = i * Main.Memory.Width.REACTION;
