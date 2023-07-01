@@ -176,24 +176,25 @@ public class VerletPhysics extends GameSystem
 
 
 
-        spatialMap.rebuildKeyBank(keyBank, keyCounts);
-        spatialMap.calculateMapOffsets(keyOffsets, keyCounts);
 
         // todo: figure out how to get the key matches into the map buffer matching the current pointer
         //     buffer functionality (updateKeyDirectory)
 
 
         // OLD way
-
-        // todo: this only sets up the map for the next step now,
+        // todo: this only sets up the map for the next step now, still required at the moment
         spatialMap.rebuildIndex();
-
         // this should be replaced by the key map structure
-        spatialMap.updateKeyDirectory(keyMap);
+        spatialMap.updateKeyDirectory();
 
-        var candidates = spatialMap.computeCandidates(spatialMap.keyDirectory(), keyBank);
 
-        var pointers = Main.Memory.pointerCount();
+        // new stuff here again
+        spatialMap.rebuildKeyBank(keyBank, keyCounts);
+        spatialMap.calculateMapOffsets(keyOffsets, keyCounts);
+        spatialMap.updateKeyDirectoryEX(keyMap, keyOffsets, keyCounts);
+
+        var candidates = spatialMap.computeCandidatesEX(spatialMap.keyDirectory(),
+                keyBank, keyMap, keyCounts, keyOffsets);
 
         // narrow phase collision
         if (candidates.limit() > 0)
