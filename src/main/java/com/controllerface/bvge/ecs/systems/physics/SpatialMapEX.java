@@ -79,6 +79,10 @@ public class SpatialMapEX
 
         int current_index = offset;
         int totalCount = 0;
+
+        // todo: use this method to pre-calculate the total counts earlier
+        int testCount = (max_x - min_x + 1) * (max_y - min_y + 1);
+
         for (int current_x = min_x; current_x <= max_x; current_x++)
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
