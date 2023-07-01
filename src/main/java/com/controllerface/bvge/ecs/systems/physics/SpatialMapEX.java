@@ -66,7 +66,18 @@ public class SpatialMapEX
         }
     }
 
-    private int generateBodyKeys(int bodyIndex, int[] keyBankBuffer, int[] mapCounts)
+    /**
+     * Generates the keys for the given body, stores them in the appropriate section of the key bank,
+     * and returns the total number of keys added. The provided map count array is also incremented
+     * in the appropriate index in order to keep track of the total number of bodies that have a key
+     * at that index.
+     *
+     * @param bodyIndex index of the body to generate keys for
+     * @param keyBankBuffer the key bank to store the keys within
+     * @param keyCounts the running counts array of keys at a given index
+     * @return
+     */
+    private void generateBodyKeys(int bodyIndex, int[] keyBankBuffer, int[] keyCounts)
     {
         var body = Main.Memory.bodyByIndex(bodyIndex);
 
@@ -80,9 +91,6 @@ public class SpatialMapEX
         int current_index = offset;
         int totalCount = 0;
 
-        // todo: use this method to pre-calculate the total counts earlier
-        int testCount = (max_x - min_x + 1) * (max_y - min_y + 1);
-
         for (int current_x = min_x; current_x <= max_x; current_x++)
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
@@ -92,10 +100,9 @@ public class SpatialMapEX
                 int i = xsubdivisions * current_y + current_x;
                 // todo: can a sum/reduction in CL work here to calculate total counts
                 //  in parallel and then store in the map counts by index in the final step?
-                mapCounts[i] = totalCount++; // increment the map count for this key
+                keyCounts[i] = totalCount++; // increment the map count for this key
             }
         }
-        return totalCount;
     }
 
     public int[] keyDirectory()
@@ -103,19 +110,24 @@ public class SpatialMapEX
         return keyDirectory;
     }
 
-    public void updateKeyDirectory()
+    public void updateKeyDirectory(int[] keyMap)
     {
+        var t = 0;
         for (Map.Entry<BoxKey, Set<Integer>> entry : boxMap.entrySet())
         {
             // here, the 2D grid of the spatial map is packed into a 1D array
             // so it can be used in OpenCL.
             BoxKey key = entry.getKey();
             Set<Integer> value = entry.getValue();
+            if (value.size() < 1) continue; // no matches in this key index
             int[] matches = value.stream().mapToInt(i->i).toArray();
+            //System.arraycopy(matches, 0, keyMap, t, matches.length);
             int index = Main.Memory.storeKeyPointer(matches);
             int i = xsubdivisions * key.y + key.x;
             keyDirectory[i] = index;
+            t += matches.length;
         }
+        System.out.println("debug: " + t);
     }
 
 
@@ -129,40 +141,37 @@ public class SpatialMapEX
             // into the main key bank where the keys for this body are stored.
             // when accessing keys, the si_bank size is used along with this
             // value to get all the keys for this object
-            // todo: can a "scan" (parallel prefix sum) be used here?
+            // todo: can a "scan" (parallel prefix sum) be used here? bodies could have their offset
+            //  computed and set in CL this way
             body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
             size += body.si_bank_size();
         }
         return size;
     }
 
-    public record IndexEx(int[] mapCounts, int keyTotal) { }
-
-    public IndexEx rebuildKeyBank(int[] keyBankBuffer)
+    public void rebuildKeyBank(int[] keyBankBuffer, int[] keyCounts)
     {
         var bodyCount = Main.Memory.bodyCount();
-        // this array stores the total count of keys generated for each spatial index cell
-        // the intent is that code can index into this array to determine the number of keys to
-        // read from the min key storage object (which still needs to be built)
-        int[] mapCounts = new int[keyDirectory.length];
-        int keyCount = 0;
         for (int bodyIndex = 0; bodyIndex < bodyCount; bodyIndex++)
         {
-            keyCount += generateBodyKeys(bodyIndex, keyBankBuffer, mapCounts);
+            generateBodyKeys(bodyIndex, keyBankBuffer, keyCounts);
         }
-        return new IndexEx(mapCounts, keyCount);
     }
 
-    public int[] calculateMapOffsets(SpatialMapEX.IndexEx indexEx)
+    public void calculateMapOffsets(int[] keyOffsets, int[] keyCounts)
     {
-        int[] mapOffsets = new int[indexEx.mapCounts.length];
         int currentOffset = 0;
-        for (int i = 0; i < indexEx.mapCounts.length; i++)
+        for (int i = 0; i < keyCounts.length; i++)
         {
-            mapOffsets[i] = currentOffset;
-            currentOffset += indexEx.mapCounts[i];
+            int next = keyCounts[i];
+            if (next == 0)
+            {
+                keyOffsets[i] =-1;
+                continue;
+            }
+            keyOffsets[i] = Integer.valueOf(currentOffset);
+            currentOffset += next;
         }
-        return mapOffsets;
     }
 
 

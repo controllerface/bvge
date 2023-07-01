@@ -90,6 +90,8 @@ public class Main
         private static int bounds_index  = 0;
         private static int pointer_index = 0;
 
+        private static int pointer_count = 0;
+
         public static void startKeyRebuild()
         {
             pointer_index = 0;
@@ -97,6 +99,7 @@ public class Main
 
         public static int storeKeyPointer(int[] key_data)
         {
+            pointer_count += key_data.length;
             int out = pointer_index;
             pointer_buffer[pointer_index++] = key_data.length; // the first value is the length of data
             System.arraycopy(key_data, 0, pointer_buffer, pointer_index, key_data.length);
@@ -121,7 +124,7 @@ public class Main
 
         public static int pointerCount()
         {
-            return point_index;
+            return pointer_count;
         }
 
         public static int pointLength()
