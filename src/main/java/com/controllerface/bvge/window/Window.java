@@ -3,6 +3,7 @@ package com.controllerface.bvge.window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.KBMInput;
 import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
+import com.controllerface.bvge.ecs.systems.physics.SpatialMapEX;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
 import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
@@ -95,7 +96,17 @@ public class Window
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
+
+
         var prim = glfwGetPrimaryMonitor();
+
+        int[] x = new int[1];
+        int[] y = new int[1];
+        int[] w = new int[1];
+        int[] h = new int[1];
+        glfwGetMonitorWorkarea(prim, x,y,w,h);
+        this.width = w[0];
+        this.height = h[0];
 
         glfwWindow = glfwCreateWindow(this.width, this.height, this.title, prim, NULL);
         if (glfwWindow == NULL)
@@ -119,7 +130,7 @@ public class Window
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        glViewport(0,0,1920, 1080);
+        glViewport(0,0,this.width, this.height);
 
     }
 
@@ -133,7 +144,7 @@ public class Window
 
     private static SpacePartitionRenderer spacePartitionRenderer;
 
-    public static void setSP(SpatialMap spatialMap)
+    public static void setSP(SpatialMapEX spatialMap)
     {
         Window.spacePartitionRenderer.setSpatialMap(spatialMap);
     }
@@ -144,6 +155,7 @@ public class Window
         initWindow();
 
         spacePartitionRenderer = new SpacePartitionRenderer(ecs);
+        ecs.registerSystem(spacePartitionRenderer);
 
         // order of system registry is important, systems run in the order they are added
         var inputSystem = new KBMInput(ecs);
@@ -153,7 +165,6 @@ public class Window
         ecs.registerSystem(new LineRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
 
-        //ecs.registerSystem(spacePartionRendering);
         // note: the display is wrong for this renderer, it's not scaled correctly for some reason.
         // todo: look into that
 
@@ -162,6 +173,9 @@ public class Window
         currentGameMode = new GameRunning(ecs);
         currentGameMode.load();
         currentGameMode.start();
+
+        currentGameMode.camera().projectionSize.x = this.width;
+        currentGameMode.camera().projectionSize.y = this.height;
     }
 
     public static int getWidth() {

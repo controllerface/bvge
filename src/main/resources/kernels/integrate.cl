@@ -31,10 +31,10 @@ int4 getExtents(int2 corners[])
 
 // calculates a spatial index cell for a given point
 // todo: the x/y sizing should be provided to the kernel in a arg like dt
-int2 getKeyForPoint(float px, float py)
+int2 getKeyForPoint(float px, float py, float x_spacing, float y_spacing)
 {
-    int index_x = ((int) floor(px / 7.68));
-    int index_y = ((int) floor(py / 4.32));
+    int index_x = ((int) floor(px / x_spacing));
+    int index_y = ((int) floor(py / y_spacing));
     int2 out;
     out.x = index_x;
     out.y = index_y;
@@ -48,9 +48,13 @@ __kernel void integrate(
     __global float16 *r_bodies,
     __global float4 *r_points,
     __global float8 *r_bounds,
-    __global float *dt)
+    __global float *args)
 {
     int gid = get_global_id(0);
+
+    float dt = args[0];
+    float x_spacing = args[1];
+    float y_spacing = args[2];
 
     // get body from array
     float16 body = bodies[gid];
@@ -59,8 +63,8 @@ __kernel void integrate(
    	float2 acc;
    	acc.x = body.s4;
    	acc.y = body.s5;
-   	acc.x = acc.x * dt[0];
-   	acc.y = acc.y * dt[0];
+   	acc.x = acc.x * dt;
+   	acc.y = acc.y * dt;
 
     // get start/end vertex indices
     int start = (int)body.s7;
@@ -148,10 +152,10 @@ __kernel void integrate(
 
     // calculate spatial index boundary
     int2 keys[4];
-    keys[0] = getKeyForPoint(bounding_box.s0, bounding_box.s1);
-    keys[1] = getKeyForPoint(max_x, bounding_box.s1);
-    keys[2] = getKeyForPoint(max_x, max_y);
-    keys[3] = getKeyForPoint(bounding_box.s0, max_y);
+    keys[0] = getKeyForPoint(bounding_box.s0, bounding_box.s1, x_spacing, y_spacing);
+    keys[1] = getKeyForPoint(max_x, bounding_box.s1, x_spacing, y_spacing);
+    keys[2] = getKeyForPoint(max_x, max_y, x_spacing, y_spacing);
+    keys[3] = getKeyForPoint(bounding_box.s0, max_y, x_spacing, y_spacing);
     int4 k = getExtents(keys);
     body.sb = (float) k.x;
     body.sc = (float) k.y;

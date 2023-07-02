@@ -10,8 +10,8 @@ public class SpatialMapEX
 {
     private float width = 1920;
     private float height = 1080;
-    private int xsubdivisions = 250;
-    private int ysubdivisions = 250;
+    private int xsubdivisions = 100;
+    private int ysubdivisions = 100;
 
     private int directoryLength = xsubdivisions * ysubdivisions;
     private float x_spacing = 0;
@@ -28,9 +28,9 @@ public class SpatialMapEX
         y_spacing = height / ysubdivisions;
     }
 
-    private void rebuildLocationEX(int bodyIndex, int[] key_map, int[] key_counts, int[] key_offsets)
+    private void rebuildLocationEX(int body_index, int[] key_map, int[] key_counts, int[] key_offsets)
     {
-        var body = Main.Memory.bodyByIndex(bodyIndex);
+        var body = Main.Memory.bodyByIndex(body_index);
 
         int min_x = body.si_min_x();
         int max_x = body.si_max_x();
@@ -46,9 +46,10 @@ public class SpatialMapEX
                 int offset = key_offsets[key_index];
                 for (int i = offset; i < offset + count; i++)
                 {
+                    // todo: this could be reworked using a counter array
                     if (key_map[i] == -1)
                     {
-                        key_map[i] = bodyIndex;
+                        key_map[i] = body_index;
                         break;
                     }
                 }
@@ -62,14 +63,14 @@ public class SpatialMapEX
      * in the appropriate index in order to keep track of the total number of bodies that have a key
      * at that index.
      *
-     * @param bodyIndex index of the body to generate keys for
-     * @param keyBank the key bank to store the keys within
-     * @param keyCounts the running counts array of keys at a given index
+     * @param body_index index of the body to generate keys for
+     * @param key_bank the key bank to store the keys within
+     * @param key_counts the running counts array of keys at a given index
      * @return
      */
-    private void generateBodyKeys(int bodyIndex, int[] keyBank, int[] keyCounts)
+    private void generateBodyKeys(int body_index, int[] key_bank, int[] key_counts)
     {
-        var body = Main.Memory.bodyByIndex(bodyIndex);
+        var body = Main.Memory.bodyByIndex(body_index);
 
         var offset = body.bounds().bank_offset() * Main.Memory.Width.KEY;
 
@@ -83,13 +84,14 @@ public class SpatialMapEX
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
-                keyBank[current_index++] = current_x;
-                keyBank[current_index++] = current_y;
-                int i = xsubdivisions * current_y + current_x;
+                key_bank[current_index++] = current_x;
+                key_bank[current_index++] = current_y;
+                int key_index = xsubdivisions * current_y + current_x;
 
                 // todo: can a sum/reduction in CL work here to calculate total counts
                 //  in parallel and then store in the map counts by index in the final step?
-                keyCounts[i]++; // increment the map count for this key
+                //  or perhaps atomic counters
+                key_counts[key_index]++; // increment the map count for this key
             }
         }
     }
@@ -102,9 +104,9 @@ public class SpatialMapEX
     public int calculateKeyBankSize()
     {
         int size = 0;
-        for (int bodyindex = 0; bodyindex < Main.Memory.bodyCount(); bodyindex++)
+        for (int body_index = 0; body_index < Main.Memory.bodyCount(); body_index++)
         {
-            var body = Main.Memory.bodyByIndex(bodyindex);
+            var body = Main.Memory.bodyByIndex(body_index);
             // write the current offset into the bounds object, this is the offset
             // into the main key bank where the keys for this body are stored.
             // when accessing keys, the si_bank size is used along with this
@@ -112,40 +114,45 @@ public class SpatialMapEX
             // todo: can a "scan" (parallel prefix sum) be used here? bodies could have their offset
             //  computed and set in CL this way
             body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
+
+            // todo: can this be calculated alone using a parallel reduce? maybe first?
             size += body.si_bank_size();
         }
         return size;
     }
 
-    public void rebuildKeyBank(int[] keyBank, int[] keyCounts)
+    public void buildKeyBank(int[] key_bank, int[] key_counts)
     {
-        var bodyCount = Main.Memory.bodyCount();
-        for (int bodyIndex = 0; bodyIndex < bodyCount; bodyIndex++)
+        var body_count = Main.Memory.bodyCount();
+        for (int body_index = 0; body_index < body_count; body_index++)
         {
-            generateBodyKeys(bodyIndex, keyBank, keyCounts);
+            generateBodyKeys(body_index, key_bank, key_counts);
         }
     }
 
-    public void calculateMapOffsets(int[] keyOffsets, int[] keyCounts)
+    public void calculateMapOffsets(int[] key_offsets, int[] key_counts)
     {
-        int currentOffset = 0;
-        for (int i = 0; i < keyCounts.length; i++)
+        int current_offset = 0;
+        for (int i = 0; i < key_counts.length; i++)
         {
-            int next = keyCounts[i];
+            int next = key_counts[i];
             if (next == 0)
             {
-                keyOffsets[i] =-1;
+                key_offsets[i] =-1;
                 continue;
             }
-            keyOffsets[i] = currentOffset;
-            currentOffset += next;
+            // todo: definitely would need a parallel prefix sum for this one, probably won't
+            //  be able to use the -1 trick though, so may need to account for a difference between
+            //  "no keys" at index vs. index offset _actually_ being 0.
+            key_offsets[i] = current_offset;
+            current_offset += next;
         }
     }
 
-    public void rebuildIndexEX(int[] key_map, int[] key_counts, int[] key_offsets)
+    public void buildKeyMap(int[] key_map, int[] key_counts, int[] key_offsets)
     {
-        var bodyCount = Main.Memory.bodyCount();
-        for (int location = 0; location < bodyCount; location++)
+        var body_count = Main.Memory.bodyCount();
+        for (int location = 0; location < body_count; location++)
         {
             rebuildLocationEX(location, key_map, key_counts, key_offsets);
         }
@@ -206,19 +213,19 @@ public class SpatialMapEX
         return rSet.stream().mapToInt(i->i).toArray();
     }
 
-    private int[] findCandidatesEX(int targetIndex,
+    private int[] findCandidatesEX(int target_index,
                                    int[] key_bank,
                                    int[] key_map,
                                    int[] key_counts,
                                    int[] key_offsets)
     {
-        var target = Main.Memory.bodyByIndex(targetIndex);
+        var target = Main.Memory.bodyByIndex(target_index);
         var bounds = target.bounds();
         var spatial_index = bounds.bank_offset() * Main.Memory.Width.KEY;
         var spatial_length = target.si_bank_size();
         var keys = new int[spatial_length];
         System.arraycopy(key_bank, spatial_index, keys, 0, spatial_length);
-        return findMatchesEX(targetIndex, keys, key_map, key_counts, key_offsets);
+        return findMatchesEX(target_index, keys, key_map, key_counts, key_offsets);
     }
 
     // todo: factor this out to a statically sized array
@@ -229,14 +236,14 @@ public class SpatialMapEX
                                          int[] key_counts,
                                          int[] key_offsets)
     {
-        var bodyCount = Main.Memory.bodyCount();
+        var body_count = Main.Memory.bodyCount();
         outBuffer.clear();
-        for (int targetIndex = 0; targetIndex < bodyCount; targetIndex++)
+        for (int target_index = 0; target_index < body_count; target_index++)
         {
-            var matches = this.findCandidatesEX(targetIndex, key_bank, key_map, key_counts, key_offsets);
+            var matches = this.findCandidatesEX(target_index, key_bank, key_map, key_counts, key_offsets);
             for (int match : matches)
             {
-                outBuffer.add(targetIndex);
+                outBuffer.add(target_index);
                 outBuffer.add(match);
             }
         }
@@ -246,5 +253,21 @@ public class SpatialMapEX
             ob[i] = outBuffer.get(i);
         }
         return IntBuffer.wrap(ob);
+    }
+
+    public float getWidth() {
+        return width;
+    }
+
+    public float getHeight() {
+        return height;
+    }
+
+    public float getX_spacing() {
+        return x_spacing;
+    }
+
+    public float getY_spacing() {
+        return y_spacing;
     }
 }

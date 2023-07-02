@@ -4,8 +4,6 @@ import com.controllerface.bvge.Main;
 import org.jocl.*;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
@@ -24,10 +22,6 @@ public class OpenCL_EX
     static cl_kernel k_collide;
     static cl_program p_collide;
     private static String src_collide = readSrc("collide.cl");
-
-    static cl_kernel k_react;
-    static cl_program p_react;
-    private static String src_react = readSrc("react.cl");
 
     private static String readSrc(String file)
     {
@@ -105,11 +99,6 @@ public class OpenCL_EX
         p_collide = clCreateProgramWithSource(context, 1, new String[]{src_collide}, null, null);
         clBuildProgram(p_collide, 1, x, null, null, null);
         k_collide = clCreateKernel(p_collide, "collide", null);
-
-        p_react = clCreateProgramWithSource(context, 1, new String[]{src_react}, null, null);
-        clBuildProgram(p_react, 1, x, null, null, null);
-        k_react = clCreateKernel(p_react, "react", null);
-
     }
 
     public static void destroy()
@@ -120,7 +109,7 @@ public class OpenCL_EX
         clReleaseContext(context);
     }
 
-    public static void integrate(float tick_rate)
+    public static void integrate(float tick_rate, float x_spacing, float y_spacing)
     {
         int bodiesSize = Main.Memory.bodyLength();
         int pointsSize = Main.Memory.pointLength();
@@ -132,12 +121,12 @@ public class OpenCL_EX
 
         // Set the work-item dimensions
         long global_work_size[] = new long[]{Main.Memory.bodyCount()};
-        float[] dt = { tick_rate * tick_rate };
+        float[] args = { tick_rate * tick_rate, x_spacing, y_spacing };
 
         Pointer srcBodies = Pointer.to(bodyBuffer);
         Pointer srcPoints = Pointer.to(pointBuffer);
         Pointer srcBounds = Pointer.to(boundsBuffer);
-        Pointer srcDt = Pointer.to(FloatBuffer.wrap(dt));
+        Pointer srcDt = Pointer.to(FloatBuffer.wrap(args));
 
         long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
         long pointBufsize = (long)Sizeof.cl_float * pointsSize;
@@ -155,7 +144,7 @@ public class OpenCL_EX
         cl_mem dstMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE, pointBufsize, null, null);
         cl_mem dstMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE, boundsBufsize, null, null);
 
-        cl_mem dtMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, Sizeof.cl_float, srcDt, null);
+        cl_mem dtMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, Sizeof.cl_float * args.length, srcDt, null);
 
         // Set the arguments for the kernel
         int a = 0;
@@ -190,12 +179,12 @@ public class OpenCL_EX
         clReleaseMemObject(dtMem);
     }
 
-    public static void collide(IntBuffer candidates, FloatBuffer manifolds)
+    public static void collide(IntBuffer candidates, FloatBuffer reactions)
     {
         int candidatesSize = candidates.limit();
         int bodiesSize = Main.Memory.bodyLength();
         int pointsSize = Main.Memory.pointLength();
-        int manifoldsSize = manifolds.limit();
+        int reactionsSize = reactions.limit();
 
         var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
         var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
@@ -206,64 +195,14 @@ public class OpenCL_EX
         Pointer srcCandidates = Pointer.to(candidates);
         Pointer srcBodies = Pointer.to(bodyBuffer);
         Pointer srcPoints = Pointer.to(pointBuffer);
-        Pointer dstManifolds = Pointer.to(manifolds);
+        Pointer dstReactions = Pointer.to(reactions);
 
         long candidateBufSize = Sizeof.cl_int * candidatesSize;
         long bodyBufsize = Sizeof.cl_float * bodiesSize;
         long pointBufsize = Sizeof.cl_float * pointsSize;
-        long manifoldBufsize = Sizeof.cl_float * manifoldsSize;
-
-        cl_mem srcMemCandidates = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, candidateBufSize, srcCandidates, null);
-        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, bodyBufsize, srcBodies, null);
-        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, pointBufsize, srcPoints, null);
-        cl_mem dstMemManifolds = clCreateBuffer(context, CL_MEM_READ_WRITE, manifoldBufsize, null, null);
-
-
-        // Set the arguments for the kernel
-        int a = 0;
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemCandidates));
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(dstMemManifolds));
-
-        // Execute the kernel
-        clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
-            global_work_size, null, 0, null, null);
-
-        // Read the output data
-        clEnqueueReadBuffer(commandQueue, dstMemManifolds, CL_TRUE, 0,
-            manifoldBufsize, dstManifolds, 0, null, null);
-
-        clReleaseMemObject(srcMemCandidates);
-        clReleaseMemObject(srcMemBodies);
-        clReleaseMemObject(srcMemPoints);
-        clReleaseMemObject(dstMemManifolds);
-    }
-
-    public static void react(FloatBuffer manifolds, FloatBuffer reactions)
-    {
-        int manifoldsSize = manifolds.limit();
-        int bodiesSize = Main.Memory.bodyLength();
-        int pointsSize = Main.Memory.pointLength();
-        int reactionsSize = reactions.limit();
-
-        var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
-        var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
-
-        // Set the work-item dimensions
-        long global_work_size[] = new long[]{manifolds.limit() / Main.Memory.Width.MANIFOLD};
-
-        Pointer srcManifolds = Pointer.to(manifolds);
-        Pointer srcBodies = Pointer.to(bodyBuffer);
-        Pointer srcPoints = Pointer.to(pointBuffer);
-        Pointer dstReactions = Pointer.to(reactions);
-
-        long manifoldBufSize = Sizeof.cl_int * manifoldsSize;
-        long bodyBufsize = Sizeof.cl_float * bodiesSize;
-        long pointBufsize = Sizeof.cl_float * pointsSize;
         long reactionBufsize = Sizeof.cl_float * reactionsSize;
 
-        cl_mem srcMemManifolds = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, manifoldBufSize, srcManifolds, null);
+        cl_mem srcMemCandidates = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, candidateBufSize, srcCandidates, null);
         cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, bodyBufsize, srcBodies, null);
         cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, pointBufsize, srcPoints, null);
         cl_mem dstMemReactions = clCreateBuffer(context, CL_MEM_READ_WRITE, reactionBufsize, null, null);
@@ -271,23 +210,22 @@ public class OpenCL_EX
 
         // Set the arguments for the kernel
         int a = 0;
-        clSetKernelArg(k_react, a++, Sizeof.cl_mem, Pointer.to(srcMemManifolds));
-        clSetKernelArg(k_react, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
-        clSetKernelArg(k_react, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
-        clSetKernelArg(k_react, a++, Sizeof.cl_mem, Pointer.to(dstMemReactions));
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemCandidates));
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(dstMemReactions));
 
         // Execute the kernel
-        clEnqueueNDRangeKernel(commandQueue, k_react, 1, null,
-            global_work_size, null, 0, null, null);
+        clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
+                global_work_size, null, 0, null, null);
 
         // Read the output data
         clEnqueueReadBuffer(commandQueue, dstMemReactions, CL_TRUE, 0,
-            reactionBufsize, dstReactions, 0, null, null);
+                reactionBufsize, dstReactions, 0, null, null);
 
-        clReleaseMemObject(srcMemManifolds);
+        clReleaseMemObject(srcMemCandidates);
         clReleaseMemObject(srcMemBodies);
         clReleaseMemObject(srcMemPoints);
         clReleaseMemObject(dstMemReactions);
     }
-
 }

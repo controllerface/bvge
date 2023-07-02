@@ -6,6 +6,7 @@ import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.window.Window;
 import org.joml.Vector2f;
 
 import java.nio.FloatBuffer;
@@ -115,7 +116,8 @@ public class VerletPhysics extends GameSystem
 //                //resolveConstraints(body);
 //            }
 
-            // todo: come back p2 doing this with CL after getting SAT stuff further along
+            // todo: would be worth trying to iterate on each edge but in parallel for each body
+            //  solving ALL edges at once doesn't work, but
             //CLInstance.vectorDistance(arr1, arr2, dest2);
             for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
             {
@@ -137,7 +139,7 @@ public class VerletPhysics extends GameSystem
         }
     }
 
-    private SpatialMapEX spatialMap = new SpatialMapEX();
+    private final SpatialMapEX spatialMap = new SpatialMapEX();
 
     private void tickSimulation(float dt)
     {
@@ -156,46 +158,40 @@ public class VerletPhysics extends GameSystem
         resolveForces(body.entity(), body);
 
         // integrate in CL
-        OpenCL_EX.integrate(dt);
+        OpenCL_EX.integrate(dt, spatialMap.getX_spacing(), spatialMap.getY_spacing());
 
         // broad phase collision
-        var keyBankSize = spatialMap.calculateKeyBankSize();
-        int keyMapSize = keyBankSize / Main.Memory.Width.KEY;
+        var key_bank_size = spatialMap.calculateKeyBankSize();
+        int key_map_size = key_bank_size / Main.Memory.Width.KEY;
 
-        int[] keyBank = new int[keyBankSize];
-        int[] keyMap = new int[keyMapSize];
+        int[] key_bank = new int[key_bank_size];
+        int[] key_map = new int[key_map_size];
 
-        Arrays.fill(keyMap, -1);
-        // todo: this is a bit hacky, but needed for the moment to ensure the key map is build correctly.
-        //  an alternative would be to make body index 0 unused, so indices all start at one, but that
-        //  may create a lot more issues.
+        // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is build
+        //  correctly. an alternative would be to make body index 0 unused, so indices all start at one,
+        //  but that may create a lot more issues.
+        Arrays.fill(key_map, -1);
 
-        int[] keyCounts = new int[spatialMap.directoryLength()];
-        int[] keyOffsets = new int[spatialMap.directoryLength()];
+        int[] key_counts = new int[spatialMap.directoryLength()];
+        int[] key_offsets = new int[spatialMap.directoryLength()];
 
-        spatialMap.rebuildKeyBank(keyBank, keyCounts);
-        spatialMap.calculateMapOffsets(keyOffsets, keyCounts);
-        spatialMap.rebuildIndexEX(keyMap, keyCounts, keyOffsets);
+        spatialMap.buildKeyBank(key_bank, key_counts);
+        spatialMap.calculateMapOffsets(key_offsets, key_counts);
+        spatialMap.buildKeyMap(key_map, key_counts, key_offsets);
 
         // todo: now need to pull out the intermediate list used as a buffer in this method
         //  may need to do two passes, one to detect size needed and one to actually get candidates
         //  best to do on GPU.
-        var candidates = spatialMap.computeCandidatesEX(keyBank, keyMap, keyCounts, keyOffsets);
+        var candidates = spatialMap.computeCandidatesEX(key_bank, key_map, key_counts, key_offsets);
 
         // narrow phase collision
         if (candidates.limit() > 0)
         {
             var count = candidates.limit() / Main.Memory.Width.COLLISION;
-            var manifold_size = count * Main.Memory.Width.MANIFOLD;
             var reaction_size = count * Main.Memory.Width.REACTION;
-            var manifolds = new float[manifold_size];
             var reactions = new float[reaction_size];
-            var reactionBuffer = FloatBuffer.wrap(reactions);
-            var manifoldBuffer = FloatBuffer.wrap(manifolds);
-
-            // todo: can these calls be merged into one?
-            OpenCL_EX.collide(candidates, manifoldBuffer);
-            OpenCL_EX.react(manifoldBuffer, reactionBuffer);
+            var reaction_buffer = FloatBuffer.wrap(reactions);
+            OpenCL_EX.collide(candidates, reaction_buffer);
 
             // todo: replace loop below with CL call. will need to calculate offsets for
             //  each collision pair and store the reactions, then sum them into a single
@@ -214,6 +210,8 @@ public class VerletPhysics extends GameSystem
         }
 
         tickEdges();
+
+        Window.setSP(spatialMap);
     }
 
     private void simulate(float dt)

@@ -3,6 +3,7 @@ package com.controllerface.bvge.ecs.systems;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.window.Window;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
@@ -31,6 +32,26 @@ public class KBMInput extends GameSystem
             controlPoints.setDown(keyDown[GLFW_KEY_S]);
             controlPoints.setRight(keyDown[GLFW_KEY_D]);
         });
+
+        if (keyDown[GLFW_KEY_LEFT])
+        {
+            Window.getScene().camera().position.x += 5;
+        }
+
+        if (keyDown[GLFW_KEY_RIGHT])
+        {
+            Window.getScene().camera().position.x -= 5;
+        }
+
+        if (keyDown[GLFW_KEY_UP])
+        {
+            Window.getScene().camera().position.y -= 5;
+        }
+
+        if (keyDown[GLFW_KEY_DOWN])
+        {
+            Window.getScene().camera().position.y += 5;
+        }
     }
 
     public void keyCallback(long window, int key, int scancode, int action, int mods)
