@@ -9,9 +9,9 @@ import java.nio.FloatBuffer;
 import static org.jocl.CL.*;
 import static org.jocl.CL.clReleaseContext;
 
-public class OpenCL
+// keep this class around just for refrence
+public class OpenCL_Reference
 {
-
     static cl_command_queue commandQueue;
     static cl_context context;
 

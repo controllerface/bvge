@@ -1,15 +1,11 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
-import com.controllerface.bvge.data.FBounds2D;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
 import com.controllerface.bvge.ecs.systems.physics.SpatialMapEX;
-import com.controllerface.bvge.gl.batches.BoxRenderBatch;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.batches.RectRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
-import com.controllerface.bvge.ecs.components.QuadRectangle;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;

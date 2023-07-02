@@ -1,7 +1,7 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.cl.OpenCL_EX;
+import com.controllerface.bvge.cl.OCLFunctions;
 import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
@@ -159,7 +159,7 @@ public class VerletPhysics extends GameSystem
         resolveForces(body.entity(), body);
 
         // integrate in CL
-        OpenCL_EX.integrate(dt, spatialMap.getX_spacing(), spatialMap.getY_spacing());
+        OCLFunctions.integrate(dt, spatialMap.getX_spacing(), spatialMap.getY_spacing());
 
         // broad phase collision
         var key_bank_size = spatialMap.calculateKeyBankSize();
@@ -192,7 +192,7 @@ public class VerletPhysics extends GameSystem
             var reaction_size = count * Main.Memory.Width.REACTION;
             var reactions = new float[reaction_size];
             var reaction_buffer = FloatBuffer.wrap(reactions);
-            OpenCL_EX.collide(candidates, reaction_buffer);
+            OCLFunctions.collide(candidates, reaction_buffer);
 
             // todo: replace loop below with CL call. will need to calculate offsets for
             //  each collision pair and store the reactions, then sum them into a single

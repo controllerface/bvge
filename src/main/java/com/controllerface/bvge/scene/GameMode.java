@@ -12,10 +12,7 @@ public abstract class GameMode
 
     }
 
-    public void start()
-    {
-
-    }
+    abstract public void start();
 
     abstract public void update(float dt);
 
@@ -29,13 +26,5 @@ public abstract class GameMode
 
     abstract public SpatialMapEX getSpatialMap();
 
-    public void saveExit()
-    {
-        // empty for now
-    }
-
-    public void load()
-    {
-        // empty for now
-    }
+    abstract public void load();
 }

@@ -16,13 +16,10 @@ public class Shader
     private int shaderProgramId;
     private String vertexSource;
     private String fragmentSource;
-    private String filepath;
-
     private boolean beingUsed = false;
 
     public Shader(String filePath)
     {
-        this.filepath = filePath;
         try
         {
             // todo: stop this string split stuff and just put the shaders in their own files

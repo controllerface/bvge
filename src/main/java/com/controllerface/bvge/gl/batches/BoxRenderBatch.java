@@ -4,7 +4,6 @@ import com.controllerface.bvge.data.FBounds2D;
 import com.controllerface.bvge.ecs.Line2D;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.util.Constants;
-import com.controllerface.bvge.ecs.components.QuadRectangle;
 import com.controllerface.bvge.window.Window;
 import org.joml.Vector2f;
 import org.joml.Vector3f;

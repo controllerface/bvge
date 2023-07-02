@@ -1,10 +1,7 @@
 package com.controllerface.bvge.util;
 
 import com.controllerface.bvge.data.FPoint2D;
-import com.controllerface.bvge.ecs.Point2D;
 import org.joml.Vector2f;
-
-import java.util.List;
 
 public class MathEX
 {

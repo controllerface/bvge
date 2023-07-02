@@ -1,8 +1,6 @@
 package com.controllerface.bvge;
 
-import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.cl.OpenCL_EX;
-import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
+import com.controllerface.bvge.cl.OCLFunctions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -110,13 +108,13 @@ class MainTest
         body_buffer[31] = 0f;
 
 
-        OpenCL_EX.init();
+        OCLFunctions.init();
     }
 
     @AfterAll
     public static void tearDown()
     {
-        OpenCL_EX.destroy();
+        OCLFunctions.destroy();
     }
 
     @Test
@@ -126,7 +124,7 @@ class MainTest
         System.out.println(Arrays.toString(body_buffer));
         System.out.println(Arrays.toString(point_buffer));
         System.out.println(Arrays.toString(bounds_buffer));
-        OpenCL_EX.integrate(1f/60f, 100, 100);
+        OCLFunctions.integrate(1f/60f, 100, 100);
         System.out.println("After:");
         System.out.println(Arrays.toString(body_buffer));
         System.out.println(Arrays.toString(point_buffer));

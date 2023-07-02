@@ -30,10 +30,4 @@ public record FTransform(int index) implements GameComponent
     {
         return Main.Memory.body_buffer[index() + sy_offset];
     }
-
-    public void subPos(FTransform other, Vector2f out)
-    {
-        out.x = pos_x() - other.pos_x();
-        out.y = pos_y() - other.pos_y();
-    }
 }

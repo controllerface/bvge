@@ -141,10 +141,4 @@ public record FBody2D(int index,
         Main.Memory.body_buffer[index() + ACC_X_OFFSET] = newAcc.x;
         Main.Memory.body_buffer[index() + ACC_Y_OFFSET] = newAcc.y;
     }
-
-    public void mulAcc(float scalar)
-    {
-        Main.Memory.body_buffer[index() + ACC_X_OFFSET] = acc_x() * scalar;
-        Main.Memory.body_buffer[index() + ACC_Y_OFFSET] = acc_y() * scalar;
-    }
 }

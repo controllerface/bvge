@@ -24,7 +24,6 @@ public enum Component
     public <T extends GameComponent> T coerce(Object componentClass)
     {
         assert componentClass != null : "Attempted p2 coerce null component";
-        if (componentClass == null) return null;
         if (_class.isAssignableFrom(componentClass.getClass()))
         {
             @SuppressWarnings("unchecked")

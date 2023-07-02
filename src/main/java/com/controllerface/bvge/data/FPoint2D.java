@@ -59,21 +59,4 @@ public record FPoint2D(int index)
         Main.Memory.point_buffer[index() + x_offset] = pos_x() - other.x();
         Main.Memory.point_buffer[index() + y_offset] = pos_y() - other.y();
     }
-
-    public float dotPos(Vector2fc v)
-    {
-        return pos_x() * v.x() + pos_y() * v.y();
-    }
-
-    public void frameDiff(Vector2f out)
-    {
-        out.x = pos_x() - prv_x();
-        out.y = pos_y() - prv_y();
-    }
-
-    public void frameSwap()
-    {
-        Main.Memory.point_buffer[index() + px_offset] = pos_x();
-        Main.Memory.point_buffer[index() + py_offset] = pos_y();
-    }
 }

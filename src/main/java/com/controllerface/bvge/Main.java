@@ -1,6 +1,6 @@
 package com.controllerface.bvge;
 
-import com.controllerface.bvge.cl.OpenCL_EX;
+import com.controllerface.bvge.cl.OCLFunctions;
 import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.window.Window;
 
@@ -180,10 +180,10 @@ public class Main
 
     public static void main(String[] args)
     {
-        OpenCL_EX.init();
+        OCLFunctions.init();
         Window window = Window.get();
         window.run();
-        OpenCL_EX.destroy();
+        OCLFunctions.destroy();
     }
 }
 

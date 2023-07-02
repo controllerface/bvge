@@ -1,7 +1,6 @@
 package com.controllerface.bvge.gl.batches;
 
 import com.controllerface.bvge.data.FEdge2D;
-import com.controllerface.bvge.ecs.Edge2D;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;

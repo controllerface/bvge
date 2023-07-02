@@ -23,17 +23,11 @@ public class ECS
 
     private void registerComponent(Component component)
     {
-        // todo: define a "defaults" system that maps component enum type p2 a factory
-        //  of some kind that generates a proper initial or "empty" value p2 use here.
-        //  Then optionally, calling code may chose p2 provide a pre-constructed object
-        //  that can be used p2 override the default.
+        // todo: define a "defaults" system that maps component enum type to a factory
+        //  of some kind that generates a proper initial or "empty" value to use here.
+        //  Then optionally, calling code may chose to provide a pre-constructed object
+        //  that can be used to override the default.
         components.put(component, new HashMap<>());
-    }
-
-
-    public String registerEntity()
-    {
-        return registerEntity(null);
     }
 
     public String registerEntity(String id)
@@ -76,8 +70,6 @@ public class ECS
 
     public void run(float dt)
     {
-        systems.forEach(system_EX_ -> {
-            system_EX_.run(dt);
-        });
+        systems.forEach(system_EX_ -> system_EX_.run(dt));
     }
 }
