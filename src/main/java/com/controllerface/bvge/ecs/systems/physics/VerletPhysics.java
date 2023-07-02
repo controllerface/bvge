@@ -184,9 +184,6 @@ public class VerletPhysics extends GameSystem
         // OLD way
         // todo: this only sets up the map for the next step now, still required at the moment
         spatialMap.rebuildIndex();
-        // this should be replaced by the key map structure
-        spatialMap.updateKeyDirectory();
-
 
         // new stuff here again
         spatialMap.rebuildKeyBank(keyBank, keyCounts);
