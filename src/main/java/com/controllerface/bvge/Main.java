@@ -49,10 +49,6 @@ public class Main
             public static final int KEY = 2;
             // A spatial index key is calculated for each body to aid in collision checks
 
-            // int
-            public static final int POINTER = 1;
-            // A pointer index used for referencing spatial key matches
-
             // int2
             public static final int COLLISION = 2;
             // Collisions are represented as a pair of indices, one for each object
@@ -70,42 +66,21 @@ public class Main
 
         private static final int MAX_BODIES  = 100_000;
         private static final int MAX_POINTS  = 1_000_000;
-        private static final int MAX_KEYS    = MAX_BODIES * 50;
 
         private static final int BODY_BUFFER_SIZE    = Width.BODY    * MAX_BODIES;
         private static final int POINT_BUFFER_SIZE   = Width.POINT   * MAX_POINTS;
         private static final int EDGE_BUFFER_SIZE    = Width.EDGE    * MAX_POINTS;
         private static final int BOUNDS_BUFFER_SIZE  = Width.BOUNDS  * MAX_BODIES;
-        private static final int POINTER_BUFFER_SIZE = Width.POINTER * MAX_KEYS;
 
         public static float[] body_buffer   = new float[BODY_BUFFER_SIZE];
         public static float[] point_buffer  = new float[POINT_BUFFER_SIZE];
         public static float[] edge_buffer   = new float[EDGE_BUFFER_SIZE];
         public static float[] bounds_buffer = new float[BOUNDS_BUFFER_SIZE];
-        public static int[] pointer_buffer  = new int[POINTER_BUFFER_SIZE];
 
         private static int body_index    = 0;
         private static int point_index   = 0;
         private static int edge_index    = 0;
         private static int bounds_index  = 0;
-        private static int pointer_index = 0;
-
-        private static int pointer_count = 0;
-
-        public static void startKeyRebuild()
-        {
-            pointer_index = 0;
-        }
-
-        public static int storeKeyPointer(int[] key_data)
-        {
-            pointer_count += key_data.length;
-            int out = pointer_index;
-            pointer_buffer[pointer_index++] = key_data.length; // the first value is the length of data
-            System.arraycopy(key_data, 0, pointer_buffer, pointer_index, key_data.length);
-            pointer_index += key_data.length;
-            return out;
-        }
 
         public static FBody2D bodyByIndex(int index)
         {
@@ -120,11 +95,6 @@ public class Main
         public static int bodyLength()
         {
             return body_index + 1;
-        }
-
-        public static int pointerCount()
-        {
-            return pointer_count;
         }
 
         public static int pointLength()
@@ -179,7 +149,7 @@ public class Main
                                       float es, float ee,
                                       float bi,
                                       FPoint2D[] points,
-                                      FEdge2D edges[],
+                                      FEdge2D[] edges,
                                       FBounds2D bounds,
                                       float force, String entity)
         {

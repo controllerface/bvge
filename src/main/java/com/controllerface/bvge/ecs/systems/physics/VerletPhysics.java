@@ -13,9 +13,9 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 30.0f;
+    private final float TICK_RATE = 1.0f / 60.0f;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 4;
+    private final int EDGE_STEPS = 2;
     private final float GRAVITY = 9.8f;
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
@@ -171,14 +171,9 @@ public class VerletPhysics extends GameSystem
 
         int[] keyBank = new int[keyBankSize];
         int[] keyMap = new int[keyMapSize];
-        int[] keyCounts = new int[spatialMap.keyDirectory().length];
-        int[] keyOffsets = new int[spatialMap.keyDirectory().length];
-
-
-
-
-        // todo: figure out how to get the key matches into the map buffer matching the current pointer
-        //     buffer functionality (updateKeyDirectory)
+        Arrays.fill(keyMap, -1);
+        int[] keyCounts = new int[spatialMap.directoryLength()];
+        int[] keyOffsets = new int[spatialMap.directoryLength()];
 
 
         // OLD way
@@ -190,8 +185,7 @@ public class VerletPhysics extends GameSystem
         spatialMap.calculateMapOffsets(keyOffsets, keyCounts);
         spatialMap.updateKeyDirectoryEX(keyMap, keyOffsets, keyCounts);
 
-        var candidates = spatialMap.computeCandidatesEX(spatialMap.keyDirectory(),
-                keyBank, keyMap, keyCounts, keyOffsets);
+        var candidates = spatialMap.computeCandidatesEX(keyBank, keyMap, keyCounts, keyOffsets);
 
         // narrow phase collision
         if (candidates.limit() > 0)

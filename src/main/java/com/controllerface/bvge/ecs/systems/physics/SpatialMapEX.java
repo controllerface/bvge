@@ -13,6 +13,8 @@ public class SpatialMapEX
     private float height = 1080;
     private int xsubdivisions = 250;
     private int ysubdivisions = 250;
+
+    private int directoryLength = xsubdivisions * ysubdivisions;
     private float x_spacing = 0;
     private float y_spacing = 0;
     Map<Integer, Map<Integer, BoxKey>> keyMap = new ConcurrentHashMap<>();
@@ -23,7 +25,6 @@ public class SpatialMapEX
 
     // after the map is built, this directory is updated, which effectively
     // duplicates it in memory, making it queryable as a raw structure
-    private final int[] keyDirectory = new int[xsubdivisions * ysubdivisions];
 
     public SpatialMapEX()
     {
@@ -104,25 +105,9 @@ public class SpatialMapEX
         }
     }
 
-    public int[] keyDirectory()
+    public int directoryLength()
     {
-        return keyDirectory;
-    }
-
-    public void updateKeyDirectory()
-    {
-        for (Map.Entry<BoxKey, Set<Integer>> entry : boxMap.entrySet())
-        {
-            // here, the 2D grid of the spatial map is packed into a 1D array
-            // so it can be used in OpenCL.
-            BoxKey key = entry.getKey();
-            Set<Integer> value = entry.getValue();
-            if (value.size() < 1) continue; // no matches in this key index
-            int[] matches = value.stream().mapToInt(i->i).toArray();
-            int index = Main.Memory.storeKeyPointer(matches);
-            int i = xsubdivisions * key.y + key.x;
-            keyDirectory[i] = index;
-        }
+        return directoryLength;
     }
 
     public void updateKeyDirectoryEX(int[] key_map, int[] key_offsets, int[] key_counts)
@@ -190,7 +175,6 @@ public class SpatialMapEX
     {
         keyMap.clear();
         boxMap.clear();
-        Main.Memory.startKeyRebuild();
         var bodyCount = Main.Memory.bodyCount();
         for (int location = 0; location < bodyCount; location++)
         {
@@ -206,44 +190,9 @@ public class SpatialMapEX
             && a.y() + a.h() > b.y();
     }
 
-    /**
-     * For a set of keys, belonging to an object, find all the other objects that share at least
-     * one key.
-     * @param keys keys for the target object
-     * @param key_directory directory of potential matches
-     * @return indices of all matching bodies
-     */
-    private int[] findMatches(int target, int[] keys, int[] key_directory)
-    {
-        // use a set as a buffer for matches todo: can this size be pre-calculated?
-        var rSet = new HashSet<Integer>();
-        for (int i = 0; i < keys.length; i += Main.Memory.Width.KEY)
-        {
-            int x = keys[i];
-            int y = keys[i + 1];
-            int pointer = key_directory[xsubdivisions * y + x];
-            int len = Main.Memory.pointer_buffer[pointer];
-            int endIndex = pointer + len;
-            for (int j = pointer + 1; j <= endIndex; j++)
-            {
-                // get the next potential match
-                int next = Main.Memory.pointer_buffer[j];
-                // if this would be a self collision, or a duplicate to an earlier match,
-                // discard this match.
-                if (target >= next)
-                {
-                    continue;
-                }
-                rSet.add(next);
-            }
-        }
-        // dump the buffer to an array todo: see above, can this be pre-sized?
-        return rSet.stream().mapToInt(i->i).toArray();
-    }
 
     private int[] findMatchesEX(int target,
                                 int[] keys,
-                                int[] key_directory,
                                 int[] key_map,
                                 int[] key_counts,
                                 int[] key_offsets)
@@ -255,8 +204,6 @@ public class SpatialMapEX
             int x = keys[i];
             int y = keys[i + 1];
             int key_index = xsubdivisions * y + x;
-
-
 
             int count = key_counts[key_index];
             int offset = key_offsets[key_index];
@@ -276,23 +223,6 @@ public class SpatialMapEX
                 }
                 rSet.add(next);
             }
-
-
-//            int pointer = key_directory[key_index];
-//            int len = Main.Memory.pointer_buffer[pointer];
-//            int endIndex = pointer + len;
-//            for (int j = pointer + 1; j <= endIndex; j++)
-//            {
-//                // get the next potential match
-//                int next = Main.Memory.pointer_buffer[j];
-//                // if this would be a self collision, or a duplicate to an earlier match,
-//                // discard this match.
-//                if (target >= next)
-//                {
-//                    continue;
-//                }
-//                rSet.add(next);
-//            }
         }
         // dump the buffer to an array todo: see above, can this be pre-sized?
         return rSet.stream().mapToInt(i->i).toArray();
@@ -300,33 +230,7 @@ public class SpatialMapEX
 
     private final List<Integer> outBuffer = new ArrayList<>();
 
-    private void findCandidates(int targetIndex, int[] key_directory, int[] key_bank)
-    {
-        var target = Main.Memory.bodyByIndex(targetIndex);
-        var bounds = target.bounds();
-        var spatial_index = bounds.bank_offset() * Main.Memory.Width.KEY;
-        var spatial_length = target.si_bank_size();
-
-        var keys = new int[spatial_length];
-        System.arraycopy(key_bank, spatial_index, keys, 0, spatial_length);
-
-        var matches = findMatches(targetIndex, keys, key_directory);
-
-        for (int candidateIndex : matches)
-        {
-            var candidate = Main.Memory.bodyByIndex(candidateIndex);
-            boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
-            if (!ch)
-            {
-                continue;
-            }
-            outBuffer.add(targetIndex);
-            outBuffer.add(candidateIndex);
-        }
-    }
-
     private void findCandidatesEX(int targetIndex,
-                                  int[] key_directory,
                                   int[] key_bank,
                                   int[] key_map,
                                   int[] key_counts,
@@ -340,8 +244,7 @@ public class SpatialMapEX
         var keys = new int[spatial_length];
         System.arraycopy(key_bank, spatial_index, keys, 0, spatial_length);
 
-        var matches = findMatchesEX(targetIndex, keys, key_directory,
-                key_map, key_counts, key_offsets);
+        var matches = findMatchesEX(targetIndex, keys, key_map, key_counts, key_offsets);
 
         for (int candidateIndex : matches)
         {
@@ -356,24 +259,7 @@ public class SpatialMapEX
         }
     }
 
-    public IntBuffer computeCandidates(int[] key_directory, int[] key_bank)
-    {
-        var bodyCount = Main.Memory.bodyCount();
-        outBuffer.clear();
-        for (int targetIndex = 0; targetIndex < bodyCount; targetIndex++)
-        {
-            this.findCandidates(targetIndex, key_directory, key_bank);
-        }
-        int[] ob = new int[outBuffer.size()];
-        for (int i = 0; i < outBuffer.size(); i++)
-        {
-            ob[i] = outBuffer.get(i);
-        }
-        return IntBuffer.wrap(ob);
-    }
-
-    public IntBuffer computeCandidatesEX(int[] key_directory,
-                                         int[] key_bank,
+    public IntBuffer computeCandidatesEX(int[] key_bank,
                                          int[] key_map,
                                          int[] key_counts,
                                          int[] key_offsets)
@@ -382,8 +268,7 @@ public class SpatialMapEX
         outBuffer.clear();
         for (int targetIndex = 0; targetIndex < bodyCount; targetIndex++)
         {
-            this.findCandidatesEX(targetIndex, key_directory,
-                    key_bank, key_map, key_counts, key_offsets);
+            this.findCandidatesEX(targetIndex, key_bank, key_map, key_counts, key_offsets);
         }
         int[] ob = new int[outBuffer.size()];
         for (int i = 0; i < outBuffer.size(); i++)
