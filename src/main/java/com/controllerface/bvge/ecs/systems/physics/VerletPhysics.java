@@ -159,8 +159,6 @@ public class VerletPhysics extends GameSystem
         OpenCL_EX.integrate(dt);
 
         // broad phase collision
-
-        // NEW way (WIP)
         // todo: split some of these into two phases, one that calculates the space needed
         //  for a phase, then a quick pass locally to create the appropriately sized buffer,
         //  then push that back up to be calculated on the GPU. Essentially, only return to
@@ -175,16 +173,11 @@ public class VerletPhysics extends GameSystem
         int[] keyCounts = new int[spatialMap.directoryLength()];
         int[] keyOffsets = new int[spatialMap.directoryLength()];
 
-
-        // OLD way
-        // todo: this only sets up the map for the next step now, still required at the moment
-        spatialMap.rebuildIndex();
-
-        // new stuff here again
         spatialMap.rebuildKeyBank(keyBank, keyCounts);
         spatialMap.calculateMapOffsets(keyOffsets, keyCounts);
-        spatialMap.updateKeyDirectoryEX(keyMap, keyOffsets, keyCounts);
+        spatialMap.rebuildIndexEX(keyMap, keyCounts, keyOffsets);
 
+        // todo: now need to pull out the intermediate list used as a buffer in this method
         var candidates = spatialMap.computeCandidatesEX(keyBank, keyMap, keyCounts, keyOffsets);
 
         // narrow phase collision

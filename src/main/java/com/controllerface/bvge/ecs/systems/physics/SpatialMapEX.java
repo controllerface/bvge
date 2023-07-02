@@ -5,7 +5,6 @@ import com.controllerface.bvge.data.FBounds2D;
 
 import java.nio.IntBuffer;
 import java.util.*;
-import java.util.concurrent.*;
 
 public class SpatialMapEX
 {
@@ -17,28 +16,10 @@ public class SpatialMapEX
     private int directoryLength = xsubdivisions * ysubdivisions;
     private float x_spacing = 0;
     private float y_spacing = 0;
-    Map<Integer, Map<Integer, BoxKey>> keyMap = new ConcurrentHashMap<>();
-
-    // maps all box keys within the tracked area to a set of body IDs
-    // that have that box key in their key bank
-    Map<BoxKey, Set<Integer>> boxMap = new ConcurrentHashMap<>();
-
-    // after the map is built, this directory is updated, which effectively
-    // duplicates it in memory, making it queryable as a raw structure
 
     public SpatialMapEX()
     {
         init();
-    }
-
-    private static Set<Integer> newKeySet(BoxKey _k)
-    {
-        return new HashSet<>();
-    }
-
-    private static Map<Integer, BoxKey> newKeyMap(Integer _k)
-    {
-        return new HashMap<>();
     }
 
     void init()
@@ -47,7 +28,7 @@ public class SpatialMapEX
         y_spacing = height / ysubdivisions;
     }
 
-    private void rebuildLocation(int bodyIndex)
+    private void rebuildLocationEX(int bodyIndex, int[] key_map, int[] key_counts, int[] key_offsets)
     {
         var body = Main.Memory.bodyByIndex(bodyIndex);
 
@@ -60,9 +41,17 @@ public class SpatialMapEX
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
-                var bodyKey = getKeyByIndex(current_x, current_y);
-                // todo: remove this map and use a raw array
-                boxMap.computeIfAbsent(bodyKey, SpatialMapEX::newKeySet).add(bodyIndex);
+                int key_index = xsubdivisions * current_y + current_x;
+                int count = key_counts[key_index];
+                int offset = key_offsets[key_index];
+                for (int i = offset; i < offset + count; i++)
+                {
+                    if (key_map[i] == -1)
+                    {
+                        key_map[i] = bodyIndex;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -110,23 +99,6 @@ public class SpatialMapEX
         return directoryLength;
     }
 
-    public void updateKeyDirectoryEX(int[] key_map, int[] key_offsets, int[] key_counts)
-    {
-        for (Map.Entry<BoxKey, Set<Integer>> entry : boxMap.entrySet())
-        {
-            // here, the 2D grid of the spatial map is packed into a 1D array
-            // so it can be used in OpenCL.
-            BoxKey key = entry.getKey();
-            Set<Integer> value = entry.getValue();
-            if (value.size() < 1) continue; // no matches in this key index
-            int[] matches = value.stream().mapToInt(x->x).toArray();
-            int key_index = xsubdivisions * key.y + key.x;
-            int key_offset = key_offsets[key_index];
-            int key_count = key_counts[key_index];
-            System.arraycopy(matches, 0, key_map, key_offset, key_count);
-        }
-    }
-
     public int calculateKeyBankSize()
     {
         int size = 0;
@@ -170,15 +142,12 @@ public class SpatialMapEX
         }
     }
 
-
-    public void rebuildIndex()
+    public void rebuildIndexEX(int[] key_map, int[] key_counts, int[] key_offsets)
     {
-        keyMap.clear();
-        boxMap.clear();
         var bodyCount = Main.Memory.bodyCount();
         for (int location = 0; location < bodyCount; location++)
         {
-            rebuildLocation(location);
+            rebuildLocationEX(location, key_map, key_counts, key_offsets);
         }
     }
 
@@ -191,7 +160,7 @@ public class SpatialMapEX
     }
 
 
-    private int[] findMatchesEX(int target,
+    private int[] findMatchesEX(int target_index,
                                 int[] keys,
                                 int[] key_map,
                                 int[] key_counts,
@@ -207,17 +176,26 @@ public class SpatialMapEX
 
             int count = key_counts[key_index];
             int offset = key_offsets[key_index];
-            if (count==0 || offset==-1)
+
+            // these are sentinel values marking a key as having no entries
+            if (count == 0 || offset == -1)
             {
                 continue;
             }
             int[] hits = new int[count];
             System.arraycopy(key_map, offset, hits, 0, count);
 
-            for (int j = 0; j<hits.length;j++)
+            var target = Main.Memory.bodyByIndex(target_index);
+            for (int j = 0; j < hits.length;j++)
             {
                 int next = hits[j];
-                if (target >= next)
+                if (target_index >= next)
+                {
+                    continue;
+                }
+                var candidate = Main.Memory.bodyByIndex(next);
+                boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
+                if (!ch)
                 {
                     continue;
                 }
@@ -228,36 +206,23 @@ public class SpatialMapEX
         return rSet.stream().mapToInt(i->i).toArray();
     }
 
-    private final List<Integer> outBuffer = new ArrayList<>();
-
-    private void findCandidatesEX(int targetIndex,
-                                  int[] key_bank,
-                                  int[] key_map,
-                                  int[] key_counts,
-                                  int[] key_offsets)
+    private int[] findCandidatesEX(int targetIndex,
+                                   int[] key_bank,
+                                   int[] key_map,
+                                   int[] key_counts,
+                                   int[] key_offsets)
     {
         var target = Main.Memory.bodyByIndex(targetIndex);
         var bounds = target.bounds();
         var spatial_index = bounds.bank_offset() * Main.Memory.Width.KEY;
         var spatial_length = target.si_bank_size();
-
         var keys = new int[spatial_length];
         System.arraycopy(key_bank, spatial_index, keys, 0, spatial_length);
-
-        var matches = findMatchesEX(targetIndex, keys, key_map, key_counts, key_offsets);
-
-        for (int candidateIndex : matches)
-        {
-            var candidate = Main.Memory.bodyByIndex(candidateIndex);
-            boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
-            if (!ch)
-            {
-                continue;
-            }
-            outBuffer.add(targetIndex);
-            outBuffer.add(candidateIndex);
-        }
+        return findMatchesEX(targetIndex, keys, key_map, key_counts, key_offsets);
     }
+
+    // todo: factor this out to a statically sized array
+    private final List<Integer> outBuffer = new ArrayList<>();
 
     public IntBuffer computeCandidatesEX(int[] key_bank,
                                          int[] key_map,
@@ -268,7 +233,12 @@ public class SpatialMapEX
         outBuffer.clear();
         for (int targetIndex = 0; targetIndex < bodyCount; targetIndex++)
         {
-            this.findCandidatesEX(targetIndex, key_bank, key_map, key_counts, key_offsets);
+            var matches = this.findCandidatesEX(targetIndex, key_bank, key_map, key_counts, key_offsets);
+            for (int match : matches)
+            {
+                outBuffer.add(targetIndex);
+                outBuffer.add(match);
+            }
         }
         int[] ob = new int[outBuffer.size()];
         for (int i = 0; i < outBuffer.size(); i++)
@@ -276,11 +246,5 @@ public class SpatialMapEX
             ob[i] = outBuffer.get(i);
         }
         return IntBuffer.wrap(ob);
-    }
-
-    private BoxKey getKeyByIndex(int index_x, int index_y)
-    {
-        var y_map = keyMap.computeIfAbsent(index_x, SpatialMapEX::newKeyMap);
-        return y_map.computeIfAbsent(index_y, (_k) -> new BoxKey(index_x, index_y));
     }
 }
