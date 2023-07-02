@@ -4,10 +4,8 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.KBMInput;
 import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
-import com.controllerface.bvge.ecs.systems.renderers.BoundingBoxRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
-import com.controllerface.bvge.ecs.systems.renderers.SpriteRenderer;
 import com.controllerface.bvge.scene.GameMode;
 import com.controllerface.bvge.scene.GameRunning;
 import org.lwjgl.Version;
@@ -95,10 +93,9 @@ public class Window
 
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-        var prim = NULL; //glfwGetPrimaryMonitor();
+        var prim = glfwGetPrimaryMonitor();
 
         glfwWindow = glfwCreateWindow(this.width, this.height, this.title, prim, NULL);
         if (glfwWindow == NULL)

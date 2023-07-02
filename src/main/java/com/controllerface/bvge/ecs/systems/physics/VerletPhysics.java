@@ -159,17 +159,17 @@ public class VerletPhysics extends GameSystem
         OpenCL_EX.integrate(dt);
 
         // broad phase collision
-        // todo: split some of these into two phases, one that calculates the space needed
-        //  for a phase, then a quick pass locally to create the appropriately sized buffer,
-        //  then push that back up to be calculated on the GPU. Essentially, only return to
-        //  the CPU when we need to generate a dynamically sized buffer.
-
         var keyBankSize = spatialMap.calculateKeyBankSize();
         int keyMapSize = keyBankSize / Main.Memory.Width.KEY;
 
         int[] keyBank = new int[keyBankSize];
         int[] keyMap = new int[keyMapSize];
+
         Arrays.fill(keyMap, -1);
+        // todo: this is a bit hacky, but needed for the moment to ensure the key map is build correctly.
+        //  an alternative would be to make body index 0 unused, so indices all start at one, but that
+        //  may create a lot more issues.
+
         int[] keyCounts = new int[spatialMap.directoryLength()];
         int[] keyOffsets = new int[spatialMap.directoryLength()];
 
@@ -178,6 +178,8 @@ public class VerletPhysics extends GameSystem
         spatialMap.rebuildIndexEX(keyMap, keyCounts, keyOffsets);
 
         // todo: now need to pull out the intermediate list used as a buffer in this method
+        //  may need to do two passes, one to detect size needed and one to actually get candidates
+        //  best to do on GPU.
         var candidates = spatialMap.computeCandidatesEX(keyBank, keyMap, keyCounts, keyOffsets);
 
         // narrow phase collision
@@ -185,13 +187,14 @@ public class VerletPhysics extends GameSystem
         {
             var count = candidates.limit() / Main.Memory.Width.COLLISION;
             var manifold_size = count * Main.Memory.Width.MANIFOLD;
-            var manifolds = new float[manifold_size];
-            var manifoldBuffer = FloatBuffer.wrap(manifolds);
-            OpenCL_EX.collide(candidates, manifoldBuffer);
-
             var reaction_size = count * Main.Memory.Width.REACTION;
+            var manifolds = new float[manifold_size];
             var reactions = new float[reaction_size];
             var reactionBuffer = FloatBuffer.wrap(reactions);
+            var manifoldBuffer = FloatBuffer.wrap(manifolds);
+
+            // todo: can these calls be merged into one?
+            OpenCL_EX.collide(candidates, manifoldBuffer);
             OpenCL_EX.react(manifoldBuffer, reactionBuffer);
 
             // todo: replace loop below with CL call. will need to calculate offsets for
