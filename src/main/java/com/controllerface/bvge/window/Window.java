@@ -96,8 +96,6 @@ public class Window
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-
-
         var prim = glfwGetPrimaryMonitor();
 
         int[] x = new int[1];
@@ -108,7 +106,7 @@ public class Window
         this.width = w[0];
         this.height = h[0];
 
-        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, prim, NULL);
+        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
         if (glfwWindow == NULL)
         {
             throw new IllegalStateException("could not create window");
@@ -117,6 +115,7 @@ public class Window
         {
             Window.setWidth(newWidth);
             Window.setHeight(newHeight);
+            currentGameMode.resizeSpatialMap(newWidth, newHeight);
         });
 
         glfwMakeContextCurrent(glfwWindow);
@@ -154,28 +153,28 @@ public class Window
     {
         initWindow();
 
-        spacePartitionRenderer = new SpacePartitionRenderer(ecs);
-        ecs.registerSystem(spacePartitionRenderer);
-
-        // order of system registry is important, systems run in the order they are added
-        var inputSystem = new KBMInput(ecs);
-        ecs.registerSystem(inputSystem);
-        ecs.registerSystem(new VerletPhysics(ecs));
-        //ecs.registerSystem(new SpriteRenderer(ecs));
-        ecs.registerSystem(new LineRenderer(ecs));
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
-
-        // note: the display is wrong for this renderer, it's not scaled correctly for some reason.
-        // todo: look into that
-
-        initInput(inputSystem);
-
         currentGameMode = new GameRunning(ecs);
         currentGameMode.load();
         currentGameMode.start();
 
         currentGameMode.camera().projectionSize.x = this.width;
         currentGameMode.camera().projectionSize.y = this.height;
+
+        currentGameMode.resizeSpatialMap(this.width, this.height);
+
+        spacePartitionRenderer = new SpacePartitionRenderer(ecs);
+        ecs.registerSystem(spacePartitionRenderer);
+
+        // order of system registry is important, systems run in the order they are added
+        var inputSystem = new KBMInput(ecs);
+        ecs.registerSystem(inputSystem);
+        ecs.registerSystem(new VerletPhysics(ecs, currentGameMode.getSpatialMap()));
+        //ecs.registerSystem(new SpriteRenderer(ecs));
+        ecs.registerSystem(new LineRenderer(ecs));
+        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+
+
+        initInput(inputSystem);
     }
 
     public static int getWidth() {

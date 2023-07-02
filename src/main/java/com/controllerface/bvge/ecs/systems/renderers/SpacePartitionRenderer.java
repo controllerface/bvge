@@ -58,7 +58,7 @@ public class SpacePartitionRenderer extends GameSystem
         for (RectRenderBatch batch : batches)
         {
             batch.render();
-            //batch.clear();
+            batch.clear();
         }
     }
 
@@ -75,25 +75,19 @@ public class SpacePartitionRenderer extends GameSystem
     public void run(float dt)
     {
         if (spatialMap == null) return;
-
-        if (!hasSet)
+        for (float i = 0; i < spatialMap.getWidth(); i += spatialMap.getX_spacing())
         {
-            for (float i = 0; i < spatialMap.getWidth(); i += spatialMap.getX_spacing())
+            for (float j = 0; j < spatialMap.getHeight(); j += spatialMap.getY_spacing())
             {
-                for (float j = 0; j < spatialMap.getHeight(); j += spatialMap.getY_spacing())
-                {
-                    if (i + spatialMap.getX_spacing() > spatialMap.getWidth()
-                            || j + spatialMap.getY_spacing() > spatialMap.getHeight())
-                    {
-                        continue;
-                    }
-                    this.add(i, j, spatialMap.getX_spacing(), spatialMap.getY_spacing(), color2);
-                }
+//                if (i + spatialMap.getX_spacing() > spatialMap.getWidth()
+//                        || j + spatialMap.getY_spacing() > spatialMap.getHeight())
+//                {
+//                    continue;
+//                }
+                this.add(i, j, spatialMap.getX_spacing(), spatialMap.getY_spacing(), color2);
             }
-            this.add(0,0, spatialMap.getWidth(), spatialMap.getHeight(), color);
-            hasSet = true;
         }
-
+        this.add(0,0, spatialMap.getWidth(), spatialMap.getHeight(), color);
         render();
     }
 }

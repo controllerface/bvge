@@ -10,10 +10,10 @@ public class SpatialMapEX
 {
     private float width = 1920;
     private float height = 1080;
-    private int xsubdivisions = 100;
-    private int ysubdivisions = 100;
+    private int xsubdivisions = 200;
+    private int ysubdivisions = 200;
 
-    private int directoryLength = xsubdivisions * ysubdivisions;
+    private int directoryLength;
     private float x_spacing = 0;
     private float y_spacing = 0;
 
@@ -22,10 +22,21 @@ public class SpatialMapEX
         init();
     }
 
+    // todo: partitioning needs to change a bit, instead of specifying subdivisions, the spacing is what
+    //  should be static, so the resize operation will keep the space cell size but make the tracking area
+    //  alone bigger or smaller. right now, resize changes the cell size which is not ideal.
     void init()
     {
         x_spacing = width / xsubdivisions;
         y_spacing = height / ysubdivisions;
+        directoryLength = xsubdivisions * ysubdivisions;
+    }
+
+    public void resize(float width, float height)
+    {
+        this.width = width;
+        this.height = height;
+        init();
     }
 
     private void rebuildLocationEX(int body_index, int[] key_map, int[] key_counts, int[] key_offsets)

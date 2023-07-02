@@ -4,6 +4,7 @@ import com.controllerface.bvge.data.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.Sprite;
 import com.controllerface.bvge.ecs.components.*;
+import com.controllerface.bvge.ecs.systems.physics.SpatialMapEX;
 import com.controllerface.bvge.util.AssetPool;
 import org.joml.Random;
 import org.joml.Vector2f;
@@ -17,6 +18,8 @@ public class GameRunning extends GameMode
     {
         this.ecs = ecs;
     }
+
+    private final SpatialMapEX spatialMap = new SpatialMapEX();
 
     private int testBoxSize = 50;
 
@@ -88,4 +91,12 @@ public class GameRunning extends GameMode
         this.camera.adjustProjection();
     }
 
+    @Override
+    public void resizeSpatialMap(int width, int height) {
+        spatialMap.resize(width, height);
+    }
+
+    public SpatialMapEX getSpatialMap() {
+        return spatialMap;
+    }
 }
