@@ -35,11 +35,10 @@ int2 getKeyForPoint(float px, float py,
                     float x_origin, float y_origin,
                     int x_subdivisions, int y_subdivisions)
 {
-    float test_x = px - (x_origin);
-    float test_y = py - (y_origin);
-
-    int index_x = ((int) floor(test_x / x_spacing));
-    int index_y = ((int) floor(test_y / y_spacing));
+    float adjusted_x = px - (x_origin);
+    float adjusted_y = py - (y_origin);
+    int index_x = ((int) floor(adjusted_x / x_spacing));
+    int index_y = ((int) floor(adjusted_y / y_spacing));
     int2 out;
     out.x = index_x;
     out.y = index_y;
@@ -110,8 +109,8 @@ __kernel void integrate(
         diff = acc + diff;
 
         // add friction component
-        diff.x *= .980;
-        diff.y *= .980;
+        diff.x *= .990;
+        diff.y *= .990;
 
         // set the prv to current pos
         prv.x = pos.x;

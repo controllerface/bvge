@@ -27,7 +27,7 @@ public class TestGame extends GameMode
 
     private void genNPCs(float spacing, float size)
     {
-        int testBoxSize = 2;
+        int testBoxSize = 64;
 
         System.out.println("generating: " + testBoxSize * testBoxSize + " NPCs..");
         var rand = new Random();
@@ -96,7 +96,7 @@ public class TestGame extends GameMode
     public void load()
     {
         genPlayer();
-        genNPCs(15f, 15f);
+        genNPCs(3f, 3f);
         loadSystems();
     }
 

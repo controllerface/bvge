@@ -345,8 +345,10 @@ public class SpatialPartition
 
     int[] getKeyForPoint(float px, float py)
     {
-        int index_x = ((int) Math.floor(px / x_spacing));
-        int index_y = ((int) Math.floor(py / y_spacing));
+        float adjusted_x = px - (x_origin);
+        float adjusted_y = py - (y_origin);
+        int index_x = ((int) Math.floor(adjusted_x / x_spacing));
+        int index_y = ((int) Math.floor(adjusted_y / y_spacing));
         int[] out = new int[2];
         out[0] = index_x;
         out[1] = index_y;
