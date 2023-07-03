@@ -126,7 +126,13 @@ public class VerletPhysics extends GameSystem
         resolveForces(body.entity(), body);
 
         // integrate in CL
-        OCLFunctions.integrate(dt, spatialPartition.getX_spacing(), spatialPartition.getY_spacing());
+        OCLFunctions.integrate(dt,
+                spatialPartition.getX_spacing(),
+                spatialPartition.getY_spacing(),
+                spatialPartition.getX_origin(),
+                spatialPartition.getY_origin(),
+                spatialPartition.getX_subdivisions(),
+                spatialPartition.getY_subdivisions());
 
         spatialPartition.calculateKeyBankSize();
         spatialPartition.buildKeyBank();

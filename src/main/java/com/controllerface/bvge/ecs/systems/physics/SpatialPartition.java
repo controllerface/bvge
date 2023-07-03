@@ -10,6 +10,8 @@ public class SpatialPartition
 {
     private float width = 1920;
     private float height = 1080;
+
+    // note: sub-divisions should always be divisible by 2
     private int x_subdivisions = 200;
     private int y_subdivisions = 200;
 
@@ -331,6 +333,14 @@ public class SpatialPartition
 
     public float getY_origin() {
         return y_origin;
+    }
+
+    public int getX_subdivisions() {
+        return x_subdivisions;
+    }
+
+    public int getY_subdivisions() {
+        return y_subdivisions;
     }
 
     int[] getKeyForPoint(float px, float py)
