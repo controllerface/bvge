@@ -4,6 +4,7 @@ import com.controllerface.bvge.data.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.Sprite;
 import com.controllerface.bvge.ecs.components.*;
+import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
 import com.controllerface.bvge.ecs.systems.renderers.BoundingBoxRenderer;
@@ -60,8 +61,7 @@ public class TestGame extends GameMode
         }
     }
 
-    @Override
-    public void load()
+    private void genPlayer()
     {
         // player entity
         var player = ecs.registerEntity("player");
@@ -74,20 +74,31 @@ public class TestGame extends GameMode
         scomp.setSprite(sprite);
         //scomp.setColor(new Vector4f(0,0,0,1));
         var physicsObject = PhysicsObjects.polygon1(0,0, 32, player);
+        ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
+        ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.Transform, physicsObject.transform());
-        ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.RigidBody2D, physicsObject);
         ecs.attachComponent(player, Component.BoundingBox, physicsObject.bounds());
+    }
 
-        genNPCs(3f, 3f);
-
-        // note: order of adding systems is important
-        ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialMap));
+    // note: order of adding systems is important
+    private void loadSystems()
+    {
         ecs.registerSystem(new VerletPhysics(ecs, spatialMap));
+        ecs.registerSystem(new CameraTracking(ecs));
+        ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialMap));
         //ecs.registerSystem(new SpriteRenderer(ecs));
         ecs.registerSystem(new LineRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+    }
+
+    @Override
+    public void load()
+    {
+        genPlayer();
+        genNPCs(3f, 3f);
+        loadSystems();
     }
 
     @Override

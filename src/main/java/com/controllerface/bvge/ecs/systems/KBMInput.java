@@ -33,25 +33,26 @@ public class KBMInput extends GameSystem
             controlPoints.setRight(keyDown[GLFW_KEY_D]);
         });
 
-        if (keyDown[GLFW_KEY_LEFT])
-        {
-            Window.get().camera().position.x -= 5;
-        }
-
-        if (keyDown[GLFW_KEY_RIGHT])
-        {
-            Window.get().camera().position.x += 5;
-        }
-
-        if (keyDown[GLFW_KEY_UP])
-        {
-            Window.get().camera().position.y += 5;
-        }
-
-        if (keyDown[GLFW_KEY_DOWN])
-        {
-            Window.get().camera().position.y -= 5;
-        }
+        // test camera moving code
+//        if (keyDown[GLFW_KEY_LEFT])
+//        {
+//            Window.get().camera().position.x -= 5;
+//        }
+//
+//        if (keyDown[GLFW_KEY_RIGHT])
+//        {
+//            Window.get().camera().position.x += 5;
+//        }
+//
+//        if (keyDown[GLFW_KEY_UP])
+//        {
+//            Window.get().camera().position.y += 5;
+//        }
+//
+//        if (keyDown[GLFW_KEY_DOWN])
+//        {
+//            Window.get().camera().position.y -= 5;
+//        }
     }
 
     public void keyCallback(long window, int key, int scancode, int action, int mods)

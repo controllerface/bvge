@@ -11,6 +11,7 @@ public enum Component
     ControlPoints(ControlPoints.class),
     RigidBody2D(FBody2D.class),
     BoundingBox(FBounds2D.class),
+    CameraFocus(CameraFocus.class),
 
     ;
 
