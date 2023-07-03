@@ -12,18 +12,14 @@ public class CameraTracking extends GameSystem
         super(ecs);
     }
 
-    float accum = 0;
-
     @Override
     public void run(float dt)
     {
-        accum+=dt;
         var focusTargets = ecs.getComponents(Component.CameraFocus);
-        // only grab the first one, there should only be one, attached to the player
         var focusTarget = focusTargets.entrySet().stream().findAny().orElseThrow();
         var t = ecs.getComponentFor(focusTarget.getKey(), Component.Transform);
         FTransform transform = Component.Transform.coerce(t);
-
+        if (transform == null) return;
         var camera = Window.get().camera();
         var width = (float)Window.get().getWidth() * camera.getZoom();
         var height = (float)Window.get().getHeight() * camera.getZoom();
