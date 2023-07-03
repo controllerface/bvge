@@ -51,7 +51,15 @@ public class SpatialPartition
         this.y_origin = y_origin;
     }
 
-    private void rebuildLocationEX(int body_index, int[] key_map, int[] key_counts, int[] key_offsets)
+    private int calculateKeyIndex(int x, int y)
+    {
+        int adjusted_x = x;// - (int) x_origin;
+        int adjusted_y = y;// - (int) y_origin;
+        int key_index = x_subdivisions * adjusted_y + adjusted_x;
+        return key_index;
+    }
+
+    private void rebuildLocationEX(int body_index)
     {
         var body = Main.Memory.bodyByIndex(body_index);
 
@@ -64,7 +72,7 @@ public class SpatialPartition
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
-                int key_index = x_subdivisions * current_y + current_x;
+                int key_index = calculateKeyIndex(current_x, current_y);
                 if (key_index < 0 || key_index >= key_counts.length)
                 {
                     continue;
@@ -111,7 +119,7 @@ public class SpatialPartition
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
-                int key_index = x_subdivisions * current_y + current_x;
+                int key_index = calculateKeyIndex(current_x, current_y);
                 if (key_index < 0 || key_index >= key_counts.length)
                 {
                     continue;
@@ -133,6 +141,20 @@ public class SpatialPartition
         return directoryLength;
     }
 
+
+
+
+    int key_bank_size = 0;
+    int key_map_size = 0;
+
+    int[] key_bank = new int[0];
+    int[] key_map = new int[0];
+
+    int[] key_counts = new int[0];
+    int[] key_offsets = new int[0];
+
+
+
     public int calculateKeyBankSize()
     {
         int size = 0;
@@ -150,10 +172,20 @@ public class SpatialPartition
             // todo: can this be calculated alone using a parallel reduce? maybe first?
             size += body.si_bank_size();
         }
+        key_bank_size = size;
+        key_map_size = key_bank_size /Main.Memory.Width.KEY;
+        key_bank = new int[key_bank_size];
+        key_map = new int[key_map_size];
+        // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is build
+        //  correctly. an alternative would be to make body index 0 unused, so indices all start at one,
+        //  but that may create a lot more issues.
+        Arrays.fill(key_map, -1);
+        key_counts=new int[directoryLength];
+        key_offsets=new int[directoryLength];
         return size;
     }
 
-    public void buildKeyBank(int[] key_bank, int[] key_counts)
+    public void buildKeyBank()
     {
         var body_count = Main.Memory.bodyCount();
         for (int body_index = 0; body_index < body_count; body_index++)
@@ -162,7 +194,7 @@ public class SpatialPartition
         }
     }
 
-    public void calculateMapOffsets(int[] key_offsets, int[] key_counts)
+    public void calculateMapOffsets()
     {
         int current_offset = 0;
         for (int i = 0; i < key_counts.length; i++)
@@ -181,12 +213,12 @@ public class SpatialPartition
         }
     }
 
-    public void buildKeyMap(int[] key_map, int[] key_counts, int[] key_offsets)
+    public void buildKeyMap()
     {
         var body_count = Main.Memory.bodyCount();
         for (int location = 0; location < body_count; location++)
         {
-            rebuildLocationEX(location, key_map, key_counts, key_offsets);
+            rebuildLocationEX(location);
         }
     }
 
@@ -200,18 +232,15 @@ public class SpatialPartition
 
 
     private int[] findMatchesEX(int target_index,
-                                int[] keys,
-                                int[] key_map,
-                                int[] key_counts,
-                                int[] key_offsets)
+                                int[] target_keys)
     {
         // use a set as a buffer for matches todo: can this size be pre-calculated?
         var rSet = new HashSet<Integer>();
-        for (int i = 0; i < keys.length; i += Main.Memory.Width.KEY)
+        for (int i = 0; i < target_keys.length; i += Main.Memory.Width.KEY)
         {
-            int x = keys[i];
-            int y = keys[i + 1];
-            int key_index = x_subdivisions * y + x;
+            int x = target_keys[i];
+            int y = target_keys[i + 1];
+            int key_index = calculateKeyIndex(x, y);
 
             int count = key_counts[key_index];
             int offset = key_offsets[key_index];
@@ -245,34 +274,27 @@ public class SpatialPartition
         return rSet.stream().mapToInt(i->i).toArray();
     }
 
-    private int[] findCandidatesEX(int target_index,
-                                   int[] key_bank,
-                                   int[] key_map,
-                                   int[] key_counts,
-                                   int[] key_offsets)
+    private int[] findCandidatesEX(int target_index)
     {
         var target = Main.Memory.bodyByIndex(target_index);
         var bounds = target.bounds();
         var spatial_index = bounds.bank_offset() * Main.Memory.Width.KEY;
         var spatial_length = target.si_bank_size();
-        var keys = new int[spatial_length];
-        System.arraycopy(key_bank, spatial_index, keys, 0, spatial_length);
-        return findMatchesEX(target_index, keys, key_map, key_counts, key_offsets);
+        var target_keys = new int[spatial_length];
+        System.arraycopy(key_bank, spatial_index, target_keys, 0, spatial_length);
+        return findMatchesEX(target_index, target_keys);
     }
 
     // todo: factor this out to a statically sized array
     private final List<Integer> outBuffer = new ArrayList<>();
 
-    public IntBuffer computeCandidatesEX(int[] key_bank,
-                                         int[] key_map,
-                                         int[] key_counts,
-                                         int[] key_offsets)
+    public IntBuffer computeCandidatesEX()
     {
         var body_count = Main.Memory.bodyCount();
         outBuffer.clear();
         for (int target_index = 0; target_index < body_count; target_index++)
         {
-            var matches = this.findCandidatesEX(target_index, key_bank, key_map, key_counts, key_offsets);
+            var matches = this.findCandidatesEX(target_index);
             for (int match : matches)
             {
                 outBuffer.add(target_index);
@@ -309,5 +331,22 @@ public class SpatialPartition
 
     public float getY_origin() {
         return y_origin;
+    }
+
+    int[] getKeyForPoint(float px, float py)
+    {
+        int index_x = ((int) Math.floor(px / x_spacing));
+        int index_y = ((int) Math.floor(py / y_spacing));
+        int[] out = new int[2];
+        out[0] = index_x;
+        out[1] = index_y;
+        return out;
+    }
+
+    public int countAtIndex(float x, float y)
+    {
+        int[] key = getKeyForPoint(x, y);
+        int i = calculateKeyIndex(key[0], key[1]);
+        return key_counts[i];
     }
 }

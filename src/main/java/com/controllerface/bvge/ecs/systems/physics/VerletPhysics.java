@@ -128,29 +128,15 @@ public class VerletPhysics extends GameSystem
         // integrate in CL
         OCLFunctions.integrate(dt, spatialPartition.getX_spacing(), spatialPartition.getY_spacing());
 
-        // broad phase collision
-        var key_bank_size = spatialPartition.calculateKeyBankSize();
-        int key_map_size = key_bank_size / Main.Memory.Width.KEY;
-
-        int[] key_bank = new int[key_bank_size];
-        int[] key_map = new int[key_map_size];
-
-        // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is build
-        //  correctly. an alternative would be to make body index 0 unused, so indices all start at one,
-        //  but that may create a lot more issues.
-        Arrays.fill(key_map, -1);
-
-        int[] key_counts = new int[spatialPartition.directoryLength()];
-        int[] key_offsets = new int[spatialPartition.directoryLength()];
-
-        spatialPartition.buildKeyBank(key_bank, key_counts);
-        spatialPartition.calculateMapOffsets(key_offsets, key_counts);
-        spatialPartition.buildKeyMap(key_map, key_counts, key_offsets);
+        spatialPartition.calculateKeyBankSize();
+        spatialPartition.buildKeyBank();
+        spatialPartition.calculateMapOffsets();
+        spatialPartition.buildKeyMap();
 
         // todo: now need to pull out the intermediate list used as a buffer in this method
         //  may need to do two passes, one to detect size needed and one to actually get candidates
         //  best to do on GPU.
-        var candidates = spatialPartition.computeCandidatesEX(key_bank, key_map, key_counts, key_offsets);
+        var candidates = spatialPartition.computeCandidatesEX();
 
         // narrow phase collision
         if (candidates.limit() > 0)

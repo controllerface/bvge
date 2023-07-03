@@ -17,6 +17,7 @@ public class SpacePartitionRenderer extends GameSystem
     private List<RectRenderBatch> batches;
     private final Vector3f color = new Vector3f(0f,0f,1f);
     private final Vector3f color2 = new Vector3f(.5f,0.1f,0.1f);
+    private final Vector3f color3 = new Vector3f(1f,0.1f,0.1f);
 
     private final SpatialPartition spatialPartition;
 
@@ -62,6 +63,21 @@ public class SpacePartitionRenderer extends GameSystem
 
     private boolean hasSet = false;
 
+    private Vector3f getColor(float x, float y)
+    {
+        if (accum < 1) return color2;
+        var i = x - spatialPartition.getX_origin();
+        var j = y - spatialPartition.getY_origin();
+
+        var c = spatialPartition.countAtIndex(i, j);
+        if (c > 0)
+        {
+            return color3;
+        }
+        return color2;
+    }
+
+    float accum = 0;
     @Override
     public void run(float dt)
     {
@@ -73,9 +89,14 @@ public class SpacePartitionRenderer extends GameSystem
         {
             for (float j = spatialPartition.getY_origin(); j < y_max; j += spatialPartition.getY_spacing())
             {
-                this.add(i, j, spatialPartition.getX_spacing(), spatialPartition.getY_spacing(), color2);
+                var c = getColor(i, j);
+                this.add(i, j, spatialPartition.getX_spacing(), spatialPartition.getY_spacing(), c);
             }
         }
+
+
+        accum+=dt;
+
         this.add(spatialPartition.getX_origin(),
                 spatialPartition.getY_origin(),
                 spatialPartition.getWidth(),
