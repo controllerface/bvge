@@ -1,8 +1,8 @@
 # List of things to do (in no particular order)
 
-1. camera tracking for player
-   1. when near edge of viewport, scroll to ensure player is on screen 
-   2. distance from edge should be sufficient to see upcoming objects
+1. ~~camera tracking for player~~
+   1. ~~when near edge of viewport, scroll to ensure player is on screen~~ 
+   2. ~~distance from edge should be sufficient to see upcoming objects~~
 2. static geometry
    1. physics objects should be able to be toggled static on/off
    2. add check to ensure static objects only check non-static for collision
@@ -14,9 +14,9 @@
    2. for example, bullets or other projectiles than can impact without reaction
    3. typically such objects should be destroyed after collision
 5. spatial partition improvements
-   1. objects outside tracked zone should not move or collide
-   2. zone should follow player
-   3. will need offset calculations to handle negative values
+   1. ~~objects outside tracked zone should not move or collide~~
+   2. ~~zone should follow player~~
+   3. ~~will need offset calculations to handle negative values~~
    4. need at least one outer tier just outside viewing zone for "settling"
    5. tiers should help "ease" objects out as player moves away
    6. change from specifying subdivisions to specifying spacing instead
