@@ -61,8 +61,6 @@ public class SpacePartitionRenderer extends GameSystem
         }
     }
 
-    private boolean hasSet = false;
-
     private Vector3f getColor(float x, float y)
     {
         if (accum < 1) return color2;
@@ -80,6 +78,7 @@ public class SpacePartitionRenderer extends GameSystem
     public void run(float dt)
     {
         if (spatialPartition == null) return;
+
         var x_max = spatialPartition.getX_origin() + spatialPartition.getWidth();
         var y_max = spatialPartition.getY_origin() + spatialPartition.getHeight();
 
@@ -91,7 +90,6 @@ public class SpacePartitionRenderer extends GameSystem
                 this.add(i, j, spatialPartition.getX_spacing(), spatialPartition.getY_spacing(), c);
             }
         }
-
 
         accum+=dt;
 

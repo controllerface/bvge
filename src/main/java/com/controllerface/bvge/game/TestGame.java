@@ -10,6 +10,7 @@ import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
 import com.controllerface.bvge.ecs.systems.renderers.BoundingBoxRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
+import com.controllerface.bvge.ecs.systems.renderers.SpriteRenderer;
 import com.controllerface.bvge.util.AssetPool;
 import org.joml.Random;
 import org.joml.Vector4f;
@@ -25,22 +26,20 @@ public class TestGame extends GameMode
 
     private final SpatialPartition spatialPartition = new SpatialPartition();
 
-    private void genNPCs(float spacing, float size)
+    private void genNPCs(int box_size, float spacing, float size, float start_x, float start_y)
     {
-        int testBoxSize = 64;
-
-        System.out.println("generating: " + testBoxSize * testBoxSize + " NPCs..");
+        System.out.println("generating: " + box_size * box_size + " NPCs..");
         var rand = new Random();
-        for (int i = 0; i < testBoxSize; i++)
+        for (int i = 0; i < box_size; i++)
         {
-            for (int j = 0; j < testBoxSize; j++)
+            for (int j = 0; j < box_size; j++)
             {
                 float r = rand.nextFloat() / 5.0f;
                 float g = rand.nextFloat() / 5.0f;
                 float b = rand.nextFloat();
 
-                float x = 100 + i * spacing;
-                float y = 100 + j * spacing;
+                float x = start_x + i * spacing;
+                float y = start_y + j * spacing;
 
                 var npc = ecs.registerEntity(null);
                 var scomp2 = new SpriteComponent();
@@ -96,7 +95,12 @@ public class TestGame extends GameMode
     public void load()
     {
         genPlayer();
-        genNPCs(3f, 3f);
+        genNPCs(10, 20f, 20f, 100, 100);
+        genNPCs(50, 10f, 10f, 1000, 1000);
+        genNPCs(25, 2f, 2f, -500, -500);
+        genNPCs(20, 7f, 7f, -1000, 500);
+
+
         loadSystems();
     }
 

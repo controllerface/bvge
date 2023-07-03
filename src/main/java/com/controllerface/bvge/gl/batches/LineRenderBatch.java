@@ -128,6 +128,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 
     public void render()
     {
+        //glLineWidth(2.0f);
         //boolean rebuffer= false;
         for (int i = 0; i < numLines; i++)
         {
@@ -195,9 +196,9 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
      */
     private void loadVertexProperties(int index)
     {
-        float r = rand.nextFloat() / 7.0f;
-        float g = rand.nextFloat() / 5.0f;
-        float b = rand.nextFloat() / 3.0f;
+        float r = 0f; //rand.nextFloat() / 7.0f;
+        float g = 0f; //rand.nextFloat() / 5.0f;
+        float b = 0f; //rand.nextFloat() / 3.0f;
 
         FEdge2D line = this.lines[index];
 
