@@ -76,6 +76,12 @@ __kernel void integrate(
 	// track the center index for the centroid calc at the end as well as the min/max for bounding box
 	float x_sum = 0;
 	float y_sum = 0;
+
+	bool min_x_set = false;
+	bool max_x_set = false;
+	bool min_y_set = false;
+	bool max_y_set = false;
+
 	float min_x = FLT_MAX;
 	float max_x = FLT_MIN;
 	float min_y = FLT_MAX;
@@ -116,21 +122,25 @@ __kernel void integrate(
         y_sum += pos.y;
 
         // update min/max values for bounding box
-        if (pos.x > max_x)
+        if (pos.x > max_x || !max_x_set)
         {
             max_x = pos.x;
+            max_x_set = true;
         }
-        if (pos.x < min_x)
+        if (pos.x < min_x || !min_x_set)
         {
             min_x = pos.x;
+            min_x_set = true;
         }
-        if (pos.y > max_y)
+        if (pos.y > max_y || !max_y_set)
         {
             max_y = pos.y;
+            max_y_set = true;
         }
-        if (pos.y < min_y)
+        if (pos.y < min_y || !min_y_set)
         {
             min_y = pos.y;
+            min_y_set = true;
         }
 
         // store updated point in result buffer

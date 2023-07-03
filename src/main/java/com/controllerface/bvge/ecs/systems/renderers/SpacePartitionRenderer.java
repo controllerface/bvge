@@ -66,6 +66,7 @@ public class SpacePartitionRenderer extends GameSystem
     private Vector3f getColor(float x, float y)
     {
         if (accum < 1) return color2;
+        // remove offset from origin once keys are fixed
         var i = x - spatialPartition.getX_origin();
         var j = y - spatialPartition.getY_origin();
 

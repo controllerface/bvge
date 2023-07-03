@@ -7,6 +7,7 @@ import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
+import com.controllerface.bvge.ecs.systems.renderers.BoundingBoxRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
 import com.controllerface.bvge.util.AssetPool;
@@ -88,7 +89,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));
         ecs.registerSystem(new LineRenderer(ecs));
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs));
     }
 
     @Override
