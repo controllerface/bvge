@@ -2,9 +2,8 @@ package com.controllerface.bvge.window;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.KBMInput;
-import com.controllerface.bvge.scene.Camera;
-import com.controllerface.bvge.scene.GameMode;
-import com.controllerface.bvge.scene.GameRunning;
+import com.controllerface.bvge.game.GameMode;
+import com.controllerface.bvge.game.TestGame;
 import org.joml.Vector2f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -138,7 +137,7 @@ public class Window
     {
         initWindow();
 
-        currentGameMode = new GameRunning(ecs);
+        currentGameMode = new TestGame(ecs);
         currentGameMode.load();
         currentGameMode.start();
 

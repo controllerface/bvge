@@ -1,6 +1,4 @@
-package com.controllerface.bvge.scene;
-
-import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
+package com.controllerface.bvge.game;
 
 public abstract class GameMode
 {

@@ -87,55 +87,23 @@ public class VerletPhysics extends GameSystem
 
     private void tickEdges()
     {
-//        var buf = bodyBuffer.size() * 6;
-//        var buf2 = buf * 2;
-
         var bodies = ecs.getComponents(Component.RigidBody2D);
-
         for (int i = 0; i < EDGE_STEPS; i++)
         {
-//            float[] arr1 = new float[buf2];
-//            float[] arr2 = new float[buf2];
-//            float[] dest2 = new float[buf];
-//
-//            float[] offsets = new float[bodyBuffer.size() * 6 * 2];
-//
-//            int offset = 0;
-//            for (RigidBody2D body : bodyBuffer.values())
-//            {
-//                var edges = body.getEdges();
-//                for (Edge2D e : edges)
-//                {
-//                    e.p2().pos().sub(e.p1().pos(), vectorBuffer1);
-//                    offsets[offset] = vectorBuffer1.x;
-//                    offsets[offset + 1] = vectorBuffer1.y;
-//                    arr1[offset] = e.p1().pos().x;
-//                    arr1[offset + 1] = e.p1().pos().y;
-//                    arr2[offset] = e.p2().pos().x;
-//                    arr2[offset + 1] = e.p2().pos().y;
-//                }
-//
-//                //resolveConstraints(body);
-//            }
-
             // todo: would be worth trying to iterate on each edge but in parallel for each body
-            //  solving ALL edges at once doesn't work, but
-            //CLInstance.vectorDistance(arr1, arr2, dest2);
+            //  solving ALL edges at once doesn't work, but in series it may
             for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
             {
                 FBody2D body = Component.RigidBody2D.coerce(entry.getValue());
                 for (FEdge2D edge : body.edges())
                 {
                     edge.p2().subPos(edge.p1(), vectorBuffer1);
-                    //edge.p2_index().pos().sub(edge.p1_index().pos(), vectorBuffer1);
                     var length = vectorBuffer1.length();
                     float diff = length - edge.length();
                     vectorBuffer1.normalize();
                     vectorBuffer1.mul(diff * 0.5f);
                     edge.p1().addPos(vectorBuffer1);
                     edge.p2().subPos(vectorBuffer1);
-                    //edge.p1_index().pos().add(vectorBuffer1);
-                    //edge.p2_index().pos().sub(vectorBuffer1);
                 }
             }
         }

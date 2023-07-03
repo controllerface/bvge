@@ -1,4 +1,4 @@
-package com.controllerface.bvge.scene;
+package com.controllerface.bvge.game;
 
 import com.controllerface.bvge.data.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
@@ -14,11 +14,11 @@ import com.controllerface.bvge.util.AssetPool;
 import org.joml.Random;
 import org.joml.Vector4f;
 
-public class GameRunning extends GameMode
+public class TestGame extends GameMode
 {
     private final ECS ecs;
 
-    public GameRunning(ECS ecs)
+    public TestGame(ECS ecs)
     {
         this.ecs = ecs;
     }
@@ -73,7 +73,7 @@ public class GameRunning extends GameMode
         sprite.setWidth(16);
         scomp.setSprite(sprite);
         //scomp.setColor(new Vector4f(0,0,0,1));
-        var physicsObject = PhysicsObjects.polygon1(500,50, 32, player);
+        var physicsObject = PhysicsObjects.polygon1(0,0, 32, player);
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.Transform, physicsObject.transform());
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
@@ -85,9 +85,9 @@ public class GameRunning extends GameMode
         // note: order of adding systems is important
         ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialMap));
         ecs.registerSystem(new VerletPhysics(ecs, spatialMap));
-        ecs.registerSystem(new SpriteRenderer(ecs));
+        //ecs.registerSystem(new SpriteRenderer(ecs));
         ecs.registerSystem(new LineRenderer(ecs));
-        ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
     }
 
     @Override

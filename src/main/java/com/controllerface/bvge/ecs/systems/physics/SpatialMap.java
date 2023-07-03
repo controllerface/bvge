@@ -13,6 +13,9 @@ public class SpatialMap
     private int x_subdivisions = 200;
     private int y_subdivisions = 200;
 
+    // todo: will need some kind of "offset" values that track the player position, moving the effective
+    //  range of the partition, and allowing negative co-ordinates to work with the backing arrays.
+
     private int directoryLength;
     private float x_spacing = 0;
     private float y_spacing = 0;
