@@ -173,8 +173,8 @@ public class BoxRenderBatch implements Comparable<BoxRenderBatch>
 
         // Use shader
         currentShader.use();
-        currentShader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
-        currentShader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
+        currentShader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
+        currentShader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
 
 //        // todo: this is bad, there's no check for the hardware texture slot max
 //        //  batches should be grouped by texture, if multiple objects use the same texture,

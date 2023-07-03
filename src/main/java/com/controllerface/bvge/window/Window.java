@@ -6,8 +6,10 @@ import com.controllerface.bvge.ecs.systems.physics.SpatialMapEX;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
 import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
+import com.controllerface.bvge.scene.Camera;
 import com.controllerface.bvge.scene.GameMode;
 import com.controllerface.bvge.scene.GameRunning;
+import org.joml.Vector2f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
@@ -36,6 +38,8 @@ public class Window
     private static GameMode currentGameMode;
 
     private ECS ecs = new ECS();
+
+    protected Camera camera = new Camera(new Vector2f(0, 0));
 
     private Window()
     {
@@ -80,6 +84,7 @@ public class Window
         glfwPollEvents();
         glClearColor(r, g, b, a);
         glClear(GL_COLOR_BUFFER_BIT);
+        camera.adjustProjection();
     }
 
     private void initWindow()
@@ -156,8 +161,8 @@ public class Window
         currentGameMode.load();
         currentGameMode.start();
 
-        currentGameMode.camera().projectionSize.x = this.width;
-        currentGameMode.camera().projectionSize.y = this.height;
+        camera.projectionSize.x = this.width;
+        camera.projectionSize.y = this.height;
 
         currentGameMode.resizeSpatialMap(this.width, this.height);
 
@@ -174,6 +179,11 @@ public class Window
 
 
         initInput(inputSystem);
+    }
+
+    public Camera camera()
+    {
+        return camera;
     }
 
     public static int getWidth() {

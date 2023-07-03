@@ -16,7 +16,7 @@ public class SpacePartitionRenderer extends GameSystem
     private Shader shader;
     private List<RectRenderBatch> batches;
     private final Vector3f color = new Vector3f(0f,0f,1f);
-    private final Vector3f color2 = new Vector3f(1f,0f,0f);
+    private final Vector3f color2 = new Vector3f(.5f,0.1f,0.1f);
 
 
     public SpacePartitionRenderer(ECS ecs)

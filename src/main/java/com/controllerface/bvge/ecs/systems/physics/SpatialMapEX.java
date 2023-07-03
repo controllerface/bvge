@@ -53,6 +53,10 @@ public class SpatialMapEX
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
                 int key_index = xsubdivisions * current_y + current_x;
+                if (key_index < 0 || key_index >= key_counts.length)
+                {
+                    continue;
+                }
                 int count = key_counts[key_index];
                 int offset = key_offsets[key_index];
                 for (int i = offset; i < offset + count; i++)
@@ -95,9 +99,15 @@ public class SpatialMapEX
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
+                int key_index = xsubdivisions * current_y + current_x;
+
+                if (key_index < 0 || key_index >= key_counts.length)
+                {
+                    continue;
+                }
+
                 key_bank[current_index++] = current_x;
                 key_bank[current_index++] = current_y;
-                int key_index = xsubdivisions * current_y + current_x;
 
                 // todo: can a sum/reduction in CL work here to calculate total counts
                 //  in parallel and then store in the map counts by index in the final step?

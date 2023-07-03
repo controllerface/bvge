@@ -21,7 +21,7 @@ public class GameRunning extends GameMode
 
     private final SpatialMapEX spatialMap = new SpatialMapEX();
 
-    private int testBoxSize = 50;
+    private int testBoxSize = 64;
 
     private void genNPCs(float spacing, float size)
     {
@@ -69,7 +69,7 @@ public class GameRunning extends GameMode
         sprite.setWidth(16);
         scomp.setSprite(sprite);
         //scomp.setColor(new Vector4f(0,0,0,1));
-        var physicsObject = PhysicsObjects.simpleBox(500,50, 32, player);
+        var physicsObject = PhysicsObjects.polygon1(500,50, 32, player);
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.Transform, physicsObject.transform());
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
@@ -82,13 +82,13 @@ public class GameRunning extends GameMode
     @Override
     public void start()
     {
-        this.camera = new Camera(new Vector2f(0, 0));
+        //this.camera = new Camera(new Vector2f(0, 0));
     }
 
     @Override
     public void update(float dt)
     {
-        this.camera.adjustProjection();
+        //this.camera.adjustProjection();
     }
 
     @Override

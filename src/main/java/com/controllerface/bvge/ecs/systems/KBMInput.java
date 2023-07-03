@@ -35,22 +35,22 @@ public class KBMInput extends GameSystem
 
         if (keyDown[GLFW_KEY_LEFT])
         {
-            Window.getScene().camera().position.x -= 5;
+            Window.get().camera().position.x -= 5;
         }
 
         if (keyDown[GLFW_KEY_RIGHT])
         {
-            Window.getScene().camera().position.x += 5;
+            Window.get().camera().position.x += 5;
         }
 
         if (keyDown[GLFW_KEY_UP])
         {
-            Window.getScene().camera().position.y += 5;
+            Window.get().camera().position.y += 5;
         }
 
         if (keyDown[GLFW_KEY_DOWN])
         {
-            Window.getScene().camera().position.y -= 5;
+            Window.get().camera().position.y -= 5;
         }
     }
 
