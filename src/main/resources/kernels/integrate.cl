@@ -30,7 +30,6 @@ int4 getExtents(int2 corners[])
 }
 
 // calculates a spatial index cell for a given point
-// todo: the x/y sizing should be provided to the kernel in a arg like dt
 int2 getKeyForPoint(float px, float py, float x_spacing, float y_spacing)
 {
     int index_x = ((int) floor(px / x_spacing));

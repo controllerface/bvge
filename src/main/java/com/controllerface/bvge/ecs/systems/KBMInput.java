@@ -34,25 +34,35 @@ public class KBMInput extends GameSystem
         });
 
         // test camera moving code
-//        if (keyDown[GLFW_KEY_LEFT])
-//        {
-//            Window.get().camera().position.x -= 5;
-//        }
-//
-//        if (keyDown[GLFW_KEY_RIGHT])
-//        {
-//            Window.get().camera().position.x += 5;
-//        }
-//
-//        if (keyDown[GLFW_KEY_UP])
-//        {
-//            Window.get().camera().position.y += 5;
-//        }
-//
-//        if (keyDown[GLFW_KEY_DOWN])
-//        {
-//            Window.get().camera().position.y -= 5;
-//        }
+        if (keyDown[GLFW_KEY_LEFT])
+        {
+            Window.get().camera().position.x -= 5;
+        }
+
+        if (keyDown[GLFW_KEY_RIGHT])
+        {
+            Window.get().camera().position.x += 5;
+        }
+
+        if (keyDown[GLFW_KEY_UP])
+        {
+            Window.get().camera().position.y += 5;
+        }
+
+        if (keyDown[GLFW_KEY_DOWN])
+        {
+            Window.get().camera().position.y -= 5;
+        }
+
+        if (keyDown[GLFW_KEY_COMMA])
+        {
+            Window.get().camera().addZoom(.5f);
+        }
+
+        if (keyDown[GLFW_KEY_PERIOD])
+        {
+            Window.get().camera().addZoom(-.5f);
+        }
     }
 
     public void keyCallback(long window, int key, int scancode, int action, int mods)

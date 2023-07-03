@@ -23,6 +23,7 @@ public class SpatialPartition
     private float x_origin = 0;
     private float y_origin = 0;
 
+
     public SpatialPartition()
     {
         init();
@@ -49,13 +50,12 @@ public class SpatialPartition
     {
         this.x_origin = x_origin;
         this.y_origin = y_origin;
+        //System.out.println("x: " + x_origin + " y: " + y_origin);
     }
 
     private int calculateKeyIndex(int x, int y)
     {
-        int adjusted_x = x;// - (int) x_origin;
-        int adjusted_y = y;// - (int) y_origin;
-        int key_index = x_subdivisions * adjusted_y + adjusted_x;
+        int key_index = x_subdivisions * y + x;
         return key_index;
     }
 

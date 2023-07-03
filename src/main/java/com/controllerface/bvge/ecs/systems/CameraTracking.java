@@ -28,10 +28,10 @@ public class CameraTracking extends GameSystem
         var height = (float)Window.get().getHeight() * camera.getZoom();
         var new_x = (transform.pos_x() - width / 2);
         var new_y = (transform.pos_y() - height / 2);
-        var w = (transform.pos_x() - width / camera.getZoom()) + (spatialPartition.getWidth() / 2);
-        var h = (transform.pos_y() - height / camera.getZoom()) + (spatialPartition.getHeight() / 2);
+        var new_origin_x = (transform.pos_x() - width / camera.getZoom()) + (spatialPartition.getWidth() / 2);
+        var new_origin_y = (transform.pos_y() - height / camera.getZoom()) + (spatialPartition.getHeight() / 2);
         camera.position.x = new_x;
         camera.position.y = new_y;
-        spatialPartition.updateOrigin(w, h );
+        spatialPartition.updateOrigin(new_origin_x, new_origin_y);
     }
 }
