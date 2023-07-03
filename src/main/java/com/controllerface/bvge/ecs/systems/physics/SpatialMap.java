@@ -6,18 +6,18 @@ import com.controllerface.bvge.data.FBounds2D;
 import java.nio.IntBuffer;
 import java.util.*;
 
-public class SpatialMapEX
+public class SpatialMap
 {
     private float width = 1920;
     private float height = 1080;
-    private int xsubdivisions = 200;
-    private int ysubdivisions = 200;
+    private int x_subdivisions = 200;
+    private int y_subdivisions = 200;
 
     private int directoryLength;
     private float x_spacing = 0;
     private float y_spacing = 0;
 
-    public SpatialMapEX()
+    public SpatialMap()
     {
         init();
     }
@@ -27,9 +27,9 @@ public class SpatialMapEX
     //  alone bigger or smaller. right now, resize changes the cell size which is not ideal.
     void init()
     {
-        x_spacing = width / xsubdivisions;
-        y_spacing = height / ysubdivisions;
-        directoryLength = xsubdivisions * ysubdivisions;
+        x_spacing = width / x_subdivisions;
+        y_spacing = height / y_subdivisions;
+        directoryLength = x_subdivisions * y_subdivisions;
     }
 
     public void resize(float width, float height)
@@ -52,7 +52,7 @@ public class SpatialMapEX
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
-                int key_index = xsubdivisions * current_y + current_x;
+                int key_index = x_subdivisions * current_y + current_x;
                 if (key_index < 0 || key_index >= key_counts.length)
                 {
                     continue;
@@ -99,8 +99,7 @@ public class SpatialMapEX
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
-                int key_index = xsubdivisions * current_y + current_x;
-
+                int key_index = x_subdivisions * current_y + current_x;
                 if (key_index < 0 || key_index >= key_counts.length)
                 {
                     continue;
@@ -200,7 +199,7 @@ public class SpatialMapEX
         {
             int x = keys[i];
             int y = keys[i + 1];
-            int key_index = xsubdivisions * y + x;
+            int key_index = x_subdivisions * y + x;
 
             int count = key_counts[key_index];
             int offset = key_offsets[key_index];

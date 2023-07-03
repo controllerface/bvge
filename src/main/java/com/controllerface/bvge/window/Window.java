@@ -2,10 +2,6 @@ package com.controllerface.bvge.window;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.KBMInput;
-import com.controllerface.bvge.ecs.systems.physics.SpatialMapEX;
-import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
-import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
-import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
 import com.controllerface.bvge.scene.Camera;
 import com.controllerface.bvge.scene.GameMode;
 import com.controllerface.bvge.scene.GameRunning;
@@ -20,7 +16,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
- * The Window is intended p2 be globally accessible
+ * The Window is intended to be globally accessible
  */
 public class Window
 {
@@ -36,10 +32,8 @@ public class Window
     public float r, g, b, a;
 
     private static GameMode currentGameMode;
-
-    private ECS ecs = new ECS();
-
-    protected Camera camera = new Camera(new Vector2f(0, 0));
+    private final ECS ecs = new ECS();
+    private final Camera camera = new Camera(new Vector2f(0, 0));
 
     private Window()
     {
@@ -59,11 +53,6 @@ public class Window
             Window.INSTANCE = new Window();
         }
         return Window.INSTANCE;
-    }
-
-    public static GameMode getScene()
-    {
-        return get().currentGameMode;
     }
 
     public void run()
@@ -115,10 +104,11 @@ public class Window
         {
             throw new IllegalStateException("could not create window");
         }
+
         glfwSetWindowSizeCallback(glfwWindow, (win, newWidth, newHeight)->
         {
-            Window.setWidth(newWidth);
-            Window.setHeight(newHeight);
+            get().width = newWidth;
+            get().height = newHeight;
             currentGameMode.resizeSpatialMap(newWidth, newHeight);
         });
 
@@ -134,7 +124,6 @@ public class Window
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         glViewport(0,0,this.width, this.height);
-
     }
 
     private void initInput(KBMInput inputSystem)
@@ -144,14 +133,6 @@ public class Window
         glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
         glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback);
     }
-
-    private static SpacePartitionRenderer spacePartitionRenderer;
-
-    public static void setSP(SpatialMapEX spatialMap)
-    {
-        Window.spacePartitionRenderer.setSpatialMap(spatialMap);
-    }
-
 
     public void init()
     {
@@ -166,17 +147,9 @@ public class Window
 
         currentGameMode.resizeSpatialMap(this.width, this.height);
 
-        spacePartitionRenderer = new SpacePartitionRenderer(ecs);
-        ecs.registerSystem(spacePartitionRenderer);
-
         // order of system registry is important, systems run in the order they are added
         var inputSystem = new KBMInput(ecs);
         ecs.registerSystem(inputSystem);
-        ecs.registerSystem(new VerletPhysics(ecs, currentGameMode.getSpatialMap()));
-        //ecs.registerSystem(new SpriteRenderer(ecs));
-        ecs.registerSystem(new LineRenderer(ecs));
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
-
 
         initInput(inputSystem);
     }
@@ -184,27 +157,6 @@ public class Window
     public Camera camera()
     {
         return camera;
-    }
-
-    public static int getWidth() {
-        return get().width;
-    }
-
-    public static int getHeight() {
-        return get().height;
-    }
-
-    public static void setWidth(int newWidth) {
-        get().width = newWidth;
-    }
-
-    public static void setHeight(int newHeight) {
-        get().height = newHeight;
-    }
-
-    public static float getTargetAspectRatio()
-    {
-        return 16.0f / 9.0f;
     }
 
     // this is the main game loop

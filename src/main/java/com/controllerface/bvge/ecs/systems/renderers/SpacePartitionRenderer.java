@@ -2,7 +2,7 @@ package com.controllerface.bvge.ecs.systems.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.physics.SpatialMapEX;
+import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.batches.RectRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
@@ -18,10 +18,12 @@ public class SpacePartitionRenderer extends GameSystem
     private final Vector3f color = new Vector3f(0f,0f,1f);
     private final Vector3f color2 = new Vector3f(.5f,0.1f,0.1f);
 
+    private final SpatialMap spatialMap;
 
-    public SpacePartitionRenderer(ECS ecs)
+    public SpacePartitionRenderer(ECS ecs, SpatialMap spatialMap)
     {
         super(ecs);
+        this.spatialMap = spatialMap;
         this.batches = new ArrayList<>();
         this.shader = AssetPool.getShader("debugLine2D.glsl");
     }
@@ -56,13 +58,6 @@ public class SpacePartitionRenderer extends GameSystem
             batch.render();
             batch.clear();
         }
-    }
-
-    private SpatialMapEX spatialMap;
-
-    public void setSpatialMap( SpatialMapEX spatialMap)
-    {
-        this.spatialMap = spatialMap;
     }
 
     private boolean hasSet = false;

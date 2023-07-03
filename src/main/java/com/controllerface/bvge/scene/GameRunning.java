@@ -4,10 +4,14 @@ import com.controllerface.bvge.data.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.Sprite;
 import com.controllerface.bvge.ecs.components.*;
-import com.controllerface.bvge.ecs.systems.physics.SpatialMapEX;
+import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
+import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
+import com.controllerface.bvge.ecs.systems.renderers.BoundingBoxRenderer;
+import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
+import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
+import com.controllerface.bvge.ecs.systems.renderers.SpriteRenderer;
 import com.controllerface.bvge.util.AssetPool;
 import org.joml.Random;
-import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 public class GameRunning extends GameMode
@@ -19,12 +23,12 @@ public class GameRunning extends GameMode
         this.ecs = ecs;
     }
 
-    private final SpatialMapEX spatialMap = new SpatialMapEX();
-
-    private int testBoxSize = 64;
+    private final SpatialMap spatialMap = new SpatialMap();
 
     private void genNPCs(float spacing, float size)
     {
+        int testBoxSize = 64;
+
         System.out.println("generating: " + testBoxSize * testBoxSize + " NPCs..");
         var rand = new Random();
         for (int i = 0; i < testBoxSize; i++)
@@ -77,26 +81,28 @@ public class GameRunning extends GameMode
         ecs.attachComponent(player, Component.BoundingBox, physicsObject.bounds());
 
         genNPCs(3f, 3f);
+
+        // note: order of adding systems is important
+        ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialMap));
+        ecs.registerSystem(new VerletPhysics(ecs, spatialMap));
+        ecs.registerSystem(new SpriteRenderer(ecs));
+        ecs.registerSystem(new LineRenderer(ecs));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs));
     }
 
     @Override
     public void start()
     {
-        //this.camera = new Camera(new Vector2f(0, 0));
     }
 
     @Override
     public void update(float dt)
     {
-        //this.camera.adjustProjection();
     }
 
     @Override
-    public void resizeSpatialMap(int width, int height) {
+    public void resizeSpatialMap(int width, int height)
+    {
         spatialMap.resize(width, height);
-    }
-
-    public SpatialMapEX getSpatialMap() {
-        return spatialMap;
     }
 }

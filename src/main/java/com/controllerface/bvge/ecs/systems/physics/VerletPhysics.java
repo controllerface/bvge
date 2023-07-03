@@ -21,14 +21,14 @@ public class VerletPhysics extends GameSystem
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
 
-    private final SpatialMapEX spatialMap;
+    private final SpatialMap spatialMap;
     /**
      * These buffers are reused each tick p2 avoid creating a new one every frame and for each object.
      * They should always be zeroed before each use.
      */
     private final Vector2f vectorBuffer1 = new Vector2f();
 
-    public VerletPhysics(ECS ecs, SpatialMapEX spatialMap)
+    public VerletPhysics(ECS ecs, SpatialMap spatialMap)
     {
         super(ecs);
         this.spatialMap = spatialMap;
@@ -211,8 +211,6 @@ public class VerletPhysics extends GameSystem
         }
 
         tickEdges();
-
-        Window.setSP(spatialMap);
     }
 
     private void simulate(float dt)

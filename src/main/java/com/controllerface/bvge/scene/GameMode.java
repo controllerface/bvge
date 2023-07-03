@@ -1,6 +1,6 @@
 package com.controllerface.bvge.scene;
 
-import com.controllerface.bvge.ecs.systems.physics.SpatialMapEX;
+import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
 
 public abstract class GameMode
 {
@@ -13,10 +13,7 @@ public abstract class GameMode
 
     abstract public void update(float dt);
 
-
     abstract public void resizeSpatialMap(int width, int height);
-
-    abstract public SpatialMapEX getSpatialMap();
 
     abstract public void load();
 }
