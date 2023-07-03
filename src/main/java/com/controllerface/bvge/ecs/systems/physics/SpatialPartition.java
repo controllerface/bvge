@@ -6,7 +6,7 @@ import com.controllerface.bvge.data.FBounds2D;
 import java.nio.IntBuffer;
 import java.util.*;
 
-public class SpatialMap
+public class SpatialPartition
 {
     private float width = 1920;
     private float height = 1080;
@@ -20,7 +20,10 @@ public class SpatialMap
     private float x_spacing = 0;
     private float y_spacing = 0;
 
-    public SpatialMap()
+    private float x_origin = 0;
+    private float y_origin = 0;
+
+    public SpatialPartition()
     {
         init();
     }
@@ -40,6 +43,12 @@ public class SpatialMap
         this.width = width;
         this.height = height;
         init();
+    }
+
+    public void updateOrigin(float x_origin, float y_origin)
+    {
+        this.x_origin = x_origin;
+        this.y_origin = y_origin;
     }
 
     private void rebuildLocationEX(int body_index, int[] key_map, int[] key_counts, int[] key_offsets)
@@ -292,5 +301,13 @@ public class SpatialMap
 
     public float getY_spacing() {
         return y_spacing;
+    }
+
+    public float getX_origin() {
+        return x_origin;
+    }
+
+    public float getY_origin() {
+        return y_origin;
     }
 }

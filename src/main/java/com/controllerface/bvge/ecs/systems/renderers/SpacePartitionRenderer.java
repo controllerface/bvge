@@ -2,7 +2,7 @@ package com.controllerface.bvge.ecs.systems.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
+import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.batches.RectRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
@@ -18,12 +18,12 @@ public class SpacePartitionRenderer extends GameSystem
     private final Vector3f color = new Vector3f(0f,0f,1f);
     private final Vector3f color2 = new Vector3f(.5f,0.1f,0.1f);
 
-    private final SpatialMap spatialMap;
+    private final SpatialPartition spatialPartition;
 
-    public SpacePartitionRenderer(ECS ecs, SpatialMap spatialMap)
+    public SpacePartitionRenderer(ECS ecs, SpatialPartition spatialPartition)
     {
         super(ecs);
-        this.spatialMap = spatialMap;
+        this.spatialPartition = spatialPartition;
         this.batches = new ArrayList<>();
         this.shader = AssetPool.getShader("debugLine2D.glsl");
     }
@@ -65,20 +65,21 @@ public class SpacePartitionRenderer extends GameSystem
     @Override
     public void run(float dt)
     {
-        if (spatialMap == null) return;
-        for (float i = 0; i < spatialMap.getWidth(); i += spatialMap.getX_spacing())
+        if (spatialPartition == null) return;
+        var x_max = spatialPartition.getX_origin() + spatialPartition.getWidth();
+        var y_max = spatialPartition.getY_origin() + spatialPartition.getHeight();
+
+        for (float i = spatialPartition.getX_origin(); i < x_max; i += spatialPartition.getX_spacing())
         {
-            for (float j = 0; j < spatialMap.getHeight(); j += spatialMap.getY_spacing())
+            for (float j = spatialPartition.getY_origin(); j < y_max; j += spatialPartition.getY_spacing())
             {
-//                if (i + spatialMap.getX_spacing() > spatialMap.getWidth()
-//                        || j + spatialMap.getY_spacing() > spatialMap.getHeight())
-//                {
-//                    continue;
-//                }
-                this.add(i, j, spatialMap.getX_spacing(), spatialMap.getY_spacing(), color2);
+                this.add(i, j, spatialPartition.getX_spacing(), spatialPartition.getY_spacing(), color2);
             }
         }
-        this.add(0,0, spatialMap.getWidth(), spatialMap.getHeight(), color);
+        this.add(spatialPartition.getX_origin(),
+                spatialPartition.getY_origin(),
+                spatialPartition.getWidth(),
+                spatialPartition.getHeight(), color);
         render();
     }
 }

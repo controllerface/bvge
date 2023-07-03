@@ -5,12 +5,10 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.Sprite;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
-import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
+import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
-import com.controllerface.bvge.ecs.systems.renderers.BoundingBoxRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
 import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
-import com.controllerface.bvge.ecs.systems.renderers.SpriteRenderer;
 import com.controllerface.bvge.util.AssetPool;
 import org.joml.Random;
 import org.joml.Vector4f;
@@ -24,7 +22,7 @@ public class TestGame extends GameMode
         this.ecs = ecs;
     }
 
-    private final SpatialMap spatialMap = new SpatialMap();
+    private final SpatialPartition spatialPartition = new SpatialPartition();
 
     private void genNPCs(float spacing, float size)
     {
@@ -85,9 +83,9 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
-        ecs.registerSystem(new VerletPhysics(ecs, spatialMap));
-        ecs.registerSystem(new CameraTracking(ecs));
-        ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialMap));
+        ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
+        ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
+        ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));
         ecs.registerSystem(new LineRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
@@ -114,6 +112,6 @@ public class TestGame extends GameMode
     @Override
     public void resizeSpatialMap(int width, int height)
     {
-        spatialMap.resize(width, height);
+        spatialPartition.resize(width, height);
     }
 }

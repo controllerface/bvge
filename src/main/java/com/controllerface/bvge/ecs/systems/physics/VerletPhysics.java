@@ -6,7 +6,6 @@ import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.window.Window;
 import org.joml.Vector2f;
 
 import java.nio.FloatBuffer;
@@ -21,17 +20,17 @@ public class VerletPhysics extends GameSystem
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
 
-    private final SpatialMap spatialMap;
+    private final SpatialPartition spatialPartition;
     /**
      * These buffers are reused each tick p2 avoid creating a new one every frame and for each object.
      * They should always be zeroed before each use.
      */
     private final Vector2f vectorBuffer1 = new Vector2f();
 
-    public VerletPhysics(ECS ecs, SpatialMap spatialMap)
+    public VerletPhysics(ECS ecs, SpatialPartition spatialPartition)
     {
         super(ecs);
-        this.spatialMap = spatialMap;
+        this.spatialPartition = spatialPartition;
     }
 
     private void resolveForces(String entity, FBody2D body2D)
@@ -127,10 +126,10 @@ public class VerletPhysics extends GameSystem
         resolveForces(body.entity(), body);
 
         // integrate in CL
-        OCLFunctions.integrate(dt, spatialMap.getX_spacing(), spatialMap.getY_spacing());
+        OCLFunctions.integrate(dt, spatialPartition.getX_spacing(), spatialPartition.getY_spacing());
 
         // broad phase collision
-        var key_bank_size = spatialMap.calculateKeyBankSize();
+        var key_bank_size = spatialPartition.calculateKeyBankSize();
         int key_map_size = key_bank_size / Main.Memory.Width.KEY;
 
         int[] key_bank = new int[key_bank_size];
@@ -141,17 +140,17 @@ public class VerletPhysics extends GameSystem
         //  but that may create a lot more issues.
         Arrays.fill(key_map, -1);
 
-        int[] key_counts = new int[spatialMap.directoryLength()];
-        int[] key_offsets = new int[spatialMap.directoryLength()];
+        int[] key_counts = new int[spatialPartition.directoryLength()];
+        int[] key_offsets = new int[spatialPartition.directoryLength()];
 
-        spatialMap.buildKeyBank(key_bank, key_counts);
-        spatialMap.calculateMapOffsets(key_offsets, key_counts);
-        spatialMap.buildKeyMap(key_map, key_counts, key_offsets);
+        spatialPartition.buildKeyBank(key_bank, key_counts);
+        spatialPartition.calculateMapOffsets(key_offsets, key_counts);
+        spatialPartition.buildKeyMap(key_map, key_counts, key_offsets);
 
         // todo: now need to pull out the intermediate list used as a buffer in this method
         //  may need to do two passes, one to detect size needed and one to actually get candidates
         //  best to do on GPU.
-        var candidates = spatialMap.computeCandidatesEX(key_bank, key_map, key_counts, key_offsets);
+        var candidates = spatialPartition.computeCandidatesEX(key_bank, key_map, key_counts, key_offsets);
 
         // narrow phase collision
         if (candidates.limit() > 0)

@@ -3,13 +3,16 @@ package com.controllerface.bvge.ecs.systems;
 import com.controllerface.bvge.data.FTransform;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.window.Window;
 
 public class CameraTracking extends GameSystem
 {
-    public CameraTracking(ECS ecs)
+    private final SpatialPartition spatialPartition;
+    public CameraTracking(ECS ecs, SpatialPartition spatialPartition)
     {
         super(ecs);
+        this.spatialPartition = spatialPartition;
     }
 
     @Override
@@ -27,5 +30,6 @@ public class CameraTracking extends GameSystem
         var new_y = (transform.pos_y() - height / 2);
         camera.position.x = new_x;
         camera.position.y = new_y;
+        spatialPartition.updateOrigin(new_x + width/4, new_y + height/4);
     }
 }
