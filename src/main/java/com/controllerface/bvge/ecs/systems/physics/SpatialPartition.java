@@ -12,8 +12,8 @@ public class SpatialPartition
     private float height = 0;
 
     // note: sub-divisions should always be divisible by 2
-    private int x_subdivisions = 100;
-    private int y_subdivisions = 100;
+    private int x_subdivisions = 120;
+    private int y_subdivisions = 120;
 
     // todo: will need some kind of "offset" values that track the player position, moving the effective
     //  range of the partition, and allowing negative co-ordinates to work with the backing arrays.
@@ -125,11 +125,14 @@ public class SpatialPartition
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
-                if (current_x < 0 || current_x >= x_subdivisions
-                    || current_y < 0 || current_y >= y_subdivisions)
-                {
-                    continue;
-                }
+                // todo: for some reason, with this code enabled, some collisions do not occur.
+                //  with it disabled, a lot of extra keys are generated
+//                boolean xout = (current_x < 0 || current_x >= x_subdivisions);
+//                boolean yout = (current_y < 0 || current_y >= y_subdivisions);
+//                if (xout || yout)
+//                {
+//                    continue;
+//                }
                 int key_index = calculateKeyIndex(current_x, current_y);
                 if (key_index < 0 || current_index < 0
                     || key_index >= key_counts.length

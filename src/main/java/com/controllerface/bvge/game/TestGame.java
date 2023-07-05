@@ -71,7 +71,7 @@ public class TestGame extends GameMode
         sprite.setWidth(16);
         scomp.setSprite(sprite);
         //scomp.setColor(new Vector4f(0,0,0,1));
-        var physicsObject = PhysicsObjects.polygon1(0,0, 32, player);
+        var physicsObject = PhysicsObjects.simpleBox(0,0, 32, player);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
@@ -86,19 +86,19 @@ public class TestGame extends GameMode
         ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
         ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
-        //ecs.registerSystem(new SpriteRenderer(ecs));
+        ecs.registerSystem(new SpriteRenderer(ecs));
         ecs.registerSystem(new LineRenderer(ecs));
-        ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
     }
 
     @Override
     public void load()
     {
         genPlayer();
-        genNPCs(50, 20f, 20f, 100, 100);
-        genNPCs(50, 10f, 10f, 1000, 1000);
-        genNPCs(50, 2f, 2f, -500, -500);
-        genNPCs(50, 7f, 7f, -1000, 500);
+        genNPCs(50, 20f, 20f, 2100, 2100);
+        genNPCs(50, 20f, 20f, 1000, 1000);
+        genNPCs(50, 20f, 20f, -1500, -1500);
+        genNPCs(50, 20f, 20f, -1000, 1500);
 
 
         loadSystems();

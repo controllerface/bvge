@@ -91,9 +91,9 @@ public class Camera
         {
             zoom = .5f;
         }
-        else if (zoom > 3f)
+        else if (zoom > 20f)
         {
-            zoom = 3f;
+            zoom = 20f;
         }
     }
 }
