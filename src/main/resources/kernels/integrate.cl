@@ -1,5 +1,5 @@
 // gets the extents of a spatial index for an axis-aligned bounding box
-int4 getExtents(int2 corners[])
+int4 getExtents(int3 corners[])
 {
     int4 r;
     r.x = INT_MAX; // min_x
@@ -8,7 +8,7 @@ int4 getExtents(int2 corners[])
     r.w = INT_MIN; // max_y
     for (int i = 0; i < sizeof(corners); i++)
     {
-        int2 corner = corners[i];
+        int3 corner = corners[i];
         if (corner.x < r.x)
         {
             r.x = corner.x;
@@ -30,13 +30,13 @@ int4 getExtents(int2 corners[])
 }
 
 // calculates a spatial index cell for a given point
-int2 getKeyForPoint(float px, float py,
+int3 getKeyForPoint(float px, float py,
                     float x_spacing, float y_spacing,
                     float x_origin, float y_origin,
                     float width, float height,
                     int x_subdivisions, int y_subdivisions)
 {
-    int2 out;
+    int3 out;
     float adjusted_x = px - (x_origin);
     float adjusted_y = py - (y_origin);
     int index_x = ((int) floor(adjusted_x / x_spacing));
@@ -112,8 +112,8 @@ __kernel void integrate(
         diff = acc + diff;
 
         // add friction component todo: take this in as an argument, gravity too
-        diff.x *= .999;
-        diff.y *= .999;
+        diff.x *= .980;
+        diff.y *= .980;
 
         // set the prv to current pos
         prv.x = pos.x;
@@ -172,7 +172,7 @@ __kernel void integrate(
     bounding_box.s3 = fabs(max_y - min_y);
 
     // calculate spatial index boundary
-    int2 keys[4];
+    int3 keys[4];
 
     keys[0] = getKeyForPoint(bounding_box.s0, bounding_box.s1, 
         x_spacing, y_spacing,

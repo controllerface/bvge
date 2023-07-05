@@ -113,6 +113,11 @@ public class SpatialPartition
     {
         var body = Main.Memory.bodyByIndex(body_index);
 
+//        if (!isInBounds(body.bounds()))
+//        {
+//            return;
+//        }
+
         var offset = body.bounds().bank_offset() * Main.Memory.Width.KEY;
 
         int min_x = body.si_min_x();
@@ -251,6 +256,14 @@ public class SpatialPartition
             && a.x() + a.w() > b.x()
             && a.y() < b.y() + b.h()
             && a.y() + a.h() > b.y();
+    }
+
+    private boolean isInBounds(FBounds2D a)
+    {
+        return a.x() < x_origin + width
+                && a.x() + a.w() > x_origin
+                && a.y() < y_origin + width
+                && a.y() + a.h() > y_origin;
     }
 
 
