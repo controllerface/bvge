@@ -112,6 +112,7 @@ public class OCLFunctions
     public static void integrate(float tick_rate,
                                  float x_spacing, float y_spacing,
                                  float x_origin, float y_origin,
+                                 float width, float height,
                                  int x_subdivisions, int y_subdivisions)
     {
         int bodiesSize = Main.Memory.bodyLength();
@@ -126,13 +127,15 @@ public class OCLFunctions
         long global_work_size[] = new long[]{Main.Memory.bodyCount()};
         float[] args =
         {
-                tick_rate * tick_rate,
-                x_spacing,
-                y_spacing,
-                x_origin,
-                y_origin,
-                (float)x_subdivisions,
-                (float)y_subdivisions
+            tick_rate * tick_rate,
+            x_spacing,
+            y_spacing,
+            x_origin,
+            y_origin,
+            width,
+            height,
+            (float)x_subdivisions,
+            (float)y_subdivisions
         };
 
         Pointer srcBodies = Pointer.to(bodyBuffer);

@@ -33,13 +33,14 @@ int4 getExtents(int2 corners[])
 int2 getKeyForPoint(float px, float py,
                     float x_spacing, float y_spacing,
                     float x_origin, float y_origin,
+                    float width, float height,
                     int x_subdivisions, int y_subdivisions)
 {
+    int2 out;
     float adjusted_x = px - (x_origin);
     float adjusted_y = py - (y_origin);
     int index_x = ((int) floor(adjusted_x / x_spacing));
     int index_y = ((int) floor(adjusted_y / y_spacing));
-    int2 out;
     out.x = index_x;
     out.y = index_y;
     return out;
@@ -61,8 +62,10 @@ __kernel void integrate(
     float y_spacing = args[2];
     float x_origin = args[3];
     float y_origin = args[4];
-    int x_subdivisions = (int) args[5];
-    int y_subdivisions = (int) args[6];
+    float width = args[5];
+    float height = args[6];
+    int x_subdivisions = (int) args[7];
+    int y_subdivisions = (int) args[8];
 
     // get body from array
     float16 body = bodies[gid];
@@ -171,29 +174,29 @@ __kernel void integrate(
     // calculate spatial index boundary
     int2 keys[4];
 
-    keys[0] = getKeyForPoint(bounding_box.s0, bounding_box.s1, x_spacing, y_spacing,
-        x_origin,
-        y_origin,
-        x_subdivisions,
-        y_subdivisions);
+    keys[0] = getKeyForPoint(bounding_box.s0, bounding_box.s1, 
+        x_spacing, y_spacing,
+        x_origin, y_origin,
+        width, height,
+        x_subdivisions, y_subdivisions);
 
-    keys[1] = getKeyForPoint(max_x, bounding_box.s1, x_spacing, y_spacing,
-        x_origin,
-        y_origin,
-        x_subdivisions,
-        y_subdivisions);
+    keys[1] = getKeyForPoint(max_x, bounding_box.s1, 
+        x_spacing, y_spacing,
+        x_origin, y_origin,
+        width, height,
+        x_subdivisions, y_subdivisions);
 
-    keys[2] = getKeyForPoint(max_x, max_y, x_spacing, y_spacing,
-        x_origin,
-        y_origin,
-        x_subdivisions,
-        y_subdivisions);
+    keys[2] = getKeyForPoint(max_x, max_y, 
+        x_spacing, y_spacing,
+        x_origin, y_origin,
+        width, height,
+        x_subdivisions, y_subdivisions);
 
-    keys[3] = getKeyForPoint(bounding_box.s0, max_y, x_spacing, y_spacing,
-        x_origin,
-        y_origin,
-        x_subdivisions,
-        y_subdivisions);
+    keys[3] = getKeyForPoint(bounding_box.s0, max_y, 
+        x_spacing, y_spacing,
+        x_origin, y_origin,
+        width, height,
+        x_subdivisions, y_subdivisions);
 
     int4 k = getExtents(keys);
     body.sb = (float) k.x;

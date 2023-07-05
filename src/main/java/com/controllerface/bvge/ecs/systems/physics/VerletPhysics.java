@@ -13,7 +13,7 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 30.0f;
+    private final float TICK_RATE = 1.0f / 60.0f;
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 2;
     private final float GRAVITY = 9.8f;
@@ -131,6 +131,8 @@ public class VerletPhysics extends GameSystem
                 spatialPartition.getY_spacing(),
                 spatialPartition.getX_origin(),
                 spatialPartition.getY_origin(),
+                spatialPartition.getWidth(),
+                spatialPartition.getHeight(),
                 spatialPartition.getX_subdivisions(),
                 spatialPartition.getY_subdivisions());
 

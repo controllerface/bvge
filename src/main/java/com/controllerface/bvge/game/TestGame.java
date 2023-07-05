@@ -95,10 +95,10 @@ public class TestGame extends GameMode
     public void load()
     {
         genPlayer();
-        genNPCs(10, 20f, 20f, 100, 100);
+        genNPCs(50, 20f, 20f, 100, 100);
         genNPCs(50, 10f, 10f, 1000, 1000);
-        genNPCs(25, 2f, 2f, -500, -500);
-        genNPCs(20, 7f, 7f, -1000, 500);
+        genNPCs(50, 2f, 2f, -500, -500);
+        genNPCs(50, 7f, 7f, -1000, 500);
 
 
         loadSystems();

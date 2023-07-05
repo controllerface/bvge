@@ -236,8 +236,6 @@ __kernel void collide(
     manifold.s6 = (float)edge_index_b;  // edge point B
     manifold.s7 = (float)vert_index;  // vertex point
 
-
-
     reaction.s0 = -1;
     if (manifold.s0 == -1)
     {

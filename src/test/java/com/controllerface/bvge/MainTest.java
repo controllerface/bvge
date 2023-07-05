@@ -124,7 +124,7 @@ class MainTest
         System.out.println(Arrays.toString(body_buffer));
         System.out.println(Arrays.toString(point_buffer));
         System.out.println(Arrays.toString(bounds_buffer));
-        OCLFunctions.integrate(1f/60f, 100, 100);
+        //OCLFunctions.integrate(1f/60f, 100, 100);
         System.out.println("After:");
         System.out.println(Arrays.toString(body_buffer));
         System.out.println(Arrays.toString(point_buffer));
