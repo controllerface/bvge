@@ -86,9 +86,9 @@ public class TestGame extends GameMode
         ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
         ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
-        ecs.registerSystem(new SpriteRenderer(ecs));
+        //ecs.registerSystem(new SpriteRenderer(ecs));
         ecs.registerSystem(new LineRenderer(ecs));
-        ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
     }
 
     @Override
@@ -99,6 +99,8 @@ public class TestGame extends GameMode
         genNPCs(20, 40f, 40f, 1000, -1000);
         genNPCs(20, 40f, 40f, -1500, -1500);
         genNPCs(20, 40f, 40f, -1000, 1500);
+        //genNPCs(1, 40f, 40f, -40, -1);
+
 
 
         loadSystems();

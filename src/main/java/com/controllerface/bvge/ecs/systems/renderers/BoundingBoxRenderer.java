@@ -5,6 +5,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.batches.BoxRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
@@ -19,22 +20,35 @@ public class BoundingBoxRenderer extends GameSystem
     private Shader shader;
     private List<BoxRenderBatch> batches;
     private final Vector3f color = new Vector3f(0.8f,0.8f,0.2f);
+    private final Vector3f color2 = new Vector3f(1f,1f,1f);
 
-    public BoundingBoxRenderer(ECS ecs)
+    private final Vector3f color3 = new Vector3f(.0f,.8f,.3f);
+
+    private final SpatialPartition spatialPartition;
+
+    public BoundingBoxRenderer(ECS ecs, SpatialPartition spatialPartition)
     {
         super(ecs);
+        this.spatialPartition = spatialPartition;
         this.batches = new ArrayList<>();
         this.shader = AssetPool.getShader("debugLine2D.glsl");
     }
 
-    private void add(FBounds2D box)
+    private void add(FBounds2D box, boolean in)
     {
+//        var colorToUse = box.boo() == 0
+//                ? color2
+//                : box.boo() == 4
+//                    ? color
+//                    : color3;
+        var colorToUse = in ? color2 : color;
+
         boolean added = false;
         for (BoxRenderBatch batch : batches)
         {
             if (batch.hasRoom())
             {
-                batch.addBox(box, color);
+                batch.addBox(box, colorToUse);
                 added = true;
                 break;
             }
@@ -45,7 +59,7 @@ public class BoundingBoxRenderer extends GameSystem
             BoxRenderBatch newBatch = new BoxRenderBatch(0, shader);
             newBatch.start();
             batches.add(newBatch);
-            newBatch.addBox(box, color);
+            newBatch.addBox(box, colorToUse);
         }
     }
 
@@ -65,7 +79,7 @@ public class BoundingBoxRenderer extends GameSystem
         {
             GameComponent component = entry.getValue();
             FBounds2D box = Component.BoundingBox.coerce(component);
-            this.add(box);
+            this.add(box, spatialPartition.isInBounds(box));
         }
         render();
     }

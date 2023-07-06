@@ -69,6 +69,11 @@ public class SpatialPartition
     {
         var body = Main.Memory.bodyByIndex(body_index);
 
+        if (!isInBounds(body.bounds()))
+        {
+            return;
+        }
+
         int min_x = body.si_min_x();
         int max_x = body.si_max_x();
         int min_y = body.si_min_y();
@@ -118,12 +123,12 @@ public class SpatialPartition
         var body = Main.Memory.bodyByIndex(body_index);
 
         boolean inBounds = isInBounds(body.bounds());
-        boolean out_count = body.bounds().boo() > 0f;
+        boolean out_count = body.bounds().boo() == 4f;
 
-//        if (!inBounds && out_count)
-//        {
-//            return;
-//        }
+        if (!inBounds)
+        {
+            return;
+        }
 
 //        if (body.bounds().boo() != 0f && body.bounds().boo() != 4f) System.out.println(body.bounds().boo());
 //        if (body.bounds().boo() == 4f) return;
@@ -194,16 +199,22 @@ public class SpatialPartition
         for (int body_index = 0; body_index < Main.Memory.bodyCount(); body_index++)
         {
             var body = Main.Memory.bodyByIndex(body_index);
-            // write the current offset into the bounds object, this is the offset
-            // into the main key bank where the keys for this body are stored.
-            // when accessing keys, the si_bank size is used along with this
-            // value to get all the keys for this object
-            // todo: can a "scan" (parallel prefix sum) be used here? bodies could have their offset
-            //  computed and set in CL this way
-            body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
+            if (!isInBounds(body.bounds()))
+            {
+                body.bounds().setBankOffset(-1);
+            }
+            else {
+                // write the current offset into the bounds object, this is the offset
+                // into the main key bank where the keys for this body are stored.
+                // when accessing keys, the si_bank size is used along with this
+                // value to get all the keys for this object
+                // todo: can a "scan" (parallel prefix sum) be used here? bodies could have their offset
+                //  computed and set in CL this way
+                body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
 
-            // todo: can this be calculated alone using a parallel reduce? maybe first?
-            size += body.si_bank_size();
+                // todo: can this be calculated alone using a parallel reduce? maybe first?
+                size += body.si_bank_size();
+            }
         }
         key_bank_size = size;
         key_map_size = key_bank_size /Main.Memory.Width.KEY;
@@ -268,11 +279,11 @@ public class SpatialPartition
             && a.y() + a.h() > b.y();
     }
 
-    private boolean isInBounds(FBounds2D a)
+    public boolean isInBounds(FBounds2D a)
     {
         return a.x() < x_origin + width
                 && a.x() + a.w() > x_origin
-                && a.y() < y_origin + width
+                && a.y() < y_origin + height
                 && a.y() + a.h() > y_origin;
     }
 
@@ -324,6 +335,10 @@ public class SpatialPartition
     {
         var target = Main.Memory.bodyByIndex(target_index);
         var bounds = target.bounds();
+        if (!isInBounds(bounds))
+        {
+            return new int[0];
+        }
         var spatial_index = bounds.bank_offset() * Main.Memory.Width.KEY;
         var spatial_length = target.si_bank_size();
         var target_keys = new int[spatial_length];
