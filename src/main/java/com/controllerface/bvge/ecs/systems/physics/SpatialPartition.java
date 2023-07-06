@@ -31,6 +31,9 @@ public class SpatialPartition
         init();
     }
 
+    float [] x_indices;
+    float [] y_indices;
+
     // todo: partitioning needs to change a bit, instead of specifying subdivisions, the spacing is what
     //  should be static, so the resize operation will keep the space cell size but make the tracking area
     //  alone bigger or smaller. right now, resize changes the cell size which is not ideal.
@@ -39,6 +42,7 @@ public class SpatialPartition
         x_spacing = width / x_subdivisions;
         y_spacing = height / y_subdivisions;
         directoryLength = x_subdivisions * y_subdivisions;
+
     }
 
     public void resize(float width, float height)
@@ -113,10 +117,16 @@ public class SpatialPartition
     {
         var body = Main.Memory.bodyByIndex(body_index);
 
-//        if (!isInBounds(body.bounds()))
+        boolean inBounds = isInBounds(body.bounds());
+        boolean out_count = body.bounds().boo() > 0f;
+
+//        if (!inBounds && out_count)
 //        {
 //            return;
 //        }
+
+//        if (body.bounds().boo() != 0f && body.bounds().boo() != 4f) System.out.println(body.bounds().boo());
+//        if (body.bounds().boo() == 4f) return;
 
         var offset = body.bounds().bank_offset() * Main.Memory.Width.KEY;
 
@@ -391,6 +401,11 @@ public class SpatialPartition
 
     public int countAtIndex(float x, float y)
     {
+        if (x < x_origin || x > x_origin + width)
+        {
+            return 0;
+        }
+
         int[] key = getKeyForPoint(x, y);
         int i = calculateKeyIndex(key[0], key[1]);
         if (i > key_counts.length-1)

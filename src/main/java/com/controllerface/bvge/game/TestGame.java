@@ -96,7 +96,7 @@ public class TestGame extends GameMode
     {
         genPlayer();
         genNPCs(20, 40f, 40f, 2100, 2100);
-        genNPCs(20, 40f, 40f, 1000, 1000);
+        genNPCs(20, 40f, 40f, 1000, -1000);
         genNPCs(20, 40f, 40f, -1500, -1500);
         genNPCs(20, 40f, 40f, -1000, 1500);
 

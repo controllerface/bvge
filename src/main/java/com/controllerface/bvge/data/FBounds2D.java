@@ -12,15 +12,16 @@ public record FBounds2D(int index) implements GameComponent
     * 2: width
     * 3: height
     * 4: key bank offset
-    * 5:
+    * 5: bounding out count
     * 6:
     * 7:
     *  */
-    private static final int X_OFFSET     = 0;
-    private static final int Y_OFFSET     = 1;
-    private static final int W_OFFSET     = 2;
-    private static final int H_OFFSET     = 3;
-    private static final int BANK_OFFSET  = 4;
+    private static final int X_OFFSET         = 0;
+    private static final int Y_OFFSET         = 1;
+    private static final int W_OFFSET         = 2;
+    private static final int H_OFFSET         = 3;
+    private static final int BANK_OFFSET      = 4;
+    private static final int BOUND_OUT_OFFSET = 5;
 
     public float x()
     {
@@ -40,6 +41,11 @@ public record FBounds2D(int index) implements GameComponent
     public float h()
     {
         return Main.Memory.bounds_buffer[index() + H_OFFSET];
+    }
+
+    public float boo()
+    {
+        return Main.Memory.bounds_buffer[index() + BOUND_OUT_OFFSET];
     }
 
     public int bank_offset()

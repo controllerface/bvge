@@ -18,7 +18,7 @@ public class BoundingBoxRenderer extends GameSystem
 {
     private Shader shader;
     private List<BoxRenderBatch> batches;
-    private final Vector3f color = new Vector3f(1.0f,1.0f,1.0f);
+    private final Vector3f color = new Vector3f(0.8f,0.8f,0.2f);
 
     public BoundingBoxRenderer(ECS ecs)
     {

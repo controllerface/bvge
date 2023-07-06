@@ -39,10 +39,12 @@ int3 getKeyForPoint(float px, float py,
     int3 out;
     float adjusted_x = px - (x_origin);
     float adjusted_y = py - (y_origin);
-    int index_x = ((int) floor(adjusted_x / x_spacing));
-    int index_y = ((int) floor(adjusted_y / y_spacing));
+    int index_x = ((int) floor(adjusted_x / x_spacing - FLT_EPSILON));
+    int index_y = ((int) floor(adjusted_y / y_spacing - FLT_EPSILON));
+    bool outside = px < x_origin || px >= x_origin + width;
     out.x = index_x;
     out.y = index_y;
+    out.z = outside ? 1 : 0;
     return out;
 }
 
@@ -197,6 +199,8 @@ __kernel void integrate(
         x_origin, y_origin,
         width, height,
         x_subdivisions, y_subdivisions);
+
+    bounding_box.s5 = (keys[0].z + keys[1].z + keys[2].z + keys[3].z);
 
     int4 k = getExtents(keys);
     body.sb = (float) k.x;

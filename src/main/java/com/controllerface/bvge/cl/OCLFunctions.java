@@ -1,6 +1,7 @@
 package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.Main;
+import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import org.jocl.*;
 
 import java.io.IOException;
@@ -109,11 +110,7 @@ public class OCLFunctions
         clReleaseContext(context);
     }
 
-    public static void integrate(float tick_rate,
-                                 float x_spacing, float y_spacing,
-                                 float x_origin, float y_origin,
-                                 float width, float height,
-                                 int x_subdivisions, int y_subdivisions)
+    public static void integrate(float tick_rate, SpatialPartition spatialPartition)
     {
         int bodiesSize = Main.Memory.bodyLength();
         int pointsSize = Main.Memory.pointLength();
@@ -123,19 +120,27 @@ public class OCLFunctions
         var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
         var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
 
+
+
+//        float x_spacing, float y_spacing,
+//        float x_origin, float y_origin,
+//        float width, float height,
+//        int x_subdivisions, int y_subdivisions
+
+
         // Set the work-item dimensions
         long global_work_size[] = new long[]{Main.Memory.bodyCount()};
         float[] args =
         {
             tick_rate * tick_rate,
-            x_spacing,
-            y_spacing,
-            x_origin,
-            y_origin,
-            width,
-            height,
-            (float)x_subdivisions,
-            (float)y_subdivisions
+            spatialPartition.getX_spacing(),
+            spatialPartition.getY_spacing(),
+            spatialPartition.getX_origin(),
+            spatialPartition.getY_origin(),
+            spatialPartition.getWidth(),
+            spatialPartition.getHeight(),
+            (float)spatialPartition.getX_subdivisions(),
+            (float)spatialPartition.getY_subdivisions()
         };
 
         Pointer srcBodies = Pointer.to(bodyBuffer);
