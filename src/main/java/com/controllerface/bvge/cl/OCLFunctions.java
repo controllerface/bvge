@@ -24,6 +24,10 @@ public class OCLFunctions
     static cl_program p_collide;
     private static final String src_collide = readSrc("collide.cl");
 
+    static cl_kernel k_test;
+    static cl_program p_test;
+    private static final String src_test = readSrc("test.cl");
+
     private static String readSrc(String file)
     {
         var stream = OCLFunctions.class.getResourceAsStream("/kernels/" + file);
@@ -100,6 +104,12 @@ public class OCLFunctions
         p_collide = clCreateProgramWithSource(context, 1, new String[]{src_collide}, null, null);
         clBuildProgram(p_collide, 1, device_id, null, null, null);
         k_collide = clCreateKernel(p_collide, "collide", null);
+
+
+
+        p_test = clCreateProgramWithSource(context, 1, new String[]{src_test}, null, null);
+        clBuildProgram(p_test, 1, device_id, null, null, null);
+        k_test = clCreateKernel(p_test, "scan", null);
     }
 
     public static void destroy()
