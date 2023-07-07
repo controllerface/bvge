@@ -127,9 +127,9 @@ public class Window
 
     private void initInput(KBMInput inputSystem)
     {
-        glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
-        glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
-        glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
+        glfwSetCursorPosCallback(glfwWindow, inputSystem::mousePosCallback);
+        glfwSetMouseButtonCallback(glfwWindow, inputSystem::mouseButtonCallback);
+        glfwSetScrollCallback(glfwWindow, inputSystem::mouseScrollCallback);
         glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback);
     }
 

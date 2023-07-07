@@ -36,7 +36,7 @@
    3. would be useful to be able to measure current rotation angle
    4. may need some kind of "compass edge" to enable this
    5. also need a way to intentionally rotate to some specific angle
-   6. should be able to implement mouse tracking as for player to "look" it
+   6. should be able to implement mouse tracking for player to "look" it
 10. more Open CL physics
     1. figure out parallel prefix sum and reduce functions
     2. move as much as possible into GPU

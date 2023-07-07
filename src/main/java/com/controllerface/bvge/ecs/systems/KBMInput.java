@@ -11,7 +11,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 public class KBMInput extends GameSystem
 {
     private final boolean[] keyDown = new boolean[350];
-
+    double scrollX, scrollY;
     public KBMInput(ECS ecs)
     {
         super(ecs);
@@ -81,5 +81,57 @@ public class KBMInput extends GameSystem
         {
             keyDown[key] = false;
         }
+    }
+
+    private int mouseButtonsDown = 0;
+    private boolean[] mouseButtonsPressed =  new boolean[9];
+    private boolean isDragging;
+    private double xPos;
+    private double yPos;
+    private double lastX;
+    private double lastY;
+
+
+    public void mouseScrollCallback(long window, double xOffset, double yOffset)
+    {
+        scrollX = xOffset;
+        scrollY = yOffset;
+        Window.get().camera().addZoom(-(float) yOffset / 2);
+    }
+
+    public void mouseButtonCallback(long window, int button, int action, int mods)
+    {
+        System.out.println(button);
+        if (action == GLFW_PRESS)
+        {
+            mouseButtonsDown++;
+
+            if (button < mouseButtonsPressed.length)
+            {
+                mouseButtonsPressed[button] = true;
+            }
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            mouseButtonsDown--;
+
+            if (button < mouseButtonsPressed.length)
+            {
+                mouseButtonsPressed[button] = false;
+                isDragging = false;
+            }
+        }
+    }
+
+    public void mousePosCallback(long window, double xpos, double ypos)
+    {
+        if (mouseButtonsDown > 0)
+        {
+            isDragging = true;
+        }
+        lastX = xPos;
+        lastY = yPos;
+        xPos = xpos;
+        yPos = ypos;
     }
 }

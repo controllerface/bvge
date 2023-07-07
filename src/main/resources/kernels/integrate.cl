@@ -139,8 +139,8 @@ __kernel void integrate(
         diff = acc + diff;
 
         // add friction component todo: take this in as an argument, gravity too
-        diff.x *= .999;
-        diff.y *= .999;
+        diff.x *= .980;
+        diff.y *= .980;
 
         // set the prv to current pos
         prv.x = pos.x;
