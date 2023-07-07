@@ -88,20 +88,18 @@ public class TestGame extends GameMode
         ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));
         ecs.registerSystem(new LineRenderer(ecs));
-        ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
+       // ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
     }
 
     @Override
     public void load()
     {
         genPlayer();
-        genNPCs(20, 40f, 40f, 2100, 2100);
-        genNPCs(20, 40f, 40f, 1000, -1000);
-        genNPCs(20, 40f, 40f, -1500, -1500);
-        genNPCs(20, 40f, 40f, -1000, 1500);
+        genNPCs(60, 10f, 10f, 2100, 2100);
+        genNPCs(60, 10f, 10f, 1000, -1000);
+        genNPCs(60, 10f, 10f, -1500, -1500);
+        genNPCs(60, 10f, 10f, -1000, 1500);
         //genNPCs(1, 40f, 40f, -40, -1);
-
-
 
         loadSystems();
     }

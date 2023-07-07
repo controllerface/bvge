@@ -29,6 +29,15 @@ int4 getExtents(int3 corners[])
     return r;
 }
 
+bool isInBounds(float8 a, float x_origin, float y_origin, float width, float height)
+{
+    //printf("debug xo: %f yo: %f w: %f h: %f", x_origin, y_origin, width, height);
+    return a.s0 < x_origin + width
+            && a.s0 + a.s3 > x_origin
+            && a.s1 < y_origin + height
+            && a.s1 + a.s4 > y_origin;
+}
+
 // calculates a spatial index cell for a given point
 int3 getKeyForPoint(float px, float py,
                     float x_spacing, float y_spacing,
@@ -71,6 +80,24 @@ __kernel void integrate(
 
     // get body from array
     float16 body = bodies[gid];
+    int bound_index = (int)body.s6;
+    float8 bounding_box = bounds[bound_index];
+    // get start/end vertex indices
+    int start = (int)body.s7;
+    int end   = (int)body.s8;
+
+    if (!isInBounds(bounding_box, x_origin, y_origin, width, height))
+    {
+        r_bodies[gid] = body;
+        r_bounds[bound_index] = bounding_box;
+
+        for (int i = start; i <= end; i++)
+        {
+            float4 point = points[i];
+            r_points[i] = point;
+        }
+        return;
+    }
 
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
@@ -79,9 +106,7 @@ __kernel void integrate(
    	acc.x = acc.x * dt;
    	acc.y = acc.y * dt;
 
-    // get start/end vertex indices
-    int start = (int)body.s7;
-    int end   = (int)body.s8;
+
 
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;
@@ -114,8 +139,8 @@ __kernel void integrate(
         diff = acc + diff;
 
         // add friction component todo: take this in as an argument, gravity too
-        diff.x *= .980;
-        diff.y *= .980;
+        diff.x *= .999;
+        diff.y *= .999;
 
         // set the prv to current pos
         prv.x = pos.x;
@@ -163,9 +188,6 @@ __kernel void integrate(
     // calculate centroid
     body.s0 = x_sum / point_count;
     body.s1 = y_sum / point_count;
-
-    int bound_index = (int)body.s6;
-    float8 bounding_box = bounds[bound_index];
 
     // calculate bounding box
     bounding_box.s0 = min_x;
