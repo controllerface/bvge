@@ -1,11 +1,12 @@
 __kernel void scan(__global float *a,
                    __global float *r,
-                   __local float *b,
-                   uint n_items)
+                   __local float *b)
+                   //,uint n_items)
 {
     uint gid = get_global_id(0);
     uint lid = get_local_id(0);
     uint dp = 1;
+    uint n_items = 10;
 
     b[2*lid] = a[2*gid];
     b[2*lid+1] = a[2*gid+1];

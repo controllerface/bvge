@@ -105,8 +105,6 @@ public class OCLFunctions
         clBuildProgram(p_collide, 1, device_id, null, null, null);
         k_collide = clCreateKernel(p_collide, "collide", null);
 
-
-
         p_test = clCreateProgramWithSource(context, 1, new String[]{src_test}, null, null);
         clBuildProgram(p_test, 1, device_id, null, null, null);
         k_test = clCreateKernel(p_test, "scan", null);
@@ -118,6 +116,65 @@ public class OCLFunctions
         clReleaseProgram(p_verletIntegrate);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
+    }
+
+
+    public static final int WIDTH = 1024;
+    public static final int HEIGHT = 1024;
+    public static final int BIN_SIZE = 256;
+    public static final int GROUP_SIZE = 16;
+    public static final int SUB_HISTOGRAM_COUNT =
+        ((WIDTH * HEIGHT) / (GROUP_SIZE * BIN_SIZE));
+
+
+    public static void test_scan(float[] input, float[] output)
+    {
+
+        int inputsSize = input.length;
+        int outputsSize = output.length;
+
+
+        long globalThreads = (inputsSize) / BIN_SIZE ;
+        long localThreads = GROUP_SIZE;
+
+        // todo: add test that work item count is supported
+
+        var inputBuffer = FloatBuffer.wrap(input);
+        var outputBuffer = FloatBuffer.wrap(output);
+
+        // Set the work-item dimensions
+        long global_work_size[] = new long[]{inputsSize};
+
+        Pointer srcInput = Pointer.to(inputBuffer);
+        Pointer dstOutput = Pointer.to(outputBuffer);
+
+        long inputBufSize = Sizeof.cl_float * inputsSize;
+        long outputBufsize = Sizeof.cl_float * outputsSize;
+
+        cl_mem srcMemInput = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, inputBufSize, srcInput, null);
+        cl_mem dstMemOutput = clCreateBuffer(context, CL_MEM_READ_WRITE, outputBufsize, null, null);
+
+
+        // Set the arguments for the kernel
+        int a = 0;
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemInput));
+        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(dstMemOutput));
+        clSetKernelArg(k_collide, a++, GROUP_SIZE * BIN_SIZE * Sizeof.cl_float, null);
+
+
+        // todo: add test that memory is sufficient
+
+
+        // Execute the kernel
+        clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
+            new long[]{globalThreads}, new long[]{localThreads}, 0, null, null);
+
+        // Read the output data
+        clEnqueueReadBuffer(commandQueue, dstMemOutput, CL_TRUE, 0,
+            outputBufsize, dstOutput, 0, null, null);
+
+        clReleaseMemObject(srcMemInput);
+        clReleaseMemObject(dstMemOutput);
     }
 
     public static void integrate(float tick_rate, SpatialPartition spatialPartition)
