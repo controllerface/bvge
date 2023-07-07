@@ -86,6 +86,8 @@ __kernel void integrate(
     int start = (int)body.s7;
     int end   = (int)body.s8;
 
+    // todo: instead of punting on these, we can maybe update differently and tag the body
+    //  or something, so it can be handled differently for collisions as well.
     if (!isInBounds(bounding_box, x_origin, y_origin, width, height))
     {
         r_bodies[gid] = body;
