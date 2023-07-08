@@ -13,13 +13,15 @@ public class HarrisTest
 
     static cl_context context;
     static cl_kernel k_scan_pad_to_pow2;
-    static cl_program p_test;
+    static cl_kernel k_scan_subarrays;
+
+    static cl_program program;
     static cl_command_queue commandQueue;
     private static final String source = readSrc("harris_test.cl");
 
     public static void main(String[] args) {
         // Input array
-        int size = 100;
+        int size = 512;
         int[] input = new int[size];
         for (int i = 0; i<size; i++)
         {
@@ -38,7 +40,7 @@ public class HarrisTest
         commandQueue = CL.clCreateCommandQueue(context, device, 0, null);
 
         // Create and build the kernel program
-        cl_program program = CL.clCreateProgramWithSource(context, 1, new String[]{source}, null, null);
+        program = CL.clCreateProgramWithSource(context, 1, new String[]{source}, null, null);
         CL.clBuildProgram(program, 0, null, null, null, null);
 
         // Create input and output buffers
@@ -51,6 +53,8 @@ public class HarrisTest
 
         // Create kernel
         k_scan_pad_to_pow2 = CL.clCreateKernel(program, "scan_pad_to_pow2", null);
+        k_scan_subarrays = CL.clCreateKernel(program, "scan_subarrays", null);
+
 
 
 
@@ -123,33 +127,41 @@ public class HarrisTest
         if (k == 1)
         {
             long data_buf_size = (long)Sizeof.cl_int * n;
-
             Pointer dst_data = Pointer.to(output);
-
-            cl_mem r_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, data_buf_size, dst_data, null);
-
             Pointer src_data = Pointer.to(d_data);
-            // todo: need to call the "pad to pow" kernel with the proper data
-            //  it takes 3 args, the input data, a local buffer, and an int size.
             clSetKernelArg(k_scan_pad_to_pow2, 0, Sizeof.cl_mem, src_data);
             clSetKernelArg(k_scan_pad_to_pow2, 1, bufsize,null);
             clSetKernelArg(k_scan_pad_to_pow2, 2, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
             clEnqueueNDRangeKernel(commandQueue, k_scan_pad_to_pow2, 1, null,
                 new long[]{wx}, new long[]{wx}, 0, null, null);
-
             clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
                 data_buf_size, dst_data, 0, null, null);
-
-            System.out.println("test");
+            System.out.println("test 1");
 
 //            clw.kernel_arg(scan_pad_to_pow2,
 //                d_data, bufsize, n);
 //            k0 += clw.run_kernel_with_timing(scan_pad_to_pow2, /*dim=*/1, &wx, &wx);
         }
         else {
-//            size_t gx = k * wx;
-//            cl_mem d_partial = clw.dev_malloc(sizeof(int)*k);
+            int gx = k * wx;
+            long data_buf_size = (long)Sizeof.cl_int * k;
+            int[] nb = new int[k];
+            Pointer nb_data = Pointer.to(nb);
+            cl_mem d_partial = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, data_buf_size, nb_data, null);
+            Pointer dst_data = Pointer.to(output);
+            Pointer src_data = Pointer.to(d_data);
+            clSetKernelArg(k_scan_subarrays, 0, Sizeof.cl_mem, src_data);
+            clSetKernelArg(k_scan_subarrays, 1, bufsize,null);
+            clSetKernelArg(k_scan_subarrays, 2, Sizeof.cl_mem, nb_data);
+            clSetKernelArg(k_scan_subarrays, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+            clEnqueueNDRangeKernel(commandQueue, k_scan_subarrays, 1, null,
+                new long[]{gx}, new long[]{wx}, 0, null, null);
+            clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
+                data_buf_size, dst_data, 0, null, null);
+            System.out.println("test 2");
+            //recursive_scan(d_partial, output, k);
+            //clw.dev_malloc(sizeof(int)*k);
 //            clw.kernel_arg(scan_subarrays,
 //                d_data, bufsize, d_partial, n);
 //            k1 += clw.run_kernel_with_timing(scan_subarrays, /*dim=*/1, &gx, &wx);
@@ -159,6 +171,8 @@ public class HarrisTest
 //            k2 += clw.run_kernel_with_timing(scan_inc_subarrays, /*dim=*/1, &gx, &wx);
 //
 //            clw.dev_free(d_partial);
+
+            CL.clReleaseMemObject(d_partial);
         }
     }
 }
