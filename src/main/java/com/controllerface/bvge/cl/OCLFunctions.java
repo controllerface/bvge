@@ -5,6 +5,8 @@ import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import org.jocl.*;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
@@ -24,11 +26,15 @@ public class OCLFunctions
     static cl_program p_collide;
     private static final String src_collide = readSrc("collide.cl");
 
-    static cl_kernel k_test;
+    static cl_kernel exclusiveScanKernel;
     static cl_program p_test;
-    private static final String src_test = readSrc("test.cl");
+    private static final String src_test = readSrc("test_2.cl");
 
-    private static String readSrc(String file)
+    static cl_kernel addOffsetKernel;
+    static cl_program p_test2;
+    private static final String src_test2 = readSrc("test_add_offset.cl");
+
+    public static String readSrc(String file)
     {
         var stream = OCLFunctions.class.getResourceAsStream("/kernels/" + file);
         try
@@ -107,7 +113,12 @@ public class OCLFunctions
 
         p_test = clCreateProgramWithSource(context, 1, new String[]{src_test}, null, null);
         clBuildProgram(p_test, 1, device_id, null, null, null);
-        k_test = clCreateKernel(p_test, "scan", null);
+        exclusiveScanKernel = clCreateKernel(p_test, "scan", null);
+
+        p_test2 = clCreateProgramWithSource(context, 1, new String[]{src_test2}, null, null);
+        clBuildProgram(p_test2, 1, device_id, null, null, null);
+        addOffsetKernel = clCreateKernel(p_test2, "addOffset", null);
+
     }
 
     public static void destroy()
@@ -119,63 +130,104 @@ public class OCLFunctions
     }
 
 
-    public static final int WIDTH = 1024;
-    public static final int HEIGHT = 1024;
-    public static final int BIN_SIZE = 256;
-    public static final int GROUP_SIZE = 16;
-    public static final int SUB_HISTOGRAM_COUNT =
-        ((WIDTH * HEIGHT) / (GROUP_SIZE * BIN_SIZE));
 
+    public static final int wx = 256;
+    public static final int m = wx * 2;
 
-    public static void test_scan(float[] input, float[] output)
+    public static void scan(float[] inputData, float[] outputData, int size)
     {
+        cl_mem inputBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            Sizeof.cl_float * size, Pointer.to(inputData), null);
+        cl_mem outputBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+            Sizeof.cl_float * size, null, null);
 
-        int inputsSize = input.length;
-        int outputsSize = output.length;
+        // Set the kernel arguments
+        clSetKernelArg(exclusiveScanKernel, 0, Sizeof.cl_mem, Pointer.to(inputBuffer));
+        clSetKernelArg(exclusiveScanKernel, 1, Sizeof.cl_mem, Pointer.to(outputBuffer));
+        clSetKernelArg(exclusiveScanKernel, 2, Sizeof.cl_int, Pointer.to(new int[]{size}));
 
+        // Enqueue the kernel for execution
+        clEnqueueNDRangeKernel(commandQueue, exclusiveScanKernel, 1, null, new long[]{size}, null, 0, null, null);
 
-        long globalThreads = (inputsSize) / BIN_SIZE ;
-        long localThreads = GROUP_SIZE;
+        // Read the output buffer to retrieve the result
+        clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * size,
+            Pointer.to(outputData), 0, null, null);
 
-        // todo: add test that work item count is supported
+        // Print the results
+        System.out.println("Input: " + java.util.Arrays.toString(inputData));
+        System.out.println("GPU Output: " + java.util.Arrays.toString(outputData));
 
-        var inputBuffer = FloatBuffer.wrap(input);
-        var outputBuffer = FloatBuffer.wrap(output);
-
-        // Set the work-item dimensions
-        long global_work_size[] = new long[]{inputsSize};
-
-        Pointer srcInput = Pointer.to(inputBuffer);
-        Pointer dstOutput = Pointer.to(outputBuffer);
-
-        long inputBufSize = Sizeof.cl_float * inputsSize;
-        long outputBufsize = Sizeof.cl_float * outputsSize;
-
-        cl_mem srcMemInput = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, inputBufSize, srcInput, null);
-        cl_mem dstMemOutput = clCreateBuffer(context, CL_MEM_READ_WRITE, outputBufsize, null, null);
-
-
-        // Set the arguments for the kernel
-        int a = 0;
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(srcMemInput));
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(dstMemOutput));
-        clSetKernelArg(k_collide, a++, GROUP_SIZE * BIN_SIZE * Sizeof.cl_float, null);
-
-
-        // todo: add test that memory is sufficient
-
-
-        // Execute the kernel
-        clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
-            new long[]{globalThreads}, new long[]{localThreads}, 0, null, null);
-
-        // Read the output data
-        clEnqueueReadBuffer(commandQueue, dstMemOutput, CL_TRUE, 0,
-            outputBufsize, dstOutput, 0, null, null);
-
-        clReleaseMemObject(srcMemInput);
-        clReleaseMemObject(dstMemOutput);
     }
+
+
+//    public static void scan(int[] data, int[] flag, int n)
+//    {
+//        int k = (int) Math.ceil((float)n/(float)m);
+//
+//        var inputBuffer = IntBuffer.wrap(data);
+//        var flagBuffer = IntBuffer.wrap(flag);
+//        Pointer srcInput = Pointer.to(inputBuffer);
+//        Pointer srcFlag = Pointer.to(flagBuffer);
+//        long inputBufsize = (long)Sizeof.cl_int * k * m;
+//
+//        cl_mem d_data = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, inputBufsize, srcInput, null);
+//        //clw.dev_malloc(sizeof(int)*k*m);
+//        cl_mem d_part = clw.dev_malloc(sizeof(int)*k*m);
+//        cl_mem d_flag = clw.dev_malloc(sizeof(int)*k*m);
+//
+//        m0 += clw.memcpy_to_dev(d_data, sizeof(int)*n, data);
+//        m1 += clw.memcpy_to_dev(d_part, sizeof(int)*n, flag);
+//        m2 += clw.memcpy_to_dev(d_flag, sizeof(int)*n, flag);
+//
+//        recursive_scan(d_data, d_part, d_flag, n);
+//
+//        m3 += clw.memcpy_from_dev(d_data, sizeof(int)*n, data);
+//
+//        clw.dev_free(d_data);
+//        clw.dev_free(d_part);
+//        clw.dev_free(d_flag);
+//    }
+
+
+//    public static void recursive_scan(cl_mem d_data, cl_mem d_part, cl_mem d_flag, int n)
+//    {
+//        int k = (int) Math.ceil((float)n/(float)m);
+//        //size of each subarray stored in local memory
+//        var bufsize = Sizeof.cl_int + m;//sizeof(int)*m;
+//        if (k == 1) {
+//            clw.kernel_arg(scan_pad_to_pow2,
+//                d_data,  d_part,  d_flag,
+//                bufsize, bufsize, bufsize,
+//                n);
+//            k0 += clw.run_kernel_with_timing(scan_pad_to_pow2, /*dim=*/1, &wx, &wx);
+//
+//        } else {
+//            size_t gx = k * wx;
+//            cl_mem d_data2 = clw.dev_malloc(sizeof(int)*k);
+//            cl_mem d_part2 = clw.dev_malloc(sizeof(int)*k);
+//            cl_mem d_flag2 = clw.dev_malloc(sizeof(int)*k);
+//            clw.kernel_arg(upsweep_subarrays,
+//                d_data,  d_part,  d_flag,
+//                d_data2, d_part2, d_flag2,
+//                bufsize, bufsize, bufsize,
+//                n);
+//            k1 += clw.run_kernel_with_timing(upsweep_subarrays, /*dim=*/1, &gx, &wx);
+//
+//            recursive_scan(d_data2, d_part2, d_flag2, k);
+//
+//            clw.kernel_arg(downsweep_subarrays,
+//                d_data,  d_part,  d_flag,
+//                d_data2, d_part2, d_flag2,
+//                bufsize, bufsize, bufsize,
+//                n);
+//            k2 += clw.run_kernel_with_timing(downsweep_subarrays, /*dim=*/1, &gx, &wx);
+//
+//            clw.dev_free(d_data2);
+//            clw.dev_free(d_part2);
+//            clw.dev_free(d_flag2);
+//        }
+//    }
+
 
     public static void integrate(float tick_rate, SpatialPartition spatialPartition)
     {

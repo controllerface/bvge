@@ -120,10 +120,26 @@ class MainTest
     @Test
     public void xtest()
     {
-        float[] input = new float[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        float[] output = new float[input.length];
-        OCLFunctions.test_scan(input, output);
-        System.out.println("hey!");
+
+        int size = 5000;
+        float[] input = new float[size];
+        float[] output = new float[size];
+        for (int i = 0; i < size; i++)
+        {
+            input[i] = i + 1;
+        }
+
+
+        OCLFunctions.scan(input, output, size);
+
+        float[] t = new float[size];
+        for (int i = 1; i < input.length; i ++)
+        {
+            t[i] = t[i-1] + input[i-1];
+        }
+        int c = Arrays.compare(t, output);
+        System.out.println("CPU Output: " + Arrays.toString(t));
+        System.out.println("DEBUG: c=" + c);
     }
 
     @Test
