@@ -21,7 +21,7 @@ public class HarrisTest
 
     public static void main(String[] args) {
         // Input array
-        int size = 512;
+        int size = 512 * 1;
         int[] input = new int[size];
         for (int i = 0; i<size; i++)
         {
@@ -145,9 +145,11 @@ public class HarrisTest
         else {
             int gx = k * wx;
             long data_buf_size = (long)Sizeof.cl_int * k;
-            int[] nb = new int[k];
+            int[] nb = new int[(int)data_buf_size];
             Pointer nb_data = Pointer.to(nb);
+
             cl_mem d_partial = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, data_buf_size, nb_data, null);
+
             Pointer dst_data = Pointer.to(output);
             Pointer src_data = Pointer.to(d_data);
             clSetKernelArg(k_scan_subarrays, 0, Sizeof.cl_mem, src_data);
@@ -159,8 +161,10 @@ public class HarrisTest
                 new long[]{gx}, new long[]{wx}, 0, null, null);
             clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
                 data_buf_size, dst_data, 0, null, null);
+            clEnqueueReadBuffer(commandQueue, d_partial, CL_TRUE, 0,
+                data_buf_size, nb_data, 0, null, null);
             System.out.println("test 2");
-            //recursive_scan(d_partial, output, k);
+            recursive_scan(d_partial, output, k);
             //clw.dev_malloc(sizeof(int)*k);
 //            clw.kernel_arg(scan_subarrays,
 //                d_data, bufsize, d_partial, n);
