@@ -42,7 +42,7 @@ public class Main
             // Edges define constraints that are set between two vertices
 
             // float8
-            public static final int BOUNDS = 8;
+            public static final int BOUNDS = 16;
             // Bounding boxes are used for proximity checks on bodies
 
             // int2
@@ -117,6 +117,14 @@ public class Main
             bounds_buffer[bounds_index++] = 0f;
             bounds_buffer[bounds_index++] = 0f;
             bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
+            bounds_buffer[bounds_index++] = 0f;
             return new FBounds2D(bounds_index - Width.BOUNDS);
         }
 
@@ -147,7 +155,6 @@ public class Main
                                       float ax, float ay,
                                       float ps, float pe,
                                       float es, float ee,
-                                      float bi,
                                       FPoint2D[] points,
                                       FEdge2D[] edges,
                                       FBounds2D bounds,
@@ -159,7 +166,7 @@ public class Main
             body_buffer[body_index++] = sy;
             body_buffer[body_index++] = ax;
             body_buffer[body_index++] = ay;
-            body_buffer[body_index++] = bi;
+            body_buffer[body_index++] = 0f;
             body_buffer[body_index++] = ps;
             body_buffer[body_index++] = pe;
             body_buffer[body_index++] = es;

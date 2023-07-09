@@ -72,7 +72,6 @@ public class PhysicsObjects
             (float) p4.index() / Main.Memory.Width.POINT,
             (float) e1.index() / Main.Memory.Width.EDGE,
             (float) e6.index() / Main.Memory.Width.EDGE,
-            (float) bounds.index() / Main.Memory.Width.BOUNDS,
             points, edges,
             bounds, force,
             entity);
@@ -156,7 +155,6 @@ public class PhysicsObjects
                 (float) p5.index() / Main.Memory.Width.POINT,
                 (float) e1.index() / Main.Memory.Width.EDGE,
                 (float) e6.index() / Main.Memory.Width.EDGE,
-                (float) bounds.index() / Main.Memory.Width.BOUNDS,
                 points, edges,
                 bounds, force,
                 entity);

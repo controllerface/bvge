@@ -74,10 +74,10 @@ public class SpatialPartition
             return;
         }
 
-        int min_x = body.si_min_x();
-        int max_x = body.si_max_x();
-        int min_y = body.si_min_y();
-        int max_y = body.si_max_y();
+        int min_x = body.bounds().si_min_x();
+        int max_x = body.bounds().si_max_x();
+        int min_y = body.bounds().si_min_y();
+        int max_y = body.bounds().si_max_y();
 
         for (int current_x = min_x; current_x <= max_x; current_x++)
         {
@@ -123,7 +123,7 @@ public class SpatialPartition
         var body = Main.Memory.bodyByIndex(body_index);
 
         boolean inBounds = isInBounds(body.bounds());
-        boolean out_count = body.bounds().boo() == 4f;
+        //boolean out_count = body.bounds().boo() == 4f;
 
         if (!inBounds)
         {
@@ -135,10 +135,10 @@ public class SpatialPartition
 
         var offset = body.bounds().bank_offset() * Main.Memory.Width.KEY;
 
-        int min_x = body.si_min_x();
-        int max_x = body.si_max_x();
-        int min_y = body.si_min_y();
-        int max_y = body.si_max_y();
+        int min_x = body.bounds().si_min_x();
+        int max_x = body.bounds().si_max_x();
+        int min_y = body.bounds().si_min_y();
+        int max_y = body.bounds().si_max_y();
 
         int current_index = offset;
         for (int current_x = min_x; current_x <= max_x; current_x++)
@@ -213,7 +213,9 @@ public class SpatialPartition
                 body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
 
                 // todo: can this be calculated alone using a parallel reduce? maybe first?
-                size += body.si_bank_size();
+                size += body.bounds().si_bank_size();
+                var x = body.bounds().si_bank_size();
+                //System.out.println("dbg: " + x + ":" + size);
             }
         }
         key_bank_size = size;
@@ -340,7 +342,7 @@ public class SpatialPartition
             return new int[0];
         }
         var spatial_index = bounds.bank_offset() * Main.Memory.Width.KEY;
-        var spatial_length = target.si_bank_size();
+        var spatial_length = target.bounds().si_bank_size();
         var target_keys = new int[spatial_length];
         System.arraycopy(key_bank, spatial_index, target_keys, 0, spatial_length);
         return findMatchesEX(target_index, target_keys);
