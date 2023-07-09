@@ -155,6 +155,7 @@ public class Main
                                       float ax, float ay,
                                       float ps, float pe,
                                       float es, float ee,
+                                      int c_flags,
                                       FPoint2D[] points,
                                       FEdge2D[] edges,
                                       FBounds2D bounds,

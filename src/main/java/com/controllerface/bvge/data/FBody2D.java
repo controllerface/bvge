@@ -20,7 +20,7 @@ public record FBody2D(int index,
      *  3: scale y                    (transform)
      *  4: acceleration x component
      *  5: acceleration y component
-     *  6: bounding box index         (int cast) // no longer used
+     *  6: collision flags            (int cast) // todo: use
      *  7: start point index          (int cast)
      *  8: end point index            (int cast)
      *  9: start edge index           (int cast)

@@ -251,6 +251,8 @@ __kernel void collide(
     normal.y = manifold.s3;
 
     float2 collision_vector = normal * manifold.s4;
+    // todo: check body flags for static geometry, always default to 0 impact for the static
+    //  body, and 1.0 for the non-static body.
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 

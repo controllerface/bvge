@@ -8,6 +8,9 @@ public class PhysicsObjects
 {
     private static final Vector2f vectorBuffer = new Vector2f();
 
+    public static int FLAG_NONE = 0x00;
+    public static int FLAG_STATIC = 0x01;
+
     public static FBody2D simpleBox(float x, float y, float size, String entity)
     {
         var halfSize = size / 2;
@@ -72,6 +75,7 @@ public class PhysicsObjects
             (float) p4.index() / Main.Memory.Width.POINT,
             (float) e1.index() / Main.Memory.Width.EDGE,
             (float) e6.index() / Main.Memory.Width.EDGE,
+            FLAG_NONE,
             points, edges,
             bounds, force,
             entity);
@@ -149,14 +153,15 @@ public class PhysicsObjects
         MathEX.centroid(points, vectorBuffer);
 
         return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
-                size, size,
-                0,0,
-                (float) p1.index() / Main.Memory.Width.POINT,
-                (float) p5.index() / Main.Memory.Width.POINT,
-                (float) e1.index() / Main.Memory.Width.EDGE,
-                (float) e6.index() / Main.Memory.Width.EDGE,
-                points, edges,
-                bounds, force,
-                entity);
+            size, size,
+            0,0,
+            (float) p1.index() / Main.Memory.Width.POINT,
+            (float) p5.index() / Main.Memory.Width.POINT,
+            (float) e1.index() / Main.Memory.Width.EDGE,
+            (float) e6.index() / Main.Memory.Width.EDGE,
+            FLAG_NONE,
+            points, edges,
+            bounds, force,
+            entity);
     }
 }
