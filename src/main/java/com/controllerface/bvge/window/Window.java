@@ -2,13 +2,9 @@ package com.controllerface.bvge.window;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.KBMInput;
-import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
-import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
-import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
-import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
-import com.controllerface.bvge.ecs.systems.renderers.SpriteRenderer;
-import com.controllerface.bvge.scene.GameMode;
-import com.controllerface.bvge.scene.GameRunning;
+import com.controllerface.bvge.game.GameMode;
+import com.controllerface.bvge.game.TestGame;
+import org.joml.Vector2f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
@@ -35,8 +31,8 @@ public class Window
     public float r, g, b, a;
 
     private static GameMode currentGameMode;
-
-    private ECS ecs = new ECS();
+    private final ECS ecs = new ECS();
+    private final Camera camera = new Camera(new Vector2f(0, 0));
 
     private Window()
     {
@@ -58,11 +54,6 @@ public class Window
         return Window.INSTANCE;
     }
 
-    public static GameMode getScene()
-    {
-        return get().currentGameMode;
-    }
-
     public void run()
     {
         System.out.println("LWJGL version: " + Version.getVersion());
@@ -81,6 +72,7 @@ public class Window
         glfwPollEvents();
         glClearColor(r, g, b, a);
         glClear(GL_COLOR_BUFFER_BIT);
+        camera.adjustProjection();
     }
 
     private void initWindow()
@@ -94,20 +86,29 @@ public class Window
 
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-        var prim = NULL; //glfwGetPrimaryMonitor();
+        var prim = glfwGetPrimaryMonitor();
 
-        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, prim, NULL);
+        int[] x = new int[1];
+        int[] y = new int[1];
+        int[] w = new int[1];
+        int[] h = new int[1];
+        glfwGetMonitorWorkarea(prim, x,y,w,h);
+        this.width = w[0];
+        this.height = h[0];
+
+        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
         if (glfwWindow == NULL)
         {
             throw new IllegalStateException("could not create window");
         }
+
         glfwSetWindowSizeCallback(glfwWindow, (win, newWidth, newHeight)->
         {
-            Window.setWidth(newWidth);
-            Window.setHeight(newHeight);
+            get().width = newWidth;
+            get().height = newHeight;
+            currentGameMode.resizeSpatialMap(newWidth, newHeight);
         });
 
         glfwMakeContextCurrent(glfwWindow);
@@ -121,70 +122,40 @@ public class Window
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        glViewport(0,0,1920, 1080);
-
+        glViewport(0,0,this.width, this.height);
     }
 
     private void initInput(KBMInput inputSystem)
     {
-        glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
-        glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
-        glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
+        glfwSetCursorPosCallback(glfwWindow, inputSystem::mousePosCallback);
+        glfwSetMouseButtonCallback(glfwWindow, inputSystem::mouseButtonCallback);
+        glfwSetScrollCallback(glfwWindow, inputSystem::mouseScrollCallback);
         glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback);
     }
-
-    private static SpacePartitionRenderer spacePartitionRenderer;
-
-    public static void setSP(SpatialMap spatialMap)
-    {
-        Window.spacePartitionRenderer.setSpatialMap(spatialMap);
-    }
-
 
     public void init()
     {
         initWindow();
 
-        spacePartitionRenderer = new SpacePartitionRenderer(ecs);
+        currentGameMode = new TestGame(ecs);
+        currentGameMode.load();
+        currentGameMode.start();
+
+        camera.projectionSize.x = this.width;
+        camera.projectionSize.y = this.height;
+
+        currentGameMode.resizeSpatialMap(this.width, this.height);
 
         // order of system registry is important, systems run in the order they are added
         var inputSystem = new KBMInput(ecs);
         ecs.registerSystem(inputSystem);
-        ecs.registerSystem(new VerletPhysics(ecs));
-        ecs.registerSystem(new SpriteRenderer(ecs));
-        //ecs.registerSystem(new LineRenderer(ecs));
-        //ecs.registerSystem(new BoundingBoxRendering(ecs));
-
-        //ecs.registerSystem(spacePartionRendering);
-        // note: the display is wrong for this renderer, it's not scaled correctly for some reason.
-        // todo: look into that
 
         initInput(inputSystem);
-
-        currentGameMode = new GameRunning(ecs);
-        currentGameMode.load();
-        currentGameMode.start();
     }
 
-    public static int getWidth() {
-        return get().width;
-    }
-
-    public static int getHeight() {
-        return get().height;
-    }
-
-    public static void setWidth(int newWidth) {
-        get().width = newWidth;
-    }
-
-    public static void setHeight(int newHeight) {
-        get().height = newHeight;
-    }
-
-    public static float getTargetAspectRatio()
+    public Camera camera()
     {
-        return 16.0f / 9.0f;
+        return camera;
     }
 
     // this is the main game loop
@@ -212,5 +183,13 @@ public class Window
             dt = currentTime - lastTime;
             lastTime = currentTime;
         }
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 }

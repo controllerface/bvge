@@ -1,9 +1,11 @@
 package com.controllerface.bvge.gl.batches;
 
-import com.controllerface.bvge.ecs.Edge2D;
+import com.controllerface.bvge.data.FEdge2D;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
+
+import java.util.Random;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
@@ -29,7 +31,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
     private final int VERTEX_SIZE = 6;
     private final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
-    private Edge2D[] lines;
+    private FEdge2D[] lines;
     private int numLines;
     private boolean hasRoom;
     private float[] vertices;
@@ -47,7 +49,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
     public LineRenderBatch(int zIndex, Shader currentShader)
     {
         this.zIndex = zIndex;
-        this.lines = new Edge2D[Constants.Rendering.MAX_BATCH_SIZE];
+        this.lines = new FEdge2D[Constants.Rendering.MAX_BATCH_SIZE];
 
         // 4 vertices for quads, sprites are always rectangular
         vertices = new float[Constants.Rendering.MAX_BATCH_SIZE * 2 * VERTEX_SIZE];
@@ -61,6 +63,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
     public void clear()
     {
         numLines = 0;
+        this.hasRoom = true;
         //sprites = new SpriteComponentEX[maxBatchSize * 4 * VERTEX_SIZE];
         //textures.clear();
     }
@@ -99,7 +102,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 //        glEnableVertexAttribArray(4);
     }
 
-    public void addLine(Edge2D line)
+    public void addLine(FEdge2D line)
     {
         // Get index and add renderObject
         int index = this.numLines;
@@ -114,7 +117,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 //            }
 //        }
 
-        // Add properties to local vertices array
+        // Add properties p2 local vertices array
         loadVertexProperties(index);
 
         if (numLines >= Constants.Rendering.MAX_BATCH_SIZE)
@@ -125,6 +128,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 
     public void render()
     {
+        //glLineWidth(2.0f);
         //boolean rebuffer= false;
         for (int i = 0; i < numLines; i++)
         {
@@ -148,8 +152,8 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 
         // Use shader
         currentShader.use();
-        currentShader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
-        currentShader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
+        currentShader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
+        currentShader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
 
 //        // todo: this is bad, there's no check for the hardware texture slot max
 //        //  batches should be grouped by texture, if multiple objects use the same texture,
@@ -158,7 +162,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 //        {
 //            // todo: actually just set the correct index, bound by the max
 //            //  and do -1 in the shader
-//            // this + 1 is to support using texture 0 as "empty", allowing color to take
+//            // this + 1 is p2 support using texture 0 as "empty", allowing color p2 take
 //            glActiveTexture(GL_TEXTURE0 + i);
 //            textures.get(i).bind();
 //        }
@@ -182,37 +186,44 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
         currentShader.detach();
     }
 
+
+    private Random rand = new Random();
+
     /**
-     * Updates the local buffer to reflect the current state of the indexed sprite.
+     * Updates the local buffer p2 reflect the current state of the indexed sprite.
      *
      * @param index the location of the sprite, within the sprite array
      */
     private void loadVertexProperties(int index)
     {
-        Edge2D line = this.lines[index];
+        float r = 0f; //rand.nextFloat() / 7.0f;
+        float g = 0f; //rand.nextFloat() / 5.0f;
+        float b = 0f; //rand.nextFloat() / 3.0f;
+
+        FEdge2D line = this.lines[index];
 
         // Find offset within array (4 vertices per sprite)
         int offset = index * 2 * VERTEX_SIZE;
 
         // Load position
-        vertices[offset] = line.p1().pos().x;
-        vertices[offset + 1] = line.p1().pos().y;
+        vertices[offset] = line.p1().pos_x();
+        vertices[offset + 1] = line.p1().pos_y();
         vertices[offset + 2] = 0.0f;
 
         // Load color
-        vertices[offset + 3] = 0.0f;
-        vertices[offset + 4] = 0.0f;
-        vertices[offset + 5] = 0.0f;
+        vertices[offset + 3] = r;
+        vertices[offset + 4] = g;
+        vertices[offset + 5] = b;
 
 
-        vertices[offset + 6] = line.p2().pos().x;
-        vertices[offset + 7] = line.p2().pos().y;
+        vertices[offset + 6] = line.p2().pos_x();
+        vertices[offset + 7] = line.p2().pos_y();
         vertices[offset + 8] = 0.0f;
 
         // Load color
-        vertices[offset + 9] = 0.0f;
-        vertices[offset + 10] = 0.0f;
-        vertices[offset + 11] = 0.0f;
+        vertices[offset + 9] = r;
+        vertices[offset + 10] = g;
+        vertices[offset + 11] = b;
     }
 
     private int[] generateIndices()

@@ -15,7 +15,7 @@ public class FrameBuffer
         fboId = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, fboId);
 
-        // create texture/ attach to buffer
+        // create texture/ attach p2 buffer
         this.texture = new Texture(width, height);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this.texture.getTexId(), 0);
 

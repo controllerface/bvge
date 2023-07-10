@@ -1,20 +1,22 @@
 package com.controllerface.bvge;
 
-import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.cl.OpenCL_EX;
-import com.controllerface.bvge.ecs.systems.physics.SpatialMap;
+import com.controllerface.bvge.cl.OCLFunctions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
+import static com.controllerface.bvge.Main.Memory.*;
+
 class MainTest
 {
     private static final int body_width = 16;
     private static final int point_width = 4;
-    private static float[] body_buffer = new float[2 * body_width]; // two bodies, 16 floats each
-    private static float[] point_buffer = new float[8 * point_width]; // 8 vertices, 4 floats each
+    private static final int bounds_width = 8;
+//    private static float[] body_buffer = new float[2 * body_width]; // 2 bodies, 16 floats each
+//    private static float[] point_buffer = new float[8 * point_width]; // 8 vertices, 4 floats each
+//    private static float[] bounds_buffer = new float[2 * bounds_width]; // 2 bounding boxes, 8 floats each
 
     @BeforeAll
     public static void setup()
@@ -67,52 +69,77 @@ class MainTest
 
 
         // body 1
-        body_buffer[0] = 0f; // pos x
-        body_buffer[1] = 0f; // pos y
-        body_buffer[2] = 10f; // scale w
-        body_buffer[3] = 10f; // scale h
-        body_buffer[4] = 1f; // acc x
-        body_buffer[5] = 0f; // acc y
-        body_buffer[6] = 0f; // bounds x
-        body_buffer[7] = 0f; // bounds y
-        body_buffer[8] = 0f; // bounds w
-        body_buffer[9] = 0f; // bounds h
-        body_buffer[10] = (float) 0; // point index start (int cast);
-        body_buffer[11] = (float) 3; // point index end (int cast);
-        body_buffer[12] = (float) 0; // self index (int cast)
-        // empty for now, but needed to pad out float16 data type
+        body_buffer[0]  = 0f;        // pos x
+        body_buffer[1]  = 0f;        // pos y
+        body_buffer[2]  = 10f;       // scale w
+        body_buffer[3]  = 10f;       // scale h
+        body_buffer[4]  = 1f;        // acc x
+        body_buffer[5]  = 0f;        // acc y
+        body_buffer[6]  = (float) 0; // bounds x
+        body_buffer[7]  = (float) 0; // point index start (int cast);
+        body_buffer[8]  = (float) 3; // point index end (int cast);
+        body_buffer[9]  = (float) 0; // edge index start (int cast)
+        body_buffer[10] = (float) 0; // edge index end (int cast)
+        // empty for now, but needed p2 pad out float16 data type
+        body_buffer[11] = 0f;
+        body_buffer[12] = 0f;
         body_buffer[13] = 0f;
         body_buffer[14] = 0f;
         body_buffer[15] = 0f;
 
 
         // body 2
-        body_buffer[16] = 0f; // pos x
-        body_buffer[17] = 0f; // pos y
-        body_buffer[18] = 10f; // scale w
-        body_buffer[19] = 10f; // scale h
-        body_buffer[20] = 0f; // acc x
-        body_buffer[21] = 0f; // acc y
-        body_buffer[22] = 0f; // bounds x
-        body_buffer[23] = 0f; // bounds y
-        body_buffer[24] = 0f; // bounds w
-        body_buffer[25] = 0f; // bounds h
-        body_buffer[26] = (float) 4; // point index start (int cast);
-        body_buffer[27] = (float) 7; // point index end (int cast);
-        body_buffer[28] = (float) 0; // self index (int cast)
-        // empty for now, but needed to pad out float16 data type
+        body_buffer[16] = 0f;        // pos x
+        body_buffer[17] = 0f;        // pos y
+        body_buffer[18] = 10f;       // scale w
+        body_buffer[19] = 10f;       // scale h
+        body_buffer[20] = 0f;        // acc x
+        body_buffer[21] = 0f;        // acc y
+        body_buffer[22] = (float) 1; // bounds index (int cast)
+        body_buffer[23] = (float) 4; // point index start (int cast);
+        body_buffer[24] = (float) 7; // point index end (int cast);
+        body_buffer[25] = (float) 0; // edge index start (int cast)
+        body_buffer[26] = (float) 0; // edge index end (int cast)
+        // empty for now, but needed p2 pad out float16 data type
+        body_buffer[27] = 0f;
+        body_buffer[28] = 0f;
         body_buffer[29] = 0f;
         body_buffer[30] = 0f;
         body_buffer[31] = 0f;
 
 
-        OpenCL_EX.init();
+        OCLFunctions.init();
     }
 
     @AfterAll
     public static void tearDown()
     {
-        OpenCL_EX.destroy();
+        OCLFunctions.destroy();
+    }
+
+    @Test
+    public void xtest()
+    {
+
+        int size = 5000;
+        float[] input = new float[size];
+        float[] output = new float[size];
+        for (int i = 0; i < size; i++)
+        {
+            input[i] = i + 1;
+        }
+
+
+        OCLFunctions.scan(input, output, size);
+
+        float[] t = new float[size];
+        for (int i = 1; i < input.length; i ++)
+        {
+            t[i] = t[i-1] + input[i-1];
+        }
+        int c = Arrays.compare(t, output);
+        System.out.println("CPU Output: " + Arrays.toString(t));
+        System.out.println("DEBUG: c=" + c);
     }
 
     @Test
@@ -121,12 +148,11 @@ class MainTest
         System.out.println("Before:");
         System.out.println(Arrays.toString(body_buffer));
         System.out.println(Arrays.toString(point_buffer));
-
-        OpenCL_EX.integrate(body_buffer, point_buffer);
-
+        System.out.println(Arrays.toString(bounds_buffer));
+        //OCLFunctions.integrate(1f/60f, 100, 100);
         System.out.println("After:");
         System.out.println(Arrays.toString(body_buffer));
         System.out.println(Arrays.toString(point_buffer));
-
+        System.out.println(Arrays.toString(bounds_buffer));
     }
 }

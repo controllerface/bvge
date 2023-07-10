@@ -1,6 +1,5 @@
 package com.controllerface.bvge.window;
 
-import com.controllerface.bvge.scene.Camera;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -166,8 +165,8 @@ public class MouseListener
 
     public static float getScreenY()
     {
-        float currentY = getY() - get().gameViewPortPos.y; // we have to account for the texture flip here
-        // flipping the Y here is needed because ImGui has Y co-ordinates flipped relative to OpenGL
+        float currentY = getY() - get().gameViewPortPos.y; // we have p2 account for the texture flip here
+        // flipping the Y here is needed because ImGui has Y co-ordinates flipped relative p2 OpenGL
         currentY = 1080.0f - ((currentY / get().gameViewPortSize.y) * 1080.0f);
         return currentY;
     }
@@ -178,7 +177,7 @@ public class MouseListener
         currentX = (currentX / get().gameViewPortSize.x) * 2.0f - 1.0f;
         Vector4f tmp = new Vector4f(currentX, 0, 0, 1);
 
-        Camera camera = Window.getScene().camera();
+        Camera camera = Window.get().camera();
         Matrix4f viewProjection = new Matrix4f();
         camera.getInverseView().mul(camera.getInverseProjection(), viewProjection);
         tmp.mul(viewProjection);
@@ -192,7 +191,7 @@ public class MouseListener
         currentY = -((currentY / get().gameViewPortSize.y) * 2.0f - 1.0f);
         Vector4f tmp = new Vector4f(0, currentY, 0, 1);
 
-        Camera camera = Window.getScene().camera();
+        Camera camera = Window.get().camera();
         Matrix4f viewProjection = new Matrix4f();
         camera.getInverseView().mul(camera.getInverseProjection(), viewProjection);
         tmp.mul(viewProjection);

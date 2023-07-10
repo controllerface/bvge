@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
-import com.controllerface.bvge.ecs.components.Transform;
+import com.controllerface.bvge.data.FTransform;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.GameComponent;
@@ -65,8 +65,6 @@ public class SpriteRenderer extends GameSystem
         }
     }
 
-    private boolean runyet = false;
-
     @Override
     public void run(float dt)
     {
@@ -78,15 +76,12 @@ public class SpriteRenderer extends GameSystem
             GameComponent component = entry.getValue();
             SpriteComponent sprite = Component.SpriteComponent.coerce(component);
             var t = ecs.getComponentFor(entity, Component.Transform);
-            Transform transform = Component.Transform.coerce(t);
-            sprite.transform.position.x = transform.position.x;
-            sprite.transform.position.y = transform.position.y;
-            sprite.transform.scale.x = transform.scale.x;
-            sprite.transform.scale.y = transform.scale.y;
-            if (!runyet)
-            {
-                this.add(sprite);
-            }
+            FTransform transform = Component.Transform.coerce(t);
+            sprite.transform.position.x = transform.pos_x();
+            sprite.transform.position.y = transform.pos_y();
+            sprite.transform.scale.x = transform.scale_x();
+            sprite.transform.scale.y = transform.scale_y();
+            this.add(sprite);
         }
 
         render();

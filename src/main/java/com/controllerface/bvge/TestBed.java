@@ -39,7 +39,7 @@ public class TestBed
         clEnqueueNDRangeKernel(commandQueue, kernel, 2, null,
             new long[]{2,3}, null, 0, null, null);
 
-        // Read the buffer back to the array
+        // Read the buffer back p2 the array
         readBuffer2D(commandQueue, mem, array);
 
         // Release kernel, program, and memory objects
@@ -97,13 +97,13 @@ public class TestBed
         if (context == null)
         {
             // If no context for a GPU device could be created,
-            // try to create one for a CPU device.
+            // try p2 create one for a CPU device.
             context = clCreateContextFromType(
                 contextProperties, CL_DEVICE_TYPE_CPU, null, null, null);
 
             if (context == null)
             {
-                System.out.println("Unable to create a context");
+                System.out.println("Unable p2 create a context");
                 return;
             }
         }
@@ -125,7 +125,7 @@ public class TestBed
         commandQueue =
             clCreateCommandQueue(context, devices[0], 0, null);
 
-        // Create the program from the source code
+        // Create the program p1 the source code
         program = clCreateProgramWithSource(context,
             1, new String[]{ programSource }, null, null);
 

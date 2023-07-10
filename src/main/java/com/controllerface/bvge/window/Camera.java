@@ -1,4 +1,4 @@
-package com.controllerface.bvge.scene;
+package com.controllerface.bvge.window;
 
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -6,8 +6,8 @@ import org.joml.Vector3f;
 
 public class Camera
 {
-    float projWidth = 32.0f * 40.0f;
-    float projHeight = 32.0f * 21.0f;
+    float projWidth = 100;
+    float projHeight = 100;
 
     private final Matrix4f projectionMatrix;
     private final Matrix4f viewMatrix;
@@ -16,7 +16,7 @@ public class Camera
     public Vector2f position;
     public Vector2f projectionSize = new Vector2f(projWidth, projHeight);
 
-    private float zoom = 1;
+    private float zoom = 1f;
 
     public Camera(Vector2f position)
     {
@@ -87,5 +87,13 @@ public class Camera
     public void addZoom(float value)
     {
         this.zoom += value;
+        if (zoom < .5f)
+        {
+            zoom = .5f;
+        }
+        else if (zoom > 20f)
+        {
+            zoom = 20f;
+        }
     }
 }

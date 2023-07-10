@@ -1,9 +1,7 @@
 package com.controllerface.bvge.util;
 
-import com.controllerface.bvge.ecs.Point2D;
+import com.controllerface.bvge.data.FPoint2D;
 import org.joml.Vector2f;
-
-import java.util.List;
 
 public class MathEX
 {
@@ -13,15 +11,15 @@ public class MathEX
      * @param verts
      * @param target
      */
-    public static void centroid(List<Point2D> verts, Vector2f target)
+    public static void centroid(FPoint2D[] verts, Vector2f target)
     {
-        var points = verts.size();
+        var points = verts.length;
         float x_sum = 0;
         float y_sum = 0;
-        for (Point2D point : verts)
+        for (FPoint2D point : verts)
         {
-            x_sum += point.pos().x;
-            y_sum += point.pos().y;
+            x_sum += point.pos_x();
+            y_sum += point.pos_y();
         }
         float x = x_sum / points;
         float y = y_sum / points;

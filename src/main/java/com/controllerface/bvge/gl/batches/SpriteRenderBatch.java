@@ -73,6 +73,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     public void clear()
     {
         numSprites = 0;
+        this.hasRoom = true;
         //sprites = new SpriteComponentEX[maxBatchSize * 4 * VERTEX_SIZE];
         textures.clear();
     }
@@ -126,7 +127,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             }
         }
 
-        // Add properties to local vertices array
+        // Add properties p2 local vertices array
         loadVertexProperties(index);
 
         if (numSprites >= Constants.Rendering.MAX_BATCH_SIZE)
@@ -149,8 +150,8 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
 
         // Use shader
         currentShader.use();
-        currentShader.uploadMat4f("uProjection", Window.getScene().camera().getProjectionMatrix());
-        currentShader.uploadMat4f("uView", Window.getScene().camera().getViewMatrix());
+        currentShader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
+        currentShader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
 
         // todo: this is bad, there's no check for the hardware texture slot max
         //  batches should be grouped by texture, if multiple objects use the same texture,
@@ -159,7 +160,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         {
             // todo: actually just set the correct index, bound by the max
             //  and do -1 in the shader
-            // this + 1 is to support using texture 0 as "empty", allowing color to take
+            // this + 1 is p2 support using texture 0 as "empty", allowing color p2 take
             glActiveTexture(GL_TEXTURE0 + i);
             textures.get(i).bind();
         }
@@ -183,7 +184,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     }
 
     /**
-     * Updates the local buffer to reflect the current state of the indexed sprite.
+     * Updates the local buffer p2 reflect the current state of the indexed sprite.
      *
      * @param index the location of the sprite, within the sprite array
      */
@@ -204,7 +205,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             {
                 if (textures.get(i).equals(sprite.getTexture()))
                 {
-                    texId = i + 1; // this + 1 is to support using texture 0 as "empty"
+                    texId = i + 1; // this + 1 is p2 support using texture 0 as "empty"
                     break;
                 }
             }

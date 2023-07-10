@@ -16,7 +16,7 @@ public class ECS
 
     public ECS()
     {
-        // register all components at creation time. This is necessary to ensure all the
+        // register all components at creation time. This is necessary p2 ensure all the
         // available components can be used before any systems or entities make use of them
         Arrays.stream(Component.values()).forEach(this::registerComponent);
     }
@@ -28,12 +28,6 @@ public class ECS
         //  Then optionally, calling code may chose to provide a pre-constructed object
         //  that can be used to override the default.
         components.put(component, new HashMap<>());
-    }
-
-
-    public String registerEntity()
-    {
-        return registerEntity(null);
     }
 
     public String registerEntity(String id)
@@ -66,7 +60,7 @@ public class ECS
     /**
      * Retrieve the Map of components (by entity) for a given component.
      *
-     * @param type the type of component map to retrieve
+     * @param type the type of component map p2 retrieve
      * @return the components map for the given component type. may be empty
      */
     public Map<String, GameComponent> getComponents(Component type)
