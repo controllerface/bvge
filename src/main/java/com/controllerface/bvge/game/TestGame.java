@@ -59,6 +59,35 @@ public class TestGame extends GameMode
         }
     }
 
+    private void genFloor(int floor_size, float spacing, float size, float start_x, float start_y)
+    {
+        System.out.println("generating floor size: " + floor_size);
+        var rand = new Random();
+        for (int i = 0; i < floor_size; i++)
+        {
+            float r = rand.nextFloat() / 5.0f;
+            float g = rand.nextFloat() / 5.0f;
+            float b = rand.nextFloat();
+            float x = start_x + i * spacing;
+            float y = start_y;
+
+            var npc = ecs.registerEntity(null);
+            var scomp2 = new SpriteComponent();
+            var sprite2 = new Sprite();
+            var tex2 = AssetPool.getTexture("assets/images/blendImage2.png");
+            sprite2.setTexture(tex2);
+            sprite2.setHeight(32);
+            sprite2.setWidth(32);
+            //scomp2.setSprite(sprite2);
+            scomp2.setColor(new Vector4f(r,g,b,1));
+            var physicsObject = PhysicsObjects.staticBox(x, y, size, npc);
+            ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
+            ecs.attachComponent(npc, Component.Transform, physicsObject.transform());
+            ecs.attachComponent(npc, Component.RigidBody2D, physicsObject);
+            ecs.attachComponent(npc, Component.BoundingBox, physicsObject.bounds());
+        }
+    }
+
     private void genPlayer()
     {
         // player entity
@@ -71,7 +100,7 @@ public class TestGame extends GameMode
         sprite.setWidth(16);
         scomp.setSprite(sprite);
         //scomp.setColor(new Vector4f(0,0,0,1));
-        var physicsObject = PhysicsObjects.simpleBox(0,0, 32, player);
+        var physicsObject = PhysicsObjects.simpleBox(400,100, 32, player);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
@@ -90,18 +119,19 @@ public class TestGame extends GameMode
         ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));
 
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
     }
 
     @Override
     public void load()
     {
         genPlayer();
-        genNPCs(50, 10f, 10f, 2100, 2100);
-        genNPCs(50, 10f, 10f, 1000, -1000);
-        genNPCs(50, 10f, 10f, -1500, -1500);
-        genNPCs(50, 10f, 10f, -1000, 1500);
-        //genNPCs(1, 40f, 40f, -40, -1);
+        //genNPCs(50, 10f, 10f, 2100, 2100);
+        //genNPCs(50, 10f, 10f, 1000, -1000);
+        //genNPCs(50, 10f, 10f, -1500, -1500);
+        //genNPCs(50, 10f, 10f, -1000, 1500);
+        genNPCs(3, 15f, 15f, 100, 300);
+        genFloor(100, 100f, 100f, -400, -40);
 
         loadSystems();
     }

@@ -76,6 +76,14 @@ __kernel void collide(
     float16 body_1 = bodies[b1_id];
     float16 body_2 = bodies[b2_id];
 
+    bool b1s = (body_1.s6 && 0x01) !=0;
+    bool b2s = (body_2.s6 && 0x01) !=0;
+    
+    if (b1s && b2s) // these should be filtered before getting here, but just in case..
+    {
+        return;
+    }
+
     int start_1 = (int)body_1.s7;
     int end_1   = (int)body_1.s8;
 	int b1_vert_count = end_1 - start_1 + 1;
@@ -108,6 +116,7 @@ __kernel void collide(
     // reaction object
     float16 reaction;
     reaction.s0 = -1;
+
 
     // object 1
     for (int i = 0; i < b1_vert_count; i++)
@@ -153,6 +162,7 @@ __kernel void collide(
             edge_index_b = b_index;
         }
     }
+    
 
     // object 2
     for (int i = 0; i < b2_vert_count; i++)
@@ -255,6 +265,23 @@ __kernel void collide(
     //  body, and 1.0 for the non-static body.
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
+
+    bool vs = (vo.s6 && 0x01) !=0;
+    bool es = (eo.s6 && 0x01) !=0;
+    
+    if (vs || es)
+    {
+        if (vs)
+        {
+            vertex_magnitude = 0.0f;
+            edge_magnitude = 1.0f;
+        }
+        if (es)
+        {
+            vertex_magnitude = 1.0f;
+            edge_magnitude = 0.0f;
+        }
+    }
 
     // vertex reaction is easy
     float2 v_reaction = collision_vector * vertex_magnitude;

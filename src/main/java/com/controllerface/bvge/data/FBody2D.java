@@ -20,7 +20,7 @@ public record FBody2D(int index,
      *  3: scale y                    (transform)
      *  4: acceleration x component
      *  5: acceleration y component
-     *  6: collision flags            (int cast) // todo: use
+     *  6: collision flags            (int cast)
      *  7: start point index          (int cast)
      *  8: end point index            (int cast)
      *  9: start edge index           (int cast)
@@ -37,7 +37,7 @@ public record FBody2D(int index,
     public static final int SY_OFFSET           = 3;
     public static final int ACC_X_OFFSET        = 4;
     public static final int ACC_Y_OFFSET        = 5;
-    public static final int BI_OFFSET           = 6;
+    public static final int FLAGS_OFFSET        = 6;
     public static final int SP_OFFSET           = 7;
     public static final int EP_OFFSET           = 8;
     public static final int SE_OFFSET           = 9;
@@ -75,9 +75,9 @@ public record FBody2D(int index,
         return Main.Memory.body_buffer[index() + ACC_Y_OFFSET];
     }
 
-    public float bounds_i()
+    public int flags()
     {
-        return Main.Memory.body_buffer[index() + BI_OFFSET];
+        return (int)Main.Memory.body_buffer[index() + FLAGS_OFFSET];
     }
 
     public int start_point()

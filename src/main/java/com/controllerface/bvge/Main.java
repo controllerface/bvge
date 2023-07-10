@@ -167,7 +167,7 @@ public class Main
             body_buffer[body_index++] = sy;
             body_buffer[body_index++] = ax;
             body_buffer[body_index++] = ay;
-            body_buffer[body_index++] = 0f;
+            body_buffer[body_index++] = c_flags;
             body_buffer[body_index++] = ps;
             body_buffer[body_index++] = pe;
             body_buffer[body_index++] = es;

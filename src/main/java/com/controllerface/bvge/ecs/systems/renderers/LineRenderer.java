@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.controllerface.bvge.data.PhysicsObjects.FLAG_STATIC;
+
 public class LineRenderer extends GameSystem
 {
     private Shader shader;
@@ -64,6 +66,7 @@ public class LineRenderer extends GameSystem
         {
             GameComponent component = entry.getValue();
             FBody2D body = Component.RigidBody2D.coerce(component);
+            boolean isStatic = (body.flags() & FLAG_STATIC) != 0;
             for (FEdge2D edge : body.edges())
             {
                 add(edge);

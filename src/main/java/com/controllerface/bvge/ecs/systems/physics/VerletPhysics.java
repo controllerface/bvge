@@ -11,6 +11,8 @@ import org.joml.Vector2f;
 import java.nio.FloatBuffer;
 import java.util.*;
 
+import static com.controllerface.bvge.data.PhysicsObjects.FLAG_STATIC;
+
 public class VerletPhysics extends GameSystem
 {
     private final float TICK_RATE = 1.0f / 60.0f;
@@ -35,32 +37,32 @@ public class VerletPhysics extends GameSystem
 
     private void resolveForces(String entity, FBody2D body2D)
     {
-        var cp = ecs.getComponentFor(entity, Component.ControlPoints);
-
-        if (cp == null)
-        {
-            return;
-        }
-
-        ControlPoints controlPoints = Component.ControlPoints.coerce(cp);
+        if ((body2D.flags() & FLAG_STATIC) != 0) return;
         vectorBuffer1.zero();
 
-        if (controlPoints.isLeft())
+        var cp = ecs.getComponentFor(entity, Component.ControlPoints);
+        if (cp != null)
         {
-            vectorBuffer1.x -= body2D.force();
+            ControlPoints controlPoints = Component.ControlPoints.coerce(cp);
+
+            if (controlPoints.isLeft())
+            {
+                vectorBuffer1.x -= body2D.force();
+            }
+            if (controlPoints.isRight())
+            {
+                vectorBuffer1.x += body2D.force();
+            }
+            if (controlPoints.isUp())
+            {
+                vectorBuffer1.y += body2D.force();
+            }
+            if (controlPoints.isDown())
+            {
+                vectorBuffer1.y -= body2D.force();
+            }
         }
-        if (controlPoints.isRight())
-        {
-            vectorBuffer1.x += body2D.force();
-        }
-        if (controlPoints.isUp())
-        {
-            vectorBuffer1.y += body2D.force();
-        }
-        if (controlPoints.isDown())
-        {
-            vectorBuffer1.y -= body2D.force();
-        }
+        vectorBuffer1.y -= 980.0;
         body2D.setAcc(vectorBuffer1);
     }
 
@@ -119,13 +121,14 @@ public class VerletPhysics extends GameSystem
             return;
         }
 
-        // update the player's acc values, don't bother doing this in the CL call
-        // as it only applies to one object and would waste cycles on all other objects
-        var bd = ecs.getComponentFor("player", Component.RigidBody2D);
-        FBody2D body = Component.RigidBody2D.coerce(bd);
-        resolveForces(body.entity(), body);
+        // todo: this can be moved into CL
+        bodies.forEach((key, value)->
+        {
+            FBody2D body = Component.RigidBody2D.coerce(value);
+            resolveForces(body.entity(), body);
+        });
 
-        // integrate in CL
+        // perform integration step
         OCLFunctions.integrate(dt, spatialPartition);
 
         spatialPartition.calculateKeyBankSize();

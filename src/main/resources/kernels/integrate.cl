@@ -106,8 +106,6 @@ __kernel void integrate(
    	acc.x = acc.x * dt;
    	acc.y = acc.y * dt;
 
-
-
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;
 
@@ -141,7 +139,7 @@ __kernel void integrate(
         // add friction component todo: take this in as an argument, gravity too
         diff.x *= .980;
         diff.y *= .980;
-
+        
         // set the prv to current pos
         prv.x = pos.x;
         prv.y = pos.y;
