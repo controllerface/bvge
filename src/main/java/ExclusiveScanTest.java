@@ -1,6 +1,7 @@
 import org.jocl.*;
 
 import java.util.Arrays;
+import java.util.Random;
 
 import static com.controllerface.bvge.cl.OCLFunctions.readSrc;
 import static org.jocl.CL.*;
@@ -21,23 +22,25 @@ public class ExclusiveScanTest
 
     public static void main(String[] args)
     {
+        Random random = new Random();
+
         // Input array
-        int size = 100_000_000;
+        int size = 20_000_000;
         System.out.println("debug: " + size * Sizeof.cl_int);
         int[] input = new int[size];
         for (int i = 0; i<size; i++)
         {
-            input[i] = i + 1;
+            input[i] = random.nextInt(20);;
         }
 
         // CPU based exclusive scan
-        long s = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         int[] t = new int[size];
         for (int i = 1; i < input.length; i ++)
         {
             t[i] = t[i - 1] + input[i - 1];
         }
-        System.out.println("t1: " + (System.currentTimeMillis() - s));
+        System.out.println("t1: " + (System.currentTimeMillis() - start));
         //System.out.println("CPU Output: " + Arrays.toString(t));
 
 
@@ -63,31 +66,26 @@ public class ExclusiveScanTest
 
 
         // GPU based exclusive scan
-        s = System.currentTimeMillis();
+        start = System.currentTimeMillis();
         int n = input.length;
         int k = (int) Math.ceil((float)n / (float)m);
         cl_mem d_data;
-        if (k == 1)
-        {
-            long x = ((long)Sizeof.cl_int * (long)k * (long)m);
-            d_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, x, Pointer.to(input), null);
-        }
-        else
-        {
-            long x = ((long)Sizeof.cl_int * (long)k * (long)m);
-            d_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, x, Pointer.to(input), null);
-        }
+        long sz = ((long)Sizeof.cl_int * (long)k * (long)m);
+        long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
+        d_data = CL.clCreateBuffer(context, flags, sz, Pointer.to(input), null);
         long data_buf_size = (long)Sizeof.cl_int * n;
         Pointer dst_data = Pointer.to(input);
-        scan(d_data, n);
-
+        scan(d_data, n, k);
+        System.out.println("t2e: " + (System.currentTimeMillis() - start));
+        start = System.currentTimeMillis();
         // transfer results into local memory.
         // Note: this is only needed once, after all operations are done
         clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
             data_buf_size, dst_data, 0, null, null);
-
         clReleaseMemObject(d_data);
-        System.out.println("t2: " + (System.currentTimeMillis() - s));
+        System.out.println("t2m: " + (System.currentTimeMillis() - start));
+
+
 
         // Print the output
         //System.out.println("GPU Output: " + Arrays.toString(input));
@@ -99,9 +97,8 @@ public class ExclusiveScanTest
 
         System.out.println("Variance: " + Arrays.compare(t, input));
     }
-    private static void scan(cl_mem d_data, int n)
+    private static void scan(cl_mem d_data, int n, int k)
     {
-        int k = (int) Math.ceil((float)n / (float)m);
         if (k == 1)
         {
             scan_single_block(d_data, n);
@@ -149,8 +146,10 @@ public class ExclusiveScanTest
         clEnqueueNDRangeKernel(commandQueue, k_scan_multi_block, 1, null,
             new long[]{gx}, new long[]{wx}, 0, null, null);
 
-        // do scan on partial/block sums
-        scan(p_data, partial_sums.length);
+        // do scan on block sums
+        int n2 = partial_sums.length;
+        int k2 = (int) Math.ceil((float)n2 / (float)m);
+        scan(p_data, n2, k2);
 
         // pass in arguments
         clSetKernelArg(k_complete_multi_block, 0, Sizeof.cl_mem, src_data);
