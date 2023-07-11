@@ -22,7 +22,7 @@ public class ExclusiveScanTest
     public static void main(String[] args)
     {
         // Input array
-        int size = 512 * 100;
+        int size = 100_000_000;
         System.out.println("debug: " + size * Sizeof.cl_int);
         int[] input = new int[size];
         for (int i = 0; i<size; i++)
@@ -61,7 +61,25 @@ public class ExclusiveScanTest
         k_complete_multi_block = CL.clCreateKernel(program, "complete_multi_block", null);
 
         s = System.nanoTime();
-        scan(input);
+
+        int n = input.length;
+        int k = (int) Math.ceil((float)n / (float)m);
+
+        cl_mem d_data;
+        if (k == 1)
+        {
+            long x = ((long)Sizeof.cl_int * (long)k * (long)m);
+            d_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, x, Pointer.to(input), null);
+        }
+        else
+        {
+            long x = ((long)Sizeof.cl_int * (long)k * (long)m);
+            d_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, x, Pointer.to(input), null);
+        }
+
+        scan(d_data, input);
+        clReleaseMemObject(d_data);
+
         System.out.println("t2: " + (System.nanoTime() - s));
 
         // Print the output
@@ -77,21 +95,18 @@ public class ExclusiveScanTest
 
         System.out.println("Variance: " + Arrays.compare(t, input));
     }
-    private static void scan(int[] input)
+    private static void scan(cl_mem d_data, int[] input)
     {
         int n = input.length;
         int k = (int) Math.ceil((float)n / (float)m);
 
         if (k == 1)
         {
-            long x = ((long)Sizeof.cl_int * (long)k * (long)m);
-            cl_mem d_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, x, Pointer.to(input), null);
             scan_single_block(d_data, input, n);
-            clReleaseMemObject(d_data);
         }
         else
         {
-            scan_multi_block(input, n, k);
+            scan_multi_block(d_data, input, n, k);
         }
     }
 
@@ -117,7 +132,7 @@ public class ExclusiveScanTest
             data_buf_size, dst_data, 0, null, null);
     }
 
-    private static void scan_multi_block(int[] input, int n, int k)
+    private static void scan_multi_block(cl_mem d_data, int[] input, int n, int k)
     {
         // set up buffers
         int localBufferSize = Sizeof.cl_int * m;
@@ -125,7 +140,6 @@ public class ExclusiveScanTest
         long data_buf_size = ((long)Sizeof.cl_int * (long)n);
         long part_buf_size = ((long)Sizeof.cl_int * (long)k);
         int[] partial_sums = new int[k];
-        cl_mem d_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, data_buf_size, Pointer.to(input), null);
         cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
         Pointer dst_data = Pointer.to(input);
         Pointer dst_data2 = Pointer.to(partial_sums);
@@ -149,7 +163,7 @@ public class ExclusiveScanTest
             part_buf_size, dst_data2, 0, null, null);
 
         // do scan on partial/block sums
-        scan(partial_sums);
+        scan(p_data, partial_sums);
         cl_mem p_data2 = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
 
         Pointer part_data2 = Pointer.to(p_data2);
@@ -168,7 +182,6 @@ public class ExclusiveScanTest
             data_buf_size, dst_data, 0, null, null);
 
 
-        clReleaseMemObject(d_data);
         clReleaseMemObject(p_data);
         clReleaseMemObject(p_data2);
     }
