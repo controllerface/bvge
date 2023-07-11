@@ -180,8 +180,6 @@ public class SpatialPartition
     }
 
 
-
-
     int key_bank_size = 0;
     int key_map_size = 0;
 
@@ -190,8 +188,6 @@ public class SpatialPartition
 
     int[] key_counts = new int[0];
     int[] key_offsets = new int[0];
-
-
 
     public int calculateKeyBankSize()
     {
@@ -214,15 +210,13 @@ public class SpatialPartition
 
                 // todo: can this be calculated alone using a parallel reduce? maybe first?
                 size += body.bounds().si_bank_size();
-                var x = body.bounds().si_bank_size();
-                //System.out.println("dbg: " + x + ":" + size);
             }
         }
         key_bank_size = size;
         key_map_size = key_bank_size /Main.Memory.Width.KEY;
         key_bank = new int[key_bank_size];
         key_map = new int[key_map_size];
-        // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is build
+        // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is built
         //  correctly. an alternative would be to make body index 0 unused, so indices all start at one,
         //  but that may create a lot more issues.
         Arrays.fill(key_map, -1);

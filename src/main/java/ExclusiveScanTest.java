@@ -22,12 +22,12 @@ public class ExclusiveScanTest
     public static void main(String[] args)
     {
         // Input array
-        int size = 1_000_000;
+        int size = 100_000_000;
         System.out.println("debug: " + size * Sizeof.cl_int);
         int[] input = new int[size];
         for (int i = 0; i<size; i++)
         {
-            input[i] = i+1;
+            input[i] = i + 1;
         }
 
         // CPU based exclusive scan
@@ -35,7 +35,7 @@ public class ExclusiveScanTest
         int[] t = new int[size];
         for (int i = 1; i < input.length; i ++)
         {
-            t[i] = t[i-1] + input[i-1];
+            t[i] = t[i - 1] + input[i - 1];
         }
         System.out.println("t1: " + (System.currentTimeMillis() - s));
         //System.out.println("CPU Output: " + Arrays.toString(t));
@@ -80,9 +80,12 @@ public class ExclusiveScanTest
         long data_buf_size = (long)Sizeof.cl_int * n;
         Pointer dst_data = Pointer.to(input);
         scan(d_data, n);
-        // transfer results into local memory
+
+        // transfer results into local memory.
+        // Note: this is only needed once, after all operations are done
         clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
             data_buf_size, dst_data, 0, null, null);
+
         clReleaseMemObject(d_data);
         System.out.println("t2: " + (System.currentTimeMillis() - s));
 

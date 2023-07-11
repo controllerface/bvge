@@ -19,8 +19,8 @@ public class BoundingBoxRenderer extends GameSystem
 {
     private Shader shader;
     private List<BoxRenderBatch> batches;
-    private final Vector3f color = new Vector3f(0.8f,0.8f,0.2f);
-    private final Vector3f color2 = new Vector3f(1f,1f,1f);
+    private final Vector3f outbound_color = new Vector3f(0.8f,0.8f,0.2f);
+    private final Vector3f inbound_color = new Vector3f(1f,1f,1f);
 
     private final Vector3f color3 = new Vector3f(.0f,.8f,.3f);
 
@@ -34,14 +34,11 @@ public class BoundingBoxRenderer extends GameSystem
         this.shader = AssetPool.getShader("debugLine2D.glsl");
     }
 
-    private void add(FBounds2D box, boolean in)
+    private void add(FBounds2D box, boolean inBounds)
     {
-//        var colorToUse = box.boo() == 0
-//                ? color2
-//                : box.boo() == 4
-//                    ? color
-//                    : color3;
-        var colorToUse = in ? color2 : color;
+        var colorToUse = inBounds
+            ? inbound_color
+            : outbound_color;
 
         boolean added = false;
         for (BoxRenderBatch batch : batches)
