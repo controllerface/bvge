@@ -22,7 +22,7 @@ public class ExclusiveScanTest
     public static void main(String[] args)
     {
         // Input array
-        int size = 1_000_000_000;
+        int size = 1_000_000;
         System.out.println("debug: " + size * Sizeof.cl_int);
         int[] input = new int[size];
         for (int i = 0; i<size; i++)
@@ -77,16 +77,18 @@ public class ExclusiveScanTest
             long x = ((long)Sizeof.cl_int * (long)k * (long)m);
             d_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, x, Pointer.to(input), null);
         }
-        scan(d_data, input);
+        long data_buf_size = (long)Sizeof.cl_int * n;
+        Pointer dst_data = Pointer.to(input);
+        scan(d_data, n);
+        // transfer results into local memory
+        clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
+            data_buf_size, dst_data, 0, null, null);
         clReleaseMemObject(d_data);
         System.out.println("t2: " + (System.currentTimeMillis() - s));
 
         // Print the output
         //System.out.println("GPU Output: " + Arrays.toString(input));
 
-        // Release resources
-//        CL.clReleaseMemObject(d_data);
-        //CL.clReleaseMemObject(outputBuffer);
         CL.clReleaseKernel(k_scan_single_block);
         CL.clReleaseProgram(program);
         CL.clReleaseCommandQueue(commandQueue);
@@ -94,26 +96,23 @@ public class ExclusiveScanTest
 
         System.out.println("Variance: " + Arrays.compare(t, input));
     }
-    private static void scan(cl_mem d_data, int[] input)
+    private static void scan(cl_mem d_data, int n)
     {
-        int n = input.length;
         int k = (int) Math.ceil((float)n / (float)m);
         if (k == 1)
         {
-            scan_single_block(d_data, input, n);
+            scan_single_block(d_data, n);
         }
         else
         {
-            scan_multi_block(d_data, input, n, k);
+            scan_multi_block(d_data, n, k);
         }
     }
 
-    private static void scan_single_block(cl_mem d_data, int[] output, int n)
+    private static void scan_single_block(cl_mem d_data, int n)
     {
         // set up buffers
         int localBufferSize = Sizeof.cl_int * m;
-        long data_buf_size = (long)Sizeof.cl_int * n;
-        Pointer dst_data = Pointer.to(output);
         Pointer src_data = Pointer.to(d_data);
 
         // pass in arguments
@@ -124,58 +123,41 @@ public class ExclusiveScanTest
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_single_block, 1, null,
             new long[]{wx}, new long[]{wx}, 0, null, null);
-
-        // transfer results into local memory
-        clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
-            data_buf_size, dst_data, 0, null, null);
     }
 
-    private static void scan_multi_block(cl_mem d_data, int[] input, int n, int k)
+    private static void scan_multi_block(cl_mem d_data, int n, int k)
     {
         // set up buffers
         int localBufferSize = Sizeof.cl_int * m;
         int gx = k * m;
-        long data_buf_size = ((long)Sizeof.cl_int * (long)n);
         long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
         int[] partial_sums = new int[k * 2];
         cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
-        Pointer dst_data = Pointer.to(input);
-        Pointer dst_data2 = Pointer.to(partial_sums);
         Pointer src_data = Pointer.to(d_data);
-        Pointer part_data = Pointer.to(p_data);
+        Pointer src_part = Pointer.to(p_data);
 
         // pass in arguments
         clSetKernelArg(k_scan_multi_block, 0, Sizeof.cl_mem, src_data);
         clSetKernelArg(k_scan_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_multi_block, 2, Sizeof.cl_mem, part_data);
+        clSetKernelArg(k_scan_multi_block, 2, Sizeof.cl_mem, src_part);
         clSetKernelArg(k_scan_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_multi_block, 1, null,
             new long[]{gx}, new long[]{wx}, 0, null, null);
 
-        // transfer results into local memory
-        clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
-            data_buf_size, dst_data, 0, null, null);
-        clEnqueueReadBuffer(commandQueue, p_data, CL_TRUE, 0,
-            part_buf_size, dst_data2, 0, null, null);
-
         // do scan on partial/block sums
-        scan(p_data, partial_sums);
+        scan(p_data, partial_sums.length);
 
         // pass in arguments
         clSetKernelArg(k_complete_multi_block, 0, Sizeof.cl_mem, src_data);
         clSetKernelArg(k_complete_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_complete_multi_block, 2, Sizeof.cl_mem, part_data);
+        clSetKernelArg(k_complete_multi_block, 2, Sizeof.cl_mem, src_part);
         clSetKernelArg(k_complete_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_complete_multi_block, 1, null,
             new long[]{gx}, new long[]{wx}, 0, null, null);
-
-        // transfer results into local memory
-        clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
-            data_buf_size, dst_data, 0, null, null);
 
         clReleaseMemObject(p_data);
     }
