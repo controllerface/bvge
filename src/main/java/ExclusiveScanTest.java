@@ -22,7 +22,7 @@ public class ExclusiveScanTest
     public static void main(String[] args)
     {
         // Input array
-        int size = 100_000_000;
+        int size = 1_000_000_000;
         System.out.println("debug: " + size * Sizeof.cl_int);
         int[] input = new int[size];
         for (int i = 0; i<size; i++)
@@ -30,13 +30,14 @@ public class ExclusiveScanTest
             input[i] = i+1;
         }
 
-        long s = System.nanoTime();
+        // CPU based exclusive scan
+        long s = System.currentTimeMillis();
         int[] t = new int[size];
         for (int i = 1; i < input.length; i ++)
         {
             t[i] = t[i-1] + input[i-1];
         }
-        System.out.println("t1: " + (System.nanoTime() - s));
+        System.out.println("t1: " + (System.currentTimeMillis() - s));
         //System.out.println("CPU Output: " + Arrays.toString(t));
 
 
@@ -60,11 +61,11 @@ public class ExclusiveScanTest
         k_scan_multi_block = CL.clCreateKernel(program, "scan_multi_block", null);
         k_complete_multi_block = CL.clCreateKernel(program, "complete_multi_block", null);
 
-        s = System.nanoTime();
 
+        // GPU based exclusive scan
+        s = System.currentTimeMillis();
         int n = input.length;
         int k = (int) Math.ceil((float)n / (float)m);
-
         cl_mem d_data;
         if (k == 1)
         {
@@ -76,11 +77,9 @@ public class ExclusiveScanTest
             long x = ((long)Sizeof.cl_int * (long)k * (long)m);
             d_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, x, Pointer.to(input), null);
         }
-
         scan(d_data, input);
         clReleaseMemObject(d_data);
-
-        System.out.println("t2: " + (System.nanoTime() - s));
+        System.out.println("t2: " + (System.currentTimeMillis() - s));
 
         // Print the output
         //System.out.println("GPU Output: " + Arrays.toString(input));
@@ -99,7 +98,6 @@ public class ExclusiveScanTest
     {
         int n = input.length;
         int k = (int) Math.ceil((float)n / (float)m);
-
         if (k == 1)
         {
             scan_single_block(d_data, input, n);
@@ -138,8 +136,8 @@ public class ExclusiveScanTest
         int localBufferSize = Sizeof.cl_int * m;
         int gx = k * m;
         long data_buf_size = ((long)Sizeof.cl_int * (long)n);
-        long part_buf_size = ((long)Sizeof.cl_int * (long)k);
-        int[] partial_sums = new int[k];
+        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
+        int[] partial_sums = new int[k * 2];
         cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
         Pointer dst_data = Pointer.to(input);
         Pointer dst_data2 = Pointer.to(partial_sums);
@@ -164,13 +162,11 @@ public class ExclusiveScanTest
 
         // do scan on partial/block sums
         scan(p_data, partial_sums);
-        cl_mem p_data2 = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
 
-        Pointer part_data2 = Pointer.to(p_data2);
         // pass in arguments
         clSetKernelArg(k_complete_multi_block, 0, Sizeof.cl_mem, src_data);
         clSetKernelArg(k_complete_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_complete_multi_block, 2, Sizeof.cl_mem, part_data2);
+        clSetKernelArg(k_complete_multi_block, 2, Sizeof.cl_mem, part_data);
         clSetKernelArg(k_complete_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
@@ -181,8 +177,6 @@ public class ExclusiveScanTest
         clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
             data_buf_size, dst_data, 0, null, null);
 
-
         clReleaseMemObject(p_data);
-        clReleaseMemObject(p_data2);
     }
 }
