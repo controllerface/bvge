@@ -15,9 +15,6 @@ public class SpatialPartition
     private int x_subdivisions = 120;
     private int y_subdivisions = 120;
 
-    // todo: will need some kind of "offset" values that track the player position, moving the effective
-    //  range of the partition, and allowing negative co-ordinates to work with the backing arrays.
-
     private int directoryLength;
     private float x_spacing = 0;
     private float y_spacing = 0;
@@ -25,14 +22,10 @@ public class SpatialPartition
     private float x_origin = 0;
     private float y_origin = 0;
 
-
     public SpatialPartition()
     {
         init();
     }
-
-    float [] x_indices;
-    float [] y_indices;
 
     // todo: partitioning needs to change a bit, instead of specifying subdivisions, the spacing is what
     //  should be static, so the resize operation will keep the space cell size but make the tracking area
@@ -42,7 +35,6 @@ public class SpatialPartition
         x_spacing = width / x_subdivisions;
         y_spacing = height / y_subdivisions;
         directoryLength = x_subdivisions * y_subdivisions;
-
     }
 
     public void resize(float width, float height)
@@ -56,7 +48,6 @@ public class SpatialPartition
     {
         this.x_origin = x_origin;
         this.y_origin = y_origin;
-        //System.out.println("x: " + x_origin + " y: " + y_origin);
     }
 
     private int calculateKeyIndex(int x, int y)
@@ -90,6 +81,13 @@ public class SpatialPartition
                 }
                 int count = key_counts[key_index];
                 int offset = key_offsets[key_index];
+
+                // this loop goes through the key map starting at the offset, up to the
+                // count for this index, and finds an empty location in the precomputed
+                // section of the map and places this body's index there. It doesn't
+                // actually matter what the order is of indices being placed into the key
+                // map, only that the position relative to the offset is only written to
+                // once, so bodies don't overwrite other bodies' entries.
                 for (int i = offset; i < offset + count; i++)
                 {
                     // todo: this could be reworked using a counter array
@@ -102,10 +100,6 @@ public class SpatialPartition
             }
         }
     }
-
-    private long last = System.currentTimeMillis();
-    private long next = System.currentTimeMillis();
-
 
     /**
      * Generates the keys for the given body, stores them in the appropriate section of the key bank,
@@ -123,15 +117,11 @@ public class SpatialPartition
         var body = Main.Memory.bodyByIndex(body_index);
 
         boolean inBounds = isInBounds(body.bounds());
-        //boolean out_count = body.bounds().boo() == 4f;
 
         if (!inBounds)
         {
             return;
         }
-
-//        if (body.bounds().boo() != 0f && body.bounds().boo() != 4f) System.out.println(body.bounds().boo());
-//        if (body.bounds().boo() == 4f) return;
 
         var offset = body.bounds().bank_offset() * Main.Memory.Width.KEY;
 
@@ -145,14 +135,6 @@ public class SpatialPartition
         {
             for (int current_y = min_y; current_y <= max_y; current_y++)
             {
-                // todo: for some reason, with this code enabled, some collisions do not occur.
-                //  with it disabled, a lot of extra keys are generated
-//                boolean xout = (current_x < 0 || current_x >= x_subdivisions);
-//                boolean yout = (current_y < 0 || current_y >= y_subdivisions);
-//                if (xout || yout)
-//                {
-//                    continue;
-//                }
                 int key_index = calculateKeyIndex(current_x, current_y);
                 if (key_index < 0 || current_index < 0
                     || key_index >= key_counts.length
@@ -170,8 +152,6 @@ public class SpatialPartition
                 key_counts[key_index]++; // increment the map count for this key
             }
         }
-
-
     }
 
     public int directoryLength()
@@ -195,25 +175,25 @@ public class SpatialPartition
         for (int body_index = 0; body_index < Main.Memory.bodyCount(); body_index++)
         {
             var body = Main.Memory.bodyByIndex(body_index);
-            if (!isInBounds(body.bounds()))
-            {
-                body.bounds().setBankOffset(-1);
-            }
-            else {
-                // write the current offset into the bounds object, this is the offset
-                // into the main key bank where the keys for this body are stored.
-                // when accessing keys, the si_bank size is used along with this
-                // value to get all the keys for this object
-                // todo: can a "scan" (parallel prefix sum) be used here? bodies could have their offset
-                //  computed and set in CL this way
-                body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
 
-                // todo: can this be calculated alone using a parallel reduce? maybe first?
-                size += body.bounds().si_bank_size();
-            }
+            // note: to keep logic simpler, objects that are out of bounds for this frame
+            // are not filtered out. however, their bank sizes are set to zero during the
+            // integration step, so they will not have an effect on the total size
+
+            // write the current offset into the bounds object, this is the offset
+            // into the main key bank where the keys for this body are stored.
+            // when accessing keys, the si_bank size is used along with this
+            // value to get all the keys for this object
+            // todo: can a "scan" (parallel prefix sum) be used here? bodies could have their offset
+            //  computed and set in CL this way
+            body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
+
+            // todo: can this be calculated alone using a parallel reduce? maybe first?
+            size += body.bounds().si_bank_size();
         }
+
         key_bank_size = size;
-        key_map_size = key_bank_size /Main.Memory.Width.KEY;
+        key_map_size = key_bank_size / Main.Memory.Width.KEY;
         key_bank = new int[key_bank_size];
         key_map = new int[key_map_size];
         // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is built
@@ -232,27 +212,15 @@ public class SpatialPartition
         {
             generateBodyKeys(body_index, key_bank, key_counts);
         }
-        if (next - last > 2000)
-        {
-            last = next;
-        }
-        next = System.currentTimeMillis();
     }
 
     public void calculateMapOffsets()
     {
+        // todo: definitely would need a parallel prefix sum for this one
         int current_offset = 0;
         for (int i = 0; i < key_counts.length; i++)
         {
             int next = key_counts[i];
-            if (next == 0)
-            {
-                key_offsets[i] =-1;
-                continue;
-            }
-            // todo: definitely would need a parallel prefix sum for this one, probably won't
-            //  be able to use the -1 trick though, so may need to account for a difference between
-            //  "no keys" at index vs. index offset _actually_ being 0.
             key_offsets[i] = current_offset;
             current_offset += next;
         }
@@ -299,7 +267,7 @@ public class SpatialPartition
             int offset = key_offsets[key_index];
 
             // these are sentinel values marking a key as having no entries
-            if (count == 0 || offset == -1)
+            if (count == 0)// || offset == -1)
             {
                 continue;
             }

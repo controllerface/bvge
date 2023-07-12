@@ -130,105 +130,6 @@ public class OCLFunctions
     }
 
 
-
-    public static final int wx = 256;
-    public static final int m = wx * 2;
-
-    public static void scan(float[] inputData, float[] outputData, int size)
-    {
-        cl_mem inputBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-            Sizeof.cl_float * size, Pointer.to(inputData), null);
-        cl_mem outputBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-            Sizeof.cl_float * size, null, null);
-
-        // Set the kernel arguments
-        clSetKernelArg(exclusiveScanKernel, 0, Sizeof.cl_mem, Pointer.to(inputBuffer));
-        clSetKernelArg(exclusiveScanKernel, 1, Sizeof.cl_mem, Pointer.to(outputBuffer));
-        clSetKernelArg(exclusiveScanKernel, 2, Sizeof.cl_int, Pointer.to(new int[]{size}));
-
-        // Enqueue the kernel for execution
-        clEnqueueNDRangeKernel(commandQueue, exclusiveScanKernel, 1, null, new long[]{size}, null, 0, null, null);
-
-        // Read the output buffer to retrieve the result
-        clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * size,
-            Pointer.to(outputData), 0, null, null);
-
-        // Print the results
-        System.out.println("Input: " + java.util.Arrays.toString(inputData));
-        System.out.println("GPU Output: " + java.util.Arrays.toString(outputData));
-
-    }
-
-
-//    public static void scan(int[] data, int[] flag, int n)
-//    {
-//        int k = (int) Math.ceil((float)n/(float)m);
-//
-//        var inputBuffer = IntBuffer.wrap(data);
-//        var flagBuffer = IntBuffer.wrap(flag);
-//        Pointer srcInput = Pointer.to(inputBuffer);
-//        Pointer srcFlag = Pointer.to(flagBuffer);
-//        long inputBufsize = (long)Sizeof.cl_int * k * m;
-//
-//        cl_mem d_data = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, inputBufsize, srcInput, null);
-//        //clw.dev_malloc(sizeof(int)*k*m);
-//        cl_mem d_part = clw.dev_malloc(sizeof(int)*k*m);
-//        cl_mem d_flag = clw.dev_malloc(sizeof(int)*k*m);
-//
-//        m0 += clw.memcpy_to_dev(d_data, sizeof(int)*n, data);
-//        m1 += clw.memcpy_to_dev(d_part, sizeof(int)*n, flag);
-//        m2 += clw.memcpy_to_dev(d_flag, sizeof(int)*n, flag);
-//
-//        recursive_scan(d_data, d_part, d_flag, n);
-//
-//        m3 += clw.memcpy_from_dev(d_data, sizeof(int)*n, data);
-//
-//        clw.dev_free(d_data);
-//        clw.dev_free(d_part);
-//        clw.dev_free(d_flag);
-//    }
-
-
-//    public static void recursive_scan(cl_mem d_data, cl_mem d_part, cl_mem d_flag, int n)
-//    {
-//        int k = (int) Math.ceil((float)n/(float)m);
-//        //size of each subarray stored in local memory
-//        var bufsize = Sizeof.cl_int + m;//sizeof(int)*m;
-//        if (k == 1) {
-//            clw.kernel_arg(scan_pad_to_pow2,
-//                d_data,  d_part,  d_flag,
-//                bufsize, bufsize, bufsize,
-//                n);
-//            k0 += clw.run_kernel_with_timing(scan_pad_to_pow2, /*dim=*/1, &wx, &wx);
-//
-//        } else {
-//            size_t gx = k * wx;
-//            cl_mem d_data2 = clw.dev_malloc(sizeof(int)*k);
-//            cl_mem d_part2 = clw.dev_malloc(sizeof(int)*k);
-//            cl_mem d_flag2 = clw.dev_malloc(sizeof(int)*k);
-//            clw.kernel_arg(upsweep_subarrays,
-//                d_data,  d_part,  d_flag,
-//                d_data2, d_part2, d_flag2,
-//                bufsize, bufsize, bufsize,
-//                n);
-//            k1 += clw.run_kernel_with_timing(upsweep_subarrays, /*dim=*/1, &gx, &wx);
-//
-//            recursive_scan(d_data2, d_part2, d_flag2, k);
-//
-//            clw.kernel_arg(downsweep_subarrays,
-//                d_data,  d_part,  d_flag,
-//                d_data2, d_part2, d_flag2,
-//                bufsize, bufsize, bufsize,
-//                n);
-//            k2 += clw.run_kernel_with_timing(downsweep_subarrays, /*dim=*/1, &gx, &wx);
-//
-//            clw.dev_free(d_data2);
-//            clw.dev_free(d_part2);
-//            clw.dev_free(d_flag2);
-//        }
-//    }
-
-
     public static void integrate(float tick_rate, SpatialPartition spatialPartition)
     {
         int bodiesSize = Main.Memory.bodyLength();
@@ -238,14 +139,6 @@ public class OCLFunctions
         var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
         var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
         var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
-
-
-
-//        float x_spacing, float y_spacing,
-//        float x_origin, float y_origin,
-//        float width, float height,
-//        int x_subdivisions, int y_subdivisions
-
 
         // Set the work-item dimensions
         long global_work_size[] = new long[]{Main.Memory.bodyCount()};
@@ -261,7 +154,6 @@ public class OCLFunctions
             (float)spatialPartition.getX_subdivisions(),
             (float)spatialPartition.getY_subdivisions()
         };
-
         Pointer srcBodies = Pointer.to(bodyBuffer);
         Pointer srcPoints = Pointer.to(pointBuffer);
         Pointer srcBounds = Pointer.to(boundsBuffer);
@@ -275,13 +167,9 @@ public class OCLFunctions
         // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
         // directly p2 thr destination p1 the result fo the kernel call. This avoids
         // needing p2 use an intermediate buffer and System.arrayCopy() calls.
-        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, bodyBufsize, srcBodies, null);
-        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, pointBufsize, srcPoints, null);
-        cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, boundsBufsize, srcBounds, null);
-
-        cl_mem dstMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE, bodyBufsize, null, null);
-        cl_mem dstMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE, pointBufsize, null, null);
-        cl_mem dstMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE, boundsBufsize, null, null);
+        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
+        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
+        cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
 
         cl_mem dtMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, Sizeof.cl_float * args.length, srcDt, null);
 
@@ -290,9 +178,6 @@ public class OCLFunctions
         clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
         clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
         clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBounds));
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dstMemBodies));
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dstMemPoints));
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dstMemBounds));
         clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dtMem));
 
         // Execute the kernel
@@ -300,21 +185,18 @@ public class OCLFunctions
             global_work_size, null, 0, null, null);
 
         // Read the output data
-        clEnqueueReadBuffer(commandQueue, dstMemBodies, CL_TRUE, 0,
+        clEnqueueReadBuffer(commandQueue, srcMemBodies, CL_TRUE, 0,
             bodyBufsize, srcBodies, 0, null, null);
 
-        clEnqueueReadBuffer(commandQueue, dstMemPoints, CL_TRUE, 0,
+        clEnqueueReadBuffer(commandQueue, srcMemPoints, CL_TRUE, 0,
             pointBufsize, srcPoints, 0, null, null);
 
-        clEnqueueReadBuffer(commandQueue, dstMemBounds, CL_TRUE, 0,
+        clEnqueueReadBuffer(commandQueue, srcMemBounds, CL_TRUE, 0,
             boundsBufsize, srcBounds, 0, null, null);
 
         clReleaseMemObject(srcMemBodies);
         clReleaseMemObject(srcMemPoints);
         clReleaseMemObject(srcMemBounds);
-        clReleaseMemObject(dstMemBodies);
-        clReleaseMemObject(dstMemPoints);
-        clReleaseMemObject(dstMemBounds);
         clReleaseMemObject(dtMem);
     }
 

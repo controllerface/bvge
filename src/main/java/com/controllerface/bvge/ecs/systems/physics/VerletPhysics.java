@@ -62,7 +62,7 @@ public class VerletPhysics extends GameSystem
                 vectorBuffer1.y -= body2D.force();
             }
         }
-        vectorBuffer1.y -= 980.0;
+        vectorBuffer1.y -= 9.8 * 100;
         body2D.setAcc(vectorBuffer1);
     }
 
@@ -83,6 +83,14 @@ public class VerletPhysics extends GameSystem
         Main.Memory.point_buffer[y_index_a] -= reaction[11];
         Main.Memory.point_buffer[x_index_b] -= reaction[12];
         Main.Memory.point_buffer[y_index_b] -= reaction[13];
+
+        // uncomment these lines to force inelastic collisions
+//        Main.Memory.point_buffer[x_index+2] = Main.Memory.point_buffer[x_index];
+//        Main.Memory.point_buffer[y_index+2] = Main.Memory.point_buffer[y_index];
+//        Main.Memory.point_buffer[x_index_a+2] = Main.Memory.point_buffer[x_index_a];
+//        Main.Memory.point_buffer[y_index_a+2] = Main.Memory.point_buffer[y_index_a];
+//        Main.Memory.point_buffer[x_index_b+2] = Main.Memory.point_buffer[x_index_b];
+//        Main.Memory.point_buffer[y_index_b+2] = Main.Memory.point_buffer[y_index_b];
     }
 
 
@@ -131,15 +139,51 @@ public class VerletPhysics extends GameSystem
         // perform integration step
         OCLFunctions.integrate(dt, spatialPartition);
 
+        // todo #0: replace this with 3 OCL calls
         spatialPartition.calculateKeyBankSize();
-        spatialPartition.buildKeyBank();
-        spatialPartition.calculateMapOffsets();
-        spatialPartition.buildKeyMap();
+        // todo #1: create OCL function to scan the bounding boxes, using the si bank
+        //  size as the value to sum. These values are stored in an array aligned to
+        //  the number of bounding boxes
 
-        // todo: now need to pull out the intermediate list used as a buffer in this method
-        //  may need to do two passes, one to detect size needed and one to actually get candidates
-        //  best to do on GPU.
+        // todo #2: create OCL function to take scan sums from step 1 and forward
+        //  them into the corresponding bounding boxes' offset values
+
+        // todo #3: create OCL function to reduce the body key sizes, calculating the
+        //  space needed for the key bank and key map. These arrays can then be generated
+        //  via a host call.
+
+
+        // todo #0: replace this with a single OCL call
+        spatialPartition.buildKeyBank();
+        // todo #1: create an OCL function that accepts the key counts array and the empty,
+        //  key map, and operates on every tracked body/bounds pair. The function should
+        //  iterate the keys for each object and place them in the appropriate keymap
+        //  location. During this process, it should atomically increment the key count
+        //  array.
+
+
+        // todo #0: replace this with 2 OCL calls
+        spatialPartition.calculateMapOffsets();
+        // todo #1: do an exclusive scan on the key counts array as one CL call, and then
+        //  make a second call that forwards the values to the key offsets array
+
+
+        // todo #0: replace this with 1 OCL call
+        spatialPartition.buildKeyMap();
+        // todo #1: this one will be tricky, as there needs to be one atomic counter per
+        //  key-map index that threads can increment to get their relative offset in order
+        //  to store their index into the proper part of the array. When run sequentially,
+        //  the order is effectively always ascending and preserved, but this is not strictly
+        //  needed.
+
+
+
+        // todo #0: replace this with 2 OCL calls
         var candidates = spatialPartition.computeCandidatesEX();
+        // todo #1: need to pull out the intermediate list used as a buffer in this method
+        //  and instead do two CL passes, one to detect size needed and one to actually get
+        //  candidate pairs stored into the sized array. probably will need a global atomic
+        //  counter for this one, otherwise a more complex solution will be needed.
 
         // narrow phase collision
         if (candidates.limit() > 0)
