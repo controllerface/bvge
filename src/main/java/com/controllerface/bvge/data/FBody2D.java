@@ -111,10 +111,4 @@ public record FBody2D(int index,
         Main.Memory.body_buffer[index() + ACC_X_OFFSET] = newAcc.x;
         Main.Memory.body_buffer[index() + ACC_Y_OFFSET] = newAcc.y;
     }
-
-    public void addAcc(Vector2f newAcc)
-    {
-        Main.Memory.body_buffer[index() + ACC_X_OFFSET] += newAcc.x;
-        Main.Memory.body_buffer[index() + ACC_Y_OFFSET] += newAcc.y;
-    }
 }

@@ -39,8 +39,31 @@ public class VerletPhysics extends GameSystem
     {
         if ((body2D.flags() & FLAG_STATIC) != 0) return;
         vectorBuffer1.zero();
-        vectorBuffer1.y -= 500.00;
-        body2D.addAcc(vectorBuffer1);
+
+        var cp = ecs.getComponentFor(entity, Component.ControlPoints);
+        if (cp != null)
+        {
+            ControlPoints controlPoints = Component.ControlPoints.coerce(cp);
+
+            if (controlPoints.isLeft())
+            {
+                vectorBuffer1.x -= body2D.force();
+            }
+            if (controlPoints.isRight())
+            {
+                vectorBuffer1.x += body2D.force();
+            }
+            if (controlPoints.isUp())
+            {
+                vectorBuffer1.y += body2D.force();
+            }
+            if (controlPoints.isDown())
+            {
+                vectorBuffer1.y -= body2D.force();
+            }
+        }
+        vectorBuffer1.y -= 980.0;
+        body2D.setAcc(vectorBuffer1);
     }
 
     private void reactPolygon(float[] reaction)
@@ -60,14 +83,6 @@ public class VerletPhysics extends GameSystem
         Main.Memory.point_buffer[y_index_a] -= reaction[11];
         Main.Memory.point_buffer[x_index_b] -= reaction[12];
         Main.Memory.point_buffer[y_index_b] -= reaction[13];
-
-        // uncomment these lines to force inelastic collisions
-//        Main.Memory.point_buffer[x_index+2] = Main.Memory.point_buffer[x_index];
-//        Main.Memory.point_buffer[y_index+2] = Main.Memory.point_buffer[y_index];
-//        Main.Memory.point_buffer[x_index_a+2] = Main.Memory.point_buffer[x_index_a];
-//        Main.Memory.point_buffer[y_index_a+2] = Main.Memory.point_buffer[y_index_a];
-//        Main.Memory.point_buffer[x_index_b+2] = Main.Memory.point_buffer[x_index_b];
-//        Main.Memory.point_buffer[y_index_b+2] = Main.Memory.point_buffer[y_index_b];
     }
 
 
@@ -96,38 +111,6 @@ public class VerletPhysics extends GameSystem
     }
 
 
-    private void updateControlledBodies()
-    {
-        var controllable_bodies = ecs.getComponents(Component.ControlPoints);
-        for (Map.Entry<String, GameComponent> entry : controllable_bodies.entrySet())
-        {
-            String entity = entry.getKey();
-            GameComponent component = entry.getValue();
-            ControlPoints controlPoints = Component.ControlPoints.coerce(component);
-            var b = ecs.getComponentFor(entity, Component.RigidBody2D);
-            FBody2D body = Component.RigidBody2D.coerce(b);
-            if ((body.flags() & FLAG_STATIC) != 0) continue;
-            vectorBuffer1.zero();
-            if (controlPoints.isLeft())
-            {
-                vectorBuffer1.x -= body.force();
-            }
-            if (controlPoints.isRight())
-            {
-                vectorBuffer1.x += body.force();
-            }
-            if (controlPoints.isUp())
-            {
-                vectorBuffer1.y += body.force();
-            }
-            if (controlPoints.isDown())
-            {
-                vectorBuffer1.y -= body.force();
-            }
-            body.addAcc(vectorBuffer1);
-        }
-    }
-
     private void tickSimulation(float dt)
     {
         var bodies = ecs.getComponents(Component.RigidBody2D);
@@ -137,8 +120,6 @@ public class VerletPhysics extends GameSystem
         {
             return;
         }
-
-        updateControlledBodies();
 
         // todo: this can be moved into CL
         bodies.forEach((key, value)->

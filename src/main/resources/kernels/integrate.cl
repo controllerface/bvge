@@ -56,9 +56,12 @@ int2 getKeyForPoint(float px, float py,
 }
 
 __kernel void integrate(
-    __global float16 *bodies,
-    __global float4 *points,
-    __global float16 *bounds,
+    __global const float16 *bodies,
+    __global const float4 *points,
+    __global const float16 *bounds,
+    __global float16 *r_bodies,
+    __global float4 *r_points,
+    __global float16 *r_bounds,
     __global float *args)
 {
     int gid = get_global_id(0);
@@ -85,13 +88,13 @@ __kernel void integrate(
     //  or something, so it can be handled differently for collisions as well.
     if (!isInBounds(bounding_box, x_origin, y_origin, width, height))
     {
-        bodies[gid] = body;
-        bounds[gid] = bounding_box;
+        r_bodies[gid] = body;
+        r_bounds[gid] = bounding_box;
 
         for (int i = start; i <= end; i++)
         {
             float4 point = points[i];
-            points[i] = point;
+            r_points[i] = point;
         }
         return;
     }
@@ -100,8 +103,6 @@ __kernel void integrate(
    	float2 acc;
    	acc.x = body.s4;
    	acc.y = body.s5;
-    body.s4 = 0.0;
-   	body.s5 = 0.0;
    	acc.x = acc.x * dt;
    	acc.y = acc.y * dt;
 
@@ -179,7 +180,7 @@ __kernel void integrate(
         }
 
         // store updated point in result buffer
-        points[i] = point;
+        r_points[i] = point;
     }
 
     // calculate centroid
@@ -240,6 +241,6 @@ __kernel void integrate(
     bounding_box.s5 = (float) size;
 
     // store updated body and bounds data in result buffers
-    bounds[gid] = bounding_box;
-    bodies[gid] = body;
+    r_bounds[gid] = bounding_box;
+    r_bodies[gid] = body;
 }

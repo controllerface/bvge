@@ -5,7 +5,7 @@
    2. ~~distance from edge should be sufficient to see upcoming objects~~
 2. static geometry
    1. physics objects should be able to be toggled static on/off
-   2. ~~add check to ensure static objects only check non-static for collision~~
+   2. add check to ensure static objects only check non-static for collision
 3. circle objects
    1. will need circle/circle and circle/poly collision reaction functions
    2. will need circle specific renderer
@@ -21,9 +21,9 @@
    5. tiers should help "ease" objects out as player moves away
    6. change from specifying subdivisions to specifying spacing instead
 6. gravity
-   1. ~~objects should fall when gravity is enabled~~
+   1. objects should fall when gravity is enabled
    2. consider "zones" which could be used to implement planet-side mechanics
-   3. radial zone for small space bound objects (asteroids, etc.) may be cool
+   3. radial zone for small space bound objects (asteroids, etc.) amy be cool
 7. collision layers
    1. physics objects should have a layer parameter to restrict collisions
    2. layer 0 should be an "always collide" layer so things don't clip out
