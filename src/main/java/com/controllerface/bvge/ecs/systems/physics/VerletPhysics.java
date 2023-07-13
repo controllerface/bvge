@@ -62,7 +62,7 @@ public class VerletPhysics extends GameSystem
                 vectorBuffer1.y -= body2D.force();
             }
         }
-        //vectorBuffer1.y -= 9.8 * 100;
+        vectorBuffer1.y -= 9.8 * 100;
         body2D.setAcc(vectorBuffer1);
     }
 
@@ -161,12 +161,6 @@ public class VerletPhysics extends GameSystem
 //            System.out.println("CPU: " + Arrays.toString(out2));
 //        }
 
-        // todo #1: create OCL function to scan the bounding boxes, using the si bank
-        //  size as the value to sum. These values are stored in an array aligned to
-        //  the number of bounding boxes
-
-        // todo #2: create OCL function to take scan sums from step 1 and forward
-        //  them into the corresponding bounding boxes' offset values
 
         // todo #3: create OCL function to reduce the body key sizes, calculating the
         //  space needed for the key bank and key map. These arrays can then be generated

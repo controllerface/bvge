@@ -137,7 +137,7 @@ public class OCLFunctions
     private static int wx = 256;
     private static int m = wx * 2;
 
-    public static void scan_key_bank()
+    public static void  scan_key_bank()
     {
         int boundsSize = Main.Memory.boundsLength();
         var input = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
