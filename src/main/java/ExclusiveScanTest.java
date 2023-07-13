@@ -25,7 +25,7 @@ public class ExclusiveScanTest
         Random random = new Random();
 
         // Input array
-        int size = 20_000_000;
+        int size = 50_000_000;
         System.out.println("debug: " + size * Sizeof.cl_int);
         int[] input = new int[size];
         for (int i = 0; i<size; i++)
@@ -70,10 +70,10 @@ public class ExclusiveScanTest
         int n = input.length;
         int k = (int) Math.ceil((float)n / (float)m);
         cl_mem d_data;
-        long sz = ((long)Sizeof.cl_int * (long)k * (long)m);
-        long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
-        d_data = CL.clCreateBuffer(context, flags, sz, Pointer.to(input), null);
         long data_buf_size = (long)Sizeof.cl_int * n;
+        //long sz = ((long)Sizeof.cl_int * (long)k * (long)m);
+        long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
+        d_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(input), null);
         Pointer dst_data = Pointer.to(input);
         scan(d_data, n, k);
         System.out.println("t2e: " + (System.currentTimeMillis() - start));

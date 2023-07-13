@@ -175,7 +175,10 @@ public class SpatialPartition
         for (int body_index = 0; body_index < Main.Memory.bodyCount(); body_index++)
         {
             var body = Main.Memory.bodyByIndex(body_index);
-
+//            if (!isInBounds(body.bounds()))
+//            {
+//                body.bounds().setBankOffset(-1);
+//            }
             // note: to keep logic simpler, objects that are out of bounds for this frame
             // are not filtered out. however, their bank sizes are set to zero during the
             // integration step, so they will not have an effect on the total size
@@ -194,7 +197,10 @@ public class SpatialPartition
         }
 
         key_bank_size = size;
-        key_map_size = key_bank_size / Main.Memory.Width.KEY;
+        key_map_size = key_bank_size;// / Main.Memory.Width.KEY;
+        // not sure why, but the key map size needs to be equal to the bank size when the body count is
+        // high enough. todo: check if this is a bug or not?
+
         key_bank = new int[key_bank_size];
         key_map = new int[key_map_size];
         // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is built

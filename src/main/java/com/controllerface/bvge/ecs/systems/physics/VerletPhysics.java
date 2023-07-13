@@ -62,7 +62,7 @@ public class VerletPhysics extends GameSystem
                 vectorBuffer1.y -= body2D.force();
             }
         }
-        vectorBuffer1.y -= 9.8 * 100;
+        //vectorBuffer1.y -= 9.8 * 100;
         body2D.setAcc(vectorBuffer1);
     }
 
@@ -140,9 +140,26 @@ public class VerletPhysics extends GameSystem
         OCLFunctions.integrate(dt, spatialPartition);
 
         OCLFunctions.scan_key_bank();
+//        int[] out = new int[Main.Memory.boundsCount()];
+//        for (int i = 0; i < Main.Memory.boundsCount(); i++)
+//        {
+//            int next = (int)Main.Memory.bounds_buffer[i*Main.Memory.Width.BOUNDS+FBounds2D.BANK_OFFSET];
+//            out[i] = next;
+//        }
 
-        // todo #0: replace this with 3 OCL calls
+        // todo #0: replace this with 2 OCL calls
         spatialPartition.calculateKeyBankSize();
+//        int[] out2 = new int[Main.Memory.boundsCount()];
+//        for (int i = 0; i < Main.Memory.boundsCount(); i++)
+//        {
+//            int next = (int)Main.Memory.bounds_buffer[i*Main.Memory.Width.BOUNDS+FBounds2D.BANK_OFFSET];
+//            out2[i] = next;
+//        }
+//        if (Arrays.compare(out, out2) != 0)
+//        {
+//            System.out.println("GPU: " + Arrays.toString(out));
+//            System.out.println("CPU: " + Arrays.toString(out2));
+//        }
 
         // todo #1: create OCL function to scan the bounding boxes, using the si bank
         //  size as the value to sum. These values are stored in an array aligned to
