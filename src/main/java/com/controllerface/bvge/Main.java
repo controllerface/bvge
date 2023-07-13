@@ -107,6 +107,11 @@ public class Main
             return bounds_index + 1;
         }
 
+        public static int boundsCount()
+        {
+            return bounds_index / Width.BOUNDS;
+        }
+
         public static FBounds2D newBounds()
         {
             bounds_buffer[bounds_index++] = 0f;

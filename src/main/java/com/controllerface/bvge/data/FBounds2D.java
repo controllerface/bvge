@@ -24,11 +24,11 @@ public record FBounds2D(int index) implements GameComponent
     * 14:
     * 15:
     *  */
-    private static final int X_OFFSET           = 0;
-    private static final int Y_OFFSET           = 1;
-    private static final int W_OFFSET           = 2;
-    private static final int H_OFFSET           = 3;
-    private static final int BANK_OFFSET        = 4;
+    public static final int X_OFFSET           = 0;
+    public static final int Y_OFFSET           = 1;
+    public static final int W_OFFSET           = 2;
+    public static final int H_OFFSET           = 3;
+    public static final int BANK_OFFSET        = 4;
     public static final int SI_BANK_SIZE_OFFSET = 5;
     public static final int SI_MIN_X_OFFSET     = 6;
     public static final int SI_MAX_X_OFFSET     = 7;

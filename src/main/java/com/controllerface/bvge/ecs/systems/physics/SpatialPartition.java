@@ -186,8 +186,9 @@ public class SpatialPartition
             // value to get all the keys for this object
             // todo: can a "scan" (parallel prefix sum) be used here? bodies could have their offset
             //  computed and set in CL this way
-            body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
+            //body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
 
+            //System.out.println(body_index + " : " + body.bounds().si_bank_size());
             // todo: can this be calculated alone using a parallel reduce? maybe first?
             size += body.bounds().si_bank_size();
         }

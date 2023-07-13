@@ -139,8 +139,11 @@ public class VerletPhysics extends GameSystem
         // perform integration step
         OCLFunctions.integrate(dt, spatialPartition);
 
+        OCLFunctions.scan_key_bank();
+
         // todo #0: replace this with 3 OCL calls
         spatialPartition.calculateKeyBankSize();
+
         // todo #1: create OCL function to scan the bounding boxes, using the si bank
         //  size as the value to sum. These values are stored in an array aligned to
         //  the number of bounding boxes
