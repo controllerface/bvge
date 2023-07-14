@@ -72,6 +72,10 @@ __kernel void integrate(
     float height = args[6];
     int x_subdivisions = (int) args[7];
     int y_subdivisions = (int) args[8];
+    float2 gravity;
+    gravity.x = args[9];
+    gravity.y = args[10];
+    
 
     // get body from array
     float16 body = bodies[gid];
@@ -86,6 +90,8 @@ __kernel void integrate(
     if (!isInBounds(bounding_box, x_origin, y_origin, width, height))
     {
         bounding_box.s5 = 0;
+        body.s4 = 0.0;
+   	    body.s5 = 0.0;
         bodies[gid] = body;
         bounds[gid] = bounding_box;
 
@@ -101,10 +107,18 @@ __kernel void integrate(
    	float2 acc;
    	acc.x = body.s4;
    	acc.y = body.s5;
-    body.s4 = 0.0;
-   	body.s5 = 0.0;
+    bool b1s = (body.s6 && 0x01) !=0;
+    if (!b1s)
+    {
+        acc.x += gravity.x;
+        acc.y += gravity.y;
+    }
    	acc.x = acc.x * dt;
    	acc.y = acc.y * dt;
+
+    // reset acceleration to zero for the next frame
+    body.s4 = 0.0;
+   	body.s5 = 0.0;
 
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;

@@ -301,7 +301,7 @@ public class OCLFunctions
 
 
 
-    public static void integrate(float tick_rate, SpatialPartition spatialPartition)
+    public static void integrate(float tick_rate, float gravity_x, float gravity_y, float friction, SpatialPartition spatialPartition)
     {
         int bodiesSize = Main.Memory.bodyLength();
         int pointsSize = Main.Memory.pointLength();
@@ -323,7 +323,10 @@ public class OCLFunctions
             spatialPartition.getWidth(),
             spatialPartition.getHeight(),
             (float)spatialPartition.getX_subdivisions(),
-            (float)spatialPartition.getY_subdivisions()
+            (float)spatialPartition.getY_subdivisions(),
+            gravity_x,
+            gravity_y,
+            friction
         };
         Pointer srcBodies = Pointer.to(bodyBuffer);
         Pointer srcPoints = Pointer.to(pointBuffer);

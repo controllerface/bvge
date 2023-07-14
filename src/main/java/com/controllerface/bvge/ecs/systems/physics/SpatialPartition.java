@@ -116,8 +116,7 @@ public class SpatialPartition
     {
         var body = Main.Memory.bodyByIndex(body_index);
 
-        boolean inBounds = isInBounds(body.bounds());
-
+        boolean inBounds = body.bounds().si_bank_size() != 0;
         if (!inBounds)
         {
             return;
@@ -154,12 +153,6 @@ public class SpatialPartition
         }
     }
 
-    public int directoryLength()
-    {
-        return directoryLength;
-    }
-
-
     int key_bank_size = 0;
     int key_map_size = 0;
 
@@ -171,44 +164,26 @@ public class SpatialPartition
 
     public int calculateKeyBankSize()
     {
-        int size = 0;
-        for (int body_index = 0; body_index < Main.Memory.bodyCount(); body_index++)
-        {
-            var body = Main.Memory.bodyByIndex(body_index);
-//            if (!isInBounds(body.bounds()))
-//            {
-//                body.bounds().setBankOffset(-1);
-//            }
-            // note: to keep logic simpler, objects that are out of bounds for this frame
-            // are not filtered out. however, their bank sizes are set to zero during the
-            // integration step, so they will not have an effect on the total size
-
-            // write the current offset into the bounds object, this is the offset
-            // into the main key bank where the keys for this body are stored.
-            // when accessing keys, the si_bank size is used along with this
-            // value to get all the keys for this object
-            // todo: can a "scan" (parallel prefix sum) be used here? bodies could have their offset
-            //  computed and set in CL this way
-            //body.bounds().setBankOffset(size / Main.Memory.Width.KEY);
-
-            //System.out.println(body_index + " : " + body.bounds().si_bank_size());
-            // todo: can this be calculated alone using a parallel reduce? maybe first?
-            size += body.bounds().si_bank_size();
-        }
+        var final_bound = (Main.Memory.boundsCount() - 1) * Main.Memory.Width.BOUNDS;
+        int bank_size = (int)Main.Memory.bounds_buffer[final_bound + FBounds2D.SI_BANK_SIZE_OFFSET];
+        int bank_offset = (int)Main.Memory.bounds_buffer[final_bound + FBounds2D.BANK_OFFSET];
+        int size = (bank_size + bank_offset) * Main.Memory.Width.KEY;
 
         key_bank_size = size;
-        key_map_size = key_bank_size;// / Main.Memory.Width.KEY;
+        key_map_size = key_bank_size; // / Main.Memory.Width.KEY;
         // not sure why, but the key map size needs to be equal to the bank size when the body count is
         // high enough. todo: check if this is a bug or not?
 
-        key_bank = new int[key_bank_size];
-        key_map = new int[key_map_size];
+        key_bank    = new int[key_bank_size];
+        key_map     = new int[key_map_size];
+        key_counts  = new int[directoryLength];
+        key_offsets = new int[directoryLength];
+
         // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is built
         //  correctly. an alternative would be to make body index 0 unused, so indices all start at one,
         //  but that may create a lot more issues.
         Arrays.fill(key_map, -1);
-        key_counts=new int[directoryLength];
-        key_offsets=new int[directoryLength];
+
         return size;
     }
 

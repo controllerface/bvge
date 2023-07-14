@@ -101,7 +101,7 @@ public class KBMInput extends GameSystem
 
     public void mouseButtonCallback(long window, int button, int action, int mods)
     {
-        System.out.println(button);
+        //System.out.println(button);
         if (action == GLFW_PRESS)
         {
             mouseButtonsDown++;

@@ -15,10 +15,13 @@ import static com.controllerface.bvge.data.PhysicsObjects.FLAG_STATIC;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TICK_RATE = 1.0f / 60.0f;
+    private final float TARGET_FPS = 60.0f;
+    private final float TICK_RATE = 1.0f / TARGET_FPS;
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 2;
-    private final float GRAVITY = 9.8f;
+    private final float GRAVITY_X = 0;
+    private final float GRAVITY_Y = -(9.8f * TARGET_FPS);
+
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
 
@@ -33,37 +36,6 @@ public class VerletPhysics extends GameSystem
     {
         super(ecs);
         this.spatialPartition = spatialPartition;
-    }
-
-    private void resolveForces(String entity, FBody2D body2D)
-    {
-        if ((body2D.flags() & FLAG_STATIC) != 0) return;
-        vectorBuffer1.zero();
-
-        var cp = ecs.getComponentFor(entity, Component.ControlPoints);
-        if (cp != null)
-        {
-            ControlPoints controlPoints = Component.ControlPoints.coerce(cp);
-
-            if (controlPoints.isLeft())
-            {
-                vectorBuffer1.x -= body2D.force();
-            }
-            if (controlPoints.isRight())
-            {
-                vectorBuffer1.x += body2D.force();
-            }
-            if (controlPoints.isUp())
-            {
-                vectorBuffer1.y += body2D.force();
-            }
-            if (controlPoints.isDown())
-            {
-                vectorBuffer1.y -= body2D.force();
-            }
-        }
-        vectorBuffer1.y -= 9.8 * 100;
-        body2D.setAcc(vectorBuffer1);
     }
 
     private void reactPolygon(float[] reaction)
@@ -118,6 +90,36 @@ public class VerletPhysics extends GameSystem
         }
     }
 
+    private void updateControllableBodies()
+    {
+        var cntro = ecs.getComponents(Component.ControlPoints);
+        for (Map.Entry<String, GameComponent> entry : cntro.entrySet())
+        {
+            String entity = entry.getKey();
+            var b = ecs.getComponentFor(entity, Component.RigidBody2D);
+            FBody2D body = Component.RigidBody2D.coerce(b);
+            GameComponent component = entry.getValue();
+            ControlPoints controlPoints = Component.ControlPoints.coerce(component);
+            vectorBuffer1.zero();
+            if (controlPoints.isLeft())
+            {
+                vectorBuffer1.x -= body.force();
+            }
+            if (controlPoints.isRight())
+            {
+                vectorBuffer1.x += body.force();
+            }
+            if (controlPoints.isUp())
+            {
+                vectorBuffer1.y += body.force();
+            }
+            if (controlPoints.isDown())
+            {
+                vectorBuffer1.y -= body.force();
+            }
+            body.addAcc(vectorBuffer1);
+        }
+    }
 
     private void tickSimulation(float dt)
     {
@@ -129,43 +131,13 @@ public class VerletPhysics extends GameSystem
             return;
         }
 
-        // todo: this can be moved into CL
-        bodies.forEach((key, value)->
-        {
-            FBody2D body = Component.RigidBody2D.coerce(value);
-            resolveForces(body.entity(), body);
-        });
+        updateControllableBodies();
 
-        // perform integration step
-        OCLFunctions.integrate(dt, spatialPartition);
-
+        // todo: the buffers generated during integration can be carried forward
+        //  and only pulled off the GPU at the very end.
+        OCLFunctions.integrate(dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
         OCLFunctions.scan_key_bank();
-//        int[] out = new int[Main.Memory.boundsCount()];
-//        for (int i = 0; i < Main.Memory.boundsCount(); i++)
-//        {
-//            int next = (int)Main.Memory.bounds_buffer[i*Main.Memory.Width.BOUNDS+FBounds2D.BANK_OFFSET];
-//            out[i] = next;
-//        }
-
-        // todo #0: replace this with 2 OCL calls
         spatialPartition.calculateKeyBankSize();
-//        int[] out2 = new int[Main.Memory.boundsCount()];
-//        for (int i = 0; i < Main.Memory.boundsCount(); i++)
-//        {
-//            int next = (int)Main.Memory.bounds_buffer[i*Main.Memory.Width.BOUNDS+FBounds2D.BANK_OFFSET];
-//            out2[i] = next;
-//        }
-//        if (Arrays.compare(out, out2) != 0)
-//        {
-//            System.out.println("GPU: " + Arrays.toString(out));
-//            System.out.println("CPU: " + Arrays.toString(out2));
-//        }
-
-
-        // todo #3: create OCL function to reduce the body key sizes, calculating the
-        //  space needed for the key bank and key map. These arrays can then be generated
-        //  via a host call.
-
 
         // todo #0: replace this with a single OCL call
         spatialPartition.buildKeyBank();
