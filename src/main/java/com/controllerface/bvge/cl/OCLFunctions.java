@@ -33,6 +33,10 @@ public class OCLFunctions
     static cl_program p_scan_key_bank;
     private static final String src_scan_key_bank = readSrc("scan_key_bank.cl");
 
+    static cl_kernel k_generate_keys;
+    static cl_program p_generate_keys;
+    private static final String src_generate_keys = readSrc("generate_keys.cl");
+
     public static String readSrc(String file)
     {
         var stream = OCLFunctions.class.getResourceAsStream("/kernels/" + file);
@@ -117,7 +121,12 @@ public class OCLFunctions
         k_finish_key_bank_block = clCreateKernel(p_scan_key_bank, "finish_key_bank_block", null);
         k_scan_single_block = clCreateKernel(p_scan_key_bank, "scan_single_block", null);;
         k_scan_multi_block = clCreateKernel(p_scan_key_bank, "scan_multi_block", null);;
-        k_complete_multi_block = clCreateKernel(p_scan_key_bank, "complete_multi_block", null);;
+        k_complete_multi_block = clCreateKernel(p_scan_key_bank, "complete_multi_block", null);
+
+
+        p_generate_keys = clCreateProgramWithSource(context, 1, new String[]{src_generate_keys}, null, null);
+        clBuildProgram(p_generate_keys, 1, device_id, null, null, null);
+        k_generate_keys = clCreateKernel(p_generate_keys, "generate_keys", null);
     }
 
     public static void destroy()
@@ -134,10 +143,75 @@ public class OCLFunctions
         clReleaseContext(context);
     }
 
-    private static int wx = 256;
+    public static void generate_key_bank(SpatialPartition spatialPartition)
+
+    {
+        int[] key_bank = spatialPartition.getKey_bank();
+        int[] key_counts = spatialPartition.getKey_counts();
+        int x_subdivisions = spatialPartition.getX_subdivisions();
+        int boundsSize = Main.Memory.boundsLength();
+        var input = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
+        var binput = IntBuffer.wrap(key_bank);
+        var cinput = IntBuffer.wrap(key_counts);
+
+        int n = Main.Memory.boundsCount();
+        long data_buf_size = (long)Sizeof.cl_float16 * n;
+        long bank_buf_size = (long)Sizeof.cl_int * key_bank.length;
+        long counts_buf_size = (long)Sizeof.cl_int * key_counts.length;
+        long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
+        cl_mem bounds_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(input), null);
+        cl_mem bank_data = CL.clCreateBuffer(context, flags, bank_buf_size, Pointer.to(binput), null);
+        cl_mem counts_data = CL.clCreateBuffer(context, flags, counts_buf_size, Pointer.to(cinput), null);
+        Pointer src_data = Pointer.to(bounds_data);
+        Pointer dst_bank = Pointer.to(key_bank);
+        Pointer src_bank = Pointer.to(bank_data);
+        Pointer dst_counts = Pointer.to(key_counts);
+        Pointer src_counts = Pointer.to(counts_data);
+
+        // pass in arguments
+        clSetKernelArg(k_generate_keys, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_generate_keys, 1, Sizeof.cl_mem, src_bank);
+        clSetKernelArg(k_generate_keys, 2, Sizeof.cl_mem, src_counts);
+        clSetKernelArg(k_generate_keys, 3, Sizeof.cl_int, Pointer.to(new int[]{x_subdivisions}));
+        clSetKernelArg(k_generate_keys, 4, Sizeof.cl_int, Pointer.to(new int[]{key_bank.length}));
+        clSetKernelArg(k_generate_keys, 5, Sizeof.cl_int, Pointer.to(new int[]{key_counts.length}));
+
+        // call kernel
+        clEnqueueNDRangeKernel(commandQueue, k_generate_keys, 1, null,
+            new long[]{n}, null, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, bank_data, CL_TRUE, 0,
+            bank_buf_size, dst_bank, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, counts_data, CL_TRUE, 0,
+            counts_buf_size, dst_counts, 0, null, null);
+
+        clReleaseMemObject(bounds_data);
+        clReleaseMemObject(bank_data);
+        clReleaseMemObject(counts_data);
+    }
+
+    private static int wx = 256; // todo: query hardware for this limit
     private static int m = wx * 2;
 
-    public static void  scan_key_bank()
+    public static void scan_key_offsets(SpatialPartition spatialPartition)
+    {
+        int[] key_counts = spatialPartition.getKey_counts();
+        int[] key_offsets = spatialPartition.getKey_offsets();
+        int n = key_counts.length;
+        int k = (int) Math.ceil((float)n / (float)m);
+        cl_mem d_data;
+        long data_buf_size = (long)Sizeof.cl_int * n;
+        long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
+        d_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(key_counts), null);
+        Pointer dst_data = Pointer.to(key_offsets);
+        scan(d_data, n, k);
+        clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
+            data_buf_size, dst_data, 0, null, null);
+        clReleaseMemObject(d_data);
+    }
+
+    public static void calculate_key_bank_offsets()
     {
         int boundsSize = Main.Memory.boundsLength();
         var input = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);

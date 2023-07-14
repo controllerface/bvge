@@ -108,11 +108,9 @@ public class SpatialPartition
      * at that index.
      *
      * @param body_index index of the body to generate keys for
-     * @param key_bank the key bank to store the keys within
-     * @param key_counts the running counts array of keys at a given index
      * @return
      */
-    private void generateBodyKeys(int body_index, int[] key_bank, int[] key_counts)
+    private void generateBodyKeys(int body_index)
     {
         var body = Main.Memory.bodyByIndex(body_index);
 
@@ -154,7 +152,6 @@ public class SpatialPartition
     }
 
     int key_bank_size = 0;
-    int key_map_size = 0;
 
     int[] key_bank = new int[0];
     int[] key_map = new int[0];
@@ -170,12 +167,11 @@ public class SpatialPartition
         int size = (bank_size + bank_offset) * Main.Memory.Width.KEY;
 
         key_bank_size = size;
-        key_map_size = key_bank_size; // / Main.Memory.Width.KEY;
         // not sure why, but the key map size needs to be equal to the bank size when the body count is
         // high enough. todo: check if this is a bug or not?
 
         key_bank    = new int[key_bank_size];
-        key_map     = new int[key_map_size];
+        key_map     = new int[key_bank_size];
         key_counts  = new int[directoryLength];
         key_offsets = new int[directoryLength];
 
@@ -187,12 +183,27 @@ public class SpatialPartition
         return size;
     }
 
+    public int[] getKey_counts()
+    {
+        return key_counts;
+    }
+
+    public int[] getKey_bank()
+    {
+        return key_bank;
+    }
+
+    public int[] getKey_offsets()
+    {
+        return key_offsets;
+    }
+
     public void buildKeyBank()
     {
         var body_count = Main.Memory.bodyCount();
         for (int body_index = 0; body_index < body_count; body_index++)
         {
-            generateBodyKeys(body_index, key_bank, key_counts);
+            generateBodyKeys(body_index);
         }
     }
 

@@ -69,7 +69,7 @@ __kernel void scan_key_bank(__global float16 *bounds,
     // calculate the total length of the local buffer array
     int m = 2 * get_local_size(0);
 
-    // load the gloabl value sinto the local buffer, and with extra zeroes
+    // load the gloabl values into the local buffer, and with extra zeroes
     // so the buffer size matches the work group
     buffer[a_index] = a_index < n ? (int)bounds[a_index].s5 : 0;
     buffer[b_index] = b_index < n ? (int)bounds[b_index].s5 : 0;

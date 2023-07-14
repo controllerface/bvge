@@ -1,5 +1,5 @@
 // gets the extents of a spatial index for an axis-aligned bounding box
-int4 getExtents(int2 corners[])
+inline int4 getExtents(int2 corners[])
 {
     int4 r;
     r.x = INT_MAX; // min_x
@@ -29,7 +29,7 @@ int4 getExtents(int2 corners[])
     return r;
 }
 
-bool isInBounds(float16 a, float x_origin, float y_origin, float width, float height)
+inline bool isInBounds(float16 a, float x_origin, float y_origin, float width, float height)
 {
     //printf("debug xo: %f yo: %f w: %f h: %f", x_origin, y_origin, width, height);
     return a.s0 < x_origin + width
@@ -39,7 +39,7 @@ bool isInBounds(float16 a, float x_origin, float y_origin, float width, float he
 }
 
 // calculates a spatial index cell for a given point
-int2 getKeyForPoint(float px, float py,
+inline int2 getKeyForPoint(float px, float py,
                     float x_spacing, float y_spacing,
                     float x_origin, float y_origin,
                     float width, float height,

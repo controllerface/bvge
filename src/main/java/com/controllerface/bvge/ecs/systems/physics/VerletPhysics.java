@@ -11,8 +11,6 @@ import org.joml.Vector2f;
 import java.nio.FloatBuffer;
 import java.util.*;
 
-import static com.controllerface.bvge.data.PhysicsObjects.FLAG_STATIC;
-
 public class VerletPhysics extends GameSystem
 {
     private final float TARGET_FPS = 60.0f;
@@ -20,7 +18,7 @@ public class VerletPhysics extends GameSystem
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 2;
     private final float GRAVITY_X = 0;
-    private final float GRAVITY_Y = -(9.8f * TARGET_FPS);
+    private final float GRAVITY_Y = 0;//-(9.8f * TARGET_FPS);
 
     private final float FRICTION = .995f;
     private float accumulator = 0.0f;
@@ -133,26 +131,16 @@ public class VerletPhysics extends GameSystem
 
         updateControllableBodies();
 
-        // todo: the buffers generated during integration can be carried forward
+        // todo: the buffers generated during OCL calls can be carried forward
         //  and only pulled off the GPU at the very end.
         OCLFunctions.integrate(dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
-        OCLFunctions.scan_key_bank();
+        OCLFunctions.calculate_key_bank_offsets();
         spatialPartition.calculateKeyBankSize();
+        OCLFunctions.generate_key_bank(spatialPartition);
+        //spatialPartition.buildKeyBank();
 
-        // todo #0: replace this with a single OCL call
-        spatialPartition.buildKeyBank();
-        // todo #1: create an OCL function that accepts the key counts array and the empty,
-        //  key map, and operates on every tracked body/bounds pair. The function should
-        //  iterate the keys for each object and place them in the appropriate keymap
-        //  location. During this process, it should atomically increment the key count
-        //  array.
-
-
-        // todo #0: replace this with 2 OCL calls
-        spatialPartition.calculateMapOffsets();
-        // todo #1: do an exclusive scan on the key counts array as one CL call, and then
-        //  make a second call that forwards the values to the key offsets array
-
+        OCLFunctions.scan_key_offsets(spatialPartition);
+        //spatialPartition.calculateMapOffsets();
 
         // todo #0: replace this with 1 OCL call
         spatialPartition.buildKeyMap();

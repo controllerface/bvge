@@ -1,4 +1,4 @@
-float3 projectPolygon(__global const float4 *points, float16 body, float2 normal)
+inline float3 projectPolygon(__global const float4 *points, float16 body, float2 normal)
 {
     int start = (int)body.s7;
     int end   = (int)body.s8;
@@ -30,7 +30,7 @@ float3 projectPolygon(__global const float4 *points, float16 body, float2 normal
     return result;
 }
 
-float polygonDistance(float3 proj_a, float3 proj_b)
+inline float polygonDistance(float3 proj_a, float3 proj_b)
 {
     if (proj_a.x < proj_b.x)
     {
@@ -42,7 +42,7 @@ float polygonDistance(float3 proj_a, float3 proj_b)
     }
 }
 
-float edgeContact(float2 e1, float2 e2, float2 collision_vertex, float2 collision_vector)
+inline float edgeContact(float2 e1, float2 e2, float2 collision_vertex, float2 collision_vector)
 {
     float contact;
     float x_dist = e1.x - e2.x;
