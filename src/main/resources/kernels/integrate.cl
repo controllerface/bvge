@@ -75,6 +75,7 @@ __kernel void integrate(
     float2 gravity;
     gravity.x = args[9];
     gravity.y = args[10];
+    float friction = args[11];
     
 
     // get body from array
@@ -151,8 +152,8 @@ __kernel void integrate(
         diff = acc + diff;
 
         // add friction component todo: take this in as an argument, gravity too
-        diff.x *= .980;
-        diff.y *= .980;
+        diff.x *= friction;
+        diff.y *= friction;
         
         // set the prv to current pos
         prv.x = pos.x;

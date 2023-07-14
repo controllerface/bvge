@@ -18,9 +18,8 @@ public class VerletPhysics extends GameSystem
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 2;
     private final float GRAVITY_X = 0;
-    private final float GRAVITY_Y = 0;//-(9.8f * TARGET_FPS);
-
-    private final float FRICTION = .995f;
+    private final float GRAVITY_Y = 0;//-(9.8f * 100);
+    private final float FRICTION = .980f;
     private float accumulator = 0.0f;
 
     private final SpatialPartition spatialPartition;
@@ -135,15 +134,16 @@ public class VerletPhysics extends GameSystem
         //  and only pulled off the GPU at the very end.
         OCLFunctions.integrate(dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
         OCLFunctions.calculate_key_bank_offsets();
+
+        // todo: calculate this during bank scan
         spatialPartition.calculateKeyBankSize();
+
         OCLFunctions.generate_key_bank(spatialPartition);
-        //spatialPartition.buildKeyBank();
-
         OCLFunctions.scan_key_offsets(spatialPartition);
-        //spatialPartition.calculateMapOffsets();
 
+        OCLFunctions.generate_key_map(spatialPartition);
         // todo #0: replace this with 1 OCL call
-        spatialPartition.buildKeyMap();
+        //spatialPartition.buildKeyMap();
         // todo #1: this one will be tricky, as there needs to be one atomic counter per
         //  key-map index that threads can increment to get their relative offset in order
         //  to store their index into the proper part of the array. When run sequentially,

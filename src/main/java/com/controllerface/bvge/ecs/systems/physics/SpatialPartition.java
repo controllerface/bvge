@@ -178,7 +178,7 @@ public class SpatialPartition
         // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is built
         //  correctly. an alternative would be to make body index 0 unused, so indices all start at one,
         //  but that may create a lot more issues.
-        Arrays.fill(key_map, -1);
+        //Arrays.fill(key_map, -1);
 
         return size;
     }
@@ -196,6 +196,11 @@ public class SpatialPartition
     public int[] getKey_offsets()
     {
         return key_offsets;
+    }
+
+    public int[] getKey_map()
+    {
+        return key_map;
     }
 
     public void buildKeyBank()

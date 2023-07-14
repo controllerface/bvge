@@ -37,6 +37,10 @@ public class OCLFunctions
     static cl_program p_generate_keys;
     private static final String src_generate_keys = readSrc("generate_keys.cl");
 
+    static cl_kernel k_build_key_map;
+    static cl_program p_build_key_map;
+    private static final String src_build_key_map = readSrc("build_key_map.cl");
+
     public static String readSrc(String file)
     {
         var stream = OCLFunctions.class.getResourceAsStream("/kernels/" + file);
@@ -127,6 +131,10 @@ public class OCLFunctions
         p_generate_keys = clCreateProgramWithSource(context, 1, new String[]{src_generate_keys}, null, null);
         clBuildProgram(p_generate_keys, 1, device_id, null, null, null);
         k_generate_keys = clCreateKernel(p_generate_keys, "generate_keys", null);
+
+        p_build_key_map = clCreateProgramWithSource(context, 1, new String[]{src_build_key_map}, null, null);
+        clBuildProgram(p_build_key_map, 1, device_id, null, null, null);
+        k_build_key_map = clCreateKernel(p_build_key_map, "build_key_map", null);
     }
 
     public static void destroy()
@@ -136,15 +144,66 @@ public class OCLFunctions
         clReleaseKernel(k_scan_key_bank);
         clReleaseKernel(k_scan_key_bank_block);
         clReleaseKernel(k_finish_key_bank_block);
+        clReleaseKernel(k_generate_keys);
+        clReleaseKernel(k_complete_multi_block);
+        clReleaseKernel(k_build_key_map);
         clReleaseProgram(p_verletIntegrate);
         clReleaseProgram(p_collide);
         clReleaseProgram(p_scan_key_bank);
+        clReleaseProgram(p_generate_keys);
+        clReleaseProgram(p_build_key_map);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
     }
 
-    public static void generate_key_bank(SpatialPartition spatialPartition)
+    public static void generate_key_map(SpatialPartition spatialPartition)
+    {
+        int[] key_map = spatialPartition.getKey_map();
+        int[] key_offsets = spatialPartition.getKey_offsets();
+        int[] key_counts = new int[key_offsets.length]; // todo: maybe generate on GPU?
+        int x_subdivisions = spatialPartition.getX_subdivisions();
+        int boundsSize = Main.Memory.boundsLength();
+        var input = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
+        var minput = IntBuffer.wrap(key_map);
+        var oinput = IntBuffer.wrap(key_offsets);
+        var cinput = IntBuffer.wrap(key_counts);
 
+
+
+        int n = Main.Memory.boundsCount();
+        long data_buf_size = (long)Sizeof.cl_float16 * n;
+        long map_buf_size = (long)Sizeof.cl_int * key_map.length;
+        long offsets_buf_size = (long)Sizeof.cl_int * key_offsets.length;
+        long counts_buf_size = (long)Sizeof.cl_int * key_counts.length;
+        long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
+        cl_mem bounds_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(input), null);
+        cl_mem map_data = CL.clCreateBuffer(context, flags, map_buf_size, Pointer.to(minput), null);
+        cl_mem offset_data = CL.clCreateBuffer(context, flags, offsets_buf_size, Pointer.to(oinput), null);
+        cl_mem counts_data = CL.clCreateBuffer(context, flags, counts_buf_size, Pointer.to(cinput), null);
+        Pointer src_data = Pointer.to(bounds_data);
+        Pointer dst_map = Pointer.to(minput);
+        Pointer src_map = Pointer.to(map_data);
+        //Pointer dst_offset = Pointer.to(key_offsets);
+        Pointer src_offset = Pointer.to(offset_data);
+        //Pointer dst_counts = Pointer.to(key_counts);
+        Pointer src_counts = Pointer.to(counts_data);
+
+        clSetKernelArg(k_build_key_map, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_build_key_map, 1, Sizeof.cl_mem, src_map);
+        clSetKernelArg(k_build_key_map, 2, Sizeof.cl_mem, src_offset);
+        clSetKernelArg(k_build_key_map, 3, Sizeof.cl_mem, src_counts);
+        clSetKernelArg(k_build_key_map, 4, Sizeof.cl_int, Pointer.to(new int[]{x_subdivisions}));
+        clSetKernelArg(k_build_key_map, 5, Sizeof.cl_int, Pointer.to(new int[]{key_counts.length}));
+
+
+        clEnqueueNDRangeKernel(commandQueue, k_build_key_map, 1, null,
+            new long[]{n}, null, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, map_data, CL_TRUE, 0,
+            map_buf_size, dst_map, 0, null, null);
+    }
+
+    public static void generate_key_bank(SpatialPartition spatialPartition)
     {
         int[] key_bank = spatialPartition.getKey_bank();
         int[] key_counts = spatialPartition.getKey_counts();
@@ -205,7 +264,7 @@ public class OCLFunctions
         long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
         d_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(key_counts), null);
         Pointer dst_data = Pointer.to(key_offsets);
-        scan(d_data, n, k);
+        scan_int(d_data, n, k);
         clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
             data_buf_size, dst_data, 0, null, null);
         clReleaseMemObject(d_data);
@@ -233,19 +292,19 @@ public class OCLFunctions
     }
 
 
-    private static void scan(cl_mem d_data, int n, int k)
+    private static void scan_int(cl_mem d_data, int n, int k)
     {
         if (k == 1)
         {
-            scan_single_block(d_data, n);
+            scan_single_block_int(d_data, n);
         }
         else
         {
-            scan_multi_block(d_data, n, k);
+            scan_multi_block_int(d_data, n, k);
         }
     }
 
-    private static void scan_single_block(cl_mem d_data, int n)
+    private static void scan_single_block_int(cl_mem d_data, int n)
     {
         // set up buffers
         int localBufferSize = Sizeof.cl_int * m;
@@ -261,7 +320,7 @@ public class OCLFunctions
             new long[]{wx}, new long[]{wx}, 0, null, null);
     }
 
-    private static void scan_multi_block(cl_mem d_data, int n, int k)
+    private static void scan_multi_block_int(cl_mem d_data, int n, int k)
     {
         // set up buffers
         int localBufferSize = Sizeof.cl_int * m;
@@ -285,7 +344,7 @@ public class OCLFunctions
         // do scan on block sums
         int n2 = partial_sums.length;
         int k2 = (int) Math.ceil((float)n2 / (float)m);
-        scan(p_data, n2, k2);
+        scan_int(p_data, n2, k2);
 
         // pass in arguments
         clSetKernelArg(k_complete_multi_block, 0, Sizeof.cl_mem, src_data);
@@ -355,7 +414,7 @@ public class OCLFunctions
         int k2 = (int) Math.ceil((float)n2 / (float)m);
 
 
-        scan(p_data, n2, k2);
+        scan_int(p_data, n2, k2);
 
         // pass in arguments
         clSetKernelArg(k_finish_key_bank_block, 0, Sizeof.cl_mem, src_data);
