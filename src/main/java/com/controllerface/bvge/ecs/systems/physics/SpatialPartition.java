@@ -276,6 +276,7 @@ public class SpatialPartition
             for (int j = 0; j < hits.length;j++)
             {
                 int next = hits[j];
+                // this is where duplicate/reverse collisions are weeded out
                 if (target_index >= next)
                 {
                     continue;
@@ -304,6 +305,7 @@ public class SpatialPartition
         var spatial_index = bounds.bank_offset() * Main.Memory.Width.KEY;
         var spatial_length = target.bounds().si_bank_size();
         var target_keys = new int[spatial_length];
+        // grab the keys for this object and use them to find potential candidates
         System.arraycopy(key_bank, spatial_index, target_keys, 0, spatial_length);
         return findMatchesEX(target_index, target_keys);
     }

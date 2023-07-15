@@ -130,7 +130,16 @@ public class VerletPhysics extends GameSystem
 
         updateControllableBodies();
 
-        // todo: the buffers generated during OCL calls can be carried forward
+        // todo: (LARGE)
+        //  the memory where the objects reside should reside on the GPU and the CPU/
+        //  host code should "query" this memory when necessary. Instead of being host
+        //  local and transferring to the GPU every frame, as is the current design,
+        //  this would drastically cut down on the amount of memory transferred back
+        //  and forth from the GPU.
+        //  Also, once this is in place, the vertex data should be prepared on the GPU
+        //  as well, so CL can prep the data for use by GL.
+
+        // todo: the buffers generated during these OCL calls can be carried forward
         //  and only pulled off the GPU at the very end.
         OCLFunctions.integrate(dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
         OCLFunctions.calculate_key_bank_offsets();
@@ -140,24 +149,17 @@ public class VerletPhysics extends GameSystem
 
         OCLFunctions.generate_key_bank(spatialPartition);
         OCLFunctions.scan_key_offsets(spatialPartition);
-
         OCLFunctions.generate_key_map(spatialPartition);
-        // todo #0: replace this with 1 OCL call
-        //spatialPartition.buildKeyMap();
-        // todo #1: this one will be tricky, as there needs to be one atomic counter per
-        //  key-map index that threads can increment to get their relative offset in order
-        //  to store their index into the proper part of the array. When run sequentially,
-        //  the order is effectively always ascending and preserved, but this is not strictly
-        //  needed.
 
 
-
-        // todo #0: replace this with 2 OCL calls
+        // todo #0: replace this with OCL calls
         var candidates = spatialPartition.computeCandidatesEX();
-        // todo #1: need to pull out the intermediate list used as a buffer in this method
-        //  and instead do two CL passes, one to detect size needed and one to actually get
-        //  candidate pairs stored into the sized array. probably will need a global atomic
-        //  counter for this one, otherwise a more complex solution will be needed.
+        // todo #1: need to make a kernel that determines the key sums of each body
+        //  as well as the total size needed for the entire candidate buffer. Then
+        //  a separate kernel will be needed to query the key map for every body and
+        //  compute their candidates, porting the current logic into that kernel.
+        //  The output of the calculation just needs to conform to the structure
+        //  assumed below, which is effectively an array of 2 dimensional int vectors.
 
         // narrow phase collision
         if (candidates.limit() > 0)
