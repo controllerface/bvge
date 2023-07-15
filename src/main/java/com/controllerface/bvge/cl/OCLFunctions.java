@@ -24,12 +24,12 @@ public class OCLFunctions
     static cl_program p_collide;
     private static final String src_collide = readSrc("collide.cl");
 
-    static cl_kernel k_scan_key_bank;
-    static cl_kernel k_scan_key_bank_block;
-    static cl_kernel k_finish_key_bank_block;
-    static cl_kernel k_scan_single_block;
-    static cl_kernel k_scan_multi_block;
-    static cl_kernel k_complete_multi_block;
+    static cl_kernel k_scan_bounds_single_block;
+    static cl_kernel k_scan_bounds_multi_block;
+    static cl_kernel k_complete_bounds_multi_block;
+    static cl_kernel k_scan_int_single_block;
+    static cl_kernel k_scan_int_multi_block;
+    static cl_kernel k_complete_int_multi_block;
     static cl_program p_scan_key_bank;
     private static final String src_scan_key_bank = readSrc("scan_key_bank.cl");
 
@@ -120,12 +120,12 @@ public class OCLFunctions
 
         p_scan_key_bank = clCreateProgramWithSource(context, 1, new String[]{src_scan_key_bank}, null, null);
         clBuildProgram(p_scan_key_bank, 1, device_id, null, null, null);
-        k_scan_key_bank = clCreateKernel(p_scan_key_bank, "scan_key_bank", null);
-        k_scan_key_bank_block = clCreateKernel(p_scan_key_bank, "scan_key_bank_block", null);
-        k_finish_key_bank_block = clCreateKernel(p_scan_key_bank, "finish_key_bank_block", null);
-        k_scan_single_block = clCreateKernel(p_scan_key_bank, "scan_single_block", null);;
-        k_scan_multi_block = clCreateKernel(p_scan_key_bank, "scan_multi_block", null);;
-        k_complete_multi_block = clCreateKernel(p_scan_key_bank, "complete_multi_block", null);
+        k_scan_bounds_single_block = clCreateKernel(p_scan_key_bank, "scan_bounds_single_block", null);
+        k_scan_bounds_multi_block = clCreateKernel(p_scan_key_bank, "scan_bounds_multi_block", null);
+        k_complete_bounds_multi_block = clCreateKernel(p_scan_key_bank, "complete_bounds_multi_block", null);
+        k_scan_int_single_block = clCreateKernel(p_scan_key_bank, "scan_int_single_block", null);;
+        k_scan_int_multi_block = clCreateKernel(p_scan_key_bank, "scan_int_multi_block", null);;
+        k_complete_int_multi_block = clCreateKernel(p_scan_key_bank, "complete_int_multi_block", null);
 
 
         p_generate_keys = clCreateProgramWithSource(context, 1, new String[]{src_generate_keys}, null, null);
@@ -141,11 +141,11 @@ public class OCLFunctions
     {
         clReleaseKernel(k_verletIntegrate);
         clReleaseKernel(k_collide);
-        clReleaseKernel(k_scan_key_bank);
-        clReleaseKernel(k_scan_key_bank_block);
-        clReleaseKernel(k_finish_key_bank_block);
+        clReleaseKernel(k_scan_bounds_single_block);
+        clReleaseKernel(k_scan_bounds_multi_block);
+        clReleaseKernel(k_complete_bounds_multi_block);
         clReleaseKernel(k_generate_keys);
-        clReleaseKernel(k_complete_multi_block);
+        clReleaseKernel(k_complete_int_multi_block);
         clReleaseKernel(k_build_key_map);
         clReleaseProgram(p_verletIntegrate);
         clReleaseProgram(p_collide);
@@ -201,6 +201,11 @@ public class OCLFunctions
 
         clEnqueueReadBuffer(commandQueue, map_data, CL_TRUE, 0,
             map_buf_size, dst_map, 0, null, null);
+
+        clReleaseMemObject(bounds_data);
+        clReleaseMemObject(offset_data);
+        clReleaseMemObject(map_data);
+        clReleaseMemObject(counts_data);
     }
 
     public static void generate_key_bank(SpatialPartition spatialPartition)
@@ -310,12 +315,12 @@ public class OCLFunctions
         Pointer src_data = Pointer.to(d_data);
 
         // pass in arguments
-        clSetKernelArg(k_scan_single_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_single_block, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_single_block, 2, Sizeof.cl_int, Pointer.to(new int[]{n}));
+        clSetKernelArg(k_scan_int_single_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_int_single_block, 1, localBufferSize,null);
+        clSetKernelArg(k_scan_int_single_block, 2, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_single_block, 1, null,
+        clEnqueueNDRangeKernel(commandQueue, k_scan_int_single_block, 1, null,
             new long[]{wx}, new long[]{wx}, 0, null, null);
     }
 
@@ -331,13 +336,13 @@ public class OCLFunctions
         Pointer src_part = Pointer.to(p_data);
 
         // pass in arguments
-        clSetKernelArg(k_scan_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_multi_block, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_scan_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+        clSetKernelArg(k_scan_int_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_int_multi_block, 1, localBufferSize,null);
+        clSetKernelArg(k_scan_int_multi_block, 2, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_scan_int_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_multi_block, 1, null,
+        clEnqueueNDRangeKernel(commandQueue, k_scan_int_multi_block, 1, null,
             new long[]{gx}, new long[]{wx}, 0, null, null);
 
         // do scan on block sums
@@ -346,13 +351,13 @@ public class OCLFunctions
         scan_int(p_data, n2, k2);
 
         // pass in arguments
-        clSetKernelArg(k_complete_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_complete_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_complete_multi_block, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_complete_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+        clSetKernelArg(k_complete_int_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_complete_int_multi_block, 1, localBufferSize,null);
+        clSetKernelArg(k_complete_int_multi_block, 2, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_complete_int_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_complete_multi_block, 1, null,
+        clEnqueueNDRangeKernel(commandQueue, k_complete_int_multi_block, 1, null,
             new long[]{gx}, new long[]{wx}, 0, null, null);
 
         clReleaseMemObject(p_data);
@@ -378,12 +383,12 @@ public class OCLFunctions
         Pointer src_data = Pointer.to(d_data);
 
         // pass in arguments
-        clSetKernelArg(k_scan_key_bank, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_key_bank, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_key_bank, 2, Sizeof.cl_int, Pointer.to(new int[]{n}));
+        clSetKernelArg(k_scan_bounds_single_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_bounds_single_block, 1, localBufferSize,null);
+        clSetKernelArg(k_scan_bounds_single_block, 2, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_key_bank, 1, null,
+        clEnqueueNDRangeKernel(commandQueue, k_scan_bounds_single_block, 1, null,
             new long[]{wx}, new long[]{wx}, 0, null, null);
     }
 
@@ -399,13 +404,13 @@ public class OCLFunctions
         Pointer src_part = Pointer.to(p_data);
 
         // pass in arguments
-        clSetKernelArg(k_scan_key_bank_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_key_bank_block, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_key_bank_block, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_scan_key_bank_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+        clSetKernelArg(k_scan_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_bounds_multi_block, 1, localBufferSize,null);
+        clSetKernelArg(k_scan_bounds_multi_block, 2, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_scan_bounds_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_key_bank_block, 1, null,
+        clEnqueueNDRangeKernel(commandQueue, k_scan_bounds_multi_block, 1, null,
             new long[]{gx}, new long[]{wx}, 0, null, null);
 
         // do scan on block sums
@@ -416,13 +421,13 @@ public class OCLFunctions
         scan_int(p_data, n2, k2);
 
         // pass in arguments
-        clSetKernelArg(k_finish_key_bank_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_finish_key_bank_block, 1, localBufferSize,null);
-        clSetKernelArg(k_finish_key_bank_block, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_finish_key_bank_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+        clSetKernelArg(k_complete_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_complete_bounds_multi_block, 1, localBufferSize,null);
+        clSetKernelArg(k_complete_bounds_multi_block, 2, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_complete_bounds_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_finish_key_bank_block, 1, null,
+        clEnqueueNDRangeKernel(commandQueue, k_complete_bounds_multi_block, 1, null,
             new long[]{gx}, new long[]{wx}, 0, null, null);
 
         clReleaseMemObject(p_data);

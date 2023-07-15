@@ -55,7 +55,7 @@ inline void downsweep(__local int *buffer, int m)
     }
 }
 
-__kernel void scan_key_bank(__global float16 *bounds,
+__kernel void scan_bounds_single_block(__global float16 *bounds,
                             __local int *buffer,
                             int n)
 {
@@ -96,7 +96,7 @@ __kernel void scan_key_bank(__global float16 *bounds,
     }
 }
 
-__kernel void scan_key_bank_block(__global float16 *bounds, 
+__kernel void scan_bounds_multi_block(__global float16 *bounds, 
                                   __local int *buffer, 
                                   __global int *part, 
                                   int n)
@@ -149,7 +149,7 @@ __kernel void scan_key_bank_block(__global float16 *bounds,
     }
 }
 
-__kernel void finish_key_bank_block(__global float16 *bounds, 
+__kernel void complete_bounds_multi_block(__global float16 *bounds, 
                                     __local int *buffer, 
                                     __global int *part, 
                                     int n)
@@ -182,7 +182,7 @@ __kernel void finish_key_bank_block(__global float16 *bounds,
     }
 }
 
-__kernel void scan_single_block(__global int *data, __local int *buffer, int n) 
+__kernel void scan_int_single_block(__global int *data, __local int *buffer, int n) 
 {
     // the global ID for this thread
     int global_id = get_global_id(0);
@@ -228,7 +228,7 @@ __kernel void scan_single_block(__global int *data, __local int *buffer, int n)
  * part is a buffer of size [k] where k is the total number of blocks being processed
  * n is the total number of elements in the entire global data array.
  */
-__kernel void scan_multi_block(__global int *data, 
+__kernel void scan_int_multi_block(__global int *data, 
                                __local int *buffer, 
                                __global int *part, 
                                int n)
@@ -281,7 +281,7 @@ __kernel void scan_multi_block(__global int *data,
     }
 }
 
-__kernel void complete_multi_block(__global int *data, 
+__kernel void complete_int_multi_block(__global int *data, 
                                    __local int *buffer, 
                                    __global int *part, 
                                    int n)
