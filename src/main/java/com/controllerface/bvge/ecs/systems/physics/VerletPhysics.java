@@ -17,10 +17,20 @@ public class VerletPhysics extends GameSystem
     private final float TICK_RATE = 1.0f / TARGET_FPS;
     private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 2;
+    private float accumulator = 0.0f;
+
+    // todo: these values should not be global, but per-object.
+    //  When an object is considered "in-contact" with a static object,
+    //  it should be assigned friction based on that object. There should
+    //  be some type of ambient friction (i.e. friction of the "air" or ambient medium)
+    //  that applies when no other friction value is set, and then friction
+    //  values applied by objects could not go above the ambient friction.
+    //  In this way, friction is a "status effect" that is cleared every frame
+    //  and applied when contact occurs.
     private final float GRAVITY_X = 0;
     private final float GRAVITY_Y = 0;//-(9.8f * 100);
     private final float FRICTION = .980f;
-    private float accumulator = 0.0f;
+
 
     private final SpatialPartition spatialPartition;
     /**
@@ -37,29 +47,30 @@ public class VerletPhysics extends GameSystem
 
     private void reactPolygon(float[] reaction)
     {
-        // vertex object
-        var x_index = (int)reaction[7] * Main.Memory.Width.POINT;
-        var y_index = x_index + 1;
-        Main.Memory.point_buffer[x_index] += reaction[8];
-        Main.Memory.point_buffer[y_index] += reaction[9];
+        var vo_x = (int)reaction[0] * Main.Memory.Width.POINT;
+        var vo_y = vo_x + 1;
+        var e1_x = (int)reaction[1] * Main.Memory.Width.POINT;
+        var e1_y = e1_x + 1;
+        var e2_x = (int)reaction[2] * Main.Memory.Width.POINT;
+        var e2_y = e2_x + 1;
 
-        // edge object
-        var x_index_a = (int)reaction[5] * Main.Memory.Width.POINT;
-        var y_index_a = x_index_a + 1;
-        var x_index_b = (int)reaction[6] * Main.Memory.Width.POINT;
-        var y_index_b = x_index_b + 1;
-        Main.Memory.point_buffer[x_index_a] -= reaction[10];
-        Main.Memory.point_buffer[y_index_a] -= reaction[11];
-        Main.Memory.point_buffer[x_index_b] -= reaction[12];
-        Main.Memory.point_buffer[y_index_b] -= reaction[13];
+        Main.Memory.point_buffer[vo_x] += reaction[3];
+        Main.Memory.point_buffer[vo_y] += reaction[4];
+        Main.Memory.point_buffer[e1_x] -= reaction[5];
+        Main.Memory.point_buffer[e1_y] -= reaction[6];
+        Main.Memory.point_buffer[e2_x] -= reaction[7];
+        Main.Memory.point_buffer[e2_y] -= reaction[8];
 
+        // todo: elasticity should be a per-object value that adjusts how elastic
+        //  reactions against that object are. Mass should also be taken into account
+        //  to determine the magnitude of the adjustment
         // uncomment these lines to force inelastic collisions
-//        Main.Memory.point_buffer[x_index+2] = Main.Memory.point_buffer[x_index];
-//        Main.Memory.point_buffer[y_index+2] = Main.Memory.point_buffer[y_index];
-//        Main.Memory.point_buffer[x_index_a+2] = Main.Memory.point_buffer[x_index_a];
-//        Main.Memory.point_buffer[y_index_a+2] = Main.Memory.point_buffer[y_index_a];
-//        Main.Memory.point_buffer[x_index_b+2] = Main.Memory.point_buffer[x_index_b];
-//        Main.Memory.point_buffer[y_index_b+2] = Main.Memory.point_buffer[y_index_b];
+//        Main.Memory.point_buffer[vo_x + 2] = Main.Memory.point_buffer[vo_x];
+//        Main.Memory.point_buffer[vo_y + 2] = Main.Memory.point_buffer[vo_y];
+//        Main.Memory.point_buffer[e1_x + 2] = Main.Memory.point_buffer[e1_x];
+//        Main.Memory.point_buffer[e1_y + 2] = Main.Memory.point_buffer[e1_y];
+//        Main.Memory.point_buffer[e2_x + 2] = Main.Memory.point_buffer[e2_x];
+//        Main.Memory.point_buffer[e2_y + 2] = Main.Memory.point_buffer[e2_y];
     }
 
 
@@ -142,15 +153,9 @@ public class VerletPhysics extends GameSystem
         // todo: the buffers generated during these OCL calls can be carried forward
         //  and only pulled off the GPU at the very end.
         OCLFunctions.integrate(dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
-        OCLFunctions.calculate_key_bank_offsets();
-
-        // todo: calculate this during bank scan. It should be possible on the final
-        //  scan phase to calculate one further value, as if the scan were inclusive.
-        //  The value can the be read back into the host so a buffer can be allocated.
-        spatialPartition.calculateKeyBankSize();
-
+        OCLFunctions.calculate_bank_offsets(spatialPartition);
         OCLFunctions.generate_key_bank(spatialPartition);
-        OCLFunctions.scan_key_offsets(spatialPartition);
+        OCLFunctions.calculate_map_offsets(spatialPartition);
         OCLFunctions.generate_key_map(spatialPartition);
 
         // todo #0: replace this with OCL calls

@@ -168,24 +168,21 @@ public class OCLFunctions
         var oinput = IntBuffer.wrap(key_offsets);
         var cinput = IntBuffer.wrap(key_counts);
 
-
-
         int n = Main.Memory.boundsCount();
         long data_buf_size = (long)Sizeof.cl_float16 * n;
         long map_buf_size = (long)Sizeof.cl_int * key_map.length;
         long offsets_buf_size = (long)Sizeof.cl_int * key_offsets.length;
         long counts_buf_size = (long)Sizeof.cl_int * key_counts.length;
-        long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
+        long flags = CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR ;
         cl_mem bounds_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(input), null);
         cl_mem map_data = CL.clCreateBuffer(context, flags, map_buf_size, Pointer.to(minput), null);
         cl_mem offset_data = CL.clCreateBuffer(context, flags, offsets_buf_size, Pointer.to(oinput), null);
         cl_mem counts_data = CL.clCreateBuffer(context, flags, counts_buf_size, Pointer.to(cinput), null);
+
         Pointer src_data = Pointer.to(bounds_data);
         Pointer dst_map = Pointer.to(minput);
         Pointer src_map = Pointer.to(map_data);
-        //Pointer dst_offset = Pointer.to(key_offsets);
         Pointer src_offset = Pointer.to(offset_data);
-        //Pointer dst_counts = Pointer.to(key_counts);
         Pointer src_counts = Pointer.to(counts_data);
 
         clSetKernelArg(k_build_key_map, 0, Sizeof.cl_mem, src_data);
@@ -193,8 +190,7 @@ public class OCLFunctions
         clSetKernelArg(k_build_key_map, 2, Sizeof.cl_mem, src_offset);
         clSetKernelArg(k_build_key_map, 3, Sizeof.cl_mem, src_counts);
         clSetKernelArg(k_build_key_map, 4, Sizeof.cl_int, Pointer.to(new int[]{x_subdivisions}));
-        clSetKernelArg(k_build_key_map, 5, Sizeof.cl_int, Pointer.to(new int[]{key_counts.length}));
-
+        clSetKernelArg(k_build_key_map, 5, Sizeof.cl_int, Pointer.to(new int[]{key_offsets.length}));
 
         clEnqueueNDRangeKernel(commandQueue, k_build_key_map, 1, null,
             new long[]{n}, null, 0, null, null);
@@ -258,7 +254,7 @@ public class OCLFunctions
     private static int wx = 256; // todo: query hardware for this limit
     private static int m = wx * 2;
 
-    public static void scan_key_offsets(SpatialPartition spatialPartition)
+    public static void calculate_map_offsets(SpatialPartition spatialPartition)
     {
         int[] key_counts = spatialPartition.getKey_counts();
         int[] key_offsets = spatialPartition.getKey_offsets();
@@ -275,7 +271,7 @@ public class OCLFunctions
         clReleaseMemObject(d_data);
     }
 
-    public static void calculate_key_bank_offsets()
+    public static void calculate_bank_offsets(SpatialPartition spatialPartition)
     {
         int boundsSize = Main.Memory.boundsLength();
         var input = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
@@ -287,14 +283,14 @@ public class OCLFunctions
         cl_mem d_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(input), null);
 
         Pointer dst_data = Pointer.to(input);
-        scan_key_bounds(d_data, n, k);
+        int bank_size = scan_key_bounds(d_data, n, k);
         // transfer results into local memory.
         // Note: this is only needed once, after all operations are done
         clEnqueueReadBuffer(commandQueue, d_data, CL_TRUE, 0,
             data_buf_size, dst_data, 0, null, null);
         clReleaseMemObject(d_data);
+        spatialPartition.resizeBank(bank_size);
     }
-
 
     private static void scan_int(cl_mem d_data, int n, int k)
     {
@@ -364,35 +360,50 @@ public class OCLFunctions
     }
 
 
-    private static void scan_key_bounds(cl_mem d_data, int n, int k)
+    private static int scan_key_bounds(cl_mem d_data, int n, int k)
     {
         if (k == 1)
         {
-            scan_single_block_key(d_data, n);
+            return scan_single_block_key(d_data, n);
         }
         else
         {
-            scan_multi_block_key(d_data, n, k);
+            return scan_multi_block_key(d_data, n, k);
         }
     }
 
-    private static void scan_single_block_key(cl_mem d_data, int n)
+    private static int scan_single_block_key(cl_mem d_data, int n)
     {
         // set up buffers
         int localBufferSize = Sizeof.cl_int * m;
         Pointer src_data = Pointer.to(d_data);
 
+        // input/output buffers for final size value
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        Pointer src_size = Pointer.to(size_data);
+
         // pass in arguments
         clSetKernelArg(k_scan_bounds_single_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_bounds_single_block, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_bounds_single_block, 2, Sizeof.cl_int, Pointer.to(new int[]{n}));
+        clSetKernelArg(k_scan_bounds_single_block, 1, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_scan_bounds_single_block, 2, localBufferSize,null);
+        clSetKernelArg(k_scan_bounds_single_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_bounds_single_block, 1, null,
             new long[]{wx}, new long[]{wx}, 0, null, null);
+
+        // read out the calculated key bank size
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        clReleaseMemObject(size_data);
+
+        return sz[0];
     }
 
-    private static void scan_multi_block_key(cl_mem d_data, int n, int k)
+    private static int scan_multi_block_key(cl_mem d_data, int n, int k)
     {
         // set up buffers
         int localBufferSize = Sizeof.cl_int * m;
@@ -417,26 +428,35 @@ public class OCLFunctions
         int n2 = partial_sums.length;
         int k2 = (int) Math.ceil((float)n2 / (float)m);
 
-
+        // scan the partial sums for the secondary kernel call
         scan_int(p_data, n2, k2);
+
+        // input/output buffers for final size value
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        Pointer src_size = Pointer.to(size_data);
 
         // pass in arguments
         clSetKernelArg(k_complete_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_complete_bounds_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_complete_bounds_multi_block, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_complete_bounds_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+        clSetKernelArg(k_complete_bounds_multi_block, 1, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_complete_bounds_multi_block, 2, localBufferSize,null);
+        clSetKernelArg(k_complete_bounds_multi_block, 3, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_complete_bounds_multi_block, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_complete_bounds_multi_block, 1, null,
             new long[]{gx}, new long[]{wx}, 0, null, null);
 
+        // read out the calculated key bank size
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        clReleaseMemObject(size_data);
         clReleaseMemObject(p_data);
+
+        return sz[0];
     }
-
-
-
-
-
 
     public static void integrate(float tick_rate, float gravity_x, float gravity_y, float friction, SpatialPartition spatialPartition)
     {
@@ -482,7 +502,7 @@ public class OCLFunctions
         cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
         cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
 
-        cl_mem dtMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, Sizeof.cl_float * args.length, srcDt, null);
+        cl_mem dtMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_float * args.length, srcDt, null);
 
         // Set the arguments for the kernel
         int a = 0;
@@ -534,9 +554,9 @@ public class OCLFunctions
         long pointBufsize = Sizeof.cl_float * pointsSize;
         long reactionBufsize = Sizeof.cl_float * reactionsSize;
 
-        cl_mem srcMemCandidates = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, candidateBufSize, srcCandidates, null);
-        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, bodyBufsize, srcBodies, null);
-        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, pointBufsize, srcPoints, null);
+        cl_mem srcMemCandidates = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, candidateBufSize, srcCandidates, null);
+        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
+        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
         cl_mem dstMemReactions = clCreateBuffer(context, CL_MEM_READ_WRITE, reactionBufsize, null, null);
 
 

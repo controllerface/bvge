@@ -9,6 +9,15 @@ import java.util.*;
 
 public class Main
 {
+    // TODO: (large)
+    //  The data that is stored here can instead be allocated and stored on the GPU. Before
+    //  this can be done, a few things need to happen. First, GPU characteristics need to be
+    //  determined programmatically, so max RAM, etc. can be known before the buffers are
+    //  created. Once the sizes are better known, kernel code needs to be written that acts
+    //  as an interface, similar to a database, where objects can be written/read using the
+    //  GPU-side buffer. The end goal is to keep the data resident on the GPU as much as
+    //  possible, and only pull values down to the host if needed. The entire physics loop
+    //  will then be implemented in GPU code.
     public static class Memory
     {
         // todo: actually add the cleaner/tracking mechanism for keeping track of

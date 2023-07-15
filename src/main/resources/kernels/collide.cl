@@ -92,31 +92,20 @@ __kernel void collide(
     int end_2   = (int)body_2.s8;
 	int b2_vert_count = end_2 - start_2 + 1;
 
-    float min_distance = FLT_MAX;
+    float min_distance   = FLT_MAX;
     int vertex_object_id = -1;
     int edge_object_id   = -1;
     int edge_index_a     = -1;
     int edge_index_b     = -1;
     int vert_index       = -1;
-    int invert = 0;
-    float2 vectorBuffer2;
+    bool invert          = false;
+    
+    float2 normalBuffer;
     float16 vertex_body;
  
-    // manifold object
-    float8 manifold;
-    manifold.s0 = (float)-1; // vertex object index
-    manifold.s1 = (float)-1; // edge obejct index
-    manifold.s2 = (float)0;  // normal x
-    manifold.s3 = (float)0;  // normal y
-    manifold.s4 = FLT_MAX;   // min distance
-    manifold.s5 = (float)0;  // edge point A
-    manifold.s6 = (float)0;  // edge point B
-    manifold.s7 = (float)0;  // vertex point
-
     // reaction object
     float16 reaction;
     reaction.s0 = -1;
-
 
     // object 1
     for (int i = 0; i < b1_vert_count; i++)
@@ -151,10 +140,10 @@ __kernel void collide(
 
         if (abs_distance < min_distance)
         {
-            invert = 1;
+            invert = true;
             vertex_body = body_2;
-            vectorBuffer2.x = vectorBuffer1.x;
-            vectorBuffer2.y = vectorBuffer1.y;
+            normalBuffer.x = vectorBuffer1.x;
+            normalBuffer.y = vectorBuffer1.y;
             vertex_object_id = (float)b2_id;
             edge_object_id   = (float)b1_id;
             min_distance = abs_distance;
@@ -163,7 +152,6 @@ __kernel void collide(
         }
     }
     
-
     // object 2
     for (int i = 0; i < b2_vert_count; i++)
     {
@@ -195,10 +183,10 @@ __kernel void collide(
         float abs_distance = fabs(distance);
         if (abs_distance < min_distance)
         {
-            invert = 0;
+            invert = false;
             vertex_body = body_1;
-            vectorBuffer2.x = vectorBuffer1.x;
-            vectorBuffer2.y = vectorBuffer1.y;
+            normalBuffer.x = vectorBuffer1.x;
+            normalBuffer.y = vectorBuffer1.y;
             vertex_object_id = (float)b1_id;
             edge_object_id   = (float)b2_id;
             min_distance = abs_distance;
@@ -207,16 +195,16 @@ __kernel void collide(
         }
     }
 
-    float3 pr = projectPolygon(points, vertex_body, vectorBuffer2);
+    float3 pr = projectPolygon(points, vertex_body, normalBuffer);
     vert_index = pr.z;
-    min_distance = min_distance / length(vectorBuffer2);
-    vectorBuffer2 = normalize(vectorBuffer2);
+    min_distance = min_distance / length(normalBuffer);
+    normalBuffer = normalize(normalBuffer);
 
-    float16 a = (invert == 1)
+    float16 a = (invert)
         ? body_2
         : body_1;
 
-    float16 b = (invert ==  1)
+    float16 b = (invert)
         ? body_1
         : body_2;
 
@@ -230,37 +218,26 @@ __kernel void collide(
 
     float2 direction = transformA - transformB;
 
-    float dirdot = (float)dot(direction, vectorBuffer2);
+    float dirdot = (float)dot(direction, normalBuffer);
     if (dirdot < 0)
     {
-        vectorBuffer2.x = vectorBuffer2.x * -1;
-        vectorBuffer2.y = vectorBuffer2.y * -1;
+        normalBuffer.x = normalBuffer.x * -1;
+        normalBuffer.y = normalBuffer.y * -1;
     }
 
-    manifold.s0 = (float)vertex_object_id; // vertex object index
-    manifold.s1 = (float)edge_object_id; // edge obejct index
-    manifold.s2 = vectorBuffer2.x;  // normal x
-    manifold.s3 = vectorBuffer2.y;  // normal y
-    manifold.s4 = min_distance;   // min distance
-    manifold.s5 = (float)edge_index_a;  // edge point A
-    manifold.s6 = (float)edge_index_b;  // edge point B
-    manifold.s7 = (float)vert_index;  // vertex point
-
     reaction.s0 = -1;
-    if (manifold.s0 == -1)
+    if (vertex_object_id == -1)
     {
         reactions[gid] = reaction;
         return;
     }
 
     // vertex and edge objects
-    float16 vo = bodies[(int)manifold.s0];
-    float16 eo = bodies[(int)manifold.s1];
-    float2 normal;
-    normal.x = manifold.s2;
-    normal.y = manifold.s3;
+    float16 vo = bodies[(int)vertex_object_id];
+    float16 eo = bodies[(int)edge_object_id];
+    float2 normal = normalBuffer;
 
-    float2 collision_vector = normal * manifold.s4;
+    float2 collision_vector = normal * min_distance;
     // todo: check body flags for static geometry, always default to 0 impact for the static
     //  body, and 1.0 for the non-static body.
     float vertex_magnitude = .5f;
@@ -287,32 +264,33 @@ __kernel void collide(
     float2 v_reaction = collision_vector * vertex_magnitude;
 
     // now do edge reactions
-    float2 e1 = points[(int)manifold.s5].xy;
-    float2 e2 = points[(int)manifold.s6].xy;
-    float2 collision_vertex = points[(int)manifold.s7].xy;
+    float2 e1 = points[edge_index_a].xy;
+    float2 e2 = points[edge_index_b].xy;
+    float2 collision_vertex = points[vert_index].xy;
     float edge_contact = edgeContact(e1, e2, collision_vertex, collision_vector);
 
     float edge_scale = 1.0f / (edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
     float2 e1_reaction = collision_vector * ((1 - edge_contact) * edge_magnitude * edge_scale);
     float2 e2_reaction = collision_vector * (edge_contact * edge_magnitude * edge_scale);
 
-    // todo: detemine if everything is needed, if not may fit into smaller data type
-    reaction.s0  = (float)manifold.s0;  // vertex object index
-    reaction.s1  = (float)manifold.s1;  // edge object index
-    reaction.s2  = (float)manifold.s2;  // normal x
-    reaction.s3  = (float)manifold.s3;  // normal y
-    reaction.s4  = (float)manifold.s4;  // min distance
-    reaction.s5  = (float)manifold.s5;  // edge point A
-    reaction.s6  = (float)manifold.s6;  // edge point B
-    reaction.s7  = (float)manifold.s7;  // vertex point
-    reaction.s8  = v_reaction.x;        // vertex object reaction x1
-    reaction.s9  = v_reaction.y;        // vertex object reaction y1
-    reaction.sa = e1_reaction.x;       // edge object reaction x1
-    reaction.sb = e1_reaction.y;       // edge object reaction y1
-    reaction.sc = e2_reaction.x;       // edge object reaction x2
-    reaction.sd = e2_reaction.y;       // edge object reaction y2
-    reaction.se = (float)0;            // [empty]
-    reaction.sf = (float)0;            // [empty]
+    reaction.s0 = (float)vert_index;
+    reaction.s1 = (float)edge_index_a;
+    reaction.s2 = (float)edge_index_b;
+    reaction.s3 = v_reaction.x;  
+    reaction.s4 = v_reaction.y;  
+    reaction.s5 = e1_reaction.x;  
+    reaction.s6 = e1_reaction.y;  
+    reaction.s7 = e2_reaction.x;  
+    reaction.s8 = e2_reaction.y;   
+    // these are currently unused, but may be used later as collision checks
+    // are updated with more complex logic
+    // reaction.s9 = 0;
+    // reaction.sa = 0;
+    // reaction.sb = 0;
+    // reaction.sc = 0;
+    // reaction.sd = 0;
+    // reaction.se = 0;
+    // reaction.sf = 0;
 
     reactions[gid] = reaction;
 }

@@ -56,8 +56,9 @@ inline void downsweep(__local int *buffer, int m)
 }
 
 __kernel void scan_bounds_single_block(__global float16 *bounds,
-                            __local int *buffer,
-                            int n)
+                                       __global int *sz,
+                                       __local int *buffer,
+                                       int n)
 {
     // the global ID for this thread
     int global_id = get_global_id(0);
@@ -88,11 +89,19 @@ __kernel void scan_bounds_single_block(__global float16 *bounds,
     if (a_index < n) 
     {
         bounds[a_index].s4 = (float)buffer[a_index] / 2;
+        if (a_index == n -1)
+        {
+            sz[0] = (bounds[a_index].s4 + bounds[a_index].s5) * 2;
+        }
     }
 
     if (b_index < n) 
     {
         bounds[b_index].s4 = (float)buffer[b_index] / 2;
+        if (b_index == n -1)
+        {
+            sz[0] = (bounds[b_index].s4 + bounds[b_index].s5) * 2;
+        }
     }
 }
 
@@ -150,9 +159,10 @@ __kernel void scan_bounds_multi_block(__global float16 *bounds,
 }
 
 __kernel void complete_bounds_multi_block(__global float16 *bounds, 
-                                    __local int *buffer, 
-                                    __global int *part, 
-                                    int n)
+                                          __global int *sz,
+                                          __local int *buffer, 
+                                          __global int *part, 
+                                          int n)
 {
     // global identifiers and indexes
     int global_id = get_global_id(0);
@@ -175,10 +185,18 @@ __kernel void complete_bounds_multi_block(__global float16 *bounds,
     if (a_index < n) 
     {
         bounds[a_index].s4 = (float)buffer[local_a_index] / 2;
+        if (a_index == n -1)
+        {
+            sz[0] = (bounds[a_index].s4 + bounds[a_index].s5) * 2;
+        }
     }
     if (b_index < n) 
     {
         bounds[b_index].s4 = (float)buffer[local_b_index] / 2;
+        if (b_index == n -1)
+        {
+            sz[0] = (bounds[b_index].s4 + bounds[b_index].s5) * 2;
+        }
     }
 }
 

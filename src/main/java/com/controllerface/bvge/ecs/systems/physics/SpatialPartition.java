@@ -56,131 +56,19 @@ public class SpatialPartition
         return key_index;
     }
 
-    private void rebuildLocationEX(int body_index)
-    {
-        var body = Main.Memory.bodyByIndex(body_index);
-
-        if (!isInBounds(body.bounds()))
-        {
-            return;
-        }
-
-        int min_x = body.bounds().si_min_x();
-        int max_x = body.bounds().si_max_x();
-        int min_y = body.bounds().si_min_y();
-        int max_y = body.bounds().si_max_y();
-
-        for (int current_x = min_x; current_x <= max_x; current_x++)
-        {
-            for (int current_y = min_y; current_y <= max_y; current_y++)
-            {
-                int key_index = calculateKeyIndex(current_x, current_y);
-                if (key_index < 0 || key_index >= key_counts.length)
-                {
-                    continue;
-                }
-                int count = key_counts[key_index];
-                int offset = key_offsets[key_index];
-
-                // this loop goes through the key map starting at the offset, up to the
-                // count for this index, and finds an empty location in the precomputed
-                // section of the map and places this body's index there. It doesn't
-                // actually matter what the order is of indices being placed into the key
-                // map, only that the position relative to the offset is only written to
-                // once, so bodies don't overwrite other bodies' entries.
-                for (int i = offset; i < offset + count; i++)
-                {
-                    // todo: this could be reworked using a counter array
-                    if (key_map[i] == -1)
-                    {
-                        key_map[i] = body_index;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Generates the keys for the given body, stores them in the appropriate section of the key bank,
-     * and returns the total number of keys added. The provided map count array is also incremented
-     * in the appropriate index in order to keep track of the total number of bodies that have a key
-     * at that index.
-     *
-     * @param body_index index of the body to generate keys for
-     * @return
-     */
-    private void generateBodyKeys(int body_index)
-    {
-        var body = Main.Memory.bodyByIndex(body_index);
-
-        boolean inBounds = body.bounds().si_bank_size() != 0;
-        if (!inBounds)
-        {
-            return;
-        }
-
-        var offset = body.bounds().bank_offset() * Main.Memory.Width.KEY;
-
-        int min_x = body.bounds().si_min_x();
-        int max_x = body.bounds().si_max_x();
-        int min_y = body.bounds().si_min_y();
-        int max_y = body.bounds().si_max_y();
-
-        int current_index = offset;
-        for (int current_x = min_x; current_x <= max_x; current_x++)
-        {
-            for (int current_y = min_y; current_y <= max_y; current_y++)
-            {
-                int key_index = calculateKeyIndex(current_x, current_y);
-                if (key_index < 0 || current_index < 0
-                    || key_index >= key_counts.length
-                    || current_index >= key_bank.length)
-                {
-                    continue;
-                }
-
-                key_bank[current_index++] = current_x;
-                key_bank[current_index++] = current_y;
-
-                // todo: can a sum/reduction in CL work here to calculate total counts
-                //  in parallel and then store in the map counts by index in the final step?
-                //  or perhaps atomic counters
-                key_counts[key_index]++; // increment the map count for this key
-            }
-        }
-    }
-
     int key_bank_size = 0;
-
     int[] key_bank = new int[0];
     int[] key_map = new int[0];
-
     int[] key_counts = new int[0];
     int[] key_offsets = new int[0];
 
-    public int calculateKeyBankSize()
+    public void resizeBank(int size)
     {
-        var final_bound = (Main.Memory.boundsCount() - 1) * Main.Memory.Width.BOUNDS;
-        int bank_size = (int)Main.Memory.bounds_buffer[final_bound + FBounds2D.SI_BANK_SIZE_OFFSET];
-        int bank_offset = (int)Main.Memory.bounds_buffer[final_bound + FBounds2D.BANK_OFFSET];
-        int size = (bank_size + bank_offset) * Main.Memory.Width.KEY;
-
         key_bank_size = size;
-        // not sure why, but the key map size needs to be equal to the bank size when the body count is
-        // high enough. todo: check if this is a bug or not?
-
         key_bank    = new int[key_bank_size];
         key_map     = new int[key_bank_size];
         key_counts  = new int[directoryLength];
         key_offsets = new int[directoryLength];
-
-        // todo: this -1 thing is a bit hacky, but needed for the moment to ensure the key map is built
-        //  correctly. an alternative would be to make body index 0 unused, so indices all start at one,
-        //  but that may create a lot more issues.
-        //Arrays.fill(key_map, -1);
-
-        return size;
     }
 
     public int[] getKey_counts()
@@ -201,36 +89,6 @@ public class SpatialPartition
     public int[] getKey_map()
     {
         return key_map;
-    }
-
-    public void buildKeyBank()
-    {
-        var body_count = Main.Memory.bodyCount();
-        for (int body_index = 0; body_index < body_count; body_index++)
-        {
-            generateBodyKeys(body_index);
-        }
-    }
-
-    public void calculateMapOffsets()
-    {
-        // todo: definitely would need a parallel prefix sum for this one
-        int current_offset = 0;
-        for (int i = 0; i < key_counts.length; i++)
-        {
-            int next = key_counts[i];
-            key_offsets[i] = current_offset;
-            current_offset += next;
-        }
-    }
-
-    public void buildKeyMap()
-    {
-        var body_count = Main.Memory.bodyCount();
-        for (int location = 0; location < body_count; location++)
-        {
-            rebuildLocationEX(location);
-        }
     }
 
     private static boolean doBoxesIntersect(FBounds2D a, FBounds2D b)
