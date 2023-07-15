@@ -277,10 +277,9 @@ public class OCLFunctions
 
         int n = Main.Memory.boundsCount();
         int k = (int) Math.ceil((float)n / (float)m);
-        cl_mem d_data;
         long data_buf_size = (long)Sizeof.cl_float16 * n;
         long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
-        d_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(input), null);
+        cl_mem d_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(input), null);
 
         Pointer dst_data = Pointer.to(input);
         scan_key_bounds(d_data, n, k);

@@ -144,13 +144,14 @@ public class VerletPhysics extends GameSystem
         OCLFunctions.integrate(dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
         OCLFunctions.calculate_key_bank_offsets();
 
-        // todo: calculate this during bank scan
+        // todo: calculate this during bank scan. It should be possible on the final
+        //  scan phase to calculate one further value, as if the scan were inclusive.
+        //  The value can the be read back into the host so a buffer can be allocated.
         spatialPartition.calculateKeyBankSize();
 
         OCLFunctions.generate_key_bank(spatialPartition);
         OCLFunctions.scan_key_offsets(spatialPartition);
         OCLFunctions.generate_key_map(spatialPartition);
-
 
         // todo #0: replace this with OCL calls
         var candidates = spatialPartition.computeCandidatesEX();
@@ -160,6 +161,9 @@ public class VerletPhysics extends GameSystem
         //  compute their candidates, porting the current logic into that kernel.
         //  The output of the calculation just needs to conform to the structure
         //  assumed below, which is effectively an array of 2 dimensional int vectors.
+        //  May make sense to split "compute candidates" into "count candidates" and
+        //  "find candidates" phases. See if buffer can be created in GPU and not
+        //  passed back out, having the next phase start immediately after
 
         // narrow phase collision
         if (candidates.limit() > 0)
