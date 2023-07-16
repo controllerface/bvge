@@ -341,7 +341,7 @@ __kernel void complete_int_multi_block(__global int *data,
 
 
 
-__kernel void scan_int_single_block_out(__global int *data, 
+__kernel void scan_int_single_block_out(__global int *input, 
                                         __global int *output,
                                         __local int *buffer, 
                                         int n) 
@@ -358,8 +358,8 @@ __kernel void scan_int_single_block_out(__global int *data,
 
     // load the gloabl value sinto the local buffer, and with extra zeroes
     // so the buffer size matches the work group
-    buffer[a_index] = a_index < n ? data[a_index] : 0;
-    buffer[b_index] = b_index < n ? data[b_index] : 0;
+    buffer[a_index] = a_index < n ? input[a_index] : 0;
+    buffer[b_index] = b_index < n ? input[b_index] : 0;
 
     // perform the "up sweep" traversing from leaf to root of the tree
     upsweep(buffer, m);
@@ -390,7 +390,7 @@ __kernel void scan_int_single_block_out(__global int *data,
  * part is a buffer of size [k] where k is the total number of blocks being processed
  * n is the total number of elements in the entire global data array.
  */
-__kernel void scan_int_multi_block_out(__global int *data, 
+__kernel void scan_int_multi_block_out(__global int *input, 
                                        __global int *output,
                                        __local int *buffer, 
                                        __global int *part, 
@@ -415,8 +415,8 @@ __kernel void scan_int_multi_block_out(__global int *data,
     int k = get_num_groups(0);
 
     // copy into local data padding elements >= n with 0
-    buffer[local_a_index] = (a_index < n) ? data[a_index] : 0;
-    buffer[local_b_index] = (b_index < n) ? data[b_index] : 0;
+    buffer[local_a_index] = (a_index < n) ? input[a_index] : 0;
+    buffer[local_b_index] = (b_index < n) ? input[b_index] : 0;
 
     // ON EACH SUBARRAY
     // a reduce on each subarray

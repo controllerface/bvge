@@ -119,7 +119,7 @@ public class TestGame extends GameMode
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));
 
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
     }
 
     @Override

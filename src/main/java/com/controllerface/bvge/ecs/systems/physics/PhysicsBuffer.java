@@ -7,7 +7,7 @@ public class PhysicsBuffer
     public MemoryBuffer points;
     //public MemoryBuffer key_map;
     //public MemoryBuffer key_bank;
-    //public MemoryBuffer key_counts;
+    public MemoryBuffer key_counts;
     //public MemoryBuffer key_offsets;
 
     public void transferAll()
@@ -17,7 +17,7 @@ public class PhysicsBuffer
         points.transfer();
         //key_map.transfer();
         //key_bank.transfer();
-        //key_counts.transfer();
+        key_counts.transfer();
         //key_offsets.transfer();
     }
 }
