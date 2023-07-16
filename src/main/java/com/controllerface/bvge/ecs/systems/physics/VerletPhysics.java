@@ -77,22 +77,27 @@ public class VerletPhysics extends GameSystem
     private void tickEdges()
     {
         var bodies = ecs.getComponents(Component.RigidBody2D);
+        boolean lastStep;
         for (int i = 0; i < EDGE_STEPS; i++)
         {
+            lastStep = i == EDGE_STEPS - 1;
             // todo: would be worth trying to iterate on each edge but in parallel for each body
             //  solving ALL edges at once doesn't work, but in series it may
             for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
             {
                 FBody2D body = Component.RigidBody2D.coerce(entry.getValue());
-                for (FEdge2D edge : body.edges())
+                if (lastStep || spatialPartition.isInBounds(body.bounds()))
                 {
-                    edge.p2().subPos(edge.p1(), vectorBuffer1);
-                    var length = vectorBuffer1.length();
-                    float diff = length - edge.length();
-                    vectorBuffer1.normalize();
-                    vectorBuffer1.mul(diff * 0.5f);
-                    edge.p1().addPos(vectorBuffer1);
-                    edge.p2().subPos(vectorBuffer1);
+                    for (FEdge2D edge : body.edges())
+                    {
+                        edge.p2().subPos(edge.p1(), vectorBuffer1);
+                        var length = vectorBuffer1.length();
+                        float diff = length - edge.length();
+                        vectorBuffer1.normalize();
+                        vectorBuffer1.mul(diff * 0.5f);
+                        edge.p1().addPos(vectorBuffer1);
+                        edge.p2().subPos(vectorBuffer1);
+                    }
                 }
             }
         }

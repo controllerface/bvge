@@ -6,6 +6,7 @@ import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.batches.RectRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
+import org.graalvm.collections.Pair;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -82,14 +83,23 @@ public class SpacePartitionRenderer extends GameSystem
         var x_max = spatialPartition.getX_origin() + spatialPartition.getWidth();
         var y_max = spatialPartition.getY_origin() + spatialPartition.getHeight();
 
+        var deferred = new ArrayList<Pair<Float, Float>>();
+
         for (float i = spatialPartition.getX_origin(); i < x_max; i += spatialPartition.getX_spacing())
         {
             for (float j = spatialPartition.getY_origin(); j < y_max; j += spatialPartition.getY_spacing())
             {
                 var c = getColor(i, j);
-                this.add(i, j, spatialPartition.getX_spacing(), spatialPartition.getY_spacing(), c);
+                if (c == color3)
+                {
+                    deferred.add(Pair.create(i, j));
+                }
+                else this.add(i, j, spatialPartition.getX_spacing(), spatialPartition.getY_spacing(), c);
             }
         }
+
+        deferred.forEach(d->this.add(d.getLeft(), d.getRight(),
+            spatialPartition.getX_spacing(), spatialPartition.getY_spacing(),color3));
 
         accum+=dt;
 

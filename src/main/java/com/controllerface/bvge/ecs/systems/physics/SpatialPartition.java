@@ -69,8 +69,7 @@ public class SpatialPartition
         // todo: figure out how to predict the size for this correctly
         //  at the moment, I just increase it whenever I get crash with
         //  an index out-of-bounds exception for the map
-        key_map     = new int[key_bank_size * 2];
-
+        key_map     = new int[key_bank_size];
         key_bank    = new int[key_bank_size];
         key_counts  = new int[directoryLength];
         key_offsets = new int[directoryLength];
