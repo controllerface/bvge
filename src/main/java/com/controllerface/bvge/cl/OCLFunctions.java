@@ -195,7 +195,7 @@ public class OCLFunctions
         Pointer src_offset = Pointer.to(physicsBuffer.key_offsets.get_mem());
         Pointer src_counts = Pointer.to(counts_data);
 
-        //physicsBuffer.key_map = new MemoryBuffer(map_data, map_buf_size, dst_map);
+        physicsBuffer.key_map = new MemoryBuffer(map_data, map_buf_size, dst_map);
 
         clSetKernelArg(k_build_key_map, 0, Sizeof.cl_mem, src_data);
         clSetKernelArg(k_build_key_map, 1, Sizeof.cl_mem, src_map);
@@ -207,11 +207,11 @@ public class OCLFunctions
         clEnqueueNDRangeKernel(commandQueue, k_build_key_map, 1, null,
             new long[]{n}, null, 0, null, null);
 
-        clEnqueueReadBuffer(commandQueue, map_data, CL_TRUE, 0,
-            map_buf_size, dst_map, 0, null, null);
+//        clEnqueueReadBuffer(commandQueue, map_data, CL_TRUE, 0,
+//            map_buf_size, dst_map, 0, null, null);
 
         //clReleaseMemObject(offset_data);
-        clReleaseMemObject(map_data);
+        //clReleaseMemObject(map_data);
         clReleaseMemObject(counts_data);
     }
 
@@ -237,7 +237,7 @@ public class OCLFunctions
         Pointer src_counts = Pointer.to(counts_data);
 
         physicsBuffer.key_counts = new MemoryBuffer(counts_data, counts_buf_size, dst_counts);
-        //physicsBuffer.key_bank = new MemoryBuffer(bank_data, bank_buf_size, dst_bank);
+        physicsBuffer.key_bank = new MemoryBuffer(bank_data, bank_buf_size, dst_bank);
 
         // pass in arguments
         clSetKernelArg(k_generate_keys, 0, Sizeof.cl_mem, src_data);
@@ -251,13 +251,13 @@ public class OCLFunctions
         clEnqueueNDRangeKernel(commandQueue, k_generate_keys, 1, null,
             new long[]{n}, null, 0, null, null);
 
-        clEnqueueReadBuffer(commandQueue, bank_data, CL_TRUE, 0,
-            bank_buf_size, dst_bank, 0, null, null);
+//        clEnqueueReadBuffer(commandQueue, bank_data, CL_TRUE, 0,
+//            bank_buf_size, dst_bank, 0, null, null);
 
 //        clEnqueueReadBuffer(commandQueue, counts_data, CL_TRUE, 0,
 //            counts_buf_size, dst_counts, 0, null, null);
 
-        clReleaseMemObject(bank_data);
+        //clReleaseMemObject(bank_data);
         //clReleaseMemObject(counts_data);
     }
 
