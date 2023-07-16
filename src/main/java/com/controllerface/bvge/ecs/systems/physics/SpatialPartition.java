@@ -122,11 +122,6 @@ public class SpatialPartition
             int y = target_keys[i + 1];
             int key_index = calculateKeyIndex(x, y);
 
-            if (key_index >= key_counts.length)
-            {
-                continue;
-            }
-
             int count = key_counts[key_index];
             int offset = key_offsets[key_index];
 
@@ -193,6 +188,8 @@ public class SpatialPartition
                 outBuffer.add(match);
             }
         }
+
+
         int[] ob = new int[outBuffer.size()];
         for (int i = 0; i < outBuffer.size(); i++)
         {

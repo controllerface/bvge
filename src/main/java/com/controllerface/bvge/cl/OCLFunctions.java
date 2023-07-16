@@ -171,22 +171,18 @@ public class OCLFunctions
     public static void generate_key_map(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
     {
         int[] key_map = spatialPartition.getKey_map();
-        //int[] key_offsets = spatialPartition.getKey_offsets();
         // Note: this is not the same as the local counts in the spatial map.
         // This buffer is used only during calculations within the kernel
         int[] key_counts = new int[spatialPartition.getKey_offsets().length];
         int x_subdivisions = spatialPartition.getX_subdivisions();
         var minput = IntBuffer.wrap(key_map);
-        //var oinput = IntBuffer.wrap(key_offsets);
         var cinput = IntBuffer.wrap(key_counts);
 
         int n = Main.Memory.boundsCount();
         long map_buf_size = (long)Sizeof.cl_int * key_map.length;
-        //long offsets_buf_size = (long)Sizeof.cl_int * key_offsets.length;
         long counts_buf_size = (long)Sizeof.cl_int * key_counts.length;
         long flags = CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR ;
         cl_mem map_data = CL.clCreateBuffer(context, flags, map_buf_size, Pointer.to(minput), null);
-        //cl_mem offset_data = CL.clCreateBuffer(context, flags, offsets_buf_size, Pointer.to(oinput), null);
         cl_mem counts_data = CL.clCreateBuffer(context, flags, counts_buf_size, Pointer.to(cinput), null);
 
         Pointer src_data = Pointer.to(physicsBuffer.bounds.get_mem());
@@ -207,11 +203,6 @@ public class OCLFunctions
         clEnqueueNDRangeKernel(commandQueue, k_build_key_map, 1, null,
             new long[]{n}, null, 0, null, null);
 
-//        clEnqueueReadBuffer(commandQueue, map_data, CL_TRUE, 0,
-//            map_buf_size, dst_map, 0, null, null);
-
-        //clReleaseMemObject(offset_data);
-        //clReleaseMemObject(map_data);
         clReleaseMemObject(counts_data);
     }
 
@@ -250,15 +241,6 @@ public class OCLFunctions
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_generate_keys, 1, null,
             new long[]{n}, null, 0, null, null);
-
-//        clEnqueueReadBuffer(commandQueue, bank_data, CL_TRUE, 0,
-//            bank_buf_size, dst_bank, 0, null, null);
-
-//        clEnqueueReadBuffer(commandQueue, counts_data, CL_TRUE, 0,
-//            counts_buf_size, dst_counts, 0, null, null);
-
-        //clReleaseMemObject(bank_data);
-        //clReleaseMemObject(counts_data);
     }
 
     private static int wx = 256; // todo: query hardware for this limit
@@ -266,28 +248,18 @@ public class OCLFunctions
 
     public static void calculate_map_offsets(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
     {
-        //int[] key_counts = spatialPartition.getKey_counts();
         int[] key_offsets = spatialPartition.getKey_offsets();
-        int n = spatialPartition.getKey_counts().length;//key_counts.length;
+        int n = spatialPartition.getKey_counts().length;
         int k = (int) Math.ceil((float)n / (float)m);
-        //cl_mem d_data;
-        cl_mem o_data;
+
         long data_buf_size = (long)Sizeof.cl_int * n;
         long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
 
         Pointer dst_data = Pointer.to(key_offsets);
-
-        //d_data = CL.clCreateBuffer(context, flags, data_buf_size, Pointer.to(key_counts), null);
-        o_data = CL.clCreateBuffer(context, flags, data_buf_size, dst_data, null);
-
+        cl_mem o_data = CL.clCreateBuffer(context, flags, data_buf_size, dst_data, null);
         physicsBuffer.key_offsets = new MemoryBuffer(o_data, data_buf_size, dst_data);
 
         scan_int_out(physicsBuffer.key_counts.get_mem(), o_data, n, k);
-//        clEnqueueReadBuffer(commandQueue, o_data, CL_TRUE, 0,
-//            data_buf_size, dst_data, 0, null, null);
-
-        //clReleaseMemObject(d_data);
-        //clReleaseMemObject(o_data);
     }
 
     public static void calculate_bank_offsets(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
