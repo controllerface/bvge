@@ -160,7 +160,9 @@ public class OCLFunctions
     {
         int[] key_map = spatialPartition.getKey_map();
         int[] key_offsets = spatialPartition.getKey_offsets();
-        int[] key_counts = new int[key_offsets.length]; // todo: maybe generate on GPU?
+        // Note: this is not the same as the local counts in the spatial map.
+        // This buffer is used only during calculations within the kernel
+        int[] key_counts = new int[key_offsets.length];
         int x_subdivisions = spatialPartition.getX_subdivisions();
         int boundsSize = Main.Memory.boundsLength();
         var input = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);

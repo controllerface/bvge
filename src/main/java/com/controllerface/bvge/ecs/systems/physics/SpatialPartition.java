@@ -108,8 +108,7 @@ public class SpatialPartition
     }
 
 
-    private int[] findMatchesEX(int target_index,
-                                int[] target_keys)
+    private int[] findMatchesEX(int target_index, int[] target_keys)
     {
         // use a set as a buffer for matches todo: can this size be pre-calculated?
         var rSet = new HashSet<Integer>();
@@ -122,11 +121,12 @@ public class SpatialPartition
             int count = key_counts[key_index];
             int offset = key_offsets[key_index];
 
-            // these are sentinel values marking a key as having no entries
-            if (count == 0)// || offset == -1)
+            // sentinel value marking a key as having no entries
+            if (count == 0)
             {
                 continue;
             }
+
             int[] hits = new int[count];
             System.arraycopy(key_map, offset, hits, 0, count);
 
@@ -161,7 +161,7 @@ public class SpatialPartition
             return new int[0];
         }
         var spatial_index = bounds.bank_offset() * Main.Memory.Width.KEY;
-        var spatial_length = target.bounds().si_bank_size();
+        var spatial_length = bounds.si_bank_size();
         var target_keys = new int[spatial_length];
         // grab the keys for this object and use them to find potential candidates
         System.arraycopy(key_bank, spatial_index, target_keys, 0, spatial_length);
