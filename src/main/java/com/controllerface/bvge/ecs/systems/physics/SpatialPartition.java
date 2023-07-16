@@ -65,8 +65,13 @@ public class SpatialPartition
     public void resizeBank(int size)
     {
         key_bank_size = size;
+
+        // todo: figure out how to predict the size for this correctly
+        //  at the moment, I just increase it whenever I get crash with
+        //  an index out-of-bounds exception for the map
+        key_map     = new int[key_bank_size * 2];
+
         key_bank    = new int[key_bank_size];
-        key_map     = new int[key_bank_size];
         key_counts  = new int[directoryLength];
         key_offsets = new int[directoryLength];
     }
@@ -117,6 +122,11 @@ public class SpatialPartition
             int x = target_keys[i];
             int y = target_keys[i + 1];
             int key_index = calculateKeyIndex(x, y);
+
+            if (key_index >= key_counts.length)
+            {
+                continue;
+            }
 
             int count = key_counts[key_index];
             int offset = key_offsets[key_index];

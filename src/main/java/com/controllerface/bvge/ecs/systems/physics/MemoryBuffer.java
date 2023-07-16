@@ -1,0 +1,41 @@
+package com.controllerface.bvge.ecs.systems.physics;
+
+import com.controllerface.bvge.cl.OCLFunctions;
+import org.jocl.Pointer;
+import org.jocl.cl_mem;
+
+import static org.jocl.CL.*;
+
+public class MemoryBuffer
+{
+    private final cl_mem src;
+    private final long size;
+    private final Pointer dst;
+
+    public MemoryBuffer(cl_mem src, long size, Pointer dst)
+    {
+        this.src = src;
+        this.size = size;
+        this.dst = dst;
+    }
+
+    public cl_mem get_mem()
+    {
+        return src;
+    }
+
+    public long getSize()
+    {
+        return size;
+    }
+
+    public void transfer()
+    {
+        clEnqueueReadBuffer(OCLFunctions.getCommandQueue(),
+            src, CL_TRUE, 0,
+            size,
+            dst,
+            0, null, null);
+        clReleaseMemObject(src);
+    }
+}

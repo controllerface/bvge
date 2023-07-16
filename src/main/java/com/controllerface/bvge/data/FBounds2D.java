@@ -6,7 +6,7 @@ import com.controllerface.bvge.ecs.components.GameComponent;
 public record FBounds2D(int index) implements GameComponent
 {
     /*
-    * Memory layout: float8
+    * Memory layout: float16
     * 0: x position
     * 1: y position
     * 2: width

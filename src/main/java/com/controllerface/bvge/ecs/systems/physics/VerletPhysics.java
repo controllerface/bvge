@@ -152,11 +152,13 @@ public class VerletPhysics extends GameSystem
 
         // todo: the buffers generated during these OCL calls can be carried forward
         //  and only pulled off the GPU at the very end.
-        OCLFunctions.integrate(dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
-        OCLFunctions.calculate_bank_offsets(spatialPartition);
-        OCLFunctions.generate_key_bank(spatialPartition);
-        OCLFunctions.calculate_map_offsets(spatialPartition);
-        OCLFunctions.generate_key_map(spatialPartition);
+        var physicsBuffer = new PhysicsBuffer();
+        OCLFunctions.integrate(physicsBuffer, dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
+        OCLFunctions.calculate_bank_offsets(physicsBuffer, spatialPartition);
+        OCLFunctions.generate_key_bank(physicsBuffer, spatialPartition);
+        OCLFunctions.calculate_map_offsets(physicsBuffer, spatialPartition);
+        OCLFunctions.generate_key_map(physicsBuffer, spatialPartition);
+        physicsBuffer.transferAll();
 
         // todo #0: replace this with OCL calls
         var candidates = spatialPartition.computeCandidatesEX();
