@@ -10,45 +10,109 @@ import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.jocl.CL.*;
 
-public class OCLFunctions
+public class OpenCL
 {
     static cl_command_queue commandQueue;
     static cl_context context;
+    static cl_device_id[] device_ids;
 
-    static cl_kernel k_verletIntegrate;
-    static cl_program p_verletIntegrate;
-    private static final String src_verletIntegrate = readSrc("integrate.cl");
+    static String pragma_int32_base_atomics = readSrc("pragma/int32_base_atomics.cl");;
 
-    static cl_kernel k_collide;
+    /**
+     * Some general purpose functions
+     */
+    static String src_is_in_bounds = readSrc("functions/is_in_bounds.cl");
+    static String src_get_extents = readSrc("functions/get_extents.cl");
+    static String src_get_key_for_point = readSrc("functions/get_key_for_point.cl");
+    static String src_calculate_key_index = readSrc("functions/calculate_key_index.cl");
+    static String src_exclusive_scan = readSrc("functions/exclusive_scan.cl");
+
+    /**
+     * Core kernel files
+     */
+    static String src_integrate = readSrc("integrate.cl");
+    static String src_collide = readSrc("collide.cl");
+    static String src_scan_key_bank = readSrc("scan_key_bank.cl");
+    static String src_scan_int_array = readSrc("scan_int_array.cl");
+    static String src_scan_int_array_out = readSrc("scan_int_array_out.cl");
+    static String src_scan_candidates_out = readSrc("scan_key_candidates.cl");
+    static String src_generate_keys = readSrc("generate_keys.cl");
+    static String src_build_key_map = readSrc("build_key_map.cl");
+    static String src_locate_in_bounds = readSrc("locate_in_bounds.cl");
+
+    static cl_program p_locate_in_bounds;
+    static String kn_locate_in_bounds = "locate_in_bounds";
+    static cl_kernel k_locate_in_bounds;
+    static String kn_count_candidates = "count_candidates";
+    static cl_kernel k_count_candidates;
+
+    static cl_program p_integrate;
+    static String kn_integrate = "integrate";
+    static cl_kernel k_integrate;
+
     static cl_program p_collide;
-    private static final String src_collide = readSrc("collide.cl");
+    static String kn_collide = "collide";
+    static cl_kernel k_collide;
 
-    static cl_kernel k_scan_bounds_single_block;
-    static cl_kernel k_scan_bounds_multi_block;
-    static cl_kernel k_complete_bounds_multi_block;
-    static cl_kernel k_scan_int_single_block;
-    static cl_kernel k_scan_int_multi_block;
-    static cl_kernel k_complete_int_multi_block;
-    static cl_kernel k_scan_int_single_block_out;
-    static cl_kernel k_scan_int_multi_block_out;
-    static cl_kernel k_complete_int_multi_block_out;
     static cl_program p_scan_key_bank;
-    private static final String src_scan_key_bank = readSrc("scan_key_bank.cl");
+    static String kn_scan_bounds_single_block = "scan_bounds_single_block";
+    static cl_kernel k_scan_bounds_single_block;
+    static String kn_scan_bounds_multi_block = "scan_bounds_multi_block";
+    static cl_kernel k_scan_bounds_multi_block;
+    static String kn_complete_bounds_multi_block = "complete_bounds_multi_block";
+    static cl_kernel k_complete_bounds_multi_block;
 
-    static cl_kernel k_generate_keys;
+    static cl_program p_scan_int_array;
+    static String kn_scan_int_single_block = "scan_int_single_block";
+    static cl_kernel k_scan_int_single_block;
+    static String kn_scan_int_multi_block = "scan_int_multi_block";
+    static cl_kernel k_scan_int_multi_block;
+    static String kn_complete_int_multi_block = "complete_int_multi_block";
+    static cl_kernel k_complete_int_multi_block;
+
+    static cl_program p_scan_int_array_out;
+    static String kn_scan_int_single_block_out = "scan_int_single_block_out";
+    static cl_kernel k_scan_int_single_block_out;
+    static String kn_scan_int_multi_block_out = "scan_int_multi_block_out";
+    static cl_kernel k_scan_int_multi_block_out;
+    static String kn_complete_int_multi_block_out = "complete_int_multi_block_out";
+    static cl_kernel k_complete_int_multi_block_out;
+
+
+
+    static cl_program p_scan_candidates;
+    static String kn_scan_candidates_single_block = "scan_candidates_single_block_out";
+    static cl_kernel k_scan_candidates_single_block;
+    static String kn_scan_candidates_multi_block = "scan_candidates_multi_block_out";
+    static cl_kernel k_scan_candidates_multi_block;
+    static String kn_complete_candidates_multi_block = "complete_candidates_multi_block_out";
+    static cl_kernel k_complete_candidates_multi_block;
+
+
+
+
+    static String kn_generate_keys = "generate_keys";
     static cl_program p_generate_keys;
-    private static final String src_generate_keys = readSrc("generate_keys.cl");
+    static cl_kernel k_generate_keys;
 
-    static cl_kernel k_build_key_map;
+    static String kn_build_key_map = "build_key_map";
     static cl_program p_build_key_map;
-    private static final String src_build_key_map = readSrc("build_key_map.cl");
+    static cl_kernel k_build_key_map;
+
+    static List<cl_program> loaded_programs = new ArrayList<>();
+    static List<cl_kernel> loaded_kernels = new ArrayList<>();
+
+    private static int wx = 256; // todo: query hardware for this limit
+    private static int m = wx * 2;
 
     public static String readSrc(String file)
     {
-        var stream = OCLFunctions.class.getResourceAsStream("/kernels/" + file);
+        var stream = OpenCL.class.getResourceAsStream("/kernels/" + file);
         try
         {
             byte [] bytes = stream.readAllBytes();
@@ -116,56 +180,137 @@ public class OCLFunctions
         return commandQueue;
     }
 
+    // todo: wrapper functions should use the errcode value and actually check/report errors
+    private static cl_program cl_p(String ... src)
+    {
+        var program = clCreateProgramWithSource(context, src.length, src, null, null);
+        clBuildProgram(program, 1, device_ids, null, null, null);
+        loaded_programs.add(program);
+        return program;
+    }
+
+    private static cl_kernel cl_k(cl_program program, String kernel_name)
+    {
+        var kernel = clCreateKernel(program, kernel_name, null);
+        loaded_kernels.add(kernel);
+        return kernel;
+    }
+
     public static void init()
     {
-        var device_id = commonInit();
+        device_ids = commonInit();
 
-        p_verletIntegrate = clCreateProgramWithSource(context, 1, new String[]{src_verletIntegrate}, null, null);
-        clBuildProgram(p_verletIntegrate, 1, device_id, null, null, null);
-        k_verletIntegrate = clCreateKernel(p_verletIntegrate, "integrate", null);
+        p_locate_in_bounds = cl_p(pragma_int32_base_atomics, src_calculate_key_index, src_locate_in_bounds);
+        k_locate_in_bounds = cl_k(p_locate_in_bounds, kn_locate_in_bounds);
+        k_count_candidates = cl_k(p_locate_in_bounds, kn_count_candidates);
 
-        p_collide = clCreateProgramWithSource(context, 1, new String[]{src_collide}, null, null);
-        clBuildProgram(p_collide, 1, device_id, null, null, null);
-        k_collide = clCreateKernel(p_collide, "collide", null);
+        p_integrate = cl_p(src_is_in_bounds, src_get_extents, src_get_key_for_point, src_integrate);
+        k_integrate = cl_k(p_integrate, kn_integrate);
 
-        p_scan_key_bank = clCreateProgramWithSource(context, 1, new String[]{src_scan_key_bank}, null, null);
-        clBuildProgram(p_scan_key_bank, 1, device_id, null, null, null);
-        k_scan_bounds_single_block = clCreateKernel(p_scan_key_bank, "scan_bounds_single_block", null);
-        k_scan_bounds_multi_block = clCreateKernel(p_scan_key_bank, "scan_bounds_multi_block", null);
-        k_complete_bounds_multi_block = clCreateKernel(p_scan_key_bank, "complete_bounds_multi_block", null);
-        k_scan_int_single_block = clCreateKernel(p_scan_key_bank, "scan_int_single_block", null);;
-        k_scan_int_multi_block = clCreateKernel(p_scan_key_bank, "scan_int_multi_block", null);;
-        k_complete_int_multi_block = clCreateKernel(p_scan_key_bank, "complete_int_multi_block", null);
-        k_scan_int_single_block_out = clCreateKernel(p_scan_key_bank, "scan_int_single_block_out", null);;
-        k_scan_int_multi_block_out = clCreateKernel(p_scan_key_bank, "scan_int_multi_block_out", null);;
-        k_complete_int_multi_block_out = clCreateKernel(p_scan_key_bank, "complete_int_multi_block_out", null);
+        p_collide = cl_p(src_collide);
+        k_collide = cl_k(p_collide, kn_collide);
 
-        p_generate_keys = clCreateProgramWithSource(context, 1, new String[]{src_generate_keys}, null, null);
-        clBuildProgram(p_generate_keys, 1, device_id, null, null, null);
-        k_generate_keys = clCreateKernel(p_generate_keys, "generate_keys", null);
+        p_scan_key_bank = cl_p(src_exclusive_scan, src_scan_key_bank);
+        k_scan_bounds_single_block = cl_k(p_scan_key_bank, kn_scan_bounds_single_block);
+        k_scan_bounds_multi_block = cl_k(p_scan_key_bank, kn_scan_bounds_multi_block);
+        k_complete_bounds_multi_block = cl_k(p_scan_key_bank, kn_complete_bounds_multi_block);
 
-        p_build_key_map = clCreateProgramWithSource(context, 1, new String[]{src_build_key_map}, null, null);
-        clBuildProgram(p_build_key_map, 1, device_id, null, null, null);
-        k_build_key_map = clCreateKernel(p_build_key_map, "build_key_map", null);
+        p_scan_int_array = cl_p(src_exclusive_scan, src_scan_int_array);
+        k_scan_int_single_block = cl_k(p_scan_int_array, kn_scan_int_single_block);
+        k_scan_int_multi_block = cl_k(p_scan_int_array, kn_scan_int_multi_block);
+        k_complete_int_multi_block = cl_k(p_scan_int_array, kn_complete_int_multi_block);
+
+        p_scan_int_array_out = cl_p(src_exclusive_scan, src_scan_int_array_out);
+        k_scan_int_single_block_out = cl_k(p_scan_int_array_out, kn_scan_int_single_block_out);
+        k_scan_int_multi_block_out = cl_k(p_scan_int_array_out, kn_scan_int_multi_block_out);
+        k_complete_int_multi_block_out = cl_k(p_scan_int_array_out, kn_complete_int_multi_block_out);
+
+        p_scan_candidates = cl_p(src_exclusive_scan, src_scan_candidates_out);
+        k_scan_candidates_single_block = cl_k(p_scan_candidates, kn_scan_candidates_single_block);
+        k_scan_candidates_multi_block = cl_k(p_scan_candidates, kn_scan_candidates_multi_block);
+        k_complete_candidates_multi_block = cl_k(p_scan_candidates, kn_complete_candidates_multi_block);
+
+
+        p_generate_keys = cl_p(pragma_int32_base_atomics, src_calculate_key_index, src_generate_keys);
+        k_generate_keys = cl_k(p_generate_keys, kn_generate_keys);
+
+        p_build_key_map = cl_p(pragma_int32_base_atomics, src_calculate_key_index, src_build_key_map);
+        k_build_key_map = cl_k(p_build_key_map, kn_build_key_map);
     }
 
     public static void destroy()
     {
-        clReleaseKernel(k_verletIntegrate);
-        clReleaseKernel(k_collide);
-        clReleaseKernel(k_scan_bounds_single_block);
-        clReleaseKernel(k_scan_bounds_multi_block);
-        clReleaseKernel(k_complete_bounds_multi_block);
-        clReleaseKernel(k_generate_keys);
-        clReleaseKernel(k_complete_int_multi_block);
-        clReleaseKernel(k_build_key_map);
-        clReleaseProgram(p_verletIntegrate);
-        clReleaseProgram(p_collide);
-        clReleaseProgram(p_scan_key_bank);
-        clReleaseProgram(p_generate_keys);
-        clReleaseProgram(p_build_key_map);
+        loaded_programs.forEach(CL::clReleaseProgram);
+        loaded_kernels.forEach(CL::clReleaseKernel);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
+    }
+
+    public static void locate_in_bounds(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    {
+        // step 1: locate objects that are within bounds
+        int x_subdivisions = spatialPartition.getX_subdivisions();
+        int n = Main.Memory.bodyCount();
+        int[] in_bounds = new int[n];
+        long inbound_buf_size = (long)Sizeof.cl_int * in_bounds.length;
+        cl_mem inbound_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+            inbound_buf_size, Pointer.to(in_bounds), null);
+
+        Pointer src_inbound = Pointer.to(inbound_data);
+
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size, null);
+        Pointer src_size = Pointer.to(size_data);
+
+        Pointer src_bounds = Pointer.to(physicsBuffer.bounds.get_mem());
+
+        clSetKernelArg(k_locate_in_bounds, 0, Sizeof.cl_mem, src_bounds);
+        clSetKernelArg(k_locate_in_bounds, 1, Sizeof.cl_mem, src_inbound);
+        clSetKernelArg(k_locate_in_bounds, 2, Sizeof.cl_mem, src_size);
+
+        clEnqueueNDRangeKernel(commandQueue, k_locate_in_bounds, 1, null,
+            new long[]{n}, null, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        // step 2: count candidates
+        int cand_count = sz[0];
+        long cand_buf_size = (long)Sizeof.cl_int2 * cand_count;
+        int[] candidates = new int[cand_count * 2];
+        Pointer pnt_cand = Pointer.to(candidates);
+        cl_mem cand_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, cand_buf_size, pnt_cand, null);
+        Pointer src_candidates = Pointer.to(cand_data);
+
+        Pointer src_key_bank = Pointer.to(physicsBuffer.key_bank.get_mem());
+        Pointer src_key_counts = Pointer.to(physicsBuffer.key_counts.get_mem());
+
+        clSetKernelArg(k_count_candidates, 0, Sizeof.cl_mem, src_bounds);
+        clSetKernelArg(k_count_candidates, 1, Sizeof.cl_mem, src_inbound);
+        clSetKernelArg(k_count_candidates, 2, Sizeof.cl_mem, src_key_bank);
+        clSetKernelArg(k_count_candidates, 3, Sizeof.cl_mem, src_key_counts);
+        clSetKernelArg(k_count_candidates, 4, Sizeof.cl_mem, src_candidates);
+        clSetKernelArg(k_count_candidates, 5, Sizeof.cl_int, Pointer.to(new int[]{x_subdivisions}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_count_candidates, 1, null,
+            new long[]{cand_count}, null, 0, null, null);
+
+        // step 3:
+        int n2 = cand_count;
+        int k = (int) Math.ceil((float)n2 / (float)m);
+        int[] offsets = new int[cand_count];
+        long offset_buf_size = Sizeof.cl_int * n2;
+        Pointer pnt_offset = Pointer.to(offsets);
+        cl_mem offset_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, offset_buf_size, pnt_offset, null);
+
+        int cand_sz = scan_key_candidates(cand_data, offset_data, n2, k);
+
+        clEnqueueReadBuffer(commandQueue, offset_data, CL_TRUE, 0,
+            offset_buf_size, pnt_offset, 0, null, null);
+
+        clReleaseMemObject(size_data);
+        clReleaseMemObject(inbound_data);
     }
 
     public static void generate_key_map(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
@@ -243,8 +388,7 @@ public class OCLFunctions
             new long[]{n}, null, 0, null, null);
     }
 
-    private static int wx = 256; // todo: query hardware for this limit
-    private static int m = wx * 2;
+
 
     public static void calculate_map_offsets(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
     {
@@ -270,6 +414,8 @@ public class OCLFunctions
         spatialPartition.resizeBank(bank_size);
     }
 
+
+
     private static void scan_int(cl_mem d_data, int n, int k)
     {
         if (k == 1)
@@ -293,6 +439,34 @@ public class OCLFunctions
             scan_multi_block_int_out(d_data, o_data, n, k);
         }
     }
+
+    private static int scan_key_bounds(cl_mem d_data, int n, int k)
+    {
+        if (k == 1)
+        {
+            return scan_single_block_key(d_data, n);
+        }
+        else
+        {
+            return scan_multi_block_key(d_data, n, k);
+        }
+    }
+
+
+    private static int scan_key_candidates(cl_mem d_data, cl_mem o_data, int n, int k)
+    {
+        if (k == 1)
+        {
+            return scan_single_block_candidates_out(d_data, o_data, n);
+        }
+        else
+        {
+            return scan_multi_block_candidates_out(d_data, o_data, n, k);
+        }
+    }
+
+
+
 
     private static void scan_single_block_int(cl_mem d_data, int n)
     {
@@ -348,8 +522,6 @@ public class OCLFunctions
 
         clReleaseMemObject(p_data);
     }
-
-
 
     private static void scan_single_block_int_out(cl_mem d_data, cl_mem o_data, int n)
     {
@@ -411,17 +583,100 @@ public class OCLFunctions
         clReleaseMemObject(p_data);
     }
 
-    private static int scan_key_bounds(cl_mem d_data, int n, int k)
+
+
+
+    private static int scan_single_block_candidates_out(cl_mem d_data, cl_mem o_data, int n)
     {
-        if (k == 1)
-        {
-            return scan_single_block_key(d_data, n);
-        }
-        else
-        {
-            return scan_multi_block_key(d_data, n, k);
-        }
+        // set up buffers
+        int localBufferSize = Sizeof.cl_int * m;
+        Pointer src_data = Pointer.to(d_data);
+        Pointer dst_data = Pointer.to(o_data);
+
+        // input/output buffers for final size value
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        Pointer src_size = Pointer.to(size_data);
+
+        // pass in arguments
+        clSetKernelArg(k_scan_candidates_single_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_candidates_single_block, 1, Sizeof.cl_mem, dst_data);
+        clSetKernelArg(k_scan_candidates_single_block, 2, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_scan_candidates_single_block, 3, localBufferSize,null);
+        clSetKernelArg(k_scan_candidates_single_block, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        // call kernel
+        clEnqueueNDRangeKernel(commandQueue, k_scan_candidates_single_block, 1, null,
+            new long[]{wx}, new long[]{wx}, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        clReleaseMemObject(size_data);
+
+        return sz[0];
     }
+
+    private static int scan_multi_block_candidates_out(cl_mem d_data, cl_mem o_data, int n, int k)
+    {
+        // set up buffers
+        int localBufferSize = Sizeof.cl_int * m;
+        int gx = k * m;
+        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
+        int[] partial_sums = new int[k * 2];
+        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
+        Pointer src_data = Pointer.to(d_data);
+        Pointer src_part = Pointer.to(p_data);
+
+        Pointer dst_data = Pointer.to(o_data);
+
+        // pass in arguments
+        clSetKernelArg(k_scan_candidates_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_candidates_multi_block, 1, Sizeof.cl_mem, dst_data);
+        clSetKernelArg(k_scan_candidates_multi_block, 2, localBufferSize,null);
+        clSetKernelArg(k_scan_candidates_multi_block, 3, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_scan_candidates_multi_block, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        // call kernel
+        clEnqueueNDRangeKernel(commandQueue, k_scan_candidates_multi_block, 1, null,
+            new long[]{gx}, new long[]{wx}, 0, null, null);
+
+        // do scan on block sums
+        int n2 = partial_sums.length;
+        int k2 = (int) Math.ceil((float)n2 / (float)m);
+        scan_int(p_data, n2, k2);
+
+        // input/output buffers for final size value
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        Pointer src_size = Pointer.to(size_data);
+
+        // pass in arguments
+        clSetKernelArg(k_complete_candidates_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_complete_candidates_multi_block, 1, Sizeof.cl_mem, dst_data);
+        clSetKernelArg(k_complete_candidates_multi_block, 2, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_complete_candidates_multi_block, 3, localBufferSize,null);
+        clSetKernelArg(k_complete_candidates_multi_block, 4, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_complete_candidates_multi_block, 5, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        // call kernel
+        clEnqueueNDRangeKernel(commandQueue, k_complete_candidates_multi_block, 1, null,
+            new long[]{gx}, new long[]{wx}, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        clReleaseMemObject(p_data);
+        clReleaseMemObject(size_data);
+
+        return sz[0];
+    }
+
+
+
+
 
     private static int scan_single_block_key(cl_mem d_data, int n)
     {
@@ -509,6 +764,8 @@ public class OCLFunctions
         return sz[0];
     }
 
+
+
     public static void integrate(PhysicsBuffer physicsBuffer, float tick_rate, float gravity_x, float gravity_y, float friction, SpatialPartition spatialPartition)
     {
         int bodiesSize = Main.Memory.bodyLength();
@@ -561,17 +818,20 @@ public class OCLFunctions
 
         // Set the arguments for the kernel
         int a = 0;
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBounds));
-        clSetKernelArg(k_verletIntegrate, a++, Sizeof.cl_mem, Pointer.to(dtMem));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBounds));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(dtMem));
 
         // Execute the kernel
-        clEnqueueNDRangeKernel(commandQueue, k_verletIntegrate, 1, null,
+        clEnqueueNDRangeKernel(commandQueue, k_integrate, 1, null,
             global_work_size, null, 0, null, null);
 
         clReleaseMemObject(dtMem);
     }
+
+
+
 
     public static void collide(IntBuffer candidates, FloatBuffer reactions)
     {

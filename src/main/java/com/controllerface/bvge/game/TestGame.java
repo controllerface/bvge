@@ -100,7 +100,7 @@ public class TestGame extends GameMode
         sprite.setWidth(16);
         scomp.setSprite(sprite);
         //scomp.setColor(new Vector4f(0,0,0,1));
-        var physicsObject = PhysicsObjects.polygon1(400,100, 32, player);
+        var physicsObject = PhysicsObjects.polygon1(600,100, 32, player);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
@@ -116,10 +116,10 @@ public class TestGame extends GameMode
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
         ecs.registerSystem(new LineRenderer(ecs));
 
-        //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
+        ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));
 
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
     }
 
     @Override
@@ -129,9 +129,9 @@ public class TestGame extends GameMode
         //genNPCs(100, 10f, 10f, 2100, 2100);
         //genNPCs(100, 10f, 10f, 1000, -1000);
         //genNPCs(100, 10f, 10f, -1500, -1500);
-        genNPCs(100, 10f, 10f, -1000, 1500);
+        genNPCs(100, 10f, 10f, -100, 1500);
         genNPCs(3, 15f, 15f, 100, 300);
-        genFloor(100, 100f, 100f, -400, -40);
+        genFloor(100, 200f, 200f, -400, -40);
 
         loadSystems();
     }

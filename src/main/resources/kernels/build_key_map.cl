@@ -1,11 +1,3 @@
-#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
-
-inline int calculateKeyIndex(int x_subdivisions, int x, int y)
-{
-    int key_index = x_subdivisions * y + x;
-    return key_index;
-}
-
 __kernel void build_key_map(__global float16 *bounds,
                             __global int *key_map,
                             __global int *key_offsets,
@@ -30,7 +22,7 @@ __kernel void build_key_map(__global float16 *bounds,
     {
         for (int current_y = min_y; current_y <= max_y; current_y++)
         {
-            int key_index = calculateKeyIndex(x_subdivisions, current_x, current_y);
+            int key_index = calculate_key_index(x_subdivisions, current_x, current_y);
             if (key_index < 0 || key_index >= key_count_length)
             {
                 continue;

@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-import com.controllerface.bvge.cl.OCLFunctions;
+import com.controllerface.bvge.cl.OpenCL;
 import org.jocl.Pointer;
 import org.jocl.cl_mem;
 
@@ -31,7 +31,7 @@ public class MemoryBuffer
 
     public void transfer()
     {
-        clEnqueueReadBuffer(OCLFunctions.getCommandQueue(),
+        clEnqueueReadBuffer(OpenCL.getCommandQueue(),
             src, CL_TRUE, 0,
             size,
             dst,

@@ -57,6 +57,7 @@ public class SpatialPartition
     }
 
     int key_bank_size = 0;
+    int key_map_size = 0;
     int[] key_bank = new int[0];
     int[] key_map = new int[0];
     int[] key_counts = new int[0];
@@ -65,11 +66,8 @@ public class SpatialPartition
     public void resizeBank(int size)
     {
         key_bank_size = size;
-
-        // todo: figure out how to predict the size for this correctly
-        //  at the moment, I just increase it whenever I get crash with
-        //  an index out-of-bounds exception for the map
-        key_map     = new int[key_bank_size];
+        key_map_size = size / 2;
+        key_map     = new int[key_map_size];
         key_bank    = new int[key_bank_size];
         key_counts  = new int[directoryLength];
         key_offsets = new int[directoryLength];
@@ -160,7 +158,7 @@ public class SpatialPartition
     {
         var target = Main.Memory.bodyByIndex(target_index);
         var bounds = target.bounds();
-        if (!isInBounds(bounds))
+        if (bounds.si_bank_size() == 0)
         {
             return new int[0];
         }

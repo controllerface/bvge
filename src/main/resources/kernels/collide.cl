@@ -282,15 +282,8 @@ __kernel void collide(
     reaction.s6 = e1_reaction.y;  
     reaction.s7 = e2_reaction.x;  
     reaction.s8 = e2_reaction.y;   
-    // these are currently unused, but may be used later as collision checks
-    // are updated with more complex logic
-    // reaction.s9 = 0;
-    // reaction.sa = 0;
-    // reaction.sb = 0;
-    // reaction.sc = 0;
-    // reaction.sd = 0;
-    // reaction.se = 0;
-    // reaction.sf = 0;
+    // reaction.s9 through reaction.sf are currently empty, but may be used later 
+    // as collision checks are updated with more complex logic
 
     reactions[gid] = reaction;
 }

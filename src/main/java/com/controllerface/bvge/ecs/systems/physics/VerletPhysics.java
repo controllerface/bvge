@@ -1,7 +1,7 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.cl.OCLFunctions;
+import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
@@ -16,7 +16,7 @@ public class VerletPhysics extends GameSystem
     private final float TARGET_FPS = 60.0f;
     private final float TICK_RATE = 1.0f / TARGET_FPS;
     private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 2;
+    private final int EDGE_STEPS = 4;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.
@@ -86,7 +86,7 @@ public class VerletPhysics extends GameSystem
             for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
             {
                 FBody2D body = Component.RigidBody2D.coerce(entry.getValue());
-                if (lastStep || spatialPartition.isInBounds(body.bounds()))
+                if (lastStep || body.bounds().si_bank_size() > 0)
                 {
                     for (FEdge2D edge : body.edges())
                     {
@@ -158,13 +158,17 @@ public class VerletPhysics extends GameSystem
         // todo: the buffers generated during these OCL calls can be carried forward
         //  and only pulled off the GPU at the very end.
         var physicsBuffer = new PhysicsBuffer();
-        OCLFunctions.integrate(physicsBuffer, dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
-        OCLFunctions.calculate_bank_offsets(physicsBuffer, spatialPartition);
-        OCLFunctions.generate_key_bank(physicsBuffer, spatialPartition);
-        OCLFunctions.calculate_map_offsets(physicsBuffer, spatialPartition);
-        OCLFunctions.generate_key_map(physicsBuffer, spatialPartition);
+        OpenCL.integrate(physicsBuffer, dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
+        OpenCL.calculate_bank_offsets(physicsBuffer, spatialPartition);
+        OpenCL.generate_key_bank(physicsBuffer, spatialPartition);
+        OpenCL.calculate_map_offsets(physicsBuffer, spatialPartition);
+        OpenCL.generate_key_map(physicsBuffer, spatialPartition);
+
+        OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
+
         physicsBuffer.transferAll();
 
+        // broad phase collision
         // todo #0: replace this with OCL calls
         var candidates = spatialPartition.computeCandidatesEX();
         // todo #1: need to make a kernel that determines the key sums of each body
@@ -184,7 +188,7 @@ public class VerletPhysics extends GameSystem
             var reaction_size = count * Main.Memory.Width.REACTION;
             var reactions = new float[reaction_size];
             var reaction_buffer = FloatBuffer.wrap(reactions);
-            OCLFunctions.collide(candidates, reaction_buffer);
+            OpenCL.collide(candidates, reaction_buffer);
 
             // todo: replace loop below with CL call. will need to calculate offsets for
             //  each collision pair and store the reactions, then sum them into a single

@@ -1,60 +1,9 @@
-// gets the extents of a spatial index for an axis-aligned bounding box
-inline int4 getExtents(int2 corners[])
-{
-    int4 r;
-    r.x = INT_MAX; // min_x
-    r.y = INT_MIN; // max_x
-    r.z = INT_MAX; // min_y
-    r.w = INT_MIN; // max_y
-    for (int i = 0; i < sizeof(corners); i++)
-    {
-        int2 corner = corners[i];
-        if (corner.x < r.x)
-        {
-            r.x = corner.x;
-        }
-        if (corner.x > r.y)
-        {
-            r.y = corner.x;
-        }
-        if (corner.y < r.z)
-        {
-            r.z = corner.y;
-        }
-        if (corner.y > r.w)
-        {
-            r.w = corner.y;
-        }
-    }
-    return r;
-}
-
-inline bool isInBounds(float16 a, float x_origin, float y_origin, float width, float height)
-{
-    //printf("debug xo: %f yo: %f w: %f h: %f", x_origin, y_origin, width, height);
-    return a.s0 < x_origin + width
-            && a.s0 + a.s3 > x_origin
-            && a.s1 < y_origin + height
-            && a.s1 + a.s4 > y_origin;
-}
-
-// calculates a spatial index cell for a given point
-inline int2 getKeyForPoint(float px, float py,
-                    float x_spacing, float y_spacing,
-                    float x_origin, float y_origin,
-                    float width, float height,
-                    int x_subdivisions, int y_subdivisions)
-{
-    int2 out;
-    float adjusted_x = px - (x_origin);
-    float adjusted_y = py - (y_origin);
-    int index_x = ((int) floor(adjusted_x / x_spacing - FLT_EPSILON));
-    int index_y = ((int) floor(adjusted_y / y_spacing - FLT_EPSILON));
-    out.x = index_x;
-    out.y = index_y;
-    return out;
-}
-
+/**
+Performs the integration step of a physics loop, generally this is the first stage
+in a process that updates all the tracked vertices each frame.
+Some meta-data about the bodies that are updated is stored within
+them before this kernel completes. 
+ */
 __kernel void integrate(
     __global float16 *bodies,
     __global float4 *points,
@@ -80,8 +29,8 @@ __kernel void integrate(
 
     // get body from array
     float16 body = bodies[gid];
-    int bound_index = (int)body.s6;
     float16 bounding_box = bounds[gid];
+
     // get start/end vertex indices
     int start = (int)body.s7;
     int end   = (int)body.s8;
@@ -90,17 +39,12 @@ __kernel void integrate(
     //  or something, so it can be handled differently for collisions as well.
     if (!isInBounds(bounding_box, x_origin, y_origin, width, height))
     {
-        bounding_box.s5 = 0;
         body.s4 = 0.0;
    	    body.s5 = 0.0;
         bodies[gid] = body;
-        bounds[gid] = bounding_box;
 
-        for (int i = start; i <= end; i++)
-        {
-            float4 point = points[i];
-            points[i] = point;
-        }
+        bounding_box.s5 = 0;
+        bounds[gid] = bounding_box;
         return;
     }
 
@@ -211,25 +155,25 @@ __kernel void integrate(
     // calculate spatial index boundary
     int2 keys[4];
 
-    keys[0] = getKeyForPoint(bounding_box.s0, bounding_box.s1, 
+    keys[0] = get_key_for_point(bounding_box.s0, bounding_box.s1, 
         x_spacing, y_spacing,
         x_origin, y_origin,
         width, height,
         x_subdivisions, y_subdivisions);
 
-    keys[1] = getKeyForPoint(max_x, bounding_box.s1, 
+    keys[1] = get_key_for_point(max_x, bounding_box.s1, 
         x_spacing, y_spacing,
         x_origin, y_origin,
         width, height,
         x_subdivisions, y_subdivisions);
 
-    keys[2] = getKeyForPoint(max_x, max_y, 
+    keys[2] = get_key_for_point(max_x, max_y, 
         x_spacing, y_spacing,
         x_origin, y_origin,
         width, height,
         x_subdivisions, y_subdivisions);
 
-    keys[3] = getKeyForPoint(bounding_box.s0, max_y, 
+    keys[3] = get_key_for_point(bounding_box.s0, max_y, 
         x_spacing, y_spacing,
         x_origin, y_origin,
         width, height,

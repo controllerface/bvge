@@ -76,7 +76,8 @@ public class BoundingBoxRenderer extends GameSystem
         {
             GameComponent component = entry.getValue();
             FBounds2D box = Component.BoundingBox.coerce(component);
-            this.add(box, spatialPartition.isInBounds(box));
+            this.add(box, box.si_bank_size() > 0);
+            //this.add(box, spatialPartition.isInBounds(box));
         }
         render();
     }
