@@ -316,17 +316,11 @@ public class OpenCL
             inbound_buf_size, pnt_inbound, 0, null, null);
 
         int match_count = scan_key_candidates(cand_data, offset_data, n2);
-        if (match_count < 0)
-        {
-            System.out.println("Problem!");
-        }
-        else
-        {
-            int[] matches = new int[match_count];
 
-            clEnqueueReadBuffer(commandQueue, offset_data, CL_TRUE, 0,
-                offset_buf_size, pnt_offset, 0, null, null);
-        }
+        int[] matches = new int[match_count];
+
+        clEnqueueReadBuffer(commandQueue, offset_data, CL_TRUE, 0,
+            offset_buf_size, pnt_offset, 0, null, null);
 
 
         clReleaseMemObject(size_data);

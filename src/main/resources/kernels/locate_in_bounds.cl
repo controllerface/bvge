@@ -40,10 +40,6 @@ __kernel void count_candidates(__global float16 *bounds,
         }
         int count = key_counts[key_index];
         size += count;
-        if (count > 10500)
-        {
-            printf("issue L: %d obj: %d x: %d y: %d", count, index, x, y);
-        }
         if (count > 0)
         {
             size -= 1;
@@ -53,7 +49,43 @@ __kernel void count_candidates(__global float16 *bounds,
     candidates[gid].y = size;
 }
 
-__kernel void compute_matches()
-{
 
+// WORK IN PROGRESS vvvv
+__kernel void compute_matches(__global float16 *bounds,
+                              __global int2 *candidates,
+                              __global int *match_offsets,
+                              __global int *key_map,
+                              __global int *key_bank,
+                              __global int *key_counts,
+                              __global int *key_offsets,
+                              int x_subdivisions,
+                              int key_count_length)
+{
+    int gid = get_global_id(0);
+    int index = candidates[gid].x;
+    int size = candidates[gid].y;
+
+    float16 bound = bounds[index];
+
+    int spatial_index = (int)bound.s4 * 2;
+    int spatial_length = (int)bound.s5;
+    int end = spatial_index + spatial_length;
+
+    for (int i = spatial_index; i < end; i++)
+    {
+        int x = key_bank[i];
+        int y = key_bank[i + 1];
+        int key_index = calculate_key_index(x_subdivisions, x, y);
+        if (key_index < 0 || key_index >= key_count_length)
+        {
+            continue;
+        }
+        int count = key_counts[key_index];
+        if (count == 0)
+        {
+            continue;
+        }
+        int offset = key_offsets[key_index];
+
+    }
 }
