@@ -17,7 +17,8 @@ __kernel void count_candidates(__global float16 *bounds,
                                __global int *key_bank,
                                __global int *key_counts,
                                __global int2 *candidates,
-                               int x_subdivisions)
+                               int x_subdivisions,
+                               int key_count_length)
 {
     int gid = get_global_id(0);
     int index = in_bounds[gid];
@@ -33,8 +34,16 @@ __kernel void count_candidates(__global float16 *bounds,
         int x = key_bank[i];
         int y = key_bank[i + 1];
         int key_index = calculate_key_index(x_subdivisions, x, y);
+        if (key_index < 0 || key_index >= key_count_length)
+        {
+            continue;
+        }
         int count = key_counts[key_index];
         size += count;
+        if (count > 10500)
+        {
+            printf("issue L: %d obj: %d x: %d y: %d", count, index, x, y);
+        }
         if (count > 0)
         {
             size -= 1;
@@ -42,4 +51,9 @@ __kernel void count_candidates(__global float16 *bounds,
     }
     candidates[gid].x = index;
     candidates[gid].y = size;
+}
+
+__kernel void compute_matches()
+{
+
 }

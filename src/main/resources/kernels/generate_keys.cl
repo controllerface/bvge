@@ -36,7 +36,11 @@ __kernel void generate_keys(__global float16 *bounds,
 
             key_bank[current_index++] = current_x;
             key_bank[current_index++] = current_y;
-            atomic_inc(&key_counts[key_index]);
+            int r = atomic_inc(&key_counts[key_index]);
+            if (r > 10500)
+            {
+                printf("issue G: %d obj: %d x: %d y: %d", r, gid, current_x, current_y);
+            }
         }
     }
 }
