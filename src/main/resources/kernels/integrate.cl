@@ -37,7 +37,7 @@ __kernel void integrate(
 
     // todo: instead of punting on these, we can maybe update differently and tag the body
     //  or something, so it can be handled differently for collisions as well.
-    if (!isInBounds(bounding_box, x_origin, y_origin, width, height))
+    if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
         body.s4 = 0.0;
    	    body.s5 = 0.0;
@@ -185,7 +185,7 @@ __kernel void integrate(
     bounding_box.s8 = (float) k.z;
     bounding_box.s9 = (float) k.w;
 
-    if (!isInBounds(bounding_box, x_origin, y_origin, width, height))
+    if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
         bounding_box.s5 = 0;
     }

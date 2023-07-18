@@ -58,12 +58,14 @@ __kernel void compute_matches(__global float16 *bounds,
                               __global int *key_bank,
                               __global int *key_counts,
                               __global int *key_offsets,
+                              __global int *matches,
                               int x_subdivisions,
                               int key_count_length)
 {
     int gid = get_global_id(0);
     int index = candidates[gid].x;
     int size = candidates[gid].y;
+    int offset = match_offsets[gid];
 
     float16 bound = bounds[index];
 
@@ -71,6 +73,7 @@ __kernel void compute_matches(__global float16 *bounds,
     int spatial_length = (int)bound.s5;
     int end = spatial_index + spatial_length;
 
+    // loop through all the keys for this body
     for (int i = spatial_index; i < end; i++)
     {
         int x = key_bank[i];
@@ -86,6 +89,32 @@ __kernel void compute_matches(__global float16 *bounds,
             continue;
         }
         int offset = key_offsets[key_index];
+
+        for (int j = offset; j > count; j++)
+        {
+            int next = key_map[j]; 
+        }
+
+        // int[] hits = new int[count];
+        // System.arraycopy(key_map, offset, hits, 0, count);
+
+        // var target = Main.Memory.bodyByIndex(target_index);
+        // for (int j = 0; j < hits.length;j++)
+        // {
+        //     int next = hits[j];
+        //     // this is where duplicate/reverse collisions are weeded out
+        //     if (target_index >= next)
+        //     {
+        //         continue;
+        //     }
+        //     var candidate = Main.Memory.bodyByIndex(next);
+        //     boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
+        //     if (!ch)
+        //     {
+        //         continue;
+        //     }
+        //     rSet.add(next);
+        // }
 
     }
 }
