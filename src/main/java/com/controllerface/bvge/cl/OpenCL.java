@@ -335,63 +335,61 @@ public class OpenCL
         // step 3:
         int n2 = cand_count;
         int[] offsets = new int[cand_count];
-        long offset_buf_size = Sizeof.cl_int * n2;
+        long offset_buf_size = (long)Sizeof.cl_int * n2;
         Pointer pnt_offset = Pointer.to(offsets);
         cl_mem offset_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, offset_buf_size, pnt_offset, null);
-
-        clEnqueueReadBuffer(commandQueue, cand_data, CL_TRUE, 0,
-            cand_buf_size, pnt_cand, 0, null, null);
-
-        clEnqueueReadBuffer(commandQueue, inbound_data, CL_TRUE, 0,
-            inbound_buf_size, pnt_inbound, 0, null, null);
+        Pointer src_offsets = Pointer.to(offset_data);
+//        clEnqueueReadBuffer(commandQueue, cand_data, CL_TRUE, 0,
+//            cand_buf_size, pnt_cand, 0, null, null);
+//
+//        clEnqueueReadBuffer(commandQueue, inbound_data, CL_TRUE, 0,
+//            inbound_buf_size, pnt_inbound, 0, null, null);
 
         int match_count = scan_key_candidates(cand_data, offset_data, n2);
 
-
-
-        clEnqueueReadBuffer(commandQueue, offset_data, CL_TRUE, 0,
-            offset_buf_size, pnt_offset, 0, null, null);
+//        clEnqueueReadBuffer(commandQueue, offset_data, CL_TRUE, 0,
+//            offset_buf_size, pnt_offset, 0, null, null);
 
 
         // step 4:  find matches
-//        int[] matches = new int[match_count];
-//        long matches_buf_size = Sizeof.cl_int * match_count;
-//        Pointer pnt_matches = Pointer.to(matches);
-//        cl_mem matches_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matches_buf_size, pnt_matches, null);
-//        Pointer src_matches = Pointer.to(matches_data);
-//
-//        int[] used = new int[cand_count];
-//        long used_buf_size = Sizeof.cl_int * cand_count;
-//        Pointer pnt_used = Pointer.to(used);
-//        cl_mem used_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, used_buf_size, pnt_used, null);
-//        Pointer src_used = Pointer.to(used_data);
-//
-//        Pointer src_key_map = Pointer.to(physicsBuffer.key_map.get_mem());
-//        Pointer src_key_offsets = Pointer.to(physicsBuffer.key_offsets.get_mem());
-//
-//        clSetKernelArg(k_compute_matches, 0, Sizeof.cl_mem, src_bounds);
-//        clSetKernelArg(k_compute_matches, 1, Sizeof.cl_mem, src_candidates);
-//        clSetKernelArg(k_compute_matches, 2, Sizeof.cl_mem, pnt_offset);
-//        clSetKernelArg(k_compute_matches, 3, Sizeof.cl_mem, src_key_map);
-//        clSetKernelArg(k_compute_matches, 4, Sizeof.cl_mem, src_key_bank);
-//        clSetKernelArg(k_compute_matches, 5, Sizeof.cl_mem, src_key_counts);
-//        clSetKernelArg(k_compute_matches, 6, Sizeof.cl_mem, src_key_offsets);
-//        clSetKernelArg(k_compute_matches, 7, Sizeof.cl_mem, src_matches);
-//        clSetKernelArg(k_compute_matches, 8, Sizeof.cl_mem, src_used);
-//        clSetKernelArg(k_compute_matches, 9, Sizeof.cl_int, pnt_subdivisions);
-//        clSetKernelArg(k_compute_matches, 10, Sizeof.cl_int, pnt_counts_length);
-//
-//        clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
-//            new long[]{cand_count}, null, 0, null, null);
+        int[] matches = new int[match_count];
+        long matches_buf_size = (long)Sizeof.cl_int * matches.length;
+        Pointer pnt_matches = Pointer.to(matches);
+        cl_mem matches_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matches_buf_size, pnt_matches, null);
+        Pointer src_matches = Pointer.to(matches_data);
 
-//        clEnqueueReadBuffer(commandQueue, matches_data, CL_TRUE, 0,
-//            matches_buf_size, pnt_matches, 0, null, null);
-//
-//        clEnqueueReadBuffer(commandQueue, used_data, CL_TRUE, 0,
-//            used_buf_size, pnt_used, 0, null, null);
+        int[] used = new int[cand_count];
+        long used_buf_size = (long)Sizeof.cl_int * used.length;
+        Pointer pnt_used = Pointer.to(used);
+        cl_mem used_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, used_buf_size, pnt_used, null);
+        Pointer src_used = Pointer.to(used_data);
 
-//        clReleaseMemObject(matches_data);
-//        clReleaseMemObject(used_data);
+        Pointer src_key_map = Pointer.to(physicsBuffer.key_map.get_mem());
+        Pointer src_key_offsets = Pointer.to(physicsBuffer.key_offsets.get_mem());
+
+        clSetKernelArg(k_compute_matches, 0, Sizeof.cl_mem, src_bounds);
+        clSetKernelArg(k_compute_matches, 1, Sizeof.cl_mem, src_candidates);
+        clSetKernelArg(k_compute_matches, 2, Sizeof.cl_mem, src_offsets);
+        clSetKernelArg(k_compute_matches, 3, Sizeof.cl_mem, src_key_map);
+        clSetKernelArg(k_compute_matches, 4, Sizeof.cl_mem, src_key_bank);
+        clSetKernelArg(k_compute_matches, 5, Sizeof.cl_mem, src_key_counts);
+        clSetKernelArg(k_compute_matches, 6, Sizeof.cl_mem, src_key_offsets);
+        clSetKernelArg(k_compute_matches, 7, Sizeof.cl_mem, src_matches);
+        clSetKernelArg(k_compute_matches, 8, Sizeof.cl_mem, src_used);
+        clSetKernelArg(k_compute_matches, 9, Sizeof.cl_int, pnt_subdivisions);
+        clSetKernelArg(k_compute_matches, 10, Sizeof.cl_int, pnt_counts_length);
+//
+        clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
+            new long[]{cand_count}, null, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, matches_data, CL_TRUE, 0,
+            matches_buf_size, pnt_matches, 0, null, null);
+////
+        clEnqueueReadBuffer(commandQueue, used_data, CL_TRUE, 0,
+            used_buf_size, pnt_used, 0, null, null);
+
+        clReleaseMemObject(matches_data);
+        clReleaseMemObject(used_data);
         clReleaseMemObject(offset_data);
         clReleaseMemObject(cand_data);
         clReleaseMemObject(size_data);
