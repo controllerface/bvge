@@ -40,11 +40,6 @@ __kernel void count_candidates(__global float16 *bounds,
         }
         int count = key_counts[key_index];
         size += count;
-        // if (count > 0)
-        // {
-        //     // minus 1 for the body itself, sine we will not generate a self-match
-        //     size -= 1;
-        // }
     }
     candidates[gid].x = index;
     candidates[gid].y = size;
@@ -70,13 +65,10 @@ __kernel void compute_matches(__global float16 *bounds,
     int offset = match_offsets[gid];
 
     float16 bound = bounds[index];
-    //printf("debug 1: %d", index);
 
     int spatial_index = (int)bound.s4 * 2;
     int spatial_length = (int)bound.s5;
     int end = spatial_index + spatial_length;
-    //printf("debug 2: i: %d l: %d e: %d", spatial_index,spatial_length,end);
-
 
     int currentOffset = offset;
     int slots_used = 0;
@@ -86,7 +78,6 @@ __kernel void compute_matches(__global float16 *bounds,
         int x = key_bank[i];
         int y = key_bank[i + 1];
         int key_index = calculate_key_index(x_subdivisions, x, y);
-        //printf("debug 3: x: %d y: %d i: %d", x, y, key_index);
 
         if (key_index < 0 || key_index >= key_count_length)
         {
@@ -99,39 +90,35 @@ __kernel void compute_matches(__global float16 *bounds,
         }
 
         int offset = key_offsets[key_index];
-        // printf("debug 4: c: %d o: %d", count, offset);
-
 
         // loop through all the candidates at this key
         for (int j = offset; j < offset + count; j++)
         {
             int next = key_map[j]; 
-            //printf("debug 5: n: %d", next);
-        //     // no self-matches
-            // if (next == index)
-            // {
-            //     continue;
-            // }
-            
-        //     // no duplicate matches
+
+            // no duplicates or self-matches
             if (next >= index)
             {
                 matches[currentOffset++] = -1;
                 continue;
             }
 
-        //     // broad phase collision check
+            // broad phase collision check
             float16 candidate = bounds[next];
             bool near = do_bounds_intersect(bound, candidate);
 
-        //     // bodies are not near each other
+            // bodies are not near each other
             if (!near)
             {
                 matches[currentOffset++] = -1;
                 continue;
             }
-            printf("debug 6: n: %d", next);
-        //     // broad phase collision detected
+
+            // todo: matches has to be treated like a set, so if we've matched once already, we need to
+            // consider that match as already having been captured. Otherwise, we coudl have multiple
+            // collision reactions for the same 
+
+            // broad phase collision detected
             matches[currentOffset++] = next;
             slots_used++;
         }
