@@ -116,10 +116,10 @@ public class TestGame extends GameMode
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
         ecs.registerSystem(new LineRenderer(ecs));
 
-        ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
+        //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));
 
-        ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
+        //ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
     }
 
     @Override
@@ -131,7 +131,7 @@ public class TestGame extends GameMode
         //genNPCs(100, 10f, 10f, -1500, -1500);
         genNPCs(100, 10f, 10f, -100, 1500);
         genNPCs(3, 15f, 15f, 100, 300);
-        genFloor(100, 200f, 200f, -400, -40);
+        genFloor(100, 25f, 25f, -400, -40);
 
         loadSystems();
     }

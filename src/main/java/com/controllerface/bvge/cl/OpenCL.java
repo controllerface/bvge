@@ -31,6 +31,7 @@ public class OpenCL
     static String func_get_key_for_point    = readSrc("functions/get_key_for_point.cl");
     static String func_calculate_key_index  = readSrc("functions/calculate_key_index.cl");
     static String func_exclusive_scan       = readSrc("functions/exclusive_scan.cl");
+    static String func_do_bounds_intersect  = readSrc("functions/do_bounds_intersect.cl");
 
     /**
      * Core kernel files
@@ -49,6 +50,7 @@ public class OpenCL
      * Kernel function names
      */
     static String kn_locate_in_bounds                   = "locate_in_bounds";
+    static String kn_compute_matches                    = "compute_matches";
     static String kn_count_candidates                   = "count_candidates";
     static String kn_integrate                          = "integrate";
     static String kn_collide                            = "collide";
@@ -84,6 +86,7 @@ public class OpenCL
      * CL Kernels
      */
     static cl_kernel k_locate_in_bounds;
+    static cl_kernel k_compute_matches;
     static cl_kernel k_count_candidates;
     static cl_kernel k_integrate;
     static cl_kernel k_collide;
@@ -209,37 +212,60 @@ public class OpenCL
         /*
          * Programs
          */
-        p_integrate = cl_p(func_is_in_bounds, func_get_extents, func_get_key_for_point, kern_integrate);
         p_collide = cl_p(kern_collide);
-        p_locate_in_bounds = cl_p(prag_int32_base_atomics, func_calculate_key_index, kern_locate_in_bounds);
-        p_scan_key_bank = cl_p(func_exclusive_scan, kern_scan_key_bank);
-        p_scan_int_array = cl_p(func_exclusive_scan, kern_scan_int_array);
-        p_scan_int_array_out = cl_p(func_exclusive_scan, kern_scan_int_array_out);
-        p_scan_candidates = cl_p(func_exclusive_scan, kern_scan_candidates_out);
-        p_generate_keys = cl_p(prag_int32_base_atomics, func_calculate_key_index, kern_generate_keys);
-        p_build_key_map = cl_p(prag_int32_base_atomics, func_calculate_key_index, kern_build_key_map);
+
+        p_integrate = cl_p(func_is_in_bounds,
+            func_get_extents,
+            func_get_key_for_point,
+            kern_integrate);
+
+        p_locate_in_bounds = cl_p(prag_int32_base_atomics,
+            func_do_bounds_intersect,
+            func_calculate_key_index,
+            kern_locate_in_bounds);
+
+        p_scan_key_bank = cl_p(func_exclusive_scan,
+            kern_scan_key_bank);
+
+        p_scan_int_array = cl_p(func_exclusive_scan,
+            kern_scan_int_array);
+
+        p_scan_int_array_out = cl_p(func_exclusive_scan,
+            kern_scan_int_array_out);
+
+        p_scan_candidates = cl_p(func_exclusive_scan,
+            kern_scan_candidates_out);
+
+        p_generate_keys = cl_p(prag_int32_base_atomics,
+            func_calculate_key_index,
+            kern_generate_keys);
+
+        p_build_key_map = cl_p(prag_int32_base_atomics,
+            func_calculate_key_index,
+            kern_build_key_map);
 
         /*
          * Kernels
          */
-        k_integrate = cl_k(p_integrate, kn_integrate);
-        k_collide = cl_k(p_collide, kn_collide);
-        k_locate_in_bounds = cl_k(p_locate_in_bounds, kn_locate_in_bounds);
-        k_count_candidates = cl_k(p_locate_in_bounds, kn_count_candidates);
-        k_scan_bounds_single_block = cl_k(p_scan_key_bank, kn_scan_bounds_single_block);
-        k_scan_bounds_multi_block = cl_k(p_scan_key_bank, kn_scan_bounds_multi_block);
-        k_complete_bounds_multi_block = cl_k(p_scan_key_bank, kn_complete_bounds_multi_block);
-        k_scan_int_single_block = cl_k(p_scan_int_array, kn_scan_int_single_block);
-        k_scan_int_multi_block = cl_k(p_scan_int_array, kn_scan_int_multi_block);
-        k_complete_int_multi_block = cl_k(p_scan_int_array, kn_complete_int_multi_block);
-        k_scan_int_single_block_out = cl_k(p_scan_int_array_out, kn_scan_int_single_block_out);
-        k_scan_int_multi_block_out = cl_k(p_scan_int_array_out, kn_scan_int_multi_block_out);
-        k_complete_int_multi_block_out = cl_k(p_scan_int_array_out, kn_complete_int_multi_block_out);
-        k_scan_candidates_single_block = cl_k(p_scan_candidates, kn_scan_candidates_single_block);
-        k_scan_candidates_multi_block = cl_k(p_scan_candidates, kn_scan_candidates_multi_block);
-        k_complete_candidates_multi_block = cl_k(p_scan_candidates, kn_complete_candidates_multi_block);
-        k_generate_keys = cl_k(p_generate_keys, kn_generate_keys);
-        k_build_key_map = cl_k(p_build_key_map, kn_build_key_map);
+        k_integrate                         = cl_k(p_integrate, kn_integrate);
+        k_collide                           = cl_k(p_collide, kn_collide);
+        k_locate_in_bounds                  = cl_k(p_locate_in_bounds, kn_locate_in_bounds);
+        k_compute_matches                   = cl_k(p_locate_in_bounds, kn_compute_matches);
+        k_count_candidates                  = cl_k(p_locate_in_bounds, kn_count_candidates);
+        k_scan_bounds_single_block          = cl_k(p_scan_key_bank, kn_scan_bounds_single_block);
+        k_scan_bounds_multi_block           = cl_k(p_scan_key_bank, kn_scan_bounds_multi_block);
+        k_complete_bounds_multi_block       = cl_k(p_scan_key_bank, kn_complete_bounds_multi_block);
+        k_scan_int_single_block             = cl_k(p_scan_int_array, kn_scan_int_single_block);
+        k_scan_int_multi_block              = cl_k(p_scan_int_array, kn_scan_int_multi_block);
+        k_complete_int_multi_block          = cl_k(p_scan_int_array, kn_complete_int_multi_block);
+        k_scan_int_single_block_out         = cl_k(p_scan_int_array_out, kn_scan_int_single_block_out);
+        k_scan_int_multi_block_out          = cl_k(p_scan_int_array_out, kn_scan_int_multi_block_out);
+        k_complete_int_multi_block_out      = cl_k(p_scan_int_array_out, kn_complete_int_multi_block_out);
+        k_scan_candidates_single_block      = cl_k(p_scan_candidates, kn_scan_candidates_single_block);
+        k_scan_candidates_multi_block       = cl_k(p_scan_candidates, kn_scan_candidates_multi_block);
+        k_complete_candidates_multi_block   = cl_k(p_scan_candidates, kn_complete_candidates_multi_block);
+        k_generate_keys                     = cl_k(p_generate_keys, kn_generate_keys);
+        k_build_key_map                     = cl_k(p_build_key_map, kn_build_key_map);
     }
 
     public static void destroy()
@@ -254,6 +280,10 @@ public class OpenCL
     {
         // step 1: locate objects that are within bounds
         int x_subdivisions = spatialPartition.getX_subdivisions();
+        var pnt_subdivisions = Pointer.to(new int[]{x_subdivisions});
+
+        var pnt_counts_length = Pointer.to(new int[]{spatialPartition.getKey_counts().length});
+
         int n = Main.Memory.bodyCount();
         int[] in_bounds = new int[n];
         var pnt_inbound = Pointer.to(in_bounds);
@@ -296,8 +326,8 @@ public class OpenCL
         clSetKernelArg(k_count_candidates, 2, Sizeof.cl_mem, src_key_bank);
         clSetKernelArg(k_count_candidates, 3, Sizeof.cl_mem, src_key_counts);
         clSetKernelArg(k_count_candidates, 4, Sizeof.cl_mem, src_candidates);
-        clSetKernelArg(k_count_candidates, 5, Sizeof.cl_int, Pointer.to(new int[]{x_subdivisions}));
-        clSetKernelArg(k_count_candidates, 6, Sizeof.cl_int, Pointer.to(new int[]{spatialPartition.getKey_counts().length}));
+        clSetKernelArg(k_count_candidates, 5, Sizeof.cl_int, pnt_subdivisions);
+        clSetKernelArg(k_count_candidates, 6, Sizeof.cl_int, pnt_counts_length);
 
         clEnqueueNDRangeKernel(commandQueue, k_count_candidates, 1, null,
             new long[]{cand_count}, null, 0, null, null);
@@ -317,12 +347,53 @@ public class OpenCL
 
         int match_count = scan_key_candidates(cand_data, offset_data, n2);
 
-        int[] matches = new int[match_count];
+
 
         clEnqueueReadBuffer(commandQueue, offset_data, CL_TRUE, 0,
             offset_buf_size, pnt_offset, 0, null, null);
 
 
+        // step 4:  find matches
+//        int[] matches = new int[match_count];
+//        long matches_buf_size = Sizeof.cl_int * match_count;
+//        Pointer pnt_matches = Pointer.to(matches);
+//        cl_mem matches_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matches_buf_size, pnt_matches, null);
+//        Pointer src_matches = Pointer.to(matches_data);
+//
+//        int[] used = new int[cand_count];
+//        long used_buf_size = Sizeof.cl_int * cand_count;
+//        Pointer pnt_used = Pointer.to(used);
+//        cl_mem used_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, used_buf_size, pnt_used, null);
+//        Pointer src_used = Pointer.to(used_data);
+//
+//        Pointer src_key_map = Pointer.to(physicsBuffer.key_map.get_mem());
+//        Pointer src_key_offsets = Pointer.to(physicsBuffer.key_offsets.get_mem());
+//
+//        clSetKernelArg(k_compute_matches, 0, Sizeof.cl_mem, src_bounds);
+//        clSetKernelArg(k_compute_matches, 1, Sizeof.cl_mem, src_candidates);
+//        clSetKernelArg(k_compute_matches, 2, Sizeof.cl_mem, pnt_offset);
+//        clSetKernelArg(k_compute_matches, 3, Sizeof.cl_mem, src_key_map);
+//        clSetKernelArg(k_compute_matches, 4, Sizeof.cl_mem, src_key_bank);
+//        clSetKernelArg(k_compute_matches, 5, Sizeof.cl_mem, src_key_counts);
+//        clSetKernelArg(k_compute_matches, 6, Sizeof.cl_mem, src_key_offsets);
+//        clSetKernelArg(k_compute_matches, 7, Sizeof.cl_mem, src_matches);
+//        clSetKernelArg(k_compute_matches, 8, Sizeof.cl_mem, src_used);
+//        clSetKernelArg(k_compute_matches, 9, Sizeof.cl_int, pnt_subdivisions);
+//        clSetKernelArg(k_compute_matches, 10, Sizeof.cl_int, pnt_counts_length);
+//
+//        clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
+//            new long[]{cand_count}, null, 0, null, null);
+
+//        clEnqueueReadBuffer(commandQueue, matches_data, CL_TRUE, 0,
+//            matches_buf_size, pnt_matches, 0, null, null);
+//
+//        clEnqueueReadBuffer(commandQueue, used_data, CL_TRUE, 0,
+//            used_buf_size, pnt_used, 0, null, null);
+
+//        clReleaseMemObject(matches_data);
+//        clReleaseMemObject(used_data);
+        clReleaseMemObject(offset_data);
+        clReleaseMemObject(cand_data);
         clReleaseMemObject(size_data);
         clReleaseMemObject(inbound_data);
     }

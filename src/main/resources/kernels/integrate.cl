@@ -111,6 +111,8 @@ __kernel void integrate(
         point.y = pos.y;
         point.z = prv.x;
         point.w = prv.y;
+        // point.z = pos.x;
+        // point.w = pos.y;
 
         // update center sum
         x_sum += pos.x;

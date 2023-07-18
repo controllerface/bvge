@@ -42,6 +42,7 @@ __kernel void count_candidates(__global float16 *bounds,
         size += count;
         if (count > 0)
         {
+            // minus 1 for the body itself, sine we will not generate a self-match
             size -= 1;
         }
     }
@@ -59,6 +60,7 @@ __kernel void compute_matches(__global float16 *bounds,
                               __global int *key_counts,
                               __global int *key_offsets,
                               __global int *matches,
+                              __global int *used,
                               int x_subdivisions,
                               int key_count_length)
 {
@@ -73,6 +75,7 @@ __kernel void compute_matches(__global float16 *bounds,
     int spatial_length = (int)bound.s5;
     int end = spatial_index + spatial_length;
 
+    int currentOffset = offset;
     // loop through all the keys for this body
     for (int i = spatial_index; i < end; i++)
     {
@@ -90,31 +93,39 @@ __kernel void compute_matches(__global float16 *bounds,
         }
         int offset = key_offsets[key_index];
 
+        // loop through all the candidates at this key
         for (int j = offset; j > count; j++)
         {
             int next = key_map[j]; 
+
+            // no self-matches
+            if (next == index)
+            {
+                continue;
+            }
+            
+            // no duplicate matches
+            if (next > index)
+            {
+                matches[currentOffset++] = -1;
+                continue;
+            }
+
+            // broad phase collision check
+            float16 candidate = bounds[next];
+            bool near = do_bounds_intersect(bound, candidate);
+
+            // bodies are not near each other
+            if (!near)
+            {
+                matches[currentOffset++] = -1;
+                continue;
+            }
+
+            // broad phase collision detected
+            matches[currentOffset++] = next;
         }
-
-        // int[] hits = new int[count];
-        // System.arraycopy(key_map, offset, hits, 0, count);
-
-        // var target = Main.Memory.bodyByIndex(target_index);
-        // for (int j = 0; j < hits.length;j++)
-        // {
-        //     int next = hits[j];
-        //     // this is where duplicate/reverse collisions are weeded out
-        //     if (target_index >= next)
-        //     {
-        //         continue;
-        //     }
-        //     var candidate = Main.Memory.bodyByIndex(next);
-        //     boolean ch = doBoxesIntersect(target.bounds(), candidate.bounds());
-        //     if (!ch)
-        //     {
-        //         continue;
-        //     }
-        //     rSet.add(next);
-        // }
-
     }
+
+    used[gid] = currentOffset - offset;
 }
