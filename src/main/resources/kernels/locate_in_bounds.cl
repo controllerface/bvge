@@ -61,7 +61,7 @@ __kernel void compute_matches(__global float16 *bounds,
     int gid = get_global_id(0);
     int index = candidates[gid].x;
     int size = candidates[gid].y;
-    int offset = match_offsets[gid];
+    int match_offset = match_offsets[gid];
 
     float16 bound = bounds[index];
 
@@ -69,7 +69,7 @@ __kernel void compute_matches(__global float16 *bounds,
     int spatial_length = (int)bound.s5;
     int end = spatial_index + spatial_length;
 
-    int currentOffset = offset;
+    int current_offset = match_offset;
     int slots_used = 0;
 
     // loop through all the keys for this body
@@ -89,10 +89,10 @@ __kernel void compute_matches(__global float16 *bounds,
             continue;
         }
 
-        int offset = key_offsets[key_index];
+        int key_offset = key_offsets[key_index];
 
         // loop through all the candidates at this key
-        for (int map_index = offset; map_index < offset + count; map_index++)
+        for (int map_index = key_offset; map_index < key_offset + count; map_index++)
         {
             int next = key_map[map_index]; 
 
@@ -117,7 +117,7 @@ __kernel void compute_matches(__global float16 *bounds,
             if (slots_used > 0)
             {
                 bool dupe = false;
-                for (int match_index = offset; match_index < currentOffset; match_index++)
+                for (int match_index = match_offset; match_index < current_offset; match_index++)
                 {
                     if (matches[match_index] == next)
                     {
@@ -132,7 +132,7 @@ __kernel void compute_matches(__global float16 *bounds,
             }
 
             // broad phase collision detected
-            matches[currentOffset++] = next;
+            matches[current_offset++] = next;
             slots_used++;
         }
     }
