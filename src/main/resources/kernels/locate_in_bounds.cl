@@ -140,3 +140,24 @@ __kernel void compute_matches(__global float16 *bounds,
     used[gid] = slots_used;
     atomic_add(&counter[0], slots_used);
 }
+
+__kernel void finalize_candidates(__global int2 *input_candidates,
+                                  __global int *match_offsets,
+                                  __global int *matches,
+                                  __global int *used,
+                                  __global int *counter,
+                                  __global int2 *final_candidates)
+{
+    int gid = get_global_id(0);
+    int index = input_candidates[gid].x;
+    int size = used[gid];
+    int offset = match_offsets[gid];
+    for (int i = offset; i < offset + size; i++)
+    {
+        int next = matches[i];
+        //printf("debug pair: t: %d c: %d", index, next);
+        int2 pair = (int2)(index, next);
+        int j = atomic_inc(&counter[0]);
+        final_candidates[j] = pair;
+    }
+}

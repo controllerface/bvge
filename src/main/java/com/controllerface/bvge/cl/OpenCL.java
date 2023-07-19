@@ -52,6 +52,7 @@ public class OpenCL
     static String kn_locate_in_bounds                   = "locate_in_bounds";
     static String kn_compute_matches                    = "compute_matches";
     static String kn_count_candidates                   = "count_candidates";
+    static String kn_finalize_candidates                = "finalize_candidates";
     static String kn_integrate                          = "integrate";
     static String kn_collide                            = "collide";
     static String kn_scan_bounds_single_block           = "scan_bounds_single_block";
@@ -88,6 +89,7 @@ public class OpenCL
     static cl_kernel k_locate_in_bounds;
     static cl_kernel k_compute_matches;
     static cl_kernel k_count_candidates;
+    static cl_kernel k_finalize_candidates;
     static cl_kernel k_integrate;
     static cl_kernel k_collide;
     static cl_kernel k_scan_bounds_single_block;
@@ -252,6 +254,7 @@ public class OpenCL
         k_locate_in_bounds                  = cl_k(p_locate_in_bounds, kn_locate_in_bounds);
         k_compute_matches                   = cl_k(p_locate_in_bounds, kn_compute_matches);
         k_count_candidates                  = cl_k(p_locate_in_bounds, kn_count_candidates);
+        k_finalize_candidates               = cl_k(p_locate_in_bounds, kn_finalize_candidates);
         k_scan_bounds_single_block          = cl_k(p_scan_key_bank, kn_scan_bounds_single_block);
         k_scan_bounds_multi_block           = cl_k(p_scan_key_bank, kn_scan_bounds_multi_block);
         k_complete_bounds_multi_block       = cl_k(p_scan_key_bank, kn_complete_bounds_multi_block);
@@ -276,7 +279,7 @@ public class OpenCL
         clReleaseContext(context);
     }
 
-    public static void locate_in_bounds(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    public static IntBuffer locate_in_bounds(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
     {
         // step 1: locate objects that are within bounds
         int x_subdivisions = spatialPartition.getX_subdivisions();
@@ -384,22 +387,49 @@ public class OpenCL
         clSetKernelArg(k_compute_matches, 9, Sizeof.cl_mem, src_size2);
         clSetKernelArg(k_compute_matches, 10, Sizeof.cl_int, pnt_subdivisions);
         clSetKernelArg(k_compute_matches, 11, Sizeof.cl_int, pnt_counts_length);
-//
+
         clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
             new long[]{cand_count}, null, 0, null, null);
 
-        clEnqueueReadBuffer(commandQueue, matches_data, CL_TRUE, 0,
-            matches_buf_size, pnt_matches, 0, null, null);
-////
-        clEnqueueReadBuffer(commandQueue, used_data, CL_TRUE, 0,
-            used_buf_size, pnt_used, 0, null, null);
+//        clEnqueueReadBuffer(commandQueue, matches_data, CL_TRUE, 0,
+//            matches_buf_size, pnt_matches, 0, null, null);
+//
+//        clEnqueueReadBuffer(commandQueue, used_data, CL_TRUE, 0,
+//            used_buf_size, pnt_used, 0, null, null);
 
         clEnqueueReadBuffer(commandQueue, size_data2, CL_TRUE, 0,
             Sizeof.cl_int, dst_size2, 0, null, null);
 
+        // step 5: if there's any candidates, write them out
+        int[] finals = new int[0];
         if (sz2[0]>0)
         {
-            System.out.println(sz2[0]);
+            finals = new int[sz2[0]*2];
+            Pointer dst_finals = Pointer.to(finals);
+            long final_buf_size = (long)Sizeof.cl_int2 * sz2[0];
+            cl_mem finals_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, final_buf_size, dst_finals, null);
+            Pointer src_finals = Pointer.to(finals_data);
+
+            int[] sz3 = new int[1];
+            Pointer dst_size3 = Pointer.to(sz3);
+            cl_mem size_data3 = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size3, null);
+            Pointer src_size3 = Pointer.to(size_data3);
+
+            clSetKernelArg(k_finalize_candidates, 0, Sizeof.cl_mem, src_candidates);
+            clSetKernelArg(k_finalize_candidates, 1, Sizeof.cl_mem, src_offsets);
+            clSetKernelArg(k_finalize_candidates, 2, Sizeof.cl_mem, src_matches);
+            clSetKernelArg(k_finalize_candidates, 3, Sizeof.cl_mem, src_used);
+            clSetKernelArg(k_finalize_candidates, 4, Sizeof.cl_mem, src_size3);
+            clSetKernelArg(k_finalize_candidates, 5, Sizeof.cl_mem, src_finals);
+
+            clEnqueueNDRangeKernel(commandQueue, k_finalize_candidates, 1, null,
+                new long[]{cand_count}, null, 0, null, null);
+
+            clEnqueueReadBuffer(commandQueue, finals_data, CL_TRUE, 0,
+                final_buf_size, dst_finals, 0, null, null);
+
+            clReleaseMemObject(size_data3);
+            clReleaseMemObject(finals_data);
         }
 
         clReleaseMemObject(matches_data);
@@ -407,7 +437,10 @@ public class OpenCL
         clReleaseMemObject(offset_data);
         clReleaseMemObject(cand_data);
         clReleaseMemObject(size_data);
+        clReleaseMemObject(size_data2);
         clReleaseMemObject(inbound_data);
+
+        return IntBuffer.wrap(finals);
     }
 
     public static void generate_key_map(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
