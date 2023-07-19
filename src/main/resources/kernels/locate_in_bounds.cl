@@ -45,8 +45,6 @@ __kernel void count_candidates(__global float16 *bounds,
     candidates[gid].y = size;
 }
 
-
-// WORK IN PROGRESS vvvv
 __kernel void compute_matches(__global float16 *bounds,
                               __global int2 *candidates,
                               __global int *match_offsets,
@@ -56,6 +54,7 @@ __kernel void compute_matches(__global float16 *bounds,
                               __global int *key_offsets,
                               __global int *matches,
                               __global int *used,
+                              __global int *counter,
                               int x_subdivisions,
                               int key_count_length)
 {
@@ -72,11 +71,12 @@ __kernel void compute_matches(__global float16 *bounds,
 
     int currentOffset = offset;
     int slots_used = 0;
+
     // loop through all the keys for this body
-    for (int i = spatial_index; i < end; i++)
+    for (int bank_index = spatial_index; bank_index < end; bank_index++)
     {
-        int x = key_bank[i];
-        int y = key_bank[i + 1];
+        int x = key_bank[bank_index];
+        int y = key_bank[bank_index + 1];
         int key_index = calculate_key_index(x_subdivisions, x, y);
 
         if (key_index < 0 || key_index >= key_count_length)
@@ -92,14 +92,13 @@ __kernel void compute_matches(__global float16 *bounds,
         int offset = key_offsets[key_index];
 
         // loop through all the candidates at this key
-        for (int j = offset; j < offset + count; j++)
+        for (int map_index = offset; map_index < offset + count; map_index++)
         {
-            int next = key_map[j]; 
+            int next = key_map[map_index]; 
 
-            // no duplicates or self-matches
+            // no mirror or self-matches
             if (next >= index)
             {
-                matches[currentOffset++] = -1;
                 continue;
             }
 
@@ -110,13 +109,27 @@ __kernel void compute_matches(__global float16 *bounds,
             // bodies are not near each other
             if (!near)
             {
-                matches[currentOffset++] = -1;
                 continue;
             }
 
-            // todo: matches has to be treated like a set, so if we've matched once already, we need to
-            // consider that match as already having been captured. Otherwise, we coudl have multiple
-            // collision reactions for the same 
+            // we need to be "set-like" so any candidate we already matched 
+            // with needs to be dropped
+            if (slots_used > 0)
+            {
+                bool dupe = false;
+                for (int match_index = offset; match_index < currentOffset; match_index++)
+                {
+                    if (matches[match_index] == next)
+                    {
+                        dupe = true;
+                        break;
+                    }
+                }
+                if (dupe)
+                {
+                    continue;
+                }
+            }
 
             // broad phase collision detected
             matches[currentOffset++] = next;
@@ -125,4 +138,5 @@ __kernel void compute_matches(__global float16 *bounds,
     }
 
     used[gid] = slots_used;
+    atomic_add(&counter[0], slots_used);
 }

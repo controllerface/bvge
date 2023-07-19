@@ -332,7 +332,7 @@ public class OpenCL
         clEnqueueNDRangeKernel(commandQueue, k_count_candidates, 1, null,
             new long[]{cand_count}, null, 0, null, null);
 
-        // step 3:
+        // step 3: compute candidate buffer
         int n2 = cand_count;
         int[] offsets = new int[cand_count];
         long offset_buf_size = (long)Sizeof.cl_int * n2;
@@ -367,6 +367,11 @@ public class OpenCL
         Pointer src_key_map = Pointer.to(physicsBuffer.key_map.get_mem());
         Pointer src_key_offsets = Pointer.to(physicsBuffer.key_offsets.get_mem());
 
+        int[] sz2 = new int[1];
+        Pointer dst_size2 = Pointer.to(sz2);
+        cl_mem size_data2 = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size2, null);
+        Pointer src_size2 = Pointer.to(size_data2);
+
         clSetKernelArg(k_compute_matches, 0, Sizeof.cl_mem, src_bounds);
         clSetKernelArg(k_compute_matches, 1, Sizeof.cl_mem, src_candidates);
         clSetKernelArg(k_compute_matches, 2, Sizeof.cl_mem, src_offsets);
@@ -376,8 +381,9 @@ public class OpenCL
         clSetKernelArg(k_compute_matches, 6, Sizeof.cl_mem, src_key_offsets);
         clSetKernelArg(k_compute_matches, 7, Sizeof.cl_mem, src_matches);
         clSetKernelArg(k_compute_matches, 8, Sizeof.cl_mem, src_used);
-        clSetKernelArg(k_compute_matches, 9, Sizeof.cl_int, pnt_subdivisions);
-        clSetKernelArg(k_compute_matches, 10, Sizeof.cl_int, pnt_counts_length);
+        clSetKernelArg(k_compute_matches, 9, Sizeof.cl_mem, src_size2);
+        clSetKernelArg(k_compute_matches, 10, Sizeof.cl_int, pnt_subdivisions);
+        clSetKernelArg(k_compute_matches, 11, Sizeof.cl_int, pnt_counts_length);
 //
         clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
             new long[]{cand_count}, null, 0, null, null);
@@ -387,6 +393,14 @@ public class OpenCL
 ////
         clEnqueueReadBuffer(commandQueue, used_data, CL_TRUE, 0,
             used_buf_size, pnt_used, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data2, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size2, 0, null, null);
+
+        if (sz2[0]>0)
+        {
+            System.out.println(sz2[0]);
+        }
 
         clReleaseMemObject(matches_data);
         clReleaseMemObject(used_data);
