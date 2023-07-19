@@ -164,13 +164,13 @@ public class VerletPhysics extends GameSystem
         OpenCL.calculate_map_offsets(physicsBuffer, spatialPartition);
         OpenCL.generate_key_map(physicsBuffer, spatialPartition);
 
-        //var candidates = OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
+        var candidates = OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
 
         physicsBuffer.transferAll();
 
         // broad phase collision
         // todo #0: replace this with OCL calls
-        var candidates = spatialPartition.computeCandidatesEX();
+        var candidates2 = spatialPartition.computeCandidatesEX();
         // todo #1: need to make a kernel that determines the key sums of each body
         //  as well as the total size needed for the entire candidate buffer. Then
         //  a separate kernel will be needed to query the key map for every body and

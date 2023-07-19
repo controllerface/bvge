@@ -97,7 +97,7 @@ __kernel void compute_matches(__global float16 *bounds,
             int next = key_map[map_index]; 
 
             // no mirror or self-matches
-            if (next >= index)
+            if (index >= next)
             {
                 continue;
             }
@@ -152,7 +152,7 @@ __kernel void finalize_candidates(__global int2 *input_candidates,
     int index = input_candidates[gid].x;
     int size = used[gid];
     int offset = match_offsets[gid];
-    for (int i = offset; i < offset + size; i++)
+    for (int i = offset; i < (offset + size); i++)
     {
         int next = matches[i];
         //printf("debug pair: t: %d c: %d", index, next);
