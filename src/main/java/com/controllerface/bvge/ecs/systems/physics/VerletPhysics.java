@@ -15,7 +15,7 @@ public class VerletPhysics extends GameSystem
 {
     private final float TARGET_FPS = 60.0f;
     private final float TICK_RATE = 1.0f / TARGET_FPS;
-    private final int SUB_STEPS = 1;
+    private final int SUB_STEPS = 2;
     private final int EDGE_STEPS = 2;
     private float accumulator = 0.0f;
 
@@ -170,7 +170,7 @@ public class VerletPhysics extends GameSystem
 
         // broad phase collision
         // todo #0: replace this with OCL calls
-        var candidates2 = spatialPartition.computeCandidatesEX();
+        //var candidates2 = spatialPartition.computeCandidatesEX();
         // todo #1: need to make a kernel that determines the key sums of each body
         //  as well as the total size needed for the entire candidate buffer. Then
         //  a separate kernel will be needed to query the key map for every body and
