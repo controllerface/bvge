@@ -6,6 +6,7 @@ import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import org.jocl.Sizeof;
 import org.joml.Vector2f;
 
 import java.nio.FloatBuffer;
@@ -146,53 +147,27 @@ public class VerletPhysics extends GameSystem
 
         updateControllableBodies();
 
-        // todo: (LARGE)
-        //  the memory where the objects reside should reside on the GPU and the CPU/
-        //  host code should "query" this memory when necessary. Instead of being host
-        //  local and transferring to the GPU every frame, as is the current design,
-        //  this would drastically cut down on the amount of memory transferred back
-        //  and forth from the GPU.
-        //  Also, once this is in place, the vertex data should be prepared on the GPU
-        //  as well, so CL can prep the data for use by GL.
-
-        // todo: the buffers generated during these OCL calls can be carried forward
-        //  and only pulled off the GPU at the very end.
         var physicsBuffer = new PhysicsBuffer();
         OpenCL.integrate(physicsBuffer, dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
+
+        // broad phase collision
         OpenCL.calculate_bank_offsets(physicsBuffer, spatialPartition);
         OpenCL.generate_key_bank(physicsBuffer, spatialPartition);
         OpenCL.calculate_map_offsets(physicsBuffer, spatialPartition);
         OpenCL.generate_key_map(physicsBuffer, spatialPartition);
+        OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
 
-        var candidates = OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
-
-        physicsBuffer.transferAll();
-
-        // broad phase collision
-        // todo #0: replace this with OCL calls
-        //var candidates2 = spatialPartition.computeCandidatesEX();
-        // todo #1: need to make a kernel that determines the key sums of each body
-        //  as well as the total size needed for the entire candidate buffer. Then
-        //  a separate kernel will be needed to query the key map for every body and
-        //  compute their candidates, porting the current logic into that kernel.
-        //  The output of the calculation just needs to conform to the structure
-        //  assumed below, which is effectively an array of 2 dimensional int vectors.
-        //  May make sense to split "compute candidates" into "count candidates" and
-        //  "find candidates" phases. See if buffer can be created in GPU and not
-        //  passed back out, having the next phase start immediately after
-
-        // narrow phase collision
-        if (candidates.limit() > 0)
+        if (physicsBuffer.candidates != null)
         {
-            var count = candidates.limit() / Main.Memory.Width.COLLISION;
+            int count = (int) physicsBuffer.candidates.getSize() / Sizeof.cl_int2;
             var reaction_size = count * Main.Memory.Width.REACTION;
             var reactions = new float[reaction_size];
             var reaction_buffer = FloatBuffer.wrap(reactions);
-            OpenCL.collide(candidates, reaction_buffer);
+            OpenCL.collide(physicsBuffer, reaction_buffer);
 
-            // todo: replace loop below with CL call. will need to calculate offsets for
-            //  each collision pair and store the reactions, then sum them into a single
-            //  reaction, before finally adding them to the appropriate objects
+            // todo: avoid transfer, use existing buffer in new kernel
+            physicsBuffer.transferAll();
+
             for (int i = 0; i < count; i++)
             {
                 var next_reaction = i * Main.Memory.Width.REACTION;
@@ -204,6 +179,10 @@ public class VerletPhysics extends GameSystem
                 System.arraycopy(reactions, next_reaction, reaction, 0, Main.Memory.Width.REACTION);
                 reactPolygon(reaction);
             }
+        }
+        else
+        {
+            physicsBuffer.transferAll();
         }
 
         tickEdges();

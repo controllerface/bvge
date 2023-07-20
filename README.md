@@ -3,9 +3,9 @@
 1. ~~camera tracking for player~~
    1. ~~when near edge of viewport, scroll to ensure player is on screen~~ 
    2. ~~distance from edge should be sufficient to see upcoming objects~~
-2. static geometry
-   1. physics objects should be able to be toggled static on/off
-   2. add check to ensure static objects only check non-static for collision
+2. ~~static geometry~~
+   1. ~~physics objects should be able to be toggled static on/off~~
+   2. ~~add check to ensure static objects only check non-static for collision~~
 3. circle objects
    1. will need circle/circle and circle/poly collision reaction functions
    2. will need circle specific renderer
@@ -21,9 +21,9 @@
    5. tiers should help "ease" objects out as player moves away
    6. change from specifying subdivisions to specifying spacing instead
 6. gravity
-   1. objects should fall when gravity is enabled
+   1. ~~objects should fall when gravity is enabled~~
    2. consider "zones" which could be used to implement planet-side mechanics
-   3. radial zone for small space bound objects (asteroids, etc.) amy be cool
+   3. radial zone for small space bound objects (asteroids, etc.) may be cool
 7. collision layers
    1. physics objects should have a layer parameter to restrict collisions
    2. layer 0 should be an "always collide" layer so things don't clip out
@@ -38,7 +38,7 @@
    5. also need a way to intentionally rotate to some specific angle
    6. should be able to implement mouse tracking for player to "look" it
 10. more Open CL physics
-    1. figure out parallel prefix sum and reduce functions
+    1. ~~figure out parallel prefix sum and reduce functions~~
     2. move as much as possible into GPU
 11. renderer improvements
     1. main batches should be changed to operate on individual triangles, not quads
