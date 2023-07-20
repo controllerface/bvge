@@ -148,6 +148,8 @@ public class VerletPhysics extends GameSystem
         updateControllableBodies();
 
         var physicsBuffer = new PhysicsBuffer();
+
+        // integration
         OpenCL.integrate(physicsBuffer, dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
 
         // broad phase collision
@@ -157,6 +159,7 @@ public class VerletPhysics extends GameSystem
         OpenCL.generate_key_map(physicsBuffer, spatialPartition);
         OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
 
+        // narrow phase collision
         if (physicsBuffer.candidates != null)
         {
             int count = (int) physicsBuffer.candidates.getSize() / Sizeof.cl_int2;

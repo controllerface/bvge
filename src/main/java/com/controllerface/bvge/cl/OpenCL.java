@@ -6,13 +6,12 @@ import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import org.jocl.*;
 
-import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.controllerface.bvge.cl.OpenCLUtils.read_src;
 import static org.jocl.CL.*;
 
 public class OpenCL
@@ -21,33 +20,33 @@ public class OpenCL
     static cl_context context;
     static cl_device_id[] device_ids;
 
-    static String prag_int32_base_atomics   = readSrc("pragma/int32_base_atomics.cl");;
+    static String prag_int32_base_atomics   = read_src("pragma/int32_base_atomics.cl");;
 
     /**
      * Helper functions
      */
-    static String func_is_in_bounds         = readSrc("functions/is_in_bounds.cl");
-    static String func_get_extents          = readSrc("functions/get_extents.cl");
-    static String func_get_key_for_point    = readSrc("functions/get_key_for_point.cl");
-    static String func_calculate_key_index  = readSrc("functions/calculate_key_index.cl");
-    static String func_exclusive_scan       = readSrc("functions/exclusive_scan.cl");
-    static String func_do_bounds_intersect  = readSrc("functions/do_bounds_intersect.cl");
-    static String func_project_polygon      = readSrc("functions/project_polygon.cl");
-    static String func_polygon_distance     = readSrc("functions/polygon_distance.cl");
-    static String func_edge_contact         = readSrc("functions/edge_contact.cl");
+    static String func_is_in_bounds         = read_src("functions/is_in_bounds.cl");
+    static String func_get_extents          = read_src("functions/get_extents.cl");
+    static String func_get_key_for_point    = read_src("functions/get_key_for_point.cl");
+    static String func_calculate_key_index  = read_src("functions/calculate_key_index.cl");
+    static String func_exclusive_scan       = read_src("functions/exclusive_scan.cl");
+    static String func_do_bounds_intersect  = read_src("functions/do_bounds_intersect.cl");
+    static String func_project_polygon      = read_src("functions/project_polygon.cl");
+    static String func_polygon_distance     = read_src("functions/polygon_distance.cl");
+    static String func_edge_contact         = read_src("functions/edge_contact.cl");
 
     /**
      * Core kernel files
      */
-    static String kern_integrate            = readSrc("integrate.cl");
-    static String kern_collide              = readSrc("collide.cl");
-    static String kern_scan_key_bank        = readSrc("scan_key_bank.cl");
-    static String kern_scan_int_array       = readSrc("scan_int_array.cl");
-    static String kern_scan_int_array_out   = readSrc("scan_int_array_out.cl");
-    static String kern_scan_candidates_out  = readSrc("scan_key_candidates.cl");
-    static String kern_generate_keys        = readSrc("generate_keys.cl");
-    static String kern_build_key_map        = readSrc("build_key_map.cl");
-    static String kern_locate_in_bounds     = readSrc("locate_in_bounds.cl");
+    static String kern_integrate            = read_src("kernels/integrate.cl");
+    static String kern_collide              = read_src("kernels/collide.cl");
+    static String kern_scan_key_bank        = read_src("kernels/scan_key_bank.cl");
+    static String kern_scan_int_array       = read_src("kernels/scan_int_array.cl");
+    static String kern_scan_int_array_out   = read_src("kernels/scan_int_array_out.cl");
+    static String kern_scan_candidates_out  = read_src("kernels/scan_key_candidates.cl");
+    static String kern_generate_keys        = read_src("kernels/generate_keys.cl");
+    static String kern_build_key_map        = read_src("kernels/build_key_map.cl");
+    static String kern_locate_in_bounds     = read_src("kernels/locate_in_bounds.cl");
 
     /**
      * Kernel function names
@@ -119,20 +118,6 @@ public class OpenCL
     private static int wx = 256; // todo: query hardware for this limit
     private static int m = wx * 2;
 
-    public static String readSrc(String file)
-    {
-        var stream = OpenCL.class.getResourceAsStream("/kernels/" + file);
-        try
-        {
-            byte [] bytes = stream.readAllBytes();
-            return new String(bytes, StandardCharsets.UTF_8);
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static cl_device_id[] device_init()
     {
         // The platform, device type and device number
@@ -142,7 +127,7 @@ public class OpenCL
         final int deviceIndex = 0;
 
         // Enable exceptions and subsequently omit error checks in this sample
-        CL.setExceptionsEnabled(true);
+        //CL.setExceptionsEnabled(true);
 
         // Obtain the number of platforms
         int numPlatformsArray[] = new int[1];
@@ -189,18 +174,16 @@ public class OpenCL
         return commandQueue;
     }
 
-    // todo: wrapper functions should use the errcode value and actually check/report errors
     private static cl_program cl_p(String ... src)
     {
-        var program = clCreateProgramWithSource(context, src.length, src, null, null);
-        clBuildProgram(program, 1, device_ids, null, null, null);
+        var program = OpenCLUtils.cl_p(context, device_ids, src);
         loaded_programs.add(program);
         return program;
     }
 
     private static cl_kernel cl_k(cl_program program, String kernel_name)
     {
-        var kernel = clCreateKernel(program, kernel_name, null);
+        var kernel = OpenCLUtils.cl_k(program, kernel_name);
         loaded_kernels.add(kernel);
         return kernel;
     }
@@ -284,6 +267,8 @@ public class OpenCL
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
     }
+
+
 
     public static void locate_in_bounds(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
     {
@@ -524,7 +509,6 @@ public class OpenCL
             new long[]{n}, null, 0, null, null);
     }
 
-
     public static void calculate_map_offsets(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
     {
         int[] key_offsets = spatialPartition.getKey_offsets();
@@ -546,7 +530,6 @@ public class OpenCL
         int bank_size = scan_key_bounds(physicsBuffer.bounds.get_mem(), n);
         spatialPartition.resizeBank(bank_size);
     }
-
 
     private static void scan_int(cl_mem d_data, int n)
     {
@@ -574,7 +557,6 @@ public class OpenCL
         }
     }
 
-
     private static int scan_key_bounds(cl_mem d_data, int n)
     {
         int k = work_group_size(n);
@@ -600,8 +582,6 @@ public class OpenCL
             return scan_multi_block_candidates_out(d_data, o_data, n, k);
         }
     }
-
-
 
     private static void scan_single_block_int(cl_mem d_data, int n)
     {
@@ -716,8 +696,6 @@ public class OpenCL
         clReleaseMemObject(p_data);
     }
 
-
-
     private static int scan_single_block_candidates_out(cl_mem d_data, cl_mem o_data, int n)
     {
         // set up buffers
@@ -805,8 +783,6 @@ public class OpenCL
         return sz[0];
     }
 
-
-
     private static int scan_single_block_key(cl_mem d_data, int n)
     {
         // set up buffers
@@ -891,6 +867,8 @@ public class OpenCL
     }
 
 
+
+
     public static void integrate(PhysicsBuffer physicsBuffer, float tick_rate, float gravity_x, float gravity_y, float friction, SpatialPartition spatialPartition)
     {
         int bodiesSize = Main.Memory.bodyLength();
@@ -971,7 +949,6 @@ public class OpenCL
         long reactionBufsize = Sizeof.cl_float * reactionsSize;
 
         cl_mem dstMemReactions = clCreateBuffer(context, CL_MEM_READ_WRITE, reactionBufsize, null, null);
-
 
         // Set the arguments for the kernel
         int a = 0;
