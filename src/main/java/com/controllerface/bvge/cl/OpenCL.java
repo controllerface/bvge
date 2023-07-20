@@ -24,7 +24,7 @@ public class OpenCL
     static String prag_int32_base_atomics   = readSrc("pragma/int32_base_atomics.cl");;
 
     /**
-     * Some general purpose functions
+     * Helper functions
      */
     static String func_is_in_bounds         = readSrc("functions/is_in_bounds.cl");
     static String func_get_extents          = readSrc("functions/get_extents.cl");
@@ -32,6 +32,9 @@ public class OpenCL
     static String func_calculate_key_index  = readSrc("functions/calculate_key_index.cl");
     static String func_exclusive_scan       = readSrc("functions/exclusive_scan.cl");
     static String func_do_bounds_intersect  = readSrc("functions/do_bounds_intersect.cl");
+    static String func_project_polygon      = readSrc("functions/project_polygon.cl");
+    static String func_polygon_distance     = readSrc("functions/polygon_distance.cl");
+    static String func_edge_contact         = readSrc("functions/edge_contact.cl");
 
     /**
      * Core kernel files
@@ -214,7 +217,10 @@ public class OpenCL
         /*
          * Programs
          */
-        p_collide = cl_p(kern_collide);
+        p_collide = cl_p(func_project_polygon,
+            func_polygon_distance,
+            func_edge_contact,
+            kern_collide);
 
         p_integrate = cl_p(func_is_in_bounds,
             func_get_extents,
@@ -404,7 +410,7 @@ public class OpenCL
         int[] finals = new int[0];
         if (sz2[0]>0)
         {
-            finals = new int[sz2[0]*2];
+            finals = new int[sz2[0] * 2];
             Pointer dst_finals = Pointer.to(finals);
             long final_buf_size = (long)Sizeof.cl_int2 * sz2[0];
             cl_mem finals_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, final_buf_size, dst_finals, null);

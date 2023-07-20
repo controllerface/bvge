@@ -1,67 +1,3 @@
-inline float3 projectPolygon(__global const float4 *points, float16 body, float2 normal)
-{
-    int start = (int)body.s7;
-    int end   = (int)body.s8;
-	int vert_count = end - start + 1;
-
-    float3 result;
-    result.x = (float)0; // min
-    result.y = (float)0; // max
-    result.z = (float)0; // index
-    bool minYet = false;
-    bool maxYet = false;
-    for (int i = 0; i < vert_count; i++)
-    {
-        int n = start + i;
-        float2 v = points[n].xy;
-        float proj = dot(v, normal);
-        if (proj < result.x || !minYet)
-        {
-            result.x = proj;
-            result.z = n;
-            minYet = true;
-        }
-        if (proj > result.y || !maxYet)
-        {
-            result.y = proj;
-            maxYet = true;
-        }
-    }
-    return result;
-}
-
-inline float polygonDistance(float3 proj_a, float3 proj_b)
-{
-    if (proj_a.x < proj_b.x)
-    {
-        return proj_b.x - proj_a.y;
-    }
-    else
-    {
-        return proj_a.x - proj_b.y;
-    }
-}
-
-inline float edgeContact(float2 e1, float2 e2, float2 collision_vertex, float2 collision_vector)
-{
-    float contact;
-    float x_dist = e1.x - e2.x;
-    float y_dist = e1.y - e2.y;
-    if (fabs(x_dist) > fabs(y_dist))
-    {
-        float x_offset = (collision_vertex.x - collision_vector.x - e1.x);
-        float x_diff = (e2.x - e1.x);
-        contact = x_offset / x_diff;
-    }
-    else
-    {
-        float y_offset = (collision_vertex.y - collision_vector.y - e1.y);
-        float y_diff = (e2.y - e1.y);
-        contact = y_offset / y_diff;
-    }
-    return contact;
-}
-
 __kernel void collide(
     __global const int2 *candidates,
     __global const float16 *bodies,
@@ -126,9 +62,9 @@ __kernel void collide(
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = projectPolygon(points, body_1, vectorBuffer1);
-        float3 proj_b = projectPolygon(points, body_2, vectorBuffer1);
-        float distance = polygonDistance(proj_a, proj_b);
+        float3 proj_a = project_polygon(points, body_1, vectorBuffer1);
+        float3 proj_b = project_polygon(points, body_2, vectorBuffer1);
+        float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
         {
@@ -170,9 +106,9 @@ __kernel void collide(
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = projectPolygon(points, body_1, vectorBuffer1);
-        float3 proj_b = projectPolygon(points, body_2, vectorBuffer1);
-        float distance = polygonDistance(proj_a, proj_b);
+        float3 proj_a = project_polygon(points, body_1, vectorBuffer1);
+        float3 proj_b = project_polygon(points, body_2, vectorBuffer1);
+        float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
         {
@@ -195,7 +131,7 @@ __kernel void collide(
         }
     }
 
-    float3 pr = projectPolygon(points, vertex_body, normalBuffer);
+    float3 pr = project_polygon(points, vertex_body, normalBuffer);
     vert_index = pr.z;
     min_distance = min_distance / length(normalBuffer);
     normalBuffer = normalize(normalBuffer);
@@ -267,11 +203,11 @@ __kernel void collide(
     float2 e1 = points[edge_index_a].xy;
     float2 e2 = points[edge_index_b].xy;
     float2 collision_vertex = points[vert_index].xy;
-    float edge_contact = edgeContact(e1, e2, collision_vertex, collision_vector);
+    float contact = edge_contact(e1, e2, collision_vertex, collision_vector);
 
-    float edge_scale = 1.0f / (edge_contact * edge_contact + (1 - edge_contact) * (1 - edge_contact));
-    float2 e1_reaction = collision_vector * ((1 - edge_contact) * edge_magnitude * edge_scale);
-    float2 e2_reaction = collision_vector * (edge_contact * edge_magnitude * edge_scale);
+    float edge_scale = 1.0f / (contact * contact + (1 - contact) * (1 - contact));
+    float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale);
+    float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale);
 
     reaction.s0 = (float)vert_index;
     reaction.s1 = (float)edge_index_a;
