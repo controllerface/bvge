@@ -34,6 +34,7 @@ public class OpenCL
     static String func_project_polygon      = read_src("functions/project_polygon.cl");
     static String func_polygon_distance     = read_src("functions/polygon_distance.cl");
     static String func_edge_contact         = read_src("functions/edge_contact.cl");
+    static String func_atomic_add_float     = read_src("functions/atomic_add_float.cl");
 
     /**
      * Core kernel files
@@ -117,7 +118,7 @@ public class OpenCL
 
     private static int wx = 256; // todo: query hardware for this limit
     private static int m = wx * 2;
-
+    private static long local_work_default[] = new long[]{wx};
     private static cl_device_id[] device_init()
     {
         // The platform, device type and device number
@@ -200,7 +201,8 @@ public class OpenCL
         /*
          * Programs
          */
-        p_collide = cl_p(func_project_polygon,
+        p_collide = cl_p(
+            func_project_polygon,
             func_polygon_distance,
             func_edge_contact,
             kern_collide);
@@ -299,7 +301,7 @@ public class OpenCL
         clSetKernelArg(k_locate_in_bounds, 2, Sizeof.cl_mem, src_size);
 
         clEnqueueNDRangeKernel(commandQueue, k_locate_in_bounds, 1, null,
-            new long[]{n}, null, 0, null, null);
+            new long[]{n}, local_work_default, 0, null, null);
 
         clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
             Sizeof.cl_int, dst_size, 0, null, null);
@@ -324,7 +326,7 @@ public class OpenCL
         clSetKernelArg(k_count_candidates, 6, Sizeof.cl_int, pnt_counts_length);
 
         clEnqueueNDRangeKernel(commandQueue, k_count_candidates, 1, null,
-            new long[]{cand_count}, null, 0, null, null);
+            new long[]{cand_count}, local_work_default, 0, null, null);
 
         // step 3: compute candidate buffer
         int n2 = cand_count;
@@ -380,7 +382,7 @@ public class OpenCL
         clSetKernelArg(k_compute_matches, 11, Sizeof.cl_int, pnt_counts_length);
 
         clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
-            new long[]{cand_count}, null, 0, null, null);
+            new long[]{cand_count}, local_work_default, 0, null, null);
 
 //        clEnqueueReadBuffer(commandQueue, matches_data, CL_TRUE, 0,
 //            matches_buf_size, pnt_matches, 0, null, null);
@@ -416,7 +418,7 @@ public class OpenCL
             clSetKernelArg(k_finalize_candidates, 5, Sizeof.cl_mem, src_finals);
 
             clEnqueueNDRangeKernel(commandQueue, k_finalize_candidates, 1, null,
-                new long[]{cand_count}, null, 0, null, null);
+                new long[]{cand_count}, local_work_default, 0, null, null);
 
 //            clEnqueueReadBuffer(commandQueue, finals_data, CL_TRUE, 0,
 //                final_buf_size, dst_finals, 0, null, null);
@@ -467,7 +469,7 @@ public class OpenCL
         clSetKernelArg(k_build_key_map, 5, Sizeof.cl_int, Pointer.to(new int[]{key_counts.length}));
 
         clEnqueueNDRangeKernel(commandQueue, k_build_key_map, 1, null,
-            new long[]{n}, null, 0, null, null);
+            new long[]{n}, local_work_default, 0, null, null);
 
         clReleaseMemObject(counts_data);
     }
@@ -506,7 +508,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_generate_keys, 1, null,
-            new long[]{n}, null, 0, null, null);
+            new long[]{n}, local_work_default, 0, null, null);
     }
 
     public static void calculate_map_offsets(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
@@ -596,7 +598,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_int_single_block, 1, null,
-            new long[]{wx}, new long[]{wx}, 0, null, null);
+            local_work_default, local_work_default, 0, null, null);
     }
 
     private static void scan_multi_block_int(cl_mem d_data, int n, int k)
@@ -618,7 +620,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_int_multi_block, 1, null,
-            new long[]{gx}, new long[]{wx}, 0, null, null);
+            new long[]{gx}, local_work_default, 0, null, null);
 
         // do scan on block sums
         int n2 = partial_sums.length;
@@ -632,7 +634,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_complete_int_multi_block, 1, null,
-            new long[]{gx}, new long[]{wx}, 0, null, null);
+            new long[]{gx}, local_work_default, 0, null, null);
 
         clReleaseMemObject(p_data);
     }
@@ -652,7 +654,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_int_single_block_out, 1, null,
-            new long[]{wx}, new long[]{wx}, 0, null, null);
+            local_work_default, local_work_default, 0, null, null);
     }
 
     private static void scan_multi_block_int_out(cl_mem d_data, cl_mem o_data, int n, int k)
@@ -677,7 +679,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_int_multi_block_out, 1, null,
-            new long[]{gx}, new long[]{wx}, 0, null, null);
+            new long[]{gx}, local_work_default, 0, null, null);
 
         // do scan on block sums
         int n2 = partial_sums.length;
@@ -691,7 +693,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_complete_int_multi_block_out, 1, null,
-            new long[]{gx}, new long[]{wx}, 0, null, null);
+            new long[]{gx}, local_work_default, 0, null, null);
 
         clReleaseMemObject(p_data);
     }
@@ -718,7 +720,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_candidates_single_block, 1, null,
-            new long[]{wx}, new long[]{wx}, 0, null, null);
+            local_work_default, local_work_default, 0, null, null);
 
         clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
             Sizeof.cl_int, dst_size, 0, null, null);
@@ -750,7 +752,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_candidates_multi_block, 1, null,
-            new long[]{gx}, new long[]{wx}, 0, null, null);
+            new long[]{gx}, local_work_default, 0, null, null);
 
         // do scan on block sums
         int n2 = partial_sums.length;
@@ -772,7 +774,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_complete_candidates_multi_block, 1, null,
-            new long[]{gx}, new long[]{wx}, 0, null, null);
+            new long[]{gx}, local_work_default, 0, null, null);
 
         clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
             Sizeof.cl_int, dst_size, 0, null, null);
@@ -803,7 +805,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_bounds_single_block, 1, null,
-            new long[]{wx}, new long[]{wx}, 0, null, null);
+            local_work_default, local_work_default, 0, null, null);
 
         // read out the calculated key bank size
         clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
@@ -833,7 +835,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_scan_bounds_multi_block, 1, null,
-            new long[]{gx}, new long[]{wx}, 0, null, null);
+            new long[]{gx}, local_work_default, 0, null, null);
 
         // do scan on block sums
         int n2 = partial_sums.length;
@@ -854,7 +856,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_complete_bounds_multi_block, 1, null,
-            new long[]{gx}, new long[]{wx}, 0, null, null);
+            new long[]{gx}, local_work_default, 0, null, null);
 
         // read out the calculated key bank size
         clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
@@ -928,43 +930,29 @@ public class OpenCL
 
         // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, k_integrate, 1, null,
-            global_work_size, null, 0, null, null);
+            global_work_size, local_work_default, 0, null, null);
 
         clReleaseMemObject(dtMem);
     }
 
 
-    public static void collide(PhysicsBuffer physicsBuffer, FloatBuffer reactions)
+    public static void collide(PhysicsBuffer physicsBuffer)
     {
         if (physicsBuffer.candidates == null) return;
 
         int candidatesSize = (int) physicsBuffer.candidates.getSize() / Sizeof.cl_int;
-        int reactionsSize = reactions.limit();
+        //int reactionsSize = reactions.limit();
 
         // Set the work-item dimensions
         long global_work_size[] = new long[]{candidatesSize / Main.Memory.Width.COLLISION};
 
-        Pointer dstReactions = Pointer.to(reactions);
-
-        long reactionBufsize = Sizeof.cl_float * reactionsSize;
-
-        cl_mem dstMemReactions = clCreateBuffer(context, CL_MEM_READ_WRITE, reactionBufsize, null, null);
-
         // Set the arguments for the kernel
-        int a = 0;
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.candidates.get_mem()));
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.get_mem()));
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.get_mem()));
-        clSetKernelArg(k_collide, a++, Sizeof.cl_mem, Pointer.to(dstMemReactions));
+        clSetKernelArg(k_collide, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.candidates.get_mem()));
+        clSetKernelArg(k_collide, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.get_mem()));
+        clSetKernelArg(k_collide, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.get_mem()));
 
         // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
-                global_work_size, null, 0, null, null);
-
-        // Read the output data
-        clEnqueueReadBuffer(commandQueue, dstMemReactions, CL_TRUE, 0,
-                reactionBufsize, dstReactions, 0, null, null);
-
-        clReleaseMemObject(dstMemReactions);
+                global_work_size, local_work_default, 0, null, null);
     }
 }

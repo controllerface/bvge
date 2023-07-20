@@ -1,8 +1,6 @@
-__kernel void collide(
-    __global const int2 *candidates,
-    __global const float16 *bodies,
-    __global const float4 *points,
-    __global float16 *reactions)
+__kernel void collide(__global int2 *candidates,
+                      __global float16 *bodies,
+                      __global float4 *points)
 {
     int gid = get_global_id(0);
     
@@ -38,10 +36,6 @@ __kernel void collide(
     
     float2 normalBuffer;
     float16 vertex_body;
- 
-    // reaction object
-    float16 reaction;
-    reaction.s0 = -1;
 
     // object 1
     for (int i = 0; i < b1_vert_count; i++)
@@ -68,7 +62,6 @@ __kernel void collide(
 
         if (distance > 0)
         {
-            reactions[gid] = reaction;
             return;
         }
 
@@ -112,7 +105,6 @@ __kernel void collide(
 
         if (distance > 0)
         {
-            reactions[gid] = reaction;
             return;
         }
 
@@ -161,10 +153,8 @@ __kernel void collide(
         normalBuffer.y = normalBuffer.y * -1;
     }
 
-    reaction.s0 = -1;
     if (vertex_object_id == -1)
     {
-        reactions[gid] = reaction;
         return;
     }
 
@@ -174,8 +164,6 @@ __kernel void collide(
     float2 normal = normalBuffer;
 
     float2 collision_vector = normal * min_distance;
-    // todo: check body flags for static geometry, always default to 0 impact for the static
-    //  body, and 1.0 for the non-static body.
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 
@@ -209,17 +197,20 @@ __kernel void collide(
     float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale);
     float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale);
 
-    reaction.s0 = (float)vert_index;
-    reaction.s1 = (float)edge_index_a;
-    reaction.s2 = (float)edge_index_b;
-    reaction.s3 = v_reaction.x;  
-    reaction.s4 = v_reaction.y;  
-    reaction.s5 = e1_reaction.x;  
-    reaction.s6 = e1_reaction.y;  
-    reaction.s7 = e2_reaction.x;  
-    reaction.s8 = e2_reaction.y;   
-    // reaction.s9 through reaction.sf are currently empty, but may be used later 
-    // as collision checks are updated with more complex logic
+    // todo: this should techncially be atomic, however visually it doesn't
+    //  seem to matter right now. probably should do it "right" though at some point
+    points[vert_index].x += v_reaction.x;
+    points[vert_index].y += v_reaction.y;
+    points[edge_index_a].x -= e1_reaction.x;
+    points[edge_index_a].y -= e1_reaction.y;
+    points[edge_index_b].x -= e2_reaction.x;
+    points[edge_index_b].y -= e2_reaction.y;
 
-    reactions[gid] = reaction;
+    // uncomment below for inelastic collisions
+    // points[vert_index].z = points[vert_index].x;
+    // points[vert_index].w = points[vert_index].y;
+    // points[edge_index_a].z = points[edge_index_a].x;
+    // points[edge_index_a].w = points[edge_index_a].y;
+    // points[edge_index_b].z = points[edge_index_b].x;
+    // points[edge_index_b].w = points[edge_index_b].y;
 }

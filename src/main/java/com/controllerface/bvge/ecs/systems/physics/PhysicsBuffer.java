@@ -13,6 +13,12 @@ public class PhysicsBuffer
 
     public void transferAll()
     {
+        key_map.setDoTransfer(false);
+        key_bank.setDoTransfer(false);
+        key_counts.setDoTransfer(false);
+        key_offsets.setDoTransfer(false);
+        if (candidates != null) candidates.setDoTransfer(false);
+
         bounds.transfer();
         bodies.transfer();
         points.transfer();

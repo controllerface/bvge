@@ -75,6 +75,7 @@ public class SpacePartitionRenderer extends GameSystem
     }
 
     float accum = 0;
+
     @Override
     public void run(float dt)
     {

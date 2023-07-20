@@ -6,10 +6,8 @@ import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import org.jocl.Sizeof;
 import org.joml.Vector2f;
 
-import java.nio.FloatBuffer;
 import java.util.*;
 
 public class VerletPhysics extends GameSystem
@@ -45,35 +43,6 @@ public class VerletPhysics extends GameSystem
         super(ecs);
         this.spatialPartition = spatialPartition;
     }
-
-    private void reactPolygon(float[] reaction)
-    {
-        var vo_x = (int)reaction[0] * Main.Memory.Width.POINT;
-        var vo_y = vo_x + 1;
-        var e1_x = (int)reaction[1] * Main.Memory.Width.POINT;
-        var e1_y = e1_x + 1;
-        var e2_x = (int)reaction[2] * Main.Memory.Width.POINT;
-        var e2_y = e2_x + 1;
-
-        Main.Memory.point_buffer[vo_x] += reaction[3];
-        Main.Memory.point_buffer[vo_y] += reaction[4];
-        Main.Memory.point_buffer[e1_x] -= reaction[5];
-        Main.Memory.point_buffer[e1_y] -= reaction[6];
-        Main.Memory.point_buffer[e2_x] -= reaction[7];
-        Main.Memory.point_buffer[e2_y] -= reaction[8];
-
-        // todo: elasticity should be a per-object value that adjusts how elastic
-        //  reactions against that object are. Mass should also be taken into account
-        //  to determine the magnitude of the adjustment
-        // uncomment these lines to force inelastic collisions
-//        Main.Memory.point_buffer[vo_x + 2] = Main.Memory.point_buffer[vo_x];
-//        Main.Memory.point_buffer[vo_y + 2] = Main.Memory.point_buffer[vo_y];
-//        Main.Memory.point_buffer[e1_x + 2] = Main.Memory.point_buffer[e1_x];
-//        Main.Memory.point_buffer[e1_y + 2] = Main.Memory.point_buffer[e1_y];
-//        Main.Memory.point_buffer[e2_x + 2] = Main.Memory.point_buffer[e2_x];
-//        Main.Memory.point_buffer[e2_y + 2] = Main.Memory.point_buffer[e2_y];
-    }
-
 
     private void tickEdges()
     {
@@ -160,33 +129,10 @@ public class VerletPhysics extends GameSystem
         OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
 
         // narrow phase collision
-        if (physicsBuffer.candidates != null)
-        {
-            int count = (int) physicsBuffer.candidates.getSize() / Sizeof.cl_int2;
-            var reaction_size = count * Main.Memory.Width.REACTION;
-            var reactions = new float[reaction_size];
-            var reaction_buffer = FloatBuffer.wrap(reactions);
-            OpenCL.collide(physicsBuffer, reaction_buffer);
+        OpenCL.collide(physicsBuffer);
 
-            // todo: avoid transfer, use existing buffer in new kernel
-            physicsBuffer.transferAll();
-
-            for (int i = 0; i < count; i++)
-            {
-                var next_reaction = i * Main.Memory.Width.REACTION;
-                if (reactions[next_reaction] == -1) // separating axis was found
-                {
-                    continue;
-                }
-                float[] reaction = new float[Main.Memory.Width.REACTION];
-                System.arraycopy(reactions, next_reaction, reaction, 0, Main.Memory.Width.REACTION);
-                reactPolygon(reaction);
-            }
-        }
-        else
-        {
-            physicsBuffer.transferAll();
-        }
+        // todo: avoid transfer, use existing buffer in new kernel
+        physicsBuffer.transferAll();
 
         tickEdges();
     }

@@ -11,12 +11,18 @@ public class MemoryBuffer
     private final cl_mem src;
     private final long size;
     private final Pointer dst;
+    private boolean doTransfer = true;
 
     public MemoryBuffer(cl_mem src, long size, Pointer dst)
     {
         this.src = src;
         this.size = size;
         this.dst = dst;
+    }
+
+    public void setDoTransfer(boolean doTransfer)
+    {
+        this.doTransfer = doTransfer;
     }
 
     public cl_mem get_mem()
@@ -31,11 +37,11 @@ public class MemoryBuffer
 
     public void transfer()
     {
-        clEnqueueReadBuffer(OpenCL.getCommandQueue(),
-            src, CL_TRUE, 0,
-            size,
-            dst,
-            0, null, null);
+        if (doTransfer)
+        {
+            clEnqueueReadBuffer(OpenCL.getCommandQueue(), src, CL_TRUE, 0, size, dst,
+                0, null, null);
+        }
         clReleaseMemObject(src);
     }
 }
