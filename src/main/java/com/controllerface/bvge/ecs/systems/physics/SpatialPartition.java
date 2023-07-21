@@ -6,8 +6,8 @@ public class SpatialPartition
     private float height = 0;
 
     // note: sub-divisions should always be divisible by 2
-    private int x_subdivisions = 120;
-    private int y_subdivisions = 120;
+    private int x_subdivisions = 240;
+    private int y_subdivisions = 240;
 
     private int directoryLength;
     private float x_spacing = 0;

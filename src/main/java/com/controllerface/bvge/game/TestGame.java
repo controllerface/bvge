@@ -128,8 +128,8 @@ public class TestGame extends GameMode
         genPlayer();
         //genNPCs(100, 10f, 10f, 2100, 2100);
         //genNPCs(100, 10f, 10f, 1000, -1000);
-        genNPCs(100, 10f, 10f, -1500, -1500);
-        genNPCs(100, 10f, 10f, -100, 1500);
+        //genNPCs(100, 10f, 10f, -1500, -1500);
+        genNPCs(100, 2f, 3f, -100, 1500);
         genNPCs(3, 10f, 10f, 100, 300);
         genFloor(100, 25f, 25f, -400, -40);
 

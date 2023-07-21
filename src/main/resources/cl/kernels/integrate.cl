@@ -53,6 +53,7 @@ __kernel void integrate(
    	acc.x = body.s4;
    	acc.y = body.s5;
     bool b1s = (body.s6 && 0x01) !=0;
+    
     if (!b1s)
     {
         acc.x += gravity.x;
@@ -91,26 +92,29 @@ __kernel void integrate(
         float2 pos = point.xy;
         float2 prv = point.zw;
 
-        // subtract prv from pos to get the difference this frame
-        float2 diff = pos - prv;
-        diff = acc + diff;
+        if (!b1s)
+        {
+            // subtract prv from pos to get the difference this frame
+            float2 diff = pos - prv;
+            diff = acc + diff;
 
-        // add friction component todo: take this in as an argument, gravity too
-        diff.x *= friction;
-        diff.y *= friction;
-        
-        // set the prv to current pos
-        prv.x = pos.x;
-        prv.y = pos.y;
+            // add friction component todo: take this in as an argument, gravity too
+            diff.x *= friction;
+            diff.y *= friction;
+            
+            // set the prv to current pos
+            prv.x = pos.x;
+            prv.y = pos.y;
 
-        // update pos
-        pos = pos + diff;
+            // update pos
+            pos = pos + diff;
 
-        // finally, update the pos and prv in the object
-        point.x = pos.x;
-        point.y = pos.y;
-        point.z = prv.x;
-        point.w = prv.y;
+            // finally, update the pos and prv in the object
+            point.x = pos.x;
+            point.y = pos.y;
+            point.z = prv.x;
+            point.w = prv.y;
+        }
 
         // update center sum
         x_sum += pos.x;
