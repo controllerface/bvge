@@ -1,6 +1,5 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;

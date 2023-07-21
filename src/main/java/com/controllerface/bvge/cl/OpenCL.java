@@ -974,28 +974,24 @@ public class OpenCL
     {
         boolean lastStep;
 
+        int edgesCount = Main.Memory.edgesCount();
+        int edgesSize = Main.Memory.edgesLength();
+        var edgesBuffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edgesSize);
 
-            //if (physicsBuffer.candidates == null) return;
+        // Set the work-item dimensions
+        long global_work_size[] = new long[]{Main.Memory.bodyCount()};
+        Pointer srcEdges = Pointer.to(edgesBuffer);
+        long edgesBufsize = (long) Sizeof.cl_float4 * edgesCount;
 
-            int edgesCount = Main.Memory.edgesCount();
-            int edgesSize = Main.Memory.edgesLength();
-            var edgesBuffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edgesSize);
-
-            // Set the work-item dimensions
-            long global_work_size[] = new long[]{Main.Memory.bodyCount()};
-            Pointer srcEdges = Pointer.to(edgesBuffer);
-            long edgesBufsize = (long) Sizeof.cl_float4 * edgesCount;
-
-            // Allocate the memory objects for the input- and output data
-            // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
-            // directly p2 thr destination p1 the result fo the kernel call. This avoids
-            // needing p2 use an intermediate buffer and System.arrayCopy() calls.
-            cl_mem srcMemEdges = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, edgesBufsize, srcEdges, null);
+        // Allocate the memory objects for the input- and output data
+        // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
+        // directly p2 thr destination p1 the result fo the kernel call. This avoids
+        // needing p2 use an intermediate buffer and System.arrayCopy() calls.
+        cl_mem srcMemEdges = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, edgesBufsize, srcEdges, null);
 
         for (int i = 0; i < edge_steps; i++)
         {
             lastStep = i == edge_steps - 1;
-            // Set the arguments for the kernel
             int n = lastStep ? 1 : 0;
             int a = 0;
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.get_mem()));
