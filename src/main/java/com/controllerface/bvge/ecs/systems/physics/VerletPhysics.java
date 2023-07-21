@@ -44,35 +44,6 @@ public class VerletPhysics extends GameSystem
         this.spatialPartition = spatialPartition;
     }
 
-    private void tickEdges()
-    {
-        var bodies = ecs.getComponents(Component.RigidBody2D);
-        boolean lastStep;
-        for (int i = 0; i < EDGE_STEPS; i++)
-        {
-            lastStep = i == EDGE_STEPS - 1;
-            // todo: would be worth trying to iterate on each edge but in parallel for each body
-            //  solving ALL edges at once doesn't work, but in series it may
-            for (Map.Entry<String, GameComponent> entry : bodies.entrySet())
-            {
-                FBody2D body = Component.RigidBody2D.coerce(entry.getValue());
-                if (lastStep || body.bounds().si_bank_size() > 0)
-                {
-                    for (FEdge2D edge : body.edges())
-                    {
-                        edge.p2().subPos(edge.p1(), vectorBuffer1);
-                        var length = vectorBuffer1.length();
-                        float diff = length - edge.length();
-                        vectorBuffer1.normalize();
-                        vectorBuffer1.mul(diff * 0.5f);
-                        edge.p1().addPos(vectorBuffer1);
-                        edge.p2().subPos(vectorBuffer1);
-                    }
-                }
-            }
-        }
-    }
-
     private void updateControllableBodies()
     {
         var cntro = ecs.getComponents(Component.ControlPoints);
@@ -116,6 +87,8 @@ public class VerletPhysics extends GameSystem
 
         updateControllableBodies();
 
+        // todo: see if the main buffers can be created once and then reused, loading
+        //  current data in each time through the loop
         var physicsBuffer = new PhysicsBuffer();
 
         // integration
@@ -131,17 +104,11 @@ public class VerletPhysics extends GameSystem
         // narrow phase collision and reaction
         OpenCL.collide(physicsBuffer);
 
+        // resolve edges
+        OpenCL.resolve_constraints(physicsBuffer, EDGE_STEPS);
+
         // todo: avoid transfer, use existing buffer in new kernel
         physicsBuffer.transferAll();
-
-        // todo: attempt to replace with CL kernel
-        tickEdges();
-        // todo #1: will need to create a kernel that accepts bodies, points, and edges.
-        //  logic will need to allow for 1 iteration for out of bounds objects (but only one)
-        //  and should accept a value that controls how many total iterations are done.
-        //  The kernel will reconcile each edge constraint serially, though all bodies
-        //  will resolve in parallel. The hope is that doing them all per-body should
-        //  give similar results to doing them all in one big serial loop
     }
 
     private void simulate(float dt)

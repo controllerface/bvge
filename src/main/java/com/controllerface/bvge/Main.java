@@ -45,7 +45,7 @@ public class Main
             // Bodies are composed of one or more points
 
             // float3
-            public static final int EDGE = 3;
+            public static final int EDGE = 4;
             // Edges define constraints that are set between two vertices
 
             // float8
@@ -82,7 +82,7 @@ public class Main
 
         public static int bodyLength()
         {
-            return body_index + 1;
+            return body_index;
         }
 
         public static int pointLength()
@@ -92,7 +92,17 @@ public class Main
 
         public static int boundsLength()
         {
-            return bounds_index + 1;
+            return bounds_index;
+        }
+
+        public static int edgesLength()
+        {
+            return edge_index;
+        }
+
+        public static int edgesCount()
+        {
+            return edge_index / Width.EDGE;
         }
 
         public static int boundsCount()
@@ -126,6 +136,7 @@ public class Main
             edge_buffer[edge_index++] = (float) p1;
             edge_buffer[edge_index++] = (float) p2;
             edge_buffer[edge_index++] = l;
+            edge_buffer[edge_index++] = 0f;
             return new FEdge2D(edge_index - Width.EDGE, from, to);
         }
 

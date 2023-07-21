@@ -1,6 +1,10 @@
 package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.Main;
+import com.controllerface.bvge.data.FBody2D;
+import com.controllerface.bvge.data.FEdge2D;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.ecs.systems.physics.MemoryBuffer;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
@@ -10,6 +14,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.controllerface.bvge.cl.OpenCLUtils.read_src;
 import static org.jocl.CL.*;
@@ -47,6 +52,7 @@ public class OpenCL
     static String kern_scan_candidates_out  = read_src("kernels/scan_key_candidates.cl");
     static String kern_generate_keys        = read_src("kernels/generate_keys.cl");
     static String kern_build_key_map        = read_src("kernels/build_key_map.cl");
+    static String kern_resolve_constraints  = read_src("kernels/resolve_constraints.cl");
     static String kern_locate_in_bounds     = read_src("kernels/locate_in_bounds.cl");
 
     /**
@@ -72,6 +78,7 @@ public class OpenCL
     static String kn_complete_candidates_multi_block    = "complete_candidates_multi_block_out";
     static String kn_generate_keys                      = "generate_keys";
     static String kn_build_key_map                      = "build_key_map";
+    static String kn_resolve_constraints                = "resolve_constraints";
 
     /**
      * CL Programs
@@ -85,6 +92,7 @@ public class OpenCL
     static cl_program p_scan_candidates;
     static cl_program p_generate_keys;
     static cl_program p_build_key_map;
+    static cl_program p_resolve_constraints;
 
     /**
      * CL Kernels
@@ -109,6 +117,7 @@ public class OpenCL
     static cl_kernel k_complete_candidates_multi_block;
     static cl_kernel k_generate_keys;
     static cl_kernel k_build_key_map;
+    static cl_kernel k_resolve_constraints;
 
     /**
      * During shutdown, these are used to release resources.
@@ -239,6 +248,8 @@ public class OpenCL
             func_calculate_key_index,
             kern_build_key_map);
 
+        p_resolve_constraints = cl_p(kern_resolve_constraints);
+
         /*
          * Kernels
          */
@@ -262,6 +273,7 @@ public class OpenCL
         k_complete_candidates_multi_block   = cl_k(p_scan_candidates, kn_complete_candidates_multi_block);
         k_generate_keys                     = cl_k(p_generate_keys, kn_generate_keys);
         k_build_key_map                     = cl_k(p_build_key_map, kn_build_key_map);
+        k_resolve_constraints               = cl_k(p_resolve_constraints, kn_resolve_constraints);
     }
 
     public static void destroy()
@@ -956,5 +968,48 @@ public class OpenCL
         // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
                 global_work_size, local_work_default, 0, null, null);
+    }
+
+    public static void resolve_constraints(PhysicsBuffer physicsBuffer, int edge_steps)
+    {
+        boolean lastStep;
+
+
+            //if (physicsBuffer.candidates == null) return;
+
+            int edgesCount = Main.Memory.edgesCount();
+            int edgesSize = Main.Memory.edgesLength();
+            var edgesBuffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edgesSize);
+
+            // Set the work-item dimensions
+            long global_work_size[] = new long[]{Main.Memory.bodyCount()};
+            Pointer srcEdges = Pointer.to(edgesBuffer);
+            long edgesBufsize = (long) Sizeof.cl_float4 * edgesCount;
+
+            // Allocate the memory objects for the input- and output data
+            // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
+            // directly p2 thr destination p1 the result fo the kernel call. This avoids
+            // needing p2 use an intermediate buffer and System.arrayCopy() calls.
+            cl_mem srcMemEdges = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, edgesBufsize, srcEdges, null);
+
+        for (int i = 0; i < edge_steps; i++)
+        {
+            lastStep = i == edge_steps - 1;
+            // Set the arguments for the kernel
+            int n = lastStep ? 1 : 0;
+            int a = 0;
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.get_mem()));
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.get_mem()));
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.get_mem()));
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, Pointer.to(srcMemEdges));
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+            // Execute the kernel
+            clEnqueueNDRangeKernel(commandQueue, k_resolve_constraints, 1, null,
+                global_work_size, local_work_default, 0, null, null);
+
+        }
+
+        clReleaseMemObject(srcMemEdges);
     }
 }
