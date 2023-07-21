@@ -13,7 +13,7 @@ public class VerletPhysics extends GameSystem
 {
     private final float TARGET_FPS = 60.0f;
     private final float TICK_RATE = 1.0f / TARGET_FPS;
-    private final int SUB_STEPS = 2;
+    private final int SUB_STEPS = 1;
     private final int EDGE_STEPS = 2;
     private float accumulator = 0.0f;
 

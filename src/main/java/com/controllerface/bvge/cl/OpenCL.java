@@ -315,7 +315,7 @@ public class OpenCL
         clSetKernelArg(k_locate_in_bounds, 2, Sizeof.cl_mem, src_size);
 
         clEnqueueNDRangeKernel(commandQueue, k_locate_in_bounds, 1, null,
-            new long[]{n}, local_work_default, 0, null, null);
+            new long[]{n}, null, 0, null, null);
 
         clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
             Sizeof.cl_int, dst_size, 0, null, null);
@@ -340,7 +340,7 @@ public class OpenCL
         clSetKernelArg(k_count_candidates, 6, Sizeof.cl_int, pnt_counts_length);
 
         clEnqueueNDRangeKernel(commandQueue, k_count_candidates, 1, null,
-            new long[]{cand_count}, local_work_default, 0, null, null);
+            new long[]{cand_count}, null, 0, null, null);
 
         // step 3: compute candidate buffer
         int n2 = cand_count;
@@ -396,7 +396,7 @@ public class OpenCL
         clSetKernelArg(k_compute_matches, 11, Sizeof.cl_int, pnt_counts_length);
 
         clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
-            new long[]{cand_count}, local_work_default, 0, null, null);
+            new long[]{cand_count}, null, 0, null, null);
 
 //        clEnqueueReadBuffer(commandQueue, matches_data, CL_TRUE, 0,
 //            matches_buf_size, pnt_matches, 0, null, null);
@@ -432,7 +432,7 @@ public class OpenCL
             clSetKernelArg(k_finalize_candidates, 5, Sizeof.cl_mem, src_finals);
 
             clEnqueueNDRangeKernel(commandQueue, k_finalize_candidates, 1, null,
-                new long[]{cand_count}, local_work_default, 0, null, null);
+                new long[]{cand_count}, null, 0, null, null);
 
 //            clEnqueueReadBuffer(commandQueue, finals_data, CL_TRUE, 0,
 //                final_buf_size, dst_finals, 0, null, null);
@@ -483,7 +483,7 @@ public class OpenCL
         clSetKernelArg(k_build_key_map, 5, Sizeof.cl_int, Pointer.to(new int[]{key_counts.length}));
 
         clEnqueueNDRangeKernel(commandQueue, k_build_key_map, 1, null,
-            new long[]{n}, local_work_default, 0, null, null);
+            new long[]{n}, null, 0, null, null);
 
         clReleaseMemObject(counts_data);
     }
@@ -522,7 +522,7 @@ public class OpenCL
 
         // call kernel
         clEnqueueNDRangeKernel(commandQueue, k_generate_keys, 1, null,
-            new long[]{n}, local_work_default, 0, null, null);
+            new long[]{n}, null, 0, null, null);
     }
 
     public static void calculate_map_offsets(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
@@ -944,7 +944,7 @@ public class OpenCL
 
         // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, k_integrate, 1, null,
-            global_work_size, local_work_default, 0, null, null);
+            global_work_size, null, 0, null, null);
 
         clReleaseMemObject(dtMem);
     }
@@ -967,7 +967,7 @@ public class OpenCL
 
         // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
-                global_work_size, local_work_default, 0, null, null);
+                global_work_size, null, 0, null, null);
     }
 
     public static void resolve_constraints(PhysicsBuffer physicsBuffer, int edge_steps)
@@ -1002,7 +1002,7 @@ public class OpenCL
 
             // Execute the kernel
             clEnqueueNDRangeKernel(commandQueue, k_resolve_constraints, 1, null,
-                global_work_size, local_work_default, 0, null, null);
+                global_work_size, null, 0, null, null);
 
         }
 

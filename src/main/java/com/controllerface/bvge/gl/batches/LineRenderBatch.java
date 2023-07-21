@@ -99,6 +99,7 @@ public class LineRenderBatch implements Comparable<LineRenderBatch>
 
     public void render()
     {
+        glLineWidth(2.0f);
         glBindVertexArray(vaoID);
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertices);
