@@ -4,8 +4,6 @@ import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.window.Window;
 
-import java.util.*;
-
 
 public class Main
 {
@@ -55,23 +53,9 @@ public class Main
             // Bounding boxes are used for proximity checks on bodies
 
             // int2
-            public static final int KEY = 2;
-            // A spatial index key is calculated for each body to aid in collision checks
-
-            // int2
             public static final int COLLISION = 2;
             // Collisions are represented as a pair of indices, one for each object
-
-            // float8
-            public static final int MANIFOLD = 8;
-            // Collision manifolds are used when resolving collisions
-
-            // float8
-            public static final int REACTION = 16;
-            // Collision reactions are generated from collision manifolds
         }
-
-        private static final Map<Integer, FBody2D> bodies = new HashMap<>();
 
         private static final int MAX_BODIES  = 100_000;
         private static final int MAX_POINTS  = 1_000_000;
@@ -90,11 +74,6 @@ public class Main
         private static int point_index   = 0;
         private static int edge_index    = 0;
         private static int bounds_index  = 0;
-
-        public static FBody2D bodyByIndex(int index)
-        {
-            return bodies.get(index);
-        }
 
         public static int bodyCount()
         {
@@ -193,17 +172,15 @@ public class Main
             body_buffer[body_index++] = 0f;
             var idx = body_index - Width.BODY;
             var transform = new FTransform(idx);
-            var newBody = new FBody2D(idx, force, points, edges, bounds, transform, entity);
-            bodies.put(idx / Width.BODY, newBody);
-            return newBody;
+            return new FBody2D(idx, force, points, edges, bounds, transform, entity);
         }
 
     }
 
     public static void main(String[] args)
     {
-        OpenCL.init();
         Window window = Window.get();
+        OpenCL.init();
         window.run();
         OpenCL.destroy();
     }

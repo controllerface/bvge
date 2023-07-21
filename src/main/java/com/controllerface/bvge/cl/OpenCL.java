@@ -128,7 +128,7 @@ public class OpenCL
         final int deviceIndex = 0;
 
         // Enable exceptions and subsequently omit error checks in this sample
-        //CL.setExceptionsEnabled(true);
+        CL.setExceptionsEnabled(true);
 
         // Obtain the number of platforms
         int numPlatformsArray[] = new int[1];
@@ -197,6 +197,8 @@ public class OpenCL
     public static void init()
     {
         device_ids = device_init();
+
+        OpenCLUtils.printDeviceDetails(device_ids);
 
         /*
          * Programs

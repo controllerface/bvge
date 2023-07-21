@@ -128,13 +128,20 @@ public class VerletPhysics extends GameSystem
         OpenCL.generate_key_map(physicsBuffer, spatialPartition);
         OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
 
-        // narrow phase collision
+        // narrow phase collision and reaction
         OpenCL.collide(physicsBuffer);
 
         // todo: avoid transfer, use existing buffer in new kernel
         physicsBuffer.transferAll();
 
+        // todo: attempt to replace with CL kernel
         tickEdges();
+        // todo #1: will need to create a kernel that accepts bodies, points, and edges.
+        //  logic will need to allow for 1 iteration for out of bounds objects (but only one)
+        //  and should accept a value that controls how many total iterations are done.
+        //  The kernel will reconcile each edge constraint serially, though all bodies
+        //  will resolve in parallel. The hope is that doing them all per-body should
+        //  give similar results to doing them all in one big serial loop
     }
 
     private void simulate(float dt)
