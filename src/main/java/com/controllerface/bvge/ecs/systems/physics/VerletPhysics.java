@@ -14,7 +14,7 @@ public class VerletPhysics extends GameSystem
     private final float TARGET_FPS = 60.0f;
     private final float TICK_RATE = 1.0f / TARGET_FPS;
     private final int SUB_STEPS = 4;
-    private final int EDGE_STEPS = 2;
+    private final int EDGE_STEPS = 4;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.
@@ -27,7 +27,7 @@ public class VerletPhysics extends GameSystem
     //  and applied when contact occurs.
     private final float GRAVITY_X = 0;
     private final float GRAVITY_Y = -(9.8f * SUB_STEPS) * 50;
-    private final float FRICTION = .980f;
+    private final float FRICTION = .981f;
 
     private final SpatialPartition spatialPartition;
     private final PhysicsBuffer physicsBuffer;
@@ -126,7 +126,7 @@ public class VerletPhysics extends GameSystem
         // todo: need to account for this in the kernel somehow so it can be
         //  updated inside the sub-steps. Right now this is the last point before
         //  the memory is transferred out.
-        //updateControllableBodies();
+        updateControllableBodies();
 
         this.accumulator += dt;
         while (this.accumulator >= TICK_RATE)
@@ -141,7 +141,7 @@ public class VerletPhysics extends GameSystem
 
 
         physicsBuffer.transferFinish();
-        //zeroControllableBodies();
+        zeroControllableBodies();
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)
         {
