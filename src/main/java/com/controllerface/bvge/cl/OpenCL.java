@@ -320,6 +320,11 @@ public class OpenCL
         clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
             Sizeof.cl_int, dst_size, 0, null, null);
 
+
+
+
+
+
         // step 2: count candidates
         int cand_count = sz[0];
         long cand_buf_size = (long)Sizeof.cl_int2 * cand_count;
@@ -342,6 +347,10 @@ public class OpenCL
         clEnqueueNDRangeKernel(commandQueue, k_count_candidates, 1, null,
             new long[]{cand_count}, null, 0, null, null);
 
+
+
+
+
         // step 3: compute candidate buffer
         int n2 = cand_count;
         int[] offsets = new int[cand_count];
@@ -349,16 +358,9 @@ public class OpenCL
         Pointer pnt_offset = Pointer.to(offsets);
         cl_mem offset_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, offset_buf_size, pnt_offset, null);
         Pointer src_offsets = Pointer.to(offset_data);
-//        clEnqueueReadBuffer(commandQueue, cand_data, CL_TRUE, 0,
-//            cand_buf_size, pnt_cand, 0, null, null);
-//
-//        clEnqueueReadBuffer(commandQueue, inbound_data, CL_TRUE, 0,
-//            inbound_buf_size, pnt_inbound, 0, null, null);
 
         int match_count = scan_key_candidates(cand_data, offset_data, n2);
 
-//        clEnqueueReadBuffer(commandQueue, offset_data, CL_TRUE, 0,
-//            offset_buf_size, pnt_offset, 0, null, null);
 
 
         // step 4:  find matches
@@ -398,14 +400,11 @@ public class OpenCL
         clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
             new long[]{cand_count}, null, 0, null, null);
 
-//        clEnqueueReadBuffer(commandQueue, matches_data, CL_TRUE, 0,
-//            matches_buf_size, pnt_matches, 0, null, null);
-//
-//        clEnqueueReadBuffer(commandQueue, used_data, CL_TRUE, 0,
-//            used_buf_size, pnt_used, 0, null, null);
-
         clEnqueueReadBuffer(commandQueue, size_data2, CL_TRUE, 0,
             Sizeof.cl_int, dst_size2, 0, null, null);
+
+
+
 
         // step 5: if there's any candidates, write them out
         int[] finals = new int[0];
@@ -434,11 +433,7 @@ public class OpenCL
             clEnqueueNDRangeKernel(commandQueue, k_finalize_candidates, 1, null,
                 new long[]{cand_count}, null, 0, null, null);
 
-//            clEnqueueReadBuffer(commandQueue, finals_data, CL_TRUE, 0,
-//                final_buf_size, dst_finals, 0, null, null);
-
             clReleaseMemObject(size_data3);
-            //clReleaseMemObject(finals_data);
         }
 
         clReleaseMemObject(matches_data);
