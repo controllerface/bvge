@@ -13,8 +13,8 @@ public class VerletPhysics extends GameSystem
 {
     private final float TARGET_FPS = 60.0f;
     private final float TICK_RATE = 1.0f / TARGET_FPS;
-    private final int SUB_STEPS = 1;
-    private final int EDGE_STEPS = 2;
+    private final int SUB_STEPS = 2;
+    private final int EDGE_STEPS = 4;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.
@@ -26,7 +26,7 @@ public class VerletPhysics extends GameSystem
     //  In this way, friction is a "status effect" that is cleared every frame
     //  and applied when contact occurs.
     private final float GRAVITY_X = 0;
-    private final float GRAVITY_Y = -(9.8f * 100);
+    private final float GRAVITY_Y = 0;//-(9.8f * 100);
     private final float FRICTION = .980f;
 
 
@@ -74,22 +74,8 @@ public class VerletPhysics extends GameSystem
         }
     }
 
-    private void tickSimulation(float dt)
+    private void tickSimulation(float dt, PhysicsBuffer physicsBuffer)
     {
-        var bodies = ecs.getComponents(Component.RigidBody2D);
-
-        // if somehow there are no bodies, just bail. something is probably really wrong
-        if (bodies == null || bodies.isEmpty())
-        {
-            return;
-        }
-
-        updateControllableBodies();
-
-        // todo: see if the main buffers can be created once and then reused, loading
-        //  current data in each time through the loop
-        var physicsBuffer = new PhysicsBuffer();
-
         // integration
         OpenCL.integrate(physicsBuffer, dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
 
@@ -110,18 +96,36 @@ public class VerletPhysics extends GameSystem
         physicsBuffer.transferAll();
     }
 
+
     private void simulate(float dt)
     {
+        var bodies = ecs.getComponents(Component.RigidBody2D);
+
+        // if somehow there are no bodies, just bail. something is probably really wrong
+        if (bodies == null || bodies.isEmpty())
+        {
+            return;
+        }
+
+        // todo: need to account for this in the kernel somehow so it can be
+        //  updated inside the sub-steps. Right now this is the last point before
+        //  the memory is transferred out.
+        updateControllableBodies();
+
+        var physicsBuffer = new PhysicsBuffer();
+
         this.accumulator += dt;
         while (this.accumulator >= TICK_RATE)
         {
             float sub_step = TICK_RATE / SUB_STEPS;
             for (int i = 0; i < SUB_STEPS; i++)
             {
-                this.tickSimulation(sub_step);
+                this.tickSimulation(sub_step, physicsBuffer);
                 this.accumulator -= sub_step;
             }
         }
+
+        physicsBuffer.transferFinish();
 
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)

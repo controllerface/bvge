@@ -207,10 +207,10 @@ __kernel void collide(__global int2 *candidates,
     points[edge_index_b].y -= e2_reaction.y;
 
     // uncomment below for inelastic collisions
-    // points[vert_index].z = points[vert_index].x;
-    // points[vert_index].w = points[vert_index].y;
-    // points[edge_index_a].z = points[edge_index_a].x;
-    // points[edge_index_a].w = points[edge_index_a].y;
-    // points[edge_index_b].z = points[edge_index_b].x;
-    // points[edge_index_b].w = points[edge_index_b].y;
+    // points[vert_index].z = points[vert_index].x - FLT_EPSILON;
+    // points[vert_index].w = points[vert_index].y - FLT_EPSILON;
+    // points[edge_index_a].z = points[edge_index_a].x + FLT_EPSILON;
+    // points[edge_index_a].w = points[edge_index_a].y + FLT_EPSILON;
+    // points[edge_index_b].z = points[edge_index_b].x + FLT_EPSILON;
+    // points[edge_index_b].w = points[edge_index_b].y + FLT_EPSILON;
 }

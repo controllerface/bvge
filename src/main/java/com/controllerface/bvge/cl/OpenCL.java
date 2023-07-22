@@ -887,13 +887,13 @@ public class OpenCL
 
     public static void integrate(PhysicsBuffer physicsBuffer, float tick_rate, float gravity_x, float gravity_y, float friction, SpatialPartition spatialPartition)
     {
-        int bodiesSize = Main.Memory.bodyLength();
-        int pointsSize = Main.Memory.pointLength();
-        int boundsSize = Main.Memory.boundsLength();
+        //int bodiesSize = Main.Memory.bodyLength();
+        //int pointsSize = Main.Memory.pointLength();
+        //int boundsSize = Main.Memory.boundsLength();
 
-        var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
-        var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
-        var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
+        //var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
+        //var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
+        //var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
 
         // Set the work-item dimensions
         long global_work_size[] = new long[]{Main.Memory.bodyCount()};
@@ -912,34 +912,34 @@ public class OpenCL
             gravity_y,
             friction
         };
-        Pointer srcBodies = Pointer.to(bodyBuffer);
-        Pointer srcPoints = Pointer.to(pointBuffer);
-        Pointer srcBounds = Pointer.to(boundsBuffer);
+        //Pointer srcBodies = Pointer.to(bodyBuffer);
+        //Pointer srcPoints = Pointer.to(pointBuffer);
+        //Pointer srcBounds = Pointer.to(boundsBuffer);
         Pointer srcDt = Pointer.to(FloatBuffer.wrap(args));
 
-        long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
-        long pointBufsize = (long)Sizeof.cl_float * pointsSize;
-        long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
+        //long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
+        //long pointBufsize = (long)Sizeof.cl_float * pointsSize;
+        //long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
 
         // Allocate the memory objects for the input- and output data
         // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
         // directly p2 thr destination p1 the result fo the kernel call. This avoids
         // needing p2 use an intermediate buffer and System.arrayCopy() calls.
-        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
-        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
-        cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
+        //cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
+        //cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
+        //cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
 
-        physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
-        physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
-        physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
+        //physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
+        //physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
+        //physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
 
         cl_mem dtMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_float * args.length, srcDt, null);
 
         // Set the arguments for the kernel
         int a = 0;
-        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBodies));
-        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(srcMemPoints));
-        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(srcMemBounds));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.get_mem()));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.get_mem()));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.get_mem()));
         clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(dtMem));
 
         // Execute the kernel
@@ -1007,5 +1007,36 @@ public class OpenCL
         }
 
         clReleaseMemObject(srcMemEdges);
+    }
+
+    public static void makeBuffers(PhysicsBuffer physicsBuffer)
+    {
+        int bodiesSize = Main.Memory.bodyLength();
+        int pointsSize = Main.Memory.pointLength();
+        int boundsSize = Main.Memory.boundsLength();
+
+        var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
+        var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
+        var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
+
+        Pointer srcBodies = Pointer.to(bodyBuffer);
+        Pointer srcPoints = Pointer.to(pointBuffer);
+        Pointer srcBounds = Pointer.to(boundsBuffer);
+
+        long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
+        long pointBufsize = (long)Sizeof.cl_float * pointsSize;
+        long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
+
+        // Allocate the memory objects for the input- and output data
+        // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
+        // directly p2 thr destination p1 the result fo the kernel call. This avoids
+        // needing p2 use an intermediate buffer and System.arrayCopy() calls.
+        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
+        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
+        cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
+
+        physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
+        physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
+        physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
     }
 }
