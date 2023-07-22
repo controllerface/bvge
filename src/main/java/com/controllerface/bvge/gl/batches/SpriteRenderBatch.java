@@ -145,6 +145,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
             rend.setClean();
         }
 
+        // bind the vertex buffer, making it active then copy the vertex data into it
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
         glBufferSubData(GL_ARRAY_BUFFER, 0, vertices);
 
@@ -184,7 +185,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
     }
 
     /**
-     * Updates the local buffer p2 reflect the current state of the indexed sprite.
+     * Updates the local buffer to reflect the current state of the indexed sprite.
      *
      * @param index the location of the sprite, within the sprite array
      */
@@ -276,12 +277,18 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
 
             // entity ID
             vertices[offset + 9] = -1; //sprite.gameObject.getUid() + 1;
-            // todo: add back in a UID system for this, it is used for picking
+            // todo: add back in a UID system for this, it is used for picking/mouse interaction
 
             offset += VERTEX_SIZE;
         }
     }
 
+    /**
+     * Generates an int array that confirms to the expected triangle format of the sprite objects that will be
+     * loaded. Note that this index array never changes, even if the provided vertices do from frame to frame.
+     * It is making an assumption that
+     * @return
+     */
     private int[] generateIndices()
     {
         // 6 indices per quad (3 per triangle)
@@ -296,19 +303,19 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
 
     private void loadElementIndices(int[] elements, int index)
     {
-        int offsetArrayIndex = 6 * index;
+        int quadOffset = 6 * index;
         int offset = 4 * index;
 
-        // 3, 2, 0, 0, 2, 1        7, 6, 4, 4, 6, 5
+        // 3, 2, 0, 0, 2, 1  ->  7, 6, 4, 4, 6, 5 -> ...
         // Triangle 1
-        elements[offsetArrayIndex] = offset + 3;
-        elements[offsetArrayIndex + 1] = offset + 2;
-        elements[offsetArrayIndex + 2] = offset;
+        elements[quadOffset] = offset + 3;
+        elements[quadOffset + 1] = offset + 2;
+        elements[quadOffset + 2] = offset;
 
         // Triangle 2
-        elements[offsetArrayIndex + 3] = offset;
-        elements[offsetArrayIndex + 4] = offset + 2;
-        elements[offsetArrayIndex + 5] = offset + 1;
+        elements[quadOffset + 3] = offset;
+        elements[quadOffset + 4] = offset + 2;
+        elements[quadOffset + 5] = offset + 1;
     }
 
     public boolean hasRoom()

@@ -116,7 +116,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         ecs.registerSystem(new LineRenderer(ecs));
-        ecs.registerSystem(new SpriteRenderer(ecs));
+        //ecs.registerSystem(new SpriteRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
     }
 

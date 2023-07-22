@@ -77,6 +77,11 @@ public class SpriteRenderer extends GameSystem
             SpriteComponent sprite = Component.SpriteComponent.coerce(component);
             var t = ecs.getComponentFor(entity, Component.Transform);
             FTransform transform = Component.Transform.coerce(t);
+
+            // set the sprite transform so it always tracks the center point of the object.
+            // rotation is left out intentionally, these sprites are intended to be used as
+            // axis-aligned "billboards" for things like damage numbers and other ephemeral
+            // data.
             sprite.transform.position.x = transform.pos_x();
             sprite.transform.position.y = transform.pos_y();
             sprite.transform.scale.x = transform.scale_x();

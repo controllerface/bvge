@@ -63,11 +63,8 @@ __kernel void integrate(
    	acc.y = acc.y * dt;
 
     // reset acceleration to zero for the next frame
-    //if (gid != 0)
-    //{
-        body.s4 = 0.0;
-   	    body.s5 = 0.0;
-    //}
+    body.s4 = 0.0;
+   	body.s5 = 0.0;
 
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;
