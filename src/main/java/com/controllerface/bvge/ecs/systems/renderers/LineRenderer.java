@@ -74,4 +74,10 @@ public class LineRenderer extends GameSystem
         }
         render();
     }
+
+    @Override
+    public void shutdown()
+    {
+
+    }
 }

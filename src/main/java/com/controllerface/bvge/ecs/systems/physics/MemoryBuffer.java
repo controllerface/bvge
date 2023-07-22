@@ -12,6 +12,8 @@ public class MemoryBuffer
     private final long size;
     private final Pointer dst;
     private boolean doTransfer = true;
+    private boolean releaseAfterTransfer = true;
+    private boolean released = false;
 
     public MemoryBuffer(cl_mem src, long size, Pointer dst)
     {
@@ -23,6 +25,11 @@ public class MemoryBuffer
     public void setDoTransfer(boolean doTransfer)
     {
         this.doTransfer = doTransfer;
+    }
+
+    public void setReleaseAfterTransfer(boolean releaseAfterTransfer)
+    {
+        this.releaseAfterTransfer = releaseAfterTransfer;
     }
 
     public cl_mem get_mem()
@@ -37,11 +44,23 @@ public class MemoryBuffer
 
     public void transfer()
     {
-        if (doTransfer)
+        if (!released && doTransfer)
         {
             clEnqueueReadBuffer(OpenCL.getCommandQueue(), src, CL_TRUE, 0, size, dst,
                 0, null, null);
         }
-        clReleaseMemObject(src);
+        if (!released && releaseAfterTransfer)
+        {
+            release();
+        }
+    }
+
+    public void release()
+    {
+        if (!released)
+        {
+            clReleaseMemObject(src);
+            released = true;
+        }
     }
 }

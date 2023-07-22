@@ -72,4 +72,9 @@ public class ECS
     {
         systems.forEach(system_EX_ -> system_EX_.run(dt));
     }
+
+    public void shutdown()
+    {
+        systems.forEach(GameSystem::shutdown);
+    }
 }

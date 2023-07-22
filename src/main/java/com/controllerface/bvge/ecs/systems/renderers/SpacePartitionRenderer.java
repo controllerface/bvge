@@ -110,4 +110,10 @@ public class SpacePartitionRenderer extends GameSystem
                 spatialPartition.getHeight(), color);
         render();
     }
+
+    @Override
+    public void shutdown()
+    {
+
+    }
 }

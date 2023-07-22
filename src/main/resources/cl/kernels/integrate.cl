@@ -37,16 +37,16 @@ __kernel void integrate(
 
     // todo: instead of punting on these, we can maybe update differently and tag the body
     //  or something, so it can be handled differently for collisions as well.
-    if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
-    {
-        body.s4 = 0.0;
-   	    body.s5 = 0.0;
-        bodies[gid] = body;
+    // if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
+    // {
+    //     body.s4 = 0.0;
+   	//     body.s5 = 0.0;
+    //     bodies[gid] = body;
 
-        bounding_box.s5 = 0;
-        bounds[gid] = bounding_box;
-        return;
-    }
+    //     bounding_box.s5 = 0;
+    //     bounds[gid] = bounding_box;
+    //     return;
+    // }
 
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
@@ -63,8 +63,11 @@ __kernel void integrate(
    	acc.y = acc.y * dt;
 
     // reset acceleration to zero for the next frame
-    body.s4 = 0.0;
-   	body.s5 = 0.0;
+    //if (gid != 0)
+    //{
+        body.s4 = 0.0;
+   	    body.s5 = 0.0;
+    //}
 
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;

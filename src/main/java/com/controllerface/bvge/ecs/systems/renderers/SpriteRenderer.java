@@ -86,4 +86,10 @@ public class SpriteRenderer extends GameSystem
 
         render();
     }
+
+    @Override
+    public void shutdown()
+    {
+
+    }
 }

@@ -1027,10 +1027,6 @@ public class OpenCL
         long pointBufsize = (long)Sizeof.cl_float * pointsSize;
         long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
 
-        // Allocate the memory objects for the input- and output data
-        // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
-        // directly p2 thr destination p1 the result fo the kernel call. This avoids
-        // needing p2 use an intermediate buffer and System.arrayCopy() calls.
         cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
         cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
         cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);

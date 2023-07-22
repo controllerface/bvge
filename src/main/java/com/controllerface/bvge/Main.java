@@ -44,7 +44,7 @@ public class Main
             public static final int POINT = 4;
             // Bodies are composed of one or more points
 
-            // float3
+            // float4
             public static final int EDGE = 4;
             // Edges define constraints that are set between two vertices
 

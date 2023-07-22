@@ -113,6 +113,7 @@ public class RectRenderBatch implements Comparable<RectRenderBatch>
 
     public void render()
     {
+        glLineWidth(1.0f);
         for (int i = 0; i < numLines; i++)
         {
             loadVertexProperties(i);

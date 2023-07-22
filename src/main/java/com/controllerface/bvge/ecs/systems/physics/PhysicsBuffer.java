@@ -30,7 +30,7 @@ public class PhysicsBuffer
     {
         key_map.setDoTransfer(false);
         key_bank.setDoTransfer(false);
-        key_counts.setDoTransfer(false);
+        //key_counts.setDoTransfer(false);
         key_offsets.setDoTransfer(false);
         if (candidates != null) candidates.setDoTransfer(false);
 
@@ -55,12 +55,48 @@ public class PhysicsBuffer
 
     public void transferFinish()
     {
+        bounds.setReleaseAfterTransfer(false);
+        bodies.setReleaseAfterTransfer(false);
+        points.setReleaseAfterTransfer(false);
+
         bounds.transfer();
         bodies.transfer();
         points.transfer();
+    }
 
-        bodies = null;
-        bounds = null;
-        points = null;
+    public void shutdown()
+    {
+        if (bounds != null)
+        {
+            bounds.release();
+        }
+        if (bodies != null)
+        {
+            bodies.release();
+        }
+        if (points != null)
+        {
+            points.release();
+        }
+        if (key_map != null)
+        {
+            key_map.release();
+        }
+        if (key_bank != null)
+        {
+            key_bank.release();
+        }
+        if (key_counts != null)
+        {
+            key_counts.release();
+        }
+        if (key_offsets != null)
+        {
+            key_offsets.release();
+        }
+        if (candidates != null)
+        {
+            candidates.release();
+        }
     }
 }

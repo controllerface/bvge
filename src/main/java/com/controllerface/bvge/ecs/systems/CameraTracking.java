@@ -34,4 +34,10 @@ public class CameraTracking extends GameSystem
         camera.position.y = new_y;
         spatialPartition.updateOrigin(new_origin_x, new_origin_y);
     }
+
+    @Override
+    public void shutdown()
+    {
+
+    }
 }

@@ -60,6 +60,8 @@ public class Window
         init();
         loop();
 
+        ecs.shutdown();
+
         glfwFreeCallbacks(glfwWindow);
         glfwDestroyWindow(glfwWindow);
 

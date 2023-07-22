@@ -13,8 +13,8 @@ public class VerletPhysics extends GameSystem
 {
     private final float TARGET_FPS = 60.0f;
     private final float TICK_RATE = 1.0f / TARGET_FPS;
-    private final int SUB_STEPS = 2;
-    private final int EDGE_STEPS = 4;
+    private final int SUB_STEPS = 4;
+    private final int EDGE_STEPS = 2;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.
@@ -26,11 +26,12 @@ public class VerletPhysics extends GameSystem
     //  In this way, friction is a "status effect" that is cleared every frame
     //  and applied when contact occurs.
     private final float GRAVITY_X = 0;
-    private final float GRAVITY_Y = 0;//-(9.8f * 100);
+    private final float GRAVITY_Y = -(9.8f * SUB_STEPS) * 50;
     private final float FRICTION = .980f;
 
-
     private final SpatialPartition spatialPartition;
+    private final PhysicsBuffer physicsBuffer;
+
     /**
      * These buffers are reused each tick p2 avoid creating a new one every frame and for each object.
      * They should always be zeroed before each use.
@@ -41,18 +42,20 @@ public class VerletPhysics extends GameSystem
     {
         super(ecs);
         this.spatialPartition = spatialPartition;
+        this.physicsBuffer = new PhysicsBuffer();
     }
 
     private void updateControllableBodies()
     {
-        var cntro = ecs.getComponents(Component.ControlPoints);
-        for (Map.Entry<String, GameComponent> entry : cntro.entrySet())
+        var components = ecs.getComponents(Component.ControlPoints);
+        for (Map.Entry<String, GameComponent> entry : components.entrySet())
         {
             String entity = entry.getKey();
-            var b = ecs.getComponentFor(entity, Component.RigidBody2D);
-            FBody2D body = Component.RigidBody2D.coerce(b);
             GameComponent component = entry.getValue();
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
+
+            var b = ecs.getComponentFor(entity, Component.RigidBody2D);
+            FBody2D body = Component.RigidBody2D.coerce(b);
             vectorBuffer1.zero();
             if (controlPoints.isLeft())
             {
@@ -71,6 +74,19 @@ public class VerletPhysics extends GameSystem
                 vectorBuffer1.y -= body.force();
             }
             body.addAcc(vectorBuffer1);
+        }
+    }
+
+    private void zeroControllableBodies()
+    {
+        var components = ecs.getComponents(Component.ControlPoints);
+        for (Map.Entry<String, GameComponent> entry : components.entrySet())
+        {
+            String entity = entry.getKey();
+            var b = ecs.getComponentFor(entity, Component.RigidBody2D);
+            FBody2D body = Component.RigidBody2D.coerce(b);
+            vectorBuffer1.zero();
+            body.setAcc(vectorBuffer1);
         }
     }
 
@@ -110,9 +126,7 @@ public class VerletPhysics extends GameSystem
         // todo: need to account for this in the kernel somehow so it can be
         //  updated inside the sub-steps. Right now this is the last point before
         //  the memory is transferred out.
-        updateControllableBodies();
-
-        var physicsBuffer = new PhysicsBuffer();
+        //updateControllableBodies();
 
         this.accumulator += dt;
         while (this.accumulator >= TICK_RATE)
@@ -125,8 +139,9 @@ public class VerletPhysics extends GameSystem
             }
         }
 
-        physicsBuffer.transferFinish();
 
+        physicsBuffer.transferFinish();
+        //zeroControllableBodies();
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)
         {
@@ -139,5 +154,11 @@ public class VerletPhysics extends GameSystem
     public void run(float dt)
     {
         simulate(dt);
+    }
+
+    @Override
+    public void shutdown()
+    {
+        physicsBuffer.shutdown();
     }
 }

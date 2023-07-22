@@ -12,4 +12,6 @@ public abstract class GameSystem
     }
 
     abstract public void run(float dt);
+
+    abstract public void shutdown();
 }

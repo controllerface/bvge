@@ -48,7 +48,7 @@ public class TestGame extends GameMode
                 sprite2.setTexture(tex2);
                 sprite2.setHeight(32);
                 sprite2.setWidth(32);
-                //scomp2.setSprite(sprite2);
+                scomp2.setSprite(sprite2);
                 scomp2.setColor(new Vector4f(r,g,b,1));
                 var physicsObject = PhysicsObjects.simpleBox(x, y, size, npc);
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
@@ -114,10 +114,9 @@ public class TestGame extends GameMode
     {
         ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
-        ecs.registerSystem(new LineRenderer(ecs));
-
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
-        //ecs.registerSystem(new SpriteRenderer(ecs));
+        ecs.registerSystem(new LineRenderer(ecs));
+        ecs.registerSystem(new SpriteRenderer(ecs));
 
         //ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
     }
@@ -129,9 +128,9 @@ public class TestGame extends GameMode
         //genNPCs(100, 10f, 10f, 2100, 2100);
         //genNPCs(100, 10f, 10f, 1000, -1000);
         //genNPCs(100, 10f, 10f, -1500, -1500);
-        genNPCs(100, 10f, 10f, -100, 1500);
-        genNPCs(3, 10f, 10f, 100, 300);
-        genFloor(150, 25f, 25f, -500, -40);
+        genNPCs(100, 2f, 3f, 50, 2500);
+        genNPCs(3, 15f, 10f, 100, 300);
+        genFloor(500, 5f, 5f, -500, -40);
 
         loadSystems();
     }
@@ -149,6 +148,7 @@ public class TestGame extends GameMode
     @Override
     public void resizeSpatialMap(int width, int height)
     {
+        // todo: buffer resize operations and then apply ONLY after a frame is done rendering
         spatialPartition.resize(width, height);
     }
 }

@@ -150,6 +150,7 @@ public class BoxRenderBatch implements Comparable<BoxRenderBatch>
 
     public void render()
     {
+        glLineWidth(0.2f);
         //boolean rebuffer= false;
         for (int i = 0; i < numLines; i++)
         {

@@ -81,4 +81,10 @@ public class BoundingBoxRenderer extends GameSystem
         }
         render();
     }
+
+    @Override
+    public void shutdown()
+    {
+
+    }
 }
