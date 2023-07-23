@@ -59,8 +59,8 @@ __kernel void integrate(
         acc.x += gravity.x;
         acc.y += gravity.y;
     }
-   	acc.x = acc.x * dt;
-   	acc.y = acc.y * dt;
+   	acc.x = acc.x * (dt * dt);
+   	acc.y = acc.y * (dt * dt);
 
     // reset acceleration to zero for the next frame
     body.s4 = 0.0;

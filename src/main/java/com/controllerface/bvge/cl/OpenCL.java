@@ -34,13 +34,14 @@ public class OpenCL
     static String func_project_polygon      = read_src("functions/project_polygon.cl");
     static String func_polygon_distance     = read_src("functions/polygon_distance.cl");
     static String func_edge_contact         = read_src("functions/edge_contact.cl");
-    static String func_atomic_add_float     = read_src("functions/atomic_add_float.cl");
 
     /**
      * Core kernel files
      */
     static String kern_integrate            = read_src("kernels/integrate.cl");
-    static String kern_collide              = read_src("kernels/collide.cl");
+    static String kern_sat_collide          = read_src("kernels/sat_collide.cl");
+    static String kern_aabb_collide         = read_src("kernels/aabb_collide.cl");
+
     static String kern_scan_key_bank        = read_src("kernels/scan_key_bank.cl");
     static String kern_scan_int_array       = read_src("kernels/scan_int_array.cl");
     static String kern_scan_int_array_out   = read_src("kernels/scan_int_array_out.cl");
@@ -54,11 +55,11 @@ public class OpenCL
      * Kernel function names
      */
     static String kn_locate_in_bounds                   = "locate_in_bounds";
-    static String kn_compute_matches                    = "compute_matches";
     static String kn_count_candidates                   = "count_candidates";
     static String kn_finalize_candidates                = "finalize_candidates";
     static String kn_integrate                          = "integrate";
-    static String kn_collide                            = "collide";
+    static String kn_sat_collide                        = "sat_collide";
+    static String kn_aabb_collide                       = "aabb_collide";
     static String kn_scan_bounds_single_block           = "scan_bounds_single_block";
     static String kn_scan_bounds_multi_block            = "scan_bounds_multi_block";
     static String kn_complete_bounds_multi_block        = "complete_bounds_multi_block";
@@ -80,7 +81,8 @@ public class OpenCL
      */
     static cl_program p_locate_in_bounds;
     static cl_program p_integrate;
-    static cl_program p_collide;
+    static cl_program p_sat_collide;
+    static cl_program p_aabb_collide;
     static cl_program p_scan_key_bank;
     static cl_program p_scan_int_array;
     static cl_program p_scan_int_array_out;
@@ -93,11 +95,11 @@ public class OpenCL
      * CL Kernels
      */
     static cl_kernel k_locate_in_bounds;
-    static cl_kernel k_compute_matches;
     static cl_kernel k_count_candidates;
     static cl_kernel k_finalize_candidates;
     static cl_kernel k_integrate;
-    static cl_kernel k_collide;
+    static cl_kernel k_sat_collide;
+    static cl_kernel k_aabb_collide;
     static cl_kernel k_scan_bounds_single_block;
     static cl_kernel k_scan_bounds_multi_block;
     static cl_kernel k_complete_bounds_multi_block;
@@ -120,9 +122,9 @@ public class OpenCL
     static List<cl_program> loaded_programs = new ArrayList<>();
     static List<cl_kernel> loaded_kernels = new ArrayList<>();
 
-    private static int wx = 256; // todo: query hardware for this limit
-    private static int m = wx * 2;
-    private static long local_work_default[] = new long[]{wx};
+    private static final int wx = 256; // todo: query hardware for this limit
+    private static final int m = wx * 2;
+    private static final long[] local_work_default = new long[]{wx};
     private static cl_device_id[] device_init()
     {
         // The platform, device type and device number
@@ -193,7 +195,7 @@ public class OpenCL
         return kernel;
     }
 
-    private static int work_group_size(int n)
+    private static int work_group_count(int n)
     {
         return (int) Math.ceil((float)n / (float)m);
     }
@@ -207,11 +209,16 @@ public class OpenCL
         /*
          * Programs
          */
-        p_collide = cl_p(
+        p_sat_collide = cl_p(
             func_project_polygon,
             func_polygon_distance,
             func_edge_contact,
-            kern_collide);
+            kern_sat_collide);
+
+        p_aabb_collide = cl_p(
+            func_do_bounds_intersect,
+            func_calculate_key_index,
+            kern_aabb_collide);
 
         p_integrate = cl_p(func_is_in_bounds,
             func_get_extents,
@@ -249,9 +256,9 @@ public class OpenCL
          * Kernels
          */
         k_integrate                         = cl_k(p_integrate, kn_integrate);
-        k_collide                           = cl_k(p_collide, kn_collide);
+        k_sat_collide                       = cl_k(p_sat_collide, kn_sat_collide);
+        k_aabb_collide                      = cl_k(p_aabb_collide, kn_aabb_collide);
         k_locate_in_bounds                  = cl_k(p_locate_in_bounds, kn_locate_in_bounds);
-        k_compute_matches                   = cl_k(p_locate_in_bounds, kn_compute_matches);
         k_count_candidates                  = cl_k(p_locate_in_bounds, kn_count_candidates);
         k_finalize_candidates               = cl_k(p_locate_in_bounds, kn_finalize_candidates);
         k_scan_bounds_single_block          = cl_k(p_scan_key_bank, kn_scan_bounds_single_block);
@@ -279,14 +286,47 @@ public class OpenCL
         clReleaseContext(context);
     }
 
+    public static void makeBuffers(PhysicsBuffer physicsBuffer)
+    {
+        int bodiesSize = Main.Memory.bodyLength();
+        int pointsSize = Main.Memory.pointLength();
+        int boundsSize = Main.Memory.boundsLength();
+        int edgesSize = Main.Memory.edgesLength();
+
+        var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
+        var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
+        var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
+        var edgesBuffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edgesSize);
+
+        Pointer srcBodies = Pointer.to(bodyBuffer);
+        Pointer srcPoints = Pointer.to(pointBuffer);
+        Pointer srcBounds = Pointer.to(boundsBuffer);
+        Pointer srcEdges = Pointer.to(edgesBuffer);
+
+        long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
+        long pointBufsize = (long)Sizeof.cl_float * pointsSize;
+        long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
+        long edgesBufsize = (long) Sizeof.cl_float * edgesSize;
+
+        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
+        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
+        cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
+        cl_mem srcMemEdges = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, edgesBufsize, srcEdges, null);
+
+
+        physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
+        physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
+        physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
+        physicsBuffer.edges = new MemoryBuffer(srcMemEdges, edgesBufsize, srcEdges);
+    }
 
     public static void finalize_candidates(PhysicsBuffer physicsBuffer)
     {
-        if (physicsBuffer.get_match_count() > 0)
+        if (physicsBuffer.get_candidate_count() > 0)
         {
-            int[] finals = new int[physicsBuffer.get_match_count() * 2];
+            int[] finals = new int[physicsBuffer.get_candidate_count() * 2];
             Pointer dst_finals = Pointer.to(finals);
-            long final_buf_size = (long)Sizeof.cl_int2 * physicsBuffer.get_match_count();
+            long final_buf_size = (long)Sizeof.cl_int2 * physicsBuffer.get_candidate_count();
             cl_mem finals_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, final_buf_size, dst_finals, null);
             Pointer src_finals = Pointer.to(finals_data);
 
@@ -311,7 +351,7 @@ public class OpenCL
         }
     }
 
-    public static void find_matches(PhysicsBuffer physicsBuffer)
+    public static void aabb_collide(PhysicsBuffer physicsBuffer)
     {
         int[] matches = new int[physicsBuffer.get_candidate_match_count()];
         long matches_buf_size = (long)Sizeof.cl_int * matches.length;
@@ -330,20 +370,20 @@ public class OpenCL
         cl_mem size_data2 = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size2, null);
         Pointer src_size2 = Pointer.to(size_data2);
 
-        clSetKernelArg(k_compute_matches, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
-        clSetKernelArg(k_compute_matches, 1, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
-        clSetKernelArg(k_compute_matches, 2, Sizeof.cl_mem, physicsBuffer.candidate_offsets.pointer());
-        clSetKernelArg(k_compute_matches, 3, Sizeof.cl_mem, physicsBuffer.key_map.pointer());
-        clSetKernelArg(k_compute_matches, 4, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
-        clSetKernelArg(k_compute_matches, 5, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
-        clSetKernelArg(k_compute_matches, 6, Sizeof.cl_mem, physicsBuffer.key_offsets.pointer());
-        clSetKernelArg(k_compute_matches, 7, Sizeof.cl_mem, physicsBuffer.matches.pointer());
-        clSetKernelArg(k_compute_matches, 8, Sizeof.cl_mem, physicsBuffer.matches_used.pointer());
-        clSetKernelArg(k_compute_matches, 9, Sizeof.cl_mem, src_size2);
-        clSetKernelArg(k_compute_matches, 10, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
-        clSetKernelArg(k_compute_matches, 11, Sizeof.cl_int, physicsBuffer.key_count_length);
+        clSetKernelArg(k_aabb_collide, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+        clSetKernelArg(k_aabb_collide, 1, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
+        clSetKernelArg(k_aabb_collide, 2, Sizeof.cl_mem, physicsBuffer.candidate_offsets.pointer());
+        clSetKernelArg(k_aabb_collide, 3, Sizeof.cl_mem, physicsBuffer.key_map.pointer());
+        clSetKernelArg(k_aabb_collide, 4, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
+        clSetKernelArg(k_aabb_collide, 5, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
+        clSetKernelArg(k_aabb_collide, 6, Sizeof.cl_mem, physicsBuffer.key_offsets.pointer());
+        clSetKernelArg(k_aabb_collide, 7, Sizeof.cl_mem, physicsBuffer.matches.pointer());
+        clSetKernelArg(k_aabb_collide, 8, Sizeof.cl_mem, physicsBuffer.matches_used.pointer());
+        clSetKernelArg(k_aabb_collide, 9, Sizeof.cl_mem, src_size2);
+        clSetKernelArg(k_aabb_collide, 10, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
+        clSetKernelArg(k_aabb_collide, 11, Sizeof.cl_int, physicsBuffer.key_count_length);
 
-        clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
+        clEnqueueNDRangeKernel(commandQueue, k_aabb_collide, 1, null,
             new long[]{physicsBuffer.get_candidate_buffer_count()}, null, 0, null, null);
 
         clEnqueueReadBuffer(commandQueue, size_data2, CL_TRUE, 0,
@@ -351,11 +391,10 @@ public class OpenCL
 
         clReleaseMemObject(size_data2);
 
-        physicsBuffer.set_match_count(sz2[0]);
+        physicsBuffer.set_candidate_count(sz2[0]);
     }
 
-
-    public static void calculate_candidate_buffer(PhysicsBuffer physicsBuffer)
+    public static void count_matches(PhysicsBuffer physicsBuffer)
     {
         int n2 = physicsBuffer.get_candidate_buffer_count();
         int[] offsets = new int[physicsBuffer.get_candidate_buffer_count()];
@@ -368,7 +407,6 @@ public class OpenCL
         physicsBuffer.set_candidate_match_count(match_count);
 
     }
-
 
     public static void count_candidates(PhysicsBuffer physicsBuffer)
     {
@@ -526,410 +564,41 @@ public class OpenCL
         spatialPartition.resizeBank(bank_size);
     }
 
-    private static void scan_int(cl_mem d_data, int n)
+    public static void integrate(float delta_time, PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
     {
-        int k = work_group_size(n);
-        if (k == 1)
-        {
-            scan_single_block_int(d_data, n);
-        }
-        else
-        {
-            scan_multi_block_int(d_data, n, k);
-        }
-    }
-
-    private static void scan_int_out(cl_mem d_data, cl_mem o_data, int n)
-    {
-        int k = work_group_size(n);
-        if (k == 1)
-        {
-            scan_single_block_int_out(d_data, o_data, n);
-        }
-        else
-        {
-            scan_multi_block_int_out(d_data, o_data, n, k);
-        }
-    }
-
-    private static int scan_key_bounds(cl_mem d_data, int n)
-    {
-        int k = work_group_size(n);
-        if (k == 1)
-        {
-            return scan_single_block_key(d_data, n);
-        }
-        else
-        {
-            return scan_multi_block_key(d_data, n, k);
-        }
-    }
-
-    private static int scan_key_candidates(cl_mem d_data, cl_mem o_data, int n)
-    {
-        int k = work_group_size(n);
-        if (k == 1)
-        {
-            return scan_single_block_candidates_out(d_data, o_data, n);
-        }
-        else
-        {
-            return scan_multi_block_candidates_out(d_data, o_data, n, k);
-        }
-    }
-
-    private static void scan_single_block_int(cl_mem d_data, int n)
-    {
-        // set up buffers
-        int localBufferSize = Sizeof.cl_int * m;
-        Pointer src_data = Pointer.to(d_data);
-
-        // pass in arguments
-        clSetKernelArg(k_scan_int_single_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_int_single_block, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_int_single_block, 2, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_int_single_block, 1, null,
-            local_work_default, local_work_default, 0, null, null);
-    }
-
-    private static void scan_multi_block_int(cl_mem d_data, int n, int k)
-    {
-        // set up buffers
-        int localBufferSize = Sizeof.cl_int * m;
-        int gx = k * m;
-        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
-        int[] partial_sums = new int[k * 2];
-        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
-        Pointer src_data = Pointer.to(d_data);
-        Pointer src_part = Pointer.to(p_data);
-
-        // pass in arguments
-        clSetKernelArg(k_scan_int_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_int_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_int_multi_block, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_scan_int_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_int_multi_block, 1, null,
-            new long[]{gx}, local_work_default, 0, null, null);
-
-        // do scan on block sums
-        int n2 = partial_sums.length;
-        scan_int(p_data, n2);
-
-        // pass in arguments
-        clSetKernelArg(k_complete_int_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_complete_int_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_complete_int_multi_block, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_complete_int_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_complete_int_multi_block, 1, null,
-            new long[]{gx}, local_work_default, 0, null, null);
-
-        clReleaseMemObject(p_data);
-    }
-
-    private static void scan_single_block_int_out(cl_mem d_data, cl_mem o_data, int n)
-    {
-        // set up buffers
-        int localBufferSize = Sizeof.cl_int * m;
-        Pointer src_data = Pointer.to(d_data);
-        Pointer dst_data = Pointer.to(o_data);
-
-        // pass in arguments
-        clSetKernelArg(k_scan_int_single_block_out, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_int_single_block_out, 2, Sizeof.cl_mem, dst_data);
-        clSetKernelArg(k_scan_int_single_block_out, 2, localBufferSize,null);
-        clSetKernelArg(k_scan_int_single_block_out, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_int_single_block_out, 1, null,
-            local_work_default, local_work_default, 0, null, null);
-    }
-
-    private static void scan_multi_block_int_out(cl_mem d_data, cl_mem o_data, int n, int k)
-    {
-        // set up buffers
-        int localBufferSize = Sizeof.cl_int * m;
-        int gx = k * m;
-        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
-        int[] partial_sums = new int[k * 2];
-        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
-        Pointer src_data = Pointer.to(d_data);
-        Pointer src_part = Pointer.to(p_data);
-
-        Pointer dst_data = Pointer.to(o_data);
-
-        // pass in arguments
-        clSetKernelArg(k_scan_int_multi_block_out, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_int_multi_block_out, 1, Sizeof.cl_mem, dst_data);
-        clSetKernelArg(k_scan_int_multi_block_out, 2, localBufferSize,null);
-        clSetKernelArg(k_scan_int_multi_block_out, 3, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_scan_int_multi_block_out, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_int_multi_block_out, 1, null,
-            new long[]{gx}, local_work_default, 0, null, null);
-
-        // do scan on block sums
-        int n2 = partial_sums.length;
-        scan_int(p_data, n2);
-
-        // pass in arguments
-        clSetKernelArg(k_complete_int_multi_block_out, 0, Sizeof.cl_mem, dst_data);
-        clSetKernelArg(k_complete_int_multi_block_out, 1, localBufferSize,null);
-        clSetKernelArg(k_complete_int_multi_block_out, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_complete_int_multi_block_out, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_complete_int_multi_block_out, 1, null,
-            new long[]{gx}, local_work_default, 0, null, null);
-
-        clReleaseMemObject(p_data);
-    }
-
-    private static int scan_single_block_candidates_out(cl_mem d_data, cl_mem o_data, int n)
-    {
-        // set up buffers
-        int localBufferSize = Sizeof.cl_int * m;
-        Pointer src_data = Pointer.to(d_data);
-        Pointer dst_data = Pointer.to(o_data);
-
-        // input/output buffers for final size value
-        int[] sz = new int[1];
-        Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
-        Pointer src_size = Pointer.to(size_data);
-
-        // pass in arguments
-        clSetKernelArg(k_scan_candidates_single_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_candidates_single_block, 1, Sizeof.cl_mem, dst_data);
-        clSetKernelArg(k_scan_candidates_single_block, 2, Sizeof.cl_mem, src_size);
-        clSetKernelArg(k_scan_candidates_single_block, 3, localBufferSize,null);
-        clSetKernelArg(k_scan_candidates_single_block, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_candidates_single_block, 1, null,
-            local_work_default, local_work_default, 0, null, null);
-
-        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
-            Sizeof.cl_int, dst_size, 0, null, null);
-
-        clReleaseMemObject(size_data);
-
-        return sz[0];
-    }
-
-    private static int scan_multi_block_candidates_out(cl_mem d_data, cl_mem o_data, int n, int k)
-    {
-        // set up buffers
-        int localBufferSize = Sizeof.cl_int * m;
-        int gx = k * m;
-        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
-        int[] partial_sums = new int[k * 2];
-        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
-        Pointer src_data = Pointer.to(d_data);
-        Pointer src_part = Pointer.to(p_data);
-
-        Pointer dst_data = Pointer.to(o_data);
-
-        // pass in arguments
-        clSetKernelArg(k_scan_candidates_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_candidates_multi_block, 1, Sizeof.cl_mem, dst_data);
-        clSetKernelArg(k_scan_candidates_multi_block, 2, localBufferSize,null);
-        clSetKernelArg(k_scan_candidates_multi_block, 3, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_scan_candidates_multi_block, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_candidates_multi_block, 1, null,
-            new long[]{gx}, local_work_default, 0, null, null);
-
-        // do scan on block sums
-        int n2 = partial_sums.length;
-        scan_int(p_data, n2);
-
-        // input/output buffers for final size value
-        int[] sz = new int[1];
-        Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
-        Pointer src_size = Pointer.to(size_data);
-
-        // pass in arguments
-        clSetKernelArg(k_complete_candidates_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_complete_candidates_multi_block, 1, Sizeof.cl_mem, dst_data);
-        clSetKernelArg(k_complete_candidates_multi_block, 2, Sizeof.cl_mem, src_size);
-        clSetKernelArg(k_complete_candidates_multi_block, 3, localBufferSize,null);
-        clSetKernelArg(k_complete_candidates_multi_block, 4, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_complete_candidates_multi_block, 5, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_complete_candidates_multi_block, 1, null,
-            new long[]{gx}, local_work_default, 0, null, null);
-
-        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
-            Sizeof.cl_int, dst_size, 0, null, null);
-
-        clReleaseMemObject(p_data);
-        clReleaseMemObject(size_data);
-
-        return sz[0];
-    }
-
-    private static int scan_single_block_key(cl_mem d_data, int n)
-    {
-        // set up buffers
-        int localBufferSize = Sizeof.cl_int * m;
-        Pointer src_data = Pointer.to(d_data);
-
-        // input/output buffers for final size value
-        int[] sz = new int[1];
-        Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
-        Pointer src_size = Pointer.to(size_data);
-
-        // pass in arguments
-        clSetKernelArg(k_scan_bounds_single_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_bounds_single_block, 1, Sizeof.cl_mem, src_size);
-        clSetKernelArg(k_scan_bounds_single_block, 2, localBufferSize,null);
-        clSetKernelArg(k_scan_bounds_single_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_bounds_single_block, 1, null,
-            local_work_default, local_work_default, 0, null, null);
-
-        // read out the calculated key bank size
-        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
-            Sizeof.cl_int, dst_size, 0, null, null);
-
-        clReleaseMemObject(size_data);
-
-        return sz[0];
-    }
-
-    private static int scan_multi_block_key(cl_mem d_data, int n, int k)
-    {
-        // set up buffers
-        int localBufferSize = Sizeof.cl_int * m;
-        int gx = k * m;
-        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
-        int[] partial_sums = new int[k * 2];
-        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
-        Pointer src_data = Pointer.to(d_data);
-        Pointer src_part = Pointer.to(p_data);
-
-        // pass in arguments
-        clSetKernelArg(k_scan_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_bounds_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_bounds_multi_block, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_scan_bounds_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_scan_bounds_multi_block, 1, null,
-            new long[]{gx}, local_work_default, 0, null, null);
-
-        // do scan on block sums
-        int n2 = partial_sums.length;
-        scan_int(p_data, n2);
-
-        // input/output buffers for final size value
-        int[] sz = new int[1];
-        Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
-        Pointer src_size = Pointer.to(size_data);
-
-        // pass in arguments
-        clSetKernelArg(k_complete_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_complete_bounds_multi_block, 1, Sizeof.cl_mem, src_size);
-        clSetKernelArg(k_complete_bounds_multi_block, 2, localBufferSize,null);
-        clSetKernelArg(k_complete_bounds_multi_block, 3, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_complete_bounds_multi_block, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
-
-        // call kernel
-        clEnqueueNDRangeKernel(commandQueue, k_complete_bounds_multi_block, 1, null,
-            new long[]{gx}, local_work_default, 0, null, null);
-
-        // read out the calculated key bank size
-        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
-            Sizeof.cl_int, dst_size, 0, null, null);
-
-        clReleaseMemObject(size_data);
-        clReleaseMemObject(p_data);
-
-        return sz[0];
-    }
-
-
-
-
-    public static void integrate(PhysicsBuffer physicsBuffer, float tick_rate, float gravity_x, float gravity_y, float friction, SpatialPartition spatialPartition)
-    {
-        //int bodiesSize = Main.Memory.bodyLength();
-        //int pointsSize = Main.Memory.pointLength();
-        //int boundsSize = Main.Memory.boundsLength();
-
-        //var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
-        //var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
-        //var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
-
-        // Set the work-item dimensions
-        long global_work_size[] = new long[]{Main.Memory.bodyCount()};
+        long[] global_work_size = new long[]{Main.Memory.bodyCount()};
         float[] args =
-        {
-            tick_rate * tick_rate,
-            spatialPartition.getX_spacing(),
-            spatialPartition.getY_spacing(),
-            spatialPartition.getX_origin(),
-            spatialPartition.getY_origin(),
-            spatialPartition.getWidth(),
-            spatialPartition.getHeight(),
-            (float)spatialPartition.getX_subdivisions(),
-            (float)spatialPartition.getY_subdivisions(),
-            gravity_x,
-            gravity_y,
-            friction
-        };
-        //Pointer srcBodies = Pointer.to(bodyBuffer);
-        //Pointer srcPoints = Pointer.to(pointBuffer);
-        //Pointer srcBounds = Pointer.to(boundsBuffer);
+            {
+                delta_time,
+                spatialPartition.getX_spacing(),
+                spatialPartition.getY_spacing(),
+                spatialPartition.getX_origin(),
+                spatialPartition.getY_origin(),
+                spatialPartition.getWidth(),
+                spatialPartition.getHeight(),
+                (float)spatialPartition.getX_subdivisions(),
+                (float)spatialPartition.getY_subdivisions(),
+                physicsBuffer.get_gravity_x(),
+                physicsBuffer.get_gravity_y(),
+                physicsBuffer.get_friction()
+            };
+
         Pointer srcDt = Pointer.to(FloatBuffer.wrap(args));
-
-        //long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
-        //long pointBufsize = (long)Sizeof.cl_float * pointsSize;
-        //long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
-
-        // Allocate the memory objects for the input- and output data
-        // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
-        // directly p2 thr destination p1 the result fo the kernel call. This avoids
-        // needing p2 use an intermediate buffer and System.arrayCopy() calls.
-        //cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
-        //cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
-        //cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
-
-        //physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
-        //physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
-        //physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
-
         cl_mem dtMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_float * args.length, srcDt, null);
 
-        // Set the arguments for the kernel
         int a = 0;
         clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
         clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
         clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
         clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(dtMem));
 
-        // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, k_integrate, 1, null,
             global_work_size, null, 0, null, null);
 
         clReleaseMemObject(dtMem);
     }
 
-
-    public static void collide(PhysicsBuffer physicsBuffer)
+    public static void sat_collide(PhysicsBuffer physicsBuffer)
     {
         if (physicsBuffer.candidates == null) return;
 
@@ -940,13 +609,13 @@ public class OpenCL
         long global_work_size[] = new long[]{candidatesSize / Main.Memory.Width.COLLISION};
 
         // Set the arguments for the kernel
-        clSetKernelArg(k_collide, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.candidates.memory()));
-        clSetKernelArg(k_collide, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
-        clSetKernelArg(k_collide, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
+        clSetKernelArg(k_sat_collide, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.candidates.memory()));
+        clSetKernelArg(k_sat_collide, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
+        clSetKernelArg(k_sat_collide, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
 
         // Execute the kernel
-        clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
-                global_work_size, null, 0, null, null);
+        clEnqueueNDRangeKernel(commandQueue, k_sat_collide, 1, null,
+            global_work_size, null, 0, null, null);
     }
 
     public static void resolve_constraints(PhysicsBuffer physicsBuffer, int edge_steps)
@@ -970,52 +639,300 @@ public class OpenCL
         }
     }
 
-    public static void makeBuffers(PhysicsBuffer physicsBuffer)
+    //#region Exclusive scan variants
+
+    private static void scan_int(cl_mem d_data, int n)
     {
-
-
-
-        // Set the work-item dimensions
-
-
-
-
-        // Allocate the memory objects for the input- and output data
-        // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
-        // directly p2 thr destination p1 the result fo the kernel call. This avoids
-        // needing p2 use an intermediate buffer and System.arrayCopy() calls.
-
-
-        int bodiesSize = Main.Memory.bodyLength();
-        int pointsSize = Main.Memory.pointLength();
-        int boundsSize = Main.Memory.boundsLength();
-        int edgesCount = Main.Memory.edgesCount();
-        int edgesSize = Main.Memory.edgesLength();
-
-        var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
-        var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
-        var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
-        var edgesBuffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edgesSize);
-
-        Pointer srcBodies = Pointer.to(bodyBuffer);
-        Pointer srcPoints = Pointer.to(pointBuffer);
-        Pointer srcBounds = Pointer.to(boundsBuffer);
-        Pointer srcEdges = Pointer.to(edgesBuffer);
-
-        long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
-        long pointBufsize = (long)Sizeof.cl_float * pointsSize;
-        long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
-        long edgesBufsize = (long) Sizeof.cl_float4 * edgesCount;
-
-        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
-        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
-        cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
-        cl_mem srcMemEdges = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, edgesBufsize, srcEdges, null);
-
-
-        physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
-        physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
-        physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
-        physicsBuffer.edges = new MemoryBuffer(srcMemEdges, edgesBufsize, srcEdges);
+        int k = work_group_count(n);
+        if (k == 1)
+        {
+            scan_single_block_int(d_data, n);
+        }
+        else
+        {
+            scan_multi_block_int(d_data, n, k);
+        }
     }
+
+    private static void scan_int_out(cl_mem d_data, cl_mem o_data, int n)
+    {
+        int k = work_group_count(n);
+        if (k == 1)
+        {
+            scan_single_block_int_out(d_data, o_data, n);
+        }
+        else
+        {
+            scan_multi_block_int_out(d_data, o_data, n, k);
+        }
+    }
+
+    private static int scan_key_bounds(cl_mem d_data, int n)
+    {
+        int k = work_group_count(n);
+        if (k == 1)
+        {
+            return scan_single_block_key(d_data, n);
+        }
+        else
+        {
+            return scan_multi_block_key(d_data, n, k);
+        }
+    }
+
+    private static int scan_key_candidates(cl_mem d_data, cl_mem o_data, int n)
+    {
+        int k = work_group_count(n);
+        if (k == 1)
+        {
+            return scan_single_block_candidates_out(d_data, o_data, n);
+        }
+        else
+        {
+            return scan_multi_block_candidates_out(d_data, o_data, n, k);
+        }
+    }
+
+    private static void scan_single_block_int(cl_mem d_data, int n)
+    {
+        int localBufferSize = Sizeof.cl_int * m;
+        Pointer src_data = Pointer.to(d_data);
+
+        clSetKernelArg(k_scan_int_single_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_int_single_block, 1, localBufferSize,null);
+        clSetKernelArg(k_scan_int_single_block, 2, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_scan_int_single_block, 1, null,
+            local_work_default, local_work_default, 0, null, null);
+    }
+
+    private static void scan_multi_block_int(cl_mem d_data, int n, int k)
+    {
+        int localBufferSize = Sizeof.cl_int * m;
+        int gx = k * m;
+        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
+        int[] partial_sums = new int[k * 2];
+        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
+        Pointer src_data = Pointer.to(d_data);
+        Pointer src_part = Pointer.to(p_data);
+
+        clSetKernelArg(k_scan_int_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_int_multi_block, 1, localBufferSize,null);
+        clSetKernelArg(k_scan_int_multi_block, 2, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_scan_int_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_scan_int_multi_block, 1, null,
+            new long[]{gx}, local_work_default, 0, null, null);
+
+        int n2 = partial_sums.length;
+        scan_int(p_data, n2);
+
+        clSetKernelArg(k_complete_int_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_complete_int_multi_block, 1, localBufferSize,null);
+        clSetKernelArg(k_complete_int_multi_block, 2, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_complete_int_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_complete_int_multi_block, 1, null,
+            new long[]{gx}, local_work_default, 0, null, null);
+
+        clReleaseMemObject(p_data);
+    }
+
+    private static void scan_single_block_int_out(cl_mem d_data, cl_mem o_data, int n)
+    {
+        int localBufferSize = Sizeof.cl_int * m;
+        Pointer src_data = Pointer.to(d_data);
+        Pointer dst_data = Pointer.to(o_data);
+
+        clSetKernelArg(k_scan_int_single_block_out, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_int_single_block_out, 2, Sizeof.cl_mem, dst_data);
+        clSetKernelArg(k_scan_int_single_block_out, 2, localBufferSize,null);
+        clSetKernelArg(k_scan_int_single_block_out, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_scan_int_single_block_out, 1, null,
+            local_work_default, local_work_default, 0, null, null);
+    }
+
+    private static void scan_multi_block_int_out(cl_mem d_data, cl_mem o_data, int n, int k)
+    {
+        int localBufferSize = Sizeof.cl_int * m;
+        int gx = k * m;
+        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
+        int[] partial_sums = new int[k * 2];
+        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
+        Pointer src_data = Pointer.to(d_data);
+        Pointer src_part = Pointer.to(p_data);
+
+        Pointer dst_data = Pointer.to(o_data);
+
+        clSetKernelArg(k_scan_int_multi_block_out, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_int_multi_block_out, 1, Sizeof.cl_mem, dst_data);
+        clSetKernelArg(k_scan_int_multi_block_out, 2, localBufferSize,null);
+        clSetKernelArg(k_scan_int_multi_block_out, 3, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_scan_int_multi_block_out, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_scan_int_multi_block_out, 1, null,
+            new long[]{gx}, local_work_default, 0, null, null);
+
+        int n2 = partial_sums.length;
+        scan_int(p_data, n2);
+
+        clSetKernelArg(k_complete_int_multi_block_out, 0, Sizeof.cl_mem, dst_data);
+        clSetKernelArg(k_complete_int_multi_block_out, 1, localBufferSize,null);
+        clSetKernelArg(k_complete_int_multi_block_out, 2, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_complete_int_multi_block_out, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_complete_int_multi_block_out, 1, null,
+            new long[]{gx}, local_work_default, 0, null, null);
+
+        clReleaseMemObject(p_data);
+    }
+
+    private static int scan_single_block_candidates_out(cl_mem d_data, cl_mem o_data, int n)
+    {
+        int localBufferSize = Sizeof.cl_int * m;
+        Pointer src_data = Pointer.to(d_data);
+        Pointer dst_data = Pointer.to(o_data);
+
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        Pointer src_size = Pointer.to(size_data);
+
+        clSetKernelArg(k_scan_candidates_single_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_candidates_single_block, 1, Sizeof.cl_mem, dst_data);
+        clSetKernelArg(k_scan_candidates_single_block, 2, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_scan_candidates_single_block, 3, localBufferSize,null);
+        clSetKernelArg(k_scan_candidates_single_block, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_scan_candidates_single_block, 1, null,
+            local_work_default, local_work_default, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        clReleaseMemObject(size_data);
+
+        return sz[0];
+    }
+
+    private static int scan_multi_block_candidates_out(cl_mem d_data, cl_mem o_data, int n, int k)
+    {
+        int localBufferSize = Sizeof.cl_int * m;
+        int gx = k * m;
+        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
+        int[] partial_sums = new int[k * 2];
+        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
+        Pointer src_data = Pointer.to(d_data);
+        Pointer src_part = Pointer.to(p_data);
+
+        Pointer dst_data = Pointer.to(o_data);
+
+        clSetKernelArg(k_scan_candidates_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_candidates_multi_block, 1, Sizeof.cl_mem, dst_data);
+        clSetKernelArg(k_scan_candidates_multi_block, 2, localBufferSize,null);
+        clSetKernelArg(k_scan_candidates_multi_block, 3, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_scan_candidates_multi_block, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_scan_candidates_multi_block, 1, null,
+            new long[]{gx}, local_work_default, 0, null, null);
+
+        int n2 = partial_sums.length;
+        scan_int(p_data, n2);
+
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        Pointer src_size = Pointer.to(size_data);
+
+        clSetKernelArg(k_complete_candidates_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_complete_candidates_multi_block, 1, Sizeof.cl_mem, dst_data);
+        clSetKernelArg(k_complete_candidates_multi_block, 2, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_complete_candidates_multi_block, 3, localBufferSize,null);
+        clSetKernelArg(k_complete_candidates_multi_block, 4, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_complete_candidates_multi_block, 5, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_complete_candidates_multi_block, 1, null,
+            new long[]{gx}, local_work_default, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        clReleaseMemObject(p_data);
+        clReleaseMemObject(size_data);
+
+        return sz[0];
+    }
+
+    private static int scan_single_block_key(cl_mem d_data, int n)
+    {
+        int localBufferSize = Sizeof.cl_int * m;
+        Pointer src_data = Pointer.to(d_data);
+
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        Pointer src_size = Pointer.to(size_data);
+
+        clSetKernelArg(k_scan_bounds_single_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_bounds_single_block, 1, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_scan_bounds_single_block, 2, localBufferSize,null);
+        clSetKernelArg(k_scan_bounds_single_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_scan_bounds_single_block, 1, null,
+            local_work_default, local_work_default, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        clReleaseMemObject(size_data);
+
+        return sz[0];
+    }
+
+    private static int scan_multi_block_key(cl_mem d_data, int n, int k)
+    {
+        int localBufferSize = Sizeof.cl_int * m;
+        int gx = k * m;
+        long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
+        int[] partial_sums = new int[k * 2];
+        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
+        Pointer src_data = Pointer.to(d_data);
+        Pointer src_part = Pointer.to(p_data);
+
+        clSetKernelArg(k_scan_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_scan_bounds_multi_block, 1, localBufferSize,null);
+        clSetKernelArg(k_scan_bounds_multi_block, 2, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_scan_bounds_multi_block, 3, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_scan_bounds_multi_block, 1, null,
+            new long[]{gx}, local_work_default, 0, null, null);
+
+        int n2 = partial_sums.length;
+        scan_int(p_data, n2);
+
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        Pointer src_size = Pointer.to(size_data);
+
+        clSetKernelArg(k_complete_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
+        clSetKernelArg(k_complete_bounds_multi_block, 1, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_complete_bounds_multi_block, 2, localBufferSize,null);
+        clSetKernelArg(k_complete_bounds_multi_block, 3, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_complete_bounds_multi_block, 4, Sizeof.cl_int, Pointer.to(new int[]{n}));
+
+        clEnqueueNDRangeKernel(commandQueue, k_complete_bounds_multi_block, 1, null,
+            new long[]{gx}, local_work_default, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        clReleaseMemObject(size_data);
+        clReleaseMemObject(p_data);
+
+        return sz[0];
+    }
+
+    //#endregion
 }

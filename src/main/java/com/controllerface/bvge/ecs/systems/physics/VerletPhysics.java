@@ -43,6 +43,9 @@ public class VerletPhysics extends GameSystem
         super(ecs);
         this.spatialPartition = spatialPartition;
         this.physicsBuffer = new PhysicsBuffer();
+        this.physicsBuffer.set_gravity_x(GRAVITY_X);
+        this.physicsBuffer.set_gravity_y(GRAVITY_Y);
+        this.physicsBuffer.set_friction(FRICTION);
     }
 
     private void updateControllableBodies()
@@ -77,23 +80,16 @@ public class VerletPhysics extends GameSystem
         }
     }
 
-    private void zeroControllableBodies()
+    private void tickSimulation(float dt)
     {
-        var components = ecs.getComponents(Component.ControlPoints);
-        for (Map.Entry<String, GameComponent> entry : components.entrySet())
-        {
-            String entity = entry.getKey();
-            var b = ecs.getComponentFor(entity, Component.RigidBody2D);
-            FBody2D body = Component.RigidBody2D.coerce(b);
-            vectorBuffer1.zero();
-            body.setAcc(vectorBuffer1);
-        }
-    }
+        // todo: need to account for this in the kernel somehow so it can be
+        //  updated inside the sub-steps. Right now this is the last point before
+        //  the memory is transferred out.
+        updateControllableBodies();
 
-    private void tickSimulation(float dt, PhysicsBuffer physicsBuffer)
-    {
+
         // integration
-        OpenCL.integrate(physicsBuffer, dt, GRAVITY_X, GRAVITY_Y, FRICTION, spatialPartition);
+        OpenCL.integrate(dt, physicsBuffer, spatialPartition);
 
         // broad phase collision
         OpenCL.calculate_bank_offsets(physicsBuffer, spatialPartition);
@@ -102,12 +98,12 @@ public class VerletPhysics extends GameSystem
         OpenCL.generate_key_map(physicsBuffer, spatialPartition);
         OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
         OpenCL.count_candidates(physicsBuffer);
-        OpenCL.calculate_candidate_buffer(physicsBuffer);
-        OpenCL.find_matches(physicsBuffer);
+        OpenCL.count_matches(physicsBuffer);
+        OpenCL.aabb_collide(physicsBuffer);
         OpenCL.finalize_candidates(physicsBuffer);
 
         // narrow phase collision/reaction
-        OpenCL.collide(physicsBuffer);
+        OpenCL.sat_collide(physicsBuffer);
 
         // resolve edges
         OpenCL.resolve_constraints(physicsBuffer, EDGE_STEPS);
@@ -127,25 +123,18 @@ public class VerletPhysics extends GameSystem
             return;
         }
 
-        // todo: need to account for this in the kernel somehow so it can be
-        //  updated inside the sub-steps. Right now this is the last point before
-        //  the memory is transferred out.
-        updateControllableBodies();
-
         this.accumulator += dt;
         while (this.accumulator >= TICK_RATE)
         {
             float sub_step = TICK_RATE / SUB_STEPS;
             for (int i = 0; i < SUB_STEPS; i++)
             {
-                this.tickSimulation(sub_step, physicsBuffer);
+                this.tickSimulation(sub_step);
                 this.accumulator -= sub_step;
             }
         }
 
-
         physicsBuffer.transferFinish();
-        zeroControllableBodies();
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)
         {

@@ -26,7 +26,52 @@ public class PhysicsBuffer
 
     private int candidate_buffer_count = 0;
     private int match_buffer_count = 0;
-    private int match_count = 0;
+    private int candidate_count = 0;
+
+    private float tick_rate = 0f;
+    private float gravity_x = 0f;
+    private float gravity_y = 0f;
+    private float friction = 0f;
+
+    public float get_tick_rate()
+    {
+        return tick_rate;
+    }
+
+    public void set_tick_rate(float tick_rate)
+    {
+        this.tick_rate = tick_rate;
+    }
+
+    public float get_gravity_x()
+    {
+        return gravity_x;
+    }
+
+    public void set_gravity_x(float gravity_x)
+    {
+        this.gravity_x = gravity_x;
+    }
+
+    public float get_gravity_y()
+    {
+        return gravity_y;
+    }
+
+    public void set_gravity_y(float gravity_y)
+    {
+        this.gravity_y = gravity_y;
+    }
+
+    public float get_friction()
+    {
+        return friction;
+    }
+
+    public void set_friction(float friction)
+    {
+        this.friction = friction;
+    }
 
     public PhysicsBuffer()
     {
@@ -142,13 +187,13 @@ public class PhysicsBuffer
         this.match_buffer_count = match_count;
     }
 
-    public int get_match_count()
+    public int get_candidate_count()
     {
-        return match_count;
+        return candidate_count;
     }
 
-    public void set_match_count(int match_count)
+    public void set_candidate_count(int candidate_count)
     {
-        this.match_count = match_count;
+        this.candidate_count = candidate_count;
     }
 }
