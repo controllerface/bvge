@@ -28,20 +28,9 @@ public class PhysicsBuffer
     private int match_buffer_count = 0;
     private int candidate_count = 0;
 
-    private float tick_rate = 0f;
     private float gravity_x = 0f;
     private float gravity_y = 0f;
     private float friction = 0f;
-
-    public float get_tick_rate()
-    {
-        return tick_rate;
-    }
-
-    public void set_tick_rate(float tick_rate)
-    {
-        this.tick_rate = tick_rate;
-    }
 
     public float get_gravity_x()
     {
@@ -75,7 +64,7 @@ public class PhysicsBuffer
 
     public PhysicsBuffer()
     {
-        OpenCL.makeBuffers(this);
+        OpenCL.initPhysicsBuffer(this);
     }
 
     public void transferAll()
