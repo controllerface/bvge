@@ -9,6 +9,7 @@ import static org.jocl.CL.*;
 public class MemoryBuffer
 {
     private final cl_mem src;
+    private final Pointer pointer;
     private final long size;
     private final Pointer dst;
     private boolean doTransfer = true;
@@ -18,13 +19,14 @@ public class MemoryBuffer
     public MemoryBuffer(cl_mem src, long size, Pointer dst)
     {
         this.src = src;
+        this.pointer = Pointer.to(this.src);
         this.size = size;
         this.dst = dst;
     }
 
-    public void setDoTransfer(boolean doTransfer)
+    public void setCopyBuffer(boolean doCopy)
     {
-        this.doTransfer = doTransfer;
+        this.doTransfer = doCopy;
     }
 
     public void setReleaseAfterTransfer(boolean releaseAfterTransfer)
@@ -32,9 +34,14 @@ public class MemoryBuffer
         this.releaseAfterTransfer = releaseAfterTransfer;
     }
 
-    public cl_mem get_mem()
+    public cl_mem memory()
     {
         return src;
+    }
+
+    public Pointer pointer()
+    {
+        return pointer;
     }
 
     public long getSize()

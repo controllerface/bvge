@@ -13,8 +13,8 @@ public class VerletPhysics extends GameSystem
 {
     private final float TARGET_FPS = 60.0f;
     private final float TICK_RATE = 1.0f / TARGET_FPS;
-    private final int SUB_STEPS = 3;
-    private final int EDGE_STEPS = 3;
+    private final int SUB_STEPS = 4;
+    private final int EDGE_STEPS = 4;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.
@@ -101,8 +101,12 @@ public class VerletPhysics extends GameSystem
         OpenCL.calculate_map_offsets(physicsBuffer, spatialPartition);
         OpenCL.generate_key_map(physicsBuffer, spatialPartition);
         OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
+        OpenCL.count_candidates(physicsBuffer);
+        OpenCL.calculate_candidate_buffer(physicsBuffer);
+        OpenCL.find_matches(physicsBuffer);
+        OpenCL.finalize_candidates(physicsBuffer);
 
-        // narrow phase collision and reaction
+        // narrow phase collision/reaction
         OpenCL.collide(physicsBuffer);
 
         // resolve edges

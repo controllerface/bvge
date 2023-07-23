@@ -1,10 +1,6 @@
 package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.data.FBody2D;
-import com.controllerface.bvge.data.FEdge2D;
-import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.ecs.systems.physics.MemoryBuffer;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
@@ -14,7 +10,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.controllerface.bvge.cl.OpenCLUtils.read_src;
 import static org.jocl.CL.*;
@@ -285,134 +280,13 @@ public class OpenCL
     }
 
 
-
-    public static void locate_in_bounds(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    public static void finalize_candidates(PhysicsBuffer physicsBuffer)
     {
-        // step 1: locate objects that are within bounds
-        int x_subdivisions = spatialPartition.getX_subdivisions();
-        var pnt_subdivisions = Pointer.to(new int[]{x_subdivisions});
-
-        var pnt_counts_length = Pointer.to(new int[]{spatialPartition.getKey_counts().length});
-
-        int n = Main.Memory.bodyCount();
-        int[] in_bounds = new int[n];
-        var pnt_inbound = Pointer.to(in_bounds);
-        long inbound_buf_size = (long)Sizeof.cl_int * in_bounds.length;
-        cl_mem inbound_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-            inbound_buf_size, pnt_inbound, null);
-
-        Pointer src_inbound = Pointer.to(inbound_data);
-
-        int[] sz = new int[1];
-        Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size, null);
-        Pointer src_size = Pointer.to(size_data);
-
-        Pointer src_bounds = Pointer.to(physicsBuffer.bounds.get_mem());
-
-        clSetKernelArg(k_locate_in_bounds, 0, Sizeof.cl_mem, src_bounds);
-        clSetKernelArg(k_locate_in_bounds, 1, Sizeof.cl_mem, src_inbound);
-        clSetKernelArg(k_locate_in_bounds, 2, Sizeof.cl_mem, src_size);
-
-        clEnqueueNDRangeKernel(commandQueue, k_locate_in_bounds, 1, null,
-            new long[]{n}, null, 0, null, null);
-
-        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
-            Sizeof.cl_int, dst_size, 0, null, null);
-
-
-
-
-
-
-        // step 2: count candidates
-        int cand_count = sz[0];
-        long cand_buf_size = (long)Sizeof.cl_int2 * cand_count;
-        int[] candidates = new int[cand_count * 2];
-        Pointer pnt_cand = Pointer.to(candidates);
-        cl_mem cand_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, cand_buf_size, pnt_cand, null);
-        Pointer src_candidates = Pointer.to(cand_data);
-
-        Pointer src_key_bank = Pointer.to(physicsBuffer.key_bank.get_mem());
-        Pointer src_key_counts = Pointer.to(physicsBuffer.key_counts.get_mem());
-
-        clSetKernelArg(k_count_candidates, 0, Sizeof.cl_mem, src_bounds);
-        clSetKernelArg(k_count_candidates, 1, Sizeof.cl_mem, src_inbound);
-        clSetKernelArg(k_count_candidates, 2, Sizeof.cl_mem, src_key_bank);
-        clSetKernelArg(k_count_candidates, 3, Sizeof.cl_mem, src_key_counts);
-        clSetKernelArg(k_count_candidates, 4, Sizeof.cl_mem, src_candidates);
-        clSetKernelArg(k_count_candidates, 5, Sizeof.cl_int, pnt_subdivisions);
-        clSetKernelArg(k_count_candidates, 6, Sizeof.cl_int, pnt_counts_length);
-
-        clEnqueueNDRangeKernel(commandQueue, k_count_candidates, 1, null,
-            new long[]{cand_count}, null, 0, null, null);
-
-
-
-
-
-        // step 3: compute candidate buffer
-        int n2 = cand_count;
-        int[] offsets = new int[cand_count];
-        long offset_buf_size = (long)Sizeof.cl_int * n2;
-        Pointer pnt_offset = Pointer.to(offsets);
-        cl_mem offset_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, offset_buf_size, pnt_offset, null);
-        Pointer src_offsets = Pointer.to(offset_data);
-
-        int match_count = scan_key_candidates(cand_data, offset_data, n2);
-
-
-
-        // step 4:  find matches
-        int[] matches = new int[match_count];
-        long matches_buf_size = (long)Sizeof.cl_int * matches.length;
-        Pointer pnt_matches = Pointer.to(matches);
-        cl_mem matches_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matches_buf_size, pnt_matches, null);
-        Pointer src_matches = Pointer.to(matches_data);
-
-        int[] used = new int[cand_count];
-        long used_buf_size = (long)Sizeof.cl_int * used.length;
-        Pointer pnt_used = Pointer.to(used);
-        cl_mem used_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, used_buf_size, pnt_used, null);
-        Pointer src_used = Pointer.to(used_data);
-
-        Pointer src_key_map = Pointer.to(physicsBuffer.key_map.get_mem());
-        Pointer src_key_offsets = Pointer.to(physicsBuffer.key_offsets.get_mem());
-
-        int[] sz2 = new int[1];
-        Pointer dst_size2 = Pointer.to(sz2);
-        cl_mem size_data2 = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size2, null);
-        Pointer src_size2 = Pointer.to(size_data2);
-
-        clSetKernelArg(k_compute_matches, 0, Sizeof.cl_mem, src_bounds);
-        clSetKernelArg(k_compute_matches, 1, Sizeof.cl_mem, src_candidates);
-        clSetKernelArg(k_compute_matches, 2, Sizeof.cl_mem, src_offsets);
-        clSetKernelArg(k_compute_matches, 3, Sizeof.cl_mem, src_key_map);
-        clSetKernelArg(k_compute_matches, 4, Sizeof.cl_mem, src_key_bank);
-        clSetKernelArg(k_compute_matches, 5, Sizeof.cl_mem, src_key_counts);
-        clSetKernelArg(k_compute_matches, 6, Sizeof.cl_mem, src_key_offsets);
-        clSetKernelArg(k_compute_matches, 7, Sizeof.cl_mem, src_matches);
-        clSetKernelArg(k_compute_matches, 8, Sizeof.cl_mem, src_used);
-        clSetKernelArg(k_compute_matches, 9, Sizeof.cl_mem, src_size2);
-        clSetKernelArg(k_compute_matches, 10, Sizeof.cl_int, pnt_subdivisions);
-        clSetKernelArg(k_compute_matches, 11, Sizeof.cl_int, pnt_counts_length);
-
-        clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
-            new long[]{cand_count}, null, 0, null, null);
-
-        clEnqueueReadBuffer(commandQueue, size_data2, CL_TRUE, 0,
-            Sizeof.cl_int, dst_size2, 0, null, null);
-
-
-
-
-        // step 5: if there's any candidates, write them out
-        int[] finals = new int[0];
-        if (sz2[0]>0)
+        if (physicsBuffer.get_match_count() > 0)
         {
-            finals = new int[sz2[0] * 2];
+            int[] finals = new int[physicsBuffer.get_match_count() * 2];
             Pointer dst_finals = Pointer.to(finals);
-            long final_buf_size = (long)Sizeof.cl_int2 * sz2[0];
+            long final_buf_size = (long)Sizeof.cl_int2 * physicsBuffer.get_match_count();
             cl_mem finals_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, final_buf_size, dst_finals, null);
             Pointer src_finals = Pointer.to(finals_data);
 
@@ -423,26 +297,136 @@ public class OpenCL
 
             physicsBuffer.candidates = new MemoryBuffer(finals_data, final_buf_size, dst_finals);
 
-            clSetKernelArg(k_finalize_candidates, 0, Sizeof.cl_mem, src_candidates);
-            clSetKernelArg(k_finalize_candidates, 1, Sizeof.cl_mem, src_offsets);
-            clSetKernelArg(k_finalize_candidates, 2, Sizeof.cl_mem, src_matches);
-            clSetKernelArg(k_finalize_candidates, 3, Sizeof.cl_mem, src_used);
+            clSetKernelArg(k_finalize_candidates, 0, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
+            clSetKernelArg(k_finalize_candidates, 1, Sizeof.cl_mem, physicsBuffer.candidate_offsets.pointer());
+            clSetKernelArg(k_finalize_candidates, 2, Sizeof.cl_mem, physicsBuffer.matches.pointer());
+            clSetKernelArg(k_finalize_candidates, 3, Sizeof.cl_mem, physicsBuffer.matches_used.pointer());
             clSetKernelArg(k_finalize_candidates, 4, Sizeof.cl_mem, src_size3);
             clSetKernelArg(k_finalize_candidates, 5, Sizeof.cl_mem, src_finals);
 
             clEnqueueNDRangeKernel(commandQueue, k_finalize_candidates, 1, null,
-                new long[]{cand_count}, null, 0, null, null);
+                new long[]{physicsBuffer.get_candidate_buffer_count()}, null, 0, null, null);
 
             clReleaseMemObject(size_data3);
         }
+    }
 
-        clReleaseMemObject(matches_data);
-        clReleaseMemObject(used_data);
-        clReleaseMemObject(offset_data);
-        clReleaseMemObject(cand_data);
-        clReleaseMemObject(size_data);
+    public static void find_matches(PhysicsBuffer physicsBuffer)
+    {
+        int[] matches = new int[physicsBuffer.get_candidate_match_count()];
+        long matches_buf_size = (long)Sizeof.cl_int * matches.length;
+        Pointer pnt_matches = Pointer.to(matches);
+        cl_mem matches_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, matches_buf_size, pnt_matches, null);
+        physicsBuffer.matches = new MemoryBuffer(matches_data, matches_buf_size, pnt_matches);
+
+        int[] used = new int[physicsBuffer.get_candidate_buffer_count()];
+        long used_buf_size = (long)Sizeof.cl_int * used.length;
+        Pointer pnt_used = Pointer.to(used);
+        cl_mem used_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, used_buf_size, pnt_used, null);
+        physicsBuffer.matches_used = new MemoryBuffer(used_data, used_buf_size, pnt_used);
+
+        int[] sz2 = new int[1];
+        Pointer dst_size2 = Pointer.to(sz2);
+        cl_mem size_data2 = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size2, null);
+        Pointer src_size2 = Pointer.to(size_data2);
+
+        clSetKernelArg(k_compute_matches, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+        clSetKernelArg(k_compute_matches, 1, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
+        clSetKernelArg(k_compute_matches, 2, Sizeof.cl_mem, physicsBuffer.candidate_offsets.pointer());
+        clSetKernelArg(k_compute_matches, 3, Sizeof.cl_mem, physicsBuffer.key_map.pointer());
+        clSetKernelArg(k_compute_matches, 4, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
+        clSetKernelArg(k_compute_matches, 5, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
+        clSetKernelArg(k_compute_matches, 6, Sizeof.cl_mem, physicsBuffer.key_offsets.pointer());
+        clSetKernelArg(k_compute_matches, 7, Sizeof.cl_mem, physicsBuffer.matches.pointer());
+        clSetKernelArg(k_compute_matches, 8, Sizeof.cl_mem, physicsBuffer.matches_used.pointer());
+        clSetKernelArg(k_compute_matches, 9, Sizeof.cl_mem, src_size2);
+        clSetKernelArg(k_compute_matches, 10, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
+        clSetKernelArg(k_compute_matches, 11, Sizeof.cl_int, physicsBuffer.key_count_length);
+
+        clEnqueueNDRangeKernel(commandQueue, k_compute_matches, 1, null,
+            new long[]{physicsBuffer.get_candidate_buffer_count()}, null, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data2, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size2, 0, null, null);
+
         clReleaseMemObject(size_data2);
-        clReleaseMemObject(inbound_data);
+
+        physicsBuffer.set_match_count(sz2[0]);
+    }
+
+
+    public static void calculate_candidate_buffer(PhysicsBuffer physicsBuffer)
+    {
+        int n2 = physicsBuffer.get_candidate_buffer_count();
+        int[] offsets = new int[physicsBuffer.get_candidate_buffer_count()];
+        long offset_buf_size = (long)Sizeof.cl_int * n2;
+        Pointer pnt_offset = Pointer.to(offsets);
+        cl_mem offset_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, offset_buf_size, pnt_offset, null);
+        physicsBuffer.candidate_offsets = new MemoryBuffer(offset_data, offset_buf_size, pnt_offset);
+
+        int match_count = scan_key_candidates(physicsBuffer.candidate_counts.memory(), offset_data, n2);
+        physicsBuffer.set_candidate_match_count(match_count);
+
+    }
+
+
+    public static void count_candidates(PhysicsBuffer physicsBuffer)
+    {
+        long cand_buf_size = (long)Sizeof.cl_int2 * physicsBuffer.get_candidate_buffer_count();
+        int[] cand_counts = new int[physicsBuffer.get_candidate_buffer_count() * 2];
+        Pointer pnt_cand_counts = Pointer.to(cand_counts);
+        cl_mem cand_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, cand_buf_size, pnt_cand_counts, null);
+        physicsBuffer.candidate_counts = new MemoryBuffer(cand_data, cand_buf_size, pnt_cand_counts);
+
+        clSetKernelArg(k_count_candidates, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+        clSetKernelArg(k_count_candidates, 1, Sizeof.cl_mem, physicsBuffer.in_bounds.pointer());
+        clSetKernelArg(k_count_candidates, 2, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
+        clSetKernelArg(k_count_candidates, 3, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
+        clSetKernelArg(k_count_candidates, 4, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
+        clSetKernelArg(k_count_candidates, 5, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
+        clSetKernelArg(k_count_candidates, 6, Sizeof.cl_int, physicsBuffer.key_count_length);
+
+        clEnqueueNDRangeKernel(commandQueue, k_count_candidates, 1, null,
+            new long[]{physicsBuffer.get_candidate_buffer_count()}, null, 0, null, null);
+    }
+
+    public static void locate_in_bounds(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    {
+        // step 1: locate objects that are within bounds
+        int x_subdivisions = spatialPartition.getX_subdivisions();
+        physicsBuffer.x_sub_divisions = Pointer.to(new int[]{x_subdivisions});
+        physicsBuffer.key_count_length = Pointer.to(new int[]{spatialPartition.getKey_counts().length});
+
+        int n = Main.Memory.bodyCount();
+        int[] in_bounds = new int[n];
+        var pnt_inbound = Pointer.to(in_bounds);
+        long inbound_buf_size = (long)Sizeof.cl_int * in_bounds.length;
+        cl_mem inbound_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+            inbound_buf_size, pnt_inbound, null);
+
+        physicsBuffer.in_bounds = new MemoryBuffer(inbound_data, inbound_buf_size, pnt_inbound);
+
+        int[] sz = new int[1];
+        Pointer dst_size = Pointer.to(sz);
+        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size, null);
+        Pointer src_size = Pointer.to(size_data);
+
+        clSetKernelArg(k_locate_in_bounds, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+        clSetKernelArg(k_locate_in_bounds, 1, Sizeof.cl_mem, physicsBuffer.in_bounds.pointer());
+        clSetKernelArg(k_locate_in_bounds, 2, Sizeof.cl_mem, src_size);
+
+        clEnqueueNDRangeKernel(commandQueue, k_locate_in_bounds, 1, null,
+            new long[]{n}, null, 0, null, null);
+
+        clEnqueueReadBuffer(commandQueue, size_data, CL_TRUE, 0,
+            Sizeof.cl_int, dst_size, 0, null, null);
+
+        clReleaseMemObject(size_data);
+
+        physicsBuffer.set_candidate_buffer_count(sz[0]);
+
+
+
     }
 
     public static void generate_key_map(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
@@ -462,10 +446,10 @@ public class OpenCL
         cl_mem map_data = CL.clCreateBuffer(context, flags, map_buf_size, Pointer.to(minput), null);
         cl_mem counts_data = CL.clCreateBuffer(context, flags, counts_buf_size, Pointer.to(cinput), null);
 
-        Pointer src_data = Pointer.to(physicsBuffer.bounds.get_mem());
+        Pointer src_data = Pointer.to(physicsBuffer.bounds.memory());
         Pointer dst_map = Pointer.to(minput);
         Pointer src_map = Pointer.to(map_data);
-        Pointer src_offset = Pointer.to(physicsBuffer.key_offsets.get_mem());
+        Pointer src_offset = Pointer.to(physicsBuffer.key_offsets.memory());
         Pointer src_counts = Pointer.to(counts_data);
 
         physicsBuffer.key_map = new MemoryBuffer(map_data, map_buf_size, dst_map);
@@ -498,7 +482,7 @@ public class OpenCL
         cl_mem bank_data = CL.clCreateBuffer(context, flags, bank_buf_size, Pointer.to(binput), null);
         cl_mem counts_data = CL.clCreateBuffer(context, flags, counts_buf_size, Pointer.to(cinput), null);
 
-        Pointer src_data = Pointer.to(physicsBuffer.bounds.get_mem());
+        Pointer src_data = Pointer.to(physicsBuffer.bounds.memory());
         Pointer dst_bank = Pointer.to(key_bank);
         Pointer src_bank = Pointer.to(bank_data);
         Pointer dst_counts = Pointer.to(key_counts);
@@ -532,13 +516,13 @@ public class OpenCL
         cl_mem o_data = CL.clCreateBuffer(context, flags, data_buf_size, dst_data, null);
         physicsBuffer.key_offsets = new MemoryBuffer(o_data, data_buf_size, dst_data);
 
-        scan_int_out(physicsBuffer.key_counts.get_mem(), o_data, n);
+        scan_int_out(physicsBuffer.key_counts.memory(), o_data, n);
     }
 
     public static void calculate_bank_offsets(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
     {
         int n = Main.Memory.boundsCount();
-        int bank_size = scan_key_bounds(physicsBuffer.bounds.get_mem(), n);
+        int bank_size = scan_key_bounds(physicsBuffer.bounds.memory(), n);
         spatialPartition.resizeBank(bank_size);
     }
 
@@ -932,9 +916,9 @@ public class OpenCL
 
         // Set the arguments for the kernel
         int a = 0;
-        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.get_mem()));
-        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.get_mem()));
-        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.get_mem()));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
+        clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
         clSetKernelArg(k_integrate, a++, Sizeof.cl_mem, Pointer.to(dtMem));
 
         // Execute the kernel
@@ -956,9 +940,9 @@ public class OpenCL
         long global_work_size[] = new long[]{candidatesSize / Main.Memory.Width.COLLISION};
 
         // Set the arguments for the kernel
-        clSetKernelArg(k_collide, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.candidates.get_mem()));
-        clSetKernelArg(k_collide, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.get_mem()));
-        clSetKernelArg(k_collide, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.get_mem()));
+        clSetKernelArg(k_collide, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.candidates.memory()));
+        clSetKernelArg(k_collide, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
+        clSetKernelArg(k_collide, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
 
         // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, k_collide, 1, null,
@@ -968,66 +952,70 @@ public class OpenCL
     public static void resolve_constraints(PhysicsBuffer physicsBuffer, int edge_steps)
     {
         boolean lastStep;
-
-        int edgesCount = Main.Memory.edgesCount();
-        int edgesSize = Main.Memory.edgesLength();
-        var edgesBuffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edgesSize);
-
-        // Set the work-item dimensions
         long global_work_size[] = new long[]{Main.Memory.bodyCount()};
-        Pointer srcEdges = Pointer.to(edgesBuffer);
-        long edgesBufsize = (long) Sizeof.cl_float4 * edgesCount;
-
-        // Allocate the memory objects for the input- and output data
-        // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
-        // directly p2 thr destination p1 the result fo the kernel call. This avoids
-        // needing p2 use an intermediate buffer and System.arrayCopy() calls.
-        cl_mem srcMemEdges = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, edgesBufsize, srcEdges, null);
-
         for (int i = 0; i < edge_steps; i++)
         {
             lastStep = i == edge_steps - 1;
             int n = lastStep ? 1 : 0;
             int a = 0;
-            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.get_mem()));
-            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.get_mem()));
-            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.get_mem()));
-            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, Pointer.to(srcMemEdges));
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.points.pointer());
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.edges.pointer());
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
             // Execute the kernel
             clEnqueueNDRangeKernel(commandQueue, k_resolve_constraints, 1, null,
                 global_work_size, null, 0, null, null);
-
         }
-
-        clReleaseMemObject(srcMemEdges);
     }
 
     public static void makeBuffers(PhysicsBuffer physicsBuffer)
     {
+
+
+
+        // Set the work-item dimensions
+
+
+
+
+        // Allocate the memory objects for the input- and output data
+        // Note that the src B/P and dest B/P buffers will effectively be the same as the data is transferred
+        // directly p2 thr destination p1 the result fo the kernel call. This avoids
+        // needing p2 use an intermediate buffer and System.arrayCopy() calls.
+
+
         int bodiesSize = Main.Memory.bodyLength();
         int pointsSize = Main.Memory.pointLength();
         int boundsSize = Main.Memory.boundsLength();
+        int edgesCount = Main.Memory.edgesCount();
+        int edgesSize = Main.Memory.edgesLength();
 
         var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
         var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
         var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
+        var edgesBuffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edgesSize);
 
         Pointer srcBodies = Pointer.to(bodyBuffer);
         Pointer srcPoints = Pointer.to(pointBuffer);
         Pointer srcBounds = Pointer.to(boundsBuffer);
+        Pointer srcEdges = Pointer.to(edgesBuffer);
 
         long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
         long pointBufsize = (long)Sizeof.cl_float * pointsSize;
         long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
+        long edgesBufsize = (long) Sizeof.cl_float4 * edgesCount;
 
         cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
         cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
         cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
+        cl_mem srcMemEdges = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, edgesBufsize, srcEdges, null);
+
 
         physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
         physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
         physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
+        physicsBuffer.edges = new MemoryBuffer(srcMemEdges, edgesBufsize, srcEdges);
     }
 }
