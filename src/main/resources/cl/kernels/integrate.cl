@@ -102,6 +102,12 @@ __kernel void integrate(
             diff.x *= friction;
             diff.y *= friction;
             
+            if (fabs(diff.x) < 0.005 && fabs(diff.y) < 0.005)
+            {
+                diff.x = 0.0f;
+                diff.y = 0.0f;
+            }
+
             // set the prv to current pos
             prv.x = pos.x;
             prv.y = pos.y;
