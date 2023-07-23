@@ -331,7 +331,7 @@ public class OpenCL
         physicsBuffer.edges = new MemoryBuffer(srcMemEdges, edgesBufsize, srcEdges);
     }
 
-    public static void update_body(PhysicsBuffer physicsBuffer, int body_index, float acc_x, float acc_y)
+    public static void update_accel(PhysicsBuffer physicsBuffer, int body_index, float acc_x, float acc_y)
     {
         long[] global_work_size = new long[]{1};
         float[] acc = new float[]{acc_x, acc_y};

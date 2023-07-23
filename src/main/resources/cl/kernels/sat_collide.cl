@@ -214,7 +214,9 @@ __kernel void sat_collide(__global int2 *candidates,
     points[edge_index_b].x -= e2_reaction.x;
     points[edge_index_b].y -= e2_reaction.y;
 
-    // uncomment below for inelastic collisions
+    // uncomment below for "fake" inelastic collisions
+    // todo: previous location should be updated so relative difference is the same as before,
+    //  but reaction difference is "cancelled out"
     // points[vert_index].z = points[vert_index].x - FLT_EPSILON;
     // points[vert_index].w = points[vert_index].y - FLT_EPSILON;
     // points[edge_index_a].z = points[edge_index_a].x + FLT_EPSILON;

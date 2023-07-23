@@ -76,7 +76,7 @@ public class VerletPhysics extends GameSystem
             {
                 vectorBuffer1.y -= body.force();
             }
-            OpenCL.update_body(physicsBuffer, body.bodyIndex(), vectorBuffer1.x, vectorBuffer1.y);
+            OpenCL.update_accel(physicsBuffer, body.bodyIndex(), vectorBuffer1.x, vectorBuffer1.y);
             //body.addAcc(vectorBuffer1);
         }
     }
