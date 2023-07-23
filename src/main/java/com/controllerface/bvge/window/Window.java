@@ -92,11 +92,11 @@ public class Window
         }
 
         glfwDefaultWindowHints();
-        //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-        //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
         var prim = glfwGetPrimaryMonitor();
 
@@ -122,8 +122,7 @@ public class Window
         });
 
         glfwMakeContextCurrent(glfwWindow);
-        glfwSwapInterval(1); // v-sync
-        //glfwShowWindow(glfwWindow);
+        glfwSwapInterval(0); // v-sync
 
         // note: this must be called or nothing will work
         GL.createCapabilities();
@@ -131,7 +130,7 @@ public class Window
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        //glViewport(0,0,this.width, this.height);
+        glViewport(0,0,this.width, this.height);
     }
 
     private void initInput(KBMInput inputSystem)

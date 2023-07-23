@@ -166,8 +166,9 @@ public class OpenCL
         // Initialize the context properties
         cl_context_properties contextProperties = new cl_context_properties();
         contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
-        contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
         contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
+        contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
+
 
         // Obtain the number of devices for the platform
         int numDevicesArray[] = new int[1];
