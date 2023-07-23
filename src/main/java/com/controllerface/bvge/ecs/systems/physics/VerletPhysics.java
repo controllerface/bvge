@@ -30,7 +30,7 @@ public class VerletPhysics extends GameSystem
     private final float FRICTION = .981f;
 
     private final SpatialPartition spatialPartition;
-    private final PhysicsBuffer physicsBuffer;
+    private PhysicsBuffer physicsBuffer;
 
     /**
      * These buffers are reused each tick p2 avoid creating a new one every frame and for each object.
@@ -42,10 +42,6 @@ public class VerletPhysics extends GameSystem
     {
         super(ecs);
         this.spatialPartition = spatialPartition;
-        this.physicsBuffer = new PhysicsBuffer();
-        this.physicsBuffer.set_gravity_x(GRAVITY_X);
-        this.physicsBuffer.set_gravity_y(GRAVITY_Y);
-        this.physicsBuffer.set_friction(FRICTION);
     }
 
     private void updateControllableBodies()
@@ -147,6 +143,14 @@ public class VerletPhysics extends GameSystem
     @Override
     public void run(float dt)
     {
+        if (physicsBuffer == null)
+        {
+            this.physicsBuffer = new PhysicsBuffer();
+            this.physicsBuffer.set_gravity_x(GRAVITY_X);
+            this.physicsBuffer.set_gravity_y(GRAVITY_Y);
+            this.physicsBuffer.set_friction(FRICTION);
+        }
+
         simulate(dt);
     }
 

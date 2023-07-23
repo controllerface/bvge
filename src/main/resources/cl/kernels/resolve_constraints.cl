@@ -27,7 +27,8 @@ __kernel void resolve_constraints(__global float16 *bodies,
 
         // for each edge, we need to calculate the current distance between points,
         // and then move the vertices apart so they meet the length requirement.
-        for (int current_edge = start_edge; current_edge <= end_edge; current_edge++)
+        for (int current_edge = end_edge; current_edge >= start_edge; current_edge--)
+        //for (int current_edge = start_edge; current_edge <= end_edge; current_edge++)
         {
             // get this edge
             float4 edge = edges[current_edge];
@@ -49,15 +50,18 @@ __kernel void resolve_constraints(__global float16 *bodies,
             float2 sub = p2_v - p1_v;
             float len = length(sub);
             float diff = len - constraint;
+
+            if (diff == 0.0f) continue;
+
             float2 direction = normalize(sub);
-            
+        
             // the difference is halved and the direction is set to that magnitude
             direction.x *= diff * 0.5;
             direction.y *= diff * 0.5;
-           
+        
             // move the first vertex in the positive direction, move the second negative
-            p1_v = p1_v + direction;
-            p2_v = p2_v - direction;
+            p1_v = p1_v + direction - FLT_EPSILON;
+            p2_v = p2_v - direction + FLT_EPSILON;
 
             // store the updated values in the points
             p1.x = p1_v.x;

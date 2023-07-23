@@ -13,6 +13,12 @@ import java.util.List;
 
 import static com.controllerface.bvge.cl.OpenCLUtils.read_src;
 import static org.jocl.CL.*;
+import static org.lwjgl.glfw.GLFW.glfwGetCurrentContext;
+import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
+import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
+import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
+import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
 public class OpenCL
 {
@@ -154,9 +160,14 @@ public class OpenCL
         clGetPlatformIDs(platforms.length, platforms, null);
         cl_platform_id platform = platforms[platformIndex];
 
+        // note: this portion is windows specific todo: add linux code path
+        var dc = wglGetCurrentDC();
+        var ctx = wglGetCurrentContext();
         // Initialize the context properties
         cl_context_properties contextProperties = new cl_context_properties();
         contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
+        contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
+        contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
 
         // Obtain the number of devices for the platform
         int numDevicesArray[] = new int[1];
@@ -210,6 +221,8 @@ public class OpenCL
 
     public static void init()
     {
+        System.out.println("Test 1a");
+
         device_ids = device_init();
 
         OpenCLUtils.printDeviceDetails(device_ids);
@@ -287,6 +300,7 @@ public class OpenCL
         k_build_key_map                     = cl_k(p_build_key_map, kn_build_key_map);
         k_resolve_constraints               = cl_k(p_resolve_constraints, kn_resolve_constraints);
         k_update_accel                      = cl_k(p_update_accel, kn_update_accel);
+        System.out.println("Test 1b");
     }
 
     public static void destroy()
@@ -323,6 +337,13 @@ public class OpenCL
         cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
         cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
         cl_mem srcMemEdges = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, edgesBufsize, srcEdges, null);
+
+        //var vboID = glGenBuffers();
+        //glBindBuffer(GL_ARRAY_BUFFER, vboID);
+        // allocates enough space for the vertices we can handle in this batch, but doesn't transfer any data
+        // into the buffer just yet
+        //glBufferData(GL_ARRAY_BUFFER, 100 * Float.BYTES, GL_DYNAMIC_DRAW);
+        //cl_mem test = clCreateFromGLBuffer(context, CL_MEM_READ_WRITE, vboID, null);
 
 
         physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);

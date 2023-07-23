@@ -191,7 +191,7 @@ public class Main
     public static void main(String[] args)
     {
         Window window = Window.get();
-        OpenCL.init();
+        //OpenCL.init();
         window.run();
         OpenCL.destroy();
     }
