@@ -106,7 +106,7 @@ public class VerletPhysics extends GameSystem
         OpenCL.resolve_constraints(physicsBuffer, EDGE_STEPS);
 
         // todo: avoid transfer, use existing buffer in new kernel
-        physicsBuffer.transferAll();
+        physicsBuffer.finishTick();
     }
 
 
@@ -131,10 +131,14 @@ public class VerletPhysics extends GameSystem
             }
         }
 
-        physicsBuffer.transferFinish();
+        physicsBuffer.finishLoop();
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)
         {
+            // todo: once work starts in on renderer in earnest, check if this needs to be done or not
+            //  initial visuals without it don't look bad, but would be good to see if there's some
+            //  kind of improvement if the lerp is done. It should only affect the visual location of
+            //  objects, not their actual location.
             //this.lerp(drift);
         }
     }

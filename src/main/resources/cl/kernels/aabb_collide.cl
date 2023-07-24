@@ -7,7 +7,7 @@ __kernel void aabb_collide(__global float16 *bounds,
                            __global int *key_offsets,
                            __global int *matches,
                            __global int *used,
-                           __global int *counter,
+                           volatile __global int *counter,
                            int x_subdivisions,
                            int key_count_length)
 {

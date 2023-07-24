@@ -1,6 +1,6 @@
 __kernel void generate_keys(__global float16 *bounds,
                             __global int *key_bank,
-                            __global int *key_counts,
+                            volatile __global int *key_counts,
                             int x_subdivisions,
                             int key_bank_length,
                             int key_count_length)

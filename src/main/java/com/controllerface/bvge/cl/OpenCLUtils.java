@@ -37,7 +37,12 @@ public class OpenCLUtils
         return clCreateKernel(program, kernel_name, null);
     }
 
-    public static void printDeviceDetails(cl_device_id[] devices)
+    /**
+     * Dump device data for debugging.
+     *
+     * @param devices
+     */
+    public static void debugDeviceDetails(cl_device_id[] devices)
     {
         for (cl_device_id device : devices)
         {
@@ -234,7 +239,7 @@ public class OpenCLUtils
      * @param paramName The parameter name
      * @return The value
      */
-    private static String getString(cl_device_id device, int paramName)
+    public static String getString(cl_device_id device, int paramName)
     {
         // Obtain the length of the string that will be queried
         long size[] = new long[1];
@@ -255,7 +260,7 @@ public class OpenCLUtils
      * @param paramName The parameter name
      * @return The value
      */
-    private static long getSize(cl_device_id device, int paramName)
+    public static long getSize(cl_device_id device, int paramName)
     {
         return getSizes(device, paramName, 1)[0];
     }

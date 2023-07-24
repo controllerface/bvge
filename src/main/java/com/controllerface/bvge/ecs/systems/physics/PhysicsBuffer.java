@@ -67,7 +67,7 @@ public class PhysicsBuffer
         OpenCL.initPhysicsBuffer(this);
     }
 
-    public void transferAll()
+    public void finishTick()
     {
         key_map.setCopyBuffer(false);
         key_bank.setCopyBuffer(false);
@@ -80,9 +80,6 @@ public class PhysicsBuffer
         matches.setCopyBuffer(false);
         if (candidates != null) candidates.setCopyBuffer(false);
 
-//        bounds.transfer();
-//        bodies.transfer();
-//        points.transfer();
         key_map.transfer();
         key_bank.transfer();
         key_counts.transfer();
@@ -109,15 +106,17 @@ public class PhysicsBuffer
         matches = null;
     }
 
-    public void transferFinish()
+    public void finishLoop()
     {
         bounds.setReleaseAfterTransfer(false);
         bodies.setReleaseAfterTransfer(false);
         points.setReleaseAfterTransfer(false);
+        edges.setReleaseAfterTransfer(false);
 
         bounds.transfer();
         bodies.transfer();
         points.transfer();
+        edges.transfer();
     }
 
     public void shutdown()

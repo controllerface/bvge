@@ -122,7 +122,7 @@ public class Window
         });
 
         glfwMakeContextCurrent(glfwWindow);
-        glfwSwapInterval(0); // v-sync
+        glfwSwapInterval(1); // v-sync
 
         // note: this must be called or nothing will work
         GL.createCapabilities();
@@ -131,6 +131,12 @@ public class Window
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         glViewport(0,0,this.width, this.height);
+
+        System.out.println("\n-------- OPEN GL DEVICE -----------");
+        System.out.println(glGetString(GL_VENDOR));
+        System.out.println(glGetString(GL_RENDERER));
+        System.out.println(glGetString(GL_VERSION));
+        System.out.println("-----------------------------------\n");
     }
 
     private void initInput(KBMInput inputSystem)

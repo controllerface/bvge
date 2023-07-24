@@ -37,9 +37,9 @@
    4. may need some kind of "compass edge" to enable this
    5. also need a way to intentionally rotate to some specific angle
    6. should be able to implement mouse tracking for player to "look" it
-10. more Open CL physics
+10. ~~more Open CL physics~~
     1. ~~figure out parallel prefix sum and reduce functions~~
-    2. move as much as possible into GPU
+    2. ~~move as much as possible into GPU~~
 11. renderer improvements
     1. main batches should be changed to operate on individual triangles, not quads
     2. sprite renderer should be changed to map texture to vertices instead of center
@@ -48,4 +48,3 @@
 12. removable bodies
     1. it must be possible to remove tracked bodies when they are destroyed
     2. this will require compacting backing arrays
-    3. objects must have their fields updated when they are destroyed so they still function

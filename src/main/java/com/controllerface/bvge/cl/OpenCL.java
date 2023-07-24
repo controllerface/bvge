@@ -11,12 +11,8 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.controllerface.bvge.cl.OpenCLUtils.read_src;
+import static com.controllerface.bvge.cl.OpenCLUtils.*;
 import static org.jocl.CL.*;
-import static org.lwjgl.glfw.GLFW.glfwGetCurrentContext;
-import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
@@ -136,9 +132,9 @@ public class OpenCL
     static List<cl_program> loaded_programs = new ArrayList<>();
     static List<cl_kernel> loaded_kernels = new ArrayList<>();
 
-    private static final int wx = 256; // todo: query hardware for this limit
-    private static final int m = wx * 2;
-    private static final long[] local_work_default = new long[]{wx};
+    private static long wx = 256; // todo: query hardware for this limit
+    private static long m = wx * 2;
+    private static long[] local_work_default = new long[]{wx};
     private static cl_device_id[] device_init()
     {
         // The platform, device type and device number
@@ -222,11 +218,21 @@ public class OpenCL
 
     public static void init()
     {
-        System.out.println("Test 1a");
-
         device_ids = device_init();
 
-        OpenCLUtils.printDeviceDetails(device_ids);
+        var device = device_ids[0];
+
+        System.out.println("\n-------- OPEN CL DEVICE -----------");
+        System.out.println(getString(device, CL_DEVICE_VENDOR));
+        System.out.println(getString(device, CL_DEVICE_NAME));
+        System.out.println(getString(device, CL_DRIVER_VERSION));
+        System.out.println("-----------------------------------\n");
+
+        wx = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        m = wx * 2;
+        local_work_default = new long[]{ wx };
+
+        //OpenCLUtils.debugDeviceDetails(device_ids);
 
         /*
          * Programs
@@ -301,7 +307,6 @@ public class OpenCL
         k_build_key_map                     = cl_k(p_build_key_map, kn_build_key_map);
         k_resolve_constraints               = cl_k(p_resolve_constraints, kn_resolve_constraints);
         k_update_accel                      = cl_k(p_update_accel, kn_update_accel);
-        System.out.println("Test 1b");
     }
 
     public static void destroy()
@@ -745,7 +750,7 @@ public class OpenCL
 
     private static void scan_single_block_int(cl_mem d_data, int n)
     {
-        int localBufferSize = Sizeof.cl_int * m;
+        long localBufferSize = Sizeof.cl_int * m;
         Pointer src_data = Pointer.to(d_data);
 
         clSetKernelArg(k_scan_int_single_block, 0, Sizeof.cl_mem, src_data);
@@ -758,8 +763,8 @@ public class OpenCL
 
     private static void scan_multi_block_int(cl_mem d_data, int n, int k)
     {
-        int localBufferSize = Sizeof.cl_int * m;
-        int gx = k * m;
+        long localBufferSize = Sizeof.cl_int * m;
+        long gx = k * m;
         long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
         int[] partial_sums = new int[k * 2];
         cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
@@ -790,7 +795,7 @@ public class OpenCL
 
     private static void scan_single_block_int_out(cl_mem d_data, cl_mem o_data, int n)
     {
-        int localBufferSize = Sizeof.cl_int * m;
+        long localBufferSize = Sizeof.cl_int * m;
         Pointer src_data = Pointer.to(d_data);
         Pointer dst_data = Pointer.to(o_data);
 
@@ -805,8 +810,8 @@ public class OpenCL
 
     private static void scan_multi_block_int_out(cl_mem d_data, cl_mem o_data, int n, int k)
     {
-        int localBufferSize = Sizeof.cl_int * m;
-        int gx = k * m;
+        long localBufferSize = Sizeof.cl_int * m;
+        long gx = k * m;
         long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
         int[] partial_sums = new int[k * 2];
         cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
@@ -840,7 +845,7 @@ public class OpenCL
 
     private static int scan_single_block_candidates_out(cl_mem d_data, cl_mem o_data, int n)
     {
-        int localBufferSize = Sizeof.cl_int * m;
+        long localBufferSize = Sizeof.cl_int * m;
         Pointer src_data = Pointer.to(d_data);
         Pointer dst_data = Pointer.to(o_data);
 
@@ -868,8 +873,8 @@ public class OpenCL
 
     private static int scan_multi_block_candidates_out(cl_mem d_data, cl_mem o_data, int n, int k)
     {
-        int localBufferSize = Sizeof.cl_int * m;
-        int gx = k * m;
+        long localBufferSize = Sizeof.cl_int * m;
+        long gx = k * m;
         long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
         int[] partial_sums = new int[k * 2];
         cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
@@ -916,7 +921,7 @@ public class OpenCL
 
     private static int scan_single_block_key(cl_mem d_data, int n)
     {
-        int localBufferSize = Sizeof.cl_int * m;
+        long localBufferSize = Sizeof.cl_int * m;
         Pointer src_data = Pointer.to(d_data);
 
         int[] sz = new int[1];
@@ -942,8 +947,8 @@ public class OpenCL
 
     private static int scan_multi_block_key(cl_mem d_data, int n, int k)
     {
-        int localBufferSize = Sizeof.cl_int * m;
-        int gx = k * m;
+        long localBufferSize = Sizeof.cl_int * m;
+        long gx = k * m;
         long part_buf_size = ((long)Sizeof.cl_int * ((long)k * 2));
         int[] partial_sums = new int[k * 2];
         cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR, part_buf_size, Pointer.to(partial_sums), null);
