@@ -20,12 +20,10 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
  */
 public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
 {
-    private final int POS_SIZE = 2;
-
-    private final int POS_OFFSET = 0;
-
-    private final int VERTEX_SIZE = POS_SIZE;
-    private final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
+    private static final int VERTEX_SIZE = 2; // a vertex is 2 floats (x,y)
+    private static final int VERTS_PER_LINE = 2;
+    private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
+    private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VERTS_PER_LINE * VERTEX_SIZE;
 
     private FEdge2D[] lines;
     private int numLines;
@@ -70,13 +68,13 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
         // allocates enough space for the vertices we can handle in this batch, but doesn't transfer any data
         // into the buffer just yet
-        glBufferData(GL_ARRAY_BUFFER, (long) vertices.length * Float.BYTES, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, BATCH_VERTEX_COUNT * Float.BYTES, GL_DYNAMIC_DRAW);
 
         // bind the buffer to the CL context
         OpenCL.bindEdgeVBO(vboID);
 
         // define the buffer attribute pointers
-        glVertexAttribPointer(0, POS_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, POS_OFFSET);
+        glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, 0);
 
         // unbind the vao since we're done defining things for now
         glBindVertexArray(0);
