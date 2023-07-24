@@ -24,11 +24,9 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
     private static final int VERTS_PER_LINE = 2;
     private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
     private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VERTS_PER_LINE * VERTEX_SIZE;
+    private static final int BATCH_BUFFER_SIZE = BATCH_VERTEX_COUNT * Float.BYTES;
 
-    private FEdge2D[] lines;
     private int numLines;
-    private boolean hasRoom;
-    private float[] vertices;
 
     // todo: try and make two vbo's and avoid needed to deal with offsets when defining attribute
     //  pointers.
@@ -41,19 +39,13 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
     public LineRenderBatchEX(int zIndex, Shader currentShader)
     {
         this.zIndex = zIndex;
-        this.lines = new FEdge2D[Constants.Rendering.MAX_BATCH_SIZE];
-
-        vertices = new float[Constants.Rendering.MAX_BATCH_SIZE * 2 * VERTEX_SIZE];
-
         this.numLines = 0;
-        this.hasRoom = true;
         this.currentShader = currentShader;
     }
 
     public void clear()
     {
         numLines = 0;
-        this.hasRoom = true;
     }
 
     public void start()
@@ -68,7 +60,7 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
         // allocates enough space for the vertices we can handle in this batch, but doesn't transfer any data
         // into the buffer just yet
-        glBufferData(GL_ARRAY_BUFFER, BATCH_VERTEX_COUNT * Float.BYTES, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, BATCH_BUFFER_SIZE, GL_DYNAMIC_DRAW);
 
         // bind the buffer to the CL context
         OpenCL.bindEdgeVBO(vboID);
@@ -109,46 +101,6 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
         glBindVertexArray(0);
 
         currentShader.detach();
-    }
-
-
-    private Random rand = new Random();
-
-    /**
-     * Updates the local buffer p2 reflect the current state of the indexed sprite.
-     *
-     * @param index the location of the sprite, within the sprite array
-     */
-    private void loadVertexProperties(int index)
-    {
-        float r = 0f; //rand.nextFloat() / 7.0f;
-        float g = 0f; //rand.nextFloat() / 5.0f;
-        float b = 0f; //rand.nextFloat() / 3.0f;
-
-        FEdge2D line = this.lines[index];
-
-        // Find offset within array (4 vertices per sprite)
-        int offset = index * 2 * VERTEX_SIZE;
-
-        // Load position
-        vertices[offset] = line.p1().pos_x();
-        vertices[offset + 1] = line.p1().pos_y();
-        //vertices[offset + 2] = 0.0f;
-//        vertices[offset + 3] = r;
-//        vertices[offset + 4] = g;
-//        vertices[offset + 5] = b;
-
-        vertices[offset + 2] = line.p2().pos_x();
-        vertices[offset + 3] = line.p2().pos_y();
-        //vertices[offset + 5] = 0.0f;
-//        vertices[offset + 9] = r;
-//        vertices[offset + 10] = g;
-//        vertices[offset + 11] = b;
-    }
-
-    public boolean hasRoom()
-    {
-        return this.hasRoom;
     }
 
     public int zIndex()
