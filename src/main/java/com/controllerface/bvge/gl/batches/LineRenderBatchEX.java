@@ -87,22 +87,6 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
         this.numLines = numLines;
     }
 
-    public void addLine(FEdge2D line)
-    {
-        // Get index and add renderObject
-        int index = this.numLines;
-        this.lines[index] = line;
-        this.numLines++;
-
-        // Add properties p2 local vertices array
-        //loadVertexProperties(index);
-
-        if (numLines >= Constants.Rendering.MAX_BATCH_SIZE)
-        {
-            this.hasRoom = false;
-        }
-    }
-
     public void render(int current_edge_count)
     {
         glLineWidth(1.5f);
@@ -121,7 +105,7 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
-        glDrawArrays(GL_LINES, 0, numLines * 6 * 2);
+        glDrawArrays(GL_LINES, 0, numLines * 2 * 2);
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glBindVertexArray(0);

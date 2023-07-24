@@ -347,7 +347,7 @@ public class OpenCL
     {
         int vboOffset = offset_map.get(vboID);
         var mem = vbo_map.get(vboID);
-        int batchSize = Math.max(Constants.Rendering.MAX_BATCH_SIZE, current_edge_count - vboOffset);
+        int batchSize = Math.min(Constants.Rendering.MAX_BATCH_SIZE, current_edge_count - vboOffset);
         long[] global_work_size = new long[]{batchSize};
 
         clSetKernelArg(k_prepare_edges, 0, Sizeof.cl_mem, physicsBuffer.points.pointer());

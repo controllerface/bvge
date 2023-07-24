@@ -29,28 +29,6 @@ public class LineRendererEX extends GameSystem
         this.shader = AssetPool.getShader("object_outline.glsl");
     }
 
-    private void add(FEdge2D line)
-    {
-        boolean added = false;
-        for (LineRenderBatchEX batch : batches)
-        {
-            if (batch.hasRoom())
-            {
-                batch.addLine(line);
-                added = true;
-                break;
-            }
-        }
-
-        if (!added)
-        {
-            LineRenderBatchEX newBatch = new LineRenderBatchEX(0, shader);
-            newBatch.start();
-            batches.add(newBatch);
-            newBatch.addLine(line);
-        }
-    }
-
     private void render(int current_edge_count)
     {
         for (LineRenderBatchEX batch : batches)
@@ -86,7 +64,7 @@ public class LineRendererEX extends GameSystem
         int next = 0;
         for (int i = edge_count; i > 0; i -= Constants.Rendering.MAX_BATCH_SIZE)
         {
-            int count = Math.max(Constants.Rendering.MAX_BATCH_SIZE, i);
+            int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, i);
             batches.get(next++).setLineCount(count);
         }
 
