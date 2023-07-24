@@ -7,10 +7,7 @@ import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
-import com.controllerface.bvge.ecs.systems.renderers.BoundingBoxRenderer;
-import com.controllerface.bvge.ecs.systems.renderers.LineRenderer;
-import com.controllerface.bvge.ecs.systems.renderers.SpacePartitionRenderer;
-import com.controllerface.bvge.ecs.systems.renderers.SpriteRenderer;
+import com.controllerface.bvge.ecs.systems.renderers.*;
 import com.controllerface.bvge.util.AssetPool;
 import org.joml.Random;
 import org.joml.Vector4f;
@@ -115,8 +112,11 @@ public class TestGame extends GameMode
         ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
-        ecs.registerSystem(new LineRenderer(ecs));
-        ecs.registerSystem(new SpriteRenderer(ecs));
+
+        ecs.registerSystem(new LineRendererEX(ecs));
+
+        //ecs.registerSystem(new LineRenderer(ecs));
+        //ecs.registerSystem(new SpriteRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
     }
 
@@ -127,7 +127,7 @@ public class TestGame extends GameMode
         //genNPCs(100, 10f, 10f, 2100, 2100);
         //genNPCs(100, 10f, 10f, 1000, -1000);
         //genNPCs(100, 10f, 10f, -1500, -1500);
-        genNPCs(100, 6f, 8f, 40, 2500);
+        //genNPCs(100, 7f, 10f, 40, 2500);
         genNPCs(3, 20f, 15f, 100, 300);
         genFloor(500, 5f, 5f, -500, -40);
 

@@ -72,7 +72,7 @@ public class VerletPhysics extends GameSystem
             {
                 vectorBuffer1.y -= body.force();
             }
-            OpenCL.update_accel(physicsBuffer, body.bodyIndex(), vectorBuffer1.x, vectorBuffer1.y);
+            OpenCL.update_accel(body.bodyIndex(), vectorBuffer1.x, vectorBuffer1.y);
             //body.addAcc(vectorBuffer1);
         }
     }
@@ -86,24 +86,24 @@ public class VerletPhysics extends GameSystem
 
 
         // integration
-        OpenCL.integrate(dt, physicsBuffer, spatialPartition);
+        OpenCL.integrate(dt, spatialPartition);
 
         // broad phase collision
-        OpenCL.calculate_bank_offsets(physicsBuffer, spatialPartition);
-        OpenCL.generate_key_bank(physicsBuffer, spatialPartition);
-        OpenCL.calculate_map_offsets(physicsBuffer, spatialPartition);
-        OpenCL.generate_key_map(physicsBuffer, spatialPartition);
-        OpenCL.locate_in_bounds(physicsBuffer, spatialPartition);
-        OpenCL.count_candidates(physicsBuffer);
-        OpenCL.count_matches(physicsBuffer);
-        OpenCL.aabb_collide(physicsBuffer);
-        OpenCL.finalize_candidates(physicsBuffer);
+        OpenCL.calculate_bank_offsets(spatialPartition);
+        OpenCL.generate_key_bank(spatialPartition);
+        OpenCL.calculate_map_offsets(spatialPartition);
+        OpenCL.generate_key_map(spatialPartition);
+        OpenCL.locate_in_bounds(spatialPartition);
+        OpenCL.count_candidates();
+        OpenCL.count_matches();
+        OpenCL.aabb_collide();
+        OpenCL.finalize_candidates();
 
         // narrow phase collision/reaction
-        OpenCL.sat_collide(physicsBuffer);
+        OpenCL.sat_collide();
 
         // resolve edges
-        OpenCL.resolve_constraints(physicsBuffer, EDGE_STEPS);
+        OpenCL.resolve_constraints(EDGE_STEPS);
 
         // todo: avoid transfer, use existing buffer in new kernel
         physicsBuffer.finishTick();
@@ -153,6 +153,7 @@ public class VerletPhysics extends GameSystem
             this.physicsBuffer.set_gravity_x(GRAVITY_X);
             this.physicsBuffer.set_gravity_y(GRAVITY_Y);
             this.physicsBuffer.set_friction(FRICTION);
+            OpenCL.setPhysicsBuffer(physicsBuffer);
         }
 
         simulate(dt);

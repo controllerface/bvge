@@ -4,16 +4,14 @@ import com.controllerface.bvge.Main;
 import com.controllerface.bvge.ecs.systems.physics.MemoryBuffer;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
+import com.controllerface.bvge.util.Constants;
 import org.jocl.*;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static com.controllerface.bvge.cl.OpenCLUtils.*;
 import static org.jocl.CL.*;
-import static org.lwjgl.opengl.GLX.glXGetCurrentContext;
-import static org.lwjgl.opengl.GLX.glXGetCurrentDrawable;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
@@ -58,6 +56,7 @@ public class OpenCL
     static String kern_build_key_map        = read_src("kernels/build_key_map.cl");
     static String kern_resolve_constraints  = read_src("kernels/resolve_constraints.cl");
     static String kern_locate_in_bounds     = read_src("kernels/locate_in_bounds.cl");
+    static String kern_prepare_edges        = read_src("kernels/prepare_edges.cl");
 
     /**
      * Kernel function names
@@ -84,6 +83,7 @@ public class OpenCL
     static String kn_build_key_map                      = "build_key_map";
     static String kn_resolve_constraints                = "resolve_constraints";
     static String kn_update_accel                       = "update_accel";
+    static String kn_prepare_edges                      = "prepare_edges";
 
     /**
      * CL Programs
@@ -100,6 +100,7 @@ public class OpenCL
     static cl_program p_build_key_map;
     static cl_program p_resolve_constraints;
     static cl_program p_update_accel;
+    static cl_program p_prepare_edges;
 
     /**
      * CL Kernels
@@ -126,6 +127,7 @@ public class OpenCL
     static cl_kernel k_build_key_map;
     static cl_kernel k_resolve_constraints;
     static cl_kernel k_update_accel;
+    static cl_kernel k_prepare_edges;
 
     /**
      * During shutdown, these are used to release resources.
@@ -133,11 +135,13 @@ public class OpenCL
     static List<cl_program> loaded_programs = new ArrayList<>();
     static List<cl_kernel> loaded_kernels = new ArrayList<>();
 
+    private static PhysicsBuffer physicsBuffer;
+
     // these are re-calculated at startup to match the user's hardware
     private static long wx = 0;
     private static long m = wx * 2;
     private static long[] local_work_default = new long[]{wx};
-
+    private static long[] global_single_size = new long[]{1};
     private static cl_device_id[] device_init()
     {
         // The platform, device type and device number
@@ -290,6 +294,8 @@ public class OpenCL
 
         p_update_accel = cl_p(kern_update_accel);
 
+        p_prepare_edges = cl_p(kern_prepare_edges);
+
         /*
          * Kernels
          */
@@ -315,6 +321,7 @@ public class OpenCL
         k_build_key_map                     = cl_k(p_build_key_map, kn_build_key_map);
         k_resolve_constraints               = cl_k(p_resolve_constraints, kn_resolve_constraints);
         k_update_accel                      = cl_k(p_update_accel, kn_update_accel);
+        k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
     }
 
     public static void destroy()
@@ -323,6 +330,32 @@ public class OpenCL
         loaded_kernels.forEach(CL::clReleaseKernel);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
+        vbo_map.values().forEach(CL::clReleaseMemObject);
+    }
+
+    private static final HashMap<Integer, cl_mem> vbo_map = new LinkedHashMap<>();
+    private static final HashMap<Integer, Integer> offset_map = new HashMap<>();
+
+    public static void bindEdgeVBO(int vboID)
+    {
+        cl_mem vbo_mem = clCreateFromGLBuffer(context, CL_MEM_READ_WRITE, vboID, null);
+        offset_map.put(vboID, vbo_map.size() * Constants.Rendering.MAX_BATCH_SIZE );
+        vbo_map.put(vboID, vbo_mem);
+    }
+
+    public static void batchVbo(int vboID, int current_edge_count)
+    {
+        int vboOffset = offset_map.get(vboID);
+        var mem = vbo_map.get(vboID);
+        int batchSize = Math.max(Constants.Rendering.MAX_BATCH_SIZE, current_edge_count - vboOffset);
+        long[] global_work_size = new long[]{batchSize};
+
+        clSetKernelArg(k_prepare_edges, 0, Sizeof.cl_mem, physicsBuffer.points.pointer());
+        clSetKernelArg(k_prepare_edges, 1, Sizeof.cl_mem, physicsBuffer.edges.pointer());
+        clSetKernelArg(k_prepare_edges, 2, Sizeof.cl_mem, Pointer.to(mem));
+
+        clEnqueueNDRangeKernel(commandQueue, k_prepare_edges, 1, new long[]{ vboOffset },
+            global_work_size, null, 0, null, null);
     }
 
     public static void initPhysicsBuffer(PhysicsBuffer physicsBuffer)
@@ -374,9 +407,8 @@ public class OpenCL
         physicsBuffer.edges.setCopyBuffer(false);
     }
 
-    public static void update_accel(PhysicsBuffer physicsBuffer, int body_index, float acc_x, float acc_y)
+    public static void update_accel(int body_index, float acc_x, float acc_y)
     {
-        long[] global_work_size = new long[]{1};
         float[] acc = new float[]{acc_x, acc_y};
         int[] index = new int[]{body_index};
 
@@ -385,12 +417,12 @@ public class OpenCL
         clSetKernelArg(k_update_accel, 2, Sizeof.cl_float2, Pointer.to(acc));
 
         clEnqueueNDRangeKernel(commandQueue, k_update_accel, 1, null,
-            global_work_size, null, 0, null, null);
+            global_single_size, null, 0, null, null);
     }
 
     //#region Physics Simulation
 
-    public static void integrate(float delta_time, PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    public static void integrate(float delta_time, SpatialPartition spatialPartition)
     {
         long[] global_work_size = new long[]{Main.Memory.bodyCount()};
         float[] args =
@@ -423,14 +455,14 @@ public class OpenCL
         clReleaseMemObject(argMem);
     }
 
-    public static void calculate_bank_offsets(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    public static void calculate_bank_offsets(SpatialPartition spatialPartition)
     {
         int n = Main.Memory.boundsCount();
         int bank_size = scan_key_bounds(physicsBuffer.bounds.memory(), n);
         spatialPartition.resizeBank(bank_size);
     }
 
-    public static void generate_key_bank(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    public static void generate_key_bank(SpatialPartition spatialPartition)
     {
         var pat = Pointer.to(new int[]{0});
 
@@ -468,7 +500,7 @@ public class OpenCL
             new long[]{n}, null, 0, null, null);
     }
 
-    public static void calculate_map_offsets(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    public static void calculate_map_offsets(SpatialPartition spatialPartition)
     {
         int[] key_offsets = spatialPartition.getKey_offsets();
         int n = spatialPartition.getKey_counts().length;
@@ -483,7 +515,7 @@ public class OpenCL
         scan_int_out(physicsBuffer.key_counts.memory(), o_data, n);
     }
 
-    public static void generate_key_map(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    public static void generate_key_map(SpatialPartition spatialPartition)
     {
         var pat = Pointer.to(new int[]{0});
 
@@ -518,7 +550,7 @@ public class OpenCL
         clReleaseMemObject(counts_data);
     }
 
-    public static void locate_in_bounds(PhysicsBuffer physicsBuffer, SpatialPartition spatialPartition)
+    public static void locate_in_bounds(SpatialPartition spatialPartition)
     {
         // step 1: locate objects that are within bounds
         int x_subdivisions = spatialPartition.getX_subdivisions();
@@ -552,7 +584,7 @@ public class OpenCL
         physicsBuffer.set_candidate_buffer_count(size[0]);
     }
 
-    public static void count_candidates(PhysicsBuffer physicsBuffer)
+    public static void count_candidates()
     {
         long cand_buf_size = (long)Sizeof.cl_int2 * physicsBuffer.get_candidate_buffer_count();
         cl_mem cand_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, cand_buf_size, null, null);
@@ -570,7 +602,7 @@ public class OpenCL
             new long[]{physicsBuffer.get_candidate_buffer_count()}, null, 0, null, null);
     }
 
-    public static void count_matches(PhysicsBuffer physicsBuffer)
+    public static void count_matches()
     {
         int n = physicsBuffer.get_candidate_buffer_count();
         long offset_buf_size = (long)Sizeof.cl_int * n;
@@ -582,7 +614,7 @@ public class OpenCL
 
     }
 
-    public static void aabb_collide(PhysicsBuffer physicsBuffer)
+    public static void aabb_collide()
     {
         long matches_buf_size = (long)Sizeof.cl_int * physicsBuffer.get_candidate_match_count();
         cl_mem matches_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, matches_buf_size, null, null);
@@ -622,7 +654,7 @@ public class OpenCL
         physicsBuffer.set_candidate_count(count[0]);
     }
 
-    public static void finalize_candidates(PhysicsBuffer physicsBuffer)
+    public static void finalize_candidates()
     {
         if (physicsBuffer.get_candidate_count() > 0)
         {
@@ -653,7 +685,7 @@ public class OpenCL
         }
     }
 
-    public static void sat_collide(PhysicsBuffer physicsBuffer)
+    public static void sat_collide()
     {
         if (physicsBuffer.candidates == null) return;
 
@@ -672,7 +704,7 @@ public class OpenCL
             global_work_size, null, 0, null, null);
     }
 
-    public static void resolve_constraints(PhysicsBuffer physicsBuffer, int edge_steps)
+    public static void resolve_constraints(int edge_steps)
     {
         boolean lastStep;
         long[] global_work_size = new long[]{Main.Memory.bodyCount()};
@@ -986,6 +1018,11 @@ public class OpenCL
         clReleaseMemObject(p_data);
 
         return sz[0];
+    }
+
+    public static void setPhysicsBuffer(PhysicsBuffer physicsBuffer)
+    {
+        OpenCL.physicsBuffer = physicsBuffer;
     }
 
     //#endregion
