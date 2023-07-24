@@ -12,6 +12,8 @@ import java.util.List;
 
 import static com.controllerface.bvge.cl.OpenCLUtils.*;
 import static org.jocl.CL.*;
+import static org.lwjgl.opengl.GLX.glXGetCurrentContext;
+import static org.lwjgl.opengl.GLX.glXGetCurrentDrawable;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
@@ -131,9 +133,11 @@ public class OpenCL
     static List<cl_program> loaded_programs = new ArrayList<>();
     static List<cl_kernel> loaded_kernels = new ArrayList<>();
 
-    private static long wx = 256; // todo: query hardware for this limit
+    // these are re-calculated at startup to match the user's hardware
+    private static long wx = 0;
     private static long m = wx * 2;
     private static long[] local_work_default = new long[]{wx};
+
     private static cl_device_id[] device_init()
     {
         // The platform, device type and device number
@@ -155,15 +159,20 @@ public class OpenCL
         clGetPlatformIDs(platforms.length, platforms, null);
         cl_platform_id platform = platforms[platformIndex];
 
-        // note: this portion is windows specific todo: add linux code path
+        // note: this portion is windows specific
         var dc = wglGetCurrentDC();
         var ctx = wglGetCurrentContext();
+
+        // todo: add linux code path, should look something like this
+//        var ctx = glXGetCurrentContext();
+//        var dc = glXGetCurrentDrawable();
+        //contextProperties.addProperty(CL_GLX_DISPLAY_KHR, dc);
         // Initialize the context properties
+
         cl_context_properties contextProperties = new cl_context_properties();
         contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
-        contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
         contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
-
+        contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
 
         // Obtain the number of devices for the platform
         int numDevicesArray[] = new int[1];
@@ -356,9 +365,13 @@ public class OpenCL
 
 
         physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
+        physicsBuffer.bounds.setCopyBuffer(false);
         physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
+        //physicsBuffer.bodies.setCopyBuffer(false);
         physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
+        //physicsBuffer.points.setCopyBuffer(false);
         physicsBuffer.edges = new MemoryBuffer(srcMemEdges, edgesBufsize, srcEdges);
+        physicsBuffer.edges.setCopyBuffer(false);
     }
 
     public static void update_accel(PhysicsBuffer physicsBuffer, int body_index, float acc_x, float acc_y)
@@ -465,7 +478,7 @@ public class OpenCL
 
         Pointer dst_data = Pointer.to(key_offsets);
         cl_mem o_data = CL.clCreateBuffer(context, flags, data_buf_size, dst_data, null);
-        physicsBuffer.key_offsets = new MemoryBuffer(o_data, data_buf_size, dst_data);
+        physicsBuffer.key_offsets = new MemoryBuffer(o_data, data_buf_size);
 
         scan_int_out(physicsBuffer.key_counts.memory(), o_data, n);
     }

@@ -12,7 +12,7 @@ public class MemoryBuffer
     private final Pointer pointer;
     private final long size;
     private final Pointer dst;
-    private boolean doTransfer = true;
+    private boolean copyBuffer = true;
     private boolean releaseAfterTransfer = true;
     private boolean released = false;
 
@@ -30,12 +30,12 @@ public class MemoryBuffer
         this.pointer = Pointer.to(this.src);
         this.size = size;
         this.dst = null;
-        doTransfer = false;
+        copyBuffer = false;
     }
 
     public void setCopyBuffer(boolean doCopy)
     {
-        this.doTransfer = doCopy;
+        this.copyBuffer = doCopy;
     }
 
     public void setReleaseAfterTransfer(boolean releaseAfterTransfer)
@@ -60,7 +60,7 @@ public class MemoryBuffer
 
     public void transfer()
     {
-        if (!released && doTransfer)
+        if (!released && copyBuffer)
         {
             clEnqueueReadBuffer(OpenCL.getCommandQueue(), src, CL_TRUE, 0, size, dst,
                 0, null, null);

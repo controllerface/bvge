@@ -69,17 +69,6 @@ public class PhysicsBuffer
 
     public void finishTick()
     {
-        key_map.setCopyBuffer(false);
-        key_bank.setCopyBuffer(false);
-        //key_counts.setDoTransfer(false);
-        key_offsets.setCopyBuffer(false);
-        in_bounds.setCopyBuffer(false);
-        candidate_counts.setCopyBuffer(false);
-        candidate_offsets.setCopyBuffer(false);
-        matches_used.setCopyBuffer(false);
-        matches.setCopyBuffer(false);
-        if (candidates != null) candidates.setCopyBuffer(false);
-
         key_map.transfer();
         key_bank.transfer();
         key_counts.transfer();
@@ -91,9 +80,6 @@ public class PhysicsBuffer
         matches.transfer();
         if (candidates != null) candidates.transfer();
 
-//        bodies = null;
-//        bounds = null;
-//        points = null;
         key_map = null;
         key_bank = null;
         key_counts = null;
