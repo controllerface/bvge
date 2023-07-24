@@ -9,6 +9,10 @@ public class SpatialPartition
     private int x_subdivisions = 120;
     private int y_subdivisions = 120;
 
+    public int getDirectoryLength() {
+        return directoryLength;
+    }
+
     private int directoryLength;
     private float x_spacing = 0;
     private float y_spacing = 0;
@@ -16,7 +20,16 @@ public class SpatialPartition
     private float x_origin = 0;
     private float y_origin = 0;
 
+    public int getKey_bank_size() {
+        return key_bank_size;
+    }
+
     int key_bank_size = 0;
+
+    public int getKey_map_size() {
+        return key_map_size;
+    }
+
     int key_map_size = 0;
     int[] key_bank = new int[0];
     int[] key_map = new int[0];

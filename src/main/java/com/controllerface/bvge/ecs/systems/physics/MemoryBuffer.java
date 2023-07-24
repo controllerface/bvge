@@ -24,6 +24,15 @@ public class MemoryBuffer
         this.dst = dst;
     }
 
+    public MemoryBuffer(cl_mem src, long size)
+    {
+        this.src = src;
+        this.pointer = Pointer.to(this.src);
+        this.size = size;
+        this.dst = null;
+        doTransfer = false;
+    }
+
     public void setCopyBuffer(boolean doCopy)
     {
         this.doTransfer = doCopy;
