@@ -65,7 +65,8 @@ public class LineRendererEX extends GameSystem
         for (int i = edge_count; i > 0; i -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, i);
-            batches.get(next++).setLineCount(count);
+            var b = batches.get(next++);
+            b.setLineCount(count);
         }
 
 
