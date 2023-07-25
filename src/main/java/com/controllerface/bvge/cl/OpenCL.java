@@ -208,6 +208,16 @@ public class OpenCL
         return commandQueue;
     }
 
+    private static cl_mem cl_buffer(long flags, long size)
+    {
+       return CL.clCreateBuffer(context, flags, size, null, null);
+    }
+
+    private static cl_mem cl_buffer(long flags, long size, Pointer src)
+    {
+        return CL.clCreateBuffer(context, flags, size, src, null);
+    }
+
     private static cl_program cl_p(String ... src)
     {
         var program = OpenCLUtils.cl_p(context, device_ids, src);
@@ -234,6 +244,17 @@ public class OpenCL
             global_work_size, local_work_size, 0, null, null);
     }
 
+    private static void gl_acquire(cl_mem mem)
+    {
+        clEnqueueAcquireGLObjects(commandQueue, 1, new cl_mem[]{mem}, 0, null, null);
+    }
+
+    private static void gl_release(cl_mem mem)
+    {
+        clEnqueueReleaseGLObjects(commandQueue, 1, new cl_mem[]{ mem}, 0, null, null);
+    }
+
+
     private static long[] long_arg(long arg)
     {
         return new long[]{ arg };
@@ -243,6 +264,8 @@ public class OpenCL
     {
         return (int) Math.ceil((float)n / (float)m);
     }
+
+
 
     public static void init()
     {
@@ -368,11 +391,9 @@ public class OpenCL
         clSetKernelArg(k_prepare_edges, 2, Sizeof.cl_mem, Pointer.to(mem));
         clSetKernelArg(k_prepare_edges, 3, Sizeof.cl_int, Pointer.to(edge_offset));
 
-        clEnqueueAcquireGLObjects(commandQueue, 1, new cl_mem[]{mem}, 0, null, null);
-
+        gl_acquire(mem);
         k_call(k_prepare_edges, global_work_size);
-
-        clEnqueueReleaseGLObjects(commandQueue, 1, new cl_mem[]{ mem}, 0, null, null);
+        gl_release(mem);
     }
 
     public static void initPhysicsBuffer(PhysicsBuffer physicsBuffer)
@@ -397,22 +418,12 @@ public class OpenCL
         long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
         long edgesBufsize = (long) Sizeof.cl_float * edgesSize;
 
-        cl_mem srcMemBodies = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bodyBufsize, srcBodies, null);
-        cl_mem srcMemPoints = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, pointBufsize, srcPoints, null);
-        cl_mem srcMemBounds = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, boundsBufsize, srcBounds, null);
-        cl_mem srcMemEdges = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, edgesBufsize, srcEdges, null);
+        long flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
 
-
-        // GL/CL interop test area
-
-        //var vboID = glGenBuffers();
-        //glBindBuffer(GL_ARRAY_BUFFER, vboID);
-        // allocates enough space for the vertices we can handle in this batch, but doesn't transfer any data
-        // into the buffer just yet
-        //glBufferData(GL_ARRAY_BUFFER, 100 * Float.BYTES, GL_DYNAMIC_DRAW);
-        //cl_mem test = clCreateFromGLBuffer(context, CL_MEM_READ_WRITE, vboID, null);
-        // the test mem object could now be written to each frame to update the vbo
-
+        cl_mem srcMemBodies = cl_buffer(flags, bodyBufsize, srcBodies);
+        cl_mem srcMemPoints = cl_buffer(flags, pointBufsize, srcPoints);
+        cl_mem srcMemBounds = cl_buffer(flags, boundsBufsize, srcBounds);
+        cl_mem srcMemEdges  = cl_buffer(flags, edgesBufsize, srcEdges);
 
         physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
         physicsBuffer.bounds.setCopyBuffer(false);
@@ -458,7 +469,10 @@ public class OpenCL
             };
 
         Pointer srcArgs = Pointer.to(args);
-        cl_mem argMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Sizeof.cl_float * args.length, srcArgs, null);
+
+        long flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
+        long size = Sizeof.cl_float * args.length;
+        cl_mem argMem = cl_buffer(flags, size, srcArgs);
 
         clSetKernelArg(k_integrate, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
         clSetKernelArg(k_integrate, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
@@ -485,8 +499,8 @@ public class OpenCL
         long bank_buf_size = (long)Sizeof.cl_int * spatialPartition.getKey_bank_size();
         long counts_buf_size = (long)Sizeof.cl_int * spatialPartition.getDirectoryLength();
 
-        cl_mem bank_data = CL.clCreateBuffer(context, CL_MEM_READ_WRITE, bank_buf_size, null, null);
-        cl_mem counts_data = CL.clCreateBuffer(context, CL_MEM_READ_WRITE, counts_buf_size, null, null);
+        cl_mem bank_data = cl_buffer(CL_MEM_READ_WRITE, bank_buf_size);
+        cl_mem counts_data = cl_buffer(CL_MEM_READ_WRITE, counts_buf_size);
         clEnqueueFillBuffer(commandQueue, counts_data, pat, 1, 0, counts_buf_size, 0, null, null);
 
         Pointer src_data = Pointer.to(physicsBuffer.bounds.memory());
@@ -522,7 +536,7 @@ public class OpenCL
         long flags = CL.CL_MEM_READ_WRITE | CL.CL_MEM_COPY_HOST_PTR;
 
         Pointer dst_data = Pointer.to(key_offsets);
-        cl_mem o_data = CL.clCreateBuffer(context, flags, data_buf_size, dst_data, null);
+        cl_mem o_data = cl_buffer(flags, data_buf_size, dst_data);
         physicsBuffer.key_offsets = new MemoryBuffer(o_data, data_buf_size);
 
         scan_int_out(physicsBuffer.key_counts.memory(), o_data, n);
@@ -535,8 +549,9 @@ public class OpenCL
         int n = Main.Memory.boundsCount();
         long map_buf_size = (long)Sizeof.cl_int * spatialPartition.getKey_map_size();
         long counts_buf_size = (long)Sizeof.cl_int * spatialPartition.getDirectoryLength();
-        cl_mem map_data = CL.clCreateBuffer(context, CL_MEM_READ_WRITE, map_buf_size, null, null);
-        cl_mem counts_data = CL.clCreateBuffer(context, CL_MEM_READ_WRITE, counts_buf_size, null, null);
+
+        cl_mem map_data = cl_buffer(CL_MEM_READ_WRITE, map_buf_size);
+        cl_mem counts_data = cl_buffer(CL_MEM_READ_WRITE, counts_buf_size);
 
         // the counts buffer needs to start off filled with all zeroes
         clEnqueueFillBuffer(commandQueue, counts_data, pat, 1, 0, counts_buf_size, 0, null, null);
@@ -572,13 +587,13 @@ public class OpenCL
         int n = Main.Memory.bodyCount();
         int[] in_bounds = new int[n];
         long inbound_buf_size = (long)Sizeof.cl_int * in_bounds.length;
-        cl_mem inbound_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, inbound_buf_size, null, null);
+        cl_mem inbound_data = cl_buffer(CL_MEM_READ_WRITE, inbound_buf_size);
 
         physicsBuffer.in_bounds = new MemoryBuffer(inbound_data, inbound_buf_size);
 
         int[] size = new int[]{ 0 };
         Pointer dst_size = Pointer.to(size);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size, null);
+        cl_mem size_data = cl_buffer(CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_size);
         Pointer src_size = Pointer.to(size_data);
 
         clSetKernelArg(k_locate_in_bounds, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
@@ -598,7 +613,7 @@ public class OpenCL
     public static void count_candidates()
     {
         long cand_buf_size = (long)Sizeof.cl_int2 * physicsBuffer.get_candidate_buffer_count();
-        cl_mem cand_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, cand_buf_size, null, null);
+        cl_mem cand_data = cl_buffer(CL_MEM_READ_WRITE, cand_buf_size);
         physicsBuffer.candidate_counts = new MemoryBuffer(cand_data, cand_buf_size);
 
         clSetKernelArg(k_count_candidates, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
@@ -616,7 +631,7 @@ public class OpenCL
     {
         int n = physicsBuffer.get_candidate_buffer_count();
         long offset_buf_size = (long)Sizeof.cl_int * n;
-        cl_mem offset_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE , offset_buf_size, null, null);
+        cl_mem offset_data = cl_buffer(CL_MEM_READ_WRITE, offset_buf_size);
         physicsBuffer.candidate_offsets = new MemoryBuffer(offset_data, offset_buf_size);
 
         int match_count = scan_key_candidates(physicsBuffer.candidate_counts.memory(), offset_data, n);
@@ -627,17 +642,17 @@ public class OpenCL
     public static void aabb_collide()
     {
         long matches_buf_size = (long)Sizeof.cl_int * physicsBuffer.get_candidate_match_count();
-        cl_mem matches_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, matches_buf_size, null, null);
+        cl_mem matches_data = cl_buffer(CL_MEM_READ_WRITE, matches_buf_size);
         physicsBuffer.matches = new MemoryBuffer(matches_data, matches_buf_size);
 
         long used_buf_size = (long)Sizeof.cl_int * physicsBuffer.get_candidate_buffer_count();
-        cl_mem used_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, used_buf_size, null, null);
+        cl_mem used_data = cl_buffer(CL_MEM_READ_WRITE, used_buf_size);
         physicsBuffer.matches_used = new MemoryBuffer(used_data, used_buf_size);
 
         // this buffer will contain the total number of candidates that were found
         int[] count = new int[]{ 0 };
         Pointer dst_count = Pointer.to(count);
-        cl_mem count_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_count, null);
+        cl_mem count_data = cl_buffer(CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_count);
         Pointer src_count = Pointer.to(count_data);
 
         clSetKernelArg(k_aabb_collide, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
@@ -669,13 +684,13 @@ public class OpenCL
         {
             // create an empty buffer that the kernel will use to store finalized candidates
             long final_buf_size = (long)Sizeof.cl_int2 * physicsBuffer.get_candidate_count();
-            cl_mem finals_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, final_buf_size, null, null);
+            cl_mem finals_data = cl_buffer(CL_MEM_READ_WRITE, final_buf_size);
             Pointer src_finals = Pointer.to(finals_data);
 
             // the kernel will use this value as an internal atomic counter, always initialize to zero
             int[] counter = new int[]{ 0 };
             Pointer dst_counter = Pointer.to(counter);
-            cl_mem counter_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_counter, null);
+            cl_mem counter_data = cl_buffer(CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, Sizeof.cl_int, dst_counter);
             Pointer src_counter = Pointer.to(counter_data);
 
             physicsBuffer.candidates = new MemoryBuffer(finals_data, final_buf_size);
@@ -803,7 +818,7 @@ public class OpenCL
         long[] global_work_size = long_arg(gx);
         int part_size = k * 2;
         long part_buf_size = ((long)Sizeof.cl_int * ((long)part_size));
-        cl_mem part_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, part_buf_size, null, null);
+        cl_mem part_data = cl_buffer(CL_MEM_READ_WRITE, part_buf_size);
         Pointer src_data = Pointer.to(d_data);
         Pointer src_part = Pointer.to(part_data);
         Pointer src_n = Pointer.to(new int[]{n});
@@ -848,7 +863,7 @@ public class OpenCL
         long[] global_work_size = long_arg(gx);
         int part_size = k * 2;
         long part_buf_size = ((long)Sizeof.cl_int * ((long)part_size));
-        cl_mem part_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, part_buf_size, null, null);
+        cl_mem part_data = cl_buffer(CL_MEM_READ_WRITE, part_buf_size);
         Pointer src_data = Pointer.to(d_data);
         Pointer src_part = Pointer.to(part_data);
         Pointer dst_data = Pointer.to(o_data);
@@ -882,7 +897,7 @@ public class OpenCL
 
         int[] sz = new int[]{ 0 };
         Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        cl_mem size_data = cl_buffer(CL_MEM_READ_WRITE, Sizeof.cl_int);
         Pointer src_size = Pointer.to(size_data);
 
         clSetKernelArg(k_scan_candidates_single_block, 0, Sizeof.cl_mem, src_data);
@@ -908,7 +923,7 @@ public class OpenCL
         long[] global_work_size = long_arg(gx);
         int part_size = k * 2;
         long part_buf_size = ((long)Sizeof.cl_int * ((long)part_size));
-        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, part_buf_size, null, null);
+        cl_mem p_data = cl_buffer(CL_MEM_READ_WRITE, part_buf_size);
         Pointer src_data = Pointer.to(d_data);
         Pointer src_part = Pointer.to(p_data);
         Pointer dst_data = Pointer.to(o_data);
@@ -926,7 +941,7 @@ public class OpenCL
 
         int[] sz = new int[]{ 0 };
         Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        cl_mem size_data = cl_buffer(CL_MEM_READ_WRITE, Sizeof.cl_int);
         Pointer src_size = Pointer.to(size_data);
 
         clSetKernelArg(k_complete_candidates_multi_block, 0, Sizeof.cl_mem, src_data);
@@ -954,7 +969,7 @@ public class OpenCL
 
         int[] sz = new int[]{ 0 };
         Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        cl_mem size_data = cl_buffer(CL_MEM_READ_WRITE, Sizeof.cl_int);
         Pointer src_size = Pointer.to(size_data);
         Pointer src_n = Pointer.to(new int[]{n});
 
@@ -980,7 +995,7 @@ public class OpenCL
         long[] global_work_size = long_arg(gx);
         int part_size = k * 2;
         long part_buf_size = ((long)Sizeof.cl_int * ((long)part_size));
-        cl_mem p_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, part_buf_size, null, null);
+        cl_mem p_data = cl_buffer(CL_MEM_READ_WRITE, part_buf_size);
         Pointer src_data = Pointer.to(d_data);
         Pointer src_part = Pointer.to(p_data);
         Pointer src_n = Pointer.to(new int[]{n});
@@ -996,7 +1011,7 @@ public class OpenCL
 
         int[] sz = new int[1];
         Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = CL.clCreateBuffer(context, CL.CL_MEM_READ_WRITE, Sizeof.cl_int, null, null);
+        cl_mem size_data = cl_buffer(CL_MEM_READ_WRITE, Sizeof.cl_int);
         Pointer src_size = Pointer.to(size_data);
 
         clSetKernelArg(k_complete_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
