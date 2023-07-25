@@ -87,9 +87,6 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
         OpenCL.batchVbo(vboID, offset, numLines);
-        // todo: run kernel that batches
-        // prepare the VBO in CL
-        //glBufferSubData(GL_ARRAY_BUFFER, 0, vertices);
 
         // Use shader
         currentShader.use();
