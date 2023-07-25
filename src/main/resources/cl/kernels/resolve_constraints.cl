@@ -50,9 +50,6 @@ __kernel void resolve_constraints(__global float16 *bodies,
             float2 sub = p2_v - p1_v;
             float len = length(sub);
             float diff = len - constraint;
-
-            if (diff == 0.0f) continue;
-
             float2 direction = normalize(sub);
         
             // the difference is halved and the direction is set to that magnitude

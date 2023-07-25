@@ -13,8 +13,8 @@ public class VerletPhysics extends GameSystem
 {
     private final float TARGET_FPS = 60.0f;
     private final float TICK_RATE = 1.0f / TARGET_FPS;
-    private final int SUB_STEPS = 4;
-    private final int EDGE_STEPS = 4;
+    private final int SUB_STEPS = 8;
+    private final int EDGE_STEPS = 8;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.
@@ -26,7 +26,7 @@ public class VerletPhysics extends GameSystem
     //  In this way, friction is a "status effect" that is cleared every frame
     //  and applied when contact occurs.
     private final float GRAVITY_X = 0;
-    private final float GRAVITY_Y = 0;//-(9.8f * SUB_STEPS) * 50;
+    private final float GRAVITY_Y = -(9.8f * 50) * SUB_STEPS;
     private final float FRICTION = .981f;
 
     private final SpatialPartition spatialPartition;
