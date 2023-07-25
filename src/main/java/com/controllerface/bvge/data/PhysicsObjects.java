@@ -220,7 +220,7 @@ public class PhysicsObjects
 
         var edges = new FEdge2D[]{ e1, e2, e3, e4, e5, e6, e5a, e5b };
 
-        var force = 5000;
+        var force = 2500;
 
         var bounds = Main.Memory.newBounds();
 
