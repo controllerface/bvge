@@ -343,18 +343,18 @@ public class OpenCL
         vbo_map.put(vboID, vbo_mem);
     }
 
-    public static void batchVbo(int vboID, int current_edge_count)
+    public static void batchVbo(int vboID, int vboOffset, int batchSize)
     {
-        int vboOffset = offset_map.get(vboID);
         var mem = vbo_map.get(vboID);
-        int batchSize = Math.min(Constants.Rendering.MAX_BATCH_SIZE, current_edge_count - vboOffset);
-        long[] global_work_size = new long[]{batchSize};
+        long[] global_work_size = new long[]{ batchSize };
+        long[] edge_offset = new long[]{ vboOffset };
 
         clSetKernelArg(k_prepare_edges, 0, Sizeof.cl_mem, physicsBuffer.points.pointer());
         clSetKernelArg(k_prepare_edges, 1, Sizeof.cl_mem, physicsBuffer.edges.pointer());
         clSetKernelArg(k_prepare_edges, 2, Sizeof.cl_mem, Pointer.to(mem));
+        clSetKernelArg(k_prepare_edges, 3, Sizeof.cl_int, Pointer.to(edge_offset));
 
-        clEnqueueNDRangeKernel(commandQueue, k_prepare_edges, 1, new long[]{ vboOffset },
+        clEnqueueNDRangeKernel(commandQueue, k_prepare_edges, 1, null,
             global_work_size, null, 0, null, null);
     }
 

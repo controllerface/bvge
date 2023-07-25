@@ -1,12 +1,7 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.data.FBody2D;
-import com.controllerface.bvge.data.FEdge2D;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.batches.LineRenderBatchEX;
@@ -15,7 +10,6 @@ import com.controllerface.bvge.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class LineRendererEX extends GameSystem
 {
@@ -29,11 +23,11 @@ public class LineRendererEX extends GameSystem
         this.shader = AssetPool.getShader("object_outline.glsl");
     }
 
-    private void render(int current_edge_count)
+    private void render()
     {
         for (LineRenderBatchEX batch : batches)
         {
-            batch.render(current_edge_count);
+            batch.render();
             batch.clear();
         }
     }
@@ -62,11 +56,14 @@ public class LineRendererEX extends GameSystem
         }
 
         int next = 0;
+        int offset = 0;
         for (int i = edge_count; i > 0; i -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, i);
             var b = batches.get(next++);
             b.setLineCount(count);
+            b.setOffset(offset);
+            offset += count;
         }
 
 
@@ -79,7 +76,7 @@ public class LineRendererEX extends GameSystem
 //                add(edge);
 //            }
 //        }
-        render(edge_count);
+        render();
     }
 
     @Override

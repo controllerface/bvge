@@ -1,12 +1,9 @@
 package com.controllerface.bvge.gl.batches;
 
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.data.FEdge2D;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
-
-import java.util.Random;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
@@ -27,6 +24,7 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
     private static final int BATCH_BUFFER_SIZE = BATCH_VERTEX_COUNT * Float.BYTES;
 
     private int numLines;
+    private int offset;
 
     // todo: try and make two vbo's and avoid needed to deal with offsets when defining attribute
     //  pointers.
@@ -77,13 +75,18 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
         this.numLines = numLines;
     }
 
-    public void render(int current_edge_count)
+    public void setOffset(int offset)
+    {
+        this.offset = offset;
+    }
+
+    public void render()
     {
         glLineWidth(1.5f);
         glBindVertexArray(vaoID);
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
-        OpenCL.batchVbo(vboID, current_edge_count);
+        OpenCL.batchVbo(vboID, offset, numLines);
         // todo: run kernel that batches
         // prepare the VBO in CL
         //glBufferSubData(GL_ARRAY_BUFFER, 0, vertices);

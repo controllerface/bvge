@@ -1,9 +1,11 @@
 __kernel void prepare_edges(__global float4 *points, 
                             __global float4 *edges,
-                            __global float4 *vbo)
+                            __global float4 *vbo,
+                            int offset)
 {
     int gid = get_global_id(0); // this will be offset correctly by the kernel call
-    float4 edge = edges[gid];
+    int edge_id = gid + offset;
+    float4 edge = edges[edge_id];
     int p1_index = (int)edge.s0;
     int p2_index = (int)edge.s1;
     float4 p1 = points[p1_index];
