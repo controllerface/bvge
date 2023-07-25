@@ -406,7 +406,7 @@ public class OpenCL
         physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
         //physicsBuffer.bodies.setCopyBuffer(false);
         physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
-        //physicsBuffer.points.setCopyBuffer(false);
+        physicsBuffer.points.setCopyBuffer(false);
         physicsBuffer.edges = new MemoryBuffer(srcMemEdges, edgesBufsize, srcEdges);
         physicsBuffer.edges.setCopyBuffer(false);
     }
