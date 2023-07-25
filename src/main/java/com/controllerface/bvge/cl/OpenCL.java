@@ -354,8 +354,12 @@ public class OpenCL
         clSetKernelArg(k_prepare_edges, 2, Sizeof.cl_mem, Pointer.to(mem));
         clSetKernelArg(k_prepare_edges, 3, Sizeof.cl_int, Pointer.to(edge_offset));
 
+        clEnqueueAcquireGLObjects(commandQueue, 1, new cl_mem[]{mem}, 0, null, null);
+
         clEnqueueNDRangeKernel(commandQueue, k_prepare_edges, 1, null,
             global_work_size, null, 0, null, null);
+
+        clEnqueueReleaseGLObjects(commandQueue, 1, new cl_mem[]{ mem}, 0, null, null);
     }
 
     public static void initPhysicsBuffer(PhysicsBuffer physicsBuffer)
