@@ -6,8 +6,6 @@ import org.joml.Vector2f;
 
 public record FBody2D(int index,
                       float force,
-                      FPoint2D[] points,
-                      FEdge2D[] edges,
                       FBounds2D bounds,
                       FTransform transform,
                       String entity) implements GameComponent

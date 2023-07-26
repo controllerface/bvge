@@ -1,6 +1,5 @@
 package com.controllerface.bvge.window;
 
-import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.KBMInput;
 import com.controllerface.bvge.game.GameMode;
@@ -59,9 +58,7 @@ public class Window
     public void run()
     {
         System.out.println("LWJGL version: " + Version.getVersion());
-        //OpenCL.init();
-        //init();
-        //OpenCL.init();
+
         glfwShowWindow(glfwWindow);
         loop();
 
@@ -82,7 +79,7 @@ public class Window
         camera.adjustProjection();
     }
 
-    private void initWindow()
+    public void initOpenGL()
     {
         GLFWErrorCallback.createPrint(System.err).set();
 
@@ -147,10 +144,8 @@ public class Window
         glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback);
     }
 
-    public void init()
+    public void initGameMode()
     {
-        initWindow();
-
         currentGameMode = new TestGame(ecs);
         currentGameMode.load();
         currentGameMode.start();

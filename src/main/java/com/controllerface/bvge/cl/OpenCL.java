@@ -43,8 +43,7 @@ public class OpenCL
      * CRUD
      */
 
-    static String kern_update_accel            = read_src("kernels/update_accel.cl");
-    static String kern_read_position           = read_src("kernels/read_position.cl");
+    static String kern_gpu_crud = read_src("kernels/gpu_crud.cl");
 
     /**
      * Core kernel files
@@ -104,8 +103,7 @@ public class OpenCL
     static cl_program p_generate_keys;
     static cl_program p_build_key_map;
     static cl_program p_resolve_constraints;
-    static cl_program p_update_accel;
-    static cl_program p_read_position;
+    static cl_program p_gpu_crud;
     static cl_program p_prepare_edges;
 
     /**
@@ -307,7 +305,7 @@ public class OpenCL
 
         var device = device_ids[0];
 
-        System.out.println("\n-------- OPEN CL DEVICE -----------");
+        System.out.println("-------- OPEN CL DEVICE -----------");
         System.out.println(getString(device, CL_DEVICE_VENDOR));
         System.out.println(getString(device, CL_DEVICE_NAME));
         System.out.println(getString(device, CL_DRIVER_VERSION));
@@ -365,9 +363,7 @@ public class OpenCL
 
         p_resolve_constraints = cl_p(kern_resolve_constraints);
 
-        p_update_accel = cl_p(kern_update_accel);
-
-        p_read_position = cl_p(kern_read_position);
+        p_gpu_crud = cl_p(kern_gpu_crud);
 
         p_prepare_edges = cl_p(kern_prepare_edges);
 
@@ -395,8 +391,8 @@ public class OpenCL
         k_generate_keys                     = cl_k(p_generate_keys, kn_generate_keys);
         k_build_key_map                     = cl_k(p_build_key_map, kn_build_key_map);
         k_resolve_constraints               = cl_k(p_resolve_constraints, kn_resolve_constraints);
-        k_update_accel                      = cl_k(p_update_accel, kn_update_accel);
-        k_read_position                     = cl_k(p_read_position, kn_read_position);
+        k_update_accel                      = cl_k(p_gpu_crud, kn_update_accel);
+        k_read_position                     = cl_k(p_gpu_crud, kn_read_position);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
     }
 
@@ -435,38 +431,47 @@ public class OpenCL
 
     public static void initPhysicsBuffer(PhysicsBuffer physicsBuffer)
     {
-        int bodiesSize = Main.Memory.bodyLength();
-        int pointsSize = Main.Memory.pointLength();
-        int boundsSize = Main.Memory.boundsLength();
-        int edgesSize = Main.Memory.edgesLength();
+        // todo: the buffers created in this step should no longer have the CPU-side
+        //  values copied into them. Instead, they will be zeroed out and then later
+        //  calls will write the body data into the backing buffers.
 
-        var bodyBuffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodiesSize);
-        var pointBuffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, pointsSize);
-        var boundsBuffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, boundsSize);
-        var edgesBuffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edgesSize);
+        // todo: the body and bounds data needs to be sliced up into smaller arrays for better
+        //  efficiency. Where possible, 4 dimensional vectors are preferable, followed by
+        //  2 dimensional vectors, and then scalars.
 
-        Pointer srcBodies = Pointer.to(bodyBuffer);
-        Pointer srcPoints = Pointer.to(pointBuffer);
-        Pointer srcBounds = Pointer.to(boundsBuffer);
-        Pointer srcEdges = Pointer.to(edgesBuffer);
+        int bodies_size = Main.Memory.bodyLength();
+        int points_size = Main.Memory.pointLength();
+        int bounds_size = Main.Memory.boundsLength();
+        int edges_size  = Main.Memory.edgesLength();
 
-        long bodyBufsize = (long)Sizeof.cl_float * bodiesSize;
-        long pointBufsize = (long)Sizeof.cl_float * pointsSize;
-        long boundsBufsize = (long)Sizeof.cl_float * boundsSize;
-        long edgesBufsize = (long) Sizeof.cl_float * edgesSize;
+        var body_buffer   = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodies_size);
+        var point_buffer  = FloatBuffer.wrap(Main.Memory.point_buffer, 0, points_size);
+        var bounds_buffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, bounds_size);
+        var edges_buffer  = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edges_size);
 
-        cl_mem srcMemBodies = cl_new_buffer(FLAGS_WRITE_CPU_COPY, bodyBufsize, srcBodies);
-        cl_mem srcMemPoints = cl_new_buffer(FLAGS_WRITE_CPU_COPY, pointBufsize, srcPoints);
-        cl_mem srcMemBounds = cl_new_buffer(FLAGS_WRITE_CPU_COPY, boundsBufsize, srcBounds);
-        cl_mem srcMemEdges  = cl_new_buffer(FLAGS_WRITE_CPU_COPY, edgesBufsize, srcEdges);
+        var ptr_bodies = Pointer.to(body_buffer);
+        var ptr_points = Pointer.to(point_buffer);
+        var ptr_bounds = Pointer.to(bounds_buffer);
+        var ptr_edges  = Pointer.to(edges_buffer);
 
-        physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
+        long body_buf_size   = (long)Sizeof.cl_float * bodies_size;
+        long point_buf_size  = (long)Sizeof.cl_float * points_size;
+        long bounds_buf_size = (long)Sizeof.cl_float * bounds_size;
+        long edges_buf_size  = (long) Sizeof.cl_float * edges_size;
+
+        cl_mem src_mem_bodies = cl_new_buffer(FLAGS_WRITE_CPU_COPY, body_buf_size, ptr_bodies);
+        cl_mem src_mem_points = cl_new_buffer(FLAGS_WRITE_CPU_COPY, point_buf_size, ptr_points);
+        cl_mem src_mem_bounds = cl_new_buffer(FLAGS_WRITE_CPU_COPY, bounds_buf_size, ptr_bounds);
+        cl_mem src_mem_edges  = cl_new_buffer(FLAGS_WRITE_CPU_COPY, edges_buf_size, ptr_edges);
+
+        physicsBuffer.bounds = new MemoryBuffer(src_mem_bounds, bounds_buf_size, ptr_bounds);
+        physicsBuffer.bodies = new MemoryBuffer(src_mem_bodies, body_buf_size, ptr_bodies);
+        physicsBuffer.points = new MemoryBuffer(src_mem_points, point_buf_size, ptr_points);
+        physicsBuffer.edges  = new MemoryBuffer(src_mem_edges, edges_buf_size, ptr_edges);
+
         physicsBuffer.bounds.setCopyBuffer(false);
-        physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
         physicsBuffer.bodies.setCopyBuffer(false);
-        physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
         physicsBuffer.points.setCopyBuffer(false);
-        physicsBuffer.edges = new MemoryBuffer(srcMemEdges, edgesBufsize, srcEdges);
         physicsBuffer.edges.setCopyBuffer(false);
     }
 
@@ -485,9 +490,9 @@ public class OpenCL
     public static float[] read_position(int body_index)
     {
         int[] index = arg_int(body_index);
-        float[] result = arg_float2(0, 0);
-        Pointer dst_result = Pointer.to(result);
-        cl_mem result_data = cl_new_buffer(FLAGS_WRITE_CPU_COPY, Sizeof.cl_float2, dst_result);
+
+        cl_mem result_data = cl_new_buffer(FLAGS_WRITE_GPU, Sizeof.cl_float2);
+        cl_zero_buffer(result_data, Sizeof.cl_float2);
         Pointer src_result = Pointer.to(result_data);
 
         clSetKernelArg(k_read_position, 0, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
@@ -496,8 +501,11 @@ public class OpenCL
 
         k_call(k_read_position, global_single_size);
 
+        float[] result = arg_float2(0, 0);
+        Pointer dst_result = Pointer.to(result);
         cl_read_buffer(result_data, Sizeof.cl_float2, dst_result);
         clReleaseMemObject(result_data);
+
         return result;
     }
 

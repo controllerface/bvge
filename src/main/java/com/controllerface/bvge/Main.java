@@ -176,8 +176,6 @@ public class Main
                                       float ps, float pe,
                                       float es, float ee,
                                       int c_flags,
-                                      FPoint2D[] points,
-                                      FEdge2D[] edges,
                                       FBounds2D bounds,
                                       float force, String entity)
         {
@@ -199,7 +197,7 @@ public class Main
             body_buffer[body_index++] = 0f;
             var idx = body_index - Width.BODY;
             var transform = new FTransform(idx);
-            return new FBody2D(idx, force, points, edges, bounds, transform, entity);
+            return new FBody2D(idx, force, bounds, transform, entity);
         }
 
     }
@@ -207,8 +205,9 @@ public class Main
     public static void main(String[] args)
     {
         Window window = Window.get();
-        window.init();
+        window.initOpenGL();
         OpenCL.init();
+        window.initGameMode();
         window.run();
         OpenCL.destroy();
     }
