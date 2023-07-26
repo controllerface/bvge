@@ -441,7 +441,7 @@ public class OpenCL
 
         int bodies_size = Main.Memory.bodyLength();
         int points_size = Main.Memory.pointLength();
-        int bounds_size = Main.Memory.boundsLength();
+        int bounds_size = bodies_size;
         int edges_size  = Main.Memory.edgesLength();
 
         var body_buffer   = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodies_size);
@@ -548,14 +548,14 @@ public class OpenCL
 
     public static void calculate_bank_offsets(SpatialPartition spatialPartition)
     {
-        int n = Main.Memory.boundsCount();
+        int n = Main.Memory.bodyCount();
         int bank_size = scan_key_bounds(physicsBuffer.bounds.memory(), n);
         spatialPartition.resizeBank(bank_size);
     }
 
     public static void generate_key_bank(SpatialPartition spatialPartition)
     {
-        int n = Main.Memory.boundsCount();
+        int n = Main.Memory.bodyCount();
         long bank_buf_size = (long)Sizeof.cl_int * spatialPartition.getKey_bank_size();
         long counts_buf_size = (long)Sizeof.cl_int * spatialPartition.getDirectoryLength();
 
@@ -603,7 +603,7 @@ public class OpenCL
 
     public static void generate_key_map(SpatialPartition spatialPartition)
     {
-        int n = Main.Memory.boundsCount();
+        int n = Main.Memory.bodyCount();
         long map_buf_size = (long)Sizeof.cl_int * spatialPartition.getKey_map_size();
         long counts_buf_size = (long)Sizeof.cl_int * spatialPartition.getDirectoryLength();
 

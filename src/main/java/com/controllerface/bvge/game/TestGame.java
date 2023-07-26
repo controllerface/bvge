@@ -51,7 +51,7 @@ public class TestGame extends GameMode
                 var physicsObject = PhysicsObjects.simpleBox(x, y, size, npc);
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
                 ecs.attachComponent(npc, Component.RigidBody2D, physicsObject);
-                ecs.attachComponent(npc, Component.BoundingBox, physicsObject.bounds());
+                //ecs.attachComponent(npc, Component.BoundingBox, physicsObject.bounds());
             }
         }
     }
@@ -80,7 +80,7 @@ public class TestGame extends GameMode
             var physicsObject = PhysicsObjects.staticBox(x, y, size, npc);
             ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
             ecs.attachComponent(npc, Component.RigidBody2D, physicsObject);
-            ecs.attachComponent(npc, Component.BoundingBox, physicsObject.bounds());
+            //ecs.attachComponent(npc, Component.BoundingBox, physicsObject.bounds());
         }
     }
 
@@ -104,7 +104,7 @@ public class TestGame extends GameMode
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.RigidBody2D, physicsObject);
-        ecs.attachComponent(player, Component.BoundingBox, physicsObject.bounds());
+        //ecs.attachComponent(player, Component.BoundingBox, physicsObject.bounds());
     }
 
     // note: order of adding systems is important

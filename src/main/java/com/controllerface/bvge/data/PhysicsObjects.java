@@ -67,8 +67,6 @@ public class PhysicsObjects
 
         var force = 500;
 
-        var bounds = Main.Memory.newBounds();
-
         return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
             size, size,
             0,0,
@@ -77,7 +75,7 @@ public class PhysicsObjects
             (float) start_edge.index() / Main.Memory.Width.EDGE,
             (float) end_edge.index() / Main.Memory.Width.EDGE,
             FLAG_NONE,
-            bounds, force,
+                force,
             entity);
     }
 
@@ -133,8 +131,6 @@ public class PhysicsObjects
 
         var force = 500;
 
-        var bounds = Main.Memory.newBounds();
-
         return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
             size, size,
             0,0,
@@ -143,7 +139,7 @@ public class PhysicsObjects
             (float) e1.index() / Main.Memory.Width.EDGE,
             (float) e6.index() / Main.Memory.Width.EDGE,
             FLAG_STATIC,
-            bounds, force,
+                force,
             entity);
     }
 
@@ -214,8 +210,6 @@ public class PhysicsObjects
 
         var force = 2500;
 
-        var bounds = Main.Memory.newBounds();
-
         return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
             size, size,
             0,0,
@@ -224,7 +218,7 @@ public class PhysicsObjects
             (float) e1.index() / Main.Memory.Width.EDGE,
             (float) e6.index() / Main.Memory.Width.EDGE,
             FLAG_NONE,
-            bounds, force,
+                force,
             entity);
     }
 }

@@ -117,32 +117,6 @@ public class Main
             return edge_index / Width.EDGE;
         }
 
-        public static int boundsCount()
-        {
-            return bounds_index / Width.BOUNDS;
-        }
-
-        public static FBounds2D newBounds()
-        {
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            bounds_buffer[bounds_index++] = 0f;
-            return new FBounds2D(bounds_index - Width.BOUNDS);
-        }
-
         public static FEdge2D newEdge(int p1, int p2, float l, FPoint2D from, FPoint2D to)
         {
             edge_buffer[edge_index++] = (float) p1;
@@ -172,7 +146,6 @@ public class Main
                                       float ps, float pe,
                                       float es, float ee,
                                       int c_flags,
-                                      FBounds2D bounds,
                                       float force, String entity)
         {
             body_buffer[body_index++] = x;
@@ -192,7 +165,7 @@ public class Main
             body_buffer[body_index++] = 0f;
             body_buffer[body_index++] = 0f;
             var idx = body_index - Width.BODY;
-            return new FBody2D(idx, force, bounds, entity);
+            return new FBody2D(idx, force, entity);
         }
     }
 
