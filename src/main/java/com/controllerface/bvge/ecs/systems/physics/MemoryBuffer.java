@@ -62,6 +62,7 @@ public class MemoryBuffer
     {
         if (!released && copyBuffer)
         {
+            // todo: this code should not be called anymore
             clEnqueueReadBuffer(OpenCL.getCommandQueue(), src, CL_TRUE, 0, size, dst,
                 0, null, null);
         }

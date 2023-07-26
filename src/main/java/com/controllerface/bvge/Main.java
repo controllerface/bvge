@@ -18,10 +18,6 @@ public class Main
     //  will then be implemented in GPU code.
     public static class Memory
     {
-        // todo: actually add the cleaner/tracking mechanism for keeping track of
-        //  all points, bodies, etc. This will be needed when the arrays need to compact
-        //  because of this, those objects won't be able to be records.
-
         // Memory layout notes:
         //---------------------
         // Objects managed by this class are laid out as 1 dimensional arrays for interoperability
@@ -199,7 +195,6 @@ public class Main
             var transform = new FTransform(idx);
             return new FBody2D(idx, force, bounds, transform, entity);
         }
-
     }
 
     public static void main(String[] args)
