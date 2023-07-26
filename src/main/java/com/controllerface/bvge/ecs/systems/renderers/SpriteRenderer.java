@@ -1,20 +1,16 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
-import com.controllerface.bvge.data.FTransform;
-import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.GameComponent;
+import com.controllerface.bvge.ecs.components.SpriteComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.Shader;
-import com.controllerface.bvge.ecs.components.SpriteComponent;
-import com.controllerface.bvge.gl.batches.SpriteRenderBatch;
 import com.controllerface.bvge.gl.Texture;
+import com.controllerface.bvge.gl.batches.SpriteRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class SpriteRenderer extends GameSystem
 {
@@ -68,28 +64,28 @@ public class SpriteRenderer extends GameSystem
     @Override
     public void run(float dt)
     {
-        var spriteComponents = ecs.getComponents(Component.SpriteComponent);
-
-        for (Map.Entry<String, GameComponent> entry : spriteComponents.entrySet())
-        {
-            String entity = entry.getKey();
-            GameComponent component = entry.getValue();
-            SpriteComponent sprite = Component.SpriteComponent.coerce(component);
-            var t = ecs.getComponentFor(entity, Component.Transform);
-            FTransform transform = Component.Transform.coerce(t);
-
-            // set the sprite transform so it always tracks the center point of the object.
-            // rotation is left out intentionally, these sprites are intended to be used as
-            // axis-aligned "billboards" for things like damage numbers and other ephemeral
-            // data.
-            sprite.transform.position.x = transform.pos_x();
-            sprite.transform.position.y = transform.pos_y();
-            sprite.transform.scale.x = transform.scale_x();
-            sprite.transform.scale.y = transform.scale_y();
-            this.add(sprite);
-        }
-
-        render();
+//        var spriteComponents = ecs.getComponents(Component.SpriteComponent);
+//
+//        for (Map.Entry<String, GameComponent> entry : spriteComponents.entrySet())
+//        {
+//            String entity = entry.getKey();
+//            GameComponent component = entry.getValue();
+//            SpriteComponent sprite = Component.SpriteComponent.coerce(component);
+//            var t = ecs.getComponentFor(entity, Component.Transform);
+//            FTransform transform = Component.Transform.coerce(t);
+//
+//            // set the sprite transform so it always tracks the center point of the object.
+//            // rotation is left out intentionally, these sprites are intended to be used as
+//            // axis-aligned "billboards" for things like damage numbers and other ephemeral
+//            // data.
+//            sprite.transform.position.x = transform.pos_x();
+//            sprite.transform.position.y = transform.pos_y();
+//            sprite.transform.scale.x = transform.scale_x();
+//            sprite.transform.scale.y = transform.scale_y();
+//            this.add(sprite);
+//        }
+//
+//        render();
     }
 
     @Override

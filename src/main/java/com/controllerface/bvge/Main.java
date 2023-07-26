@@ -192,8 +192,7 @@ public class Main
             body_buffer[body_index++] = 0f;
             body_buffer[body_index++] = 0f;
             var idx = body_index - Width.BODY;
-            var transform = new FTransform(idx);
-            return new FBody2D(idx, force, bounds, transform, entity);
+            return new FBody2D(idx, force, bounds, entity);
         }
     }
 

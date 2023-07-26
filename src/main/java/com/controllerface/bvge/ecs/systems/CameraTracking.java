@@ -1,7 +1,7 @@
 package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.data.FTransform;
+import com.controllerface.bvge.data.FBody2D;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
@@ -24,11 +24,11 @@ public class CameraTracking extends GameSystem
     {
         var focusTargets = ecs.getComponents(Component.CameraFocus);
         var focusTarget = focusTargets.entrySet().stream().findAny().orElseThrow();
-        var t = ecs.getComponentFor(focusTarget.getKey(), Component.Transform);
-        FTransform transform = Component.Transform.coerce(t);
-        if (transform == null) return;
+        var b = ecs.getComponentFor(focusTarget.getKey(), Component.RigidBody2D);
+        FBody2D body = Component.RigidBody2D.coerce(b);
+        if (body == null) return;
 
-        float[] pos = OpenCL.read_position(transform.index());
+        float[] pos = OpenCL.read_position(body.index());
         float pos_x = pos[0];
         float pos_y = pos[1];
 
