@@ -44,6 +44,7 @@ public class OpenCL
      */
 
     static String kern_update_accel            = read_src("kernels/update_accel.cl");
+    static String kern_read_position           = read_src("kernels/read_position.cl");
 
     /**
      * Core kernel files
@@ -86,6 +87,7 @@ public class OpenCL
     static String kn_build_key_map                      = "build_key_map";
     static String kn_resolve_constraints                = "resolve_constraints";
     static String kn_update_accel                       = "update_accel";
+    static String kn_read_position                      = "read_position";
     static String kn_prepare_edges                      = "prepare_edges";
 
     /**
@@ -103,6 +105,7 @@ public class OpenCL
     static cl_program p_build_key_map;
     static cl_program p_resolve_constraints;
     static cl_program p_update_accel;
+    static cl_program p_read_position;
     static cl_program p_prepare_edges;
 
     /**
@@ -130,6 +133,7 @@ public class OpenCL
     static cl_kernel k_build_key_map;
     static cl_kernel k_resolve_constraints;
     static cl_kernel k_update_accel;
+    static cl_kernel k_read_position;
     static cl_kernel k_prepare_edges;
 
     /**
@@ -363,6 +367,8 @@ public class OpenCL
 
         p_update_accel = cl_p(kern_update_accel);
 
+        p_read_position = cl_p(kern_read_position);
+
         p_prepare_edges = cl_p(kern_prepare_edges);
 
         /*
@@ -390,6 +396,7 @@ public class OpenCL
         k_build_key_map                     = cl_k(p_build_key_map, kn_build_key_map);
         k_resolve_constraints               = cl_k(p_resolve_constraints, kn_resolve_constraints);
         k_update_accel                      = cl_k(p_update_accel, kn_update_accel);
+        k_read_position                     = cl_k(p_read_position, kn_read_position);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
     }
 
@@ -456,7 +463,7 @@ public class OpenCL
         physicsBuffer.bounds = new MemoryBuffer(srcMemBounds, boundsBufsize, srcBounds);
         physicsBuffer.bounds.setCopyBuffer(false);
         physicsBuffer.bodies = new MemoryBuffer(srcMemBodies, bodyBufsize, srcBodies);
-        //physicsBuffer.bodies.setCopyBuffer(false);
+        physicsBuffer.bodies.setCopyBuffer(false);
         physicsBuffer.points = new MemoryBuffer(srcMemPoints, pointBufsize, srcPoints);
         physicsBuffer.points.setCopyBuffer(false);
         physicsBuffer.edges = new MemoryBuffer(srcMemEdges, edgesBufsize, srcEdges);
@@ -474,6 +481,26 @@ public class OpenCL
 
         k_call(k_update_accel, global_single_size);
     }
+
+    public static float[] read_position(int body_index)
+    {
+        int[] index = arg_int(body_index);
+        float[] result = arg_float2(0, 0);
+        Pointer dst_result = Pointer.to(result);
+        cl_mem result_data = cl_new_buffer(FLAGS_WRITE_CPU_COPY, Sizeof.cl_float2, dst_result);
+        Pointer src_result = Pointer.to(result_data);
+
+        clSetKernelArg(k_read_position, 0, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
+        clSetKernelArg(k_read_position, 1, Sizeof.cl_float2, src_result);
+        clSetKernelArg(k_read_position, 2, Sizeof.cl_int, Pointer.to(index));
+
+        k_call(k_read_position, global_single_size);
+
+        cl_read_buffer(result_data, Sizeof.cl_float2, dst_result);
+        clReleaseMemObject(result_data);
+        return result;
+    }
+
 
     //#region Physics Simulation
 

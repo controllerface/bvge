@@ -70,6 +70,22 @@ public class Main
         public static float[] edge_buffer   = new float[EDGE_BUFFER_SIZE];
         public static float[] bounds_buffer = new float[BOUNDS_BUFFER_SIZE];
 
+        static
+        {
+            int body_bytes = body_buffer.length * Float.BYTES;
+            int point_bytes = point_buffer.length * Float.BYTES;
+            int edge_bytes = edge_buffer.length * Float.BYTES;
+            int bounds_bytes = bounds_buffer.length * Float.BYTES;
+            int total = body_bytes + point_bytes + edge_bytes + bounds_bytes;
+            System.out.println("body_buffer   : " + body_bytes   + " Bytes");
+            System.out.println("point_buffer  : " + point_bytes  + " Bytes");
+            System.out.println("edge_buffer   : " + edge_bytes   + " Bytes");
+            System.out.println("bounds_buffer : " + bounds_bytes + " Bytes");
+            System.out.println("-Total-       : " + total        + " Bytes");
+            System.out.println("-Total-       : " + total / 1024 / 1024 + " MB");
+
+        }
+
         private static int body_index    = 0;
         private static int point_index   = 0;
         private static int edge_index    = 0;
@@ -191,7 +207,8 @@ public class Main
     public static void main(String[] args)
     {
         Window window = Window.get();
-        //OpenCL.init();
+        window.init();
+        OpenCL.init();
         window.run();
         OpenCL.destroy();
     }

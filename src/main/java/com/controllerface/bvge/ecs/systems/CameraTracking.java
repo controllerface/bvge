@@ -1,10 +1,14 @@
 package com.controllerface.bvge.ecs.systems;
 
+import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.data.FTransform;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.window.Window;
+
+import java.lang.reflect.Array;
+import java.util.Arrays;
 
 public class CameraTracking extends GameSystem
 {
@@ -23,13 +27,18 @@ public class CameraTracking extends GameSystem
         var t = ecs.getComponentFor(focusTarget.getKey(), Component.Transform);
         FTransform transform = Component.Transform.coerce(t);
         if (transform == null) return;
+
+        float[] pos = OpenCL.read_position(transform.index());
+        float pos_x = pos[0];
+        float pos_y = pos[1];
+
         var camera = Window.get().camera();
         var width = (float)Window.get().getWidth() * camera.getZoom();
         var height = (float)Window.get().getHeight() * camera.getZoom();
-        var new_x = (transform.pos_x() - width / 2);
-        var new_y = (transform.pos_y() - height / 2);
-        var new_origin_x = (transform.pos_x() - width / camera.getZoom()) + (spatialPartition.getWidth() / 2);
-        var new_origin_y = (transform.pos_y() - height / camera.getZoom()) + (spatialPartition.getHeight() / 2);
+        var new_x = (pos_x - width / 2);
+        var new_y = (pos_y - height / 2);
+        var new_origin_x = (pos_x - width / camera.getZoom()) + (spatialPartition.getWidth() / 2);
+        var new_origin_y = (pos_y - height / camera.getZoom()) + (spatialPartition.getHeight() / 2);
         camera.position.x = new_x;
         camera.position.y = new_y;
         spatialPartition.updateOrigin(new_origin_x, new_origin_y);

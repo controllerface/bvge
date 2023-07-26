@@ -60,8 +60,8 @@ public class Window
     {
         System.out.println("LWJGL version: " + Version.getVersion());
         //OpenCL.init();
-        init();
-        OpenCL.init();
+        //init();
+        //OpenCL.init();
         glfwShowWindow(glfwWindow);
         loop();
 
