@@ -573,7 +573,7 @@ public class OpenCL
 
         // key counts get transferred out right now for use in the spatial index renderer
         // todo: remove this transfer after moving over to CL/GL interop renderer
-        physicsBuffer.key_counts = new MemoryBuffer(counts_data, counts_buf_size, dst_counts);
+        physicsBuffer.key_counts = new MemoryBuffer(counts_data, counts_buf_size);
         physicsBuffer.key_bank = new MemoryBuffer(bank_data, bank_buf_size);
 
         // pass in arguments

@@ -1,10 +1,14 @@
 package com.controllerface.bvge.game;
 
+import com.controllerface.bvge.ecs.ECS;
+
 public abstract class GameMode
 {
-    public GameMode()
-    {
+    protected final ECS ecs;
 
+    public GameMode(ECS ecs)
+    {
+        this.ecs = ecs;
     }
 
     abstract public void start();

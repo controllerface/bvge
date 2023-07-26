@@ -1,12 +1,14 @@
 package com.controllerface.bvge.window;
 
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.KBMInput;
 import com.controllerface.bvge.game.GameMode;
 import com.controllerface.bvge.game.TestGame;
 import org.joml.Vector2f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
@@ -73,7 +75,6 @@ public class Window
 
     private void windowUpkeep()
     {
-        glfwPollEvents();
         glClearColor(r, g, b, a);
         glClear(GL_COLOR_BUFFER_BIT);
         camera.adjustProjection();
@@ -89,14 +90,13 @@ public class Window
         }
 
         glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
         var prim = glfwGetPrimaryMonitor();
-
         int[] x = new int[1];
         int[] y = new int[1];
         int[] w = new int[1];
@@ -104,6 +104,13 @@ public class Window
         glfwGetMonitorWorkarea(prim, x,y,w,h);
         this.width = w[0];
         this.height = h[0];
+
+        GLFWVidMode.Buffer modes = glfwGetVideoModes(prim);
+
+        modes.stream().forEach(m->
+        {
+            System.out.println(m.refreshRate() + " x " + m.width() + " x " + m.height());
+        });
 
         glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
         if (glfwWindow == NULL)
@@ -127,7 +134,7 @@ public class Window
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        glViewport(0,0,this.width, this.height);
+        //glViewport(0,0,this.width, this.height);
 
         System.out.println("\n-------- OPEN GL DEVICE -----------");
         System.out.println(glGetString(GL_VENDOR));
@@ -144,9 +151,33 @@ public class Window
         glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback);
     }
 
+    /**
+     * A simple utility system that just blanks the screen, getting it ready to render. This is used
+     * instead of just calling it at the top of the loop, so that the screen clear can happen s late
+     * as possible, just before rendering. todo: it may be better to use a framebuffer of some kind
+     */
+    private class BlankSystem extends GameSystem
+    {
+
+        public BlankSystem(ECS ecs) {
+            super(ecs);
+        }
+
+        @Override
+        public void run(float dt) {
+            windowUpkeep();
+        }
+
+        @Override
+        public void shutdown() {
+
+        }
+    }
+
     public void initGameMode()
     {
-        currentGameMode = new TestGame(ecs);
+        var x = new BlankSystem(null);
+        currentGameMode = new TestGame(ecs, x);
         currentGameMode.load();
         currentGameMode.start();
 
@@ -176,14 +207,13 @@ public class Window
 
         while (!glfwWindowShouldClose(glfwWindow))
         {
-            windowUpkeep();
+            glfwPollEvents();
 
             if (dt >= 0)
             {
                 ecs.run(dt);
                 currentGameMode.update(dt);
             }
-            //System.out.println("FPS:" + (1000 / dt) / 1000);
 
             glfwSwapBuffers(glfwWindow);
             MouseListener.endFrame();

@@ -5,6 +5,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.Sprite;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
+import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
 import com.controllerface.bvge.ecs.systems.renderers.*;
@@ -14,11 +15,11 @@ import org.joml.Vector4f;
 
 public class TestGame extends GameMode
 {
-    private final ECS ecs;
-
-    public TestGame(ECS ecs)
+    private final GameSystem screenBlankSystem;
+    public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {
-        this.ecs = ecs;
+        super(ecs);
+        this.screenBlankSystem = screenBlankSystem;
     }
 
     private final SpatialPartition spatialPartition = new SpatialPartition();
@@ -113,6 +114,9 @@ public class TestGame extends GameMode
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
 
+        // todo: insert screen blanker system here
+
+        ecs.registerSystem(screenBlankSystem);
         ecs.registerSystem(new LineRendererEX(ecs));
 
         //ecs.registerSystem(new SpriteRenderer(ecs));
@@ -123,20 +127,19 @@ public class TestGame extends GameMode
     public void load()
     {
         genPlayer();
+
         //genNPCs(100, 10f, 10f, 2100, 2100);
-//        genNPCs(100, 10f, 10f, 2100, 2100);
-//
         //genNPCs(100, 10f, 10f, 1000, -1000);
-//        genNPCs(100, 10f, 10f, 1000, -1000);
-//
-//        genNPCs(100, 10f, 10f, -1500, -1500);
         //genNPCs(100, 10f, 10f, -1500, -1500);
-//
-//        genNPCs(100, 10f, 10f, 40, 500);
         //genNPCs(100, 10f, 10f, 40, 500);
 
+        genNPCs(100, 10f, 10f, 2100, 2100);
+        genNPCs(100, 10f, 10f, 1000, -1000);
+        genNPCs(100, 10f, 10f, -1500, -1500);
+        genNPCs(100, 10f, 10f, 40, 500);
+
         genNPCs(3, 20f, 15f, 100, 300);
-        //genFloor(500, 5f, 5f, -500, -40);
+        genFloor(500, 5f, 5f, -500, -40);
 
         loadSystems();
     }

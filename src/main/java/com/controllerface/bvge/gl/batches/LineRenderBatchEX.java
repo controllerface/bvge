@@ -82,7 +82,7 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
 
     public void render()
     {
-        glLineWidth(1.5f);
+        glLineWidth(1f);
         glBindVertexArray(vaoID);
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
