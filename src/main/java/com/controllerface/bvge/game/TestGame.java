@@ -1,5 +1,7 @@
 package com.controllerface.bvge.game;
 
+import com.controllerface.bvge.data.BodyIndex;
+import com.controllerface.bvge.data.LinearForce;
 import com.controllerface.bvge.data.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.Sprite;
@@ -50,7 +52,7 @@ public class TestGame extends GameMode
                 scomp2.setColor(new Vector4f(r,g,b,1));
                 var physicsObject = PhysicsObjects.simpleBox(x, y, size);
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-                ecs.attachComponent(npc, Component.RigidBody2D, physicsObject);
+                ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(physicsObject));
             }
         }
     }
@@ -78,7 +80,7 @@ public class TestGame extends GameMode
             scomp2.setColor(new Vector4f(r,g,b,1));
             var physicsObject = PhysicsObjects.staticBox(x, y, size);
             ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-            ecs.attachComponent(npc, Component.RigidBody2D, physicsObject);
+            ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(physicsObject));
         }
     }
 
@@ -101,7 +103,8 @@ public class TestGame extends GameMode
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
-        ecs.attachComponent(player, Component.RigidBody2D, physicsObject);
+        ecs.attachComponent(player, Component.RigidBody2D, new BodyIndex(physicsObject));
+        ecs.attachComponent(player, Component.LinearForce, new LinearForce(1500));
     }
 
     // note: order of adding systems is important

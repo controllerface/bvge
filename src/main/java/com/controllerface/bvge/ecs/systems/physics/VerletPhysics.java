@@ -54,34 +54,36 @@ public class VerletPhysics extends GameSystem
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
 
             var b = ecs.getComponentFor(entity, Component.RigidBody2D);
+            var f = ecs.getComponentFor(entity, Component.LinearForce);
             BodyIndex body = Component.RigidBody2D.coerce(b);
+            LinearForce force = Component.LinearForce.coerce(f);
             vectorBuffer1.zero();
             if (controlPoints.is_moving_left())
             {
-                vectorBuffer1.x -= body.force();
+                vectorBuffer1.x -= force.magnitude();
             }
             if (controlPoints.is_moving_right())
             {
-                vectorBuffer1.x += body.force();
+                vectorBuffer1.x += force.magnitude();
             }
             if (controlPoints.is_moving_up())
             {
-                vectorBuffer1.y += body.force();
+                vectorBuffer1.y += force.magnitude();
             }
             if (controlPoints.is_moving_down())
             {
-                vectorBuffer1.y -= body.force();
+                vectorBuffer1.y -= force.magnitude();
             }
 
             if (vectorBuffer1.x != 0f || vectorBuffer1.y != 0)
             {
-                OpenCL.update_accel(body.bodyIndex(), vectorBuffer1.x, vectorBuffer1.y);
+                OpenCL.update_accel(body.index(), vectorBuffer1.x, vectorBuffer1.y);
             }
 
             if (controlPoints.is_rotating_right() ^ controlPoints.is_rotating_left())
             {
                 float angle = controlPoints.is_rotating_right() ? -500 : 500;
-                OpenCL.rotate_body(body.bodyIndex(), angle * dt * dt);
+                OpenCL.rotate_body(body.index(), angle * dt * dt);
             }
         }
     }

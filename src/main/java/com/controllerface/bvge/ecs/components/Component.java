@@ -1,12 +1,14 @@
 package com.controllerface.bvge.ecs.components;
 
 import com.controllerface.bvge.data.BodyIndex;
+import com.controllerface.bvge.data.LinearForce;
 
 public enum Component
 {
     SpriteComponent(SpriteComponent.class),
     ControlPoints(ControlPoints.class),
     RigidBody2D(BodyIndex.class),
+    LinearForce(LinearForce.class),
     CameraFocus(CameraFocus.class),
 
     ;

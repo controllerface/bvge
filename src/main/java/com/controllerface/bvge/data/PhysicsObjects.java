@@ -23,7 +23,7 @@ public class PhysicsObjects
     }
 
 
-    public static BodyIndex simpleBox(float x, float y, float size)
+    public static int simpleBox(float x, float y, float size)
     {
         var halfSize = size / 2;
 
@@ -77,8 +77,6 @@ public class PhysicsObjects
             distance(p4, p2)
         );
 
-        var force = 500;
-
         return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
             size, size,
             0,0,
@@ -86,12 +84,11 @@ public class PhysicsObjects
             (float) p4_obj / Main.Memory.Width.POINT,
             (float) start_edge / Main.Memory.Width.EDGE,
             (float) end_edge / Main.Memory.Width.EDGE,
-            FLAG_NONE,
-                force
+            FLAG_NONE
         );
     }
 
-    public static BodyIndex staticBox(float x, float y, float size)
+    public static int staticBox(float x, float y, float size)
     {
         var halfSize = size / 2;
 
@@ -145,8 +142,6 @@ public class PhysicsObjects
             distance(p4, p2)
         );
 
-        var force = 500;
-
         return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
             size, size,
             0,0,
@@ -154,12 +149,11 @@ public class PhysicsObjects
             (float) p4_obj / Main.Memory.Width.POINT,
             (float) e1 / Main.Memory.Width.EDGE,
             (float) e6 / Main.Memory.Width.EDGE,
-            FLAG_STATIC,
-                force
+            FLAG_STATIC
         );
     }
 
-    public static BodyIndex polygon1(float x, float y, float size)
+    public static int polygon1(float x, float y, float size)
     {
         var halfSize = size / 2;
 
@@ -229,8 +223,6 @@ public class PhysicsObjects
         );
 
 
-        var force = 1500;
-
         return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
             size, size,
             0,0,
@@ -238,8 +230,7 @@ public class PhysicsObjects
             (float) p5_obj / Main.Memory.Width.POINT,
             (float) e1 / Main.Memory.Width.EDGE,
             (float) e6 / Main.Memory.Width.EDGE,
-            FLAG_NONE,
-                force
+            FLAG_NONE
         );
     }
 }

@@ -16,6 +16,8 @@ import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
 public class OpenCL
 {
+    private static final int COLLISION_SIZE = 2;
+
     private static final long FLAGS_WRITE_GPU       = CL_MEM_READ_WRITE;
     private static final long FLAGS_WRITE_CPU_COPY  = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     private static final long FLAGS_READ_CPU_COPY   = CL_MEM_READ_ONLY  | CL_MEM_COPY_HOST_PTR;
@@ -304,8 +306,6 @@ public class OpenCL
     {
         return (int) Math.ceil((float)n / (float)m);
     }
-
-
 
     public static void init()
     {
@@ -800,7 +800,7 @@ public class OpenCL
         int candidatesSize = (int) physicsBuffer.candidates.getSize() / Sizeof.cl_int;
 
         // Set the work-item dimensions
-        long[] global_work_size = new long[]{candidatesSize / Main.Memory.Width.COLLISION};
+        long[] global_work_size = new long[]{candidatesSize / COLLISION_SIZE};
 
         // Set the arguments for the kernel
         clSetKernelArg(k_sat_collide, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.candidates.memory()));

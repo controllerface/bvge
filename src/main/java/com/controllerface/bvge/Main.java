@@ -1,7 +1,6 @@
 package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.window.Window;
 
 
@@ -43,10 +42,6 @@ public class Main
             // float4
             public static final int EDGE = 4;
             // Edges define constraints that are set between two vertices
-
-            // int2
-            public static final int COLLISION = 2;
-            // Collisions are represented as a pair of indices, one for each object
         }
 
         private static final int MAX_BODIES  = 100_000;
@@ -75,9 +70,9 @@ public class Main
             System.out.println("-Total-       : " + total / 1024 / 1024 + " MB");
         }
 
-        private static int body_index    = 0;
-        private static int point_index   = 0;
-        private static int edge_index    = 0;
+        private static int body_index  = 0;
+        private static int point_index = 0;
+        private static int edge_index  = 0;
 
         public static int bodyCount()
         {
@@ -113,9 +108,6 @@ public class Main
             return edge_index - Width.EDGE;
         }
 
-
-
-
         public static int newPoint(float x, float y)
         {
             return newPoint(x, y, x, y);
@@ -135,13 +127,12 @@ public class Main
             return point_index - Width.POINT;
         }
 
-        public static BodyIndex newBody(float x, float y,
+        public static int newBody(float x, float y,
                                         float sx, float sy,
                                         float ax, float ay,
                                         float ps, float pe,
                                         float es, float ee,
-                                        int c_flags,
-                                        float force)
+                                        int c_flags)
         {
             body_buffer[body_index++] = x;
             body_buffer[body_index++] = y;
@@ -160,7 +151,7 @@ public class Main
             body_buffer[body_index++] = 0f;
             body_buffer[body_index++] = 0f;
             var idx = body_index - Width.BODY;
-            return new BodyIndex(idx, force);
+            return idx / Width.BODY;
         }
     }
 
