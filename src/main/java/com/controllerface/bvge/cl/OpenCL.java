@@ -441,17 +441,17 @@ public class OpenCL
 
         int bodies_size = Main.Memory.bodyLength();
         int points_size = Main.Memory.pointLength();
-        int bounds_size = bodies_size;
         int edges_size  = Main.Memory.edgesLength();
+
+        int bounds_size = bodies_size;
+
 
         var body_buffer   = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodies_size);
         var point_buffer  = FloatBuffer.wrap(Main.Memory.point_buffer, 0, points_size);
-        var bounds_buffer = FloatBuffer.wrap(Main.Memory.bounds_buffer, 0, bounds_size);
         var edges_buffer  = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edges_size);
 
         var ptr_bodies = Pointer.to(body_buffer);
         var ptr_points = Pointer.to(point_buffer);
-        var ptr_bounds = Pointer.to(bounds_buffer);
         var ptr_edges  = Pointer.to(edges_buffer);
 
         long body_buf_size   = (long)Sizeof.cl_float * bodies_size;
@@ -461,10 +461,12 @@ public class OpenCL
 
         cl_mem src_mem_bodies = cl_new_buffer(FLAGS_WRITE_CPU_COPY, body_buf_size, ptr_bodies);
         cl_mem src_mem_points = cl_new_buffer(FLAGS_WRITE_CPU_COPY, point_buf_size, ptr_points);
-        cl_mem src_mem_bounds = cl_new_buffer(FLAGS_WRITE_CPU_COPY, bounds_buf_size, ptr_bounds);
         cl_mem src_mem_edges  = cl_new_buffer(FLAGS_WRITE_CPU_COPY, edges_buf_size, ptr_edges);
 
-        physicsBuffer.bounds = new MemoryBuffer(src_mem_bounds, bounds_buf_size, ptr_bounds);
+        cl_mem src_mem_bounds = cl_new_buffer(FLAGS_WRITE_GPU, bounds_buf_size);
+        cl_zero_buffer(src_mem_bounds, bounds_buf_size);
+
+        physicsBuffer.bounds = new MemoryBuffer(src_mem_bounds, bounds_buf_size);
         physicsBuffer.bodies = new MemoryBuffer(src_mem_bodies, body_buf_size, ptr_bodies);
         physicsBuffer.points = new MemoryBuffer(src_mem_points, point_buf_size, ptr_points);
         physicsBuffer.edges  = new MemoryBuffer(src_mem_edges, edges_buf_size, ptr_edges);
