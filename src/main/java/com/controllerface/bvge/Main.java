@@ -133,7 +133,7 @@ public class Main
                                       float ps, float pe,
                                       float es, float ee,
                                       int c_flags,
-                                      float force, String entity)
+                                      float force)
         {
             body_buffer[body_index++] = x;
             body_buffer[body_index++] = y;
@@ -152,7 +152,7 @@ public class Main
             body_buffer[body_index++] = 0f;
             body_buffer[body_index++] = 0f;
             var idx = body_index - Width.BODY;
-            return new FBody2D(idx, force, entity);
+            return new FBody2D(idx, force);
         }
     }
 

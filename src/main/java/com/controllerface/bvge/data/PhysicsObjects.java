@@ -15,7 +15,7 @@ public class PhysicsObjects
     public static int FLAG_NONE = 0x00;
     public static int FLAG_STATIC = 0x01;
 
-    public static FBody2D simpleBox(float x, float y, float size, String entity)
+    public static FBody2D simpleBox(float x, float y, float size)
     {
         var halfSize = size / 2;
 
@@ -75,11 +75,11 @@ public class PhysicsObjects
             (float) start_edge.index() / Main.Memory.Width.EDGE,
             (float) end_edge.index() / Main.Memory.Width.EDGE,
             FLAG_NONE,
-                force,
-            entity);
+                force
+        );
     }
 
-    public static FBody2D staticBox(float x, float y, float size, String entity)
+    public static FBody2D staticBox(float x, float y, float size)
     {
         var halfSize = size / 2;
 
@@ -139,11 +139,11 @@ public class PhysicsObjects
             (float) e1.index() / Main.Memory.Width.EDGE,
             (float) e6.index() / Main.Memory.Width.EDGE,
             FLAG_STATIC,
-                force,
-            entity);
+                force
+        );
     }
 
-    public static FBody2D polygon1(float x, float y, float size, String entity)
+    public static FBody2D polygon1(float x, float y, float size)
     {
         var halfSize = size / 2;
 
@@ -218,7 +218,7 @@ public class PhysicsObjects
             (float) e1.index() / Main.Memory.Width.EDGE,
             (float) e6.index() / Main.Memory.Width.EDGE,
             FLAG_NONE,
-                force,
-            entity);
+                force
+        );
     }
 }

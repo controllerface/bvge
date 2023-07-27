@@ -48,10 +48,9 @@ public class TestGame extends GameMode
                 sprite2.setWidth(32);
                 scomp2.setSprite(sprite2);
                 scomp2.setColor(new Vector4f(r,g,b,1));
-                var physicsObject = PhysicsObjects.simpleBox(x, y, size, npc);
+                var physicsObject = PhysicsObjects.simpleBox(x, y, size);
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
                 ecs.attachComponent(npc, Component.RigidBody2D, physicsObject);
-                //ecs.attachComponent(npc, Component.BoundingBox, physicsObject.bounds());
             }
         }
     }
@@ -77,10 +76,9 @@ public class TestGame extends GameMode
             sprite2.setWidth(32);
             //scomp2.setSprite(sprite2);
             scomp2.setColor(new Vector4f(r,g,b,1));
-            var physicsObject = PhysicsObjects.staticBox(x, y, size, npc);
+            var physicsObject = PhysicsObjects.staticBox(x, y, size);
             ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
             ecs.attachComponent(npc, Component.RigidBody2D, physicsObject);
-            //ecs.attachComponent(npc, Component.BoundingBox, physicsObject.bounds());
         }
     }
 
@@ -98,13 +96,12 @@ public class TestGame extends GameMode
         //scomp.setColor(new Vector4f(0,0,0,1));
 
         // todo: instead of a body, just a reference/index needs to be stored
-        var physicsObject = PhysicsObjects.polygon1(600,100, 32, player);
+        var physicsObject = PhysicsObjects.polygon1(600,100, 32);
 
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.RigidBody2D, physicsObject);
-        //ecs.attachComponent(player, Component.BoundingBox, physicsObject.bounds());
     }
 
     // note: order of adding systems is important

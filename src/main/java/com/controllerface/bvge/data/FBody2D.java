@@ -5,8 +5,7 @@ import com.controllerface.bvge.ecs.components.GameComponent;
 import org.joml.Vector2f;
 
 public record FBody2D(int index,
-                      float force,
-                      String entity) implements GameComponent
+                      float force) implements GameComponent
 {
     /*
      * Memory layout: float16
