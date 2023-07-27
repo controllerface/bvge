@@ -44,16 +44,16 @@ public class Main
             // Edges define constraints that are set between two vertices
         }
 
-        private static final int MAX_BODIES  = 100_000;
-        private static final int MAX_POINTS  = 1_000_000;
+        private static final int MAX_BODIES = 100_000;
+        private static final int MAX_POINTS = 1_000_000;
 
-        private static final int BODY_BUFFER_SIZE    = Width.BODY    * MAX_BODIES;
-        private static final int POINT_BUFFER_SIZE   = Width.POINT   * MAX_POINTS;
-        private static final int EDGE_BUFFER_SIZE    = Width.EDGE    * MAX_POINTS;
+        private static final int BODY_BUFFER_SIZE = Width.BODY * MAX_BODIES;
+        private static final int POINT_BUFFER_SIZE = Width.POINT * MAX_POINTS;
+        private static final int EDGE_BUFFER_SIZE = Width.EDGE * MAX_POINTS;
 
-        public static float[] body_buffer   = new float[BODY_BUFFER_SIZE];
-        public static float[] point_buffer  = new float[POINT_BUFFER_SIZE];
-        public static float[] edge_buffer   = new float[EDGE_BUFFER_SIZE];
+        public static float[] body_buffer = new float[BODY_BUFFER_SIZE];
+        public static float[] point_buffer = new float[POINT_BUFFER_SIZE];
+        public static float[] edge_buffer = new float[EDGE_BUFFER_SIZE];
 
         static
         {
@@ -86,7 +86,7 @@ public class Main
 
         public static int pointLength()
         {
-            return point_index + 1;
+            return point_index;
         }
 
         public static int edgesLength()
@@ -108,31 +108,21 @@ public class Main
             return edge_index - Width.EDGE;
         }
 
-        public static int newPoint(float x, float y)
-        {
-            return newPoint(x, y, x, y);
-        }
-
         public static int newPoint(float[] p)
         {
-            return newPoint(p[0], p[1]);
-        }
-
-        public static int newPoint(float x, float y, float px, float py)
-        {
-            point_buffer[point_index++] = x;
-            point_buffer[point_index++] = y;
-            point_buffer[point_index++] = px;
-            point_buffer[point_index++] = py;
+            point_buffer[point_index++] = p[0];
+            point_buffer[point_index++] = p[1];
+            point_buffer[point_index++] = p[0];
+            point_buffer[point_index++] = p[1];
             return point_index - Width.POINT;
         }
 
         public static int newBody(float x, float y,
-                                        float sx, float sy,
-                                        float ax, float ay,
-                                        float ps, float pe,
-                                        float es, float ee,
-                                        int c_flags)
+                                  float sx, float sy,
+                                  float ax, float ay,
+                                  float ps, float pe,
+                                  float es, float ee,
+                                  int c_flags)
         {
             body_buffer[body_index++] = x;
             body_buffer[body_index++] = y;

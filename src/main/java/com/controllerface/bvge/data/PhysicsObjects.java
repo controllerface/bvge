@@ -11,19 +11,17 @@ import org.joml.Vector2f;
  */
 public class PhysicsObjects
 {
-    private static final Vector2f vectorBuffer = new Vector2f();
+    private static final Vector2f vector_buffer = new Vector2f();
 
     public static int FLAG_NONE = 0x00;
     public static int FLAG_STATIC = 0x01;
-
 
     public static float distance(float[] a, float[]b)
     {
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-
-    public static int simpleBox(float x, float y, float size)
+    public static int box(float x, float y, float size, int flags)
     {
         var halfSize = size / 2;
 
@@ -32,125 +30,70 @@ public class PhysicsObjects
         var p3 = OpenCL.arg_float2(x + halfSize, y + halfSize);
         var p4 = OpenCL.arg_float2(x - halfSize, y + halfSize);
 
-        var p1_obj = Main.Memory.newPoint(p1);
-        var p2_obj = Main.Memory.newPoint(p2);
-        var p3_obj = Main.Memory.newPoint(p3);
-        var p4_obj = Main.Memory.newPoint(p4);
+        var p1_index = Main.Memory.newPoint(p1);
+        var p2_index = Main.Memory.newPoint(p2);
+        var p3_index = Main.Memory.newPoint(p3);
+        var p4_index = Main.Memory.newPoint(p4);
 
-        MathEX.centroid(vectorBuffer, p1, p2, p3, p4);
+        MathEX.centroid(vector_buffer, p1, p2, p3, p4);
 
         // box sides
         var start_edge = Main.Memory.newEdge(
-            p1_obj / Main.Memory.Width.POINT,
-            p2_obj / Main.Memory.Width.POINT,
-            distance(p2, p1)
+                p1_index / Main.Memory.Width.POINT,
+                p2_index / Main.Memory.Width.POINT,
+                distance(p2, p1)
         );
 
         Main.Memory.newEdge(
-            p2_obj / Main.Memory.Width.POINT,
-            p3_obj / Main.Memory.Width.POINT,
-            distance(p3, p2)
+                p2_index / Main.Memory.Width.POINT,
+                p3_index / Main.Memory.Width.POINT,
+                distance(p3, p2)
         );
 
         Main.Memory.newEdge(
-            p3_obj / Main.Memory.Width.POINT,
-            p4_obj / Main.Memory.Width.POINT,
-            distance(p4, p3)
+                p3_index / Main.Memory.Width.POINT,
+                p4_index / Main.Memory.Width.POINT,
+                distance(p4, p3)
         );
 
         Main.Memory.newEdge(
-            p4_obj / Main.Memory.Width.POINT,
-            p1_obj / Main.Memory.Width.POINT,
-            distance(p1, p4)
+                p4_index / Main.Memory.Width.POINT,
+                p1_index / Main.Memory.Width.POINT,
+                distance(p1, p4)
         );
 
         // corner braces
         Main.Memory.newEdge(
-            p1_obj / Main.Memory.Width.POINT,
-            p3_obj / Main.Memory.Width.POINT,
-            distance(p3, p1)
+                p1_index / Main.Memory.Width.POINT,
+                p3_index / Main.Memory.Width.POINT,
+                distance(p3, p1)
         );
 
         var end_edge = Main.Memory.newEdge(
-            p2_obj / Main.Memory.Width.POINT,
-            p4_obj / Main.Memory.Width.POINT,
-            distance(p4, p2)
+                p2_index / Main.Memory.Width.POINT,
+                p4_index / Main.Memory.Width.POINT,
+                distance(p4, p2)
         );
 
-        return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
-            size, size,
-            0,0,
-            (float) p1_obj / Main.Memory.Width.POINT,
-            (float) p4_obj / Main.Memory.Width.POINT,
-            (float) start_edge / Main.Memory.Width.EDGE,
-            (float) end_edge / Main.Memory.Width.EDGE,
-            FLAG_NONE
+        return Main.Memory.newBody(vector_buffer.x, vector_buffer.y,
+                size, size,
+                0,0,
+                (float) p1_index / Main.Memory.Width.POINT,
+                (float) p4_index / Main.Memory.Width.POINT,
+                (float) start_edge / Main.Memory.Width.EDGE,
+                (float) end_edge / Main.Memory.Width.EDGE,
+                flags
         );
     }
 
-    public static int staticBox(float x, float y, float size)
+    public static int dynamic_Box(float x, float y, float size)
     {
-        var halfSize = size / 2;
+        return box(x, y, size, FLAG_NONE);
+    }
 
-        var p1 = OpenCL.arg_float2(x - halfSize, y - halfSize);
-        var p2 = OpenCL.arg_float2(x + halfSize, y - halfSize);
-        var p3 = OpenCL.arg_float2(x + halfSize, y + halfSize);
-        var p4 = OpenCL.arg_float2(x - halfSize, y + halfSize);
-
-        var p1_obj = Main.Memory.newPoint(p1);
-        var p2_obj = Main.Memory.newPoint(p2);
-        var p3_obj = Main.Memory.newPoint(p3);
-        var p4_obj = Main.Memory.newPoint(p4);
-
-        MathEX.centroid(vectorBuffer, p1, p2, p3, p4);
-
-        // box sides
-        var e1 = Main.Memory.newEdge(
-            p1_obj / Main.Memory.Width.POINT,
-            p2_obj / Main.Memory.Width.POINT,
-            distance(p2, p1)
-        );
-
-        var e2 = Main.Memory.newEdge(
-            p2_obj / Main.Memory.Width.POINT,
-            p3_obj / Main.Memory.Width.POINT,
-            distance(p3, p2)
-        );
-
-        var e3 = Main.Memory.newEdge(
-            p3_obj / Main.Memory.Width.POINT,
-            p4_obj / Main.Memory.Width.POINT,
-            distance(p4, p3)
-        );
-
-        var e4 = Main.Memory.newEdge(
-            p4_obj / Main.Memory.Width.POINT,
-            p1_obj / Main.Memory.Width.POINT,
-            distance(p1, p4)
-        );
-
-        // corner braces
-        var e5 = Main.Memory.newEdge(
-            p1_obj / Main.Memory.Width.POINT,
-            p3_obj / Main.Memory.Width.POINT,
-            distance(p3, p1)
-        );
-
-        var e6 = Main.Memory.newEdge(
-            p2_obj / Main.Memory.Width.POINT,
-            p4_obj / Main.Memory.Width.POINT,
-            distance(p4, p2)
-        );
-
-        return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
-            size, size,
-            0,0,
-            (float) p1_obj / Main.Memory.Width.POINT,
-            (float) p4_obj / Main.Memory.Width.POINT,
-            (float) e1 / Main.Memory.Width.EDGE,
-            (float) e6 / Main.Memory.Width.EDGE,
-            FLAG_STATIC
-        );
+    public static int static_box(float x, float y, float size)
+    {
+        return box(x, y, size, FLAG_STATIC);
     }
 
     public static int polygon1(float x, float y, float size)
@@ -163,73 +106,73 @@ public class PhysicsObjects
         var p4 = OpenCL.arg_float2(x - halfSize, y + halfSize);
         var p5 = OpenCL.arg_float2(x, y + halfSize * 2);
 
-        var p1_obj = Main.Memory.newPoint(p1);
-        var p2_obj = Main.Memory.newPoint(p2);
-        var p3_obj = Main.Memory.newPoint(p3);
-        var p4_obj = Main.Memory.newPoint(p4);
-        var p5_obj = Main.Memory.newPoint(p5);
+        var p1_index = Main.Memory.newPoint(p1);
+        var p2_index = Main.Memory.newPoint(p2);
+        var p3_index = Main.Memory.newPoint(p3);
+        var p4_index = Main.Memory.newPoint(p4);
+        var p5_index = Main.Memory.newPoint(p5);
 
-        MathEX.centroid(vectorBuffer, p1, p2, p3, p4, p5);
+        MathEX.centroid(vector_buffer, p1, p2, p3, p4, p5);
 
         // box sides
-        var e1 = Main.Memory.newEdge(
-                p1_obj / Main.Memory.Width.POINT,
-                p2_obj / Main.Memory.Width.POINT,
+        var start_edge = Main.Memory.newEdge(
+                p1_index / Main.Memory.Width.POINT,
+                p2_index / Main.Memory.Width.POINT,
                 distance(p2, p1)
         );
 
-        var e2 = Main.Memory.newEdge(
-                p2_obj / Main.Memory.Width.POINT,
-                p3_obj / Main.Memory.Width.POINT,
+        Main.Memory.newEdge(
+                p2_index / Main.Memory.Width.POINT,
+                p3_index / Main.Memory.Width.POINT,
                 distance(p3, p2)
         );
 
-        var e3 = Main.Memory.newEdge(
-                p3_obj / Main.Memory.Width.POINT,
-                p4_obj / Main.Memory.Width.POINT,
+        Main.Memory.newEdge(
+                p3_index / Main.Memory.Width.POINT,
+                p4_index / Main.Memory.Width.POINT,
                 distance(p4, p3)
         );
 
-        var e4 = Main.Memory.newEdge(
-                p4_obj / Main.Memory.Width.POINT,
-                p1_obj / Main.Memory.Width.POINT,
+        Main.Memory.newEdge(
+                p4_index / Main.Memory.Width.POINT,
+                p1_index / Main.Memory.Width.POINT,
                 distance(p1, p4)
         );
 
 
-        var e5a = Main.Memory.newEdge(
-                p4_obj / Main.Memory.Width.POINT,
-                p5_obj / Main.Memory.Width.POINT,
+        Main.Memory.newEdge(
+                p4_index / Main.Memory.Width.POINT,
+                p5_index / Main.Memory.Width.POINT,
                 distance(p4, p5)
         );
 
-        var e5b = Main.Memory.newEdge(
-                p3_obj / Main.Memory.Width.POINT,
-                p5_obj / Main.Memory.Width.POINT,
+        Main.Memory.newEdge(
+                p3_index / Main.Memory.Width.POINT,
+                p5_index / Main.Memory.Width.POINT,
                 distance(p3, p5)
         );
 
         // corner braces
-        var e5 = Main.Memory.newEdge(
-                p1_obj / Main.Memory.Width.POINT,
-                p3_obj / Main.Memory.Width.POINT,
+        Main.Memory.newEdge(
+                p1_index / Main.Memory.Width.POINT,
+                p3_index / Main.Memory.Width.POINT,
                 distance(p3, p1)
         );
 
-        var e6 = Main.Memory.newEdge(
-                p2_obj / Main.Memory.Width.POINT,
-                p4_obj / Main.Memory.Width.POINT,
+        var end_edge = Main.Memory.newEdge(
+                p2_index / Main.Memory.Width.POINT,
+                p4_index / Main.Memory.Width.POINT,
                 distance(p4, p2)
         );
 
 
-        return Main.Memory.newBody(vectorBuffer.x, vectorBuffer.y,
+        return Main.Memory.newBody(vector_buffer.x, vector_buffer.y,
             size, size,
             0,0,
-            (float) p1_obj / Main.Memory.Width.POINT,
-            (float) p5_obj / Main.Memory.Width.POINT,
-            (float) e1 / Main.Memory.Width.EDGE,
-            (float) e6 / Main.Memory.Width.EDGE,
+            (float) p1_index / Main.Memory.Width.POINT,
+            (float) p5_index / Main.Memory.Width.POINT,
+            (float) start_edge / Main.Memory.Width.EDGE,
+            (float) end_edge / Main.Memory.Width.EDGE,
             FLAG_NONE
         );
     }

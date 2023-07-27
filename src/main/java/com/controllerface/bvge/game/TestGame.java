@@ -50,9 +50,9 @@ public class TestGame extends GameMode
                 sprite2.setWidth(32);
                 scomp2.setSprite(sprite2);
                 scomp2.setColor(new Vector4f(r,g,b,1));
-                var physicsObject = PhysicsObjects.simpleBox(x, y, size);
+                var body_index = PhysicsObjects.dynamic_Box(x, y, size);
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-                ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(physicsObject));
+                ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(body_index));
             }
         }
     }
@@ -78,9 +78,9 @@ public class TestGame extends GameMode
             sprite2.setWidth(32);
             //scomp2.setSprite(sprite2);
             scomp2.setColor(new Vector4f(r,g,b,1));
-            var physicsObject = PhysicsObjects.staticBox(x, y, size);
+            var body_index = PhysicsObjects.static_box(x, y, size);
             ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-            ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(physicsObject));
+            ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(body_index));
         }
     }
 
@@ -98,12 +98,11 @@ public class TestGame extends GameMode
         //scomp.setColor(new Vector4f(0,0,0,1));
 
         // todo: instead of a body, just a reference/index needs to be stored
-        var physicsObject = PhysicsObjects.polygon1(600,100, 32);
-
+        var body_index = PhysicsObjects.polygon1(600,100, 32);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.SpriteComponent, scomp);
-        ecs.attachComponent(player, Component.RigidBody2D, new BodyIndex(physicsObject));
+        ecs.attachComponent(player, Component.RigidBody2D, new BodyIndex(body_index));
         ecs.attachComponent(player, Component.LinearForce, new LinearForce(1500));
     }
 
