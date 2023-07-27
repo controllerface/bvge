@@ -557,6 +557,10 @@ public class OpenCL
 
     public static void generate_key_bank(SpatialPartition spatialPartition)
     {
+        if (spatialPartition.getKey_bank_size() < 1)
+        {
+            return;
+        }
         int n = Main.Memory.bodyCount();
         long bank_buf_size = (long)Sizeof.cl_int * spatialPartition.getKey_bank_size();
         long counts_buf_size = (long)Sizeof.cl_int * spatialPartition.getDirectoryLength();

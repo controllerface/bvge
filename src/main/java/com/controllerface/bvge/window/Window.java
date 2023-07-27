@@ -96,21 +96,24 @@ public class Window
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
-        var prim = glfwGetPrimaryMonitor();
-        int[] x = new int[1];
-        int[] y = new int[1];
-        int[] w = new int[1];
-        int[] h = new int[1];
-        glfwGetMonitorWorkarea(prim, x,y,w,h);
-        this.width = w[0];
-        this.height = h[0];
+        var primary_monitor = glfwGetPrimaryMonitor();
 
-        GLFWVidMode.Buffer modes = glfwGetVideoModes(prim);
+        // example for how to get area with start menu accounted for
+        // todo: use this for windowed mode
+//        int[] x = new int[1];
+//        int[] y = new int[1];
+//        int[] w = new int[1];
+//        int[] h = new int[1];
+//        glfwGetMonitorWorkarea(primary_monitor, x,y,w,h);
+//        this.width = w[0];
+//        this.height = h[0];
 
-        modes.stream().forEach(m->
+        GLFWVidMode mode = glfwGetVideoMode(primary_monitor);
+        if (mode != null)
         {
-            System.out.println(m.refreshRate() + " x " + m.width() + " x " + m.height());
-        });
+            this.width = mode.width();
+            this.height = mode.height();
+        }
 
         glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
         if (glfwWindow == NULL)
@@ -134,7 +137,7 @@ public class Window
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        //glViewport(0,0,this.width, this.height);
+        glViewport(0,0,this.width, this.height);
 
         System.out.println("\n-------- OPEN GL DEVICE -----------");
         System.out.println(glGetString(GL_VENDOR));
@@ -216,7 +219,6 @@ public class Window
             }
 
             glfwSwapBuffers(glfwWindow);
-            MouseListener.endFrame();
 
             currentTime = (float) glfwGetTime();
             dt = currentTime - lastTime;

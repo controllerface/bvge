@@ -45,7 +45,7 @@ public class Camera
         var cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
         var cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
         this.viewMatrix.identity();
-        var eye = new Vector3f(position.x, position.y, 20.0f);
+        var eye = new Vector3f(position.x, position.y, 0.0f);
         var center = cameraFront.add(position.x, position.y, 0.0f);
         this.viewMatrix.lookAt(eye, center, cameraUp);
 
@@ -57,21 +57,6 @@ public class Camera
     public Matrix4f getProjectionMatrix()
     {
         return this.projectionMatrix;
-    }
-
-    public Matrix4f getInverseProjection()
-    {
-        return inverseProjection;
-    }
-
-    public Matrix4f getInverseView()
-    {
-        return inverseView;
-    }
-
-    public Vector2f getProjectionSize()
-    {
-        return projectionSize;
     }
 
     public float getZoom()

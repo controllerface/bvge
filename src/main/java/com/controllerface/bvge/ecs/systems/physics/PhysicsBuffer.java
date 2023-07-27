@@ -69,15 +69,15 @@ public class PhysicsBuffer
 
     public void finishTick()
     {
-        key_map.transfer();
-        key_bank.transfer();
-        key_counts.transfer();
-        key_offsets.transfer();
-        in_bounds.transfer();
-        candidate_counts.transfer();
-        candidate_offsets.transfer();
-        matches_used.transfer();
-        matches.transfer();
+        if (key_map != null) key_map.transfer();
+        if (key_bank != null) key_bank.transfer();
+        if (key_counts != null) key_counts.transfer();
+        if (key_offsets != null) key_offsets.transfer();
+        if (in_bounds != null) in_bounds.transfer();
+        if (candidate_counts != null) candidate_counts.transfer();
+        if (candidate_offsets != null) candidate_offsets.transfer();
+        if (matches_used != null) matches_used.transfer();
+        if (matches != null) matches.transfer();
         if (candidates != null) candidates.transfer();
 
         key_map = null;

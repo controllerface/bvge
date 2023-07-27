@@ -90,25 +90,29 @@ public class VerletPhysics extends GameSystem
 
         // broad phase collision
         OpenCL.calculate_bank_offsets(spatialPartition);
-        OpenCL.generate_key_bank(spatialPartition);
-        OpenCL.calculate_map_offsets(spatialPartition);
-        OpenCL.generate_key_map(spatialPartition);
-        OpenCL.locate_in_bounds(spatialPartition);
-        OpenCL.count_candidates();
-        OpenCL.count_matches();
-        OpenCL.aabb_collide();
-        OpenCL.finalize_candidates();
+        if (spatialPartition.getKey_bank_size() > 0)
+        {
+            OpenCL.generate_key_bank(spatialPartition);
+            OpenCL.calculate_map_offsets(spatialPartition);
+            OpenCL.generate_key_map(spatialPartition);
+            OpenCL.locate_in_bounds(spatialPartition);
+            OpenCL.count_candidates();
+            OpenCL.count_matches();
+            OpenCL.aabb_collide();
+            OpenCL.finalize_candidates();
 
-        // narrow phase collision/reaction
-        OpenCL.sat_collide();
+            // narrow phase collision/reaction
+            OpenCL.sat_collide();
 
-        // resolve edges
-        OpenCL.resolve_constraints(EDGE_STEPS);
+            // resolve edges
+            OpenCL.resolve_constraints(EDGE_STEPS);
+        }
 
         // todo: avoid transfer, use existing buffer in new kernel
         physicsBuffer.finishTick();
     }
 
+    //boolean run_once = false;
 
     private void simulate(float dt)
     {
@@ -121,8 +125,9 @@ public class VerletPhysics extends GameSystem
         }
 
         this.accumulator += dt;
-        while (this.accumulator >= TICK_RATE)
+        while (this.accumulator >= TICK_RATE)// || !run_once)
         {
+            //run_once = true;
             float sub_step = TICK_RATE / SUB_STEPS;
             for (int i = 0; i < SUB_STEPS; i++)
             {
