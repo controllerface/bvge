@@ -44,10 +44,6 @@ public class Main
             public static final int EDGE = 4;
             // Edges define constraints that are set between two vertices
 
-            // float8
-            public static final int BOUNDS = 16;
-            // Bounding boxes are used for proximity checks on bodies
-
             // int2
             public static final int COLLISION = 2;
             // Collisions are represented as a pair of indices, one for each object
@@ -59,19 +55,17 @@ public class Main
         private static final int BODY_BUFFER_SIZE    = Width.BODY    * MAX_BODIES;
         private static final int POINT_BUFFER_SIZE   = Width.POINT   * MAX_POINTS;
         private static final int EDGE_BUFFER_SIZE    = Width.EDGE    * MAX_POINTS;
-        private static final int BOUNDS_BUFFER_SIZE  = Width.BOUNDS  * MAX_BODIES;
 
         public static float[] body_buffer   = new float[BODY_BUFFER_SIZE];
         public static float[] point_buffer  = new float[POINT_BUFFER_SIZE];
         public static float[] edge_buffer   = new float[EDGE_BUFFER_SIZE];
-        public static float[] bounds_buffer = new float[BOUNDS_BUFFER_SIZE];
 
         static
         {
             int body_bytes = body_buffer.length * Float.BYTES;
             int point_bytes = point_buffer.length * Float.BYTES;
             int edge_bytes = edge_buffer.length * Float.BYTES;
-            int bounds_bytes = bounds_buffer.length * Float.BYTES;
+            int bounds_bytes = body_bytes;
             int total = body_bytes + point_bytes + edge_bytes + bounds_bytes;
             System.out.println("body_buffer   : " + body_bytes   + " Bytes");
             System.out.println("point_buffer  : " + point_bytes  + " Bytes");
@@ -79,13 +73,11 @@ public class Main
             System.out.println("bounds_buffer : " + bounds_bytes + " Bytes");
             System.out.println("-Total-       : " + total        + " Bytes");
             System.out.println("-Total-       : " + total / 1024 / 1024 + " MB");
-
         }
 
         private static int body_index    = 0;
         private static int point_index   = 0;
         private static int edge_index    = 0;
-        private static int bounds_index  = 0;
 
         public static int bodyCount()
         {
@@ -100,11 +92,6 @@ public class Main
         public static int pointLength()
         {
             return point_index + 1;
-        }
-
-        public static int boundsLength()
-        {
-            return bounds_index;
         }
 
         public static int edgesLength()

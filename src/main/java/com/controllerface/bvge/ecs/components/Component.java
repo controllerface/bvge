@@ -20,14 +20,14 @@ public enum Component
 
     public <T extends GameComponent> T coerce(Object componentClass)
     {
-        assert componentClass != null : "Attempted p2 coerce null component";
+        assert componentClass != null : "Attempted to coerce null component";
         if (_class.isAssignableFrom(componentClass.getClass()))
         {
             @SuppressWarnings("unchecked")
             T t = (T) _class.cast(componentClass);
             return t;
         }
-        assert false : "Attempted p2 coerce incompatible component";
+        assert false : "Attempted to coerce incompatible component";
         return null;
     }
 }
