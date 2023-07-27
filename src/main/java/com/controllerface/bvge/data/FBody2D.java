@@ -4,9 +4,49 @@ import com.controllerface.bvge.Main;
 import com.controllerface.bvge.ecs.components.GameComponent;
 import org.joml.Vector2f;
 
-public record FBody2D(int index,
-                      float force) implements GameComponent
+public class FBody2D implements GameComponent
 {
+    int index;
+    float force;
+    float x_pos;
+    float y_pos;
+
+    public FBody2D(int index, float force)
+    {
+        this.index = index;
+        this.force = force;
+    }
+
+    public int index()
+    {
+        return index;
+    }
+
+    public float force()
+    {
+        return force;
+    }
+
+    public float x_pos()
+    {
+        return x_pos;
+    }
+
+    public float y_pos()
+    {
+        return y_pos;
+    }
+
+    public void set_x_pos(float x_pos)
+    {
+        this.x_pos = x_pos;
+    }
+
+    public void set_y_pos(float y_pos)
+    {
+        this.y_pos = y_pos;
+    }
+
     /*
      * Memory layout: float16
      *  0: x position                 (transform)

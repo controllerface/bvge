@@ -28,7 +28,6 @@ __kernel void integrate(
     gravity.y = args[10];
     float friction = args[11];
     
-
     // get body from array
     float16 body = bodies[gid];
     float16 bounding_box = bounds[gid];

@@ -25,12 +25,14 @@ public class KBMInput extends GameSystem
         {
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
             assert controlPoints != null : "Component was null";
-            if (controlPoints.isDisabled()) return;
+            if (controlPoints.is_disabled()) return;
 
-            controlPoints.setUp(keyDown[GLFW_KEY_W]);
-            controlPoints.setLeft(keyDown[GLFW_KEY_A]);
-            controlPoints.setDown(keyDown[GLFW_KEY_S]);
-            controlPoints.setRight(keyDown[GLFW_KEY_D]);
+            controlPoints.set_moving_up(keyDown[GLFW_KEY_W]);
+            controlPoints.set_moving_Left(keyDown[GLFW_KEY_A]);
+            controlPoints.set_moving_down(keyDown[GLFW_KEY_S]);
+            controlPoints.set_moving_right(keyDown[GLFW_KEY_D]);
+            controlPoints.set_rot_right(keyDown[GLFW_KEY_E]);
+            controlPoints.set_rotating_Left(keyDown[GLFW_KEY_Q]);
         });
 
         // test camera moving code

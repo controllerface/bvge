@@ -17,6 +17,22 @@ __kernel void update_accel(__global float16 *bodies,
     bodies[target] = body;
 }
 
+__kernel void rotate_body(__global float16 *bodies,
+                          __global float4 *points,
+                          int target,
+                          float angle)
+{
+    float16 body = bodies[target];
+    int start = (int)body.s7;
+    int end   = (int)body.s8;
+    float2 origin = (float2)(body.s0, body.s1);
+    for (int i = start; i <= end; i++)
+    {
+        float4 point = points[i];
+        points[i] = rotate_point(point, origin, angle);
+    }
+}
+
 
 
 // new world below

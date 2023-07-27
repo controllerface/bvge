@@ -29,8 +29,15 @@ public class CameraTracking extends GameSystem
         if (body == null) return;
 
         float[] pos = OpenCL.read_position(body.index());
+
+        // will be null for the first few frames while the loop is primed
+        if (pos == null) return;
+
         float pos_x = pos[0];
         float pos_y = pos[1];
+
+        body.set_x_pos(pos_x);
+        body.set_y_pos(pos_y);
 
         var camera = Window.get().camera();
         var width = (float)Window.get().getWidth() * camera.getZoom();

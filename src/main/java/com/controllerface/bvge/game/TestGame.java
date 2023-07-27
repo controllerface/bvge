@@ -109,6 +109,7 @@ public class TestGame extends GameMode
     {
         ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
+
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
 
         // todo: insert screen blanker system here
@@ -130,9 +131,9 @@ public class TestGame extends GameMode
         //genNPCs(100, 10f, 10f, -1500, -1500);
         //genNPCs(100, 10f, 10f, 40, 500);
 
-        genNPCs(100, 10f, 10f, 2100, 2100);
-        genNPCs(100, 10f, 10f, 1000, -1000);
-        genNPCs(100, 10f, 10f, -1500, -1500);
+        //genNPCs(100, 10f, 10f, 2100, 2100);
+        //genNPCs(100, 10f, 10f, 1000, -1000);
+        //genNPCs(100, 10f, 10f, -1500, -1500);
         genNPCs(100, 10f, 10f, 40, 500);
 
         genNPCs(3, 20f, 15f, 100, 300);

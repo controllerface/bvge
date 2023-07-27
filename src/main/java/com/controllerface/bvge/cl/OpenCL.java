@@ -38,6 +38,7 @@ public class OpenCL
     static String func_project_polygon      = read_src("functions/project_polygon.cl");
     static String func_polygon_distance     = read_src("functions/polygon_distance.cl");
     static String func_edge_contact         = read_src("functions/edge_contact.cl");
+    static String func_rotate_point         = read_src("functions/rotate_point.cl");
 
     /**
      * CRUD
@@ -86,6 +87,7 @@ public class OpenCL
     static String kn_build_key_map                      = "build_key_map";
     static String kn_resolve_constraints                = "resolve_constraints";
     static String kn_update_accel                       = "update_accel";
+    static String kn_rotate_body                        = "rotate_body";
     static String kn_read_position                      = "read_position";
     static String kn_prepare_edges                      = "prepare_edges";
 
@@ -131,6 +133,7 @@ public class OpenCL
     static cl_kernel k_build_key_map;
     static cl_kernel k_resolve_constraints;
     static cl_kernel k_update_accel;
+    static cl_kernel k_rotate_body;
     static cl_kernel k_read_position;
     static cl_kernel k_prepare_edges;
 
@@ -287,6 +290,11 @@ public class OpenCL
         return new int[]{ arg };
     }
 
+    private static float[] arg_float(float arg)
+    {
+        return new float[]{ arg };
+    }
+
     private static float[] arg_float2(float x, float y)
     {
         return new float[]{ x, y };
@@ -363,7 +371,7 @@ public class OpenCL
 
         p_resolve_constraints = cl_p(kern_resolve_constraints);
 
-        p_gpu_crud = cl_p(kern_gpu_crud);
+        p_gpu_crud = cl_p(func_rotate_point, kern_gpu_crud);
 
         p_prepare_edges = cl_p(kern_prepare_edges);
 
@@ -392,6 +400,7 @@ public class OpenCL
         k_build_key_map                     = cl_k(p_build_key_map, kn_build_key_map);
         k_resolve_constraints               = cl_k(p_resolve_constraints, kn_resolve_constraints);
         k_update_accel                      = cl_k(p_gpu_crud, kn_update_accel);
+        k_rotate_body                       = cl_k(p_gpu_crud, kn_rotate_body);
         k_read_position                     = cl_k(p_gpu_crud, kn_read_position);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
     }
@@ -479,18 +488,33 @@ public class OpenCL
 
     public static void update_accel(int body_index, float acc_x, float acc_y)
     {
-        float[] acc = arg_float2(acc_x, acc_y);
-        int[] index = arg_int(body_index);
+        var pnt_index = Pointer.to(arg_int(body_index));
+        var pnt_acc = Pointer.to(arg_float2(acc_x, acc_y));
 
         clSetKernelArg(k_update_accel, 0, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
-        clSetKernelArg(k_update_accel, 1, Sizeof.cl_int, Pointer.to(index));
-        clSetKernelArg(k_update_accel, 2, Sizeof.cl_float2, Pointer.to(acc));
+        clSetKernelArg(k_update_accel, 1, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_update_accel, 2, Sizeof.cl_float2, pnt_acc);
 
         k_call(k_update_accel, global_single_size);
     }
 
+    public static void rotate_body(int body_index, float angle)
+    {
+        var pnt_index = Pointer.to(arg_int(body_index));
+        var pnt_angle = Pointer.to(arg_float(angle));
+
+        clSetKernelArg(k_rotate_body, 0, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
+        clSetKernelArg(k_rotate_body, 1, Sizeof.cl_mem, physicsBuffer.points.pointer());
+        clSetKernelArg(k_rotate_body, 2, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_rotate_body, 3, Sizeof.cl_float, pnt_angle);
+
+        k_call(k_rotate_body, global_single_size);
+    }
+
     public static float[] read_position(int body_index)
     {
+        if (physicsBuffer == null) return null;
+
         int[] index = arg_int(body_index);
 
         cl_mem result_data = cl_new_buffer(FLAGS_WRITE_GPU, Sizeof.cl_float2);

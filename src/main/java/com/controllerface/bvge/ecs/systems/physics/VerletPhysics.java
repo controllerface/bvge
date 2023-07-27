@@ -27,7 +27,7 @@ public class VerletPhysics extends GameSystem
     //  and applied when contact occurs.
     private final float GRAVITY_X = 0;
     private final float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
-    private final float FRICTION = .981f;
+    private final float FRICTION = .995f;
 
     private final SpatialPartition spatialPartition;
     private PhysicsBuffer physicsBuffer;
@@ -44,7 +44,7 @@ public class VerletPhysics extends GameSystem
         this.spatialPartition = spatialPartition;
     }
 
-    private void updateControllableBodies()
+    private void updateControllableBodies(float dt)
     {
         var components = ecs.getComponents(Component.ControlPoints);
         for (Map.Entry<String, GameComponent> entry : components.entrySet())
@@ -56,24 +56,33 @@ public class VerletPhysics extends GameSystem
             var b = ecs.getComponentFor(entity, Component.RigidBody2D);
             FBody2D body = Component.RigidBody2D.coerce(b);
             vectorBuffer1.zero();
-            if (controlPoints.isLeft())
+            if (controlPoints.is_moving_left())
             {
                 vectorBuffer1.x -= body.force();
             }
-            if (controlPoints.isRight())
+            if (controlPoints.is_moving_right())
             {
                 vectorBuffer1.x += body.force();
             }
-            if (controlPoints.isUp())
+            if (controlPoints.is_moving_up())
             {
                 vectorBuffer1.y += body.force();
             }
-            if (controlPoints.isDown())
+            if (controlPoints.is_moving_down())
             {
                 vectorBuffer1.y -= body.force();
             }
-            OpenCL.update_accel(body.bodyIndex(), vectorBuffer1.x, vectorBuffer1.y);
-            //body.addAcc(vectorBuffer1);
+
+            if (vectorBuffer1.x != 0f || vectorBuffer1.y != 0)
+            {
+                OpenCL.update_accel(body.bodyIndex(), vectorBuffer1.x, vectorBuffer1.y);
+            }
+
+            if (controlPoints.is_rotating_right() ^ controlPoints.is_rotating_left())
+            {
+                float angle = controlPoints.is_rotating_right() ? -500 : 500;
+                OpenCL.rotate_body(body.bodyIndex(), angle * dt * dt);
+            }
         }
     }
 
@@ -82,34 +91,33 @@ public class VerletPhysics extends GameSystem
         // todo: need to account for this in the kernel somehow so it can be
         //  updated inside the sub-steps. Right now this is the last point before
         //  the memory is transferred out.
-        updateControllableBodies();
-
+        updateControllableBodies(dt);
 
         // integration
         OpenCL.integrate(dt, spatialPartition);
 
         // broad phase collision
         OpenCL.calculate_bank_offsets(spatialPartition);
-        if (spatialPartition.getKey_bank_size() > 0)
+
+        if (spatialPartition.getKey_bank_size() == 0)
         {
-            OpenCL.generate_key_bank(spatialPartition);
-            OpenCL.calculate_map_offsets(spatialPartition);
-            OpenCL.generate_key_map(spatialPartition);
-            OpenCL.locate_in_bounds(spatialPartition);
-            OpenCL.count_candidates();
-            OpenCL.count_matches();
-            OpenCL.aabb_collide();
-            OpenCL.finalize_candidates();
-
-            // narrow phase collision/reaction
-            OpenCL.sat_collide();
-
-            // resolve edges
-            OpenCL.resolve_constraints(EDGE_STEPS);
+            return;
         }
 
-        // todo: avoid transfer, use existing buffer in new kernel
-        physicsBuffer.finishTick();
+        OpenCL.generate_key_bank(spatialPartition);
+        OpenCL.calculate_map_offsets(spatialPartition);
+        OpenCL.generate_key_map(spatialPartition);
+        OpenCL.locate_in_bounds(spatialPartition);
+        OpenCL.count_candidates();
+        OpenCL.count_matches();
+        OpenCL.aabb_collide();
+        OpenCL.finalize_candidates();
+
+        // narrow phase collision/reaction
+        OpenCL.sat_collide();
+
+        // resolve edges
+        OpenCL.resolve_constraints(EDGE_STEPS);
     }
 
     //boolean run_once = false;
@@ -133,6 +141,7 @@ public class VerletPhysics extends GameSystem
             {
                 this.tickSimulation(sub_step);
                 this.accumulator -= sub_step;
+                physicsBuffer.finishTick();
             }
         }
 

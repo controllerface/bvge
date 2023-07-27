@@ -11,6 +11,8 @@ public class ControlPoints implements GameComponent
     private boolean down = false;
     private boolean left = false;
     private boolean right = false;
+    private boolean rot_left = false;
+    private boolean rot_right = false;
 
     // mouse buttons
     private boolean primary = false;
@@ -22,107 +24,127 @@ public class ControlPoints implements GameComponent
     // target position
     private Vector2f target = new Vector2f();
 
-    public boolean isDisabled()
+    public boolean is_disabled()
     {
         return disabled;
     }
 
-    public void setDisabled(boolean disabled)
+    public void set_disabled(boolean disabled)
     {
         this.disabled = disabled;
     }
 
-    public boolean isUp()
+    public boolean is_moving_up()
     {
         return up;
     }
 
-    public void setUp(boolean up)
+    public void set_moving_up(boolean up)
     {
         this.up = up;
     }
 
-    public boolean isDown()
+    public boolean is_moving_down()
     {
         return down;
     }
 
-    public void setDown(boolean down)
+    public void set_moving_down(boolean down)
     {
         this.down = down;
     }
 
-    public boolean isLeft()
+    public boolean is_moving_left()
     {
         return left;
     }
 
-    public void setLeft(boolean left)
+    public void set_moving_Left(boolean left)
     {
         this.left = left;
     }
 
-    public boolean isRight()
+    public boolean is_moving_right()
     {
         return right;
     }
 
-    public void setRight(boolean right)
+    public void set_moving_right(boolean right)
     {
         this.right = right;
     }
 
-    public boolean isPrimary()
+    public boolean is_rotating_left()
+    {
+        return rot_left;
+    }
+
+    public void set_rotating_Left(boolean left)
+    {
+        this.rot_left = left;
+    }
+
+    public boolean is_rotating_right()
+    {
+        return rot_right;
+    }
+
+    public void set_rot_right(boolean right)
+    {
+        this.rot_right = right;
+    }
+
+    public boolean is_primary()
     {
         return primary;
     }
 
-    public void setPrimary(boolean primary)
+    public void set_primary(boolean primary)
     {
         this.primary = primary;
     }
 
-    public boolean isSecondary()
+    public boolean is_secondary()
     {
         return secondary;
     }
 
-    public void setSecondary(boolean secondary)
+    public void set_secondary(boolean secondary)
     {
         this.secondary = secondary;
     }
 
-    public boolean isMiddle()
+    public boolean is_middle()
     {
         return middle;
     }
 
-    public void setMiddle(boolean middle)
+    public void set_middle(boolean middle)
     {
         this.middle = middle;
     }
 
-    public boolean isBack()
+    public boolean is_back()
     {
         return back;
     }
 
-    public void setBack(boolean back)
+    public void set_back(boolean back)
     {
         this.back = back;
     }
 
-    public boolean isForward()
+    public boolean is_forward()
     {
         return forward;
     }
 
-    public void setForward(boolean forward)
+    public void set_forward(boolean forward)
     {
         this.forward = forward;
     }
 
-    public Vector2f getTarget()
+    public Vector2f get_target()
     {
         return target;
     }
