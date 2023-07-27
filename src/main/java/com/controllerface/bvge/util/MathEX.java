@@ -1,25 +1,24 @@
 package com.controllerface.bvge.util;
 
-import com.controllerface.bvge.data.FPoint2D;
 import org.joml.Vector2f;
 
 public class MathEX
 {
     /**
      * Calculates the centroid, i.e. center point, of a polygon and stores it in the target vector.
-     * This method is only tested with convex polygons.
-     * @param verts
-     * @param target
+     *
+     * @param target vector buffer to store the result
+     * @param vertices the vertices to use for the calculation
      */
-    public static void centroid(FPoint2D[] verts, Vector2f target)
+    public static void centroid(Vector2f target, float[] ... vertices)
     {
-        var points = verts.length;
+        var points = vertices.length;
         float x_sum = 0;
         float y_sum = 0;
-        for (FPoint2D point : verts)
+        for (float[] point : vertices)
         {
-            x_sum += point.pos_x();
-            y_sum += point.pos_y();
+            x_sum += point[0];
+            y_sum += point[1];
         }
         float x = x_sum / points;
         float y = y_sum / points;

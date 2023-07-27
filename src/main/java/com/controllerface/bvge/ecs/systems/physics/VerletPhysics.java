@@ -54,7 +54,7 @@ public class VerletPhysics extends GameSystem
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
 
             var b = ecs.getComponentFor(entity, Component.RigidBody2D);
-            FBody2D body = Component.RigidBody2D.coerce(b);
+            BodyIndex body = Component.RigidBody2D.coerce(b);
             vectorBuffer1.zero();
             if (controlPoints.is_moving_left())
             {

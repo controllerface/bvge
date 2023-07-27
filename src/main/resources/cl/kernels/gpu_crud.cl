@@ -1,3 +1,8 @@
+/**
+This is a collection of Create/Read/Update/Delete (CRUD) functions that are used
+to query and update objects stored on the GPU. Unlike most kernels, these functions
+are designed to operate on a single target object. 
+ */
 __kernel void read_position(__global float16 *bodies,
                             __global float *output,
                             int target)
@@ -35,7 +40,7 @@ __kernel void rotate_body(__global float16 *bodies,
 
 
 
-// new world below
+// new world below - Bulk methods
 
 __kernel void create_points(__global int *indices,
                             __global float4 *new_points,

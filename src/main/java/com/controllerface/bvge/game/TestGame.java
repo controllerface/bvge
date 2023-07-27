@@ -107,18 +107,25 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
+        // do physics first
         ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
+
+        // camera movement must be handled before rendering occurs
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
 
-        //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
-
-        // todo: insert screen blanker system here
-
+        // rendering passes happen at the end
+        // todo: if things are moved to a unified vbo, there could be a VBO prep step here before
+        //  the screen blank so the render time is a fast as possible, and the time from blank to
+        //  render is minimized.
+        // blank screen before rendering
         ecs.registerSystem(screenBlankSystem);
         ecs.registerSystem(new LineRendererEX(ecs));
 
+        //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs, spatialPartition));
+
+
     }
 
     @Override

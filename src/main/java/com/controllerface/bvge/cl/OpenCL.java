@@ -280,27 +280,27 @@ public class OpenCL
         clEnqueueReleaseGLObjects(commandQueue, 1, new cl_mem[]{ mem}, 0, null, null);
     }
 
-    private static long[] arg_long(long arg)
+    public static long[] arg_long(long arg)
     {
         return new long[]{ arg };
     }
 
-    private static int[] arg_int(int arg)
+    public static int[] arg_int(int arg)
     {
         return new int[]{ arg };
     }
 
-    private static float[] arg_float(float arg)
+    public static float[] arg_float(float arg)
     {
         return new float[]{ arg };
     }
 
-    private static float[] arg_float2(float x, float y)
+    public static float[] arg_float2(float x, float y)
     {
         return new float[]{ x, y };
     }
 
-    private static int work_group_count(int n)
+    public static int work_group_count(int n)
     {
         return (int) Math.ceil((float)n / (float)m);
     }

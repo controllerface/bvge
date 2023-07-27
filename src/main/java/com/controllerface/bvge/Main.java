@@ -104,36 +104,44 @@ public class Main
             return edge_index / Width.EDGE;
         }
 
-        public static FEdge2D newEdge(int p1, int p2, float l, FPoint2D from, FPoint2D to)
+        public static int newEdge(int p1, int p2, float l)
         {
             edge_buffer[edge_index++] = (float) p1;
             edge_buffer[edge_index++] = (float) p2;
             edge_buffer[edge_index++] = l;
             edge_buffer[edge_index++] = 0f;
-            return new FEdge2D(edge_index - Width.EDGE, from, to);
+            return edge_index - Width.EDGE;
         }
 
-        public static FPoint2D newPoint(float x, float y)
+
+
+
+        public static int newPoint(float x, float y)
         {
             return newPoint(x, y, x, y);
         }
 
-        public static FPoint2D newPoint(float x, float y, float px, float py)
+        public static int newPoint(float[] p)
+        {
+            return newPoint(p[0], p[1]);
+        }
+
+        public static int newPoint(float x, float y, float px, float py)
         {
             point_buffer[point_index++] = x;
             point_buffer[point_index++] = y;
             point_buffer[point_index++] = px;
             point_buffer[point_index++] = py;
-            return new FPoint2D(point_index - Width.POINT);
+            return point_index - Width.POINT;
         }
 
-        public static FBody2D newBody(float x, float y,
-                                      float sx, float sy,
-                                      float ax, float ay,
-                                      float ps, float pe,
-                                      float es, float ee,
-                                      int c_flags,
-                                      float force)
+        public static BodyIndex newBody(float x, float y,
+                                        float sx, float sy,
+                                        float ax, float ay,
+                                        float ps, float pe,
+                                        float es, float ee,
+                                        int c_flags,
+                                        float force)
         {
             body_buffer[body_index++] = x;
             body_buffer[body_index++] = y;
@@ -152,7 +160,7 @@ public class Main
             body_buffer[body_index++] = 0f;
             body_buffer[body_index++] = 0f;
             var idx = body_index - Width.BODY;
-            return new FBody2D(idx, force);
+            return new BodyIndex(idx, force);
         }
     }
 

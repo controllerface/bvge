@@ -1,14 +1,11 @@
 package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.data.FBody2D;
+import com.controllerface.bvge.data.BodyIndex;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.window.Window;
-
-import java.lang.reflect.Array;
-import java.util.Arrays;
 
 public class CameraTracking extends GameSystem
 {
@@ -25,7 +22,7 @@ public class CameraTracking extends GameSystem
         var focusTargets = ecs.getComponents(Component.CameraFocus);
         var focusTarget = focusTargets.entrySet().stream().findAny().orElseThrow();
         var b = ecs.getComponentFor(focusTarget.getKey(), Component.RigidBody2D);
-        FBody2D body = Component.RigidBody2D.coerce(b);
+        BodyIndex body = Component.RigidBody2D.coerce(b);
         if (body == null) return;
 
         float[] pos = OpenCL.read_position(body.index());
@@ -35,9 +32,6 @@ public class CameraTracking extends GameSystem
 
         float pos_x = pos[0];
         float pos_y = pos[1];
-
-        body.set_x_pos(pos_x);
-        body.set_y_pos(pos_y);
 
         var camera = Window.get().camera();
         var width = (float)Window.get().getWidth() * camera.getZoom();

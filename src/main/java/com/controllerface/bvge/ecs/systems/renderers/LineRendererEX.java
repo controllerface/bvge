@@ -35,13 +35,7 @@ public class LineRendererEX extends GameSystem
     @Override
     public void run(float dt)
     {
-        // todo: query the number of lines and divide that into batches
-        //  -> check current batch count and add more if needed
-        //  -> run CL jobs to batch in the edge vertices
-        //  -> on last batch, if less than batch max, set length to read the right number of vertices
-
         var edge_count = Main.Memory.edgesCount();
-
         var needed_batches = edge_count / Constants.Rendering.MAX_BATCH_SIZE;
         var r = edge_count % Constants.Rendering.MAX_BATCH_SIZE;
         if (r > 0)

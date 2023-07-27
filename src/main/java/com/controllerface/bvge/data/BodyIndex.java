@@ -2,16 +2,13 @@ package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.ecs.components.GameComponent;
-import org.joml.Vector2f;
 
-public class FBody2D implements GameComponent
+public class BodyIndex implements GameComponent
 {
     int index;
     float force;
-    float x_pos;
-    float y_pos;
 
-    public FBody2D(int index, float force)
+    public BodyIndex(int index, float force)
     {
         this.index = index;
         this.force = force;
@@ -25,26 +22,6 @@ public class FBody2D implements GameComponent
     public float force()
     {
         return force;
-    }
-
-    public float x_pos()
-    {
-        return x_pos;
-    }
-
-    public float y_pos()
-    {
-        return y_pos;
-    }
-
-    public void set_x_pos(float x_pos)
-    {
-        this.x_pos = x_pos;
-    }
-
-    public void set_y_pos(float y_pos)
-    {
-        this.y_pos = y_pos;
     }
 
     /*
