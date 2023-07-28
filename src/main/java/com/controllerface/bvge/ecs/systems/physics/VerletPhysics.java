@@ -147,7 +147,6 @@ public class VerletPhysics extends GameSystem
             }
         }
 
-        physicsBuffer.finishLoop();
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)
         {

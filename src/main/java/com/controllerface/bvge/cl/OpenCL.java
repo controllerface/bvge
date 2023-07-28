@@ -454,10 +454,9 @@ public class OpenCL
 
         int bounds_size = bodies_size;
 
-
-        var body_buffer   = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodies_size);
-        var point_buffer  = FloatBuffer.wrap(Main.Memory.point_buffer, 0, points_size);
-        var edges_buffer  = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edges_size);
+        var body_buffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodies_size);
+        var point_buffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, points_size);
+        var edges_buffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edges_size);
 
         var ptr_bodies = Pointer.to(body_buffer);
         var ptr_points = Pointer.to(point_buffer);
@@ -476,14 +475,9 @@ public class OpenCL
         cl_zero_buffer(src_mem_bounds, bounds_buf_size);
 
         physicsBuffer.bounds = new MemoryBuffer(src_mem_bounds, bounds_buf_size);
-        physicsBuffer.bodies = new MemoryBuffer(src_mem_bodies, body_buf_size, ptr_bodies);
-        physicsBuffer.points = new MemoryBuffer(src_mem_points, point_buf_size, ptr_points);
-        physicsBuffer.edges  = new MemoryBuffer(src_mem_edges, edges_buf_size, ptr_edges);
-
-        physicsBuffer.bounds.setCopyBuffer(false);
-        physicsBuffer.bodies.setCopyBuffer(false);
-        physicsBuffer.points.setCopyBuffer(false);
-        physicsBuffer.edges.setCopyBuffer(false);
+        physicsBuffer.bodies = new MemoryBuffer(src_mem_bodies, body_buf_size);
+        physicsBuffer.points = new MemoryBuffer(src_mem_points, point_buf_size);
+        physicsBuffer.edges  = new MemoryBuffer(src_mem_edges, edges_buf_size);
     }
 
     public static void update_accel(int body_index, float acc_x, float acc_y)

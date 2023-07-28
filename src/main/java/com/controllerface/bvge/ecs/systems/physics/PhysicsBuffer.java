@@ -69,16 +69,16 @@ public class PhysicsBuffer
 
     public void finishTick()
     {
-        if (key_map != null) key_map.transfer();
-        if (key_bank != null) key_bank.transfer();
-        if (key_counts != null) key_counts.transfer();
-        if (key_offsets != null) key_offsets.transfer();
-        if (in_bounds != null) in_bounds.transfer();
-        if (candidate_counts != null) candidate_counts.transfer();
-        if (candidate_offsets != null) candidate_offsets.transfer();
-        if (matches_used != null) matches_used.transfer();
-        if (matches != null) matches.transfer();
-        if (candidates != null) candidates.transfer();
+        if (key_map != null) key_map.release();
+        if (key_bank != null) key_bank.release();
+        if (key_counts != null) key_counts.release();
+        if (key_offsets != null) key_offsets.release();
+        if (in_bounds != null) in_bounds.release();
+        if (candidate_counts != null) candidate_counts.release();
+        if (candidate_offsets != null) candidate_offsets.release();
+        if (matches_used != null) matches_used.release();
+        if (matches != null) matches.release();
+        if (candidates != null) candidates.release();
 
         key_map = null;
         key_bank = null;
@@ -90,19 +90,6 @@ public class PhysicsBuffer
         candidate_offsets = null;
         matches_used = null;
         matches = null;
-    }
-
-    public void finishLoop()
-    {
-        bounds.setReleaseAfterTransfer(false);
-        bodies.setReleaseAfterTransfer(false);
-        points.setReleaseAfterTransfer(false);
-        edges.setReleaseAfterTransfer(false);
-
-        bounds.transfer();
-        bodies.transfer();
-        points.transfer();
-        edges.transfer();
     }
 
     public void shutdown()
@@ -119,25 +106,9 @@ public class PhysicsBuffer
         {
             points.release();
         }
-        if (key_map != null)
+        if (edges != null)
         {
-            key_map.release();
-        }
-        if (key_bank != null)
-        {
-            key_bank.release();
-        }
-        if (key_counts != null)
-        {
-            key_counts.release();
-        }
-        if (key_offsets != null)
-        {
-            key_offsets.release();
-        }
-        if (candidates != null)
-        {
-            candidates.release();
+            edges.release();
         }
     }
 
