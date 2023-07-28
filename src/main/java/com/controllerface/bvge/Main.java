@@ -1,21 +1,11 @@
 package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.gl.OpenGL;
 import com.controllerface.bvge.window.Window;
 
 
 public class Main
 {
-    // TODO: (large)
-    //  The data that is stored here can instead be allocated and stored on the GPU. Before
-    //  this can be done, a few things need to happen. First, GPU characteristics need to be
-    //  determined programmatically, so max RAM, etc. can be known before the buffers are
-    //  created. Once the sizes are better known, kernel code needs to be written that acts
-    //  as an interface, similar to a database, where objects can be written/read using the
-    //  GPU-side buffer. The end goal is to keep the data resident on the GPU as much as
-    //  possible, and only pull values down to the host if needed. The entire physics loop
-    //  will then be implemented in GPU code.
     public static class Memory
     {
         // Memory layout notes:
@@ -52,15 +42,11 @@ public class Main
         private static final int POINT_BUFFER_SIZE = Width.POINT * MAX_POINTS;
         private static final int EDGE_BUFFER_SIZE = Width.EDGE * MAX_POINTS;
 
-        public static float[] body_buffer = new float[BODY_BUFFER_SIZE];
-        public static float[] point_buffer = new float[POINT_BUFFER_SIZE];
-        public static float[] edge_buffer = new float[EDGE_BUFFER_SIZE];
-
         static
         {
-            int body_bytes = body_buffer.length * Float.BYTES;
-            int point_bytes = point_buffer.length * Float.BYTES;
-            int edge_bytes = edge_buffer.length * Float.BYTES;
+            int body_bytes = BODY_BUFFER_SIZE * Float.BYTES;
+            int point_bytes = POINT_BUFFER_SIZE * Float.BYTES;
+            int edge_bytes = EDGE_BUFFER_SIZE * Float.BYTES;
             int bounds_bytes = body_bytes;
             int total = body_bytes + point_bytes + edge_bytes + bounds_bytes;
             System.out.println("body_buffer   : " + body_bytes   + " Bytes");
@@ -80,24 +66,9 @@ public class Main
             return body_index / Width.BODY;
         }
 
-        public static int bodyLength()
-        {
-            return body_index;
-        }
-
-        public static int pointLength()
-        {
-            return point_index;
-        }
-
         public static int pointsCount()
         {
             return point_index / Width.POINT;
-        }
-
-        public static int edgesLength()
-        {
-            return edge_index;
         }
 
         public static int edgesCount()
@@ -119,51 +90,11 @@ public class Main
             return point_index - Width.POINT;
         }
 
-        public static int newBody(float x, float y,
-                                  float sx, float sy,
-                                  float ax, float ay,
-                                  float ps, float pe,
-                                  float es, float ee,
-                                  int c_flags)
+        public static int newBody(float[] arg)
         {
-            OpenCL.create_body(bodyCount(), new float[]
-                {
-                    x,
-                    y,
-                    sx,
-                    sy,
-                    ax,
-                    ay,
-                    c_flags,
-                    ps,
-                    pe,
-                    es,
-                    ee,
-                    0f,
-                    0f,
-                    0f,
-                    0f,
-                    0f
-                });
-//            body_buffer[body_index++] = x;
-//            body_buffer[body_index++] = y;
-//            body_buffer[body_index++] = sx;
-//            body_buffer[body_index++] = sy;
-//            body_buffer[body_index++] = ax;
-//            body_buffer[body_index++] = ay;
-//            body_buffer[body_index++] = c_flags;
-//            body_buffer[body_index++] = ps;
-//            body_buffer[body_index++] = pe;
-//            body_buffer[body_index++] = es;
-//            body_buffer[body_index++] = ee;
-//            body_buffer[body_index++] = 0f;
-//            body_buffer[body_index++] = 0f;
-//            body_buffer[body_index++] = 0f;
-//            body_buffer[body_index++] = 0f;
-//            body_buffer[body_index++] = 0f;
+            OpenCL.create_body(bodyCount(), arg);
             body_index += Width.BODY;
             var idx = body_index - Width.BODY;
-
             return idx / Width.BODY;
         }
     }
@@ -183,7 +114,6 @@ public class Main
 
         window.initOpenGL();
         OpenCL.init(b_buf, e_buf, p_buf);
-        //OpenGL.init(p_buf);
         window.initGameMode();
         window.run();
         OpenCL.destroy();

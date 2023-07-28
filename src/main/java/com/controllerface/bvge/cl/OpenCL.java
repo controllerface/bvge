@@ -309,6 +309,17 @@ public class OpenCL
         return new float[]{ x, y, z, w };
     }
 
+    public static float[] arg_float16(float s0, float s1, float s2, float s3,
+                                      float s4, float s5, float s6, float s7,
+                                      float s8, float s9, float sA, float sB,
+                                      float sC, float sD, float sE, float sF)
+    {
+        return new float[]{ s0, s1, s2, s3,
+                            s4, s5, s6, s7,
+                            s8, s9, sA, sB,
+                            sC, sD, sE, sF };
+    }
+
     public static int work_group_count(int n)
     {
         return (int) Math.ceil((float)n / (float)m);
@@ -482,34 +493,9 @@ public class OpenCL
 
     public static void initPhysicsBuffer(PhysicsBuffer physicsBuffer)
     {
-        // todo: the buffers created in this step should no longer have the CPU-side
-        //  values copied into them. Instead, they will be zeroed out and then later
-        //  calls will write the body data into the backing buffers.
-
         // todo: the body and bounds data needs to be sliced up into smaller arrays for better
         //  efficiency. Where possible, 4 dimensional vectors are preferable, followed by
         //  2 dimensional vectors, and then scalars.
-
-        int bodies_size = Main.Memory.bodyLength();
-        int points_size = Main.Memory.pointLength();
-
-        int bounds_size = bodies_size;
-
-        var body_buffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodies_size);
-        var point_buffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, points_size);
-
-        var ptr_bodies = Pointer.to(body_buffer);
-        var ptr_points = Pointer.to(point_buffer);
-
-        long body_buf_size   = (long)Sizeof.cl_float * bodies_size;
-        long point_buf_size  = (long)Sizeof.cl_float * points_size;
-        long bounds_buf_size = (long)Sizeof.cl_float * bounds_size;
-
-        cl_mem src_mem_bodies = cl_new_buffer(FLAGS_WRITE_CPU_COPY, body_buf_size, ptr_bodies);
-        cl_mem src_mem_points = cl_new_buffer(FLAGS_WRITE_CPU_COPY, point_buf_size, ptr_points);
-
-        cl_mem src_mem_bounds = cl_new_buffer(FLAGS_WRITE_GPU, bounds_buf_size);
-        cl_zero_buffer(src_mem_bounds, bounds_buf_size);
 
         physicsBuffer.bounds = new MemoryBuffer(aabb_mem);
         physicsBuffer.bodies = new MemoryBuffer(body_mem);

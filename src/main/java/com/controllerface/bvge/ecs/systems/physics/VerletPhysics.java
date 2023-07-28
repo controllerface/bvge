@@ -14,7 +14,7 @@ public class VerletPhysics extends GameSystem
     private final float TARGET_FPS = 60.0f;
     private final float TICK_RATE = 1.0f / TARGET_FPS;
     private final int SUB_STEPS = 4;
-    private final int EDGE_STEPS = 1;
+    private final int EDGE_STEPS = 4;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.
@@ -27,7 +27,7 @@ public class VerletPhysics extends GameSystem
     //  and applied when contact occurs.
     private final float GRAVITY_X = 0;
     private final float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
-    private final float FRICTION = .995f;
+    private final float FRICTION = .985f;
 
     private final SpatialPartition spatialPartition;
     private PhysicsBuffer physicsBuffer;
