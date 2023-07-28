@@ -2,6 +2,7 @@ package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.gl.Models;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Vector2f;
 
@@ -23,12 +24,14 @@ public class PhysicsObjects
 
     public static int box(float x, float y, float size, int flags)
     {
-        var halfSize = size / 2;
+        // get the box model
+        var mdl = Models.get_model_by_index(0);
 
-        var p1 = OpenCL.arg_float2(x - halfSize, y - halfSize);
-        var p2 = OpenCL.arg_float2(x + halfSize, y - halfSize);
-        var p3 = OpenCL.arg_float2(x + halfSize, y + halfSize);
-        var p4 = OpenCL.arg_float2(x - halfSize, y + halfSize);
+        // generate the vertices based on the desired size and position
+        var p1 = OpenCL.arg_float2(mdl[0] * size + x, mdl[1] * size + y);
+        var p2 = OpenCL.arg_float2(mdl[2] * size + x, mdl[3] * size + y);
+        var p3 = OpenCL.arg_float2(mdl[4] * size + x, mdl[5] * size + y);
+        var p4 = OpenCL.arg_float2(mdl[6] * size + x, mdl[7] * size + y);
 
         var p1_index = Main.Memory.newPoint(p1);
         var p2_index = Main.Memory.newPoint(p2);
@@ -92,13 +95,13 @@ public class PhysicsObjects
 
     public static int polygon1(float x, float y, float size)
     {
-        var halfSize = size / 2;
+        var mdl = Models.get_model_by_index(1);
 
-        var p1 = OpenCL.arg_float2(x - halfSize, y - halfSize);
-        var p2 = OpenCL.arg_float2(x + halfSize, y - halfSize);
-        var p3 = OpenCL.arg_float2(x + halfSize, y + halfSize);
-        var p4 = OpenCL.arg_float2(x - halfSize, y + halfSize);
-        var p5 = OpenCL.arg_float2(x, y + halfSize * 2);
+        var p1 = OpenCL.arg_float2(mdl[0] * size + x, mdl[1] * size + y);
+        var p2 = OpenCL.arg_float2(mdl[2] * size + x, mdl[3] * size + y);
+        var p3 = OpenCL.arg_float2(mdl[4] * size + x, mdl[5] * size + y);
+        var p4 = OpenCL.arg_float2(mdl[6] * size + x, mdl[7] * size + y);
+        var p5 = OpenCL.arg_float2(mdl[8] * size + x, mdl[9] * size + y);
 
         var p1_index = Main.Memory.newPoint(p1);
         var p2_index = Main.Memory.newPoint(p2);
