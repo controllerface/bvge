@@ -28,6 +28,7 @@ public class TestGame extends GameMode
 
     private void genNPCs(int box_size, float spacing, float size, float start_x, float start_y)
     {
+        // trivial change for new commit
         System.out.println("generating: " + box_size * box_size + " NPCs..");
         var rand = new Random();
         for (int i = 0; i < box_size; i++)
