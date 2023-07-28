@@ -8,31 +8,16 @@ public class Main
 {
     public static class Memory
     {
-        // Memory layout notes:
-        //---------------------
-        // Objects managed by this class are laid out as 1 dimensional arrays for interoperability
-        // with OpenGL and OpenCL. Each object type is mapped to a corresponding OpenCL vector type,
-        // and when the elements are used within cl kernel code, these arrays are indexed based on
-        // their "vector width" within the kernel environment. For example, in the Java environment,
-        // an integer array declared like this:
-        //     int[] test_array= new int[10];
-        // may be accessed in the kernel code as an int2 (i.e. a 2D vector of ints) as an *int2 pointer.
-        // This in this scenario, the int[] of size 10, is treated as an int2[] of size 5. I.e., indexing
-        // into the array from within kernel code, the maximum index would be 4. The Width class below will
-        // contain comments describing the kernel side structure used for each.
         public static class Width
         {
             // float16
             public static final int BODY = 16;
-            // Individual objects, including the player are a single body
 
             // float4
             public static final int POINT = 4;
-            // Bodies are composed of one or more points
 
             // float4
             public static final int EDGE = 4;
-            // Edges define constraints that are set between two vertices
         }
 
         private static final int MAX_BODIES = 100_000;
@@ -41,7 +26,9 @@ public class Main
         private static final int BODY_BUFFER_SIZE = Width.BODY * MAX_BODIES;
         private static final int POINT_BUFFER_SIZE = Width.POINT * MAX_POINTS;
         private static final int EDGE_BUFFER_SIZE = Width.EDGE * MAX_POINTS;
-
+        private static final int BODY_BUFFER_LENGTH = BODY_BUFFER_SIZE * Float.BYTES;
+        private static final int POINT_BUFFER_LENGTH = EDGE_BUFFER_SIZE * Float.BYTES;
+        private static final int EDGE_BUFFER_LENGTH = POINT_BUFFER_SIZE * Float.BYTES;
         static
         {
             int body_bytes = BODY_BUFFER_SIZE * Float.BYTES;
@@ -102,18 +89,10 @@ public class Main
     public static void main(String[] args)
     {
         Window window = Window.get();
-
-        // todo: pre-generate Open CL/GL buffers
-        //  CL should be done first, offloading object data to the GPU
-        //  GL can then be added by making a single VBO out of the point buffer
-        //  draw calls will need to be done with ebo's in batches
-        //  experiment with batch sizes on different systems
-        var b_buf = Memory.BODY_BUFFER_SIZE * Float.BYTES;
-        var e_buf = Memory.EDGE_BUFFER_SIZE * Float.BYTES;
-        var p_buf = Memory.POINT_BUFFER_SIZE * Float.BYTES;
-
         window.initOpenGL();
-        OpenCL.init(b_buf, e_buf, p_buf);
+        OpenCL.init(Memory.BODY_BUFFER_LENGTH,
+            Memory.EDGE_BUFFER_LENGTH,
+            Memory.POINT_BUFFER_LENGTH);
         window.initGameMode();
         window.run();
         OpenCL.destroy();

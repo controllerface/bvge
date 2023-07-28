@@ -59,17 +59,6 @@ public class LineRendererEX extends GameSystem
             b.setOffset(offset);
             offset += count;
         }
-
-
-//        for (Map.Entry<String, GameComponent> entry : ecs.getComponents(Component.RigidBody2D).entrySet())
-//        {
-//            GameComponent component = entry.getValue();
-//            FBody2D body = Component.RigidBody2D.coerce(component);
-//            for (FEdge2D edge : body.edges())
-//            {
-//                add(edge);
-//            }
-//        }
         render();
     }
 
