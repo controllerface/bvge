@@ -38,6 +38,26 @@ __kernel void rotate_body(__global float16 *bodies,
     }
 }
 
+__kernel void create_point(__global float4 *points,
+                           int target,
+                           float4 new_point)
+{
+    points[target] = new_point; 
+}
+
+__kernel void create_edge(__global float4 *edges,
+                           int target,
+                           float4 new_edge)
+{
+    edges[target] = new_edge; 
+}
+
+__kernel void create_body(__global float16 *bodies,
+                           int target,
+                           float16 new_body)
+{
+    bodies[target] = new_body; 
+}
 
 
 // new world below - Bulk methods

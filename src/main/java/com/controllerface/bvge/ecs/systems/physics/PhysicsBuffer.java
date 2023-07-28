@@ -27,6 +27,7 @@ public class PhysicsBuffer
     private int candidate_buffer_count = 0;
     private int match_buffer_count = 0;
     private int candidate_count = 0;
+    private long final_size = 0;
 
     private float gravity_x = 0f;
     private float gravity_y = 0f;
@@ -140,5 +141,15 @@ public class PhysicsBuffer
     public void set_candidate_count(int candidate_count)
     {
         this.candidate_count = candidate_count;
+    }
+
+    public long get_final_size()
+    {
+        return final_size;
+    }
+
+    public void set_final_size(long final_size)
+    {
+        this.final_size = final_size;
     }
 }

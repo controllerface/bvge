@@ -16,7 +16,7 @@ public class PhysicsObjects
     public static int FLAG_NONE = 0x00;
     public static int FLAG_STATIC = 0x01;
 
-    public static float distance(float[] a, float[]b)
+    public static float distance(float[] a, float[] b)
     {
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
@@ -39,51 +39,44 @@ public class PhysicsObjects
 
         // box sides
         var start_edge = Main.Memory.newEdge(
-                p1_index / Main.Memory.Width.POINT,
-                p2_index / Main.Memory.Width.POINT,
-                distance(p2, p1)
-        );
+            p1_index / Main.Memory.Width.POINT,
+            p2_index / Main.Memory.Width.POINT,
+            distance(p2, p1));
 
         Main.Memory.newEdge(
-                p2_index / Main.Memory.Width.POINT,
-                p3_index / Main.Memory.Width.POINT,
-                distance(p3, p2)
-        );
+            p2_index / Main.Memory.Width.POINT,
+            p3_index / Main.Memory.Width.POINT,
+            distance(p3, p2));
 
         Main.Memory.newEdge(
-                p3_index / Main.Memory.Width.POINT,
-                p4_index / Main.Memory.Width.POINT,
-                distance(p4, p3)
-        );
+            p3_index / Main.Memory.Width.POINT,
+            p4_index / Main.Memory.Width.POINT,
+            distance(p4, p3));
 
         Main.Memory.newEdge(
-                p4_index / Main.Memory.Width.POINT,
-                p1_index / Main.Memory.Width.POINT,
-                distance(p1, p4)
-        );
+            p4_index / Main.Memory.Width.POINT,
+            p1_index / Main.Memory.Width.POINT,
+            distance(p1, p4));
 
         // corner braces
         Main.Memory.newEdge(
-                p1_index / Main.Memory.Width.POINT,
-                p3_index / Main.Memory.Width.POINT,
-                distance(p3, p1)
-        );
+            p1_index / Main.Memory.Width.POINT,
+            p3_index / Main.Memory.Width.POINT,
+            distance(p3, p1));
 
         var end_edge = Main.Memory.newEdge(
-                p2_index / Main.Memory.Width.POINT,
-                p4_index / Main.Memory.Width.POINT,
-                distance(p4, p2)
-        );
+            p2_index / Main.Memory.Width.POINT,
+            p4_index / Main.Memory.Width.POINT,
+            distance(p4, p2));
 
         return Main.Memory.newBody(vector_buffer.x, vector_buffer.y,
-                size, size,
-                0,0,
-                (float) p1_index / Main.Memory.Width.POINT,
-                (float) p4_index / Main.Memory.Width.POINT,
-                (float) start_edge / Main.Memory.Width.EDGE,
-                (float) end_edge / Main.Memory.Width.EDGE,
-                flags
-        );
+            size, size,
+            0, 0,
+            (float) p1_index / Main.Memory.Width.POINT,
+            (float) p4_index / Main.Memory.Width.POINT,
+            (float) start_edge / Main.Memory.Width.EDGE,
+            (float) end_edge / Main.Memory.Width.EDGE,
+            flags);
     }
 
     public static int dynamic_Box(float x, float y, float size)
@@ -116,59 +109,59 @@ public class PhysicsObjects
 
         // box sides
         var start_edge = Main.Memory.newEdge(
-                p1_index / Main.Memory.Width.POINT,
-                p2_index / Main.Memory.Width.POINT,
-                distance(p2, p1)
+            p1_index / Main.Memory.Width.POINT,
+            p2_index / Main.Memory.Width.POINT,
+            distance(p2, p1)
         );
 
         Main.Memory.newEdge(
-                p2_index / Main.Memory.Width.POINT,
-                p3_index / Main.Memory.Width.POINT,
-                distance(p3, p2)
+            p2_index / Main.Memory.Width.POINT,
+            p3_index / Main.Memory.Width.POINT,
+            distance(p3, p2)
         );
 
         Main.Memory.newEdge(
-                p3_index / Main.Memory.Width.POINT,
-                p4_index / Main.Memory.Width.POINT,
-                distance(p4, p3)
+            p3_index / Main.Memory.Width.POINT,
+            p4_index / Main.Memory.Width.POINT,
+            distance(p4, p3)
         );
 
         Main.Memory.newEdge(
-                p4_index / Main.Memory.Width.POINT,
-                p1_index / Main.Memory.Width.POINT,
-                distance(p1, p4)
+            p4_index / Main.Memory.Width.POINT,
+            p1_index / Main.Memory.Width.POINT,
+            distance(p1, p4)
         );
 
 
         Main.Memory.newEdge(
-                p4_index / Main.Memory.Width.POINT,
-                p5_index / Main.Memory.Width.POINT,
-                distance(p4, p5)
+            p4_index / Main.Memory.Width.POINT,
+            p5_index / Main.Memory.Width.POINT,
+            distance(p4, p5)
         );
 
         Main.Memory.newEdge(
-                p3_index / Main.Memory.Width.POINT,
-                p5_index / Main.Memory.Width.POINT,
-                distance(p3, p5)
+            p3_index / Main.Memory.Width.POINT,
+            p5_index / Main.Memory.Width.POINT,
+            distance(p3, p5)
         );
 
         // corner braces
         Main.Memory.newEdge(
-                p1_index / Main.Memory.Width.POINT,
-                p3_index / Main.Memory.Width.POINT,
-                distance(p3, p1)
+            p1_index / Main.Memory.Width.POINT,
+            p3_index / Main.Memory.Width.POINT,
+            distance(p3, p1)
         );
 
         var end_edge = Main.Memory.newEdge(
-                p2_index / Main.Memory.Width.POINT,
-                p4_index / Main.Memory.Width.POINT,
-                distance(p4, p2)
+            p2_index / Main.Memory.Width.POINT,
+            p4_index / Main.Memory.Width.POINT,
+            distance(p4, p2)
         );
 
 
         return Main.Memory.newBody(vector_buffer.x, vector_buffer.y,
             size, size,
-            0,0,
+            0, 0,
             (float) p1_index / Main.Memory.Width.POINT,
             (float) p5_index / Main.Memory.Width.POINT,
             (float) start_edge / Main.Memory.Width.EDGE,

@@ -11,20 +11,12 @@ public class MemoryBuffer
 {
     private final cl_mem src;
     private final Pointer pointer;
-    private final long size;
-    private boolean releaseAfterTransfer = true;
     private boolean released = false;
 
-    public MemoryBuffer(cl_mem src, long size)
+    public MemoryBuffer(cl_mem src)
     {
         this.src = src;
         this.pointer = Pointer.to(this.src);
-        this.size = size;
-    }
-
-    public void setReleaseAfterTransfer(boolean releaseAfterTransfer)
-    {
-        this.releaseAfterTransfer = releaseAfterTransfer;
     }
 
     public cl_mem memory()
@@ -35,19 +27,6 @@ public class MemoryBuffer
     public Pointer pointer()
     {
         return pointer;
-    }
-
-    public long getSize()
-    {
-        return size;
-    }
-
-    public void transfer()
-    {
-        if (!released && releaseAfterTransfer)
-        {
-            release();
-        }
     }
 
     public void release()

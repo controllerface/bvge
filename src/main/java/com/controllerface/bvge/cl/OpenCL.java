@@ -219,11 +219,6 @@ public class OpenCL
 
     }
 
-    public static cl_command_queue getCommandQueue()
-    {
-        return commandQueue;
-    }
-
     private static void cl_read_buffer(cl_mem src, long size, Pointer dst)
     {
         clEnqueueReadBuffer(commandQueue, src, CL_TRUE, 0, size, dst,
@@ -307,7 +302,7 @@ public class OpenCL
         return (int) Math.ceil((float)n / (float)m);
     }
 
-    public static void init()
+    public static void init(int body_buffer_size, int edge_buffer_size)
     {
         device_ids = device_init();
 
@@ -403,6 +398,21 @@ public class OpenCL
         k_rotate_body                       = cl_k(p_gpu_crud, kn_rotate_body);
         k_read_position                     = cl_k(p_gpu_crud, kn_read_position);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
+
+
+
+
+
+
+        // todo: init physics/render buffers here
+
+        body_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
+        aabb_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
+        edge_mem  = cl_new_buffer(FLAGS_WRITE_GPU, edge_buffer_size);
+
+        cl_zero_buffer(body_mem, body_buffer_size);
+        cl_zero_buffer(aabb_mem, body_buffer_size);
+        cl_zero_buffer(edge_mem, edge_buffer_size);
     }
 
     public static void destroy()
@@ -411,10 +421,30 @@ public class OpenCL
         loaded_kernels.forEach(CL::clReleaseKernel);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
+        clReleaseMemObject(vertex_mem);
+        clReleaseMemObject(body_mem);
+        clReleaseMemObject(aabb_mem);
+        clReleaseMemObject(edge_mem);
         vbo_edges.values().forEach(CL::clReleaseMemObject);
     }
 
     private static final HashMap<Integer, cl_mem> vbo_edges = new LinkedHashMap<>();
+
+    private static cl_mem vertex_mem;
+    private static cl_mem body_mem;
+    private static cl_mem aabb_mem;
+    private static cl_mem edge_mem;
+
+    public static void bindvertexVBO(int vboID)
+    {
+        cl_mem vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
+        if (vertex_mem != null)
+        {
+            clReleaseMemObject(vertex_mem);
+        }
+        vertex_mem = vbo_mem;
+    }
+
 
     public static void bindEdgeVBO(int vboID)
     {
@@ -465,7 +495,7 @@ public class OpenCL
         long body_buf_size   = (long)Sizeof.cl_float * bodies_size;
         long point_buf_size  = (long)Sizeof.cl_float * points_size;
         long bounds_buf_size = (long)Sizeof.cl_float * bounds_size;
-        long edges_buf_size  = (long) Sizeof.cl_float * edges_size;
+        long edges_buf_size  = (long)Sizeof.cl_float * edges_size;
 
         cl_mem src_mem_bodies = cl_new_buffer(FLAGS_WRITE_CPU_COPY, body_buf_size, ptr_bodies);
         cl_mem src_mem_points = cl_new_buffer(FLAGS_WRITE_CPU_COPY, point_buf_size, ptr_points);
@@ -474,10 +504,10 @@ public class OpenCL
         cl_mem src_mem_bounds = cl_new_buffer(FLAGS_WRITE_GPU, bounds_buf_size);
         cl_zero_buffer(src_mem_bounds, bounds_buf_size);
 
-        physicsBuffer.bounds = new MemoryBuffer(src_mem_bounds, bounds_buf_size);
-        physicsBuffer.bodies = new MemoryBuffer(src_mem_bodies, body_buf_size);
-        physicsBuffer.points = new MemoryBuffer(src_mem_points, point_buf_size);
-        physicsBuffer.edges  = new MemoryBuffer(src_mem_edges, edges_buf_size);
+        physicsBuffer.bounds = new MemoryBuffer(src_mem_bounds);
+        physicsBuffer.bodies = new MemoryBuffer(src_mem_bodies);
+        physicsBuffer.points = new MemoryBuffer(src_mem_points);
+        physicsBuffer.edges  = new MemoryBuffer(src_mem_edges);
     }
 
     public static void update_accel(int body_index, float acc_x, float acc_y)
@@ -589,7 +619,6 @@ public class OpenCL
 
         Pointer src_data = Pointer.to(physicsBuffer.bounds.memory());
         Pointer src_bank = Pointer.to(bank_data);
-        Pointer dst_counts = Pointer.to(spatialPartition.getKey_counts());
         Pointer src_counts = Pointer.to(counts_data);
         Pointer src_kb_len = Pointer.to(arg_int(spatialPartition.getKey_bank_size()));
         Pointer src_kc_len = Pointer.to(arg_int(spatialPartition.getDirectoryLength()));
@@ -597,8 +626,8 @@ public class OpenCL
 
         // key counts get transferred out right now for use in the spatial index renderer
         // todo: remove this transfer after moving over to CL/GL interop renderer
-        physicsBuffer.key_counts = new MemoryBuffer(counts_data, counts_buf_size);
-        physicsBuffer.key_bank = new MemoryBuffer(bank_data, bank_buf_size);
+        physicsBuffer.key_counts = new MemoryBuffer(counts_data);
+        physicsBuffer.key_bank = new MemoryBuffer(bank_data);
 
         // pass in arguments
         clSetKernelArg(k_generate_keys, 0, Sizeof.cl_mem, src_data);
@@ -613,15 +642,10 @@ public class OpenCL
 
     public static void calculate_map_offsets(SpatialPartition spatialPartition)
     {
-        int[] key_offsets = spatialPartition.getKey_offsets();
-        int n = spatialPartition.getKey_counts().length;
-
+        int n = spatialPartition.getDirectoryLength();
         long data_buf_size = (long)Sizeof.cl_int * n;
-
-        Pointer dst_data = Pointer.to(key_offsets);
-        cl_mem o_data = cl_new_buffer(FLAGS_WRITE_CPU_COPY, data_buf_size, dst_data);
-        physicsBuffer.key_offsets = new MemoryBuffer(o_data, data_buf_size);
-
+        cl_mem o_data = cl_new_buffer(FLAGS_WRITE_GPU, data_buf_size);
+        physicsBuffer.key_offsets = new MemoryBuffer(o_data);
         scan_int_out(physicsBuffer.key_counts.memory(), o_data, n);
     }
 
@@ -644,7 +668,7 @@ public class OpenCL
         Pointer src_x_subs =  Pointer.to(new int[]{spatialPartition.getX_subdivisions()});
         Pointer src_c_len =  Pointer.to(new int[]{spatialPartition.getDirectoryLength()});
 
-        physicsBuffer.key_map = new MemoryBuffer(map_data, map_buf_size);
+        physicsBuffer.key_map = new MemoryBuffer(map_data);
 
         clSetKernelArg(k_build_key_map, 0, Sizeof.cl_mem, src_data);
         clSetKernelArg(k_build_key_map, 1, Sizeof.cl_mem, src_map);
@@ -665,12 +689,12 @@ public class OpenCL
         // step 1: locate objects that are within bounds
         int x_subdivisions = spatialPartition.getX_subdivisions();
         physicsBuffer.x_sub_divisions = Pointer.to(arg_int(x_subdivisions));
-        physicsBuffer.key_count_length = Pointer.to(arg_int(spatialPartition.getKey_counts().length));
+        physicsBuffer.key_count_length = Pointer.to(arg_int(spatialPartition.getDirectoryLength()));
 
         long inbound_buf_size = (long)Sizeof.cl_int * n;
         cl_mem inbound_data = cl_new_buffer(FLAGS_WRITE_GPU, inbound_buf_size);
 
-        physicsBuffer.in_bounds = new MemoryBuffer(inbound_data, inbound_buf_size);
+        physicsBuffer.in_bounds = new MemoryBuffer(inbound_data);
 
         int[] size = arg_int(0);
         Pointer dst_size = Pointer.to(size);
@@ -694,7 +718,7 @@ public class OpenCL
     {
         long cand_buf_size = (long)Sizeof.cl_int2 * physicsBuffer.get_candidate_buffer_count();
         cl_mem cand_data = cl_new_buffer(FLAGS_WRITE_GPU, cand_buf_size);
-        physicsBuffer.candidate_counts = new MemoryBuffer(cand_data, cand_buf_size);
+        physicsBuffer.candidate_counts = new MemoryBuffer(cand_data);
 
         clSetKernelArg(k_count_candidates, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
         clSetKernelArg(k_count_candidates, 1, Sizeof.cl_mem, physicsBuffer.in_bounds.pointer());
@@ -712,7 +736,7 @@ public class OpenCL
         int n = physicsBuffer.get_candidate_buffer_count();
         long offset_buf_size = (long)Sizeof.cl_int * n;
         cl_mem offset_data = cl_new_buffer(FLAGS_WRITE_GPU, offset_buf_size);
-        physicsBuffer.candidate_offsets = new MemoryBuffer(offset_data, offset_buf_size);
+        physicsBuffer.candidate_offsets = new MemoryBuffer(offset_data);
 
         int match_count = scan_key_candidates(physicsBuffer.candidate_counts.memory(), offset_data, n);
         physicsBuffer.set_candidate_match_count(match_count);
@@ -723,11 +747,11 @@ public class OpenCL
     {
         long matches_buf_size = (long)Sizeof.cl_int * physicsBuffer.get_candidate_match_count();
         cl_mem matches_data = cl_new_buffer(FLAGS_WRITE_GPU, matches_buf_size);
-        physicsBuffer.matches = new MemoryBuffer(matches_data, matches_buf_size);
+        physicsBuffer.matches = new MemoryBuffer(matches_data);
 
         long used_buf_size = (long)Sizeof.cl_int * physicsBuffer.get_candidate_buffer_count();
         cl_mem used_data = cl_new_buffer(FLAGS_WRITE_GPU, used_buf_size);
-        physicsBuffer.matches_used = new MemoryBuffer(used_data, used_buf_size);
+        physicsBuffer.matches_used = new MemoryBuffer(used_data);
 
         // this buffer will contain the total number of candidates that were found
         int[] count = arg_int(0);
@@ -772,7 +796,9 @@ public class OpenCL
             cl_mem counter_data = cl_new_buffer(FLAGS_WRITE_CPU_COPY, Sizeof.cl_int, dst_counter);
             Pointer src_counter = Pointer.to(counter_data);
 
-            physicsBuffer.candidates = new MemoryBuffer(finals_data, final_buf_size);
+            physicsBuffer.set_final_size(final_buf_size);
+
+            physicsBuffer.candidates = new MemoryBuffer(finals_data);
 
             clSetKernelArg(k_finalize_candidates, 0, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
             clSetKernelArg(k_finalize_candidates, 1, Sizeof.cl_mem, physicsBuffer.candidate_offsets.pointer());
@@ -791,7 +817,7 @@ public class OpenCL
     {
         if (physicsBuffer.candidates == null) return;
 
-        int candidatesSize = (int) physicsBuffer.candidates.getSize() / Sizeof.cl_int;
+        int candidatesSize = (int) physicsBuffer.get_final_size() / Sizeof.cl_int;
 
         // Set the work-item dimensions
         long[] global_work_size = new long[]{candidatesSize / COLLISION_SIZE};

@@ -1,6 +1,7 @@
 package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.gl.OpenGL;
 import com.controllerface.bvge.window.Window;
 
 
@@ -148,8 +149,15 @@ public class Main
     public static void main(String[] args)
     {
         Window window = Window.get();
+
+        // todo: pre-generate Open CL/GL buffers
+        //  CL should be done first, offloading object data to the GPU
+        //  GL can then be added by making a single VBO out of the point buffer
+        //  draw calls will need to be done with ebo's in batches
+        //  experiment with batch sizes on different systems
         window.initOpenGL();
-        OpenCL.init();
+        OpenCL.init(Memory.BODY_BUFFER_SIZE, Memory.EDGE_BUFFER_SIZE);
+        OpenGL.init(Memory.POINT_BUFFER_SIZE);
         window.initGameMode();
         window.run();
         OpenCL.destroy();

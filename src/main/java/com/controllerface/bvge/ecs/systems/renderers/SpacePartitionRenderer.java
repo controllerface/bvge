@@ -66,11 +66,11 @@ public class SpacePartitionRenderer extends GameSystem
     {
         if (accum < 1) return color2;
 
-        var c = spatialPartition.countAtIndex(x, y);
-        if (c > 0)
-        {
-            return color3;
-        }
+        //var c = spatialPartition.countAtIndex(x, y);
+        //if (c > 0)
+        //{
+            //return color3;
+        //}
         return color2;
     }
 
