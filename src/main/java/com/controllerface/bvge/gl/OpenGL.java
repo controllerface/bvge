@@ -29,7 +29,6 @@ public class OpenGL
         // allocates enough space for the vertices we can handle in this batch, but doesn't transfer any data
         // into the buffer just yet
 
-        // todo: figure out buffer size
         glBufferData(GL_ARRAY_BUFFER, buffer_size, GL_DYNAMIC_DRAW);
 
         // todo: bind the entire vertex buffer here instead

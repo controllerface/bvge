@@ -90,6 +90,11 @@ public class Main
             return point_index;
         }
 
+        public static int pointsCount()
+        {
+            return point_index / Width.POINT;
+        }
+
         public static int edgesLength()
         {
             return edge_index;
@@ -102,19 +107,15 @@ public class Main
 
         public static int newEdge(int p1, int p2, float l)
         {
-            edge_buffer[edge_index++] = (float) p1;
-            edge_buffer[edge_index++] = (float) p2;
-            edge_buffer[edge_index++] = l;
-            edge_buffer[edge_index++] = 0f;
+            OpenCL.create_edge(edgesCount(), p1, p2, l);
+            edge_index += Width.EDGE;
             return edge_index - Width.EDGE;
         }
 
         public static int newPoint(float[] p)
         {
-            point_buffer[point_index++] = p[0];
-            point_buffer[point_index++] = p[1];
-            point_buffer[point_index++] = p[0];
-            point_buffer[point_index++] = p[1];
+            OpenCL.create_point(pointsCount(), p[0], p[1], p[0], p[1]);
+            point_index += Width.POINT;
             return point_index - Width.POINT;
         }
 
@@ -125,23 +126,44 @@ public class Main
                                   float es, float ee,
                                   int c_flags)
         {
-            body_buffer[body_index++] = x;
-            body_buffer[body_index++] = y;
-            body_buffer[body_index++] = sx;
-            body_buffer[body_index++] = sy;
-            body_buffer[body_index++] = ax;
-            body_buffer[body_index++] = ay;
-            body_buffer[body_index++] = c_flags;
-            body_buffer[body_index++] = ps;
-            body_buffer[body_index++] = pe;
-            body_buffer[body_index++] = es;
-            body_buffer[body_index++] = ee;
-            body_buffer[body_index++] = 0f;
-            body_buffer[body_index++] = 0f;
-            body_buffer[body_index++] = 0f;
-            body_buffer[body_index++] = 0f;
-            body_buffer[body_index++] = 0f;
+            OpenCL.create_body(bodyCount(), new float[]
+                {
+                    x,
+                    y,
+                    sx,
+                    sy,
+                    ax,
+                    ay,
+                    c_flags,
+                    ps,
+                    pe,
+                    es,
+                    ee,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0f
+                });
+//            body_buffer[body_index++] = x;
+//            body_buffer[body_index++] = y;
+//            body_buffer[body_index++] = sx;
+//            body_buffer[body_index++] = sy;
+//            body_buffer[body_index++] = ax;
+//            body_buffer[body_index++] = ay;
+//            body_buffer[body_index++] = c_flags;
+//            body_buffer[body_index++] = ps;
+//            body_buffer[body_index++] = pe;
+//            body_buffer[body_index++] = es;
+//            body_buffer[body_index++] = ee;
+//            body_buffer[body_index++] = 0f;
+//            body_buffer[body_index++] = 0f;
+//            body_buffer[body_index++] = 0f;
+//            body_buffer[body_index++] = 0f;
+//            body_buffer[body_index++] = 0f;
+            body_index += Width.BODY;
             var idx = body_index - Width.BODY;
+
             return idx / Width.BODY;
         }
     }
@@ -155,9 +177,13 @@ public class Main
         //  GL can then be added by making a single VBO out of the point buffer
         //  draw calls will need to be done with ebo's in batches
         //  experiment with batch sizes on different systems
+        var b_buf = Memory.BODY_BUFFER_SIZE * Float.BYTES;
+        var e_buf = Memory.EDGE_BUFFER_SIZE * Float.BYTES;
+        var p_buf = Memory.POINT_BUFFER_SIZE * Float.BYTES;
+
         window.initOpenGL();
-        OpenCL.init(Memory.BODY_BUFFER_SIZE, Memory.EDGE_BUFFER_SIZE);
-        OpenGL.init(Memory.POINT_BUFFER_SIZE);
+        OpenCL.init(b_buf, e_buf, p_buf);
+        //OpenGL.init(p_buf);
         window.initGameMode();
         window.run();
         OpenCL.destroy();

@@ -91,6 +91,9 @@ public class OpenCL
     static String kn_update_accel                       = "update_accel";
     static String kn_rotate_body                        = "rotate_body";
     static String kn_read_position                      = "read_position";
+    static String kn_create_point                       = "create_point";
+    static String kn_create_edge                        = "create_edge";
+    static String kn_create_body                        = "create_body";
     static String kn_prepare_edges                      = "prepare_edges";
 
     /**
@@ -137,7 +140,11 @@ public class OpenCL
     static cl_kernel k_update_accel;
     static cl_kernel k_rotate_body;
     static cl_kernel k_read_position;
+    static cl_kernel k_create_point;
+    static cl_kernel k_create_edge;
+    static cl_kernel k_create_body;
     static cl_kernel k_prepare_edges;
+
 
     /**
      * During shutdown, these are used to release resources.
@@ -297,12 +304,17 @@ public class OpenCL
         return new float[]{ x, y };
     }
 
+    public static float[] arg_float4(float x, float y, float z, float w)
+    {
+        return new float[]{ x, y, z, w };
+    }
+
     public static int work_group_count(int n)
     {
         return (int) Math.ceil((float)n / (float)m);
     }
 
-    public static void init(int body_buffer_size, int edge_buffer_size)
+    public static void init(int body_buffer_size, int edge_buffer_size, int point_buffer_size)
     {
         device_ids = device_init();
 
@@ -397,19 +409,19 @@ public class OpenCL
         k_update_accel                      = cl_k(p_gpu_crud, kn_update_accel);
         k_rotate_body                       = cl_k(p_gpu_crud, kn_rotate_body);
         k_read_position                     = cl_k(p_gpu_crud, kn_read_position);
+        k_create_body                       = cl_k(p_gpu_crud, kn_create_body);
+        k_create_point                      = cl_k(p_gpu_crud, kn_create_point);
+        k_create_edge                       = cl_k(p_gpu_crud, kn_create_edge);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
 
+        // init physics buffers here
 
-
-
-
-
-        // todo: init physics/render buffers here
-
+        point_mem = cl_new_buffer(FLAGS_WRITE_GPU, point_buffer_size);
         body_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
         aabb_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
         edge_mem  = cl_new_buffer(FLAGS_WRITE_GPU, edge_buffer_size);
 
+        cl_zero_buffer(point_mem, body_buffer_size);
         cl_zero_buffer(body_mem, body_buffer_size);
         cl_zero_buffer(aabb_mem, body_buffer_size);
         cl_zero_buffer(edge_mem, edge_buffer_size);
@@ -421,7 +433,7 @@ public class OpenCL
         loaded_kernels.forEach(CL::clReleaseKernel);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
-        clReleaseMemObject(vertex_mem);
+        clReleaseMemObject(point_mem);
         clReleaseMemObject(body_mem);
         clReleaseMemObject(aabb_mem);
         clReleaseMemObject(edge_mem);
@@ -430,7 +442,7 @@ public class OpenCL
 
     private static final HashMap<Integer, cl_mem> vbo_edges = new LinkedHashMap<>();
 
-    private static cl_mem vertex_mem;
+    private static cl_mem point_mem;
     private static cl_mem body_mem;
     private static cl_mem aabb_mem;
     private static cl_mem edge_mem;
@@ -438,11 +450,11 @@ public class OpenCL
     public static void bindvertexVBO(int vboID)
     {
         cl_mem vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
-        if (vertex_mem != null)
+        if (point_mem != null)
         {
-            clReleaseMemObject(vertex_mem);
+            clReleaseMemObject(point_mem);
         }
-        vertex_mem = vbo_mem;
+        point_mem = vbo_mem;
     }
 
 
@@ -480,35 +492,73 @@ public class OpenCL
 
         int bodies_size = Main.Memory.bodyLength();
         int points_size = Main.Memory.pointLength();
-        int edges_size  = Main.Memory.edgesLength();
 
         int bounds_size = bodies_size;
 
         var body_buffer = FloatBuffer.wrap(Main.Memory.body_buffer, 0, bodies_size);
         var point_buffer = FloatBuffer.wrap(Main.Memory.point_buffer, 0, points_size);
-        var edges_buffer = FloatBuffer.wrap(Main.Memory.edge_buffer, 0, edges_size);
 
         var ptr_bodies = Pointer.to(body_buffer);
         var ptr_points = Pointer.to(point_buffer);
-        var ptr_edges  = Pointer.to(edges_buffer);
 
         long body_buf_size   = (long)Sizeof.cl_float * bodies_size;
         long point_buf_size  = (long)Sizeof.cl_float * points_size;
         long bounds_buf_size = (long)Sizeof.cl_float * bounds_size;
-        long edges_buf_size  = (long)Sizeof.cl_float * edges_size;
 
         cl_mem src_mem_bodies = cl_new_buffer(FLAGS_WRITE_CPU_COPY, body_buf_size, ptr_bodies);
         cl_mem src_mem_points = cl_new_buffer(FLAGS_WRITE_CPU_COPY, point_buf_size, ptr_points);
-        cl_mem src_mem_edges  = cl_new_buffer(FLAGS_WRITE_CPU_COPY, edges_buf_size, ptr_edges);
 
         cl_mem src_mem_bounds = cl_new_buffer(FLAGS_WRITE_GPU, bounds_buf_size);
         cl_zero_buffer(src_mem_bounds, bounds_buf_size);
 
-        physicsBuffer.bounds = new MemoryBuffer(src_mem_bounds);
-        physicsBuffer.bodies = new MemoryBuffer(src_mem_bodies);
-        physicsBuffer.points = new MemoryBuffer(src_mem_points);
-        physicsBuffer.edges  = new MemoryBuffer(src_mem_edges);
+        physicsBuffer.bounds = new MemoryBuffer(aabb_mem);
+        physicsBuffer.bodies = new MemoryBuffer(body_mem);
+        physicsBuffer.points = new MemoryBuffer(point_mem);
+        physicsBuffer.edges  = new MemoryBuffer(edge_mem);
     }
+
+
+
+
+
+
+
+    public static void create_point(int point_index, float pos_x, float pos_y, float prv_x, float prv_y)
+    {
+        var pnt_index = Pointer.to(arg_int(point_index));
+        var pnt_point = Pointer.to(arg_float4(pos_x, pos_y, prv_x, prv_y));
+
+        clSetKernelArg(k_create_point, 0, Sizeof.cl_mem, Pointer.to(point_mem));
+        clSetKernelArg(k_create_point, 1, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_point, 2, Sizeof.cl_float4, pnt_point);
+
+        k_call(k_create_point, global_single_size);
+    }
+
+    public static void create_edge(int edge_index, float p1, float p2, float l)
+    {
+        var pnt_index = Pointer.to(arg_int(edge_index));
+        var pnt_edge = Pointer.to(arg_float4(p1, p2, l, 0f));
+
+        clSetKernelArg(k_create_edge, 0, Sizeof.cl_mem, Pointer.to(edge_mem));
+        clSetKernelArg(k_create_edge, 1, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_edge, 2, Sizeof.cl_float4, pnt_edge);
+
+        k_call(k_create_edge, global_single_size);
+    }
+
+    public static void create_body(int body_index, float[] body)
+    {
+        var pnt_index = Pointer.to(arg_int(body_index));
+        var pnt_body = Pointer.to(body);
+
+        clSetKernelArg(k_create_body, 0, Sizeof.cl_mem, Pointer.to(body_mem));
+        clSetKernelArg(k_create_body, 1, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_body, 2, Sizeof.cl_float16, pnt_body);
+
+        k_call(k_create_body, global_single_size);
+    }
+
 
     public static void update_accel(int body_index, float acc_x, float acc_y)
     {
@@ -845,7 +895,9 @@ public class OpenCL
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.edges.pointer());
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_int, Pointer.to(new int[]{n}));
 
+            //gl_acquire(vertex_mem);
             k_call(k_resolve_constraints, global_work_size);
+            //gl_release(vertex_mem);
         }
     }
 
