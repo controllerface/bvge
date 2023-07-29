@@ -3,6 +3,7 @@ Resolves edge constraints used for Verlet integration.
  */
 __kernel void resolve_constraints(__global float16 *bodies,
                                   __global float16 *bounds,
+                                  __global int2 *bounds_bank_data,
                                   __global float4 *points,
                                   __global float4 *edges, 
                                   int process_all)
@@ -13,7 +14,8 @@ __kernel void resolve_constraints(__global float16 *bodies,
     // the bounding box is used to check if the edges should be processed.
     float16 body = bodies[gid];
     float16 bound = bounds[gid];
-
+    int2 bounds_bank = bounds_bank_data[gid];
+    
     // extract the bank size from the boundary. Bodies with empty banks are out of bounds
     int bank_size = (int)bound.s5;
 

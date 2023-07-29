@@ -2,6 +2,7 @@
 // todo: convert to int 2, key bank and int 4, aabb index
 
 __kernel void generate_keys(__global float16 *bounds,
+                            __global int2 *bounds_bank_data,
                             __global int *key_bank,
                             volatile __global int *key_counts,
                             int x_subdivisions,
@@ -10,6 +11,7 @@ __kernel void generate_keys(__global float16 *bounds,
 {
     int gid = get_global_id(0);
     float16 bound = bounds[gid];
+    int2 bounds_bank = bounds_bank_data[gid];
 
     bool inBounds = bound.s5 != 0;
     if (!inBounds)

@@ -670,7 +670,8 @@ public class OpenCL
         clSetKernelArg(k_integrate, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.acceleration.memory()));
         clSetKernelArg(k_integrate, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
         clSetKernelArg(k_integrate, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
-        clSetKernelArg(k_integrate, 4, Sizeof.cl_mem, Pointer.to(argMem));
+        clSetKernelArg(k_integrate, 4, Sizeof.cl_mem, Pointer.to(physicsBuffer.bank.memory()));
+        clSetKernelArg(k_integrate, 5, Sizeof.cl_mem, Pointer.to(argMem));
 
         k_call(k_integrate, global_work_size);
 
@@ -680,7 +681,7 @@ public class OpenCL
     public static void calculate_bank_offsets(SpatialPartition spatialPartition)
     {
         int n = Main.Memory.bodyCount();
-        int bank_size = scan_key_bounds(physicsBuffer.bounds.memory(), n);
+        int bank_size = scan_key_bounds(physicsBuffer.bounds.memory(), physicsBuffer.bank.memory(), n);
         spatialPartition.resizeBank(bank_size);
     }
 
@@ -698,7 +699,6 @@ public class OpenCL
         cl_mem counts_data = cl_new_buffer(FLAGS_WRITE_GPU, counts_buf_size);
         cl_zero_buffer(counts_data, counts_buf_size);
 
-        Pointer src_data = Pointer.to(physicsBuffer.bounds.memory());
         Pointer src_bank = Pointer.to(bank_data);
         Pointer src_counts = Pointer.to(counts_data);
         Pointer src_kb_len = Pointer.to(arg_int(spatialPartition.getKey_bank_size()));
@@ -711,12 +711,13 @@ public class OpenCL
         physicsBuffer.key_bank = new MemoryBuffer(bank_data);
 
         // pass in arguments
-        clSetKernelArg(k_generate_keys, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_generate_keys, 1, Sizeof.cl_mem, src_bank);
-        clSetKernelArg(k_generate_keys, 2, Sizeof.cl_mem, src_counts);
-        clSetKernelArg(k_generate_keys, 3, Sizeof.cl_int, src_x_subs);
-        clSetKernelArg(k_generate_keys, 4, Sizeof.cl_int, src_kb_len);
-        clSetKernelArg(k_generate_keys, 5, Sizeof.cl_int, src_kc_len);
+        clSetKernelArg(k_generate_keys, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+        clSetKernelArg(k_generate_keys, 1, Sizeof.cl_mem, physicsBuffer.bank.pointer());
+        clSetKernelArg(k_generate_keys, 2, Sizeof.cl_mem, src_bank);
+        clSetKernelArg(k_generate_keys, 3, Sizeof.cl_mem, src_counts);
+        clSetKernelArg(k_generate_keys, 4, Sizeof.cl_int, src_x_subs);
+        clSetKernelArg(k_generate_keys, 5, Sizeof.cl_int, src_kb_len);
+        clSetKernelArg(k_generate_keys, 6, Sizeof.cl_int, src_kc_len);
 
         k_call(k_generate_keys, arg_long(n));
     }
@@ -730,7 +731,7 @@ public class OpenCL
         scan_int_out(physicsBuffer.key_counts.memory(), o_data, n);
     }
 
-    public static void generate_key_map(SpatialPartition spatialPartition)
+    public static void build_key_map(SpatialPartition spatialPartition)
     {
         int n = Main.Memory.bodyCount();
         long map_buf_size = (long)Sizeof.cl_int * spatialPartition.getKey_map_size();
@@ -742,21 +743,20 @@ public class OpenCL
         // the counts buffer needs to start off filled with all zeroes
         cl_zero_buffer(counts_data, counts_buf_size);
 
-        Pointer src_data = Pointer.to(physicsBuffer.bounds.memory());
         Pointer src_map = Pointer.to(map_data);
-        Pointer src_offset = Pointer.to(physicsBuffer.key_offsets.memory());
         Pointer src_counts = Pointer.to(counts_data);
-        Pointer src_x_subs =  Pointer.to(new int[]{spatialPartition.getX_subdivisions()});
-        Pointer src_c_len =  Pointer.to(new int[]{spatialPartition.getDirectoryLength()});
+        Pointer src_x_subs = Pointer.to(arg_int(spatialPartition.getX_subdivisions()));
+        Pointer src_c_len = Pointer.to(arg_int(spatialPartition.getDirectoryLength()));
 
         physicsBuffer.key_map = new MemoryBuffer(map_data);
 
-        clSetKernelArg(k_build_key_map, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_build_key_map, 1, Sizeof.cl_mem, src_map);
-        clSetKernelArg(k_build_key_map, 2, Sizeof.cl_mem, src_offset);
-        clSetKernelArg(k_build_key_map, 3, Sizeof.cl_mem, src_counts);
-        clSetKernelArg(k_build_key_map, 4, Sizeof.cl_int, src_x_subs );
-        clSetKernelArg(k_build_key_map, 5, Sizeof.cl_int, src_c_len);
+        clSetKernelArg(k_build_key_map, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+        clSetKernelArg(k_build_key_map, 1, Sizeof.cl_mem, physicsBuffer.bank.pointer());
+        clSetKernelArg(k_build_key_map, 2, Sizeof.cl_mem, src_map);
+        clSetKernelArg(k_build_key_map, 3, Sizeof.cl_mem, physicsBuffer.key_offsets.pointer());
+        clSetKernelArg(k_build_key_map, 4, Sizeof.cl_mem, src_counts);
+        clSetKernelArg(k_build_key_map, 5, Sizeof.cl_int, src_x_subs );
+        clSetKernelArg(k_build_key_map, 6, Sizeof.cl_int, src_c_len);
 
         k_call(k_build_key_map, arg_long(n));
 
@@ -783,8 +783,9 @@ public class OpenCL
         Pointer src_size = Pointer.to(size_data);
 
         clSetKernelArg(k_locate_in_bounds, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
-        clSetKernelArg(k_locate_in_bounds, 1, Sizeof.cl_mem, physicsBuffer.in_bounds.pointer());
-        clSetKernelArg(k_locate_in_bounds, 2, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_locate_in_bounds, 1, Sizeof.cl_mem, physicsBuffer.bank.pointer());
+        clSetKernelArg(k_locate_in_bounds, 2, Sizeof.cl_mem, physicsBuffer.in_bounds.pointer());
+        clSetKernelArg(k_locate_in_bounds, 3, Sizeof.cl_mem, src_size);
 
         k_call(k_locate_in_bounds, arg_long(n));
 
@@ -802,12 +803,13 @@ public class OpenCL
         physicsBuffer.candidate_counts = new MemoryBuffer(cand_data);
 
         clSetKernelArg(k_count_candidates, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
-        clSetKernelArg(k_count_candidates, 1, Sizeof.cl_mem, physicsBuffer.in_bounds.pointer());
-        clSetKernelArg(k_count_candidates, 2, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
-        clSetKernelArg(k_count_candidates, 3, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
-        clSetKernelArg(k_count_candidates, 4, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
-        clSetKernelArg(k_count_candidates, 5, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
-        clSetKernelArg(k_count_candidates, 6, Sizeof.cl_int, physicsBuffer.key_count_length);
+        clSetKernelArg(k_count_candidates, 1, Sizeof.cl_mem, physicsBuffer.bank.pointer());
+        clSetKernelArg(k_count_candidates, 2, Sizeof.cl_mem, physicsBuffer.in_bounds.pointer());
+        clSetKernelArg(k_count_candidates, 3, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
+        clSetKernelArg(k_count_candidates, 4, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
+        clSetKernelArg(k_count_candidates, 5, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
+        clSetKernelArg(k_count_candidates, 6, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
+        clSetKernelArg(k_count_candidates, 7, Sizeof.cl_int, physicsBuffer.key_count_length);
 
         k_call(k_count_candidates, arg_long(physicsBuffer.get_candidate_buffer_count()));
     }
@@ -841,17 +843,18 @@ public class OpenCL
         Pointer src_count = Pointer.to(count_data);
 
         clSetKernelArg(k_aabb_collide, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
-        clSetKernelArg(k_aabb_collide, 1, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
-        clSetKernelArg(k_aabb_collide, 2, Sizeof.cl_mem, physicsBuffer.candidate_offsets.pointer());
-        clSetKernelArg(k_aabb_collide, 3, Sizeof.cl_mem, physicsBuffer.key_map.pointer());
-        clSetKernelArg(k_aabb_collide, 4, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
-        clSetKernelArg(k_aabb_collide, 5, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
-        clSetKernelArg(k_aabb_collide, 6, Sizeof.cl_mem, physicsBuffer.key_offsets.pointer());
-        clSetKernelArg(k_aabb_collide, 7, Sizeof.cl_mem, physicsBuffer.matches.pointer());
-        clSetKernelArg(k_aabb_collide, 8, Sizeof.cl_mem, physicsBuffer.matches_used.pointer());
-        clSetKernelArg(k_aabb_collide, 9, Sizeof.cl_mem, src_count);
-        clSetKernelArg(k_aabb_collide, 10, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
-        clSetKernelArg(k_aabb_collide, 11, Sizeof.cl_int, physicsBuffer.key_count_length);
+        clSetKernelArg(k_aabb_collide, 1, Sizeof.cl_mem, physicsBuffer.bank.pointer());
+        clSetKernelArg(k_aabb_collide, 2, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
+        clSetKernelArg(k_aabb_collide, 3, Sizeof.cl_mem, physicsBuffer.candidate_offsets.pointer());
+        clSetKernelArg(k_aabb_collide, 4, Sizeof.cl_mem, physicsBuffer.key_map.pointer());
+        clSetKernelArg(k_aabb_collide, 5, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
+        clSetKernelArg(k_aabb_collide, 6, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
+        clSetKernelArg(k_aabb_collide, 7, Sizeof.cl_mem, physicsBuffer.key_offsets.pointer());
+        clSetKernelArg(k_aabb_collide, 8, Sizeof.cl_mem, physicsBuffer.matches.pointer());
+        clSetKernelArg(k_aabb_collide, 9, Sizeof.cl_mem, physicsBuffer.matches_used.pointer());
+        clSetKernelArg(k_aabb_collide, 10, Sizeof.cl_mem, src_count);
+        clSetKernelArg(k_aabb_collide, 11, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
+        clSetKernelArg(k_aabb_collide, 12, Sizeof.cl_int, physicsBuffer.key_count_length);
 
         k_call(k_aabb_collide, arg_long(physicsBuffer.get_candidate_buffer_count()));
 
@@ -922,6 +925,7 @@ public class OpenCL
             int a = 0;
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.bank.pointer());
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.points.pointer());
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.edges.pointer());
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_int, Pointer.to(new int[]{n}));
@@ -962,16 +966,16 @@ public class OpenCL
         }
     }
 
-    private static int scan_key_bounds(cl_mem d_data, int n)
+    private static int scan_key_bounds(cl_mem d_data, cl_mem d_data2, int n)
     {
         int k = work_group_count(n);
         if (k == 1)
         {
-            return scan_single_block_key(d_data, n);
+            return scan_single_block_key(d_data, d_data2, n);
         }
         else
         {
-            return scan_multi_block_key(d_data, n, k);
+            return scan_multi_block_key(d_data, d_data2, n, k);
         }
     }
 
@@ -1148,10 +1152,11 @@ public class OpenCL
         return sz[0];
     }
 
-    private static int scan_single_block_key(cl_mem d_data, int n)
+    private static int scan_single_block_key(cl_mem d_data, cl_mem d_data2, int n)
     {
         long localBufferSize = Sizeof.cl_int * m;
         Pointer src_data = Pointer.to(d_data);
+        Pointer src_data2 = Pointer.to(d_data2);
 
         int[] sz = new int[]{ 0 };
         Pointer dst_size = Pointer.to(sz);
@@ -1160,9 +1165,10 @@ public class OpenCL
         Pointer src_n = Pointer.to(new int[]{n});
 
         clSetKernelArg(k_scan_bounds_single_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_bounds_single_block, 1, Sizeof.cl_mem, src_size);
-        clSetKernelArg(k_scan_bounds_single_block, 2, localBufferSize,null);
-        clSetKernelArg(k_scan_bounds_single_block, 3, Sizeof.cl_int, src_n);
+        clSetKernelArg(k_scan_bounds_single_block, 1, Sizeof.cl_mem, src_data2);
+        clSetKernelArg(k_scan_bounds_single_block, 2, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_scan_bounds_single_block, 3, localBufferSize,null);
+        clSetKernelArg(k_scan_bounds_single_block, 4, Sizeof.cl_int, src_n);
 
         k_call(k_scan_bounds_single_block, local_work_default, local_work_default);
 
@@ -1173,7 +1179,7 @@ public class OpenCL
         return sz[0];
     }
 
-    private static int scan_multi_block_key(cl_mem d_data, int n, int k)
+    private static int scan_multi_block_key(cl_mem d_data, cl_mem d_data2, int n, int k)
     {
         long localBufferSize = Sizeof.cl_int * m;
         long gx = k * m;
@@ -1182,13 +1188,15 @@ public class OpenCL
         long part_buf_size = ((long)Sizeof.cl_int * ((long)part_size));
         cl_mem p_data = cl_new_buffer(FLAGS_WRITE_GPU, part_buf_size);
         Pointer src_data = Pointer.to(d_data);
+        Pointer src_data2 = Pointer.to(d_data2);
         Pointer src_part = Pointer.to(p_data);
         Pointer src_n = Pointer.to(new int[]{n});
 
         clSetKernelArg(k_scan_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_scan_bounds_multi_block, 1, localBufferSize,null);
-        clSetKernelArg(k_scan_bounds_multi_block, 2, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_scan_bounds_multi_block, 3, Sizeof.cl_int, src_n);
+        clSetKernelArg(k_scan_bounds_multi_block, 1, Sizeof.cl_mem, src_data2);
+        clSetKernelArg(k_scan_bounds_multi_block, 2, localBufferSize,null);
+        clSetKernelArg(k_scan_bounds_multi_block, 3, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_scan_bounds_multi_block, 4, Sizeof.cl_int, src_n);
 
         k_call(k_scan_bounds_multi_block, global_work_size, local_work_default);
 
@@ -1200,10 +1208,11 @@ public class OpenCL
         Pointer src_size = Pointer.to(size_data);
 
         clSetKernelArg(k_complete_bounds_multi_block, 0, Sizeof.cl_mem, src_data);
-        clSetKernelArg(k_complete_bounds_multi_block, 1, Sizeof.cl_mem, src_size);
-        clSetKernelArg(k_complete_bounds_multi_block, 2, localBufferSize,null);
-        clSetKernelArg(k_complete_bounds_multi_block, 3, Sizeof.cl_mem, src_part);
-        clSetKernelArg(k_complete_bounds_multi_block, 4, Sizeof.cl_int, src_n);
+        clSetKernelArg(k_complete_bounds_multi_block, 1, Sizeof.cl_mem, src_data2);
+        clSetKernelArg(k_complete_bounds_multi_block, 2, Sizeof.cl_mem, src_size);
+        clSetKernelArg(k_complete_bounds_multi_block, 3, localBufferSize,null);
+        clSetKernelArg(k_complete_bounds_multi_block, 4, Sizeof.cl_mem, src_part);
+        clSetKernelArg(k_complete_bounds_multi_block, 5, Sizeof.cl_int, src_n);
 
         k_call(k_complete_bounds_multi_block, global_work_size, local_work_default);
 

@@ -2,11 +2,13 @@
 // todo: convert to int 2, key bank
 
 __kernel void locate_in_bounds(__global float16 *bounds,
+                               __global int2 *bounds_bank_data,
                                __global int *in_bounds,
                                __global int *counter)
 {
     int gid = get_global_id(0);
     float16 bound = bounds[gid];
+    int2 bounds_bank = bounds_bank_data[gid];
     bool is_in_bounds = bound.s5 > 0;
     if (is_in_bounds)
     {
@@ -18,6 +20,7 @@ __kernel void locate_in_bounds(__global float16 *bounds,
 // todo: convert to int 2, key bank
 
 __kernel void count_candidates(__global float16 *bounds,
+                               __global int2 *bounds_bank_data,
                                __global int *in_bounds,
                                __global int *key_bank,
                                __global int *key_counts,
@@ -28,7 +31,7 @@ __kernel void count_candidates(__global float16 *bounds,
     int gid = get_global_id(0);
     int index = in_bounds[gid];
     float16 bound = bounds[index];
-
+    int2 bounds_bank = bounds_bank_data[index];
     int spatial_index = (int)bound.s4 * 2;
     int spatial_length = (int)bound.s5;
     int end = spatial_index + spatial_length;

@@ -1,4 +1,5 @@
 __kernel void scan_bounds_single_block(__global float16 *bounds,
+                                       __global int2 *bounds_bank_data,
                                        __global int *sz,
                                        __local int *buffer,
                                        int n)
@@ -32,6 +33,7 @@ __kernel void scan_bounds_single_block(__global float16 *bounds,
     if (a_index < n) 
     {
         bounds[a_index].s4 = (float)buffer[a_index] / 2;
+        bounds_bank_data[a_index].x = (float)buffer[a_index] / 2;
         if (a_index == n - 1)
         {
             sz[0] = (bounds[a_index].s4 + bounds[a_index].s5) * 2;
@@ -41,6 +43,7 @@ __kernel void scan_bounds_single_block(__global float16 *bounds,
     if (b_index < n) 
     {
         bounds[b_index].s4 = (float)buffer[b_index] / 2;
+        bounds_bank_data[b_index].x = (float)buffer[b_index] / 2;
         if (b_index == n - 1)
         {
             sz[0] = (bounds[b_index].s4 + bounds[b_index].s5) * 2;
@@ -49,9 +52,10 @@ __kernel void scan_bounds_single_block(__global float16 *bounds,
 }
 
 __kernel void scan_bounds_multi_block(__global float16 *bounds, 
-                                  __local int *buffer, 
-                                  __global int *part, 
-                                  int n)
+                                      __global int2 *bounds_bank_data,
+                                      __local int *buffer, 
+                                      __global int *part, 
+                                      int n)
 {
     // workgroup size
     int wx = get_local_size(0);
@@ -94,14 +98,17 @@ __kernel void scan_bounds_multi_block(__global float16 *bounds,
     if (a_index < n) 
     {
         bounds[a_index].s4 = (float)buffer[local_a_index];
+        bounds_bank_data[a_index].x = (float)buffer[local_a_index];
     }
     if (b_index < n) 
     {
         bounds[b_index].s4 = (float)buffer[local_b_index];
+        bounds_bank_data[b_index].x = (float)buffer[local_b_index];
     }
 }
 
 __kernel void complete_bounds_multi_block(__global float16 *bounds, 
+                                          __global int2 *bounds_bank_data,
                                           __global int *sz,
                                           __local int *buffer, 
                                           __global int *part, 
@@ -128,6 +135,7 @@ __kernel void complete_bounds_multi_block(__global float16 *bounds,
     if (a_index < n) 
     {
         bounds[a_index].s4 = (float)buffer[local_a_index] / 2;
+        bounds_bank_data[a_index].x = (float)buffer[local_a_index] / 2;
         if (a_index == n - 1)
         {
             sz[0] = (bounds[a_index].s4 + bounds[a_index].s5) * 2;
@@ -136,6 +144,7 @@ __kernel void complete_bounds_multi_block(__global float16 *bounds,
     if (b_index < n) 
     {
         bounds[b_index].s4 = (float)buffer[local_b_index] / 2;
+        bounds_bank_data[b_index].x = (float)buffer[local_b_index] / 2;
         if (b_index == n - 1)
         {
             sz[0] = (bounds[b_index].s4 + bounds[b_index].s5) * 2;

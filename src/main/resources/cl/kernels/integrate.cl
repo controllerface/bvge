@@ -21,6 +21,7 @@ __kernel void integrate(
     __global float2 *body_accel,
     __global float4 *points,
     __global float16 *bounds,
+    __global int2 *bounds_bank_data,
     __global float *args)
 {
     int gid = get_global_id(0);
@@ -43,6 +44,7 @@ __kernel void integrate(
     float16 body = bodies[gid];
     float2 acceleration = body_accel[gid];
     float16 bounding_box = bounds[gid];
+    int2 bounds_bank = bounds_bank_data[gid];
 
     // get start/end vertex indices
     int start = (int)body.s7;
@@ -59,6 +61,9 @@ __kernel void integrate(
         acceleration.x = 0;
         acceleration.y = 0;
         body_accel[gid] = acceleration;
+
+        bounds_bank.y = 0;
+        bounds_bank_data[gid] = bounds_bank;
 
         bounding_box.s5 = 0;
         bounds[gid] = bounding_box;
@@ -223,6 +228,7 @@ __kernel void integrate(
     if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
         bounding_box.s5 = 0;
+        bounds_bank.y = 0;
     }
     else
     {
@@ -232,10 +238,12 @@ __kernel void integrate(
         int count = x_count * y_count;
         int size = count * 2;
         bounding_box.s5 = (float) size;
+        bounds_bank.y = size;
     }
 
     // store updated body and bounds data in result buffers
     bounds[gid] = bounding_box;
     bodies[gid] = body;
     body_accel[gid] = acceleration;
+    bounds_bank_data[gid] = bounds_bank;
 }

@@ -1,6 +1,7 @@
 // todo: convert to int 2, key bank and float 4, extents
 //  
 __kernel void aabb_collide(__global float16 *bounds,
+                           __global int2 *bounds_bank_data,
                            __global int2 *candidates,
                            __global int *match_offsets,
                            __global int *key_map,
@@ -19,9 +20,14 @@ __kernel void aabb_collide(__global float16 *bounds,
     int match_offset = match_offsets[gid];
 
     float16 bound = bounds[index];
+    int2 bounds_bank = bounds_bank_data[index];
 
-    int spatial_index = (int)bound.s4 * 2;
-    int spatial_length = (int)bound.s5;
+    // int spatial_index = (int)bound.s4 * 2;
+    // int spatial_length = (int)bound.s5;
+
+    int spatial_index = bounds_bank.x * 2;
+    int spatial_length = bounds_bank.y;
+
     int end = spatial_index + spatial_length;
 
     int current_offset = match_offset;
