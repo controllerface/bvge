@@ -1,3 +1,6 @@
+
+// todo: convert to int 2, key bank
+
 __kernel void locate_in_bounds(__global float16 *bounds,
                                __global int *in_bounds,
                                __global int *counter)
@@ -11,6 +14,8 @@ __kernel void locate_in_bounds(__global float16 *bounds,
         in_bounds[i] = gid;
     }    
 }
+
+// todo: convert to int 2, key bank
 
 __kernel void count_candidates(__global float16 *bounds,
                                __global int *in_bounds,

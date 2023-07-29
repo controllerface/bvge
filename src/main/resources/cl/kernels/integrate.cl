@@ -6,6 +6,16 @@ in a process that updates all the tracked vertices each frame.
 Some meta-data about the bodies that are updated is stored within
 them before this kernel completes. 
  */
+
+// todo: convert to: 
+//  - float 4, transform
+//  - float 2, accel
+//  - int 4, element table
+//  - int 2, key bank
+//  - float 4, extents
+//  - int 4, aabb index
+
+
 __kernel void integrate(
     __global float16 *bodies,
     __global float4 *points,

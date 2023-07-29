@@ -324,7 +324,7 @@ public class OpenCL
         return (int) Math.ceil((float)n / (float)m);
     }
 
-    public static void init(int body_buffer_size, int edge_buffer_size, int point_buffer_size)
+    public static void init(int max_bodies, int body_buffer_size, int edge_buffer_size, int point_buffer_size)
     {
         device_ids = device_init();
 
@@ -426,12 +426,37 @@ public class OpenCL
 
         // init physics buffers here
 
+        int transform_mem_size        = max_bodies * Sizeof.cl_float4;
+        int accleration_mem_size      = max_bodies * Sizeof.cl_float2;
+        int element_table_mem_size    = max_bodies * Sizeof.cl_int4;
+        int flags_mem_size            = max_bodies * Sizeof.cl_int;
+        int bounding_box_mem_size     = max_bodies * Sizeof.cl_float4;
+        int spatial_index_mem_size    = max_bodies * Sizeof.cl_int4;
+        int spatial_key_bank_mem_size = max_bodies * Sizeof.cl_int2;
+
+        mem_body_transforms     = cl_new_buffer(FLAGS_WRITE_GPU, transform_mem_size);
+        mem_body_acceleration   = cl_new_buffer(FLAGS_WRITE_GPU, accleration_mem_size);
+        mem_body_element_tables = cl_new_buffer(FLAGS_WRITE_GPU, element_table_mem_size);
+        mem_body_flags          = cl_new_buffer(FLAGS_WRITE_GPU, flags_mem_size);
+        mem_aabb_extents        = cl_new_buffer(FLAGS_WRITE_GPU, bounding_box_mem_size);
+        mem_aabb_index          = cl_new_buffer(FLAGS_WRITE_GPU, spatial_index_mem_size);
+        mem_aabb_key_bank       = cl_new_buffer(FLAGS_WRITE_GPU, spatial_key_bank_mem_size);
+
+        cl_zero_buffer(mem_body_transforms, transform_mem_size);
+        cl_zero_buffer(mem_body_acceleration, accleration_mem_size);
+        cl_zero_buffer(mem_body_element_tables, element_table_mem_size);
+        cl_zero_buffer(mem_body_flags, flags_mem_size);
+        cl_zero_buffer(mem_aabb_extents, bounding_box_mem_size);
+        cl_zero_buffer(mem_aabb_index, spatial_index_mem_size);
+        cl_zero_buffer(mem_aabb_key_bank, spatial_key_bank_mem_size);
+
+
+
+
+        // old world
+
         point_mem = cl_new_buffer(FLAGS_WRITE_GPU, point_buffer_size);
-
         body_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
-
-
-
         aabb_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
         edge_mem  = cl_new_buffer(FLAGS_WRITE_GPU, edge_buffer_size);
 
@@ -460,15 +485,14 @@ public class OpenCL
     private static cl_mem edge_mem;
 
     private static cl_mem body_mem;
-    private static cl_mem mem_body_transforms;     // float 4
-    private static cl_mem mem_body_acceleration;   // float 2
-    private static cl_mem mem_body_element_tables; // int 4
-    private static cl_mem mem_body_flags;          // int
-
     private static cl_mem aabb_mem;
-    private static cl_mem mem_aabb_extents;  // float 4
-    private static cl_mem mem_aabb_index;    // int 4
-    private static cl_mem mem_aabb_key_bank; // int 2
+    private static cl_mem mem_body_transforms;
+    private static cl_mem mem_body_acceleration;
+    private static cl_mem mem_body_element_tables;
+    private static cl_mem mem_body_flags;
+    private static cl_mem mem_aabb_extents;
+    private static cl_mem mem_aabb_index;
+    private static cl_mem mem_aabb_key_bank;
 
     public static void bindvertexVBO(int vboID)
     {
@@ -513,6 +537,14 @@ public class OpenCL
         physicsBuffer.bodies = new MemoryBuffer(body_mem);
         physicsBuffer.points = new MemoryBuffer(point_mem);
         physicsBuffer.edges  = new MemoryBuffer(edge_mem);
+
+        physicsBuffer.transforms = new MemoryBuffer(mem_body_transforms);
+        physicsBuffer.acceleration = new MemoryBuffer(mem_body_acceleration);
+        physicsBuffer.elements = new MemoryBuffer(mem_body_element_tables);
+        physicsBuffer.flags = new MemoryBuffer(mem_body_flags);
+        physicsBuffer.extents = new MemoryBuffer(mem_aabb_extents);
+        physicsBuffer.index = new MemoryBuffer(mem_aabb_index);
+        physicsBuffer.bank = new MemoryBuffer(mem_aabb_key_bank);
     }
 
 

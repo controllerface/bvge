@@ -22,4 +22,28 @@ import com.controllerface.bvge.ecs.components.GameComponent;
  * 15:
  *  */
 
+
+
+/* Bounds object
+
+ * Memory layout: float16
+ * 0: x position
+ * 1: y position
+ * 2: width
+ * 3: height
+ * 4: key bank offset
+ * 5: spatial index key bank size
+ * 6: spatial index min x offset (int cast)
+ * 7: spatial index max x offset (int cast)
+ * 8: spatial index min y offset (int cast)
+ * 9: spatial index max y offset (int cast)
+ * 10:
+ * 11:
+ * 12:
+ * 13:
+ * 14:
+ * 15:
+ *  */
+
+
 public record BodyIndex(int index) implements GameComponent { }

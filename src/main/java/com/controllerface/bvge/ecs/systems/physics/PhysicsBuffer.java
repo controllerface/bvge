@@ -10,6 +10,15 @@ public class PhysicsBuffer
     public MemoryBuffer points;
     public MemoryBuffer edges;
 
+    public MemoryBuffer transforms;
+    public MemoryBuffer acceleration;
+    public MemoryBuffer elements;
+    public MemoryBuffer flags;
+    public MemoryBuffer extents;
+    public MemoryBuffer index;
+    public MemoryBuffer bank;
+
+
     public MemoryBuffer key_map;
     public MemoryBuffer key_bank;
     public MemoryBuffer key_counts;
@@ -95,22 +104,24 @@ public class PhysicsBuffer
 
     public void shutdown()
     {
-        if (bounds != null)
-        {
-            bounds.release();
-        }
-        if (bodies != null)
-        {
-            bodies.release();
-        }
-        if (points != null)
-        {
-            points.release();
-        }
-        if (edges != null)
-        {
-            edges.release();
-        }
+        if (bounds != null) bounds.release();
+        if (bodies != null) bodies.release();
+        if (points != null) points.release();
+        if (edges != null) edges.release();
+
+
+
+
+        if (transforms != null) transforms.release();
+        if (acceleration != null) acceleration.release();
+        if (elements != null) elements.release();
+        if (flags != null) flags.release();
+        if (extents != null) extents.release();
+        if (index != null) index.release();
+        if (bank != null) bank.release();
+
+
+
     }
 
     public int get_candidate_buffer_count()

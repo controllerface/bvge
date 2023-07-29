@@ -3,6 +3,7 @@ package com.controllerface.bvge;
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.gl.Models;
 import com.controllerface.bvge.window.Window;
+import org.jocl.Sizeof;
 
 
 public class Main
@@ -27,9 +28,21 @@ public class Main
         private static final int BODY_BUFFER_SIZE = Width.BODY * MAX_BODIES;
         private static final int POINT_BUFFER_SIZE = Width.POINT * MAX_POINTS;
         private static final int EDGE_BUFFER_SIZE = Width.EDGE * MAX_POINTS;
+
         private static final int BODY_BUFFER_LENGTH = BODY_BUFFER_SIZE * Float.BYTES;
         private static final int POINT_BUFFER_LENGTH = EDGE_BUFFER_SIZE * Float.BYTES;
         private static final int EDGE_BUFFER_LENGTH = POINT_BUFFER_SIZE * Float.BYTES;
+
+
+        private static final int X_TRANFORM_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_float4;
+        private static final int X_ACCLERATION_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_float2;
+        private static final int X_ELEMENT_TABLE_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_int4;
+        private static final int X_FLAGS_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_int;
+        private static final int X_BOUNDING_BOX_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_float4;
+        private static final int X_SPATIAL_INDEX_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_int4;
+        private static final int X_SPATIAL_KEY_BANK_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_int2;
+
+
         static
         {
             int body_bytes = BODY_BUFFER_SIZE * Float.BYTES;
@@ -92,7 +105,8 @@ public class Main
         Models.init();
         Window window = Window.get();
         window.initOpenGL();
-        OpenCL.init(Memory.BODY_BUFFER_LENGTH,
+        OpenCL.init(Memory.MAX_BODIES,
+            Memory.BODY_BUFFER_LENGTH,
             Memory.EDGE_BUFFER_LENGTH,
             Memory.POINT_BUFFER_LENGTH);
         window.initGameMode();
