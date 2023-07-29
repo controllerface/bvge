@@ -122,7 +122,7 @@ public class TestGame extends GameMode
         //  render is minimized.
         // blank screen before rendering
         ecs.registerSystem(screenBlankSystem);
-        ecs.registerSystem(new LineRendererEX(ecs));
+        ecs.registerSystem(new EdgeRenderer(ecs));
 
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));

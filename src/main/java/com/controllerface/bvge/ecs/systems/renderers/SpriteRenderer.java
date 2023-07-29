@@ -5,7 +5,7 @@ import com.controllerface.bvge.ecs.components.SpriteComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
-import com.controllerface.bvge.gl.batches.SpriteRenderBatch;
+import com.controllerface.bvge.ecs.systems.renderers.batches.SpriteRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
 
 import java.util.ArrayList;

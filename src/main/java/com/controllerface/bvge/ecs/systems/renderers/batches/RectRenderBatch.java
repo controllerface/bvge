@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gl.batches;
+package com.controllerface.bvge.ecs.systems.renderers.batches;
 
 import com.controllerface.bvge.ecs.Line2D;
 import com.controllerface.bvge.gl.Shader;

@@ -4,19 +4,24 @@ import com.controllerface.bvge.Main;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.Shader;
-import com.controllerface.bvge.gl.batches.LineRenderBatchEX;
+import com.controllerface.bvge.ecs.systems.renderers.batches.EdgeRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
 import com.controllerface.bvge.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LineRendererEX extends GameSystem
+/**
+ * Manages rendering of edge constraints. All edges that are defined in the currently
+ * loaded physics state are rendered as lines.
+ */
+public class EdgeRenderer extends GameSystem
 {
-    private Shader shader;
-    private List<LineRenderBatchEX> batches;
+    private final Shader shader;
+    private final List<EdgeRenderBatch> batches;
+    private int last_count = 0;
 
-    public LineRendererEX(ECS ecs)
+    public EdgeRenderer(ECS ecs)
     {
         super(ecs);
         this.batches = new ArrayList<>();
@@ -25,7 +30,7 @@ public class LineRendererEX extends GameSystem
 
     private void render()
     {
-        for (LineRenderBatchEX batch : batches)
+        for (EdgeRenderBatch batch : batches)
         {
             batch.render();
             batch.clear();
@@ -35,6 +40,10 @@ public class LineRendererEX extends GameSystem
     @Override
     public void run(float dt)
     {
+        // todo: right now, this check only adds batches, never reducing them if the count goes
+        //  low enough that some batches would be unneeded. This will leak memory resources
+        //  so should be adjusted when deleting bodies is added.
+
         var edge_count = Main.Memory.edgesCount();
         var needed_batches = edge_count / Constants.Rendering.MAX_BATCH_SIZE;
         var r = edge_count % Constants.Rendering.MAX_BATCH_SIZE;
@@ -44,7 +53,7 @@ public class LineRendererEX extends GameSystem
         }
         while (needed_batches > batches.size())
         {
-            var b = new LineRenderBatchEX(0, shader);
+            var b = new EdgeRenderBatch(shader);
             batches.add(b);
             b.start();
         }

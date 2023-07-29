@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gl.batches;
+package com.controllerface.bvge.ecs.systems.renderers.batches;
 
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.gl.Shader;
@@ -13,9 +13,9 @@ import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 /**
- * Rendering batch specifically for sprites
+ * Rendering batch specifically for edge constraints
  */
-public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
+public class EdgeRenderBatch
 {
     private static final int VERTEX_SIZE = 2; // a vertex is 2 floats (x,y)
     private static final int VERTS_PER_LINE = 2;
@@ -26,17 +26,12 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
     private int numLines;
     private int offset;
 
-    // todo: try and make two vbo's and avoid needed to deal with offsets when defining attribute
-    //  pointers.
     private int vaoID, vboID;
-
-    private int zIndex;
 
     private final Shader currentShader;
 
-    public LineRenderBatchEX(int zIndex, Shader currentShader)
+    public EdgeRenderBatch(Shader currentShader)
     {
-        this.zIndex = zIndex;
         this.numLines = 0;
         this.currentShader = currentShader;
     }
@@ -60,8 +55,8 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
         // into the buffer just yet
         glBufferData(GL_ARRAY_BUFFER, BATCH_BUFFER_SIZE, GL_DYNAMIC_DRAW);
 
-        // bind the buffer to the CL context
-        OpenCL.bindEdgeVBO(vboID);
+        // share the buffer with the CL context
+        OpenCL.shareEdgeVBO(vboID);
 
         // define the buffer attribute pointers
         glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, 0);
@@ -101,16 +96,5 @@ public class LineRenderBatchEX implements Comparable<LineRenderBatchEX>
         glBindVertexArray(0);
 
         currentShader.detach();
-    }
-
-    public int zIndex()
-    {
-        return this.zIndex;
-    }
-
-    @Override
-    public int compareTo(LineRenderBatchEX o)
-    {
-        return Integer.compare(this.zIndex, o.zIndex());
     }
 }

@@ -6,7 +6,6 @@ import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import org.jocl.*;
 
-import java.nio.FloatBuffer;
 import java.util.*;
 
 import static com.controllerface.bvge.cl.OpenCLUtils.*;
@@ -469,7 +468,7 @@ public class OpenCL
     }
 
 
-    public static void bindEdgeVBO(int vboID)
+    public static void shareEdgeVBO(int vboID)
     {
         cl_mem vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
         vbo_edges.put(vboID, vbo_mem);

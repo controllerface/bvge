@@ -9,7 +9,7 @@ uniform mat4 uProjection;
 
 void main()
 {
-    fColor = vec3(0.4, 0.5, 0.9);
+    fColor = vec3(0.2, 0.2, 0.8);
 
     gl_Position = uProjection * uView * vec4(aPos, 0.0, 1.0);
 }

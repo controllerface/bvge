@@ -4,7 +4,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.gl.Shader;
-import com.controllerface.bvge.gl.batches.RectRenderBatch;
+import com.controllerface.bvge.ecs.systems.renderers.batches.RectRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
 import org.graalvm.collections.Pair;
 import org.joml.Vector3f;
