@@ -20,7 +20,7 @@ __kernel void integrate(
     __global float16 *bodies,
     __global float2 *body_accel,
     __global float4 *points,
-    __global float16 *bounds,
+    __global float4 *bounds,
     __global int4 *bounds_index_data,
     __global int2 *bounds_bank_data,
     __global float *args)
@@ -44,7 +44,7 @@ __kernel void integrate(
     // get body from array
     float16 body = bodies[gid];
     float2 acceleration = body_accel[gid];
-    float16 bounding_box = bounds[gid];
+    float4 bounding_box = bounds[gid];
     int4 bounds_index = bounds_index_data[gid];
     int2 bounds_bank = bounds_bank_data[gid];
 
@@ -179,10 +179,10 @@ __kernel void integrate(
     body.s1 = y_sum / point_count;
 
     // calculate bounding box
-    bounding_box.s0 = min_x;
-    bounding_box.s1 = min_y;
-    bounding_box.s2 = fabs(max_x - min_x);
-    bounding_box.s3 = fabs(max_y - min_y);
+    bounding_box.x = min_x;
+    bounding_box.y = min_y;
+    bounding_box.z = fabs(max_x - min_x);
+    bounding_box.w = fabs(max_y - min_y);
 
     // calculate spatial index boundary
     int2 keys[4];

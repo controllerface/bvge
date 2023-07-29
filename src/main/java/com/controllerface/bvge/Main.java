@@ -15,6 +15,8 @@ public class Main
             // float16
             public static final int BODY = 16;
 
+            public static final int BOUNDS = 4;
+
             // float4
             public static final int POINT = 4;
 
@@ -26,10 +28,13 @@ public class Main
         private static final int MAX_POINTS = 1_000_000;
 
         private static final int BODY_BUFFER_SIZE = Width.BODY * MAX_BODIES;
+        private static final int BOUNDS_BUFFER_SIZE = Width.BOUNDS * MAX_BODIES;
+
         private static final int POINT_BUFFER_SIZE = Width.POINT * MAX_POINTS;
         private static final int EDGE_BUFFER_SIZE = Width.EDGE * MAX_POINTS;
 
         private static final int BODY_BUFFER_LENGTH = BODY_BUFFER_SIZE * Float.BYTES;
+        private static final int BOUNDS_BUFFER_LENGTH = BOUNDS_BUFFER_SIZE * Float.BYTES;
         private static final int POINT_BUFFER_LENGTH = EDGE_BUFFER_SIZE * Float.BYTES;
         private static final int EDGE_BUFFER_LENGTH = POINT_BUFFER_SIZE * Float.BYTES;
 
@@ -107,6 +112,7 @@ public class Main
         window.initOpenGL();
         OpenCL.init(Memory.MAX_BODIES,
             Memory.BODY_BUFFER_LENGTH,
+            Memory.BOUNDS_BUFFER_LENGTH,
             Memory.EDGE_BUFFER_LENGTH,
             Memory.POINT_BUFFER_LENGTH);
         window.initGameMode();

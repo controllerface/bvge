@@ -14,7 +14,7 @@ public class PhysicsBuffer
     public MemoryBuffer acceleration;
     public MemoryBuffer elements;
     public MemoryBuffer flags;
-    public MemoryBuffer extents;
+    //public MemoryBuffer extents;
     public MemoryBuffer index;
     public MemoryBuffer bank;
 
@@ -116,7 +116,7 @@ public class PhysicsBuffer
         if (acceleration != null) acceleration.release();
         if (elements != null) elements.release();
         if (flags != null) flags.release();
-        if (extents != null) extents.release();
+        //if (extents != null) extents.release();
         if (index != null) index.release();
         if (bank != null) bank.release();
 

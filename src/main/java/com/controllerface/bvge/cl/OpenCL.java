@@ -324,7 +324,7 @@ public class OpenCL
         return (int) Math.ceil((float)n / (float)m);
     }
 
-    public static void init(int max_bodies, int body_buffer_size, int edge_buffer_size, int point_buffer_size)
+    public static void init(int max_bodies, int body_buffer_size, int bounds_buffer_size, int edge_buffer_size, int point_buffer_size)
     {
         device_ids = device_init();
 
@@ -450,19 +450,17 @@ public class OpenCL
         cl_zero_buffer(mem_aabb_index, spatial_index_mem_size);
         cl_zero_buffer(mem_aabb_key_bank, spatial_key_bank_mem_size);
 
-
-
+        aabb_mem = cl_new_buffer(FLAGS_WRITE_GPU, bounds_buffer_size);
+        cl_zero_buffer(aabb_mem, bounds_buffer_size);
 
         // old world
 
         point_mem = cl_new_buffer(FLAGS_WRITE_GPU, point_buffer_size);
         body_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
-        aabb_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
         edge_mem  = cl_new_buffer(FLAGS_WRITE_GPU, edge_buffer_size);
 
         cl_zero_buffer(point_mem, body_buffer_size);
         cl_zero_buffer(body_mem, body_buffer_size);
-        cl_zero_buffer(aabb_mem, body_buffer_size);
         cl_zero_buffer(edge_mem, edge_buffer_size);
     }
 
@@ -542,7 +540,7 @@ public class OpenCL
         physicsBuffer.acceleration = new MemoryBuffer(mem_body_acceleration);
         physicsBuffer.elements = new MemoryBuffer(mem_body_element_tables);
         physicsBuffer.flags = new MemoryBuffer(mem_body_flags);
-        physicsBuffer.extents = new MemoryBuffer(mem_aabb_extents);
+        //physicsBuffer.extents = new MemoryBuffer(mem_aabb_extents);
         physicsBuffer.index = new MemoryBuffer(mem_aabb_index);
         physicsBuffer.bank = new MemoryBuffer(mem_aabb_key_bank);
     }

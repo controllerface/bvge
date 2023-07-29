@@ -1,6 +1,6 @@
 // todo: convert to int 2, key bank and float 4, extents
 //  
-__kernel void aabb_collide(__global float16 *bounds,
+__kernel void aabb_collide(__global float4 *bounds,
                            __global int2 *bounds_bank_data,
                            __global int2 *candidates,
                            __global int *match_offsets,
@@ -19,7 +19,7 @@ __kernel void aabb_collide(__global float16 *bounds,
     int size = candidates[gid].y;
     int match_offset = match_offsets[gid];
 
-    float16 bound = bounds[index];
+    float4 bound = bounds[index];
     int2 bounds_bank = bounds_bank_data[index];
 
     int spatial_index = bounds_bank.x * 2;
@@ -61,7 +61,7 @@ __kernel void aabb_collide(__global float16 *bounds,
             }
 
             // broad phase collision check
-            float16 candidate = bounds[next];
+            float4 candidate = bounds[next];
             bool near = do_bounds_intersect(bound, candidate);
 
             // bodies are not near each other
