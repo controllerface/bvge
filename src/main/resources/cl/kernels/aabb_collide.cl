@@ -1,5 +1,6 @@
-// todo: convert to int 2, key bank and float 4, extents
-//  
+/**
+Performs axis-aligned bounding box collision detection as part of a broad phase collision step.
+ */
 __kernel void aabb_collide(__global float4 *bounds,
                            __global int2 *bounds_bank_data,
                            __global int2 *candidates,

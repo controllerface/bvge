@@ -9,15 +9,11 @@ them before this kernel completes.
 
 // todo: convert to: 
 //  - float 4, transform
-//  - float 2, accel
-//  - int 4, element table
-//  - int 2, key bank
-//  - float 4, extents
-//  - int 4, aabb index
 
 
 __kernel void integrate(
-    __global float16 *bodies,
+    __global float4 *bodies,
+    __global int4 *element_tables,
     __global float2 *body_accel,
     __global float4 *points,
     __global float4 *bounds,
@@ -43,7 +39,8 @@ __kernel void integrate(
     float friction = args[11];
     
     // get body from array
-    float16 body = bodies[gid];
+    float4 body = bodies[gid];
+    int4 element_table = element_tables[gid];
     int body_1_flags = body_flags[gid];
     float2 acceleration = body_accel[gid];
     float4 bounding_box = bounds[gid];
@@ -51,8 +48,8 @@ __kernel void integrate(
     int2 bounds_bank = bounds_bank_data[gid];
 
     // get start/end vertex indices
-    int start = (int)body.s7;
-    int end   = (int)body.s8;
+    int start = element_table.x;
+    int end   = element_table.y;
 
     // todo: instead of punting on these, we can maybe update differently and tag the body
     //  or something, so it can be handled differently for collisions as well.
@@ -176,8 +173,8 @@ __kernel void integrate(
     }
 
     // calculate centroid
-    body.s0 = x_sum / point_count;
-    body.s1 = y_sum / point_count;
+    body.x = x_sum / point_count;
+    body.y = y_sum / point_count;
 
     // calculate bounding box
     bounding_box.x = min_x;

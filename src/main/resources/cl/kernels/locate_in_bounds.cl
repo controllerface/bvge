@@ -1,6 +1,7 @@
 
-// todo: convert to int 2, key bank
-
+/**
+Locates objects that are in bounds of the spatial partition
+ */
 __kernel void locate_in_bounds(__global int2 *bounds_bank_data,
                                __global int *in_bounds,
                                __global int *counter)
@@ -15,8 +16,9 @@ __kernel void locate_in_bounds(__global int2 *bounds_bank_data,
     }    
 }
 
-// todo: convert to int 2, key bank
-
+/**
+Counts the number of potential matches each body could have.
+ */
 __kernel void count_candidates(__global int2 *bounds_bank_data,
                                __global int *in_bounds,
                                __global int *key_bank,
@@ -49,6 +51,10 @@ __kernel void count_candidates(__global int2 *bounds_bank_data,
     candidates[gid].y = size;
 }
 
+/**
+After candidates have been counted and the buffers created, this function forwards
+all the candidates into the final buffer for processing.
+ */
 __kernel void finalize_candidates(__global int2 *input_candidates,
                                   __global int *match_offsets,
                                   __global int *matches,

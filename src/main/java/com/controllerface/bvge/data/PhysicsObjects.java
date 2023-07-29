@@ -72,15 +72,14 @@ public class PhysicsObjects
             p4_index / Main.Memory.Width.POINT,
             distance(p4, p2));
 
-        var arg = OpenCL.arg_float16(vector_buffer.x, vector_buffer.y,
-            size, size, 0, 0, 0,
-            (float) p1_index / Main.Memory.Width.POINT,
-            (float) p4_index / Main.Memory.Width.POINT,
-            (float) start_edge / Main.Memory.Width.EDGE,
-            (float) end_edge / Main.Memory.Width.EDGE,
-            0f, 0f, 0f, 0f, 0f);
+        var table = OpenCL.arg_int4(p1_index / Main.Memory.Width.POINT,
+             p4_index / Main.Memory.Width.POINT,
+             start_edge / Main.Memory.Width.EDGE,
+             end_edge / Main.Memory.Width.EDGE);
 
-        return Main.Memory.newBody(arg, flags);
+        var arg = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
+
+        return Main.Memory.newBody(arg, table, flags);
     }
 
     public static int dynamic_Box(float x, float y, float size)
@@ -162,14 +161,16 @@ public class PhysicsObjects
             distance(p4, p2)
         );
 
+        var table = OpenCL.arg_int4(p1_index / Main.Memory.Width.POINT,
+             p5_index / Main.Memory.Width.POINT,
+             start_edge / Main.Memory.Width.EDGE,
+             end_edge / Main.Memory.Width.EDGE);
+
         var arg = OpenCL.arg_float16(vector_buffer.x, vector_buffer.y,
             size, size, 0, 0, 0,
-            (float) p1_index / Main.Memory.Width.POINT,
-            (float) p5_index / Main.Memory.Width.POINT,
-            (float) start_edge / Main.Memory.Width.EDGE,
-            (float) end_edge / Main.Memory.Width.EDGE,
+            0f, 0f, 0f, 0f,
             0f,0f,0f,0f,0f);
 
-        return Main.Memory.newBody(arg, FLAG_NONE);
+        return Main.Memory.newBody(arg, table, FLAG_NONE);
     }
 }

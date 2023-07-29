@@ -1,6 +1,7 @@
 
-// todo: convert to int 2, key bank and int 4, aabb index
-
+/**
+Generates the entries within spatial key map for each body's bounding box.
+ */
 __kernel void build_key_map(__global int4 *bounds_index_data,
                             __global int2 *bounds_bank_data,
                             __global int *key_map,

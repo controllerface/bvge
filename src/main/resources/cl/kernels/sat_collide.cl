@@ -6,8 +6,12 @@ has a single vertex adjusted as a reaction. The edge object has two vertices adj
 and the adjustments are in oppostie directions, which will naturally apply some
 degree of rotation to the object
  */
+
+// todo: convert to float4; transforms
+
 __kernel void sat_collide(__global int2 *candidates,
-                          __global float16 *bodies,
+                          __global float4 *bodies,
+                          __global int4 *element_tables,
                           __global int *body_flags,
                           __global float4 *points)
 {
@@ -16,8 +20,12 @@ __kernel void sat_collide(__global int2 *candidates,
     int2 current_pair = candidates[gid];
     int b1_id = current_pair.x;
     int b2_id = current_pair.y;
-    float16 body_1 = bodies[b1_id];
-    float16 body_2 = bodies[b2_id];
+    float4 body_1 = bodies[b1_id];
+    float4 body_2 = bodies[b2_id];
+
+    int4 body_1_table = element_tables[b1_id];
+    int4 body_2_table = element_tables[b2_id];
+
     int body_1_flags = body_flags[b1_id];
     int body_2_flags = body_flags[b2_id];
 
@@ -29,12 +37,12 @@ __kernel void sat_collide(__global int2 *candidates,
         return;
     }
 
-    int start_1 = (int)body_1.s7;
-    int end_1   = (int)body_1.s8;
+    int start_1 = body_1_table.x;
+    int end_1   = body_1_table.y;
 	int b1_vert_count = end_1 - start_1 + 1;
 
-    int start_2 = (int)body_2.s7;
-    int end_2   = (int)body_2.s8;
+    int start_2 = body_2_table.x;
+    int end_2   = body_2_table.y;
 	int b2_vert_count = end_2 - start_2 + 1;
 
     float min_distance   = FLT_MAX;
@@ -46,7 +54,7 @@ __kernel void sat_collide(__global int2 *candidates,
     bool invert          = false;
     
     float2 normalBuffer;
-    float16 vertex_body;
+    int4 vertex_table;
 
     // object 1
     for (int i = 0; i < b1_vert_count; i++)
@@ -67,8 +75,8 @@ __kernel void sat_collide(__global int2 *candidates,
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = project_polygon(points, body_1, vectorBuffer1);
-        float3 proj_b = project_polygon(points, body_2, vectorBuffer1);
+        float3 proj_a = project_polygon(points, body_1_table, vectorBuffer1);
+        float3 proj_b = project_polygon(points, body_2_table, vectorBuffer1);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -81,7 +89,7 @@ __kernel void sat_collide(__global int2 *candidates,
         if (abs_distance < min_distance)
         {
             invert = true;
-            vertex_body = body_2;
+            vertex_table = body_2_table;
             normalBuffer.x = vectorBuffer1.x;
             normalBuffer.y = vectorBuffer1.y;
             vertex_object_id = (float)b2_id;
@@ -110,8 +118,8 @@ __kernel void sat_collide(__global int2 *candidates,
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = project_polygon(points, body_1, vectorBuffer1);
-        float3 proj_b = project_polygon(points, body_2, vectorBuffer1);
+        float3 proj_a = project_polygon(points, body_1_table, vectorBuffer1);
+        float3 proj_b = project_polygon(points, body_2_table, vectorBuffer1);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -123,7 +131,7 @@ __kernel void sat_collide(__global int2 *candidates,
         if (abs_distance < min_distance)
         {
             invert = false;
-            vertex_body = body_1;
+            vertex_table = body_1_table;
             normalBuffer.x = vectorBuffer1.x;
             normalBuffer.y = vectorBuffer1.y;
             vertex_object_id = (float)b1_id;
@@ -134,26 +142,26 @@ __kernel void sat_collide(__global int2 *candidates,
         }
     }
 
-    float3 pr = project_polygon(points, vertex_body, normalBuffer);
+    float3 pr = project_polygon(points, vertex_table, normalBuffer);
     vert_index = pr.z;
     min_distance = min_distance / length(normalBuffer);
     normalBuffer = normalize(normalBuffer);
 
-    float16 a = (invert)
+    float4 a = (invert)
         ? body_2
         : body_1;
 
-    float16 b = (invert)
+    float4 b = (invert)
         ? body_1
         : body_2;
 
     float2 transformA;
-    transformA.x = a.s0;
-    transformA.y = a.s1;
+    transformA.x = a.x;
+    transformA.y = a.y;
 
     float2 transformB;
-    transformB.x = b.s0;
-    transformB.y = b.s1;
+    transformB.x = b.x;
+    transformB.y = b.y;
 
     float2 direction = transformA - transformB;
 

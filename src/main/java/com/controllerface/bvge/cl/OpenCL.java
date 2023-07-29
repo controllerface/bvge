@@ -293,6 +293,11 @@ public class OpenCL
         return new int[]{ arg };
     }
 
+    public static int[] arg_int4(int x, int y, int z, int w)
+    {
+        return new int[]{ x, y, z, w };
+    }
+
     public static float[] arg_float(float arg)
     {
         return new float[]{ arg };
@@ -434,14 +439,12 @@ public class OpenCL
         int spatial_index_mem_size    = max_bodies * Sizeof.cl_int4;
         int spatial_key_bank_mem_size = max_bodies * Sizeof.cl_int2;
 
-        mem_body_transforms     = cl_new_buffer(FLAGS_WRITE_GPU, transform_mem_size);
         mem_body_acceleration   = cl_new_buffer(FLAGS_WRITE_GPU, accleration_mem_size);
         mem_body_element_tables = cl_new_buffer(FLAGS_WRITE_GPU, element_table_mem_size);
         mem_body_flags          = cl_new_buffer(FLAGS_WRITE_GPU, flags_mem_size);
         mem_aabb_index          = cl_new_buffer(FLAGS_WRITE_GPU, spatial_index_mem_size);
         mem_aabb_key_bank       = cl_new_buffer(FLAGS_WRITE_GPU, spatial_key_bank_mem_size);
 
-        cl_zero_buffer(mem_body_transforms, transform_mem_size);
         cl_zero_buffer(mem_body_acceleration, accleration_mem_size);
         cl_zero_buffer(mem_body_element_tables, element_table_mem_size);
         cl_zero_buffer(mem_body_flags, flags_mem_size);
@@ -482,7 +485,6 @@ public class OpenCL
 
     private static cl_mem body_mem;
     private static cl_mem aabb_mem;
-    private static cl_mem mem_body_transforms;
     private static cl_mem mem_body_acceleration;
     private static cl_mem mem_body_element_tables;
     private static cl_mem mem_body_flags;
@@ -532,12 +534,9 @@ public class OpenCL
         physicsBuffer.bodies = new MemoryBuffer(body_mem);
         physicsBuffer.points = new MemoryBuffer(point_mem);
         physicsBuffer.edges  = new MemoryBuffer(edge_mem);
-
-        physicsBuffer.transforms = new MemoryBuffer(mem_body_transforms);
-        physicsBuffer.acceleration = new MemoryBuffer(mem_body_acceleration);
         physicsBuffer.elements = new MemoryBuffer(mem_body_element_tables);
+        physicsBuffer.acceleration = new MemoryBuffer(mem_body_acceleration);
         physicsBuffer.flags = new MemoryBuffer(mem_body_flags);
-        //physicsBuffer.extents = new MemoryBuffer(mem_aabb_extents);
         physicsBuffer.index = new MemoryBuffer(mem_aabb_index);
         physicsBuffer.bank = new MemoryBuffer(mem_aabb_key_bank);
     }
@@ -572,17 +571,20 @@ public class OpenCL
         k_call(k_create_edge, global_single_size);
     }
 
-    public static void create_body(int body_index, float[] body, int flags)
+    public static void create_body(int body_index, float[] body, int[] table, int flags)
     {
         var pnt_index = Pointer.to(arg_int(body_index));
         var pnt_flags = Pointer.to(arg_int(flags));
+        var pnt_table = Pointer.to(table);
         var pnt_body = Pointer.to(body);
 
         clSetKernelArg(k_create_body, 0, Sizeof.cl_mem, Pointer.to(body_mem));
-        clSetKernelArg(k_create_body, 1, Sizeof.cl_mem, Pointer.to(mem_body_flags));
-        clSetKernelArg(k_create_body, 2, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(k_create_body, 3, Sizeof.cl_float16, pnt_body);
-        clSetKernelArg(k_create_body, 4, Sizeof.cl_int, pnt_flags);
+        clSetKernelArg(k_create_body, 1, Sizeof.cl_mem, Pointer.to(mem_body_element_tables));
+        clSetKernelArg(k_create_body, 2, Sizeof.cl_mem, Pointer.to(mem_body_flags));
+        clSetKernelArg(k_create_body, 3, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_body, 4, Sizeof.cl_float4, pnt_body);
+        clSetKernelArg(k_create_body, 5, Sizeof.cl_int4, pnt_table);
+        clSetKernelArg(k_create_body, 6, Sizeof.cl_int, pnt_flags);
 
         k_call(k_create_body, global_single_size);
     }
@@ -606,9 +608,10 @@ public class OpenCL
         var pnt_angle = Pointer.to(arg_float(angle));
 
         clSetKernelArg(k_rotate_body, 0, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
-        clSetKernelArg(k_rotate_body, 1, Sizeof.cl_mem, physicsBuffer.points.pointer());
-        clSetKernelArg(k_rotate_body, 2, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(k_rotate_body, 3, Sizeof.cl_float, pnt_angle);
+        clSetKernelArg(k_rotate_body, 1, Sizeof.cl_mem, physicsBuffer.elements.pointer());
+        clSetKernelArg(k_rotate_body, 2, Sizeof.cl_mem, physicsBuffer.points.pointer());
+        clSetKernelArg(k_rotate_body, 3, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_rotate_body, 4, Sizeof.cl_float, pnt_angle);
 
         k_call(k_rotate_body, global_single_size);
     }
@@ -665,13 +668,14 @@ public class OpenCL
         cl_mem argMem = cl_new_buffer(FLAGS_READ_CPU_COPY, size, srcArgs);
 
         clSetKernelArg(k_integrate, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
-        clSetKernelArg(k_integrate, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.acceleration.memory()));
-        clSetKernelArg(k_integrate, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
-        clSetKernelArg(k_integrate, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
-        clSetKernelArg(k_integrate, 4, Sizeof.cl_mem, Pointer.to(physicsBuffer.index.memory()));
-        clSetKernelArg(k_integrate, 5, Sizeof.cl_mem, Pointer.to(physicsBuffer.bank.memory()));
-        clSetKernelArg(k_integrate, 6, Sizeof.cl_mem, Pointer.to(physicsBuffer.flags.memory()));
-        clSetKernelArg(k_integrate, 7, Sizeof.cl_mem, Pointer.to(argMem));
+        clSetKernelArg(k_integrate, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.elements.memory()));
+        clSetKernelArg(k_integrate, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.acceleration.memory()));
+        clSetKernelArg(k_integrate, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
+        clSetKernelArg(k_integrate, 4, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
+        clSetKernelArg(k_integrate, 5, Sizeof.cl_mem, Pointer.to(physicsBuffer.index.memory()));
+        clSetKernelArg(k_integrate, 6, Sizeof.cl_mem, Pointer.to(physicsBuffer.bank.memory()));
+        clSetKernelArg(k_integrate, 7, Sizeof.cl_mem, Pointer.to(physicsBuffer.flags.memory()));
+        clSetKernelArg(k_integrate, 8, Sizeof.cl_mem, Pointer.to(argMem));
 
         k_call(k_integrate, global_work_size);
 
@@ -907,8 +911,9 @@ public class OpenCL
         // Set the arguments for the kernel
         clSetKernelArg(k_sat_collide, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.candidates.memory()));
         clSetKernelArg(k_sat_collide, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
-        clSetKernelArg(k_sat_collide, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.flags.memory()));
-        clSetKernelArg(k_sat_collide, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
+        clSetKernelArg(k_sat_collide, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.elements.memory()));
+        clSetKernelArg(k_sat_collide, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.flags.memory()));
+        clSetKernelArg(k_sat_collide, 4, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
 
         k_call(k_sat_collide, global_work_size);
     }
@@ -922,7 +927,7 @@ public class OpenCL
             lastStep = i == edge_steps - 1;
             int n = lastStep ? 1 : 0;
             int a = 0;
-            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
+            clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.elements.pointer());
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.bank.pointer());
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.points.pointer());
             clSetKernelArg(k_resolve_constraints, a++, Sizeof.cl_mem, physicsBuffer.edges.pointer());

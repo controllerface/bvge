@@ -6,16 +6,14 @@ are designed to operate on a single target object.
 
  // todo: convert to float 4, transform
 
-__kernel void read_position(__global float16 *bodies,
+__kernel void read_position(__global float4 *bodies,
                             __global float *output,
                             int target)
 {
-    float16 body = bodies[target];
-    output[0] = body.s0;
-    output[1] = body.s1;
+    float4 body = bodies[target];
+    output[0] = body.x;
+    output[1] = body.y;
 }
-
-// converted from float16 bodies
 
 __kernel void update_accel(__global float2 *body_accel,
                            int target,
@@ -27,17 +25,19 @@ __kernel void update_accel(__global float2 *body_accel,
     body_accel[target] = accel;
 }
 
-// todo: convert to float 4 transform, and int 4, element tables
+// todo: convert to float 4 transform,
 
-__kernel void rotate_body(__global float16 *bodies,
+__kernel void rotate_body(__global float4 *bodies,
+                          __global int4 *element_tables,
                           __global float4 *points,
                           int target,
                           float angle)
 {
-    float16 body = bodies[target];
-    int start = (int)body.s7;
-    int end   = (int)body.s8;
-    float2 origin = (float2)(body.s0, body.s1);
+    float4 body = bodies[target];
+    int4 element_table = element_tables[target];
+    int start = element_table.x;
+    int end   = element_table.y;
+    float2 origin = (float2)(body.x, body.y);
     for (int i = start; i <= end; i++)
     {
         float4 point = points[i];
@@ -59,15 +59,18 @@ __kernel void create_edge(__global float4 *edges,
     edges[target] = new_edge; 
 }
 
-// todo: convert to float 4, transform, int 4, element tables, and int, flags
+// todo: convert to float 4, transform
 
-__kernel void create_body(__global float16 *bodies,
+__kernel void create_body(__global float4 *bodies,
+                          __global int4 *element_tables,
                           __global int *body_flags,
                           int target,
-                          float16 new_body,
+                          float4 new_body,
+                          int4 new_table,
                           int new_flags)
 {
     bodies[target] = new_body; 
+    element_tables[target] = new_table; 
     body_flags[target] = new_flags; 
 }
 

@@ -13,7 +13,7 @@ public class Main
         public static class Width
         {
             // float16
-            public static final int BODY = 16;
+            public static final int BODY = 4;
 
             // float4
             public static final int POINT = 4;
@@ -83,9 +83,9 @@ public class Main
             return point_index - Width.POINT;
         }
 
-        public static int newBody(float[] arg, int flags)
+        public static int newBody(float[] arg, int[] table, int flags)
         {
-            OpenCL.create_body(bodyCount(), arg, flags);
+            OpenCL.create_body(bodyCount(), arg, table, flags);
             body_index += Width.BODY;
             var idx = body_index - Width.BODY;
             return idx / Width.BODY;

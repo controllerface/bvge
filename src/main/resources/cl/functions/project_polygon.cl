@@ -1,9 +1,9 @@
 // todo: convert to int 4, element tables
 
-inline float3 project_polygon(__global const float4 *points, float16 body, float2 normal)
+inline float3 project_polygon(__global const float4 *points, int4 body, float2 normal)
 {
-    int start = (int)body.s7;
-    int end   = (int)body.s8;
+    int start = body.x;
+    int end   = body.y;
 	int vert_count = end - start + 1;
 
     float3 result;

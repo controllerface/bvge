@@ -10,7 +10,7 @@ public class PhysicsBuffer
     public MemoryBuffer points;
     public MemoryBuffer edges;
 
-    public MemoryBuffer transforms;
+    //public MemoryBuffer transforms;
     public MemoryBuffer acceleration;
     public MemoryBuffer elements;
     public MemoryBuffer flags;
@@ -112,7 +112,7 @@ public class PhysicsBuffer
 
 
 
-        if (transforms != null) transforms.release();
+        //if (transforms != null) transforms.release();
         if (acceleration != null) acceleration.release();
         if (elements != null) elements.release();
         if (flags != null) flags.release();
