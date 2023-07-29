@@ -1,3 +1,6 @@
+
+// todo: convert to int 2, key bank and int 4, aabb index
+
 __kernel void generate_keys(__global float16 *bounds,
                             __global int *key_bank,
                             volatile __global int *key_counts,

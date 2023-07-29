@@ -1,3 +1,6 @@
+
+// todo: convert to int 2, key bank and int 4, aabb index
+
 __kernel void build_key_map(__global float16 *bounds,
                             __global int *key_map,
                             __global int *key_offsets,

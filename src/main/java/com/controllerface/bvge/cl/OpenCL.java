@@ -427,7 +427,11 @@ public class OpenCL
         // init physics buffers here
 
         point_mem = cl_new_buffer(FLAGS_WRITE_GPU, point_buffer_size);
+
         body_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
+
+
+
         aabb_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
         edge_mem  = cl_new_buffer(FLAGS_WRITE_GPU, edge_buffer_size);
 
@@ -453,9 +457,18 @@ public class OpenCL
     private static final HashMap<Integer, cl_mem> vbo_edges = new LinkedHashMap<>();
 
     private static cl_mem point_mem;
-    private static cl_mem body_mem;
-    private static cl_mem aabb_mem;
     private static cl_mem edge_mem;
+
+    private static cl_mem body_mem;
+    private static cl_mem mem_body_transforms;     // float 4
+    private static cl_mem mem_body_acceleration;   // float 2
+    private static cl_mem mem_body_element_tables; // int 4
+    private static cl_mem mem_body_flags;          // int
+
+    private static cl_mem aabb_mem;
+    private static cl_mem mem_aabb_extents;  // float 4
+    private static cl_mem mem_aabb_index;    // int 4
+    private static cl_mem mem_aabb_key_bank; // int 2
 
     public static void bindvertexVBO(int vboID)
     {

@@ -1,3 +1,5 @@
+// todo: convert to int 2, key bank and float 4, extents
+//  
 __kernel void aabb_collide(__global float16 *bounds,
                            __global int2 *candidates,
                            __global int *match_offsets,

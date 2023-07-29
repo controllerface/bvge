@@ -1,3 +1,6 @@
+
+// todo: move to float 4, extents
+
 inline bool do_bounds_intersect(float16 a, float16 b)
 {
     return a.s0 < b.s0 + b.s2

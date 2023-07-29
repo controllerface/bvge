@@ -1,6 +1,8 @@
 /**
 Determines if a given bounding box is within the current spatial index boundary.
  */
+
+ // todo: move to float4, extents
 inline bool is_in_bounds(float16 a, float x, float y, float w, float h)
 {
     return a.s0 < x + w
