@@ -18,6 +18,7 @@ them before this kernel completes.
 
 __kernel void integrate(
     __global float16 *bodies,
+    __global float2 *body_accel,
     __global float4 *points,
     __global float16 *bounds,
     __global float *args)
@@ -40,6 +41,7 @@ __kernel void integrate(
     
     // get body from array
     float16 body = bodies[gid];
+    float2 acceleration = body_accel[gid];
     float16 bounding_box = bounds[gid];
 
     // get start/end vertex indices
@@ -50,9 +52,13 @@ __kernel void integrate(
     //  or something, so it can be handled differently for collisions as well.
     if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
-        body.s4 = 0.0;
-   	    body.s5 = 0.0;
-        bodies[gid] = body;
+        //body.s4 = 0.0;
+   	    //body.s5 = 0.0;
+        //bodies[gid] = body;
+
+        acceleration.x = 0;
+        acceleration.y = 0;
+        body_accel[gid] = acceleration;
 
         bounding_box.s5 = 0;
         bounds[gid] = bounding_box;
@@ -61,8 +67,10 @@ __kernel void integrate(
 
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
-   	acc.x = body.s4;
-   	acc.y = body.s5;
+   	// acc.x = body.s4;
+   	// acc.y = body.s5;
+    acc.x = acceleration.x;
+    acc.y = acceleration.y;
     bool b1s = (body.s6 && 0x01) !=0;
     
     if (!b1s)
@@ -74,8 +82,10 @@ __kernel void integrate(
    	acc.y = acc.y * (dt * dt);
 
     // reset acceleration to zero for the next frame
-    body.s4 = 0.0;
-   	body.s5 = 0.0;
+    //body.s4 = 0.0;
+   	//body.s5 = 0.0;
+    acceleration.x = 0;
+    acceleration.y = 0;
 
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;
@@ -227,4 +237,5 @@ __kernel void integrate(
     // store updated body and bounds data in result buffers
     bounds[gid] = bounding_box;
     bodies[gid] = body;
+    body_accel[gid] = acceleration;
 }

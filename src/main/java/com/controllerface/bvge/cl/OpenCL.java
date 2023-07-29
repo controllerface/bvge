@@ -595,7 +595,7 @@ public class OpenCL
         var pnt_index = Pointer.to(arg_int(body_index));
         var pnt_acc = Pointer.to(arg_float2(acc_x, acc_y));
 
-        clSetKernelArg(k_update_accel, 0, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
+        clSetKernelArg(k_update_accel, 0, Sizeof.cl_mem, physicsBuffer.acceleration.pointer());
         clSetKernelArg(k_update_accel, 1, Sizeof.cl_int, pnt_index);
         clSetKernelArg(k_update_accel, 2, Sizeof.cl_float2, pnt_acc);
 
@@ -667,9 +667,10 @@ public class OpenCL
         cl_mem argMem = cl_new_buffer(FLAGS_READ_CPU_COPY, size, srcArgs);
 
         clSetKernelArg(k_integrate, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
-        clSetKernelArg(k_integrate, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
-        clSetKernelArg(k_integrate, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
-        clSetKernelArg(k_integrate, 3, Sizeof.cl_mem, Pointer.to(argMem));
+        clSetKernelArg(k_integrate, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.acceleration.memory()));
+        clSetKernelArg(k_integrate, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
+        clSetKernelArg(k_integrate, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
+        clSetKernelArg(k_integrate, 4, Sizeof.cl_mem, Pointer.to(argMem));
 
         k_call(k_integrate, global_work_size);
 

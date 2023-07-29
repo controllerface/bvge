@@ -15,16 +15,16 @@ __kernel void read_position(__global float16 *bodies,
     output[1] = body.s1;
 }
 
-// todo: convert to float 2, accel
+// converted from float16 bodies
 
-__kernel void update_accel(__global float16 *bodies,
+__kernel void update_accel(__global float2 *body_accel,
                            int target,
                            float2 new_value)
 {
-    float16 body = bodies[target];
-    body.s4 = new_value.x;
-   	body.s5 = new_value.y;
-    bodies[target] = body;
+    float2 accel = body_accel[target];
+    accel.x = new_value.x;
+    accel.y = new_value.y;
+    body_accel[target] = accel;
 }
 
 // todo: convert to float 4 transform, and int 4, element tables
