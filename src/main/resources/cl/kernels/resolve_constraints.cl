@@ -2,7 +2,6 @@
 Resolves edge constraints used for Verlet integration.
  */
 __kernel void resolve_constraints(__global float16 *bodies,
-                                  __global float16 *bounds,
                                   __global int2 *bounds_bank_data,
                                   __global float4 *points,
                                   __global float4 *edges, 
@@ -13,11 +12,10 @@ __kernel void resolve_constraints(__global float16 *bodies,
     // the body contains the relevant pointers into the edge buffer, and
     // the bounding box is used to check if the edges should be processed.
     float16 body = bodies[gid];
-    float16 bound = bounds[gid];
     int2 bounds_bank = bounds_bank_data[gid];
-    
+
     // extract the bank size from the boundary. Bodies with empty banks are out of bounds
-    int bank_size = (int)bound.s5;
+    int bank_size = bounds_bank.y;
 
     // we usually only want to process objects that are in bounds, however in order to ensure 
     // simulation stability, out of bounds objects need at least one update per frame.

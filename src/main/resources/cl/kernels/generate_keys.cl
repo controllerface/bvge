@@ -13,13 +13,13 @@ __kernel void generate_keys(__global float16 *bounds,
     float16 bound = bounds[gid];
     int2 bounds_bank = bounds_bank_data[gid];
 
-    bool inBounds = bound.s5 != 0;
+    bool inBounds = bounds_bank.y != 0;
     if (!inBounds)
     {
         return;
     }
 
-    int offset = bound.s4 * 2;
+    int offset = bounds_bank.x * 2;
 
     int min_x = bound.s6;
     int max_x = bound.s7;

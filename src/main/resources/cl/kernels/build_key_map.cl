@@ -13,7 +13,7 @@ __kernel void build_key_map(__global float16 *bounds,
     float16 bound = bounds[gid];
     int2 bounds_bank = bounds_bank_data[gid];
 
-    bool inBounds = bound.s5 != 0;
+    bool inBounds = bounds_bank.y != 0;
     if (!inBounds)
     {
         return;

@@ -54,26 +54,17 @@ __kernel void integrate(
     //  or something, so it can be handled differently for collisions as well.
     if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
-        //body.s4 = 0.0;
-   	    //body.s5 = 0.0;
-        //bodies[gid] = body;
-
         acceleration.x = 0;
         acceleration.y = 0;
         body_accel[gid] = acceleration;
 
         bounds_bank.y = 0;
         bounds_bank_data[gid] = bounds_bank;
-
-        bounding_box.s5 = 0;
-        bounds[gid] = bounding_box;
         return;
     }
 
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
-   	// acc.x = body.s4;
-   	// acc.y = body.s5;
     acc.x = acceleration.x;
     acc.y = acceleration.y;
     bool b1s = (body.s6 && 0x01) !=0;
@@ -87,8 +78,6 @@ __kernel void integrate(
    	acc.y = acc.y * (dt * dt);
 
     // reset acceleration to zero for the next frame
-    //body.s4 = 0.0;
-   	//body.s5 = 0.0;
     acceleration.x = 0;
     acceleration.y = 0;
 
@@ -227,7 +216,6 @@ __kernel void integrate(
 
     if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
-        bounding_box.s5 = 0;
         bounds_bank.y = 0;
     }
     else
@@ -237,7 +225,6 @@ __kernel void integrate(
         int y_count = (k.w - k.z) + 1;
         int count = x_count * y_count;
         int size = count * 2;
-        bounding_box.s5 = (float) size;
         bounds_bank.y = size;
     }
 

@@ -22,9 +22,6 @@ __kernel void aabb_collide(__global float16 *bounds,
     float16 bound = bounds[index];
     int2 bounds_bank = bounds_bank_data[index];
 
-    // int spatial_index = (int)bound.s4 * 2;
-    // int spatial_length = (int)bound.s5;
-
     int spatial_index = bounds_bank.x * 2;
     int spatial_length = bounds_bank.y;
 
