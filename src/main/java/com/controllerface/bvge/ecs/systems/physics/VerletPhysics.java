@@ -106,7 +106,7 @@ public class VerletPhysics extends GameSystem
             return;
         }
 
-        OpenCL.generate_key_bank(spatialPartition);
+        OpenCL.generate_keys(spatialPartition);
         OpenCL.calculate_map_offsets(spatialPartition);
         OpenCL.build_key_map(spatialPartition);
         OpenCL.locate_in_bounds(spatialPartition);

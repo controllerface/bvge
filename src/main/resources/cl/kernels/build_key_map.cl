@@ -1,7 +1,7 @@
 
 // todo: convert to int 2, key bank and int 4, aabb index
 
-__kernel void build_key_map(__global float16 *bounds,
+__kernel void build_key_map(__global int4 *bounds_index_data,
                             __global int2 *bounds_bank_data,
                             __global int *key_map,
                             __global int *key_offsets,
@@ -10,7 +10,7 @@ __kernel void build_key_map(__global float16 *bounds,
                             int key_count_length)
 {
     int gid = get_global_id(0);
-    float16 bound = bounds[gid];
+    int4 bounds_index = bounds_index_data[gid];
     int2 bounds_bank = bounds_bank_data[gid];
 
     bool inBounds = bounds_bank.y != 0;
@@ -19,10 +19,10 @@ __kernel void build_key_map(__global float16 *bounds,
         return;
     }
 
-    int min_x = bound.s6;
-    int max_x = bound.s7;
-    int min_y = bound.s8;
-    int max_y = bound.s9;
+    int min_x = bounds_index.x;
+    int max_x = bounds_index.y;
+    int min_y = bounds_index.z;
+    int max_y = bounds_index.w;
 
     for (int current_x = min_x; current_x <= max_x; current_x++)
     {

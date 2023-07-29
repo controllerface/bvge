@@ -670,8 +670,9 @@ public class OpenCL
         clSetKernelArg(k_integrate, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.acceleration.memory()));
         clSetKernelArg(k_integrate, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
         clSetKernelArg(k_integrate, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
-        clSetKernelArg(k_integrate, 4, Sizeof.cl_mem, Pointer.to(physicsBuffer.bank.memory()));
-        clSetKernelArg(k_integrate, 5, Sizeof.cl_mem, Pointer.to(argMem));
+        clSetKernelArg(k_integrate, 4, Sizeof.cl_mem, Pointer.to(physicsBuffer.index.memory()));
+        clSetKernelArg(k_integrate, 5, Sizeof.cl_mem, Pointer.to(physicsBuffer.bank.memory()));
+        clSetKernelArg(k_integrate, 6, Sizeof.cl_mem, Pointer.to(argMem));
 
         k_call(k_integrate, global_work_size);
 
@@ -685,7 +686,7 @@ public class OpenCL
         spatialPartition.resizeBank(bank_size);
     }
 
-    public static void generate_key_bank(SpatialPartition spatialPartition)
+    public static void generate_keys(SpatialPartition spatialPartition)
     {
         if (spatialPartition.getKey_bank_size() < 1)
         {
@@ -711,7 +712,7 @@ public class OpenCL
         physicsBuffer.key_bank = new MemoryBuffer(bank_data);
 
         // pass in arguments
-        clSetKernelArg(k_generate_keys, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+        clSetKernelArg(k_generate_keys, 0, Sizeof.cl_mem, physicsBuffer.index.pointer());
         clSetKernelArg(k_generate_keys, 1, Sizeof.cl_mem, physicsBuffer.bank.pointer());
         clSetKernelArg(k_generate_keys, 2, Sizeof.cl_mem, src_bank);
         clSetKernelArg(k_generate_keys, 3, Sizeof.cl_mem, src_counts);
@@ -750,7 +751,7 @@ public class OpenCL
 
         physicsBuffer.key_map = new MemoryBuffer(map_data);
 
-        clSetKernelArg(k_build_key_map, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+        clSetKernelArg(k_build_key_map, 0, Sizeof.cl_mem, physicsBuffer.index.pointer());
         clSetKernelArg(k_build_key_map, 1, Sizeof.cl_mem, physicsBuffer.bank.pointer());
         clSetKernelArg(k_build_key_map, 2, Sizeof.cl_mem, src_map);
         clSetKernelArg(k_build_key_map, 3, Sizeof.cl_mem, physicsBuffer.key_offsets.pointer());
