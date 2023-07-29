@@ -23,6 +23,7 @@ __kernel void integrate(
     __global float4 *bounds,
     __global int4 *bounds_index_data,
     __global int2 *bounds_bank_data,
+    __global int *body_flags,
     __global float *args)
 {
     int gid = get_global_id(0);
@@ -43,11 +44,11 @@ __kernel void integrate(
     
     // get body from array
     float16 body = bodies[gid];
+    int body_1_flags = body_flags[gid];
     float2 acceleration = body_accel[gid];
     float4 bounding_box = bounds[gid];
     int4 bounds_index = bounds_index_data[gid];
     int2 bounds_bank = bounds_bank_data[gid];
-
 
     // get start/end vertex indices
     int start = (int)body.s7;
@@ -70,9 +71,9 @@ __kernel void integrate(
    	float2 acc;
     acc.x = acceleration.x;
     acc.y = acceleration.y;
-    bool b1s = (body.s6 && 0x01) !=0;
+    bool is_static = (body_1_flags && 0x01) !=0;
     
-    if (!b1s)
+    if (!is_static)
     {
         acc.x += gravity.x;
         acc.y += gravity.y;
@@ -110,7 +111,7 @@ __kernel void integrate(
         float2 pos = point.xy;
         float2 prv = point.zw;
 
-        if (!b1s)
+        if (!is_static)
         {
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;

@@ -8,6 +8,7 @@ degree of rotation to the object
  */
 __kernel void sat_collide(__global int2 *candidates,
                           __global float16 *bodies,
+                          __global int *body_flags,
                           __global float4 *points)
 {
     int gid = get_global_id(0);
@@ -17,9 +18,11 @@ __kernel void sat_collide(__global int2 *candidates,
     int b2_id = current_pair.y;
     float16 body_1 = bodies[b1_id];
     float16 body_2 = bodies[b2_id];
+    int body_1_flags = body_flags[b1_id];
+    int body_2_flags = body_flags[b2_id];
 
-    bool b1s = (body_1.s6 && 0x01) !=0;
-    bool b2s = (body_2.s6 && 0x01) !=0;
+    bool b1s = (body_1_flags && 0x01) !=0;
+    bool b2s = (body_2_flags && 0x01) !=0;
     
     if (b1s && b2s) // these should be filtered before getting here, but just in case..
     {
@@ -166,17 +169,18 @@ __kernel void sat_collide(__global int2 *candidates,
         return;
     }
 
-    // vertex and edge objects
-    float16 vo = bodies[(int)vertex_object_id];
-    float16 eo = bodies[(int)edge_object_id];
+    // vertex and edge object flags
+    int vo_f = body_flags[(int)vertex_object_id];
+    int eo_f = body_flags[(int)edge_object_id];
+
     float2 normal = normalBuffer;
 
     float2 collision_vector = normal * min_distance;
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 
-    bool vs = (vo.s6 && 0x01) !=0;
-    bool es = (eo.s6 && 0x01) !=0;
+    bool vs = (vo_f && 0x01) !=0;
+    bool es = (eo_f && 0x01) !=0;
     
     if (vs || es)
     {

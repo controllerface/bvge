@@ -15,8 +15,6 @@ public class Main
             // float16
             public static final int BODY = 16;
 
-            public static final int BOUNDS = 4;
-
             // float4
             public static final int POINT = 4;
 
@@ -28,24 +26,13 @@ public class Main
         private static final int MAX_POINTS = 1_000_000;
 
         private static final int BODY_BUFFER_SIZE = Width.BODY * MAX_BODIES;
-        private static final int BOUNDS_BUFFER_SIZE = Width.BOUNDS * MAX_BODIES;
 
         private static final int POINT_BUFFER_SIZE = Width.POINT * MAX_POINTS;
         private static final int EDGE_BUFFER_SIZE = Width.EDGE * MAX_POINTS;
 
         private static final int BODY_BUFFER_LENGTH = BODY_BUFFER_SIZE * Float.BYTES;
-        private static final int BOUNDS_BUFFER_LENGTH = BOUNDS_BUFFER_SIZE * Float.BYTES;
         private static final int POINT_BUFFER_LENGTH = EDGE_BUFFER_SIZE * Float.BYTES;
         private static final int EDGE_BUFFER_LENGTH = POINT_BUFFER_SIZE * Float.BYTES;
-
-
-        private static final int X_TRANFORM_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_float4;
-        private static final int X_ACCLERATION_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_float2;
-        private static final int X_ELEMENT_TABLE_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_int4;
-        private static final int X_FLAGS_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_int;
-        private static final int X_BOUNDING_BOX_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_float4;
-        private static final int X_SPATIAL_INDEX_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_int4;
-        private static final int X_SPATIAL_KEY_BANK_BUFFER_SIZE = MAX_BODIES * Sizeof.cl_int2;
 
 
         static
@@ -96,9 +83,9 @@ public class Main
             return point_index - Width.POINT;
         }
 
-        public static int newBody(float[] arg)
+        public static int newBody(float[] arg, int flags)
         {
-            OpenCL.create_body(bodyCount(), arg);
+            OpenCL.create_body(bodyCount(), arg, flags);
             body_index += Width.BODY;
             var idx = body_index - Width.BODY;
             return idx / Width.BODY;
@@ -112,7 +99,6 @@ public class Main
         window.initOpenGL();
         OpenCL.init(Memory.MAX_BODIES,
             Memory.BODY_BUFFER_LENGTH,
-            Memory.BOUNDS_BUFFER_LENGTH,
             Memory.EDGE_BUFFER_LENGTH,
             Memory.POINT_BUFFER_LENGTH);
         window.initGameMode();

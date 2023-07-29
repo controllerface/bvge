@@ -62,10 +62,13 @@ __kernel void create_edge(__global float4 *edges,
 // todo: convert to float 4, transform, int 4, element tables, and int, flags
 
 __kernel void create_body(__global float16 *bodies,
-                           int target,
-                           float16 new_body)
+                          __global int *body_flags,
+                          int target,
+                          float16 new_body,
+                          int new_flags)
 {
     bodies[target] = new_body; 
+    body_flags[target] = new_flags; 
 }
 
 
