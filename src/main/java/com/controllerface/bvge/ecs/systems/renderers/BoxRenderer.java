@@ -16,9 +16,13 @@ import static org.lwjgl.opengl.GL15.*;
 
 public class BoxRenderer extends GameSystem
 {
-    private static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE;
-    private static final int TRANSFORM_BUFFER_SIZE = TRANSFORM_VERTEX_COUNT * 2 * Float.BYTES;
+    public static final int VERTEX_SIZE = 2; // a vertex is 2 floats (x,y)
+    public static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
+    public static final int TRANSFORM_SIZE = 4; // a transform is 3 floats (x,y,w)
+    public static final int TRANSFORM_SIZE_BYTES = TRANSFORM_SIZE * Float.BYTES;
+    public static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * TRANSFORM_SIZE;
+    public static final int TRANSFORM_BUFFER_SIZE = TRANSFORM_VERTEX_COUNT * Float.BYTES;
 
     private final int model_index = 0;
     private final Shader shader;

@@ -4,6 +4,7 @@ import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.window.Window;
 
+import static com.controllerface.bvge.ecs.systems.renderers.BoxRenderer.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
@@ -13,12 +14,6 @@ import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 public class BoxRenderBatch
 {
-    private static final int VERTEX_SIZE = 2; // a vertex is 2 floats (x,y)
-    private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
-
-    private static final int TRANSFORM_SIZE = 2; // a transform is 3 floats (x,y,w)
-    private static final int TRANSFORM_SIZE_BYTES = TRANSFORM_SIZE * Float.BYTES;
-
     private int numModels;
     private int vaoID, vboID;
     private final int transform_buffer_ID, model_buffer_id;
@@ -55,7 +50,7 @@ public class BoxRenderBatch
         // create buffer for transforms and configure the instance divisor
         glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_ID); // this attribute comes from a different vertex buffer
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, TRANSFORM_SIZE_BYTES, 0);
+        glVertexAttribPointer(1, TRANSFORM_SIZE, GL_FLOAT, false, TRANSFORM_SIZE_BYTES, 0);
         glVertexAttribDivisor(1, 1);
 
         // share the buffer with the CL context

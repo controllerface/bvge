@@ -558,9 +558,9 @@ public class OpenCL
         long[] global_work_size = arg_long(size);
 
         clSetKernelArg(k_prepare_transforms, 0, Sizeof.cl_mem, Pointer.to(mem_transform));
-        //clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(mem_body_rotation));
-        clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(vbo_mem));
-        clSetKernelArg(k_prepare_transforms, 2, Sizeof.cl_mem, Pointer.to(vbo_mem2));
+        clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(mem_body_rotation));
+        clSetKernelArg(k_prepare_transforms, 2, Sizeof.cl_mem, Pointer.to(vbo_mem));
+        clSetKernelArg(k_prepare_transforms, 3, Sizeof.cl_mem, Pointer.to(vbo_mem2));
 
         gl_acquire(vbo_mem);
         gl_acquire(vbo_mem2);

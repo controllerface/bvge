@@ -1,7 +1,7 @@
 #type vertex
 #version 330 core
 layout (location = 0) in vec2 aPos;
-layout (location = 1) in vec2 aTransform;
+layout (location = 1) in vec4 aTransform;
 
 out vec3 fColor;
 
@@ -34,12 +34,12 @@ void main()
 {
     fColor = vec3(1, 0.2, 0.8);
 
-    //vec2 pos_offset;
-    //pos_offset.x = aTransform.x;
-    //pos_offset.y = aTransform.y;
-    //vec2 translated = aPos + pos_offset;
-    //vec2 rotated = rotate(translated, aTransform.z, pos_offset);
-    gl_Position = uProjection * uView * vec4(aPos + aTransform, 0.0, 1.0);
+    vec2 pos_offset;
+    pos_offset.x = aTransform.x;
+    pos_offset.y = aTransform.y;
+    vec2 translated = aPos + pos_offset;
+    vec2 rotated = rotate(translated, aTransform.z, pos_offset);
+    gl_Position = uProjection * uView * vec4(rotated, 0.0, 1.0);
 }
 
 #type fragment
