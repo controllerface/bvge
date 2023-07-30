@@ -21,7 +21,7 @@ public class BoxRenderBatch
 
     private int numModels;
     private int vaoID, vboID;
-    private final int tranform_buffer_ID, model_buffer_id;
+    private final int transform_buffer_ID, model_buffer_id;
     private final Shader currentShader;
     private int[] indices; // will be large enough to hold a full batch, but may only contain a partial one
 
@@ -31,7 +31,7 @@ public class BoxRenderBatch
     {
         //this.numModels = numModels;
         this.currentShader = currentShader;
-        this.tranform_buffer_ID = transform_buffer_ID;
+        this.transform_buffer_ID = transform_buffer_ID;
         this.model_buffer_id = model_buffer_id;
         //this.indices = indices;
         //start();
@@ -53,7 +53,7 @@ public class BoxRenderBatch
         glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, 0);
 
         // create buffer for transforms and configure the instance divisor
-        glBindBuffer(GL_ARRAY_BUFFER, tranform_buffer_ID); // this attribute comes from a different vertex buffer
+        glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_ID); // this attribute comes from a different vertex buffer
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, false, TRANSFORM_SIZE_BYTES, 0);
         glVertexAttribDivisor(1, 1);
@@ -92,7 +92,7 @@ public class BoxRenderBatch
 
         glBindVertexArray(vaoID);
 
-        OpenCL.batch_transforms_GL(vboID, tranform_buffer_ID, numModels);
+        OpenCL.batch_transforms_GL(vboID, transform_buffer_ID, numModels);
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
