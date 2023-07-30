@@ -25,7 +25,6 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
  */
 public class EdgeRenderer extends GameSystem
 {
-
     private static final int VERTEX_SIZE = 2; // a vertex is 2 floats (x,y)
     private static final int VERTS_PER_LINE = 2;
     private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
@@ -59,7 +58,7 @@ public class EdgeRenderer extends GameSystem
         glBufferData(GL_ARRAY_BUFFER, BATCH_BUFFER_SIZE, GL_DYNAMIC_DRAW);
 
         // share the buffer with the CL context
-        OpenCL.shareEdgeVBO(vboID);
+        OpenCL.share_memory(vboID);
 
         // define the buffer attribute pointers
         glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, 0);

@@ -63,6 +63,7 @@ public class OpenCL
     static String kern_resolve_constraints  = read_src("kernels/resolve_constraints.cl");
     static String kern_locate_in_bounds     = read_src("kernels/locate_in_bounds.cl");
     static String kern_prepare_edges        = read_src("kernels/prepare_edges.cl");
+    static String kern_prepare_transforms   = read_src("kernels/prepare_transforms.cl");
 
     /**
      * Kernel function names
@@ -95,6 +96,7 @@ public class OpenCL
     static String kn_create_edge                        = "create_edge";
     static String kn_create_body                        = "create_body";
     static String kn_prepare_edges                      = "prepare_edges";
+    static String kn_prepare_transforms                 = "prepare_transforms";
 
     /**
      * CL Programs
@@ -112,6 +114,7 @@ public class OpenCL
     static cl_program p_resolve_constraints;
     static cl_program p_gpu_crud;
     static cl_program p_prepare_edges;
+    static cl_program p_prepare_transforms;
 
     /**
      * CL Kernels
@@ -144,6 +147,7 @@ public class OpenCL
     static cl_kernel k_create_edge;
     static cl_kernel k_create_body;
     static cl_kernel k_prepare_edges;
+    static cl_kernel k_prepare_transforms;
 
 
     /**
@@ -399,6 +403,8 @@ public class OpenCL
 
         p_prepare_edges = cl_p(kern_prepare_edges);
 
+        p_prepare_transforms = cl_p(kern_prepare_transforms);
+
         /*
          * Kernels
          */
@@ -430,6 +436,7 @@ public class OpenCL
         k_create_point                      = cl_k(p_gpu_crud, kn_create_point);
         k_create_edge                       = cl_k(p_gpu_crud, kn_create_edge);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
+        k_prepare_transforms                = cl_k(p_prepare_transforms, kn_prepare_transforms);
 
         // init physics buffers here
 
@@ -505,14 +512,13 @@ public class OpenCL
         clReleaseMemObject(mem_aabb);
         clReleaseMemObject(mem_edges);
         // todo: destroy more/track it better
-        vbo_edges.values().forEach(CL::clReleaseMemObject);
+        shared_mem.values().forEach(CL::clReleaseMemObject);
     }
 
-    private static final HashMap<Integer, cl_mem> vbo_edges = new LinkedHashMap<>();
+    private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
 
     private static cl_mem mem_points;
     private static cl_mem mem_edges;
-
     private static cl_mem mem_transform;
     private static cl_mem mem_aabb;
     private static cl_mem mem_body_acceleration;
@@ -522,26 +528,15 @@ public class OpenCL
     private static cl_mem mem_aabb_index;
     private static cl_mem mem_aabb_key_bank;
 
-    public static void bindvertexVBO(int vboID)
+    public static void share_memory(int vboID)
     {
         cl_mem vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
-        if (mem_points != null)
-        {
-            clReleaseMemObject(mem_points);
-        }
-        mem_points = vbo_mem;
+        shared_mem.put(vboID, vbo_mem);
     }
 
-
-    public static void shareEdgeVBO(int vboID)
+    public static void batch_edge_GL(int vboID, int vboOffset, int batchSize)
     {
-        cl_mem vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
-        vbo_edges.put(vboID, vbo_mem);
-    }
-
-    public static void batchVbo(int vboID, int vboOffset, int batchSize)
-    {
-        var vbo_mem = vbo_edges.get(vboID);
+        var vbo_mem = shared_mem.get(vboID);
         long[] global_work_size = arg_long(batchSize);
         long[] edge_offset = arg_long(vboOffset);
 
@@ -553,6 +548,24 @@ public class OpenCL
         gl_acquire(vbo_mem);
         k_call(k_prepare_edges, global_work_size);
         gl_release(vbo_mem);
+    }
+
+    public static void batch_transforms_GL(int vboID, int transforms_id, int size)
+    {
+        var vbo_mem = shared_mem.get(vboID);
+        var vbo_mem2 = shared_mem.get(transforms_id);
+        long[] global_work_size = arg_long(size);
+
+        clSetKernelArg(k_prepare_transforms, 0, Sizeof.cl_mem, Pointer.to(mem_transform));
+        clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(mem_body_rotation));
+        clSetKernelArg(k_prepare_transforms, 2, Sizeof.cl_mem, Pointer.to(vbo_mem));
+        clSetKernelArg(k_prepare_transforms, 3, Sizeof.cl_mem, Pointer.to(vbo_mem2));
+
+        gl_acquire(vbo_mem);
+        gl_acquire(vbo_mem2);
+        k_call(k_prepare_transforms, global_work_size);
+        gl_release(vbo_mem);
+        gl_release(vbo_mem2);
     }
 
     public static void initPhysicsBuffer(PhysicsBuffer physicsBuffer)

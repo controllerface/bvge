@@ -8,6 +8,7 @@ import java.util.Set;
 public class Models
 {
     private static final Map<Integer, float[]> loaded_models = new HashMap<>();
+    private static final Map<Integer, Boolean> dirty_models = new HashMap<>();
     private static final Map<Integer, Set<Integer>> model_instances = new HashMap<>();
 
     public static float[] get_model_by_index(int index)
@@ -19,6 +20,28 @@ public class Models
     {
         model_instances.computeIfAbsent(model_id, _k->new HashSet<>())
             .add(body_id);
+        dirty_models.put(model_id, true);
+    }
+
+    public static Set<Integer> get_model_instances(int model_id)
+    {
+        return model_instances.get(model_id);
+    }
+
+    public static boolean is_model_dirty(int model_id)
+    {
+        var r = dirty_models.get(model_id);
+        return r != null && r;
+    }
+
+    public static int get_instance_count(int model_id)
+    {
+        return model_instances.get(model_id).size();
+    }
+
+    public static void set_model_clean(int model_id)
+    {
+        dirty_models.put(model_id, false);
     }
 
     /**
