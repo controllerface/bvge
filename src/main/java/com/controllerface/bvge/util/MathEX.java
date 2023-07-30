@@ -43,6 +43,23 @@ public class MathEX
         vec.y = yPrime;
     }
 
+    public static float angleBetween2Lines(float[] line1, float[] line2)
+    {
+        float l1x1 = line1[0];
+        float l1y1 = line1[1];
+        float l1x2 = line1[2];
+        float l1y2 = line1[3];
+
+        float l2x1 = line2[0];
+        float l2y1 = line2[1];
+        float l2x2 = line2[2];
+        float l2y2 = line2[3];
+
+        float angle1 = (float)Math.atan2(l1y1 - l1y2, l1x1 - l1x2);
+        float angle2 = (float)Math.atan2(l2y1 - l2y2, l2x1 - l2x2);
+        return angle1 - angle2;
+    }
+
     public static boolean compare(float x, float y, float epsilon) {
         return Math.abs(x - y) <= epsilon * Math.max(1.0f, Math.max(Math.abs(x), Math.abs(y)));
     }

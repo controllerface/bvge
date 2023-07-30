@@ -40,6 +40,12 @@ public class PhysicsObjects
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
 
+        var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+        var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+
+        // todo: store this reference angle so it acn be used to calculate current body rotation
+        var angle = MathEX.angleBetween2Lines(l1, l2);
+
         // box sides
         var start_edge = Main.Memory.newEdge(
             p1_index / Main.Memory.Width.POINT,

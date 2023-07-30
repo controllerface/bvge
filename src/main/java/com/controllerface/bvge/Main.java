@@ -3,7 +3,6 @@ package com.controllerface.bvge;
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.gl.Models;
 import com.controllerface.bvge.window.Window;
-import org.jocl.Sizeof;
 
 
 public class Main
@@ -12,43 +11,13 @@ public class Main
     {
         public static class Width
         {
-            // float16
             public static final int BODY = 4;
-
-            // float4
             public static final int POINT = 4;
-
-            // float4
             public static final int EDGE = 4;
         }
 
         private static final int MAX_BODIES = 100_000;
         private static final int MAX_POINTS = 1_000_000;
-
-        private static final int BODY_BUFFER_SIZE = Width.BODY * MAX_BODIES;
-
-        private static final int POINT_BUFFER_SIZE = Width.POINT * MAX_POINTS;
-        private static final int EDGE_BUFFER_SIZE = Width.EDGE * MAX_POINTS;
-
-        private static final int BODY_BUFFER_LENGTH = BODY_BUFFER_SIZE * Float.BYTES;
-        private static final int POINT_BUFFER_LENGTH = EDGE_BUFFER_SIZE * Float.BYTES;
-        private static final int EDGE_BUFFER_LENGTH = POINT_BUFFER_SIZE * Float.BYTES;
-
-
-        static
-        {
-            int body_bytes = BODY_BUFFER_SIZE * Float.BYTES;
-            int point_bytes = POINT_BUFFER_SIZE * Float.BYTES;
-            int edge_bytes = EDGE_BUFFER_SIZE * Float.BYTES;
-            int bounds_bytes = body_bytes;
-            int total = body_bytes + point_bytes + edge_bytes + bounds_bytes;
-            System.out.println("body_buffer   : " + body_bytes   + " Bytes");
-            System.out.println("point_buffer  : " + point_bytes  + " Bytes");
-            System.out.println("edge_buffer   : " + edge_bytes   + " Bytes");
-            System.out.println("bounds_buffer : " + bounds_bytes + " Bytes");
-            System.out.println("-Total-       : " + total        + " Bytes");
-            System.out.println("-Total-       : " + total / 1024 / 1024 + " MB");
-        }
 
         private static int body_index  = 0;
         private static int point_index = 0;
@@ -83,9 +52,9 @@ public class Main
             return point_index - Width.POINT;
         }
 
-        public static int newBody(float[] arg, int[] table, int flags)
+        public static int newBody(float[] transform, int[] table, int flags)
         {
-            OpenCL.create_body(bodyCount(), arg, table, flags);
+            OpenCL.create_body(bodyCount(), transform, table, flags);
             body_index += Width.BODY;
             var idx = body_index - Width.BODY;
             return idx / Width.BODY;
@@ -97,10 +66,7 @@ public class Main
         Models.init();
         Window window = Window.get();
         window.initOpenGL();
-        OpenCL.init(Memory.MAX_BODIES,
-            Memory.BODY_BUFFER_LENGTH,
-            Memory.EDGE_BUFFER_LENGTH,
-            Memory.POINT_BUFFER_LENGTH);
+        OpenCL.init(Memory.MAX_BODIES, Memory.MAX_POINTS);
         window.initGameMode();
         window.run();
         OpenCL.destroy();

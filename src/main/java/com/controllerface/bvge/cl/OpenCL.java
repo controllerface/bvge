@@ -40,6 +40,7 @@ public class OpenCL
     static String func_polygon_distance     = read_src("functions/polygon_distance.cl");
     static String func_edge_contact         = read_src("functions/edge_contact.cl");
     static String func_rotate_point         = read_src("functions/rotate_point.cl");
+    static String func_angle_between        = read_src("functions/angle_between.cl");
 
     /**
      * CRUD
@@ -329,7 +330,7 @@ public class OpenCL
         return (int) Math.ceil((float)n / (float)m);
     }
 
-    public static void init(int max_bodies, int body_buffer_size, int edge_buffer_size, int point_buffer_size)
+    public static void init(int max_bodies, int max_points)
     {
         device_ids = device_init();
 
@@ -361,7 +362,8 @@ public class OpenCL
             func_calculate_key_index,
             kern_aabb_collide);
 
-        p_integrate = cl_p(func_is_in_bounds,
+        p_integrate = cl_p(func_angle_between,
+            func_is_in_bounds,
             func_get_extents,
             func_get_key_for_point,
             kern_integrate);
@@ -438,30 +440,55 @@ public class OpenCL
         int bounding_box_mem_size     = max_bodies * Sizeof.cl_float4;
         int spatial_index_mem_size    = max_bodies * Sizeof.cl_int4;
         int spatial_key_bank_mem_size = max_bodies * Sizeof.cl_int2;
+        int points_mem_size           = max_points * Sizeof.cl_float4;
+        int edges_mem_size            = max_points * Sizeof.cl_float4;
 
-        mem_body_acceleration   = cl_new_buffer(FLAGS_WRITE_GPU, accleration_mem_size);
-        mem_body_element_tables = cl_new_buffer(FLAGS_WRITE_GPU, element_table_mem_size);
-        mem_body_flags          = cl_new_buffer(FLAGS_WRITE_GPU, flags_mem_size);
-        mem_aabb_index          = cl_new_buffer(FLAGS_WRITE_GPU, spatial_index_mem_size);
-        mem_aabb_key_bank       = cl_new_buffer(FLAGS_WRITE_GPU, spatial_key_bank_mem_size);
+        int total = transform_mem_size
+            + accleration_mem_size
+            + element_table_mem_size
+            + flags_mem_size
+            + bounding_box_mem_size
+            + spatial_index_mem_size
+            + spatial_key_bank_mem_size
+            + points_mem_size
+            + edges_mem_size;
+
+
+        System.out.println("transform buffer        : " + transform_mem_size   + " Bytes");
+        System.out.println("accleration buffer      : " + accleration_mem_size   + " Bytes");
+        System.out.println("element_table buffer    : " + element_table_mem_size   + " Bytes");
+        System.out.println("flags buffer            : " + flags_mem_size   + " Bytes");
+        System.out.println("bounding_box buffer     : " + bounding_box_mem_size   + " Bytes");
+        System.out.println("spatial_index buffer    : " + spatial_index_mem_size   + " Bytes");
+        System.out.println("spatial_key_bank buffer : " + spatial_key_bank_mem_size   + " Bytes");
+        System.out.println("points buffer           : " + points_mem_size   + " Bytes");
+        System.out.println("edges buffer            : " + edges_mem_size   + " Bytes");
+        System.out.println("----------------------------------------------------------");
+        System.out.println("-Total-                 : " + total        + " Bytes");
+        System.out.println("-Total (MB)-            : " + total / 1024 / 1024 + " MB");
+
+
+
+
+        mem_body_acceleration         = cl_new_buffer(FLAGS_WRITE_GPU, accleration_mem_size);
+        mem_body_element_tables       = cl_new_buffer(FLAGS_WRITE_GPU, element_table_mem_size);
+        mem_body_flags                = cl_new_buffer(FLAGS_WRITE_GPU, flags_mem_size);
+        mem_aabb_index                = cl_new_buffer(FLAGS_WRITE_GPU, spatial_index_mem_size);
+        mem_aabb_key_bank             = cl_new_buffer(FLAGS_WRITE_GPU, spatial_key_bank_mem_size);
+        mem_transform                 = cl_new_buffer(FLAGS_WRITE_GPU, transform_mem_size);
+        mem_aabb                      = cl_new_buffer(FLAGS_WRITE_GPU, bounding_box_mem_size);
+        mem_points                    = cl_new_buffer(FLAGS_WRITE_GPU, points_mem_size);
+        mem_edges                     = cl_new_buffer(FLAGS_WRITE_GPU, edges_mem_size);
 
         cl_zero_buffer(mem_body_acceleration, accleration_mem_size);
         cl_zero_buffer(mem_body_element_tables, element_table_mem_size);
         cl_zero_buffer(mem_body_flags, flags_mem_size);
         cl_zero_buffer(mem_aabb_index, spatial_index_mem_size);
         cl_zero_buffer(mem_aabb_key_bank, spatial_key_bank_mem_size);
-
-        aabb_mem = cl_new_buffer(FLAGS_WRITE_GPU, bounding_box_mem_size);
-        cl_zero_buffer(aabb_mem, bounding_box_mem_size);
-        point_mem = cl_new_buffer(FLAGS_WRITE_GPU, point_buffer_size);
-        edge_mem  = cl_new_buffer(FLAGS_WRITE_GPU, edge_buffer_size);
-        cl_zero_buffer(point_mem, body_buffer_size);
-        cl_zero_buffer(edge_mem, edge_buffer_size);
-
-        // old world
-        body_mem = cl_new_buffer(FLAGS_WRITE_GPU, body_buffer_size);
-        cl_zero_buffer(body_mem, body_buffer_size);
-
+        cl_zero_buffer(mem_transform, transform_mem_size);
+        cl_zero_buffer(mem_aabb, bounding_box_mem_size);
+        cl_zero_buffer(mem_points, points_mem_size);
+        cl_zero_buffer(mem_edges, edges_mem_size);
     }
 
     public static void destroy()
@@ -470,21 +497,21 @@ public class OpenCL
         loaded_kernels.forEach(CL::clReleaseKernel);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
-        clReleaseMemObject(point_mem);
-        clReleaseMemObject(body_mem);
-        clReleaseMemObject(aabb_mem);
-        clReleaseMemObject(edge_mem);
+        clReleaseMemObject(mem_points);
+        clReleaseMemObject(mem_transform);
+        clReleaseMemObject(mem_aabb);
+        clReleaseMemObject(mem_edges);
         // todo: destroy more/track it better
         vbo_edges.values().forEach(CL::clReleaseMemObject);
     }
 
     private static final HashMap<Integer, cl_mem> vbo_edges = new LinkedHashMap<>();
 
-    private static cl_mem point_mem;
-    private static cl_mem edge_mem;
+    private static cl_mem mem_points;
+    private static cl_mem mem_edges;
 
-    private static cl_mem body_mem;
-    private static cl_mem aabb_mem;
+    private static cl_mem mem_transform;
+    private static cl_mem mem_aabb;
     private static cl_mem mem_body_acceleration;
     private static cl_mem mem_body_element_tables;
     private static cl_mem mem_body_flags;
@@ -494,11 +521,11 @@ public class OpenCL
     public static void bindvertexVBO(int vboID)
     {
         cl_mem vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
-        if (point_mem != null)
+        if (mem_points != null)
         {
-            clReleaseMemObject(point_mem);
+            clReleaseMemObject(mem_points);
         }
-        point_mem = vbo_mem;
+        mem_points = vbo_mem;
     }
 
 
@@ -530,10 +557,10 @@ public class OpenCL
         //  efficiency. Where possible, 4 dimensional vectors are preferable, followed by
         //  2 dimensional vectors, and then scalars.
 
-        physicsBuffer.bounds = new MemoryBuffer(aabb_mem);
-        physicsBuffer.bodies = new MemoryBuffer(body_mem);
-        physicsBuffer.points = new MemoryBuffer(point_mem);
-        physicsBuffer.edges  = new MemoryBuffer(edge_mem);
+        physicsBuffer.bounds = new MemoryBuffer(mem_aabb);
+        physicsBuffer.bodies = new MemoryBuffer(mem_transform);
+        physicsBuffer.points = new MemoryBuffer(mem_points);
+        physicsBuffer.edges  = new MemoryBuffer(mem_edges);
         physicsBuffer.elements = new MemoryBuffer(mem_body_element_tables);
         physicsBuffer.acceleration = new MemoryBuffer(mem_body_acceleration);
         physicsBuffer.flags = new MemoryBuffer(mem_body_flags);
@@ -552,7 +579,7 @@ public class OpenCL
         var pnt_index = Pointer.to(arg_int(point_index));
         var pnt_point = Pointer.to(arg_float4(pos_x, pos_y, prv_x, prv_y));
 
-        clSetKernelArg(k_create_point, 0, Sizeof.cl_mem, Pointer.to(point_mem));
+        clSetKernelArg(k_create_point, 0, Sizeof.cl_mem, Pointer.to(mem_points));
         clSetKernelArg(k_create_point, 1, Sizeof.cl_int, pnt_index);
         clSetKernelArg(k_create_point, 2, Sizeof.cl_float4, pnt_point);
 
@@ -564,7 +591,7 @@ public class OpenCL
         var pnt_index = Pointer.to(arg_int(edge_index));
         var pnt_edge = Pointer.to(arg_float4(p1, p2, l, 0f));
 
-        clSetKernelArg(k_create_edge, 0, Sizeof.cl_mem, Pointer.to(edge_mem));
+        clSetKernelArg(k_create_edge, 0, Sizeof.cl_mem, Pointer.to(mem_edges));
         clSetKernelArg(k_create_edge, 1, Sizeof.cl_int, pnt_index);
         clSetKernelArg(k_create_edge, 2, Sizeof.cl_float4, pnt_edge);
 
@@ -578,7 +605,7 @@ public class OpenCL
         var pnt_table = Pointer.to(table);
         var pnt_body = Pointer.to(body);
 
-        clSetKernelArg(k_create_body, 0, Sizeof.cl_mem, Pointer.to(body_mem));
+        clSetKernelArg(k_create_body, 0, Sizeof.cl_mem, Pointer.to(mem_transform));
         clSetKernelArg(k_create_body, 1, Sizeof.cl_mem, Pointer.to(mem_body_element_tables));
         clSetKernelArg(k_create_body, 2, Sizeof.cl_mem, Pointer.to(mem_body_flags));
         clSetKernelArg(k_create_body, 3, Sizeof.cl_int, pnt_index);

@@ -226,6 +226,22 @@ __kernel void integrate(
         bounds_bank.y = size;
     }
 
+    // get the current angle between the center and the first point
+    if (gid == 0)
+    {
+        float4 p_test = points[start];
+        float4 l1 = (float4)(body.x, body.y, body.x, body.y + 1);
+        float4 l2 = (float4)(body.x, body.y, p_test.x, p_test.y);
+        float r_x = angle_between(l1, l2);
+        printf("debug: %f", r_x);
+    }
+
+    
+
+
+    //var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+    //var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+
     // store updated body and bounds data in result buffers
     bounds[gid] = bounding_box;
     bodies[gid] = body;
