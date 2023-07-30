@@ -556,14 +556,22 @@ public class OpenCL
         var vbo_mem2 = shared_mem.get(transforms_id);
         long[] global_work_size = arg_long(size);
 
+
+
         clSetKernelArg(k_prepare_transforms, 0, Sizeof.cl_mem, Pointer.to(mem_transform));
-        clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(mem_body_rotation));
-        clSetKernelArg(k_prepare_transforms, 2, Sizeof.cl_mem, Pointer.to(vbo_mem));
-        clSetKernelArg(k_prepare_transforms, 3, Sizeof.cl_mem, Pointer.to(vbo_mem2));
+        //clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(mem_body_rotation));
+        clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(vbo_mem));
+        clSetKernelArg(k_prepare_transforms, 2, Sizeof.cl_mem, Pointer.to(vbo_mem2));
+
+        float[] debug = new float[size * 2];
+        Pointer dst_debug = Pointer.to(debug);
 
         gl_acquire(vbo_mem);
         gl_acquire(vbo_mem2);
         k_call(k_prepare_transforms, global_work_size);
+
+        //cl_read_buffer(vbo_mem2, (long)debug.length * Sizeof.cl_int, dst_debug);
+
         gl_release(vbo_mem);
         gl_release(vbo_mem2);
     }

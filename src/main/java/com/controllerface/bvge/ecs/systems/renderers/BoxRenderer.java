@@ -30,7 +30,7 @@ public class BoxRenderer extends GameSystem
     private static final int ORIGIN_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE  * VERTEX_SIZE;
     private static final int ORIGIN_BUFFER_SIZE = ORIGIN_VERTEX_COUNT * Float.BYTES;
 
-    private static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE  * TRANSFORM_SIZE;
+    private static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE;
     private static final int TRANSFORM_BUFFER_SIZE = TRANSFORM_VERTEX_COUNT * Float.BYTES;
 
 
