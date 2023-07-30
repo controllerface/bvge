@@ -61,9 +61,19 @@ public class BoxRenderer extends GameSystem
         model_buffer_id = glGenBuffers();
 
 
+        var modl = Models.get_model_by_index(model_index);
+        modl[0] = modl[0] * 10;
+        modl[1] = modl[1] * 10;
+        modl[2] = modl[2] * 10;
+        modl[3] = modl[3] * 10;
+        modl[4] = modl[4] * 10;
+        modl[5] = modl[5] * 10;
+        modl[6] = modl[6] * 10;
+        modl[7] = modl[7] * 10;
+
         // load model data and configure the vertex attributes
         glBindBuffer(GL_ARRAY_BUFFER, model_buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, Models.get_model_by_index(model_index), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, modl, GL_STATIC_DRAW);
 
         // create buffer for transforms and configure the instance divisor
         glBindBuffer(GL_ARRAY_BUFFER, tranform_buffer_ID); // this attribute comes from a different vertex buffer

@@ -14,7 +14,6 @@ __kernel void prepare_transforms(__global float4 *transforms,
     transform_out.y = transform.y; 
     //transform_out.z = rotation.x; 
     transforms_out[gid] = transform_out;
-    //printf("index: %d", index);
     //printf("debug: %f %f %f", transform.x, transform.y, rotation.x);
-    //printf("debug: %f %f", transform.x, transform.y);
+    //printf("debug: %d %f %f\n", index, transform.x, transform.y);
 }

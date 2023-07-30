@@ -90,9 +90,9 @@ public class BoxRenderBatch
         currentShader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
         currentShader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
 
-        glBindVertexArray(vaoID);
-
         OpenCL.batch_transforms_GL(vboID, transform_buffer_ID, numModels);
+
+        glBindVertexArray(vaoID);
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);

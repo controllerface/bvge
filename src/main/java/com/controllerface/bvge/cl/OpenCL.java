@@ -503,16 +503,17 @@ public class OpenCL
 
     public static void destroy()
     {
+        //clReleaseMemObject(mem_points);
+        //clReleaseMemObject(mem_transform);
+        //clReleaseMemObject(mem_aabb);
+        //clReleaseMemObject(mem_edges);
+        // todo: destroy more/track it better
+        //shared_mem.values().forEach(CL::clReleaseMemObject);
+
         loaded_programs.forEach(CL::clReleaseProgram);
         loaded_kernels.forEach(CL::clReleaseKernel);
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
-        clReleaseMemObject(mem_points);
-        clReleaseMemObject(mem_transform);
-        clReleaseMemObject(mem_aabb);
-        clReleaseMemObject(mem_edges);
-        // todo: destroy more/track it better
-        shared_mem.values().forEach(CL::clReleaseMemObject);
     }
 
     private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
@@ -556,22 +557,14 @@ public class OpenCL
         var vbo_mem2 = shared_mem.get(transforms_id);
         long[] global_work_size = arg_long(size);
 
-
-
         clSetKernelArg(k_prepare_transforms, 0, Sizeof.cl_mem, Pointer.to(mem_transform));
         //clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(mem_body_rotation));
         clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(vbo_mem));
         clSetKernelArg(k_prepare_transforms, 2, Sizeof.cl_mem, Pointer.to(vbo_mem2));
 
-        float[] debug = new float[size * 2];
-        Pointer dst_debug = Pointer.to(debug);
-
         gl_acquire(vbo_mem);
         gl_acquire(vbo_mem2);
         k_call(k_prepare_transforms, global_work_size);
-
-        //cl_read_buffer(vbo_mem2, (long)debug.length * Sizeof.cl_int, dst_debug);
-
         gl_release(vbo_mem);
         gl_release(vbo_mem2);
     }
