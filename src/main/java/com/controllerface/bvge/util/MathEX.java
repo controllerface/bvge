@@ -43,6 +43,16 @@ public class MathEX
         vec.y = yPrime;
     }
 
+    public static float degreesToRadians(float degrees)
+    {
+        return (float)(degrees * (Math.PI / 180));
+    }
+
+    public static float radiansToDegrees(float radians)
+    {
+        return (float)(Math.PI / radians);
+    }
+
     public static float angleBetween2Lines(float[] line1, float[] line2)
     {
         float l1x1 = line1[0];

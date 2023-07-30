@@ -9,12 +9,10 @@ public class PhysicsBuffer
     public MemoryBuffer bodies;
     public MemoryBuffer points;
     public MemoryBuffer edges;
-
-    //public MemoryBuffer transforms;
     public MemoryBuffer acceleration;
+    public MemoryBuffer rotation;
     public MemoryBuffer elements;
     public MemoryBuffer flags;
-    //public MemoryBuffer extents;
     public MemoryBuffer index;
     public MemoryBuffer bank;
 
@@ -108,20 +106,12 @@ public class PhysicsBuffer
         if (bodies != null) bodies.release();
         if (points != null) points.release();
         if (edges != null) edges.release();
-
-
-
-
-        //if (transforms != null) transforms.release();
         if (acceleration != null) acceleration.release();
+        if (rotation != null) rotation.release();
         if (elements != null) elements.release();
         if (flags != null) flags.release();
-        //if (extents != null) extents.release();
         if (index != null) index.release();
         if (bank != null) bank.release();
-
-
-
     }
 
     public int get_candidate_buffer_count()

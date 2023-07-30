@@ -7,7 +7,7 @@ import com.controllerface.bvge.util.MathEX;
 import org.joml.Vector2f;
 
 /**
- * This is the core "factor" class for all physics based objects. It contains named archetype
+ * This is the core "factory" class for all physics based objects. It contains named archetype
  * methods that can be used to create tracked objects.
  */
 public class PhysicsObjects
@@ -39,53 +39,30 @@ public class PhysicsObjects
         var p4_index = Main.Memory.newPoint(p4);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
-
         var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
         var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
-        // todo: store this reference angle so it acn be used to calculate current body rotation
+        // todo: store this reference angle so it can be used to calculate current body rotation
         var angle = MathEX.angleBetween2Lines(l1, l2);
 
+
         // box sides
-        var start_edge = Main.Memory.newEdge(
-            p1_index / Main.Memory.Width.POINT,
-            p2_index / Main.Memory.Width.POINT,
-            distance(p2, p1));
-
-        Main.Memory.newEdge(
-            p2_index / Main.Memory.Width.POINT,
-            p3_index / Main.Memory.Width.POINT,
-            distance(p3, p2));
-
-        Main.Memory.newEdge(
-            p3_index / Main.Memory.Width.POINT,
-            p4_index / Main.Memory.Width.POINT,
-            distance(p4, p3));
-
-        Main.Memory.newEdge(
-            p4_index / Main.Memory.Width.POINT,
-            p1_index / Main.Memory.Width.POINT,
-            distance(p1, p4));
+        var start_edge = Main.Memory.newEdge(p1_index, p2_index, distance(p2, p1));
+        Main.Memory.newEdge(p2_index, p3_index, distance(p3, p2));
+        Main.Memory.newEdge(p3_index, p4_index, distance(p4, p3));
+        Main.Memory.newEdge(p4_index, p1_index, distance(p1, p4));
 
         // corner braces
-        Main.Memory.newEdge(
-            p1_index / Main.Memory.Width.POINT,
-            p3_index / Main.Memory.Width.POINT,
-            distance(p3, p1));
+        Main.Memory.newEdge(p1_index, p3_index, distance(p3, p1));
+        var end_edge = Main.Memory.newEdge(p2_index, p4_index, distance(p4, p2));
 
-        var end_edge = Main.Memory.newEdge(
-            p2_index / Main.Memory.Width.POINT,
-            p4_index / Main.Memory.Width.POINT,
-            distance(p4, p2));
+        var table = OpenCL.arg_int4(p1_index, p4_index, start_edge, end_edge);
+        var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
+        var rotation = OpenCL.arg_float2(0, angle);
 
-        var table = OpenCL.arg_int4(p1_index / Main.Memory.Width.POINT,
-             p4_index / Main.Memory.Width.POINT,
-             start_edge / Main.Memory.Width.EDGE,
-             end_edge / Main.Memory.Width.EDGE);
-
-        var arg = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
-
-        return Main.Memory.newBody(arg, table, flags);
+        int body_id =  Main.Memory.newBody(transform, rotation, table, flags);
+        Models.register_model_instance(0, body_id);
+        return body_id;
     }
 
     public static int dynamic_Box(float x, float y, float size)
@@ -100,6 +77,7 @@ public class PhysicsObjects
 
     public static int polygon1(float x, float y, float size)
     {
+        // todo: will probably need the model ID stored for the body in order to delete it later
         var mdl = Models.get_model_by_index(1);
 
         var p1 = OpenCL.arg_float2(mdl[0] * size + x, mdl[1] * size + y);
@@ -115,68 +93,34 @@ public class PhysicsObjects
         var p5_index = Main.Memory.newPoint(p5);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4, p5);
+        var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+        var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
+        // todo: store this reference angle so it can be used to calculate current body rotation
+        var angle = MathEX.angleBetween2Lines(l1, l2);
+        if (Main.Memory.bodyCount() == 0)
+        {
+            System.out.println("Initial: " + angle);
+        }
         // box sides
-        var start_edge = Main.Memory.newEdge(
-            p1_index / Main.Memory.Width.POINT,
-            p2_index / Main.Memory.Width.POINT,
-            distance(p2, p1)
-        );
-
-        Main.Memory.newEdge(
-            p2_index / Main.Memory.Width.POINT,
-            p3_index / Main.Memory.Width.POINT,
-            distance(p3, p2)
-        );
-
-        Main.Memory.newEdge(
-            p3_index / Main.Memory.Width.POINT,
-            p4_index / Main.Memory.Width.POINT,
-            distance(p4, p3)
-        );
-
-        Main.Memory.newEdge(
-            p4_index / Main.Memory.Width.POINT,
-            p1_index / Main.Memory.Width.POINT,
-            distance(p1, p4)
-        );
-
-
-        Main.Memory.newEdge(
-            p4_index / Main.Memory.Width.POINT,
-            p5_index / Main.Memory.Width.POINT,
-            distance(p4, p5)
-        );
-
-        Main.Memory.newEdge(
-            p3_index / Main.Memory.Width.POINT,
-            p5_index / Main.Memory.Width.POINT,
-            distance(p3, p5)
-        );
+        var start_edge = Main.Memory.newEdge(p1_index, p2_index, distance(p2, p1));
+        Main.Memory.newEdge(p2_index, p3_index, distance(p3, p2));
+        Main.Memory.newEdge(p3_index, p4_index, distance(p4, p3));
+        Main.Memory.newEdge(p4_index, p1_index, distance(p1, p4));
+        Main.Memory.newEdge(p4_index, p5_index, distance(p4, p5));
+        Main.Memory.newEdge(p3_index, p5_index, distance(p3, p5));
 
         // corner braces
-        Main.Memory.newEdge(
-            p1_index / Main.Memory.Width.POINT,
-            p3_index / Main.Memory.Width.POINT,
-            distance(p3, p1)
-        );
+        Main.Memory.newEdge(p1_index, p3_index, distance(p3, p1));
+        var end_edge = Main.Memory.newEdge(p2_index, p4_index, distance(p4, p2));
 
-        var end_edge = Main.Memory.newEdge(
-            p2_index / Main.Memory.Width.POINT,
-            p4_index / Main.Memory.Width.POINT,
-            distance(p4, p2)
-        );
+        var table = OpenCL.arg_int4(p1_index, p5_index, start_edge, end_edge);
+        var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
+        var rotation = OpenCL.arg_float2(0, angle);
 
-        var table = OpenCL.arg_int4(p1_index / Main.Memory.Width.POINT,
-             p5_index / Main.Memory.Width.POINT,
-             start_edge / Main.Memory.Width.EDGE,
-             end_edge / Main.Memory.Width.EDGE);
-
-        var arg = OpenCL.arg_float16(vector_buffer.x, vector_buffer.y,
-            size, size, 0, 0, 0,
-            0f, 0f, 0f, 0f,
-            0f,0f,0f,0f,0f);
-
-        return Main.Memory.newBody(arg, table, FLAG_NONE);
+        // todo: register this body index as using the indexed model
+        int body_id = Main.Memory.newBody(transform, rotation, table, FLAG_NONE);
+        Models.register_model_instance(1, body_id);
+        return body_id;
     }
 }

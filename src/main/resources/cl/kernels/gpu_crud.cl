@@ -3,9 +3,6 @@ This is a collection of Create/Read/Update/Delete (CRUD) functions that are used
 to query and update objects stored on the GPU. Unlike most kernels, these functions
 are designed to operate on a single target object. 
  */
-
- // todo: convert to float 4, transform
-
 __kernel void read_position(__global float4 *bodies,
                             __global float *output,
                             int target)
@@ -24,8 +21,6 @@ __kernel void update_accel(__global float2 *body_accel,
     accel.y = new_value.y;
     body_accel[target] = accel;
 }
-
-// todo: convert to float 4 transform,
 
 __kernel void rotate_body(__global float4 *bodies,
                           __global int4 *element_tables,
@@ -59,17 +54,18 @@ __kernel void create_edge(__global float4 *edges,
     edges[target] = new_edge; 
 }
 
-// todo: convert to float 4, transform
-
 __kernel void create_body(__global float4 *bodies,
+                          __global float2 *body_rotations,
                           __global int4 *element_tables,
                           __global int *body_flags,
                           int target,
                           float4 new_body,
+                          float2 new_rotation,
                           int4 new_table,
                           int new_flags)
 {
     bodies[target] = new_body; 
+    body_rotations[target] = new_rotation; 
     element_tables[target] = new_table; 
     body_flags[target] = new_flags; 
 }

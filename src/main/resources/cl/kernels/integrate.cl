@@ -6,15 +6,11 @@ in a process that updates all the tracked vertices each frame.
 Some meta-data about the bodies that are updated is stored within
 them before this kernel completes. 
  */
-
-// todo: convert to: 
-//  - float 4, transform
-
-
 __kernel void integrate(
     __global float4 *bodies,
     __global int4 *element_tables,
     __global float2 *body_accel,
+    __global float2 *body_rotations,
     __global float4 *points,
     __global float4 *bounds,
     __global int4 *bounds_index_data,
@@ -43,6 +39,7 @@ __kernel void integrate(
     int4 element_table = element_tables[gid];
     int body_1_flags = body_flags[gid];
     float2 acceleration = body_accel[gid];
+    float2 rotation = body_rotations[gid];
     float4 bounding_box = bounds[gid];
     int4 bounds_index = bounds_index_data[gid];
     int2 bounds_bank = bounds_bank_data[gid];
@@ -226,26 +223,17 @@ __kernel void integrate(
         bounds_bank.y = size;
     }
 
-    // get the current angle between the center and the first point
-    if (gid == 0)
-    {
-        float4 p_test = points[start];
-        float4 l1 = (float4)(body.x, body.y, body.x, body.y + 1);
-        float4 l2 = (float4)(body.x, body.y, p_test.x, p_test.y);
-        float r_x = angle_between(l1, l2);
-        printf("debug: %f", r_x);
-    }
-
-    
-
-
-    //var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
-    //var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+    float4 p_test = points[start];
+    float4 l1 = (float4)(body.x, body.y, body.x, body.y + 1);
+    float4 l2 = (float4)(body.x, body.y, p_test.x, p_test.y);
+    float r_x = angle_between(l1, l2);
+    rotation.x = rotation.y - r_x;
 
     // store updated body and bounds data in result buffers
     bounds[gid] = bounding_box;
     bodies[gid] = body;
     body_accel[gid] = acceleration;
+    body_rotations[gid] = rotation;
     bounds_index_data[gid] = bounds_index;
     bounds_bank_data[gid] = bounds_bank;
 }

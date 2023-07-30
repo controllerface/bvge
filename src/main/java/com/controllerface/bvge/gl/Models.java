@@ -1,15 +1,24 @@
 package com.controllerface.bvge.gl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class Models
 {
-    public static Map<Integer, float[]> loadedModels = new HashMap<>();
+    private static final Map<Integer, float[]> loaded_models = new HashMap<>();
+    private static final Map<Integer, Set<Integer>> model_instances = new HashMap<>();
 
     public static float[] get_model_by_index(int index)
     {
-        return loadedModels.get(index);
+        return loaded_models.get(index);
+    }
+
+    public static void register_model_instance(int model_id, int body_id)
+    {
+        model_instances.computeIfAbsent(model_id, _k->new HashSet<>())
+            .add(body_id);
     }
 
     /**
@@ -52,7 +61,7 @@ public class Models
 
     public static void init()
     {
-        loadedModels.put(0, load_box_model());
-        loadedModels.put(1, load_poly1_model());
+        loaded_models.put(0, load_box_model());
+        loaded_models.put(1, load_poly1_model());
     }
 }

@@ -42,19 +42,21 @@ public class Main
         {
             OpenCL.create_edge(edgesCount(), p1, p2, l);
             edge_index += Width.EDGE;
-            return edge_index - Width.EDGE;
+            var idx = edge_index - Width.EDGE;
+            return idx / Width.EDGE;
         }
 
         public static int newPoint(float[] p)
         {
             OpenCL.create_point(pointsCount(), p[0], p[1], p[0], p[1]);
             point_index += Width.POINT;
-            return point_index - Width.POINT;
+            var idx = point_index - Width.POINT;
+            return idx / Width.POINT;
         }
 
-        public static int newBody(float[] transform, int[] table, int flags)
+        public static int newBody(float[] transform, float[] rotation, int[] table, int flags)
         {
-            OpenCL.create_body(bodyCount(), transform, table, flags);
+            OpenCL.create_body(bodyCount(), transform, rotation, table, flags);
             body_index += Width.BODY;
             var idx = body_index - Width.BODY;
             return idx / Width.BODY;
