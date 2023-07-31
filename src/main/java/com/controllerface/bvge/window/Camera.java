@@ -37,6 +37,14 @@ public class Camera
             projectionSize.y * zoom,
             0.0f,
             100.0f);
+
+//        projectionMatrix.perspective(0.0f,
+//            (projectionSize.x * zoom) / (projectionSize.y * zoom),
+//            0.0f,
+//            100.0f,
+//            false,
+//            projectionMatrix);
+
         projectionMatrix.invert(inverseProjection);
     }
 

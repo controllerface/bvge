@@ -12,13 +12,11 @@ import com.controllerface.bvge.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static org.lwjgl.opengl.GL15.*;
 
 public class BoxRenderer extends GameSystem
 {
-    public static final int VERTEX_SIZE = 2; // a vertex is 2 floats (x,y)
-    public static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
-
     public static final int TRANSFORM_SIZE = 4; // a transform is 3 floats (x,y,w)
     public static final int TRANSFORM_SIZE_BYTES = TRANSFORM_SIZE * Float.BYTES;
     public static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * TRANSFORM_SIZE;
@@ -42,23 +40,33 @@ public class BoxRenderer extends GameSystem
     {
         var base_model = Models.get_model_by_index(model_index);
         var vbo_model = new float[12];
-        vbo_model[0] = base_model[0]; // p1
-        vbo_model[1] = base_model[1];
+        vbo_model[0] = base_model[0];  // tri 1 // p1 x
+        vbo_model[1] = base_model[1];           // p1 y
+        vbo_model[2] = base_model[2];           // p2 x
+        vbo_model[3] = base_model[3];           // p2 y
+        vbo_model[4] = base_model[4];           // p3 x
+        vbo_model[5] = base_model[5];           // p3 y
+        vbo_model[6] = base_model[0];  // tri 2 // p1 x
+        vbo_model[7] = base_model[1];           // p1 y
+        vbo_model[8] = base_model[4];           // p3 x
+        vbo_model[9] = base_model[5];           // p3 y
+        vbo_model[10] = base_model[6];          // p4 x
+        vbo_model[11] = base_model[7];          // p4 y
 
-        vbo_model[2] = base_model[2]; // p2
-        vbo_model[3] = base_model[3];
 
-        vbo_model[4] = base_model[4]; // p3
-        vbo_model[5] = base_model[5];
-
-        vbo_model[6] = base_model[0]; // p1
-        vbo_model[7] = base_model[1];
-
-        vbo_model[8] = base_model[4]; // p3
-        vbo_model[9] = base_model[5];
-
-        vbo_model[10] = base_model[6]; // p4
-        vbo_model[11] = base_model[7];
+        var vbo_tex_coords = new float[12];
+        vbo_tex_coords[0] = 0f;  // tri 1 // p1 x
+        vbo_tex_coords[1] = 0f;           // p1 y
+        vbo_tex_coords[2] = 1f;           // p2 x
+        vbo_tex_coords[3] = 0f;           // p2 y
+        vbo_tex_coords[4] = 1f;           // p3 x
+        vbo_tex_coords[5] = 1f;           // p3 y
+        vbo_tex_coords[6] = 0f;  // tri 2 // p1 x
+        vbo_tex_coords[7] = 0f;           // p1 y
+        vbo_tex_coords[8] = 1f;           // p3 x
+        vbo_tex_coords[9] = 1f;           // p3 y
+        vbo_tex_coords[10] = 0f;          // p4 x
+        vbo_tex_coords[11] = 1f;          // p4 y
 
         // load model data
         model_buffer_id = glGenBuffers();

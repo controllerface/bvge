@@ -5,6 +5,8 @@ import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.ecs.systems.renderers.BoxRenderer.*;
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
@@ -45,7 +47,7 @@ public class BoxRenderBatch
         // load model data and configure the vertex attributes
         glBindBuffer(GL_ARRAY_BUFFER, model_buffer_id);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, 0);
+        glVertexAttribPointer(0, VECTOR_2D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_2D_SIZE, 0);
 
         // create buffer for transforms and configure the instance divisor
         glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_ID); // this attribute comes from a different vertex buffer
