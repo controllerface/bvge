@@ -5,8 +5,7 @@ import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.ecs.systems.renderers.BoxRenderer.*;
-import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
-import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
+import static com.controllerface.bvge.util.Constants.Rendering.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
@@ -18,18 +17,20 @@ public class BoxRenderBatch
 {
     private int numModels;
     private int vaoID, vboID;
-    private final int transform_buffer_ID, model_buffer_id;
+    private final int transform_buffer_ID, model_buffer_id, texture_uv_buffer_id;
     private final Shader currentShader;
     private int[] indices; // will be large enough to hold a full batch, but may only contain a partial one
 
     public BoxRenderBatch(Shader currentShader,
                           int transform_buffer_ID,
-                          int model_buffer_id)
+                          int model_buffer_id,
+                          int texture_uv_buffer_id)
     {
         //this.numModels = numModels;
         this.currentShader = currentShader;
         this.transform_buffer_ID = transform_buffer_ID;
         this.model_buffer_id = model_buffer_id;
+        this.texture_uv_buffer_id = texture_uv_buffer_id;
         //this.indices = indices;
         //start();
     }
@@ -49,10 +50,14 @@ public class BoxRenderBatch
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, VECTOR_2D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_2D_SIZE, 0);
 
+        glBindBuffer(GL_ARRAY_BUFFER, texture_uv_buffer_id);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(2, VECTOR_2D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_2D_SIZE, 0);
+
         // create buffer for transforms and configure the instance divisor
         glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_ID); // this attribute comes from a different vertex buffer
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, TRANSFORM_SIZE, GL_FLOAT, false, TRANSFORM_SIZE_BYTES, 0);
+        glVertexAttribPointer(1, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
         glVertexAttribDivisor(1, 1);
 
         // share the buffer with the CL context

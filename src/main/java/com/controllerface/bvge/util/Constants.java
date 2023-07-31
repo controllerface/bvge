@@ -13,7 +13,7 @@ public class Constants
         public static final int VECTOR_FLOAT_2D_SIZE = VECTOR_2D_LENGTH * Float.BYTES;
         public static final int VECTOR_INT_2D_SIZE = VECTOR_2D_LENGTH * Integer.BYTES;
 
-        public static final int VECTOR_4D_LENGTH = 2; // 3D vector; x,y,z,w
+        public static final int VECTOR_4D_LENGTH = 4; // 3D vector; x,y,z,w
         public static final int VECTOR_FLOAT_4D_SIZE = VECTOR_4D_LENGTH * Float.BYTES;
         public static final int VECTOR_INT_4D_SIZE = VECTOR_4D_LENGTH * Integer.BYTES;
     }

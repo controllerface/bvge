@@ -12,21 +12,20 @@ import com.controllerface.bvge.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static org.lwjgl.opengl.GL15.*;
 
 public class BoxRenderer extends GameSystem
 {
-    public static final int TRANSFORM_SIZE = 4; // a transform is 3 floats (x,y,w)
-    public static final int TRANSFORM_SIZE_BYTES = TRANSFORM_SIZE * Float.BYTES;
-    public static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * TRANSFORM_SIZE;
+    public static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_4D_LENGTH;
     public static final int TRANSFORM_BUFFER_SIZE = TRANSFORM_VERTEX_COUNT * Float.BYTES;
 
     private final int model_index = 0;
     private final Shader shader;
     private final List<BoxRenderBatch> batches;
     private int model_buffer_id;
-    private int tranform_buffer_ID;
+    private int transform_buffer_id;
+    private int texture_uv_buffer_id;
 
     public BoxRenderer(ECS ecs)
     {
@@ -55,31 +54,35 @@ public class BoxRenderer extends GameSystem
 
 
         var vbo_tex_coords = new float[12];
-        vbo_tex_coords[0] = 0f;  // tri 1 // p1 x
-        vbo_tex_coords[1] = 0f;           // p1 y
-        vbo_tex_coords[2] = 1f;           // p2 x
-        vbo_tex_coords[3] = 0f;           // p2 y
-        vbo_tex_coords[4] = 1f;           // p3 x
-        vbo_tex_coords[5] = 1f;           // p3 y
-        vbo_tex_coords[6] = 0f;  // tri 2 // p1 x
-        vbo_tex_coords[7] = 0f;           // p1 y
-        vbo_tex_coords[8] = 1f;           // p3 x
-        vbo_tex_coords[9] = 1f;           // p3 y
-        vbo_tex_coords[10] = 0f;          // p4 x
-        vbo_tex_coords[11] = 1f;          // p4 y
+        vbo_tex_coords[0] = 0f;  // tri 1 // p1 u
+        vbo_tex_coords[1] = 0f;           // p1 v
+        vbo_tex_coords[2] = 1f;           // p2 u
+        vbo_tex_coords[3] = 0f;           // p2 v
+        vbo_tex_coords[4] = 1f;           // p3 u
+        vbo_tex_coords[5] = 1f;           // p3 v
+        vbo_tex_coords[6] = 0f;  // tri 2 // p1 u
+        vbo_tex_coords[7] = 0f;           // p1 v
+        vbo_tex_coords[8] = 1f;           // p3 u
+        vbo_tex_coords[9] = 1f;           // p3 v
+        vbo_tex_coords[10] = 0f;          // p4 u
+        vbo_tex_coords[11] = 1f;          // p4 v
 
         // load model data
         model_buffer_id = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, model_buffer_id);
         glBufferData(GL_ARRAY_BUFFER, vbo_model, GL_STATIC_DRAW);
 
+        texture_uv_buffer_id = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, texture_uv_buffer_id);
+        glBufferData(GL_ARRAY_BUFFER, vbo_tex_coords, GL_STATIC_DRAW);
+
         // create buffer for transforms, batches will use this during the rendering process
-        tranform_buffer_ID = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, tranform_buffer_ID); // this attribute comes from a different vertex buffer
+        transform_buffer_id = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_id); // this attribute comes from a different vertex buffer
         glBufferData(GL_ARRAY_BUFFER, TRANSFORM_BUFFER_SIZE, GL_DYNAMIC_DRAW);
 
         // share the buffer with the CL context
-        OpenCL.share_memory(tranform_buffer_ID);
+        OpenCL.share_memory(transform_buffer_id);
 
         // unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -115,7 +118,7 @@ public class BoxRenderer extends GameSystem
             }
             while (needed_batches > batches.size())
             {
-                var b = new BoxRenderBatch(shader, tranform_buffer_ID, model_buffer_id);
+                var b = new BoxRenderBatch(shader, transform_buffer_id, model_buffer_id, texture_uv_buffer_id);
                 batches.add(b);
             }
 
