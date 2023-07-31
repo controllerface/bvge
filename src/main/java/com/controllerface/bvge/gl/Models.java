@@ -53,10 +53,13 @@ public class Models
         float[] model = new float[8];
         model[0] = -halfSize;
         model[1] = -halfSize;
+
         model[2] = halfSize;
         model[3] = -halfSize;
+
         model[4] = halfSize;
         model[5] = halfSize;
+
         model[6] = -halfSize;
         model[7] = halfSize;
         return model;

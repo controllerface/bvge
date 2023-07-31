@@ -27,7 +27,7 @@ public class VerletPhysics extends GameSystem
     //  and applied when contact occurs.
     private final float GRAVITY_X = 0;
     private final float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
-    private final float FRICTION = .985f;
+    private final float FRICTION = .9999f;
 
     private final SpatialPartition spatialPartition;
     private PhysicsBuffer physicsBuffer;

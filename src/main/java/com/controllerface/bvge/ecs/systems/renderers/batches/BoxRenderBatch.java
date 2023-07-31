@@ -91,7 +91,7 @@ public class BoxRenderBatch
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, numModels);
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, numModels);
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glBindVertexArray(0);

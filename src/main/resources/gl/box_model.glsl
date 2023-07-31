@@ -32,12 +32,13 @@ vec2 rotate(vec2 vec, float angleDeg, vec2 origin)
 
 void main()
 {
-    fColor = vec3(1, 0.2, 0.8);
+    fColor = vec3(0.2, 0.2, 1);
 
     vec2 pos_offset;
     pos_offset.x = aTransform.x;
     pos_offset.y = aTransform.y;
-    vec2 translated = aPos + pos_offset;
+    vec2 scaled = aPos * aTransform.w;
+    vec2 translated = scaled + pos_offset;
     vec2 rotated = rotate(translated, aTransform.z, pos_offset);
     gl_Position = uProjection * uView * vec4(rotated, 0.0, 1.0);
 }

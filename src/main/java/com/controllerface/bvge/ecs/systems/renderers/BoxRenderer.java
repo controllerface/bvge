@@ -41,20 +41,39 @@ public class BoxRenderer extends GameSystem
     public void start()
     {
         // todo: for now, just scale the model manually by 10x, until scale transform is wired up
-        var model = Models.get_model_by_index(model_index);
-        model[0] = model[0] * 10;
-        model[1] = model[1] * 10;
-        model[2] = model[2] * 10;
-        model[3] = model[3] * 10;
-        model[4] = model[4] * 10;
-        model[5] = model[5] * 10;
-        model[6] = model[6] * 10;
-        model[7] = model[7] * 10;
+        var base_model = Models.get_model_by_index(model_index);
+//        base_model[0] = base_model[0] * 10;
+//        base_model[1] = base_model[1] * 10;
+//        base_model[2] = base_model[2] * 10;
+//        base_model[3] = base_model[3] * 10;
+//        base_model[4] = base_model[4] * 10;
+//        base_model[5] = base_model[5] * 10;
+//        base_model[6] = base_model[6] * 10;
+//        base_model[7] = base_model[7] * 10;
+
+        var vbo_model = new float[12];
+        vbo_model[0] = base_model[0]; // p1
+        vbo_model[1] = base_model[1];
+
+        vbo_model[2] = base_model[2]; // p2
+        vbo_model[3] = base_model[3];
+
+        vbo_model[4] = base_model[4]; // p3
+        vbo_model[5] = base_model[5];
+
+        vbo_model[6] = base_model[0]; // p1
+        vbo_model[7] = base_model[1];
+
+        vbo_model[8] = base_model[4]; // p3
+        vbo_model[9] = base_model[5];
+
+        vbo_model[10] = base_model[6]; // p4
+        vbo_model[11] = base_model[7];
 
         // load model data
         model_buffer_id = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, model_buffer_id);
-        glBufferData(GL_ARRAY_BUFFER, model, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vbo_model, GL_STATIC_DRAW);
 
         // create buffer for transforms, batches will use this during the rendering process
         tranform_buffer_ID = glGenBuffers();

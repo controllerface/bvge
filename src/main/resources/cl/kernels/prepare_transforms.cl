@@ -12,7 +12,8 @@ __kernel void prepare_transforms(__global float4 *transforms,
     float4 transform_out;
     transform_out.x = transform.x; 
     transform_out.y = transform.y; 
-    transform_out.z = rotation.x; 
+    transform_out.z = rotation.x;
+    transform_out.w = transform.z; // just use x scale for now 
     transforms_out[gid] = transform_out;
     //printf("debug: %f %f %f", transform.x, transform.y, rotation.x);
     //printf("debug: %d %f %f\n", index, transform.x, transform.y);

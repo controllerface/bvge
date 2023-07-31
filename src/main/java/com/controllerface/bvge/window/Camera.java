@@ -72,13 +72,13 @@ public class Camera
     public void addZoom(float value)
     {
         this.zoom += value;
-        if (zoom < .2f)
+        if (zoom < .5f)
         {
-            zoom = .2f;
+            zoom = .5f;
         }
-        else if (zoom > 20f)
+        else if (zoom > 1000f)
         {
-            zoom = 20f;
+            zoom = 1000f;
         }
     }
 }
