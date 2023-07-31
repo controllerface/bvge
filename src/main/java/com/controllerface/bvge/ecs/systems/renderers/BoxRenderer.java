@@ -40,17 +40,7 @@ public class BoxRenderer extends GameSystem
 
     public void start()
     {
-        // todo: for now, just scale the model manually by 10x, until scale transform is wired up
         var base_model = Models.get_model_by_index(model_index);
-//        base_model[0] = base_model[0] * 10;
-//        base_model[1] = base_model[1] * 10;
-//        base_model[2] = base_model[2] * 10;
-//        base_model[3] = base_model[3] * 10;
-//        base_model[4] = base_model[4] * 10;
-//        base_model[5] = base_model[5] * 10;
-//        base_model[6] = base_model[6] * 10;
-//        base_model[7] = base_model[7] * 10;
-
         var vbo_model = new float[12];
         vbo_model[0] = base_model[0]; // p1
         vbo_model[1] = base_model[1];
@@ -108,7 +98,6 @@ public class BoxRenderer extends GameSystem
 
             // get the number of models that need to be rendered
             var model_count = Models.get_instance_count(model_index);
-            System.out.println("debug: count="+ model_count);
 
             var needed_batches = model_count / Constants.Rendering.MAX_BATCH_SIZE;
             var r = model_count % Constants.Rendering.MAX_BATCH_SIZE;

@@ -463,19 +463,21 @@ public class OpenCL
             + edges_mem_size;
 
         System.out.println("------------- BUFFERS -------------");
-        System.out.println("points           : " + points_mem_size   + " Bytes");
-        System.out.println("edges            : " + edges_mem_size   + " Bytes");
-        System.out.println("transformw       : " + transform_mem_size   + " Bytes");
-        System.out.println("acceleration     : " + accleration_mem_size   + " Bytes");
-        System.out.println("rotation         : " + rotation_mem_size   + " Bytes");
-        System.out.println("element table    : " + element_table_mem_size   + " Bytes");
-        System.out.println("flags            : " + flags_mem_size   + " Bytes");
-        System.out.println("bounding box     : " + bounding_box_mem_size   + " Bytes");
-        System.out.println("spatial index    : " + spatial_index_mem_size   + " Bytes");
-        System.out.println("spatial key bank : " + spatial_key_bank_mem_size   + " Bytes");
+        System.out.println("points           : " + points_mem_size);
+        System.out.println("edges            : " + edges_mem_size);
+        System.out.println("transforms       : " + transform_mem_size);
+        System.out.println("acceleration     : " + accleration_mem_size);
+        System.out.println("rotation         : " + rotation_mem_size);
+        System.out.println("element table    : " + element_table_mem_size);
+        System.out.println("flags            : " + flags_mem_size);
+        System.out.println("bounding box     : " + bounding_box_mem_size);
+        System.out.println("spatial index    : " + spatial_index_mem_size);
+        System.out.println("spatial key bank : " + spatial_key_bank_mem_size);
         System.out.println("=====================================");
-        System.out.println("-Total-                 : " + total        + " Bytes");
-        System.out.println("-Total (MB)-            : " + total / 1024 / 1024 + " MB");
+        System.out.println(" Total (Bytes)   : " + total);
+        System.out.println("              KB : " + ((float)total / 1024f));
+        System.out.println("              MB : " + ((float)total / 1024f / 1024f));
+        System.out.println("              GB : " + ((float)total / 1024f / 1024f / 1024f));
         System.out.println("-----------------------------------\n");
 
         mem_body_acceleration         = cl_new_buffer(FLAGS_WRITE_GPU, accleration_mem_size);
