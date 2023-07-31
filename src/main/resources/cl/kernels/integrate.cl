@@ -1,4 +1,4 @@
-#define MINIMUM_DIFF 0.000
+#define MINIMUM_DIFF 0.005
 
 /**
 Performs the integration step of a physics loop, generally this is the first stage

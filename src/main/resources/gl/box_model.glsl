@@ -5,6 +5,7 @@ layout (location = 1) in vec4 aTransform;
 layout (location = 2) in vec2 aTexCoords;
 
 out vec3 fColor;
+out vec2 fTexCoords;
 
 uniform mat4 uView;
 uniform mat4 uProjection;
@@ -33,8 +34,11 @@ vec2 rotate(vec2 vec, float angleDeg, vec2 origin)
 
 void main()
 {
-    fColor = vec3(0.2, 0.2, 1);
-
+    //fColor = vec3(0.5f, 0.35f, 0.05f);
+    //fColor = vec3(0.23, 0.21, 0.2);
+    //fColor = vec3(0.55, 0.5, 0.48);
+    fColor = vec3(1, 1, 1);
+    fTexCoords = aTexCoords;
     vec2 pos_offset;
     pos_offset.x = aTransform.x;
     pos_offset.y = aTransform.y;
@@ -47,9 +51,15 @@ void main()
 #type fragment
 #version 330 core
 in vec3 fColor;
+in vec2 fTexCoords;
+
 out vec4 color;
+
+uniform sampler2D uTextures[1];
 
 void main()
 {
-    color = vec4(fColor, 1);
+    vec4 f2Color = vec4(fColor, 1);
+    vec4 texColor = texture(uTextures[0], fTexCoords);
+    color = f2Color * texColor;
 }

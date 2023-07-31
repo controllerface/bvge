@@ -6,6 +6,7 @@ import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.renderers.batches.BoxRenderBatch;
 import com.controllerface.bvge.gl.Models;
 import com.controllerface.bvge.gl.Shader;
+import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.AssetPool;
 import com.controllerface.bvge.util.Constants;
 
@@ -22,16 +23,19 @@ public class BoxRenderer extends GameSystem
 
     private final int model_index = 0;
     private final Shader shader;
+    private final Texture texture;
     private final List<BoxRenderBatch> batches;
     private int model_buffer_id;
     private int transform_buffer_id;
     private int texture_uv_buffer_id;
+
 
     public BoxRenderer(ECS ecs)
     {
         super(ecs);
         this.batches = new ArrayList<>();
         this.shader = AssetPool.getShader("box_model.glsl"); // todo: need new shader program
+        this.texture = AssetPool.getTexture("src/main/resources/img/crate.png");
         start();
     }
 
@@ -118,7 +122,7 @@ public class BoxRenderer extends GameSystem
             }
             while (needed_batches > batches.size())
             {
-                var b = new BoxRenderBatch(shader, transform_buffer_id, model_buffer_id, texture_uv_buffer_id);
+                var b = new BoxRenderBatch(shader, texture, transform_buffer_id, model_buffer_id, texture_uv_buffer_id);
                 batches.add(b);
             }
 

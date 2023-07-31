@@ -143,16 +143,13 @@ public class TestGame extends GameMode
 //        genNPCs(100, 10f, 10f, -1500, -1500);
 //        genNPCs(100, 10f, 10f, 40, 2500);
 
-//        genNPCs(100, 10f, 10f, 2100, 2100);
-//        genNPCs(100, 10f, 10f, 1000, -1000);
-//        genNPCs(100, 10f, 10f, -1500, -1500);
-        //genNPCs(100, 10f, 10f, 0, 0);w
-        //genNPCs(100, 10f, 10f, 0, 0);
-        //genNPCs(100, 10f, 10f, 0, 0);
-        genNPCs(100, 11f, 10f, 0, 0);
+        //genNPCs(100, 10f, 10f, 2100, 2100);
+        //genNPCs(100, 10f, 10f, 1000, -1000);
+        //genNPCs(100, 10f, 10f, -1500, -1500);
+        genNPCs(100, 11f, 10f, 0, 500);
 
-        //genNPCs(3, 20f, 15f, 100, 300);
-        //genFloor(500, 25f, 25f, -500, -40);
+        genNPCs(3, 41f, 40f, 100, 300);
+        genFloor(500, 25f, 25f, -500, -40);
 
         loadSystems();
     }

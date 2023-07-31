@@ -26,8 +26,8 @@ public class VerletPhysics extends GameSystem
     //  In this way, friction is a "status effect" that is cleared every frame
     //  and applied when contact occurs.
     private final static float GRAVITY_X = 0;
-    private final static float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
-    private final static float FRICTION = .9999f;
+    private final static float GRAVITY_Y = -(2.8f * 50) * SUB_STEPS;
+    private final static float FRICTION = .999f;
 
     private final SpatialPartition spatialPartition;
     private PhysicsBuffer physicsBuffer;
@@ -84,7 +84,7 @@ public class VerletPhysics extends GameSystem
 
             if (controlPoints.is_rotating_right() ^ controlPoints.is_rotating_left())
             {
-                float angle = controlPoints.is_rotating_right() ? -500 : 500;
+                float angle = controlPoints.is_rotating_right() ? -1000 : 1000;
                 OpenCL.rotate_body(body.index(), angle * dt * dt);
             }
         }

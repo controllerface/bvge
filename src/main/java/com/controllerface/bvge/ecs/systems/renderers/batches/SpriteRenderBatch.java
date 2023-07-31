@@ -161,7 +161,7 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
         {
             // todo: actually just set the correct index, bound by the max
             //  and do -1 in the shader
-            // this + 1 is p2 support using texture 0 as "empty", allowing color p2 take
+            // this + 1 is to support using texture 0 as "empty", allowing color p2 take
             glActiveTexture(GL_TEXTURE0 + i);
             textures.get(i).bind();
         }
