@@ -2,6 +2,7 @@ package com.controllerface.bvge.ecs.components;
 
 import com.controllerface.bvge.data.BodyIndex;
 import com.controllerface.bvge.data.LinearForce;
+import com.controllerface.bvge.ecs.ECS;
 
 public enum Component
 {
@@ -31,5 +32,19 @@ public enum Component
         }
         assert false : "Attempted to coerce incompatible component";
         return null;
+    }
+
+    /**
+     * Convenience method that reads and coerces a component from the ECS in a single call.
+     *
+     * @param ecs the ECS to read the component data from
+     * @param entity the entity ID of the target entity
+     * @return the extracted component, or null if the named component is not attached to the entity
+     * @param <T> one of the component types mapped to a Component enum type defined in this class
+     */
+    public <T extends GameComponent> T forEntity(ECS ecs, String entity)
+    {
+        var componentClass = ecs.getComponentFor(entity, this);
+        return componentClass == null ? null : coerce(componentClass);
     }
 }

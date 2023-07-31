@@ -11,10 +11,10 @@ import java.util.*;
 
 public class VerletPhysics extends GameSystem
 {
-    private final float TARGET_FPS = 60.0f;
-    private final float TICK_RATE = 1.0f / TARGET_FPS;
-    private final int SUB_STEPS = 4;
-    private final int EDGE_STEPS = 4;
+    private final static float TARGET_FPS = 60.0f;
+    private final static float TICK_RATE = 1.0f / TARGET_FPS;
+    private final static int SUB_STEPS = 4;
+    private final static int EDGE_STEPS = 4;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.
@@ -25,9 +25,9 @@ public class VerletPhysics extends GameSystem
     //  values applied by objects could not go above the ambient friction.
     //  In this way, friction is a "status effect" that is cleared every frame
     //  and applied when contact occurs.
-    private final float GRAVITY_X = 0;
-    private final float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
-    private final float FRICTION = .9999f;
+    private final static float GRAVITY_X = 0;
+    private final static float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
+    private final static float FRICTION = .9999f;
 
     private final SpatialPartition spatialPartition;
     private PhysicsBuffer physicsBuffer;
@@ -52,11 +52,13 @@ public class VerletPhysics extends GameSystem
             String entity = entry.getKey();
             GameComponent component = entry.getValue();
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
+            BodyIndex body = Component.RigidBody2D.forEntity(ecs, entity);
+            LinearForce force = Component.LinearForce.forEntity(ecs, entity);
 
-            var b = ecs.getComponentFor(entity, Component.RigidBody2D);
-            var f = ecs.getComponentFor(entity, Component.LinearForce);
-            BodyIndex body = Component.RigidBody2D.coerce(b);
-            LinearForce force = Component.LinearForce.coerce(f);
+            Objects.requireNonNull(controlPoints);
+            Objects.requireNonNull(body);
+            Objects.requireNonNull(force);
+
             vectorBuffer1.zero();
             if (controlPoints.is_moving_left())
             {

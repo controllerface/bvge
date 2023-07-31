@@ -21,8 +21,7 @@ public class CameraTracking extends GameSystem
     {
         var focusTargets = ecs.getComponents(Component.CameraFocus);
         var focusTarget = focusTargets.entrySet().stream().findAny().orElseThrow();
-        var b = ecs.getComponentFor(focusTarget.getKey(), Component.RigidBody2D);
-        BodyIndex body = Component.RigidBody2D.coerce(b);
+        BodyIndex body = Component.RigidBody2D.forEntity(ecs, focusTarget.getKey());
         if (body == null) return;
 
         float[] pos = OpenCL.read_position(body.index());
