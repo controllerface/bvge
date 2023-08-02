@@ -15,7 +15,8 @@ public class PhysicsObjects
     private static final Vector2f vector_buffer = new Vector2f();
 
     public static int FLAG_NONE = 0x00;
-    public static int FLAG_STATIC = 0x01;
+    public static int FLAG_STATIC_OBJECT = 0x01;
+    public static int FLAG_INTERIOR_EDGE = 0x01;
 
     public static float distance(float[] a, float[] b)
     {
@@ -53,8 +54,8 @@ public class PhysicsObjects
         Main.Memory.newEdge(p4_index, p1_index, distance(p1, p4));
 
         // corner braces
-        Main.Memory.newEdge(p1_index, p3_index, distance(p3, p1));
-        var end_edge = Main.Memory.newEdge(p2_index, p4_index, distance(p4, p2));
+        Main.Memory.newEdge(p1_index, p3_index, distance(p3, p1), FLAG_INTERIOR_EDGE);
+        var end_edge = Main.Memory.newEdge(p2_index, p4_index, distance(p4, p2), FLAG_INTERIOR_EDGE);
 
         var table = OpenCL.arg_int4(p1_index, p4_index, start_edge, end_edge);
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
@@ -72,7 +73,7 @@ public class PhysicsObjects
 
     public static int static_box(float x, float y, float size)
     {
-        return box(x, y, size, FLAG_STATIC);
+        return box(x, y, size, FLAG_STATIC_OBJECT);
     }
 
     public static int polygon1(float x, float y, float size)
@@ -111,8 +112,8 @@ public class PhysicsObjects
         Main.Memory.newEdge(p3_index, p5_index, distance(p3, p5));
 
         // corner braces
-        Main.Memory.newEdge(p1_index, p3_index, distance(p3, p1));
-        var end_edge = Main.Memory.newEdge(p2_index, p4_index, distance(p4, p2));
+        Main.Memory.newEdge(p1_index, p3_index, distance(p3, p1), FLAG_INTERIOR_EDGE);
+        var end_edge = Main.Memory.newEdge(p2_index, p4_index, distance(p4, p2), FLAG_INTERIOR_EDGE);
 
         var table = OpenCL.arg_int4(p1_index, p5_index, start_edge, end_edge);
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);

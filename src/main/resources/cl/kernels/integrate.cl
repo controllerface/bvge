@@ -96,10 +96,18 @@ __kernel void integrate(
 	float min_y = FLT_MAX;
 	float max_y = FLT_MIN;
 
+    bool inv_r = gid % 2 == 0;
+
     for (int i = start; i <= end; i++)
     {
         // get this point
         float4 point = points[i];
+        //if (fabs(rotation.x) > 0.01)
+        //{
+            //point = rotate_point(point, (float2)body.xy, -rotation.x);
+            //float rot  = /*inv_r ? -.00001 :*/ .00001;
+            //point = rotate_point(point, (float2)(0,0), rot);
+        //}
 
         // get pos/prv vectors
         float2 pos = point.xy;
@@ -223,12 +231,28 @@ __kernel void integrate(
         bounds_bank.y = size;
     }
 
-    float4 p_test = points[start];
+    float4 ref_point = points[start];
+    
+    // unit vector up from where we are now
     float4 l1 = (float4)(body.x, body.y, body.x, body.y + 1);
-    float4 l2 = (float4)(body.x, body.y, p_test.x, p_test.y);
+    
+    // vector pointing at the reference point
+    float4 l2 = (float4)(body.x, body.y, ref_point.x, ref_point.y);
+        
+    // determine the rotation of the body
     float r_x = angle_between(l1, l2);
+    
+    // rotation.y is the reference angle taken at object creation when rotation is zero
     rotation.x = rotation.y - r_x;
 
+    // force rotate the object to zero
+    // for (int i = start; i <= end; i++)
+    // {
+    //     float4 point = points[i];
+    //     point = rotate_point(point, (float2)body.xy, -rotation.x);
+    //     points[i] = point;
+    // }
+    
     // store updated body and bounds data in result buffers
     bounds[gid] = bounding_box;
     bodies[gid] = body;

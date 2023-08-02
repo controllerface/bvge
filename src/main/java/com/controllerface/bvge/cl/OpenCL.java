@@ -356,6 +356,7 @@ public class OpenCL
          * Programs
          */
         p_sat_collide = cl_p(
+            func_angle_between,
             func_project_polygon,
             func_polygon_distance,
             func_edge_contact,
@@ -367,6 +368,7 @@ public class OpenCL
             kern_aabb_collide);
 
         p_integrate = cl_p(func_angle_between,
+            func_rotate_point,
             func_is_in_bounds,
             func_get_extents,
             func_get_key_for_point,
@@ -607,10 +609,10 @@ public class OpenCL
         k_call(k_create_point, global_single_size);
     }
 
-    public static void create_edge(int edge_index, float p1, float p2, float l)
+    public static void create_edge(int edge_index, float p1, float p2, float l, int flags)
     {
         var pnt_index = Pointer.to(arg_int(edge_index));
-        var pnt_edge = Pointer.to(arg_float4(p1, p2, l, 0f));
+        var pnt_edge = Pointer.to(arg_float4(p1, p2, l, flags));
 
         clSetKernelArg(k_create_edge, 0, Sizeof.cl_mem, Pointer.to(mem_edges));
         clSetKernelArg(k_create_edge, 1, Sizeof.cl_int, pnt_index);
@@ -961,11 +963,12 @@ public class OpenCL
         long[] global_work_size = new long[]{candidatesSize / COLLISION_SIZE};
 
         // Set the arguments for the kernel
-        clSetKernelArg(k_sat_collide, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.candidates.memory()));
-        clSetKernelArg(k_sat_collide, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.bodies.memory()));
-        clSetKernelArg(k_sat_collide, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.elements.memory()));
-        clSetKernelArg(k_sat_collide, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.flags.memory()));
-        clSetKernelArg(k_sat_collide, 4, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
+        clSetKernelArg(k_sat_collide, 0, Sizeof.cl_mem, physicsBuffer.candidates.pointer());
+        clSetKernelArg(k_sat_collide, 1, Sizeof.cl_mem, physicsBuffer.bodies.pointer());
+        clSetKernelArg(k_sat_collide, 2, Sizeof.cl_mem, physicsBuffer.elements.pointer());
+        clSetKernelArg(k_sat_collide, 3, Sizeof.cl_mem, physicsBuffer.flags.pointer());
+        clSetKernelArg(k_sat_collide, 4, Sizeof.cl_mem, physicsBuffer.points.pointer());
+        clSetKernelArg(k_sat_collide, 5, Sizeof.cl_mem, physicsBuffer.edges.pointer());
 
         k_call(k_sat_collide, global_work_size);
     }

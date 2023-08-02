@@ -3,8 +3,9 @@
 layout (location = 0) in vec2 aPos;
 layout (location = 1) in vec4 aTransform;
 layout (location = 2) in vec2 aTexCoords;
+layout (location = 3) in vec4 aColor;
 
-out vec3 fColor;
+out vec4 fColor;
 out vec2 fTexCoords;
 
 uniform mat4 uView;
@@ -36,8 +37,8 @@ void main()
 {
     //fColor = vec3(0.5f, 0.35f, 0.05f);
     //fColor = vec3(0.23, 0.21, 0.2);
-    //fColor = vec3(0.55, 0.5, 0.48);
-    fColor = vec3(1, 1, 1);
+    //fColor = vec4(0.55, 0.5, 0.48, 1);
+    fColor = aColor;
     fTexCoords = aTexCoords;
     vec2 pos_offset;
     pos_offset.x = aTransform.x;
@@ -50,7 +51,7 @@ void main()
 
 #type fragment
 #version 330 core
-in vec3 fColor;
+in vec4 fColor;
 in vec2 fTexCoords;
 
 out vec4 color;
@@ -59,7 +60,6 @@ uniform sampler2D uTextures[1];
 
 void main()
 {
-    vec4 f2Color = vec4(fColor, 1);
     vec4 texColor = texture(uTextures[0], fTexCoords);
-    color = f2Color * texColor;
+    color = fColor * texColor;
 }

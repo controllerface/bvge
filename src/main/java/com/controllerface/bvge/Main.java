@@ -40,7 +40,12 @@ public class Main
 
         public static int newEdge(int p1, int p2, float l)
         {
-            OpenCL.create_edge(edgesCount(), p1, p2, l);
+            return newEdge(p1, p2, l, 0);
+        }
+
+        public static int newEdge(int p1, int p2, float l, int flags)
+        {
+            OpenCL.create_edge(edgesCount(), p1, p2, l, flags);
             edge_index += Width.EDGE;
             var idx = edge_index - Width.EDGE;
             return idx / Width.EDGE;

@@ -69,7 +69,9 @@ __kernel void finalize_candidates(__global int2 *input_candidates,
     for (int i = offset; i < (offset + size); i++)
     {
         int next = matches[i];
-        int2 pair = (int2)(index, next);
+        int a  = next < index ? index : next;
+        int b  = next < index ? next : index;
+        int2 pair = (int2)(a, b);
         int j = atomic_inc(&counter[0]);
         final_candidates[j] = pair;
     }

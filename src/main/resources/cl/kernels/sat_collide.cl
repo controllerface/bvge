@@ -1,19 +1,17 @@
 /**
 Performs collision detection using separating axis theorem, and then applys a reaction
-for objects when they are found to be colliding. Assumes polygons todo: add circles
-Reactions detemine one "edge" polygon and one "vertex" polygon. The vertext polygon
-has a single vertex adjusted as a reaction. The edge object has two vertices adjusted
-and the adjustments are in oppostie directions, which will naturally apply some
-degree of rotation to the object
+for objects when they are found to be colliding. Reactions detemine one "edge" polygon 
+and one "vertex" polygon. The vertext polygon has a single vertex adjusted as a reaction. 
+The edge object has two vertices adjusted and the adjustments are in oppostie directions, 
+which will naturally apply some degree of rotation to the object.
+ todo: add circles, currently assumes polygons 
  */
-
-// todo: convert to float4; transforms
-
 __kernel void sat_collide(__global int2 *candidates,
                           __global float4 *bodies,
                           __global int4 *element_tables,
                           __global int *body_flags,
-                          __global float4 *points)
+                          __global float4 *points,
+                          __global float4 *edges)
 {
     int gid = get_global_id(0);
     
@@ -37,6 +35,8 @@ __kernel void sat_collide(__global int2 *candidates,
         return;
     }
 
+    bool has_static = b1s || b2s;
+
     int start_1 = body_1_table.x;
     int end_1   = body_1_table.y;
 	int b1_vert_count = end_1 - start_1 + 1;
@@ -44,6 +44,14 @@ __kernel void sat_collide(__global int2 *candidates,
     int start_2 = body_2_table.x;
     int end_2   = body_2_table.y;
 	int b2_vert_count = end_2 - start_2 + 1;
+
+    int edge_start_1 = body_1_table.z;
+    int edge_end_1   = body_1_table.w;
+	int b1_edge_count = edge_end_1 - edge_start_1 + 1;
+
+    int edge_start_2 = body_2_table.z;
+    int edge_end_2   = body_2_table.w;
+	int b2_edge_count = edge_end_2 - edge_start_2 + 1;
 
     float min_distance   = FLT_MAX;
     int vertex_object_id = -1;
@@ -55,14 +63,19 @@ __kernel void sat_collide(__global int2 *candidates,
     
     float2 normalBuffer;
     int4 vertex_table;
+    int vert_edge_index;
 
     // object 1
-    for (int i = 0; i < b1_vert_count; i++)
+    for (int i = 0; i < b1_edge_count; i++)
     {
-        int a_index = start_1 + i;
-        int b_index = a_index < end_1 
-            ? a_index + 1
-            : start_1;
+        int edge_index = edge_start_1 + i;
+        float4 edge = edges[edge_index];
+        
+        // do not test interior edges
+        if (edge.w == 1) continue;
+
+        int a_index = edge.x;
+        int b_index = edge.y;
 
         float2 va = points[a_index].xy;
         float2 vb = points[b_index].xy;
@@ -90,10 +103,11 @@ __kernel void sat_collide(__global int2 *candidates,
         {
             invert = true;
             vertex_table = body_2_table;
+            vert_edge_index = edge_index;
             normalBuffer.x = vectorBuffer1.x;
             normalBuffer.y = vectorBuffer1.y;
-            vertex_object_id = (float)b2_id;
-            edge_object_id   = (float)b1_id;
+            vertex_object_id = b2_id;
+            edge_object_id   = b1_id;
             min_distance = abs_distance;
             edge_index_a = a_index;
             edge_index_b = b_index;
@@ -101,12 +115,16 @@ __kernel void sat_collide(__global int2 *candidates,
     }
     
     // object 2
-    for (int i = 0; i < b2_vert_count; i++)
+    for (int i = 0; i < b2_edge_count; i++)
     {
-        int a_index = start_2 + i;
-        int b_index = a_index < end_2 
-            ? a_index + 1
-            : start_2;
+        int edge_index = edge_start_2 + i;
+        float4 edge = edges[edge_index];
+        
+        // do not test interior edges
+        if (edge.w == 1) continue;
+
+        int a_index = edge.x;
+        int b_index = edge.y;
 
         float2 va = points[a_index].xy;
         float2 vb = points[b_index].xy;
@@ -132,28 +150,29 @@ __kernel void sat_collide(__global int2 *candidates,
         {
             invert = false;
             vertex_table = body_1_table;
+            vert_edge_index = edge_index;
             normalBuffer.x = vectorBuffer1.x;
             normalBuffer.y = vectorBuffer1.y;
-            vertex_object_id = (float)b1_id;
-            edge_object_id   = (float)b2_id;
+            vertex_object_id = b1_id;
+            edge_object_id   = b2_id;
             min_distance = abs_distance;
             edge_index_a = a_index;
             edge_index_b = b_index;
         }
     }
 
-    float3 pr = project_polygon(points, vertex_table, normalBuffer);
-    vert_index = pr.z;
-    min_distance = min_distance / length(normalBuffer);
     normalBuffer = normalize(normalBuffer);
 
-    float4 a = (invert)
-        ? body_2
-        : body_1;
+    int a_idx = (invert)
+        ? b2_id
+        : b1_id;
 
-    float4 b = (invert)
-        ? body_1
-        : body_2;
+    int b_idx = (invert)
+        ? b1_id
+        : b2_id;
+
+    float4 a = bodies[a_idx];
+    float4 b = bodies[b_idx];
 
     float2 transformA;
     transformA.x = a.x;
@@ -171,6 +190,11 @@ __kernel void sat_collide(__global int2 *candidates,
         normalBuffer.x = normalBuffer.x * -1;
         normalBuffer.y = normalBuffer.y * -1;
     }
+
+    float3 final_proj = project_polygon(points, vertex_table, normalBuffer);
+    vert_index = final_proj.z;
+    min_distance = min_distance / length(normalBuffer);
+    
 
     if (vertex_object_id == -1)
     {
@@ -204,18 +228,21 @@ __kernel void sat_collide(__global int2 *candidates,
         }
     }
 
-    // vertex reaction is easy
-    float2 v_reaction = collision_vector * vertex_magnitude;
-
-    // now do edge reactions
     float2 e1 = points[edge_index_a].xy;
     float2 e2 = points[edge_index_b].xy;
     float2 collision_vertex = points[vert_index].xy;
+
+    // edge reactions
     float contact = edge_contact(e1, e2, collision_vertex, collision_vector);
 
     float edge_scale = 1.0f / (contact * contact + (1 - contact) * (1 - contact));
     float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale);
     float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale);
+
+    // vertex reaction
+    float2 v_reaction = collision_vector * vertex_magnitude;
+    float2 e_reaction = collision_vector * edge_magnitude;
+
 
     // todo: this should techncially be atomic, however visually it doesn't
     //  seem to matter right now. probably should do it "right" though at some point
@@ -225,6 +252,12 @@ __kernel void sat_collide(__global int2 *candidates,
     points[edge_index_a].y -= e1_reaction.y;
     points[edge_index_b].x -= e2_reaction.x;
     points[edge_index_b].y -= e2_reaction.y;
+    
+    // if (vertex_object_id == 0)
+    // {
+    //     printf("debug: edge_object_id=%d vert_object_id=%d", edge_object_id, vertex_object_id);
+    // }
+  
 
     // uncomment below for "fake" inelastic collisions
     // todo: previous location should be updated so relative difference is the same as before,

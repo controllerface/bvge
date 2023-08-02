@@ -19,7 +19,7 @@ public class BoxRenderBatch
     private final Texture texture;
     private int numModels;
     private int vaoID, vboID;
-    private final int transform_buffer_ID, model_buffer_id, texture_uv_buffer_id;
+    private final int transform_buffer_ID, model_buffer_id, texture_uv_buffer_id, color_buffer_id;
     private int[] texSlots = { 0 };
     private int[] indices; // will be large enough to hold a full batch, but may only contain a partial one
 
@@ -27,13 +27,15 @@ public class BoxRenderBatch
                           Texture texture,
                           int transform_buffer_ID,
                           int model_buffer_id,
-                          int texture_uv_buffer_id)
+                          int texture_uv_buffer_id,
+                          int color_buffer_id)
     {
         this.shader = shader;
         this.texture = texture;
         this.transform_buffer_ID = transform_buffer_ID;
         this.model_buffer_id = model_buffer_id;
         this.texture_uv_buffer_id = texture_uv_buffer_id;
+        this.color_buffer_id = color_buffer_id;
     }
 
     public void start()
@@ -46,13 +48,11 @@ public class BoxRenderBatch
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
         glBufferData(GL_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 
-        // load model data and configure the vertex attributes
         glBindBuffer(GL_ARRAY_BUFFER, model_buffer_id);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, VECTOR_2D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_2D_SIZE, 0);
 
-        // create buffer for transforms and configure the instance divisor
-        glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_ID); // this attribute comes from a different vertex buffer
+        glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_ID);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
         glVertexAttribDivisor(1, 1);
@@ -61,6 +61,9 @@ public class BoxRenderBatch
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(2, VECTOR_2D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_2D_SIZE, 0);
 
+        glBindBuffer(GL_ARRAY_BUFFER, color_buffer_id);
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
 
         // share the buffer with the CL context
         OpenCL.share_memory(vboID);
@@ -104,10 +107,12 @@ public class BoxRenderBatch
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
         glDrawArraysInstanced(GL_TRIANGLES, 0, 6, numModels);
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(2);
+        glDisableVertexAttribArray(3);
         glBindVertexArray(0);
         shader.detach();
         texture.unbind();

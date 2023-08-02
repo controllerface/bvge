@@ -28,6 +28,7 @@ public class BoxRenderer extends GameSystem
     private int model_buffer_id;
     private int transform_buffer_id;
     private int texture_uv_buffer_id;
+    private int color_buffer_id;
 
 
     public BoxRenderer(ECS ecs)
@@ -45,14 +46,19 @@ public class BoxRenderer extends GameSystem
         var vbo_model = new float[12];
         vbo_model[0] = base_model[0];  // tri 1 // p1 x
         vbo_model[1] = base_model[1];           // p1 y
+
         vbo_model[2] = base_model[2];           // p2 x
         vbo_model[3] = base_model[3];           // p2 y
+
         vbo_model[4] = base_model[4];           // p3 x
         vbo_model[5] = base_model[5];           // p3 y
+
         vbo_model[6] = base_model[0];  // tri 2 // p1 x
         vbo_model[7] = base_model[1];           // p1 y
+
         vbo_model[8] = base_model[4];           // p3 x
         vbo_model[9] = base_model[5];           // p3 y
+
         vbo_model[10] = base_model[6];          // p4 x
         vbo_model[11] = base_model[7];          // p4 y
 
@@ -60,16 +66,54 @@ public class BoxRenderer extends GameSystem
         var vbo_tex_coords = new float[12];
         vbo_tex_coords[0] = 0f;  // tri 1 // p1 u
         vbo_tex_coords[1] = 0f;           // p1 v
+
         vbo_tex_coords[2] = 1f;           // p2 u
         vbo_tex_coords[3] = 0f;           // p2 v
+
         vbo_tex_coords[4] = 1f;           // p3 u
         vbo_tex_coords[5] = 1f;           // p3 v
+
         vbo_tex_coords[6] = 0f;  // tri 2 // p1 u
         vbo_tex_coords[7] = 0f;           // p1 v
+
         vbo_tex_coords[8] = 1f;           // p3 u
         vbo_tex_coords[9] = 1f;           // p3 v
+
         vbo_tex_coords[10] = 0f;          // p4 u
         vbo_tex_coords[11] = 1f;          // p4 v
+
+        var vbo_colors = new float[24];
+        vbo_colors[0] = 1f; // tri 1 // p1 r
+        vbo_colors[1] = 0f;          // p1 g
+        vbo_colors[2] = 0f;          // p1 b
+        vbo_colors[3] = 1f;          // p1 a
+
+        vbo_colors[4] = 0f;          // p2 r
+        vbo_colors[5] = 1f;          // p2 g
+        vbo_colors[6] = 0f;          // p2 b
+        vbo_colors[7] = 1f;          // p2 a
+
+        vbo_colors[8] = 0f;          // p3 r
+        vbo_colors[9] = 0f;          // p3 g
+        vbo_colors[10] = 1f;          // p3 b
+        vbo_colors[11] = 1f;          // p3 a
+
+        vbo_colors[12] = 1f; // tri 2 // p1 r
+        vbo_colors[13] = 0f;          // p1 g
+        vbo_colors[14] = 0f;          // p1 b
+        vbo_colors[15] = 1f;          // p1 a
+
+        vbo_colors[16] = 0f;          // p3 r
+        vbo_colors[17] = 0f;          // p3 g
+        vbo_colors[18] = 1f;          // p3 b
+        vbo_colors[19] = 1f;          // p3 a
+
+        vbo_colors[20] = 1f;          // p4 r
+        vbo_colors[21] = 1f;          // p4 g
+        vbo_colors[22] = 1f;          // p4 b
+        vbo_colors[23] = 1f;          // p4 a
+
+
 
         // load model data
         model_buffer_id = glGenBuffers();
@@ -79,6 +123,10 @@ public class BoxRenderer extends GameSystem
         texture_uv_buffer_id = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, texture_uv_buffer_id);
         glBufferData(GL_ARRAY_BUFFER, vbo_tex_coords, GL_STATIC_DRAW);
+
+        color_buffer_id = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, color_buffer_id);
+        glBufferData(GL_ARRAY_BUFFER, vbo_colors, GL_STATIC_DRAW);
 
         // create buffer for transforms, batches will use this during the rendering process
         transform_buffer_id = glGenBuffers();
@@ -122,7 +170,12 @@ public class BoxRenderer extends GameSystem
             }
             while (needed_batches > batches.size())
             {
-                var b = new BoxRenderBatch(shader, texture, transform_buffer_id, model_buffer_id, texture_uv_buffer_id);
+                var b = new BoxRenderBatch(shader,
+                    texture,
+                    transform_buffer_id,
+                    model_buffer_id,
+                    texture_uv_buffer_id,
+                    color_buffer_id);
                 batches.add(b);
             }
 
