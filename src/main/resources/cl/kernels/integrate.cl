@@ -1,4 +1,4 @@
-#define MINIMUM_DIFF 0.005
+#define MINIMUM_DIFF 0.001
 
 /**
 Performs the integration step of a physics loop, generally this is the first stage
@@ -123,6 +123,10 @@ __kernel void integrate(
             diff.x *= friction;
             diff.y *= friction;
             
+            // set the prv to current pos
+            prv.x = pos.x;
+            prv.y = pos.y;
+
             if (diff.x < MINIMUM_DIFF && diff.x > -MINIMUM_DIFF)
             {
                 diff.x = 0.0f;
@@ -132,10 +136,6 @@ __kernel void integrate(
             {
                 diff.y = 0.0f;
             }
-
-            // set the prv to current pos
-            prv.x = pos.x;
-            prv.y = pos.y;
 
             // update pos
             pos = pos + diff;

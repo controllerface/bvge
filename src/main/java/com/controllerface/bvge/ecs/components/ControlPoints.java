@@ -21,6 +21,9 @@ public class ControlPoints implements GameComponent
     private boolean back = false;
     private boolean forward = false;
 
+    // keyboard
+    private boolean space_bar = false;
+
     // target position
     private Vector2f target = new Vector2f();
 
@@ -92,6 +95,16 @@ public class ControlPoints implements GameComponent
     public void set_rot_right(boolean right)
     {
         this.rot_right = right;
+    }
+
+    public boolean is_space_bar_down()
+    {
+        return space_bar;
+    }
+
+    public void set_space_bar(boolean space_bar)
+    {
+        this.space_bar = space_bar;
     }
 
     public boolean is_primary()

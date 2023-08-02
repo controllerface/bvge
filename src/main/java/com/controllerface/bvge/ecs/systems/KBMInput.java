@@ -33,6 +33,7 @@ public class KBMInput extends GameSystem
             controlPoints.set_moving_right(keyDown[GLFW_KEY_D]);
             controlPoints.set_rot_right(keyDown[GLFW_KEY_E]);
             controlPoints.set_rotating_Left(keyDown[GLFW_KEY_Q]);
+            controlPoints.set_space_bar(keyDown[GLFW_KEY_SPACE]);
         });
 
         // test camera moving code

@@ -26,8 +26,8 @@ public class VerletPhysics extends GameSystem
     //  In this way, friction is a "status effect" that is cleared every frame
     //  and applied when contact occurs.
     private final static float GRAVITY_X = 0;
-    private final static float GRAVITY_Y = -(9.8f * 50);// * SUB_STEPS;
-    private final static float FRICTION = .985f;
+    private final static float GRAVITY_Y = -(9.8f * 50) * SUB_STEPS;
+    private final static float FRICTION = .990f;
 
     private final SpatialPartition spatialPartition;
     private PhysicsBuffer physicsBuffer;
@@ -70,11 +70,15 @@ public class VerletPhysics extends GameSystem
             }
             if (controlPoints.is_moving_up())
             {
-                vectorBuffer1.y += force.magnitude();
+                vectorBuffer1.y += -GRAVITY_Y * .5;
             }
             if (controlPoints.is_moving_down())
             {
                 vectorBuffer1.y -= force.magnitude();
+            }
+            if (controlPoints.is_space_bar_down())
+            {
+                vectorBuffer1.y -= GRAVITY_Y * 5;
             }
 
             if (vectorBuffer1.x != 0f || vectorBuffer1.y != 0)

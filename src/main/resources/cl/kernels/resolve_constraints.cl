@@ -57,8 +57,8 @@ __kernel void resolve_constraints(__global int4 *element_tables,
             direction.y *= diff * 0.5;
         
             // move the first vertex in the positive direction, move the second negative
-            p1_v = p1_v + direction - FLT_EPSILON;
-            p2_v = p2_v - direction + FLT_EPSILON;
+            p1_v = p1_v + direction;
+            p2_v = p2_v - direction;
 
             // store the updated values in the points
             p1.x = p1_v.x;

@@ -35,9 +35,6 @@ vec2 rotate(vec2 vec, float angleDeg, vec2 origin)
 
 void main()
 {
-    //fColor = vec3(0.5f, 0.35f, 0.05f);
-    //fColor = vec3(0.23, 0.21, 0.2);
-    //fColor = vec4(0.55, 0.5, 0.48, 1);
     fColor = aColor;
     fTexCoords = aTexCoords;
     vec2 pos_offset;

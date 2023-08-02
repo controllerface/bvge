@@ -1,7 +1,7 @@
 /**
 Performs collision detection using separating axis theorem, and then applys a reaction
 for objects when they are found to be colliding. Reactions detemine one "edge" polygon 
-and one "vertex" polygon. The vertext polygon has a single vertex adjusted as a reaction. 
+and one "vertex" polygon. The vertex polygon has a single vertex adjusted as a reaction. 
 The edge object has two vertices adjusted and the adjustments are in oppostie directions, 
 which will naturally apply some degree of rotation to the object.
  todo: add circles, currently assumes polygons 
@@ -63,7 +63,6 @@ __kernel void sat_collide(__global int2 *candidates,
     
     float2 normalBuffer;
     int4 vertex_table;
-    int vert_edge_index;
 
     // object 1
     for (int i = 0; i < b1_edge_count; i++)
@@ -103,7 +102,6 @@ __kernel void sat_collide(__global int2 *candidates,
         {
             invert = true;
             vertex_table = body_2_table;
-            vert_edge_index = edge_index;
             normalBuffer.x = vectorBuffer1.x;
             normalBuffer.y = vectorBuffer1.y;
             vertex_object_id = b2_id;
@@ -150,7 +148,6 @@ __kernel void sat_collide(__global int2 *candidates,
         {
             invert = false;
             vertex_table = body_1_table;
-            vert_edge_index = edge_index;
             normalBuffer.x = vectorBuffer1.x;
             normalBuffer.y = vectorBuffer1.y;
             vertex_object_id = b1_id;
@@ -159,6 +156,12 @@ __kernel void sat_collide(__global int2 *candidates,
             edge_index_a = a_index;
             edge_index_b = b_index;
         }
+    }
+
+    // this shouldn't be needed, maybe remove
+    if (vertex_object_id == -1)
+    {
+        return;
     }
 
     normalBuffer = normalize(normalBuffer);
@@ -194,12 +197,7 @@ __kernel void sat_collide(__global int2 *candidates,
     float3 final_proj = project_polygon(points, vertex_table, normalBuffer);
     vert_index = final_proj.z;
     min_distance = min_distance / length(normalBuffer);
-    
 
-    if (vertex_object_id == -1)
-    {
-        return;
-    }
 
     // vertex and edge object flags
     int vo_f = body_flags[(int)vertex_object_id];
