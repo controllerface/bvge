@@ -45,7 +45,7 @@ public class Models
     }
 
     /**
-     * A simple square with 4 vertices
+     * A simple unit square; 4 vertices defining a square of size 1.
      */
     private static float[] load_box_model()
     {

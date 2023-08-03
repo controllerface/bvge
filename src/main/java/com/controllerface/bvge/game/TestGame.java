@@ -124,6 +124,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(screenBlankSystem);
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new BoxRenderer(ecs));
+        ecs.registerSystem(new CircleRenderer(ecs));
 
 
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
