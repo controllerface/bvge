@@ -149,7 +149,7 @@ public class TestGame extends GameMode
     public void load()
     {
         genPlayer();
-        genTestCircle(10,0, 0);
+        genTestCircle(300,0, 0);
 
 //        genNPCs(100, 10f, 10f, 2100, 2100);
 //        genNPCs(100, 10f, 10f, 1000, -1000);

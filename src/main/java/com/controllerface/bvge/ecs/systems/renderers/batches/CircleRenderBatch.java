@@ -75,6 +75,7 @@ public class CircleRenderBatch
         shader.use();
         shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
         shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
+        shader.uploadFloat2("uResolution", Window.get().getWidth(), Window.get().getHeight());
 
         OpenCL.batch_transforms_GL(vboID, transform_buffer_ID, numModels);
 
