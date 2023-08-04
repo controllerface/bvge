@@ -58,19 +58,19 @@ void main()
     vec2 translated4 = scaled4 + pos_offset;
 
     fPosition = pos1;
-    gl_Position = uProjection * uView * vec4(translated1, 0.0, 1.0); // 1:bottom-left   
+    gl_Position = uProjection * uView * vec4(translated1, 0.0, 1.0);  
     EmitVertex();   
 
     fPosition = pos2;
-    gl_Position = uProjection * uView * vec4(translated2, 0.0, 1.0); // 2:bottom-right
+    gl_Position = uProjection * uView * vec4(translated2, 0.0, 1.0);
     EmitVertex();
     
     fPosition = pos3;
-    gl_Position = uProjection * uView * vec4(translated3, 0.0, 1.0); // 3:top-left
+    gl_Position = uProjection * uView * vec4(translated3, 0.0, 1.0);
     EmitVertex();
     
     fPosition = pos4;
-    gl_Position = uProjection * uView * vec4(translated4, 0.0, 1.0); // 4:top-right
+    gl_Position = uProjection * uView * vec4(translated4, 0.0, 1.0);
     EmitVertex();
 
     EndPrimitive();
@@ -86,22 +86,14 @@ in vec2 fPosition;
 void main()
 {
     vec3 circleColor = vec3(0.85, 0.35, 0.2);
-    float thickness = .99;
+    float thickness = .1;
     float fade = 0.005;
-
-    // todo: these need to go away and re replaced wioth "local position"
-    // -1 -> 1 local space, adjusted for aspect ratio
-    //vec2 uv = gl_FragCoord.xy / uResolution.xy * 2.0 - 1.0;
-    //float aspect = uResolution.x / uResolution.y;
-    //uv.x *= aspect;
 
     // Calculate distance and fill circle with white
     float distance = 1.0 - length(fPosition * 2);
     vec3 color = vec3(smoothstep(0.0, fade, distance));
     color *= vec3(smoothstep(thickness + fade, thickness, distance));
 
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(color, 0.0);
     gl_FragColor.rgb *= circleColor;
-
-    //gl_FragColor = vec4(0,1,0, 1.0);
 }
