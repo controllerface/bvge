@@ -71,7 +71,7 @@ public class CircleRenderBatch
 
     public void render()
     {
-        glPointSize(10f);
+        //glPointSize(10f);
         shader.use();
         shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
         shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
