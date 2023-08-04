@@ -35,6 +35,14 @@ __kernel void sat_collide(__global int2 *candidates,
         return;
     }
 
+    bool b1c_test = (body_1_flags && 0x02) !=0;
+    bool b2c_test = (body_2_flags && 0x02) !=0;
+
+    if (b1c_test || b2c_test) // no circles for now
+    {
+        return;
+    }
+
     bool has_static = b1s || b2s;
 
     int start_1 = body_1_table.x;

@@ -4,6 +4,7 @@ import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.ecs.systems.renderers.batches.EdgeRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
@@ -31,7 +32,7 @@ public class EdgeRenderer extends GameSystem
     private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VERTS_PER_LINE * VERTEX_SIZE;
     private static final int BATCH_BUFFER_SIZE = BATCH_VERTEX_COUNT * Float.BYTES;
 
-    private final Shader shader;
+    private final AbstractShader shader;
     private final List<EdgeRenderBatch> batches;
     private int vaoID, vboID;
 

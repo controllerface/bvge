@@ -1,5 +1,6 @@
 package com.controllerface.bvge.ecs.systems.renderers.batches;
 
+import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.ecs.components.SpriteComponent;
 import com.controllerface.bvge.gl.Texture;
@@ -54,9 +55,9 @@ public class SpriteRenderBatch implements Comparable<SpriteRenderBatch>
 
     private int zIndex;
 
-    private final Shader currentShader;
+    private final AbstractShader currentShader;
 
-    public SpriteRenderBatch(int zIndex, Shader currentShader)
+    public SpriteRenderBatch(int zIndex, AbstractShader currentShader)
     {
         this.zIndex = zIndex;
         this.sprites = new SpriteComponent[Constants.Rendering.MAX_BATCH_SIZE];

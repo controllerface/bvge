@@ -3,6 +3,7 @@ package com.controllerface.bvge.ecs.systems.renderers;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.SpriteComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.ecs.systems.renderers.batches.SpriteRenderBatch;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class SpriteRenderer extends GameSystem
 {
-    private Shader shader;
+    private AbstractShader shader;
     private List<SpriteRenderBatch> batches;
 
     public SpriteRenderer(ECS ecs)

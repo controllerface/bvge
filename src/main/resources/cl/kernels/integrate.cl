@@ -105,7 +105,7 @@ __kernel void integrate(
 
         // force rotate the point to keep the object upright
         // todo: this should scale based on gravity, with zero g being no ro restriction of rotation
-        point = rotate_point(point, (float2)body.xy, -rotation.x * 10);
+        //point = rotate_point(point, (float2)body.xy, -rotation.x * 10);
         
         // this was a very basic orbital motion test, worth saving for something else
         //float rot  = /*inv_r ? -.00001 :*/ .00001;

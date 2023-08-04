@@ -1,6 +1,7 @@
 package com.controllerface.bvge.ecs.systems.renderers.batches;
 
 import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.window.Window;
 
@@ -19,9 +20,9 @@ public class EdgeRenderBatch
     private int numLines;
     private int offset;
     private final int vaoID, vboID;
-    private final Shader currentShader;
+    private final AbstractShader currentShader;
 
-    public EdgeRenderBatch(Shader currentShader, int vaoID, int vboID)
+    public EdgeRenderBatch(AbstractShader currentShader, int vaoID, int vboID)
     {
         this.numLines = 0;
         this.currentShader = currentShader;

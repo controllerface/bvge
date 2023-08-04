@@ -1,6 +1,7 @@
 package com.controllerface.bvge.ecs.systems.renderers.batches;
 
 import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.window.Window;
@@ -15,7 +16,7 @@ import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 public class BoxRenderBatch
 {
-    private final Shader shader;
+    private final AbstractShader shader;
     private final Texture texture;
     private int numModels;
     private int vaoID, vboID;
@@ -23,7 +24,7 @@ public class BoxRenderBatch
     private int[] texSlots = { 0 };
     private int[] indices; // will be large enough to hold a full batch, but may only contain a partial one
 
-    public BoxRenderBatch(Shader shader,
+    public BoxRenderBatch(AbstractShader shader,
                           Texture texture,
                           int transform_buffer_ID,
                           int model_buffer_id,

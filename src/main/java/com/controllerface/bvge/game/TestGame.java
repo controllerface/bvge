@@ -15,6 +15,8 @@ import com.controllerface.bvge.util.AssetPool;
 import org.joml.Random;
 import org.joml.Vector4f;
 
+import static com.controllerface.bvge.data.PhysicsObjects.FLAG_CIRCLE;
+
 public class TestGame extends GameMode
 {
     private final GameSystem screenBlankSystem;
@@ -85,24 +87,33 @@ public class TestGame extends GameMode
         }
     }
 
+    private void genTestCircle(float size, float x, float y)
+    {
+        // circle entity
+        var npc = ecs.registerEntity(null);
+        var body_index = PhysicsObjects.circle(x, y, size, FLAG_CIRCLE);
+        ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(body_index));
+    }
+
+
     private void genPlayer()
     {
         // player entity
         var player = ecs.registerEntity("player");
-        var scomp = new SpriteComponent();
-        var sprite = new Sprite();
-        var tex = AssetPool.getTexture("assets/images/blendImage1.png");
-        sprite.setTexture(tex);
-        sprite.setHeight(16);
-        sprite.setWidth(16);
-        scomp.setSprite(sprite);
+        //var scomp = new SpriteComponent();
+        //var sprite = new Sprite();
+        //var tex = AssetPool.getTexture("assets/images/blendImage1.png");
+        //sprite.setTexture(tex);
+        //sprite.setHeight(16);
+        //sprite.setWidth(16);
+        //scomp.setSprite(sprite);
         //scomp.setColor(new Vector4f(0,0,0,1));
 
         // todo: instead of a body, just a reference/index needs to be stored
         var body_index = PhysicsObjects.dynamic_Box(0,0, 32);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
-        ecs.attachComponent(player, Component.SpriteComponent, scomp);
+        //ecs.attachComponent(player, Component.SpriteComponent, scomp);
         ecs.attachComponent(player, Component.RigidBody2D, new BodyIndex(body_index));
         ecs.attachComponent(player, Component.LinearForce, new LinearForce(1500));
     }
@@ -138,6 +149,7 @@ public class TestGame extends GameMode
     public void load()
     {
         genPlayer();
+        genTestCircle(25,0, 0);
 
 //        genNPCs(100, 10f, 10f, 2100, 2100);
 //        genNPCs(100, 10f, 10f, 1000, -1000);
@@ -149,8 +161,8 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
         //genNPCs(100, 7f, 10f, 0, 0);
 
-        genNPCs(1, 41f, 40f, 100, 300);
-        genFloor(20, 150f, 150f, -500, -100);
+        //genNPCs(1, 41f, 40f, 100, 300);
+        //genFloor(20, 150f, 150f, -500, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);
 

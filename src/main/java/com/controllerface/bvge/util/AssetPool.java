@@ -1,6 +1,8 @@
 package com.controllerface.bvge.util;
 
+import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
+import com.controllerface.bvge.gl.Shader2;
 import com.controllerface.bvge.gl.Texture;
 
 import java.util.HashMap;
@@ -8,10 +10,10 @@ import java.util.Map;
 
 public class AssetPool
 {
-    private static Map<String, Shader> shaders = new HashMap<>();
+    private static Map<String, AbstractShader> shaders = new HashMap<>();
     private static Map<String, Texture> textures = new HashMap<>();
 
-    public static Shader getShader(String resourceName)
+    public static AbstractShader getShader(String resourceName)
     {
         if (shaders.containsKey(resourceName))
         {
@@ -19,7 +21,16 @@ public class AssetPool
         }
         else
         {
-            Shader shader = new Shader(resourceName);
+            AbstractShader shader;
+            if (resourceName.contains("circle_shader"))
+            {
+                shader = new Shader2(resourceName);
+            }
+            else
+            {
+                shader = new Shader(resourceName);
+            }
+
             shader.compile();
             AssetPool.shaders.put(resourceName, shader);
             return shader;

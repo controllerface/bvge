@@ -1,23 +1,29 @@
 package com.controllerface.bvge.gl;
 
+import org.joml.*;
+import org.lwjgl.BufferUtils;
+
 import java.io.IOException;
+import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL32.GL_GEOMETRY_SHADER;
 
-public class Shader extends AbstractShader
+public class Shader2 extends AbstractShader
 {
     private String vertexSource;
     private String fragmentSource;
+    private String geometrySource;
     private boolean beingUsed = false;
 
-    public Shader(String filePath)
+    public Shader2(String filePath)
     {
         try
         {
             // todo: stop this string split stuff and just put the shaders in their own files
-            var st= Shader.class.getResourceAsStream("/gl/" + filePath);
+            var st= Shader2.class.getResourceAsStream("/gl/" + filePath);
             String source = new String(st.readAllBytes(), StandardCharsets.UTF_8);//new String(Files.readAllBytes(Paths.get(filePath)));
             source = source.replaceAll("\\r\\n?", "\n");
             String[] splits = source.split("(#type)( )+([a-zA-Z]+)");
@@ -30,30 +36,32 @@ public class Shader extends AbstractShader
             eol = source.indexOf("\n", index);
             String secondPattern = source.substring(index, eol).trim();
 
-            if (firstPattern.equals("vertex"))
+            index = source.indexOf("#type", eol) + 6;
+            eol = source.indexOf("\n", index);
+            String thirdPattern = source.substring(index, eol).trim();
+
+            switch (firstPattern)
             {
-                vertexSource = splits[1];
-            }
-            else if (firstPattern.equals("fragment"))
-            {
-                fragmentSource = splits[1];
-            }
-            else
-            {
-                //throw new IOException("incorrect type:" + firstPattern);
+                case "vertex" -> vertexSource = splits[1];
+                case "fragment" -> fragmentSource = splits[1];
+                case "geometry" -> geometrySource = splits[1];
+                default -> throw new IOException("incorrect type:" + firstPattern);
             }
 
-            if (secondPattern.equals("vertex"))
+            switch (secondPattern)
             {
-                vertexSource = splits[2];
+                case "vertex" -> vertexSource = splits[2];
+                case "fragment" -> fragmentSource = splits[2];
+                case "geometry" -> geometrySource = splits[2];
+                default -> throw new IOException("incorrect type:" + firstPattern);
             }
-            else if (secondPattern.equals("fragment"))
+
+            switch (thirdPattern)
             {
-                fragmentSource = splits[2];
-            }
-            else
-            {
-                //throw new IOException("incorrect type:" + firstPattern);
+                case "vertex" -> vertexSource = splits[3];
+                case "fragment" -> fragmentSource = splits[3];
+                case "geometry" -> geometrySource = splits[3];
+                default -> throw new IOException("incorrect type:" + firstPattern);
             }
         }
         catch (IOException ioe)
@@ -65,7 +73,9 @@ public class Shader extends AbstractShader
 
     public void compile()
     {
-        int vertexID, fragmentID;
+        int vertexID, fragmentID, geometryID;
+
+
 
         // vertex shader
         vertexID = glCreateShader(GL_VERTEX_SHADER);
@@ -80,6 +90,22 @@ public class Shader extends AbstractShader
             assert false : "";
         }
 
+
+        // geo shader
+        geometryID = glCreateShader(GL_GEOMETRY_SHADER);
+        glShaderSource(geometryID, geometrySource);
+        glCompileShader(geometryID);
+        success = glGetShaderi(geometryID, GL_COMPILE_STATUS);
+        if (success == GL_FALSE)
+        {
+            int len = glGetShaderi(geometryID, GL_INFO_LOG_LENGTH);
+            System.out.println("ERROR: geometry shader compilation failed");
+            System.out.println(glGetShaderInfoLog(geometryID, len));
+            assert false : "";
+        }
+
+
+
         // fragment shader
         fragmentID = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentID, fragmentSource);
@@ -93,10 +119,12 @@ public class Shader extends AbstractShader
             assert false : "";
         }
 
+
         // link and check step
         shaderProgramId = glCreateProgram();
         glAttachShader(shaderProgramId, vertexID);
         glAttachShader(shaderProgramId, fragmentID);
+        glAttachShader(shaderProgramId, geometryID);
         glLinkProgram(shaderProgramId);
 
         // check erorr
@@ -124,4 +152,5 @@ public class Shader extends AbstractShader
         glUseProgram(0);
         beingUsed = false;
     }
+
 }

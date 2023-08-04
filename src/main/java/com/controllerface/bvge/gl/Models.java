@@ -7,6 +7,10 @@ import java.util.Set;
 
 public class Models
 {
+    public static final int CIRCLE_MODEL = 0;
+    public static final int BOX_MODEL = 1;
+    public static final int POLYGON1_MODEL = 2;
+
     private static final Map<Integer, float[]> loaded_models = new HashMap<>();
     private static final Map<Integer, Boolean> dirty_models = new HashMap<>();
     private static final Map<Integer, Set<Integer>> model_instances = new HashMap<>();
@@ -87,7 +91,8 @@ public class Models
 
     public static void init()
     {
-        loaded_models.put(0, load_box_model());
-        loaded_models.put(1, load_poly1_model());
+        loaded_models.put(CIRCLE_MODEL, new float[]{ 0, 0 });
+        loaded_models.put(BOX_MODEL, load_box_model());
+        loaded_models.put(POLYGON1_MODEL, load_poly1_model());
     }
 }

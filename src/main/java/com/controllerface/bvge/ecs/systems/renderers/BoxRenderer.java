@@ -4,6 +4,7 @@ import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.renderers.batches.BoxRenderBatch;
+import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Models;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
@@ -21,8 +22,7 @@ public class BoxRenderer extends GameSystem
     public static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_4D_LENGTH;
     public static final int TRANSFORM_BUFFER_SIZE = TRANSFORM_VERTEX_COUNT * Float.BYTES;
 
-    private final int model_index = 0;
-    private final Shader shader;
+    private final AbstractShader shader;
     private final Texture texture;
     private final List<BoxRenderBatch> batches;
     private int model_buffer_id;
@@ -42,7 +42,7 @@ public class BoxRenderer extends GameSystem
 
     public void start()
     {
-        var base_model = Models.get_model_by_index(model_index);
+        var base_model = Models.get_model_by_index(Models.BOX_MODEL);
         var vbo_model = new float[12];
         vbo_model[0] = base_model[0];  // tri 1 // p1 x
         vbo_model[1] = base_model[1];           // p1 y
@@ -156,15 +156,15 @@ public class BoxRenderer extends GameSystem
     public void run(float dt)
     {
         // todo: will ned to account for this happening more than once
-        if (Models.is_model_dirty(model_index))
+        if (Models.is_model_dirty(Models.BOX_MODEL))
         {
-            var instances = Models.get_model_instances(model_index);
+            var instances = Models.get_model_instances(Models.BOX_MODEL);
             int[] indices = new int[instances.size()];
             int[] counter = new int[1];
             instances.forEach(integer -> indices[counter[0]++] = integer);
 
             // get the number of models that need to be rendered
-            var model_count = Models.get_instance_count(model_index);
+            var model_count = Models.get_instance_count(Models.BOX_MODEL);
 
             var needed_batches = model_count / Constants.Rendering.MAX_BATCH_SIZE;
             var r = model_count % Constants.Rendering.MAX_BATCH_SIZE;
@@ -198,7 +198,7 @@ public class BoxRenderer extends GameSystem
             }
 
 
-            Models.set_model_clean(model_index);
+            Models.set_model_clean(Models.BOX_MODEL);
         }
 
         render();

@@ -3,6 +3,7 @@ package com.controllerface.bvge.ecs.systems.renderers;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
+import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.ecs.systems.renderers.batches.RectRenderBatch;
 import com.controllerface.bvge.util.AssetPool;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class SpacePartitionRenderer extends GameSystem
 {
-    private Shader shader;
+    private AbstractShader shader;
     private List<RectRenderBatch> batches;
     private final Vector3f color = new Vector3f(0f,0f,1f);
     private final Vector3f color2 = new Vector3f(.1f,0.5f,0.1f);

@@ -1,6 +1,7 @@
 package com.controllerface.bvge.ecs.systems.renderers.batches;
 
 import com.controllerface.bvge.ecs.Line2D;
+import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
@@ -33,9 +34,9 @@ public class RectRenderBatch implements Comparable<RectRenderBatch>
     private float[] vertices;
     private int vaoID, vboID;
     private int zIndex;
-    private final Shader currentShader;
+    private final AbstractShader currentShader;
 
-    public RectRenderBatch(int zIndex, Shader currentShader)
+    public RectRenderBatch(int zIndex, AbstractShader currentShader)
     {
         this.zIndex = zIndex;
         this.lines = new Line2D[Constants.Rendering.MAX_BATCH_SIZE * 4]; // 4 lines per box
