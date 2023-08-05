@@ -121,21 +121,21 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
-        // do physics first
+        // all physics calculations should be done first
         ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
 
-        // camera movement must be handled before rendering occurs
+        // camera movement must be handled before rendering occurs, but after objects are in position
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
 
-        // rendering passes happen at the end
-        // todo: if things are moved to a unified vbo, there could be a VBO prep step here before
-        //  the screen blank so the render time is a fast as possible, and the time from blank to
-        //  render is minimized.
-        // blank screen before rendering
+        // blank screen before rendering, rendering passes happen after screen blanking
         ecs.registerSystem(screenBlankSystem);
+
+        // these are debug-level renderers for visualizing the modeled physics boundaries
         ecs.registerSystem(new EdgeRenderer(ecs));
-        //ecs.registerSystem(new BoxRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
+
+        // main renderers go here, one for each model type that can be rendered
+        ecs.registerSystem(new CrateRenderer(ecs));
 
 
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
@@ -149,10 +149,10 @@ public class TestGame extends GameMode
     public void load()
     {
         genPlayer();
-        genTestCircle(20,0, 0);
-        genTestCircle(100,100, 50);
-        genTestCircle(20,-25, -20);
-        genTestCircle(30,25, -5);
+        genTestCircle(20,0, 50);
+        genTestCircle(100,100, 70);
+        genTestCircle(20,0, 100);
+        genTestCircle(30,20, 55);
 
 //        genNPCs(100, 10f, 10f, 2100, 2100);
 //        genNPCs(100, 10f, 10f, 1000, -1000);

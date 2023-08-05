@@ -13,7 +13,7 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
 import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
-public class BoxRenderBatch
+public class CrateRenderBatch
 {
     private final AbstractShader shader;
     private final Texture texture;
@@ -23,12 +23,12 @@ public class BoxRenderBatch
     private int[] texSlots = { 0 };
     private int[] indices; // will be large enough to hold a full batch, but may only contain a partial one
 
-    public BoxRenderBatch(AbstractShader shader,
-                          Texture texture,
-                          int transform_buffer_ID,
-                          int model_buffer_id,
-                          int texture_uv_buffer_id,
-                          int color_buffer_id)
+    public CrateRenderBatch(AbstractShader shader,
+                            Texture texture,
+                            int transform_buffer_ID,
+                            int model_buffer_id,
+                            int texture_uv_buffer_id,
+                            int color_buffer_id)
     {
         this.shader = shader;
         this.texture = texture;

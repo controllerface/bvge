@@ -3,10 +3,9 @@ package com.controllerface.bvge.ecs.systems.renderers;
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.renderers.batches.BoxRenderBatch;
+import com.controllerface.bvge.ecs.systems.renderers.batches.CrateRenderBatch;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Models;
-import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.AssetPool;
 import com.controllerface.bvge.util.Constants;
@@ -17,21 +16,21 @@ import java.util.List;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static org.lwjgl.opengl.GL15.*;
 
-public class BoxRenderer extends GameSystem
+public class CrateRenderer extends GameSystem
 {
     public static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_4D_LENGTH;
     public static final int TRANSFORM_BUFFER_SIZE = TRANSFORM_VERTEX_COUNT * Float.BYTES;
 
     private final AbstractShader shader;
     private final Texture texture;
-    private final List<BoxRenderBatch> batches;
+    private final List<CrateRenderBatch> batches;
     private int model_buffer_id;
     private int transform_buffer_id;
     private int texture_uv_buffer_id;
     private int color_buffer_id;
 
 
-    public BoxRenderer(ECS ecs)
+    public CrateRenderer(ECS ecs)
     {
         super(ecs);
         this.batches = new ArrayList<>();
@@ -82,9 +81,6 @@ public class BoxRenderer extends GameSystem
         vbo_tex_coords[10] = 0f;          // p4 u
         vbo_tex_coords[11] = 1f;          // p4 v
 
-        //fColor = vec3(0.5f, 0.35f, 0.05f);
-        //fColor = vec3(0.23, 0.21, 0.2);
-        //fColor = vec4(0.55, 0.5, 0.48, 1);
 
         var vbo_colors = new float[24];
         vbo_colors[0] = 0.5f; // tri 1 // p1 r
@@ -146,7 +142,7 @@ public class BoxRenderer extends GameSystem
 
     private void render()
     {
-        for (BoxRenderBatch batch : batches)
+        for (CrateRenderBatch batch : batches)
         {
             batch.render();
         }
@@ -174,7 +170,7 @@ public class BoxRenderer extends GameSystem
             }
             while (needed_batches > batches.size())
             {
-                var b = new BoxRenderBatch(shader,
+                var b = new CrateRenderBatch(shader,
                     texture,
                     transform_buffer_id,
                     model_buffer_id,

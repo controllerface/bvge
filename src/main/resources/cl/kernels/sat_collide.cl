@@ -1,49 +1,15 @@
-/**
-Performs collision detection using separating axis theorem, and then applys a reaction
-for objects when they are found to be colliding. Reactions detemine one "edge" polygon 
-and one "vertex" polygon. The vertex polygon has a single vertex adjusted as a reaction. 
-The edge object has two vertices adjusted and the adjustments are in oppostie directions, 
-which will naturally apply some degree of rotation to the object.
- todo: add circles, currently assumes polygons 
- */
-__kernel void sat_collide(__global int2 *candidates,
-                          __global float4 *bodies,
-                          __global int4 *element_tables,
-                          __global int *body_flags,
-                          __global float4 *points,
-                          __global float4 *edges)
+inline void polygon_collision(int b1_id, int b2_id,
+                             __global float4 *bodies,
+                             __global int *body_flags,
+                             __global int4 *element_tables,
+                             __global float4 *points,
+                             __global float4 *edges)
 {
-    int gid = get_global_id(0);
-    
-    int2 current_pair = candidates[gid];
-    int b1_id = current_pair.x;
-    int b2_id = current_pair.y;
+
     float4 body_1 = bodies[b1_id];
     float4 body_2 = bodies[b2_id];
-
     int4 body_1_table = element_tables[b1_id];
     int4 body_2_table = element_tables[b2_id];
-
-    int body_1_flags = body_flags[b1_id];
-    int body_2_flags = body_flags[b2_id];
-
-    bool b1s = (body_1_flags & 0x01) !=0;
-    bool b2s = (body_2_flags & 0x01) !=0;
-    
-    if (b1s && b2s) // these should be filtered before getting here, but just in case..
-    {
-        return;
-    }
-
-    // no circles for now
-    bool b1c_test = (body_1_flags & 0x02) !=0;
-    bool b2c_test = (body_2_flags & 0x02) !=0;
-    if (b1c_test || b2c_test)
-    {
-        return;
-    }
-
-    bool has_static = b1s || b2s;
 
     int start_1 = body_1_table.x;
     int end_1   = body_1_table.y;
@@ -249,8 +215,7 @@ __kernel void sat_collide(__global int2 *candidates,
     float2 v_reaction = collision_vector * vertex_magnitude;
     float2 e_reaction = collision_vector * edge_magnitude;
 
-
-    // todo: this should techncially be atomic, however visually it doesn't
+    // todo: this should technically be atomic, however visually it doesn't
     //  seem to matter right now. probably should do it "right" though at some point
     points[vert_index].x += v_reaction.x;
     points[vert_index].y += v_reaction.y;
@@ -258,20 +223,112 @@ __kernel void sat_collide(__global int2 *candidates,
     points[edge_index_a].y -= e1_reaction.y;
     points[edge_index_b].x -= e2_reaction.x;
     points[edge_index_b].y -= e2_reaction.y;
-    
-    // if (vertex_object_id == 0)
-    // {
-    //     printf("debug: edge_object_id=%d vert_object_id=%d", edge_object_id, vertex_object_id);
-    // }
-  
+}
 
-    // uncomment below for "fake" inelastic collisions
-    // todo: previous location should be updated so relative difference is the same as before,
-    //  but reaction difference is "cancelled out"
-    // points[vert_index].z = points[vert_index].x - FLT_EPSILON;
-    // points[vert_index].w = points[vert_index].y - FLT_EPSILON;
-    // points[edge_index_a].z = points[edge_index_a].x + FLT_EPSILON;
-    // points[edge_index_a].w = points[edge_index_a].y + FLT_EPSILON;
-    // points[edge_index_b].z = points[edge_index_b].x + FLT_EPSILON;
-    // points[edge_index_b].w = points[edge_index_b].y + FLT_EPSILON;
+inline void circle_collision(int b1_id, int b2_id,
+                             __global float4 *bodies,
+                             __global int4 *element_tables,
+                             __global float4 *points)
+{
+    float4 body_1 = bodies[b1_id];
+    float4 body_2 = bodies[b2_id];
+    int4 body_1_table = element_tables[b1_id];
+    int4 body_2_table = element_tables[b2_id];
+
+    float2 normal;
+    float depth = 0;
+    float _distance = distance(body_1.xy, body_2.xy);
+    float radii = body_1.w + body_2.w;
+    if(_distance >= radii)
+    {
+        return;
+    }
+
+    float2 sub = body_2.xy - body_1.xy;
+    normal = normalize(sub);
+    depth = radii - _distance;
+
+    // float test = project_circle(body_1, normal);
+    // float test2 = project_circle(body_2, normal);
+
+    // now react
+
+    //let verts1 = collision.a.verts;
+    //let verts2 = collision.b.verts;
+
+    float2 reaction;
+    reaction.x = normal.x * (depth + .1);
+    reaction.y = normal.y * (depth + .1);
+
+    float2 offset1;
+    offset1.x = reaction.x * -0.5;
+    offset1.y = reaction.y * -0.5;
+    float2 offset2;
+    offset2.x = reaction.x * 0.5;
+    offset2.y = reaction.y * 0.5;
+
+    float4 vert1 = points[body_1_table.x];
+    float4 vert2 = points[body_2_table.x];
+    
+    vert1.xy += offset1;
+    vert2.xy += offset2;
+
+    points[body_1_table.x] = vert1;
+    points[body_2_table.x] = vert2;
+
+    //verts1[0].pos = vectors.add(verts1[0].pos, offset1);
+    //verts2[0].pos = vectors.add(verts2[0].pos, offset2);
+    //collision.a.pos = verts1[0].pos;
+    //collision.b.pos = verts2[0].pos;
+    //utils.clamp(verts1[0]);
+    //utils.clamp(verts1[0]);
+}
+
+/**
+Performs collision detection using separating axis theorem, and then applys a reaction
+for objects when they are found to be colliding. Reactions detemine one "edge" polygon 
+and one "vertex" polygon. The vertex polygon has a single vertex adjusted as a reaction. 
+The edge object has two vertices adjusted and the adjustments are in oppostie directions, 
+which will naturally apply some degree of rotation to the object.
+ todo: add circles, currently assumes polygons 
+ */
+__kernel void sat_collide(__global int2 *candidates,
+                          __global float4 *bodies,
+                          __global int4 *element_tables,
+                          __global int *body_flags,
+                          __global float4 *points,
+                          __global float4 *edges)
+{
+    int gid = get_global_id(0);
+    
+    int2 current_pair = candidates[gid];
+    int b1_id = current_pair.x;
+    int b2_id = current_pair.y;
+    int body_1_flags = body_flags[b1_id];
+    int body_2_flags = body_flags[b2_id];
+    bool b1s = (body_1_flags & 0x01) !=0;
+    bool b2s = (body_2_flags & 0x01) !=0;
+    
+    if (b1s && b2s) // no collisions between static objects todo: probably can weed these out earlier, during aabb checks
+    {
+        return;
+    }
+
+    bool b1_is_circle = (body_1_flags & 0x02) !=0;
+    bool b2_is_circle = (body_2_flags & 0x02) !=0;
+
+    bool b1_is_polygon = (body_1_flags & 0x04) !=0;
+    bool b2_is_polygon = (body_2_flags & 0x04) !=0;
+
+    // no circles for now
+    // if (b1_is_circle || b2_is_circle)
+    // {
+    //     return;
+    // }
+
+    // todo: it will probably be more performant to have separate kernels for each collision type. There should
+    //  be a prelimianry kernel that sorts the candidate pairs so they can be 
+    if (b1_is_polygon && b2_is_polygon) polygon_collision(b1_id, b2_id, bodies, body_flags, element_tables, points, edges); 
+    
+    if (b1_is_circle && b2_is_circle) circle_collision(b1_id, b2_id, bodies, element_tables, points); 
 }

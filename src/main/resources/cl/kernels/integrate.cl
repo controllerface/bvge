@@ -66,7 +66,8 @@ __kernel void integrate(
     acc.x = acceleration.x;
     acc.y = acceleration.y;
     bool is_static = (body_1_flags & 0x01) !=0;
-    
+    bool is_circle = (body_1_flags & 0x02) !=0;
+
     if (!is_static)
     {
         acc.x += gravity.x;
@@ -179,9 +180,18 @@ __kernel void integrate(
         points[i] = point;
     }
 
-    // calculate centroid
+    // calculate centroid // todo: account for circles
     body.x = x_sum / point_count;
     body.y = y_sum / point_count;
+
+    // handle bounding boxes for circles
+    if (is_circle)
+    {
+        min_x = body.x - body.w;
+        max_x = body.x + body.w;
+        min_y = body.y - body.w;
+        max_y = body.y + body.w;
+    }
 
     // calculate bounding box
     bounding_box.x = min_x;

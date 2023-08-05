@@ -3,7 +3,6 @@ package com.controllerface.bvge.ecs.systems.renderers;
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.renderers.batches.BoxRenderBatch;
 import com.controllerface.bvge.ecs.systems.renderers.batches.CircleRenderBatch;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Models;

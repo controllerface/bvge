@@ -39,7 +39,7 @@ public class PhysicsObjects
         var l2 = OpenCL.arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angleBetween2Lines(l1, l2);
         var table = OpenCL.arg_int4(p1_index, p1_index, -1, -1);
-        var transform = OpenCL.arg_float4(x, y, size, size);
+        var transform = OpenCL.arg_float4(x, y, size, size / 2);
         var rotation = OpenCL.arg_float2(0, angle);
         int body_id =  Main.Memory.newBody(transform, rotation, table, flags);
         Models.register_model_instance(Models.CIRCLE_MODEL, body_id);
