@@ -27,8 +27,8 @@ __kernel void resolve_constraints(__global int4 *element_tables,
 
         // for each edge, we need to calculate the current distance between points,
         // and then move the vertices apart so they meet the length requirement.
-        for (int current_edge = end_edge; current_edge >= start_edge; current_edge--)
-        //for (int current_edge = start_edge; current_edge <= end_edge; current_edge++)
+        //for (int current_edge = end_edge; current_edge >= start_edge; current_edge--)
+        for (int current_edge = start_edge; current_edge <= end_edge; current_edge++)
         {
             // get this edge
             float4 edge = edges[current_edge];
@@ -45,6 +45,9 @@ __kernel void resolve_constraints(__global int4 *element_tables,
             // extract just the current vertex info for processing
             float2 p1_v = p1.xy;
             float2 p2_v = p2.xy;
+
+            float2 p1_prv = p1.zw;
+            float2 p2_prv = p2.zw;
             
             // calculate the normalized direction of separation
             float2 sub = p2_v - p1_v;
@@ -60,11 +63,24 @@ __kernel void resolve_constraints(__global int4 *element_tables,
             p1_v = p1_v + direction;
             p2_v = p2_v - direction;
 
+            p1_prv = p1_prv + direction;
+            p2_prv = p2_prv - direction;
+
             // store the updated values in the points
             p1.x = p1_v.x;
             p1.y = p1_v.y;
             p2.x = p2_v.x;
             p2.y = p2_v.y;
+
+            // p1.z = p1_v.x;
+            // p1.w = p1_v.y;
+            // p2.z = p2_v.x;
+            // p2.w = p2_v.y;
+
+            // p1.z = p1_prv.x;
+            // p1.w = p1_prv.y;
+            // p2.z = p2_prv.x;
+            // p2.w = p2_prv.y;
 
             // set the updated points into the buffer
             points[p1_index] = p1;

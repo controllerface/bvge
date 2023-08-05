@@ -2,8 +2,6 @@ package com.controllerface.bvge.ecs.systems.renderers.batches;
 
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.gl.AbstractShader;
-import com.controllerface.bvge.gl.Shader;
-import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.util.Constants.Rendering.*;
@@ -11,8 +9,6 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
-import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
-import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 public class CircleRenderBatch
 {
@@ -75,7 +71,7 @@ public class CircleRenderBatch
         shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
         shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
 
-        OpenCL.batch_transforms_GL(vboID, transform_buffer_ID, numModels);
+        OpenCL.GL_transforms(vboID, transform_buffer_ID, numModels);
 
         glBindVertexArray(vaoID);
 

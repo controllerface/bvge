@@ -2,7 +2,6 @@ package com.controllerface.bvge.ecs.systems.renderers.batches;
 
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.gl.AbstractShader;
-import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.window.Window;
 
@@ -101,7 +100,7 @@ public class BoxRenderBatch
         glActiveTexture(GL_TEXTURE0);
         texture.bind();
 
-        OpenCL.batch_transforms_GL(vboID, transform_buffer_ID, numModels);
+        OpenCL.GL_transforms(vboID, transform_buffer_ID, numModels);
 
         glBindVertexArray(vaoID);
 

@@ -539,7 +539,7 @@ public class OpenCL
         shared_mem.put(vboID, vbo_mem);
     }
 
-    public static void batch_edge_GL(int vboID, int vboOffset, int batchSize)
+    public static void GL_edges(int vboID, int vboOffset, int batchSize)
     {
         var vbo_mem = shared_mem.get(vboID);
         long[] global_work_size = arg_long(batchSize);
@@ -555,7 +555,7 @@ public class OpenCL
         gl_release(vbo_mem);
     }
 
-    public static void batch_transforms_GL(int vboID, int transforms_id, int size)
+    public static void GL_transforms(int vboID, int transforms_id, int size)
     {
         var vbo_mem = shared_mem.get(vboID);
         var vbo_mem2 = shared_mem.get(transforms_id);
