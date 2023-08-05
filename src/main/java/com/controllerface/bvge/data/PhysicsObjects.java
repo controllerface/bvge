@@ -17,6 +17,7 @@ public class PhysicsObjects
     public static int FLAG_NONE = 0x00;
     public static int FLAG_STATIC_OBJECT = 0x01;
     public static int FLAG_CIRCLE = 0x02;
+    public static int FLAG_POLYGON = 0x04;
     public static int FLAG_INTERIOR_EDGE = 0x01;
 
     public static float distance(float[] a, float[] b)
@@ -83,7 +84,7 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = OpenCL.arg_float2(0, angle);
 
-        int body_id =  Main.Memory.newBody(transform, rotation, table, flags);
+        int body_id =  Main.Memory.newBody(transform, rotation, table, flags | FLAG_POLYGON);
         Models.register_model_instance(Models.BOX_MODEL, body_id);
         return body_id;
     }
@@ -142,7 +143,7 @@ public class PhysicsObjects
         var rotation = OpenCL.arg_float2(0, angle);
 
         // todo: register this body index as using the indexed model
-        int body_id = Main.Memory.newBody(transform, rotation, table, FLAG_NONE);
+        int body_id = Main.Memory.newBody(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
         Models.register_model_instance(Models.POLYGON1_MODEL, body_id);
         return body_id;
     }

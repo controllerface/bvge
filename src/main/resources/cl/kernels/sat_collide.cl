@@ -27,18 +27,18 @@ __kernel void sat_collide(__global int2 *candidates,
     int body_1_flags = body_flags[b1_id];
     int body_2_flags = body_flags[b2_id];
 
-    bool b1s = (body_1_flags && 0x01) !=0;
-    bool b2s = (body_2_flags && 0x01) !=0;
+    bool b1s = (body_1_flags & 0x01) !=0;
+    bool b2s = (body_2_flags & 0x01) !=0;
     
     if (b1s && b2s) // these should be filtered before getting here, but just in case..
     {
         return;
     }
 
-    bool b1c_test = (body_1_flags && 0x02) !=0;
-    bool b2c_test = (body_2_flags && 0x02) !=0;
-
-    if (b1c_test || b2c_test) // no circles for now
+    // no circles for now
+    bool b1c_test = (body_1_flags & 0x02) !=0;
+    bool b2c_test = (body_2_flags & 0x02) !=0;
+    if (b1c_test || b2c_test)
     {
         return;
     }
@@ -217,8 +217,8 @@ __kernel void sat_collide(__global int2 *candidates,
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 
-    bool vs = (vo_f && 0x01) !=0;
-    bool es = (eo_f && 0x01) !=0;
+    bool vs = (vo_f & 0x01) !=0;
+    bool es = (eo_f & 0x01) !=0;
     
     if (vs || es)
     {

@@ -65,7 +65,7 @@ __kernel void integrate(
    	float2 acc;
     acc.x = acceleration.x;
     acc.y = acceleration.y;
-    bool is_static = (body_1_flags && 0x01) !=0;
+    bool is_static = (body_1_flags & 0x01) !=0;
     
     if (!is_static)
     {

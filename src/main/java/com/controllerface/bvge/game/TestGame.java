@@ -164,7 +164,7 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
         //genNPCs(100, 7f, 10f, 0, 0);
 
-        //genNPCs(1, 41f, 40f, 100, 300);
+        genNPCs(1, 41f, 40f, 100, 300);
         //genFloor(20, 150f, 150f, -500, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);
