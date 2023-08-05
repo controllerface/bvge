@@ -37,10 +37,12 @@ public class OpenCL
     static String func_exclusive_scan       = read_src("functions/exclusive_scan.cl");
     static String func_do_bounds_intersect  = read_src("functions/do_bounds_intersect.cl");
     static String func_project_polygon      = read_src("functions/project_polygon.cl");
+    static String func_project_circle       = read_src("functions/project_circle.cl");
     static String func_polygon_distance     = read_src("functions/polygon_distance.cl");
     static String func_edge_contact         = read_src("functions/edge_contact.cl");
     static String func_rotate_point         = read_src("functions/rotate_point.cl");
     static String func_angle_between        = read_src("functions/angle_between.cl");
+    static String func_closest_point_circle = read_src("functions/closest_point_circle.cl");
 
     /**
      * CRUD
@@ -357,6 +359,8 @@ public class OpenCL
          */
         p_sat_collide = cl_p(
             func_angle_between,
+            func_closest_point_circle,
+            func_project_circle,
             func_project_polygon,
             func_polygon_distance,
             func_edge_contact,

@@ -135,7 +135,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new CircleRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
-        ecs.registerSystem(new CrateRenderer(ecs));
+        //ecs.registerSystem(new CrateRenderer(ecs));
 
 
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
@@ -149,9 +149,9 @@ public class TestGame extends GameMode
     public void load()
     {
         genPlayer();
-        genTestCircle(20,0, 50);
-        genTestCircle(100,100, 70);
-        genTestCircle(20,0, 100);
+        //genTestCircle(20,0, 50);
+        //genTestCircle(100,100, 70);
+        //genTestCircle(20,0, 100);
         genTestCircle(30,20, 55);
 
 //        genNPCs(100, 10f, 10f, 2100, 2100);
@@ -164,7 +164,7 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
         //genNPCs(100, 7f, 10f, 0, 0);
 
-        genNPCs(1, 41f, 40f, 100, 300);
+        //genNPCs(1, 41f, 40f, 100, 300);
         genFloor(20, 150f, 150f, -500, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);
