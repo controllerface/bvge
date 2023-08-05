@@ -79,15 +79,14 @@ out vec4 color;
 
 void main()
 {
-    vec4 circleColor = vec4(1, 1, 1, 1);
-    float thickness = .05;
-    float fade = .05;
+    vec4 circleColor = vec4(0, 0, 0, 1);
+    float thickness = .07;
+    float fade = .0005;
 
     float distance = 1.0 - length(fPosition);
     float circle = smoothstep(0.0, fade, distance);
     circle *= smoothstep(thickness + fade, thickness, distance);
     
-    color = vec4(0, 0, 0, 1);
+    if (circle > 0) color = circleColor;
     color.a *= circle;
-    if (color.a > 0) color.rgb = circleColor.rgb;
 }
