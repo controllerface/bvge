@@ -150,6 +150,9 @@ public class TestGame extends GameMode
     {
         genPlayer();
         genTestCircle(20,0, 0);
+        genTestCircle(100,100, 50);
+        genTestCircle(20,-25, -20);
+        genTestCircle(30,25, -5);
 
 //        genNPCs(100, 10f, 10f, 2100, 2100);
 //        genNPCs(100, 10f, 10f, 1000, -1000);

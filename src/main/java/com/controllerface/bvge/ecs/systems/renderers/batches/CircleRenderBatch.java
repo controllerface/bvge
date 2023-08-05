@@ -41,7 +41,6 @@ public class CircleRenderBatch
         glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_ID);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
-        glVertexAttribDivisor(0, 1);
 
         // share the buffer with the CL context
         OpenCL.share_memory(vboID);
@@ -75,7 +74,6 @@ public class CircleRenderBatch
         shader.use();
         shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
         shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
-        shader.uploadFloat2("uResolution", Window.get().getWidth(), Window.get().getHeight());
 
         OpenCL.batch_transforms_GL(vboID, transform_buffer_ID, numModels);
 
