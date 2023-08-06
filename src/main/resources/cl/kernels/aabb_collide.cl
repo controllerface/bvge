@@ -55,6 +55,10 @@ __kernel void aabb_collide(__global float4 *bounds,
         {
             int next = key_map[map_index]; 
 
+            // todo: add static-to-static
+            // todo: add layer check 
+            // todo: add non-interact flag check
+
             // no mirror or self-matches
             if (index >= next)
             {
@@ -72,7 +76,8 @@ __kernel void aabb_collide(__global float4 *bounds,
             }
 
             // we need to be "set-like" so any candidate we already matched 
-            // with needs to be dropped
+            // with need to be dropped. This does mean that this loop size grows
+            // with the number of matches, 
             if (slots_used > 0)
             {
                 bool dupe = false;

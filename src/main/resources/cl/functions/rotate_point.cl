@@ -1,3 +1,7 @@
+/**
+Rotates a target point around an origin point, by the specified angle. 
+The target point's previous positions are forwarded to the output vector.
+ */
 inline float4 rotate_point(float4 target, float2 origin, float angle)
 {
     float4 output;

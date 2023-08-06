@@ -15,7 +15,6 @@ import com.controllerface.bvge.util.AssetPool;
 import org.joml.Random;
 import org.joml.Vector4f;
 
-import static com.controllerface.bvge.data.PhysicsObjects.FLAG_CIRCLE;
 
 public class TestGame extends GameMode
 {
@@ -173,11 +172,11 @@ public class TestGame extends GameMode
     {
         genPlayer();
         //genTestCircle(20,0, 50);
-        genTestCircle(100,100, 70);
+        genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
         genTestCircle(30,20, 55);
 
-        genCircles(50, 5f, 3f, 40, 500);
+        genCircles(100, 5f, 5f, 0, 2500);
 
 //        genNPCs(100, 10f, 10f, 2100, 2100);
 //        genNPCs(100, 10f, 10f, 1000, -1000);
@@ -190,7 +189,7 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 0);
 
         genNPCs(1, 41f, 40f, 100, 300);
-        genFloor(20, 150f, 150f, -500, -100);
+        genFloor(200, 150f, 150f, -4000, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);
 

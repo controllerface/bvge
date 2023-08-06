@@ -1,16 +1,9 @@
+/**
+Calculates the angle between two lines. Each line is packed into a float4, the xy
+components containing the start point of the line, and the zw components containing 
+the end point. The angle returned is in radians. 
+ */
 inline float angle_between(float4 line1, float4 line2)
 {
-    float l1x1 = line1.x;
-    float l1y1 = line1.y;
-    float l1x2 = line1.z;
-    float l1y2 = line1.w;
-
-    float l2x1 = line2.x;
-    float l2y1 = line2.y;
-    float l2x2 = line2.z;
-    float l2y2 = line2.w;
-    
-    float angle1 = atan2(l1y1 - l1y2, l1x1 - l1x2);
-    float angle2 = atan2(l2y1 - l2y2, l2x1 - l2x2);
-    return angle1 - angle2;
+    return atan2(line1.y - line1.w, line1.x - line1.z) - atan2(line2.y - line2.w, line2.x - line2.z);
 }

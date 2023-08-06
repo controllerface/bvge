@@ -1,6 +1,6 @@
-
-// todo: move to float 4, extents
-
+/**
+Tests two axis-aligned bounding boxes for intersection.
+ */
 inline bool do_bounds_intersect(float4 a, float4 b)
 {
     return a.s0 < b.s0 + b.s2

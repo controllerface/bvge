@@ -349,7 +349,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     float2 axis = fast_normalize(edge);
     float3 proj_p = project_polygon(points, polygon_table, axis);
     float3 proj_c = project_circle(circle, axis);
-    float distance = polygon_distance(proj_c, proj_p) / circle.w;
+    float distance = polygon_distance(proj_c, proj_p) / (circle.z / 2);
     if (distance > 0)
     {
         return;
@@ -485,14 +485,8 @@ __kernel void sat_collide(__global int2 *candidates,
     bool b1_is_polygon = (body_1_flags & 0x04) !=0;
     bool b2_is_polygon = (body_2_flags & 0x04) !=0;
 
-    // no circles for now
-    // if (b1_is_circle || b2_is_circle)
-    // {
-    //     return;
-    // }
-
     // todo: it will probably be more performant to have separate kernels for each collision type. There should
-    //  be a prelimianry kernel that sorts the candidate pairs so they can be 
+    //  be a preliminary kernel that sorts the candidate pairs so they can be run on the right kernel
     if (b1_is_polygon && b2_is_polygon) polygon_collision(b1_id, b2_id, bodies, body_flags, element_tables, points, edges); 
     else if (b1_is_circle && b2_is_circle) circle_collision(b1_id, b2_id, bodies, element_tables, points); 
     else 

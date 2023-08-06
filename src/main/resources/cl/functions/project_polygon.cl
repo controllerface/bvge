@@ -1,5 +1,8 @@
-// todo: convert to int 4, element tables
-
+/**
+Projects the points of the given body onto the given normal vector. 
+The return vector contains the min/max distances, and the index of
+the point that have the mininum value.
+ */
 inline float3 project_polygon(__global const float4 *points, int4 body, float2 normal)
 {
     int start = body.x;
