@@ -346,9 +346,6 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     // circle check
     float2 collision_point = points[cp_index].xy;
     float2 edge = collision_point - points[circle_table.x].xy;
-    float xTemp = edge.y;
-        edge.y = edge.x * -1;
-        edge.x = xTemp;
     float2 axis = fast_normalize(edge);
     float3 proj_p = project_polygon(points, polygon_table, axis);
     float3 proj_c = project_circle(circle, axis);
@@ -357,7 +354,94 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     {
         return;
     }
-    printf("debug collide");
+    float abs_distance = fabs(distance);
+
+    if (abs_distance < min_distance)
+    {
+        normalBuffer.x = axis.x;
+        normalBuffer.y = axis.y;
+        min_distance = abs_distance;
+    }
+
+    normalBuffer = normalize(normalBuffer);
+
+    int a_idx = circle_id;
+    int b_idx = polygon_id;
+
+    float4 a = bodies[a_idx];
+    float4 b = bodies[b_idx];
+
+    float2 transformA;
+    transformA.x = a.x;
+    transformA.y = a.y;
+
+    float2 transformB;
+    transformB.x = b.x;
+    transformB.y = b.y;
+
+    float2 direction = transformA - transformB;
+
+    float dirdot = (float)dot(direction, normalBuffer);
+    if (dirdot < 0)
+    {
+        normalBuffer.x = normalBuffer.x * -1;
+        normalBuffer.y = normalBuffer.y * -1;
+    }
+
+    vert_index = circle_table.x;
+    min_distance = min_distance / length(normalBuffer);
+
+
+    // vertex and edge object flags
+    int vo_f = body_flags[(int)vertex_object_id];
+    int eo_f = body_flags[(int)edge_object_id];
+
+    float2 normal = normalBuffer;
+
+    float2 collision_vector = normal * min_distance;
+    float vertex_magnitude = .5f;
+    float edge_magnitude = .5f;
+
+    bool vs = (vo_f & 0x01) !=0;
+    bool es = (eo_f & 0x01) !=0;
+    
+    if (vs || es)
+    {
+        if (vs)
+        {
+            vertex_magnitude = 0.0f;
+            edge_magnitude = 1.0f;
+        }
+        if (es)
+        {
+            vertex_magnitude = 1.0f;
+            edge_magnitude = 0.0f;
+        }
+    }
+
+    float2 e1 = points[edge_index_a].xy;
+    float2 e2 = points[edge_index_b].xy;
+    float2 collision_vertex = points[vert_index].xy;
+
+    // edge reactions
+    float contact = edge_contact(e1, e2, collision_vertex, collision_vector);
+
+    float edge_scale = 1.0f / (contact * contact + (1 - contact) * (1 - contact));
+    float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale);
+    float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale);
+
+    // vertex reaction
+    float2 v_reaction = collision_vector * vertex_magnitude;
+
+    // todo: this should technically be atomic, however visually it doesn't
+    //  seem to matter right now. probably should do it "right" though at some point
+    points[vert_index].x += v_reaction.x;
+    points[vert_index].y += v_reaction.y;
+    points[edge_index_a].x -= e1_reaction.x;
+    points[edge_index_a].y -= e1_reaction.y;
+    points[edge_index_b].x -= e2_reaction.x;
+    points[edge_index_b].y -= e2_reaction.y;
+
 }
 
 

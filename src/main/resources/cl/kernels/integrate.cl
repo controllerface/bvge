@@ -1,4 +1,4 @@
-#define MINIMUM_DIFF 0.001
+#define MINIMUM_DIFF 0.000
 
 /**
 Performs the integration step of a physics loop, generally this is the first stage
@@ -50,16 +50,16 @@ __kernel void integrate(
 
     // todo: instead of punting on these, we can maybe update differently and tag the body
     //  or something, so it can be handled differently for collisions as well.
-    if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
-    {
-        acceleration.x = 0;
-        acceleration.y = 0;
-        body_accel[gid] = acceleration;
+    // if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
+    // {
+    //     acceleration.x = 0;
+    //     acceleration.y = 0;
+    //     body_accel[gid] = acceleration;
 
-        bounds_bank.y = 0;
-        bounds_bank_data[gid] = bounds_bank;
-        return;
-    }
+    //     bounds_bank.y = 0;
+    //     bounds_bank_data[gid] = bounds_bank;
+    //     return;
+    // }
 
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
@@ -106,7 +106,7 @@ __kernel void integrate(
         
         // force rotate the point to keep the object upright
         // todo: this should scale based on gravity, with zero g being no ro restriction of rotation
-        //point = rotate_point(point, (float2)body.xy, -rotation.x * .01);
+        //point = rotate_point(point, (float2)body.xy, -rotation.x * .05);
 
         // this was a very basic orbital motion test, worth saving for something else
         //float rot  = /*inv_r ? -.00001 :*/ .00001;

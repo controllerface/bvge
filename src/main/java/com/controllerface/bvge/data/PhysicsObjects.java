@@ -25,7 +25,7 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int circle(float x, float y, float size, int flags)
+    public static int circle(float x, float y, float size)
     {
         // get the circle model. this is almost silly to do but just for consistency :-)
         var mdl = Models.get_model_by_index(Models.CIRCLE_MODEL);
@@ -41,7 +41,7 @@ public class PhysicsObjects
         var table = OpenCL.arg_int4(p1_index, p1_index, -1, -1);
         var transform = OpenCL.arg_float4(x, y, size, size / 2.0f);
         var rotation = OpenCL.arg_float2(0, angle);
-        int body_id =  Main.Memory.newBody(transform, rotation, table, flags);
+        int body_id =  Main.Memory.newBody(transform, rotation, table, FLAG_CIRCLE);
         Models.register_model_instance(Models.CIRCLE_MODEL, body_id);
         return body_id;
     }

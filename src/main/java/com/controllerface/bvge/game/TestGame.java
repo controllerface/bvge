@@ -60,6 +60,29 @@ public class TestGame extends GameMode
         }
     }
 
+    private void genCircles(int box_size, float spacing, float size, float start_x, float start_y)
+    {
+        // trivial change for new commit
+        System.out.println("generating: " + box_size * box_size + " NPCs..");
+        var rand = new Random();
+        for (int i = 0; i < box_size; i++)
+        {
+            for (int j = 0; j < box_size; j++)
+            {
+                float r = rand.nextFloat() / 5.0f;
+                float g = rand.nextFloat() / 5.0f;
+                float b = rand.nextFloat();
+
+                float x = start_x + i * spacing;
+                float y = start_y + j * spacing;
+
+                var npc = ecs.registerEntity(null);
+                var body_index = PhysicsObjects.circle(x, y, size);
+                ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(body_index));
+            }
+        }
+    }
+
     private void genFloor(int floor_size, float spacing, float size, float start_x, float start_y)
     {
         System.out.println("generating floor size: " + floor_size);
@@ -91,7 +114,7 @@ public class TestGame extends GameMode
     {
         // circle entity
         var npc = ecs.registerEntity(null);
-        var body_index = PhysicsObjects.circle(x, y, size, FLAG_CIRCLE);
+        var body_index = PhysicsObjects.circle(x, y, size);
         ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(body_index));
     }
 
@@ -150,9 +173,11 @@ public class TestGame extends GameMode
     {
         genPlayer();
         //genTestCircle(20,0, 50);
-        //genTestCircle(100,100, 70);
+        genTestCircle(100,100, 70);
         //genTestCircle(20,0, 100);
         genTestCircle(30,20, 55);
+
+        genCircles(50, 5f, 3f, 40, 500);
 
 //        genNPCs(100, 10f, 10f, 2100, 2100);
 //        genNPCs(100, 10f, 10f, 1000, -1000);
@@ -164,7 +189,7 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
         //genNPCs(100, 7f, 10f, 0, 0);
 
-        //genNPCs(1, 41f, 40f, 100, 300);
+        genNPCs(1, 41f, 40f, 100, 300);
         genFloor(20, 150f, 150f, -500, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);
