@@ -132,7 +132,7 @@ public class TestGame extends GameMode
         //scomp.setColor(new Vector4f(0,0,0,1));
 
         // todo: instead of a body, just a reference/index needs to be stored
-        var body_index = PhysicsObjects.dynamic_Box(0,0, 32);
+        var body_index = PhysicsObjects.polygon1(0,0, 32);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         //ecs.attachComponent(player, Component.SpriteComponent, scomp);
@@ -172,11 +172,13 @@ public class TestGame extends GameMode
     {
         genPlayer();
         //genTestCircle(20,0, 50);
-        genTestCircle(100,100, 100);
+        //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
         genTestCircle(30,20, 55);
 
-        genCircles(100, 5f, 5f, 0, 2500);
+        genCircles(100, 50f, 50f, 0, 2500);
+
+        //genCircles(100, 80f, 100f, 2100, 2100);
 
 //        genNPCs(100, 10f, 10f, 2100, 2100);
 //        genNPCs(100, 10f, 10f, 1000, -1000);

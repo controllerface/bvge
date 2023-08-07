@@ -5,7 +5,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.renderers.batches.CrateRenderBatch;
 import com.controllerface.bvge.gl.AbstractShader;
-import com.controllerface.bvge.gl.Models;
+import com.controllerface.bvge.gl.Meshes;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.AssetPool;
 import com.controllerface.bvge.util.Constants;
@@ -41,7 +41,7 @@ public class CrateRenderer extends GameSystem
 
     public void start()
     {
-        var base_model = Models.get_model_by_index(Models.BOX_MODEL);
+        var base_model = Meshes.get_mesh_by_index(Meshes.BOX_MESH);
         var vbo_model = new float[12];
         vbo_model[0] = base_model[0];  // tri 1 // p1 x
         vbo_model[1] = base_model[1];           // p1 y
@@ -152,15 +152,15 @@ public class CrateRenderer extends GameSystem
     public void run(float dt)
     {
         // todo: will ned to account for this happening more than once
-        if (Models.is_model_dirty(Models.BOX_MODEL))
+        if (Meshes.is_mesh_dirty(Meshes.BOX_MESH))
         {
-            var instances = Models.get_model_instances(Models.BOX_MODEL);
+            var instances = Meshes.get_mesh_instances(Meshes.BOX_MESH);
             int[] indices = new int[instances.size()];
             int[] counter = new int[1];
             instances.forEach(integer -> indices[counter[0]++] = integer);
 
             // get the number of models that need to be rendered
-            var model_count = Models.get_instance_count(Models.BOX_MODEL);
+            var model_count = Meshes.get_instance_count(Meshes.BOX_MESH);
 
             var needed_batches = model_count / Constants.Rendering.MAX_BATCH_SIZE;
             var r = model_count % Constants.Rendering.MAX_BATCH_SIZE;
@@ -194,7 +194,7 @@ public class CrateRenderer extends GameSystem
             }
 
 
-            Models.set_model_clean(Models.BOX_MODEL);
+            Meshes.set_mesh_clean(Meshes.BOX_MESH);
         }
 
         render();

@@ -1,7 +1,7 @@
 package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.gl.Models;
+import com.controllerface.bvge.gl.Meshes;
 import com.controllerface.bvge.window.Window;
 
 
@@ -70,7 +70,7 @@ public class Main
 
     public static void main(String[] args)
     {
-        Models.init();
+        Meshes.init();
         Window window = Window.get();
         window.initOpenGL();
         OpenCL.init(Memory.MAX_BODIES, Memory.MAX_POINTS);
