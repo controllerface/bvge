@@ -155,14 +155,16 @@ public class TestGame extends GameMode
         // these are debug-level renderers for visualizing the modeled physics boundaries
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs));
+
 
         // main renderers go here, one for each model type that can be rendered
-        //ecs.registerSystem(new CrateRenderer(ecs));
+        ecs.registerSystem(new CrateRenderer(ecs));
 
 
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
         //ecs.registerSystem(new SpriteRenderer(ecs));
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+
 
 
     }
