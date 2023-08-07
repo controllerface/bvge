@@ -66,9 +66,7 @@ public class PhysicsObjects
         var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
         var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
-        // todo: store this reference angle so it can be used to calculate current body rotation
         var angle = MathEX.angleBetween2Lines(l1, l2);
-
 
         // box sides
         var start_edge = Main.Memory.newEdge(p1_index, p2_index, edgeDistance(p2, p1));
@@ -101,7 +99,6 @@ public class PhysicsObjects
 
     public static int polygon1(float x, float y, float size)
     {
-        // todo: will probably need the model ID stored for the body in order to delete it later
         var mesh = Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH);
 
         var p1 = OpenCL.arg_float2(mesh[0] * size + x, mesh[1] * size + y);
@@ -120,12 +117,7 @@ public class PhysicsObjects
         var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
         var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
-        // todo: store this reference angle so it can be used to calculate current body rotation
         var angle = MathEX.angleBetween2Lines(l1, l2);
-        if (Main.Memory.bodyCount() == 0)
-        {
-            System.out.println("Initial: " + angle);
-        }
         // box sides
         var start_edge = Main.Memory.newEdge(p1_index, p2_index, edgeDistance(p2, p1));
         Main.Memory.newEdge(p2_index, p3_index, edgeDistance(p3, p2));
@@ -142,7 +134,6 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = OpenCL.arg_float2(0, angle);
 
-        // todo: register this body index as using the indexed model
         int body_id = Main.Memory.newBody(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
         Meshes.register_mesh_instance(Meshes.POLYGON1_MESH, body_id);
         return body_id;

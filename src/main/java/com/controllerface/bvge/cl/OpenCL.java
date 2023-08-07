@@ -66,6 +66,7 @@ public class OpenCL
     static String kern_locate_in_bounds     = read_src("kernels/locate_in_bounds.cl");
     static String kern_prepare_edges        = read_src("kernels/prepare_edges.cl");
     static String kern_prepare_transforms   = read_src("kernels/prepare_transforms.cl");
+    static String kern_prepare_bounds       = read_src("kernels/prepare_bounds.cl");
 
     /**
      * Kernel function names
@@ -99,6 +100,7 @@ public class OpenCL
     static String kn_create_body                        = "create_body";
     static String kn_prepare_edges                      = "prepare_edges";
     static String kn_prepare_transforms                 = "prepare_transforms";
+    static String kn_prepare_bounds                     = "prepare_bounds";
 
     /**
      * CL Programs
@@ -117,6 +119,7 @@ public class OpenCL
     static cl_program p_gpu_crud;
     static cl_program p_prepare_edges;
     static cl_program p_prepare_transforms;
+    static cl_program p_prepare_bounds;
 
     /**
      * CL Kernels
@@ -150,6 +153,7 @@ public class OpenCL
     static cl_kernel k_create_body;
     static cl_kernel k_prepare_edges;
     static cl_kernel k_prepare_transforms;
+    static cl_kernel k_prepare_bounds;
 
 
     /**
@@ -411,6 +415,8 @@ public class OpenCL
 
         p_prepare_transforms = cl_p(kern_prepare_transforms);
 
+        p_prepare_bounds = cl_p(kern_prepare_bounds);
+
         /*
          * Kernels
          */
@@ -443,6 +449,7 @@ public class OpenCL
         k_create_edge                       = cl_k(p_gpu_crud, kn_create_edge);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
         k_prepare_transforms                = cl_k(p_prepare_transforms, kn_prepare_transforms);
+        k_prepare_bounds                    = cl_k(p_prepare_bounds, kn_prepare_bounds);
 
         // init physics buffers here
 
@@ -541,6 +548,21 @@ public class OpenCL
     {
         cl_mem vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
         shared_mem.put(vboID, vbo_mem);
+    }
+
+    public static void GL_bounds(int vboID, int vboOffset, int batchSize)
+    {
+        var vbo_mem = shared_mem.get(vboID);
+        long[] global_work_size = arg_long(batchSize);
+        long[] edge_offset = arg_long(vboOffset);
+
+        clSetKernelArg(k_prepare_bounds, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
+        clSetKernelArg(k_prepare_bounds, 1, Sizeof.cl_mem, Pointer.to(vbo_mem));
+        clSetKernelArg(k_prepare_bounds, 2, Sizeof.cl_int, Pointer.to(edge_offset));
+
+        gl_acquire(vbo_mem);
+        k_call(k_prepare_bounds, global_work_size);
+        gl_release(vbo_mem);
     }
 
     public static void GL_edges(int vboID, int vboOffset, int batchSize)

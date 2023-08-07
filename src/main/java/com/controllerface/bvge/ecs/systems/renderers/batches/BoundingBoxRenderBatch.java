@@ -2,41 +2,47 @@ package com.controllerface.bvge.ecs.systems.renderers.batches;
 
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 /**
  * Rendering batch specifically for edge constraints
  */
-public class EdgeRenderBatch
+public class BoundingBoxRenderBatch
 {
-    private int numLines;
+    private int box_count;
     private int offset;
     private final int vaoID, vboID;
     private final AbstractShader currentShader;
+    private final int[] offsets = new int[Constants.Rendering.MAX_BATCH_SIZE];;
+    private final int[] counts = new int[Constants.Rendering.MAX_BATCH_SIZE];
 
-    public EdgeRenderBatch(AbstractShader currentShader, int vaoID, int vboID)
+    public BoundingBoxRenderBatch(AbstractShader currentShader, int vaoID, int vboID)
     {
-        this.numLines = 0;
+        this.box_count = 0;
         this.currentShader = currentShader;
         this.vaoID = vaoID;
         this.vboID = vboID;
+        for (int i = 0; i < Constants.Rendering.MAX_BATCH_SIZE; i++)
+        {
+            offsets[i] = i * 4;
+            counts[i] = 4;
+        }
     }
 
     public void clear()
     {
-        numLines = 0;
+        box_count = 0;
     }
 
     public void setLineCount(int numLines)
     {
-        this.numLines = numLines;
+        this.box_count = numLines;
     }
 
     public void setOffset(int offset)
@@ -49,7 +55,7 @@ public class EdgeRenderBatch
         glBindVertexArray(vaoID);
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
-        OpenCL.GL_edges(vboID, offset, numLines);
+        OpenCL.GL_bounds(vboID, offset, box_count);
 
         // Use shader
         currentShader.use();
@@ -57,7 +63,9 @@ public class EdgeRenderBatch
         currentShader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
 
         glEnableVertexAttribArray(0);
-        glDrawArrays(GL_LINES, 0, numLines * 2);
+
+        glMultiDrawArrays(GL_LINE_LOOP, offsets, counts);
+
         glDisableVertexAttribArray(0);
         glBindVertexArray(0);
 

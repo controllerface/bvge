@@ -17,10 +17,14 @@ public class CrateRenderBatch
 {
     private final AbstractShader shader;
     private final Texture texture;
-    private int numModels;
-    private int vaoID, vboID;
-    private final int transform_buffer_ID, model_buffer_id, texture_uv_buffer_id, color_buffer_id;
-    private int[] texSlots = { 0 };
+    private int vao;
+    private int mesh_count;
+    private int index_buffer_id;
+    private final int transform_buffer_ID;
+    private final int model_buffer_id;
+    private final int texture_uv_buffer_id;
+    private final int color_buffer_id;
+    private final int[] texture_slots = { 0 };
     private int[] indices; // will be large enough to hold a full batch, but may only contain a partial one
 
     public CrateRenderBatch(AbstractShader shader,
@@ -41,11 +45,11 @@ public class CrateRenderBatch
     public void start()
     {
         // Generate and bind a Vertex Array Object
-        vaoID = glGenVertexArrays();
-        glBindVertexArray(vaoID); // this sets this VAO as being active
+        vao = glGenVertexArrays();
+        glBindVertexArray(vao); // this sets this VAO as being active
 
-        vboID = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vboID);
+        index_buffer_id = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, index_buffer_id);
         glBufferData(GL_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, model_buffer_id);
@@ -66,7 +70,7 @@ public class CrateRenderBatch
         glVertexAttribPointer(3, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
 
         // share the buffer with the CL context
-        OpenCL.share_memory(vboID);
+        OpenCL.share_memory(index_buffer_id);
 
         // unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -77,7 +81,7 @@ public class CrateRenderBatch
 
     public void clear()
     {
-        numModels = 0;
+        mesh_count = 0;
     }
 
     public void setIndices(int[] indices)
@@ -87,33 +91,36 @@ public class CrateRenderBatch
 
     public void setModelCount(int numModels)
     {
-        this.numModels = numModels;
+        this.mesh_count = numModels;
     }
 
 
     public void render()
     {
         shader.use();
-        shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
-        shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
-        shader.uploadIntArray("uTextures", texSlots);
-        glActiveTexture(GL_TEXTURE0);
         texture.bind();
 
-        OpenCL.GL_transforms(vboID, transform_buffer_ID, numModels);
+        shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
+        shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
+        shader.uploadIntArray("uTextures", texture_slots);
 
-        glBindVertexArray(vaoID);
+        OpenCL.GL_transforms(index_buffer_id, transform_buffer_ID, mesh_count);
 
+        glBindVertexArray(vao);
+        glActiveTexture(GL_TEXTURE0);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
         glEnableVertexAttribArray(3);
-        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, numModels);
+
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, mesh_count);
+
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(2);
         glDisableVertexAttribArray(3);
         glBindVertexArray(0);
+
         shader.detach();
         texture.unbind();
     }

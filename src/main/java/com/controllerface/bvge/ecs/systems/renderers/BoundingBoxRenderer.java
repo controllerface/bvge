@@ -4,8 +4,8 @@ import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.ecs.systems.renderers.batches.BoundingBoxRenderBatch;
 import com.controllerface.bvge.gl.AbstractShader;
-import com.controllerface.bvge.ecs.systems.renderers.batches.EdgeRenderBatch;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 
@@ -14,7 +14,6 @@ import java.util.List;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
 import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
@@ -23,23 +22,23 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
  * Manages rendering of edge constraints. All edges that are defined in the currently
  * loaded physics state are rendered as lines.
  */
-public class EdgeRenderer extends GameSystem
+public class BoundingBoxRenderer extends GameSystem
 {
     private static final int VERTEX_SIZE = 2; // a vertex is 2 floats (x,y)
-    private static final int VERTS_PER_EDGE = 2;
+    private static final int VERTS_PER_BOX = 4;
     private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
-    private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VERTS_PER_EDGE * VERTEX_SIZE;
+    private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VERTS_PER_BOX * VERTEX_SIZE;
     private static final int BATCH_BUFFER_SIZE = BATCH_VERTEX_COUNT * Float.BYTES;
 
     private final AbstractShader shader;
-    private final List<EdgeRenderBatch> batches;
+    private final List<BoundingBoxRenderBatch> batches;
     private int vaoID, vboID;
 
-    public EdgeRenderer(ECS ecs)
+    public BoundingBoxRenderer(ECS ecs)
     {
         super(ecs);
         this.batches = new ArrayList<>();
-        this.shader = Assets.shader("object_outline.glsl");
+        this.shader = Assets.shader("bounding_outline.glsl");
         start();
     }
 
@@ -69,7 +68,7 @@ public class EdgeRenderer extends GameSystem
 
     private void render()
     {
-        for (EdgeRenderBatch batch : batches)
+        for (BoundingBoxRenderBatch batch : batches)
         {
             batch.render();
             batch.clear();
@@ -83,22 +82,22 @@ public class EdgeRenderer extends GameSystem
         //  low enough that some batches would be unneeded. This will leak memory resources
         //  so should be adjusted when deleting bodies is added.
 
-        var edge_count = Main.Memory.edgesCount();
-        var needed_batches = edge_count / Constants.Rendering.MAX_BATCH_SIZE;
-        var r = edge_count % Constants.Rendering.MAX_BATCH_SIZE;
+        var body_count = Main.Memory.bodyCount();
+        var needed_batches = body_count / Constants.Rendering.MAX_BATCH_SIZE;
+        var r = body_count % Constants.Rendering.MAX_BATCH_SIZE;
         if (r > 0)
         {
             needed_batches++;
         }
         while (needed_batches > batches.size())
         {
-            var b = new EdgeRenderBatch(shader, vaoID, vboID);
+            var b = new BoundingBoxRenderBatch(shader, vaoID, vboID);
             batches.add(b);
         }
 
         int next = 0;
         int offset = 0;
-        for (int i = edge_count; i > 0; i -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int i = body_count; i > 0; i -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, i);
             var b = batches.get(next++);

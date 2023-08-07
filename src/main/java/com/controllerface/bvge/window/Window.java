@@ -41,9 +41,9 @@ public class Window
         this.width = 1920;
         this.height = 1080;
         this.title = "BVGE Test";
-        this.r = .0f;
-        this.g = .0f;
-        this.b = .0f;
+        this.r = .5f;
+        this.g = .5f;
+        this.b = .5f;
         this.a = 1;
     }
 
