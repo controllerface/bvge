@@ -11,7 +11,7 @@ import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
 import com.controllerface.bvge.ecs.systems.renderers.*;
-import com.controllerface.bvge.util.AssetPool;
+import com.controllerface.bvge.util.Assets;
 import org.joml.Random;
 import org.joml.Vector4f;
 
@@ -46,7 +46,7 @@ public class TestGame extends GameMode
                 var npc = ecs.registerEntity(null);
                 var scomp2 = new SpriteComponent();
                 var sprite2 = new Sprite();
-                var tex2 = AssetPool.getTexture("assets/images/blendImage2.png");
+                var tex2 = Assets.texture("assets/images/blendImage2.png");
                 sprite2.setTexture(tex2);
                 sprite2.setHeight(32);
                 sprite2.setWidth(32);
@@ -97,7 +97,7 @@ public class TestGame extends GameMode
             var npc = ecs.registerEntity(null);
             var scomp2 = new SpriteComponent();
             var sprite2 = new Sprite();
-            var tex2 = AssetPool.getTexture("assets/images/blendImage2.png");
+            var tex2 = Assets.texture("assets/images/blendImage2.png");
             sprite2.setTexture(tex2);
             sprite2.setHeight(32);
             sprite2.setWidth(32);

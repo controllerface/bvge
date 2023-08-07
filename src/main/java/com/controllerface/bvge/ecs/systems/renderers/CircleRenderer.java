@@ -6,7 +6,7 @@ import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.renderers.batches.CircleRenderBatch;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Meshes;
-import com.controllerface.bvge.util.AssetPool;
+import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public class CircleRenderer extends GameSystem
     {
         super(ecs);
         this.batches = new ArrayList<>();
-        this.shader = AssetPool.getShader("circle_shader.glsl");
+        this.shader = Assets.shader("circle_shader.glsl");
         start();
     }
 

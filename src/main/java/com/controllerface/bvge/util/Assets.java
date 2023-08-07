@@ -2,18 +2,18 @@ package com.controllerface.bvge.util;
 
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
-import com.controllerface.bvge.gl.Shader2;
+import com.controllerface.bvge.gl.CircleShader;
 import com.controllerface.bvge.gl.Texture;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class AssetPool
+public class Assets
 {
     private static Map<String, AbstractShader> shaders = new HashMap<>();
     private static Map<String, Texture> textures = new HashMap<>();
 
-    public static AbstractShader getShader(String resourceName)
+    public static AbstractShader shader(String resourceName)
     {
         if (shaders.containsKey(resourceName))
         {
@@ -24,7 +24,7 @@ public class AssetPool
             AbstractShader shader;
             if (resourceName.contains("circle_shader"))
             {
-                shader = new Shader2(resourceName);
+                shader = new CircleShader(resourceName);
             }
             else
             {
@@ -32,12 +32,12 @@ public class AssetPool
             }
 
             shader.compile();
-            AssetPool.shaders.put(resourceName, shader);
+            Assets.shaders.put(resourceName, shader);
             return shader;
         }
     }
 
-    public static Texture getTexture(String resourceName)
+    public static Texture texture(String resourceName)
     {
         if (textures.containsKey(resourceName))
         {
@@ -47,7 +47,7 @@ public class AssetPool
         {
             Texture texture = new Texture();
             texture.init(resourceName);
-            AssetPool.textures.put(resourceName, texture);
+            Assets.textures.put(resourceName, texture);
             return texture;
         }
     }

@@ -4,10 +4,9 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.SpriteComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.AbstractShader;
-import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.ecs.systems.renderers.batches.SpriteRenderBatch;
-import com.controllerface.bvge.util.AssetPool;
+import com.controllerface.bvge.util.Assets;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,7 +21,7 @@ public class SpriteRenderer extends GameSystem
     {
         super(ecs);
         this.batches = new ArrayList<>();
-        this.shader = AssetPool.getShader("default.glsl");
+        this.shader = Assets.shader("default.glsl");
     }
 
     private void add(SpriteComponent sprite)

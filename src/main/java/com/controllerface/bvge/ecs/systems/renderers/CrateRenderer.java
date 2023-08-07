@@ -7,7 +7,7 @@ import com.controllerface.bvge.ecs.systems.renderers.batches.CrateRenderBatch;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Meshes;
 import com.controllerface.bvge.gl.Texture;
-import com.controllerface.bvge.util.AssetPool;
+import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 
 import java.util.ArrayList;
@@ -34,8 +34,8 @@ public class CrateRenderer extends GameSystem
     {
         super(ecs);
         this.batches = new ArrayList<>();
-        this.shader = AssetPool.getShader("box_model.glsl"); // todo: need new shader program
-        this.texture = AssetPool.getTexture("src/main/resources/img/crate.png");
+        this.shader = Assets.shader("box_model.glsl");
+        this.texture = Assets.texture("src/main/resources/img/crate.png");
         start();
     }
 

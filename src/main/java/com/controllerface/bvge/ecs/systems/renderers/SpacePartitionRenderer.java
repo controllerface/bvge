@@ -4,9 +4,8 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.gl.AbstractShader;
-import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.ecs.systems.renderers.batches.RectRenderBatch;
-import com.controllerface.bvge.util.AssetPool;
+import com.controllerface.bvge.util.Assets;
 import org.graalvm.collections.Pair;
 import org.joml.Vector3f;
 
@@ -28,7 +27,7 @@ public class SpacePartitionRenderer extends GameSystem
         super(ecs);
         this.spatialPartition = spatialPartition;
         this.batches = new ArrayList<>();
-        this.shader = AssetPool.getShader("debugLine2D.glsl");
+        this.shader = Assets.shader("debugLine2D.glsl");
     }
 
     private void add(float x, float y, float w, float h, Vector3f colorToUse)
