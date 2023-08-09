@@ -41,6 +41,10 @@ public class PhysicsObjects
         var table = OpenCL.arg_int4(p1_index, p1_index, -1, -1);
         var transform = OpenCL.arg_float4(x, y, size, size / 2.0f);
         var rotation = OpenCL.arg_float2(0, angle);
+
+        // todo: future uses of this class should be decoupled from the model registry itself
+        //  objects will need to be separated into visual and physics components, with the current
+        //  "body" objects being used for the physics bounds, i.e. convex hulls
         int body_id = Main.Memory.newBody(transform, rotation, table, FLAG_CIRCLE);
         Meshes.register_mesh_instance(Meshes.CIRCLE_MESH, body_id);
         return body_id;
@@ -82,6 +86,9 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = OpenCL.arg_float2(0, angle);
 
+        // todo: future uses of this class should be decoupled from the model registry itself
+        //  objects will need to be separated into visual and physics components, with the current
+        //  "body" objects being used for the physics bounds, i.e. convex hulls
         int body_id =  Main.Memory.newBody(transform, rotation, table, flags | FLAG_POLYGON);
         Meshes.register_mesh_instance(Meshes.BOX_MESH, body_id);
         return body_id;
@@ -134,6 +141,9 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = OpenCL.arg_float2(0, angle);
 
+        // todo: future uses of this class should be decoupled from the model registry itself
+        //  objects will need to be separated into visual and physics components, with the current
+        //  "body" objects being used for the physics bounds, i.e. convex hulls
         int body_id = Main.Memory.newBody(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
         Meshes.register_mesh_instance(Meshes.POLYGON1_MESH, body_id);
         return body_id;

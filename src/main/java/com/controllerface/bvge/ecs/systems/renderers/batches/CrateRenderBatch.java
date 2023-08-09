@@ -11,6 +11,7 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
+import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
 import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 public class CrateRenderBatch
@@ -104,6 +105,9 @@ public class CrateRenderBatch
         shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
         shader.uploadIntArray("uTextures", texture_slots);
 
+        // this call moves the physics transforms of the tracked hulls into the buffer for rendering
+        // todo: this will need to change to use bone weights, but possibly processing them in CL
+        //  not in GL
         OpenCL.GL_transforms(index_buffer_id, transform_buffer_ID, mesh_count);
 
         glBindVertexArray(vao);

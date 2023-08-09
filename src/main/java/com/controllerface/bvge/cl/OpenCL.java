@@ -550,6 +550,14 @@ public class OpenCL
         shared_mem.put(vboID, vbo_mem);
     }
 
+    /**
+     * Transfers a subset of all bounding boxes from CL memory into GL memory, converting the bounds
+     * into a vertex structure that can be rendered as a line loop.
+     *
+     * @param vboID
+     * @param vboOffset
+     * @param batchSize
+     */
     public static void GL_bounds(int vboID, int vboOffset, int batchSize)
     {
         var vbo_mem = shared_mem.get(vboID);

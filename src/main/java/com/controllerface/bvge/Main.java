@@ -9,6 +9,79 @@ public class Main
 {
     public static class Memory
     {
+
+        /**
+         * Memory Mapping Table:
+         * =====================
+         * This table defines the layout of all tracked structures used to calculate and render the simulation.
+         * Each object is broken down into its constituent raw data types, which are primarily a mixture of float
+         * and int vectors, and some scalars as well.
+         *
+         * Point:
+         * -----
+         * - float4: vertex
+         *      x: x position
+         *      y: y position
+         *      z: x previous
+         *      w: y previous
+         *
+         * Edge:
+         * ----
+         * - int2: edge points
+         *      x: point 1 index
+         *      y: point 2 index
+         *
+         * Hull: (formerly Body) todo: actually rename everything so it is consistent
+         * ----
+         * - float4: transform
+         *      x: position x
+         *      y: position y
+         *      z: scale x
+         *      w: scale y
+         *
+         * - float4: bounding box
+         *      x: start corner x
+         *      y: start corner y
+         *      z: width
+         *      w: height
+         *
+         * - float2: rotation
+         *      x: reference angle
+         *      y: current angle
+         *
+         * - float2: acceleration
+         *      x: acceleration x component
+         *      y: acceleration y component
+         *
+         * - int4: element table
+         *      x: start point
+         *      y: end point
+         *      z: start edge
+         *      w: end edge
+         *
+         * - int4: spatial index
+         *      x: minimum x key
+         *      y: maximum x key
+         *      z: minimum y key
+         *      w: maximum y key
+         *
+         * - int2: spatial key bank
+         *      x: bank index
+         *      y: bank size
+         *
+         * - int: flags
+         *      x: flags for this body (32-bit bit-field)
+         *
+         *
+         *  todo: add the following
+         *
+         * Bone:
+         * ----
+         * - ???: transform
+         *      ?: transform data?
+         *
+         */
+
         public static class Width
         {
             public static final int BODY = 4;
