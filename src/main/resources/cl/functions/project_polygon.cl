@@ -1,5 +1,5 @@
 /**
-Projects the points of the given body onto the given normal vector. 
+Projects the points of the given hull onto the given normal vector.
 The return vector contains the min/max distances, and the index of
 the point that have the mininum value.
  */
