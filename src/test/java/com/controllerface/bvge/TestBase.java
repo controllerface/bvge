@@ -44,8 +44,15 @@ public class TestBase
                 AIBone bone = AIBone.create(mBones.get(j));
                 if (bone.mNumWeights() > 0)
                 {
+                    var mOffset = bone.mOffsetMatrix();
+                    Matrix4f offset = new Matrix4f();
+                    offset.set(mOffset.a1(), mOffset.a2(), mOffset.a3(), mOffset.a4(),
+                        mOffset.b1(), mOffset.b2(), mOffset.b3(), mOffset.b4(),
+                        mOffset.c1(), mOffset.c2(), mOffset.c3(), mOffset.c4(),
+                        mOffset.d1(), mOffset.d2(), mOffset.d3(), mOffset.d4());
                     System.out.println("bone name: " + bone.mName().dataString());
                     System.out.println("bone weights: " + bone.mNumWeights());
+                    System.out.println("bone offset: \n" + offset);
                 }
             }
 

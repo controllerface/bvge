@@ -45,9 +45,9 @@ public class PhysicsObjects
         // todo: future uses of this class should be decoupled from the model registry itself
         //  objects will need to be separated into visual and physics components, with the current
         //  "body" objects being used for the physics bounds, i.e. convex hulls
-        int body_id = Main.Memory.newBody(transform, rotation, table, FLAG_CIRCLE);
-        Meshes.register_mesh_instance(Meshes.CIRCLE_MESH, body_id);
-        return body_id;
+        int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_CIRCLE);
+        Meshes.register_mesh_instance(Meshes.CIRCLE_MESH, hull_id);
+        return hull_id;
     }
 
     public static int box(float x, float y, float size, int flags)
@@ -89,9 +89,9 @@ public class PhysicsObjects
         // todo: future uses of this class should be decoupled from the model registry itself
         //  objects will need to be separated into visual and physics components, with the current
         //  "body" objects being used for the physics bounds, i.e. convex hulls
-        int body_id =  Main.Memory.newBody(transform, rotation, table, flags | FLAG_POLYGON);
-        Meshes.register_mesh_instance(Meshes.BOX_MESH, body_id);
-        return body_id;
+        int hull_id =  Main.Memory.newHull(transform, rotation, table, flags | FLAG_POLYGON);
+        Meshes.register_mesh_instance(Meshes.BOX_MESH, hull_id);
+        return hull_id;
     }
 
     public static int dynamic_Box(float x, float y, float size)
@@ -144,8 +144,8 @@ public class PhysicsObjects
         // todo: future uses of this class should be decoupled from the model registry itself
         //  objects will need to be separated into visual and physics components, with the current
         //  "body" objects being used for the physics bounds, i.e. convex hulls
-        int body_id = Main.Memory.newBody(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
-        Meshes.register_mesh_instance(Meshes.POLYGON1_MESH, body_id);
-        return body_id;
+        int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
+        Meshes.register_mesh_instance(Meshes.POLYGON1_MESH, hull_id);
+        return hull_id;
     }
 }

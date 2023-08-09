@@ -1,6 +1,6 @@
 package com.controllerface.bvge.game;
 
-import com.controllerface.bvge.data.BodyIndex;
+import com.controllerface.bvge.data.HullIndex;
 import com.controllerface.bvge.data.LinearForce;
 import com.controllerface.bvge.data.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
@@ -52,9 +52,9 @@ public class TestGame extends GameMode
                 sprite2.setWidth(32);
                 scomp2.setSprite(sprite2);
                 scomp2.setColor(new Vector4f(r,g,b,1));
-                var body_index = PhysicsObjects.dynamic_Box(x, y, size);
+                var hull_index = PhysicsObjects.dynamic_Box(x, y, size);
                 ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-                ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(body_index));
+                ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
             }
         }
     }
@@ -76,8 +76,8 @@ public class TestGame extends GameMode
                 float y = start_y + j * spacing;
 
                 var npc = ecs.registerEntity(null);
-                var body_index = PhysicsObjects.circle(x, y, size);
-                ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(body_index));
+                var hull_index = PhysicsObjects.circle(x, y, size);
+                ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
             }
         }
     }
@@ -103,9 +103,9 @@ public class TestGame extends GameMode
             sprite2.setWidth(32);
             //scomp2.setSprite(sprite2);
             scomp2.setColor(new Vector4f(r,g,b,1));
-            var body_index = PhysicsObjects.static_box(x, y, size);
+            var hull_index = PhysicsObjects.static_box(x, y, size);
             ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-            ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(body_index));
+            ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
         }
     }
 
@@ -113,8 +113,8 @@ public class TestGame extends GameMode
     {
         // circle entity
         var npc = ecs.registerEntity(null);
-        var body_index = PhysicsObjects.circle(x, y, size);
-        ecs.attachComponent(npc, Component.RigidBody2D, new BodyIndex(body_index));
+        var hull_index = PhysicsObjects.circle(x, y, size);
+        ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
     }
 
 
@@ -122,21 +122,10 @@ public class TestGame extends GameMode
     {
         // player entity
         var player = ecs.registerEntity("player");
-        //var scomp = new SpriteComponent();
-        //var sprite = new Sprite();
-        //var tex = AssetPool.getTexture("assets/images/blendImage1.png");
-        //sprite.setTexture(tex);
-        //sprite.setHeight(16);
-        //sprite.setWidth(16);
-        //scomp.setSprite(sprite);
-        //scomp.setColor(new Vector4f(0,0,0,1));
-
-        // todo: instead of a body, just a reference/index needs to be stored
-        var body_index = PhysicsObjects.polygon1(0,0, 32);
+        var hull_index = PhysicsObjects.polygon1(0,0, 32);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
-        //ecs.attachComponent(player, Component.SpriteComponent, scomp);
-        ecs.attachComponent(player, Component.RigidBody2D, new BodyIndex(body_index));
+        ecs.attachComponent(player, Component.RigidBody2D, new HullIndex(hull_index));
         ecs.attachComponent(player, Component.LinearForce, new LinearForce(1500));
     }
 

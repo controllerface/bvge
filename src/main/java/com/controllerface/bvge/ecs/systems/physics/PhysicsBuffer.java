@@ -6,7 +6,7 @@ import org.jocl.Pointer;
 public class PhysicsBuffer
 {
     public MemoryBuffer bounds;
-    public MemoryBuffer bodies;
+    public MemoryBuffer hulls;
     public MemoryBuffer points;
     public MemoryBuffer edges;
     public MemoryBuffer acceleration;
@@ -103,7 +103,7 @@ public class PhysicsBuffer
     public void shutdown()
     {
         if (bounds != null) bounds.release();
-        if (bodies != null) bodies.release();
+        if (hulls != null) hulls.release();
         if (points != null) points.release();
         if (edges != null) edges.release();
         if (acceleration != null) acceleration.release();

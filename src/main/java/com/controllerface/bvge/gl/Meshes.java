@@ -20,10 +20,12 @@ public class Meshes
         return loaded_meshes.get(index);
     }
 
-    public static void register_mesh_instance(int model_id, int body_id)
+    // todo: this may need to be changed so it points to a complete model, or possibly
+    //  a central hull that may be one of several meshes contained in the model. Right now
+    //  a model and mesh are 1:1 and that will need to change.
+    public static void register_mesh_instance(int model_id, int hull_id)
     {
-        mesh_instances.computeIfAbsent(model_id, _k->new HashSet<>())
-            .add(body_id);
+        mesh_instances.computeIfAbsent(model_id, _k -> new HashSet<>()).add(hull_id);
         dirty_meshes.put(model_id, true);
     }
 

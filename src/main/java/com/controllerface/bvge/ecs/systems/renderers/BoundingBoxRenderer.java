@@ -82,9 +82,9 @@ public class BoundingBoxRenderer extends GameSystem
         //  low enough that some batches would be unneeded. This will leak memory resources
         //  so should be adjusted when deleting bodies is added.
 
-        var body_count = Main.Memory.bodyCount();
-        var needed_batches = body_count / Constants.Rendering.MAX_BATCH_SIZE;
-        var r = body_count % Constants.Rendering.MAX_BATCH_SIZE;
+        var hull_count = Main.Memory.hullCount();
+        var needed_batches = hull_count / Constants.Rendering.MAX_BATCH_SIZE;
+        var r = hull_count % Constants.Rendering.MAX_BATCH_SIZE;
         if (r > 0)
         {
             needed_batches++;
@@ -97,7 +97,7 @@ public class BoundingBoxRenderer extends GameSystem
 
         int next = 0;
         int offset = 0;
-        for (int i = body_count; i > 0; i -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int i = hull_count; i > 0; i -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, i);
             var b = batches.get(next++);

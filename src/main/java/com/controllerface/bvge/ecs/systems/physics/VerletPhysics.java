@@ -52,11 +52,11 @@ public class VerletPhysics extends GameSystem
             String entity = entry.getKey();
             GameComponent component = entry.getValue();
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
-            BodyIndex body = Component.RigidBody2D.forEntity(ecs, entity);
+            HullIndex hull = Component.RigidBody2D.forEntity(ecs, entity);
             LinearForce force = Component.LinearForce.forEntity(ecs, entity);
 
             Objects.requireNonNull(controlPoints);
-            Objects.requireNonNull(body);
+            Objects.requireNonNull(hull);
             Objects.requireNonNull(force);
 
             vectorBuffer1.zero();
@@ -83,13 +83,13 @@ public class VerletPhysics extends GameSystem
 
             if (vectorBuffer1.x != 0f || vectorBuffer1.y != 0)
             {
-                OpenCL.update_accel(body.index(), vectorBuffer1.x, vectorBuffer1.y);
+                OpenCL.update_accel(hull.index(), vectorBuffer1.x, vectorBuffer1.y);
             }
 
             if (controlPoints.is_rotating_right() ^ controlPoints.is_rotating_left())
             {
                 float angle = controlPoints.is_rotating_right() ? -1000 : 1000;
-                OpenCL.rotate_body(body.index(), angle * dt * dt);
+                OpenCL.rotate_hull(hull.index(), angle * dt * dt);
             }
         }
     }

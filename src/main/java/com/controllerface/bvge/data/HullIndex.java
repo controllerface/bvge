@@ -46,4 +46,4 @@ import com.controllerface.bvge.ecs.components.GameComponent;
  *  */
 
 
-public record BodyIndex(int index) implements GameComponent { }
+public record HullIndex(int index) implements GameComponent { }

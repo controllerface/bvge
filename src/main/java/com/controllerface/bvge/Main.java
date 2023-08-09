@@ -70,7 +70,7 @@ public class Main
          *      y: bank size
          *
          * - int: flags
-         *      x: flags for this body (32-bit bit-field)
+         *      x: flags for this hull (32-bit bit-field)
          *
          *
          *  todo: add the following
@@ -84,7 +84,7 @@ public class Main
 
         public static class Width
         {
-            public static final int BODY = 4;
+            public static final int HULL = 4;
             public static final int POINT = 4;
             public static final int EDGE = 4;
         }
@@ -92,13 +92,13 @@ public class Main
         private static final int MAX_BODIES = 100_000;
         private static final int MAX_POINTS = 1_000_000;
 
-        private static int body_index  = 0;
+        private static int hull_index = 0;
         private static int point_index = 0;
         private static int edge_index  = 0;
 
-        public static int bodyCount()
+        public static int hullCount()
         {
-            return body_index / Width.BODY;
+            return hull_index / Width.HULL;
         }
 
         public static int pointsCount()
@@ -132,12 +132,12 @@ public class Main
             return idx / Width.POINT;
         }
 
-        public static int newBody(float[] transform, float[] rotation, int[] table, int flags)
+        public static int newHull(float[] transform, float[] rotation, int[] table, int flags)
         {
-            OpenCL.create_body(bodyCount(), transform, rotation, table, flags);
-            body_index += Width.BODY;
-            var idx = body_index - Width.BODY;
-            return idx / Width.BODY;
+            OpenCL.create_hull(hullCount(), transform, rotation, table, flags);
+            hull_index += Width.HULL;
+            var idx = hull_index - Width.HULL;
+            return idx / Width.HULL;
         }
     }
 

@@ -22,7 +22,7 @@ __kernel void update_accel(__global float2 *body_accel,
     body_accel[target] = accel;
 }
 
-__kernel void rotate_body(__global float4 *bodies,
+__kernel void rotate_hull(__global float4 *bodies,
                           __global int4 *element_tables,
                           __global float4 *points,
                           int target,
@@ -54,7 +54,7 @@ __kernel void create_edge(__global float4 *edges,
     edges[target] = new_edge; 
 }
 
-__kernel void create_body(__global float4 *bodies,
+__kernel void create_hull(__global float4 *bodies,
                           __global float2 *body_rotations,
                           __global int4 *element_tables,
                           __global int *body_flags,

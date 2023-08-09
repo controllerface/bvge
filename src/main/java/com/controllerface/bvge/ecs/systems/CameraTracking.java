@@ -1,7 +1,7 @@
 package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.data.BodyIndex;
+import com.controllerface.bvge.data.HullIndex;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
@@ -21,10 +21,10 @@ public class CameraTracking extends GameSystem
     {
         var focusTargets = ecs.getComponents(Component.CameraFocus);
         var focusTarget = focusTargets.entrySet().stream().findAny().orElseThrow();
-        BodyIndex body = Component.RigidBody2D.forEntity(ecs, focusTarget.getKey());
-        if (body == null) return;
+        HullIndex hull = Component.RigidBody2D.forEntity(ecs, focusTarget.getKey());
+        if (hull == null) return;
 
-        float[] pos = OpenCL.read_position(body.index());
+        float[] pos = OpenCL.read_position(hull.index());
 
         // will be null for the first few frames while the loop is primed
         if (pos == null) return;
