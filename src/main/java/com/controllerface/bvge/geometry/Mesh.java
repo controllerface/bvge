@@ -1,3 +1,3 @@
 package com.controllerface.bvge.geometry;
 
-public record Mesh(Vertex[] vertices, Face[] faces, Models.SceneNode sceneNode){ }
+public record Mesh(Vertex[] vertices, Face[] faces, Bone bone, Models.SceneNode sceneNode){ }

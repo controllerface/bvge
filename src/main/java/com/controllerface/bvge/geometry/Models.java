@@ -67,11 +67,16 @@ public class Models
 
             int bone_count = aiMesh.mNumBones();
             PointerBuffer mBones = aiMesh.mBones();
+            Bone mesh_bone = null;
             for (int j = 0; j < bone_count; j++)
             {
                 AIBone bone = AIBone.create(mBones.get(j));
                 if (bone.mNumWeights() > 0)
                 {
+                    if (mesh_bone != null)
+                    {
+                        throw new IllegalStateException("Multiple bones per mesh is not currently supported");
+                    }
                     var mOffset = bone.mOffsetMatrix();
                     Matrix4f offset = new Matrix4f();
                     offset.set(mOffset.a1(), mOffset.a2(), mOffset.a3(), mOffset.a4(),
@@ -80,6 +85,18 @@ public class Models
                         mOffset.d1(), mOffset.d2(), mOffset.d3(), mOffset.d4());
                     System.out.println("bone name: " + bone.mName().dataString());
                     System.out.println("bone weights: " + bone.mNumWeights());
+
+                    int weight_index = 0;
+                    AIVertexWeight.Buffer w_buf = bone.mWeights();
+                    BoneWeight[] weights = new BoneWeight[bone.mNumWeights()];
+                    while (w_buf.remaining() > 0)
+                    {
+                        AIVertexWeight weight = w_buf.get();
+                        weights[weight_index++] = new BoneWeight(weight.mVertexId(), weight.mWeight());
+                        System.out.println("vert id: " + weight.mVertexId() + " weight: " + weight.mWeight());
+                    }
+
+                    mesh_bone = new Bone(bone.mName().dataString(), offset, weights);
                     System.out.println("bone offset: \n" + offset);
                 }
             }
@@ -89,9 +106,10 @@ public class Models
             AIVector3D.Buffer buffer = aiMesh.mVertices();
             while (buffer.remaining() > 0)
             {
+                int this_vert = vert_index++;
                 AIVector3D aiVertex = buffer.get();
-                vertices[vert_index++] = new Vertex(aiVertex.x(), aiVertex.y());
-                System.out.printf("Vertex dump: x: %f y:%f\n", aiVertex.x(), aiVertex.y());
+                vertices[this_vert] = new Vertex(aiVertex.x(), aiVertex.y());
+                System.out.printf("Vertex dump: vert id: %d x: %f y:%f\n", this_vert, aiVertex.x(), aiVertex.y());
             }
 
             int face_index = 0;
@@ -111,7 +129,7 @@ public class Models
                 System.out.printf("Face dump: raw: %s\n", indices);
             }
 
-            var new_mesh = new Mesh(vertices, faces, sceneNode);
+            var new_mesh = new Mesh(vertices, faces, mesh_bone, sceneNode);
             int new_index = Meshes.register_mesh(name, new_mesh);
             meshes[i] = new_mesh;
             System.out.printf("registered mesh [%s] with id [%d]", name, new_index);
