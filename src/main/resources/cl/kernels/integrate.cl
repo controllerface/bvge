@@ -3,19 +3,19 @@
 /**
 Performs the integration step of a physics loop, generally this is the first stage
 in a process that updates all the tracked vertices each frame.
-Some meta-data about the bodies that are updated is stored within
+Some meta-data about the hulls that are updated is stored within
 them before this kernel completes. 
  */
 __kernel void integrate(
-    __global float4 *bodies,
+    __global float4 *hulls,
     __global int4 *element_tables,
-    __global float2 *body_accel,
-    __global float2 *body_rotations,
+    __global float2 *hull_accel,
+    __global float2 *hull_rotations,
     __global float4 *points,
     __global float4 *bounds,
     __global int4 *bounds_index_data,
     __global int2 *bounds_bank_data,
-    __global int *body_flags,
+    __global int *hull_flags,
     __global float *args)
 {
     int gid = get_global_id(0);
@@ -34,12 +34,12 @@ __kernel void integrate(
     gravity.y = args[10];
     float friction = args[11];
     
-    // get body from array
-    float4 body = bodies[gid];
+    // get hull from array
+    float4 hull = hulls[gid];
     int4 element_table = element_tables[gid];
-    int body_1_flags = body_flags[gid];
-    float2 acceleration = body_accel[gid];
-    float2 rotation = body_rotations[gid];
+    int hull_1_flags = hull_flags[gid];
+    float2 acceleration = hull_accel[gid];
+    float2 rotation = hull_rotations[gid];
     float4 bounding_box = bounds[gid];
     int4 bounds_index = bounds_index_data[gid];
     int2 bounds_bank = bounds_bank_data[gid];
@@ -48,13 +48,13 @@ __kernel void integrate(
     int start = element_table.x;
     int end   = element_table.y;
 
-    // todo: instead of punting on these, we can maybe update differently and tag the body
+    // todo: instead of punting on these, we can maybe update differently and tag the hull
     //  or something, so it can be handled differently for collisions as well.
     // if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     // {
     //     acceleration.x = 0;
     //     acceleration.y = 0;
-    //     body_accel[gid] = acceleration;
+    //     hull_accel[gid] = acceleration;
 
     //     bounds_bank.y = 0;
     //     bounds_bank_data[gid] = bounds_bank;
@@ -65,8 +65,8 @@ __kernel void integrate(
    	float2 acc;
     acc.x = acceleration.x;
     acc.y = acceleration.y;
-    bool is_static = (body_1_flags & 0x01) !=0;
-    bool is_circle = (body_1_flags & 0x02) !=0;
+    bool is_static = (hull_1_flags & 0x01) !=0;
+    bool is_circle = (hull_1_flags & 0x02) !=0;
 
     if (!is_static)
     {
@@ -106,7 +106,7 @@ __kernel void integrate(
         
         // force rotate the point to keep the object upright
         // todo: this should scale based on gravity, with zero g being no ro restriction of rotation
-        //point = rotate_point(point, (float2)body.xy, -rotation.x * 1);
+        //point = rotate_point(point, (float2)hull.xy, -rotation.x * 1);
 
         // this was a very basic orbital motion test, worth saving for something else
         //float rot  = /*inv_r ? -.00001 :*/ .00001;
@@ -181,16 +181,16 @@ __kernel void integrate(
     }
 
     // calculate centroid // todo: account for circles
-    body.x = x_sum / point_count;
-    body.y = y_sum / point_count;
+    hull.x = x_sum / point_count;
+    hull.y = y_sum / point_count;
 
     // handle bounding boxes for circles
     if (is_circle)
     {
-        min_x = body.x - body.w;
-        max_x = body.x + body.w;
-        min_y = body.y - body.w;
-        max_y = body.y + body.w;
+        min_x = hull.x - hull.w;
+        max_x = hull.x + hull.w;
+        min_y = hull.y - hull.w;
+        max_y = hull.y + hull.w;
     }
 
     // calculate bounding box
@@ -246,22 +246,22 @@ __kernel void integrate(
     float4 ref_point = points[start];
     
     // unit vector up from where we are now
-    float4 l1 = (float4)(body.x, body.y, body.x, body.y + 1);
+    float4 l1 = (float4)(hull.x, hull.y, hull.x, hull.y + 1);
     
     // vector pointing at the reference point
-    float4 l2 = (float4)(body.x, body.y, ref_point.x, ref_point.y);
+    float4 l2 = (float4)(hull.x, hull.y, ref_point.x, ref_point.y);
         
-    // determine the rotation of the body
+    // determine the rotation of the hull
     float r_x = angle_between(l1, l2);
     
     // rotation.y is the reference angle taken at object creation when rotation is zero
     rotation.x = rotation.y - r_x;
 
-    // store updated body and bounds data in result buffers
+    // store updated hull and bounds data in result buffers
     bounds[gid] = bounding_box;
-    bodies[gid] = body;
-    body_accel[gid] = acceleration;
-    body_rotations[gid] = rotation;
+    hulls[gid] = hull;
+    hull_accel[gid] = acceleration;
+    hull_rotations[gid] = rotation;
     bounds_index_data[gid] = bounds_index;
     bounds_bank_data[gid] = bounds_bank;
 }

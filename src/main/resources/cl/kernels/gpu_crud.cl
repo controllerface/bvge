@@ -55,9 +55,9 @@ __kernel void create_edge(__global float4 *edges,
 }
 
 __kernel void create_hull(__global float4 *hulls,
-                          __global float2 *body_rotations,
+                          __global float2 *hull_rotations,
                           __global int4 *element_tables,
-                          __global int *body_flags,
+                          __global int *hull_flags,
                           int target,
                           float4 new_hull,
                           float2 new_rotation,
@@ -65,9 +65,9 @@ __kernel void create_hull(__global float4 *hulls,
                           int new_flags)
 {
     hulls[target] = new_hull; 
-    body_rotations[target] = new_rotation; 
+    hull_rotations[target] = new_rotation; 
     element_tables[target] = new_table; 
-    body_flags[target] = new_flags; 
+    hull_flags[target] = new_flags; 
 }
 
 
@@ -100,9 +100,9 @@ __kernel void create_hulls(__global int *indices,
                             __global int4 *tables)
 {
     int gid = get_global_id(0);
-    int body_index = indices[gid];
+    int hull_index = indices[gid];
     float4 new_hull = new_hulls[gid];
     int4 new_table = new_tables[gid];
-    hulls[body_index] = new_hull; 
-    tables[body_index] = new_table; 
+    hulls[hull_index] = new_hull; 
+    tables[hull_index] = new_table; 
 }

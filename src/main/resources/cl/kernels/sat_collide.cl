@@ -1,23 +1,23 @@
 inline void circle_collision(int b1_id, int b2_id,
-                             __global float4 *bodies,
+                             __global float4 *hulls,
                              __global int4 *element_tables,
                              __global float4 *points)
 {
-    float4 body_1 = bodies[b1_id];
-    float4 body_2 = bodies[b2_id];
-    int4 body_1_table = element_tables[b1_id];
-    int4 body_2_table = element_tables[b2_id];
+    float4 hull_1 = hulls[b1_id];
+    float4 hull_2 = hulls[b2_id];
+    int4 hull_1_table = element_tables[b1_id];
+    int4 hull_2_table = element_tables[b2_id];
 
     float2 normal;
     float depth = 0;
-    float _distance = distance(body_1.xy, body_2.xy);
-    float radii = body_1.w + body_2.w;
+    float _distance = distance(hull_1.xy, hull_2.xy);
+    float radii = hull_1.w + hull_2.w;
     if(_distance >= radii)
     {
         return;
     }
 
-    float2 sub = body_2.xy - body_1.xy;
+    float2 sub = hull_2.xy - hull_1.xy;
     normal = normalize(sub);
     depth = radii - _distance;
 
@@ -25,44 +25,44 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 offset1 = reaction * (float2)(-0.5);
     float2 offset2 = reaction * (float2)(0.5);
 
-    float4 vert1 = points[body_1_table.x];
-    float4 vert2 = points[body_2_table.x];
+    float4 vert1 = points[hull_1_table.x];
+    float4 vert2 = points[hull_2_table.x];
     
     vert1.xy += offset1;
     vert2.xy += offset2;
 
-    points[body_1_table.x] = vert1;
-    points[body_2_table.x] = vert2;
+    points[hull_1_table.x] = vert1;
+    points[hull_2_table.x] = vert2;
 }
 
 
 inline void polygon_collision(int b1_id, int b2_id,
-                             __global float4 *bodies,
-                             __global int *body_flags,
+                             __global float4 *hulls,
+                             __global int *hull_flags,
                              __global int4 *element_tables,
                              __global float4 *points,
                              __global float4 *edges)
 {
 
-    float4 body_1 = bodies[b1_id];
-    float4 body_2 = bodies[b2_id];
-    int4 body_1_table = element_tables[b1_id];
-    int4 body_2_table = element_tables[b2_id];
+    float4 hull_1 = hulls[b1_id];
+    float4 hull_2 = hulls[b2_id];
+    int4 hull_1_table = element_tables[b1_id];
+    int4 hull_2_table = element_tables[b2_id];
 
-    int start_1 = body_1_table.x;
-    int end_1   = body_1_table.y;
+    int start_1 = hull_1_table.x;
+    int end_1   = hull_1_table.y;
 	int b1_vert_count = end_1 - start_1 + 1;
 
-    int start_2 = body_2_table.x;
-    int end_2   = body_2_table.y;
+    int start_2 = hull_2_table.x;
+    int end_2   = hull_2_table.y;
 	int b2_vert_count = end_2 - start_2 + 1;
 
-    int edge_start_1 = body_1_table.z;
-    int edge_end_1   = body_1_table.w;
+    int edge_start_1 = hull_1_table.z;
+    int edge_end_1   = hull_1_table.w;
 	int b1_edge_count = edge_end_1 - edge_start_1 + 1;
 
-    int edge_start_2 = body_2_table.z;
-    int edge_end_2   = body_2_table.w;
+    int edge_start_2 = hull_2_table.z;
+    int edge_end_2   = hull_2_table.w;
 	int b2_edge_count = edge_end_2 - edge_start_2 + 1;
 
     float min_distance   = FLT_MAX;
@@ -99,8 +99,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = project_polygon(points, body_1_table, vectorBuffer1);
-        float3 proj_b = project_polygon(points, body_2_table, vectorBuffer1);
+        float3 proj_a = project_polygon(points, hull_1_table, vectorBuffer1);
+        float3 proj_b = project_polygon(points, hull_2_table, vectorBuffer1);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -113,7 +113,7 @@ inline void polygon_collision(int b1_id, int b2_id,
         if (abs_distance < min_distance)
         {
             invert = true;
-            vertex_table = body_2_table;
+            vertex_table = hull_2_table;
             normalBuffer.x = vectorBuffer1.x;
             normalBuffer.y = vectorBuffer1.y;
             vertex_object_id = b2_id;
@@ -146,8 +146,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = project_polygon(points, body_1_table, vectorBuffer1);
-        float3 proj_b = project_polygon(points, body_2_table, vectorBuffer1);
+        float3 proj_a = project_polygon(points, hull_1_table, vectorBuffer1);
+        float3 proj_b = project_polygon(points, hull_2_table, vectorBuffer1);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -159,7 +159,7 @@ inline void polygon_collision(int b1_id, int b2_id,
         if (abs_distance < min_distance)
         {
             invert = false;
-            vertex_table = body_1_table;
+            vertex_table = hull_1_table;
             normalBuffer.x = vectorBuffer1.x;
             normalBuffer.y = vectorBuffer1.y;
             vertex_object_id = b1_id;
@@ -180,8 +180,8 @@ inline void polygon_collision(int b1_id, int b2_id,
         ? b1_id
         : b2_id;
 
-    float4 a = bodies[a_idx];
-    float4 b = bodies[b_idx];
+    float4 a = hulls[a_idx];
+    float4 b = hulls[b_idx];
 
     float2 transformA;
     transformA.x = a.x;
@@ -206,8 +206,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
 
     // vertex and edge object flags
-    int vo_f = body_flags[(int)vertex_object_id];
-    int eo_f = body_flags[(int)edge_object_id];
+    int vo_f = hull_flags[(int)vertex_object_id];
+    int eo_f = hull_flags[(int)edge_object_id];
 
     float2 normal = normalBuffer;
 
@@ -262,14 +262,14 @@ inline void polygon_collision(int b1_id, int b2_id,
 
 
 inline void polygon_circle_collision(int polygon_id, int circle_id,
-                                     __global float4 *bodies,
-                                     __global int *body_flags,
+                                     __global float4 *hulls,
+                                     __global int *hull_flags,
                                      __global int4 *element_tables,
                                      __global float4 *points,
                                      __global float4 *edges)
 {
-    float4 polygon = bodies[polygon_id];
-    float4 circle = bodies[circle_id];
+    float4 polygon = hulls[polygon_id];
+    float4 circle = hulls[circle_id];
     int4 polygon_table = element_tables[polygon_id];
     int4 circle_table = element_tables[circle_id];
 
@@ -368,8 +368,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     int a_idx = circle_id;
     int b_idx = polygon_id;
 
-    float4 a = bodies[a_idx];
-    float4 b = bodies[b_idx];
+    float4 a = hulls[a_idx];
+    float4 b = hulls[b_idx];
 
     float2 transformA;
     transformA.x = a.x;
@@ -393,8 +393,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
 
 
     // vertex and edge object flags
-    int vo_f = body_flags[(int)vertex_object_id];
-    int eo_f = body_flags[(int)edge_object_id];
+    int vo_f = hull_flags[(int)vertex_object_id];
+    int eo_f = hull_flags[(int)edge_object_id];
 
     float2 normal = normalBuffer;
 
@@ -458,9 +458,9 @@ which will naturally apply some degree of rotation to the object.
  todo: add circles, currently assumes polygons 
  */
 __kernel void sat_collide(__global int2 *candidates,
-                          __global float4 *bodies,
+                          __global float4 *hulls,
                           __global int4 *element_tables,
-                          __global int *body_flags,
+                          __global int *hull_flags,
                           __global float4 *points,
                           __global float4 *edges)
 {
@@ -469,30 +469,30 @@ __kernel void sat_collide(__global int2 *candidates,
     int2 current_pair = candidates[gid];
     int b1_id = current_pair.x;
     int b2_id = current_pair.y;
-    int body_1_flags = body_flags[b1_id];
-    int body_2_flags = body_flags[b2_id];
-    bool b1s = (body_1_flags & 0x01) !=0;
-    bool b2s = (body_2_flags & 0x01) !=0;
+    int hull_1_flags = hull_flags[b1_id];
+    int hull_2_flags = hull_flags[b2_id];
+    bool b1s = (hull_1_flags & 0x01) !=0;
+    bool b2s = (hull_2_flags & 0x01) !=0;
     
     if (b1s && b2s) // no collisions between static objects todo: probably can weed these out earlier, during aabb checks
     {
         return;
     }
 
-    bool b1_is_circle = (body_1_flags & 0x02) !=0;
-    bool b2_is_circle = (body_2_flags & 0x02) !=0;
+    bool b1_is_circle = (hull_1_flags & 0x02) !=0;
+    bool b2_is_circle = (hull_2_flags & 0x02) !=0;
 
-    bool b1_is_polygon = (body_1_flags & 0x04) !=0;
-    bool b2_is_polygon = (body_2_flags & 0x04) !=0;
+    bool b1_is_polygon = (hull_1_flags & 0x04) !=0;
+    bool b2_is_polygon = (hull_2_flags & 0x04) !=0;
 
     // todo: it will probably be more performant to have separate kernels for each collision type. There should
     //  be a preliminary kernel that sorts the candidate pairs so they can be run on the right kernel
-    if (b1_is_polygon && b2_is_polygon) polygon_collision(b1_id, b2_id, bodies, body_flags, element_tables, points, edges); 
-    else if (b1_is_circle && b2_is_circle) circle_collision(b1_id, b2_id, bodies, element_tables, points); 
+    if (b1_is_polygon && b2_is_polygon) polygon_collision(b1_id, b2_id, hulls, hull_flags, element_tables, points, edges); 
+    else if (b1_is_circle && b2_is_circle) circle_collision(b1_id, b2_id, hulls, element_tables, points); 
     else 
     {
         int c_id = b1_is_circle ? b1_id : b2_id;
         int p_id = b1_is_circle ? b2_id : b1_id;
-        polygon_circle_collision(p_id, c_id, bodies, body_flags, element_tables, points, edges); 
+        polygon_circle_collision(p_id, c_id, hulls, hull_flags, element_tables, points, edges); 
     }
 }

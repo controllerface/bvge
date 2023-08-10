@@ -340,7 +340,7 @@ public class OpenCL
         return (int) Math.ceil((float)n / (float)m);
     }
 
-    public static void init(int max_bodies, int max_points)
+    public static void init(int max_hulls, int max_points)
     {
         device_ids = device_init();
 
@@ -453,14 +453,14 @@ public class OpenCL
 
         // init physics buffers here
 
-        int transform_mem_size        = max_bodies * Sizeof.cl_float4;
-        int accleration_mem_size      = max_bodies * Sizeof.cl_float2;
-        int rotation_mem_size         = max_bodies * Sizeof.cl_float2;
-        int element_table_mem_size    = max_bodies * Sizeof.cl_int4;
-        int flags_mem_size            = max_bodies * Sizeof.cl_int;
-        int bounding_box_mem_size     = max_bodies * Sizeof.cl_float4;
-        int spatial_index_mem_size    = max_bodies * Sizeof.cl_int4;
-        int spatial_key_bank_mem_size = max_bodies * Sizeof.cl_int2;
+        int transform_mem_size        = max_hulls * Sizeof.cl_float4;
+        int accleration_mem_size      = max_hulls * Sizeof.cl_float2;
+        int rotation_mem_size         = max_hulls * Sizeof.cl_float2;
+        int element_table_mem_size    = max_hulls * Sizeof.cl_int4;
+        int flags_mem_size            = max_hulls * Sizeof.cl_int;
+        int bounding_box_mem_size     = max_hulls * Sizeof.cl_float4;
+        int spatial_index_mem_size    = max_hulls * Sizeof.cl_int4;
+        int spatial_key_bank_mem_size = max_hulls * Sizeof.cl_int2;
         int points_mem_size           = max_points * Sizeof.cl_float4;
         int edges_mem_size            = max_points * Sizeof.cl_float4;
 

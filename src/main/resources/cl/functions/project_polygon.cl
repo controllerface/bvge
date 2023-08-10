@@ -3,10 +3,10 @@ Projects the points of the given hull onto the given normal vector.
 The return vector contains the min/max distances, and the index of
 the point that have the mininum value.
  */
-inline float3 project_polygon(__global const float4 *points, int4 body, float2 normal)
+inline float3 project_polygon(__global const float4 *points, int4 hull, float2 normal)
 {
-    int start = body.x;
-    int end   = body.y;
+    int start = hull.x;
+    int end   = hull.y;
 	int vert_count = end - start + 1;
 
     float3 result;

@@ -81,7 +81,7 @@ public class EdgeRenderer extends GameSystem
     {
         // todo: right now, this check only adds batches, never reducing them if the count goes
         //  low enough that some batches would be unneeded. This will leak memory resources
-        //  so should be adjusted when deleting bodies is added.
+        //  so should be adjusted when deleting entities is added.
 
         var edge_count = Main.Memory.edgesCount();
         var needed_batches = edge_count / Constants.Rendering.MAX_BATCH_SIZE;

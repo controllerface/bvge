@@ -89,7 +89,7 @@ public class Main
             public static final int EDGE = 4;
         }
 
-        private static final int MAX_BODIES = 100_000;
+        private static final int MAX_HULLS = 100_000;
         private static final int MAX_POINTS = 1_000_000;
 
         private static int hull_index = 0;
@@ -146,7 +146,7 @@ public class Main
         Meshes.init();
         Window window = Window.get();
         window.initOpenGL();
-        OpenCL.init(Memory.MAX_BODIES, Memory.MAX_POINTS);
+        OpenCL.init(Memory.MAX_HULLS, Memory.MAX_POINTS);
         window.initGameMode();
         window.run();
         OpenCL.destroy();

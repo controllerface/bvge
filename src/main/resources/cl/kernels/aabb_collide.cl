@@ -31,7 +31,7 @@ __kernel void aabb_collide(__global float4 *bounds,
     int current_offset = match_offset;
     int slots_used = 0;
 
-    // loop through all the keys for this body
+    // loop through all the keys for this hull
     for (int bank_index = spatial_index; bank_index < end; bank_index++)
     {
         int x = key_bank[bank_index];
@@ -69,7 +69,7 @@ __kernel void aabb_collide(__global float4 *bounds,
             float4 candidate = bounds[next];
             bool near = do_bounds_intersect(bound, candidate);
 
-            // bodies are not near each other
+            // hulls are not near each other
             if (!near)
             {
                 continue;

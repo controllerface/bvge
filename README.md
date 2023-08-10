@@ -45,6 +45,6 @@
     2. ~~sprite renderer should be changed to map texture to vertices instead of center~~
     3. ~~may be useful to save current center-based one for status/info/dmg# display~~
     4. ~~will need separate renderer/batches for circles~~
-12. removable bodies
-    1. it must be possible to remove tracked bodies when they are destroyed
+12. removable entities
+    1. it must be possible to remove tracked entities when they are destroyed
     2. this will require compacting backing arrays

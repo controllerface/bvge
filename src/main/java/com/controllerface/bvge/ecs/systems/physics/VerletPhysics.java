@@ -132,10 +132,10 @@ public class VerletPhysics extends GameSystem
 
     private void simulate(float dt)
     {
-        var bodies = ecs.getComponents(Component.RigidBody2D);
+        var hulls = ecs.getComponents(Component.RigidBody2D);
 
-        // if somehow there are no bodies, just bail. something is probably really wrong
-        if (bodies == null || bodies.isEmpty())
+        // if somehow there are no hulls, just bail. something is probably really wrong
+        if (hulls == null || hulls.isEmpty())
         {
             return;
         }

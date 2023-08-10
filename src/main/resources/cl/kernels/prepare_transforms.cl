@@ -1,5 +1,5 @@
 __kernel void prepare_transforms(__global float4 *transforms, 
-                                 __global float2 *body_rotations,
+                                 __global float2 *hull_rotations,
                                  __global int *indices,
                                  __global float4 *transforms_out)
 {
@@ -7,7 +7,7 @@ __kernel void prepare_transforms(__global float4 *transforms,
     int index = indices[gid];
     
     float4 transform = transforms[index];
-    float2 rotation = body_rotations[index];
+    float2 rotation = hull_rotations[index];
 
     float4 transform_out;
     transform_out.x = transform.x; 

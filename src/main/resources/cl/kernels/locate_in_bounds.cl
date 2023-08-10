@@ -17,7 +17,7 @@ __kernel void locate_in_bounds(__global int2 *bounds_bank_data,
 }
 
 /**
-Counts the number of potential matches each body could have.
+Counts the number of potential matches each hull could have.
  */
 __kernel void count_candidates(__global int2 *bounds_bank_data,
                                __global int *in_bounds,
