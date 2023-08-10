@@ -127,19 +127,14 @@ public class PhysicsObjects
             // generate the hull
             var hull = generate_convex_hull(next_mesh.vertices());
 
-
-
             // translate to model space
             hull = translate_hull(hull, next_mesh.sceneNode().transform);
-
-            System.out.printf("Debug mesh: %d mat: %s", i, next_mesh.sceneNode().transform);
 
             // scale to desired size
             hull = scale_hull(hull, size);
 
             // translate to world space
             hull = translate_hull(hull, x, y);
-
 
             // generate the points in memory for this object
             int start_point = -1;
@@ -184,34 +179,27 @@ public class PhysicsObjects
 
             // calculate interior edges
 
-
-
-
-
-            // approach 1
-            for (int p1_index = 0; p1_index < hull.length; p1_index++)
-            {
-                int p2_index = p1_index + 2;
-                if (p2_index > point_buffer.size() - 1)
+//            if ( hull.length > 6)
+//            {
+                //pass 1
+                for (int p1_index = 0; p1_index < hull.length; p1_index++)
                 {
-                    continue;
+                    int p2_index = p1_index + 2;
+                    if (p2_index > point_buffer.size() - 1)
+                    {
+                        continue;
+                    }
+                    var p1 = point_buffer.get(p1_index);
+                    var p2 = point_buffer.get(p2_index);
+                    var distance = edgeDistance(p2, p1);
+                    end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
                 }
-                var p1 = point_buffer.get(p1_index);
-                var p2 = point_buffer.get(p2_index);
-                var distance = edgeDistance(p2, p1);
-                end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
-            }
+            //}
 
-
-
-
-
-
-
-
-            // approach 2
+            // pass 2
             boolean odd_count = hull.length % 2 != 0;
             int half_count = hull.length / 2;
+            int quarter_count = half_count / 2;
             for (int p1_index = 0; p1_index < half_count; p1_index++)
             {
                 int p2_index = p1_index + half_count;
@@ -219,14 +207,19 @@ public class PhysicsObjects
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
                 end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
+
+                int p3_index = p1_index + quarter_count;
+                var p3 = point_buffer.get(p3_index);
+                var distance2 = edgeDistance(p3, p1);
+                end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p3_index], distance2);
             }
             if (odd_count) // if there was an odd vertex at the end, connect it to the mid point
             {
                 int p2_index = point_table.length - 1;
-                var p1 = point_buffer.get(half_count);
+                var p1 = point_buffer.get(half_count+1);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                end_edge = Main.Memory.newEdge(point_table[half_count], point_table[p2_index], distance);
+                end_edge = Main.Memory.newEdge(point_table[half_count+1], point_table[p2_index], distance);
             }
 
             // calculate centroid and reference angle

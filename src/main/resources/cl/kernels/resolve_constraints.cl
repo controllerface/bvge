@@ -53,6 +53,7 @@ __kernel void resolve_constraints(__global int4 *element_tables,
             float2 sub = p2_v - p1_v;
             float len = length(sub);
             float diff = len - constraint;
+            
             float2 direction = normalize(sub);
         
             // the difference is halved and the direction is set to that magnitude
