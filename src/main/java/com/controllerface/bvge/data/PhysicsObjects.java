@@ -43,9 +43,7 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(x, y, size, size / 2.0f);
         var rotation = OpenCL.arg_float2(0, angle);
 
-        // todo: future uses of this class should be decoupled from the model registry itself
-        //  objects will need to be separated into visual and physics components, with the current
-        //  "body" objects being used for the physics bounds, i.e. convex hulls
+        // there is only one hull, so it is the main hull ID by default
         int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_CIRCLE);
         Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
         return hull_id;
@@ -87,9 +85,8 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = OpenCL.arg_float2(0, angle);
 
-        // todo: register a new model instead of a new mesh, move over to renderers loading models
-        //  instead of meshes
-        int hull_id =  Main.Memory.newHull(transform, rotation, table, flags | FLAG_POLYGON);
+        // there is only one hull, so it is the main hull ID by default
+        int hull_id = Main.Memory.newHull(transform, rotation, table, flags | FLAG_POLYGON);
         Models.register_model_instance(Models.BOX_MODEL, hull_id);
         return hull_id;
     }
@@ -141,8 +138,6 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = OpenCL.arg_float2(0, angle);
 
-        // todo: register a new model instead of a new mesh, move over to renderers loading models
-        //  instead of meshes
         int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
         Models.register_model_instance(Models.POLYGON1_MODEL, hull_id);
         return hull_id;

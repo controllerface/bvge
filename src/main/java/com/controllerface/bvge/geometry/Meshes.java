@@ -38,7 +38,7 @@ public class Meshes
 
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 3);
-        return new Mesh(vertices, faces);
+        return new Mesh(vertices, faces, Models.SceneNode.empty());
     }
 
     /**
@@ -60,7 +60,7 @@ public class Meshes
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 3);
         faces[2] = new Face(3, 2, 4);
-        return new Mesh(vertices, faces);
+        return new Mesh(vertices, faces, Models.SceneNode.empty());
 
     }
 
@@ -84,7 +84,7 @@ public class Meshes
 
     public static void init()
     {
-        var circle = new Mesh(new Vertex[]{ new Vertex(0,0) }, new Face[]{ new Face(0, 0, 0) });
+        var circle = new Mesh(new Vertex[]{ new Vertex(0,0) }, new Face[]{ new Face(0, 0, 0) }, Models.SceneNode.empty());
         register_mesh(CIRCLE_MESH, circle);
         register_mesh(BOX_MESH, generate_box_mesh());
         register_mesh(POLYGON1_MESH, generate_poly1_mesh());

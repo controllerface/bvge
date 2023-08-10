@@ -36,8 +36,10 @@ public class Models
         int numMeshes = aiScene.mNumMeshes();
         var root_node = aiScene.mRootNode();
 
-        // todo: will need this for transforms
-        var sceneTree = processNodesHierarchy(root_node, null);
+        Map<String, SceneNode> node_map = new HashMap<>();
+        // todo: will need this for transforms, make the tree searchable so
+        //  models can find their default transforms
+        var sceneTree = processNodesHierarchy(root_node, null, node_map);
 
 //        int children  = root_node.mNumChildren();
 //        processBide
@@ -52,6 +54,12 @@ public class Models
         {
             AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
             var name = aiMesh.mName().dataString();
+            var sceneNode = node_map.get(name);
+            if (sceneNode == null)
+            {
+                throw new NullPointerException("No scene node for mesh: " + name
+                    + " ensure node and geometry names match in blender");
+            }
             System.out.println("\nMesh name: " + name);
             System.out.printf("verts: %d faces: %d \n",
                 aiMesh.mNumVertices(),
@@ -103,7 +111,7 @@ public class Models
                 System.out.printf("Face dump: raw: %s\n", indices);
             }
 
-            var new_mesh = new Mesh(vertices, faces);
+            var new_mesh = new Mesh(vertices, faces, sceneNode);
             int new_index = Meshes.register_mesh(name, new_mesh);
             meshes[i] = new_mesh;
             System.out.printf("registered mesh [%s] with id [%d]", name, new_index);
@@ -147,14 +155,14 @@ public class Models
 
     public static void init()
     {
-        loaded_models.put(CIRCLE_MODEL, Model.fromMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
-        loaded_models.put(BOX_MODEL, Model.fromMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
-        loaded_models.put(POLYGON1_MODEL, Model.fromMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
+        loaded_models.put(CIRCLE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
+        loaded_models.put(BOX_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
+        loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         loadTestModel();
     }
 
 
-    private static SceneNode processNodesHierarchy(AINode aiNode, SceneNode parentNode)
+    private static SceneNode processNodesHierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)
     {
         String nodeName = aiNode.mName().dataString();
         var mTransform = aiNode.mTransformation();
@@ -170,12 +178,13 @@ public class Models
         System.out.println(transform);
 
         SceneNode currentNode = new SceneNode(nodeName, parentNode, transform);
+        nodeMap.put(nodeName, currentNode);
         int numChildren = aiNode.mNumChildren();
         PointerBuffer aiChildren = aiNode.mChildren();
         for (int i = 0; i < numChildren; i++)
         {
             AINode aiChildNode = AINode.create(aiChildren.get(i));
-            SceneNode childNode = processNodesHierarchy(aiChildNode, currentNode);
+            SceneNode childNode = processNodesHierarchy(aiChildNode, currentNode, nodeMap);
             currentNode.addChild(childNode);
         }
 
@@ -199,6 +208,11 @@ public class Models
         public void addChild(SceneNode child)
         {
             children.add(child);
+        }
+
+        public static SceneNode empty()
+        {
+            return new SceneNode("", null, new Matrix4f());
         }
     }
 }
