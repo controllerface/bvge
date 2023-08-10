@@ -2,7 +2,7 @@ package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.gl.Meshes;
+import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Vector2f;
 

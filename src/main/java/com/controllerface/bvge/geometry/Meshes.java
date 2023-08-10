@@ -1,28 +1,32 @@
-package com.controllerface.bvge.gl;
+package com.controllerface.bvge.geometry;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Meshes
 {
-    public static final int CIRCLE_MESH = 0;
-    public static final int BOX_MESH = 1;
-    public static final int POLYGON1_MESH = 2;
+    private static final AtomicInteger next_mesh_index = new AtomicInteger(0);
+
+    public static final int CIRCLE_MESH = next_mesh_index.getAndIncrement();
+    public static final int BOX_MESH = next_mesh_index.getAndIncrement();
+    public static final int POLYGON1_MESH = next_mesh_index.getAndIncrement();
 
     private static final Map<Integer, float[]> loaded_meshes = new HashMap<>();
     private static final Map<Integer, Boolean> dirty_meshes = new HashMap<>();
     private static final Map<Integer, Set<Integer>> mesh_instances = new HashMap<>();
+
+    private static final Map<String, Integer> mesh_index_map = new HashMap<>();
+
 
     public static float[] get_mesh_by_index(int index)
     {
         return loaded_meshes.get(index);
     }
 
-    // todo: this may need to be changed so it points to a complete model, or possibly
-    //  a central hull that may be one of several meshes contained in the model. Right now
-    //  a model and mesh are 1:1 and that will need to change.
+
     public static void register_mesh_instance(int model_id, int hull_id)
     {
         mesh_instances.computeIfAbsent(model_id, _k -> new HashSet<>()).add(hull_id);
