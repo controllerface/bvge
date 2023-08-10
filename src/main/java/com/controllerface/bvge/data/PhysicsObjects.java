@@ -183,6 +183,33 @@ public class PhysicsObjects
             }
 
             // calculate interior edges
+
+
+
+
+
+            // approach 1
+            for (int p1_index = 0; p1_index < hull.length; p1_index++)
+            {
+                int p2_index = p1_index + 2;
+                if (p2_index > point_buffer.size() - 1)
+                {
+                    continue;
+                }
+                var p1 = point_buffer.get(p1_index);
+                var p2 = point_buffer.get(p2_index);
+                var distance = edgeDistance(p2, p1);
+                end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
+            }
+
+
+
+
+
+
+
+
+            // approach 2
             boolean odd_count = hull.length % 2 != 0;
             int half_count = hull.length / 2;
             for (int p1_index = 0; p1_index < half_count; p1_index++)
