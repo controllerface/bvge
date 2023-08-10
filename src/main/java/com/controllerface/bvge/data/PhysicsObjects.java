@@ -2,7 +2,6 @@ package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.util.MathEX;
@@ -10,6 +9,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -108,103 +109,124 @@ public class PhysicsObjects
         return box(x, y, size, FLAG_STATIC_OBJECT);
     }
 
-    public static int polygon1(float x, float y, float size)
+    public static int wrap_model(int model_index, float x, float y, float size)
     {
-        var mesh = Models.get_model_by_index(Models.POLYGON1_MODEL).meshes()[0];
-        var hull = generate_convex_hull(mesh.vertices());
-        hull = scale_hull(hull, size);
-        hull = translate_hull(hull, x, y);
-
-        var p1 = OpenCL.arg_float2(hull[0].x(), hull[0].y());
-        var p2 = OpenCL.arg_float2(hull[1].x(), hull[1].y());
-        var p3 = OpenCL.arg_float2(hull[2].x(), hull[2].y());
-        var p4 = OpenCL.arg_float2(hull[3].x(), hull[3].y());
-        var p5 = OpenCL.arg_float2(hull[4].x(), hull[4].y());
-
-        var p1_index = Main.Memory.newPoint(p1);
-        var p2_index = Main.Memory.newPoint(p2);
-        var p3_index = Main.Memory.newPoint(p3);
-        var p4_index = Main.Memory.newPoint(p4);
-        var p5_index = Main.Memory.newPoint(p5);
-
-        MathEX.centroid(vector_buffer, p1, p2, p3, p4, p5);
-        var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
-        var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
-
-        var angle = MathEX.angleBetween2Lines(l1, l2);
-        // box sides
-        var start_edge = Main.Memory.newEdge(p1_index, p2_index, edgeDistance(p2, p1));
-        Main.Memory.newEdge(p2_index, p3_index, edgeDistance(p3, p2));
-        Main.Memory.newEdge(p3_index, p4_index, edgeDistance(p4, p3));
-        Main.Memory.newEdge(p4_index, p5_index, edgeDistance(p5, p4));
-        Main.Memory.newEdge(p5_index, p1_index, edgeDistance(p1, p5));
-
-        // corner braces, top brace
-        Main.Memory.newEdge(p3_index, p5_index, edgeDistance(p5, p3), FLAG_INTERIOR_EDGE);
-        Main.Memory.newEdge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR_EDGE);
-        var end_edge = Main.Memory.newEdge(p2_index, p5_index, edgeDistance(p5, p2), FLAG_INTERIOR_EDGE);
-
-        var table = OpenCL.arg_int4(p1_index, p5_index, start_edge, end_edge);
-        var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
-        var rotation = OpenCL.arg_float2(0, angle);
-
-        // there is only one hull, so it is the main hull ID by default
-        int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
-        Models.register_model_instance(Models.POLYGON1_MODEL, hull_id);
-        return hull_id;
-    }
-
-    public static int test_model(int model_index, float x, float y, float size)
-    {
-        // 1: get the model from the registry
+        // get the model from the registry
         var model = Models.get_model_by_index(model_index);
 
-        int root_hull_id = 0;
+        // we need to track which hull is the root hull for this model
+        int root_hull_id = -1;
 
+        // loop through each mesh and generate a hull for it
         var meshes = model.meshes();
-
         for (int i = 0; i < meshes.length; i++)
         {
-            // get the next mesh and generate a convex hull. Hull will need to be
-            // transformed into position.
+            // get the next mesh
             var next_mesh = meshes[i];
+
+            // generate the hull
             var hull = generate_convex_hull(next_mesh.vertices());
+
+            // scale to desired size
             hull = scale_hull(hull, size);
-            hull = translate_hull(hull, x, y);
+
+            // translate to model space
             hull = translate_hull(hull, next_mesh.sceneNode().transform);
 
+            // translate to world space
+            hull = translate_hull(hull, x, y);
+
             // generate the points in memory for this object
-            int[] hull_indices = new int[hull.length];
-            for (int h = 0; h < hull.length; h++)
+            int start_point = -1;
+            int end_point = -1;
+            int[] point_table = new int[hull.length];
+            List<float[]> point_buffer = new ArrayList<>();
+            for (int point_index = 0; point_index < point_table.length; point_index++)
             {
-                var next_vertex = hull[h];
-                var p = OpenCL.arg_float2(next_vertex.x(), next_vertex.y());
-                var p_index = Main.Memory.newPoint(p);
-                hull_indices[h] = p_index;
+                var next_vertex = hull[point_index];
+                var new_point = OpenCL.arg_float2(next_vertex.x(), next_vertex.y());
+                var p_index = Main.Memory.newPoint(new_point);
+                if (start_point == -1)
+                {
+                    start_point = p_index;
+                }
+                end_point = p_index;
+                point_table[point_index] = p_index;
+                point_buffer.add(new_point);
             }
 
-            // todo: pick up here
-            // generate the edges in memory for this object
-            //int[] edge_indices = new int[];
+            // generate edges in memory for this object
+            int start_edge = -1;
+            int end_edge = -1;
+            for (int edge_index = 0; edge_index < hull.length; edge_index++)
+            {
+                int p1_index = edge_index;
+                int p2_index = edge_index + 1;
+                if (p2_index == hull.length)
+                {
+                    p2_index = 0;
+                }
+                var p1 = point_buffer.get(p1_index);
+                var p2 = point_buffer.get(p2_index);
+                var distance = edgeDistance(p2, p1);
+                var e_index = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
+                if (start_edge == -1)
+                {
+                    start_edge = e_index;
+                }
+                end_edge = e_index;
+            }
 
+            // calculate interior edges
+            boolean odd_count = hull.length % 2 != 0;
+            int half_count = hull.length / 2;
+            for (int ie = 0; ie < half_count; ie++)
+            {
+                int p1_index = ie;
+                int p2_index = ie + half_count;
+                var p1 = point_buffer.get(p1_index);
+                var p2 = point_buffer.get(p2_index);
+                var distance = edgeDistance(p2, p1);
+                var e_index = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
+                end_edge = e_index;
+            }
+            if (odd_count)
+            {
+                int p1_index = half_count;
+                int p2_index = point_table.length - 1;
+                var p1 = point_buffer.get(p1_index);
+                var p2 = point_buffer.get(p2_index);
+                var distance = edgeDistance(p2, p1);
+                var e_index = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
+                end_edge = e_index;
+            }
+
+            // calculate centroid and reference angle
+            MathEX.centroid(vector_buffer, hull);
+            var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+            var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, hull[0].x(), hull[0].y());
+            var angle = MathEX.angleBetween2Lines(l1, l2);
+
+            var table = OpenCL.arg_int4(start_point, end_point, start_edge, end_edge);
+            var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
+            var rotation = OpenCL.arg_float2(0, angle);
+
+            // there is only one hull, so it is the main hull ID by default
+            int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
+            if (i == model.root_index())
+            {
+                root_hull_id = hull_id;
+            }
         }
 
-            // 2: for each mesh, generate a convex hull with the provided offset
+        if (root_hull_id == -1)
+        {
+            throw new IllegalStateException("There was no root hull determined. "
+                + "Check model data to ensure it is correct");
+        }
 
-            // 3: transform hulls using mesh transform to set initial location
-
-            // 4: generate edges for the hull exterior
-
-            // 5: generate edges for hull interior
-
-            // 6: store hulls in memory
-
-
-
-
-        // 7: return the ID of the root hull, which is the hull generated for the root mesh
-
-        return -1;
+        Models.register_model_instance(model_index, root_hull_id);
+        return root_hull_id;
     }
 
 

@@ -1,5 +1,6 @@
 package com.controllerface.bvge.util;
 
+import com.controllerface.bvge.geometry.Vertex;
 import org.joml.Vector2f;
 
 public class MathEX
@@ -19,6 +20,22 @@ public class MathEX
         {
             x_sum += point[0];
             y_sum += point[1];
+        }
+        float x = x_sum / points;
+        float y = y_sum / points;
+        target.x = x;
+        target.y = y;
+    }
+
+    public static void centroid(Vector2f target, Vertex ... vertices)
+    {
+        var points = vertices.length;
+        float x_sum = 0;
+        float y_sum = 0;
+        for (Vertex point : vertices)
+        {
+            x_sum += point.x();
+            y_sum += point.y();
         }
         float x = x_sum / points;
         float y = y_sum / points;

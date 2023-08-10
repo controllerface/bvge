@@ -15,6 +15,8 @@ import com.controllerface.bvge.util.Assets;
 import org.joml.Random;
 import org.joml.Vector4f;
 
+import static com.controllerface.bvge.geometry.Models.POLYGON1_MODEL;
+
 
 public class TestGame extends GameMode
 {
@@ -122,7 +124,12 @@ public class TestGame extends GameMode
     {
         // player entity
         var player = ecs.registerEntity("player");
-        var hull_index = PhysicsObjects.polygon1(0,0, 32);
+
+        //var hull_index = PhysicsObjects.polygon1(0,0, 32);
+
+        var hull_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32);
+
+
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.RigidBody2D, new HullIndex(hull_index));
