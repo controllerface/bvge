@@ -31,7 +31,7 @@ public class PhysicsObjects
         var mesh = Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH);
 
         // the model points are always zero so the * and + are for educational purposes
-        var p1 = OpenCL.arg_float2(mesh[0] * size + x, mesh[1] * size + y);
+        var p1 = OpenCL.arg_float2(mesh.vertices()[0].x() * size + x, mesh.vertices()[0].y() * size + y);
 
         // store the single point for the circle
         var p1_index = Main.Memory.newPoint(p1);
@@ -56,10 +56,10 @@ public class PhysicsObjects
         var mesh = Meshes.get_mesh_by_index(Meshes.BOX_MESH);
 
         // generate the vertices based on the desired size and position
-        var p1 = OpenCL.arg_float2(mesh[0] * size + x, mesh[1] * size + y);
-        var p2 = OpenCL.arg_float2(mesh[2] * size + x, mesh[3] * size + y);
-        var p3 = OpenCL.arg_float2(mesh[4] * size + x, mesh[5] * size + y);
-        var p4 = OpenCL.arg_float2(mesh[6] * size + x, mesh[7] * size + y);
+        var p1 = OpenCL.arg_float2(mesh.vertices()[0].x() * size + x, mesh.vertices()[0].y() * size + y);
+        var p2 = OpenCL.arg_float2(mesh.vertices()[1].x() * size + x, mesh.vertices()[1].y() * size + y);
+        var p3 = OpenCL.arg_float2(mesh.vertices()[2].x() * size + x, mesh.vertices()[2].y() * size + y);
+        var p4 = OpenCL.arg_float2(mesh.vertices()[3].x() * size + x, mesh.vertices()[3].y() * size + y);
 
         var p1_index = Main.Memory.newPoint(p1);
         var p2_index = Main.Memory.newPoint(p2);
@@ -108,11 +108,11 @@ public class PhysicsObjects
     {
         var mesh = Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH);
 
-        var p1 = OpenCL.arg_float2(mesh[0] * size + x, mesh[1] * size + y);
-        var p2 = OpenCL.arg_float2(mesh[2] * size + x, mesh[3] * size + y);
-        var p3 = OpenCL.arg_float2(mesh[4] * size + x, mesh[5] * size + y);
-        var p4 = OpenCL.arg_float2(mesh[6] * size + x, mesh[7] * size + y);
-        var p5 = OpenCL.arg_float2(mesh[8] * size + x, mesh[9] * size + y);
+        var p1 = OpenCL.arg_float2(mesh.vertices()[0].x() * size + x, mesh.vertices()[0].x() * size + y);
+        var p2 = OpenCL.arg_float2(mesh.vertices()[1].x() * size + x, mesh.vertices()[1].y() * size + y);
+        var p3 = OpenCL.arg_float2(mesh.vertices()[2].x() * size + x, mesh.vertices()[2].y() * size + y);
+        var p4 = OpenCL.arg_float2(mesh.vertices()[3].x() * size + x, mesh.vertices()[3].y() * size + y);
+        var p5 = OpenCL.arg_float2(mesh.vertices()[4].x() * size + x, mesh.vertices()[4].y() * size + y);
 
         var p1_index = Main.Memory.newPoint(p1);
         var p2_index = Main.Memory.newPoint(p2);

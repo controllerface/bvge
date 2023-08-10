@@ -43,23 +43,23 @@ public class CrateRenderer extends GameSystem
     {
         var base_model = Meshes.get_mesh_by_index(Meshes.BOX_MESH);
         var vbo_model = new float[12];
-        vbo_model[0] = base_model[0];  // tri 1 // p1 x
-        vbo_model[1] = base_model[1];           // p1 y
+        vbo_model[0] = base_model.vertices()[0].x();  // tri 1 // p1 x
+        vbo_model[1] = base_model.vertices()[0].y();           // p1 y
 
-        vbo_model[2] = base_model[2];           // p2 x
-        vbo_model[3] = base_model[3];           // p2 y
+        vbo_model[2] = base_model.vertices()[1].x();           // p2 x
+        vbo_model[3] = base_model.vertices()[1].y();           // p2 y
 
-        vbo_model[4] = base_model[4];           // p3 x
-        vbo_model[5] = base_model[5];           // p3 y
+        vbo_model[4] = base_model.vertices()[2].x();           // p3 x
+        vbo_model[5] = base_model.vertices()[2].y();           // p3 y
 
-        vbo_model[6] = base_model[0];  // tri 2 // p1 x
-        vbo_model[7] = base_model[1];           // p1 y
+        vbo_model[6] = base_model.vertices()[0].x();  // tri 2 // p1 x
+        vbo_model[7] = base_model.vertices()[0].y();           // p1 y
 
-        vbo_model[8] = base_model[4];           // p3 x
-        vbo_model[9] = base_model[5];           // p3 y
+        vbo_model[8] = base_model.vertices()[2].x();           // p3 x
+        vbo_model[9] = base_model.vertices()[2].y();           // p3 y
 
-        vbo_model[10] = base_model[6];          // p4 x
-        vbo_model[11] = base_model[7];          // p4 y
+        vbo_model[10] = base_model.vertices()[3].x();          // p4 x
+        vbo_model[11] = base_model.vertices()[3].y();          // p4 y
 
 
         var vbo_tex_coords = new float[12];
