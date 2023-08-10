@@ -148,7 +148,7 @@ public class TestGame extends GameMode
 
 
         // main renderers go here, one for each model type that can be rendered
-        ecs.registerSystem(new CrateRenderer(ecs));
+        //ecs.registerSystem(new CrateRenderer(ecs));
 
 
         //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));

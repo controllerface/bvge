@@ -62,12 +62,12 @@ public class Meshes
         vertices[0] = new Vertex(-halfSize, -halfSize);
         vertices[1] = new Vertex(halfSize, -halfSize);
         vertices[2] = new Vertex(halfSize, halfSize);
-        vertices[3] = new Vertex(-halfSize, halfSize);
-        vertices[4] = new Vertex(0, halfSize * 2);
+        vertices[3] = new Vertex(0, halfSize * 2);
+        vertices[4] = new Vertex(-halfSize, halfSize);
 
         faces[0] = new Face(0, 1, 2);
-        faces[1] = new Face(0, 2, 3);
-        faces[2] = new Face(3, 2, 4);
+        faces[1] = new Face(0, 2, 4);
+        faces[2] = new Face(4, 2, 3);
         return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty());
 
     }
