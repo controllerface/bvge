@@ -88,7 +88,7 @@ public class VerletPhysics extends GameSystem
 
             if (controlPoints.is_rotating_right() ^ controlPoints.is_rotating_left())
             {
-                float angle = controlPoints.is_rotating_right() ? -1000 : 1000;
+                float angle = controlPoints.is_rotating_right() ? -200f : 200f;
                 OpenCL.rotate_hull(hull.index(), angle * dt * dt);
             }
         }

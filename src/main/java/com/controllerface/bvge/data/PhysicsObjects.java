@@ -32,7 +32,7 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int circle(float x, float y, float size)
+    public static int particle(float x, float y, float size)
     {
         // get the circle mesh. this is almost silly to do but just for consistency :-)
         var mesh = Models.get_model_by_index(Models.CIRCLE_MODEL).meshes()[0];
@@ -180,25 +180,21 @@ public class PhysicsObjects
             // calculate interior edges
             boolean odd_count = hull.length % 2 != 0;
             int half_count = hull.length / 2;
-            for (int ie = 0; ie < half_count; ie++)
+            for (int p1_index = 0; p1_index < half_count; p1_index++)
             {
-                int p1_index = ie;
-                int p2_index = ie + half_count;
+                int p2_index = p1_index + half_count;
                 var p1 = point_buffer.get(p1_index);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                var e_index = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
-                end_edge = e_index;
+                end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
             }
-            if (odd_count)
+            if (odd_count) // if there was an odd vertex at the end, connect it to the mid point
             {
-                int p1_index = half_count;
                 int p2_index = point_table.length - 1;
-                var p1 = point_buffer.get(p1_index);
+                var p1 = point_buffer.get(half_count);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                var e_index = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
-                end_edge = e_index;
+                end_edge = Main.Memory.newEdge(point_table[half_count], point_table[p2_index], distance);
             }
 
             // calculate centroid and reference angle

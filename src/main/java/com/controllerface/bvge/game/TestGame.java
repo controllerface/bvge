@@ -78,7 +78,7 @@ public class TestGame extends GameMode
                 float y = start_y + j * spacing;
 
                 var npc = ecs.registerEntity(null);
-                var hull_index = PhysicsObjects.circle(x, y, size);
+                var hull_index = PhysicsObjects.particle(x, y, size);
                 ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
             }
         }
@@ -115,7 +115,7 @@ public class TestGame extends GameMode
     {
         // circle entity
         var npc = ecs.registerEntity(null);
-        var hull_index = PhysicsObjects.circle(x, y, size);
+        var hull_index = PhysicsObjects.particle(x, y, size);
         ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
     }
 
