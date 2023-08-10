@@ -125,7 +125,7 @@ public class TestGame extends GameMode
     {
         // circle entity
         var npc = ecs.registerEntity(null);
-        var hull_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_STATIC_OBJECT | FLAG_POLYGON);
+        var hull_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
         ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
     }
 

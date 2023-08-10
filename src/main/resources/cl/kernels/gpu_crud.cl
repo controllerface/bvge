@@ -57,12 +57,12 @@ __kernel void create_edge(__global float4 *edges,
 __kernel void create_hull(__global float4 *hulls,
                           __global float2 *hull_rotations,
                           __global int4 *element_tables,
-                          __global int *hull_flags,
+                          __global int2 *hull_flags,
                           int target,
                           float4 new_hull,
                           float2 new_rotation,
                           int4 new_table,
-                          int new_flags)
+                          int2 new_flags)
 {
     hulls[target] = new_hull; 
     hull_rotations[target] = new_rotation; 

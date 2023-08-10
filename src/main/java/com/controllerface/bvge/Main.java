@@ -133,7 +133,7 @@ public class Main
             return idx / Width.POINT;
         }
 
-        public static int newHull(float[] transform, float[] rotation, int[] table, int flags)
+        public static int newHull(float[] transform, float[] rotation, int[] table, int[] flags)
         {
             OpenCL.create_hull(hullCount(), transform, rotation, table, flags);
             hull_index += Width.HULL;

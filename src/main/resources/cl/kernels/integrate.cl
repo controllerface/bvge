@@ -15,7 +15,7 @@ __kernel void integrate(
     __global float4 *bounds,
     __global int4 *bounds_index_data,
     __global int2 *bounds_bank_data,
-    __global int *hull_flags,
+    __global int2 *hull_flags,
     __global float *args)
 {
     int gid = get_global_id(0);
@@ -37,7 +37,7 @@ __kernel void integrate(
     // get hull from array
     float4 hull = hulls[gid];
     int4 element_table = element_tables[gid];
-    int hull_1_flags = hull_flags[gid];
+    int2 hull_1_flags = hull_flags[gid];
     float2 acceleration = hull_accel[gid];
     float2 rotation = hull_rotations[gid];
     float4 bounding_box = bounds[gid];
@@ -65,8 +65,8 @@ __kernel void integrate(
    	float2 acc;
     acc.x = acceleration.x;
     acc.y = acceleration.y;
-    bool is_static = (hull_1_flags & 0x01) !=0;
-    bool is_circle = (hull_1_flags & 0x02) !=0;
+    bool is_static = (hull_1_flags.x & 0x01) !=0;
+    bool is_circle = (hull_1_flags.x & 0x02) !=0;
 
     if (!is_static)
     {

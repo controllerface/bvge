@@ -38,7 +38,7 @@ inline void circle_collision(int b1_id, int b2_id,
 
 inline void polygon_collision(int b1_id, int b2_id,
                              __global float4 *hulls,
-                             __global int *hull_flags,
+                             __global int2 *hull_flags,
                              __global int4 *element_tables,
                              __global float4 *points,
                              __global float4 *edges)
@@ -206,8 +206,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
 
     // vertex and edge object flags
-    int vo_f = hull_flags[(int)vertex_object_id];
-    int eo_f = hull_flags[(int)edge_object_id];
+    int2 vo_f = hull_flags[(int)vertex_object_id];
+    int2 eo_f = hull_flags[(int)edge_object_id];
 
     float2 normal = normalBuffer;
 
@@ -215,8 +215,8 @@ inline void polygon_collision(int b1_id, int b2_id,
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 
-    bool vs = (vo_f & 0x01) !=0;
-    bool es = (eo_f & 0x01) !=0;
+    bool vs = (vo_f.x & 0x01) !=0;
+    bool es = (eo_f.x & 0x01) !=0;
     
     if (vs || es)
     {
@@ -263,7 +263,7 @@ inline void polygon_collision(int b1_id, int b2_id,
 
 inline void polygon_circle_collision(int polygon_id, int circle_id,
                                      __global float4 *hulls,
-                                     __global int *hull_flags,
+                                     __global int2 *hull_flags,
                                      __global int4 *element_tables,
                                      __global float4 *points,
                                      __global float4 *edges)
@@ -393,8 +393,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
 
 
     // vertex and edge object flags
-    int vo_f = hull_flags[(int)vertex_object_id];
-    int eo_f = hull_flags[(int)edge_object_id];
+    int2 vo_f = hull_flags[(int)vertex_object_id];
+    int2 eo_f = hull_flags[(int)edge_object_id];
 
     float2 normal = normalBuffer;
 
@@ -402,8 +402,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 
-    bool vs = (vo_f & 0x01) !=0;
-    bool es = (eo_f & 0x01) !=0;
+    bool vs = (vo_f.x & 0x01) !=0;
+    bool es = (eo_f.x & 0x01) !=0;
     
     if (vs || es)
     {
@@ -460,7 +460,7 @@ which will naturally apply some degree of rotation to the object.
 __kernel void sat_collide(__global int2 *candidates,
                           __global float4 *hulls,
                           __global int4 *element_tables,
-                          __global int *hull_flags,
+                          __global int2 *hull_flags,
                           __global float4 *points,
                           __global float4 *edges)
 {
@@ -469,21 +469,21 @@ __kernel void sat_collide(__global int2 *candidates,
     int2 current_pair = candidates[gid];
     int b1_id = current_pair.x;
     int b2_id = current_pair.y;
-    int hull_1_flags = hull_flags[b1_id];
-    int hull_2_flags = hull_flags[b2_id];
-    bool b1s = (hull_1_flags & 0x01) !=0;
-    bool b2s = (hull_2_flags & 0x01) !=0;
+    int2 hull_1_flags = hull_flags[b1_id];
+    int2 hull_2_flags = hull_flags[b2_id];
+    bool b1s = (hull_1_flags.x & 0x01) !=0;
+    bool b2s = (hull_2_flags.x & 0x01) !=0;
     
     if (b1s && b2s) // no collisions between static objects todo: probably can weed these out earlier, during aabb checks
     {
         return;
     }
 
-    bool b1_is_circle = (hull_1_flags & 0x02) !=0;
-    bool b2_is_circle = (hull_2_flags & 0x02) !=0;
+    bool b1_is_circle = (hull_1_flags.x & 0x02) !=0;
+    bool b2_is_circle = (hull_2_flags.x & 0x02) !=0;
 
-    bool b1_is_polygon = (hull_1_flags & 0x04) !=0;
-    bool b2_is_polygon = (hull_2_flags & 0x04) !=0;
+    bool b1_is_polygon = (hull_1_flags.x & 0x04) !=0;
+    bool b2_is_polygon = (hull_2_flags.x & 0x04) !=0;
 
     // todo: it will probably be more performant to have separate kernels for each collision type. There should
     //  be a preliminary kernel that sorts the candidate pairs so they can be run on the right kernel

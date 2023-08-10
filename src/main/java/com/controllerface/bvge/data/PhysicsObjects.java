@@ -12,6 +12,7 @@ import org.joml.Vector4f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is the core "factory" class for all physics based objects. It contains named archetype
@@ -20,6 +21,14 @@ import java.util.Stack;
 public class PhysicsObjects
 {
     private static final Vector2f vector_buffer = new Vector2f();
+
+    // todo: this will need some kind of protection from overflow, or re-use of IDs.
+    //  it will likely be the case that objects will eventually spawn and get despawned,
+    //  but IDs like this will not be re-used so eventually the game could run out of ids.
+    //  ideally, this would be set to some ID that actually is associated directly with
+    //  the model but the current design makes this hard to do.
+
+    private static AtomicInteger next_model_id = new AtomicInteger(0);
 
     public static int FLAG_NONE = 0x00;
     public static int FLAG_STATIC_OBJECT = 0x01;
@@ -50,7 +59,8 @@ public class PhysicsObjects
         var rotation = OpenCL.arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_CIRCLE);
+        int[] _flag = OpenCL.arg_int2(FLAG_CIRCLE, next_model_id.getAndIncrement());
+        int hull_id = Main.Memory.newHull(transform, rotation, table, _flag);
         Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
         return hull_id;
     }
@@ -94,7 +104,8 @@ public class PhysicsObjects
         var rotation = OpenCL.arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int hull_id = Main.Memory.newHull(transform, rotation, table, flags | FLAG_POLYGON);
+        int [] _flag =  OpenCL.arg_int2(flags | FLAG_POLYGON, next_model_id.getAndIncrement());
+        int hull_id = Main.Memory.newHull(transform, rotation, table, _flag);
         Models.register_model_instance(Models.CRATE_MODEL, hull_id);
         return hull_id;
     }
@@ -111,6 +122,8 @@ public class PhysicsObjects
 
     public static int wrap_model(int model_index, float x, float y, float size, int flags)
     {
+        int model_instance_id = next_model_id.getAndIncrement();
+
         // get the model from the registry
         var model = Models.get_model_by_index(model_index);
 
@@ -232,8 +245,9 @@ public class PhysicsObjects
             var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
             var rotation = OpenCL.arg_float2(0, angle);
 
+            int[] _flag = OpenCL.arg_int2(flags, model_instance_id);
             // there is only one hull, so it is the main hull ID by default
-            int hull_id = Main.Memory.newHull(transform, rotation, table, flags);
+            int hull_id = Main.Memory.newHull(transform, rotation, table, _flag);
             if (i == model.root_index())
             {
                 root_hull_id = hull_id;

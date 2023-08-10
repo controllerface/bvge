@@ -304,6 +304,11 @@ public class OpenCL
         return new int[]{ arg };
     }
 
+    public static int[] arg_int2(int x, int y)
+    {
+        return new int[]{ x, y };
+    }
+
     public static int[] arg_int4(int x, int y, int z, int w)
     {
         return new int[]{ x, y, z, w };
@@ -457,7 +462,7 @@ public class OpenCL
         int accleration_mem_size      = max_hulls * Sizeof.cl_float2;
         int rotation_mem_size         = max_hulls * Sizeof.cl_float2;
         int element_table_mem_size    = max_hulls * Sizeof.cl_int4;
-        int flags_mem_size            = max_hulls * Sizeof.cl_int;
+        int flags_mem_size            = max_hulls * Sizeof.cl_int2;
         int bounding_box_mem_size     = max_hulls * Sizeof.cl_float4;
         int spatial_index_mem_size    = max_hulls * Sizeof.cl_int4;
         int spatial_key_bank_mem_size = max_hulls * Sizeof.cl_int2;
@@ -655,10 +660,10 @@ public class OpenCL
         k_call(k_create_edge, global_single_size);
     }
 
-    public static void create_hull(int hull_index, float[] hull, float[] rotation, int[] table, int flags)
+    public static void create_hull(int hull_index, float[] hull, float[] rotation, int[] table, int[] flags)
     {
         var pnt_index = Pointer.to(arg_int(hull_index));
-        var pnt_flags = Pointer.to(arg_int(flags));
+        var pnt_flags = Pointer.to(flags);
         var pnt_table = Pointer.to(table);
         var pnt_rotation = Pointer.to(rotation);
         var pnt_hull = Pointer.to(hull);
@@ -671,7 +676,7 @@ public class OpenCL
         clSetKernelArg(k_create_hull, 5, Sizeof.cl_float4, pnt_hull);
         clSetKernelArg(k_create_hull, 6, Sizeof.cl_float2, pnt_rotation);
         clSetKernelArg(k_create_hull, 7, Sizeof.cl_int4, pnt_table);
-        clSetKernelArg(k_create_hull, 8, Sizeof.cl_int, pnt_flags);
+        clSetKernelArg(k_create_hull, 8, Sizeof.cl_int2, pnt_flags);
 
         k_call(k_create_hull, global_single_size);
     }
@@ -934,17 +939,18 @@ public class OpenCL
 
         clSetKernelArg(k_aabb_collide, 0, Sizeof.cl_mem, physicsBuffer.bounds.pointer());
         clSetKernelArg(k_aabb_collide, 1, Sizeof.cl_mem, physicsBuffer.bank.pointer());
-        clSetKernelArg(k_aabb_collide, 2, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
-        clSetKernelArg(k_aabb_collide, 3, Sizeof.cl_mem, physicsBuffer.candidate_offsets.pointer());
-        clSetKernelArg(k_aabb_collide, 4, Sizeof.cl_mem, physicsBuffer.key_map.pointer());
-        clSetKernelArg(k_aabb_collide, 5, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
-        clSetKernelArg(k_aabb_collide, 6, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
-        clSetKernelArg(k_aabb_collide, 7, Sizeof.cl_mem, physicsBuffer.key_offsets.pointer());
-        clSetKernelArg(k_aabb_collide, 8, Sizeof.cl_mem, physicsBuffer.matches.pointer());
-        clSetKernelArg(k_aabb_collide, 9, Sizeof.cl_mem, physicsBuffer.matches_used.pointer());
-        clSetKernelArg(k_aabb_collide, 10, Sizeof.cl_mem, src_count);
-        clSetKernelArg(k_aabb_collide, 11, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
-        clSetKernelArg(k_aabb_collide, 12, Sizeof.cl_int, physicsBuffer.key_count_length);
+        clSetKernelArg(k_aabb_collide, 2, Sizeof.cl_mem, physicsBuffer.flags.pointer());
+        clSetKernelArg(k_aabb_collide, 3, Sizeof.cl_mem, physicsBuffer.candidate_counts.pointer());
+        clSetKernelArg(k_aabb_collide, 4, Sizeof.cl_mem, physicsBuffer.candidate_offsets.pointer());
+        clSetKernelArg(k_aabb_collide, 5, Sizeof.cl_mem, physicsBuffer.key_map.pointer());
+        clSetKernelArg(k_aabb_collide, 6, Sizeof.cl_mem, physicsBuffer.key_bank.pointer());
+        clSetKernelArg(k_aabb_collide, 7, Sizeof.cl_mem, physicsBuffer.key_counts.pointer());
+        clSetKernelArg(k_aabb_collide, 8, Sizeof.cl_mem, physicsBuffer.key_offsets.pointer());
+        clSetKernelArg(k_aabb_collide, 9, Sizeof.cl_mem, physicsBuffer.matches.pointer());
+        clSetKernelArg(k_aabb_collide, 10, Sizeof.cl_mem, physicsBuffer.matches_used.pointer());
+        clSetKernelArg(k_aabb_collide, 11, Sizeof.cl_mem, src_count);
+        clSetKernelArg(k_aabb_collide, 12, Sizeof.cl_int, physicsBuffer.x_sub_divisions);
+        clSetKernelArg(k_aabb_collide, 13, Sizeof.cl_int, physicsBuffer.key_count_length);
 
         k_call(k_aabb_collide, arg_long(physicsBuffer.get_candidate_buffer_count()));
 
