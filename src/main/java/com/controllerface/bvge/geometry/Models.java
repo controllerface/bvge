@@ -6,7 +6,6 @@ import org.lwjgl.assimp.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static org.lwjgl.assimp.Assimp.*;
 import static org.lwjgl.assimp.Assimp.aiImportFile;
@@ -16,7 +15,7 @@ public class Models
     private static final AtomicInteger next_model_index = new AtomicInteger(0);
 
     public static final int CIRCLE_MODEL = next_model_index.getAndIncrement();
-    public static final int BOX_MODEL = next_model_index.getAndIncrement();
+    public static final int CRATE_MODEL = next_model_index.getAndIncrement();
     public static final int POLYGON1_MODEL = next_model_index.getAndIncrement();
 
     public static int TEST_MODEL_INDEX = 99;
@@ -81,10 +80,10 @@ public class Models
                     }
                     var mOffset = bone.mOffsetMatrix();
                     Matrix4f offset = new Matrix4f();
-                    offset.set(mOffset.a1(), mOffset.a2(), mOffset.a3(), mOffset.a4(),
-                        mOffset.b1(), mOffset.b2(), mOffset.b3(), mOffset.b4(),
-                        mOffset.c1(), mOffset.c2(), mOffset.c3(), mOffset.c4(),
-                        mOffset.d1(), mOffset.d2(), mOffset.d3(), mOffset.d4());
+                    offset.set(mOffset.a1(), mOffset.b1(), mOffset.c1(), mOffset.d1(),
+                        mOffset.a2(), mOffset.b2(), mOffset.c2(), mOffset.d2(),
+                        mOffset.a3(), mOffset.b3(), mOffset.c3(), mOffset.d3(),
+                        mOffset.a4(), mOffset.b4(), mOffset.c4(), mOffset.d4());
                     System.out.println("bone name: " + bone_name);
                     System.out.println("bone weights: " + bone.mNumWeights());
 
@@ -198,7 +197,7 @@ public class Models
     public static void init()
     {
         loaded_models.put(CIRCLE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
-        loaded_models.put(BOX_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
+        loaded_models.put(CRATE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         loadTestModel();
     }
@@ -211,10 +210,10 @@ public class Models
 
         // this is a transform object we can use
         Matrix4f transform = new Matrix4f();
-        transform.set(mTransform.a1(), mTransform.a2(), mTransform.a3(), mTransform.a4(),
-            mTransform.b1(), mTransform.b2(), mTransform.b3(), mTransform.b4(),
-            mTransform.c1(), mTransform.c2(), mTransform.c3(), mTransform.c4(),
-            mTransform.d1(), mTransform.d2(), mTransform.d3(), mTransform.d4());
+        transform.set(mTransform.a1(), mTransform.b1(), mTransform.c1(), mTransform.d1(),
+            mTransform.a2(), mTransform.b2(), mTransform.c2(), mTransform.d2(),
+            mTransform.a3(), mTransform.b3(), mTransform.c3(), mTransform.d3(),
+            mTransform.a4(), mTransform.b4(), mTransform.c4(), mTransform.d4());
 
         System.out.println("Node: " + nodeName);
         System.out.println(transform);

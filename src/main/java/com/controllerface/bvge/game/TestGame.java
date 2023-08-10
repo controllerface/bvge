@@ -15,7 +15,9 @@ import com.controllerface.bvge.util.Assets;
 import org.joml.Random;
 import org.joml.Vector4f;
 
+import static com.controllerface.bvge.data.PhysicsObjects.*;
 import static com.controllerface.bvge.geometry.Models.POLYGON1_MODEL;
+import static com.controllerface.bvge.geometry.Models.TEST_MODEL_INDEX;
 
 
 public class TestGame extends GameMode
@@ -119,6 +121,14 @@ public class TestGame extends GameMode
         ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
     }
 
+    private void genTestFigure(float size, float x, float y)
+    {
+        // circle entity
+        var npc = ecs.registerEntity(null);
+        var hull_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_STATIC_OBJECT | FLAG_POLYGON);
+        ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
+    }
+
 
     private void genPlayer()
     {
@@ -127,7 +137,7 @@ public class TestGame extends GameMode
 
         //var hull_index = PhysicsObjects.polygon1(0,0, 32);
 
-        var hull_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32);
+        var hull_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, FLAG_NONE | FLAG_POLYGON);
 
 
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
@@ -169,12 +179,13 @@ public class TestGame extends GameMode
     public void load()
     {
         genPlayer();
+        genTestFigure(5, 500, 500);
         //genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
         genTestCircle(30,20, 55);
 
-        genCircles(100, 10f, 10f, 0, 2500);
+        //genCircles(100, 10f, 10f, 0, 2500);
 
         //genCircles(100, 80f, 100f, 2100, 2100);
 
@@ -186,7 +197,7 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, -1000, 0);
         //genNPCs(100, 7f, 10f, 0, -1000);
         //genNPCs(100, 7f, 10f, 0, 1000);
-        genNPCs(100, 10f, 10f, 0, 500);
+        //genNPCs(100, 10f, 10f, 0, 500);
 
         genNPCs(1, 41f, 40f, 100, 300);
         genFloor(200, 150f, 150f, -4000, -100);

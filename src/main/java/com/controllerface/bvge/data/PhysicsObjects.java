@@ -58,7 +58,7 @@ public class PhysicsObjects
     public static int box(float x, float y, float size, int flags)
     {
         // get the box mesh
-        var mesh = Models.get_model_by_index(Models.BOX_MODEL).meshes()[0];
+        var mesh = Models.get_model_by_index(Models.CRATE_MODEL).meshes()[0];
         var hull = generate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
         hull = translate_hull(hull, x, y);
@@ -95,7 +95,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int hull_id = Main.Memory.newHull(transform, rotation, table, flags | FLAG_POLYGON);
-        Models.register_model_instance(Models.BOX_MODEL, hull_id);
+        Models.register_model_instance(Models.CRATE_MODEL, hull_id);
         return hull_id;
     }
 
@@ -109,7 +109,7 @@ public class PhysicsObjects
         return box(x, y, size, FLAG_STATIC_OBJECT);
     }
 
-    public static int wrap_model(int model_index, float x, float y, float size)
+    public static int wrap_model(int model_index, float x, float y, float size, int flags)
     {
         // get the model from the registry
         var model = Models.get_model_by_index(model_index);
@@ -127,14 +127,19 @@ public class PhysicsObjects
             // generate the hull
             var hull = generate_convex_hull(next_mesh.vertices());
 
-            // scale to desired size
-            hull = scale_hull(hull, size);
+
 
             // translate to model space
             hull = translate_hull(hull, next_mesh.sceneNode().transform);
 
+            System.out.printf("Debug mesh: %d mat: %s", i, next_mesh.sceneNode().transform);
+
+            // scale to desired size
+            hull = scale_hull(hull, size);
+
             // translate to world space
             hull = translate_hull(hull, x, y);
+
 
             // generate the points in memory for this object
             int start_point = -1;
@@ -208,7 +213,7 @@ public class PhysicsObjects
             var rotation = OpenCL.arg_float2(0, angle);
 
             // there is only one hull, so it is the main hull ID by default
-            int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
+            int hull_id = Main.Memory.newHull(transform, rotation, table, flags);
             if (i == model.root_index())
             {
                 root_hull_id = hull_id;
