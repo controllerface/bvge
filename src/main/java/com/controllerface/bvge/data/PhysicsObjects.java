@@ -2,10 +2,13 @@ package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.util.MathEX;
+import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.joml.Vector4f;
 
 import java.util.Stack;
 
@@ -154,22 +157,91 @@ public class PhysicsObjects
     public static int test_model(int model_index, float x, float y, float size)
     {
         // 1: get the model from the registry
+        var model = Models.get_model_by_index(model_index);
 
-        // 2: for each mesh, generate a convex hull with the provided offset
+        int root_hull_id = 0;
 
-        // 3: transform hulls using mesh transform to set initial location
+        var meshes = model.meshes();
 
-        // 4: generate edges for the hull exterior
+        for (int i = 0; i < meshes.length; i++)
+        {
+            // get the next mesh and generate a convex hull. Hull will need to be
+            // transformed into position.
+            var next_mesh = meshes[i];
+            var hull = generate_convex_hull(next_mesh.vertices());
+            hull = scale_hull(hull, size);
+            hull = translate_hull(hull, x, y);
+            hull = translate_hull(hull, next_mesh.sceneNode().transform);
 
-        // 5: generate edges for hull interior
+            // generate the points in memory for this object
+            int[] hull_indices = new int[hull.length];
+            for (int h = 0; h < hull.length; h++)
+            {
+                var next_vertex = hull[h];
+                var p = OpenCL.arg_float2(next_vertex.x(), next_vertex.y());
+                var p_index = Main.Memory.newPoint(p);
+                hull_indices[h] = p_index;
+            }
 
-        // 6: store hulls in memory
+            // todo: pick up here
+            // generate the edges in memory for this object
+            //int[] edge_indices = new int[];
+
+        }
+
+            // 2: for each mesh, generate a convex hull with the provided offset
+
+            // 3: transform hulls using mesh transform to set initial location
+
+            // 4: generate edges for the hull exterior
+
+            // 5: generate edges for hull interior
+
+            // 6: store hulls in memory
+
+
+
 
         // 7: return the ID of the root hull, which is the hull generated for the root mesh
 
         return -1;
     }
 
+
+    public static Vertex[] scale_hull(Vertex[] input, float scale)
+    {
+        var output = new Vertex[input.length];
+        for (int i = 0; i < input.length; i++)
+        {
+            output[i] = input[i].uniform_scale(scale);
+        }
+        return output;
+    }
+
+    public static Vertex[] translate_hull(Vertex[] input, float tx, float ty)
+    {
+        var output = new Vertex[input.length];
+        for (int i = 0; i < input.length; i++)
+        {
+            output[i] = input[i].translate(tx, ty);
+        }
+        return output;
+    }
+
+    public static Vertex[] translate_hull(Vertex[] input, Matrix4f matrix4f)
+    {
+        var output = new Vertex[input.length];
+        for (int i = 0; i < input.length; i++)
+        {
+            var next = input[i];
+            var vec = matrix4f.transform(new Vector4f(next.x(), next.y(), 0.0f, 1.0f));
+            output[i] = new Vertex(vec.x, vec.y);
+        }
+        return output;
+    }
+
+    // below was pasted and modified from here:
+    // https://github.com/rolandopalermo/convex-hull-algorithms/blob/master/src/main/java/com/rolandopalermo/algorithms/convexhull/graphics2D/GiftWrapping.java
 
     public static int lowestPoint(Vertex[] points)
     {
@@ -194,26 +266,6 @@ public class PhysicsObjects
         return points;
     }
 
-    public static Vertex[] scale_hull(Vertex[] input, float scale)
-    {
-        var output = new Vertex[input.length];
-        for (int i = 0; i < input.length; i++)
-        {
-            output[i] = input[i].uniform_scale(scale);
-        }
-        return output;
-    }
-
-    public static Vertex[] translate_hull(Vertex[] input, float tx, float ty)
-    {
-        var output = new Vertex[input.length];
-        for (int i = 0; i < input.length; i++)
-        {
-            output[i] = input[i].translate(tx, ty);
-        }
-        return output;
-    }
-
     public static Vertex[] generate_convex_hull(Vertex[] in_points)
     {
         Vertex p, q;
@@ -221,8 +273,8 @@ public class PhysicsObjects
         Vertex[] points = new Vertex[in_points.length];
         System.arraycopy(in_points, 0, points, 0, in_points.length);
 
-        points = swap(points, 0, lowestPoint(points));
-        points = swap(points, 1, lowestPolarAngle(points, points[0]));
+        swap(points, 0, lowestPoint(points));
+        swap(points, 1, lowestPolarAngle(points, points[0]));
 
         p = points[0];
         q = points[1];
@@ -251,7 +303,7 @@ public class PhysicsObjects
             q = points[index];
         }
 
-        return verticesList.stream().toArray(Vertex[]::new);
+        return verticesList.toArray(Vertex[]::new);
     }
 
     private static int lowestPolarAngle(Vertex[] points, Vertex lowestPoint)
