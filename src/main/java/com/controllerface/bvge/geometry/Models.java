@@ -6,6 +6,7 @@ import org.lwjgl.assimp.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.lwjgl.assimp.Assimp.*;
 import static org.lwjgl.assimp.Assimp.aiImportFile;
@@ -54,8 +55,8 @@ public class Models
         {
             AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
             var name = aiMesh.mName().dataString();
-            var sceneNode = node_map.get(name);
-            if (sceneNode == null)
+            var mesh_node = node_map.get(name);
+            if (mesh_node == null)
             {
                 throw new NullPointerException("No scene node for mesh: " + name
                     + " ensure node and geometry names match in blender");
@@ -73,6 +74,7 @@ public class Models
                 AIBone bone = AIBone.create(mBones.get(j));
                 if (bone.mNumWeights() > 0)
                 {
+                    var bone_name = bone.mName().dataString();
                     if (mesh_bone != null)
                     {
                         throw new IllegalStateException("Multiple bones per mesh is not currently supported");
@@ -83,7 +85,7 @@ public class Models
                         mOffset.b1(), mOffset.b2(), mOffset.b3(), mOffset.b4(),
                         mOffset.c1(), mOffset.c2(), mOffset.c3(), mOffset.c4(),
                         mOffset.d1(), mOffset.d2(), mOffset.d3(), mOffset.d4());
-                    System.out.println("bone name: " + bone.mName().dataString());
+                    System.out.println("bone name: " + bone_name);
                     System.out.println("bone weights: " + bone.mNumWeights());
 
                     int weight_index = 0;
@@ -96,24 +98,30 @@ public class Models
                         System.out.println("vert id: " + weight.mVertexId() + " weight: " + weight.mWeight());
                     }
 
-                    mesh_bone = new Bone(bone.mName().dataString(), offset, weights);
+                    var bone_node = node_map.get(bone_name);
+                    if (bone_node == null)
+                    {
+                        throw new NullPointerException("No scene node for bone: " + bone_name
+                            + " ensure node and geometry names match in blender");
+                    }
+                    mesh_bone = new Bone(bone_name, offset, weights, bone_node);
                     System.out.println("bone offset: \n" + offset);
                 }
             }
 
             int vert_index = 0;
-            Vertex[] vertices = new Vertex[aiMesh.mNumVertices()];
+            Vertex[] mesh_vertices = new Vertex[aiMesh.mNumVertices()];
             AIVector3D.Buffer buffer = aiMesh.mVertices();
             while (buffer.remaining() > 0)
             {
                 int this_vert = vert_index++;
                 AIVector3D aiVertex = buffer.get();
-                vertices[this_vert] = new Vertex(aiVertex.x(), aiVertex.y());
+                mesh_vertices[this_vert] = new Vertex(aiVertex.x(), aiVertex.y());
                 System.out.printf("Vertex dump: vert id: %d x: %f y:%f\n", this_vert, aiVertex.x(), aiVertex.y());
             }
 
             int face_index = 0;
-            Face[] faces = new Face[aiMesh.mNumFaces()];
+            Face[] mesh_faces = new Face[aiMesh.mNumFaces()];
             AIFace.Buffer buffer1 = aiMesh.mFaces();
             while (buffer1.remaining() > 0)
             {
@@ -125,17 +133,33 @@ public class Models
                     int index = b.get(x);
                     indices.add(index);
                 }
-                faces[face_index++] = new Face(indices.get(0), indices.get(1), indices.get(2));
+                mesh_faces[face_index++] = new Face(indices.get(0), indices.get(1), indices.get(2));
                 System.out.printf("Face dump: raw: %s\n", indices);
             }
 
-            var new_mesh = new Mesh(vertices, faces, mesh_bone, sceneNode);
+            var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node);
             int new_index = Meshes.register_mesh(name, new_mesh);
             meshes[i] = new_mesh;
             System.out.printf("registered mesh [%s] with id [%d]", name, new_index);
         }
 
-        loaded_models.put(TEST_MODEL_INDEX, new Model(meshes));
+        int root_index = -1;
+        for (int mi = 0; mi < meshes.length; mi++)
+        {
+            if (meshes[mi].bone().sceneNode().parent.parent.name.equalsIgnoreCase("RootNode"))
+            {
+                root_index = mi;
+                break;
+            }
+        }
+
+        if (root_index == -1)
+        {
+            throw new IllegalStateException("No root mesh found. " +
+                "Root mesh is determined by root bone in Armature under RootNode in scene");
+        }
+
+        loaded_models.put(TEST_MODEL_INDEX, new Model(meshes, root_index));
         System.out.println("\nLoaded model: " + TEST_MODEL_INDEX + " with " + meshes.length + " meshes");
     }
 
