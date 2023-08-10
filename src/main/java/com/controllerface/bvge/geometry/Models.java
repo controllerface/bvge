@@ -23,9 +23,9 @@ public class Models
     {
         var aiScene = loadFile("C:/Users/Stephen/mdl/test_humanoid.fbx");
         int numMeshes = aiScene.mNumMeshes();
-        var root_node  = aiScene.mRootNode();
+        var root_node = aiScene.mRootNode();
 
-        var newNode = processNodesHierarchy(root_node, null);
+        var sceneTree = processNodesHierarchy(root_node, null);
 
 //        int children  = root_node.mNumChildren();
 //        processBide
@@ -34,10 +34,11 @@ public class Models
 //            AINode next = AINode.create(root_node.mChildren(i));
 //        }
 
+        Mesh[] meshes = new Mesh[numMeshes];
         PointerBuffer aiMeshes = aiScene.mMeshes();
-        for (int i = 0; i < numMeshes; i++) {
+        for (int i = 0; i < numMeshes; i++)
+        {
             AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
-
             var name = aiMesh.mName().dataString();
             System.out.println("\nMesh name: " + name);
             System.out.printf("verts: %d faces: %d \n",
@@ -63,14 +64,21 @@ public class Models
                 }
             }
 
+            int vert_index = 0;
+            Vertex[] vertices = new Vertex[aiMesh.mNumVertices()];
             AIVector3D.Buffer buffer = aiMesh.mVertices();
-            while (buffer.remaining() > 0) {
+            while (buffer.remaining() > 0)
+            {
                 AIVector3D aiVertex = buffer.get();
+                vertices[vert_index++] = new Vertex(aiVertex.x(), aiVertex.y());
                 System.out.printf("Vertex dump: x: %f y:%f\n", aiVertex.x(), aiVertex.y());
             }
 
+            int face_index = 0;
+            Face[] faces = new Face[aiMesh.mNumFaces()];
             AIFace.Buffer buffer1 = aiMesh.mFaces();
-            while (buffer1.remaining() > 0) {
+            while (buffer1.remaining() > 0)
+            {
                 AIFace aiFace = buffer1.get();
                 var b = aiFace.mIndices();
                 List<Integer> indices = new ArrayList<>();
@@ -79,11 +87,14 @@ public class Models
                     int index = b.get(x);
                     indices.add(index);
                 }
+                faces[face_index++] = new Face(indices.get(0), indices.get(1), indices.get(2));
                 System.out.printf("Face dump: raw: %s\n", indices);
-
             }
 
-            //System.out.println("bone count: " + aiMesh.mNumBones());
+            var new_mesh = new Mesh(vertices, faces);
+            int new_index = Meshes.register_mesh(name, new_mesh);
+            meshes[i] = new_mesh;
+            System.out.printf("registered mesh [%s] with id [%d]", name, new_index);
         }
     }
 
@@ -94,9 +105,8 @@ public class Models
     }
 
 
-
-
-    private static Node processNodesHierarchy(AINode aiNode, Node parentNode) {
+    private static SceneNode processNodesHierarchy(AINode aiNode, SceneNode parentNode)
+    {
         String nodeName = aiNode.mName().dataString();
         var mTransform = aiNode.mTransformation();
 
@@ -110,32 +120,34 @@ public class Models
         System.out.println("Node: " + nodeName);
         System.out.println(transform);
 
-
-        Node node = new Node(nodeName, parentNode);
+        SceneNode currentNode = new SceneNode(nodeName, parentNode, transform);
         int numChildren = aiNode.mNumChildren();
         PointerBuffer aiChildren = aiNode.mChildren();
-        for (int i = 0; i < numChildren; i++) {
+        for (int i = 0; i < numChildren; i++)
+        {
             AINode aiChildNode = AINode.create(aiChildren.get(i));
-            Node childNode = processNodesHierarchy(aiChildNode, node);
-            node.addChild(childNode);
+            SceneNode childNode = processNodesHierarchy(aiChildNode, currentNode);
+            currentNode.addChild(childNode);
         }
 
-        return node;
+        return currentNode;
     }
 
-    private static class Node
+    public static class SceneNode
     {
-        private final String name;
-        private final Node parent;
-        private final List<Node> children = new ArrayList<>();
+        public final String name;
+        public final SceneNode parent;
+        public final Matrix4f transform;
+        public final List<SceneNode> children = new ArrayList<>();
 
-        private Node(String name, Node parent)
+        public SceneNode(String name, SceneNode parent, Matrix4f transform)
         {
             this.name = name;
             this.parent = parent;
+            this.transform = transform;
         }
 
-        private void addChild(Node child)
+        public void addChild(SceneNode child)
         {
             children.add(child);
         }

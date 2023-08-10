@@ -20,12 +20,10 @@ public class Meshes
 
     private static final Map<String, Integer> mesh_index_map = new HashMap<>();
 
-
     public static Mesh get_mesh_by_index(int index)
     {
         return loaded_meshes.get(index);
     }
-
 
     public static void register_mesh_instance(int model_id, int hull_id)
     {
@@ -72,20 +70,6 @@ public class Meshes
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 3);
         return new Mesh(vertices, faces);
-
-//        float[] model = new float[8];
-//        model[0] = -halfSize;
-//        model[1] = -halfSize;
-//
-//        model[2] = halfSize;
-//        model[3] = -halfSize;
-//
-//        model[4] = halfSize;
-//        model[5] = halfSize;
-//
-//        model[6] = -halfSize;
-//        model[7] = halfSize;
-//        return model;
     }
 
     /**
@@ -109,31 +93,31 @@ public class Meshes
         faces[2] = new Face(3, 2, 4);
         return new Mesh(vertices, faces);
 
-//        float[] model = new float[10];
-//        model[0] = -halfSize;
-//        model[1] = -halfSize;
-//
-//        model[2] = halfSize;
-//        model[3] = -halfSize;
-//
-//        model[4] = halfSize;
-//        model[5] = halfSize;
-//
-//        model[6] = -halfSize;
-//        model[7] = halfSize;
-//
-//        model[8] = 0;
-//        model[9] = halfSize * 2;
-//
-//        return model;
+    }
+
+    public static int register_mesh(String mesh_name, Mesh mesh)
+    {
+        if (mesh_index_map.containsKey(mesh_name))
+        {
+            throw new IllegalStateException("mesh: " + mesh_name + "already registered.");
+        }
+
+        var mesh_id = next_mesh_index.getAndIncrement();
+        mesh_index_map.put(mesh_name, mesh_id);
+        register_mesh(mesh_id, mesh);
+        return mesh_id;
+    }
+
+    private static void register_mesh(int id, Mesh mesh)
+    {
+        loaded_meshes.put(id, mesh);
     }
 
     public static void init()
     {
         var circle = new Mesh(new Vertex[]{ new Vertex(0,0) }, new Face[]{ new Face(0, 0, 0) });
-        loaded_meshes.put(CIRCLE_MESH, circle);
-
-        loaded_meshes.put(BOX_MESH, load_box_mesh());
-        loaded_meshes.put(POLYGON1_MESH, load_poly1_mesh());
+        register_mesh(CIRCLE_MESH, circle);
+        register_mesh(BOX_MESH, load_box_mesh());
+        register_mesh(POLYGON1_MESH, load_poly1_mesh());
     }
 }

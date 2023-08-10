@@ -151,9 +151,11 @@ public class CrateRenderer extends GameSystem
     @Override
     public void run(float dt)
     {
-        // todo: will ned to account for this happening more than once
+        // todo: will need to account for this happening more than once
         if (Meshes.is_mesh_dirty(Meshes.BOX_MESH))
         {
+            // todo: change to loading model, not mesh
+
             var instances = Meshes.get_mesh_instances(Meshes.BOX_MESH);
             int[] indices = new int[instances.size()];
             int[] counter = new int[1];
