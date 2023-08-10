@@ -144,8 +144,8 @@ public class Main
 
     public static void main(String[] args)
     {
-        Models.init();
         Meshes.init();
+        Models.init();
         Window window = Window.get();
         window.initOpenGL();
         OpenCL.init(Memory.MAX_HULLS, Memory.MAX_POINTS);

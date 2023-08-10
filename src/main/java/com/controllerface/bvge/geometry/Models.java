@@ -4,20 +4,31 @@ import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.lwjgl.assimp.Assimp.*;
 import static org.lwjgl.assimp.Assimp.aiImportFile;
 
 public class Models
 {
+    private static final AtomicInteger next_model_index = new AtomicInteger(0);
+
+    public static final int CIRCLE_MODEL = next_model_index.getAndIncrement();
+    public static final int BOX_MODEL = next_model_index.getAndIncrement();
+    public static final int POLYGON1_MODEL = next_model_index.getAndIncrement();
+
+    public static int TEST_MODEL_INDEX = 99;
+
+    private static final Map<Integer, Model> loaded_models = new HashMap<>();
+    private static final Map<Integer, Boolean> dirty_models = new HashMap<>();
+    private static final Map<Integer, Set<Integer>> model_instances = new HashMap<>();
+
     private static AIScene loadFile(String path)
     {
         int flags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
         return aiImportFile(path, flags);
     }
-
 
     private static void loadTestModel()
     {
@@ -25,6 +36,7 @@ public class Models
         int numMeshes = aiScene.mNumMeshes();
         var root_node = aiScene.mRootNode();
 
+        // todo: will need this for transforms
         var sceneTree = processNodesHierarchy(root_node, null);
 
 //        int children  = root_node.mNumChildren();
@@ -96,11 +108,48 @@ public class Models
             meshes[i] = new_mesh;
             System.out.printf("registered mesh [%s] with id [%d]", name, new_index);
         }
+
+        loaded_models.put(TEST_MODEL_INDEX, new Model(meshes));
+        System.out.println("\nLoaded model: " + TEST_MODEL_INDEX + " with " + meshes.length + " meshes");
     }
 
+    public static Model get_model_by_index(int index)
+    {
+        return loaded_models.get(index);
+    }
+
+    public static void register_model_instance(int model_id, int hull_id)
+    {
+        model_instances.computeIfAbsent(model_id, _k -> new HashSet<>()).add(hull_id);
+        dirty_models.put(model_id, true);
+    }
+
+    public static Set<Integer> get_model_instances(int model_id)
+    {
+        return model_instances.get(model_id);
+    }
+
+    public static boolean is_model_dirty(int model_id)
+    {
+        var r = dirty_models.get(model_id);
+        return r != null && r;
+    }
+
+    public static int get_instance_count(int model_id)
+    {
+        return model_instances.get(model_id).size();
+    }
+
+    public static void set_model_clean(int model_id)
+    {
+        dirty_models.put(model_id, false);
+    }
 
     public static void init()
     {
+        loaded_models.put(CIRCLE_MODEL, Model.fromMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
+        loaded_models.put(BOX_MODEL, Model.fromMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
+        loaded_models.put(POLYGON1_MODEL, Model.fromMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         loadTestModel();
     }
 

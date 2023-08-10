@@ -15,47 +15,16 @@ public class Meshes
     public static final int POLYGON1_MESH = next_mesh_index.getAndIncrement();
 
     private static final Map<Integer, Mesh> loaded_meshes = new HashMap<>();
-    private static final Map<Integer, Boolean> dirty_meshes = new HashMap<>();
-    private static final Map<Integer, Set<Integer>> mesh_instances = new HashMap<>();
-
     private static final Map<String, Integer> mesh_index_map = new HashMap<>();
 
     public static Mesh get_mesh_by_index(int index)
     {
         return loaded_meshes.get(index);
     }
-
-    public static void register_mesh_instance(int model_id, int hull_id)
-    {
-        mesh_instances.computeIfAbsent(model_id, _k -> new HashSet<>()).add(hull_id);
-        dirty_meshes.put(model_id, true);
-    }
-
-    public static Set<Integer> get_mesh_instances(int model_id)
-    {
-        return mesh_instances.get(model_id);
-    }
-
-    public static boolean is_mesh_dirty(int model_id)
-    {
-        var r = dirty_meshes.get(model_id);
-        return r != null && r;
-    }
-
-    public static int get_instance_count(int model_id)
-    {
-        return mesh_instances.get(model_id).size();
-    }
-
-    public static void set_mesh_clean(int model_id)
-    {
-        dirty_meshes.put(model_id, false);
-    }
-
     /**
      * A simple unit square; 4 vertices defining a square of size 1.
      */
-    private static Mesh load_box_mesh()
+    private static Mesh generate_box_mesh()
     {
         Vertex[] vertices = new Vertex[4];
         Face[] faces = new Face[2];
@@ -75,7 +44,7 @@ public class Meshes
     /**
      * A simple polygon with 5 vertices
      */
-    private static Mesh load_poly1_mesh()
+    private static Mesh generate_poly1_mesh()
     {
         Vertex[] vertices = new Vertex[5];
         Face[] faces = new Face[3];
@@ -117,7 +86,7 @@ public class Meshes
     {
         var circle = new Mesh(new Vertex[]{ new Vertex(0,0) }, new Face[]{ new Face(0, 0, 0) });
         register_mesh(CIRCLE_MESH, circle);
-        register_mesh(BOX_MESH, load_box_mesh());
-        register_mesh(POLYGON1_MESH, load_poly1_mesh());
+        register_mesh(BOX_MESH, generate_box_mesh());
+        register_mesh(POLYGON1_MESH, generate_poly1_mesh());
     }
 }

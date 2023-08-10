@@ -3,6 +3,7 @@ package com.controllerface.bvge.data;
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.geometry.Meshes;
+import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Vector2f;
 
@@ -28,7 +29,7 @@ public class PhysicsObjects
     public static int circle(float x, float y, float size)
     {
         // get the circle model. this is almost silly to do but just for consistency :-)
-        var mesh = Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH);
+        var mesh = Models.get_model_by_index(Models.CIRCLE_MODEL).meshes()[0];
 
         // the model points are always zero so the * and + are for educational purposes
         var p1 = OpenCL.arg_float2(mesh.vertices()[0].x() * size + x, mesh.vertices()[0].y() * size + y);
@@ -46,14 +47,14 @@ public class PhysicsObjects
         //  objects will need to be separated into visual and physics components, with the current
         //  "body" objects being used for the physics bounds, i.e. convex hulls
         int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_CIRCLE);
-        Meshes.register_mesh_instance(Meshes.CIRCLE_MESH, hull_id);
+        Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
         return hull_id;
     }
 
     public static int box(float x, float y, float size, int flags)
     {
         // get the box model
-        var mesh = Meshes.get_mesh_by_index(Meshes.BOX_MESH);
+        var mesh = Models.get_model_by_index(Models.BOX_MODEL).meshes()[0];
 
         // generate the vertices based on the desired size and position
         var p1 = OpenCL.arg_float2(mesh.vertices()[0].x() * size + x, mesh.vertices()[0].y() * size + y);
@@ -86,11 +87,10 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = OpenCL.arg_float2(0, angle);
 
-        // todo: future uses of this class should be decoupled from the model registry itself
-        //  objects will need to be separated into visual and physics components, with the current
-        //  "body" objects being used for the physics bounds, i.e. convex hulls
+        // todo: register a new model instead of a new mesh, move over to renderers loading models
+        //  instead of meshes
         int hull_id =  Main.Memory.newHull(transform, rotation, table, flags | FLAG_POLYGON);
-        Meshes.register_mesh_instance(Meshes.BOX_MESH, hull_id);
+        Models.register_model_instance(Models.BOX_MODEL, hull_id);
         return hull_id;
     }
 
@@ -106,7 +106,7 @@ public class PhysicsObjects
 
     public static int polygon1(float x, float y, float size)
     {
-        var mesh = Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH);
+        var mesh = Models.get_model_by_index(Models.POLYGON1_MODEL).meshes()[0];
 
         var p1 = OpenCL.arg_float2(mesh.vertices()[0].x() * size + x, mesh.vertices()[0].x() * size + y);
         var p2 = OpenCL.arg_float2(mesh.vertices()[1].x() * size + x, mesh.vertices()[1].y() * size + y);
@@ -141,11 +141,10 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = OpenCL.arg_float2(0, angle);
 
-        // todo: future uses of this class should be decoupled from the model registry itself
-        //  objects will need to be separated into visual and physics components, with the current
-        //  "body" objects being used for the physics bounds, i.e. convex hulls
+        // todo: register a new model instead of a new mesh, move over to renderers loading models
+        //  instead of meshes
         int hull_id = Main.Memory.newHull(transform, rotation, table, FLAG_NONE | FLAG_POLYGON);
-        Meshes.register_mesh_instance(Meshes.POLYGON1_MESH, hull_id);
+        Models.register_model_instance(Models.POLYGON1_MODEL, hull_id);
         return hull_id;
     }
 }

@@ -4,6 +4,7 @@ import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.renderers.batches.CircleRenderBatch;
+import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.util.Assets;
@@ -58,15 +59,15 @@ public class CircleRenderer extends GameSystem
     public void run(float dt)
     {
 //        // todo: will need to account for this happening more than once
-        if (Meshes.is_mesh_dirty(Meshes.CIRCLE_MESH))
+        if (Models.is_model_dirty(Models.CIRCLE_MODEL))
         {
-            var instances = Meshes.get_mesh_instances(Meshes.CIRCLE_MESH);
+            var instances = Models.get_model_instances(Models.CIRCLE_MODEL);
             int[] indices = new int[instances.size()];
             int[] counter = new int[1];
             instances.forEach(integer -> indices[counter[0]++] = integer);
 
             // get the number of models that need to be rendered
-            var model_count = Meshes.get_instance_count(Meshes.CIRCLE_MESH);
+            var model_count = Models.get_instance_count(Models.CIRCLE_MODEL);
 
             var needed_batches = model_count / Constants.Rendering.MAX_BATCH_SIZE;
             var r = model_count % Constants.Rendering.MAX_BATCH_SIZE;
@@ -95,7 +96,7 @@ public class CircleRenderer extends GameSystem
             }
 
 
-            Meshes.set_mesh_clean(Meshes.CIRCLE_MESH);
+            Models.set_model_clean(Models.CIRCLE_MODEL);
         }
 
         render();
