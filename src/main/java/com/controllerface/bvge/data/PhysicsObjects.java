@@ -138,40 +138,33 @@ public class PhysicsObjects
             // get the next mesh
             var next_mesh = meshes[i];
 
+            var verts = next_mesh.vertices();
+
             // generate the hull
-            var hull = generate_convex_hull(next_mesh.vertices());
+            var hull = generate_convex_hull(verts);
 
+            // This alternative to using the bone transform is using the mesh transform
+            // directly. This is helpful for debugging as the initial bone transform
+            // outcome on the mesh should be identical this reference position.
+            //
+            //hull = transform_hull(hull, next_mesh.sceneNode().transform);
 
-            // translate to model space
-            hull = transform_hull(hull, next_mesh.sceneNode().transform);
+            // todo: create Bone memory structure
+            // use bone transform to position the hull
+            var bone_transform = model.bone_transforms().get(next_mesh.bone().name());
+            hull = transform_hull(hull, bone_transform);
 
-//            List<Bone> boneChain = new ArrayList<>();
-//            var next_bone = next_mesh.bone();
-//            while (next_bone != null)
-//            {
-//                boneChain.add(0, next_bone);
-//                next_bone = Optional.ofNullable(next_bone.sceneNode())
-//                    .map(n->n.parent)
-//                    .map(node ->model.boneMap().get(node.name))
-//                    .orElse(null);
-//            }
-//
-//            for (Bone bone : boneChain)
-//            {
-//                //hull = transform_hull(hull, bone.sceneNode().transform);
-//               hull = transform_hull(hull, bone.offset());
-//
-//            }
+            // todo: determine how to re-apply bone transform after scaling
 
-
-
+            // todo: adapt tutorials usage of bone matrix to compute positions in CL
+            //  assume all bones are combined into one offset and avoid needing the
+            //  index.
 
             // scale to desired size in model space
             hull = scale_hull(hull, size);
 
             // translate to world space
             hull = translate_hull(hull, x, y);
-
 
             // generate the points in memory for this object
             int start_point = -1;
@@ -215,7 +208,6 @@ public class PhysicsObjects
             }
 
             // calculate interior edges
-
             if (hull.length > 4)
             {
                 //pass 1
@@ -259,7 +251,7 @@ public class PhysicsObjects
                 var p1 = point_buffer.get(half_count+1);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                end_edge = Main.Memory.newEdge(point_table[half_count+1], point_table[p2_index], distance);
+                end_edge = Main.Memory.newEdge(point_table[half_count+1], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
             }
 
             // calculate centroid and reference angle

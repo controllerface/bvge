@@ -37,9 +37,8 @@ public class Models
         var root_node = aiScene.mRootNode();
 
         Map<String, SceneNode> node_map = new HashMap<>();
-        // todo: will need this for transforms, make the tree searchable so
-        //  models can find their default transforms
-        processNodesHierarchy(root_node, null, node_map);
+
+        var scene_node = processNodeHierarchy(root_node, null, node_map);
 
         Mesh[] meshes = new Mesh[numMeshes];
         PointerBuffer aiMeshes = aiScene.mMeshes();
@@ -54,10 +53,6 @@ public class Models
                 throw new NullPointerException("No scene node for mesh: " + name
                     + " ensure node and geometry names match in blender");
             }
-//            System.out.println("\nMesh name: " + name);
-//            System.out.printf("verts: %d faces: %d \n",
-//                aiMesh.mNumVertices(),
-//                aiMesh.mNumFaces());
 
             int bone_count = aiMesh.mNumBones();
             PointerBuffer mBones = aiMesh.mBones();
@@ -78,8 +73,6 @@ public class Models
                         mOffset.a2(), mOffset.b2(), mOffset.c2(), mOffset.d2(),
                         mOffset.a3(), mOffset.b3(), mOffset.c3(), mOffset.d3(),
                         mOffset.a4(), mOffset.b4(), mOffset.c4(), mOffset.d4());
-                    //System.out.println("bone name: " + bone_name);
-                    //System.out.println("bone weights: " + bone.mNumWeights());
 
                     int weight_index = 0;
                     AIVertexWeight.Buffer w_buf = bone.mWeights();
@@ -88,7 +81,6 @@ public class Models
                     {
                         AIVertexWeight weight = w_buf.get();
                         weights[weight_index++] = new BoneWeight(weight.mVertexId(), weight.mWeight());
-                        //System.out.println("vert id: " + weight.mVertexId() + " weight: " + weight.mWeight());
                     }
 
                     var bone_node = node_map.get(bone_name);
@@ -99,7 +91,6 @@ public class Models
                     }
                     mesh_bone = new Bone(bone_name, offset, weights, bone_node);
                     bone_map.put(bone_name, mesh_bone);
-                    //System.out.println("bone offset: \n" + offset);
                 }
             }
 
@@ -111,7 +102,6 @@ public class Models
                 int this_vert = vert_index++;
                 var aiVertex = buffer.get();
                 mesh_vertices[this_vert] = new Vertex(aiVertex.x(), aiVertex.y());
-                //System.out.printf("Vertex dump: vert id: %d x: %f y:%f\n", this_vert, aiVertex.x(), aiVertex.y());
             }
 
             int face_index = 0;
@@ -128,13 +118,12 @@ public class Models
                     indices.add(index);
                 }
                 mesh_faces[face_index++] = new Face(indices.get(0), indices.get(1), indices.get(2));
-                //System.out.printf("Face dump: raw: %s\n", indices);
             }
 
             var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node);
             int new_index = Meshes.register_mesh(name, new_mesh);
             meshes[i] = new_mesh;
-            System.out.printf("registered mesh [%s] with id [%d]\n", name, new_index);
+            //System.out.printf("registered mesh [%s] with id [%d]\n", name, new_index);
         }
 
         int root_index = -1;
@@ -153,7 +142,10 @@ public class Models
                 "Root mesh is determined by root bone in Armature under RootNode in scene");
         }
 
-        loaded_models.put(TEST_MODEL_INDEX, new Model(meshes, bone_map, root_index));
+        Map<String, Matrix4f> bone_transforms = new HashMap<>();
+        generate_transforms(scene_node, bone_map, bone_transforms, new Matrix4f());
+
+        loaded_models.put(TEST_MODEL_INDEX, new Model(meshes, bone_map, bone_transforms, root_index));
     }
 
     public static Model get_model_by_index(int index)
@@ -197,7 +189,7 @@ public class Models
     }
 
 
-    private static SceneNode processNodesHierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)
+    private static SceneNode processNodeHierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)
     {
         var nodeName = aiNode.mName().dataString();
         var mTransform = aiNode.mTransformation();
@@ -207,21 +199,40 @@ public class Models
             mTransform.a3(), mTransform.b3(), mTransform.c3(), mTransform.d3(),
             mTransform.a4(), mTransform.b4(), mTransform.c4(), mTransform.d4());
 
-        //System.out.println("Node: " + nodeName);
-        //System.out.println(transform);
-
         var currentNode = new SceneNode(nodeName, parentNode, transform);
+        System.out.println("DEBUG name: " + nodeName);
         nodeMap.put(nodeName, currentNode);
         int numChildren = aiNode.mNumChildren();
         var aiChildren = aiNode.mChildren();
         for (int i = 0; i < numChildren; i++)
         {
             var aiChildNode = AINode.create(aiChildren.get(i));
-            var childNode = processNodesHierarchy(aiChildNode, currentNode, nodeMap);
+            var childNode = processNodeHierarchy(aiChildNode, currentNode, nodeMap);
             currentNode.addChild(childNode);
         }
 
         return currentNode;
+    }
+
+    // todo: this method or a variant needs to be callable in the game loop, this will be required
+    //  to add animations. the
+    private static void generate_transforms(SceneNode current_node,
+                                            Map<String, Bone> bone_map,
+                                            Map<String, Matrix4f> transforms,
+                                            Matrix4f parent_transform)
+    {
+        var name = current_node.name;
+        var node_transform = current_node.transform;
+        var global_transform = parent_transform.mul(node_transform, new Matrix4f());
+
+        // if this node is a bone, update the
+        if (bone_map.containsKey(name))
+        {
+            var bone = bone_map.get(name);
+            transforms.put(name, global_transform.mul(bone.offset(), new Matrix4f()));
+        }
+        current_node.children
+            .forEach(child -> generate_transforms(child, bone_map, transforms, global_transform));
     }
 
     public static class SceneNode
