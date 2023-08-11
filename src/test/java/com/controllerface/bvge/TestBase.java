@@ -32,10 +32,10 @@ public class TestBase
             AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
 
             var name = aiMesh.mName().dataString();
-            System.out.println("\nMesh name: " + name);
-            System.out.printf("verts: %d faces: %d \n",
-                aiMesh.mNumVertices(),
-                aiMesh.mNumFaces());
+            //System.out.println("\nMesh name: " + name);
+//            System.out.printf("verts: %d faces: %d \n",
+//                aiMesh.mNumVertices(),
+//                aiMesh.mNumFaces());
 
             int bone_count = aiMesh.mNumBones();
             PointerBuffer mBones = aiMesh.mBones();
@@ -50,16 +50,16 @@ public class TestBase
                         mOffset.b1(), mOffset.b2(), mOffset.b3(), mOffset.b4(),
                         mOffset.c1(), mOffset.c2(), mOffset.c3(), mOffset.c4(),
                         mOffset.d1(), mOffset.d2(), mOffset.d3(), mOffset.d4());
-                    System.out.println("bone name: " + bone.mName().dataString());
-                    System.out.println("bone weights: " + bone.mNumWeights());
-                    System.out.println("bone offset: \n" + offset);
+                    //System.out.println("bone name: " + bone.mName().dataString());
+                    //System.out.println("bone weights: " + bone.mNumWeights());
+                    //System.out.println("bone offset: \n" + offset);
                 }
             }
 
             AIVector3D.Buffer buffer = aiMesh.mVertices();
             while (buffer.remaining() > 0) {
                 AIVector3D aiVertex = buffer.get();
-                System.out.printf("Vertex dump: x: %f y:%f\n", aiVertex.x(), aiVertex.y());
+                //System.out.printf("Vertex dump: x: %f y:%f\n", aiVertex.x(), aiVertex.y());
             }
 
             AIFace.Buffer buffer1 = aiMesh.mFaces();
@@ -72,7 +72,7 @@ public class TestBase
                     int index = b.get(x);
                     indices.add(index);
                 }
-                System.out.printf("Face dump: raw: %s\n", indices);
+                //System.out.printf("Face dump: raw: %s\n", indices);
 
             }
 
@@ -100,8 +100,8 @@ public class TestBase
             mTransform.c1(), mTransform.c2(), mTransform.c3(), mTransform.c4(),
             mTransform.d1(), mTransform.d2(), mTransform.d3(), mTransform.d4());
 
-        System.out.println("Node: " + nodeName);
-        System.out.println(transform);
+        //System.out.println("Node: " + nodeName);
+        //System.out.println(transform);
 
 
         Node node = new Node(nodeName, parentNode);

@@ -2,6 +2,7 @@ package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.geometry.Bone;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.util.MathEX;
@@ -9,10 +10,10 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.controllerface.bvge.geometry.Models.CRATE_MODEL;
 
 /**
  * This is the core "factory" class for all physics based objects. It contains named archetype
@@ -68,7 +69,7 @@ public class PhysicsObjects
     public static int box(float x, float y, float size, int flags)
     {
         // get the box mesh
-        var mesh = Models.get_model_by_index(Models.CRATE_MODEL).meshes()[0];
+        var mesh = Models.get_model_by_index(CRATE_MODEL).meshes()[0];
         var hull = generate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
         hull = translate_hull(hull, x, y);
@@ -106,7 +107,7 @@ public class PhysicsObjects
         // there is only one hull, so it is the main hull ID by default
         int [] _flag =  OpenCL.arg_int2(flags | FLAG_POLYGON, next_model_id.getAndIncrement());
         int hull_id = Main.Memory.newHull(transform, rotation, table, _flag);
-        Models.register_model_instance(Models.CRATE_MODEL, hull_id);
+        Models.register_model_instance(CRATE_MODEL, hull_id);
         return hull_id;
     }
 
@@ -140,14 +141,37 @@ public class PhysicsObjects
             // generate the hull
             var hull = generate_convex_hull(next_mesh.vertices());
 
-            // translate to model space
-            hull = translate_hull(hull, next_mesh.sceneNode().transform);
 
-            // scale to desired size
+            // translate to model space
+            hull = transform_hull(hull, next_mesh.sceneNode().transform);
+
+//            List<Bone> boneChain = new ArrayList<>();
+//            var next_bone = next_mesh.bone();
+//            while (next_bone != null)
+//            {
+//                boneChain.add(0, next_bone);
+//                next_bone = Optional.ofNullable(next_bone.sceneNode())
+//                    .map(n->n.parent)
+//                    .map(node ->model.boneMap().get(node.name))
+//                    .orElse(null);
+//            }
+//
+//            for (Bone bone : boneChain)
+//            {
+//                //hull = transform_hull(hull, bone.sceneNode().transform);
+//               hull = transform_hull(hull, bone.offset());
+//
+//            }
+
+
+
+
+            // scale to desired size in model space
             hull = scale_hull(hull, size);
 
             // translate to world space
             hull = translate_hull(hull, x, y);
+
 
             // generate the points in memory for this object
             int start_point = -1;
@@ -192,8 +216,8 @@ public class PhysicsObjects
 
             // calculate interior edges
 
-//            if ( hull.length > 6)
-//            {
+            if (hull.length > 4)
+            {
                 //pass 1
                 for (int p1_index = 0; p1_index < hull.length; p1_index++)
                 {
@@ -205,9 +229,9 @@ public class PhysicsObjects
                     var p1 = point_buffer.get(p1_index);
                     var p2 = point_buffer.get(p2_index);
                     var distance = edgeDistance(p2, p1);
-                    end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
+                    end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
                 }
-            //}
+            }
 
             // pass 2
             boolean odd_count = hull.length % 2 != 0;
@@ -219,12 +243,15 @@ public class PhysicsObjects
                 var p1 = point_buffer.get(p1_index);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
+                end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
 
-                int p3_index = p1_index + quarter_count;
-                var p3 = point_buffer.get(p3_index);
-                var distance2 = edgeDistance(p3, p1);
-                end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p3_index], distance2);
+                if (quarter_count > 1)
+                {
+                    int p3_index = p1_index + quarter_count;
+                    var p3 = point_buffer.get(p3_index);
+                    var distance2 = edgeDistance(p3, p1);
+                    end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p3_index], distance2, FLAG_INTERIOR_EDGE);
+                }
             }
             if (odd_count) // if there was an odd vertex at the end, connect it to the mid point
             {
@@ -285,7 +312,7 @@ public class PhysicsObjects
         return output;
     }
 
-    public static Vertex[] translate_hull(Vertex[] input, Matrix4f matrix4f)
+    public static Vertex[] transform_hull(Vertex[] input, Matrix4f matrix4f)
     {
         var output = new Vertex[input.length];
         for (int i = 0; i < input.length; i++)
