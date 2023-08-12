@@ -171,6 +171,8 @@ public class OpenCL
     private static cl_mem mem_aabb_index;
     private static cl_mem mem_aabb_key_bank;
 
+    private static cl_mem mem_vertex_references;
+
     private static cl_mem mem_bone_references;
     private static cl_mem mem_bone_instances;
     private static cl_mem mem_bone_index;
@@ -491,6 +493,8 @@ public class OpenCL
         int points_mem_size           = max_points * Sizeof.cl_float4;
         int edges_mem_size            = max_points * Sizeof.cl_float4;
 
+        int vertex_reference_mem_size = max_points * Sizeof.cl_float2;
+
         int bone_reference_mem_size   = max_points * Sizeof.cl_float16;
         int bone_instance_mem_size    = max_points * Sizeof.cl_float16;
         int bone_index_mem_size       = max_points * Sizeof.cl_int;
@@ -505,29 +509,31 @@ public class OpenCL
             + spatial_key_bank_mem_size
             + points_mem_size
             + edges_mem_size
+            + vertex_reference_mem_size
             + bone_reference_mem_size
             + bone_instance_mem_size
             + bone_index_mem_size;
 
         System.out.println("------------- BUFFERS -------------");
-        System.out.println("points           : " + points_mem_size);
-        System.out.println("edges            : " + edges_mem_size);
-        System.out.println("transforms       : " + transform_mem_size);
-        System.out.println("acceleration     : " + accleration_mem_size);
-        System.out.println("rotation         : " + rotation_mem_size);
-        System.out.println("element table    : " + element_table_mem_size);
-        System.out.println("flags            : " + flags_mem_size);
-        System.out.println("bounding box     : " + bounding_box_mem_size);
-        System.out.println("spatial index    : " + spatial_index_mem_size);
-        System.out.println("spatial key bank : " + spatial_key_bank_mem_size);
-        System.out.println("bone references  : " + bone_reference_mem_size);
-        System.out.println("bone instances   : " + bone_instance_mem_size);
-        System.out.println("bone index       : " + bone_index_mem_size);
+        System.out.println("points            : " + points_mem_size);
+        System.out.println("edges             : " + edges_mem_size);
+        System.out.println("transforms        : " + transform_mem_size);
+        System.out.println("acceleration      : " + accleration_mem_size);
+        System.out.println("rotation          : " + rotation_mem_size);
+        System.out.println("element table     : " + element_table_mem_size);
+        System.out.println("flags             : " + flags_mem_size);
+        System.out.println("bounding box      : " + bounding_box_mem_size);
+        System.out.println("spatial index     : " + spatial_index_mem_size);
+        System.out.println("spatial key bank  : " + spatial_key_bank_mem_size);
+        System.out.println("vertex references : " + vertex_reference_mem_size);
+        System.out.println("bone references   : " + bone_reference_mem_size);
+        System.out.println("bone instances    : " + bone_instance_mem_size);
+        System.out.println("bone index        : " + bone_index_mem_size);
         System.out.println("=====================================");
-        System.out.println(" Total (Bytes)   : " + total);
-        System.out.println("              KB : " + ((float)total / 1024f));
-        System.out.println("              MB : " + ((float)total / 1024f / 1024f));
-        System.out.println("              GB : " + ((float)total / 1024f / 1024f / 1024f));
+        System.out.println(" Total (Bytes)    : " + total);
+        System.out.println("               KB : " + ((float)total / 1024f));
+        System.out.println("               MB : " + ((float)total / 1024f / 1024f));
+        System.out.println("               GB : " + ((float)total / 1024f / 1024f / 1024f));
         System.out.println("-----------------------------------\n");
 
         mem_hull_acceleration         = cl_new_buffer(FLAGS_WRITE_GPU, accleration_mem_size);
@@ -540,6 +546,7 @@ public class OpenCL
         mem_aabb                      = cl_new_buffer(FLAGS_WRITE_GPU, bounding_box_mem_size);
         mem_points                    = cl_new_buffer(FLAGS_WRITE_GPU, points_mem_size);
         mem_edges                     = cl_new_buffer(FLAGS_WRITE_GPU, edges_mem_size);
+        mem_vertex_references         = cl_new_buffer(FLAGS_WRITE_GPU, vertex_reference_mem_size);
         mem_bone_references           = cl_new_buffer(FLAGS_WRITE_GPU, bone_reference_mem_size);
         mem_bone_instances            = cl_new_buffer(FLAGS_WRITE_GPU, bone_instance_mem_size);
         mem_bone_index                = cl_new_buffer(FLAGS_WRITE_GPU, bone_index_mem_size);
@@ -554,6 +561,7 @@ public class OpenCL
         cl_zero_buffer(mem_aabb, bounding_box_mem_size);
         cl_zero_buffer(mem_points, points_mem_size);
         cl_zero_buffer(mem_edges, edges_mem_size);
+        cl_zero_buffer(mem_vertex_references, vertex_reference_mem_size);
         cl_zero_buffer(mem_bone_references, bone_reference_mem_size);
         cl_zero_buffer(mem_bone_instances, bone_instance_mem_size);
         cl_zero_buffer(mem_bone_index, bone_index_mem_size);
