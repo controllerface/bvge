@@ -3,7 +3,10 @@ package com.controllerface.bvge.geometry;
 import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
+import org.lwjgl.system.MemoryUtil;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -18,7 +21,7 @@ public class Models
     public static final int CRATE_MODEL = next_model_index.getAndIncrement();
     public static final int POLYGON1_MODEL = next_model_index.getAndIncrement();
 
-    public static int TEST_MODEL_INDEX = 99;
+    public static int TEST_MODEL_INDEX = -1;
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
     private static final Map<Integer, Boolean> dirty_models = new HashMap<>();
@@ -30,106 +33,169 @@ public class Models
         return aiImportFile(path, flags);
     }
 
-    private static void loadTestModel()
+    private static AIScene loadModelResource(String name) throws IOException
     {
-        var aiScene = loadFile("C:/Users/Stephen/mdl/test_humanoid.fbx");
-        int numMeshes = aiScene.mNumMeshes();
-        var root_node = aiScene.mRootNode();
+        var model_stream = Models.class.getResourceAsStream(name);
+        var model_data = model_stream.readAllBytes();
+        ByteBuffer data = MemoryUtil.memCalloc(model_data.length);
+        data.put(model_data);
+        data.flip();
+        int flags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
+        return aiImportFileFromMemory(data, flags, "");
+    }
 
-        Map<String, SceneNode> node_map = new HashMap<>();
-
-        var scene_node = processNodeHierarchy(root_node, null, node_map);
-
-        Mesh[] meshes = new Mesh[numMeshes];
-        PointerBuffer aiMeshes = aiScene.mMeshes();
-        Map<String, Bone> bone_map = new HashMap<>();
-        for (int i = 0; i < numMeshes; i++)
+    private static void loadMesh(int i,
+                                 Mesh[] meshes,
+                                 PointerBuffer mesh_buffer,
+                                 Map<String, SceneNode> node_map,
+                                 Map<String, Bone> bone_map)
+    {
+        AIMesh aiMesh = AIMesh.create(mesh_buffer.get(i));
+        var mesh_name = aiMesh.mName().dataString();
+        var mesh_node = node_map.get(mesh_name);
+        if (mesh_node == null)
         {
-            AIMesh aiMesh = AIMesh.create(aiMeshes.get(i));
-            var name = aiMesh.mName().dataString();
-            var mesh_node = node_map.get(name);
-            if (mesh_node == null)
-            {
-                throw new NullPointerException("No scene node for mesh: " + name
-                    + " ensure node and geometry names match in blender");
-            }
-
-            int bone_count = aiMesh.mNumBones();
-            PointerBuffer mBones = aiMesh.mBones();
-            Bone mesh_bone = null;
-            for (int j = 0; j < bone_count; j++)
-            {
-                AIBone bone = AIBone.create(mBones.get(j));
-                if (bone.mNumWeights() > 0)
-                {
-                    var bone_name = bone.mName().dataString();
-                    if (mesh_bone != null)
-                    {
-                        throw new IllegalStateException("Multiple bones per mesh is not currently supported");
-                    }
-                    var mOffset = bone.mOffsetMatrix();
-                    Matrix4f offset = new Matrix4f();
-                    offset.set(mOffset.a1(), mOffset.b1(), mOffset.c1(), mOffset.d1(),
-                        mOffset.a2(), mOffset.b2(), mOffset.c2(), mOffset.d2(),
-                        mOffset.a3(), mOffset.b3(), mOffset.c3(), mOffset.d3(),
-                        mOffset.a4(), mOffset.b4(), mOffset.c4(), mOffset.d4());
-
-                    int weight_index = 0;
-                    AIVertexWeight.Buffer w_buf = bone.mWeights();
-                    BoneWeight[] weights = new BoneWeight[bone.mNumWeights()];
-                    while (w_buf.remaining() > 0)
-                    {
-                        AIVertexWeight weight = w_buf.get();
-                        weights[weight_index++] = new BoneWeight(weight.mVertexId(), weight.mWeight());
-                    }
-
-                    var bone_node = node_map.get(bone_name);
-                    if (bone_node == null)
-                    {
-                        throw new NullPointerException("No scene node for bone: " + bone_name
-                            + " ensure node and geometry names match in blender");
-                    }
-                    mesh_bone = new Bone(bone_name, offset, weights, bone_node);
-                    bone_map.put(bone_name, mesh_bone);
-                }
-            }
-
-            int vert_index = 0;
-            var mesh_vertices = new Vertex[aiMesh.mNumVertices()];
-            var buffer = aiMesh.mVertices();
-            while (buffer.remaining() > 0)
-            {
-                int this_vert = vert_index++;
-                var aiVertex = buffer.get();
-                mesh_vertices[this_vert] = new Vertex(aiVertex.x(), aiVertex.y());
-            }
-
-            int face_index = 0;
-            var mesh_faces = new Face[aiMesh.mNumFaces()];
-            var face_buffer = aiMesh.mFaces();
-            while (face_buffer.remaining() > 0)
-            {
-                var aiFace = face_buffer.get();
-                var b = aiFace.mIndices();
-                var indices = new ArrayList<Integer>();
-                for (int x = 0; x < aiFace.mNumIndices(); x++)
-                {
-                    int index = b.get(x);
-                    indices.add(index);
-                }
-                mesh_faces[face_index++] = new Face(indices.get(0), indices.get(1), indices.get(2));
-            }
-
-            var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node);
-            int new_index = Meshes.register_mesh(name, new_mesh);
-            meshes[i] = new_mesh;
-            //System.out.printf("registered mesh [%s] with id [%d]\n", name, new_index);
+            throw new NullPointerException("No scene node for mesh: " + mesh_name
+                + " ensure node and geometry names match in blender");
         }
 
+
+        // load bone data
+        int bone_count = aiMesh.mNumBones();
+        PointerBuffer mBones = aiMesh.mBones();
+        Bone mesh_bone = null;
+        Map<Integer, Float> bone_weight_map = new HashMap<>();
+        for (int j = 0; j < bone_count; j++)
+        {
+            AIBone bone = AIBone.create(mBones.get(j));
+            if (bone.mNumWeights() > 0)
+            {
+                var bone_name = bone.mName().dataString();
+                if (mesh_bone != null)
+                {
+                    throw new IllegalStateException("Multiple bones per mesh is not currently supported");
+                }
+                var mOffset = bone.mOffsetMatrix();
+                Matrix4f offset = new Matrix4f();
+                offset.set(mOffset.a1(), mOffset.b1(), mOffset.c1(), mOffset.d1(),
+                    mOffset.a2(), mOffset.b2(), mOffset.c2(), mOffset.d2(),
+                    mOffset.a3(), mOffset.b3(), mOffset.c3(), mOffset.d3(),
+                    mOffset.a4(), mOffset.b4(), mOffset.c4(), mOffset.d4());
+
+                int weight_index = 0;
+                AIVertexWeight.Buffer w_buf = bone.mWeights();
+                BoneWeight[] weights = new BoneWeight[bone.mNumWeights()];
+                while (w_buf.remaining() > 0)
+                {
+                    AIVertexWeight weight = w_buf.get();
+                    weights[weight_index++] = new BoneWeight(weight.mVertexId(), weight.mWeight());
+                    bone_weight_map.put(weight.mVertexId(), weight.mWeight());
+                }
+
+                var bone_node = node_map.get(bone_name);
+                if (bone_node == null)
+                {
+                    throw new NullPointerException("No scene node for bone: " + bone_name
+                        + " ensure node and geometry names match in blender");
+                }
+                mesh_bone = new Bone(bone_name, offset, weights, bone_node);
+                bone_map.put(bone_name, mesh_bone);
+            }
+        }
+
+        if (mesh_bone == null)
+        {
+            throw new NullPointerException("No bone for mesh: " + mesh_name
+                + " ensure mesh has an assigned bone");
+        }
+
+        int vert_index = 0;
+        var mesh_vertices = new Vertex[aiMesh.mNumVertices()];
+        var buffer = aiMesh.mVertices();
+        while (buffer.remaining() > 0)
+        {
+            int this_vert = vert_index++;
+            var aiVertex = buffer.get();
+            float bone_weight = bone_weight_map.get(this_vert);
+            mesh_vertices[this_vert] = new Vertex(aiVertex.x(), aiVertex.y(), mesh_bone.name(), bone_weight);
+        }
+
+        int face_index = 0;
+        var mesh_faces = new Face[aiMesh.mNumFaces()];
+        var face_buffer = aiMesh.mFaces();
+        while (face_buffer.remaining() > 0)
+        {
+            var aiFace = face_buffer.get();
+            var b = aiFace.mIndices();
+            var indices = new ArrayList<Integer>();
+            for (int x = 0; x < aiFace.mNumIndices(); x++)
+            {
+                int index = b.get(x);
+                indices.add(index);
+            }
+            mesh_faces[face_index++] = new Face(indices.get(0), indices.get(1), indices.get(2));
+        }
+
+        var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node);
+        Meshes.register_mesh(mesh_name, new_mesh);
+        meshes[i] = new_mesh;
+    }
+
+    private static int loadModel(String model_path)
+    {
+        // the number of meshes associated with the loaded model
+        int numMeshes;
+
+        // the root node of the imported file. contains raw mesh buffer data
+        AINode root_node;
+
+        // a parsed version of the raw root node and associated data, in a tree structure
+        SceneNode scene_node;
+
+        // this is the raw mesh buffer extracted fom the main scene data. it is parsed for meshes
+        PointerBuffer mesh_buffer;
+
+        // an array to hold all the parsed meshes
+        Mesh[] meshes;
+
+        // used to map nodes by their node names, move convenient than tree for loading process
+        Map<String, SceneNode> node_map = new HashMap<>();
+
+        // similar to the node map, though this map is returned in the output value
+        Map<String, Bone> bone_map = new HashMap<>();
+
+        // maps each bone to a calculated bind pose transformation matrix
+        Map<String, Matrix4f> bone_transforms = new HashMap<>();
+
+        // read initital data
+        try(AIScene aiScene = loadModelResource(model_path);)
+        {
+            numMeshes = aiScene.mNumMeshes();
+            root_node = aiScene.mRootNode();
+            scene_node = processNodeHierarchy(root_node, null, node_map);
+            meshes = new Mesh[numMeshes];
+            mesh_buffer = aiScene.mMeshes();
+        }
+        catch (NullPointerException | IOException e)
+        {
+            throw new RuntimeException("Unable to load model data", e);
+        }
+
+        // load mesh data
+        for (int i = 0; i < numMeshes; i++)
+        {
+            loadMesh(i, meshes, mesh_buffer, node_map, bone_map);
+        }
+
+        // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
+        // the root bone is determined by checking if the current bone's parent is a direct descendant of the scene
         int root_index = -1;
         for (int mi = 0; mi < meshes.length; mi++)
         {
-            if (meshes[mi].bone().sceneNode().parent.parent.name.equalsIgnoreCase("RootNode"))
+            // note the chained parent call, the logic is that we way the bone that is the first direct
+            // descendant of the armature itself,
+            var grandparent = meshes[mi].bone().sceneNode().parent.parent;
+            if (grandparent.name.equalsIgnoreCase("RootNode"))
             {
                 root_index = mi;
                 break;
@@ -142,10 +208,14 @@ public class Models
                 "Root mesh is determined by root bone in Armature under RootNode in scene");
         }
 
-        Map<String, Matrix4f> bone_transforms = new HashMap<>();
+        // generate the bind pose transforms, setting the initial state of the armature
         generate_transforms(scene_node, bone_map, bone_transforms, new Matrix4f());
 
-        loaded_models.put(TEST_MODEL_INDEX, new Model(meshes, bone_map, bone_transforms, root_index));
+        // register the model
+        var next_model_id = next_model_index.getAndIncrement();
+        var model = new Model(meshes, bone_map, bone_transforms, root_index);
+        loaded_models.put(next_model_id, model);
+        return next_model_id;
     }
 
     public static Model get_model_by_index(int index)
@@ -185,7 +255,8 @@ public class Models
         loaded_models.put(CIRCLE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
         loaded_models.put(CRATE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
-        loadTestModel();
+        TEST_MODEL_INDEX = loadModel("/models/test_humanoid.fbx");
+
     }
 
 

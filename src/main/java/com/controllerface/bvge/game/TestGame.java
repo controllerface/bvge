@@ -124,9 +124,14 @@ public class TestGame extends GameMode
     private void genTestFigure(float size, float x, float y)
     {
         // circle entity
-        var npc = ecs.registerEntity(null);
+        var figure = ecs.registerEntity("player");
         var hull_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
-        ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
+        //ecs.attachComponent(figure, Component.RigidBody2D, new HullIndex(hull_index));
+
+        ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
+        ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
+        ecs.attachComponent(figure, Component.RigidBody2D, new HullIndex(hull_index));
+        ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1500));
     }
 
 
@@ -135,10 +140,7 @@ public class TestGame extends GameMode
         // player entity
         var player = ecs.registerEntity("player");
 
-        //var hull_index = PhysicsObjects.polygon1(0,0, 32);
-
         var hull_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, FLAG_NONE | FLAG_POLYGON);
-
 
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
@@ -149,13 +151,15 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
+        // todo: write bone animator system, it should put all bones in their current positions
+
         // all physics calculations should be done first
         ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
 
         // camera movement must be handled before rendering occurs, but after objects are in position
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
 
-        // blank screen before rendering, rendering passes happen after screen blanking
+        // the blanking system clears the screen before rendering passes
         ecs.registerSystem(screenBlankSystem);
 
         // these are debug-level renderers for visualizing the modeled physics boundaries
@@ -163,22 +167,14 @@ public class TestGame extends GameMode
         ecs.registerSystem(new CircleRenderer(ecs));
         ecs.registerSystem(new BoundingBoxRenderer(ecs));
 
-
         // main renderers go here, one for each model type that can be rendered
         //ecs.registerSystem(new CrateRenderer(ecs));
-
-
-        //ecs.registerSystem(new SpacePartitionRenderer(ecs, spatialPartition));
-        //ecs.registerSystem(new SpriteRenderer(ecs));
-
-
-
     }
 
     @Override
     public void load()
     {
-        genPlayer();
+        //genPlayer();
         genTestFigure(2, 200, 50);
         //genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);

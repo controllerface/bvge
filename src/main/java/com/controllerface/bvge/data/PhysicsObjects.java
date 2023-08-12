@@ -208,6 +208,8 @@ public class PhysicsObjects
             }
 
             // calculate interior edges
+
+            // connect every other
             if (hull.length > 4)
             {
                 //pass 1
@@ -311,7 +313,7 @@ public class PhysicsObjects
         {
             var next = input[i];
             var vec = matrix4f.transform(new Vector4f(next.x(), next.y(), 0.0f, 1.0f));
-            output[i] = new Vertex(vec.x, vec.y);
+            output[i] = new Vertex(vec.x, vec.y, next.bone_name(), next.bone_weight());
         }
         return output;
     }

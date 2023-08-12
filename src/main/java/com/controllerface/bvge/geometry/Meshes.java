@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.controllerface.bvge.geometry.Bone.IDENTITY_BONE_NAME;
+
 public class Meshes
 {
     private static final AtomicInteger next_mesh_index = new AtomicInteger(0);
@@ -24,7 +26,7 @@ public class Meshes
 
     private static Mesh generate_circle_mesh()
     {
-        var vertices = new Vertex[]{ new Vertex(0,0) };
+        var vertices = new Vertex[]{ new Vertex(0,0, IDENTITY_BONE_NAME, 1.0f) };
         var faces = new Face[]{ new Face(0, 0, 0) };
         return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty());
     }
@@ -39,10 +41,10 @@ public class Meshes
 
         float halfSize = 1f / 2f;
 
-        vertices[0] = new Vertex(-halfSize, -halfSize);
-        vertices[1] = new Vertex(halfSize, -halfSize);
-        vertices[2] = new Vertex(halfSize, halfSize);
-        vertices[3] = new Vertex(-halfSize, halfSize);
+        vertices[0] = new Vertex(-halfSize, -halfSize, IDENTITY_BONE_NAME, 1.0f);
+        vertices[1] = new Vertex(halfSize, -halfSize, IDENTITY_BONE_NAME, 1.0f);
+        vertices[2] = new Vertex(halfSize, halfSize, IDENTITY_BONE_NAME, 1.0f);
+        vertices[3] = new Vertex(-halfSize, halfSize, IDENTITY_BONE_NAME, 1.0f);
 
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 3);
@@ -59,11 +61,11 @@ public class Meshes
 
         float halfSize = 1f / 2f;
 
-        vertices[0] = new Vertex(-halfSize, -halfSize);
-        vertices[1] = new Vertex(halfSize, -halfSize);
-        vertices[2] = new Vertex(halfSize, halfSize);
-        vertices[3] = new Vertex(0, halfSize * 2);
-        vertices[4] = new Vertex(-halfSize, halfSize);
+        vertices[0] = new Vertex(-halfSize, -halfSize, IDENTITY_BONE_NAME, 1.0f);
+        vertices[1] = new Vertex(halfSize, -halfSize, IDENTITY_BONE_NAME, 1.0f);
+        vertices[2] = new Vertex(halfSize, halfSize, IDENTITY_BONE_NAME, 1.0f);
+        vertices[3] = new Vertex(0, halfSize * 2, IDENTITY_BONE_NAME, 1.0f);
+        vertices[4] = new Vertex(-halfSize, halfSize, IDENTITY_BONE_NAME, 1.0f);
 
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 4);
@@ -82,6 +84,7 @@ public class Meshes
         var mesh_id = next_mesh_index.getAndIncrement();
         mesh_index_map.put(mesh_name, mesh_id);
         register_mesh(mesh_id, mesh);
+        System.out.printf("registered mesh [%s] with id [%d]\n", mesh_name, mesh_id);
         return mesh_id;
     }
 

@@ -1,15 +1,15 @@
 package com.controllerface.bvge.geometry;
 
-public record Vertex(float x, float y)
+public record Vertex(float x, float y, String bone_name, float bone_weight)
 {
     public Vertex uniform_scale(float s)
     {
-        return new Vertex(x * s, y * s);
+        return new Vertex(x * s, y * s, bone_name, bone_weight);
     }
 
     public Vertex translate(float tx, float ty)
     {
-        return new Vertex(x + tx, y + ty);
+        return new Vertex(x + tx, y + ty, bone_name, bone_weight);
     }
 
     public double angle(Vertex point)
