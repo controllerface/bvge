@@ -101,6 +101,7 @@ public class Main
         private static int edge_index  = 0;
 
         private static int bone_ref_index = 0;
+        private static int bone_index = 0;
 
         public static int hull_count()
         {
@@ -120,6 +121,11 @@ public class Main
         public static int bone_ref_count()
         {
             return bone_ref_index / Width.BONE;
+        }
+
+        public static int bone_count()
+        {
+            return bone_index / Width.BONE;
         }
 
         public static int new_edge(int p1, int p2, float l)
@@ -156,6 +162,14 @@ public class Main
             OpenCL.create_bone_reference(bone_ref_count(), bone_data);
             bone_ref_index += Width.BONE;
             var idx = bone_ref_index - Width.BONE;
+            return idx / Width.BONE;
+        }
+
+        public static int new_bone(int id, float[] bone_data)
+        {
+            OpenCL.create_bone(bone_count(), id, bone_data);
+            bone_index += Width.BONE;
+            var idx = bone_index - Width.BONE;
             return idx / Width.BONE;
         }
 

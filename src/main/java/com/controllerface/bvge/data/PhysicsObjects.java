@@ -150,16 +150,15 @@ public class PhysicsObjects
             //
             //hull = transform_hull(hull, next_mesh.sceneNode().transform);
 
-            // todo: create Bone memory structure
             // use bone transform to position the hull
-            var bone_transform = model.bone_transforms().get(next_mesh.bone().name());
+            var bone_transform = model.bone_transforms().get(next_bone.name());
+
+            var raw_matrix = OpenCL.arg_float16_matrix(bone_transform);
+
+            // todo: make new bone instance in memory
+            int boneid = Main.Memory.new_bone(next_bone.bone_ref_id(), raw_matrix);
+
             hull = transform_hull(hull, bone_transform);
-
-            // todo: determine how to re-apply bone transform after scaling
-
-            // todo: adapt tutorials usage of bone matrix to compute positions in CL
-            //  assume all bones are combined into one offset and avoid needing the
-            //  index.
 
             // scale to desired size in model space
             hull = scale_hull(hull, size);

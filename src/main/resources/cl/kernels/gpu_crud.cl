@@ -27,6 +27,16 @@ __kernel void create_bone_reference(__global float16 *bone_references,
     bone_references[target] = new_bone_reference; 
 }
 
+__kernel void create_bone(__global float16 *bones,
+                          __global int *bone_ref_index,
+                          int target,
+                          float16 new_bone,
+                          int new_bone_ref_id)
+{
+    bones[target] = new_bone; 
+    bone_ref_index[target] = new_bone_ref_id; 
+}
+
 __kernel void create_hull(__global float4 *hulls,
                           __global float2 *hull_rotations,
                           __global int4 *element_tables,

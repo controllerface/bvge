@@ -5,6 +5,7 @@ import com.controllerface.bvge.ecs.systems.physics.MemoryBuffer;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import org.jocl.*;
+import org.joml.Matrix4f;
 
 import java.util.*;
 
@@ -99,6 +100,7 @@ public class OpenCL
     static String kn_create_edge                        = "create_edge";
     static String kn_create_hull                        = "create_hull";
     static String kn_create_bone_reference              = "create_bone_reference";
+    static String kn_create_bone                        = "create_bone";
     static String kn_prepare_edges                      = "prepare_edges";
     static String kn_prepare_transforms                 = "prepare_transforms";
     static String kn_prepare_bounds                     = "prepare_bounds";
@@ -153,6 +155,7 @@ public class OpenCL
     static cl_kernel k_create_edge;
     static cl_kernel k_create_hull;
     static cl_kernel k_create_bone_reference;
+    static cl_kernel k_create_bone;
     static cl_kernel k_prepare_edges;
     static cl_kernel k_prepare_transforms;
     static cl_kernel k_prepare_bounds;
@@ -366,6 +369,17 @@ public class OpenCL
                             sC, sD, sE, sF };
     }
 
+    public static float[] arg_float16_matrix(Matrix4f matrix)
+    {
+        return new float[]
+            {
+                matrix.m00(), matrix.m01(), matrix.m02(), matrix.m03(),
+                matrix.m10(), matrix.m11(), matrix.m12(), matrix.m13(),
+                matrix.m20(), matrix.m21(), matrix.m22(), matrix.m23(),
+                matrix.m30(), matrix.m31(), matrix.m32(), matrix.m33()
+            };
+    }
+
     public static int work_group_count(int n)
     {
         return (int) Math.ceil((float)n / (float)m);
@@ -479,6 +493,7 @@ public class OpenCL
         k_create_point                      = cl_k(p_gpu_crud, kn_create_point);
         k_create_edge                       = cl_k(p_gpu_crud, kn_create_edge);
         k_create_bone_reference             = cl_k(p_gpu_crud, kn_create_bone_reference);
+        k_create_bone                       = cl_k(p_gpu_crud, kn_create_bone);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
         k_prepare_transforms                = cl_k(p_prepare_transforms, kn_prepare_transforms);
         k_prepare_bounds                    = cl_k(p_prepare_bounds, kn_prepare_bounds);
@@ -727,6 +742,20 @@ public class OpenCL
         k_call(k_create_bone_reference, global_single_size);
     }
 
+    public static void create_bone(int bone_index, int bone_ref_index, float[] matrix)
+    {
+        var pnt_index = Pointer.to(arg_int(bone_index));
+        var pnt_ref_index = Pointer.to(arg_int(bone_ref_index));
+        var pnt_bone_ref = Pointer.to(matrix);
+
+        clSetKernelArg(k_create_bone, 0, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
+        clSetKernelArg(k_create_bone, 1, Sizeof.cl_mem, Pointer.to(mem_bone_index));
+        clSetKernelArg(k_create_bone, 2, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_bone, 3, Sizeof.cl_float16, pnt_bone_ref);
+        clSetKernelArg(k_create_bone, 4, Sizeof.cl_int, pnt_ref_index);
+
+        k_call(k_create_bone, global_single_size);
+    }
 
 
     public static void create_hull(int hull_index, float[] hull, float[] rotation, int[] table, int[] flags)
