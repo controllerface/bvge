@@ -3,6 +3,48 @@ This is a collection of Create/Read/Update/Delete (CRUD) functions that are used
 to query and update objects stored on the GPU. Unlike most kernels, these functions
 are designed to operate on a single target object. 
  */
+
+// create functions
+
+__kernel void create_point(__global float4 *points,
+                           int target,
+                           float4 new_point)
+{
+    points[target] = new_point; 
+}
+
+__kernel void create_edge(__global float4 *edges,
+                           int target,
+                           float4 new_edge)
+{
+    edges[target] = new_edge; 
+}
+
+__kernel void create_bone_reference(__global float16 *bone_references,
+                                    int target,
+                                    float16 new_bone_reference)
+{
+    bone_references[target] = new_bone_reference; 
+}
+
+__kernel void create_hull(__global float4 *hulls,
+                          __global float2 *hull_rotations,
+                          __global int4 *element_tables,
+                          __global int2 *hull_flags,
+                          int target,
+                          float4 new_hull,
+                          float2 new_rotation,
+                          int4 new_table,
+                          int2 new_flags)
+{
+    hulls[target] = new_hull; 
+    hull_rotations[target] = new_rotation; 
+    element_tables[target] = new_table; 
+    hull_flags[target] = new_flags; 
+}
+
+// read functions
+
 __kernel void read_position(__global float4 *hulls,
                             __global float *output,
                             int target)
@@ -11,6 +53,9 @@ __kernel void read_position(__global float4 *hulls,
     output[0] = hull.x;
     output[1] = hull.y;
 }
+
+
+// update functions
 
 __kernel void update_accel(__global float2 *hull_accel,
                            int target,
@@ -40,35 +85,11 @@ __kernel void rotate_hull(__global float4 *hulls,
     }
 }
 
-__kernel void create_point(__global float4 *points,
-                           int target,
-                           float4 new_point)
-{
-    points[target] = new_point; 
-}
 
-__kernel void create_edge(__global float4 *edges,
-                           int target,
-                           float4 new_edge)
-{
-    edges[target] = new_edge; 
-}
 
-__kernel void create_hull(__global float4 *hulls,
-                          __global float2 *hull_rotations,
-                          __global int4 *element_tables,
-                          __global int2 *hull_flags,
-                          int target,
-                          float4 new_hull,
-                          float2 new_rotation,
-                          int4 new_table,
-                          int2 new_flags)
-{
-    hulls[target] = new_hull; 
-    hull_rotations[target] = new_rotation; 
-    element_tables[target] = new_table; 
-    hull_flags[target] = new_flags; 
-}
+
+
+
 
 
 // new world below - Bulk methods

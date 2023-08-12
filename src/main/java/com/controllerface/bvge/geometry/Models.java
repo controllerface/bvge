@@ -1,5 +1,6 @@
 package com.controllerface.bvge.geometry;
 
+import com.controllerface.bvge.Main;
 import com.controllerface.bvge.data.PhysicsObjects;
 import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
@@ -57,12 +58,9 @@ public class Models
         for (int bone_index = 0; bone_index < bone_count; bone_index++)
         {
             var raw_bone = AIBone.create(bone_buffer.get(bone_index));
-            var next_bone = load_raw_bone(raw_bone, node_map, bone_map, bone_weight_map);
-            if (mesh_bone != null && next_bone != null)
-            {
-                throw new IllegalStateException("Multiple bones per mesh is not currently supported");
-            }
-            else if (next_bone != null)
+            boolean expect_empty = mesh_bone != null;
+            var next_bone = load_raw_bone(raw_bone, node_map, bone_map, bone_weight_map, expect_empty);
+            if (next_bone != null)
             {
                 mesh_bone = next_bone;
             }
@@ -79,21 +77,40 @@ public class Models
     private static Bone load_raw_bone(AIBone raw_bone,
                                       Map<String, SceneNode> node_map,
                                       Map<String, Bone> bone_map,
-                                      Map<Integer, Float> bone_weight_map)
+                                      Map<Integer, Float> bone_weight_map,
+                                      boolean expect_empty)
     {
         Bone bone;
         if (raw_bone.mNumWeights() <= 0)
         {
             return null;
         }
+        if (expect_empty)
+        {
+            throw new IllegalStateException("Multiple bones per mesh is not currently supported");
+        }
 
         var bone_name = raw_bone.mName().dataString();
         var mOffset = raw_bone.mOffsetMatrix();
         Matrix4f offset = new Matrix4f();
-        offset.set(mOffset.a1(), mOffset.b1(), mOffset.c1(), mOffset.d1(),
-            mOffset.a2(), mOffset.b2(), mOffset.c2(), mOffset.d2(),
-            mOffset.a3(), mOffset.b3(), mOffset.c3(), mOffset.d3(),
-            mOffset.a4(), mOffset.b4(), mOffset.c4(), mOffset.d4());
+        var raw_matrix = new float[16];
+        raw_matrix[0]  = mOffset.a1();
+        raw_matrix[1]  = mOffset.b1();
+        raw_matrix[2]  = mOffset.c1();
+        raw_matrix[3]  = mOffset.d1();
+        raw_matrix[4]  = mOffset.a2();
+        raw_matrix[5]  = mOffset.b2();
+        raw_matrix[6]  = mOffset.c2();
+        raw_matrix[7]  = mOffset.d2();
+        raw_matrix[8]  = mOffset.a3();
+        raw_matrix[9]  = mOffset.b3();
+        raw_matrix[10] = mOffset.c3();
+        raw_matrix[11] = mOffset.d3();
+        raw_matrix[12] = mOffset.a4();
+        raw_matrix[13] = mOffset.b4();
+        raw_matrix[14] = mOffset.c4();
+        raw_matrix[15] = mOffset.d4();
+        offset.set(raw_matrix);
 
         int weight_index = 0;
         AIVertexWeight.Buffer w_buf = raw_bone.mWeights();
@@ -111,7 +128,11 @@ public class Models
             throw new NullPointerException("No scene node for bone: " + bone_name
                 + " ensure node and geometry names match in blender");
         }
-        bone = new Bone(bone_name, offset, weights, bone_node);
+
+        // todo: store bone reference in memory and put new id into bone record
+
+        int bone_ref_id = Main.Memory.new_bone_reference(raw_matrix);
+        bone = new Bone(bone_ref_id, bone_name, offset, weights, bone_node);
         bone_map.put(bone_name, bone);
         return bone;
     }

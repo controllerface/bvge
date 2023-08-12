@@ -3,7 +3,6 @@ package com.controllerface.bvge.data;
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
 import com.controllerface.bvge.geometry.Mesh;
-import com.controllerface.bvge.geometry.Model;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.util.MathEX;
@@ -53,7 +52,7 @@ public class PhysicsObjects
         var p1 = OpenCL.arg_float2(mesh.vertices()[0].x() * size + x, mesh.vertices()[0].y() * size + y);
 
         // store the single point for the circle
-        var p1_index = Main.Memory.newPoint(p1);
+        var p1_index = Main.Memory.new_point(p1);
         var l1 = OpenCL.arg_float4(x, y, x, y + 1);
         var l2 = OpenCL.arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angleBetween2Lines(l1, l2);
@@ -63,7 +62,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = OpenCL.arg_int2(FLAG_CIRCLE, next_model_id.getAndIncrement());
-        int hull_id = Main.Memory.newHull(transform, rotation, table, _flag);
+        int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
         return hull_id;
     }
@@ -81,10 +80,10 @@ public class PhysicsObjects
         var p3 = OpenCL.arg_float2(hull[2].x(), hull[2].y());
         var p4 = OpenCL.arg_float2(hull[3].x(), hull[3].y());
 
-        var p1_index = Main.Memory.newPoint(p1);
-        var p2_index = Main.Memory.newPoint(p2);
-        var p3_index = Main.Memory.newPoint(p3);
-        var p4_index = Main.Memory.newPoint(p4);
+        var p1_index = Main.Memory.new_point(p1);
+        var p2_index = Main.Memory.new_point(p2);
+        var p3_index = Main.Memory.new_point(p3);
+        var p4_index = Main.Memory.new_point(p4);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -93,14 +92,14 @@ public class PhysicsObjects
         var angle = MathEX.angleBetween2Lines(l1, l2);
 
         // box sides
-        var start_edge = Main.Memory.newEdge(p1_index, p2_index, edgeDistance(p2, p1));
-        Main.Memory.newEdge(p2_index, p3_index, edgeDistance(p3, p2));
-        Main.Memory.newEdge(p3_index, p4_index, edgeDistance(p4, p3));
-        Main.Memory.newEdge(p4_index, p1_index, edgeDistance(p1, p4));
+        var start_edge = Main.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
+        Main.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2));
+        Main.Memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3));
+        Main.Memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4));
 
         // corner braces
-        Main.Memory.newEdge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR_EDGE);
-        var end_edge = Main.Memory.newEdge(p2_index, p4_index, edgeDistance(p4, p2), FLAG_INTERIOR_EDGE);
+        Main.Memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR_EDGE);
+        var end_edge = Main.Memory.new_edge(p2_index, p4_index, edgeDistance(p4, p2), FLAG_INTERIOR_EDGE);
 
         var table = OpenCL.arg_int4(p1_index, p4_index, start_edge, end_edge);
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
@@ -108,7 +107,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int [] _flag =  OpenCL.arg_int2(flags | FLAG_POLYGON, next_model_id.getAndIncrement());
-        int hull_id = Main.Memory.newHull(transform, rotation, table, _flag);
+        int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         Models.register_model_instance(CRATE_MODEL, hull_id);
         return hull_id;
     }
@@ -177,7 +176,7 @@ public class PhysicsObjects
             {
                 var next_vertex = hull[point_index];
                 var new_point = OpenCL.arg_float2(next_vertex.x(), next_vertex.y());
-                var p_index = Main.Memory.newPoint(new_point);
+                var p_index = Main.Memory.new_point(new_point);
                 if (start_point == -1)
                 {
                     start_point = p_index;
@@ -201,7 +200,7 @@ public class PhysicsObjects
                 var p1 = point_buffer.get(p1_index);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                var e_index = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance);
+                var e_index = Main.Memory.new_edge(point_table[p1_index], point_table[p2_index], distance);
                 if (start_edge == -1)
                 {
                     start_edge = e_index;
@@ -225,7 +224,7 @@ public class PhysicsObjects
                     var p1 = point_buffer.get(p1_index);
                     var p2 = point_buffer.get(p2_index);
                     var distance = edgeDistance(p2, p1);
-                    end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
+                    end_edge = Main.Memory.new_edge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
                 }
             }
 
@@ -239,14 +238,14 @@ public class PhysicsObjects
                 var p1 = point_buffer.get(p1_index);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
+                end_edge = Main.Memory.new_edge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
 
                 if (quarter_count > 1)
                 {
                     int p3_index = p1_index + quarter_count;
                     var p3 = point_buffer.get(p3_index);
                     var distance2 = edgeDistance(p3, p1);
-                    end_edge = Main.Memory.newEdge(point_table[p1_index], point_table[p3_index], distance2, FLAG_INTERIOR_EDGE);
+                    end_edge = Main.Memory.new_edge(point_table[p1_index], point_table[p3_index], distance2, FLAG_INTERIOR_EDGE);
                 }
             }
             if (odd_count) // if there was an odd vertex at the end, connect it to the mid point
@@ -255,7 +254,7 @@ public class PhysicsObjects
                 var p1 = point_buffer.get(half_count+1);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                end_edge = Main.Memory.newEdge(point_table[half_count+1], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
+                end_edge = Main.Memory.new_edge(point_table[half_count+1], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
             }
 
             // calculate centroid and reference angle
@@ -270,7 +269,7 @@ public class PhysicsObjects
 
             int[] _flag = OpenCL.arg_int2(flags, model_instance_id);
             // there is only one hull, so it is the main hull ID by default
-            int hull_id = Main.Memory.newHull(transform, rotation, table, _flag);
+            int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
             if (i == model.root_index())
             {
                 root_hull_id = hull_id;

@@ -98,6 +98,7 @@ public class OpenCL
     static String kn_create_point                       = "create_point";
     static String kn_create_edge                        = "create_edge";
     static String kn_create_hull                        = "create_hull";
+    static String kn_create_bone_reference              = "create_bone_reference";
     static String kn_prepare_edges                      = "prepare_edges";
     static String kn_prepare_transforms                 = "prepare_transforms";
     static String kn_prepare_bounds                     = "prepare_bounds";
@@ -151,6 +152,7 @@ public class OpenCL
     static cl_kernel k_create_point;
     static cl_kernel k_create_edge;
     static cl_kernel k_create_hull;
+    static cl_kernel k_create_bone_reference;
     static cl_kernel k_prepare_edges;
     static cl_kernel k_prepare_transforms;
     static cl_kernel k_prepare_bounds;
@@ -476,6 +478,7 @@ public class OpenCL
         k_create_hull                       = cl_k(p_gpu_crud, kn_create_hull);
         k_create_point                      = cl_k(p_gpu_crud, kn_create_point);
         k_create_edge                       = cl_k(p_gpu_crud, kn_create_edge);
+        k_create_bone_reference             = cl_k(p_gpu_crud, kn_create_bone_reference);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
         k_prepare_transforms                = cl_k(p_prepare_transforms, kn_prepare_transforms);
         k_prepare_bounds                    = cl_k(p_prepare_bounds, kn_prepare_bounds);
@@ -710,6 +713,22 @@ public class OpenCL
         k_call(k_create_edge, global_single_size);
     }
 
+
+
+    public static void create_bone_reference(int bone_ref_index, float[] matrix)
+    {
+        var pnt_index = Pointer.to(arg_int(bone_ref_index));
+        var pnt_bone_ref = Pointer.to(matrix);
+
+        clSetKernelArg(k_create_bone_reference, 0, Sizeof.cl_mem, Pointer.to(mem_bone_references));
+        clSetKernelArg(k_create_bone_reference, 1, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_bone_reference, 2, Sizeof.cl_float16, pnt_bone_ref);
+
+        k_call(k_create_bone_reference, global_single_size);
+    }
+
+
+
     public static void create_hull(int hull_index, float[] hull, float[] rotation, int[] table, int[] flags)
     {
         var pnt_index = Pointer.to(arg_int(hull_index));
@@ -791,7 +810,7 @@ public class OpenCL
 
     public static void integrate(float delta_time, SpatialPartition spatialPartition)
     {
-        long[] global_work_size = new long[]{Main.Memory.hullCount()};
+        long[] global_work_size = new long[]{Main.Memory.hull_count()};
         float[] args =
             {
                 delta_time,
@@ -831,7 +850,7 @@ public class OpenCL
 
     public static void calculate_bank_offsets(SpatialPartition spatialPartition)
     {
-        int n = Main.Memory.hullCount();
+        int n = Main.Memory.hull_count();
         int bank_size = scan_key_bounds(physicsBuffer.bank.memory(), n);
         spatialPartition.resizeBank(bank_size);
     }
@@ -842,7 +861,7 @@ public class OpenCL
         {
             return;
         }
-        int n = Main.Memory.hullCount();
+        int n = Main.Memory.hull_count();
         long bank_buf_size = (long)Sizeof.cl_int * spatialPartition.getKey_bank_size();
         long counts_buf_size = (long)Sizeof.cl_int * spatialPartition.getDirectoryLength();
 
@@ -884,7 +903,7 @@ public class OpenCL
 
     public static void build_key_map(SpatialPartition spatialPartition)
     {
-        int n = Main.Memory.hullCount();
+        int n = Main.Memory.hull_count();
         long map_buf_size = (long)Sizeof.cl_int * spatialPartition.getKey_map_size();
         long counts_buf_size = (long)Sizeof.cl_int * spatialPartition.getDirectoryLength();
 
@@ -916,7 +935,7 @@ public class OpenCL
 
     public static void locate_in_bounds(SpatialPartition spatialPartition)
     {
-        int n = Main.Memory.hullCount();
+        int n = Main.Memory.hull_count();
 
         // step 1: locate objects that are within bounds
         int x_subdivisions = spatialPartition.getX_subdivisions();
@@ -1070,7 +1089,7 @@ public class OpenCL
     public static void resolve_constraints(int edge_steps)
     {
         boolean lastStep;
-        long[] global_work_size = new long[]{Main.Memory.hullCount()};
+        long[] global_work_size = new long[]{Main.Memory.hull_count()};
         for (int i = 0; i < edge_steps; i++)
         {
             lastStep = i == edge_steps - 1;

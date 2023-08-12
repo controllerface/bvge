@@ -10,7 +10,6 @@ public class Main
 {
     public static class Memory
     {
-
         /**
          * Memory Mapping Table:
          * =====================
@@ -88,6 +87,7 @@ public class Main
             public static final int HULL = 4;
             public static final int POINT = 4;
             public static final int EDGE = 4;
+            public static final int BONE = 16;
         }
 
         private static final int MAX_BONES = 100_000;
@@ -100,49 +100,65 @@ public class Main
         private static int point_index = 0;
         private static int edge_index  = 0;
 
-        public static int hullCount()
+        private static int bone_ref_index = 0;
+
+        public static int hull_count()
         {
             return hull_index / Width.HULL;
         }
 
-        public static int pointsCount()
+        public static int point_count()
         {
             return point_index / Width.POINT;
         }
 
-        public static int edgesCount()
+        public static int edge_count()
         {
             return edge_index / Width.EDGE;
         }
 
-        public static int newEdge(int p1, int p2, float l)
+        public static int bone_ref_count()
         {
-            return newEdge(p1, p2, l, 0);
+            return bone_ref_index / Width.BONE;
         }
 
-        public static int newEdge(int p1, int p2, float l, int flags)
+        public static int new_edge(int p1, int p2, float l)
         {
-            OpenCL.create_edge(edgesCount(), p1, p2, l, flags);
+            return new_edge(p1, p2, l, 0);
+        }
+
+        public static int new_edge(int p1, int p2, float l, int flags)
+        {
+            OpenCL.create_edge(edge_count(), p1, p2, l, flags);
             edge_index += Width.EDGE;
             var idx = edge_index - Width.EDGE;
             return idx / Width.EDGE;
         }
 
-        public static int newPoint(float[] p)
+        public static int new_point(float[] p)
         {
-            OpenCL.create_point(pointsCount(), p[0], p[1], p[0], p[1]);
+            OpenCL.create_point(point_count(), p[0], p[1], p[0], p[1]);
             point_index += Width.POINT;
             var idx = point_index - Width.POINT;
             return idx / Width.POINT;
         }
 
-        public static int newHull(float[] transform, float[] rotation, int[] table, int[] flags)
+        public static int new_hull(float[] transform, float[] rotation, int[] table, int[] flags)
         {
-            OpenCL.create_hull(hullCount(), transform, rotation, table, flags);
+            OpenCL.create_hull(hull_count(), transform, rotation, table, flags);
             hull_index += Width.HULL;
             var idx = hull_index - Width.HULL;
             return idx / Width.HULL;
         }
+
+        public static int new_bone_reference(float[] bone_data)
+        {
+            OpenCL.create_bone_reference(bone_ref_count(), bone_data);
+            bone_ref_index += Width.BONE;
+            var idx = bone_ref_index - Width.BONE;
+            return idx / Width.BONE;
+        }
+
     }
 
     public static void main(String[] args)
