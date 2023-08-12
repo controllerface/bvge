@@ -129,8 +129,6 @@ public class Models
                 + " ensure node and geometry names match in blender");
         }
 
-        // todo: store bone reference in memory and put new id into bone record
-
         int bone_ref_id = Main.Memory.new_bone_reference(raw_matrix);
         bone = new Bone(bone_ref_id, bone_name, offset, weights, bone_node);
         bone_map.put(bone_name, bone);
