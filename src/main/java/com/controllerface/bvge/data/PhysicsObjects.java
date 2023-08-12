@@ -140,6 +140,8 @@ public class PhysicsObjects
             // get the next mesh
             var next_mesh = meshes[i];
 
+            var next_bone = next_mesh.bone();
+
             // generate the hull
             var hull = generate_convex_hull(next_mesh);
 
@@ -355,6 +357,14 @@ public class PhysicsObjects
         return out;
     }
 
+    /**
+     * Calculate a convex hull for the provided vertices. The returned vertex array will be a subset
+     * of the input array, and may contain all points within the input array, depending on the geometry
+     * it describes.
+     *
+     * @param in_points the points to wrap with in a convex hull
+     * @return vertex array that describes the convex hull
+     */
     public static Vertex[] calculate_convex_hull(Vertex[] in_points)
     {
         // working objects for the loop.
@@ -412,6 +422,17 @@ public class PhysicsObjects
         return hull_vertices.toArray(Vertex[]::new);
     }
 
+    /**
+     * Calculate a convex hull for the provided vertices, but instead of returning the vertices directly, an
+     * index array is returned. This array contains a mapping for each hull vertex to the corresponding vertex
+     * in the input vertex array.
+     * This is useful for storing the hull data in a more compact format, because the hull is itself made up of
+     * vertices that are already present in the meshes data, it is more space efficient to store them as an
+     * index array and use this as a lookup table at run time, if the vertex is even needed.
+     *
+     * @param in_points the points to wrap with in a convex hull
+     * @return vertex index table that describes the convex hull
+     */
     public static int[] calculate_convex_hull_table(Vertex[] in_points)
     {
         var hull = calculate_convex_hull(in_points);

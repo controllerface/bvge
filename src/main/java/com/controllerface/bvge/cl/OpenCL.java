@@ -25,7 +25,7 @@ public class OpenCL
     static cl_context context;
     static cl_device_id[] device_ids;
 
-    static String prag_int32_base_atomics   = read_src("pragma/int32_base_atomics.cl");;
+    static String prag_int32_base_atomics   = read_src("pragma/int32_base_atomics.cl");
 
     /**
      * Helper functions
@@ -156,6 +156,28 @@ public class OpenCL
     static cl_kernel k_prepare_bounds;
 
 
+
+
+    // memory objects
+    private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
+    private static cl_mem mem_points;
+    private static cl_mem mem_edges;
+    private static cl_mem mem_transform;
+    private static cl_mem mem_aabb;
+    private static cl_mem mem_hull_acceleration;
+    private static cl_mem mem_hull_rotation;
+    private static cl_mem mem_hull_element_tables;
+    private static cl_mem mem_hull_flags;
+    private static cl_mem mem_aabb_index;
+    private static cl_mem mem_aabb_key_bank;
+
+    private static cl_mem mem_bone_references;
+    private static cl_mem mem_bone_instances;
+    private static cl_mem mem_bone_index;
+
+
+
+
     /**
      * During shutdown, these are used to release resources.
      */
@@ -186,12 +208,12 @@ public class OpenCL
         CL.setExceptionsEnabled(true);
 
         // Obtain the number of platforms
-        int numPlatformsArray[] = new int[1];
+        int[] numPlatformsArray = new int[1];
         clGetPlatformIDs(0, null, numPlatformsArray);
         int numPlatforms = numPlatformsArray[0];
 
         // Obtain a platform ID
-        cl_platform_id platforms[] = new cl_platform_id[numPlatforms];
+        cl_platform_id[] platforms = new cl_platform_id[numPlatforms];
         clGetPlatformIDs(platforms.length, platforms, null);
         cl_platform_id platform = platforms[platformIndex];
 
@@ -211,12 +233,12 @@ public class OpenCL
         contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
 
         // Obtain the number of devices for the platform
-        int numDevicesArray[] = new int[1];
+        int[] numDevicesArray = new int[1];
         clGetDeviceIDs(platform, deviceType, 0, null, numDevicesArray);
         int numDevices = numDevicesArray[0];
 
         // Obtain a device ID
-        cl_device_id devices[] = new cl_device_id[numDevices];
+        cl_device_id[] devices = new cl_device_id[numDevices];
         clGetDeviceIDs(platform, deviceType, numDevices, devices, null);
         cl_device_id device = devices[deviceIndex];
 
@@ -469,6 +491,10 @@ public class OpenCL
         int points_mem_size           = max_points * Sizeof.cl_float4;
         int edges_mem_size            = max_points * Sizeof.cl_float4;
 
+        int bone_reference_mem_size   = max_points * Sizeof.cl_float16;
+        int bone_instance_mem_size    = max_points * Sizeof.cl_float16;
+        int bone_index_mem_size       = max_points * Sizeof.cl_int;
+
         int total = transform_mem_size
             + accleration_mem_size
             + rotation_mem_size
@@ -478,7 +504,10 @@ public class OpenCL
             + spatial_index_mem_size
             + spatial_key_bank_mem_size
             + points_mem_size
-            + edges_mem_size;
+            + edges_mem_size
+            + bone_reference_mem_size
+            + bone_instance_mem_size
+            + bone_index_mem_size;
 
         System.out.println("------------- BUFFERS -------------");
         System.out.println("points           : " + points_mem_size);
@@ -491,6 +520,9 @@ public class OpenCL
         System.out.println("bounding box     : " + bounding_box_mem_size);
         System.out.println("spatial index    : " + spatial_index_mem_size);
         System.out.println("spatial key bank : " + spatial_key_bank_mem_size);
+        System.out.println("bone references  : " + bone_reference_mem_size);
+        System.out.println("bone instances   : " + bone_instance_mem_size);
+        System.out.println("bone index       : " + bone_index_mem_size);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)   : " + total);
         System.out.println("              KB : " + ((float)total / 1024f));
@@ -508,6 +540,9 @@ public class OpenCL
         mem_aabb                      = cl_new_buffer(FLAGS_WRITE_GPU, bounding_box_mem_size);
         mem_points                    = cl_new_buffer(FLAGS_WRITE_GPU, points_mem_size);
         mem_edges                     = cl_new_buffer(FLAGS_WRITE_GPU, edges_mem_size);
+        mem_bone_references           = cl_new_buffer(FLAGS_WRITE_GPU, bone_reference_mem_size);
+        mem_bone_instances            = cl_new_buffer(FLAGS_WRITE_GPU, bone_instance_mem_size);
+        mem_bone_index                = cl_new_buffer(FLAGS_WRITE_GPU, bone_index_mem_size);
 
         cl_zero_buffer(mem_hull_acceleration, accleration_mem_size);
         cl_zero_buffer(mem_hull_rotation, rotation_mem_size);
@@ -519,6 +554,9 @@ public class OpenCL
         cl_zero_buffer(mem_aabb, bounding_box_mem_size);
         cl_zero_buffer(mem_points, points_mem_size);
         cl_zero_buffer(mem_edges, edges_mem_size);
+        cl_zero_buffer(mem_bone_references, bone_reference_mem_size);
+        cl_zero_buffer(mem_bone_instances, bone_instance_mem_size);
+        cl_zero_buffer(mem_bone_index, bone_index_mem_size);
     }
 
     public static void destroy()
@@ -536,24 +574,25 @@ public class OpenCL
         clReleaseContext(context);
     }
 
-    private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
+    // GL Interop
 
-    private static cl_mem mem_points;
-    private static cl_mem mem_edges;
-    private static cl_mem mem_transform;
-    private static cl_mem mem_aabb;
-    private static cl_mem mem_hull_acceleration;
-    private static cl_mem mem_hull_rotation;
-    private static cl_mem mem_hull_element_tables;
-    private static cl_mem mem_hull_flags;
-    private static cl_mem mem_aabb_index;
-    private static cl_mem mem_aabb_key_bank;
-
+    /**
+     * Called from Gl code to share a buffer object with CL. This allows kernels to process
+     * buffer data for shaders. The size of the shared data is determined automatically by the
+     * vboID and is set in the GL context.
+     *
+     * @param vboID GL buffer ID of the data to share.
+     */
     public static void share_memory(int vboID)
     {
         cl_mem vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
         shared_mem.put(vboID, vbo_mem);
     }
+
+
+
+
+
 
     /**
      * Transfers a subset of all bounding boxes from CL memory into GL memory, converting the bounds
@@ -612,6 +651,10 @@ public class OpenCL
         gl_release(vbo_mem2);
     }
 
+
+
+
+
     public static void initPhysicsBuffer(PhysicsBuffer physicsBuffer)
     {
         // todo: the hull and bounds data needs to be sliced up into smaller arrays for better
@@ -629,7 +672,6 @@ public class OpenCL
         physicsBuffer.index = new MemoryBuffer(mem_aabb_index);
         physicsBuffer.bank = new MemoryBuffer(mem_aabb_key_bank);
     }
-
 
 
 
@@ -681,7 +723,6 @@ public class OpenCL
         k_call(k_create_hull, global_single_size);
     }
 
-
     public static void update_accel(int hull_index, float acc_x, float acc_y)
     {
         var pnt_index = Pointer.to(arg_int(hull_index));
@@ -730,6 +771,11 @@ public class OpenCL
         clReleaseMemObject(result_data);
 
         return result;
+    }
+
+    public static void setPhysicsBuffer(PhysicsBuffer physicsBuffer)
+    {
+        OpenCL.physicsBuffer = physicsBuffer;
     }
 
 
@@ -1315,11 +1361,6 @@ public class OpenCL
         clReleaseMemObject(p_data);
 
         return sz[0];
-    }
-
-    public static void setPhysicsBuffer(PhysicsBuffer physicsBuffer)
-    {
-        OpenCL.physicsBuffer = physicsBuffer;
     }
 
     //#endregion

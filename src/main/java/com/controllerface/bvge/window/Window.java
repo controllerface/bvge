@@ -80,7 +80,7 @@ public class Window
         camera.adjustProjection();
     }
 
-    public void initOpenGL()
+    public void init()
     {
         GLFWErrorCallback.createPrint(System.err).set();
 

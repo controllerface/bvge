@@ -90,6 +90,9 @@ public class Main
             public static final int EDGE = 4;
         }
 
+        private static final int MAX_BONES = 100_000;
+        private static final int MAX_VERTICES = 1_000_000;
+
         private static final int MAX_HULLS = 100_000;
         private static final int MAX_POINTS = 1_000_000;
 
@@ -144,13 +147,17 @@ public class Main
 
     public static void main(String[] args)
     {
+        Window window = Window.get();
+        window.init();
+
+        OpenCL.init(Memory.MAX_HULLS, Memory.MAX_POINTS);
+
         Meshes.init();
         Models.init();
-        Window window = Window.get();
-        window.initOpenGL();
-        OpenCL.init(Memory.MAX_HULLS, Memory.MAX_POINTS);
+
         window.initGameMode();
         window.run();
+
         OpenCL.destroy();
     }
 }
