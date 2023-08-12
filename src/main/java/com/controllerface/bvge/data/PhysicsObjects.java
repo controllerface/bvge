@@ -48,11 +48,15 @@ public class PhysicsObjects
         // get the circle mesh. this is almost silly to do but just for consistency :-)
         var mesh = Models.get_model_by_index(Models.CIRCLE_MODEL).meshes()[0];
 
+        var vert = mesh.vertices()[0];
+
         // the model points are always zero so the * and + are for educational purposes
-        var p1 = OpenCL.arg_float2(mesh.vertices()[0].x() * size + x, mesh.vertices()[0].y() * size + y);
+        var p1 = OpenCL.arg_float2(vert.x() * size + x, vert.y() * size + y);
+
+        var t1 = OpenCL.arg_int2(vert.vert_ref_id(), mesh.bone().bone_ref_id());
 
         // store the single point for the circle
-        var p1_index = Main.Memory.new_point(p1);
+        var p1_index = Main.Memory.new_point(p1, t1);
         var l1 = OpenCL.arg_float4(x, y, x, y + 1);
         var l2 = OpenCL.arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angleBetween2Lines(l1, l2);
@@ -71,19 +75,25 @@ public class PhysicsObjects
     {
         // get the box mesh
         var mesh = Models.get_model_by_index(CRATE_MODEL).meshes()[0];
+        var bone_ref_id = mesh.bone().bone_ref_id();
         var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
         hull = translate_hull(hull, x, y);
 
-        var p1 = OpenCL.arg_float2(hull[0].x(), hull[0].y());
-        var p2 = OpenCL.arg_float2(hull[1].x(), hull[1].y());
-        var p3 = OpenCL.arg_float2(hull[2].x(), hull[2].y());
-        var p4 = OpenCL.arg_float2(hull[3].x(), hull[3].y());
+        var v1 = hull[0];
+        var v2 = hull[1];
+        var v3 = hull[2];
+        var v4 = hull[3];
 
-        var p1_index = Main.Memory.new_point(p1);
-        var p2_index = Main.Memory.new_point(p2);
-        var p3_index = Main.Memory.new_point(p3);
-        var p4_index = Main.Memory.new_point(p4);
+        var p1 = OpenCL.arg_float2(v1.x(), v1.y());
+        var p2 = OpenCL.arg_float2(v2.x(), v2.y());
+        var p3 = OpenCL.arg_float2(v3.x(), v3.y());
+        var p4 = OpenCL.arg_float2(v4.x(), v4.y());
+
+        var p1_index = Main.Memory.new_point(p1, OpenCL.arg_int2(v1.vert_ref_id(), bone_ref_id));
+        var p2_index = Main.Memory.new_point(p2, OpenCL.arg_int2(v2.vert_ref_id(), bone_ref_id));
+        var p3_index = Main.Memory.new_point(p3, OpenCL.arg_int2(v3.vert_ref_id(), bone_ref_id));
+        var p4_index = Main.Memory.new_point(p4, OpenCL.arg_int2(v4.vert_ref_id(), bone_ref_id));
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -153,11 +163,6 @@ public class PhysicsObjects
             // use bone transform to position the hull
             var bone_transform = model.bone_transforms().get(next_bone.name());
 
-            var raw_matrix = OpenCL.arg_float16_matrix(bone_transform);
-
-            // todo: make new bone instance in memory
-            int boneid = Main.Memory.new_bone(next_bone.bone_ref_id(), raw_matrix);
-
             hull = transform_hull(hull, bone_transform);
 
             // scale to desired size in model space
@@ -165,6 +170,10 @@ public class PhysicsObjects
 
             // translate to world space
             hull = translate_hull(hull, x, y);
+
+            // make a new bone instance for this mesh
+            var raw_matrix = OpenCL.arg_float16_matrix(bone_transform);
+            int bone_id = Main.Memory.new_bone(next_bone.bone_ref_id(), raw_matrix);
 
             // generate the points in memory for this object
             int start_point = -1;
@@ -175,7 +184,8 @@ public class PhysicsObjects
             {
                 var next_vertex = hull[point_index];
                 var new_point = OpenCL.arg_float2(next_vertex.x(), next_vertex.y());
-                var p_index = Main.Memory.new_point(new_point);
+                var new_table = OpenCL.arg_int2(next_vertex.vert_ref_id(), next_bone.bone_ref_id());
+                var p_index = Main.Memory.new_point(new_point, new_table);
                 if (start_point == -1)
                 {
                     start_point = p_index;
@@ -247,7 +257,7 @@ public class PhysicsObjects
                     end_edge = Main.Memory.new_edge(point_table[p1_index], point_table[p3_index], distance2, FLAG_INTERIOR_EDGE);
                 }
             }
-            if (odd_count) // if there was an odd vertex at the end, connect it to the mid point
+            if (odd_count) // if there was an odd vertex at the end, connect it to the mid-point
             {
                 int p2_index = point_table.length - 1;
                 var p1 = point_buffer.get(half_count+1);
@@ -266,9 +276,8 @@ public class PhysicsObjects
             var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
             var rotation = OpenCL.arg_float2(0, angle);
 
-            int[] _flag = OpenCL.arg_int2(flags, model_instance_id);
-            // there is only one hull, so it is the main hull ID by default
-            int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
+            int[] hull_flags = OpenCL.arg_int2(flags, model_instance_id);
+            int hull_id = Main.Memory.new_hull(transform, rotation, table, hull_flags);
             if (i == model.root_index())
             {
                 root_hull_id = hull_id;
@@ -313,7 +322,7 @@ public class PhysicsObjects
         {
             var next = input[i];
             var vec = matrix4f.transform(new Vector4f(next.x(), next.y(), 0.0f, 1.0f));
-            output[i] = new Vertex(vec.x, vec.y, next.bone_name(), next.bone_weight());
+            output[i] = new Vertex(next.vert_ref_id(), vec.x, vec.y, next.bone_name(), next.bone_weight());
         }
         return output;
     }

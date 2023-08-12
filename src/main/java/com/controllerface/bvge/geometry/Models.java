@@ -169,7 +169,8 @@ public class Models
             int this_vert = vert_index++;
             var aiVertex = buffer.get();
             float bone_weight = bone_weight_map.get(this_vert);
-            mesh_vertices[this_vert] = new Vertex(aiVertex.x(), aiVertex.y(), mesh_bone.name(), bone_weight);
+            var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y());
+            mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), mesh_bone.name(), bone_weight);
         }
         return mesh_vertices;
     }

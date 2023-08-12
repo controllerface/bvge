@@ -84,6 +84,7 @@ public class Main
 
         public static class Width
         {
+            public static final int VERTEX =2;
             public static final int HULL = 4;
             public static final int POINT = 4;
             public static final int EDGE = 4;
@@ -100,6 +101,7 @@ public class Main
         private static int point_index = 0;
         private static int edge_index  = 0;
 
+        private static int vertex_ref_index = 0;
         private static int bone_ref_index = 0;
         private static int bone_index = 0;
 
@@ -116,6 +118,11 @@ public class Main
         public static int edge_count()
         {
             return edge_index / Width.EDGE;
+        }
+
+        public static int vertex_ref_count()
+        {
+            return vertex_ref_index / Width.VERTEX;
         }
 
         public static int bone_ref_count()
@@ -141,9 +148,9 @@ public class Main
             return idx / Width.EDGE;
         }
 
-        public static int new_point(float[] p)
+        public static int new_point(float[] p, int[] t)
         {
-            OpenCL.create_point(point_count(), p[0], p[1], p[0], p[1]);
+            OpenCL.create_point(point_count(), p[0], p[1], p[0], p[1], t[0], t[1]);
             point_index += Width.POINT;
             var idx = point_index - Width.POINT;
             return idx / Width.POINT;
@@ -155,6 +162,14 @@ public class Main
             hull_index += Width.HULL;
             var idx = hull_index - Width.HULL;
             return idx / Width.HULL;
+        }
+
+        public static int new_vertex_reference(float x, float y)
+        {
+            OpenCL.create_vertex_reference(point_count(), x, y);
+            vertex_ref_index += Width.VERTEX;
+            var idx = vertex_ref_index - Width.VERTEX;
+            return idx / Width.VERTEX;
         }
 
         public static int new_bone_reference(float[] bone_data)
@@ -172,7 +187,6 @@ public class Main
             var idx = bone_index - Width.BONE;
             return idx / Width.BONE;
         }
-
     }
 
     public static void main(String[] args)

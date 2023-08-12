@@ -7,10 +7,13 @@ are designed to operate on a single target object.
 // create functions
 
 __kernel void create_point(__global float4 *points,
+                           __global int2 *vertex_tables,
                            int target,
-                           float4 new_point)
+                           float4 new_point,
+                           int2 new_vertex_table)
 {
     points[target] = new_point; 
+    vertex_tables[target] = new_vertex_table; 
 }
 
 __kernel void create_edge(__global float4 *edges,
@@ -18,6 +21,13 @@ __kernel void create_edge(__global float4 *edges,
                            float4 new_edge)
 {
     edges[target] = new_edge; 
+}
+
+__kernel void create_vertex_reference(__global float2 *vertex_references,
+                                      int target,
+                                      float2 new_vertex_reference)
+{
+    vertex_references[target] = new_vertex_reference; 
 }
 
 __kernel void create_bone_reference(__global float16 *bone_references,

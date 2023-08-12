@@ -99,6 +99,7 @@ public class OpenCL
     static String kn_create_point                       = "create_point";
     static String kn_create_edge                        = "create_edge";
     static String kn_create_hull                        = "create_hull";
+    static String kn_create_vertex_reference            = "create_vertex_reference";
     static String kn_create_bone_reference              = "create_bone_reference";
     static String kn_create_bone                        = "create_bone";
     static String kn_prepare_edges                      = "prepare_edges";
@@ -154,6 +155,7 @@ public class OpenCL
     static cl_kernel k_create_point;
     static cl_kernel k_create_edge;
     static cl_kernel k_create_hull;
+    static cl_kernel k_create_vertex_reference;
     static cl_kernel k_create_bone_reference;
     static cl_kernel k_create_bone;
     static cl_kernel k_prepare_edges;
@@ -177,6 +179,8 @@ public class OpenCL
     private static cl_mem mem_aabb_key_bank;
 
     private static cl_mem mem_vertex_references;
+    private static cl_mem mem_vertex_table;
+    private static cl_mem mem_vertex_index;
 
     private static cl_mem mem_bone_references;
     private static cl_mem mem_bone_instances;
@@ -493,6 +497,7 @@ public class OpenCL
         k_create_point                      = cl_k(p_gpu_crud, kn_create_point);
         k_create_edge                       = cl_k(p_gpu_crud, kn_create_edge);
         k_create_bone_reference             = cl_k(p_gpu_crud, kn_create_bone_reference);
+        k_create_vertex_reference           = cl_k(p_gpu_crud, kn_create_vertex_reference);
         k_create_bone                       = cl_k(p_gpu_crud, kn_create_bone);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
         k_prepare_transforms                = cl_k(p_prepare_transforms, kn_prepare_transforms);
@@ -511,7 +516,9 @@ public class OpenCL
         int points_mem_size           = max_points * Sizeof.cl_float4;
         int edges_mem_size            = max_points * Sizeof.cl_float4;
 
+        int vertex_table_mem_size     = max_points * Sizeof.cl_int2;
         int vertex_reference_mem_size = max_points * Sizeof.cl_float2;
+        int vertex_index_mem_size     = max_points * Sizeof.cl_int;
 
         int bone_reference_mem_size   = max_points * Sizeof.cl_float16;
         int bone_instance_mem_size    = max_points * Sizeof.cl_float16;
@@ -527,7 +534,9 @@ public class OpenCL
             + spatial_key_bank_mem_size
             + points_mem_size
             + edges_mem_size
+            + vertex_table_mem_size
             + vertex_reference_mem_size
+            + vertex_index_mem_size
             + bone_reference_mem_size
             + bone_instance_mem_size
             + bone_index_mem_size;
@@ -543,7 +552,9 @@ public class OpenCL
         System.out.println("bounding box      : " + bounding_box_mem_size);
         System.out.println("spatial index     : " + spatial_index_mem_size);
         System.out.println("spatial key bank  : " + spatial_key_bank_mem_size);
+        System.out.println("vertex table      : " + vertex_table_mem_size);
         System.out.println("vertex references : " + vertex_reference_mem_size);
+        System.out.println("vertex index      : " + vertex_index_mem_size);
         System.out.println("bone references   : " + bone_reference_mem_size);
         System.out.println("bone instances    : " + bone_instance_mem_size);
         System.out.println("bone index        : " + bone_index_mem_size);
@@ -564,7 +575,9 @@ public class OpenCL
         mem_aabb                      = cl_new_buffer(FLAGS_WRITE_GPU, bounding_box_mem_size);
         mem_points                    = cl_new_buffer(FLAGS_WRITE_GPU, points_mem_size);
         mem_edges                     = cl_new_buffer(FLAGS_WRITE_GPU, edges_mem_size);
+        mem_vertex_table              = cl_new_buffer(FLAGS_WRITE_GPU, vertex_table_mem_size);
         mem_vertex_references         = cl_new_buffer(FLAGS_WRITE_GPU, vertex_reference_mem_size);
+        mem_vertex_index              = cl_new_buffer(FLAGS_WRITE_GPU, vertex_index_mem_size);
         mem_bone_references           = cl_new_buffer(FLAGS_WRITE_GPU, bone_reference_mem_size);
         mem_bone_instances            = cl_new_buffer(FLAGS_WRITE_GPU, bone_instance_mem_size);
         mem_bone_index                = cl_new_buffer(FLAGS_WRITE_GPU, bone_index_mem_size);
@@ -579,7 +592,9 @@ public class OpenCL
         cl_zero_buffer(mem_aabb, bounding_box_mem_size);
         cl_zero_buffer(mem_points, points_mem_size);
         cl_zero_buffer(mem_edges, edges_mem_size);
+        cl_zero_buffer(mem_vertex_table, vertex_table_mem_size);
         cl_zero_buffer(mem_vertex_references, vertex_reference_mem_size);
+        cl_zero_buffer(mem_vertex_index, vertex_index_mem_size);
         cl_zero_buffer(mem_bone_references, bone_reference_mem_size);
         cl_zero_buffer(mem_bone_instances, bone_instance_mem_size);
         cl_zero_buffer(mem_bone_index, bone_index_mem_size);
@@ -704,14 +719,17 @@ public class OpenCL
 
 
 
-    public static void create_point(int point_index, float pos_x, float pos_y, float prv_x, float prv_y)
+    public static void create_point(int point_index, float pos_x, float pos_y, float prv_x, float prv_y, int v, int b)
     {
         var pnt_index = Pointer.to(arg_int(point_index));
         var pnt_point = Pointer.to(arg_float4(pos_x, pos_y, prv_x, prv_y));
+        var pnt_table = Pointer.to(arg_int2(v, b));
 
         clSetKernelArg(k_create_point, 0, Sizeof.cl_mem, Pointer.to(mem_points));
-        clSetKernelArg(k_create_point, 1, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(k_create_point, 2, Sizeof.cl_float4, pnt_point);
+        clSetKernelArg(k_create_point, 1, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
+        clSetKernelArg(k_create_point, 2, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_point, 3, Sizeof.cl_float4, pnt_point);
+        clSetKernelArg(k_create_point, 4, Sizeof.cl_int2, pnt_table);
 
         k_call(k_create_point, global_single_size);
     }
@@ -729,6 +747,17 @@ public class OpenCL
     }
 
 
+    public static void create_vertex_reference(int vert_ref_index, float x, float y)
+    {
+        var pnt_index = Pointer.to(arg_int(vert_ref_index));
+        var pnt_vert_ref = Pointer.to(arg_float2(x, y));
+
+        clSetKernelArg(k_create_vertex_reference, 0, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
+        clSetKernelArg(k_create_vertex_reference, 1, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_vertex_reference, 2, Sizeof.cl_float2, pnt_vert_ref);
+
+        k_call(k_create_vertex_reference, global_single_size);
+    }
 
     public static void create_bone_reference(int bone_ref_index, float[] matrix)
     {

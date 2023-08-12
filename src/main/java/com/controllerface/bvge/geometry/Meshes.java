@@ -1,5 +1,7 @@
 package com.controllerface.bvge.geometry;
 
+import com.controllerface.bvge.Main;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -26,7 +28,8 @@ public class Meshes
 
     private static Mesh generate_circle_mesh()
     {
-        var vertices = new Vertex[]{ new Vertex(0,0, IDENTITY_BONE_NAME, 1.0f) };
+        var vert_ref_id = Main.Memory.new_vertex_reference(0,0);
+        var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, IDENTITY_BONE_NAME, 1.0f) };
         var faces = new Face[]{ new Face(0, 0, 0) };
         var hull = new int[]{ 0 };
         return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
@@ -42,10 +45,23 @@ public class Meshes
 
         float halfSize = 1f / 2f;
 
-        vertices[0] = new Vertex(-halfSize, -halfSize, IDENTITY_BONE_NAME, 1.0f);
-        vertices[1] = new Vertex(halfSize, -halfSize, IDENTITY_BONE_NAME, 1.0f);
-        vertices[2] = new Vertex(halfSize, halfSize, IDENTITY_BONE_NAME, 1.0f);
-        vertices[3] = new Vertex(-halfSize, halfSize, IDENTITY_BONE_NAME, 1.0f);
+        float x1 = -halfSize;
+        float y1 = -halfSize;
+        int v1 = Main.Memory.new_vertex_reference(x1, y1);
+        float x2 = halfSize;
+        float y2 = -halfSize;
+        int v2 = Main.Memory.new_vertex_reference(x2, y2);
+        float x3 = halfSize;
+        float y3 = halfSize;
+        int v3 = Main.Memory.new_vertex_reference(x3, y3);
+        float x4 = -halfSize;
+        float y4 = halfSize;
+        int v4 = Main.Memory.new_vertex_reference(x4, y4);
+
+        vertices[0] = new Vertex(v1, x1, y1, IDENTITY_BONE_NAME, 1.0f);
+        vertices[1] = new Vertex(v2, x2, y2, IDENTITY_BONE_NAME, 1.0f);
+        vertices[2] = new Vertex(v3, x3, y3, IDENTITY_BONE_NAME, 1.0f);
+        vertices[3] = new Vertex(v4, x4, y4, IDENTITY_BONE_NAME, 1.0f);
 
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 3);
@@ -65,11 +81,27 @@ public class Meshes
 
         float halfSize = 1f / 2f;
 
-        vertices[0] = new Vertex(-halfSize, -halfSize, IDENTITY_BONE_NAME, 1.0f);
-        vertices[1] = new Vertex(halfSize, -halfSize, IDENTITY_BONE_NAME, 1.0f);
-        vertices[2] = new Vertex(halfSize, halfSize, IDENTITY_BONE_NAME, 1.0f);
-        vertices[3] = new Vertex(0, halfSize * 2, IDENTITY_BONE_NAME, 1.0f);
-        vertices[4] = new Vertex(-halfSize, halfSize, IDENTITY_BONE_NAME, 1.0f);
+        float x1 = -halfSize;
+        float y1 = -halfSize;
+        int v1 = Main.Memory.new_vertex_reference(x1, y1);
+        float x2 = halfSize;
+        float y2 = -halfSize;
+        int v2 = Main.Memory.new_vertex_reference(x1, y1);
+        float x3 = halfSize;
+        float y3 = halfSize;
+        int v3 = Main.Memory.new_vertex_reference(x1, y1);
+        float x4 = 0;
+        float y4 = halfSize * 2;
+        int v4 = Main.Memory.new_vertex_reference(x1, y1);
+        float x5 = -halfSize;
+        float y5 = halfSize;
+        int v5 = Main.Memory.new_vertex_reference(x1, y1);
+
+        vertices[0] = new Vertex(v1, x1, y1, IDENTITY_BONE_NAME, 1.0f);
+        vertices[1] = new Vertex(v2, x2, y2, IDENTITY_BONE_NAME, 1.0f);
+        vertices[2] = new Vertex(v3, x3, y3, IDENTITY_BONE_NAME, 1.0f);
+        vertices[3] = new Vertex(v4, x4, y4, IDENTITY_BONE_NAME, 1.0f);
+        vertices[4] = new Vertex(v5, x5, y5, IDENTITY_BONE_NAME, 1.0f);
 
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 4);
