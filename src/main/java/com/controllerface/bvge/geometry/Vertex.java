@@ -12,12 +12,12 @@ public record Vertex(float x, float y, String bone_name, float bone_weight)
         return new Vertex(x + tx, y + ty, bone_name, bone_weight);
     }
 
-    public double angle(Vertex point)
+    public double angle_between(Vertex point)
     {
-        return angle(point.x(), point.y());
+        return angle_between(point.x(), point.y());
     }
 
-    public double angle(double x, double y)
+    public double angle_between(double x, double y)
     {
         final double ax = x();
         final double ay = y();
@@ -36,7 +36,7 @@ public record Vertex(float x, float y, String bone_name, float bone_weight)
         return Math.toDegrees(Math.acos(delta));
     }
 
-    public double angle(Vertex p1, Vertex p2)
+    public double angle_between(Vertex p1, Vertex p2)
     {
         final double x = x();
         final double y = y();

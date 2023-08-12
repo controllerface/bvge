@@ -2,7 +2,6 @@ package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
-import com.controllerface.bvge.geometry.Bone;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.util.MathEX;
@@ -346,30 +345,45 @@ public class PhysicsObjects
 
     public static Vertex[] generate_convex_hull(Vertex[] in_points)
     {
-        Vertex p, q;
-        Stack<Vertex> verticesList = new Stack<>();
+        // working objects for the loop.
+        // p is the current vertex of the calculated hull
+        // q is the next vertex of the calculated hull
+        Vertex p;
+        Vertex q;
+
+        // during hull creation, this holds the vertices that are currently designated as the hull
+        Stack<Vertex> hull_vertices = new Stack<>();
+
+        // because the input array is not intended to be changed, we make a copy of the input values
+        // and operate on the copy. This is needed because of the swap() calls, which will re-order
+        // the vertices in-place to aid with hull calculation.
         Vertex[] points = new Vertex[in_points.length];
         System.arraycopy(in_points, 0, points, 0, in_points.length);
 
+        // do the initial swap to set up the points array for processing,
+        // this is essentially one iteration of the loop
         swap(points, 0, lowestPoint(points));
         swap(points, 1, lowestPolarAngle(points, points[0]));
 
+        // init the working data for the loop, pushing the first vertex into the result buffer
+        int index = 0;
         p = points[0];
         q = points[1];
+        hull_vertices.push(p);
 
-        verticesList.push(p);
-
-        int index = 0;
-
+        // loop until the calculated hull makes a loop around the mesh
         while (!points[0].equals(q))
         {
-            verticesList.push(q);
+            // push the next vertex into the buffer, since it has been calculated
+            hull_vertices.push(q);
+
+            // now iterate through the points and find the next candidate
             double minorPolarAngle = 180D;
-            for (int i = points.length-1; i >=0; i--)
+            for (int i = points.length - 1; i >=0; i--)
             {
                 if (!points[i].equals(q))
                 {
-                    double angle = 180D - q.angle(p, points[i]);
+                    double angle = 180D - q.angle_between(p, points[i]);
                     if (angle < minorPolarAngle)
                     {
                         minorPolarAngle = angle;
@@ -377,11 +391,13 @@ public class PhysicsObjects
                     }
                 }
             }
+
+            // once a candidate has been found, swap out old current and swap in new next
             p = q;
             q = points[index];
         }
 
-        return verticesList.toArray(Vertex[]::new);
+        return hull_vertices.toArray(Vertex[]::new);
     }
 
     private static int lowestPolarAngle(Vertex[] points, Vertex lowestPoint)
@@ -390,7 +406,7 @@ public class PhysicsObjects
         double minorPolarAngle = 180D;
         for (int i = 1; i < points.length; i++)
         {
-            double angle = lowestPoint.angle(points[i]);
+            double angle = lowestPoint.angle_between(points[i]);
             if (angle < minorPolarAngle)
             {
                 minorPolarAngle = angle;
