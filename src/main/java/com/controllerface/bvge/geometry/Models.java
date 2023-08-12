@@ -1,5 +1,6 @@
 package com.controllerface.bvge.geometry;
 
+import com.controllerface.bvge.data.PhysicsObjects;
 import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
@@ -169,9 +170,54 @@ public class Models
         var mesh_bone = load_bone(raw_mesh, node_map, bone_map, bone_weight_map);
         var mesh_vertices = load_vertices(raw_mesh, bone_weight_map, mesh_bone);
         var mesh_faces = load_faces(raw_mesh);
-        var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node);
+        var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
+        var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node, hull_table);
+
+
+        // todo: generate the convex hull here, just once and re-use later
+        //  possibly use indices into the vertex array to save memory when storing
+
         Meshes.register_mesh(mesh_name, new_mesh);
         meshes[mesh_index] = new_mesh;
+    }
+
+    private static void load_raw_meshes(int numMeshes,
+                                        Mesh[] meshes,
+                                        PointerBuffer mesh_buffer,
+                                        Map<String, SceneNode> node_map,
+                                        Map<String, Bone> bone_map)
+    {
+        // load raw mesh data for all meshes
+        for (int i = 0; i < numMeshes; i++)
+        {
+            var raw_mesh = AIMesh.create(mesh_buffer.get(i));
+            load_mesh(i, raw_mesh, meshes, node_map, bone_map);
+        }
+    }
+
+    private static int find_root_index(Mesh[] meshes)
+    {
+        int root_index = -1;
+        for (int mi = 0; mi < meshes.length; mi++)
+        {
+            // note the chained parent call, the logic is that we find the first bone that is a direct
+            // descendant of the armature, which is itself a child of the root scene node, which is
+            // given the default name "RootNode".
+            var grandparent = meshes[mi].bone().sceneNode().parent.parent;
+            if (grandparent.name.equalsIgnoreCase("RootNode"))
+            {
+                root_index = mi;
+                break;
+            }
+        }
+
+        if (root_index == -1)
+        {
+            throw new IllegalStateException("No root mesh found. " +
+                "Root mesh is determined by root bone in Armature under RootNode in scene");
+        }
+
+        return root_index;
     }
 
     private static int load_model(String model_path)
@@ -200,7 +246,7 @@ public class Models
         // maps each bone to a calculated bind pose transformation matrix
         var bone_transforms = new HashMap<String, Matrix4f>();
 
-        // read initital data
+        // read initial data
         try(AIScene aiScene = loadModelResource(model_path);)
         {
             numMeshes = aiScene.mNumMeshes();
@@ -214,34 +260,11 @@ public class Models
             throw new RuntimeException("Unable to load model data", e);
         }
 
-        // load mesh data
-        for (int i = 0; i < numMeshes; i++)
-        {
-            var raw_mesh = AIMesh.create(mesh_buffer.get(i));
-            load_mesh(i, raw_mesh, meshes, node_map, bone_map);
-        }
+        load_raw_meshes(numMeshes, meshes, mesh_buffer, node_map, bone_map);
 
         // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
         // the root bone is determined by checking if the current bone's parent is a direct descendant of the scene
-        int root_index = -1;
-        for (int mi = 0; mi < meshes.length; mi++)
-        {
-            // note the chained parent call, the logic is that we find the first bone that is a direct
-            // descendant of the armature, which is itself a child of the root scene node, which is
-            // given the default name "RootNode".
-            var grandparent = meshes[mi].bone().sceneNode().parent.parent;
-            if (grandparent.name.equalsIgnoreCase("RootNode"))
-            {
-                root_index = mi;
-                break;
-            }
-        }
-
-        if (root_index == -1)
-        {
-            throw new IllegalStateException("No root mesh found. " +
-                "Root mesh is determined by root bone in Armature under RootNode in scene");
-        }
+        int root_index = find_root_index(meshes);
 
         // generate the bind pose transforms, setting the initial state of the armature
         generate_transforms(scene_node, bone_map, bone_transforms, new Matrix4f());

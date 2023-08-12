@@ -2,6 +2,8 @@ package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.geometry.Mesh;
+import com.controllerface.bvge.geometry.Model;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.util.MathEX;
@@ -11,6 +13,7 @@ import org.joml.Vector4f;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import static com.controllerface.bvge.geometry.Models.CRATE_MODEL;
 
@@ -69,7 +72,7 @@ public class PhysicsObjects
     {
         // get the box mesh
         var mesh = Models.get_model_by_index(CRATE_MODEL).meshes()[0];
-        var hull = generate_convex_hull(mesh.vertices());
+        var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
         hull = translate_hull(hull, x, y);
 
@@ -137,10 +140,8 @@ public class PhysicsObjects
             // get the next mesh
             var next_mesh = meshes[i];
 
-            var verts = next_mesh.vertices();
-
             // generate the hull
-            var hull = generate_convex_hull(verts);
+            var hull = generate_convex_hull(next_mesh);
 
             // This alternative to using the bone transform is using the mesh transform
             // directly. This is helpful for debugging as the initial bone transform
@@ -343,7 +344,18 @@ public class PhysicsObjects
         return points;
     }
 
-    public static Vertex[] generate_convex_hull(Vertex[] in_points)
+    public static Vertex[] generate_convex_hull(Mesh mesh)
+    {
+        var out = new Vertex[mesh.hull().length];
+        for (int i = 0; i < mesh.hull().length; i++)
+        {
+            var next_index = mesh.hull()[i];
+            out[i] = mesh.vertices()[next_index];
+        }
+        return out;
+    }
+
+    public static Vertex[] calculate_convex_hull(Vertex[] in_points)
     {
         // working objects for the loop.
         // p is the current vertex of the calculated hull
@@ -398,6 +410,21 @@ public class PhysicsObjects
         }
 
         return hull_vertices.toArray(Vertex[]::new);
+    }
+
+    public static int[] calculate_convex_hull_table(Vertex[] in_points)
+    {
+        var hull = calculate_convex_hull(in_points);
+        var vertex_table = new int[hull.length];
+        for (int hull_index = 0; hull_index < hull.length; hull_index++)
+        {
+            var next_vert = hull[hull_index];
+            var next_index = IntStream.range(0, in_points.length)
+                .filter(point_index -> in_points[point_index].equals(next_vert))
+                .findFirst().orElseThrow();
+            vertex_table[hull_index] = next_index;
+        }
+        return vertex_table;
     }
 
     private static int lowestPolarAngle(Vertex[] points, Vertex lowestPoint)

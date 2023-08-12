@@ -28,7 +28,8 @@ public class Meshes
     {
         var vertices = new Vertex[]{ new Vertex(0,0, IDENTITY_BONE_NAME, 1.0f) };
         var faces = new Face[]{ new Face(0, 0, 0) };
-        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty());
+        var hull = new int[]{ 0 };
+        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -48,7 +49,10 @@ public class Meshes
 
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 3);
-        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty());
+
+        var hull = new int[]{ 0, 1, 2, 3 };
+
+        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -70,7 +74,10 @@ public class Meshes
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 4);
         faces[2] = new Face(4, 2, 3);
-        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty());
+
+        var hull = new int[]{ 0, 1, 2, 3, 4 };
+
+        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
 
     }
 
