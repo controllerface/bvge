@@ -44,13 +44,55 @@ public class Models
         return aiImportFileFromMemory(data, flags, "");
     }
 
-    private static void loadMesh(int i,
+    private static Bone loadBone(int bone_index,
+                                 PointerBuffer bone_buffer,
+                                 Map<String, SceneNode> node_map,
+                                 Map<String, Bone> bone_map,
+                                 Map<Integer, Float> bone_weight_map)
+    {
+        Bone bone;
+        AIBone raw_bone = AIBone.create(bone_buffer.get(bone_index));
+        if (raw_bone.mNumWeights() <= 0)
+        {
+            return null;
+        }
+
+        var bone_name = raw_bone.mName().dataString();
+        var mOffset = raw_bone.mOffsetMatrix();
+        Matrix4f offset = new Matrix4f();
+        offset.set(mOffset.a1(), mOffset.b1(), mOffset.c1(), mOffset.d1(),
+            mOffset.a2(), mOffset.b2(), mOffset.c2(), mOffset.d2(),
+            mOffset.a3(), mOffset.b3(), mOffset.c3(), mOffset.d3(),
+            mOffset.a4(), mOffset.b4(), mOffset.c4(), mOffset.d4());
+
+        int weight_index = 0;
+        AIVertexWeight.Buffer w_buf = raw_bone.mWeights();
+        BoneWeight[] weights = new BoneWeight[raw_bone.mNumWeights()];
+        while (w_buf.remaining() > 0)
+        {
+            AIVertexWeight weight = w_buf.get();
+            weights[weight_index++] = new BoneWeight(weight.mVertexId(), weight.mWeight());
+            bone_weight_map.put(weight.mVertexId(), weight.mWeight());
+        }
+
+        var bone_node = node_map.get(bone_name);
+        if (bone_node == null)
+        {
+            throw new NullPointerException("No scene node for bone: " + bone_name
+                + " ensure node and geometry names match in blender");
+        }
+        bone = new Bone(bone_name, offset, weights, bone_node);
+        bone_map.put(bone_name, bone);
+        return bone;
+    }
+
+    private static void loadMesh(int mesh_index,
                                  Mesh[] meshes,
                                  PointerBuffer mesh_buffer,
                                  Map<String, SceneNode> node_map,
                                  Map<String, Bone> bone_map)
     {
-        AIMesh aiMesh = AIMesh.create(mesh_buffer.get(i));
+        AIMesh aiMesh = AIMesh.create(mesh_buffer.get(mesh_index));
         var mesh_name = aiMesh.mName().dataString();
         var mesh_node = node_map.get(mesh_name);
         if (mesh_node == null)
@@ -59,47 +101,21 @@ public class Models
                 + " ensure node and geometry names match in blender");
         }
 
-
         // load bone data
         int bone_count = aiMesh.mNumBones();
-        PointerBuffer mBones = aiMesh.mBones();
+        PointerBuffer bone_buffer = aiMesh.mBones();
         Bone mesh_bone = null;
         Map<Integer, Float> bone_weight_map = new HashMap<>();
-        for (int j = 0; j < bone_count; j++)
+        for (int bone_index = 0; bone_index < bone_count; bone_index++)
         {
-            AIBone bone = AIBone.create(mBones.get(j));
-            if (bone.mNumWeights() > 0)
+            var next_bone = loadBone(bone_index, bone_buffer, node_map, bone_map, bone_weight_map);
+            if (mesh_bone != null && next_bone != null)
             {
-                var bone_name = bone.mName().dataString();
-                if (mesh_bone != null)
-                {
-                    throw new IllegalStateException("Multiple bones per mesh is not currently supported");
-                }
-                var mOffset = bone.mOffsetMatrix();
-                Matrix4f offset = new Matrix4f();
-                offset.set(mOffset.a1(), mOffset.b1(), mOffset.c1(), mOffset.d1(),
-                    mOffset.a2(), mOffset.b2(), mOffset.c2(), mOffset.d2(),
-                    mOffset.a3(), mOffset.b3(), mOffset.c3(), mOffset.d3(),
-                    mOffset.a4(), mOffset.b4(), mOffset.c4(), mOffset.d4());
-
-                int weight_index = 0;
-                AIVertexWeight.Buffer w_buf = bone.mWeights();
-                BoneWeight[] weights = new BoneWeight[bone.mNumWeights()];
-                while (w_buf.remaining() > 0)
-                {
-                    AIVertexWeight weight = w_buf.get();
-                    weights[weight_index++] = new BoneWeight(weight.mVertexId(), weight.mWeight());
-                    bone_weight_map.put(weight.mVertexId(), weight.mWeight());
-                }
-
-                var bone_node = node_map.get(bone_name);
-                if (bone_node == null)
-                {
-                    throw new NullPointerException("No scene node for bone: " + bone_name
-                        + " ensure node and geometry names match in blender");
-                }
-                mesh_bone = new Bone(bone_name, offset, weights, bone_node);
-                bone_map.put(bone_name, mesh_bone);
+                throw new IllegalStateException("Multiple bones per mesh is not currently supported");
+            }
+            else if (next_bone != null)
+            {
+                mesh_bone = next_bone;
             }
         }
 
@@ -138,7 +154,7 @@ public class Models
 
         var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node);
         Meshes.register_mesh(mesh_name, new_mesh);
-        meshes[i] = new_mesh;
+        meshes[mesh_index] = new_mesh;
     }
 
     private static int loadModel(String model_path)
