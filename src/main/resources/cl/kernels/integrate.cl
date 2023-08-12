@@ -104,6 +104,7 @@ __kernel void integrate(
         // get this point
         float4 point = points[i];
         
+        // todo: move this idea somewhere else, it isn't goignt o work here anymore
         // force rotate the point to keep the object upright
         // todo: this should scale based on gravity, with zero g being no ro restriction of rotation
         //point = rotate_point(point, (float2)hull.xy, -rotation.x * 10);

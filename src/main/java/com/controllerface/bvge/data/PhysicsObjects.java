@@ -284,6 +284,10 @@ public class PhysicsObjects
 
             int[] hull_flags = OpenCL.arg_int2(flags, model_instance_id);
             int hull_id = Main.Memory.new_hull(transform, rotation, table, hull_flags);
+            if (bone_id != hull_id)
+            {
+                throw new RuntimeException("hull/bone alignment error: h=" + hull_id + " b=" + bone_id);
+            }
             if (i == model.root_index())
             {
                 root_hull_id = hull_id;

@@ -68,6 +68,7 @@ public class OpenCL
     static String kern_prepare_edges        = read_src("kernels/prepare_edges.cl");
     static String kern_prepare_transforms   = read_src("kernels/prepare_transforms.cl");
     static String kern_prepare_bounds       = read_src("kernels/prepare_bounds.cl");
+    static String kern_animate_hulls        = read_src("kernels/animate_hulls.cl");
 
     /**
      * Kernel function names
@@ -105,6 +106,7 @@ public class OpenCL
     static String kn_prepare_edges                      = "prepare_edges";
     static String kn_prepare_transforms                 = "prepare_transforms";
     static String kn_prepare_bounds                     = "prepare_bounds";
+    static String kn_animate_hulls                      = "animate_hulls";
 
     /**
      * CL Programs
@@ -124,6 +126,7 @@ public class OpenCL
     static cl_program p_prepare_edges;
     static cl_program p_prepare_transforms;
     static cl_program p_prepare_bounds;
+    static cl_program p_animate_hulls;
 
     /**
      * CL Kernels
@@ -161,6 +164,7 @@ public class OpenCL
     static cl_kernel k_prepare_edges;
     static cl_kernel k_prepare_transforms;
     static cl_kernel k_prepare_bounds;
+    static cl_kernel k_animate_hulls;
 
 
 
@@ -466,6 +470,8 @@ public class OpenCL
 
         p_prepare_bounds = cl_p(kern_prepare_bounds);
 
+        p_animate_hulls = cl_p(kern_animate_hulls);
+
         /*
          * Kernels
          */
@@ -502,6 +508,7 @@ public class OpenCL
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
         k_prepare_transforms                = cl_k(p_prepare_transforms, kn_prepare_transforms);
         k_prepare_bounds                    = cl_k(p_prepare_bounds, kn_prepare_bounds);
+        k_animate_hulls                     = cl_k(p_animate_hulls, kn_animate_hulls);
 
         // init physics buffers here
 
