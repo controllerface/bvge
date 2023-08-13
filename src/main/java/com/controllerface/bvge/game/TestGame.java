@@ -126,8 +126,6 @@ public class TestGame extends GameMode
         // circle entity
         var figure = ecs.registerEntity("player");
         var hull_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
-        //ecs.attachComponent(figure, Component.RigidBody2D, new HullIndex(hull_index));
-
         ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(figure, Component.RigidBody2D, new HullIndex(hull_index));
@@ -183,10 +181,10 @@ public class TestGame extends GameMode
     @Override
     public void load()
     {
-        genPlayer();
-        //genTestFigure(2, 200, 50);
+        //genPlayer();
+        genTestFigure(2, 100, 0);
 
-        genTestFigureNPC(4, 200, 50);
+        //genTestFigureNPC(2, 200, 50);
         //genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
@@ -206,8 +204,8 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
         //genNPCs(100, 10f, 10f, 0, 500);
 
-        //genNPCs(1, 41f, 40f, 100, 300);
-        //genFloor(200, 150f, 150f, -4000, -100);
+        genNPCs(1, 41f, 40f, 100, 300);
+        genFloor(200, 150f, 150f, -4000, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);
 

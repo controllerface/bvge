@@ -144,8 +144,6 @@ public class PhysicsObjects
     {
         int model_instance_id = next_model_id.getAndIncrement();
 
-        int armature_id = Main.Memory.new_armature(x, y);
-
         // get the model from the registry
         var model = Models.get_model_by_index(model_index);
 
@@ -311,6 +309,7 @@ public class PhysicsObjects
         }
 
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
+        int armature_id = Main.Memory.new_armature(x, y, root_hull_id);
 
         Models.register_model_instance(model_index, root_hull_id);
         return root_hull_id;
@@ -344,7 +343,7 @@ public class PhysicsObjects
         {
             var next = input[i];
             var vec = matrix4f.transform(new Vector4f(next.x(), next.y(), 0.0f, 1.0f));
-            System.out.printf("DEBUG CPU: id: %d x:%f y:%f\n", next.vert_ref_id(), next.x(), next.y());
+            //System.out.printf("DEBUG CPU: id: %d x:%f y:%f\n", next.vert_ref_id(), next.x(), next.y());
             output[i] = new Vertex(next.vert_ref_id(), vec.x, vec.y, next.bone_name(), next.bone_weight());
         }
         return output;

@@ -24,10 +24,13 @@ __kernel void create_edge(__global float4 *edges,
 }
 
 __kernel void create_armature(__global float2 *armatures,
+                              __global int *armature_flags,
                               int target,
-                              float2 new_armature)
+                              float2 new_armature,
+                              int new_armature_flag)
 {
     armatures[target] = new_armature; 
+    armature_flags[target] = new_armature_flag; 
 }
 
 __kernel void create_vertex_reference(__global float2 *vertex_references,

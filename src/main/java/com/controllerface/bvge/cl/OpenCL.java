@@ -198,6 +198,7 @@ public class OpenCL
     private static cl_mem mem_bone_index;
 
     private static cl_mem mem_armatures;
+    private static cl_mem mem_armature_flags;
 
 
 
@@ -546,6 +547,7 @@ public class OpenCL
         int bone_index_mem_size       = max_points * Sizeof.cl_int;
 
         int armature_mem_size         = max_points * Sizeof.cl_float2;
+        int armature_flags_mem_size   = max_points * Sizeof.cl_int;
 
         int total = transform_mem_size
             + accleration_mem_size
@@ -563,7 +565,8 @@ public class OpenCL
             + bone_reference_mem_size
             + bone_instance_mem_size
             + bone_index_mem_size
-            + armature_mem_size;
+            + armature_mem_size
+            + armature_flags_mem_size;
 
         System.out.println("------------- BUFFERS -------------");
         System.out.println("points            : " + points_mem_size);
@@ -583,6 +586,7 @@ public class OpenCL
         System.out.println("bone instances    : " + bone_instance_mem_size);
         System.out.println("bone index        : " + bone_index_mem_size);
         System.out.println("armatures         : " + armature_mem_size);
+        System.out.println("armature flags    : " + armature_flags_mem_size);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)    : " + total);
         System.out.println("               KB : " + ((float)total / 1024f));
@@ -607,6 +611,7 @@ public class OpenCL
         mem_bone_instances            = cl_new_buffer(FLAGS_WRITE_GPU, bone_instance_mem_size);
         mem_bone_index                = cl_new_buffer(FLAGS_WRITE_GPU, bone_index_mem_size);
         mem_armatures                 = cl_new_buffer(FLAGS_WRITE_GPU, armature_mem_size);
+        mem_armature_flags            = cl_new_buffer(FLAGS_WRITE_GPU, armature_flags_mem_size);
 
         cl_zero_buffer(mem_hull_acceleration, accleration_mem_size);
         cl_zero_buffer(mem_hull_rotation, rotation_mem_size);
@@ -625,6 +630,7 @@ public class OpenCL
         cl_zero_buffer(mem_bone_instances, bone_instance_mem_size);
         cl_zero_buffer(mem_bone_index, bone_index_mem_size);
         cl_zero_buffer(mem_armatures, armature_mem_size);
+        cl_zero_buffer(mem_armature_flags, armature_flags_mem_size);
     }
 
     public static void destroy()
@@ -793,14 +799,17 @@ public class OpenCL
 
 
 
-    public static void create_armature(int armature_index, float x, float y)
+    public static void create_armature(int armature_index, float x, float y, int flags)
     {
         var pnt_index = Pointer.to(arg_int(armature_index));
         var pnt_armature = Pointer.to(arg_float2(x, y));
+        var pnt_flags = Pointer.to(arg_int(flags));
 
         clSetKernelArg(k_create_armature, 0, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        clSetKernelArg(k_create_armature, 1, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(k_create_armature, 2, Sizeof.cl_float2, pnt_armature);
+        clSetKernelArg(k_create_armature, 1, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
+        clSetKernelArg(k_create_armature, 2, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_armature, 3, Sizeof.cl_float2, pnt_armature);
+        clSetKernelArg(k_create_armature, 4, Sizeof.cl_int, pnt_flags);
 
         k_call(k_create_armature, global_single_size);
     }
@@ -936,8 +945,9 @@ public class OpenCL
         clSetKernelArg(k_animate_hulls, 2, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
         clSetKernelArg(k_animate_hulls, 3, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
         clSetKernelArg(k_animate_hulls, 4, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        clSetKernelArg(k_animate_hulls, 5, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
-        clSetKernelArg(k_animate_hulls, 6, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
+        clSetKernelArg(k_animate_hulls, 5, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
+        clSetKernelArg(k_animate_hulls, 6, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
+        clSetKernelArg(k_animate_hulls, 7, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
 
         k_call(k_animate_hulls, global_work_size);
     }

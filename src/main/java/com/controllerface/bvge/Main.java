@@ -170,9 +170,9 @@ public class Main
             return idx / Width.HULL;
         }
 
-        public static int new_armature(float x, float y)
+        public static int new_armature(float x, float y, int flags)
         {
-            OpenCL.create_armature(armature_count(), x, y);
+            OpenCL.create_armature(armature_count(), x, y, flags);
             armature_index += Width.ARMATURE;
             var idx = armature_index - Width.ARMATURE;
             return idx / Width.ARMATURE;

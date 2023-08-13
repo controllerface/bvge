@@ -168,7 +168,7 @@ public class Models
             var aiVertex = buffer.get();
             float bone_weight = bone_weight_map.get(this_vert);
             var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y());
-            System.out.printf("DEBUG CPU (in): id: %d x:%f y:%f\n", vert_ref_id, aiVertex.x(), aiVertex.y());
+            //System.out.printf("DEBUG CPU (in): id: %d x:%f y:%f\n", vert_ref_id, aiVertex.x(), aiVertex.y());
             mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), mesh_bone.name(), bone_weight);
         }
         return mesh_vertices;
