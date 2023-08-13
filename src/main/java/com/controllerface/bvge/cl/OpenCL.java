@@ -44,6 +44,7 @@ public class OpenCL
     static String func_rotate_point         = read_src("functions/rotate_point.cl");
     static String func_angle_between        = read_src("functions/angle_between.cl");
     static String func_closest_point_circle = read_src("functions/closest_point_circle.cl");
+    static String func_matrix_transform     = read_src("functions/matrix_transform.cl");
 
     /**
      * CRUD
@@ -68,6 +69,7 @@ public class OpenCL
     static String kern_prepare_edges        = read_src("kernels/prepare_edges.cl");
     static String kern_prepare_transforms   = read_src("kernels/prepare_transforms.cl");
     static String kern_prepare_bounds       = read_src("kernels/prepare_bounds.cl");
+    static String kern_prepare_bones        = read_src("kernels/prepare_bones.cl");
     static String kern_animate_hulls        = read_src("kernels/animate_hulls.cl");
 
     /**
@@ -100,12 +102,14 @@ public class OpenCL
     static String kn_create_point                       = "create_point";
     static String kn_create_edge                        = "create_edge";
     static String kn_create_hull                        = "create_hull";
+    static String kn_create_armature                    = "create_armature";
     static String kn_create_vertex_reference            = "create_vertex_reference";
     static String kn_create_bone_reference              = "create_bone_reference";
     static String kn_create_bone                        = "create_bone";
     static String kn_prepare_edges                      = "prepare_edges";
     static String kn_prepare_transforms                 = "prepare_transforms";
     static String kn_prepare_bounds                     = "prepare_bounds";
+    static String kn_prepare_bones                      = "prepare_bones";
     static String kn_animate_hulls                      = "animate_hulls";
 
     /**
@@ -126,6 +130,7 @@ public class OpenCL
     static cl_program p_prepare_edges;
     static cl_program p_prepare_transforms;
     static cl_program p_prepare_bounds;
+    static cl_program p_prepare_bones;
     static cl_program p_animate_hulls;
 
     /**
@@ -158,12 +163,14 @@ public class OpenCL
     static cl_kernel k_create_point;
     static cl_kernel k_create_edge;
     static cl_kernel k_create_hull;
+    static cl_kernel k_create_armature;
     static cl_kernel k_create_vertex_reference;
     static cl_kernel k_create_bone_reference;
     static cl_kernel k_create_bone;
     static cl_kernel k_prepare_edges;
     static cl_kernel k_prepare_transforms;
     static cl_kernel k_prepare_bounds;
+    static cl_kernel k_prepare_bones;
     static cl_kernel k_animate_hulls;
 
 
@@ -189,6 +196,8 @@ public class OpenCL
     private static cl_mem mem_bone_references;
     private static cl_mem mem_bone_instances;
     private static cl_mem mem_bone_index;
+
+    private static cl_mem mem_armatures;
 
 
 
@@ -470,7 +479,10 @@ public class OpenCL
 
         p_prepare_bounds = cl_p(kern_prepare_bounds);
 
-        p_animate_hulls = cl_p(kern_animate_hulls);
+        p_prepare_bones = cl_p(func_matrix_transform, kern_prepare_bones);
+
+        p_animate_hulls = cl_p(func_matrix_transform, kern_animate_hulls);
+
 
         /*
          * Kernels
@@ -505,9 +517,11 @@ public class OpenCL
         k_create_bone_reference             = cl_k(p_gpu_crud, kn_create_bone_reference);
         k_create_vertex_reference           = cl_k(p_gpu_crud, kn_create_vertex_reference);
         k_create_bone                       = cl_k(p_gpu_crud, kn_create_bone);
+        k_create_armature                   = cl_k(p_gpu_crud, kn_create_armature);
         k_prepare_edges                     = cl_k(p_prepare_edges, kn_prepare_edges);
         k_prepare_transforms                = cl_k(p_prepare_transforms, kn_prepare_transforms);
         k_prepare_bounds                    = cl_k(p_prepare_bounds, kn_prepare_bounds);
+        k_prepare_bones                     = cl_k(p_prepare_bones, kn_prepare_bones);
         k_animate_hulls                     = cl_k(p_animate_hulls, kn_animate_hulls);
 
         // init physics buffers here
@@ -531,6 +545,8 @@ public class OpenCL
         int bone_instance_mem_size    = max_points * Sizeof.cl_float16;
         int bone_index_mem_size       = max_points * Sizeof.cl_int;
 
+        int armature_mem_size         = max_points * Sizeof.cl_float2;
+
         int total = transform_mem_size
             + accleration_mem_size
             + rotation_mem_size
@@ -546,7 +562,8 @@ public class OpenCL
             + vertex_index_mem_size
             + bone_reference_mem_size
             + bone_instance_mem_size
-            + bone_index_mem_size;
+            + bone_index_mem_size
+            + armature_mem_size;
 
         System.out.println("------------- BUFFERS -------------");
         System.out.println("points            : " + points_mem_size);
@@ -565,6 +582,7 @@ public class OpenCL
         System.out.println("bone references   : " + bone_reference_mem_size);
         System.out.println("bone instances    : " + bone_instance_mem_size);
         System.out.println("bone index        : " + bone_index_mem_size);
+        System.out.println("armatures         : " + armature_mem_size);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)    : " + total);
         System.out.println("               KB : " + ((float)total / 1024f));
@@ -588,6 +606,7 @@ public class OpenCL
         mem_bone_references           = cl_new_buffer(FLAGS_WRITE_GPU, bone_reference_mem_size);
         mem_bone_instances            = cl_new_buffer(FLAGS_WRITE_GPU, bone_instance_mem_size);
         mem_bone_index                = cl_new_buffer(FLAGS_WRITE_GPU, bone_index_mem_size);
+        mem_armatures                 = cl_new_buffer(FLAGS_WRITE_GPU, armature_mem_size);
 
         cl_zero_buffer(mem_hull_acceleration, accleration_mem_size);
         cl_zero_buffer(mem_hull_rotation, rotation_mem_size);
@@ -605,6 +624,7 @@ public class OpenCL
         cl_zero_buffer(mem_bone_references, bone_reference_mem_size);
         cl_zero_buffer(mem_bone_instances, bone_instance_mem_size);
         cl_zero_buffer(mem_bone_index, bone_index_mem_size);
+        cl_zero_buffer(mem_armatures, armature_mem_size);
     }
 
     public static void destroy()
@@ -662,6 +682,24 @@ public class OpenCL
 
         gl_acquire(vbo_mem);
         k_call(k_prepare_bounds, global_work_size);
+        gl_release(vbo_mem);
+    }
+
+    public static void GL_bones(int vboID, int vboOffset, int batchSize)
+    {
+        var vbo_mem = shared_mem.get(vboID);
+        long[] global_work_size = arg_long(batchSize);
+        long[] bone_offset = arg_long(vboOffset);
+
+        clSetKernelArg(k_prepare_bones, 0, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
+        clSetKernelArg(k_prepare_bones, 1, Sizeof.cl_mem, Pointer.to(mem_bone_index));
+        clSetKernelArg(k_prepare_bones, 2, Sizeof.cl_mem, Pointer.to(mem_bone_references));
+        clSetKernelArg(k_prepare_bones, 3, Sizeof.cl_mem, Pointer.to(mem_transform));
+        clSetKernelArg(k_prepare_bones, 4, Sizeof.cl_mem, Pointer.to(vbo_mem));
+        clSetKernelArg(k_prepare_bones, 5, Sizeof.cl_int, Pointer.to(bone_offset));
+
+        gl_acquire(vbo_mem);
+        k_call(k_prepare_bones, global_work_size);
         gl_release(vbo_mem);
     }
 
@@ -752,6 +790,21 @@ public class OpenCL
 
         k_call(k_create_edge, global_single_size);
     }
+
+
+
+    public static void create_armature(int armature_index, float x, float y)
+    {
+        var pnt_index = Pointer.to(arg_int(armature_index));
+        var pnt_armature = Pointer.to(arg_float2(x, y));
+
+        clSetKernelArg(k_create_armature, 0, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        clSetKernelArg(k_create_armature, 1, Sizeof.cl_int, pnt_index);
+        clSetKernelArg(k_create_armature, 2, Sizeof.cl_float2, pnt_armature);
+
+        k_call(k_create_armature, global_single_size);
+    }
+
 
 
     public static void create_vertex_reference(int vert_ref_index, float x, float y)
@@ -882,8 +935,9 @@ public class OpenCL
         clSetKernelArg(k_animate_hulls, 1, Sizeof.cl_mem, Pointer.to(mem_transform));
         clSetKernelArg(k_animate_hulls, 2, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
         clSetKernelArg(k_animate_hulls, 3, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
-        clSetKernelArg(k_animate_hulls, 4, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
-        clSetKernelArg(k_animate_hulls, 5, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
+        clSetKernelArg(k_animate_hulls, 4, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        clSetKernelArg(k_animate_hulls, 5, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
+        clSetKernelArg(k_animate_hulls, 6, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
 
         k_call(k_animate_hulls, global_work_size);
     }

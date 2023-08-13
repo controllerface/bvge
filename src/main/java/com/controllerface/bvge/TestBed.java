@@ -1,138 +1,63 @@
 package com.controllerface.bvge;
 
 import org.jocl.*;
+import org.joml.Matrix4f;
+import org.joml.Vector4f;
+
+import java.util.Arrays;
 
 import static org.jocl.CL.*;
 
 public class TestBed
 {
-    private static String programSource =
-        "__kernel void "+
-            "sampleKernel(__global float *a)"+
-            "{"+
-            "    int gidX = get_global_id(0);"+
-            "    int gidY = get_global_id(1);"+
-            "    a[gidX+3*gidY] *= 2;"+
-            "}";
+    private static final float[] indices1 =
+        {
+            22.4f, 28.3f, 27.6f, 61.7f,
+            58.3f, 31.5f, 48.2f, 47.6f,
+            63.6f, 75.1f, 21.5f, 34.5f,
+            29.1f, 36.2f, 64.7f, 28.2f,
+        };
 
-    private static cl_context context;
-    private static cl_command_queue commandQueue;
-    private static cl_kernel kernel;
-    private static cl_program program;
+    private static final float[] indices2 =
+        {
+            63.6f, 75.1f, 21.5f, 74.5f,
+            58.3f, 61.5f, 34.7f, 47.6f,
+            39.1f, 36.2f, 35.8f, 28.2f,
+            22.4f, 78.3f, 27.6f, 51.7f,
+        };
+
+    private static final float[] vector =
+        {
+            74.2f, 22.0f, 0f, 0f
+        };
 
     public static void main(String args[])
     {
-        defaultInitialization();
+        Matrix4f test1 = new Matrix4f();
+        Matrix4f test2 = new Matrix4f();
+        Vector4f test_vector =  new Vector4f();
 
-        // Create input array
-        float array[][] = {{1,2},{4,5},{7,8}};
+        test_vector.set(vector);
+        test1.set(indices1);
+        test2.set(indices2);
 
-        // Allocate the memory object
-        cl_mem mem = clCreateBuffer(context, CL_MEM_READ_WRITE,
-            Sizeof.cl_float * 2 * 3, null, null);
+        System.out.println(test_vector);
+        test1.transform(test_vector);
+        System.out.println(test_vector);
 
-        // Write the source array into the buffer
-        writeBuffer2D(commandQueue, mem, array);
-
-        // Execute the kernel
-        clSetKernelArg(kernel, 0, Sizeof.cl_mem, Pointer.to(mem));
-        clEnqueueNDRangeKernel(commandQueue, kernel, 2, null,
-            new long[]{2,3}, null, 0, null, null);
-
-        // Read the buffer back p2 the array
-        readBuffer2D(commandQueue, mem, array);
-
-        // Release kernel, program, and memory objects
-        clReleaseMemObject(mem);
-        clReleaseKernel(kernel);
-        clReleaseProgram(program);
-        clReleaseCommandQueue(commandQueue);
-        clReleaseContext(context);
-
-        System.out.println("Result: ");
-        for (int r=0; r<array.length; r++)
-        {
-            System.out.println(java.util.Arrays.toString(array[r]));
-        }
-    }
-
-    private static void writeBuffer2D(cl_command_queue commandQueue, cl_mem buffer, float array[][])
-    {
-        long byteOffset = 0;
-        for (int r=0; r<array.length; r++)
-        {
-            int bytes = array[r].length * Sizeof.cl_float;
-            clEnqueueWriteBuffer(
-                commandQueue, buffer, CL_TRUE, byteOffset, bytes,
-                Pointer.to(array[r]), 0, null, null);
-            byteOffset += bytes;
-        }
-    }
-
-    private static void readBuffer2D(cl_command_queue commandQueue, cl_mem buffer, float array[][])
-    {
-        long byteOffset = 0;
-        for (int r=0; r<array.length; r++)
-        {
-            int bytes = array[r].length * Sizeof.cl_float;
-            clEnqueueReadBuffer(
-                commandQueue, buffer, CL_TRUE, byteOffset, bytes,
-                Pointer.to(array[r]), 0, null, null);
-            byteOffset += bytes;
-        }
+        System.out.println(Arrays.toString(vector));
+        var r = matrix_transform(indices1, vector);
+        System.out.println(Arrays.toString(r));
     }
 
 
-    private static void defaultInitialization()
+    private static float[] matrix_transform(float[] matrix, float[] vector)
     {
-        // Obtain the platform IDs and initialize the context properties
-        cl_platform_id platforms[] = new cl_platform_id[1];
-        clGetPlatformIDs(platforms.length, platforms, null);
-        cl_context_properties contextProperties = new cl_context_properties();
-        contextProperties.addProperty(CL_CONTEXT_PLATFORM, platforms[0]);
-
-        // Create an OpenCL context on a GPU device
-        context = clCreateContextFromType(
-            contextProperties, CL_DEVICE_TYPE_GPU, null, null, null);
-        if (context == null)
-        {
-            // If no context for a GPU device could be created,
-            // try p2 create one for a CPU device.
-            context = clCreateContextFromType(
-                contextProperties, CL_DEVICE_TYPE_CPU, null, null, null);
-
-            if (context == null)
-            {
-                System.out.println("Unable p2 create a context");
-                return;
-            }
-        }
-
-        // Enable exceptions and subsequently omit error checks in this sample
-        CL.setExceptionsEnabled(true);
-
-        // Get the list of GPU devices associated with the context
-        long numBytes[] = new long[1];
-        clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, null, numBytes);
-
-        // Obtain the cl_device_id for the first device
-        int numDevices = (int) numBytes[0] / Sizeof.cl_device_id;
-        cl_device_id devices[] = new cl_device_id[numDevices];
-        clGetContextInfo(context, CL_CONTEXT_DEVICES, numBytes[0],
-            Pointer.to(devices), null);
-
-        // Create a command-queue
-        commandQueue =
-            clCreateCommandQueue(context, devices[0], 0, null);
-
-        // Create the program p1 the source code
-        program = clCreateProgramWithSource(context,
-            1, new String[]{ programSource }, null, null);
-
-        // Build the program
-        clBuildProgram(program, 0, null, null, null, null);
-
-        // Create the kernel
-        kernel = clCreateKernel(program, "sampleKernel", null);
+        float[] result = new float[4];
+        result[0] = matrix[0] * vector[0] + matrix[4] * vector[1] + matrix[8] * vector[2] + matrix[12] * vector[3];
+        result[1] = matrix[1] * vector[0] + matrix[5] * vector[1] + matrix[9] * vector[2] + matrix[13] * vector[3];
+        result[2] = matrix[2] * vector[0] + matrix[6] * vector[1] + matrix[10] * vector[2] + matrix[14] * vector[3];
+        result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
+        return result;
     }
 }

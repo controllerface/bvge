@@ -94,6 +94,8 @@ public class VerletPhysics extends GameSystem
         }
     }
 
+    private boolean test = true;
+
     private void tickSimulation(float dt)
     {
         // todo: need to account for this in the kernel somehow so it can be
@@ -101,7 +103,11 @@ public class VerletPhysics extends GameSystem
         //  the memory is transferred out.
         updateControllableBodies(dt);
 
-        OpenCL.animate_hulls();
+        if (test)
+        {
+            OpenCL.animate_hulls();
+            //test = false;
+        }
 
         // integration
         OpenCL.integrate(dt, spatialPartition);

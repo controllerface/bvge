@@ -148,7 +148,7 @@ public class TestGame extends GameMode
         // player entity
         var player = ecs.registerEntity("player");
 
-        var hull_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, FLAG_NONE | FLAG_POLYGON);
+        var hull_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, FLAG_NONE | FLAG_POLYGON | FLAG_NO_BONES);
 
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
@@ -174,6 +174,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
         ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
         //ecs.registerSystem(new CrateRenderer(ecs));
@@ -185,11 +186,11 @@ public class TestGame extends GameMode
         genPlayer();
         //genTestFigure(2, 200, 50);
 
-        genTestFigureNPC(2, 200, 50);
+        genTestFigureNPC(4, 200, 50);
         //genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
-        genTestCircle(30,20, 55);
+        //genTestCircle(30,20, 55);
 
         //genCircles(100, 10f, 10f, 0, 2500);
 
@@ -205,8 +206,8 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
         //genNPCs(100, 10f, 10f, 0, 500);
 
-        genNPCs(1, 41f, 40f, 100, 300);
-        genFloor(200, 150f, 150f, -4000, -100);
+        //genNPCs(1, 41f, 40f, 100, 300);
+        //genFloor(200, 150f, 150f, -4000, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);
 

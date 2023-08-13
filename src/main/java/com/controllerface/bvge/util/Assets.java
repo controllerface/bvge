@@ -22,7 +22,7 @@ public class Assets
         else
         {
             AbstractShader shader;
-            if (resourceName.contains("circle_shader"))
+            if (resourceName.contains("circle_shader") || resourceName.contains("bone_shader"))
             {
                 shader = new CircleShader(resourceName);
             }

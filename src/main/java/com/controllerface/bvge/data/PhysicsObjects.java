@@ -36,6 +36,8 @@ public class PhysicsObjects
     public static int FLAG_STATIC_OBJECT = 0x01;
     public static int FLAG_CIRCLE = 0x02;
     public static int FLAG_POLYGON = 0x04;
+    public static int FLAG_NO_BONES = 0x08;
+
     public static int FLAG_INTERIOR_EDGE = 0x01;
 
     public static float edgeDistance(float[] a, float[] b)
@@ -68,7 +70,7 @@ public class PhysicsObjects
         var rotation = OpenCL.arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int[] _flag = OpenCL.arg_int2(FLAG_CIRCLE, next_model_id.getAndIncrement());
+        int[] _flag = OpenCL.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_model_id.getAndIncrement());
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
         return hull_id;
@@ -130,23 +132,30 @@ public class PhysicsObjects
 
     public static int dynamic_Box(float x, float y, float size)
     {
-        return box(x, y, size, FLAG_NONE);
+        return box(x, y, size, FLAG_NONE | FLAG_NO_BONES);
     }
 
     public static int static_box(float x, float y, float size)
     {
-        return box(x, y, size, FLAG_STATIC_OBJECT);
+        return box(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES);
     }
 
     public static int wrap_model(int model_index, float x, float y, float size, int flags)
     {
         int model_instance_id = next_model_id.getAndIncrement();
 
+        int armature_id = Main.Memory.new_armature(x, y);
+
         // get the model from the registry
         var model = Models.get_model_by_index(model_index);
 
         // we need to track which hull is the root hull for this model
         int root_hull_id = -1;
+
+        Mesh root_mesh = null;
+
+        // todo: need some kind of mesh buffer to store their relationships.
+        //  will be needed to implement pins/joints.
 
         // loop through each mesh and generate a hull for it
         var meshes = model.meshes();
@@ -291,6 +300,7 @@ public class PhysicsObjects
             if (i == model.root_index())
             {
                 root_hull_id = hull_id;
+                root_mesh = next_mesh;
             }
         }
 
@@ -299,6 +309,8 @@ public class PhysicsObjects
             throw new IllegalStateException("There was no root hull determined. "
                 + "Check model data to ensure it is correct");
         }
+
+        // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
 
         Models.register_model_instance(model_index, root_hull_id);
         return root_hull_id;
@@ -332,6 +344,7 @@ public class PhysicsObjects
         {
             var next = input[i];
             var vec = matrix4f.transform(new Vector4f(next.x(), next.y(), 0.0f, 1.0f));
+            System.out.printf("DEBUG CPU: id: %d x:%f y:%f\n", next.vert_ref_id(), next.x(), next.y());
             output[i] = new Vertex(next.vert_ref_id(), vec.x, vec.y, next.bone_name(), next.bone_weight());
         }
         return output;
@@ -459,7 +472,7 @@ public class PhysicsObjects
             var next_vert = hull[hull_index];
             var next_index = IntStream.range(0, in_points.length)
                 .filter(point_index -> in_points[point_index].equals(next_vert))
-                .findFirst().orElseThrow();
+                .findFirst().orElseThrow(() -> new RuntimeException("Vertex could not be found"));
             vertex_table[hull_index] = next_index;
         }
         return vertex_table;

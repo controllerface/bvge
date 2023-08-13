@@ -84,6 +84,7 @@ public class Main
 
         public static class Width
         {
+            public static final int ARMATURE =2;
             public static final int VERTEX =2;
             public static final int HULL = 4;
             public static final int POINT = 4;
@@ -91,19 +92,21 @@ public class Main
             public static final int BONE = 16;
         }
 
-        private static final int MAX_BONES = 100_000;
-        private static final int MAX_VERTICES = 1_000_000;
-
         private static final int MAX_HULLS = 100_000;
         private static final int MAX_POINTS = 1_000_000;
 
         private static int hull_index = 0;
         private static int point_index = 0;
         private static int edge_index  = 0;
-
         private static int vertex_ref_index = 0;
         private static int bone_ref_index = 0;
         private static int bone_index = 0;
+        private static int armature_index = 0;
+
+        public static int armature_count()
+        {
+            return armature_index / Width.ARMATURE;
+        }
 
         public static int hull_count()
         {
@@ -135,6 +138,9 @@ public class Main
             return bone_index / Width.BONE;
         }
 
+
+
+
         public static int new_edge(int p1, int p2, float l)
         {
             return new_edge(p1, p2, l, 0);
@@ -164,9 +170,17 @@ public class Main
             return idx / Width.HULL;
         }
 
+        public static int new_armature(float x, float y)
+        {
+            OpenCL.create_armature(armature_count(), x, y);
+            armature_index += Width.ARMATURE;
+            var idx = armature_index - Width.ARMATURE;
+            return idx / Width.ARMATURE;
+        }
+
         public static int new_vertex_reference(float x, float y)
         {
-            OpenCL.create_vertex_reference(point_count(), x, y);
+            OpenCL.create_vertex_reference(vertex_ref_count(), x, y);
             vertex_ref_index += Width.VERTEX;
             var idx = vertex_ref_index - Width.VERTEX;
             return idx / Width.VERTEX;
