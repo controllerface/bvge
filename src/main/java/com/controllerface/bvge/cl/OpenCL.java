@@ -873,6 +873,23 @@ public class OpenCL
 
     //#region Physics Simulation
 
+
+    public static void animate_hulls()
+    {
+        long[] global_work_size = new long[]{Main.Memory.point_count()};
+
+        clSetKernelArg(k_animate_hulls, 0, Sizeof.cl_mem, Pointer.to(mem_points));
+        clSetKernelArg(k_animate_hulls, 1, Sizeof.cl_mem, Pointer.to(mem_transform));
+        clSetKernelArg(k_animate_hulls, 2, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        clSetKernelArg(k_animate_hulls, 3, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
+        clSetKernelArg(k_animate_hulls, 4, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
+        clSetKernelArg(k_animate_hulls, 5, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
+
+        k_call(k_animate_hulls, global_work_size);
+    }
+
+
+
     public static void integrate(float delta_time, SpatialPartition spatialPartition)
     {
         long[] global_work_size = new long[]{Main.Memory.hull_count()};

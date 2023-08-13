@@ -134,6 +134,14 @@ public class TestGame extends GameMode
         ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1500));
     }
 
+    private void genTestFigureNPC(float size, float x, float y)
+    {
+        // circle entity
+        var figure = ecs.registerEntity(null);
+        var hull_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
+        ecs.attachComponent(figure, Component.RigidBody2D, new HullIndex(hull_index));
+    }
+
 
     private void genPlayer()
     {
@@ -174,8 +182,10 @@ public class TestGame extends GameMode
     @Override
     public void load()
     {
-        //genPlayer();
-        genTestFigure(2, 200, 50);
+        genPlayer();
+        //genTestFigure(2, 200, 50);
+
+        genTestFigureNPC(2, 200, 50);
         //genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);

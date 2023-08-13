@@ -101,6 +101,8 @@ public class VerletPhysics extends GameSystem
         //  the memory is transferred out.
         updateControllableBodies(dt);
 
+        OpenCL.animate_hulls();
+
         // integration
         OpenCL.integrate(dt, spatialPartition);
 

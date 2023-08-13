@@ -10,6 +10,7 @@ inline float4 transform(float16 matrix, float4 vector)
 
 __kernel void animate_hulls(__global float4 *points,
                             __global float4 *hulls,
+                            __global int2 *hull_flags,
                             __global int2 *vertex_tables,
                             __global float2 *vertex_references,
                             __global float16 *bones)
@@ -20,11 +21,15 @@ __kernel void animate_hulls(__global float4 *points,
     float2 reference_vertex = vertex_references[vertex_table.x];
     float16 bone = bones[vertex_table.y];
     float4 hull = hulls[vertex_table.y];
+    int2 flags = hull_flags[vertex_table.y];
+    bool is_circle = (flags.x & 0x02) !=0;
+    if (is_circle) return;
+    
     float4 padded = (float4)(reference_vertex.x, reference_vertex.y, 0.0f, 0.0f);
     float4 after_bone = transform(bone, padded);
     float2 un_padded = after_bone.xy;
-    un_padded.x *= hull.x;
-    un_padded.y *= hull.y;
+    un_padded.x *= hull.z;
+    un_padded.y *= hull.w;
     un_padded.x += point.x;
     un_padded.y += point.y;
     point.x = un_padded.x;
