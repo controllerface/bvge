@@ -75,6 +75,7 @@ __kernel void create_hull(__global float4 *hulls,
 
 // read functions
 
+// todo: change to armature
 __kernel void read_position(__global float4 *hulls,
                             __global float *output,
                             int target)
@@ -87,6 +88,7 @@ __kernel void read_position(__global float4 *hulls,
 
 // update functions
 
+// todo: change to armature
 __kernel void update_accel(__global float2 *hull_accel,
                            int target,
                            float2 new_value)
@@ -97,6 +99,7 @@ __kernel void update_accel(__global float2 *hull_accel,
     hull_accel[target] = accel;
 }
 
+// todo: implement for armatures
 __kernel void rotate_hull(__global float4 *hulls,
                           __global int4 *element_tables,
                           __global float4 *points,

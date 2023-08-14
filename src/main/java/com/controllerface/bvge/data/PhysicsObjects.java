@@ -146,7 +146,6 @@ public class PhysicsObjects
     {
         int armature_id = Main.Memory.new_armature(x, y, -1);
 
-
         // get the model from the registry
         var model = Models.get_model_by_index(model_index);
 

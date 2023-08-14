@@ -877,6 +877,7 @@ public class OpenCL
         k_call(k_create_hull, global_single_size);
     }
 
+    // todo: change to armature
     public static void update_accel(int hull_index, float acc_x, float acc_y)
     {
         var pnt_index = Pointer.to(arg_int(hull_index));
@@ -903,6 +904,7 @@ public class OpenCL
         k_call(k_rotate_hull, global_single_size);
     }
 
+    // todo: change to armature
     public static float[] read_position(int hull_index)
     {
         if (physicsBuffer == null) return null;

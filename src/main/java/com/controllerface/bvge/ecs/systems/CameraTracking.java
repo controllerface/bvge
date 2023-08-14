@@ -24,6 +24,7 @@ public class CameraTracking extends GameSystem
         HullIndex hull = Component.RigidBody2D.forEntity(ecs, focusTarget.getKey());
         if (hull == null) return;
 
+        // todo: change to armature
         float[] pos = OpenCL.read_position(hull.index());
 
         // will be null for the first few frames while the loop is primed

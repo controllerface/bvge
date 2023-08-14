@@ -52,6 +52,8 @@ public class VerletPhysics extends GameSystem
             String entity = entry.getKey();
             GameComponent component = entry.getValue();
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
+
+            // todo: change to armature
             HullIndex hull = Component.RigidBody2D.forEntity(ecs, entity);
             LinearForce force = Component.LinearForce.forEntity(ecs, entity);
 
@@ -83,14 +85,16 @@ public class VerletPhysics extends GameSystem
 
             if (vectorBuffer1.x != 0f || vectorBuffer1.y != 0)
             {
+                // todo: change to armature
                 OpenCL.update_accel(hull.index(), vectorBuffer1.x, vectorBuffer1.y);
             }
 
-            if (controlPoints.is_rotating_right() ^ controlPoints.is_rotating_left())
-            {
-                float angle = controlPoints.is_rotating_right() ? -200f : 200f;
-                OpenCL.rotate_hull(hull.index(), angle * dt * dt);
-            }
+            // todo: implement this for armatures
+//            if (controlPoints.is_rotating_right() ^ controlPoints.is_rotating_left())
+//            {
+//                float angle = controlPoints.is_rotating_right() ? -200f : 200f;
+//                OpenCL.rotate_hull(hull.index(), angle * dt * dt);
+//            }
         }
     }
 
@@ -135,6 +139,7 @@ public class VerletPhysics extends GameSystem
 
     private void simulate(float dt)
     {
+        // todo: change to armature
         var hulls = ecs.getComponents(Component.RigidBody2D);
 
         // if somehow there are no hulls, just bail. something is probably really wrong

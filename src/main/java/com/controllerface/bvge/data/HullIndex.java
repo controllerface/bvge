@@ -45,5 +45,5 @@ import com.controllerface.bvge.ecs.components.GameComponent;
  * 15:
  *  */
 
-
+// todo: change to armature
 public record HullIndex(int index) implements GameComponent { }
