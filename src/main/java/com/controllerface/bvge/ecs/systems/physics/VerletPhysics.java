@@ -102,7 +102,7 @@ public class VerletPhysics extends GameSystem
         updateControllableBodies(dt);
 
 
-        //OpenCL.animate_hulls();
+        OpenCL.animate_hulls();
 
         // integration
         OpenCL.integrate(dt, spatialPartition);

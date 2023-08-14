@@ -13,10 +13,10 @@ __kernel void animate_hulls(__global float4 *points,
     float2 reference_vertex = vertex_references[vertex_table.x];
     float16 bone = bones[vertex_table.y];
     float4 hull = hulls[vertex_table.y];
-    float2 armature = armatures[1]; // todo: no hard code
-    int armature_flag = armature_flags[1]; // todo: no hard code
-    int2 flags = hull_flags[vertex_table.y];
-    bool no_bones = (flags.x & 0x08) !=0;
+    float2 armature = armatures[0]; // todo: no hard code
+    int armature_flag = armature_flags[0]; // todo: no hard code
+    int2 hull_flag = hull_flags[vertex_table.y];
+    bool no_bones = (hull_flag.x & 0x08) !=0;
     if (no_bones) return;
 
     float4 root_hull = hulls[armature_flag];
@@ -30,16 +30,13 @@ __kernel void animate_hulls(__global float4 *points,
 
     float2 un_padded = after_bone.xy;
 
-
     un_padded.x *= hull.z;
     un_padded.y *= hull.w;
 
     un_padded += armature;
-    //un_padded += root_hull.xy - armature;
-
+  
     point.x = un_padded.x;
     point.y = un_padded.y;
-
 
     points[gid] = point;
 }
