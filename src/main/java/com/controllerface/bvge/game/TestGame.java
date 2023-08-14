@@ -185,7 +185,7 @@ public class TestGame extends GameMode
         genTestFigure(2, 100, 0);
 
         //genTestFigureNPC(2, 200, 50);
-        //genTestCircle(20,0, 50);
+        genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
         //genTestCircle(30,20, 55);
