@@ -8,7 +8,7 @@ them before this kernel completes.
  */
 __kernel void integrate(
     __global float4 *hulls,
-    __global float2 *armatures,
+    __global float4 *armatures,
     __global int *armature_flags,
     __global int4 *element_tables,
     __global float2 *armature_accel,
@@ -40,7 +40,7 @@ __kernel void integrate(
     float4 hull = hulls[gid];
     int4 element_table = element_tables[gid];
     int2 hull_1_flags = hull_flags[gid];
-    float2 armature = armatures[hull_1_flags.y];
+    float4 armature = armatures[hull_1_flags.y];
     int armature_flag = armature_flags[hull_1_flags.y];
     float2 acceleration = armature_accel[hull_1_flags.y];
     float2 rotation = hull_rotations[gid];
@@ -84,7 +84,8 @@ __kernel void integrate(
     if (armature_flag == gid)
     {
         // todo: do full integration, this is not correct and just moves a little bit
-        armature += acc;
+        armature.x += acc.x;
+        armature.y += acc.y;
         armatures[hull_1_flags.y] = armature;
     }
 

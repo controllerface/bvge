@@ -84,7 +84,7 @@ public class Main
 
         public static class Width
         {
-            public static final int ARMATURE =2;
+            public static final int ARMATURE = 4;
             public static final int VERTEX =2;
             public static final int HULL = 4;
             public static final int POINT = 4;

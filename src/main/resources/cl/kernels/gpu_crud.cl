@@ -23,10 +23,10 @@ __kernel void create_edge(__global float4 *edges,
     edges[target] = new_edge; 
 }
 
-__kernel void create_armature(__global float2 *armatures,
+__kernel void create_armature(__global float4 *armatures,
                               __global int *armature_flags,
                               int target,
-                              float2 new_armature,
+                              float4 new_armature,
                               int new_armature_flag)
 {
     armatures[target] = new_armature; 
@@ -75,11 +75,11 @@ __kernel void create_hull(__global float4 *hulls,
 
 // read functions
 
-__kernel void read_position(__global float2 *armatures,
+__kernel void read_position(__global float4 *armatures,
                             __global float *output,
                             int target)
 {
-    float2 armature = armatures[target];
+    float4 armature = armatures[target];
     output[0] = armature.x;
     output[1] = armature.y;
 }
