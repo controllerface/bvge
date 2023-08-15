@@ -83,9 +83,45 @@ __kernel void integrate(
     // only update the aramture during the update of the root hull, otherwise movement would be magnified 
     if (armature_flag == gid)
     {
-        // todo: do full integration, this is not correct and just moves a little bit
-        armature.x += acc.x;
-        armature.y += acc.y;
+
+        float2 pos = armature.xy;
+        float2 prv = armature.zw;
+
+        if (!is_static)
+        {
+            // subtract prv from pos to get the difference this frame
+            float2 diff = pos - prv;
+            diff = acc + diff;
+
+            // add friction component todo: take this in as an argument, gravity too
+            diff.x *= friction;
+            diff.y *= friction;
+            
+            // set the prv to current pos
+            prv.x = pos.x;
+            prv.y = pos.y;
+
+            if (diff.x < MINIMUM_DIFF && diff.x > -MINIMUM_DIFF)
+            {
+                diff.x = 0.0f;
+            }
+
+            if (diff.y < MINIMUM_DIFF && diff.y > -MINIMUM_DIFF)
+            {
+                diff.y = 0.0f;
+            }
+
+            // update pos
+            pos = pos + diff;
+
+            // finally, update the pos and prv in the object
+            armature.x = pos.x;
+            armature.y = pos.y;
+            armature.z = prv.x;
+            armature.w = prv.y;
+        }
+
+                // todo: do full integration, this is not correct and just moves a little bit
         armatures[hull_1_flags.y] = armature;
     }
 

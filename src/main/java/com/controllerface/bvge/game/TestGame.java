@@ -154,7 +154,7 @@ public class TestGame extends GameMode
         //genTestCircle(20,0, 100);
         //genTestCircle(30,20, 55);
 
-        //genCircles(100, 10f, 10f, 0, 2500);
+        genCircles(100, 10f, 10f, 0, 2500);
 
         //genCircles(100, 80f, 100f, 2100, 2100);
 
