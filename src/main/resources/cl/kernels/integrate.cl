@@ -8,8 +8,10 @@ them before this kernel completes.
  */
 __kernel void integrate(
     __global float4 *hulls,
+    __global float2 *armatures,
+    __global int *armature_flags,
     __global int4 *element_tables,
-    __global float2 *hull_accel,
+    __global float2 *armature_accel,
     __global float2 *hull_rotations,
     __global float4 *points,
     __global float4 *bounds,
@@ -38,7 +40,9 @@ __kernel void integrate(
     float4 hull = hulls[gid];
     int4 element_table = element_tables[gid];
     int2 hull_1_flags = hull_flags[gid];
-    float2 acceleration = hull_accel[gid];
+    float2 armature = armatures[hull_1_flags.y];
+    int armature_flag = armature_flags[hull_1_flags.y];
+    float2 acceleration = armature_accel[hull_1_flags.y];
     float2 rotation = hull_rotations[gid];
     float4 bounding_box = bounds[gid];
     int4 bounds_index = bounds_index_data[gid];
@@ -54,7 +58,7 @@ __kernel void integrate(
     // {
     //     acceleration.x = 0;
     //     acceleration.y = 0;
-    //     hull_accel[gid] = acceleration;
+    //     armature_accel[gid] = acceleration;
 
     //     bounds_bank.y = 0;
     //     bounds_bank_data[gid] = bounds_bank;
@@ -75,6 +79,14 @@ __kernel void integrate(
     }
    	acc.x = acc.x * (dt * dt);
    	acc.y = acc.y * (dt * dt);
+
+    // only update the aramture during the update of the root hull, otherwise movement would be magnified 
+    if (armature_flag == gid)
+    {
+        // todo: do full integration, this is not correct and just moves a little bit
+        armature += acc;
+        armatures[hull_1_flags.y] = armature;
+    }
 
     // reset acceleration to zero for the next frame
     acceleration.x = 0;
@@ -261,7 +273,7 @@ __kernel void integrate(
     // store updated hull and bounds data in result buffers
     bounds[gid] = bounding_box;
     hulls[gid] = hull;
-    hull_accel[gid] = acceleration;
+    armature_accel[gid] = acceleration;
     hull_rotations[gid] = rotation;
     bounds_index_data[gid] = bounds_index;
     bounds_bank_data[gid] = bounds_bank;

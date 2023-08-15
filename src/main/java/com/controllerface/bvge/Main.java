@@ -170,6 +170,14 @@ public class Main
             return idx / Width.HULL;
         }
 
+        public static int next_armature_id()
+        {
+            var current_armature_index = armature_index;
+            current_armature_index += Width.ARMATURE;
+            var idx = current_armature_index - Width.ARMATURE;
+            return idx / Width.ARMATURE;
+        }
+
         public static int new_armature(float x, float y, int flags)
         {
             OpenCL.create_armature(armature_count(), x, y, flags);

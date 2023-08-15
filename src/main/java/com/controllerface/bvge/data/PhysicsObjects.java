@@ -45,7 +45,7 @@ public class PhysicsObjects
 
     public static int particle(float x, float y, float size)
     {
-        int armature_id = Main.Memory.new_armature(x, y, -1);
+        int next_armature_id = Main.Memory.next_armature_id();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
         var mesh = Models.get_model_by_index(Models.CIRCLE_MODEL).meshes()[0];
@@ -70,15 +70,16 @@ public class PhysicsObjects
         var rotation = OpenCL.arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int[] _flag = OpenCL.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, armature_id);
+        int[] _flag = OpenCL.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
+        int armature_id = Main.Memory.new_armature(x, y, hull_id);
         Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
-        return hull_id;
+        return armature_id;
     }
 
     public static int box(float x, float y, float size, int flags)
     {
-        int armature_id = Main.Memory.new_armature(x, y, -1);
+        int next_armature_id = Main.Memory.next_armature_id();
 
         // get the box mesh
         var mesh = Models.get_model_by_index(CRATE_MODEL).meshes()[0];
@@ -125,11 +126,14 @@ public class PhysicsObjects
         var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = OpenCL.arg_float2(0, angle);
 
+
         // there is only one hull, so it is the main hull ID by default
-        int [] _flag =  OpenCL.arg_int2(flags | FLAG_POLYGON, armature_id);
+        int [] _flag =  OpenCL.arg_int2(flags | FLAG_POLYGON, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
+        int armature_id = Main.Memory.new_armature(x, y, hull_id);
+
         Models.register_model_instance(CRATE_MODEL, hull_id);
-        return hull_id;
+        return armature_id;
     }
 
     public static int dynamic_Box(float x, float y, float size)
@@ -144,7 +148,9 @@ public class PhysicsObjects
 
     public static int wrap_model(int model_index, float x, float y, float size, int flags)
     {
-        int armature_id = Main.Memory.new_armature(x, y, -1);
+        // we need to know the next armature ID before we create it so it can be used for hulls
+        // note: like all other memory accessing methods, this relies on single-threaded operation
+        int next_armature_id =  Main.Memory.next_armature_id();
 
         // get the model from the registry
         var model = Models.get_model_by_index(model_index);
@@ -291,7 +297,7 @@ public class PhysicsObjects
             var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
             var rotation = OpenCL.arg_float2(0, angle);
 
-            int[] hull_flags = OpenCL.arg_int2(flags, armature_id);
+            int[] hull_flags = OpenCL.arg_int2(flags, next_armature_id);
             int hull_id = Main.Memory.new_hull(transform, rotation, table, hull_flags);
             if (bone_id != hull_id)
             {
@@ -312,9 +318,9 @@ public class PhysicsObjects
 
 
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
-
+        int armature_id = Main.Memory.new_armature(x, y, root_hull_id);
         Models.register_model_instance(model_index, root_hull_id);
-        return root_hull_id;
+        return armature_id;
     }
 
 

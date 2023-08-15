@@ -1,6 +1,6 @@
 package com.controllerface.bvge.game;
 
-import com.controllerface.bvge.data.HullIndex;
+import com.controllerface.bvge.data.ArmatureIndex;
 import com.controllerface.bvge.data.LinearForce;
 import com.controllerface.bvge.data.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
@@ -35,32 +35,15 @@ public class TestGame extends GameMode
     {
         // trivial change for new commit
         System.out.println("generating: " + box_size * box_size + " NPCs..");
-        var rand = new Random();
         for (int i = 0; i < box_size; i++)
         {
             for (int j = 0; j < box_size; j++)
             {
-                float r = rand.nextFloat() / 5.0f;
-                float g = rand.nextFloat() / 5.0f;
-                float b = rand.nextFloat();
-
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-
                 var npc = ecs.registerEntity(null);
-                var scomp2 = new SpriteComponent();
-                var sprite2 = new Sprite();
-                var tex2 = Assets.texture("assets/images/blendImage2.png");
-                sprite2.setTexture(tex2);
-                sprite2.setHeight(32);
-                sprite2.setWidth(32);
-                scomp2.setSprite(sprite2);
-                scomp2.setColor(new Vector4f(r,g,b,1));
-
-                // todo: change to armature
-                var hull_index = PhysicsObjects.dynamic_Box(x, y, size);
-                ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-                ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
+                var armature_index = PhysicsObjects.dynamic_Box(x, y, size);
+                ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
     }
@@ -69,22 +52,15 @@ public class TestGame extends GameMode
     {
         // trivial change for new commit
         System.out.println("generating: " + box_size * box_size + " NPCs..");
-        var rand = new Random();
         for (int i = 0; i < box_size; i++)
         {
             for (int j = 0; j < box_size; j++)
             {
-                float r = rand.nextFloat() / 5.0f;
-                float g = rand.nextFloat() / 5.0f;
-                float b = rand.nextFloat();
-
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-
-                // todo: change to armature
                 var npc = ecs.registerEntity(null);
-                var hull_index = PhysicsObjects.particle(x, y, size);
-                ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
+                var armature_index = PhysicsObjects.particle(x, y, size);
+                ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
     }
@@ -92,29 +68,13 @@ public class TestGame extends GameMode
     private void genFloor(int floor_size, float spacing, float size, float start_x, float start_y)
     {
         System.out.println("generating floor size: " + floor_size);
-        var rand = new Random();
         for (int i = 0; i < floor_size; i++)
         {
-            float r = rand.nextFloat() / 5.0f;
-            float g = rand.nextFloat() / 5.0f;
-            float b = rand.nextFloat();
             float x = start_x + i * spacing;
             float y = start_y;
-
             var npc = ecs.registerEntity(null);
-            var scomp2 = new SpriteComponent();
-            var sprite2 = new Sprite();
-            var tex2 = Assets.texture("assets/images/blendImage2.png");
-            sprite2.setTexture(tex2);
-            sprite2.setHeight(32);
-            sprite2.setWidth(32);
-            //scomp2.setSprite(sprite2);
-            scomp2.setColor(new Vector4f(r,g,b,1));
-
-            // todo: change to armature
-            var hull_index = PhysicsObjects.static_box(x, y, size);
-            ecs.attachComponent(npc, Component.SpriteComponent, scomp2);
-            ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
+            var armature_index = PhysicsObjects.static_box(x, y, size);
+            ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
 
@@ -122,9 +82,8 @@ public class TestGame extends GameMode
     {
         // circle entity
         var npc = ecs.registerEntity(null);
-        // todo: change to armature
-        var hull_index = PhysicsObjects.particle(x, y, size);
-        ecs.attachComponent(npc, Component.RigidBody2D, new HullIndex(hull_index));
+        var armature_index = PhysicsObjects.particle(x, y, size);
+        ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestFigure(float size, float x, float y)
@@ -132,11 +91,10 @@ public class TestGame extends GameMode
         // circle entity
         var figure = ecs.registerEntity("player");
 
-        // todo: change to armature
-        var hull_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
         ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
-        ecs.attachComponent(figure, Component.RigidBody2D, new HullIndex(hull_index));
+        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
         ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1500));
     }
 
@@ -144,10 +102,8 @@ public class TestGame extends GameMode
     {
         // circle entity
         var figure = ecs.registerEntity(null);
-
-        // todo: change to armature
-        var hull_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
-        ecs.attachComponent(figure, Component.RigidBody2D, new HullIndex(hull_index));
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
+        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
 
@@ -155,12 +111,10 @@ public class TestGame extends GameMode
     {
         // player entity
         var player = ecs.registerEntity("player");
-
-        // todo: change to armature
-        var hull_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, FLAG_NONE | FLAG_POLYGON | FLAG_NO_BONES);
+        var armature_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, FLAG_NONE | FLAG_POLYGON | FLAG_NO_BONES);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
-        ecs.attachComponent(player, Component.RigidBody2D, new HullIndex(hull_index));
+        ecs.attachComponent(player, Component.Armature, new ArmatureIndex(armature_index));
         ecs.attachComponent(player, Component.LinearForce, new LinearForce(1500));
     }
 
@@ -215,7 +169,7 @@ public class TestGame extends GameMode
         //genNPCs(100, 10f, 10f, 0, 500);
 
         genNPCs(1, 41f, 40f, 100, 300);
-        //genFloor(200, 150f, 150f, -4000, -100);
+        genFloor(200, 150f, 150f, -4000, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);
 

@@ -182,7 +182,7 @@ public class OpenCL
     private static cl_mem mem_edges;
     private static cl_mem mem_transform;
     private static cl_mem mem_aabb;
-    private static cl_mem mem_hull_acceleration;
+
     private static cl_mem mem_hull_rotation;
     private static cl_mem mem_hull_element_tables;
     private static cl_mem mem_hull_flags;
@@ -199,6 +199,7 @@ public class OpenCL
 
     private static cl_mem mem_armatures;
     private static cl_mem mem_armature_flags;
+    private static cl_mem mem_armature_acceleration;
 
 
 
@@ -594,7 +595,7 @@ public class OpenCL
         System.out.println("               GB : " + ((float)total / 1024f / 1024f / 1024f));
         System.out.println("-----------------------------------\n");
 
-        mem_hull_acceleration         = cl_new_buffer(FLAGS_WRITE_GPU, accleration_mem_size);
+        mem_armature_acceleration = cl_new_buffer(FLAGS_WRITE_GPU, accleration_mem_size);
         mem_hull_rotation             = cl_new_buffer(FLAGS_WRITE_GPU, rotation_mem_size);
         mem_hull_element_tables       = cl_new_buffer(FLAGS_WRITE_GPU, element_table_mem_size);
         mem_hull_flags                = cl_new_buffer(FLAGS_WRITE_GPU, flags_mem_size);
@@ -613,7 +614,7 @@ public class OpenCL
         mem_armatures                 = cl_new_buffer(FLAGS_WRITE_GPU, armature_mem_size);
         mem_armature_flags            = cl_new_buffer(FLAGS_WRITE_GPU, armature_flags_mem_size);
 
-        cl_zero_buffer(mem_hull_acceleration, accleration_mem_size);
+        cl_zero_buffer(mem_armature_acceleration, accleration_mem_size);
         cl_zero_buffer(mem_hull_rotation, rotation_mem_size);
         cl_zero_buffer(mem_hull_element_tables, element_table_mem_size);
         cl_zero_buffer(mem_hull_flags, flags_mem_size);
@@ -758,7 +759,7 @@ public class OpenCL
         physicsBuffer.points = new MemoryBuffer(mem_points);
         physicsBuffer.edges  = new MemoryBuffer(mem_edges);
         physicsBuffer.elements = new MemoryBuffer(mem_hull_element_tables);
-        physicsBuffer.acceleration = new MemoryBuffer(mem_hull_acceleration);
+        physicsBuffer.acceleration = new MemoryBuffer(mem_armature_acceleration);
         physicsBuffer.rotation = new MemoryBuffer(mem_hull_rotation);
         physicsBuffer.flags = new MemoryBuffer(mem_hull_flags);
         physicsBuffer.index = new MemoryBuffer(mem_aabb_index);
@@ -877,13 +878,12 @@ public class OpenCL
         k_call(k_create_hull, global_single_size);
     }
 
-    // todo: change to armature
-    public static void update_accel(int hull_index, float acc_x, float acc_y)
+    public static void update_accel(int armature_index, float acc_x, float acc_y)
     {
-        var pnt_index = Pointer.to(arg_int(hull_index));
+        var pnt_index = Pointer.to(arg_int(armature_index));
         var pnt_acc = Pointer.to(arg_float2(acc_x, acc_y));
 
-        clSetKernelArg(k_update_accel, 0, Sizeof.cl_mem, Pointer.to(mem_hull_acceleration));
+        clSetKernelArg(k_update_accel, 0, Sizeof.cl_mem, Pointer.to(mem_armature_acceleration));
         clSetKernelArg(k_update_accel, 1, Sizeof.cl_int, pnt_index);
         clSetKernelArg(k_update_accel, 2, Sizeof.cl_float2, pnt_acc);
 
@@ -904,18 +904,17 @@ public class OpenCL
         k_call(k_rotate_hull, global_single_size);
     }
 
-    // todo: change to armature
-    public static float[] read_position(int hull_index)
+    public static float[] read_position(int armature_index)
     {
         if (physicsBuffer == null) return null;
 
-        int[] index = arg_int(hull_index);
+        int[] index = arg_int(armature_index);
 
         cl_mem result_data = cl_new_buffer(FLAGS_WRITE_GPU, Sizeof.cl_float2);
         cl_zero_buffer(result_data, Sizeof.cl_float2);
         Pointer src_result = Pointer.to(result_data);
 
-        clSetKernelArg(k_read_position, 0, Sizeof.cl_mem, physicsBuffer.hulls.pointer());
+        clSetKernelArg(k_read_position, 0, Sizeof.cl_mem, Pointer.to(mem_armatures));
         clSetKernelArg(k_read_position, 1, Sizeof.cl_float2, src_result);
         clSetKernelArg(k_read_position, 2, Sizeof.cl_int, Pointer.to(index));
 
@@ -981,15 +980,17 @@ public class OpenCL
         cl_mem argMem = cl_new_buffer(FLAGS_READ_CPU_COPY, size, srcArgs);
 
         clSetKernelArg(k_integrate, 0, Sizeof.cl_mem, Pointer.to(physicsBuffer.hulls.memory()));
-        clSetKernelArg(k_integrate, 1, Sizeof.cl_mem, Pointer.to(physicsBuffer.elements.memory()));
-        clSetKernelArg(k_integrate, 2, Sizeof.cl_mem, Pointer.to(physicsBuffer.acceleration.memory()));
-        clSetKernelArg(k_integrate, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.rotation.memory()));
-        clSetKernelArg(k_integrate, 4, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
-        clSetKernelArg(k_integrate, 5, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
-        clSetKernelArg(k_integrate, 6, Sizeof.cl_mem, Pointer.to(physicsBuffer.index.memory()));
-        clSetKernelArg(k_integrate, 7, Sizeof.cl_mem, Pointer.to(physicsBuffer.bank.memory()));
-        clSetKernelArg(k_integrate, 8, Sizeof.cl_mem, Pointer.to(physicsBuffer.flags.memory()));
-        clSetKernelArg(k_integrate, 9, Sizeof.cl_mem, Pointer.to(argMem));
+        clSetKernelArg(k_integrate, 1, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        clSetKernelArg(k_integrate, 2, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
+        clSetKernelArg(k_integrate, 3, Sizeof.cl_mem, Pointer.to(physicsBuffer.elements.memory()));
+        clSetKernelArg(k_integrate, 4, Sizeof.cl_mem, Pointer.to(physicsBuffer.acceleration.memory()));
+        clSetKernelArg(k_integrate, 5, Sizeof.cl_mem, Pointer.to(physicsBuffer.rotation.memory()));
+        clSetKernelArg(k_integrate, 6, Sizeof.cl_mem, Pointer.to(physicsBuffer.points.memory()));
+        clSetKernelArg(k_integrate, 7, Sizeof.cl_mem, Pointer.to(physicsBuffer.bounds.memory()));
+        clSetKernelArg(k_integrate, 8, Sizeof.cl_mem, Pointer.to(physicsBuffer.index.memory()));
+        clSetKernelArg(k_integrate, 9, Sizeof.cl_mem, Pointer.to(physicsBuffer.bank.memory()));
+        clSetKernelArg(k_integrate, 10, Sizeof.cl_mem, Pointer.to(physicsBuffer.flags.memory()));
+        clSetKernelArg(k_integrate, 11, Sizeof.cl_mem, Pointer.to(argMem));
 
         k_call(k_integrate, global_work_size);
 
