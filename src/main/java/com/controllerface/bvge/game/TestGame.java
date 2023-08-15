@@ -146,9 +146,9 @@ public class TestGame extends GameMode
     public void load()
     {
         //genPlayer();
-        genTestFigure(2, 100, 0);
+        genTestFigure(3, 100, 0);
 
-        //genTestFigureNPC(2, 200, 50);
+        genTestFigureNPC(2, 200, 50);
         genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
@@ -161,7 +161,7 @@ public class TestGame extends GameMode
 //        genNPCs(100, 10f, 10f, 2100, 2100);
 //        genNPCs(100, 10f, 10f, 1000, -1000);
 //        genNPCs(100, 10f, 10f, -1500, -1500);
-        //genNPCs(100, 9f, 10f, 40, 500);
+        genNPCs(100, 9f, 10f, 40, 500);
 
         //genNPCs(100, 7f, 10f, -1000, 0);
         //genNPCs(100, 7f, 10f, 0, -1000);

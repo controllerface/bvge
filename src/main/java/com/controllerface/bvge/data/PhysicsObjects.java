@@ -157,6 +157,8 @@ public class PhysicsObjects
 
         // we need to track which hull is the root hull for this model
         int root_hull_id = -1;
+        float root_x = 0;
+        float root_y = 0;
 
         Mesh root_mesh = null;
 
@@ -183,6 +185,9 @@ public class PhysicsObjects
 
             // use bone transform to position the hull
             var bone_transform = model.bone_transforms().get(next_bone.name());
+
+            var tvec = new Vector4f(0.0f,0.0f,0.0f,1.0f);
+            bone_transform.transform(tvec);
 
             hull = transform_hull(hull, bone_transform);
 
@@ -306,6 +311,8 @@ public class PhysicsObjects
             if (i == model.root_index())
             {
                 root_hull_id = hull_id;
+                root_x = vector_buffer.x;
+                root_y = vector_buffer.y;
                 root_mesh = next_mesh;
             }
         }
@@ -318,7 +325,7 @@ public class PhysicsObjects
 
 
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
-        int armature_id = Main.Memory.new_armature(x, y, root_hull_id);
+        int armature_id = Main.Memory.new_armature(root_x, root_y, root_hull_id);
         Models.register_model_instance(model_index, root_hull_id);
         return armature_id;
     }

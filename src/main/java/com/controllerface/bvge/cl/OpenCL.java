@@ -180,7 +180,7 @@ public class OpenCL
     private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
     private static cl_mem mem_points;
     private static cl_mem mem_edges;
-    private static cl_mem mem_transform;
+    private static cl_mem mem_hulls;
     private static cl_mem mem_aabb;
 
     private static cl_mem mem_hull_rotation;
@@ -601,7 +601,7 @@ public class OpenCL
         mem_hull_flags                = cl_new_buffer(FLAGS_WRITE_GPU, flags_mem_size);
         mem_aabb_index                = cl_new_buffer(FLAGS_WRITE_GPU, spatial_index_mem_size);
         mem_aabb_key_bank             = cl_new_buffer(FLAGS_WRITE_GPU, spatial_key_bank_mem_size);
-        mem_transform                 = cl_new_buffer(FLAGS_WRITE_GPU, transform_mem_size);
+        mem_hulls = cl_new_buffer(FLAGS_WRITE_GPU, transform_mem_size);
         mem_aabb                      = cl_new_buffer(FLAGS_WRITE_GPU, bounding_box_mem_size);
         mem_points                    = cl_new_buffer(FLAGS_WRITE_GPU, points_mem_size);
         mem_edges                     = cl_new_buffer(FLAGS_WRITE_GPU, edges_mem_size);
@@ -620,7 +620,7 @@ public class OpenCL
         cl_zero_buffer(mem_hull_flags, flags_mem_size);
         cl_zero_buffer(mem_aabb_index, spatial_index_mem_size);
         cl_zero_buffer(mem_aabb_key_bank, spatial_key_bank_mem_size);
-        cl_zero_buffer(mem_transform, transform_mem_size);
+        cl_zero_buffer(mem_hulls, transform_mem_size);
         cl_zero_buffer(mem_aabb, bounding_box_mem_size);
         cl_zero_buffer(mem_points, points_mem_size);
         cl_zero_buffer(mem_edges, edges_mem_size);
@@ -699,11 +699,13 @@ public class OpenCL
         long[] bone_offset = arg_long(vboOffset);
 
         clSetKernelArg(k_prepare_bones, 0, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
-        clSetKernelArg(k_prepare_bones, 1, Sizeof.cl_mem, Pointer.to(mem_bone_index));
-        clSetKernelArg(k_prepare_bones, 2, Sizeof.cl_mem, Pointer.to(mem_bone_references));
-        clSetKernelArg(k_prepare_bones, 3, Sizeof.cl_mem, Pointer.to(mem_transform));
-        clSetKernelArg(k_prepare_bones, 4, Sizeof.cl_mem, Pointer.to(vbo_mem));
-        clSetKernelArg(k_prepare_bones, 5, Sizeof.cl_int, Pointer.to(bone_offset));
+        clSetKernelArg(k_prepare_bones, 1, Sizeof.cl_mem, Pointer.to(mem_bone_references));
+        clSetKernelArg(k_prepare_bones, 2, Sizeof.cl_mem, Pointer.to(mem_bone_index));
+        clSetKernelArg(k_prepare_bones, 3, Sizeof.cl_mem, Pointer.to(mem_hulls));
+        clSetKernelArg(k_prepare_bones, 4, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        clSetKernelArg(k_prepare_bones, 5, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        clSetKernelArg(k_prepare_bones, 6, Sizeof.cl_mem, Pointer.to(vbo_mem));
+        clSetKernelArg(k_prepare_bones, 7, Sizeof.cl_int, Pointer.to(bone_offset));
 
         gl_acquire(vbo_mem);
         k_call(k_prepare_bones, global_work_size);
@@ -732,7 +734,7 @@ public class OpenCL
         var vbo_mem2 = shared_mem.get(transforms_id);
         long[] global_work_size = arg_long(size);
 
-        clSetKernelArg(k_prepare_transforms, 0, Sizeof.cl_mem, Pointer.to(mem_transform));
+        clSetKernelArg(k_prepare_transforms, 0, Sizeof.cl_mem, Pointer.to(mem_hulls));
         clSetKernelArg(k_prepare_transforms, 1, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
         clSetKernelArg(k_prepare_transforms, 2, Sizeof.cl_mem, Pointer.to(vbo_mem));
         clSetKernelArg(k_prepare_transforms, 3, Sizeof.cl_mem, Pointer.to(vbo_mem2));
@@ -755,7 +757,7 @@ public class OpenCL
         //  2 dimensional vectors, and then scalars.
 
         physicsBuffer.bounds = new MemoryBuffer(mem_aabb);
-        physicsBuffer.hulls = new MemoryBuffer(mem_transform);
+        physicsBuffer.hulls = new MemoryBuffer(mem_hulls);
         physicsBuffer.points = new MemoryBuffer(mem_points);
         physicsBuffer.edges  = new MemoryBuffer(mem_edges);
         physicsBuffer.elements = new MemoryBuffer(mem_hull_element_tables);
@@ -865,7 +867,7 @@ public class OpenCL
         var pnt_rotation = Pointer.to(rotation);
         var pnt_hull = Pointer.to(hull);
 
-        clSetKernelArg(k_create_hull, 0, Sizeof.cl_mem, Pointer.to(mem_transform));
+        clSetKernelArg(k_create_hull, 0, Sizeof.cl_mem, Pointer.to(mem_hulls));
         clSetKernelArg(k_create_hull, 1, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
         clSetKernelArg(k_create_hull, 2, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
         clSetKernelArg(k_create_hull, 3, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
@@ -942,7 +944,7 @@ public class OpenCL
         long[] global_work_size = new long[]{Main.Memory.point_count()};
 
         clSetKernelArg(k_animate_hulls, 0, Sizeof.cl_mem, Pointer.to(mem_points));
-        clSetKernelArg(k_animate_hulls, 1, Sizeof.cl_mem, Pointer.to(mem_transform));
+        clSetKernelArg(k_animate_hulls, 1, Sizeof.cl_mem, Pointer.to(mem_hulls));
         clSetKernelArg(k_animate_hulls, 2, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
         clSetKernelArg(k_animate_hulls, 3, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
         clSetKernelArg(k_animate_hulls, 4, Sizeof.cl_mem, Pointer.to(mem_armatures));

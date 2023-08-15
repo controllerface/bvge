@@ -80,51 +80,6 @@ __kernel void integrate(
    	acc.x = acc.x * (dt * dt);
    	acc.y = acc.y * (dt * dt);
 
-    // only update the aramture during the update of the root hull, otherwise movement would be magnified 
-    if (armature_flag == gid)
-    {
-
-        float2 pos = armature.xy;
-        float2 prv = armature.zw;
-
-        if (!is_static)
-        {
-            // subtract prv from pos to get the difference this frame
-            float2 diff = pos - prv;
-            diff = acc + diff;
-
-            // add friction component todo: take this in as an argument, gravity too
-            diff.x *= friction;
-            diff.y *= friction;
-            
-            // set the prv to current pos
-            prv.x = pos.x;
-            prv.y = pos.y;
-
-            if (diff.x < MINIMUM_DIFF && diff.x > -MINIMUM_DIFF)
-            {
-                diff.x = 0.0f;
-            }
-
-            if (diff.y < MINIMUM_DIFF && diff.y > -MINIMUM_DIFF)
-            {
-                diff.y = 0.0f;
-            }
-
-            // update pos
-            pos = pos + diff;
-
-            // finally, update the pos and prv in the object
-            armature.x = pos.x;
-            armature.y = pos.y;
-            armature.z = prv.x;
-            armature.w = prv.y;
-        }
-
-                // todo: do full integration, this is not correct and just moves a little bit
-        armatures[hull_1_flags.y] = armature;
-    }
-
     // reset acceleration to zero for the next frame
     acceleration.x = 0;
     acceleration.y = 0;
@@ -228,6 +183,49 @@ __kernel void integrate(
 
         // store updated point in result buffer
         points[i] = point;
+    }
+
+    // only update the aramture during the update of the root hull, otherwise movement would be magnified 
+    if (armature_flag == gid)
+    {
+        float2 pos = armature.xy;
+        float2 prv = armature.zw;
+
+        if (!is_static)
+        {
+            // subtract prv from pos to get the difference this frame
+            float2 diff = pos - prv;
+            diff = acc + diff;
+
+            // add friction component todo: take this in as an argument, gravity too
+            diff.x *= friction;
+            diff.y *= friction;
+            
+            // set the prv to current pos
+            prv.x = pos.x;
+            prv.y = pos.y;
+
+            if (diff.x < MINIMUM_DIFF && diff.x > -MINIMUM_DIFF)
+            {
+                diff.x = 0.0f;
+            }
+
+            if (diff.y < MINIMUM_DIFF && diff.y > -MINIMUM_DIFF)
+            {
+                diff.y = 0.0f;
+            }
+
+            // update pos
+            pos = pos + diff;
+
+            // finally, update the pos and prv in the object
+            armature.x = pos.x;
+            armature.y = pos.y;
+            armature.z = prv.x;
+            armature.w = prv.y;
+        }
+
+        armatures[hull_1_flags.y] = armature;
     }
 
     // calculate centroid // todo: account for circles

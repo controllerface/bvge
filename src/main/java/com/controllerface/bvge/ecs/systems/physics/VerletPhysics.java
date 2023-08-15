@@ -128,6 +128,9 @@ public class VerletPhysics extends GameSystem
         // narrow phase collision/reaction
         OpenCL.sat_collide();
 
+        // todo: maybe handle pins/limb feedback here? need to allow for armatures to
+        //  be moved based on their bones placements
+
         // resolve edges
         OpenCL.resolve_constraints(EDGE_STEPS);
     }
