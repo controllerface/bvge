@@ -1,22 +1,9 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-import com.controllerface.bvge.cl.OpenCL;
 import org.jocl.Pointer;
 
 public class PhysicsBuffer
 {
-    public MemoryBuffer bounds;
-    public MemoryBuffer hulls;
-    public MemoryBuffer points;
-    public MemoryBuffer edges;
-    public MemoryBuffer acceleration;
-    public MemoryBuffer rotation;
-    public MemoryBuffer elements;
-    public MemoryBuffer flags;
-    public MemoryBuffer index;
-    public MemoryBuffer bank;
-
-
     public MemoryBuffer key_map;
     public MemoryBuffer key_bank;
     public MemoryBuffer key_counts;
@@ -70,50 +57,6 @@ public class PhysicsBuffer
         this.friction = friction;
     }
 
-    public PhysicsBuffer()
-    {
-        OpenCL.initPhysicsBuffer(this);
-    }
-
-    public void finishTick()
-    {
-        if (key_map != null) key_map.release();
-        if (key_bank != null) key_bank.release();
-        if (key_counts != null) key_counts.release();
-        if (key_offsets != null) key_offsets.release();
-        if (in_bounds != null) in_bounds.release();
-        if (candidate_counts != null) candidate_counts.release();
-        if (candidate_offsets != null) candidate_offsets.release();
-        if (matches_used != null) matches_used.release();
-        if (matches != null) matches.release();
-        if (candidates != null) candidates.release();
-
-        key_map = null;
-        key_bank = null;
-        key_counts = null;
-        key_offsets = null;
-        candidates = null;
-        in_bounds = null;
-        candidate_counts = null;
-        candidate_offsets = null;
-        matches_used = null;
-        matches = null;
-    }
-
-    public void shutdown()
-    {
-        if (bounds != null) bounds.release();
-        if (hulls != null) hulls.release();
-        if (points != null) points.release();
-        if (edges != null) edges.release();
-        if (acceleration != null) acceleration.release();
-        if (rotation != null) rotation.release();
-        if (elements != null) elements.release();
-        if (flags != null) flags.release();
-        if (index != null) index.release();
-        if (bank != null) bank.release();
-    }
-
     public int get_candidate_buffer_count()
     {
         return candidate_buffer_count;
@@ -152,5 +95,33 @@ public class PhysicsBuffer
     public void set_final_size(long final_size)
     {
         this.final_size = final_size;
+    }
+
+    public void finishTick()
+    {
+        // todo: some of these could be reused between frames, as long as the spatial partition
+        //  size does not change. If it does, we would just need to release and re-acquire with
+        //  the new size. This should be easy to do on the frame tick.
+        if (key_map != null) key_map.release();
+        if (key_bank != null) key_bank.release();
+        if (key_counts != null) key_counts.release();
+        if (key_offsets != null) key_offsets.release();
+        if (in_bounds != null) in_bounds.release();
+        if (candidate_counts != null) candidate_counts.release();
+        if (candidate_offsets != null) candidate_offsets.release();
+        if (matches_used != null) matches_used.release();
+        if (matches != null) matches.release();
+        if (candidates != null) candidates.release();
+
+        key_map = null;
+        key_bank = null;
+        key_counts = null;
+        key_offsets = null;
+        candidates = null;
+        in_bounds = null;
+        candidate_counts = null;
+        candidate_offsets = null;
+        matches_used = null;
+        matches = null;
     }
 }

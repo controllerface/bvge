@@ -485,14 +485,24 @@ __kernel void sat_collide(__global int2 *candidates,
     bool b1_is_polygon = (hull_1_flags.x & 0x04) !=0;
     bool b2_is_polygon = (hull_2_flags.x & 0x04) !=0;
 
+    int c_id = b1_is_circle ? b1_id : b2_id;
+    int p_id = b1_is_circle ? b2_id : b1_id;
+
     // todo: it will probably be more performant to have separate kernels for each collision type. There should
     //  be a preliminary kernel that sorts the candidate pairs so they can be run on the right kernel
-    if (b1_is_polygon && b2_is_polygon) polygon_collision(b1_id, b2_id, hulls, hull_flags, element_tables, points, edges); 
-    else if (b1_is_circle && b2_is_circle) circle_collision(b1_id, b2_id, hulls, element_tables, points); 
+    if (b1_is_polygon && b2_is_polygon) 
+    {
+        polygon_collision(b1_id, b2_id, hulls, hull_flags, element_tables, points, edges); 
+    }
+    else if (b1_is_circle && b2_is_circle) 
+    {
+        circle_collision(b1_id, b2_id, hulls, element_tables, points); 
+    }
     else 
     {
-        int c_id = b1_is_circle ? b1_id : b2_id;
-        int p_id = b1_is_circle ? b2_id : b1_id;
         polygon_circle_collision(p_id, c_id, hulls, hull_flags, element_tables, points, edges); 
     }
+
+    // todo: calculate an epehemeral hull centroid and use it to re-position the armature for both bodies
+
 }

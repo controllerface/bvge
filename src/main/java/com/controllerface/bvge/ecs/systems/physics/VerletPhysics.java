@@ -126,8 +126,13 @@ public class VerletPhysics extends GameSystem
         OpenCL.aabb_collide();
         OpenCL.finalize_candidates();
 
+        // todo: before collision, hull centroids should be recorded
+
         // narrow phase collision/reaction
         OpenCL.sat_collide();
+
+        // todo: after collision, hull centroids should be updated and any difference should be applied
+        //  to the linked armature
 
 
         // resolve edges
@@ -189,6 +194,5 @@ public class VerletPhysics extends GameSystem
     @Override
     public void shutdown()
     {
-        physicsBuffer.shutdown();
     }
 }
