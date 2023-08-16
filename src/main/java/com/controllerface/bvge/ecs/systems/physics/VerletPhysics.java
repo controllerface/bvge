@@ -95,6 +95,7 @@ public class VerletPhysics extends GameSystem
         }
     }
 
+
     private void tickSimulation(float dt)
     {
         // todo: need to account for this in the kernel somehow so it can be
@@ -102,7 +103,7 @@ public class VerletPhysics extends GameSystem
         //  the memory is transferred out.
         updateControllableBodies(dt);
 
-
+        // animate the vertices of bone-tracked hulls
         OpenCL.animate_hulls();
 
         // integration
@@ -128,8 +129,6 @@ public class VerletPhysics extends GameSystem
         // narrow phase collision/reaction
         OpenCL.sat_collide();
 
-        // todo: maybe handle pins/limb feedback here? need to allow for armatures to
-        //  be moved based on their bones placements
 
         // resolve edges
         OpenCL.resolve_constraints(EDGE_STEPS);

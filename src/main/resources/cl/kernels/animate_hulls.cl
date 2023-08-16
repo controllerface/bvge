@@ -18,18 +18,13 @@ __kernel void animate_hulls(__global float4 *points,
     bool no_bones = (hull_flag.x & 0x08) !=0;
     if (no_bones) return;
 
-
     float4 padded = (float4)(reference_vertex.x, reference_vertex.y, 0.0f, 1.0f);
     float4 after_bone = matrix_transform(bone, padded);
     float2 un_padded = after_bone.xy;
-
     un_padded.x *= hull.z;
     un_padded.y *= hull.w;
-
     un_padded += armature.xy;
-  
     point.x = un_padded.x;
     point.y = un_padded.y;
-
     points[gid] = point;
 }

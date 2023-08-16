@@ -38,5 +38,5 @@ __kernel void prepare_bones(__global float16 *bones,
     // padded.y += hull.y;
     
     //vbo[gid] = armature.xy;
-    vbo[gid] = result.xy;
+    vbo[gid] = hull.xy;
 }

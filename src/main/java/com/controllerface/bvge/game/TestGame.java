@@ -33,8 +33,7 @@ public class TestGame extends GameMode
 
     private void genNPCs(int box_size, float spacing, float size, float start_x, float start_y)
     {
-        // trivial change for new commit
-        System.out.println("generating: " + box_size * box_size + " NPCs..");
+        System.out.println("generating: " + box_size * box_size + " Crates..");
         for (int i = 0; i < box_size; i++)
         {
             for (int j = 0; j < box_size; j++)
@@ -50,8 +49,7 @@ public class TestGame extends GameMode
 
     private void genCircles(int box_size, float spacing, float size, float start_x, float start_y)
     {
-        // trivial change for new commit
-        System.out.println("generating: " + box_size * box_size + " NPCs..");
+        System.out.println("generating: " + box_size * box_size + " Particles..");
         for (int i = 0; i < box_size; i++)
         {
             for (int j = 0; j < box_size; j++)
@@ -135,8 +133,8 @@ public class TestGame extends GameMode
         // these are debug-level renderers for visualizing the modeled physics boundaries
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
-        ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        ecs.registerSystem(new BoneRenderer(ecs));
+        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        //ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
         //ecs.registerSystem(new CrateRenderer(ecs));
@@ -146,9 +144,9 @@ public class TestGame extends GameMode
     public void load()
     {
         //genPlayer();
-        genTestFigure(3, 100, 0);
+        genTestFigure(1, 100, 0);
 
-        genTestFigureNPC(2, 200, 50);
+        genTestFigureNPC(1, 200, 50);
         genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
@@ -165,8 +163,8 @@ public class TestGame extends GameMode
 
         //genNPCs(100, 7f, 10f, -1000, 0);
         //genNPCs(100, 7f, 10f, 0, -1000);
-        //genNPCs(100, 7f, 10f, 0, 1000);
-        //genNPCs(100, 10f, 10f, 0, 500);
+        genNPCs(100, 7f, 10f, 0, 1000);
+        genNPCs(100, 10f, 10f, 0, 500);
 
         genNPCs(1, 41f, 40f, 100, 300);
         genFloor(200, 150f, 150f, -4000, -100);
