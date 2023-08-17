@@ -22,7 +22,6 @@ public class OpenCL
         aabb_collide(new AabbCollide()),
         animate_hulls(new AnimateHulls()),
         build_key_map(new BuildKeyMap()),
-        clamp_point_velocity(new ClampPointVelocity()),
         generate_keys(new GenerateKeys()),
         gpu_crud(new GpuCrud()),
         integrate(new Integrate()),
@@ -121,7 +120,6 @@ public class OpenCL
     public static String kn_prepare_bounds                     = "prepare_bounds";
     public static String kn_prepare_bones                      = "prepare_bones";
     public static String kn_animate_hulls                      = "animate_hulls";
-    public static String kn_clamp_point_velocity               = "clamp_point_velocity";
 
 
     // memory objects
@@ -747,17 +745,6 @@ public class OpenCL
 
 
     //#region Physics Simulation
-
-    // don't use this right now, it slows things down todo: probably remove this
-    public static void clamp_point_velocity()
-    {
-        long[] global_work_size = new long[]{Main.Memory.point_count()};
-
-        clSetKernelArg(_k.get(kn_clamp_point_velocity), 0, Sizeof.cl_mem, Pointer.to(mem_points));
-
-        k_call(_k.get(kn_clamp_point_velocity), global_work_size);
-    }
-
 
     public static void animate_hulls()
     {

@@ -539,7 +539,4 @@ __kernel void sat_collide(__global int2 *candidates,
         armatures[hull_2_flags.y] = b2_armature;
     }
 
-
-    // todo: calculate an epehemeral hull centroid and use it to re-position the armature for both bodies
-
 }

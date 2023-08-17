@@ -4,16 +4,14 @@ import com.controllerface.bvge.data.ArmatureIndex;
 import com.controllerface.bvge.data.LinearForce;
 import com.controllerface.bvge.data.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.Sprite;
-import com.controllerface.bvge.ecs.components.*;
+import com.controllerface.bvge.ecs.components.CameraFocus;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
 import com.controllerface.bvge.ecs.systems.renderers.*;
-import com.controllerface.bvge.util.Assets;
-import org.joml.Random;
-import org.joml.Vector4f;
 
 import static com.controllerface.bvge.data.PhysicsObjects.*;
 import static com.controllerface.bvge.geometry.Models.POLYGON1_MODEL;
@@ -133,21 +131,21 @@ public class TestGame extends GameMode
         // these are debug-level renderers for visualizing the modeled physics boundaries
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs));
         ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
-        //ecs.registerSystem(new CrateRenderer(ecs));
+        ecs.registerSystem(new CrateRenderer(ecs));
     }
 
     @Override
     public void load()
     {
         //genPlayer();
-        genTestFigure(1, 100, 0);
+        genTestFigure(1, 105, 0);
 
         genTestFigureNPC(1, 200, 50);
-        //genTestCircle(20,0, 50);
+        genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
         //genTestCircle(30,20, 55);
@@ -166,7 +164,7 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
         genNPCs(100, 10f, 10f, 0, 500);
 
-        //genNPCs(1, 41f, 40f, 100, 300);
+        genNPCs(1, 41f, 40f, 100, 300);
         genFloor(200, 150f, 150f, -4000, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);

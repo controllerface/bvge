@@ -98,9 +98,7 @@ public class VerletPhysics extends GameSystem
 
     private void tickSimulation(float dt)
     {
-        // todo: need to account for this in the kernel somehow so it can be
-        //  updated inside the sub-steps. Right now this is the last point before
-        //  the memory is transferred out.
+
         updateControllableBodies(dt);
 
         // animate the vertices of bone-tracked hulls
@@ -126,16 +124,8 @@ public class VerletPhysics extends GameSystem
         OpenCL.aabb_collide();
         OpenCL.finalize_candidates();
 
-        // todo: before collision, hull centroids should be recorded
-
         // narrow phase collision/reaction
         OpenCL.sat_collide();
-
-        //OpenCL.clamp_point_velocity();
-
-        // todo: after collision, hull centroids should be updated and any difference should be applied
-        //  to the linked armature
-
 
         // resolve edges
         OpenCL.resolve_constraints(EDGE_STEPS);
