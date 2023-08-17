@@ -131,6 +131,8 @@ public class VerletPhysics extends GameSystem
         // narrow phase collision/reaction
         OpenCL.sat_collide();
 
+        //OpenCL.clamp_point_velocity();
+
         // todo: after collision, hull centroids should be updated and any difference should be applied
         //  to the linked armature
 

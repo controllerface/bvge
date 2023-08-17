@@ -22,6 +22,7 @@ public class OpenCL
         aabb_collide(new AabbCollide()),
         animate_hulls(new AnimateHulls()),
         build_key_map(new BuildKeyMap()),
+        clamp_point_velocity(new ClampPointVelocity()),
         generate_keys(new GenerateKeys()),
         gpu_crud(new GpuCrud()),
         integrate(new Integrate()),
@@ -79,6 +80,7 @@ public class OpenCL
     public static String func_angle_between        = read_src("functions/angle_between.cl");
     public static String func_closest_point_circle = read_src("functions/closest_point_circle.cl");
     public static String func_matrix_transform     = read_src("functions/matrix_transform.cl");
+    public static String func_calculate_centroid   = read_src("functions/calculate_centroid.cl");
 
     /**
      * Kernel function names
@@ -119,6 +121,7 @@ public class OpenCL
     public static String kn_prepare_bounds                     = "prepare_bounds";
     public static String kn_prepare_bones                      = "prepare_bones";
     public static String kn_animate_hulls                      = "animate_hulls";
+    public static String kn_clamp_point_velocity               = "clamp_point_velocity";
 
 
     // memory objects
@@ -745,6 +748,16 @@ public class OpenCL
 
     //#region Physics Simulation
 
+    // don't use this right now, it slows things down todo: probably remove this
+    public static void clamp_point_velocity()
+    {
+        long[] global_work_size = new long[]{Main.Memory.point_count()};
+
+        clSetKernelArg(_k.get(kn_clamp_point_velocity), 0, Sizeof.cl_mem, Pointer.to(mem_points));
+
+        k_call(_k.get(kn_clamp_point_velocity), global_work_size);
+    }
+
 
     public static void animate_hulls()
     {
@@ -1032,10 +1045,11 @@ public class OpenCL
         // Set the arguments for the kernel
         clSetKernelArg(_k.get(kn_sat_collide), 0, Sizeof.cl_mem, physicsBuffer.candidates.pointer());
         clSetKernelArg(_k.get(kn_sat_collide), 1, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        clSetKernelArg(_k.get(kn_sat_collide), 2, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
-        clSetKernelArg(_k.get(kn_sat_collide), 3, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
-        clSetKernelArg(_k.get(kn_sat_collide), 4, Sizeof.cl_mem, Pointer.to(mem_points));
-        clSetKernelArg(_k.get(kn_sat_collide), 5, Sizeof.cl_mem, Pointer.to(mem_edges));
+        clSetKernelArg(_k.get(kn_sat_collide), 2, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        clSetKernelArg(_k.get(kn_sat_collide), 3, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
+        clSetKernelArg(_k.get(kn_sat_collide), 4, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        clSetKernelArg(_k.get(kn_sat_collide), 5, Sizeof.cl_mem, Pointer.to(mem_points));
+        clSetKernelArg(_k.get(kn_sat_collide), 6, Sizeof.cl_mem, Pointer.to(mem_edges));
 
         k_call(_k.get(kn_sat_collide), global_work_size);
     }

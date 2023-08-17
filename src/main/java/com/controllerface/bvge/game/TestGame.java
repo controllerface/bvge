@@ -134,7 +134,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        //ecs.registerSystem(new BoneRenderer(ecs));
+        ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
         //ecs.registerSystem(new CrateRenderer(ecs));
@@ -147,7 +147,7 @@ public class TestGame extends GameMode
         genTestFigure(1, 100, 0);
 
         genTestFigureNPC(1, 200, 50);
-        genTestCircle(20,0, 50);
+        //genTestCircle(20,0, 50);
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
         //genTestCircle(30,20, 55);
@@ -159,14 +159,14 @@ public class TestGame extends GameMode
 //        genNPCs(100, 10f, 10f, 2100, 2100);
 //        genNPCs(100, 10f, 10f, 1000, -1000);
 //        genNPCs(100, 10f, 10f, -1500, -1500);
-        genNPCs(100, 9f, 10f, 40, 500);
+       // genNPCs(100, 9f, 10f, 40, 500);
 
         //genNPCs(100, 7f, 10f, -1000, 0);
         //genNPCs(100, 7f, 10f, 0, -1000);
-        genNPCs(100, 7f, 10f, 0, 1000);
+        //genNPCs(100, 7f, 10f, 0, 1000);
         genNPCs(100, 10f, 10f, 0, 500);
 
-        genNPCs(1, 41f, 40f, 100, 300);
+        //genNPCs(1, 41f, 40f, 100, 300);
         genFloor(200, 150f, 150f, -4000, -100);
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);

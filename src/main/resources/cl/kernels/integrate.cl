@@ -1,4 +1,5 @@
 #define MINIMUM_DIFF 0.005
+#define MAXIMUM_DIFF 2.5
 
 /**
 Performs the integration step of a physics loop, generally this is the first stage
@@ -71,6 +72,7 @@ __kernel void integrate(
     acc.y = acceleration.y;
     bool is_static = (hull_1_flags.x & 0x01) !=0;
     bool is_circle = (hull_1_flags.x & 0x02) !=0;
+    bool no_bones = (hull_1_flags.x & 0x08) !=0;
 
     if (!is_static)
     {
@@ -101,7 +103,7 @@ __kernel void integrate(
 	float min_y = FLT_MAX;
 	float max_y = FLT_MIN;
 
-    bool inv_r = gid % 2 == 0;
+    //bool inv_r = gid % 2 == 0;
 
     for (int i = start; i <= end; i++)
     {
@@ -143,6 +145,24 @@ __kernel void integrate(
             if (diff.y < MINIMUM_DIFF && diff.y > -MINIMUM_DIFF)
             {
                 diff.y = 0.0f;
+            }
+
+            if (diff.x > MAXIMUM_DIFF)
+            {
+                diff.x = MAXIMUM_DIFF;
+            }
+            if (diff.x < -MAXIMUM_DIFF)
+            {
+                diff.x = -MAXIMUM_DIFF;
+            }
+
+            if (diff.y > MAXIMUM_DIFF)
+            {
+                diff.y = MAXIMUM_DIFF;
+            }
+            if (diff.y < -MAXIMUM_DIFF)
+            {
+                diff.y = -MAXIMUM_DIFF;
             }
 
             // update pos
@@ -191,7 +211,12 @@ __kernel void integrate(
         float2 pos = armature.xy;
         float2 prv = armature.zw;
 
-        if (!is_static)
+        if (no_bones)
+        {
+            armature = hull;
+        }
+
+        if (!is_static && !no_bones)
         {
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
