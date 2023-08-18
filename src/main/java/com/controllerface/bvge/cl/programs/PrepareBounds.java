@@ -10,8 +10,8 @@ public class PrepareBounds extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/prepare_bounds.cl");
-        this.program = cl_p(source);
-        this.kernels.put(kn_prepare_bounds, cl_k(program, kn_prepare_bounds));
+        add_src(read_src("kernels/prepare_bounds.cl"));
+        make_program();
+        make_kernel(kn_prepare_bounds);
     }
 }

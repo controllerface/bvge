@@ -10,10 +10,13 @@ public class LocateInBounds extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/locate_in_bounds.cl");
-        this.program = cl_p(prag_int32_base_atomics, func_do_bounds_intersect, func_calculate_key_index, source);
-        this.kernels.put(kn_locate_in_bounds,    cl_k(program, kn_locate_in_bounds));
-        this.kernels.put(kn_count_candidates,    cl_k(program, kn_count_candidates));
-        this.kernels.put(kn_finalize_candidates, cl_k(program, kn_finalize_candidates));
+        add_src(prag_int32_base_atomics);
+        add_src(func_do_bounds_intersect);
+        add_src(func_calculate_key_index);
+        add_src(read_src("kernels/locate_in_bounds.cl"));
+        make_program();
+        make_kernel(kn_locate_in_bounds);
+        make_kernel(kn_count_candidates);
+        make_kernel(kn_finalize_candidates);
     }
 }

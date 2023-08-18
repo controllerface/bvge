@@ -10,10 +10,11 @@ public class ScanIntArrayOut extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/scan_int_array_out.cl");
-        this.program = cl_p(func_exclusive_scan, source);
-        this.kernels.put(kn_scan_int_single_block_out,    cl_k(program, kn_scan_int_single_block_out));
-        this.kernels.put(kn_scan_int_multi_block_out,     cl_k(program, kn_scan_int_multi_block_out));
-        this.kernels.put(kn_complete_int_multi_block_out, cl_k(program, kn_complete_int_multi_block_out));
+        add_src(func_exclusive_scan);
+        add_src(read_src("kernels/scan_int_array_out.cl"));
+        make_program();
+        make_kernel(kn_scan_int_single_block_out);
+        make_kernel(kn_scan_int_multi_block_out);
+        make_kernel(kn_complete_int_multi_block_out);
     }
 }

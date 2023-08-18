@@ -10,8 +10,8 @@ public class PrepareEdges extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/prepare_edges.cl");
-        this.program = cl_p(source);
-        this.kernels.put(kn_prepare_edges, cl_k(program, kn_prepare_edges));
+        add_src(read_src("kernels/prepare_edges.cl"));
+        make_program();
+        make_kernel(kn_prepare_edges);
     }
 }

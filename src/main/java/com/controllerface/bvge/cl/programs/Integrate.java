@@ -10,16 +10,13 @@ public class Integrate extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/integrate.cl");
-
-        this.program = cl_p(func_angle_between,
-            func_rotate_point,
-            func_is_in_bounds,
-            func_get_extents,
-            func_get_key_for_point,
-            source);
-
-        // example loading kernel
-        this.kernels.put(kn_integrate, cl_k(program, kn_integrate));
+        add_src(func_angle_between);
+        add_src(func_rotate_point);
+        add_src(func_is_in_bounds);
+        add_src(func_get_extents);
+        add_src(func_get_key_for_point);
+        add_src(read_src("kernels/integrate.cl"));
+        make_program();
+        make_kernel(kn_integrate);
     }
 }

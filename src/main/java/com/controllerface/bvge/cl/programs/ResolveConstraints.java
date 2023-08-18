@@ -10,8 +10,8 @@ public class ResolveConstraints extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/resolve_constraints.cl");
-        this.program = cl_p(source);
-        this.kernels.put(kn_resolve_constraints, cl_k(program, kn_resolve_constraints));
+        add_src(read_src("kernels/resolve_constraints.cl"));
+        make_program();
+        make_kernel(kn_resolve_constraints);
     }
 }

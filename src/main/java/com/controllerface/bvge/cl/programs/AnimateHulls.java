@@ -10,8 +10,9 @@ public class AnimateHulls extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/animate_hulls.cl");
-        this.program = cl_p(func_matrix_transform, source);
-        this.kernels.put(kn_animate_hulls, cl_k(program, kn_animate_hulls));
+        add_src(func_matrix_transform);
+        add_src(read_src("kernels/animate_hulls.cl"));
+        make_program();
+        make_kernel(kn_animate_hulls);
     }
 }

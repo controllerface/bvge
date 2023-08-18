@@ -10,10 +10,11 @@ public class ScanCandidates extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/scan_key_candidates.cl");
-        this.program = cl_p(func_exclusive_scan, source);
-        this.kernels.put(kn_scan_candidates_single_block,    cl_k(program, kn_scan_candidates_single_block));
-        this.kernels.put(kn_scan_candidates_multi_block,     cl_k(program, kn_scan_candidates_multi_block));
-        this.kernels.put(kn_complete_candidates_multi_block, cl_k(program, kn_complete_candidates_multi_block));
+        add_src(func_exclusive_scan);
+        add_src(read_src("kernels/scan_key_candidates.cl"));
+        make_program();
+        make_kernel(kn_scan_candidates_single_block);
+        make_kernel(kn_scan_candidates_multi_block);
+        make_kernel(kn_complete_candidates_multi_block);
     }
 }

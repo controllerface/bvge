@@ -10,8 +10,10 @@ public class BuildKeyMap extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/build_key_map.cl");
-        this.program = cl_p(prag_int32_base_atomics, func_calculate_key_index, source);
-        this.kernels.put(kn_build_key_map, cl_k(program, kn_build_key_map));
+        add_src(prag_int32_base_atomics);
+        add_src(func_calculate_key_index);
+        add_src(read_src("kernels/build_key_map.cl"));
+        make_program();
+        make_kernel(kn_build_key_map);
     }
 }

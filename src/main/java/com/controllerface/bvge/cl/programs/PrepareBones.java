@@ -10,8 +10,9 @@ public class PrepareBones extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/prepare_bones.cl");
-        this.program = cl_p(func_matrix_transform, source);
-        this.kernels.put(kn_prepare_bones, cl_k(program, kn_prepare_bones));
+        add_src(func_matrix_transform);
+        add_src(read_src("kernels/prepare_bones.cl"));
+        make_program();
+        make_kernel(kn_prepare_bones);
     }
 }

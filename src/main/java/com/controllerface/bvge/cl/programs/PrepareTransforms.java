@@ -10,8 +10,8 @@ public class PrepareTransforms extends GpuKernel
     @Override
     protected void init()
     {
-        var source = read_src("kernels/prepare_transforms.cl");
-        this.program = cl_p(source);
-        this.kernels.put(kn_prepare_transforms, cl_k(program, kn_prepare_transforms));
+        add_src(read_src("kernels/prepare_transforms.cl"));
+        make_program();
+        make_kernel(kn_prepare_transforms);
     }
 }
