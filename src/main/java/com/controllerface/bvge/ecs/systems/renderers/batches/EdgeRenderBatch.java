@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems.renderers.batches;
 
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.window.Window;
 
@@ -49,7 +49,7 @@ public class EdgeRenderBatch
         glBindVertexArray(vaoID);
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
-        OpenCL.GL_edges(vboID, offset, numLines);
+        GPU.GL_edges(vboID, offset, numLines);
 
         // Use shader
         currentShader.use();

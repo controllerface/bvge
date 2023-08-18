@@ -1,6 +1,7 @@
 package com.controllerface.bvge.cl;
 
 import org.jocl.*;
+import org.joml.Matrix4f;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -9,11 +10,11 @@ import java.nio.charset.StandardCharsets;
 
 import static org.jocl.CL.*;
 
-public class OpenCLUtils
+public class CLUtils
 {
     public static String read_src(String file)
     {
-        var stream = OpenCL.class.getResourceAsStream("/cl/" + file);
+        var stream = GPU.class.getResourceAsStream("/cl/" + file);
         try
         {
             byte [] bytes = stream.readAllBytes();
@@ -36,6 +37,102 @@ public class OpenCLUtils
     {
         return clCreateKernel(program, kernel_name, null);
     }
+
+    public static long[] arg_long(long arg)
+    {
+        return new long[]{arg};
+    }
+
+    public static int[] arg_int(int arg)
+    {
+        return new int[]{arg};
+    }
+
+    public static int[] arg_int2(int x, int y)
+    {
+        return new int[]{x, y};
+    }
+
+    public static int[] arg_int4(int x, int y, int z, int w)
+    {
+        return new int[]{x, y, z, w};
+    }
+
+    public static float[] arg_float(float arg)
+    {
+        return new float[]{arg};
+    }
+
+    public static float[] arg_float2(float x, float y)
+    {
+        return new float[]{x, y};
+    }
+
+    public static float[] arg_float4(float x, float y, float z, float w)
+    {
+        return new float[]{x, y, z, w};
+    }
+
+    public static float[] arg_float16(float s0, float s1, float s2, float s3,
+                                      float s4, float s5, float s6, float s7,
+                                      float s8, float s9, float sA, float sB,
+                                      float sC, float sD, float sE, float sF)
+    {
+        return new float[]
+            {
+                s0, s1, s2, s3,
+                s4, s5, s6, s7,
+                s8, s9, sA, sB,
+                sC, sD, sE, sF
+            };
+    }
+
+    public static float[] arg_float16_matrix(Matrix4f matrix)
+    {
+        return arg_float16(
+            matrix.m00(), matrix.m01(), matrix.m02(), matrix.m03(),
+            matrix.m10(), matrix.m11(), matrix.m12(), matrix.m13(),
+            matrix.m20(), matrix.m21(), matrix.m22(), matrix.m23(),
+            matrix.m30(), matrix.m31(), matrix.m32(), matrix.m33());
+    }
+
+
+
+
+
+
+
+
+
+    public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size)
+    {
+        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
+            global_work_size, null, 0, null, null);
+    }
+
+    public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size, long[] local_work_size)
+    {
+        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
+            global_work_size, local_work_size, 0, null, null);
+    }
+
+    public static void gl_acquire(cl_command_queue commandQueue, cl_mem mem)
+    {
+        clEnqueueAcquireGLObjects(commandQueue, 1, new cl_mem[]{mem}, 0, null, null);
+    }
+
+    public static void gl_release(cl_command_queue commandQueue, cl_mem mem)
+    {
+        clEnqueueReleaseGLObjects(commandQueue, 1, new cl_mem[]{mem}, 0, null, null);
+    }
+
+
+
+
+
+
+
+
 
     /**
      * Dump device data for debugging.

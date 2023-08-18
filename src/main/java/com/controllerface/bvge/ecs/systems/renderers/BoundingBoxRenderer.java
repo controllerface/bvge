@@ -1,7 +1,7 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.renderers.batches.BoundingBoxRenderBatch;
@@ -57,7 +57,7 @@ public class BoundingBoxRenderer extends GameSystem
         glBufferData(GL_ARRAY_BUFFER, BATCH_BUFFER_SIZE, GL_DYNAMIC_DRAW);
 
         // share the buffer with the CL context
-        OpenCL.share_memory(vboID);
+        GPU.share_memory(vboID);
 
         // define the buffer attribute pointers
         glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, 0);

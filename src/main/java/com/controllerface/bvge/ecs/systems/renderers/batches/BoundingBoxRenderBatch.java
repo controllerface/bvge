@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems.renderers.batches;
 
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
@@ -55,7 +55,7 @@ public class BoundingBoxRenderBatch
         glBindVertexArray(vaoID);
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
-        OpenCL.GL_bounds(vboID, offset, box_count);
+        GPU.GL_bounds(vboID, offset, box_count);
 
         // Use shader
         currentShader.use();

@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems;
 
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.data.ArmatureIndex;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
@@ -24,7 +24,7 @@ public class CameraTracking extends GameSystem
         ArmatureIndex armature = Component.Armature.forEntity(ecs, focusTarget.getKey());
         if (armature == null) return;
 
-        float[] pos = OpenCL.read_position(armature.index());
+        float[] pos = GPU.read_position(armature.index());
 
         // will be null for the first few frames while the loop is primed
         if (pos == null) return;

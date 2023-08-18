@@ -1,8 +1,6 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-import com.controllerface.bvge.cl.OpenCL;
 import org.jocl.Pointer;
-import org.jocl.cl_command_queue;
 import org.jocl.cl_mem;
 
 import static org.jocl.CL.*;

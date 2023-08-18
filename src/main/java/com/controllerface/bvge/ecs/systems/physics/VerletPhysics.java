@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
@@ -83,7 +83,7 @@ public class VerletPhysics extends GameSystem
 
             if (vectorBuffer1.x != 0f || vectorBuffer1.y != 0)
             {
-                OpenCL.update_accel(armature.index(), vectorBuffer1.x, vectorBuffer1.y);
+                GPU.update_accel(armature.index(), vectorBuffer1.x, vectorBuffer1.y);
             }
 
             // todo: implement this for armatures
@@ -102,33 +102,33 @@ public class VerletPhysics extends GameSystem
         updateControllableBodies(dt);
 
         // animate the vertices of bone-tracked hulls
-        OpenCL.animate_hulls();
+        GPU.animate_hulls();
 
         // integration
-        OpenCL.integrate(dt, spatialPartition);
+        GPU.integrate(dt, spatialPartition);
 
         // broad phase collision
-        OpenCL.calculate_bank_offsets(spatialPartition);
+        GPU.calculate_bank_offsets(spatialPartition);
 
         if (spatialPartition.getKey_bank_size() == 0)
         {
             return;
         }
 
-        OpenCL.generate_keys(spatialPartition);
-        OpenCL.calculate_map_offsets(spatialPartition);
-        OpenCL.build_key_map(spatialPartition);
-        OpenCL.locate_in_bounds(spatialPartition);
-        OpenCL.count_candidates();
-        OpenCL.count_matches();
-        OpenCL.aabb_collide();
-        OpenCL.finalize_candidates();
+        GPU.generate_keys(spatialPartition);
+        GPU.calculate_map_offsets(spatialPartition);
+        GPU.build_key_map(spatialPartition);
+        GPU.locate_in_bounds(spatialPartition);
+        GPU.count_candidates();
+        GPU.count_matches();
+        GPU.aabb_collide();
+        GPU.finalize_candidates();
 
         // narrow phase collision/reaction
-        OpenCL.sat_collide();
+        GPU.sat_collide();
 
         // resolve edges
-        OpenCL.resolve_constraints(EDGE_STEPS);
+        GPU.resolve_constraints(EDGE_STEPS);
     }
 
     //boolean run_once = false;
@@ -177,7 +177,7 @@ public class VerletPhysics extends GameSystem
             this.physicsBuffer.set_gravity_x(GRAVITY_X);
             this.physicsBuffer.set_gravity_y(GRAVITY_Y);
             this.physicsBuffer.set_friction(FRICTION);
-            OpenCL.setPhysicsBuffer(physicsBuffer);
+            GPU.setPhysicsBuffer(physicsBuffer);
         }
 
         simulate(dt);

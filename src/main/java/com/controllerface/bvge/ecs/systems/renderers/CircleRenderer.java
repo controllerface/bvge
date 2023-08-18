@@ -1,12 +1,11 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.renderers.batches.CircleRenderBatch;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.gl.AbstractShader;
-import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 
@@ -41,7 +40,7 @@ public class CircleRenderer extends GameSystem
         glBufferData(GL_ARRAY_BUFFER, TRANSFORM_BUFFER_SIZE, GL_DYNAMIC_DRAW);
 
         // share the buffer with the CL context
-        OpenCL.share_memory(transform_buffer_id);
+        GPU.share_memory(transform_buffer_id);
 
         // unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);

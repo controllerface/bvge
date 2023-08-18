@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.renderers.batches.CrateRenderBatch;
@@ -134,7 +134,7 @@ public class CrateRenderer extends GameSystem
         glBufferData(GL_ARRAY_BUFFER, TRANSFORM_BUFFER_SIZE, GL_DYNAMIC_DRAW);
 
         // share the buffer with the CL context
-        OpenCL.share_memory(transform_buffer_id);
+        GPU.share_memory(transform_buffer_id);
 
         // unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);

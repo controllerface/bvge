@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems.renderers.batches;
 
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.window.Window;
@@ -71,7 +71,7 @@ public class CrateRenderBatch
         glVertexAttribPointer(3, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
 
         // share the buffer with the CL context
-        OpenCL.share_memory(index_buffer_id);
+        GPU.share_memory(index_buffer_id);
 
         // unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -108,7 +108,7 @@ public class CrateRenderBatch
         // this call moves the physics transforms of the tracked hulls into the buffer for rendering
         // todo: this will need to change to use bone weights, but possibly processing them in CL
         //  not in GL
-        OpenCL.GL_transforms(index_buffer_id, transform_buffer_ID, mesh_count);
+        GPU.GL_transforms(index_buffer_id, transform_buffer_ID, mesh_count);
 
         glBindVertexArray(vao);
         glActiveTexture(GL_TEXTURE0);

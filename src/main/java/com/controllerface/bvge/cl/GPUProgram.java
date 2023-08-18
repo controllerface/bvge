@@ -8,12 +8,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.controllerface.bvge.cl.OpenCL.*;
+import static com.controllerface.bvge.cl.GPU.*;
 
-public abstract class GpuKernel
+public abstract class GPUProgram
 {
     protected cl_program program;
+
     protected Map<String, cl_kernel> kernels = new HashMap<>();
+
     protected List<String> source_files = new ArrayList<>();
 
     protected abstract void init();

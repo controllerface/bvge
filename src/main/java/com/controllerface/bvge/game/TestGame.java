@@ -12,6 +12,8 @@ import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
 import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
 import com.controllerface.bvge.ecs.systems.renderers.*;
+import com.controllerface.bvge.geometry.Meshes;
+import com.controllerface.bvge.geometry.Models;
 
 import static com.controllerface.bvge.data.PhysicsObjects.*;
 import static com.controllerface.bvge.geometry.Models.POLYGON1_MODEL;
@@ -21,9 +23,14 @@ import static com.controllerface.bvge.geometry.Models.TEST_MODEL_INDEX;
 public class TestGame extends GameMode
 {
     private final GameSystem screenBlankSystem;
+
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {
         super(ecs);
+
+        Meshes.init();
+        Models.init();
+
         this.screenBlankSystem = screenBlankSystem;
     }
 

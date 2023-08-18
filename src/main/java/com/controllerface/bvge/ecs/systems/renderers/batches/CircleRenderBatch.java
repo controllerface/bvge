@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems.renderers.batches;
 
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.window.Window;
 
@@ -14,14 +14,14 @@ public class CircleRenderBatch
 {
     private final AbstractShader shader;
     private int numModels;
-    private int vaoID, vboID;
-    private final int transform_buffer_ID;
+    private int vaoID, index_buffer_id;
+    private final int transform_buffer_id;
     private int[] indices; // will be large enough to hold a full batch, but may only contain a partial one
 
-    public CircleRenderBatch(AbstractShader shader, int transform_buffer_ID)
+    public CircleRenderBatch(AbstractShader shader, int transform_buffer_id)
     {
         this.shader = shader;
-        this.transform_buffer_ID = transform_buffer_ID;
+        this.transform_buffer_id = transform_buffer_id;
     }
 
     public void start()
@@ -30,16 +30,16 @@ public class CircleRenderBatch
         vaoID = glGenVertexArrays();
         glBindVertexArray(vaoID); // this sets this VAO as being active
 
-        vboID = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vboID);
+        index_buffer_id = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, index_buffer_id);
         glBufferData(GL_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_ID);
+        glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_id);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
 
         // share the buffer with the CL context
-        OpenCL.share_memory(vboID);
+        GPU.share_memory(index_buffer_id);
 
         // unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -71,7 +71,7 @@ public class CircleRenderBatch
         shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
         shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
 
-        OpenCL.GL_transforms(vboID, transform_buffer_ID, numModels);
+        GPU.GL_transforms(index_buffer_id, transform_buffer_id, numModels);
 
         glBindVertexArray(vaoID);
 

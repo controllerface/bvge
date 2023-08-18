@@ -1,7 +1,7 @@
 package com.controllerface.bvge.data;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.cl.OpenCL;
+import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
@@ -11,7 +11,6 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static com.controllerface.bvge.geometry.Models.CRATE_MODEL;
@@ -50,27 +49,27 @@ public class PhysicsObjects
         // get the circle mesh. this is almost silly to do but just for consistency :-)
         var mesh = Models.get_model_by_index(Models.CIRCLE_MODEL).meshes()[0];
 
-        var raw_matrix = OpenCL.arg_float16_matrix(mesh.bone().offset());
+        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
         int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
 
         var vert = mesh.vertices()[0];
 
         // the model points are always zero so the * and + are for educational purposes
-        var p1 = OpenCL.arg_float2(vert.x() * size + x, vert.y() * size + y);
+        var p1 = CLUtils.arg_float2(vert.x() * size + x, vert.y() * size + y);
 
-        var t1 = OpenCL.arg_int2(vert.vert_ref_id(), bone_id);
+        var t1 = CLUtils.arg_int2(vert.vert_ref_id(), bone_id);
 
         // store the single point for the circle
         var p1_index = Main.Memory.new_point(p1, t1);
-        var l1 = OpenCL.arg_float4(x, y, x, y + 1);
-        var l2 = OpenCL.arg_float4(x, y, p1[0], p1[1]);
+        var l1 = CLUtils.arg_float4(x, y, x, y + 1);
+        var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angleBetween2Lines(l1, l2);
-        var table = OpenCL.arg_int4(p1_index, p1_index, -1, -1);
-        var transform = OpenCL.arg_float4(x, y, size, size / 2.0f);
-        var rotation = OpenCL.arg_float2(0, angle);
+        var table = CLUtils.arg_int4(p1_index, p1_index, -1, -1);
+        var transform = CLUtils.arg_float4(x, y, size, size / 2.0f);
+        var rotation = CLUtils.arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int[] _flag = OpenCL.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id);
+        int[] _flag = CLUtils.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int armature_id = Main.Memory.new_armature(x, y, hull_id);
         Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
@@ -84,7 +83,7 @@ public class PhysicsObjects
         // get the box mesh
         var mesh = Models.get_model_by_index(CRATE_MODEL).meshes()[0];
 
-        var raw_matrix = OpenCL.arg_float16_matrix(mesh.bone().offset());
+        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
         int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
 
         var hull = calculate_convex_hull(mesh.vertices());
@@ -96,19 +95,19 @@ public class PhysicsObjects
         var v3 = hull[2];
         var v4 = hull[3];
 
-        var p1 = OpenCL.arg_float2(v1.x(), v1.y());
-        var p2 = OpenCL.arg_float2(v2.x(), v2.y());
-        var p3 = OpenCL.arg_float2(v3.x(), v3.y());
-        var p4 = OpenCL.arg_float2(v4.x(), v4.y());
+        var p1 = CLUtils.arg_float2(v1.x(), v1.y());
+        var p2 = CLUtils.arg_float2(v2.x(), v2.y());
+        var p3 = CLUtils.arg_float2(v3.x(), v3.y());
+        var p4 = CLUtils.arg_float2(v4.x(), v4.y());
 
-        var p1_index = Main.Memory.new_point(p1, OpenCL.arg_int2(v1.vert_ref_id(), bone_id));
-        var p2_index = Main.Memory.new_point(p2, OpenCL.arg_int2(v2.vert_ref_id(), bone_id));
-        var p3_index = Main.Memory.new_point(p3, OpenCL.arg_int2(v3.vert_ref_id(), bone_id));
-        var p4_index = Main.Memory.new_point(p4, OpenCL.arg_int2(v4.vert_ref_id(), bone_id));
+        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), bone_id));
+        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), bone_id));
+        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), bone_id));
+        var p4_index = Main.Memory.new_point(p4, CLUtils.arg_int2(v4.vert_ref_id(), bone_id));
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
-        var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
-        var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+        var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+        var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
         var angle = MathEX.angleBetween2Lines(l1, l2);
 
@@ -122,13 +121,13 @@ public class PhysicsObjects
         Main.Memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR_EDGE);
         var end_edge = Main.Memory.new_edge(p2_index, p4_index, edgeDistance(p4, p2), FLAG_INTERIOR_EDGE);
 
-        var table = OpenCL.arg_int4(p1_index, p4_index, start_edge, end_edge);
-        var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
-        var rotation = OpenCL.arg_float2(0, angle);
+        var table = CLUtils.arg_int4(p1_index, p4_index, start_edge, end_edge);
+        var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
+        var rotation = CLUtils.arg_float2(0, angle);
 
 
         // there is only one hull, so it is the main hull ID by default
-        int [] _flag =  OpenCL.arg_int2(flags | FLAG_POLYGON, next_armature_id);
+        int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int armature_id = Main.Memory.new_armature(x, y, hull_id);
 
@@ -198,7 +197,7 @@ public class PhysicsObjects
             hull = translate_hull(hull, x, y);
 
             // make a new bone instance for this mesh
-            var raw_matrix = OpenCL.arg_float16_matrix(bone_transform);
+            var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
             int bone_id = Main.Memory.new_bone(next_bone.bone_ref_id(), raw_matrix);
 
             // generate the points in memory for this object
@@ -209,8 +208,8 @@ public class PhysicsObjects
             for (int point_index = 0; point_index < point_table.length; point_index++)
             {
                 var next_vertex = hull[point_index];
-                var new_point = OpenCL.arg_float2(next_vertex.x(), next_vertex.y());
-                var new_table = OpenCL.arg_int2(next_vertex.vert_ref_id(), bone_id);
+                var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
+                var new_table = CLUtils.arg_int2(next_vertex.vert_ref_id(), bone_id);
                 var p_index = Main.Memory.new_point(new_point, new_table);
                 if (start_point == -1)
                 {
@@ -294,15 +293,15 @@ public class PhysicsObjects
 
             // calculate centroid and reference angle
             MathEX.centroid(vector_buffer, hull);
-            var l1 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
-            var l2 = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, hull[0].x(), hull[0].y());
+            var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+            var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, hull[0].x(), hull[0].y());
             var angle = MathEX.angleBetween2Lines(l1, l2);
 
-            var table = OpenCL.arg_int4(start_point, end_point, start_edge, end_edge);
-            var transform = OpenCL.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
-            var rotation = OpenCL.arg_float2(0, angle);
+            var table = CLUtils.arg_int4(start_point, end_point, start_edge, end_edge);
+            var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
+            var rotation = CLUtils.arg_float2(0, angle);
 
-            int[] hull_flags = OpenCL.arg_int2(flags, next_armature_id);
+            int[] hull_flags = CLUtils.arg_int2(flags, next_armature_id);
             int hull_id = Main.Memory.new_hull(transform, rotation, table, hull_flags);
             if (bone_id != hull_id)
             {
