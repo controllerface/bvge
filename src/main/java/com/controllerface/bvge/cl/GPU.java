@@ -485,7 +485,15 @@ public class GPU
 
         //OpenCLUtils.debugDeviceDetails(device_ids);
 
-        // init physics buffers
+        // create memory buffers
+        prepare_memory(max_hulls, max_points);
+
+        // Create re-usable kernel objects
+        prepare_kernels();
+    }
+
+    private static void prepare_memory(int max_hulls, int max_points)
+    {
         int transform_mem_size        = max_hulls * Sizeof.cl_float4;
         int acceleration_mem_size     = max_hulls * Sizeof.cl_float2;
         int rotation_mem_size         = max_hulls * Sizeof.cl_float2;
@@ -541,18 +549,7 @@ public class GPU
         cl_zero_buffer(mem_armature_flags, armature_flags_mem_size);
 
 
-        // Create re-usable kernel objects
-        prepare_kernels();
-
-
-
-
-
-
-
-
         // Debugging info
-
         int total = transform_mem_size
             + acceleration_mem_size
             + rotation_mem_size
@@ -595,14 +592,25 @@ public class GPU
         System.out.println("               MB : " + ((float) total / 1024f / 1024f));
         System.out.println("               GB : " + ((float) total / 1024f / 1024f / 1024f));
         System.out.println("-----------------------------------\n");
-
-
-
-
     }
 
+    /**
+     * Creates reusable GPUKernel objects that the individual API methods use to implement
+     * the CPU-GPU transition layer. Pre-generating kernels this way helps to reduce calls
+     * to set kernel arguments, which can be expensive. Where possible, kernel arguments
+     * can be set once, and then subsequent calls to that kernel do not require setting
+     * the argument again. Only arguments with data that changes need to be updated.
+     * Generally, kernel functions operate on large arrays of data, which can be defined
+     * as arguments only once, even if the contents of these arrays changes often.
+     */
     private static void prepare_kernels()
     {
+        var gpu_prepare_bounds = new GPUKernel(command_queue, _k.get(Kernel.prepare_bounds), 3);
+        gpu_prepare_bounds.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_aabb));
+        gpu_prepare_bounds.def_arg(1, Sizeof.cl_mem);
+        gpu_prepare_bounds.def_arg(2, Sizeof.cl_int);
+        Kernel.prepare_bounds.set_kernel(gpu_prepare_bounds);
+
         var gpu_prepare_transforms = new GPUKernel(command_queue, _k.get(Kernel.prepare_transforms), 4);
         gpu_prepare_transforms.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_hulls));
         gpu_prepare_transforms.set_arg(1, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
@@ -655,7 +663,7 @@ public class GPU
      */
     public static void share_memory(int vboID)
     {
-        cl_mem vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
+        var vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
         shared_mem.put(vboID, vbo_mem);
     }
 
@@ -669,17 +677,15 @@ public class GPU
      */
     public static void GL_bounds(int vboID, int vboOffset, int batchSize)
     {
+        var gpu_kernel = Kernel.prepare_bounds.gpu;
+
         var vbo_mem = shared_mem.get(vboID);
-        long[] global_work_size = arg_long(batchSize);
         long[] edge_offset = arg_long(vboOffset);
 
-        clSetKernelArg(_k.get(Kernel.prepare_bounds), 0, Sizeof.cl_mem, Pointer.to(mem_aabb));
-        clSetKernelArg(_k.get(Kernel.prepare_bounds), 1, Sizeof.cl_mem, Pointer.to(vbo_mem));
-        clSetKernelArg(_k.get(Kernel.prepare_bounds), 2, Sizeof.cl_int, Pointer.to(edge_offset));
-
-        gl_acquire(command_queue, vbo_mem);
-        k_call(command_queue, _k.get(Kernel.prepare_bounds), global_work_size);
-        gl_release(command_queue, vbo_mem);
+        gpu_kernel.share_mem(vbo_mem);
+        gpu_kernel.update_arg(1, Pointer.to(vbo_mem));
+        gpu_kernel.update_arg(2, Pointer.to(edge_offset));
+        gpu_kernel.call(arg_long(batchSize));
     }
 
     public static void GL_bones(int vboID, int vboOffset, int batchSize)
