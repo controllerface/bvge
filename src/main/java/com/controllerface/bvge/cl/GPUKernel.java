@@ -13,13 +13,13 @@ public class GPUKernel
     final cl_command_queue command_queue;
     final cl_kernel kernel;
     final List<cl_mem> shared_memory = new ArrayList<>();
-    final int[] x;
+    final long[] arg_sizes;
 
-    public GPUKernel(cl_command_queue command_queue, cl_kernel kernel, int x)
+    public GPUKernel(cl_command_queue command_queue, cl_kernel kernel, int arg_count)
     {
         this.command_queue = command_queue;
         this.kernel = kernel;
-        this.x = new int[x];
+        this.arg_sizes = new long[arg_count];
     }
 
     public void share_mem(cl_mem mem)
@@ -35,9 +35,9 @@ public class GPUKernel
      * @param pos argument position
      * @param size size of the memory buffer being passed for the argument
      */
-    public void def_arg(int pos, int size)
+    public void def_arg(int pos, long size)
     {
-        x[pos] = size;
+        arg_sizes[pos] = size;
     }
 
     /**
@@ -50,7 +50,7 @@ public class GPUKernel
      * @param size size of the memory buffer being passed for the argument
      * @param pointer pointer to the memory buffer being passed
      */
-    public void set_arg(int pos, int size, Pointer pointer)
+    public void set_arg(int pos, long size, Pointer pointer)
     {
         def_arg(pos, size);
         clSetKernelArg(this.kernel, pos, size, pointer);
@@ -67,16 +67,21 @@ public class GPUKernel
      */
     public void update_arg(int pos, Pointer pointer)
     {
-        clSetKernelArg(this.kernel, pos, x[pos], pointer);
+        clSetKernelArg(this.kernel, pos, arg_sizes[pos], pointer);
     }
 
     public void call(long[] global_work_size)
+    {
+        call(global_work_size, null);
+    }
+
+    public void call(long[] global_work_size, long[] local_work_size)
     {
         if (!shared_memory.isEmpty())
         {
             shared_memory.forEach(m->CLUtils.gl_acquire(command_queue, m));
         }
-        k_call(command_queue, kernel, global_work_size);
+        k_call(command_queue, kernel, global_work_size, local_work_size);
         if (!shared_memory.isEmpty())
         {
             shared_memory.forEach(m->CLUtils.gl_release(command_queue, m));
