@@ -685,6 +685,44 @@ public class GPU
         create_hull.def_arg(7, Sizeof.cl_int4);
         create_hull.def_arg(8, Sizeof.cl_int2);
         Kernel.create_hull.set_kernel(create_hull);
+
+        var update_accel = new GPUKernel(command_queue, _k.get(Kernel.update_accel), 3);
+        update_accel.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_armature_acceleration));
+        update_accel.def_arg(1, Sizeof.cl_int);
+        update_accel.def_arg(2, Sizeof.cl_float2);
+        Kernel.update_accel.set_kernel(update_accel);
+
+        var read_position = new GPUKernel(command_queue, _k.get(Kernel.read_position), 3);
+        read_position.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        read_position.def_arg(1, Sizeof.cl_float2);
+        read_position.def_arg(2, Sizeof.cl_int);
+        Kernel.read_position.set_kernel(read_position);
+
+        var animate_hulls = new GPUKernel(command_queue, _k.get(Kernel.animate_hulls), 8);
+        animate_hulls.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_points));
+        animate_hulls.set_arg(1, Sizeof.cl_mem, Pointer.to(mem_hulls));
+        animate_hulls.set_arg(2, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        animate_hulls.set_arg(3, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
+        animate_hulls.set_arg(4, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        animate_hulls.set_arg(5, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
+        animate_hulls.set_arg(6, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
+        animate_hulls.set_arg(7, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
+        Kernel.animate_hulls.set_kernel(animate_hulls);
+
+        var integrate = new GPUKernel(command_queue, _k.get(Kernel.integrate), 12);
+        integrate.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_hulls));
+        integrate.set_arg(1, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        integrate.set_arg(2, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
+        integrate.set_arg(3, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
+        integrate.set_arg(4, Sizeof.cl_mem, Pointer.to(mem_armature_acceleration));
+        integrate.set_arg(5, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
+        integrate.set_arg(6, Sizeof.cl_mem, Pointer.to(mem_points));
+        integrate.set_arg(7, Sizeof.cl_mem, Pointer.to(mem_aabb));
+        integrate.set_arg(8, Sizeof.cl_mem, Pointer.to(mem_aabb_index));
+        integrate.set_arg(9, Sizeof.cl_mem, Pointer.to(mem_aabb_key_bank));
+        integrate.set_arg(10, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        integrate.def_arg(11, Sizeof.cl_mem);
+        Kernel.integrate.set_kernel(integrate);
     }
 
     public static void destroy()
@@ -880,16 +918,17 @@ public class GPU
 
     public static void update_accel(int armature_index, float acc_x, float acc_y)
     {
+        var gpu_kernel = Kernel.update_accel.gpu;
+
         var pnt_index = Pointer.to(arg_int(armature_index));
         var pnt_acc = Pointer.to(arg_float2(acc_x, acc_y));
 
-        clSetKernelArg(_k.get(Kernel.update_accel), 0, Sizeof.cl_mem, Pointer.to(mem_armature_acceleration));
-        clSetKernelArg(_k.get(Kernel.update_accel), 1, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(_k.get(Kernel.update_accel), 2, Sizeof.cl_float2, pnt_acc);
-
-        k_call(command_queue, _k.get(Kernel.update_accel), global_single_size);
+        gpu_kernel.update_arg(1, pnt_index);
+        gpu_kernel.update_arg(2, pnt_acc);
+        gpu_kernel.call(global_single_size);
     }
 
+    // todo: implement armature rotations and update this
     public static void rotate_hull(int hull_index, float angle)
     {
         var pnt_index = Pointer.to(arg_int(hull_index));
@@ -911,17 +950,17 @@ public class GPU
             return null;
         }
 
+        var gpu_kernel = Kernel.read_position.gpu;
+
         int[] index = arg_int(armature_index);
 
         cl_mem result_data = cl_new_buffer(Sizeof.cl_float2);
         cl_zero_buffer(result_data, Sizeof.cl_float2);
         Pointer src_result = Pointer.to(result_data);
 
-        clSetKernelArg(_k.get(Kernel.read_position), 0, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        clSetKernelArg(_k.get(Kernel.read_position), 1, Sizeof.cl_float2, src_result);
-        clSetKernelArg(_k.get(Kernel.read_position), 2, Sizeof.cl_int, Pointer.to(index));
-
-        k_call(command_queue, _k.get(Kernel.read_position), global_single_size);
+        gpu_kernel.update_arg(1, src_result);
+        gpu_kernel.update_arg(2, Pointer.to(index));
+        gpu_kernel.call(global_single_size);
 
         float[] result = arg_float2(0, 0);
         Pointer dst_result = Pointer.to(result);
@@ -937,23 +976,13 @@ public class GPU
 
     public static void animate_hulls()
     {
-        long[] global_work_size = new long[]{Main.Memory.point_count()};
-
-        clSetKernelArg(_k.get(Kernel.animate_hulls), 0, Sizeof.cl_mem, Pointer.to(mem_points));
-        clSetKernelArg(_k.get(Kernel.animate_hulls), 1, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        clSetKernelArg(_k.get(Kernel.animate_hulls), 2, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
-        clSetKernelArg(_k.get(Kernel.animate_hulls), 3, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
-        clSetKernelArg(_k.get(Kernel.animate_hulls), 4, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        clSetKernelArg(_k.get(Kernel.animate_hulls), 5, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
-        clSetKernelArg(_k.get(Kernel.animate_hulls), 6, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
-        clSetKernelArg(_k.get(Kernel.animate_hulls), 7, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
-
-        k_call(command_queue, _k.get(Kernel.animate_hulls), global_work_size);
+        Kernel.animate_hulls.gpu.call(arg_long(Main.Memory.point_count()));
     }
 
     public static void integrate(float delta_time, SpatialPartition spatialPartition)
     {
-        long[] global_work_size = new long[]{Main.Memory.hull_count()};
+        var gpu_kernel = Kernel.integrate.gpu;
+
         float[] args =
             {
                 delta_time,
@@ -975,20 +1004,8 @@ public class GPU
         long size = Sizeof.cl_float * args.length;
         cl_mem argMem = cl_new_read_only_buffer(size, srcArgs);
 
-        clSetKernelArg(_k.get(Kernel.integrate), 0, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        clSetKernelArg(_k.get(Kernel.integrate), 1, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        clSetKernelArg(_k.get(Kernel.integrate), 2, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
-        clSetKernelArg(_k.get(Kernel.integrate), 3, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
-        clSetKernelArg(_k.get(Kernel.integrate), 4, Sizeof.cl_mem, Pointer.to(mem_armature_acceleration));
-        clSetKernelArg(_k.get(Kernel.integrate), 5, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
-        clSetKernelArg(_k.get(Kernel.integrate), 6, Sizeof.cl_mem, Pointer.to(mem_points));
-        clSetKernelArg(_k.get(Kernel.integrate), 7, Sizeof.cl_mem, Pointer.to(mem_aabb));
-        clSetKernelArg(_k.get(Kernel.integrate), 8, Sizeof.cl_mem, Pointer.to(mem_aabb_index));
-        clSetKernelArg(_k.get(Kernel.integrate), 9, Sizeof.cl_mem, Pointer.to(mem_aabb_key_bank));
-        clSetKernelArg(_k.get(Kernel.integrate), 10, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
-        clSetKernelArg(_k.get(Kernel.integrate), 11, Sizeof.cl_mem, Pointer.to(argMem));
-
-        k_call(command_queue, _k.get(Kernel.integrate), global_work_size);
+        gpu_kernel.update_arg(11, Pointer.to(argMem));
+        gpu_kernel.call(arg_long(Main.Memory.hull_count()));
 
         clReleaseMemObject(argMem);
     }
