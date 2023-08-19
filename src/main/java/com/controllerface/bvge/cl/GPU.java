@@ -33,10 +33,11 @@ public class GPU
     private static final Pointer ZERO_PATTERN = Pointer.to(new int[]{ 0 });
 
     // these are re-calculated at startup to match the user's hardware
-    private static long max_workgroup_size = 0;
+    private static long max_work_group_size = 0;
     private static long max_scan_block_size = 0;
 
     private static long[] local_work_default = arg_long(0);
+
     // pre-made size array, used for kernels that have a single work item
     private static final long[] global_single_size = arg_long(1);
 
@@ -337,8 +338,6 @@ public class GPU
     //#endregion
 
 
-
-
     private static void cl_read_buffer(cl_mem src, long size, Pointer dst)
     {
         clEnqueueReadBuffer(command_queue, src, CL_TRUE, 0, size, dst,
@@ -458,8 +457,6 @@ public class GPU
 
     }
 
-
-
     public static void init(int max_hulls, int max_points)
     {
         device_ids = device_init();
@@ -472,9 +469,9 @@ public class GPU
         System.out.println(getString(device, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
-        max_workgroup_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
-        max_scan_block_size = max_workgroup_size * 2;
-        local_work_default = new long[]{max_workgroup_size};
+        max_work_group_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        max_scan_block_size = max_work_group_size * 2;
+        local_work_default = new long[]{max_work_group_size};
 
         // initialize kernel programs
         for (Program program : Program.values())
@@ -547,7 +544,6 @@ public class GPU
         cl_zero_buffer(mem_bone_index, bone_index_mem_size);
         cl_zero_buffer(mem_armatures, armature_mem_size);
         cl_zero_buffer(mem_armature_flags, armature_flags_mem_size);
-
 
         // Debugging info
         int total = transform_mem_size
@@ -635,6 +631,60 @@ public class GPU
         gpu_prepare_bones.def_arg(6, Sizeof.cl_mem);
         gpu_prepare_bones.def_arg(7, Sizeof.cl_int);
         Kernel.prepare_bones.set_kernel(gpu_prepare_bones);
+
+        var gpu_create_point = new GPUKernel(command_queue, _k.get(Kernel.create_point), 5);
+        gpu_create_point.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_points));
+        gpu_create_point.set_arg(1, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
+        gpu_create_point.def_arg(2, Sizeof.cl_int);
+        gpu_create_point.def_arg(3, Sizeof.cl_float4);
+        gpu_create_point.def_arg(4, Sizeof.cl_int2);
+        Kernel.create_point.set_kernel(gpu_create_point);
+
+        var gpu_create_edge = new GPUKernel(command_queue, _k.get(Kernel.create_edge), 3);
+        gpu_create_edge.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_edges));
+        gpu_create_edge.def_arg(1, Sizeof.cl_int);
+        gpu_create_edge.def_arg(2, Sizeof.cl_float4);
+        Kernel.create_edge.set_kernel(gpu_create_edge);
+
+        var create_armature = new GPUKernel(command_queue, _k.get(Kernel.create_armature), 5);
+        create_armature.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        create_armature.set_arg(1, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
+        create_armature.def_arg(2, Sizeof.cl_int);
+        create_armature.def_arg(3, Sizeof.cl_float4);
+        create_armature.def_arg(4, Sizeof.cl_int);
+        Kernel.create_armature.set_kernel(create_armature);
+
+        var create_vertex_ref = new GPUKernel(command_queue, _k.get(Kernel.create_vertex_reference), 3);
+        create_vertex_ref.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
+        create_vertex_ref.def_arg(1, Sizeof.cl_int);
+        create_vertex_ref.def_arg(2, Sizeof.cl_float2);
+        Kernel.create_vertex_reference.set_kernel(create_vertex_ref);
+
+        var create_bone_ref = new GPUKernel(command_queue, _k.get(Kernel.create_bone_reference), 3);
+        create_bone_ref.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_bone_references));
+        create_bone_ref.def_arg(1, Sizeof.cl_int);
+        create_bone_ref.def_arg(2, Sizeof.cl_float16);
+        Kernel.create_bone_reference.set_kernel(create_bone_ref);
+
+        var create_bone = new GPUKernel(command_queue, _k.get(Kernel.create_bone), 5);
+        create_bone.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
+        create_bone.set_arg(1, Sizeof.cl_mem, Pointer.to(mem_bone_index));
+        create_bone.def_arg(2, Sizeof.cl_int);
+        create_bone.def_arg(3, Sizeof.cl_float16);
+        create_bone.def_arg(4, Sizeof.cl_int);
+        Kernel.create_bone.set_kernel(create_bone);
+
+        var create_hull = new GPUKernel(command_queue, _k.get(Kernel.create_hull), 9);
+        create_hull.set_arg(0, Sizeof.cl_mem, Pointer.to(mem_hulls));
+        create_hull.set_arg(1, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
+        create_hull.set_arg(2, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
+        create_hull.set_arg(3, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        create_hull.def_arg(4, Sizeof.cl_int);
+        create_hull.def_arg(5, Sizeof.cl_float4);
+        create_hull.def_arg(6, Sizeof.cl_float2);
+        create_hull.def_arg(7, Sizeof.cl_int4);
+        create_hull.def_arg(8, Sizeof.cl_int2);
+        Kernel.create_hull.set_kernel(create_hull);
     }
 
     public static void destroy()
@@ -734,104 +784,98 @@ public class GPU
 
     public static void create_point(int point_index, float pos_x, float pos_y, float prv_x, float prv_y, int v, int b)
     {
+        var gpu_kernel = Kernel.create_point.gpu;
+
         var pnt_index = Pointer.to(arg_int(point_index));
         var pnt_point = Pointer.to(arg_float4(pos_x, pos_y, prv_x, prv_y));
         var pnt_table = Pointer.to(arg_int2(v, b));
 
-        clSetKernelArg(_k.get(Kernel.create_point), 0, Sizeof.cl_mem, Pointer.to(mem_points));
-        clSetKernelArg(_k.get(Kernel.create_point), 1, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
-        clSetKernelArg(_k.get(Kernel.create_point), 2, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(_k.get(Kernel.create_point), 3, Sizeof.cl_float4, pnt_point);
-        clSetKernelArg(_k.get(Kernel.create_point), 4, Sizeof.cl_int2, pnt_table);
-
-        k_call(command_queue, _k.get(Kernel.create_point), global_single_size);
+        gpu_kernel.update_arg(2, pnt_index);
+        gpu_kernel.update_arg(3, pnt_point);
+        gpu_kernel.update_arg(4, pnt_table);
+        gpu_kernel.call(global_single_size);
     }
 
     public static void create_edge(int edge_index, float p1, float p2, float l, int flags)
     {
+        var gpu_kernel = Kernel.create_edge.gpu;
+
         var pnt_index = Pointer.to(arg_int(edge_index));
         var pnt_edge = Pointer.to(arg_float4(p1, p2, l, flags));
 
-        clSetKernelArg(_k.get(Kernel.create_edge), 0, Sizeof.cl_mem, Pointer.to(mem_edges));
-        clSetKernelArg(_k.get(Kernel.create_edge), 1, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(_k.get(Kernel.create_edge), 2, Sizeof.cl_float4, pnt_edge);
-
-        k_call(command_queue, _k.get(Kernel.create_edge), global_single_size);
+        gpu_kernel.update_arg(1, pnt_index);
+        gpu_kernel.update_arg(2, pnt_edge);
+        gpu_kernel.call(global_single_size);
     }
 
     public static void create_armature(int armature_index, float x, float y, int flags)
     {
+        var gpu_kernel = Kernel.create_armature.gpu;
+
         var pnt_index = Pointer.to(arg_int(armature_index));
         var pnt_armature = Pointer.to(arg_float4(x, y, x, y));
         var pnt_flags = Pointer.to(arg_int(flags));
 
-        clSetKernelArg(_k.get(Kernel.create_armature), 0, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        clSetKernelArg(_k.get(Kernel.create_armature), 1, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
-        clSetKernelArg(_k.get(Kernel.create_armature), 2, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(_k.get(Kernel.create_armature), 3, Sizeof.cl_float4, pnt_armature);
-        clSetKernelArg(_k.get(Kernel.create_armature), 4, Sizeof.cl_int, pnt_flags);
-
-        k_call(command_queue, _k.get(Kernel.create_armature), global_single_size);
+        gpu_kernel.update_arg(2, pnt_index);
+        gpu_kernel.update_arg(3, pnt_armature);
+        gpu_kernel.update_arg(4, pnt_flags);
+        gpu_kernel.call(global_single_size);
     }
 
     public static void create_vertex_reference(int vert_ref_index, float x, float y)
     {
+        var gpu_kernel = Kernel.create_vertex_reference.gpu;
+
         var pnt_index = Pointer.to(arg_int(vert_ref_index));
         var pnt_vert_ref = Pointer.to(arg_float2(x, y));
 
-        clSetKernelArg(_k.get(Kernel.create_vertex_reference), 0, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
-        clSetKernelArg(_k.get(Kernel.create_vertex_reference), 1, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(_k.get(Kernel.create_vertex_reference), 2, Sizeof.cl_float2, pnt_vert_ref);
-
-        k_call(command_queue, _k.get(Kernel.create_vertex_reference), global_single_size);
+        gpu_kernel.update_arg(1, pnt_index);
+        gpu_kernel.update_arg(2, pnt_vert_ref);
+        gpu_kernel.call(global_single_size);
     }
 
     public static void create_bone_reference(int bone_ref_index, float[] matrix)
     {
+        var gpu_kernel = Kernel.create_bone_reference.gpu;
+
         var pnt_index = Pointer.to(arg_int(bone_ref_index));
         var pnt_bone_ref = Pointer.to(matrix);
 
-        clSetKernelArg(_k.get(Kernel.create_bone_reference), 0, Sizeof.cl_mem, Pointer.to(mem_bone_references));
-        clSetKernelArg(_k.get(Kernel.create_bone_reference), 1, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(_k.get(Kernel.create_bone_reference), 2, Sizeof.cl_float16, pnt_bone_ref);
-
-        k_call(command_queue, _k.get(Kernel.create_bone_reference), global_single_size);
+        gpu_kernel.update_arg(1, pnt_index);
+        gpu_kernel.update_arg(2, pnt_bone_ref);
+        gpu_kernel.call(global_single_size);
     }
 
     public static void create_bone(int bone_index, int bone_ref_index, float[] matrix)
     {
+        var gpu_kernel = Kernel.create_bone.gpu;
+
         var pnt_index = Pointer.to(arg_int(bone_index));
         var pnt_ref_index = Pointer.to(arg_int(bone_ref_index));
         var pnt_bone_ref = Pointer.to(matrix);
 
-        clSetKernelArg(_k.get(Kernel.create_bone), 0, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
-        clSetKernelArg(_k.get(Kernel.create_bone), 1, Sizeof.cl_mem, Pointer.to(mem_bone_index));
-        clSetKernelArg(_k.get(Kernel.create_bone), 2, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(_k.get(Kernel.create_bone), 3, Sizeof.cl_float16, pnt_bone_ref);
-        clSetKernelArg(_k.get(Kernel.create_bone), 4, Sizeof.cl_int, pnt_ref_index);
-
-        k_call(command_queue, _k.get(Kernel.create_bone), global_single_size);
+        gpu_kernel.update_arg(2, pnt_index);
+        gpu_kernel.update_arg(3, pnt_bone_ref);
+        gpu_kernel.update_arg(4, pnt_ref_index);
+        gpu_kernel.call(global_single_size);
     }
 
     public static void create_hull(int hull_index, float[] hull, float[] rotation, int[] table, int[] flags)
     {
+        var gpu_kernel = Kernel.create_hull.gpu;
+
         var pnt_index = Pointer.to(arg_int(hull_index));
         var pnt_flags = Pointer.to(flags);
         var pnt_table = Pointer.to(table);
         var pnt_rotation = Pointer.to(rotation);
         var pnt_hull = Pointer.to(hull);
 
-        clSetKernelArg(_k.get(Kernel.create_hull), 0, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        clSetKernelArg(_k.get(Kernel.create_hull), 1, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
-        clSetKernelArg(_k.get(Kernel.create_hull), 2, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
-        clSetKernelArg(_k.get(Kernel.create_hull), 3, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
-        clSetKernelArg(_k.get(Kernel.create_hull), 4, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(_k.get(Kernel.create_hull), 5, Sizeof.cl_float4, pnt_hull);
-        clSetKernelArg(_k.get(Kernel.create_hull), 6, Sizeof.cl_float2, pnt_rotation);
-        clSetKernelArg(_k.get(Kernel.create_hull), 7, Sizeof.cl_int4, pnt_table);
-        clSetKernelArg(_k.get(Kernel.create_hull), 8, Sizeof.cl_int2, pnt_flags);
-
-        k_call(command_queue, _k.get(Kernel.create_hull), global_single_size);
+        gpu_kernel.update_arg(4, pnt_index);
+        gpu_kernel.update_arg(5, pnt_hull);
+        gpu_kernel.update_arg(6, pnt_rotation);
+        gpu_kernel.update_arg(7, pnt_table);
+        gpu_kernel.update_arg(8, pnt_flags);
+        gpu_kernel.call(global_single_size);
     }
 
     public static void update_accel(int armature_index, float acc_x, float acc_y)
