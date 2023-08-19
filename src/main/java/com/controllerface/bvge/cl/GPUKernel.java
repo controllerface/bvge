@@ -44,6 +44,18 @@ public class GPUKernel
     }
 
     /**
+     * Sets a new argument to a null pointer. This is used for defining buffers that are local to the
+     * GPU kernel execution. Buffers of this nature are sized but have no data transferred, the empty
+     * buffer is created by the GPU and is destroyed after the call returns.
+     * @param pos argument position
+     * @param size size of the empty buffer to be created for the argument
+     */
+    public void new_arg(int pos, long size)
+    {
+        new_arg(pos, size, null);
+    }
+
+    /**
      * Defines an argument position as having a specific size, without assigning it any data yet.
      * This is used to predefine argument sizes, typically before a kernel is used, so that the
      * values can be updated at runtime. This makes calling code more concise as the size value

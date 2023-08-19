@@ -1,5 +1,6 @@
 package com.controllerface.bvge.cl;
 
+import org.jocl.CL;
 import org.jocl.cl_kernel;
 import org.jocl.cl_program;
 
@@ -10,6 +11,7 @@ import java.util.Map;
 
 import static com.controllerface.bvge.cl.CLUtils.read_src;
 import static com.controllerface.bvge.cl.GPU.*;
+import static org.jocl.CL.clReleaseProgram;
 
 public abstract class GPUProgram
 {
@@ -67,5 +69,11 @@ public abstract class GPUProgram
     protected void make_kernel(Kernel kernel_name)
     {
         this.kernels.put(kernel_name, cl_k(program, kernel_name.name()));
+    }
+
+    public void destroy()
+    {
+        clReleaseProgram(program);
+        kernels.values().forEach(CL::clReleaseKernel);
     }
 }

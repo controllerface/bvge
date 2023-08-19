@@ -83,36 +83,35 @@ public class CrateRenderer extends GameSystem
 
 
         var vbo_colors = new float[24];
-        vbo_colors[0] = 0.5f; // tri 1 // p1 r
-        vbo_colors[1] = 0.35f;          // p1 g
-        vbo_colors[2] = 0.05f;          // p1 b
-        vbo_colors[3] = 1f;          // p1 a
+        vbo_colors[0] = 0.5f;   // tri 1 // p1 r
+        vbo_colors[1] = 0.35f;           // p1 g
+        vbo_colors[2] = 0.05f;           // p1 b
+        vbo_colors[3] = 1f;              // p1 a
 
-        vbo_colors[4] = 0.23f;          // p2 r
-        vbo_colors[5] = 0.21f;          // p2 g
-        vbo_colors[6] = 0.2f;          // p2 b
-        vbo_colors[7] = 1f;          // p2 a
+        vbo_colors[4] = 0.23f;           // p2 r
+        vbo_colors[5] = 0.21f;           // p2 g
+        vbo_colors[6] = 0.2f;            // p2 b
+        vbo_colors[7] = 1f;              // p2 a
 
-        vbo_colors[8] = 0.55f;          // p3 r
-        vbo_colors[9] = 0.5f;          // p3 g
+        vbo_colors[8] = 0.55f;           // p3 r
+        vbo_colors[9] = 0.5f;            // p3 g
         vbo_colors[10] = 0.48f;          // p3 b
-        vbo_colors[11] = 1f;          // p3 a
+        vbo_colors[11] = 1f;             // p3 a
 
         vbo_colors[12] = 0.5f;  // tri 2 // p1 r
         vbo_colors[13] = 0.35f;          // p1 g
         vbo_colors[14] = 0.05f;          // p1 b
         vbo_colors[15] = 1f;             // p1 a
 
-        vbo_colors[16] = 0.55f;           // p3 r
-        vbo_colors[17] = 0.5f;            // p3 g
+        vbo_colors[16] = 0.55f;          // p3 r
+        vbo_colors[17] = 0.5f;           // p3 g
         vbo_colors[18] = 0.48f;          // p3 b
         vbo_colors[19] = 1f;             // p3 a
 
-        vbo_colors[20] = .5f;          // p4 r
-        vbo_colors[21] = .5f;          // p4 g
-        vbo_colors[22] = .5f;          // p4 b
-        vbo_colors[23] = 1f;          // p4 a
-
+        vbo_colors[20] = .5f;            // p4 r
+        vbo_colors[21] = .5f;            // p4 g
+        vbo_colors[22] = .5f;            // p4 b
+        vbo_colors[23] = 1f;             // p4 a
 
 
         // load model data
@@ -194,7 +193,6 @@ public class CrateRenderer extends GameSystem
                 b.start();
                 offset += count;
             }
-
 
             Models.set_model_clean(Models.CRATE_MODEL);
         }

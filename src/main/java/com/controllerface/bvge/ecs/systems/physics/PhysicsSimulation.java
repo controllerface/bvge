@@ -9,7 +9,7 @@ import org.joml.Vector2f;
 
 import java.util.*;
 
-public class VerletPhysics extends GameSystem
+public class PhysicsSimulation extends GameSystem
 {
     private final static float TARGET_FPS = 60.0f;
     private final static float TICK_RATE = 1.0f / TARGET_FPS;
@@ -29,7 +29,7 @@ public class VerletPhysics extends GameSystem
     private final static float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
     private final static float FRICTION = .990f;
 
-    private final SpatialPartition spatialPartition;
+    private final SpatialPartition spatial_partition;
     private PhysicsBuffer physicsBuffer;
 
     /**
@@ -38,10 +38,10 @@ public class VerletPhysics extends GameSystem
      */
     private final Vector2f vectorBuffer1 = new Vector2f();
 
-    public VerletPhysics(ECS ecs, SpatialPartition spatialPartition)
+    public PhysicsSimulation(ECS ecs, SpatialPartition spatial_partition)
     {
         super(ecs);
-        this.spatialPartition = spatialPartition;
+        this.spatial_partition = spatial_partition;
     }
 
     private void updateControllableBodies(float dt)
@@ -105,20 +105,20 @@ public class VerletPhysics extends GameSystem
         GPU.animate_hulls();
 
         // integration
-        GPU.integrate(dt, spatialPartition);
+        GPU.integrate(dt, spatial_partition);
 
         // broad phase collision
-        GPU.calculate_bank_offsets(spatialPartition);
+        GPU.calculate_bank_offsets(spatial_partition);
 
-        if (spatialPartition.getKey_bank_size() == 0)
+        if (spatial_partition.getKey_bank_size() == 0)
         {
             return;
         }
 
-        GPU.generate_keys(spatialPartition);
-        GPU.calculate_map_offsets(spatialPartition);
-        GPU.build_key_map(spatialPartition);
-        GPU.locate_in_bounds(spatialPartition);
+        GPU.generate_keys(spatial_partition);
+        GPU.calculate_map_offsets(spatial_partition);
+        GPU.build_key_map(spatial_partition);
+        GPU.locate_in_bounds(spatial_partition);
         GPU.count_candidates();
         GPU.count_matches();
         GPU.aabb_collide();

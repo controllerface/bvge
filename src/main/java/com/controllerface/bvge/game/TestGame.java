@@ -10,7 +10,7 @@ import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
-import com.controllerface.bvge.ecs.systems.physics.VerletPhysics;
+import com.controllerface.bvge.ecs.systems.physics.PhysicsSimulation;
 import com.controllerface.bvge.ecs.systems.renderers.*;
 import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.geometry.Models;
@@ -127,7 +127,7 @@ public class TestGame extends GameMode
         // todo: write bone animator system, it should put all bones in their current positions
 
         // all physics calculations should be done first
-        ecs.registerSystem(new VerletPhysics(ecs, spatialPartition));
+        ecs.registerSystem(new PhysicsSimulation(ecs, spatialPartition));
 
         // camera movement must be handled before rendering occurs, but after objects are in position
         ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
