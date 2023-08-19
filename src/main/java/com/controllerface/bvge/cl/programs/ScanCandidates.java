@@ -15,8 +15,8 @@ public class ScanCandidates extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_scan_candidates_single_block);
-        make_kernel(kn_scan_candidates_multi_block);
-        make_kernel(kn_complete_candidates_multi_block);
+        make_kernel(Kernel.scan_candidates_single_block_out);
+        make_kernel(Kernel.scan_candidates_multi_block_out);
+        make_kernel(Kernel.complete_candidates_multi_block_out);
     }
 }

@@ -14,6 +14,6 @@ public class ResolveConstraints extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_resolve_constraints);
+        make_kernel(Kernel.resolve_constraints);
     }
 }

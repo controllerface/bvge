@@ -15,8 +15,8 @@ public class ScanIntArrayOut extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_scan_int_single_block_out);
-        make_kernel(kn_scan_int_multi_block_out);
-        make_kernel(kn_complete_int_multi_block_out);
+        make_kernel(Kernel.scan_int_single_block_out);
+        make_kernel(Kernel.scan_int_multi_block_out);
+        make_kernel(Kernel.complete_int_multi_block_out);
     }
 }

@@ -14,6 +14,6 @@ public class PrepareEdges extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_prepare_edges);
+        make_kernel(Kernel.prepare_edges);
     }
 }

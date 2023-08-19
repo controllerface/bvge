@@ -2,8 +2,8 @@ package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.GPUProgram;
 
+import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.GPU.*;
-import static com.controllerface.bvge.cl.CLUtils.read_src;
 
 public class AabbCollide extends GPUProgram
 {
@@ -16,6 +16,6 @@ public class AabbCollide extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_aabb_collide);
+        make_kernel(Kernel.aabb_collide);
     }
 }

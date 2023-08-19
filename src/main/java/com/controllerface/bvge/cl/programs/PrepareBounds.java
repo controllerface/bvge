@@ -14,6 +14,6 @@ public class PrepareBounds extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_prepare_bounds);
+        make_kernel(Kernel.prepare_bounds);
     }
 }

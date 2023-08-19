@@ -15,6 +15,6 @@ public class PrepareBones extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_prepare_bones);
+        make_kernel(Kernel.prepare_bones);
     }
 }

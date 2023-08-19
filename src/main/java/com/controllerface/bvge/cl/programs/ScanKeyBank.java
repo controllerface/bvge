@@ -15,8 +15,8 @@ public class ScanKeyBank extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_scan_bounds_single_block);
-        make_kernel(kn_scan_bounds_multi_block);
-        make_kernel(kn_complete_bounds_multi_block);
+        make_kernel(Kernel.scan_bounds_single_block);
+        make_kernel(Kernel.scan_bounds_multi_block);
+        make_kernel(Kernel.complete_bounds_multi_block);
     }
 }

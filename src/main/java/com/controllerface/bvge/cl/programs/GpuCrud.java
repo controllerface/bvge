@@ -15,15 +15,15 @@ public class GpuCrud extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_update_accel);
-        make_kernel(kn_rotate_hull);
-        make_kernel(kn_read_position);
-        make_kernel(kn_create_hull);
-        make_kernel(kn_create_point);
-        make_kernel(kn_create_edge);
-        make_kernel(kn_create_bone_reference);
-        make_kernel(kn_create_vertex_reference);
-        make_kernel(kn_create_bone);
-        make_kernel(kn_create_armature);
+        make_kernel(Kernel.update_accel);
+        make_kernel(Kernel.rotate_hull);
+        make_kernel(Kernel.read_position);
+        make_kernel(Kernel.create_hull);
+        make_kernel(Kernel.create_point);
+        make_kernel(Kernel.create_edge);
+        make_kernel(Kernel.create_bone_reference);
+        make_kernel(Kernel.create_vertex_reference);
+        make_kernel(Kernel.create_bone);
+        make_kernel(Kernel.create_armature);
     }
 }

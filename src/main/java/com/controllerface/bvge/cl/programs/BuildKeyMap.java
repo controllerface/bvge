@@ -16,6 +16,6 @@ public class BuildKeyMap extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_build_key_map);
+        make_kernel(Kernel.build_key_map);
     }
 }

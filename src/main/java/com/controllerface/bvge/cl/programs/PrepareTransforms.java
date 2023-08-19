@@ -14,6 +14,6 @@ public class PrepareTransforms extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_prepare_transforms);
+        make_kernel(Kernel.prepare_transforms);
     }
 }

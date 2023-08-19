@@ -16,6 +16,6 @@ public class GenerateKeys extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_generate_keys);
+        make_kernel(Kernel.generate_keys);
     }
 }

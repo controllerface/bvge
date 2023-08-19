@@ -2,8 +2,8 @@ package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.GPUProgram;
 
+import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.GPU.*;
-import static com.controllerface.bvge.cl.CLUtils.read_src;
 
 public class LocateInBounds extends GPUProgram
 {
@@ -17,8 +17,8 @@ public class LocateInBounds extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_locate_in_bounds);
-        make_kernel(kn_count_candidates);
-        make_kernel(kn_finalize_candidates);
+        make_kernel(Kernel.locate_in_bounds);
+        make_kernel(Kernel.count_candidates);
+        make_kernel(Kernel.finalize_candidates);
     }
 }

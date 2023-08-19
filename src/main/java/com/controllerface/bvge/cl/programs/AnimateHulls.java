@@ -1,8 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
 
-import static com.controllerface.bvge.cl.GPU.*;
 import static com.controllerface.bvge.cl.CLUtils.read_src;
 
 public class AnimateHulls extends GPUProgram
@@ -15,6 +15,6 @@ public class AnimateHulls extends GPUProgram
 
         make_program();
 
-        make_kernel(kn_animate_hulls);
+        make_kernel(GPU.Kernel.animate_hulls);
     }
 }
