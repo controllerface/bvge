@@ -28,9 +28,26 @@ public class GPUKernel
     }
 
     /**
-     * Defines an argument position as having a specific size. This is used to predefine argument
-     * sizes, typically before a kernel is used, so that the values can be updated at runtime.
-     * This makes calling code more concise as the size value does not need to be passed in.
+     * Sets a new argument in this kernel. Can be used for arguments that are set once and then
+     * do not change for the life of the program, though calling code is not prevented from
+     * calling this function to update arguments. Other options are provided solely for convenience
+     * to calling code.
+     *
+     * @param pos argument position
+     * @param size size of the memory buffer being passed for the argument
+     * @param pointer pointer to the memory buffer being passed
+     */
+    public void new_arg(int pos, long size, Pointer pointer)
+    {
+        def_arg(pos, size);
+        clSetKernelArg(this.kernel, pos, size, pointer);
+    }
+
+    /**
+     * Defines an argument position as having a specific size, without assigning it any data yet.
+     * This is used to predefine argument sizes, typically before a kernel is used, so that the
+     * values can be updated at runtime. This makes calling code more concise as the size value
+     * does not need to be passed in.
      *
      * @param pos argument position
      * @param size size of the memory buffer being passed for the argument
@@ -41,31 +58,15 @@ public class GPUKernel
     }
 
     /**
-     * Sets an argument in this kernel. Typically used for arguments that are set once and then
-     * dop not change for the life of the program, though calling code is not prevented from
-     * calling this function to update arguments. Other options are provided solely for convenience
-     * to calling code.
-     *
-     * @param pos argument position
-     * @param size size of the memory buffer being passed for the argument
-     * @param pointer pointer to the memory buffer being passed
-     */
-    public void set_arg(int pos, long size, Pointer pointer)
-    {
-        def_arg(pos, size);
-        clSetKernelArg(this.kernel, pos, size, pointer);
-    }
-
-    /**
      * Update an argument to contain a value from a provided buffer, replacing the value currently
      * set for the argument position. The size of the buffer is retained from previous calls to
-     * set_arg and/or def_arg, so if the value being passed is of a different size, set_arg should be
+     * new_arg and/or def_arg, so if the value being passed is of a different size, new_arg should be
      * called instead.
      *
      * @param pos argument position
      * @param pointer pointer to the memory buffer being passed
      */
-    public void update_arg(int pos, Pointer pointer)
+    public void set_arg(int pos, Pointer pointer)
     {
         clSetKernelArg(this.kernel, pos, arg_sizes[pos], pointer);
     }
