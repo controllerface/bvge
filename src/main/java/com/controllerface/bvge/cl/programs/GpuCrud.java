@@ -10,20 +10,20 @@ public class GpuCrud extends GPUProgram
     @Override
     protected void init()
     {
-        add_src(func_rotate_point);
-        add_src(read_src("kernels/gpu_crud.cl"));
+        src.add(func_rotate_point);
+        src.add(read_src("kernels/gpu_crud.cl"));
 
         make_program();
 
-        make_kernel(Kernel.update_accel);
-        make_kernel(Kernel.rotate_hull);
-        make_kernel(Kernel.read_position);
-        make_kernel(Kernel.create_hull);
-        make_kernel(Kernel.create_point);
-        make_kernel(Kernel.create_edge);
-        make_kernel(Kernel.create_bone_reference);
-        make_kernel(Kernel.create_vertex_reference);
-        make_kernel(Kernel.create_bone);
-        make_kernel(Kernel.create_armature);
+        load_kernel(Kernel.update_accel);
+        load_kernel(Kernel.rotate_hull);
+        load_kernel(Kernel.read_position);
+        load_kernel(Kernel.create_hull);
+        load_kernel(Kernel.create_point);
+        load_kernel(Kernel.create_edge);
+        load_kernel(Kernel.create_bone_reference);
+        load_kernel(Kernel.create_vertex_reference);
+        load_kernel(Kernel.create_bone);
+        load_kernel(Kernel.create_armature);
     }
 }

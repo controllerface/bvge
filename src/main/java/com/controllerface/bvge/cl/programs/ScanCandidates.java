@@ -10,13 +10,13 @@ public class ScanCandidates extends GPUProgram
     @Override
     protected void init()
     {
-        add_src(func_exclusive_scan);
-        add_src(read_src("kernels/scan_key_candidates.cl"));
+        src.add(func_exclusive_scan);
+        src.add(read_src("kernels/scan_key_candidates.cl"));
 
         make_program();
 
-        make_kernel(Kernel.scan_candidates_single_block_out);
-        make_kernel(Kernel.scan_candidates_multi_block_out);
-        make_kernel(Kernel.complete_candidates_multi_block_out);
+        load_kernel(Kernel.scan_candidates_single_block_out);
+        load_kernel(Kernel.scan_candidates_multi_block_out);
+        load_kernel(Kernel.complete_candidates_multi_block_out);
     }
 }

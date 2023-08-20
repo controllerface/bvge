@@ -10,10 +10,10 @@ public class PrepareEdges extends GPUProgram
     @Override
     protected void init()
     {
-        add_src(read_src("kernels/prepare_edges.cl"));
+        src.add(read_src("kernels/prepare_edges.cl"));
 
         make_program();
 
-        make_kernel(Kernel.prepare_edges);
+        load_kernel(Kernel.prepare_edges);
     }
 }

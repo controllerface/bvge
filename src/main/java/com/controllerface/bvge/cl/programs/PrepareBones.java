@@ -10,11 +10,11 @@ public class PrepareBones extends GPUProgram
     @Override
     protected void init()
     {
-        add_src(func_matrix_transform);
-        add_src(read_src("kernels/prepare_bones.cl"));
+        src.add(func_matrix_transform);
+        src.add(read_src("kernels/prepare_bones.cl"));
 
         make_program();
 
-        make_kernel(Kernel.prepare_bones);
+        load_kernel(Kernel.prepare_bones);
     }
 }

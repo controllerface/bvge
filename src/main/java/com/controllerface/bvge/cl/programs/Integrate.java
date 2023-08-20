@@ -10,15 +10,15 @@ public class Integrate extends GPUProgram
     @Override
     protected void init()
     {
-        add_src(func_angle_between);
-        add_src(func_rotate_point);
-        add_src(func_is_in_bounds);
-        add_src(func_get_extents);
-        add_src(func_get_key_for_point);
-        add_src(read_src("kernels/integrate.cl"));
+        src.add(func_angle_between);
+        src.add(func_rotate_point);
+        src.add(func_is_in_bounds);
+        src.add(func_get_extents);
+        src.add(func_get_key_for_point);
+        src.add(read_src("kernels/integrate.cl"));
 
         make_program();
 
-        make_kernel(Kernel.integrate);
+        load_kernel(Kernel.integrate);
     }
 }

@@ -179,8 +179,8 @@ public class Window
 
     public void initGameMode()
     {
-        var x = new BlankSystem(null);
-        currentGameMode = new TestGame(ecs, x);
+        var blanking_system = new BlankSystem(null);
+        currentGameMode = new TestGame(ecs, blanking_system);
         currentGameMode.load();
         currentGameMode.start();
 

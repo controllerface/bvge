@@ -10,13 +10,13 @@ public class ScanIntArrayOut extends GPUProgram
     @Override
     protected void init()
     {
-        add_src(func_exclusive_scan);
-        add_src(read_src("kernels/scan_int_array_out.cl"));
+        src.add(func_exclusive_scan);
+        src.add(read_src("kernels/scan_int_array_out.cl"));
 
         make_program();
 
-        make_kernel(Kernel.scan_int_single_block_out);
-        make_kernel(Kernel.scan_int_multi_block_out);
-        make_kernel(Kernel.complete_int_multi_block_out);
+        load_kernel(Kernel.scan_int_single_block_out);
+        load_kernel(Kernel.scan_int_multi_block_out);
+        load_kernel(Kernel.complete_int_multi_block_out);
     }
 }

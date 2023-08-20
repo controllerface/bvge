@@ -402,9 +402,9 @@ public class GPU
     {
         // The platform, device type and device number
         // that will be used
-        final int platformIndex = 0;
-        final long deviceType = CL_DEVICE_TYPE_ALL;
-        final int deviceIndex = 0;
+        int platformIndex = 0;
+        long deviceType = CL_DEVICE_TYPE_ALL;
+        int deviceIndex = 0;
 
         // Enable exceptions and subsequently omit error checks in this sample
         CL.setExceptionsEnabled(true);
@@ -427,7 +427,7 @@ public class GPU
         // Obtain a device ID
         cl_device_id[] devices = new cl_device_id[numDevices];
         clGetDeviceIDs(platform, deviceType, numDevices, devices, null);
-        cl_device_id device = devices[deviceIndex];
+        var device = devices[deviceIndex];
 
         var device_ids = new cl_device_id[]{device};
 
@@ -441,7 +441,7 @@ public class GPU
         // contextProperties.addProperty(CL_GLX_DISPLAY_KHR, dc);
 
         // Initialize the context properties
-        cl_context_properties contextProperties = new cl_context_properties();
+        var contextProperties = new cl_context_properties();
         contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
         contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
         contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
@@ -453,7 +453,7 @@ public class GPU
             null, null, null);
 
         // Create a command-queue for the selected device
-        cl_queue_properties properties = new cl_queue_properties();
+        var properties = new cl_queue_properties();
         command_queue = clCreateCommandQueueWithProperties(
             context, device, properties, null);
 
@@ -478,7 +478,7 @@ public class GPU
         local_work_default = new long[]{max_work_group_size};
 
         // initialize kernel programs
-        for (Program program : Program.values())
+        for (var program : Program.values())
         {
             program.program.init();
             _k.putAll(program.program.kernels);
@@ -1027,7 +1027,6 @@ public class GPU
                                     int bone_index)
     {
         var gpu_kernel = Kernel.create_point.gpu;
-
         gpu_kernel.set_arg(2, Pointer.to(arg_int(point_index)));
         gpu_kernel.set_arg(3, Pointer.to(arg_float4(pos_x, pos_y, prv_x, prv_y)));
         gpu_kernel.set_arg(4, Pointer.to(arg_int2(vert_index, bone_index)));
@@ -1037,7 +1036,6 @@ public class GPU
     public static void create_edge(int edge_index, float p1, float p2, float l, int flags)
     {
         var gpu_kernel = Kernel.create_edge.gpu;
-
         gpu_kernel.set_arg(1, Pointer.to(arg_int(edge_index)));
         gpu_kernel.set_arg(2, Pointer.to(arg_float4(p1, p2, l, flags)));
         gpu_kernel.call(global_single_size);
@@ -1046,7 +1044,6 @@ public class GPU
     public static void create_armature(int armature_index, float x, float y, int flags)
     {
         var gpu_kernel = Kernel.create_armature.gpu;
-
         gpu_kernel.set_arg(2, Pointer.to(arg_int(armature_index)));
         gpu_kernel.set_arg(3, Pointer.to(arg_float4(x, y, x, y)));
         gpu_kernel.set_arg(4, Pointer.to(arg_int(flags)));
@@ -1056,7 +1053,6 @@ public class GPU
     public static void create_vertex_reference(int vert_ref_index, float x, float y)
     {
         var gpu_kernel = Kernel.create_vertex_reference.gpu;
-
         gpu_kernel.set_arg(1, Pointer.to(arg_int(vert_ref_index)));
         gpu_kernel.set_arg(2, Pointer.to(arg_float2(x, y)));
         gpu_kernel.call(global_single_size);
@@ -1065,7 +1061,6 @@ public class GPU
     public static void create_bone_reference(int bone_ref_index, float[] matrix)
     {
         var gpu_kernel = Kernel.create_bone_reference.gpu;
-
         gpu_kernel.set_arg(1, Pointer.to(arg_int(bone_ref_index)));
         gpu_kernel.set_arg(2, Pointer.to(matrix));
         gpu_kernel.call(global_single_size);
@@ -1074,7 +1069,6 @@ public class GPU
     public static void create_bone(int bone_index, int bone_ref_index, float[] matrix)
     {
         var gpu_kernel = Kernel.create_bone.gpu;
-
         gpu_kernel.set_arg(2, Pointer.to(arg_int(bone_index)));
         gpu_kernel.set_arg(3, Pointer.to(matrix));
         gpu_kernel.set_arg(4, Pointer.to(arg_int(bone_ref_index)));
@@ -1084,7 +1078,6 @@ public class GPU
     public static void create_hull(int hull_index, float[] hull, float[] rotation, int[] table, int[] flags)
     {
         var gpu_kernel = Kernel.create_hull.gpu;
-
         gpu_kernel.set_arg(4, Pointer.to(arg_int(hull_index)));
         gpu_kernel.set_arg(5, Pointer.to(hull));
         gpu_kernel.set_arg(6, Pointer.to(rotation));
@@ -1096,7 +1089,6 @@ public class GPU
     public static void update_accel(int armature_index, float acc_x, float acc_y)
     {
         var gpu_kernel = Kernel.update_accel.gpu;
-
         gpu_kernel.set_arg(1, Pointer.to(arg_int(armature_index)));
         gpu_kernel.set_arg(2, Pointer.to(arg_float2(acc_x, acc_y)));
         gpu_kernel.call(global_single_size);
@@ -1128,7 +1120,7 @@ public class GPU
 
         int[] index = arg_int(armature_index);
 
-        cl_mem result_data = cl_new_buffer(Sizeof.cl_float2);
+        var result_data = cl_new_buffer(Sizeof.cl_float2);
         cl_zero_buffer(result_data, Sizeof.cl_float2);
 
         gpu_kernel.set_arg(1, Pointer.to(result_data));
@@ -1171,10 +1163,10 @@ public class GPU
                 physicsBuffer.get_friction()
             };
 
-        Pointer srcArgs = Pointer.to(args);
+        var srcArgs = Pointer.to(args);
 
         long size = Sizeof.cl_float * args.length;
-        cl_mem argMem = cl_new_read_only_buffer(size, srcArgs);
+        var argMem = cl_new_read_only_buffer(size, srcArgs);
 
         gpu_kernel.set_arg(11, Pointer.to(argMem));
         gpu_kernel.call(arg_long(Main.Memory.hull_count()));
@@ -1200,8 +1192,8 @@ public class GPU
         long bank_buf_size = (long) Sizeof.cl_int * spatialPartition.getKey_bank_size();
         long counts_buf_size = (long) Sizeof.cl_int * spatialPartition.getDirectoryLength();
 
-        cl_mem bank_data = cl_new_buffer(bank_buf_size);
-        cl_mem counts_data = cl_new_buffer(counts_buf_size);
+        var bank_data = cl_new_buffer(bank_buf_size);
+        var counts_data = cl_new_buffer(counts_buf_size);
         cl_zero_buffer(counts_data, counts_buf_size);
 
         physicsBuffer.key_counts = new MemoryBuffer(counts_data);
@@ -1219,7 +1211,7 @@ public class GPU
     {
         int n = spatialPartition.getDirectoryLength();
         long data_buf_size = (long) Sizeof.cl_int * n;
-        cl_mem o_data = cl_new_buffer(data_buf_size);
+        var o_data = cl_new_buffer(data_buf_size);
         physicsBuffer.key_offsets = new MemoryBuffer(o_data);
         scan_int_out(physicsBuffer.key_counts.memory(), o_data, n);
     }
@@ -1231,8 +1223,8 @@ public class GPU
         long map_buf_size = (long) Sizeof.cl_int * spatialPartition.getKey_map_size();
         long counts_buf_size = (long) Sizeof.cl_int * spatialPartition.getDirectoryLength();
 
-        cl_mem map_data = cl_new_buffer(map_buf_size);
-        cl_mem counts_data = cl_new_buffer(counts_buf_size);
+        var map_data = cl_new_buffer(map_buf_size);
+        var counts_data = cl_new_buffer(counts_buf_size);
 
         // the counts buffer needs to start off filled with all zeroes
         cl_zero_buffer(counts_data, counts_buf_size);
@@ -1261,13 +1253,13 @@ public class GPU
         physicsBuffer.key_count_length = Pointer.to(arg_int(spatialPartition.getDirectoryLength()));
 
         long inbound_buf_size = (long) Sizeof.cl_int * hull_count;
-        cl_mem inbound_data = cl_new_buffer(inbound_buf_size);
+        var inbound_data = cl_new_buffer(inbound_buf_size);
 
         physicsBuffer.in_bounds = new MemoryBuffer(inbound_data);
 
         int[] size = arg_int(0);
-        Pointer dst_size = Pointer.to(size);
-        cl_mem size_data = cl_new_int_arg_buffer(dst_size);
+        var dst_size = Pointer.to(size);
+        var size_data = cl_new_int_arg_buffer(dst_size);
 
         gpu_kernel.set_arg(1, physicsBuffer.in_bounds.pointer());
         gpu_kernel.set_arg(2, Pointer.to(size_data));
@@ -1285,7 +1277,7 @@ public class GPU
         var gpu_kernel = Kernel.count_candidates.gpu;
 
         long candidate_buf_size = (long) Sizeof.cl_int2 * physicsBuffer.get_candidate_buffer_count();
-        cl_mem candidate_data = cl_new_buffer(candidate_buf_size);
+        var candidate_data = cl_new_buffer(candidate_buf_size);
         physicsBuffer.candidate_counts = new MemoryBuffer(candidate_data);
 
         gpu_kernel.set_arg(1, physicsBuffer.in_bounds.pointer());
@@ -1301,7 +1293,7 @@ public class GPU
     {
         int buffer_count = physicsBuffer.get_candidate_buffer_count();
         long offset_buf_size = (long) Sizeof.cl_int * buffer_count;
-        cl_mem offset_data = cl_new_buffer(offset_buf_size);
+        var offset_data = cl_new_buffer(offset_buf_size);
         physicsBuffer.candidate_offsets = new MemoryBuffer(offset_data);
         int match_count = scan_key_candidates(physicsBuffer.candidate_counts.memory(), offset_data, buffer_count);
         physicsBuffer.set_candidate_match_count(match_count);
@@ -1312,17 +1304,17 @@ public class GPU
         var gpu_kernel = Kernel.aabb_collide.gpu;
 
         long matches_buf_size = (long) Sizeof.cl_int * physicsBuffer.get_candidate_match_count();
-        cl_mem matches_data = cl_new_buffer(matches_buf_size);
+        var matches_data = cl_new_buffer(matches_buf_size);
         physicsBuffer.matches = new MemoryBuffer(matches_data);
 
         long used_buf_size = (long) Sizeof.cl_int * physicsBuffer.get_candidate_buffer_count();
-        cl_mem used_data = cl_new_buffer(used_buf_size);
+        var used_data = cl_new_buffer(used_buf_size);
         physicsBuffer.matches_used = new MemoryBuffer(used_data);
 
         // this buffer will contain the total number of candidates that were found
         int[] count = arg_int(0);
-        Pointer dst_count = Pointer.to(count);
-        cl_mem count_data = cl_new_int_arg_buffer(dst_count);
+        var dst_count = Pointer.to(count);
+        var count_data = cl_new_int_arg_buffer(dst_count);
 
         gpu_kernel.set_arg(3, physicsBuffer.candidate_counts.pointer());
         gpu_kernel.set_arg(4, physicsBuffer.candidate_offsets.pointer());
@@ -1352,12 +1344,12 @@ public class GPU
 
             // create an empty buffer that the kernel will use to store finalized candidates
             long final_buf_size = (long) Sizeof.cl_int2 * physicsBuffer.get_candidate_count();
-            cl_mem finals_data = cl_new_buffer(final_buf_size);
+            var finals_data = cl_new_buffer(final_buf_size);
 
             // the kernel will use this value as an internal atomic counter, always initialize to zero
             int[] counter = new int[]{0};
-            Pointer dst_counter = Pointer.to(counter);
-            cl_mem counter_data = cl_new_int_arg_buffer(dst_counter);
+            var dst_counter = Pointer.to(counter);
+            var counter_data = cl_new_int_arg_buffer(dst_counter);
 
             physicsBuffer.set_final_size(final_buf_size);
             physicsBuffer.candidates = new MemoryBuffer(finals_data);
@@ -1397,13 +1389,12 @@ public class GPU
         var gpu_kernel = Kernel.resolve_constraints.gpu;
 
         boolean last_step;
-        long[] global_work_size = new long[]{Main.Memory.hull_count()};
         for (int i = 0; i < edge_steps; i++)
         {
             last_step = i == edge_steps - 1;
             int n = last_step ? 1 : 0;
             gpu_kernel.set_arg(4, Pointer.to(arg_int(n)));
-            gpu_kernel.call(global_work_size);
+            gpu_kernel.call(arg_long(Main.Memory.hull_count()));
         }
     }
 
@@ -1486,10 +1477,10 @@ public class GPU
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
 
-        cl_mem part_data = cl_new_buffer(part_buf_size);
-        Pointer src_data = Pointer.to(d_data);
-        Pointer src_part = Pointer.to(part_data);
-        Pointer src_n = Pointer.to(new int[]{n});
+        var part_data = cl_new_buffer(part_buf_size);
+        var src_data = Pointer.to(d_data);
+        var src_part = Pointer.to(part_data);
+        var src_n = Pointer.to(new int[]{n});
 
         gpu_kernel_1.set_arg(0, src_data);
         gpu_kernel_1.new_arg(1, local_buffer_size);
@@ -1521,7 +1512,7 @@ public class GPU
         gpu_kernel.call(local_work_default, local_work_default);
     }
 
-    private static void scan_multi_block_int_out(cl_mem d_data, cl_mem o_data, int n, int k)
+    private static void scan_multi_block_int_out(cl_mem input_data, cl_mem o_data, int n, int k)
     {
         var gpu_kernel_1 = Kernel.scan_int_multi_block_out.gpu;
         var gpu_kernel_2 = Kernel.complete_int_multi_block_out.gpu;
@@ -1531,11 +1522,11 @@ public class GPU
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
-        cl_mem part_data = cl_new_buffer(part_buf_size);
-        Pointer src_data = Pointer.to(d_data);
-        Pointer src_part = Pointer.to(part_data);
-        Pointer dst_data = Pointer.to(o_data);
-        Pointer src_n = Pointer.to(new int[]{n});
+        var part_data = cl_new_buffer(part_buf_size);
+        var src_data = Pointer.to(input_data);
+        var src_part = Pointer.to(part_data);
+        var dst_data = Pointer.to(o_data);
+        var src_n = Pointer.to(new int[]{n});
 
         gpu_kernel_1.set_arg(0, src_data);
         gpu_kernel_1.set_arg(1, dst_data);
@@ -1560,13 +1551,13 @@ public class GPU
         var gpu_kernel = Kernel.scan_candidates_single_block_out.gpu;
 
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
-        Pointer src_data = Pointer.to(d_data);
-        Pointer dst_data = Pointer.to(o_data);
+        var src_data = Pointer.to(d_data);
+        var dst_data = Pointer.to(o_data);
 
         int[] sz = new int[]{0};
-        Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = cl_new_buffer(Sizeof.cl_int);
-        Pointer src_size = Pointer.to(size_data);
+        var dst_size = Pointer.to(sz);
+        var size_data = cl_new_buffer(Sizeof.cl_int);
+        var src_size = Pointer.to(size_data);
 
         gpu_kernel.set_arg(0, src_data);
         gpu_kernel.set_arg(1, dst_data);
@@ -1592,11 +1583,11 @@ public class GPU
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
-        cl_mem p_data = cl_new_buffer(part_buf_size);
-        Pointer src_data = Pointer.to(d_data);
-        Pointer src_part = Pointer.to(p_data);
-        Pointer dst_data = Pointer.to(o_data);
-        Pointer src_n = Pointer.to(new int[]{n});
+        var p_data = cl_new_buffer(part_buf_size);
+        var src_data = Pointer.to(d_data);
+        var src_part = Pointer.to(p_data);
+        var dst_data = Pointer.to(o_data);
+        var src_n = Pointer.to(new int[]{n});
 
         gpu_kernel_1.set_arg(0, src_data);
         gpu_kernel_1.set_arg(1, dst_data);
@@ -1608,9 +1599,9 @@ public class GPU
         scan_int(p_data, part_size);
 
         int[] sz = new int[]{0};
-        Pointer dst_size = Pointer.to(sz);
-        cl_mem size_data = cl_new_buffer(Sizeof.cl_int);
-        Pointer src_size = Pointer.to(size_data);
+        var dst_size = Pointer.to(sz);
+        var size_data = cl_new_buffer(Sizeof.cl_int);
+        var src_size = Pointer.to(size_data);
 
         gpu_kernel_2.set_arg(0, src_data);
         gpu_kernel_2.set_arg(1, dst_data);
@@ -1635,7 +1626,7 @@ public class GPU
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
 
         int[] sz = new int[]{0};
-        cl_mem size_data = cl_new_buffer(Sizeof.cl_int);
+        var size_data = cl_new_buffer(Sizeof.cl_int);
 
         gpu_kernel.set_arg(0, Pointer.to(input_data));
         gpu_kernel.set_arg(1, Pointer.to(size_data));
@@ -1660,10 +1651,10 @@ public class GPU
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
-        cl_mem p_data = cl_new_buffer(part_buf_size);
-        Pointer src_data = Pointer.to(input_data);
-        Pointer src_part = Pointer.to(p_data);
-        Pointer src_n = Pointer.to(new int[]{n});
+        var p_data = cl_new_buffer(part_buf_size);
+        var src_data = Pointer.to(input_data);
+        var src_part = Pointer.to(p_data);
+        var src_n = Pointer.to(new int[]{n});
 
         gpu_kernel_1.set_arg(0, src_data);
         gpu_kernel_1.new_arg(1, local_buffer_size);
@@ -1674,7 +1665,7 @@ public class GPU
         scan_int(p_data, part_size);
 
         int[] sz = new int[1];
-        cl_mem size_data = cl_new_buffer(Sizeof.cl_int);
+        var size_data = cl_new_buffer(Sizeof.cl_int);
 
         gpu_kernel_2.set_arg(0, src_data);
         gpu_kernel_2.set_arg(1, Pointer.to(size_data));

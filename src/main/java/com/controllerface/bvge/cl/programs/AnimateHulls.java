@@ -10,11 +10,11 @@ public class AnimateHulls extends GPUProgram
     @Override
     protected void init()
     {
-        add_src(func_matrix_transform);
-        add_src(read_src("kernels/animate_hulls.cl"));
+        src.add(func_matrix_transform);
+        src.add(read_src("kernels/animate_hulls.cl"));
 
         make_program();
 
-        make_kernel(GPU.Kernel.animate_hulls);
+        load_kernel(GPU.Kernel.animate_hulls);
     }
 }

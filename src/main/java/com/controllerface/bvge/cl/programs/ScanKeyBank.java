@@ -10,13 +10,13 @@ public class ScanKeyBank extends GPUProgram
     @Override
     protected void init()
     {
-        add_src(func_exclusive_scan);
-        add_src(read_src("kernels/scan_key_bank.cl"));
+        src.add(func_exclusive_scan);
+        src.add(read_src("kernels/scan_key_bank.cl"));
 
         make_program();
 
-        make_kernel(Kernel.scan_bounds_single_block);
-        make_kernel(Kernel.scan_bounds_multi_block);
-        make_kernel(Kernel.complete_bounds_multi_block);
+        load_kernel(Kernel.scan_bounds_single_block);
+        load_kernel(Kernel.scan_bounds_multi_block);
+        load_kernel(Kernel.complete_bounds_multi_block);
     }
 }

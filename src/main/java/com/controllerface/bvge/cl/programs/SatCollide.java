@@ -10,20 +10,20 @@ public class SatCollide extends GPUProgram
     @Override
     protected void init()
     {
-        add_src(func_angle_between);
-        add_src(func_calculate_centroid);
-        add_src(func_closest_point_circle);
-        add_src(func_project_circle);
-        add_src(func_project_polygon);
-        add_src(func_polygon_distance);
-        add_src(func_edge_contact);
-        add_src(func_circle_collision);
-        add_src(func_polygon_collision);
-        add_src(func_polygon_circle_collision);
-        add_src(read_src("kernels/sat_collide.cl"));
+        src.add(func_angle_between);
+        src.add(func_calculate_centroid);
+        src.add(func_closest_point_circle);
+        src.add(func_project_circle);
+        src.add(func_project_polygon);
+        src.add(func_polygon_distance);
+        src.add(func_edge_contact);
+        src.add(func_circle_collision);
+        src.add(func_polygon_collision);
+        src.add(func_polygon_circle_collision);
+        src.add(read_src("kernels/sat_collide.cl"));
 
         make_program();
 
-        make_kernel(Kernel.sat_collide);
+        load_kernel(Kernel.sat_collide);
     }
 }
