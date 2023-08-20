@@ -96,14 +96,6 @@ public class CLUtils
             matrix.m30(), matrix.m31(), matrix.m32(), matrix.m33());
     }
 
-
-
-
-
-
-
-
-
     public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size)
     {
         clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
@@ -116,23 +108,15 @@ public class CLUtils
             global_work_size, local_work_size, 0, null, null);
     }
 
-    public static void gl_acquire(cl_command_queue commandQueue, cl_mem mem)
+    public static void gl_acquire(cl_command_queue commandQueue, cl_mem[] mem)
     {
-        clEnqueueAcquireGLObjects(commandQueue, 1, new cl_mem[]{mem}, 0, null, null);
+        clEnqueueAcquireGLObjects(commandQueue, mem.length, mem, 0, null, null);
     }
 
-    public static void gl_release(cl_command_queue commandQueue, cl_mem mem)
+    public static void gl_release(cl_command_queue commandQueue, cl_mem[] mem)
     {
-        clEnqueueReleaseGLObjects(commandQueue, 1, new cl_mem[]{mem}, 0, null, null);
+        clEnqueueReleaseGLObjects(commandQueue, mem.length, mem, 0, null, null);
     }
-
-
-
-
-
-
-
-
 
     /**
      * Dump device data for debugging.

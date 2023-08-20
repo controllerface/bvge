@@ -1,5 +1,5 @@
 #define MINIMUM_DIFF 0.005
-#define MAXIMUM_DIFF 2.5
+#define MAXIMUM_DIFF FLT_MAX //0.01
 
 /**
 Performs the integration step of a physics loop, generally this is the first stage

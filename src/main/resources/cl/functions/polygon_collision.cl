@@ -195,9 +195,14 @@ inline void polygon_collision(int b1_id, int b2_id,
         }
     }
 
-    float2 e1 = points[edge_index_a].xy;
-    float2 e2 = points[edge_index_b].xy;
-    float2 collision_vertex = points[vert_index].xy;
+
+    float4 vert_point = points[vert_index];
+    float4 edge_point_1 = points[edge_index_a];
+    float4 edge_point_2 = points[edge_index_b];
+
+    float2 collision_vertex = vert_point.xy;
+    float2 e1 = edge_point_1.xy;
+    float2 e2 = edge_point_2.xy;
 
     // edge reactions
     float contact = edge_contact(e1, e2, collision_vertex, collision_vector);
@@ -209,12 +214,19 @@ inline void polygon_collision(int b1_id, int b2_id,
     // vertex reaction
     float2 v_reaction = collision_vector * vertex_magnitude;
 
+    vert_point.x += v_reaction.x;
+    vert_point.y += v_reaction.y;
+
+    edge_point_1.x -= e1_reaction.x;
+    edge_point_1.y -= e1_reaction.y;
+
+    edge_point_2.x -= e2_reaction.x;
+    edge_point_2.y -= e2_reaction.y;
+
     // todo: this should technically be atomic, however visually it doesn't
     //  seem to matter right now. probably should do it "right" though at some point
-    points[vert_index].x += v_reaction.x;
-    points[vert_index].y += v_reaction.y;
-    points[edge_index_a].x -= e1_reaction.x;
-    points[edge_index_a].y -= e1_reaction.y;
-    points[edge_index_b].x -= e2_reaction.x;
-    points[edge_index_b].y -= e2_reaction.y;
+    points[vert_index] = vert_point;
+    points[edge_index_a] = edge_point_1;
+    points[edge_index_b] = edge_point_2;
+
 }

@@ -67,7 +67,7 @@ __kernel void aabb_collide(__global float4 *bounds,
                 continue;
             }
 
-            // no collisions between hulls that are part fo the same model
+            // no collisions between hulls that are part of the same amrature
             int2 candiate_flags = hull_flags[next];
             if (candiate_flags.y == flags.y)
             {

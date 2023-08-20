@@ -90,15 +90,20 @@ public class GPUKernel
 
     public void call(long[] global_work_size, long[] local_work_size)
     {
-        if (!shared_memory.isEmpty())
+        var shared_ = shared_memory.toArray(new cl_mem[]{});
+
+        if (shared_.length > 0)
         {
-            shared_memory.forEach(m->CLUtils.gl_acquire(command_queue, m));
+            CLUtils.gl_acquire(command_queue, shared_);
         }
+
         k_call(command_queue, kernel, global_work_size, local_work_size);
-        if (!shared_memory.isEmpty())
+
+        if (shared_.length > 0)
         {
-            shared_memory.forEach(m->CLUtils.gl_release(command_queue, m));
+            CLUtils.gl_release(command_queue, shared_);
         }
+
         shared_memory.clear();
     }
 }

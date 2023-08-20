@@ -53,6 +53,8 @@ __kernel void resolve_constraints(__global int4 *element_tables,
             float2 sub = p2_v - p1_v;
             float len = length(sub);
             float diff = len - constraint;
+
+            //if (fabs(diff) < .9) continue;
             
             float2 direction = normalize(sub);
         
