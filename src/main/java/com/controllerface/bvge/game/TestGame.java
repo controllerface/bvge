@@ -16,8 +16,7 @@ import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.geometry.Models;
 
 import static com.controllerface.bvge.data.PhysicsObjects.*;
-import static com.controllerface.bvge.geometry.Models.POLYGON1_MODEL;
-import static com.controllerface.bvge.geometry.Models.TEST_MODEL_INDEX;
+import static com.controllerface.bvge.geometry.Models.*;
 
 
 public class TestGame extends GameMode
@@ -36,7 +35,7 @@ public class TestGame extends GameMode
 
     private final SpatialPartition spatialPartition = new SpatialPartition();
 
-    private void genNPCs(int box_size, float spacing, float size, float start_x, float start_y)
+    private void genCrates(int box_size, float spacing, float size, float start_x, float start_y)
     {
         System.out.println("generating: " + box_size * box_size + " Crates..");
         for (int i = 0; i < box_size; i++)
@@ -47,6 +46,22 @@ public class TestGame extends GameMode
                 float y = start_y + j * spacing;
                 var npc = ecs.registerEntity(null);
                 var armature_index = PhysicsObjects.dynamic_Box(x, y, size);
+                ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+            }
+        }
+    }
+
+    private void genTriangles(int box_size, float spacing, float size, float start_x, float start_y)
+    {
+        System.out.println("generating: " + box_size * box_size + " Triangles..");
+        for (int i = 0; i < box_size; i++)
+        {
+            for (int j = 0; j < box_size; j++)
+            {
+                float x = start_x + i * spacing;
+                float y = start_y + j * spacing;
+                var npc = ecs.registerEntity(null);
+                var armature_index = PhysicsObjects.tri(x, y, size, 0);
                 ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -81,11 +96,37 @@ public class TestGame extends GameMode
         }
     }
 
+    private void genWall(int floor_size, float spacing, float size, float start_x, float start_y)
+    {
+        System.out.println("generating wall size: " + floor_size);
+        for (int i = 0; i < floor_size; i++)
+        {
+            float x = start_x;
+            float y = start_y + i * spacing;
+            var npc = ecs.registerEntity(null);
+            var armature_index = PhysicsObjects.static_box(x, y, size);
+            ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+        }
+    }
+
     private void genTestCircle(float size, float x, float y)
     {
-        // circle entity
         var npc = ecs.registerEntity(null);
         var armature_index = PhysicsObjects.particle(x, y, size);
+        ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+    }
+
+    private void genTestCrate(float size, float x, float y)
+    {
+        var npc = ecs.registerEntity(null);
+        var armature_index = PhysicsObjects.dynamic_Box(x, y, size);
+        ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+    }
+
+    private void genTestTriangle(float size, float x, float y)
+    {
+        var npc = ecs.registerEntity(null);
+        var armature_index = PhysicsObjects.tri(x, y, size, 0);
         ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -103,9 +144,15 @@ public class TestGame extends GameMode
 
     private void genTestFigureNPC(float size, float x, float y)
     {
-        // circle entity
         var figure = ecs.registerEntity(null);
         var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
+        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
+    }
+
+    private void genBoxModelNPC(float size, float x, float y)
+    {
+        var figure = ecs.registerEntity(null);
+        var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
         ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -142,23 +189,52 @@ public class TestGame extends GameMode
         ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
-        ecs.registerSystem(new CrateRenderer(ecs));
+        //ecs.registerSystem(new CrateRenderer(ecs));
     }
 
     @Override
     public void load()
     {
         //genPlayer();
-        genTestFigure(1, 105, 0);
+        genTestFigure(1, 500, 0);
 
-        genTestFigureNPC(1, 200, 50);
+        genTestTriangle(10f, 190, 250);
+        genTestTriangle(10f, 190, 200);
+        genTestTriangle(10f, 190, 150);
+        genTestTriangle(10f, 190, 100);
+        genTestTriangle(10f, 190, 50);
+
+//        genTestCrate(10f, 190, 250);
+//        genTestCrate(10f, 190, 200);
+//        genTestCrate(10f, 190, 150);
+//        genTestCrate(10f, 190, 100);
+//        genTestCrate(10f, 190, 50);
+//
+//        genTestCrate(10f, 200, 250);
+//        genTestCrate(10f, 200, 200);
+//        genTestCrate(10f, 200, 150);
+//        genTestCrate(10f, 200, 100);
+//        genTestCrate(10f, 200, 50);
+//
+//        genTestCrate(10f, 210, 250);
+//        genTestCrate(10f, 210, 200);
+//        genTestCrate(10f, 210, 150);
+//        genTestCrate(10f, 210, 100);
+//        genTestCrate(10f, 210, 50);
+//
+//        genBoxModelNPC(0.05f, 200, 250);
+//        genBoxModelNPC(0.05f, 200, 200);
+//        genBoxModelNPC(0.05f, 200, 150);
+//        genBoxModelNPC(0.05f, 200, 100);
+//        genBoxModelNPC(0.05f, 200, 50);
+        //genTestFigureNPC(1, 200, 50);
         //genTestCircle(20,0, 50);
 
         //genTestCircle(100,100, 100);
         //genTestCircle(20,0, 100);
         //genTestCircle(30,20, 55);
 
-        genCircles(150, 10f, 10f, 0, 2500);
+
 
         //genCircles(100, 80f, 100f, 2100, 2100);
 
@@ -170,10 +246,30 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, -1000, 0);
         //genNPCs(100, 7f, 10f, 0, -1000);
         //genNPCs(100, 7f, 10f, 0, 1000);
-        genNPCs(100, 10f, 10f, 0, 500);
+
+
+        //genCircles(200, 3f, 5f, 0, 1000);
+        //genCrates(200, 3f, 5f, 0, 1000);
+
+        genTriangles(200, 3f, 5f, 0, 1000);
+
+
+//        genTriangles(50, 5f, 5f, 100, 1000);
+//        genTriangles(50, 5f, 5f, 200, 1100);
+//        genTriangles(50, 5f, 5f, 300, 1200);
+//        genTriangles(50, 5f, 5f, 400, 1300);
+//        genTriangles(50, 5f, 5f, 500, 1400);
+//        genTriangles(50, 5f, 5f, 600, 1500);
+//        genTriangles(50, 5f, 5f, 700, 1600);
+//        genTriangles(50, 5f, 5f, 800, 1700);
+//        genTriangles(50, 5f, 5f, 900, 1800);
+//        genTriangles(50, 5f, 5f, 0, 1900);
+
 
         //genNPCs(1, 41f, 40f, 100, 300);
-        genFloor(200, 150f, 150f, -4000, -100);
+        genFloor(10, 120f, 150f, -100, -100);
+        genWall(5, 120f, 150f, -220, -100);
+        genWall(5, 120f, 150f, 1100, -100);
 
         //genFloor(50, 25f, 25f, -500, 150);
         //genFloor(50, 25f, 25f, -500, 1000);

@@ -33,6 +33,9 @@ __kernel void aabb_collide(__global float4 *bounds,
     int current_offset = match_offset;
     int slots_used = 0;
 
+    bool no_bones = (flags.x & 0x08) !=0;
+    bool is_static = (flags.x & 0x01) !=0;
+
     // loop through all the keys for this hull
     for (int bank_index = spatial_index; bank_index < end; bank_index++)
     {
@@ -72,6 +75,23 @@ __kernel void aabb_collide(__global float4 *bounds,
             if (candiate_flags.y == flags.y)
             {
                 continue;
+            }
+
+
+            bool no_bones_c = (candiate_flags.x & 0x08) !=0;
+            bool is_static_c = (candiate_flags.x & 0x01) !=0;
+
+            if (is_static && is_static_c)
+            {
+                continue;
+            }
+
+            if (no_bones != no_bones_c)
+            {
+                if (!is_static_c && !is_static_c)
+                {
+                    continue;
+                }
             }
 
             // broad phase collision check

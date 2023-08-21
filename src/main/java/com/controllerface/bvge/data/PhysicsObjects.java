@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 import static com.controllerface.bvge.geometry.Models.CRATE_MODEL;
+import static com.controllerface.bvge.geometry.Models.TRIANGLE_MODEL;
 
 /**
  * This is the core "factory" class for all physics based objects. It contains named archetype
@@ -73,6 +74,63 @@ public class PhysicsObjects
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int armature_id = Main.Memory.new_armature(x, y, hull_id);
         Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
+        return armature_id;
+    }
+
+    public static int tri(float x, float y, float size, int flags)
+    {
+        int next_armature_id = Main.Memory.next_armature_id();
+
+        // get the box mesh
+        var mesh = Models.get_model_by_index(TRIANGLE_MODEL).meshes()[0];
+
+        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
+        int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
+
+        var hull = mesh.vertices();
+        hull = scale_hull(hull, size);
+        hull = translate_hull(hull, x, y);
+
+        var v1 = hull[0];
+        var v2 = hull[1];
+        var v3 = hull[2];
+
+        var p1 = CLUtils.arg_float2(v1.x(), v1.y());
+        var p2 = CLUtils.arg_float2(v2.x(), v2.y());
+        var p3 = CLUtils.arg_float2(v3.x(), v3.y());
+
+        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), bone_id));
+        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), bone_id));
+        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), bone_id));
+
+        MathEX.centroid(vector_buffer, p1, p2, p3);
+        var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+        var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+
+        var angle = MathEX.angleBetween2Lines(l1, l2);
+
+        // box sides
+        var start_edge = Main.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
+        Main.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2));
+        var end_edge = Main.Memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1));
+//        Main.Memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3));
+//        Main.Memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4));
+
+        // corner braces
+//        Main.Memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR_EDGE);
+//        var end_edge = Main.Memory.new_edge(p2_index, p4_index, edgeDistance(p4, p2), FLAG_INTERIOR_EDGE);
+
+        var table = CLUtils.arg_int4(p1_index, p3_index, start_edge, end_edge);
+        var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
+        var rotation = CLUtils.arg_float2(0, angle);
+
+
+        // there is only one hull, so it is the main hull ID by default
+        int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id);
+        int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
+        int armature_id = Main.Memory.new_armature(x, y, hull_id);
+
+        Models.register_model_instance(TRIANGLE_MODEL, hull_id);
         return armature_id;
     }
 

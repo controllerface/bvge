@@ -14,7 +14,7 @@ public class PhysicsSimulation extends GameSystem
     private final static float TARGET_FPS = 60.0f;
     private final static float TICK_RATE = 1.0f / TARGET_FPS;
     private final static int SUB_STEPS = 4;
-    private final static int EDGE_STEPS = 4;
+    private final static int EDGE_STEPS = 12;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.

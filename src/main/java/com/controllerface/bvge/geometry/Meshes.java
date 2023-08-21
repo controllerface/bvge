@@ -15,6 +15,7 @@ public class Meshes
     private static final AtomicInteger next_mesh_index = new AtomicInteger(0);
 
     public static final int CIRCLE_MESH = next_mesh_index.getAndIncrement();
+    public static final int TRIANGLE_MESH = next_mesh_index.getAndIncrement();
     public static final int BOX_MESH = next_mesh_index.getAndIncrement();
     public static final int POLYGON1_MESH = next_mesh_index.getAndIncrement();
 
@@ -32,6 +33,37 @@ public class Meshes
         var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, IDENTITY_BONE_NAME, 1.0f) };
         var faces = new Face[]{ new Face(0, 0, 0) };
         var hull = new int[]{ 0 };
+        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
+    }
+
+    /**
+     * A simple triangle; 3 vertices defining a triangle with a base width of 1
+     */
+    private static Mesh generate_tri_mesh()
+    {
+        Vertex[] vertices = new Vertex[3];
+        Face[] faces = new Face[1];
+
+        float halfSize = 1f / 2f;
+
+        float x1 = -halfSize;
+        float y1 = 0;
+        int v1 = Main.Memory.new_vertex_reference(x1, y1);
+        float x2 = halfSize;
+        float y2 = 0;
+        int v2 = Main.Memory.new_vertex_reference(x2, y2);
+        float x3 = 0f;
+        float y3 = 0.866f;
+        int v3 = Main.Memory.new_vertex_reference(x3, y3);
+
+        vertices[0] = new Vertex(v1, x1, y1, IDENTITY_BONE_NAME, 1.0f);
+        vertices[1] = new Vertex(v2, x2, y2, IDENTITY_BONE_NAME, 1.0f);
+        vertices[2] = new Vertex(v3, x3, y3, IDENTITY_BONE_NAME, 1.0f);
+
+        faces[0] = new Face(0, 1, 2);
+
+        var hull = new int[]{ 0, 1, 2 };
+
         return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
     }
 
@@ -135,6 +167,7 @@ public class Meshes
     public static void init()
     {
         register_mesh(CIRCLE_MESH, generate_circle_mesh());
+        register_mesh(TRIANGLE_MESH, generate_tri_mesh());
         register_mesh(BOX_MESH, generate_box_mesh());
         register_mesh(POLYGON1_MESH, generate_poly1_mesh());
     }

@@ -75,15 +75,10 @@ __kernel void resolve_constraints(__global int4 *element_tables,
             p2.x = p2_v.x;
             p2.y = p2_v.y;
 
-            // p1.z = p1_v.x;
-            // p1.w = p1_v.y;
-            // p2.z = p2_v.x;
-            // p2.w = p2_v.y;
-
-            // p1.z = p1_prv.x;
-            // p1.w = p1_prv.y;
-            // p2.z = p2_prv.x;
-            // p2.w = p2_prv.y;
+            p1.z = p1_prv.x;
+            p1.w = p1_prv.y;
+            p2.z = p2_prv.x;
+            p2.w = p2_prv.y;
 
             // set the updated points into the buffer
             points[p1_index] = p1;

@@ -20,10 +20,12 @@ public class Models
     private static final AtomicInteger next_model_index = new AtomicInteger(0);
 
     public static final int CIRCLE_MODEL = next_model_index.getAndIncrement();
+    public static final int TRIANGLE_MODEL = next_model_index.getAndIncrement();
     public static final int CRATE_MODEL = next_model_index.getAndIncrement();
     public static final int POLYGON1_MODEL = next_model_index.getAndIncrement();
 
     public static int TEST_MODEL_INDEX = -1;
+    public static int TEST_SQUARE_INDEX = -1;
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
     private static final Map<Integer, Boolean> dirty_models = new HashMap<>();
@@ -332,10 +334,11 @@ public class Models
     public static void init()
     {
         loaded_models.put(CIRCLE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
+        loaded_models.put(TRIANGLE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
         loaded_models.put(CRATE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx");
-
+        TEST_SQUARE_INDEX = load_model("/models/test_square.fbx");
     }
 
     private static SceneNode process_node_hierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)
