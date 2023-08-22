@@ -14,7 +14,7 @@ public class PhysicsSimulation extends GameSystem
     private final static float TARGET_FPS = 60.0f;
     private final static float TICK_RATE = 1.0f / TARGET_FPS;
     private final static int SUB_STEPS = 4;
-    private final static int EDGE_STEPS = 12;
+    private final static int EDGE_STEPS = 4;
     private float accumulator = 0.0f;
 
     // todo: these values should not be global, but per-object.
@@ -101,11 +101,19 @@ public class PhysicsSimulation extends GameSystem
 
         updateControllableBodies(dt);
 
+
+
         // animate the vertices of bone-tracked hulls
         GPU.animate_hulls();
 
+        // resolve edges
+        //GPU.resolve_constraints(EDGE_STEPS);
+
         // integration
         GPU.integrate(dt, spatial_partition);
+
+        // resolve edges
+        GPU.resolve_constraints(EDGE_STEPS);
 
         // broad phase collision
         GPU.calculate_bank_offsets(spatial_partition);
@@ -126,9 +134,6 @@ public class PhysicsSimulation extends GameSystem
 
         // narrow phase collision/reaction
         GPU.sat_collide();
-
-        // resolve edges
-        GPU.resolve_constraints(EDGE_STEPS);
     }
 
     private void simulate(float dt)

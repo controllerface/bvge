@@ -200,12 +200,20 @@ inline void polygon_collision(int b1_id, int b2_id,
     float4 edge_point_1 = points[edge_index_a];
     float4 edge_point_2 = points[edge_index_b];
 
-    float2 collision_vertex = vert_point.xy;
+    float2 v0 = vert_point.xy;
     float2 e1 = edge_point_1.xy;
     float2 e2 = edge_point_2.xy;
 
+    float2 v0_p = vert_point.zw;
+    float2 e1_p = edge_point_1.zw;
+    float2 e2_p = edge_point_2.zw;
+
+    float2 v0_dist = distance(v0, v0_p);
+    float2 e1_dist = distance(e1, e1_p);
+    float2 e2_dist = distance(e2, e2_p);
+
     // edge reactions
-    float contact = edge_contact(e1, e2, collision_vertex, collision_vector);
+    float contact = edge_contact(e1, e2, v0, collision_vector);
 
     float edge_scale = 1.0f / (contact * contact + (1 - contact) * (1 - contact));
     float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale);
@@ -214,14 +222,38 @@ inline void polygon_collision(int b1_id, int b2_id,
     // vertex reaction
     float2 v_reaction = collision_vector * vertex_magnitude;
 
-    vert_point.x += v_reaction.x;
-    vert_point.y += v_reaction.y;
+    // update the positions
+    vert_point.xy += v_reaction.xy;
+    edge_point_1.xy -= e1_reaction.xy;
+    edge_point_2.xy -= e2_reaction.xy;
 
-    edge_point_1.x -= e1_reaction.x;
-    edge_point_1.y -= e1_reaction.y;
+    // handle prev_updates to keep velocity correct
+    float2 v0_diff_2 = vert_point.xy - v0_p;
+    float2 e1_diff_2 = edge_point_1.xy - e1_p;
+    float2 e2_diff_2 = edge_point_2.xy - e2_p;
 
-    edge_point_2.x -= e2_reaction.x;
-    edge_point_2.y -= e2_reaction.y;
+    // Normalize the new vector
+    float new_len_v = length(v0_diff_2);
+    float new_len_e1 = length(e1_diff_2);
+    float new_len_e2 = length(e2_diff_2);
+
+    if (new_len_v != 0.0)
+    {
+        v0_diff_2 /= new_len_v;
+        vert_point.zw = vert_point.xy - v0_dist * v0_diff_2;
+    }
+
+    if (new_len_e1 != 0.0)
+    {
+        e1_diff_2 /= new_len_e1;
+        edge_point_1.zw = edge_point_1.xy - e1_dist * e1_diff_2;
+    }
+
+    if (new_len_e2 != 0.0)
+    {
+        e2_diff_2 /= new_len_e2;
+        edge_point_2.zw = edge_point_2.xy - e2_dist * e2_diff_2;
+    }
 
     // todo: this should technically be atomic, however visually it doesn't
     //  seem to matter right now. probably should do it "right" though at some point
