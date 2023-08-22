@@ -101,13 +101,8 @@ public class PhysicsSimulation extends GameSystem
 
         updateControllableBodies(dt);
 
-
-
         // animate the vertices of bone-tracked hulls
         GPU.animate_hulls();
-
-        // resolve edges
-        //GPU.resolve_constraints(EDGE_STEPS);
 
         // integration
         GPU.integrate(dt, spatial_partition);

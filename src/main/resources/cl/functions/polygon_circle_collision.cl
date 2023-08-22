@@ -88,12 +88,12 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     float2 axis = fast_normalize(edge);
     float3 proj_p = project_polygon(points, polygon_table, axis);
     float3 proj_c = project_circle(circle, axis);
-    float distance = polygon_distance(proj_c, proj_p) / (circle.z / 2);
-    if (distance > 0)
+    float _distance = polygon_distance(proj_c, proj_p) / (circle.z / 2);
+    if (_distance > 0)
     {
         return;
     }
-    float abs_distance = fabs(distance);
+    float abs_distance = fabs(_distance);
 
     if (abs_distance < min_distance)
     {
@@ -158,12 +158,24 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
         }
     }
 
-    float2 e1 = points[edge_index_a].xy;
-    float2 e2 = points[edge_index_b].xy;
-    float2 collision_vertex = points[vert_index].xy;
+    float4 vert_point = points[vert_index];
+    float4 edge_point_1 = points[edge_index_a];
+    float4 edge_point_2 = points[edge_index_b];
+
+    float2 v0 = vert_point.xy;
+    float2 e1 = edge_point_1.xy;
+    float2 e2 = edge_point_2.xy;
+
+    float2 v0_p = vert_point.zw;
+    float2 e1_p = edge_point_1.zw;
+    float2 e2_p = edge_point_2.zw;
+
+    float v0_dist = distance(v0, v0_p);
+    float e1_dist = distance(e1, e1_p);
+    float e2_dist = distance(e2, e2_p);
 
     // edge reactions
-    float contact = edge_contact(e1, e2, collision_vertex, collision_vector);
+    float contact = edge_contact(e1, e2, v0, collision_vector);
 
     float edge_scale = 1.0f / (contact * contact + (1 - contact) * (1 - contact));
     float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale);
@@ -172,13 +184,44 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     // vertex reaction
     float2 v_reaction = collision_vector * vertex_magnitude;
 
+    // update the positions
+    vert_point.xy += v_reaction.xy;
+    edge_point_1.xy -= e1_reaction.xy;
+    edge_point_2.xy -= e2_reaction.xy;
+
+    // handle prev_updates to keep velocity correct
+    float2 v0_diff_2 = vert_point.xy - v0_p;
+    float2 e1_diff_2 = edge_point_1.xy - e1_p;
+    float2 e2_diff_2 = edge_point_2.xy - e2_p;
+
+    // Normalize the new vector
+    float new_len_v = length(v0_diff_2);
+    float new_len_e1 = length(e1_diff_2);
+    float new_len_e2 = length(e2_diff_2);
+
+    if (new_len_v != 0.0)
+    {
+        v0_diff_2 /= new_len_v;
+        vert_point.zw = vert_point.xy - v0_dist * v0_diff_2;
+    }
+
+    if (new_len_e1 != 0.0)
+    {
+        e1_diff_2 /= new_len_e1;
+        edge_point_1.zw = edge_point_1.xy - e1_dist * e1_diff_2;
+    }
+
+    if (new_len_e2 != 0.0)
+    {
+        e2_diff_2 /= new_len_e2;
+        edge_point_2.zw = edge_point_2.xy - e2_dist * e2_diff_2;
+    }
+
+
     // todo: this should technically be atomic, however visually it doesn't
     //  seem to matter right now. probably should do it "right" though at some point
-    points[vert_index].x += v_reaction.x;
-    points[vert_index].y += v_reaction.y;
-    points[edge_index_a].x -= e1_reaction.x;
-    points[edge_index_a].y -= e1_reaction.y;
-    points[edge_index_b].x -= e2_reaction.x;
-    points[edge_index_b].y -= e2_reaction.y;
+    points[vert_index] = vert_point;
+    points[edge_index_a] = edge_point_1;
+    points[edge_index_b] = edge_point_2;
 
 }
