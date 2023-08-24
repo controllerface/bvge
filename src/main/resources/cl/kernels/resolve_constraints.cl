@@ -46,28 +46,73 @@ __kernel void resolve_constraints(__global int4 *element_tables,
             float2 p1_v = p1.xy;
             float2 p2_v = p2.xy;
 
-            float2 p1_prv = p1.zw;
-            float2 p2_prv = p2.zw;
+            float2 p1_p = p1.zw;
+            float2 p2_p = p2.zw;
+
+            float2 p1_diff = p1_v - p1_p;
+            float2 p2_diff = p2_v - p2_p;
             
+
+
+            float p1_dist = distance(p1_v, p1_p);
+            float p2_dist = distance(p2_v, p2_p);
+
+
+
             // calculate the normalized direction of separation
             float2 sub = p2_v - p1_v;
             float len = length(sub);
             float diff = len - constraint;
 
-            //if (fabs(diff) < .9) continue;
+
+            float2 sub_p = p2_p - p1_p;
+            float len_p = length(sub_p);
+            float diff_p = len_p - constraint;
+
             
             float2 direction = normalize(sub);
+            float2 direction_p = normalize(sub_p);
         
             // the difference is halved and the direction is set to that magnitude
             direction.x *= diff * 0.5;
             direction.y *= diff * 0.5;
         
+            direction_p.x *= diff_p * 0.5;
+            direction_p.y *= diff_p * 0.5;
+        
+
             // move the first vertex in the positive direction, move the second negative
             p1_v = p1_v + direction;
             p2_v = p2_v - direction;
 
-            p1_prv = p1_prv + direction;
-            p2_prv = p2_prv - direction;
+            // p1_p = p1_p + direction_p;
+            // p2_p = p2_p - direction_p;
+
+            // p1_p = p1_v - p1_diff;
+            // p2_p = p2_v - p2_diff;
+
+
+
+
+            // float2 p1_diff_2 = p1_v - p1_p;
+            // float2 p2_diff_2 = p2_v - p2_p;
+
+            // float new_len_p1 = length(p1_diff_2);
+            // float new_len_p2 = length(p2_diff_2);
+
+
+            // if (new_len_p1 != 0.0)
+            // {
+            //     p1_diff_2 /= new_len_p1;
+            //     p1_p = p1_v - p1_dist * p1_diff_2;
+            // }
+
+            // if (new_len_p2 != 0.0)
+            // {
+            //     p2_diff_2 /= new_len_p2;
+            //     p2_p = p2_v - p2_dist * p2_diff_2;
+            // }
+
 
             // store the updated values in the points
             p1.x = p1_v.x;
@@ -75,15 +120,10 @@ __kernel void resolve_constraints(__global int4 *element_tables,
             p2.x = p2_v.x;
             p2.y = p2_v.y;
 
-            // p1.z = p1_v.x;
-            // p1.w = p1_v.y;
-            // p2.z = p2_v.x;
-            // p2.w = p2_v.y;
-
-            // p1.z = p1_prv.x;
-            // p1.w = p1_prv.y;
-            // p2.z = p2_prv.x;
-            // p2.w = p2_prv.y;
+            // p1.z = p1_p.x;
+            // p1.w = p1_p.y;
+            // p2.z = p2_p.x;
+            // p2.w = p2_p.y;
 
             // set the updated points into the buffer
             points[p1_index] = p1;

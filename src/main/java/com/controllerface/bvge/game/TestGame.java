@@ -9,7 +9,7 @@ import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
+import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsSimulation;
 import com.controllerface.bvge.ecs.systems.renderers.*;
 import com.controllerface.bvge.geometry.Meshes;
@@ -33,7 +33,7 @@ public class TestGame extends GameMode
         this.screenBlankSystem = screenBlankSystem;
     }
 
-    private final SpatialPartition spatialPartition = new SpatialPartition();
+    private final UniformGrid uniformGrid = new UniformGrid();
 
     private void genCrates(int box_size, float spacing, float size, float start_x, float start_y)
     {
@@ -174,10 +174,10 @@ public class TestGame extends GameMode
         // todo: write bone animator system, it should put all bones in their current positions
 
         // all physics calculations should be done first
-        ecs.registerSystem(new PhysicsSimulation(ecs, spatialPartition));
+        ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid));
 
         // camera movement must be handled before rendering occurs, but after objects are in position
-        ecs.registerSystem(new CameraTracking(ecs, spatialPartition));
+        ecs.registerSystem(new CameraTracking(ecs, uniformGrid));
 
         // the blanking system clears the screen before rendering passes
         ecs.registerSystem(screenBlankSystem);
@@ -186,7 +186,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        //ecs.registerSystem(new BoneRenderer(ecs));
+        ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
         //ecs.registerSystem(new CrateRenderer(ecs));
@@ -248,9 +248,10 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
 
 
-        genCircles(100, 3f, 5f, 0, 1000);
-        genCrates(100, 3f, 5f, 300, 1000);
-        genTriangles(100, 3f, 5f, 600, 1000);
+        //genCircles(80, 8f, 10f, 100, 1000);
+        //enCrates(80, 10f, 10f, 0, 1000);
+        genTriangles(120,  8f, 10f, 0, 1000);
+
 
 
 //        genTriangles(50, 5f, 5f, 100, 1000);
@@ -290,6 +291,6 @@ public class TestGame extends GameMode
     public void resizeSpatialMap(int width, int height)
     {
         // todo: buffer resize operations and then apply ONLY after a frame is done rendering
-        spatialPartition.resize(width, height);
+        uniformGrid.resize(width, height);
     }
 }

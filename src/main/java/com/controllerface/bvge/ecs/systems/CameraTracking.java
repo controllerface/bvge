@@ -4,16 +4,16 @@ import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.data.ArmatureIndex;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
+import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import com.controllerface.bvge.window.Window;
 
 public class CameraTracking extends GameSystem
 {
-    private final SpatialPartition spatialPartition;
-    public CameraTracking(ECS ecs, SpatialPartition spatialPartition)
+    private final UniformGrid uniformGrid;
+    public CameraTracking(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
-        this.spatialPartition = spatialPartition;
+        this.uniformGrid = uniformGrid;
     }
 
     @Override
@@ -37,11 +37,11 @@ public class CameraTracking extends GameSystem
         var height = (float)Window.get().getHeight() * camera.getZoom();
         var new_x = (pos_x - width / 2);
         var new_y = (pos_y - height / 2);
-        var new_origin_x = (pos_x - width / camera.getZoom()) + (spatialPartition.getWidth() / 2);
-        var new_origin_y = (pos_y - height / camera.getZoom()) + (spatialPartition.getHeight() / 2);
+        var new_origin_x = (pos_x - width / camera.getZoom()) + (uniformGrid.getWidth() / 2);
+        var new_origin_y = (pos_y - height / camera.getZoom()) + (uniformGrid.getHeight() / 2);
         camera.position.x = new_x;
         camera.position.y = new_y;
-        spatialPartition.updateOrigin(new_origin_x, new_origin_y);
+        uniformGrid.updateOrigin(new_origin_x, new_origin_y);
     }
 
     @Override

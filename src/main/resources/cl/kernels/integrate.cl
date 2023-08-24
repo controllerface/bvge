@@ -1,4 +1,4 @@
-#define MINIMUM_DIFF 0.005
+#define MINIMUM_DIFF FLT_MIN //0.005
 #define MAXIMUM_DIFF FLT_MAX //0.01
 
 /**

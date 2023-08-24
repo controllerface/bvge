@@ -4,7 +4,7 @@ import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.systems.physics.MemoryBuffer;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
-import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
+import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import org.jocl.*;
 
 import java.util.*;
@@ -45,7 +45,7 @@ public class GPU
     static cl_context context;
     static cl_device_id[] device_ids;
 
-    private static PhysicsBuffer physicsBuffer;
+    private static PhysicsBuffer physics_buffer;
 
     /**
      * After init, all kernels are loaded into this map, making named access of them simple.
@@ -393,9 +393,9 @@ public class GPU
         return (int) Math.ceil((float) n / (float) max_scan_block_size);
     }
 
-    public static void setPhysicsBuffer(PhysicsBuffer physicsBuffer)
+    public static void set_physics_buffer(PhysicsBuffer physics_buffer)
     {
-        GPU.physicsBuffer = physicsBuffer;
+        GPU.physics_buffer = physics_buffer;
     }
 
     private static cl_device_id[] device_init()
@@ -1111,7 +1111,7 @@ public class GPU
 
     public static float[] read_position(int armature_index)
     {
-        if (physicsBuffer == null)
+        if (physics_buffer == null)
         {
             return null;
         }
@@ -1143,24 +1143,24 @@ public class GPU
         Kernel.animate_hulls.gpu.call(arg_long(Main.Memory.point_count()));
     }
 
-    public static void integrate(float delta_time, SpatialPartition spatialPartition)
+    public static void integrate(float delta_time, UniformGrid uniform_grid)
     {
         var gpu_kernel = Kernel.integrate.gpu;
 
         float[] args =
             {
                 delta_time,
-                spatialPartition.getX_spacing(),
-                spatialPartition.getY_spacing(),
-                spatialPartition.getX_origin(),
-                spatialPartition.getY_origin(),
-                spatialPartition.getWidth(),
-                spatialPartition.getHeight(),
-                (float) spatialPartition.getX_subdivisions(),
-                (float) spatialPartition.getY_subdivisions(),
-                physicsBuffer.get_gravity_x(),
-                physicsBuffer.get_gravity_y(),
-                physicsBuffer.get_friction()
+                uniform_grid.getX_spacing(),
+                uniform_grid.getY_spacing(),
+                uniform_grid.getX_origin(),
+                uniform_grid.getY_origin(),
+                uniform_grid.getWidth(),
+                uniform_grid.getHeight(),
+                (float) uniform_grid.getX_subdivisions(),
+                (float) uniform_grid.getY_subdivisions(),
+                physics_buffer.get_gravity_x(),
+                physics_buffer.get_gravity_y(),
+                physics_buffer.get_friction()
             };
 
         var srcArgs = Pointer.to(args);
@@ -1174,54 +1174,54 @@ public class GPU
         clReleaseMemObject(argMem);
     }
 
-    public static void calculate_bank_offsets(SpatialPartition spatialPartition)
+    public static void calculate_bank_offsets(UniformGrid uniform_grid)
     {
         int bank_size = scan_key_bounds(mem_aabb_key_bank,  Main.Memory.hull_count());
-        spatialPartition.resizeBank(bank_size);
+        uniform_grid.resizeBank(bank_size);
     }
 
-    public static void generate_keys(SpatialPartition spatialPartition)
+    public static void generate_keys(UniformGrid uniform_grid)
     {
-        if (spatialPartition.getKey_bank_size() < 1)
+        if (uniform_grid.getKey_bank_size() < 1)
         {
             return;
         }
 
         var gpu_kernel = Kernel.generate_keys.gpu;
 
-        long bank_buf_size = (long) Sizeof.cl_int * spatialPartition.getKey_bank_size();
-        long counts_buf_size = (long) Sizeof.cl_int * spatialPartition.getDirectoryLength();
+        long bank_buf_size = (long) Sizeof.cl_int * uniform_grid.getKey_bank_size();
+        long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.getDirectoryLength();
 
         var bank_data = cl_new_buffer(bank_buf_size);
         var counts_data = cl_new_buffer(counts_buf_size);
         cl_zero_buffer(counts_data, counts_buf_size);
 
-        physicsBuffer.key_counts = new MemoryBuffer(counts_data);
-        physicsBuffer.key_bank = new MemoryBuffer(bank_data);
+        physics_buffer.key_counts = new MemoryBuffer(counts_data);
+        physics_buffer.key_bank = new MemoryBuffer(bank_data);
 
         gpu_kernel.set_arg(2, Pointer.to(bank_data));
         gpu_kernel.set_arg(3, Pointer.to(counts_data));
-        gpu_kernel.set_arg(4, Pointer.to(arg_int(spatialPartition.getX_subdivisions())));
-        gpu_kernel.set_arg(5, Pointer.to(arg_int(spatialPartition.getKey_bank_size())));
-        gpu_kernel.set_arg(6, Pointer.to(arg_int(spatialPartition.getDirectoryLength())));
+        gpu_kernel.set_arg(4, Pointer.to(arg_int(uniform_grid.getX_subdivisions())));
+        gpu_kernel.set_arg(5, Pointer.to(arg_int(uniform_grid.getKey_bank_size())));
+        gpu_kernel.set_arg(6, Pointer.to(arg_int(uniform_grid.getDirectoryLength())));
         gpu_kernel.call(arg_long(Main.Memory.hull_count()));
     }
 
-    public static void calculate_map_offsets(SpatialPartition spatialPartition)
+    public static void calculate_map_offsets(UniformGrid uniform_grid)
     {
-        int n = spatialPartition.getDirectoryLength();
+        int n = uniform_grid.getDirectoryLength();
         long data_buf_size = (long) Sizeof.cl_int * n;
         var o_data = cl_new_buffer(data_buf_size);
-        physicsBuffer.key_offsets = new MemoryBuffer(o_data);
-        scan_int_out(physicsBuffer.key_counts.memory(), o_data, n);
+        physics_buffer.key_offsets = new MemoryBuffer(o_data);
+        scan_int_out(physics_buffer.key_counts.memory(), o_data, n);
     }
 
-    public static void build_key_map(SpatialPartition spatialPartition)
+    public static void build_key_map(UniformGrid uniform_grid)
     {
         var gpu_kernel = Kernel.build_key_map.gpu;
 
-        long map_buf_size = (long) Sizeof.cl_int * spatialPartition.getKey_map_size();
-        long counts_buf_size = (long) Sizeof.cl_int * spatialPartition.getDirectoryLength();
+        long map_buf_size = (long) Sizeof.cl_int * uniform_grid.getKey_map_size();
+        long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.getDirectoryLength();
 
         var map_data = cl_new_buffer(map_buf_size);
         var counts_data = cl_new_buffer(counts_buf_size);
@@ -1229,39 +1229,39 @@ public class GPU
         // the counts buffer needs to start off filled with all zeroes
         cl_zero_buffer(counts_data, counts_buf_size);
 
-        physicsBuffer.key_map = new MemoryBuffer(map_data);
+        physics_buffer.key_map = new MemoryBuffer(map_data);
 
         gpu_kernel.set_arg(2, Pointer.to(map_data));
-        gpu_kernel.set_arg(3, physicsBuffer.key_offsets.pointer());
+        gpu_kernel.set_arg(3, physics_buffer.key_offsets.pointer());
         gpu_kernel.set_arg(4, Pointer.to(counts_data));
-        gpu_kernel.set_arg(5, Pointer.to(arg_int(spatialPartition.getX_subdivisions())));
-        gpu_kernel.set_arg(6, Pointer.to(arg_int(spatialPartition.getDirectoryLength())));
+        gpu_kernel.set_arg(5, Pointer.to(arg_int(uniform_grid.getX_subdivisions())));
+        gpu_kernel.set_arg(6, Pointer.to(arg_int(uniform_grid.getDirectoryLength())));
         gpu_kernel.call(arg_long(Main.Memory.hull_count()));
 
         clReleaseMemObject(counts_data);
     }
 
-    public static void locate_in_bounds(SpatialPartition spatialPartition)
+    public static void locate_in_bounds(UniformGrid uniform_grid)
     {
         var gpu_kernel = Kernel.locate_in_bounds.gpu;
 
         int hull_count = Main.Memory.hull_count();
 
         // step 1: locate objects that are within bounds
-        int x_subdivisions = spatialPartition.getX_subdivisions();
-        physicsBuffer.x_sub_divisions = Pointer.to(arg_int(x_subdivisions));
-        physicsBuffer.key_count_length = Pointer.to(arg_int(spatialPartition.getDirectoryLength()));
+        int x_subdivisions = uniform_grid.getX_subdivisions();
+        physics_buffer.x_sub_divisions = Pointer.to(arg_int(x_subdivisions));
+        physics_buffer.key_count_length = Pointer.to(arg_int(uniform_grid.getDirectoryLength()));
 
         long inbound_buf_size = (long) Sizeof.cl_int * hull_count;
         var inbound_data = cl_new_buffer(inbound_buf_size);
 
-        physicsBuffer.in_bounds = new MemoryBuffer(inbound_data);
+        physics_buffer.in_bounds = new MemoryBuffer(inbound_data);
 
         int[] size = arg_int(0);
         var dst_size = Pointer.to(size);
         var size_data = cl_new_int_arg_buffer(dst_size);
 
-        gpu_kernel.set_arg(1, physicsBuffer.in_bounds.pointer());
+        gpu_kernel.set_arg(1, physics_buffer.in_bounds.pointer());
         gpu_kernel.set_arg(2, Pointer.to(size_data));
         gpu_kernel.call(arg_long(hull_count));
 
@@ -1269,81 +1269,81 @@ public class GPU
 
         clReleaseMemObject(size_data);
 
-        physicsBuffer.set_candidate_buffer_count(size[0]);
+        physics_buffer.set_candidate_buffer_count(size[0]);
     }
 
     public static void count_candidates()
     {
         var gpu_kernel = Kernel.count_candidates.gpu;
 
-        long candidate_buf_size = (long) Sizeof.cl_int2 * physicsBuffer.get_candidate_buffer_count();
+        long candidate_buf_size = (long) Sizeof.cl_int2 * physics_buffer.get_candidate_buffer_count();
         var candidate_data = cl_new_buffer(candidate_buf_size);
-        physicsBuffer.candidate_counts = new MemoryBuffer(candidate_data);
+        physics_buffer.candidate_counts = new MemoryBuffer(candidate_data);
 
-        gpu_kernel.set_arg(1, physicsBuffer.in_bounds.pointer());
-        gpu_kernel.set_arg(2, physicsBuffer.key_bank.pointer());
-        gpu_kernel.set_arg(3, physicsBuffer.key_counts.pointer());
-        gpu_kernel.set_arg(4, physicsBuffer.candidate_counts.pointer());
-        gpu_kernel.set_arg(5, physicsBuffer.x_sub_divisions);
-        gpu_kernel.set_arg(6, physicsBuffer.key_count_length);
-        gpu_kernel.call(arg_long(physicsBuffer.get_candidate_buffer_count()));
+        gpu_kernel.set_arg(1, physics_buffer.in_bounds.pointer());
+        gpu_kernel.set_arg(2, physics_buffer.key_bank.pointer());
+        gpu_kernel.set_arg(3, physics_buffer.key_counts.pointer());
+        gpu_kernel.set_arg(4, physics_buffer.candidate_counts.pointer());
+        gpu_kernel.set_arg(5, physics_buffer.x_sub_divisions);
+        gpu_kernel.set_arg(6, physics_buffer.key_count_length);
+        gpu_kernel.call(arg_long(physics_buffer.get_candidate_buffer_count()));
     }
 
     public static void count_matches()
     {
-        int buffer_count = physicsBuffer.get_candidate_buffer_count();
+        int buffer_count = physics_buffer.get_candidate_buffer_count();
         long offset_buf_size = (long) Sizeof.cl_int * buffer_count;
         var offset_data = cl_new_buffer(offset_buf_size);
-        physicsBuffer.candidate_offsets = new MemoryBuffer(offset_data);
-        int match_count = scan_key_candidates(physicsBuffer.candidate_counts.memory(), offset_data, buffer_count);
-        physicsBuffer.set_candidate_match_count(match_count);
+        physics_buffer.candidate_offsets = new MemoryBuffer(offset_data);
+        int match_count = scan_key_candidates(physics_buffer.candidate_counts.memory(), offset_data, buffer_count);
+        physics_buffer.set_candidate_match_count(match_count);
     }
 
     public static void aabb_collide()
     {
         var gpu_kernel = Kernel.aabb_collide.gpu;
 
-        long matches_buf_size = (long) Sizeof.cl_int * physicsBuffer.get_candidate_match_count();
+        long matches_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_match_count();
         var matches_data = cl_new_buffer(matches_buf_size);
-        physicsBuffer.matches = new MemoryBuffer(matches_data);
+        physics_buffer.matches = new MemoryBuffer(matches_data);
 
-        long used_buf_size = (long) Sizeof.cl_int * physicsBuffer.get_candidate_buffer_count();
+        long used_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_buffer_count();
         var used_data = cl_new_buffer(used_buf_size);
-        physicsBuffer.matches_used = new MemoryBuffer(used_data);
+        physics_buffer.matches_used = new MemoryBuffer(used_data);
 
         // this buffer will contain the total number of candidates that were found
         int[] count = arg_int(0);
         var dst_count = Pointer.to(count);
         var count_data = cl_new_int_arg_buffer(dst_count);
 
-        gpu_kernel.set_arg(3, physicsBuffer.candidate_counts.pointer());
-        gpu_kernel.set_arg(4, physicsBuffer.candidate_offsets.pointer());
-        gpu_kernel.set_arg(5, physicsBuffer.key_map.pointer());
-        gpu_kernel.set_arg(6, physicsBuffer.key_bank.pointer());
-        gpu_kernel.set_arg(7, physicsBuffer.key_counts.pointer());
-        gpu_kernel.set_arg(8, physicsBuffer.key_offsets.pointer());
-        gpu_kernel.set_arg(9, physicsBuffer.matches.pointer());
-        gpu_kernel.set_arg(10, physicsBuffer.matches_used.pointer());
+        gpu_kernel.set_arg(3, physics_buffer.candidate_counts.pointer());
+        gpu_kernel.set_arg(4, physics_buffer.candidate_offsets.pointer());
+        gpu_kernel.set_arg(5, physics_buffer.key_map.pointer());
+        gpu_kernel.set_arg(6, physics_buffer.key_bank.pointer());
+        gpu_kernel.set_arg(7, physics_buffer.key_counts.pointer());
+        gpu_kernel.set_arg(8, physics_buffer.key_offsets.pointer());
+        gpu_kernel.set_arg(9, physics_buffer.matches.pointer());
+        gpu_kernel.set_arg(10, physics_buffer.matches_used.pointer());
         gpu_kernel.set_arg(11, Pointer.to(count_data));
-        gpu_kernel.set_arg(12, physicsBuffer.x_sub_divisions);
-        gpu_kernel.set_arg(13, physicsBuffer.key_count_length);
-        gpu_kernel.call(arg_long(physicsBuffer.get_candidate_buffer_count()));
+        gpu_kernel.set_arg(12, physics_buffer.x_sub_divisions);
+        gpu_kernel.set_arg(13, physics_buffer.key_count_length);
+        gpu_kernel.call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
         cl_read_buffer(count_data, Sizeof.cl_int, dst_count);
 
         clReleaseMemObject(count_data);
 
-        physicsBuffer.set_candidate_count(count[0]);
+        physics_buffer.set_candidate_count(count[0]);
     }
 
     public static void finalize_candidates()
     {
-        if (physicsBuffer.get_candidate_count() > 0)
+        if (physics_buffer.get_candidate_count() > 0)
         {
             var gpu_kernel = Kernel.finalize_candidates.gpu;
 
             // create an empty buffer that the kernel will use to store finalized candidates
-            long final_buf_size = (long) Sizeof.cl_int2 * physicsBuffer.get_candidate_count();
+            long final_buf_size = (long) Sizeof.cl_int2 * physics_buffer.get_candidate_count();
             var finals_data = cl_new_buffer(final_buf_size);
 
             // the kernel will use this value as an internal atomic counter, always initialize to zero
@@ -1351,16 +1351,16 @@ public class GPU
             var dst_counter = Pointer.to(counter);
             var counter_data = cl_new_int_arg_buffer(dst_counter);
 
-            physicsBuffer.set_final_size(final_buf_size);
-            physicsBuffer.candidates = new MemoryBuffer(finals_data);
+            physics_buffer.set_final_size(final_buf_size);
+            physics_buffer.candidates = new MemoryBuffer(finals_data);
 
-            gpu_kernel.set_arg(0, physicsBuffer.candidate_counts.pointer());
-            gpu_kernel.set_arg(1, physicsBuffer.candidate_offsets.pointer());
-            gpu_kernel.set_arg(2, physicsBuffer.matches.pointer());
-            gpu_kernel.set_arg(3, physicsBuffer.matches_used.pointer());
+            gpu_kernel.set_arg(0, physics_buffer.candidate_counts.pointer());
+            gpu_kernel.set_arg(1, physics_buffer.candidate_offsets.pointer());
+            gpu_kernel.set_arg(2, physics_buffer.matches.pointer());
+            gpu_kernel.set_arg(3, physics_buffer.matches_used.pointer());
             gpu_kernel.set_arg(4, Pointer.to(counter_data));
             gpu_kernel.set_arg(5, Pointer.to(finals_data));
-            gpu_kernel.call(arg_long(physicsBuffer.get_candidate_buffer_count()));
+            gpu_kernel.call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
             clReleaseMemObject(counter_data);
         }
@@ -1368,19 +1368,19 @@ public class GPU
 
     public static void sat_collide()
     {
-        if (physicsBuffer.candidates == null)
+        if (physics_buffer.candidates == null)
         {
             return;
         }
 
         var gpu_kernel = Kernel.sat_collide.gpu;
 
-        int candidatesSize = (int) physicsBuffer.get_final_size() / Sizeof.cl_int;
+        int candidatesSize = (int) physics_buffer.get_final_size() / Sizeof.cl_int;
 
         // candidates are pairs of integer indices, so the global size is half the count
         long[] global_work_size = new long[]{ candidatesSize / 2 };
 
-        gpu_kernel.set_arg(0, physicsBuffer.candidates.pointer());
+        gpu_kernel.set_arg(0, physics_buffer.candidates.pointer());
         gpu_kernel.call(global_work_size);
     }
 

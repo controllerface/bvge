@@ -2,7 +2,7 @@ package com.controllerface.bvge.ecs.systems.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.physics.SpatialPartition;
+import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.ecs.systems.renderers.batches.RectRenderBatch;
 import com.controllerface.bvge.util.Assets;
@@ -20,12 +20,12 @@ public class SpacePartitionRenderer extends GameSystem
     private final Vector3f color2 = new Vector3f(.1f,0.5f,0.1f);
     private final Vector3f color3 = new Vector3f(1f,0.1f,0.1f);
 
-    private final SpatialPartition spatialPartition;
+    private final UniformGrid uniformGrid;
 
-    public SpacePartitionRenderer(ECS ecs, SpatialPartition spatialPartition)
+    public SpacePartitionRenderer(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
-        this.spatialPartition = spatialPartition;
+        this.uniformGrid = uniformGrid;
         this.batches = new ArrayList<>();
         this.shader = Assets.shader("debugLine2D.glsl");
     }
@@ -79,35 +79,35 @@ public class SpacePartitionRenderer extends GameSystem
     @Override
     public void run(float dt)
     {
-        if (spatialPartition == null) return;
+        if (uniformGrid == null) return;
 
-        var x_max = spatialPartition.getX_origin() + spatialPartition.getWidth();
-        var y_max = spatialPartition.getY_origin() + spatialPartition.getHeight();
+        var x_max = uniformGrid.getX_origin() + uniformGrid.getWidth();
+        var y_max = uniformGrid.getY_origin() + uniformGrid.getHeight();
 
         var deferred = new ArrayList<Pair<Float, Float>>();
 
-        for (float i = spatialPartition.getX_origin(); i < x_max; i += spatialPartition.getX_spacing())
+        for (float i = uniformGrid.getX_origin(); i < x_max; i += uniformGrid.getX_spacing())
         {
-            for (float j = spatialPartition.getY_origin(); j < y_max; j += spatialPartition.getY_spacing())
+            for (float j = uniformGrid.getY_origin(); j < y_max; j += uniformGrid.getY_spacing())
             {
                 var c = getColor(i, j);
                 if (c == color3)
                 {
                     deferred.add(Pair.create(i, j));
                 }
-                else this.add(i, j, spatialPartition.getX_spacing(), spatialPartition.getY_spacing(), c);
+                else this.add(i, j, uniformGrid.getX_spacing(), uniformGrid.getY_spacing(), c);
             }
         }
 
         deferred.forEach(d->this.add(d.getLeft(), d.getRight(),
-            spatialPartition.getX_spacing(), spatialPartition.getY_spacing(),color3));
+            uniformGrid.getX_spacing(), uniformGrid.getY_spacing(),color3));
 
         accum+=dt;
 
-        this.add(spatialPartition.getX_origin(),
-                spatialPartition.getY_origin(),
-                spatialPartition.getWidth(),
-                spatialPartition.getHeight(), color);
+        this.add(uniformGrid.getX_origin(),
+                uniformGrid.getY_origin(),
+                uniformGrid.getWidth(),
+                uniformGrid.getHeight(), color);
         render();
     }
 

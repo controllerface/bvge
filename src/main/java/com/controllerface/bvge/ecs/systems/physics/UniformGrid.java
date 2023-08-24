@@ -1,6 +1,10 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-public class SpatialPartition
+/**
+ * Container class for the runtime values for a uniform grid spatial partition. The grid boundary is
+ * dynamically resizable and is calculated relative to the screen dimensions.
+ */
+public class UniformGrid
 {
     private float width = 0;
     private float height = 0;
@@ -16,7 +20,7 @@ public class SpatialPartition
     int key_bank_size = 0;
     int key_map_size = 0;
 
-    public SpatialPartition()
+    public UniformGrid()
     {
         init();
     }
