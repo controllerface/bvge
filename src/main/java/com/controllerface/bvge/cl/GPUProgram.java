@@ -93,7 +93,7 @@ public abstract class GPUProgram
      */
     protected void make_program()
     {
-        this.program = cl_p(this.src);
+        this.program = gpu_p(this.src);
     }
 
     /**
@@ -106,7 +106,7 @@ public abstract class GPUProgram
      */
     protected void load_kernel(Kernel kernel)
     {
-        this.kernels.put(kernel, cl_k(program, kernel.name()));
+        this.kernels.put(kernel, CLUtils.cl_k(program, kernel.name()));
     }
 
     /**

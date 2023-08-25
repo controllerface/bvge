@@ -5,13 +5,13 @@ import org.jocl.cl_mem;
 
 import static org.jocl.CL.*;
 
-public class MemoryBuffer
+public class GPUMemory
 {
     private final cl_mem src;
     private final Pointer pointer;
     private boolean released = false;
 
-    public MemoryBuffer(cl_mem src)
+    public GPUMemory(cl_mem src)
     {
         this.src = src;
         this.pointer = Pointer.to(this.src);

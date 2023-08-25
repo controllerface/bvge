@@ -4,16 +4,16 @@ import org.jocl.Pointer;
 
 public class PhysicsBuffer
 {
-    public MemoryBuffer key_map;
-    public MemoryBuffer key_bank;
-    public MemoryBuffer key_counts;
-    public MemoryBuffer key_offsets;
-    public MemoryBuffer in_bounds;
-    public MemoryBuffer candidates;
-    public MemoryBuffer candidate_counts;
-    public MemoryBuffer candidate_offsets;
-    public MemoryBuffer matches;
-    public MemoryBuffer matches_used;
+    public GPUMemory key_map;
+    public GPUMemory key_bank;
+    public GPUMemory key_counts;
+    public GPUMemory key_offsets;
+    public GPUMemory in_bounds;
+    public GPUMemory candidates;
+    public GPUMemory candidate_counts;
+    public GPUMemory candidate_offsets;
+    public GPUMemory matches;
+    public GPUMemory matches_used;
 
     public Pointer x_sub_divisions;
     public Pointer key_count_length;

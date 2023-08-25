@@ -2,7 +2,7 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.programs.*;
-import com.controllerface.bvge.ecs.systems.physics.MemoryBuffer;
+import com.controllerface.bvge.ecs.systems.physics.GPUMemory;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import org.jocl.*;
@@ -26,35 +26,71 @@ import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
  */
 public class GPU
 {
+    //#region Constants
+
     private static final long FLAGS_WRITE_GPU = CL_MEM_READ_WRITE;
     private static final long FLAGS_WRITE_CPU_COPY = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     private static final long FLAGS_READ_CPU_COPY = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
 
-    private static final Pointer ZERO_PATTERN = Pointer.to(new int[]{ 0 });
+    private static final Pointer ZERO_PATTERN = Pointer.to(new int[]{0});
 
-    // these are re-calculated at startup to match the user's hardware
+    //#endregion
+
+    //#region Workgroup Variables
+
+    /**
+     * These values are re-calculated at startup to match the user's hardware. The max work group is the
+     * largest group of calculations that can be done in a single "warp" or "wave" of GPU processing.
+     * Related to this, we store a max scan block, which is used for variants of the prefix scan kernels.
+     * The local work default is simply the max group size formatted as a single element argument array,
+     * making it simpler to use for Open Cl calls which expect that format.
+     */
     private static long max_work_group_size = 0;
     private static long max_scan_block_size = 0;
-
     private static long[] local_work_default = arg_long(0);
 
-    // pre-made size array, used for kernels that have a single work item
+    /**
+     * This convenience array defines a work group size of 1, which is primarily used for setting up
+     * data buffers at startup. Generally speaking, kernels of this size should be used sparingly, and
+     * code should favor making bulk calls, however there are certain use cases where it makes sense to
+     * perform a single operation on some GPU memory.
+     */
     private static final long[] global_single_size = arg_long(1);
 
-    static cl_command_queue command_queue;
-    static cl_context context;
-    static cl_device_id[] device_ids;
+    //#endregion
 
+    //#region Class Variables
+
+    /**
+     * The Open CL command queue that this class uses to issue GPU commands.
+     */
+    private static cl_command_queue command_queue;
+
+    /**
+     * The Open CL context associated with this class.
+     */
+    private static cl_context context;
+
+    /**
+     * An array of devices that support being used with Open CL. In practice, this should
+     * only ever have single element, and that device should be the main GPU in the system.
+     */
+    private static cl_device_id[] device_ids;
+
+    /**
+     * Assists in managing data buffers and other variables used for physics calculations.
+     * These properties and buffers are co-located within this single structure to make it
+     * easier to reason about the logic and add or remove objects as needed for new features.
+     */
     private static PhysicsBuffer physics_buffer;
 
-    /**
-     * After init, all kernels are loaded into this map, making named access of them simple.
-     */
-    private static final Map<Kernel, cl_kernel> _k = new HashMap<>();
+    //#endregion
+
+    //#region GPU Program Objects
 
     /**
-     * Enumerates all exiting GPU programs. Programs contain one or more "kernels". A kernel
-     * is effectively an entry point into a small program, in reality simply a function.
+     * Enumerates all existing GPU programs. Programs contain one or more "kernels". A kernel is
+     * effectively an entry point into a small, self-contained, function that operates on memory.
      * Program implementations are responsible for creating and registering these kernel objects.
      * At runtime, the kernels are called using the Open CL API.
      */
@@ -80,13 +116,22 @@ public class GPU
 
         ;
 
-        private final GPUProgram program;
+        private final GPUProgram gpu;
 
         Program(GPUProgram program)
         {
-            this.program = program;
+            this.gpu = program;
         }
     }
+
+    //#endregion
+
+    //#region GPU Kernel Objects
+
+    /**
+     * After init, all kernels are loaded into this map, making named access of them simple.
+     */
+    private static final Map<Kernel, cl_kernel> _k = new HashMap<>();
 
     /**
      * Kernel function names. Program implementations use this enum to instantiate kernel objects
@@ -141,8 +186,9 @@ public class GPU
         }
     }
 
+    //#endregion
 
-    //#region Memory Objects
+    //#region GPU Memory Objects
 
     /**
      * Memory that is shared between Open CL and Open GL contexts
@@ -150,201 +196,301 @@ public class GPU
     private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
 
     /**
-     * Individual points (vertices) of tracked physics hulls. Values are float4 with the following mappings:
-     * -
-     * x: current x position
-     * y: current y position
-     * z: previous x position
-     * w: previous y position
-     * -
+     * Memory buffers that store data used within the various kernel functions. Each buffer
+     * has a different layout, but will align to an Open CL supported primitive type, such as
+     * int, float or some vectorized type like, int2 or float4.
      */
-    private static cl_mem mem_points;
+    private enum Memory
+    {
+        /**
+         * Individual points (vertices) of tracked physics hulls. Values are float4 with the following mappings:
+         * -
+         * x: current x position
+         * y: current y position
+         * z: previous x position
+         * w: previous y position
+         * -
+         */
+        points(Sizeof.cl_float4),
 
-    /**
-     * Edges of tracked physics hulls. Values are float4 with the following mappings:
-     * -
-     * x: point 1 index
-     * y: point 2 index
-     * z: distance constraint
-     * w: edge flags
-     * -
-     * note: x, y, and w values are cast to int during use
-     */
-    private static cl_mem mem_edges;
+        /**
+         * Edges of tracked physics hulls. Values are float4 with the following mappings:
+         * -
+         * x: point 1 index
+         * y: point 2 index
+         * z: distance constraint
+         * w: edge flags
+         * -
+         * note: x, y, and w values are cast to int during use
+         */
+        edges(Sizeof.cl_float4),
 
-    /**
-     * Positions of tracked hulls. Values are float4 with the following mappings:
-     * -
-     * x: current x position
-     * y: current y position
-     * z: scale x
-     * w: scale y
-     * -
-     */
-    private static cl_mem mem_hulls;
+        /**
+         * Positions of tracked hulls. Values are float4 with the following mappings:
+         * -
+         * x: current x position
+         * y: current y position
+         * z: scale x
+         * w: scale y
+         * -
+         */
+        hulls(Sizeof.cl_float4),
 
-    /**
-     * Axis-aligned bounding boxes of tracked physics hulls. Values are float4 with the following mappings:
-     * -
-     * x: corner x position
-     * y: corner y position
-     * z: width
-     * w: height
-     * -
-     */
-    private static cl_mem mem_aabb;
+        /**
+         * Axis-aligned bounding boxes of tracked physics hulls. Values are float4 with the following mappings:
+         * -
+         * x: corner x position
+         * y: corner y position
+         * z: width
+         * w: height
+         * -
+         */
+        aabb(Sizeof.cl_float4),
 
-    /**
-     * Rotation information about tracked physics hulls. Values are float2 with the following mappings:
-     * -
-     * x: initial reference angle
-     * y: current rotation
-     * -
-     */
-    private static cl_mem mem_hull_rotation;
+        /**
+         * Rotation information about tracked physics hulls. Values are float2 with the following mappings:
+         * -
+         * x: initial reference angle
+         * y: current rotation
+         * -
+         */
+        hull_rotation(Sizeof.cl_float2),
 
-    /**
-     * Indexing table for tracked physics hulls. Values are int4 with the following mappings:
-     * -
-     * x: start point index
-     * y: end point index
-     * z: start edge index
-     * w: end edge index
-     * -
-     */
-    private static cl_mem mem_hull_element_tables;
+        /**
+         * Indexing table for tracked physics hulls. Values are int4 with the following mappings:
+         * -
+         * x: start point index
+         * y: end point index
+         * z: start edge index
+         * w: end edge index
+         * -
+         */
+        hull_element_table(Sizeof.cl_int4),
 
-    /**
-     * Flags that related to tracked physics hulls. Values are int2 with the following mappings:
-     * -
-     * x: hull flags
-     * y: armature id
-     * -
-     */
-    private static cl_mem mem_hull_flags;
+        /**
+         * Flags that related to tracked physics hulls. Values are int2 with the following mappings:
+         * -
+         * x: hull flags
+         * y: armature id
+         * -
+         */
+        hull_flags(Sizeof.cl_int2),
 
-    /**
-     * Spatial partition index information for tracked physics hulls. Values are int4 with the following mappings:
-     * -
-     * x: minimum x key index
-     * y: maximum x key index
-     * z: minimum y key index
-     * w: maximum y key index
-     * -
-     */
-    private static cl_mem mem_aabb_index;
+        /**
+         * Spatial partition index information for tracked physics hulls. Values are int4 with the following mappings:
+         * -
+         * x: minimum x key index
+         * y: maximum x key index
+         * z: minimum y key index
+         * w: maximum y key index
+         * -
+         */
+        aabb_index(Sizeof.cl_int4),
 
-    /**
-     * Spatial partition key bank information for tracked physics hulls. Values are int2 with the following mappings:
-     * -
-     * x: key bank offset
-     * y: key bank size
-     * -
-     */
-    private static cl_mem mem_aabb_key_bank;
+        /**
+         * Spatial partition key bank information for tracked physics hulls. Values are int2 with the following mappings:
+         * -
+         * x: key bank offset
+         * y: key bank size
+         * -
+         */
+        aabb_key_table(Sizeof.cl_int2),
 
-    /**
-     * Vertex information for loaded models. Values are float2 with the following mappings:
-     * -
-     * x: x position
-     * y: y position
-     * -
-     */
-    private static cl_mem mem_vertex_references;
+        /**
+         * Vertex information for loaded models. Values are float2 with the following mappings:
+         * -
+         * x: x position
+         * y: y position
+         * -
+         */
+        vertex_references(Sizeof.cl_float2),
 
-    /**
-     * Indexing table for points of tracked physics hulls. Values are int2 with the following mappings:
-     * -
-     * x: reference vertex index
-     * y: bone index (todo: also used as a proxy for hull ID, based on alignment, but they should be separate)
-     * -
-     */
-    private static cl_mem mem_vertex_table;
+        /**
+         * Indexing table for points of tracked physics hulls. Values are int2 with the following mappings:
+         * -
+         * x: reference vertex index
+         * y: bone index (todo: also used as a proxy for hull ID, based on alignment, but they should be separate)
+         * -
+         */
+        vertex_table(Sizeof.cl_int2),
 
-    /**
-     * Bone offset reference matrices of loaded models. Values are float16 with the following mappings:
-     * -
-     * s0: (m00) transformation matrix column 1 row 1
-     * s1: (m01) transformation matrix column 1 row 2
-     * s2: (m02) transformation matrix column 1 row 3
-     * s3: (m03) transformation matrix column 1 row 4
-     * s4: (m10) transformation matrix column 2 row 1
-     * s5: (m11) transformation matrix column 2 row 2
-     * s6: (m12) transformation matrix column 2 row 3
-     * s7: (m13) transformation matrix column 2 row 4
-     * s8: (m20) transformation matrix column 3 row 1
-     * s9: (m21) transformation matrix column 3 row 2
-     * sA: (m22) transformation matrix column 3 row 3
-     * sB: (m23) transformation matrix column 3 row 4
-     * sC: (m30) transformation matrix column 4 row 1
-     * sD: (m31) transformation matrix column 4 row 2
-     * sE: (m32) transformation matrix column 4 row 3
-     * sF: (m33) transformation matrix column 4 row 4
-     * -
-     */
-    private static cl_mem mem_bone_references;
+        /**
+         * Bone offset reference matrices of loaded models. Values are float16 with the following mappings:
+         * -
+         * s0: (m00) transformation matrix column 1 row 1
+         * s1: (m01) transformation matrix column 1 row 2
+         * s2: (m02) transformation matrix column 1 row 3
+         * s3: (m03) transformation matrix column 1 row 4
+         * s4: (m10) transformation matrix column 2 row 1
+         * s5: (m11) transformation matrix column 2 row 2
+         * s6: (m12) transformation matrix column 2 row 3
+         * s7: (m13) transformation matrix column 2 row 4
+         * s8: (m20) transformation matrix column 3 row 1
+         * s9: (m21) transformation matrix column 3 row 2
+         * sA: (m22) transformation matrix column 3 row 3
+         * sB: (m23) transformation matrix column 3 row 4
+         * sC: (m30) transformation matrix column 4 row 1
+         * sD: (m31) transformation matrix column 4 row 2
+         * sE: (m32) transformation matrix column 4 row 3
+         * sF: (m33) transformation matrix column 4 row 4
+         * -
+         */
+        bone_references(Sizeof.cl_float16),
 
-    /**
-     * Bone offset animation matrices of tracked physics hulls. Values are float16 with the following mappings:
-     * -
-     * s0: (m00) transformation matrix column 1 row 1
-     * s1: (m01) transformation matrix column 1 row 2
-     * s2: (m02) transformation matrix column 1 row 3
-     * s3: (m03) transformation matrix column 1 row 4
-     * s4: (m10) transformation matrix column 2 row 1
-     * s5: (m11) transformation matrix column 2 row 2
-     * s6: (m12) transformation matrix column 2 row 3
-     * s7: (m13) transformation matrix column 2 row 4
-     * s8: (m20) transformation matrix column 3 row 1
-     * s9: (m21) transformation matrix column 3 row 2
-     * sA: (m22) transformation matrix column 3 row 3
-     * sB: (m23) transformation matrix column 3 row 4
-     * sC: (m30) transformation matrix column 4 row 1
-     * sD: (m31) transformation matrix column 4 row 2
-     * sE: (m32) transformation matrix column 4 row 3
-     * sF: (m33) transformation matrix column 4 row 4
-     * -
-     */
-    private static cl_mem mem_bone_instances;
+        /**
+         * Bone offset animation matrices of tracked physics hulls. Values are float16 with the following mappings:
+         * -
+         * s0: (m00) transformation matrix column 1 row 1
+         * s1: (m01) transformation matrix column 1 row 2
+         * s2: (m02) transformation matrix column 1 row 3
+         * s3: (m03) transformation matrix column 1 row 4
+         * s4: (m10) transformation matrix column 2 row 1
+         * s5: (m11) transformation matrix column 2 row 2
+         * s6: (m12) transformation matrix column 2 row 3
+         * s7: (m13) transformation matrix column 2 row 4
+         * s8: (m20) transformation matrix column 3 row 1
+         * s9: (m21) transformation matrix column 3 row 2
+         * sA: (m22) transformation matrix column 3 row 3
+         * sB: (m23) transformation matrix column 3 row 4
+         * sC: (m30) transformation matrix column 4 row 1
+         * sD: (m31) transformation matrix column 4 row 2
+         * sE: (m32) transformation matrix column 4 row 3
+         * sF: (m33) transformation matrix column 4 row 4
+         * -
+         */
+        bone_instances(Sizeof.cl_float16),
 
-    /**
-     * Reference bone index of bones used for tracked physics hulls. Values are int with the following mapping:
-     * -
-     * value: bone reference index
-     * -
-     */
-    private static cl_mem mem_bone_index;
+        /**
+         * Reference bone index of bones used for tracked physics hulls. Values are int with the following mapping:
+         * -
+         * value: bone reference index
+         * -
+         */
+        bone_index(Sizeof.cl_int),
 
-    /**
-     * Armature information for tracked physics hulls. Values are float4 with the following mappings:
-     * -
-     * x: current x position
-     * y: current y position
-     * z: previous x position
-     * w: previous y position
-     * -
-     */
-    private static cl_mem mem_armatures;
+        /**
+         * Armature information for tracked physics hulls. Values are float4 with the following mappings:
+         * -
+         * x: current x position
+         * y: current y position
+         * z: previous x position
+         * w: previous y position
+         * -
+         */
+        armatures(Sizeof.cl_float4),
 
-    /**
-     * Hull index of root hull for an armature. Values are int with the following mapping:
-     * -
-     * value: hull index
-     * -
-     */
-    private static cl_mem mem_armature_flags;
+        /**
+         * Hull index of root hull for an armature. Values are int with the following mapping:
+         * -
+         * value: hull index
+         * -
+         */
+        armature_flags(Sizeof.cl_int),
 
-    /**
-     * Acceleration value of an armature. Values are float2 with the following mappings:
-     * -
-     * x: current x acceleration
-     * y: current y acceleration
-     * -
-     */
-    private static cl_mem mem_armature_acceleration;
+        /**
+         * Acceleration value of an armature. Values are float2 with the following mappings:
+         * -
+         * x: current x acceleration
+         * y: current y acceleration
+         * -
+         */
+        armature_accel(Sizeof.cl_float2),
+
+        ;
+
+        GPUMemory gpu;
+        final int size;
+        int length;
+
+        Memory(int valueSize)
+        {
+            size = valueSize;
+        }
+
+        private void set_memory(GPUMemory GPUMemory)
+        {
+            this.gpu = GPUMemory;
+        }
+
+        public void init(int buffer_length)
+        {
+            int mem_size = buffer_length * size;
+            this.length = mem_size;
+            var mem = cl_new_buffer(mem_size);
+            cl_zero_buffer(mem, mem_size);
+            set_memory(new GPUMemory(mem));
+        }
+    }
 
     //#endregion
 
+    //#region Public API
+
+    public static cl_program gpu_p(List<String> src_strings)
+    {
+        String[] src = src_strings.toArray(new String[]{});
+        return CLUtils.cl_p(context, device_ids, src);
+    }
+
+    public static void set_physics_buffer(PhysicsBuffer physics_buffer)
+    {
+        GPU.physics_buffer = physics_buffer;
+    }
+
+    public static void init(int max_hulls, int max_points)
+    {
+        device_ids = init_device();
+
+        var device = device_ids[0];
+
+        System.out.println("-------- OPEN CL DEVICE -----------");
+        System.out.println(getString(device, CL_DEVICE_VENDOR));
+        System.out.println(getString(device, CL_DEVICE_NAME));
+        System.out.println(getString(device, CL_DRIVER_VERSION));
+        System.out.println("-----------------------------------\n");
+
+        max_work_group_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        max_scan_block_size = max_work_group_size * 2;
+        local_work_default = arg_long(max_work_group_size);
+
+        // initialize kernel programs
+        for (var program : Program.values())
+        {
+            program.gpu.init();
+            _k.putAll(program.gpu.kernels);
+        }
+
+        //OpenCLUtils.debugDeviceDetails(device_ids);
+
+        // create memory buffers
+        init_memory(max_hulls, max_points);
+
+        // Create re-usable kernel objects
+        init_kernels();
+    }
+
+    public static void destroy()
+    {
+        for (Memory buffer : Memory.values())
+        {
+            Optional.ofNullable(buffer.gpu)
+                .ifPresent(GPUMemory::release);
+        }
+
+        shared_mem.values().forEach(CL::clReleaseMemObject);
+
+        for (Program program : Program.values())
+        {
+            Optional.ofNullable(program.gpu)
+                .ifPresent(GPUProgram::destroy);
+        }
+        clReleaseCommandQueue(command_queue);
+        clReleaseContext(context);
+    }
+
+    //#endregion
+
+    //#region Utility Methods
 
     private static void cl_read_buffer(cl_mem src, long size, Pointer dst)
     {
@@ -373,32 +519,16 @@ public class GPU
             0, null, null);
     }
 
-    public static cl_program cl_p(List<String> src_strings)
-    {
-        return cl_p(src_strings.toArray(new String[]{}));
-    }
-
-    public static cl_program cl_p(String... src)
-    {
-        return CLUtils.cl_p(context, device_ids, src);
-    }
-
-    public static cl_kernel cl_k(cl_program program, String kernel_name)
-    {
-        return CLUtils.cl_k(program, kernel_name);
-    }
-
-    public static int work_group_count(int n)
+    private static int work_group_count(int n)
     {
         return (int) Math.ceil((float) n / (float) max_scan_block_size);
     }
 
-    public static void set_physics_buffer(PhysicsBuffer physics_buffer)
-    {
-        GPU.physics_buffer = physics_buffer;
-    }
+    //#endregion
 
-    private static cl_device_id[] device_init()
+    //#region Init Methods
+
+    private static cl_device_id[] init_device()
     {
         // The platform, device type and device number
         // that will be used
@@ -461,131 +591,66 @@ public class GPU
 
     }
 
-    public static void init(int max_hulls, int max_points)
+    private static void init_memory(int max_hulls, int max_points)
     {
-        device_ids = device_init();
+        // todo: there should be more granularity than just max hulls and points. There should be
+        //  limits on armatures and other data types.
 
-        var device = device_ids[0];
-
-        System.out.println("-------- OPEN CL DEVICE -----------");
-        System.out.println(getString(device, CL_DEVICE_VENDOR));
-        System.out.println(getString(device, CL_DEVICE_NAME));
-        System.out.println(getString(device, CL_DRIVER_VERSION));
-        System.out.println("-----------------------------------\n");
-
-        max_work_group_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
-        max_scan_block_size = max_work_group_size * 2;
-        local_work_default = new long[]{max_work_group_size};
-
-        // initialize kernel programs
-        for (var program : Program.values())
-        {
-            program.program.init();
-            _k.putAll(program.program.kernels);
-        }
-
-        //OpenCLUtils.debugDeviceDetails(device_ids);
-
-        // create memory buffers
-        prepare_memory(max_hulls, max_points);
-
-        // Create re-usable kernel objects
-        prepare_kernels();
-    }
-
-    private static void prepare_memory(int max_hulls, int max_points)
-    {
-        int transform_mem_size        = max_hulls * Sizeof.cl_float4;
-        int acceleration_mem_size     = max_hulls * Sizeof.cl_float2;
-        int rotation_mem_size         = max_hulls * Sizeof.cl_float2;
-        int element_table_mem_size    = max_hulls * Sizeof.cl_int4;
-        int flags_mem_size            = max_hulls * Sizeof.cl_int2;
-        int bounding_box_mem_size     = max_hulls * Sizeof.cl_float4;
-        int spatial_index_mem_size    = max_hulls * Sizeof.cl_int4;
-        int spatial_key_bank_mem_size = max_hulls * Sizeof.cl_int2;
-        int points_mem_size           = max_points * Sizeof.cl_float4;
-        int edges_mem_size            = max_points * Sizeof.cl_float4;
-        int vertex_table_mem_size     = max_points * Sizeof.cl_int2;
-        int vertex_reference_mem_size = max_points * Sizeof.cl_float2;
-        int bone_reference_mem_size   = max_points * Sizeof.cl_float16;
-        int bone_instance_mem_size    = max_points * Sizeof.cl_float16;
-        int bone_index_mem_size       = max_points * Sizeof.cl_int;
-        int armature_mem_size         = max_points * Sizeof.cl_float4;
-        int armature_flags_mem_size   = max_points * Sizeof.cl_int;
-
-        mem_armature_acceleration = cl_new_buffer(acceleration_mem_size);
-        mem_hull_rotation         = cl_new_buffer(rotation_mem_size);
-        mem_hull_element_tables   = cl_new_buffer(element_table_mem_size);
-        mem_hull_flags            = cl_new_buffer(flags_mem_size);
-        mem_aabb_index            = cl_new_buffer(spatial_index_mem_size);
-        mem_aabb_key_bank         = cl_new_buffer(spatial_key_bank_mem_size);
-        mem_hulls                 = cl_new_buffer(transform_mem_size);
-        mem_aabb                  = cl_new_buffer(bounding_box_mem_size);
-        mem_points                = cl_new_buffer(points_mem_size);
-        mem_edges                 = cl_new_buffer(edges_mem_size);
-        mem_vertex_table          = cl_new_buffer(vertex_table_mem_size);
-        mem_vertex_references     = cl_new_buffer(vertex_reference_mem_size);
-        mem_bone_references       = cl_new_buffer(bone_reference_mem_size);
-        mem_bone_instances        = cl_new_buffer(bone_instance_mem_size);
-        mem_bone_index            = cl_new_buffer(bone_index_mem_size);
-        mem_armatures             = cl_new_buffer(armature_mem_size);
-        mem_armature_flags        = cl_new_buffer(armature_flags_mem_size);
-
-        cl_zero_buffer(mem_armature_acceleration, acceleration_mem_size);
-        cl_zero_buffer(mem_hull_rotation, rotation_mem_size);
-        cl_zero_buffer(mem_hull_element_tables, element_table_mem_size);
-        cl_zero_buffer(mem_hull_flags, flags_mem_size);
-        cl_zero_buffer(mem_aabb_index, spatial_index_mem_size);
-        cl_zero_buffer(mem_aabb_key_bank, spatial_key_bank_mem_size);
-        cl_zero_buffer(mem_hulls, transform_mem_size);
-        cl_zero_buffer(mem_aabb, bounding_box_mem_size);
-        cl_zero_buffer(mem_points, points_mem_size);
-        cl_zero_buffer(mem_edges, edges_mem_size);
-        cl_zero_buffer(mem_vertex_table, vertex_table_mem_size);
-        cl_zero_buffer(mem_vertex_references, vertex_reference_mem_size);
-        cl_zero_buffer(mem_bone_references, bone_reference_mem_size);
-        cl_zero_buffer(mem_bone_instances, bone_instance_mem_size);
-        cl_zero_buffer(mem_bone_index, bone_index_mem_size);
-        cl_zero_buffer(mem_armatures, armature_mem_size);
-        cl_zero_buffer(mem_armature_flags, armature_flags_mem_size);
+        Memory.armature_accel.init(max_hulls);
+        Memory.hull_rotation.init(max_hulls);
+        Memory.hull_element_table.init(max_hulls);
+        Memory.hull_flags.init(max_hulls);
+        Memory.aabb_index.init(max_hulls);
+        Memory.aabb_key_table.init(max_hulls);
+        Memory.hulls.init(max_hulls);
+        Memory.aabb.init(max_hulls);
+        Memory.points.init(max_points);
+        Memory.edges.init(max_points);
+        Memory.vertex_table.init(max_points);
+        Memory.vertex_references.init(max_points);
+        Memory.bone_references.init(max_points);
+        Memory.bone_instances.init(max_points);
+        Memory.bone_index.init(max_points);
+        Memory.armatures.init(max_points);
+        Memory.armature_flags.init(max_points);
 
         // Debugging info
-        int total = transform_mem_size
-            + acceleration_mem_size
-            + rotation_mem_size
-            + element_table_mem_size
-            + flags_mem_size
-            + bounding_box_mem_size
-            + spatial_index_mem_size
-            + spatial_key_bank_mem_size
-            + points_mem_size
-            + edges_mem_size
-            + vertex_table_mem_size
-            + vertex_reference_mem_size
-            + bone_reference_mem_size
-            + bone_instance_mem_size
-            + bone_index_mem_size
-            + armature_mem_size
-            + armature_flags_mem_size;
+        int total = Memory.hulls.length
+            + Memory.armature_accel.length
+            + Memory.hull_rotation.length
+            + Memory.hull_element_table.length
+            + Memory.hull_flags.length
+            + Memory.aabb.length
+            + Memory.aabb_index.length
+            + Memory.aabb_key_table.length
+            + Memory.points.length
+            + Memory.edges.length
+            + Memory.vertex_table.length
+            + Memory.vertex_references.length
+            + Memory.bone_references.length
+            + Memory.bone_instances.length
+            + Memory.bone_index.length
+            + Memory.armatures.length
+            + Memory.armature_flags.length;
 
         System.out.println("------------- BUFFERS -------------");
-        System.out.println("points            : " + points_mem_size);
-        System.out.println("edges             : " + edges_mem_size);
-        System.out.println("transforms        : " + transform_mem_size);
-        System.out.println("acceleration      : " + acceleration_mem_size);
-        System.out.println("rotation          : " + rotation_mem_size);
-        System.out.println("element table     : " + element_table_mem_size);
-        System.out.println("flags             : " + flags_mem_size);
-        System.out.println("bounding box      : " + bounding_box_mem_size);
-        System.out.println("spatial index     : " + spatial_index_mem_size);
-        System.out.println("spatial key bank  : " + spatial_key_bank_mem_size);
-        System.out.println("vertex table      : " + vertex_table_mem_size);
-        System.out.println("vertex references : " + vertex_reference_mem_size);
-        System.out.println("bone references   : " + bone_reference_mem_size);
-        System.out.println("bone instances    : " + bone_instance_mem_size);
-        System.out.println("bone index        : " + bone_index_mem_size);
-        System.out.println("armatures         : " + armature_mem_size);
-        System.out.println("armature flags    : " + armature_flags_mem_size);
+        System.out.println("points            : " + Memory.hulls.length);
+        System.out.println("edges             : " + Memory.armature_accel.length);
+        System.out.println("transforms        : " + Memory.hull_rotation.length);
+        System.out.println("acceleration      : " + Memory.hull_element_table.length);
+        System.out.println("rotation          : " + Memory.hull_flags.length);
+        System.out.println("element table     : " + Memory.aabb.length);
+        System.out.println("flags             : " + Memory.aabb_index.length);
+        System.out.println("bounding box      : " + Memory.aabb_key_table.length);
+        System.out.println("spatial index     : " + Memory.points.length);
+        System.out.println("spatial key bank  : " + Memory.edges.length);
+        System.out.println("vertex table      : " + Memory.vertex_table.length);
+        System.out.println("vertex references : " + Memory.vertex_references.length);
+        System.out.println("bone references   : " + Memory.bone_references.length);
+        System.out.println("bone instances    : " + Memory.bone_instances.length);
+        System.out.println("bone index        : " + Memory.bone_index.length);
+        System.out.println("armatures         : " + Memory.armatures.length);
+        System.out.println("armature flags    : " + Memory.armature_flags.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)    : " + total);
         System.out.println("               KB : " + ((float) total / 1024f));
@@ -603,86 +668,86 @@ public class GPU
      * Generally, kernel functions operate on large arrays of data, which can be defined
      * as arguments only once, even if the contents of these arrays changes often.
      */
-    private static void prepare_kernels()
+    private static void init_kernels()
     {
-        var gpu_prepare_bounds = new GPUKernel(command_queue, _k.get(Kernel.prepare_bounds), 3);
-        gpu_prepare_bounds.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_aabb));
+        var gpu_prepare_bounds = new GPUKernel(command_queue, Program.prepare_bounds.gpu.kernels.get(Kernel.prepare_bounds), 3);
+        gpu_prepare_bounds.new_arg(0, Sizeof.cl_mem, Memory.aabb.gpu.pointer());
         gpu_prepare_bounds.def_arg(1, Sizeof.cl_mem);
         gpu_prepare_bounds.def_arg(2, Sizeof.cl_int);
         Kernel.prepare_bounds.set_kernel(gpu_prepare_bounds);
 
         var gpu_prepare_transforms = new GPUKernel(command_queue, _k.get(Kernel.prepare_transforms), 4);
-        gpu_prepare_transforms.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        gpu_prepare_transforms.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
+        gpu_prepare_transforms.new_arg(0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
+        gpu_prepare_transforms.new_arg(1, Sizeof.cl_mem, Memory.hull_rotation.gpu.pointer());
         gpu_prepare_transforms.def_arg(2, Sizeof.cl_mem);
         gpu_prepare_transforms.def_arg(3, Sizeof.cl_mem);
         Kernel.prepare_transforms.set_kernel(gpu_prepare_transforms);
 
         var gpu_prepare_edges = new GPUKernel(command_queue, _k.get(Kernel.prepare_edges), 4);
-        gpu_prepare_edges.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_points));
-        gpu_prepare_edges.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_edges));
+        gpu_prepare_edges.new_arg(0, Sizeof.cl_mem, Memory.points.gpu.pointer());
+        gpu_prepare_edges.new_arg(1, Sizeof.cl_mem, Memory.edges.gpu.pointer());
         gpu_prepare_edges.def_arg(2, Sizeof.cl_mem);
         gpu_prepare_edges.def_arg(3, Sizeof.cl_int);
         Kernel.prepare_edges.set_kernel(gpu_prepare_edges);
 
         var gpu_prepare_bones = new GPUKernel(command_queue, _k.get(Kernel.prepare_bones), 8);
-        gpu_prepare_bones.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
-        gpu_prepare_bones.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_bone_references));
-        gpu_prepare_bones.new_arg(2, Sizeof.cl_mem, Pointer.to(mem_bone_index));
-        gpu_prepare_bones.new_arg(3, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        gpu_prepare_bones.new_arg(4, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        gpu_prepare_bones.new_arg(5, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        gpu_prepare_bones.new_arg(0, Sizeof.cl_mem, Memory.bone_instances.gpu.pointer());
+        gpu_prepare_bones.new_arg(1, Sizeof.cl_mem, Memory.bone_references.gpu.pointer());
+        gpu_prepare_bones.new_arg(2, Sizeof.cl_mem, Memory.bone_index.gpu.pointer());
+        gpu_prepare_bones.new_arg(3, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
+        gpu_prepare_bones.new_arg(4, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
+        gpu_prepare_bones.new_arg(5, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
         gpu_prepare_bones.def_arg(6, Sizeof.cl_mem);
         gpu_prepare_bones.def_arg(7, Sizeof.cl_int);
         Kernel.prepare_bones.set_kernel(gpu_prepare_bones);
 
         var gpu_create_point = new GPUKernel(command_queue, _k.get(Kernel.create_point), 5);
-        gpu_create_point.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_points));
-        gpu_create_point.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
+        gpu_create_point.new_arg(0, Sizeof.cl_mem, Memory.points.gpu.pointer());
+        gpu_create_point.new_arg(1, Sizeof.cl_mem, Memory.vertex_table.gpu.pointer());
         gpu_create_point.def_arg(2, Sizeof.cl_int);
         gpu_create_point.def_arg(3, Sizeof.cl_float4);
         gpu_create_point.def_arg(4, Sizeof.cl_int2);
         Kernel.create_point.set_kernel(gpu_create_point);
 
         var gpu_create_edge = new GPUKernel(command_queue, _k.get(Kernel.create_edge), 3);
-        gpu_create_edge.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_edges));
+        gpu_create_edge.new_arg(0, Sizeof.cl_mem, Memory.edges.gpu.pointer());
         gpu_create_edge.def_arg(1, Sizeof.cl_int);
         gpu_create_edge.def_arg(2, Sizeof.cl_float4);
         Kernel.create_edge.set_kernel(gpu_create_edge);
 
         var create_armature = new GPUKernel(command_queue, _k.get(Kernel.create_armature), 5);
-        create_armature.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        create_armature.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
+        create_armature.new_arg(0, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
+        create_armature.new_arg(1, Sizeof.cl_mem, Memory.armature_flags.gpu.pointer());
         create_armature.def_arg(2, Sizeof.cl_int);
         create_armature.def_arg(3, Sizeof.cl_float4);
         create_armature.def_arg(4, Sizeof.cl_int);
         Kernel.create_armature.set_kernel(create_armature);
 
         var create_vertex_ref = new GPUKernel(command_queue, _k.get(Kernel.create_vertex_reference), 3);
-        create_vertex_ref.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
+        create_vertex_ref.new_arg(0, Sizeof.cl_mem, Memory.vertex_references.gpu.pointer());
         create_vertex_ref.def_arg(1, Sizeof.cl_int);
         create_vertex_ref.def_arg(2, Sizeof.cl_float2);
         Kernel.create_vertex_reference.set_kernel(create_vertex_ref);
 
         var create_bone_ref = new GPUKernel(command_queue, _k.get(Kernel.create_bone_reference), 3);
-        create_bone_ref.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_bone_references));
+        create_bone_ref.new_arg(0, Sizeof.cl_mem, Memory.bone_references.gpu.pointer());
         create_bone_ref.def_arg(1, Sizeof.cl_int);
         create_bone_ref.def_arg(2, Sizeof.cl_float16);
         Kernel.create_bone_reference.set_kernel(create_bone_ref);
 
         var create_bone = new GPUKernel(command_queue, _k.get(Kernel.create_bone), 5);
-        create_bone.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
-        create_bone.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_bone_index));
+        create_bone.new_arg(0, Sizeof.cl_mem, Memory.bone_instances.gpu.pointer());
+        create_bone.new_arg(1, Sizeof.cl_mem, Memory.bone_index.gpu.pointer());
         create_bone.def_arg(2, Sizeof.cl_int);
         create_bone.def_arg(3, Sizeof.cl_float16);
         create_bone.def_arg(4, Sizeof.cl_int);
         Kernel.create_bone.set_kernel(create_bone);
 
         var create_hull = new GPUKernel(command_queue, _k.get(Kernel.create_hull), 9);
-        create_hull.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        create_hull.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
-        create_hull.new_arg(2, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
-        create_hull.new_arg(3, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        create_hull.new_arg(0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
+        create_hull.new_arg(1, Sizeof.cl_mem, Memory.hull_rotation.gpu.pointer());
+        create_hull.new_arg(2, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
+        create_hull.new_arg(3, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
         create_hull.def_arg(4, Sizeof.cl_int);
         create_hull.def_arg(5, Sizeof.cl_float4);
         create_hull.def_arg(6, Sizeof.cl_float2);
@@ -691,46 +756,46 @@ public class GPU
         Kernel.create_hull.set_kernel(create_hull);
 
         var update_accel = new GPUKernel(command_queue, _k.get(Kernel.update_accel), 3);
-        update_accel.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_armature_acceleration));
+        update_accel.new_arg(0, Sizeof.cl_mem, Memory.armature_accel.gpu.pointer());
         update_accel.def_arg(1, Sizeof.cl_int);
         update_accel.def_arg(2, Sizeof.cl_float2);
         Kernel.update_accel.set_kernel(update_accel);
 
         var read_position = new GPUKernel(command_queue, _k.get(Kernel.read_position), 3);
-        read_position.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_armatures));
+        read_position.new_arg(0, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
         read_position.def_arg(1, Sizeof.cl_float2);
         read_position.def_arg(2, Sizeof.cl_int);
         Kernel.read_position.set_kernel(read_position);
 
         var animate_hulls = new GPUKernel(command_queue, _k.get(Kernel.animate_hulls), 8);
-        animate_hulls.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_points));
-        animate_hulls.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        animate_hulls.new_arg(2, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
-        animate_hulls.new_arg(3, Sizeof.cl_mem, Pointer.to(mem_vertex_table));
-        animate_hulls.new_arg(4, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        animate_hulls.new_arg(5, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
-        animate_hulls.new_arg(6, Sizeof.cl_mem, Pointer.to(mem_vertex_references));
-        animate_hulls.new_arg(7, Sizeof.cl_mem, Pointer.to(mem_bone_instances));
+        animate_hulls.new_arg(0, Sizeof.cl_mem, Memory.points.gpu.pointer());
+        animate_hulls.new_arg(1, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
+        animate_hulls.new_arg(2, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
+        animate_hulls.new_arg(3, Sizeof.cl_mem, Memory.vertex_table.gpu.pointer());
+        animate_hulls.new_arg(4, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
+        animate_hulls.new_arg(5, Sizeof.cl_mem, Memory.armature_flags.gpu.pointer());
+        animate_hulls.new_arg(6, Sizeof.cl_mem, Memory.vertex_references.gpu.pointer());
+        animate_hulls.new_arg(7, Sizeof.cl_mem, Memory.bone_instances.gpu.pointer());
         Kernel.animate_hulls.set_kernel(animate_hulls);
 
         var integrate = new GPUKernel(command_queue, _k.get(Kernel.integrate), 12);
-        integrate.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        integrate.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        integrate.new_arg(2, Sizeof.cl_mem, Pointer.to(mem_armature_flags));
-        integrate.new_arg(3, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
-        integrate.new_arg(4, Sizeof.cl_mem, Pointer.to(mem_armature_acceleration));
-        integrate.new_arg(5, Sizeof.cl_mem, Pointer.to(mem_hull_rotation));
-        integrate.new_arg(6, Sizeof.cl_mem, Pointer.to(mem_points));
-        integrate.new_arg(7, Sizeof.cl_mem, Pointer.to(mem_aabb));
-        integrate.new_arg(8, Sizeof.cl_mem, Pointer.to(mem_aabb_index));
-        integrate.new_arg(9, Sizeof.cl_mem, Pointer.to(mem_aabb_key_bank));
-        integrate.new_arg(10, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        integrate.new_arg(0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
+        integrate.new_arg(1, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
+        integrate.new_arg(2, Sizeof.cl_mem, Memory.armature_flags.gpu.pointer());
+        integrate.new_arg(3, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
+        integrate.new_arg(4, Sizeof.cl_mem, Memory.armature_accel.gpu.pointer());
+        integrate.new_arg(5, Sizeof.cl_mem, Memory.hull_rotation.gpu.pointer());
+        integrate.new_arg(6, Sizeof.cl_mem, Memory.points.gpu.pointer());
+        integrate.new_arg(7, Sizeof.cl_mem, Memory.aabb.gpu.pointer());
+        integrate.new_arg(8, Sizeof.cl_mem, Memory.aabb_index.gpu.pointer());
+        integrate.new_arg(9, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
+        integrate.new_arg(10, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
         integrate.def_arg(11, Sizeof.cl_mem);
         Kernel.integrate.set_kernel(integrate);
 
         var generate_keys = new GPUKernel(command_queue, _k.get(Kernel.generate_keys), 7);
-        generate_keys.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_aabb_index));
-        generate_keys.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_aabb_key_bank));
+        generate_keys.new_arg(0, Sizeof.cl_mem, Memory.aabb_index.gpu.pointer());
+        generate_keys.new_arg(1, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
         generate_keys.def_arg(2, Sizeof.cl_mem);
         generate_keys.def_arg(3, Sizeof.cl_mem);
         generate_keys.def_arg(4, Sizeof.cl_int);
@@ -739,8 +804,8 @@ public class GPU
         Kernel.generate_keys.set_kernel(generate_keys);
 
         var build_key_map = new GPUKernel(command_queue, _k.get(Kernel.build_key_map), 7);
-        build_key_map.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_aabb_index));
-        build_key_map.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_aabb_key_bank));
+        build_key_map.new_arg(0, Sizeof.cl_mem, Memory.aabb_index.gpu.pointer());
+        build_key_map.new_arg(1, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
         build_key_map.def_arg(2, Sizeof.cl_mem);
         build_key_map.def_arg(3, Sizeof.cl_mem);
         build_key_map.def_arg(4, Sizeof.cl_mem);
@@ -749,13 +814,13 @@ public class GPU
         Kernel.build_key_map.set_kernel(build_key_map);
 
         var locate_in_bounds = new GPUKernel(command_queue, _k.get(Kernel.locate_in_bounds), 3);
-        locate_in_bounds.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_aabb_key_bank));
+        locate_in_bounds.new_arg(0, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
         locate_in_bounds.def_arg(1, Sizeof.cl_mem);
         locate_in_bounds.def_arg(2, Sizeof.cl_mem);
         Kernel.locate_in_bounds.set_kernel(locate_in_bounds);
 
         var count_candidates = new GPUKernel(command_queue, _k.get(Kernel.count_candidates), 7);
-        count_candidates.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_aabb_key_bank));
+        count_candidates.new_arg(0, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
         count_candidates.def_arg(1, Sizeof.cl_mem);
         count_candidates.def_arg(2, Sizeof.cl_mem);
         count_candidates.def_arg(3, Sizeof.cl_mem);
@@ -765,9 +830,9 @@ public class GPU
         Kernel.count_candidates.set_kernel(count_candidates);
 
         var aabb_collide = new GPUKernel(command_queue, _k.get(Kernel.aabb_collide), 14);
-        aabb_collide.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_aabb));
-        aabb_collide.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_aabb_key_bank));
-        aabb_collide.new_arg(2, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
+        aabb_collide.new_arg(0, Sizeof.cl_mem, Memory.aabb.gpu.pointer());
+        aabb_collide.new_arg(1, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
+        aabb_collide.new_arg(2, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
         aabb_collide.def_arg(3, Sizeof.cl_mem);
         aabb_collide.def_arg(4, Sizeof.cl_mem);
         aabb_collide.def_arg(5, Sizeof.cl_mem);
@@ -792,19 +857,19 @@ public class GPU
 
         var sat_collide = new GPUKernel(command_queue, _k.get(Kernel.sat_collide), 7);
         sat_collide.def_arg(0, Sizeof.cl_mem);
-        sat_collide.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        sat_collide.new_arg(2, Sizeof.cl_mem, Pointer.to(mem_armatures));
-        sat_collide.new_arg(3, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
-        sat_collide.new_arg(4, Sizeof.cl_mem, Pointer.to(mem_hull_flags));
-        sat_collide.new_arg(5, Sizeof.cl_mem, Pointer.to(mem_points));
-        sat_collide.new_arg(6, Sizeof.cl_mem, Pointer.to(mem_edges));
+        sat_collide.new_arg(1, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
+        sat_collide.new_arg(2, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
+        sat_collide.new_arg(3, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
+        sat_collide.new_arg(4, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
+        sat_collide.new_arg(5, Sizeof.cl_mem, Memory.points.gpu.pointer());
+        sat_collide.new_arg(6, Sizeof.cl_mem, Memory.edges.gpu.pointer());
         Kernel.sat_collide.set_kernel(sat_collide);
 
         var resolve_constraints = new GPUKernel(command_queue, _k.get(Kernel.resolve_constraints), 5);
-        resolve_constraints.new_arg(0, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
-        resolve_constraints.new_arg(1, Sizeof.cl_mem, Pointer.to(mem_aabb_key_bank));
-        resolve_constraints.new_arg(2, Sizeof.cl_mem, Pointer.to(mem_points));
-        resolve_constraints.new_arg(3, Sizeof.cl_mem, Pointer.to(mem_edges));
+        resolve_constraints.new_arg(0, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
+        resolve_constraints.new_arg(1, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
+        resolve_constraints.new_arg(2, Sizeof.cl_mem, Memory.points.gpu.pointer());
+        resolve_constraints.new_arg(3, Sizeof.cl_mem, Memory.edges.gpu.pointer());
         resolve_constraints.def_arg(4, Sizeof.cl_int);
         Kernel.resolve_constraints.set_kernel(resolve_constraints);
 
@@ -898,22 +963,7 @@ public class GPU
         Kernel.complete_bounds_multi_block.set_kernel(complete_bounds_multi_block);
     }
 
-    public static void destroy()
-    {
-        //clReleaseMemObject(mem_points);
-        //clReleaseMemObject(mem_transform);
-        //clReleaseMemObject(mem_aabb);
-        //clReleaseMemObject(mem_edges);
-        // todo: destroy more/track it better
-        //shared_mem.values().forEach(CL::clReleaseMemObject);
-
-        for (Program program : Program.values())
-        {
-            program.program.destroy();
-        }
-        clReleaseCommandQueue(command_queue);
-        clReleaseContext(context);
-    }
+    //#endregion
 
     //#region GL Interop
 
@@ -934,9 +984,9 @@ public class GPU
      * Transfers a subset of all bounding boxes from CL memory into GL memory, converting the bounds
      * into a vertex structure that can be rendered as a line loop.
      *
-     * @param vbo_id id of the shared GL buffer object
+     * @param vbo_id        id of the shared GL buffer object
      * @param bounds_offset offset into the bounds array to start the transfer
-     * @param batch_size number of bounds objects to transfer in this batch
+     * @param batch_size    number of bounds objects to transfer in this batch
      */
     public static void GL_bounds(int vbo_id, int bounds_offset, int batch_size)
     {
@@ -954,9 +1004,9 @@ public class GPU
      * Transfers a subset of all bones from CL memory into GL memory, converting the bones
      * into a vertex structure that can be rendered as a point decal.
      *
-     * @param vbo_id id of the shared GL buffer object
+     * @param vbo_id      id of the shared GL buffer object
      * @param bone_offset offset into the bones array to start the transfer
-     * @param batch_size number of bone objects to transfer in this batch
+     * @param batch_size  number of bone objects to transfer in this batch
      */
     public static void GL_bones(int vbo_id, int bone_offset, int batch_size)
     {
@@ -974,9 +1024,9 @@ public class GPU
      * Transfers a subset of all edges from CL memory into GL memory, converting the edges
      * into a vertex structure that can be rendered as a line.
      *
-     * @param vbo_id id of the shared GL buffer object
+     * @param vbo_id      id of the shared GL buffer object
      * @param edge_offset offset into the edges array to start the transfer
-     * @param batch_size number of edge objects to transfer in this batch
+     * @param batch_size  number of edge objects to transfer in this batch
      */
     public static void GL_edges(int vbo_id, int edge_offset, int batch_size)
     {
@@ -997,8 +1047,8 @@ public class GPU
      * represents within the simulation.
      *
      * @param index_buffer_id id of the shared GL buffer object
-     * @param transforms_id id of the shared GL buffer object
-     * @param batch_size number of hull objects to transfer in this batch
+     * @param transforms_id   id of the shared GL buffer object
+     * @param batch_size      number of hull objects to transfer in this batch
      */
     public static void GL_transforms(int index_buffer_id, int transforms_id, int batch_size)
     {
@@ -1100,9 +1150,9 @@ public class GPU
         var pnt_index = Pointer.to(arg_int(hull_index));
         var pnt_angle = Pointer.to(arg_float(angle));
 
-        clSetKernelArg(_k.get(Kernel.rotate_hull), 0, Sizeof.cl_mem, Pointer.to(mem_hulls));
-        clSetKernelArg(_k.get(Kernel.rotate_hull), 1, Sizeof.cl_mem, Pointer.to(mem_hull_element_tables));
-        clSetKernelArg(_k.get(Kernel.rotate_hull), 2, Sizeof.cl_mem, Pointer.to(mem_points));
+        clSetKernelArg(_k.get(Kernel.rotate_hull), 0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
+        clSetKernelArg(_k.get(Kernel.rotate_hull), 1, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
+        clSetKernelArg(_k.get(Kernel.rotate_hull), 2, Sizeof.cl_mem, Memory.points.gpu.pointer());
         clSetKernelArg(_k.get(Kernel.rotate_hull), 3, Sizeof.cl_int, pnt_index);
         clSetKernelArg(_k.get(Kernel.rotate_hull), 4, Sizeof.cl_float, pnt_angle);
 
@@ -1176,7 +1226,7 @@ public class GPU
 
     public static void calculate_bank_offsets(UniformGrid uniform_grid)
     {
-        int bank_size = scan_key_bounds(mem_aabb_key_bank,  Main.Memory.hull_count());
+        int bank_size = scan_key_bounds(Memory.aabb_key_table.gpu.memory(), Main.Memory.hull_count());
         uniform_grid.resizeBank(bank_size);
     }
 
@@ -1196,8 +1246,8 @@ public class GPU
         var counts_data = cl_new_buffer(counts_buf_size);
         cl_zero_buffer(counts_data, counts_buf_size);
 
-        physics_buffer.key_counts = new MemoryBuffer(counts_data);
-        physics_buffer.key_bank = new MemoryBuffer(bank_data);
+        physics_buffer.key_counts = new GPUMemory(counts_data);
+        physics_buffer.key_bank = new GPUMemory(bank_data);
 
         gpu_kernel.set_arg(2, Pointer.to(bank_data));
         gpu_kernel.set_arg(3, Pointer.to(counts_data));
@@ -1212,7 +1262,7 @@ public class GPU
         int n = uniform_grid.getDirectoryLength();
         long data_buf_size = (long) Sizeof.cl_int * n;
         var o_data = cl_new_buffer(data_buf_size);
-        physics_buffer.key_offsets = new MemoryBuffer(o_data);
+        physics_buffer.key_offsets = new GPUMemory(o_data);
         scan_int_out(physics_buffer.key_counts.memory(), o_data, n);
     }
 
@@ -1229,7 +1279,7 @@ public class GPU
         // the counts buffer needs to start off filled with all zeroes
         cl_zero_buffer(counts_data, counts_buf_size);
 
-        physics_buffer.key_map = new MemoryBuffer(map_data);
+        physics_buffer.key_map = new GPUMemory(map_data);
 
         gpu_kernel.set_arg(2, Pointer.to(map_data));
         gpu_kernel.set_arg(3, physics_buffer.key_offsets.pointer());
@@ -1255,7 +1305,7 @@ public class GPU
         long inbound_buf_size = (long) Sizeof.cl_int * hull_count;
         var inbound_data = cl_new_buffer(inbound_buf_size);
 
-        physics_buffer.in_bounds = new MemoryBuffer(inbound_data);
+        physics_buffer.in_bounds = new GPUMemory(inbound_data);
 
         int[] size = arg_int(0);
         var dst_size = Pointer.to(size);
@@ -1278,7 +1328,7 @@ public class GPU
 
         long candidate_buf_size = (long) Sizeof.cl_int2 * physics_buffer.get_candidate_buffer_count();
         var candidate_data = cl_new_buffer(candidate_buf_size);
-        physics_buffer.candidate_counts = new MemoryBuffer(candidate_data);
+        physics_buffer.candidate_counts = new GPUMemory(candidate_data);
 
         gpu_kernel.set_arg(1, physics_buffer.in_bounds.pointer());
         gpu_kernel.set_arg(2, physics_buffer.key_bank.pointer());
@@ -1294,7 +1344,7 @@ public class GPU
         int buffer_count = physics_buffer.get_candidate_buffer_count();
         long offset_buf_size = (long) Sizeof.cl_int * buffer_count;
         var offset_data = cl_new_buffer(offset_buf_size);
-        physics_buffer.candidate_offsets = new MemoryBuffer(offset_data);
+        physics_buffer.candidate_offsets = new GPUMemory(offset_data);
         int match_count = scan_key_candidates(physics_buffer.candidate_counts.memory(), offset_data, buffer_count);
         physics_buffer.set_candidate_match_count(match_count);
     }
@@ -1305,11 +1355,11 @@ public class GPU
 
         long matches_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_match_count();
         var matches_data = cl_new_buffer(matches_buf_size);
-        physics_buffer.matches = new MemoryBuffer(matches_data);
+        physics_buffer.matches = new GPUMemory(matches_data);
 
         long used_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_buffer_count();
         var used_data = cl_new_buffer(used_buf_size);
-        physics_buffer.matches_used = new MemoryBuffer(used_data);
+        physics_buffer.matches_used = new GPUMemory(used_data);
 
         // this buffer will contain the total number of candidates that were found
         int[] count = arg_int(0);
@@ -1352,14 +1402,14 @@ public class GPU
             var counter_data = cl_new_int_arg_buffer(dst_counter);
 
             physics_buffer.set_final_size(final_buf_size);
-            physics_buffer.candidates = new MemoryBuffer(finals_data);
+            physics_buffer.candidates = new GPUMemory(finals_data);
 
             gpu_kernel.set_arg(0, physics_buffer.candidate_counts.pointer());
             gpu_kernel.set_arg(1, physics_buffer.candidate_offsets.pointer());
             gpu_kernel.set_arg(2, physics_buffer.matches.pointer());
             gpu_kernel.set_arg(3, physics_buffer.matches_used.pointer());
             gpu_kernel.set_arg(4, Pointer.to(counter_data));
-            gpu_kernel.set_arg(5, Pointer.to(finals_data));
+            gpu_kernel.set_arg(5, physics_buffer.candidates.pointer());
             gpu_kernel.call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
             clReleaseMemObject(counter_data);
@@ -1378,7 +1428,7 @@ public class GPU
         int candidatesSize = (int) physics_buffer.get_final_size() / Sizeof.cl_int;
 
         // candidates are pairs of integer indices, so the global size is half the count
-        long[] global_work_size = new long[]{ candidatesSize / 2 };
+        long[] global_work_size = new long[]{candidatesSize / 2};
 
         gpu_kernel.set_arg(0, physics_buffer.candidates.pointer());
         gpu_kernel.call(global_work_size);
@@ -1392,7 +1442,9 @@ public class GPU
         for (int i = 0; i < edge_steps; i++)
         {
             last_step = i == edge_steps - 1;
-            int n = last_step ? 1 : 0;
+            int n = last_step
+                ? 1
+                : 0;
             gpu_kernel.set_arg(4, Pointer.to(arg_int(n)));
             gpu_kernel.call(arg_long(Main.Memory.hull_count()));
         }
