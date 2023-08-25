@@ -230,6 +230,14 @@ public class PhysicsSimulation extends GameSystem
         */
 
         GPU.sat_collide();
+
+        // todo: will need to separate reactions out into manifolds in order to avoid atomicity issues.
+        //  will need to accumulate adjustments to points in a buffer, and create a kernel that loops
+        //  though adjustments to s single point only, applying them in turn to accumulate adjustments
+        //  properly.
+
+        // todo: will need to separate out cumulative armature adjustments to separate kernel. This should
+        //  happen last, to ensure the adjustment accounts for all the hulls after they are settled.
     }
 
     private void simulate(float dt)

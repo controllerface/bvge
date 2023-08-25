@@ -46,7 +46,6 @@ inline void circle_collision(int b1_id, int b2_id,
     float new_len_e1 = length(e1_diff_2);
     float new_len_e2 = length(e2_diff_2);
 
-
     if (new_len_e1 != 0.0)
     {
         e1_diff_2 /= new_len_e1;
@@ -58,7 +57,6 @@ inline void circle_collision(int b1_id, int b2_id,
         e2_diff_2 /= new_len_e2;
         vert2.zw = vert2.xy - e2_dist * e2_diff_2;
     }
-
 
     points[hull_1_table.x] = vert1;
     points[hull_2_table.x] = vert2;
