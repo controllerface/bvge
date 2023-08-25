@@ -1,6 +1,10 @@
 package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.Main;
+import com.controllerface.bvge.cl.kernels.PrepareBones_k;
+import com.controllerface.bvge.cl.kernels.PrepareBounds_k;
+import com.controllerface.bvge.cl.kernels.PrepareEdges_k;
+import com.controllerface.bvge.cl.kernels.PrepareTransforms_k;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.systems.physics.GPUMemory;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
@@ -104,7 +108,7 @@ public class GPU
         integrate(new Integrate()),
         locate_in_bounds(new LocateInBounds()),
         prepare_bones(new PrepareBones()),
-        prepare_bounds(new PrepareBounds()),
+        prepare_bounds(new com.controllerface.bvge.cl.programs.PrepareBounds()),
         prepare_edges(new PrepareEdges()),
         prepare_transforms(new PrepareTransforms()),
         resolve_constraints(new ResolveConstraints()),
@@ -121,6 +125,11 @@ public class GPU
         Program(GPUProgram program)
         {
             this.gpu = program;
+        }
+
+        cl_kernel get_kernel(Kernel kernel)
+        {
+            return gpu.kernels.get(kernel);
         }
     }
 
@@ -670,36 +679,29 @@ public class GPU
      */
     private static void init_kernels()
     {
-        var gpu_prepare_bounds = new GPUKernel(command_queue, Program.prepare_bounds.gpu.kernels.get(Kernel.prepare_bounds), 3);
-        gpu_prepare_bounds.new_arg(0, Sizeof.cl_mem, Memory.aabb.gpu.pointer());
-        gpu_prepare_bounds.def_arg(1, Sizeof.cl_mem);
-        gpu_prepare_bounds.def_arg(2, Sizeof.cl_int);
-        Kernel.prepare_bounds.set_kernel(gpu_prepare_bounds);
+        var pbk = new PrepareBounds_k(command_queue, Program.prepare_bounds.gpu);
+        pbk.set_aabb(Memory.aabb.gpu.pointer());
+        Kernel.prepare_bounds.set_kernel(pbk);
 
-        var gpu_prepare_transforms = new GPUKernel(command_queue, _k.get(Kernel.prepare_transforms), 4);
-        gpu_prepare_transforms.new_arg(0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
-        gpu_prepare_transforms.new_arg(1, Sizeof.cl_mem, Memory.hull_rotation.gpu.pointer());
-        gpu_prepare_transforms.def_arg(2, Sizeof.cl_mem);
-        gpu_prepare_transforms.def_arg(3, Sizeof.cl_mem);
-        Kernel.prepare_transforms.set_kernel(gpu_prepare_transforms);
+        var ptk = new PrepareTransforms_k(command_queue, Program.prepare_transforms.gpu);
+        ptk.set_hulls(Memory.hulls.gpu.pointer());
+        ptk.set_rotations(Memory.hull_rotation.gpu.pointer());
+        Kernel.prepare_transforms.set_kernel(ptk);
 
-        var gpu_prepare_edges = new GPUKernel(command_queue, _k.get(Kernel.prepare_edges), 4);
-        gpu_prepare_edges.new_arg(0, Sizeof.cl_mem, Memory.points.gpu.pointer());
-        gpu_prepare_edges.new_arg(1, Sizeof.cl_mem, Memory.edges.gpu.pointer());
-        gpu_prepare_edges.def_arg(2, Sizeof.cl_mem);
-        gpu_prepare_edges.def_arg(3, Sizeof.cl_int);
-        Kernel.prepare_edges.set_kernel(gpu_prepare_edges);
+        var pek = new PrepareEdges_k(command_queue, Program.prepare_edges.gpu);
+        pek.set_points(Memory.points.gpu.pointer());
+        pek.set_edges(Memory.edges.gpu.pointer());
+        Kernel.prepare_edges.set_kernel(pek);
 
-        var gpu_prepare_bones = new GPUKernel(command_queue, _k.get(Kernel.prepare_bones), 8);
-        gpu_prepare_bones.new_arg(0, Sizeof.cl_mem, Memory.bone_instances.gpu.pointer());
-        gpu_prepare_bones.new_arg(1, Sizeof.cl_mem, Memory.bone_references.gpu.pointer());
-        gpu_prepare_bones.new_arg(2, Sizeof.cl_mem, Memory.bone_index.gpu.pointer());
-        gpu_prepare_bones.new_arg(3, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
-        gpu_prepare_bones.new_arg(4, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
-        gpu_prepare_bones.new_arg(5, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
-        gpu_prepare_bones.def_arg(6, Sizeof.cl_mem);
-        gpu_prepare_bones.def_arg(7, Sizeof.cl_int);
-        Kernel.prepare_bones.set_kernel(gpu_prepare_bones);
+        var pbone = new PrepareBones_k(command_queue, Program.prepare_bones.gpu);
+        pbone.set_bone_instances(Memory.bone_instances.gpu.pointer());
+        pbone.set_bone_references(Memory.bone_references.gpu.pointer());
+        pbone.set_bone_index(Memory.bone_index.gpu.pointer());
+        pbone.set_hulls(Memory.hulls.gpu.pointer());
+        pbone.set_armatures(Memory.armatures.gpu.pointer());
+        pbone.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        Kernel.prepare_bones.set_kernel(pbone);
+
 
         var gpu_create_point = new GPUKernel(command_queue, _k.get(Kernel.create_point), 5);
         gpu_create_point.new_arg(0, Sizeof.cl_mem, Memory.points.gpu.pointer());
@@ -855,7 +857,7 @@ public class GPU
         finalize_candidates.def_arg(5, Sizeof.cl_mem);
         Kernel.finalize_candidates.set_kernel(finalize_candidates);
 
-        var sat_collide = new GPUKernel(command_queue, _k.get(Kernel.sat_collide), 7);
+        var sat_collide = new GPUKernel(command_queue, _k.get(Kernel.sat_collide), 8);
         sat_collide.def_arg(0, Sizeof.cl_mem);
         sat_collide.new_arg(1, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
         sat_collide.new_arg(2, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
@@ -863,6 +865,7 @@ public class GPU
         sat_collide.new_arg(4, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
         sat_collide.new_arg(5, Sizeof.cl_mem, Memory.points.gpu.pointer());
         sat_collide.new_arg(6, Sizeof.cl_mem, Memory.edges.gpu.pointer());
+        sat_collide.def_arg(7, Sizeof.cl_mem);
         Kernel.sat_collide.set_kernel(sat_collide);
 
         var resolve_constraints = new GPUKernel(command_queue, _k.get(Kernel.resolve_constraints), 5);
@@ -1430,8 +1433,21 @@ public class GPU
         // candidates are pairs of integer indices, so the global size is half the count
         long[] global_work_size = new long[]{candidatesSize / 2};
 
+        // atomic counter
+        int[] size = arg_int(0);
+        var dst_size = Pointer.to(size);
+        var size_data = cl_new_int_arg_buffer(dst_size);
+
         gpu_kernel.set_arg(0, physics_buffer.candidates.pointer());
+        gpu_kernel.set_arg(7, Pointer.to(size_data));
+
         gpu_kernel.call(global_work_size);
+
+        cl_read_buffer(size_data, Sizeof.cl_int, dst_size);
+
+        clReleaseMemObject(size_data);
+
+        System.out.println("Debug: " + size[0]);
     }
 
     public static void resolve_constraints(int edge_steps)

@@ -12,7 +12,8 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global int4 *element_tables,
                           __global int2 *hull_flags,
                           __global float4 *points,
-                          __global float4 *edges)
+                          __global float4 *edges,
+                          __global int *counter)
 {
     int gid = get_global_id(0);
     
@@ -41,9 +42,6 @@ __kernel void sat_collide(__global int2 *candidates,
     bool b1_is_polygon = (hull_1_flags.x & 0x04) !=0;
     bool b2_is_polygon = (hull_2_flags.x & 0x04) !=0;
 
-    bool b1_no_bones = (hull_1_flags.x & 0x08) !=0;
-    bool b2_no_bones = (hull_2_flags.x & 0x08) !=0;
-
     int c_id = b1_is_circle ? b1_id : b2_id;
     int p_id = b1_is_circle ? b2_id : b1_id;
 
@@ -51,17 +49,22 @@ __kernel void sat_collide(__global int2 *candidates,
     //  be a preliminary kernel that sorts the candidate pairs so they can be run on the right kernel
     if (b1_is_polygon && b2_is_polygon) 
     {
-        polygon_collision(b1_id, b2_id, hulls, hull_flags, element_tables, points, edges); 
+        polygon_collision(b1_id, b2_id, hulls, hull_flags, element_tables, points, edges, counter); 
     }
     else if (b1_is_circle && b2_is_circle) 
     {
-        circle_collision(b1_id, b2_id, hulls, element_tables, points); 
+        circle_collision(b1_id, b2_id, hulls, element_tables, points, counter); 
     }
     else 
     {
-        polygon_circle_collision(p_id, c_id, hulls, hull_flags, element_tables, points, edges); 
+        polygon_circle_collision(p_id, c_id, hulls, hull_flags, element_tables, points, edges, counter); 
     }
 
+
+    bool b1_no_bones = (hull_1_flags.x & 0x08) !=0;
+    bool b2_no_bones = (hull_2_flags.x & 0x08) !=0;
+
+    // todo: this needs to be moved to a separate kernel, later in the physics loop
     if (!b1_no_bones)
     {
         float2 center_a = calculate_centroid(points, hull_1_table);
@@ -87,5 +90,4 @@ __kernel void sat_collide(__global int2 *candidates,
         // b2_armature.w = b2_armature.y -= diffb.y;
         armatures[hull_2_flags.y] = b2_armature;
     }
-
 }

@@ -4,7 +4,8 @@ inline void polygon_collision(int b1_id, int b2_id,
                              __global int2 *hull_flags,
                              __global int4 *element_tables,
                              __global float4 *points,
-                             __global float4 *edges)
+                             __global float4 *edges,
+                             __global int *counter)
 {
 
     float4 hull_1 = hulls[b1_id];
@@ -254,6 +255,10 @@ inline void polygon_collision(int b1_id, int b2_id,
         e2_diff_2 /= new_len_e2;
         edge_point_2.zw = edge_point_2.xy - e2_dist * e2_diff_2;
     }
+
+    int i = atomic_inc(&counter[0]);
+    int j = atomic_inc(&counter[0]);
+    int k = atomic_inc(&counter[0]);
 
     // todo: this should technically be atomic, however visually it doesn't
     //  seem to matter right now. probably should do it "right" though at some point

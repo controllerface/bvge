@@ -1,7 +1,8 @@
 inline void circle_collision(int b1_id, int b2_id,
                              __global float4 *hulls,
                              __global int4 *element_tables,
-                             __global float4 *points)
+                             __global float4 *points,
+                             __global int *counter)
 {
     float4 hull_1 = hulls[b1_id];
     float4 hull_2 = hulls[b2_id];
@@ -57,6 +58,9 @@ inline void circle_collision(int b1_id, int b2_id,
         e2_diff_2 /= new_len_e2;
         vert2.zw = vert2.xy - e2_dist * e2_diff_2;
     }
+
+    int i = atomic_inc(&counter[0]);
+    int j = atomic_inc(&counter[0]);
 
     points[hull_1_table.x] = vert1;
     points[hull_2_table.x] = vert2;
