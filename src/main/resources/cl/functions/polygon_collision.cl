@@ -226,39 +226,6 @@ inline void polygon_collision(int b1_id, int b2_id,
     // vertex reaction
     float2 v_reaction = collision_vector * vertex_magnitude;
 
-    // // update the positions
-    // vert_point.xy += v_reaction.xy;
-    // edge_point_1.xy += e1_reaction.xy;
-    // edge_point_2.xy += e2_reaction.xy;
-
-    // // handle prev_updates to keep velocity correct
-    // float2 v0_diff_2 = vert_point.xy - v0_p;
-    // float2 e1_diff_2 = edge_point_1.xy - e1_p;
-    // float2 e2_diff_2 = edge_point_2.xy - e2_p;
-
-    // // Normalize the new vector
-    // float new_len_v = length(v0_diff_2);
-    // float new_len_e1 = length(e1_diff_2);
-    // float new_len_e2 = length(e2_diff_2);
-
-    // if (new_len_v != 0.0)
-    // {
-    //     v0_diff_2 /= new_len_v;
-    //     vert_point.zw = vert_point.xy - v0_dist * v0_diff_2;
-    // }
-
-    // if (new_len_e1 != 0.0)
-    // {
-    //     e1_diff_2 /= new_len_e1;
-    //     edge_point_1.zw = edge_point_1.xy - e1_dist * e1_diff_2;
-    // }
-
-    // if (new_len_e2 != 0.0)
-    // {
-    //     e2_diff_2 /= new_len_e2;
-    //     edge_point_2.zw = edge_point_2.xy - e2_dist * e2_diff_2;
-    // }
-
     if (!vs)
     {
         int i = atomic_inc(&counter[0]);
@@ -277,19 +244,4 @@ inline void polygon_collision(int b1_id, int b2_id,
         atomic_inc(&point_reactions[edge_index_a]);
         atomic_inc(&point_reactions[edge_index_b]);
     }
-
-
-
-
-    //printf("debug: i=%d v= %d - j=%d e1=%d - k=%d e2=%d", i,  vert_index, j, edge_index_a, k, edge_index_b);
-
-
-    // todo: increment an atomic per-point counter to indicate how many reactions each point has
-
-    // todo: below will be defferred to a later kernel
-
-    // points[vert_index] = vert_point;
-    // points[edge_index_a] = edge_point_1;
-    // points[edge_index_b] = edge_point_2;
-
 }
