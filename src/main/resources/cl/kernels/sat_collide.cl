@@ -89,35 +89,35 @@ __kernel void sat_collide(__global int2 *candidates,
     }
 
 
-    bool b1_no_bones = (hull_1_flags.x & 0x08) !=0;
-    bool b2_no_bones = (hull_2_flags.x & 0x08) !=0;
+    // bool b1_no_bones = (hull_1_flags.x & 0x08) !=0;
+    // bool b2_no_bones = (hull_2_flags.x & 0x08) !=0;
 
-    // todo: this needs to be moved to a separate kernel, later in the physics loop
-    if (!b1_no_bones)
-    {
-        float2 center_a = calculate_centroid(points, hull_1_table);
-        float2 diffa = center_a - b1_hull.xy;
-        b1_armature.x += diffa.x;
-        b1_armature.y += diffa.y;
-        b1_armature.z -= diffa.x;
-        b1_armature.w -= diffa.y;
-        // b1_armature.z = b1_armature.x -= diffa.x;
-        // b1_armature.w = b1_armature.y -= diffa.y;
-         armatures[hull_1_flags.y] = b1_armature;
-    }
+    // // todo: this needs to be moved to a separate kernel, later in the physics loop
+    // if (!b1_no_bones)
+    // {
+    //     float2 center_a = calculate_centroid(points, hull_1_table);
+    //     float2 diffa = center_a - b1_hull.xy;
+    //     b1_armature.x += diffa.x;
+    //     b1_armature.y += diffa.y;
+    //     b1_armature.z -= diffa.x;
+    //     b1_armature.w -= diffa.y;
+    //     // b1_armature.z = b1_armature.x -= diffa.x;
+    //     // b1_armature.w = b1_armature.y -= diffa.y;
+    //      armatures[hull_1_flags.y] = b1_armature;
+    // }
 
-    if (!b2_no_bones)
-    {
-        float2 center_b = calculate_centroid(points, hull_2_table);
-        float2 diffb = center_b - b2_hull.xy;
-        b2_armature.x += diffb.x;
-        b2_armature.y += diffb.y;
-        b2_armature.z -= diffb.x;
-        b2_armature.w -= diffb.y;
-        // b2_armature.z = b2_armature.x -= diffb.x;
-        // b2_armature.w = b2_armature.y -= diffb.y;
-        armatures[hull_2_flags.y] = b2_armature;
-    }
+    // if (!b2_no_bones)
+    // {
+    //     float2 center_b = calculate_centroid(points, hull_2_table);
+    //     float2 diffb = center_b - b2_hull.xy;
+    //     b2_armature.x += diffb.x;
+    //     b2_armature.y += diffb.y;
+    //     b2_armature.z -= diffb.x;
+    //     b2_armature.w -= diffb.y;
+    //     // b2_armature.z = b2_armature.x -= diffb.x;
+    //     // b2_armature.w = b2_armature.y -= diffb.y;
+    //     armatures[hull_2_flags.y] = b2_armature;
+    // }
 }
 
 __kernel void sort_reactions(__global float2 *reactions,
@@ -200,7 +200,7 @@ __kernel void move_armatures(__global float4 *hulls,
 
     bool b1_no_bones = (hull_1_flags.x & 0x08) !=0;
 
-    // todo: this needs to be moved to a separate kernel, later in the physics loop
+    // todo: this won't work without a hull table for the armatures
     if (!b1_no_bones)
     {
         float2 center_a = calculate_centroid(points, hull_1_table);

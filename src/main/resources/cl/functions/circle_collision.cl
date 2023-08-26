@@ -29,38 +29,38 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 offset1 = reaction * (float2)(-0.5);
     float2 offset2 = reaction * (float2)(0.5);
 
-    float4 vert1 = points[hull_1_table.x];
-    float4 vert2 = points[hull_2_table.x];
+    // float4 vert1 = points[hull_1_table.x];
+    // float4 vert2 = points[hull_2_table.x];
 
-    float2 e1 = vert1.xy;
-    float2 e2 = vert2.xy;
+    // float2 e1 = vert1.xy;
+    // float2 e2 = vert2.xy;
 
-    float2 e1_p = vert1.zw;
-    float2 e2_p = vert2.zw;
+    // float2 e1_p = vert1.zw;
+    // float2 e2_p = vert2.zw;
 
-    float e1_dist = distance(e1, e1_p);
-    float e2_dist = distance(e2, e2_p);
+    // float e1_dist = distance(e1, e1_p);
+    // float e2_dist = distance(e2, e2_p);
     
-    vert1.xy += offset1;
-    vert2.xy += offset2;
+    // vert1.xy += offset1;
+    // vert2.xy += offset2;
 
-    float2 e1_diff_2 = vert1.xy - e1_p;
-    float2 e2_diff_2 = vert2.xy - e2_p;
+    // float2 e1_diff_2 = vert1.xy - e1_p;
+    // float2 e2_diff_2 = vert2.xy - e2_p;
 
-    float new_len_e1 = length(e1_diff_2);
-    float new_len_e2 = length(e2_diff_2);
+    // float new_len_e1 = length(e1_diff_2);
+    // float new_len_e2 = length(e2_diff_2);
 
-    if (new_len_e1 != 0.0)
-    {
-        e1_diff_2 /= new_len_e1;
-        vert1.zw = vert1.xy - e1_dist * e1_diff_2;
-    }
+    // if (new_len_e1 != 0.0)
+    // {
+    //     e1_diff_2 /= new_len_e1;
+    //     vert1.zw = vert1.xy - e1_dist * e1_diff_2;
+    // }
 
-    if (new_len_e2 != 0.0)
-    {
-        e2_diff_2 /= new_len_e2;
-        vert2.zw = vert2.xy - e2_dist * e2_diff_2;
-    }
+    // if (new_len_e2 != 0.0)
+    // {
+    //     e2_diff_2 /= new_len_e2;
+    //     vert2.zw = vert2.xy - e2_dist * e2_diff_2;
+    // }
 
     int i = atomic_inc(&counter[0]);
     int j = atomic_inc(&counter[0]);

@@ -10,6 +10,7 @@ __kernel void animate_hulls(__global float4 *points,
     int gid = get_global_id(0);
     float4 point = points[gid];
     int2 vertex_table = vertex_tables[gid];
+    
     float2 reference_vertex = vertex_references[vertex_table.x];
     float16 bone = bones[vertex_table.y];
     float4 hull = hulls[vertex_table.y];

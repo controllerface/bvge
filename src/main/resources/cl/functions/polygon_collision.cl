@@ -226,38 +226,38 @@ inline void polygon_collision(int b1_id, int b2_id,
     // vertex reaction
     float2 v_reaction = collision_vector * vertex_magnitude;
 
-    // update the positions
-    vert_point.xy += v_reaction.xy;
-    edge_point_1.xy += e1_reaction.xy;
-    edge_point_2.xy += e2_reaction.xy;
+    // // update the positions
+    // vert_point.xy += v_reaction.xy;
+    // edge_point_1.xy += e1_reaction.xy;
+    // edge_point_2.xy += e2_reaction.xy;
 
-    // handle prev_updates to keep velocity correct
-    float2 v0_diff_2 = vert_point.xy - v0_p;
-    float2 e1_diff_2 = edge_point_1.xy - e1_p;
-    float2 e2_diff_2 = edge_point_2.xy - e2_p;
+    // // handle prev_updates to keep velocity correct
+    // float2 v0_diff_2 = vert_point.xy - v0_p;
+    // float2 e1_diff_2 = edge_point_1.xy - e1_p;
+    // float2 e2_diff_2 = edge_point_2.xy - e2_p;
 
-    // Normalize the new vector
-    float new_len_v = length(v0_diff_2);
-    float new_len_e1 = length(e1_diff_2);
-    float new_len_e2 = length(e2_diff_2);
+    // // Normalize the new vector
+    // float new_len_v = length(v0_diff_2);
+    // float new_len_e1 = length(e1_diff_2);
+    // float new_len_e2 = length(e2_diff_2);
 
-    if (new_len_v != 0.0)
-    {
-        v0_diff_2 /= new_len_v;
-        vert_point.zw = vert_point.xy - v0_dist * v0_diff_2;
-    }
+    // if (new_len_v != 0.0)
+    // {
+    //     v0_diff_2 /= new_len_v;
+    //     vert_point.zw = vert_point.xy - v0_dist * v0_diff_2;
+    // }
 
-    if (new_len_e1 != 0.0)
-    {
-        e1_diff_2 /= new_len_e1;
-        edge_point_1.zw = edge_point_1.xy - e1_dist * e1_diff_2;
-    }
+    // if (new_len_e1 != 0.0)
+    // {
+    //     e1_diff_2 /= new_len_e1;
+    //     edge_point_1.zw = edge_point_1.xy - e1_dist * e1_diff_2;
+    // }
 
-    if (new_len_e2 != 0.0)
-    {
-        e2_diff_2 /= new_len_e2;
-        edge_point_2.zw = edge_point_2.xy - e2_dist * e2_diff_2;
-    }
+    // if (new_len_e2 != 0.0)
+    // {
+    //     e2_diff_2 /= new_len_e2;
+    //     edge_point_2.zw = edge_point_2.xy - e2_dist * e2_diff_2;
+    // }
 
     if (!vs)
     {

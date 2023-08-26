@@ -421,6 +421,8 @@ public class GPU
          */
         armature_accel(Sizeof.cl_float2),
 
+        // todo: armatures need to have hull tables so they can check their hulls for interactions
+
         ;
 
         GPUMemory gpu;
