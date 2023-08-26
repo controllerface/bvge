@@ -241,8 +241,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
 
     // todo: below will be defferred to a later kernel
 
-    points[vert_index] = vert_point;
-    points[edge_index_a] = edge_point_1;
-    points[edge_index_b] = edge_point_2;
+    // points[vert_index] = vert_point;
+    // points[edge_index_a] = edge_point_1;
+    // points[edge_index_b] = edge_point_2;
 
 }

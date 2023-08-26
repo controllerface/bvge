@@ -78,6 +78,6 @@ inline void circle_collision(int b1_id, int b2_id,
 
     // todo: below will be defferred to a later kernel
 
-    points[hull_1_table.x] = vert1;
-    points[hull_2_table.x] = vert2;
+    // points[hull_1_table.x] = vert1;
+    // points[hull_2_table.x] = vert2;
 }

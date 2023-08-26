@@ -135,9 +135,11 @@ __kernel void sort_reactions(__global float2 *reactions,
 
     barrier(CLK_GLOBAL_MEM_FENCE);
 
-    local_offset--;
+    local_offset;
 
     int next = reaction_offset + local_offset;
+
+    //printf("debug offset local=%d global=%d", next, reaction_offset);
 
     reactions[next] = reaction;
     reaction_index[next] = index;
@@ -155,6 +157,8 @@ __kernel void apply_reactions(__global float2 *reactions,
 
     if (reaction_count == 0) return;
 
+    //printf("debug reaction count=%d gid=%d", reaction_count, gid);
+
     float2 reaction = (float2)(0.0, 0.0);
     for (int i = 0; i < reaction_count; i++)
     {
@@ -162,6 +166,9 @@ __kernel void apply_reactions(__global float2 *reactions,
         float2 reaction_i = reactions[idx];
         reaction += reaction_i;
     }
+
+    point_reactions[gid] = 0;
+    point_offsets[gid] = 0;
 
     point.xy += reaction;
     points[gid] = point;

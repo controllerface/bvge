@@ -220,16 +220,16 @@ inline void polygon_collision(int b1_id, int b2_id,
     float contact = edge_contact(e1, e2, v0, collision_vector);
 
     float edge_scale = 1.0f / (contact * contact + (1 - contact) * (1 - contact));
-    float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale);
-    float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale);
+    float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale) * -1;
+    float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
 
     // vertex reaction
     float2 v_reaction = collision_vector * vertex_magnitude;
 
     // update the positions
     vert_point.xy += v_reaction.xy;
-    edge_point_1.xy -= e1_reaction.xy;
-    edge_point_2.xy -= e2_reaction.xy;
+    edge_point_1.xy += e1_reaction.xy;
+    edge_point_2.xy += e2_reaction.xy;
 
     // handle prev_updates to keep velocity correct
     float2 v0_diff_2 = vert_point.xy - v0_p;
@@ -263,9 +263,11 @@ inline void polygon_collision(int b1_id, int b2_id,
     int j = atomic_inc(&counter[0]);
     int k = atomic_inc(&counter[0]);
 
+    //printf("debug: i=%d v= %d - j=%d e1=%d - k=%d e2=%d", i,  vert_index, j, edge_index_a, k, edge_index_b);
+
     reactions[i] = v_reaction;
-    reactions[j] = -e1_reaction;
-    reactions[k] = -e2_reaction;
+    reactions[j] = e1_reaction;
+    reactions[k] = e2_reaction;
 
     reaction_index[i] = vert_index;
     reaction_index[j] = edge_index_a;
@@ -279,8 +281,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
     // todo: below will be defferred to a later kernel
 
-    points[vert_index] = vert_point;
-    points[edge_index_a] = edge_point_1;
-    points[edge_index_b] = edge_point_2;
+    // points[vert_index] = vert_point;
+    // points[edge_index_a] = edge_point_1;
+    // points[edge_index_b] = edge_point_2;
 
 }

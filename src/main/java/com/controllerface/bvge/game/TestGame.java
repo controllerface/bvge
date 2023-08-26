@@ -198,6 +198,8 @@ public class TestGame extends GameMode
         //genPlayer();
         genTestFigure(1, 500, 0);
 
+        genTestTriangle(20f, 190, 250);
+
         genTestTriangle(10f, 190, 250);
         genTestTriangle(10f, 190, 200);
         genTestTriangle(10f, 190, 150);

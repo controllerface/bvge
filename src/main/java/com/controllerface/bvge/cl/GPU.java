@@ -1498,6 +1498,11 @@ public class GPU
         clReleaseMemObject(size_data);
 
         physics_buffer.set_reaction_count(size[0]);
+
+//        if (physics_buffer.get_reaction_count() > 0)
+//        {
+//            System.out.println("DEBUG: reaction count=" + physics_buffer.get_reaction_count());
+//        }
     }
 
     public static void scan_reactions()
@@ -1518,7 +1523,7 @@ public class GPU
     {
         var gpu_kernel = Kernel.apply_reactions.gpu;
         gpu_kernel.set_arg(0, physics_buffer.reactions.pointer());
-        gpu_kernel.call(arg_long(physics_buffer.get_reaction_count()));
+        gpu_kernel.call(arg_long(Main.Memory.point_count()));
     }
 
     public static void resolve_constraints(int edge_steps)
