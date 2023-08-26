@@ -72,7 +72,8 @@ public class PhysicsObjects
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
-        int armature_id = Main.Memory.new_armature(x, y, hull_id);
+        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, hull_id);
         Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
         return armature_id;
     }
@@ -128,7 +129,8 @@ public class PhysicsObjects
         // there is only one hull, so it is the main hull ID by default
         int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
-        int armature_id = Main.Memory.new_armature(x, y, hull_id);
+        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, hull_id);
 
         Models.register_model_instance(TRIANGLE_MODEL, hull_id);
         return armature_id;
@@ -187,7 +189,8 @@ public class PhysicsObjects
         // there is only one hull, so it is the main hull ID by default
         int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
-        int armature_id = Main.Memory.new_armature(x, y, hull_id);
+        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        int armature_id = Main.Memory.new_armature(x, y,hull_table, hull_id);
 
         Models.register_model_instance(CRATE_MODEL, hull_id);
         return armature_id;
@@ -224,10 +227,12 @@ public class PhysicsObjects
 
         // loop through each mesh and generate a hull for it
         var meshes = model.meshes();
-        for (int i = 0; i < meshes.length; i++)
+        int first_hull = -1;
+        int last_hull = -1;
+        for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)
         {
             // get the next mesh
-            var next_mesh = meshes[i];
+            var next_mesh = meshes[mesh_index];
 
             var next_bone = next_mesh.bone();
 
@@ -361,11 +366,18 @@ public class PhysicsObjects
 
             int[] hull_flags = CLUtils.arg_int2(flags, next_armature_id);
             int hull_id = Main.Memory.new_hull(transform, rotation, table, hull_flags);
+
+            if (first_hull == -1)
+            {
+                first_hull = hull_id;
+            }
+            last_hull = hull_id;
+
             if (bone_id != hull_id)
             {
                 throw new RuntimeException("hull/bone alignment error: h=" + hull_id + " b=" + bone_id);
             }
-            if (i == model.root_index())
+            if (mesh_index == model.root_index())
             {
                 root_hull_id = hull_id;
                 root_x = vector_buffer.x;
@@ -381,8 +393,9 @@ public class PhysicsObjects
         }
 
 
+        int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
-        int armature_id = Main.Memory.new_armature(root_x, root_y, root_hull_id);
+        int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, root_hull_id);
         Models.register_model_instance(model_index, root_hull_id);
         return armature_id;
     }

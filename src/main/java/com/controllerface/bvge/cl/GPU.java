@@ -46,7 +46,6 @@ public class GPU
      * The local work default is simply the max group size formatted as a single element argument array,
      * making it simpler to use for Open Cl calls which expect that format.
      */
-    private static long max_work_group_size = 0;
     private static long max_scan_block_size = 0;
     private static long[] local_work_default = arg_long(0);
 
@@ -87,7 +86,7 @@ public class GPU
 
     //#endregion
 
-    //#region GPU Program Objects
+    //#region Program Objects
 
     /**
      * Enumerates all existing GPU programs. Programs contain one or more "kernels". A kernel is
@@ -123,16 +122,11 @@ public class GPU
         {
             this.gpu = program;
         }
-
-        cl_kernel get_kernel(Kernel kernel)
-        {
-            return gpu.kernels.get(kernel);
-        }
     }
 
     //#endregion
 
-    //#region GPU Kernel Objects
+    //#region Kernel Objects
 
     /**
      * After init, all kernels are loaded into this map, making named access of them simple.
@@ -166,6 +160,7 @@ public class GPU
         generate_keys,
         integrate,
         locate_in_bounds,
+        move_armatures,
         prepare_bones,
         prepare_bounds,
         prepare_edges,
@@ -197,7 +192,7 @@ public class GPU
 
     //#endregion
 
-    //#region GPU Memory Objects
+    //#region Memory Objects
 
     /**
      * Memory that is shared between Open CL and Open GL contexts
@@ -421,7 +416,14 @@ public class GPU
          */
         armature_accel(Sizeof.cl_float2),
 
-        // todo: armatures need to have hull tables so they can check their hulls for interactions
+        /**
+         * Indexing table for tracked armatures. Values are int2 with the following mappings:
+         * -
+         * x: start hull index
+         * y: end hull index
+         * -
+         */
+        armature_hull_table(Sizeof.cl_int2),
 
         ;
 
@@ -446,72 +448,6 @@ public class GPU
         {
             cl_zero_buffer(this.gpu.memory(), this.length);
         }
-    }
-
-    //#endregion
-
-    //#region Public API
-
-    public static cl_program gpu_p(List<String> src_strings)
-    {
-        String[] src = src_strings.toArray(new String[]{});
-        return CLUtils.cl_p(context, device_ids, src);
-    }
-
-    public static void set_physics_buffer(PhysicsBuffer physics_buffer)
-    {
-        GPU.physics_buffer = physics_buffer;
-    }
-
-    public static void init(int max_hulls, int max_points)
-    {
-        device_ids = init_device();
-
-        var device = device_ids[0];
-
-        System.out.println("-------- OPEN CL DEVICE -----------");
-        System.out.println(getString(device, CL_DEVICE_VENDOR));
-        System.out.println(getString(device, CL_DEVICE_NAME));
-        System.out.println(getString(device, CL_DRIVER_VERSION));
-        System.out.println("-----------------------------------\n");
-
-        max_work_group_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
-        max_scan_block_size = max_work_group_size * 2;
-        local_work_default = arg_long(max_work_group_size);
-
-        // initialize kernel programs
-        for (var program : Program.values())
-        {
-            program.gpu.init();
-            _k.putAll(program.gpu.kernels);
-        }
-
-        //OpenCLUtils.debugDeviceDetails(device_ids);
-
-        // create memory buffers
-        init_memory(max_hulls, max_points);
-
-        // Create re-usable kernel objects
-        init_kernels();
-    }
-
-    public static void destroy()
-    {
-        for (Memory buffer : Memory.values())
-        {
-            Optional.ofNullable(buffer.gpu)
-                .ifPresent(GPUMemory::release);
-        }
-
-        shared_mem.values().forEach(CL::clReleaseMemObject);
-
-        for (Program program : Program.values())
-        {
-            Optional.ofNullable(program.gpu)
-                .ifPresent(GPUProgram::destroy);
-        }
-        clReleaseCommandQueue(command_queue);
-        clReleaseContext(context);
     }
 
     //#endregion
@@ -641,6 +577,7 @@ public class GPU
         Memory.bone_index.init(max_points);
         Memory.armatures.init(max_points);
         Memory.armature_flags.init(max_points);
+        Memory.armature_hull_table.init(max_hulls);
 
         // Debugging info
         int total = Memory.hulls.length
@@ -661,7 +598,8 @@ public class GPU
             + Memory.bone_instances.length
             + Memory.bone_index.length
             + Memory.armatures.length
-            + Memory.armature_flags.length;
+            + Memory.armature_flags.length
+            + Memory.armature_hull_table.length;
 
         System.out.println("------------- BUFFERS -------------");
         System.out.println("points            : " + Memory.points.length);
@@ -670,7 +608,7 @@ public class GPU
         System.out.println("acceleration      : " + Memory.armature_accel.length);
         System.out.println("rotation          : " + Memory.hull_rotation.length);
         System.out.println("element table     : " + Memory.hull_element_table.length);
-        System.out.println("flags             : " + Memory.hull_flags.length);
+        System.out.println("hull flags        : " + Memory.hull_flags.length);
         System.out.println("point reactions   : " + Memory.point_reactions.length);
         System.out.println("point offsets     : " + Memory.point_offsets.length);
         System.out.println("bounding box      : " + Memory.aabb.length);
@@ -683,6 +621,7 @@ public class GPU
         System.out.println("bone index        : " + Memory.bone_index.length);
         System.out.println("armatures         : " + Memory.armatures.length);
         System.out.println("armature flags    : " + Memory.armature_flags.length);
+        System.out.println("hull table        : " + Memory.armature_hull_table.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)    : " + total);
         System.out.println("               KB : " + ((float) total / 1024f));
@@ -746,6 +685,15 @@ public class GPU
         apply_reactions_k.set_point_offsets(Memory.point_offsets.gpu.pointer());
         Kernel.apply_reactions.set_kernel(apply_reactions_k);
 
+        var move_armatures_k = new MoveArmatures_k(command_queue, Program.sat_collide.gpu);
+        move_armatures_k.set_hulls(Memory.hulls.gpu.pointer());
+        move_armatures_k.set_armatures(Memory.armatures.gpu.pointer());
+        move_armatures_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
+        move_armatures_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        move_armatures_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        move_armatures_k.set_points(Memory.points.gpu.pointer());
+        Kernel.move_armatures.set_kernel(move_armatures_k);
+
 
         // todo: convert those below the lines to concrete classes
 
@@ -767,12 +715,14 @@ public class GPU
         gpu_create_edge.def_arg(2, Sizeof.cl_float4);
         Kernel.create_edge.set_kernel(gpu_create_edge);
 
-        var create_armature = new GPUKernel(command_queue, _k.get(Kernel.create_armature), 5);
+        var create_armature = new GPUKernel(command_queue, _k.get(Kernel.create_armature), 7);
         create_armature.new_arg(0, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
         create_armature.new_arg(1, Sizeof.cl_mem, Memory.armature_flags.gpu.pointer());
-        create_armature.def_arg(2, Sizeof.cl_int);
-        create_armature.def_arg(3, Sizeof.cl_float4);
-        create_armature.def_arg(4, Sizeof.cl_int);
+        create_armature.new_arg(2, Sizeof.cl_mem, Memory.armature_hull_table.gpu.pointer());
+        create_armature.def_arg(3, Sizeof.cl_int);
+        create_armature.def_arg(4, Sizeof.cl_float4);
+        create_armature.def_arg(5, Sizeof.cl_int);
+        create_armature.def_arg(6, Sizeof.cl_int2);
         Kernel.create_armature.set_kernel(create_armature);
 
         var create_vertex_ref = new GPUKernel(command_queue, _k.get(Kernel.create_vertex_reference), 3);
@@ -1136,12 +1086,13 @@ public class GPU
         gpu_kernel.call(global_single_size);
     }
 
-    public static void create_armature(int armature_index, float x, float y, int flags)
+    public static void create_armature(int armature_index, float x, float y, int[] table, int flags)
     {
         var gpu_kernel = Kernel.create_armature.gpu;
-        gpu_kernel.set_arg(2, Pointer.to(arg_int(armature_index)));
-        gpu_kernel.set_arg(3, Pointer.to(arg_float4(x, y, x, y)));
-        gpu_kernel.set_arg(4, Pointer.to(arg_int(flags)));
+        gpu_kernel.set_arg(3, Pointer.to(arg_int(armature_index)));
+        gpu_kernel.set_arg(4, Pointer.to(arg_float4(x, y, x, y)));
+        gpu_kernel.set_arg(5, Pointer.to(arg_int(flags)));
+        gpu_kernel.set_arg(6, Pointer.to(table));
         gpu_kernel.call(global_single_size);
     }
 
@@ -1500,11 +1451,6 @@ public class GPU
         clReleaseMemObject(size_data);
 
         physics_buffer.set_reaction_count(size[0]);
-
-//        if (physics_buffer.get_reaction_count() > 0)
-//        {
-//            System.out.println("DEBUG: reaction count=" + physics_buffer.get_reaction_count());
-//        }
     }
 
     public static void scan_reactions()
@@ -1530,7 +1476,7 @@ public class GPU
 
     public static void move_armatures()
     {
-
+        Kernel.move_armatures.gpu.call(arg_long(Main.Memory.armature_count()));
     }
 
     public static void resolve_constraints(int edge_steps)
@@ -1831,6 +1777,72 @@ public class GPU
         clReleaseMemObject(p_data);
 
         return sz[0];
+    }
+
+    //#endregion
+
+    //#region Public API
+
+    public static cl_program gpu_p(List<String> src_strings)
+    {
+        String[] src = src_strings.toArray(new String[]{});
+        return CLUtils.cl_p(context, device_ids, src);
+    }
+
+    public static void set_physics_buffer(PhysicsBuffer physics_buffer)
+    {
+        GPU.physics_buffer = physics_buffer;
+    }
+
+    public static void init(int max_hulls, int max_points)
+    {
+        device_ids = init_device();
+
+        var device = device_ids[0];
+
+        System.out.println("-------- OPEN CL DEVICE -----------");
+        System.out.println(getString(device, CL_DEVICE_VENDOR));
+        System.out.println(getString(device, CL_DEVICE_NAME));
+        System.out.println(getString(device, CL_DRIVER_VERSION));
+        System.out.println("-----------------------------------\n");
+
+        long max_work_group_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        max_scan_block_size = max_work_group_size * 2;
+        local_work_default = arg_long(max_work_group_size);
+
+        // initialize kernel programs
+        for (var program : Program.values())
+        {
+            program.gpu.init();
+            _k.putAll(program.gpu.kernels);
+        }
+
+        //OpenCLUtils.debugDeviceDetails(device_ids);
+
+        // create memory buffers
+        init_memory(max_hulls, max_points);
+
+        // Create re-usable kernel objects
+        init_kernels();
+    }
+
+    public static void destroy()
+    {
+        for (Memory buffer : Memory.values())
+        {
+            Optional.ofNullable(buffer.gpu)
+                .ifPresent(GPUMemory::release);
+        }
+
+        shared_mem.values().forEach(CL::clReleaseMemObject);
+
+        for (Program program : Program.values())
+        {
+            Optional.ofNullable(program.gpu)
+                .ifPresent(GPUProgram::destroy);
+        }
+        clReleaseCommandQueue(command_queue);
+        clReleaseContext(context);
     }
 
     //#endregion

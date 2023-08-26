@@ -188,30 +188,64 @@ __kernel void apply_reactions(__global float2 *reactions,
 
 __kernel void move_armatures(__global float4 *hulls,
                              __global float4 *armatures,
+                             __global int2 *hull_tables,
                              __global int4 *element_tables,
                              __global int2 *hull_flags,
                              __global float4 *points)
 {
     int gid = get_global_id(0);
-    float4 b1_hull = hulls[gid];
-    int2 hull_1_flags = hull_flags[gid];
-    int4 hull_1_table = element_tables[gid];
-    float4 b1_armature = armatures[hull_1_flags.y];
-
-    bool b1_no_bones = (hull_1_flags.x & 0x08) !=0;
-
-    // todo: this won't work without a hull table for the armatures
-    if (!b1_no_bones)
+    float4 armature = armatures[gid];
+    int2 hull_table = hull_tables[gid];
+    int start = hull_table.x;
+    int end = hull_table.y;
+    int hull_count = end - start + 1;
+    
+    float4 diff = (float4)(0.0, 0.0, 0.0, 0.0);
+    for (int i = 0; i < hull_count; i++)
     {
-        float2 center_a = calculate_centroid(points, hull_1_table);
-        float2 diffa = center_a - b1_hull.xy;
-        b1_armature.x += diffa.x;
-        b1_armature.y += diffa.y;
-        b1_armature.z -= diffa.x;
-        b1_armature.w -= diffa.y;
-        // b1_armature.z = b1_armature.x -= diffa.x;
-        // b1_armature.w = b1_armature.y -= diffa.y;
-        armatures[hull_1_flags.y] = b1_armature;
+        int n = start + i;
+        float4 hull = hulls[n];
+        int2 hull_flag = hull_flags[n];
+        int4 element_table = element_tables[n];
+        bool no_bones = (hull_flag.x & 0x08) !=0;
+
+        if (!no_bones)
+        {
+            float2 center_a = calculate_centroid(points, element_table);
+            float2 diffa = center_a - hull.xy;
+            diff.x += diffa.x;
+            diff.y += diffa.y;
+            diff.z -= diffa.x;
+            diff.w -= diffa.y;
+        }
     }
+
+    armature.x += diff.x;
+    armature.y += diff.y;
+    armature.z += diff.z;
+    armature.w += diff.w;
+    armatures[gid] = armature;
+
+
+    // float4 b1_hull = hulls[gid];
+    // int2 hull_1_flags = hull_flags[gid];
+    // int4 hull_1_table = element_tables[gid];
+    // float4 b1_armature = armatures[hull_1_flags.y];
+
+    // bool b1_no_bones = (hull_1_flags.x & 0x08) !=0;
+
+    // // todo: this won't work without a hull table for the armatures
+    // if (!b1_no_bones)
+    // {
+    //     float2 center_a = calculate_centroid(points, hull_1_table);
+    //     float2 diffa = center_a - b1_hull.xy;
+    //     b1_armature.x += diffa.x;
+    //     b1_armature.y += diffa.y;
+    //     b1_armature.z -= diffa.x;
+    //     b1_armature.w -= diffa.y;
+    //     // b1_armature.z = b1_armature.x -= diffa.x;
+    //     // b1_armature.w = b1_armature.y -= diffa.y;
+    //     armatures[hull_1_flags.y] = b1_armature;
+    // }
 
 }
