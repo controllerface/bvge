@@ -148,6 +148,7 @@ public class GPU
     {
         aabb_collide,
         animate_hulls,
+        apply_reactions,
         build_key_map,
         complete_bounds_multi_block,
         complete_candidates_multi_block_out,
@@ -181,6 +182,7 @@ public class GPU
         scan_int_multi_block_out,
         scan_int_single_block,
         scan_int_single_block_out,
+        sort_reactions,
         update_accel,
 
         ;
@@ -227,6 +229,14 @@ public class GPU
          * -
          */
         point_reactions(Sizeof.cl_int),
+
+        /**
+         * reaction offsets for points on tracked physics hulls. Values are int with the following mapping:
+         * -
+         * value: reaction buffer offset
+         * -
+         */
+        point_offsets(Sizeof.cl_int),
 
         /**
          * Edges of tracked physics hulls. Values are float4 with the following mappings:
@@ -422,18 +432,17 @@ public class GPU
             size = valueSize;
         }
 
-        private void set_memory(GPUMemory GPUMemory)
-        {
-            this.gpu = GPUMemory;
-        }
-
         public void init(int buffer_length)
         {
-            int mem_size = buffer_length * size;
-            this.length = mem_size;
-            var mem = cl_new_buffer(mem_size);
-            cl_zero_buffer(mem, mem_size);
-            set_memory(new GPUMemory(mem));
+            this.length = buffer_length * size;
+            var mem = cl_new_buffer(this.length);
+            this.gpu = new GPUMemory(mem);
+            clear();
+        }
+
+        public void clear()
+        {
+            cl_zero_buffer(this.gpu.memory(), this.length);
         }
     }
 
@@ -621,6 +630,7 @@ public class GPU
         Memory.aabb.init(max_hulls);
         Memory.points.init(max_points);
         Memory.point_reactions.init(max_points);
+        Memory.point_offsets.init(max_points);
         Memory.edges.init(max_points);
         Memory.vertex_table.init(max_points);
         Memory.vertex_references.init(max_points);
@@ -641,6 +651,7 @@ public class GPU
             + Memory.aabb_key_table.length
             + Memory.points.length
             + Memory.point_reactions.length
+            + Memory.point_offsets.length
             + Memory.edges.length
             + Memory.vertex_table.length
             + Memory.vertex_references.length
@@ -658,7 +669,8 @@ public class GPU
         System.out.println("rotation          : " + Memory.hull_rotation.length);
         System.out.println("element table     : " + Memory.hull_element_table.length);
         System.out.println("flags             : " + Memory.hull_flags.length);
-        System.out.println("points reactions  : " + Memory.point_reactions.length);
+        System.out.println("point reactions   : " + Memory.point_reactions.length);
+        System.out.println("point offsets     : " + Memory.point_offsets.length);
         System.out.println("bounding box      : " + Memory.aabb.length);
         System.out.println("spatial index     : " + Memory.aabb_index.length);
         System.out.println("spatial key bank  : " + Memory.aabb_key_table.length);
@@ -721,6 +733,16 @@ public class GPU
         sat_collide_k.set_reactions(Memory.point_reactions.gpu.pointer());
         Kernel.sat_collide.set_kernel(sat_collide_k);
 
+        var sort_reactions_k = new SortReactions_k(command_queue, Program.sat_collide.gpu);
+        sort_reactions_k.set_reactions(Memory.point_reactions.gpu.pointer());
+        sort_reactions_k.set_offsets(Memory.point_offsets.gpu.pointer());
+        Kernel.sort_reactions.set_kernel(sort_reactions_k);
+
+        var apply_reactions_k = new ApplyReactions_k(command_queue, Program.sat_collide.gpu);
+        apply_reactions_k.set_points(Memory.points.gpu.pointer());
+        apply_reactions_k.set_point_reactions(Memory.point_reactions.gpu.pointer());
+        apply_reactions_k.set_point_offsets(Memory.point_offsets.gpu.pointer());
+        Kernel.apply_reactions.set_kernel(apply_reactions_k);
 
 
         // todo: convert those below the lines to concrete classes
@@ -1438,11 +1460,6 @@ public class GPU
 
     public static void sat_collide()
     {
-        if (physics_buffer.candidates == null)
-        {
-            return;
-        }
-
         var gpu_kernel = Kernel.sat_collide.gpu;
 
         int candidates_size = (int) physics_buffer.get_final_size() / Sizeof.cl_int;
@@ -1480,7 +1497,28 @@ public class GPU
 
         clReleaseMemObject(size_data);
 
-        //System.out.println("Debug: " + size[0]);
+        physics_buffer.set_reaction_count(size[0]);
+    }
+
+    public static void scan_reactions()
+    {
+        scan_int_out(Memory.point_reactions.gpu.memory(), Memory.point_offsets.gpu.memory(), Main.Memory.point_count());
+        Memory.point_reactions.clear();
+    }
+
+    public static void sort_reactions()
+    {
+        var gpu_kernel = Kernel.sort_reactions.gpu;
+        gpu_kernel.set_arg(0, physics_buffer.reactions.pointer());
+        gpu_kernel.set_arg(1, physics_buffer.reaction_index.pointer());
+        gpu_kernel.call(arg_long(physics_buffer.get_reaction_count()));
+    }
+
+    public static void apply_reactions()
+    {
+        var gpu_kernel = Kernel.apply_reactions.gpu;
+        gpu_kernel.set_arg(0, physics_buffer.reactions.pointer());
+        gpu_kernel.call(arg_long(physics_buffer.get_reaction_count()));
     }
 
     public static void resolve_constraints(int edge_steps)

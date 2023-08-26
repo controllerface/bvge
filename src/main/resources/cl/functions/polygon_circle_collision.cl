@@ -8,7 +8,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
                                      __global float4 *edges,
                                      __global float2 *reactions,
                                      __global int *reaction_index,
-                                     __global int *reaction_counts,
+                                     __global int *point_reactions,
                                      __global int *counter)
 {
     float4 polygon = hulls[polygon_id];
@@ -233,9 +233,9 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     reaction_index[j] = edge_index_a;
     reaction_index[k] = edge_index_b;
 
-    atomic_inc(&reaction_counts[vert_index]);
-    atomic_inc(&reaction_counts[edge_index_a]);
-    atomic_inc(&reaction_counts[edge_index_b]);
+    atomic_inc(&point_reactions[vert_index]);
+    atomic_inc(&point_reactions[edge_index_a]);
+    atomic_inc(&point_reactions[edge_index_b]);
 
     // todo: increment an atomic per-point counter to indicate how many reactions each point has
 

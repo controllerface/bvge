@@ -15,7 +15,7 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global float4 *edges,
                           __global float2 *reactions,
                           __global int *reaction_index,
-                          __global int *reaction_counts,
+                          __global int *point_reactions,
                           __global int *counter)
 {
     int gid = get_global_id(0);
@@ -60,7 +60,7 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             reactions,
             reaction_index,
-            reaction_counts,
+            point_reactions,
             counter); 
     }
     else if (b1_is_circle && b2_is_circle) 
@@ -71,7 +71,7 @@ __kernel void sat_collide(__global int2 *candidates,
             points, 
             reactions,
             reaction_index,
-            reaction_counts,
+            point_reactions,
             counter); 
     }
     else 
@@ -84,7 +84,7 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             reactions,
             reaction_index,
-            reaction_counts,
+            point_reactions,
             counter); 
     }
 
@@ -118,4 +118,51 @@ __kernel void sat_collide(__global int2 *candidates,
         // b2_armature.w = b2_armature.y -= diffb.y;
         armatures[hull_2_flags.y] = b2_armature;
     }
+}
+
+__kernel void sort_reactions(__global float2 *reactions,
+                             __global int *reaction_index,
+                             __global int *point_reactions,
+                             __global int *point_offsets)
+{
+    int gid = get_global_id(0);
+    
+    float2 reaction = reactions[gid];
+    int index = reaction_index[gid];
+
+    int reaction_offset = point_offsets[index];
+    int local_offset = atomic_inc(&point_reactions[index]);
+
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
+    local_offset--;
+
+    int next = reaction_offset + local_offset;
+
+    reactions[next] = reaction;
+    reaction_index[next] = index;
+}
+
+__kernel void apply_reactions(__global float2 *reactions,
+                              __global float4 *points,
+                              __global int *point_reactions,
+                              __global int *point_offsets)
+{
+    int gid = get_global_id(0);
+    int reaction_count = point_reactions[gid];
+    int offset = point_offsets[gid];
+    float4 point = points[gid];
+
+    if (reaction_count == 0) return;
+
+    float2 reaction = (float2)(0.0, 0.0);
+    for (int i = 0; i < reaction_count; i++)
+    {
+        int idx = i + offset;
+        float2 reaction_i = reactions[idx];
+        reaction += reaction_i;
+    }
+
+    point.xy += reaction;
+    points[gid] = point;
 }

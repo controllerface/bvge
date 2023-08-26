@@ -7,7 +7,7 @@ inline void polygon_collision(int b1_id, int b2_id,
                              __global float4 *edges,
                              __global float2 *reactions,
                              __global int *reaction_index,
-                             __global int *reaction_counts,
+                             __global int *point_reactions,
                              __global int *counter)
 {
 
@@ -271,9 +271,9 @@ inline void polygon_collision(int b1_id, int b2_id,
     reaction_index[j] = edge_index_a;
     reaction_index[k] = edge_index_b;
 
-    atomic_inc(&reaction_counts[vert_index]);
-    atomic_inc(&reaction_counts[edge_index_a]);
-    atomic_inc(&reaction_counts[edge_index_b]);
+    atomic_inc(&point_reactions[vert_index]);
+    atomic_inc(&point_reactions[edge_index_a]);
+    atomic_inc(&point_reactions[edge_index_b]);
 
     // todo: increment an atomic per-point counter to indicate how many reactions each point has
 

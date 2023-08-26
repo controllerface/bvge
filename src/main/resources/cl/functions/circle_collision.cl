@@ -4,7 +4,7 @@ inline void circle_collision(int b1_id, int b2_id,
                              __global float4 *points,
                              __global float2 *reactions,
                              __global int *reaction_index,
-                             __global int *reaction_counts,
+                             __global int *point_reactions,
                              __global int *counter)
 {
     float4 hull_1 = hulls[b1_id];
@@ -71,8 +71,8 @@ inline void circle_collision(int b1_id, int b2_id,
     reaction_index[i] = hull_1_table.x;
     reaction_index[j] = hull_2_table.x;
 
-    atomic_inc(&reaction_counts[hull_1_table.x]);
-    atomic_inc(&reaction_counts[hull_2_table.x]);
+    atomic_inc(&point_reactions[hull_1_table.x]);
+    atomic_inc(&point_reactions[hull_2_table.x]);
 
     // todo: increment an atomic per-point counter to indicate how many reactions each point has
 

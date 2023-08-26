@@ -215,6 +215,12 @@ public class PhysicsSimulation extends GameSystem
         // After this step, the matches are ready for the narrow phase check.
         GPU.finalize_candidates();
 
+        // If there were no candidate collisions, there's nothing left to do
+        if (physics_buffer.candidates == null)
+        {
+            return;
+        }
+
         /*
         - Narrow Phase Collision/Reaction -
         ===================================
@@ -229,7 +235,16 @@ public class PhysicsSimulation extends GameSystem
         are significantly less demanding to simulate.
         */
 
+
+
         GPU.sat_collide();
+
+        GPU.scan_reactions();
+
+        GPU.sort_reactions();
+
+        //GPU.apply_reactions();
+
 
         // todo: will need to separate reactions out into manifolds in order to avoid atomicity issues.
         //  will need to accumulate adjustments to points in a buffer, and create a kernel that loops

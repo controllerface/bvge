@@ -24,6 +24,7 @@ public class PhysicsBuffer
     private int candidate_buffer_count = 0;
     private int match_buffer_count = 0;
     private int candidate_count = 0;
+    private int reaction_count = 0;
     private long final_size = 0;
 
     private float gravity_x = 0f;
@@ -88,6 +89,16 @@ public class PhysicsBuffer
     public void set_candidate_count(int candidate_count)
     {
         this.candidate_count = candidate_count;
+    }
+
+    public int get_reaction_count()
+    {
+        return reaction_count;
+    }
+
+    public void set_reaction_count(int reaction_count)
+    {
+        this.reaction_count = reaction_count;
     }
 
     public long get_final_size()

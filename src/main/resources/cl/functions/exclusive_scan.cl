@@ -15,10 +15,10 @@ inline void upsweep(__local int *buffer, int m)
         // all threads must hit this barrier to ensure local buffer data is in sync
         barrier(CLK_LOCAL_MEM_FENCE);
         
-        // calculate a mask? todo: why is it done this way?
+        // calculate a mask absed on depth, as the traversal goes up, fewer threads will do work
         int mask = (0x1 << depth) - 1;
         
-        // check if we are supposed to do work? todo: why is a mask used?
+        // check if we are supposed to do work
         if ((local_id & mask) == mask) 
         {
             int offset = (0x1 << depth);
@@ -42,7 +42,10 @@ inline void downsweep(__local int *buffer, int m)
     for (int depth = max_depth; depth > -1; depth--) 
     {
         barrier(CLK_LOCAL_MEM_FENCE);
+
+        // calculate a mask based on depth, as the traversal goes down, more threads will do work
         int mask = (0x1 << depth) - 1;
+        
         if ((local_id & mask) == mask) 
         {
             int offset = (0x1 << depth);
