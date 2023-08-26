@@ -152,12 +152,14 @@ __kernel void apply_reactions(__global float2 *reactions,
 {
     int gid = get_global_id(0);
     int reaction_count = point_reactions[gid];
-    int offset = point_offsets[gid];
-    float4 point = points[gid];
 
     if (reaction_count == 0) return;
 
-    //printf("debug reaction count=%d gid=%d", reaction_count, gid);
+    int offset = point_offsets[gid];
+    float4 point = points[gid];
+
+    float2 e1_p = point.zw;
+    float e1_dist = distance(point.xy, e1_p);
 
     float2 reaction = (float2)(0.0, 0.0);
     for (int i = 0; i < reaction_count; i++)
@@ -171,5 +173,15 @@ __kernel void apply_reactions(__global float2 *reactions,
     point_offsets[gid] = 0;
 
     point.xy += reaction;
+
+    float2 e1_diff_2 = point.xy - e1_p;
+    float new_len_e1 = length(e1_diff_2);
+
+    if (new_len_e1 != 0.0)
+    {
+        e1_diff_2 /= new_len_e1;
+        point.zw = point.xy - e1_dist * e1_diff_2;
+    }
+
     points[gid] = point;
 }
