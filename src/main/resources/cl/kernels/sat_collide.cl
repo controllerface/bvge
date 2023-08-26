@@ -15,6 +15,7 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global float4 *edges,
                           __global float2 *reactions,
                           __global int *reaction_index,
+                          __global int *reaction_counts,
                           __global int *counter)
 {
     int gid = get_global_id(0);
@@ -59,6 +60,7 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             reactions,
             reaction_index,
+            reaction_counts,
             counter); 
     }
     else if (b1_is_circle && b2_is_circle) 
@@ -69,6 +71,7 @@ __kernel void sat_collide(__global int2 *candidates,
             points, 
             reactions,
             reaction_index,
+            reaction_counts,
             counter); 
     }
     else 
@@ -81,6 +84,7 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             reactions,
             reaction_index,
+            reaction_counts,
             counter); 
     }
 

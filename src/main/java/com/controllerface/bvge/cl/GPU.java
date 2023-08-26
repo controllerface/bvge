@@ -137,6 +137,7 @@ public class GPU
     /**
      * After init, all kernels are loaded into this map, making named access of them simple.
      */
+    // todo: this will be removed in favor of explicit uses of kernels in defined programs
     private static final Map<Kernel, cl_kernel> _k = new HashMap<>();
 
     /**
@@ -218,6 +219,14 @@ public class GPU
          * -
          */
         points(Sizeof.cl_float4),
+
+        /**
+         * reaction counts for points on tracked physics hulls. Values are int with the following mapping:
+         * -
+         * value: reaction count
+         * -
+         */
+        point_reactions(Sizeof.cl_int),
 
         /**
          * Edges of tracked physics hulls. Values are float4 with the following mappings:
@@ -611,6 +620,7 @@ public class GPU
         Memory.hulls.init(max_hulls);
         Memory.aabb.init(max_hulls);
         Memory.points.init(max_points);
+        Memory.point_reactions.init(max_points);
         Memory.edges.init(max_points);
         Memory.vertex_table.init(max_points);
         Memory.vertex_references.init(max_points);
@@ -630,6 +640,7 @@ public class GPU
             + Memory.aabb_index.length
             + Memory.aabb_key_table.length
             + Memory.points.length
+            + Memory.point_reactions.length
             + Memory.edges.length
             + Memory.vertex_table.length
             + Memory.vertex_references.length
@@ -640,16 +651,17 @@ public class GPU
             + Memory.armature_flags.length;
 
         System.out.println("------------- BUFFERS -------------");
-        System.out.println("points            : " + Memory.hulls.length);
-        System.out.println("edges             : " + Memory.armature_accel.length);
-        System.out.println("transforms        : " + Memory.hull_rotation.length);
-        System.out.println("acceleration      : " + Memory.hull_element_table.length);
-        System.out.println("rotation          : " + Memory.hull_flags.length);
-        System.out.println("element table     : " + Memory.aabb.length);
-        System.out.println("flags             : " + Memory.aabb_index.length);
-        System.out.println("bounding box      : " + Memory.aabb_key_table.length);
-        System.out.println("spatial index     : " + Memory.points.length);
-        System.out.println("spatial key bank  : " + Memory.edges.length);
+        System.out.println("points            : " + Memory.points.length);
+        System.out.println("edges             : " + Memory.edges.length);
+        System.out.println("hulls             : " + Memory.hulls.length);
+        System.out.println("acceleration      : " + Memory.armature_accel.length);
+        System.out.println("rotation          : " + Memory.hull_rotation.length);
+        System.out.println("element table     : " + Memory.hull_element_table.length);
+        System.out.println("flags             : " + Memory.hull_flags.length);
+        System.out.println("points reactions  : " + Memory.point_reactions.length);
+        System.out.println("bounding box      : " + Memory.aabb.length);
+        System.out.println("spatial index     : " + Memory.aabb_index.length);
+        System.out.println("spatial key bank  : " + Memory.aabb_key_table.length);
         System.out.println("vertex table      : " + Memory.vertex_table.length);
         System.out.println("vertex references : " + Memory.vertex_references.length);
         System.out.println("bone references   : " + Memory.bone_references.length);
@@ -676,28 +688,45 @@ public class GPU
      */
     private static void init_kernels()
     {
-        var pbk = new PrepareBounds_k(command_queue, Program.prepare_bounds.gpu);
-        pbk.set_aabb(Memory.aabb.gpu.pointer());
-        Kernel.prepare_bounds.set_kernel(pbk);
+        var bounds_k = new PrepareBounds_k(command_queue, Program.prepare_bounds.gpu);
+        bounds_k.set_aabb(Memory.aabb.gpu.pointer());
+        Kernel.prepare_bounds.set_kernel(bounds_k);
 
-        var ptk = new PrepareTransforms_k(command_queue, Program.prepare_transforms.gpu);
-        ptk.set_hulls(Memory.hulls.gpu.pointer());
-        ptk.set_rotations(Memory.hull_rotation.gpu.pointer());
-        Kernel.prepare_transforms.set_kernel(ptk);
+        var transforms_k = new PrepareTransforms_k(command_queue, Program.prepare_transforms.gpu);
+        transforms_k.set_hulls(Memory.hulls.gpu.pointer());
+        transforms_k.set_rotations(Memory.hull_rotation.gpu.pointer());
+        Kernel.prepare_transforms.set_kernel(transforms_k);
 
-        var pek = new PrepareEdges_k(command_queue, Program.prepare_edges.gpu);
-        pek.set_points(Memory.points.gpu.pointer());
-        pek.set_edges(Memory.edges.gpu.pointer());
-        Kernel.prepare_edges.set_kernel(pek);
+        var edges_k = new PrepareEdges_k(command_queue, Program.prepare_edges.gpu);
+        edges_k.set_points(Memory.points.gpu.pointer());
+        edges_k.set_edges(Memory.edges.gpu.pointer());
+        Kernel.prepare_edges.set_kernel(edges_k);
 
-        var pbone = new PrepareBones_k(command_queue, Program.prepare_bones.gpu);
-        pbone.set_bone_instances(Memory.bone_instances.gpu.pointer());
-        pbone.set_bone_references(Memory.bone_references.gpu.pointer());
-        pbone.set_bone_index(Memory.bone_index.gpu.pointer());
-        pbone.set_hulls(Memory.hulls.gpu.pointer());
-        pbone.set_armatures(Memory.armatures.gpu.pointer());
-        pbone.set_hull_flags(Memory.hull_flags.gpu.pointer());
-        Kernel.prepare_bones.set_kernel(pbone);
+        var bones_k = new PrepareBones_k(command_queue, Program.prepare_bones.gpu);
+        bones_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
+        bones_k.set_bone_references(Memory.bone_references.gpu.pointer());
+        bones_k.set_bone_index(Memory.bone_index.gpu.pointer());
+        bones_k.set_hulls(Memory.hulls.gpu.pointer());
+        bones_k.set_armatures(Memory.armatures.gpu.pointer());
+        bones_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        Kernel.prepare_bones.set_kernel(bones_k);
+
+        var sat_collide_k = new SatCollide_k(command_queue, Program.sat_collide.gpu);
+        sat_collide_k.set_hulls(Memory.hulls.gpu.pointer());
+        sat_collide_k.set_armatures(Memory.armatures.gpu.pointer());
+        sat_collide_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        sat_collide_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        sat_collide_k.set_points(Memory.points.gpu.pointer());
+        sat_collide_k.set_edges(Memory.edges.gpu.pointer());
+        sat_collide_k.set_reactions(Memory.point_reactions.gpu.pointer());
+        Kernel.sat_collide.set_kernel(sat_collide_k);
+
+
+
+        // todo: convert those below the lines to concrete classes
+
+
+
 
 
         var gpu_create_point = new GPUKernel(command_queue, _k.get(Kernel.create_point), 5);
@@ -854,26 +883,8 @@ public class GPU
         finalize_candidates.def_arg(5, Sizeof.cl_mem);
         Kernel.finalize_candidates.set_kernel(finalize_candidates);
 
-        var ack = new SatCollide_k(command_queue, Program.sat_collide.gpu);
-        ack.set_hulls(Memory.hulls.gpu.pointer());
-        ack.set_armatures(Memory.armatures.gpu.pointer());
-        ack.set_element_tables(Memory.hull_element_table.gpu.pointer());
-        ack.set_hull_flags(Memory.hull_flags.gpu.pointer());
-        ack.set_points(Memory.points.gpu.pointer());
-        ack.set_edges(Memory.edges.gpu.pointer());
-        Kernel.sat_collide.set_kernel(ack);
 
 
-//        var sat_collide = new GPUKernel(command_queue, _k.get(Kernel.sat_collide), 8);
-//        sat_collide.def_arg(0, Sizeof.cl_mem);
-//        sat_collide.new_arg(1, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
-//        sat_collide.new_arg(2, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
-//        sat_collide.new_arg(3, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
-//        sat_collide.new_arg(4, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
-//        sat_collide.new_arg(5, Sizeof.cl_mem, Memory.points.gpu.pointer());
-//        sat_collide.new_arg(6, Sizeof.cl_mem, Memory.edges.gpu.pointer());
-//        sat_collide.def_arg(7, Sizeof.cl_mem);
-//        Kernel.sat_collide.set_kernel(sat_collide);
 
         var resolve_constraints = new GPUKernel(command_queue, _k.get(Kernel.resolve_constraints), 5);
         resolve_constraints.new_arg(0, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
@@ -1444,9 +1455,6 @@ public class GPU
         var dst_size = Pointer.to(size);
         var size_data = cl_new_int_arg_buffer(dst_size);
 
-        // todo: add buffer to store point reactions in, similar to aabb candidates
-        //  will need two buffers, one for point index and one for the reactions themselves
-
         long max_point_count = physics_buffer.get_final_size()
             * 2  // there are two bodies per collision pair
             * 2; // assume worst case is 2 points per body
@@ -1464,7 +1472,7 @@ public class GPU
         gpu_kernel.set_arg(0, physics_buffer.candidates.pointer());
         gpu_kernel.set_arg(7, physics_buffer.reactions.pointer());
         gpu_kernel.set_arg(8, physics_buffer.reaction_index.pointer());
-        gpu_kernel.set_arg(9, Pointer.to(size_data));
+        gpu_kernel.set_arg(10, Pointer.to(size_data));
 
         gpu_kernel.call(global_work_size);
 
@@ -1472,7 +1480,7 @@ public class GPU
 
         clReleaseMemObject(size_data);
 
-        System.out.println("Debug: " + size[0]);
+        //System.out.println("Debug: " + size[0]);
     }
 
     public static void resolve_constraints(int edge_steps)
