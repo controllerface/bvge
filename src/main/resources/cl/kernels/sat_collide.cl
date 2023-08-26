@@ -225,27 +225,4 @@ __kernel void move_armatures(__global float4 *hulls,
     armature.z += diff.z;
     armature.w += diff.w;
     armatures[gid] = armature;
-
-
-    // float4 b1_hull = hulls[gid];
-    // int2 hull_1_flags = hull_flags[gid];
-    // int4 hull_1_table = element_tables[gid];
-    // float4 b1_armature = armatures[hull_1_flags.y];
-
-    // bool b1_no_bones = (hull_1_flags.x & 0x08) !=0;
-
-    // // todo: this won't work without a hull table for the armatures
-    // if (!b1_no_bones)
-    // {
-    //     float2 center_a = calculate_centroid(points, hull_1_table);
-    //     float2 diffa = center_a - b1_hull.xy;
-    //     b1_armature.x += diffa.x;
-    //     b1_armature.y += diffa.y;
-    //     b1_armature.z -= diffa.x;
-    //     b1_armature.w -= diffa.y;
-    //     // b1_armature.z = b1_armature.x -= diffa.x;
-    //     // b1_armature.w = b1_armature.y -= diffa.y;
-    //     armatures[hull_1_flags.y] = b1_armature;
-    // }
-
 }
