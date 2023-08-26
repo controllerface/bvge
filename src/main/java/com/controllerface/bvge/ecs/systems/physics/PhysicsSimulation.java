@@ -26,7 +26,7 @@ public class PhysicsSimulation extends GameSystem
     //  In this way, friction is a "status effect" that is cleared every frame
     //  and applied when contact occurs.
     private final static float GRAVITY_X = 0;
-    private final static float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
+    private final static float GRAVITY_Y = -(9.8f * 50) * SUB_STEPS;
     private final static float FRICTION = .990f;
 
     private final UniformGrid uniform_grid;
@@ -249,6 +249,8 @@ public class PhysicsSimulation extends GameSystem
         GPU.sort_reactions();
 
         GPU.apply_reactions();
+
+        GPU.move_armatures();
 
 
         // todo: will need to separate reactions out into manifolds in order to avoid atomicity issues.

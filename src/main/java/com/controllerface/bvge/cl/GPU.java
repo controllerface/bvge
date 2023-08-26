@@ -1526,6 +1526,11 @@ public class GPU
         gpu_kernel.call(arg_long(Main.Memory.point_count()));
     }
 
+    public static void move_armatures()
+    {
+
+    }
+
     public static void resolve_constraints(int edge_steps)
     {
         var gpu_kernel = Kernel.resolve_constraints.gpu;

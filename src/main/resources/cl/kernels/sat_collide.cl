@@ -185,3 +185,33 @@ __kernel void apply_reactions(__global float2 *reactions,
 
     points[gid] = point;
 }
+
+__kernel void move_armatures(__global float4 *hulls,
+                             __global float4 *armatures,
+                             __global int4 *element_tables,
+                             __global int2 *hull_flags,
+                             __global float4 *points)
+{
+    int gid = get_global_id(0);
+    float4 b1_hull = hulls[gid];
+    int2 hull_1_flags = hull_flags[gid];
+    int4 hull_1_table = element_tables[gid];
+    float4 b1_armature = armatures[hull_1_flags.y];
+
+    bool b1_no_bones = (hull_1_flags.x & 0x08) !=0;
+
+    // todo: this needs to be moved to a separate kernel, later in the physics loop
+    if (!b1_no_bones)
+    {
+        float2 center_a = calculate_centroid(points, hull_1_table);
+        float2 diffa = center_a - b1_hull.xy;
+        b1_armature.x += diffa.x;
+        b1_armature.y += diffa.y;
+        b1_armature.z -= diffa.x;
+        b1_armature.w -= diffa.y;
+        // b1_armature.z = b1_armature.x -= diffa.x;
+        // b1_armature.w = b1_armature.y -= diffa.y;
+        armatures[hull_1_flags.y] = b1_armature;
+    }
+
+}

@@ -259,23 +259,30 @@ inline void polygon_collision(int b1_id, int b2_id,
         edge_point_2.zw = edge_point_2.xy - e2_dist * e2_diff_2;
     }
 
-    int i = atomic_inc(&counter[0]);
-    int j = atomic_inc(&counter[0]);
-    int k = atomic_inc(&counter[0]);
+    if (!vs)
+    {
+        int i = atomic_inc(&counter[0]);
+        reactions[i] = v_reaction;
+        reaction_index[i] = vert_index;
+        atomic_inc(&point_reactions[vert_index]);
+    }
+    if (!es)
+    {
+        int j = atomic_inc(&counter[0]);
+        int k = atomic_inc(&counter[0]);
+        reactions[j] = e1_reaction;
+        reactions[k] = e2_reaction;
+        reaction_index[j] = edge_index_a;
+        reaction_index[k] = edge_index_b;
+        atomic_inc(&point_reactions[edge_index_a]);
+        atomic_inc(&point_reactions[edge_index_b]);
+    }
+
+
+
 
     //printf("debug: i=%d v= %d - j=%d e1=%d - k=%d e2=%d", i,  vert_index, j, edge_index_a, k, edge_index_b);
 
-    reactions[i] = v_reaction;
-    reactions[j] = e1_reaction;
-    reactions[k] = e2_reaction;
-
-    reaction_index[i] = vert_index;
-    reaction_index[j] = edge_index_a;
-    reaction_index[k] = edge_index_b;
-
-    atomic_inc(&point_reactions[vert_index]);
-    atomic_inc(&point_reactions[edge_index_a]);
-    atomic_inc(&point_reactions[edge_index_b]);
 
     // todo: increment an atomic per-point counter to indicate how many reactions each point has
 
