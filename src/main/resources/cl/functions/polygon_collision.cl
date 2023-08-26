@@ -5,6 +5,8 @@ inline void polygon_collision(int b1_id, int b2_id,
                              __global int4 *element_tables,
                              __global float4 *points,
                              __global float4 *edges,
+                             __global float2 *reactions,
+                             __global int *reaction_index,
                              __global int *counter)
 {
 

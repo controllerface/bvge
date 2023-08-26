@@ -6,6 +6,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
                                      __global int4 *element_tables,
                                      __global float4 *points,
                                      __global float4 *edges,
+                                     __global float2 *reactions,
+                                     __global int *reaction_index,
                                      __global int *counter)
 {
     float4 polygon = hulls[polygon_id];

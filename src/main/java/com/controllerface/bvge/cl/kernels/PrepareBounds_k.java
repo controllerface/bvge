@@ -17,8 +17,8 @@ public class PrepareBounds_k extends GPUKernel
         def_arg(2, Sizeof.cl_int);
     }
 
-    public void set_aabb(Pointer aabb_pointer)
+    public void set_aabb(Pointer aabb)
     {
-        new_arg(0, Sizeof.cl_mem, aabb_pointer);
+        new_arg(0, Sizeof.cl_mem, aabb);
     }
 }

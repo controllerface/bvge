@@ -2,6 +2,8 @@ inline void circle_collision(int b1_id, int b2_id,
                              __global float4 *hulls,
                              __global int4 *element_tables,
                              __global float4 *points,
+                             __global float2 *reactions,
+                             __global int *reaction_index,
                              __global int *counter)
 {
     float4 hull_1 = hulls[b1_id];

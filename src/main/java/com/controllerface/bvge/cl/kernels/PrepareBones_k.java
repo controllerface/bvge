@@ -22,34 +22,34 @@ public class PrepareBones_k extends GPUKernel
         def_arg(7, Sizeof.cl_int);
     }
 
-    public void set_bone_instances(Pointer hulls)
+    public void set_bone_instances(Pointer bone_instances)
     {
-        new_arg(0, Sizeof.cl_mem, hulls);
+        new_arg(0, Sizeof.cl_mem, bone_instances);
     }
 
-    public void set_bone_references(Pointer rotations)
+    public void set_bone_references(Pointer bone_references)
     {
-        new_arg(1, Sizeof.cl_mem, rotations);
+        new_arg(1, Sizeof.cl_mem, bone_references);
     }
 
-    public void set_bone_index(Pointer rotations)
+    public void set_bone_index(Pointer bone_index)
     {
-        new_arg(2, Sizeof.cl_mem, rotations);
+        new_arg(2, Sizeof.cl_mem, bone_index);
     }
 
-    public void set_hulls(Pointer rotations)
+    public void set_hulls(Pointer hulls)
     {
-        new_arg(3, Sizeof.cl_mem, rotations);
+        new_arg(3, Sizeof.cl_mem, hulls);
     }
 
-    public void set_armatures(Pointer rotations)
+    public void set_armatures(Pointer armatures)
     {
-        new_arg(4, Sizeof.cl_mem, rotations);
+        new_arg(4, Sizeof.cl_mem, armatures);
     }
 
-    public void set_hull_flags(Pointer rotations)
+    public void set_hull_flags(Pointer hull_flags)
     {
-        new_arg(5, Sizeof.cl_mem, rotations);
+        new_arg(5, Sizeof.cl_mem, hull_flags);
     }
 
 }

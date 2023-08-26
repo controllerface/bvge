@@ -13,6 +13,8 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global int2 *hull_flags,
                           __global float4 *points,
                           __global float4 *edges,
+                          __global float2 *reactions,
+                          __global int *reaction_index,
                           __global int *counter)
 {
     int gid = get_global_id(0);
@@ -49,15 +51,37 @@ __kernel void sat_collide(__global int2 *candidates,
     //  be a preliminary kernel that sorts the candidate pairs so they can be run on the right kernel
     if (b1_is_polygon && b2_is_polygon) 
     {
-        polygon_collision(b1_id, b2_id, hulls, hull_flags, element_tables, points, edges, counter); 
+        polygon_collision(b1_id, b2_id, 
+            hulls, 
+            hull_flags, 
+            element_tables, 
+            points, 
+            edges, 
+            reactions,
+            reaction_index,
+            counter); 
     }
     else if (b1_is_circle && b2_is_circle) 
     {
-        circle_collision(b1_id, b2_id, hulls, element_tables, points, counter); 
+        circle_collision(b1_id, b2_id, 
+            hulls, 
+            element_tables, 
+            points, 
+            reactions,
+            reaction_index,
+            counter); 
     }
     else 
     {
-        polygon_circle_collision(p_id, c_id, hulls, hull_flags, element_tables, points, edges, counter); 
+        polygon_circle_collision(p_id, c_id, 
+            hulls, 
+            hull_flags, 
+            element_tables, 
+            points, 
+            edges, 
+            reactions,
+            reaction_index,
+            counter); 
     }
 
 

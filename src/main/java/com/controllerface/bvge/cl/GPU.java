@@ -1,10 +1,7 @@
 package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.cl.kernels.PrepareBones_k;
-import com.controllerface.bvge.cl.kernels.PrepareBounds_k;
-import com.controllerface.bvge.cl.kernels.PrepareEdges_k;
-import com.controllerface.bvge.cl.kernels.PrepareTransforms_k;
+import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.systems.physics.GPUMemory;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
@@ -857,16 +854,26 @@ public class GPU
         finalize_candidates.def_arg(5, Sizeof.cl_mem);
         Kernel.finalize_candidates.set_kernel(finalize_candidates);
 
-        var sat_collide = new GPUKernel(command_queue, _k.get(Kernel.sat_collide), 8);
-        sat_collide.def_arg(0, Sizeof.cl_mem);
-        sat_collide.new_arg(1, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
-        sat_collide.new_arg(2, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
-        sat_collide.new_arg(3, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
-        sat_collide.new_arg(4, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
-        sat_collide.new_arg(5, Sizeof.cl_mem, Memory.points.gpu.pointer());
-        sat_collide.new_arg(6, Sizeof.cl_mem, Memory.edges.gpu.pointer());
-        sat_collide.def_arg(7, Sizeof.cl_mem);
-        Kernel.sat_collide.set_kernel(sat_collide);
+        var ack = new SatCollide_k(command_queue, Program.sat_collide.gpu);
+        ack.set_hulls(Memory.hulls.gpu.pointer());
+        ack.set_armatures(Memory.armatures.gpu.pointer());
+        ack.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        ack.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        ack.set_points(Memory.points.gpu.pointer());
+        ack.set_edges(Memory.edges.gpu.pointer());
+        Kernel.sat_collide.set_kernel(ack);
+
+
+//        var sat_collide = new GPUKernel(command_queue, _k.get(Kernel.sat_collide), 8);
+//        sat_collide.def_arg(0, Sizeof.cl_mem);
+//        sat_collide.new_arg(1, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
+//        sat_collide.new_arg(2, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
+//        sat_collide.new_arg(3, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
+//        sat_collide.new_arg(4, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
+//        sat_collide.new_arg(5, Sizeof.cl_mem, Memory.points.gpu.pointer());
+//        sat_collide.new_arg(6, Sizeof.cl_mem, Memory.edges.gpu.pointer());
+//        sat_collide.def_arg(7, Sizeof.cl_mem);
+//        Kernel.sat_collide.set_kernel(sat_collide);
 
         var resolve_constraints = new GPUKernel(command_queue, _k.get(Kernel.resolve_constraints), 5);
         resolve_constraints.new_arg(0, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
@@ -1300,7 +1307,6 @@ public class GPU
 
         int hull_count = Main.Memory.hull_count();
 
-        // step 1: locate objects that are within bounds
         int x_subdivisions = uniform_grid.getX_subdivisions();
         physics_buffer.x_sub_divisions = Pointer.to(arg_int(x_subdivisions));
         physics_buffer.key_count_length = Pointer.to(arg_int(uniform_grid.getDirectoryLength()));
@@ -1428,18 +1434,37 @@ public class GPU
 
         var gpu_kernel = Kernel.sat_collide.gpu;
 
-        int candidatesSize = (int) physics_buffer.get_final_size() / Sizeof.cl_int;
+        int candidates_size = (int) physics_buffer.get_final_size() / Sizeof.cl_int;
 
         // candidates are pairs of integer indices, so the global size is half the count
-        long[] global_work_size = new long[]{candidatesSize / 2};
+        long[] global_work_size = new long[]{candidates_size / 2};
 
         // atomic counter
         int[] size = arg_int(0);
         var dst_size = Pointer.to(size);
         var size_data = cl_new_int_arg_buffer(dst_size);
 
+        // todo: add buffer to store point reactions in, similar to aabb candidates
+        //  will need two buffers, one for point index and one for the reactions themselves
+
+        long max_point_count = physics_buffer.get_final_size()
+            * 2  // there are two bodies per collision pair
+            * 2; // assume worst case is 2 points per body
+
+        // sizes for the reaction buffers
+        long reaction_buf_size = (long) Sizeof.cl_float2 * max_point_count;
+        long index_buf_size = (long) Sizeof.cl_int * max_point_count;
+
+        var reaction_data = cl_new_buffer(reaction_buf_size);
+        var index_data = cl_new_buffer(index_buf_size);
+
+        physics_buffer.reactions = new GPUMemory(reaction_data);
+        physics_buffer.reaction_index = new GPUMemory(index_data);
+
         gpu_kernel.set_arg(0, physics_buffer.candidates.pointer());
-        gpu_kernel.set_arg(7, Pointer.to(size_data));
+        gpu_kernel.set_arg(7, physics_buffer.reactions.pointer());
+        gpu_kernel.set_arg(8, physics_buffer.reaction_index.pointer());
+        gpu_kernel.set_arg(9, Pointer.to(size_data));
 
         gpu_kernel.call(global_work_size);
 
