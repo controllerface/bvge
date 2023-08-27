@@ -124,10 +124,7 @@ public class PhysicsSimulation extends GameSystem
         // what is actually moved, and the result of the hull movement is used to position the original mesh for
         // rendering. This separation is necessary as model geometry is too complex to use as a collision boundary.
         GPU.animate_hulls();
-        // todo: generate animated assets and implement animation cycle as separate system or sub-module.
-        //  This call will need to remain as part of the physics system, as objects must always be placed
-        //  each tick, however the rate at which bone animations actually change will likely be different
-        //  that the fixed physics step, and possibly vary based on the animation intent or type of model.
+
 
         // Now that all animated hulls are in their initial frame positions, we perform the mathematical steps
         // to calculate where the individual points of each hull currently are. When this call returns,  all

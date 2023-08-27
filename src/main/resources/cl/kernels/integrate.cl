@@ -1,6 +1,19 @@
 #define MINIMUM_DIFF FLT_MIN //0.005
 #define MAXIMUM_DIFF FLT_MAX //0.01
 
+inline float2 generate_counter_vector(float2 vector, float counter_scale)
+{
+    // if (counter_scale < .01)
+    // {
+    //     return (float2)(0.0f, 0.0f);
+    // }
+
+    float2 neg;
+    neg.x = -vector.x * (counter_scale);  
+    neg.y = -vector.y * (counter_scale); 
+    return neg; 
+}
+
 /**
 Performs the integration step of a physics loop, generally this is the first stage
 in a process that updates all the tracked vertices each frame.
@@ -19,6 +32,7 @@ __kernel void integrate(
     __global int4 *bounds_index_data,
     __global int2 *bounds_bank_data,
     __global int2 *hull_flags,
+    __global float *anti_gravity,
     __global float *args)
 {
     int gid = get_global_id(0);
@@ -35,7 +49,7 @@ __kernel void integrate(
     float2 gravity;
     gravity.x = args[9];
     gravity.y = args[10];
-    float friction = args[11];
+    float damping = args[11];
     
     // get hull from array
     float4 hull = hulls[gid];
@@ -79,12 +93,8 @@ __kernel void integrate(
         acc.x += gravity.x;
         acc.y += gravity.y;
     }
-   	acc.x = acc.x * (dt * dt);
-   	acc.y = acc.y * (dt * dt);
+   	acc *= (dt * dt);
 
-    // reset acceleration to zero for the next frame
-    acceleration.x = 0;
-    acceleration.y = 0;
 
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;
@@ -105,16 +115,22 @@ __kernel void integrate(
 
     //bool inv_r = gid % 2 == 0;
 
+    float anti_scale_final = -1;
+    for (int i = start; i <= end; i++)
+    {
+        float anti_scale = anti_gravity[i];
+        anti_gravity[i] = 0;
+        anti_scale_final = max(anti_scale, anti_scale_final);
+    }
+
+    float2 ag = generate_counter_vector(gravity, anti_scale_final);
+    float2 iacc = ag * (dt * dt);
+
     for (int i = start; i <= end; i++)
     {
         // get this point
         float4 point = points[i];
         
-        // todo: move this idea somewhere else, it isn't goignt o work here anymore
-        // force rotate the point to keep the object upright
-        // todo: this should scale based on gravity, with zero g being no ro restriction of rotation
-        //point = rotate_point(point, (float2)hull.xy, -rotation.x * 10);
-
         // this was a very basic orbital motion test, worth saving for something else
         //float rot  = /*inv_r ? -.00001 :*/ .00001;
         //point = rotate_point(point, (float2)(0,0), rot);
@@ -123,15 +139,22 @@ __kernel void integrate(
         float2 pos = point.xy;
         float2 prv = point.zw;
 
+
+        // // todo: use an accumulated "anti-grav" value to counteract acc.
+        // float2 ag = generate_counter_vector(gravity, anti_scale);
+
+        // float2 iacc = ag * (dt * dt);
+        // //if (ag.y > 0.0f) printf("debug ag=%f ag.y=%f iacc.y=%f acc.y=%f grav.y=%f", anti_scale, ag.y, iacc.y, acc.y, gravity.y);
+
         if (!is_static)
         {
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
-            diff = acc + diff;
+            diff = acc + iacc + diff;
 
-            // add friction component todo: take this in as an argument, gravity too
-            diff.x *= friction;
-            diff.y *= friction;
+            // add damping component
+            diff.x *= damping;
+            diff.y *= damping;
             
             // set the prv to current pos
             prv.x = pos.x;
@@ -222,9 +245,9 @@ __kernel void integrate(
             float2 diff = pos - prv;
             diff = acc + diff;
 
-            // add friction component todo: take this in as an argument, gravity too
-            diff.x *= friction;
-            diff.y *= friction;
+            // add damping component todo: take this in as an argument, gravity too
+            diff.x *= damping;
+            diff.y *= damping;
             
             // set the prv to current pos
             prv.x = pos.x;
@@ -329,6 +352,10 @@ __kernel void integrate(
     
     // rotation.y is the reference angle taken at object creation when rotation is zero
     rotation.x = rotation.y - r_x;
+
+    // reset acceleration to zero for the next frame
+    acceleration.x = 0;
+    acceleration.y = 0;
 
     // store updated hull and bounds data in result buffers
     bounds[gid] = bounding_box;

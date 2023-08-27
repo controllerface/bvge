@@ -186,7 +186,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        //ecs.registerSystem(new BoneRenderer(ecs));
+        ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
         //ecs.registerSystem(new CrateRenderer(ecs));
@@ -198,13 +198,13 @@ public class TestGame extends GameMode
         //genPlayer();
         genTestFigure(1, 500, 0);
 
-        genTestTriangle(20f, 190, 250);
+        //genTestTriangle(20f, 190, 250);
 
-        genTestTriangle(10f, 190, 250);
-        genTestTriangle(10f, 190, 200);
-        genTestTriangle(10f, 190, 150);
-        genTestTriangle(10f, 190, 100);
-        genTestTriangle(10f, 190, 50);
+//        genTestTriangle(10f, 190, 250);
+//        genTestTriangle(10f, 190, 200);
+//        genTestTriangle(10f, 190, 150);
+//        genTestTriangle(10f, 190, 100);
+//        genTestTriangle(10f, 190, 50);
 
 //        genTestCrate(10f, 190, 250);
 //        genTestCrate(10f, 190, 200);
@@ -224,10 +224,10 @@ public class TestGame extends GameMode
 //        genTestCrate(10f, 210, 100);
 //        genTestCrate(10f, 210, 50);
 //
-//        genBoxModelNPC(0.05f, 200, 250);
-//        genBoxModelNPC(0.05f, 200, 200);
 //        genBoxModelNPC(0.05f, 200, 150);
+//        genBoxModelNPC(0.05f, 200, 125);
 //        genBoxModelNPC(0.05f, 200, 100);
+//        genBoxModelNPC(0.05f, 200, 75);
 //        genBoxModelNPC(0.05f, 200, 50);
         //genTestFigureNPC(1, 200, 50);
         //genTestCircle(20,0, 50);
@@ -250,9 +250,9 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
 
 
-        //genCircles(80, 3f, 5f, 100, 1000);
-        //genCrates(80, 8f, 10f, 0, 1000);
-        genTriangles(80,  8f, 10f, 0, 1000);
+        genCircles(100, 5f, 7f, 200, 1000);
+        //genCrates(50, 8f, 7f, 200, 2000);
+        //genTriangles(50,  8f, 7f, 200, 1000);
 
 
 

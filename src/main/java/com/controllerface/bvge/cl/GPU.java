@@ -233,6 +233,8 @@ public class GPU
          */
         point_offsets(Sizeof.cl_int),
 
+        point_anti_gravity(Sizeof.cl_float),
+
         /**
          * Edges of tracked physics hulls. Values are float4 with the following mappings:
          * -
@@ -569,6 +571,7 @@ public class GPU
         Memory.points.init(max_points);
         Memory.point_reactions.init(max_points);
         Memory.point_offsets.init(max_points);
+        Memory.point_anti_gravity.init(max_points);
         Memory.edges.init(max_points);
         Memory.vertex_table.init(max_points);
         Memory.vertex_references.init(max_points);
@@ -591,6 +594,7 @@ public class GPU
             + Memory.points.length
             + Memory.point_reactions.length
             + Memory.point_offsets.length
+            + Memory.point_anti_gravity.length
             + Memory.edges.length
             + Memory.vertex_table.length
             + Memory.vertex_references.length
@@ -611,6 +615,7 @@ public class GPU
         System.out.println("hull flags        : " + Memory.hull_flags.length);
         System.out.println("point reactions   : " + Memory.point_reactions.length);
         System.out.println("point offsets     : " + Memory.point_offsets.length);
+        System.out.println("point anti-grav   : " + Memory.point_anti_gravity.length);
         System.out.println("bounding box      : " + Memory.aabb.length);
         System.out.println("spatial index     : " + Memory.aabb_index.length);
         System.out.println("spatial key bank  : " + Memory.aabb_key_table.length);
@@ -666,7 +671,6 @@ public class GPU
 
         var sat_collide_k = new SatCollide_k(command_queue, Program.sat_collide.gpu);
         sat_collide_k.set_hulls(Memory.hulls.gpu.pointer());
-        sat_collide_k.set_armatures(Memory.armatures.gpu.pointer());
         sat_collide_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         sat_collide_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         sat_collide_k.set_points(Memory.points.gpu.pointer());
@@ -681,6 +685,7 @@ public class GPU
 
         var apply_reactions_k = new ApplyReactions_k(command_queue, Program.sat_collide.gpu);
         apply_reactions_k.set_points(Memory.points.gpu.pointer());
+        apply_reactions_k.set_point_anti_grav(Memory.point_anti_gravity.gpu.pointer());
         apply_reactions_k.set_point_reactions(Memory.point_reactions.gpu.pointer());
         apply_reactions_k.set_point_offsets(Memory.point_offsets.gpu.pointer());
         Kernel.apply_reactions.set_kernel(apply_reactions_k);
@@ -780,7 +785,7 @@ public class GPU
         animate_hulls.new_arg(7, Sizeof.cl_mem, Memory.bone_instances.gpu.pointer());
         Kernel.animate_hulls.set_kernel(animate_hulls);
 
-        var integrate = new GPUKernel(command_queue, _k.get(Kernel.integrate), 12);
+        var integrate = new GPUKernel(command_queue, _k.get(Kernel.integrate), 13);
         integrate.new_arg(0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
         integrate.new_arg(1, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
         integrate.new_arg(2, Sizeof.cl_mem, Memory.armature_flags.gpu.pointer());
@@ -792,7 +797,8 @@ public class GPU
         integrate.new_arg(8, Sizeof.cl_mem, Memory.aabb_index.gpu.pointer());
         integrate.new_arg(9, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
         integrate.new_arg(10, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
-        integrate.def_arg(11, Sizeof.cl_mem);
+        integrate.new_arg(11, Sizeof.cl_mem, Memory.point_anti_gravity.gpu.pointer());
+        integrate.def_arg(12, Sizeof.cl_mem);
         Kernel.integrate.set_kernel(integrate);
 
         var generate_keys = new GPUKernel(command_queue, _k.get(Kernel.generate_keys), 7);
@@ -1214,7 +1220,7 @@ public class GPU
         long size = Sizeof.cl_float * args.length;
         var argMem = cl_new_read_only_buffer(size, srcArgs);
 
-        gpu_kernel.set_arg(11, Pointer.to(argMem));
+        gpu_kernel.set_arg(12, Pointer.to(argMem));
         gpu_kernel.call(arg_long(Main.Memory.hull_count()));
 
         clReleaseMemObject(argMem);
@@ -1440,9 +1446,9 @@ public class GPU
         physics_buffer.reaction_index = new GPUMemory(index_data);
 
         gpu_kernel.set_arg(0, physics_buffer.candidates.pointer());
-        gpu_kernel.set_arg(7, physics_buffer.reactions.pointer());
-        gpu_kernel.set_arg(8, physics_buffer.reaction_index.pointer());
-        gpu_kernel.set_arg(10, Pointer.to(size_data));
+        gpu_kernel.set_arg(6, physics_buffer.reactions.pointer());
+        gpu_kernel.set_arg(7, physics_buffer.reaction_index.pointer());
+        gpu_kernel.set_arg(9, Pointer.to(size_data));
 
         gpu_kernel.call(global_work_size);
 
@@ -1456,6 +1462,8 @@ public class GPU
     public static void scan_reactions()
     {
         scan_int_out(Memory.point_reactions.gpu.memory(), Memory.point_offsets.gpu.memory(), Main.Memory.point_count());
+
+        // it is important to zero out the reactions buffer after the scan. It will be reused during sorting
         Memory.point_reactions.clear();
     }
 
@@ -1834,13 +1842,14 @@ public class GPU
                 .ifPresent(GPUMemory::release);
         }
 
-        shared_mem.values().forEach(CL::clReleaseMemObject);
-
         for (Program program : Program.values())
         {
             Optional.ofNullable(program.gpu)
                 .ifPresent(GPUProgram::destroy);
         }
+
+        shared_mem.values().forEach(CL::clReleaseMemObject);
+
         clReleaseCommandQueue(command_queue);
         clReleaseContext(context);
     }
