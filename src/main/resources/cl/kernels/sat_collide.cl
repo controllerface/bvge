@@ -134,53 +134,59 @@ __kernel void apply_reactions(__global float2 *reactions,
     int gid = get_global_id(0);
     int reaction_count = point_reactions[gid];
 
+    // exit on non-reactive points
     if (reaction_count == 0) return;
 
-    int offset = point_offsets[gid];
+    // get the point to be adjusted
     float4 point = points[gid];
+    
+    // get the offset into the reaction buffer corresponding to this point
+    int reaction_offset = point_offsets[gid];
+    
+    // store the initial distance and previous position. These are usedf after
+    // adjustment is made to re-adjust the previous position of the point. This
+    // is done as a best effort to conserve momentum. 
+    float2 initial_tail = point.zw;
+    float initial_dist = distance(point.xy, initial_tail);
 
-    float2 e1_p = point.zw;
-    float e1_dist = distance(point.xy, e1_p);
-
+    // calculate the cumulative reaction on this point
     float2 reaction = (float2)(0.0, 0.0);
-
-    float x_sum = 0;
-    float y_sum = 0;
-
     for (int i = 0; i < reaction_count; i++)
     {
-        int idx = i + offset;
+        int idx = i + reaction_offset;
         float2 reaction_i = reactions[idx];
-        x_sum += reaction_i.x;
-        y_sum += reaction_i.y;
         reaction += reaction_i;
     }
 
-    float x = x_sum / reaction_count;
-    float y = y_sum / reaction_count;
-    
-    // point.x += x;
-    // point.y += y;
-
+    // apply the cumulative reaction
     point.xy += reaction;
 
-    float2 e1_diff_2 = point.xy - e1_p;
-    float new_len_e1 = length(e1_diff_2);
-
-    if (new_len_e1 != 0.0)
+    // using the initial data, compared to the new position, calculate the updated previous
+    // position to ensure it is equivalent to the initial position delta. This preserves 
+    // velocity.
+    float2 adjusted_offset = point.xy - initial_tail;
+    float new_len = length(adjusted_offset);
+    if (new_len != 0.0)
     {
-        e1_diff_2 /= new_len_e1;
-        point.zw = point.xy - e1_dist * e1_diff_2;
+        adjusted_offset /= new_len;
+        point.zw = point.xy - initial_dist * adjusted_offset;
     }
 
-    // todo: calculate direction of movment relative to gravity and accumulate anti-grav for this point
-
+    // in addition to velocty preservation, to aid in stabiliy, a non-real force of anti-gravity
+    // is modeled to assist in keeping objects from colliding in the direction of gravity. This
+    // adjustment is subtle and does not overcome all rigid-body simulation errors, but helps
+    // maintain stability with small numbers of stacked objects. 
     float2 g = (float2)(0.0, -1.0);
-    float2 h = point.xy - point.zw;
-    //float2 h = (float2)(x, y);
-    float ag = calculate_anti_gravity(g, h);
+    float2 heading = point.xy - point.zw;
+    float ag = calculate_anti_gravity(g, heading);
 
+    // todo: actual gravity vector should be provided, when it can change this should also be changable
+    //  right now it is a static direction. note that magnitude of gravity is not important, only direction
+
+    // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
+    // than it is against it, so we clamp to 0 to avoid divide by zero errors. 
     if (ag < 0.0f) ag = 0.0f;
+    //if (ag > 0.0f) ag = 5.0f;
 
     anti_gravity[gid] = ag;
     points[gid] = point;
@@ -204,7 +210,7 @@ __kernel void move_armatures(__global float4 *hulls,
     int start = hull_table.x;
     int end = hull_table.y;
     int hull_count = end - start + 1;
-    
+
     float4 diff = (float4)(0.0, 0.0, 0.0, 0.0);
     for (int i = 0; i < hull_count; i++)
     {
@@ -227,7 +233,5 @@ __kernel void move_armatures(__global float4 *hulls,
 
     armature.x += diff.x;
     armature.y += diff.y;
-    // armature.z += diff.x;
-    // armature.w += diff.y;
     armatures[gid] = armature;
 }

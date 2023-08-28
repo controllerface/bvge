@@ -24,7 +24,7 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 sub = hull_2.xy - hull_1.xy;
     normal = normalize(sub);
     depth = radii - _distance;
-
+    
     float2 reaction = depth * normal;
     float2 offset1 = -0.5f * reaction;
     float2 offset2 = offset1 * -1.0f;

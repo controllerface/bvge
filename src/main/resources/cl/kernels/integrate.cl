@@ -113,18 +113,19 @@ __kernel void integrate(
 	float min_y = FLT_MAX;
 	float max_y = FLT_MIN;
 
-    //bool inv_r = gid % 2 == 0;
 
-    float anti_scale_final = -1;
+    float anti_grav_scale = 0;
     for (int i = start; i <= end; i++)
     {
-        float anti_scale = anti_gravity[i];
+        float point_scale = anti_gravity[i];
         anti_gravity[i] = 0;
-        anti_scale_final = max(anti_scale, anti_scale_final);
+        anti_grav_scale = max(point_scale, anti_grav_scale);
     }
 
-    float2 ag = generate_counter_vector(gravity, anti_scale_final);
-    float2 iacc = ag * (dt * dt);
+    float2 anti_grav = generate_counter_vector(gravity, anti_grav_scale);
+    float2 i_acc = anti_grav * (dt * dt);
+
+    //bool inv_r = gid % 2 == 0;
 
     for (int i = start; i <= end; i++)
     {
@@ -139,18 +140,11 @@ __kernel void integrate(
         float2 pos = point.xy;
         float2 prv = point.zw;
 
-
-        // // todo: use an accumulated "anti-grav" value to counteract acc.
-        // float2 ag = generate_counter_vector(gravity, anti_scale);
-
-        // float2 iacc = ag * (dt * dt);
-        // //if (ag.y > 0.0f) printf("debug ag=%f ag.y=%f iacc.y=%f acc.y=%f grav.y=%f", anti_scale, ag.y, iacc.y, acc.y, gravity.y);
-
         if (!is_static)
         {
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
-            diff = acc + iacc + diff;
+            diff = acc + i_acc + diff;
 
             // add damping component
             diff.x *= damping;
@@ -243,7 +237,7 @@ __kernel void integrate(
         {
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
-            diff = acc + diff;
+            diff = acc + i_acc + diff;
 
             // add damping component todo: take this in as an argument, gravity too
             diff.x *= damping;

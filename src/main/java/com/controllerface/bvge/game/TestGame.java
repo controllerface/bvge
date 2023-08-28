@@ -51,6 +51,23 @@ public class TestGame extends GameMode
         }
     }
 
+    private void genCrates2(int box_size, float spacing, float size, float start_x, float start_y)
+    {
+        System.out.println("generating: " + box_size * box_size + " Crates..");
+        for (int i = 0; i < box_size; i++)
+        {
+            for (int j = 0; j < box_size; j++)
+            {
+                float x = start_x + i * spacing;
+                float y = start_y + j * spacing;
+//                var npc = ecs.registerEntity(null);
+//                var armature_index = PhysicsObjects.dynamic_Box(x, y, size);
+//                ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+                genBoxModelNPC(size, x, y);
+            }
+        }
+    }
+
     private void genTriangles(int box_size, float spacing, float size, float start_x, float start_y)
     {
         System.out.println("generating: " + box_size * box_size + " Triangles..");
@@ -250,9 +267,10 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
 
 
-        genCircles(100, 5f, 7f, 200, 1000);
-        //genCrates(50, 8f, 7f, 200, 2000);
-        //genTriangles(50,  8f, 7f, 200, 1000);
+        //genCircles(25, 7f, 8f, 100, 1000);
+        //genCrates(50,  9f, 8f, 100, 1000);
+        genCrates2(50,  12, 0.05f, 200, 1000);
+        //genTriangles(100,  9f, 8f, 100, 1000);
 
 
 
