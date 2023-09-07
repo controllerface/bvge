@@ -172,7 +172,7 @@ __kernel void apply_reactions(__global float2 *reactions,
         point.zw = point.xy - initial_dist * adjusted_offset;
     }
 
-    // in addition to velocty preservation, to aid in stabiliy, a non-real force of anti-gravity
+    // in addition to velocity preservation, to aid in stabiliy, a non-real force of anti-gravity
     // is modeled to assist in keeping objects from colliding in the direction of gravity. This
     // adjustment is subtle and does not overcome all rigid-body simulation errors, but helps
     // maintain stability with small numbers of stacked objects. 
@@ -186,7 +186,8 @@ __kernel void apply_reactions(__global float2 *reactions,
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0 to avoid divide by zero errors. 
     if (ag < 0.0f) ag = 0.0f;
-    //if (ag > 0.0f) ag = 5.0f;
+    //if (ag > 0.0f) ag *= 2.0f;
+    //if (ag > 0.0f) ag = 1.0f;
 
     anti_gravity[gid] = ag;
     points[gid] = point;
