@@ -33,8 +33,15 @@ public class GPU
     private static final long FLAGS_WRITE_CPU_COPY = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     private static final long FLAGS_READ_CPU_COPY = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
 
+    /**
+     * A convenience object, used when clearing out buffers to fill them with zeroes
+     */
     private static final Pointer ZERO_PATTERN = Pointer.to(new int[]{0});
 
+    /**
+     * Memory that is shared between Open CL and Open GL contexts
+     */
+    private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
     //#endregion
 
     //#region Workgroup Variables
@@ -84,6 +91,7 @@ public class GPU
      */
     private static PhysicsBuffer physics_buffer;
 
+
     //#endregion
 
     //#region Program Objects
@@ -127,12 +135,6 @@ public class GPU
     //#endregion
 
     //#region Kernel Objects
-
-    /**
-     * After init, all kernels are loaded into this map, making named access of them simple.
-     */
-    // todo: this will be removed in favor of explicit uses of kernels in defined programs
-    private static final Map<Kernel, cl_kernel> _k = new HashMap<>();
 
     /**
      * Kernel function names. Program implementations use this enum to instantiate kernel objects
@@ -193,11 +195,6 @@ public class GPU
     //#endregion
 
     //#region Memory Objects
-
-    /**
-     * Memory that is shared between Open CL and Open GL contexts
-     */
-    private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
 
     /**
      * Memory buffers that store data used within the various kernel functions. Each buffer
@@ -652,6 +649,8 @@ public class GPU
      */
     private static void init_kernels()
     {
+        // Open GL interop
+
         var prep_bounds_k = new PrepareBounds_k(command_queue, Program.prepare_bounds.gpu);
         prep_bounds_k.set_aabb(Memory.aabb.gpu.pointer());
         Kernel.prepare_bounds.set_kernel(prep_bounds_k);
@@ -674,6 +673,8 @@ public class GPU
         prep_bones_k.set_armatures(Memory.armatures.gpu.pointer());
         prep_bones_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         Kernel.prepare_bones.set_kernel(prep_bones_k);
+
+        // narrow collision
 
         var sat_collide_k = new SatCollide_k(command_queue, Program.sat_collide.gpu);
         sat_collide_k.set_hulls(Memory.hulls.gpu.pointer());
@@ -704,6 +705,8 @@ public class GPU
         move_armatures_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         move_armatures_k.set_points(Memory.points.gpu.pointer());
         Kernel.move_armatures.set_kernel(move_armatures_k);
+
+        // crud
 
         var create_point_k = new CreatePoint_k(command_queue, Program.gpu_crud.gpu);
         create_point_k.set_points(Memory.points.gpu.pointer());
@@ -740,13 +743,15 @@ public class GPU
         create_hull_k.set_element_table(Memory.hull_element_table.gpu.pointer());
         Kernel.create_hull.set_kernel(create_hull_k);
 
+        var read_position_k = new ReadPosition_k(command_queue, Program.gpu_crud.gpu);
+        read_position_k.set_armatures(Memory.armatures.gpu.pointer());
+        Kernel.read_position.set_kernel(read_position_k);
+
         var update_accel_k = new UpdateAccel_k(command_queue, Program.gpu_crud.gpu);
         update_accel_k.set_accel(Memory.armature_accel.gpu.pointer());
         Kernel.update_accel.set_kernel(update_accel_k);
 
-        var read_position_k = new ReadPosition_k(command_queue, Program.gpu_crud.gpu);
-        read_position_k.set_armatures(Memory.armatures.gpu.pointer());
-        Kernel.read_position.set_kernel(read_position_k);
+        // movement
 
         var animate_hulls_k = new AnimateHulls_k(command_queue, Program.animate_hulls.gpu);
         animate_hulls_k.set_points(Memory.points.gpu.pointer());
@@ -773,6 +778,8 @@ public class GPU
         integrate_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         integrate_k.set_point_anti_gravity(Memory.point_anti_gravity.gpu.pointer());
         Kernel.integrate.set_kernel(integrate_k);
+
+        // broad collision
 
         var generate_keys_k = new GenerateKeys_k(command_queue, Program.generate_keys.gpu);
         generate_keys_k.set_aabb_index(Memory.aabb_index.gpu.pointer());
@@ -801,6 +808,8 @@ public class GPU
         var finalize_candidates_k = new FinalizeCandidates_k(command_queue, Program.locate_in_bounds.gpu);
         Kernel.finalize_candidates.set_kernel(finalize_candidates_k);
 
+        // constraint solver
+
         var resolve_constraints_k = new ResolveConstraints_k(command_queue, Program.resolve_constraints.gpu);
         resolve_constraints_k.set_hull_element_table(Memory.hull_element_table.gpu.pointer());
         resolve_constraints_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
@@ -808,6 +817,7 @@ public class GPU
         resolve_constraints_k.set_edges(Memory.edges.gpu.pointer());
         Kernel.resolve_constraints.set_kernel(resolve_constraints_k);
 
+        // integer exclusive scan in-place
 
         var scan_int_single_block_k = new ScanIntSingleBlock_k(command_queue, Program.scan_int_array.gpu);
         Kernel.scan_int_single_block.set_kernel(scan_int_single_block_k);
@@ -818,6 +828,7 @@ public class GPU
         var complete_int_multi_block_k = new CompleteIntMultiBlock_k(command_queue, Program.scan_int_array.gpu);
         Kernel.complete_int_multi_block.set_kernel(complete_int_multi_block_k);
 
+        // integer exclusive scan to output buffer
 
         var scan_int_single_block_out_k = new ScanIntSingleBlockOut_k(command_queue, Program.scan_int_array_out.gpu);
         Kernel.scan_int_single_block_out.set_kernel(scan_int_single_block_out_k);
@@ -828,60 +839,27 @@ public class GPU
         var complete_int_multi_block_out_k = new CompleteIntMultiBlockOut_k(command_queue, Program.scan_int_array_out.gpu);
         Kernel.complete_int_multi_block_out.set_kernel(complete_int_multi_block_out_k);
 
+        // collision candidate scan to output buffer
 
+        var scan_candidates_single_block_out_k = new ScanCandidatesSingleBlockOut_k(command_queue, Program.scan_candidates.gpu);
+        Kernel.scan_candidates_single_block_out.set_kernel(scan_candidates_single_block_out_k);
 
+        var scan_candidates_multi_block_out_k = new ScanCandidatesMultiBlockOut_k(command_queue, Program.scan_candidates.gpu);
+        Kernel.scan_candidates_multi_block_out.set_kernel(scan_candidates_multi_block_out_k);
 
-        // todo: convert those below the lines to concrete classes
+        var complete_candidates_multi_block_out_k = new CompleteCandidatesMultiBlockOut_k(command_queue, Program.scan_candidates.gpu);
+        Kernel.complete_candidates_multi_block_out.set_kernel(complete_candidates_multi_block_out_k);
 
+        // in-place uniform grid key bounds scan
 
-        var scan_candidates_single_block_out = new GPUKernel(command_queue, _k.get(Kernel.scan_candidates_single_block_out), 5);
-        scan_candidates_single_block_out.def_arg(0, Sizeof.cl_mem);
-        scan_candidates_single_block_out.def_arg(1, Sizeof.cl_mem);
-        scan_candidates_single_block_out.def_arg(2, Sizeof.cl_mem);
-        scan_candidates_single_block_out.def_arg(3, -1);
-        scan_candidates_single_block_out.def_arg(4, Sizeof.cl_int);
-        Kernel.scan_candidates_single_block_out.set_kernel(scan_candidates_single_block_out);
+        var scan_bounds_single_block_k = new ScanBoundsSingleBlock_k(command_queue, Program.scan_key_bank.gpu);
+        Kernel.scan_bounds_single_block.set_kernel(scan_bounds_single_block_k);
 
-        var scan_candidates_multi_block_out = new GPUKernel(command_queue, _k.get(Kernel.scan_candidates_multi_block_out), 5);
-        scan_candidates_multi_block_out.def_arg(0, Sizeof.cl_mem);
-        scan_candidates_multi_block_out.def_arg(1, Sizeof.cl_mem);
-        scan_candidates_multi_block_out.def_arg(2, -1);
-        scan_candidates_multi_block_out.def_arg(3, Sizeof.cl_mem);
-        scan_candidates_multi_block_out.def_arg(4, Sizeof.cl_int);
-        Kernel.scan_candidates_multi_block_out.set_kernel(scan_candidates_multi_block_out);
+        var scan_bounds_multi_block_k = new ScanBoundsMultiBlock_k(command_queue, Program.scan_key_bank.gpu);
+        Kernel.scan_bounds_multi_block.set_kernel(scan_bounds_multi_block_k);
 
-        var complete_candidates_multi_block_out = new GPUKernel(command_queue, _k.get(Kernel.complete_candidates_multi_block_out), 6);
-        complete_candidates_multi_block_out.def_arg(0, Sizeof.cl_mem);
-        complete_candidates_multi_block_out.def_arg(1, Sizeof.cl_mem);
-        complete_candidates_multi_block_out.def_arg(2, Sizeof.cl_mem);
-        complete_candidates_multi_block_out.def_arg(3, -1);
-        complete_candidates_multi_block_out.def_arg(4, Sizeof.cl_mem);
-        complete_candidates_multi_block_out.def_arg(5, Sizeof.cl_int);
-        Kernel.complete_candidates_multi_block_out.set_kernel(complete_candidates_multi_block_out);
-
-
-
-        var scan_bounds_single_block = new GPUKernel(command_queue, _k.get(Kernel.scan_bounds_single_block), 4);
-        scan_bounds_single_block.def_arg(0, Sizeof.cl_mem);
-        scan_bounds_single_block.def_arg(1, Sizeof.cl_mem);
-        scan_bounds_single_block.def_arg(2, -1);
-        scan_bounds_single_block.def_arg(3, Sizeof.cl_int);
-        Kernel.scan_bounds_single_block.set_kernel(scan_bounds_single_block);
-
-        var scan_bounds_multi_block = new GPUKernel(command_queue, _k.get(Kernel.scan_bounds_multi_block), 4);
-        scan_bounds_multi_block.def_arg(0, Sizeof.cl_mem);
-        scan_bounds_multi_block.def_arg(1, -1);
-        scan_bounds_multi_block.def_arg(2, Sizeof.cl_mem);
-        scan_bounds_multi_block.def_arg(3, Sizeof.cl_int);
-        Kernel.scan_bounds_multi_block.set_kernel(scan_bounds_multi_block);
-
-        var complete_bounds_multi_block = new GPUKernel(command_queue, _k.get(Kernel.complete_bounds_multi_block), 5);
-        complete_bounds_multi_block.def_arg(0, Sizeof.cl_mem);
-        complete_bounds_multi_block.def_arg(1, Sizeof.cl_mem);
-        complete_bounds_multi_block.def_arg(2, -1);
-        complete_bounds_multi_block.def_arg(3, Sizeof.cl_mem);
-        complete_bounds_multi_block.def_arg(4, Sizeof.cl_int);
-        Kernel.complete_bounds_multi_block.set_kernel(complete_bounds_multi_block);
+        var complete_bounds_multi_block_k = new CompleteBoundsMultiBlock_k(command_queue, Program.scan_key_bank.gpu);
+        Kernel.complete_bounds_multi_block.set_kernel(complete_bounds_multi_block_k);
     }
 
     //#endregion
@@ -1069,16 +1047,16 @@ public class GPU
     // todo: implement armature rotations and update this
     public static void rotate_hull(int hull_index, float angle)
     {
-        var pnt_index = Pointer.to(arg_int(hull_index));
-        var pnt_angle = Pointer.to(arg_float(angle));
-
-        clSetKernelArg(_k.get(Kernel.rotate_hull), 0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
-        clSetKernelArg(_k.get(Kernel.rotate_hull), 1, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
-        clSetKernelArg(_k.get(Kernel.rotate_hull), 2, Sizeof.cl_mem, Memory.points.gpu.pointer());
-        clSetKernelArg(_k.get(Kernel.rotate_hull), 3, Sizeof.cl_int, pnt_index);
-        clSetKernelArg(_k.get(Kernel.rotate_hull), 4, Sizeof.cl_float, pnt_angle);
-
-        k_call(command_queue, _k.get(Kernel.rotate_hull), global_single_size);
+//        var pnt_index = Pointer.to(arg_int(hull_index));
+//        var pnt_angle = Pointer.to(arg_float(angle));
+//
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 1, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 2, Sizeof.cl_mem, Memory.points.gpu.pointer());
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 3, Sizeof.cl_int, pnt_index);
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 4, Sizeof.cl_float, pnt_angle);
+//
+//        k_call(command_queue, _k.get(Kernel.rotate_hull), global_single_size);
     }
 
     public static float[] read_position(int armature_index)
@@ -1738,11 +1716,10 @@ public class GPU
         max_scan_block_size = max_work_group_size * 2;
         local_work_default = arg_long(max_work_group_size);
 
-        // initialize kernel programs
+        // initialize gpu programs
         for (var program : Program.values())
         {
             program.gpu.init();
-            _k.putAll(program.gpu.kernels);
         }
 
         //OpenCLUtils.debugDeviceDetails(device_ids);
