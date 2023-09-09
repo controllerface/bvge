@@ -218,7 +218,7 @@ public class GPU
         points(Sizeof.cl_float4),
 
         /**
-         * reaction counts for points on tracked physics hulls. Values are int with the following mapping:
+         * Reaction counts for points on tracked physics hulls. Values are int with the following mapping:
          * -
          * value: reaction count
          * -
@@ -226,13 +226,19 @@ public class GPU
         point_reactions(Sizeof.cl_int),
 
         /**
-         * reaction offsets for points on tracked physics hulls. Values are int with the following mapping:
+         * Reaction offsets for points on tracked physics hulls. Values are int with the following mapping:
          * -
          * value: reaction buffer offset
          * -
          */
         point_offsets(Sizeof.cl_int),
 
+        /**
+         * Non-real force modeled for stability of colliding particles. Values are float with the following mapping:
+         * -
+         * value: anti-gravity magnitude
+         * -
+         */
         point_anti_gravity(Sizeof.cl_float),
 
         /**
@@ -646,28 +652,28 @@ public class GPU
      */
     private static void init_kernels()
     {
-        var bounds_k = new PrepareBounds_k(command_queue, Program.prepare_bounds.gpu);
-        bounds_k.set_aabb(Memory.aabb.gpu.pointer());
-        Kernel.prepare_bounds.set_kernel(bounds_k);
+        var prep_bounds_k = new PrepareBounds_k(command_queue, Program.prepare_bounds.gpu);
+        prep_bounds_k.set_aabb(Memory.aabb.gpu.pointer());
+        Kernel.prepare_bounds.set_kernel(prep_bounds_k);
 
-        var transforms_k = new PrepareTransforms_k(command_queue, Program.prepare_transforms.gpu);
-        transforms_k.set_hulls(Memory.hulls.gpu.pointer());
-        transforms_k.set_rotations(Memory.hull_rotation.gpu.pointer());
-        Kernel.prepare_transforms.set_kernel(transforms_k);
+        var prep_transforms_k = new PrepareTransforms_k(command_queue, Program.prepare_transforms.gpu);
+        prep_transforms_k.set_hulls(Memory.hulls.gpu.pointer());
+        prep_transforms_k.set_rotations(Memory.hull_rotation.gpu.pointer());
+        Kernel.prepare_transforms.set_kernel(prep_transforms_k);
 
-        var edges_k = new PrepareEdges_k(command_queue, Program.prepare_edges.gpu);
-        edges_k.set_points(Memory.points.gpu.pointer());
-        edges_k.set_edges(Memory.edges.gpu.pointer());
-        Kernel.prepare_edges.set_kernel(edges_k);
+        var prep_edges_k = new PrepareEdges_k(command_queue, Program.prepare_edges.gpu);
+        prep_edges_k.set_points(Memory.points.gpu.pointer());
+        prep_edges_k.set_edges(Memory.edges.gpu.pointer());
+        Kernel.prepare_edges.set_kernel(prep_edges_k);
 
-        var bones_k = new PrepareBones_k(command_queue, Program.prepare_bones.gpu);
-        bones_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
-        bones_k.set_bone_references(Memory.bone_references.gpu.pointer());
-        bones_k.set_bone_index(Memory.bone_index.gpu.pointer());
-        bones_k.set_hulls(Memory.hulls.gpu.pointer());
-        bones_k.set_armatures(Memory.armatures.gpu.pointer());
-        bones_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
-        Kernel.prepare_bones.set_kernel(bones_k);
+        var prep_bones_k = new PrepareBones_k(command_queue, Program.prepare_bones.gpu);
+        prep_bones_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
+        prep_bones_k.set_bone_references(Memory.bone_references.gpu.pointer());
+        prep_bones_k.set_bone_index(Memory.bone_index.gpu.pointer());
+        prep_bones_k.set_hulls(Memory.hulls.gpu.pointer());
+        prep_bones_k.set_armatures(Memory.armatures.gpu.pointer());
+        prep_bones_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        Kernel.prepare_bones.set_kernel(prep_bones_k);
 
         var sat_collide_k = new SatCollide_k(command_queue, Program.sat_collide.gpu);
         sat_collide_k.set_hulls(Memory.hulls.gpu.pointer());
@@ -699,222 +705,134 @@ public class GPU
         move_armatures_k.set_points(Memory.points.gpu.pointer());
         Kernel.move_armatures.set_kernel(move_armatures_k);
 
+        var create_point_k = new CreatePoint_k(command_queue, Program.gpu_crud.gpu);
+        create_point_k.set_points(Memory.points.gpu.pointer());
+        create_point_k.set_vertex_table(Memory.vertex_table.gpu.pointer());
+        Kernel.create_point.set_kernel(create_point_k);
+
+        var create_edge_k = new CreateEdge_k(command_queue, Program.gpu_crud.gpu);
+        create_edge_k.set_edges(Memory.edges.gpu.pointer());
+        Kernel.create_edge.set_kernel(create_edge_k);
+
+        var create_vertex_ref_k = new CreateVertexRef_k(command_queue, Program.gpu_crud.gpu);
+        create_vertex_ref_k.set_vertex_refs(Memory.vertex_references.gpu.pointer());
+        Kernel.create_vertex_reference.set_kernel(create_vertex_ref_k);
+
+        var create_bone_ref_k = new CreateBoneRef_k(command_queue, Program.gpu_crud.gpu);
+        create_bone_ref_k.set_bone_refs(Memory.bone_references.gpu.pointer());
+        Kernel.create_bone_reference.set_kernel(create_bone_ref_k);
+
+        var create_armature_k = new CreateArmature_k(command_queue, Program.gpu_crud.gpu);
+        create_armature_k.set_armatures(Memory.armatures.gpu.pointer());
+        create_armature_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
+        create_armature_k.set_hull_table(Memory.armature_hull_table.gpu.pointer());
+        Kernel.create_armature.set_kernel(create_armature_k);
+
+        var create_bone_k = new CreateBone_k(command_queue, Program.gpu_crud.gpu);
+        create_bone_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
+        create_bone_k.set_bone_index(Memory.bone_index.gpu.pointer());
+        Kernel.create_bone.set_kernel(create_bone_k);
+
+        var create_hull_k = new CreateHull_k(command_queue, Program.gpu_crud.gpu);
+        create_hull_k.set_hulls(Memory.hulls.gpu.pointer());
+        create_hull_k.set_hull_rotations(Memory.hull_rotation.gpu.pointer());
+        create_hull_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        create_hull_k.set_element_table(Memory.hull_element_table.gpu.pointer());
+        Kernel.create_hull.set_kernel(create_hull_k);
+
+        var update_accel_k = new UpdateAccel_k(command_queue, Program.gpu_crud.gpu);
+        update_accel_k.set_accel(Memory.armature_accel.gpu.pointer());
+        Kernel.update_accel.set_kernel(update_accel_k);
+
+        var read_position_k = new ReadPosition_k(command_queue, Program.gpu_crud.gpu);
+        read_position_k.set_armatures(Memory.armatures.gpu.pointer());
+        Kernel.read_position.set_kernel(read_position_k);
+
+        var animate_hulls_k = new AnimateHulls_k(command_queue, Program.animate_hulls.gpu);
+        animate_hulls_k.set_points(Memory.points.gpu.pointer());
+        animate_hulls_k.set_hulls(Memory.hulls.gpu.pointer());
+        animate_hulls_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        animate_hulls_k.set_vertex_table(Memory.vertex_table.gpu.pointer());
+        animate_hulls_k.set_armatures(Memory.armatures.gpu.pointer());
+        animate_hulls_k.set_armatures_flags(Memory.armature_flags.gpu.pointer());
+        animate_hulls_k.set_vertex_refs(Memory.vertex_references.gpu.pointer());
+        animate_hulls_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
+        Kernel.animate_hulls.set_kernel(animate_hulls_k);
+
+        var integrate_k = new Integrate_k(command_queue, Program.integrate.gpu);
+        integrate_k.set_hulls(Memory.hulls.gpu.pointer());
+        integrate_k.set_armatures(Memory.armatures.gpu.pointer());
+        integrate_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
+        integrate_k.set_hull_element_table(Memory.hull_element_table.gpu.pointer());
+        integrate_k.set_armature_accel(Memory.armature_accel.gpu.pointer());
+        integrate_k.set_hull_rotation(Memory.hull_rotation.gpu.pointer());
+        integrate_k.set_points(Memory.points.gpu.pointer());
+        integrate_k.set_aabb(Memory.aabb.gpu.pointer());
+        integrate_k.set_aabb_index(Memory.aabb_index.gpu.pointer());
+        integrate_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
+        integrate_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        integrate_k.set_point_anti_gravity(Memory.point_anti_gravity.gpu.pointer());
+        Kernel.integrate.set_kernel(integrate_k);
+
+        var generate_keys_k = new GenerateKeys_k(command_queue, Program.generate_keys.gpu);
+        generate_keys_k.set_aabb_index(Memory.aabb_index.gpu.pointer());
+        generate_keys_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
+        Kernel.generate_keys.set_kernel(generate_keys_k);
+
+        var build_key_map_k = new BuildKeyMap_k(command_queue, Program.build_key_map.gpu);
+        build_key_map_k.set_aabb_index(Memory.aabb_index.gpu.pointer());
+        build_key_map_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
+        Kernel.build_key_map.set_kernel(build_key_map_k);
+
+        var locate_in_bounds_k = new LocateInBounds_k(command_queue, Program.locate_in_bounds.gpu);
+        locate_in_bounds_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
+        Kernel.locate_in_bounds.set_kernel(locate_in_bounds_k);
+
+        var count_candidates_k = new  CountCandidates_k(command_queue, Program.locate_in_bounds.gpu);
+        count_candidates_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
+        Kernel.count_candidates.set_kernel(count_candidates_k);
+
+        var aabb_collide_k = new AABBCollide_k(command_queue, Program.aabb_collide.gpu);
+        aabb_collide_k.set_aabb(Memory.aabb.gpu.pointer());
+        aabb_collide_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
+        aabb_collide_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        Kernel.aabb_collide.set_kernel(aabb_collide_k);
+
+        var finalize_candidates_k = new FinalizeCandidates_k(command_queue, Program.locate_in_bounds.gpu);
+        Kernel.finalize_candidates.set_kernel(finalize_candidates_k);
+
+        var resolve_constraints_k = new ResolveConstraints_k(command_queue, Program.resolve_constraints.gpu);
+        resolve_constraints_k.set_hull_element_table(Memory.hull_element_table.gpu.pointer());
+        resolve_constraints_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
+        resolve_constraints_k.set_points(Memory.points.gpu.pointer());
+        resolve_constraints_k.set_edges(Memory.edges.gpu.pointer());
+        Kernel.resolve_constraints.set_kernel(resolve_constraints_k);
+
+
+        var scan_int_single_block_k = new ScanIntSingleBlock_k(command_queue, Program.scan_int_array.gpu);
+        Kernel.scan_int_single_block.set_kernel(scan_int_single_block_k);
+
+        var scan_int_multi_block_k = new ScanIntMultiBlock_k(command_queue, Program.scan_int_array.gpu);
+        Kernel.scan_int_multi_block.set_kernel(scan_int_multi_block_k);
+
+        var complete_int_multi_block_k = new CompleteIntMultiBlock_k(command_queue, Program.scan_int_array.gpu);
+        Kernel.complete_int_multi_block.set_kernel(complete_int_multi_block_k);
+
+
+        var scan_int_single_block_out_k = new ScanIntSingleBlockOut_k(command_queue, Program.scan_int_array_out.gpu);
+        Kernel.scan_int_single_block_out.set_kernel(scan_int_single_block_out_k);
+
+        var scan_int_multi_block_out_k = new ScanIntMultiBlockOut_k(command_queue, Program.scan_int_array_out.gpu);
+        Kernel.scan_int_multi_block_out.set_kernel(scan_int_multi_block_out_k);
+
+        var complete_int_multi_block_out_k = new CompleteIntMultiBlockOut_k(command_queue, Program.scan_int_array_out.gpu);
+        Kernel.complete_int_multi_block_out.set_kernel(complete_int_multi_block_out_k);
+
+
+
 
         // todo: convert those below the lines to concrete classes
 
-
-
-
-
-        var gpu_create_point = new GPUKernel(command_queue, _k.get(Kernel.create_point), 5);
-        gpu_create_point.new_arg(0, Sizeof.cl_mem, Memory.points.gpu.pointer());
-        gpu_create_point.new_arg(1, Sizeof.cl_mem, Memory.vertex_table.gpu.pointer());
-        gpu_create_point.def_arg(2, Sizeof.cl_int);
-        gpu_create_point.def_arg(3, Sizeof.cl_float4);
-        gpu_create_point.def_arg(4, Sizeof.cl_int2);
-        Kernel.create_point.set_kernel(gpu_create_point);
-
-        var gpu_create_edge = new GPUKernel(command_queue, _k.get(Kernel.create_edge), 3);
-        gpu_create_edge.new_arg(0, Sizeof.cl_mem, Memory.edges.gpu.pointer());
-        gpu_create_edge.def_arg(1, Sizeof.cl_int);
-        gpu_create_edge.def_arg(2, Sizeof.cl_float4);
-        Kernel.create_edge.set_kernel(gpu_create_edge);
-
-        var create_armature = new GPUKernel(command_queue, _k.get(Kernel.create_armature), 7);
-        create_armature.new_arg(0, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
-        create_armature.new_arg(1, Sizeof.cl_mem, Memory.armature_flags.gpu.pointer());
-        create_armature.new_arg(2, Sizeof.cl_mem, Memory.armature_hull_table.gpu.pointer());
-        create_armature.def_arg(3, Sizeof.cl_int);
-        create_armature.def_arg(4, Sizeof.cl_float4);
-        create_armature.def_arg(5, Sizeof.cl_int);
-        create_armature.def_arg(6, Sizeof.cl_int2);
-        Kernel.create_armature.set_kernel(create_armature);
-
-        var create_vertex_ref = new GPUKernel(command_queue, _k.get(Kernel.create_vertex_reference), 3);
-        create_vertex_ref.new_arg(0, Sizeof.cl_mem, Memory.vertex_references.gpu.pointer());
-        create_vertex_ref.def_arg(1, Sizeof.cl_int);
-        create_vertex_ref.def_arg(2, Sizeof.cl_float2);
-        Kernel.create_vertex_reference.set_kernel(create_vertex_ref);
-
-        var create_bone_ref = new GPUKernel(command_queue, _k.get(Kernel.create_bone_reference), 3);
-        create_bone_ref.new_arg(0, Sizeof.cl_mem, Memory.bone_references.gpu.pointer());
-        create_bone_ref.def_arg(1, Sizeof.cl_int);
-        create_bone_ref.def_arg(2, Sizeof.cl_float16);
-        Kernel.create_bone_reference.set_kernel(create_bone_ref);
-
-        var create_bone = new GPUKernel(command_queue, _k.get(Kernel.create_bone), 5);
-        create_bone.new_arg(0, Sizeof.cl_mem, Memory.bone_instances.gpu.pointer());
-        create_bone.new_arg(1, Sizeof.cl_mem, Memory.bone_index.gpu.pointer());
-        create_bone.def_arg(2, Sizeof.cl_int);
-        create_bone.def_arg(3, Sizeof.cl_float16);
-        create_bone.def_arg(4, Sizeof.cl_int);
-        Kernel.create_bone.set_kernel(create_bone);
-
-        var create_hull = new GPUKernel(command_queue, _k.get(Kernel.create_hull), 9);
-        create_hull.new_arg(0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
-        create_hull.new_arg(1, Sizeof.cl_mem, Memory.hull_rotation.gpu.pointer());
-        create_hull.new_arg(2, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
-        create_hull.new_arg(3, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
-        create_hull.def_arg(4, Sizeof.cl_int);
-        create_hull.def_arg(5, Sizeof.cl_float4);
-        create_hull.def_arg(6, Sizeof.cl_float2);
-        create_hull.def_arg(7, Sizeof.cl_int4);
-        create_hull.def_arg(8, Sizeof.cl_int2);
-        Kernel.create_hull.set_kernel(create_hull);
-
-        var update_accel = new GPUKernel(command_queue, _k.get(Kernel.update_accel), 3);
-        update_accel.new_arg(0, Sizeof.cl_mem, Memory.armature_accel.gpu.pointer());
-        update_accel.def_arg(1, Sizeof.cl_int);
-        update_accel.def_arg(2, Sizeof.cl_float2);
-        Kernel.update_accel.set_kernel(update_accel);
-
-        var read_position = new GPUKernel(command_queue, _k.get(Kernel.read_position), 3);
-        read_position.new_arg(0, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
-        read_position.def_arg(1, Sizeof.cl_float2);
-        read_position.def_arg(2, Sizeof.cl_int);
-        Kernel.read_position.set_kernel(read_position);
-
-        var animate_hulls = new GPUKernel(command_queue, _k.get(Kernel.animate_hulls), 8);
-        animate_hulls.new_arg(0, Sizeof.cl_mem, Memory.points.gpu.pointer());
-        animate_hulls.new_arg(1, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
-        animate_hulls.new_arg(2, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
-        animate_hulls.new_arg(3, Sizeof.cl_mem, Memory.vertex_table.gpu.pointer());
-        animate_hulls.new_arg(4, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
-        animate_hulls.new_arg(5, Sizeof.cl_mem, Memory.armature_flags.gpu.pointer());
-        animate_hulls.new_arg(6, Sizeof.cl_mem, Memory.vertex_references.gpu.pointer());
-        animate_hulls.new_arg(7, Sizeof.cl_mem, Memory.bone_instances.gpu.pointer());
-        Kernel.animate_hulls.set_kernel(animate_hulls);
-
-        var integrate = new GPUKernel(command_queue, _k.get(Kernel.integrate), 13);
-        integrate.new_arg(0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
-        integrate.new_arg(1, Sizeof.cl_mem, Memory.armatures.gpu.pointer());
-        integrate.new_arg(2, Sizeof.cl_mem, Memory.armature_flags.gpu.pointer());
-        integrate.new_arg(3, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
-        integrate.new_arg(4, Sizeof.cl_mem, Memory.armature_accel.gpu.pointer());
-        integrate.new_arg(5, Sizeof.cl_mem, Memory.hull_rotation.gpu.pointer());
-        integrate.new_arg(6, Sizeof.cl_mem, Memory.points.gpu.pointer());
-        integrate.new_arg(7, Sizeof.cl_mem, Memory.aabb.gpu.pointer());
-        integrate.new_arg(8, Sizeof.cl_mem, Memory.aabb_index.gpu.pointer());
-        integrate.new_arg(9, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
-        integrate.new_arg(10, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
-        integrate.new_arg(11, Sizeof.cl_mem, Memory.point_anti_gravity.gpu.pointer());
-        integrate.def_arg(12, Sizeof.cl_mem);
-        Kernel.integrate.set_kernel(integrate);
-
-        var generate_keys = new GPUKernel(command_queue, _k.get(Kernel.generate_keys), 7);
-        generate_keys.new_arg(0, Sizeof.cl_mem, Memory.aabb_index.gpu.pointer());
-        generate_keys.new_arg(1, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
-        generate_keys.def_arg(2, Sizeof.cl_mem);
-        generate_keys.def_arg(3, Sizeof.cl_mem);
-        generate_keys.def_arg(4, Sizeof.cl_int);
-        generate_keys.def_arg(5, Sizeof.cl_int);
-        generate_keys.def_arg(6, Sizeof.cl_int);
-        Kernel.generate_keys.set_kernel(generate_keys);
-
-        var build_key_map = new GPUKernel(command_queue, _k.get(Kernel.build_key_map), 7);
-        build_key_map.new_arg(0, Sizeof.cl_mem, Memory.aabb_index.gpu.pointer());
-        build_key_map.new_arg(1, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
-        build_key_map.def_arg(2, Sizeof.cl_mem);
-        build_key_map.def_arg(3, Sizeof.cl_mem);
-        build_key_map.def_arg(4, Sizeof.cl_mem);
-        build_key_map.def_arg(5, Sizeof.cl_int);
-        build_key_map.def_arg(6, Sizeof.cl_int);
-        Kernel.build_key_map.set_kernel(build_key_map);
-
-        var locate_in_bounds = new GPUKernel(command_queue, _k.get(Kernel.locate_in_bounds), 3);
-        locate_in_bounds.new_arg(0, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
-        locate_in_bounds.def_arg(1, Sizeof.cl_mem);
-        locate_in_bounds.def_arg(2, Sizeof.cl_mem);
-        Kernel.locate_in_bounds.set_kernel(locate_in_bounds);
-
-        var count_candidates = new GPUKernel(command_queue, _k.get(Kernel.count_candidates), 7);
-        count_candidates.new_arg(0, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
-        count_candidates.def_arg(1, Sizeof.cl_mem);
-        count_candidates.def_arg(2, Sizeof.cl_mem);
-        count_candidates.def_arg(3, Sizeof.cl_mem);
-        count_candidates.def_arg(4, Sizeof.cl_mem);
-        count_candidates.def_arg(5, Sizeof.cl_int);
-        count_candidates.def_arg(6, Sizeof.cl_int);
-        Kernel.count_candidates.set_kernel(count_candidates);
-
-        var aabb_collide = new GPUKernel(command_queue, _k.get(Kernel.aabb_collide), 14);
-        aabb_collide.new_arg(0, Sizeof.cl_mem, Memory.aabb.gpu.pointer());
-        aabb_collide.new_arg(1, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
-        aabb_collide.new_arg(2, Sizeof.cl_mem, Memory.hull_flags.gpu.pointer());
-        aabb_collide.def_arg(3, Sizeof.cl_mem);
-        aabb_collide.def_arg(4, Sizeof.cl_mem);
-        aabb_collide.def_arg(5, Sizeof.cl_mem);
-        aabb_collide.def_arg(6, Sizeof.cl_mem);
-        aabb_collide.def_arg(7, Sizeof.cl_mem);
-        aabb_collide.def_arg(8, Sizeof.cl_mem);
-        aabb_collide.def_arg(9, Sizeof.cl_mem);
-        aabb_collide.def_arg(10, Sizeof.cl_mem);
-        aabb_collide.def_arg(11, Sizeof.cl_mem);
-        aabb_collide.def_arg(12, Sizeof.cl_int);
-        aabb_collide.def_arg(13, Sizeof.cl_int);
-        Kernel.aabb_collide.set_kernel(aabb_collide);
-
-        var finalize_candidates = new GPUKernel(command_queue, _k.get(Kernel.finalize_candidates), 6);
-        finalize_candidates.def_arg(0, Sizeof.cl_mem);
-        finalize_candidates.def_arg(1, Sizeof.cl_mem);
-        finalize_candidates.def_arg(2, Sizeof.cl_mem);
-        finalize_candidates.def_arg(3, Sizeof.cl_mem);
-        finalize_candidates.def_arg(4, Sizeof.cl_mem);
-        finalize_candidates.def_arg(5, Sizeof.cl_mem);
-        Kernel.finalize_candidates.set_kernel(finalize_candidates);
-
-
-
-
-        var resolve_constraints = new GPUKernel(command_queue, _k.get(Kernel.resolve_constraints), 5);
-        resolve_constraints.new_arg(0, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
-        resolve_constraints.new_arg(1, Sizeof.cl_mem, Memory.aabb_key_table.gpu.pointer());
-        resolve_constraints.new_arg(2, Sizeof.cl_mem, Memory.points.gpu.pointer());
-        resolve_constraints.new_arg(3, Sizeof.cl_mem, Memory.edges.gpu.pointer());
-        resolve_constraints.def_arg(4, Sizeof.cl_int);
-        Kernel.resolve_constraints.set_kernel(resolve_constraints);
-
-        var scan_int_single_block = new GPUKernel(command_queue, _k.get(Kernel.scan_int_single_block), 3);
-        scan_int_single_block.def_arg(0, Sizeof.cl_mem);
-        scan_int_single_block.def_arg(1, -1);
-        scan_int_single_block.def_arg(2, Sizeof.cl_int);
-        Kernel.scan_int_single_block.set_kernel(scan_int_single_block);
-
-        var scan_int_multi_block = new GPUKernel(command_queue, _k.get(Kernel.scan_int_multi_block), 4);
-        scan_int_multi_block.def_arg(0, Sizeof.cl_mem);
-        scan_int_multi_block.def_arg(1, -1);
-        scan_int_multi_block.def_arg(2, Sizeof.cl_mem);
-        scan_int_multi_block.def_arg(3, Sizeof.cl_int);
-        Kernel.scan_int_multi_block.set_kernel(scan_int_multi_block);
-
-        var complete_int_multi_block = new GPUKernel(command_queue, _k.get(Kernel.complete_int_multi_block), 4);
-        complete_int_multi_block.def_arg(0, Sizeof.cl_mem);
-        complete_int_multi_block.def_arg(1, -1);
-        complete_int_multi_block.def_arg(2, Sizeof.cl_mem);
-        complete_int_multi_block.def_arg(3, Sizeof.cl_int);
-        Kernel.complete_int_multi_block.set_kernel(complete_int_multi_block);
-
-        var scan_int_single_block_out = new GPUKernel(command_queue, _k.get(Kernel.scan_int_single_block_out), 4);
-        scan_int_single_block_out.def_arg(0, Sizeof.cl_mem);
-        scan_int_single_block_out.def_arg(1, Sizeof.cl_mem);
-        scan_int_single_block_out.def_arg(2, -1);
-        scan_int_single_block_out.def_arg(3, Sizeof.cl_int);
-        Kernel.scan_int_single_block_out.set_kernel(scan_int_single_block_out);
-
-        var scan_int_multi_block_out = new GPUKernel(command_queue, _k.get(Kernel.scan_int_multi_block_out), 5);
-        scan_int_multi_block_out.def_arg(0, Sizeof.cl_mem);
-        scan_int_multi_block_out.def_arg(1, Sizeof.cl_mem);
-        scan_int_multi_block_out.def_arg(2, -1);
-        scan_int_multi_block_out.def_arg(3, Sizeof.cl_mem);
-        scan_int_multi_block_out.def_arg(4, Sizeof.cl_int);
-        Kernel.scan_int_multi_block_out.set_kernel(scan_int_multi_block_out);
-
-        var complete_int_multi_block_out = new GPUKernel(command_queue, _k.get(Kernel.complete_int_multi_block_out), 4);
-        complete_int_multi_block_out.def_arg(0, Sizeof.cl_mem);
-        complete_int_multi_block_out.def_arg(1, -1);
-        complete_int_multi_block_out.def_arg(2, Sizeof.cl_mem);
-        complete_int_multi_block_out.def_arg(3, Sizeof.cl_int);
-        Kernel.complete_int_multi_block_out.set_kernel(complete_int_multi_block_out);
 
         var scan_candidates_single_block_out = new GPUKernel(command_queue, _k.get(Kernel.scan_candidates_single_block_out), 5);
         scan_candidates_single_block_out.def_arg(0, Sizeof.cl_mem);
@@ -940,6 +858,8 @@ public class GPU
         complete_candidates_multi_block_out.def_arg(4, Sizeof.cl_mem);
         complete_candidates_multi_block_out.def_arg(5, Sizeof.cl_int);
         Kernel.complete_candidates_multi_block_out.set_kernel(complete_candidates_multi_block_out);
+
+
 
         var scan_bounds_single_block = new GPUKernel(command_queue, _k.get(Kernel.scan_bounds_single_block), 4);
         scan_bounds_single_block.def_arg(0, Sizeof.cl_mem);

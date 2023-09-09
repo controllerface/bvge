@@ -184,8 +184,11 @@ __kernel void apply_reactions(__global float2 *reactions,
     //  right now it is a static direction. note that magnitude of gravity is not important, only direction
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
-    // than it is against it, so we clamp to 0 to avoid divide by zero errors. 
+    // than it is against it, so we clamp to 0. 
     if (ag < 0.0f) ag = 0.0f;
+
+    // some anti-gravity experiment values. It may be useful to define a multiplier value on some particles
+    // to get interesting effects. 
     //if (ag > 0.0f) ag *= 2.0f;
     //if (ag > 0.0f) ag = 1.0f;
 
