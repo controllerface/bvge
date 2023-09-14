@@ -187,7 +187,7 @@ public class PhysicsObjects
 
 
         // there is only one hull, so it is the main hull ID by default
-        int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
+        int [] _flag = CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int armature_id = Main.Memory.new_armature(x, y,hull_table, hull_id);

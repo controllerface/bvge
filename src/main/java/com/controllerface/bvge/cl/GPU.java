@@ -118,6 +118,7 @@ public class GPU
         resolve_constraints(new ResolveConstraints()),
         sat_collide(new SatCollide()),
         scan_candidates(new ScanCandidates()),
+        scan_deletes(new ScanDeletes()),
         scan_int_array(new ScanIntArray()),
         scan_int_array_out(new ScanIntArrayOut()),
         scan_key_bank(new ScanKeyBank()),
@@ -148,6 +149,7 @@ public class GPU
         build_key_map,
         complete_bounds_multi_block,
         complete_candidates_multi_block_out,
+        complete_deletes_multi_block_out,
         complete_int_multi_block,
         complete_int_multi_block_out,
         count_candidates,
@@ -175,6 +177,8 @@ public class GPU
         scan_bounds_single_block,
         scan_candidates_multi_block_out,
         scan_candidates_single_block_out,
+        scan_deletes_multi_block_out,
+        scan_deletes_single_block_out,
         scan_int_multi_block,
         scan_int_multi_block_out,
         scan_int_single_block,
@@ -203,6 +207,48 @@ public class GPU
      */
     private enum Memory
     {
+        /*
+        Reference objects:
+        - Objects in memory at runtime may reference these objects
+        - Data stored in references should be considered immutable once written
+         */
+
+        /**
+         * Vertex information for loaded models. Values are float2 with the following mappings:
+         * -
+         * x: x position
+         * y: y position
+         * -
+         */
+        vertex_references(Sizeof.cl_float2),
+
+        /**
+         * Bone offset reference matrices of loaded models. Values are float16 with the following mappings:
+         * -
+         * s0: (m00) transformation matrix column 1 row 1
+         * s1: (m01) transformation matrix column 1 row 2
+         * s2: (m02) transformation matrix column 1 row 3
+         * s3: (m03) transformation matrix column 1 row 4
+         * s4: (m10) transformation matrix column 2 row 1
+         * s5: (m11) transformation matrix column 2 row 2
+         * s6: (m12) transformation matrix column 2 row 3
+         * s7: (m13) transformation matrix column 2 row 4
+         * s8: (m20) transformation matrix column 3 row 1
+         * s9: (m21) transformation matrix column 3 row 2
+         * sA: (m22) transformation matrix column 3 row 3
+         * sB: (m23) transformation matrix column 3 row 4
+         * sC: (m30) transformation matrix column 4 row 1
+         * sD: (m31) transformation matrix column 4 row 2
+         * sE: (m32) transformation matrix column 4 row 3
+         * sF: (m33) transformation matrix column 4 row 4
+         * -
+         */
+        bone_references(Sizeof.cl_float16),
+
+        /*
+        Points
+         */
+
         /**
          * Individual points (vertices) of tracked physics hulls. Values are float4 with the following mappings:
          * -
@@ -239,6 +285,19 @@ public class GPU
         point_anti_gravity(Sizeof.cl_float),
 
         /**
+         * Indexing table for points of tracked physics hulls. Values are int2 with the following mappings:
+         * -
+         * x: reference vertex index
+         * y: bone index (todo: also used as a proxy for hull ID, based on alignment, but they should be separate)
+         * -
+         */
+        vertex_table(Sizeof.cl_int2),
+
+        /*
+        Edges
+         */
+
+        /**
          * Edges of tracked physics hulls. Values are float4 with the following mappings:
          * -
          * x: point 1 index
@@ -250,6 +309,10 @@ public class GPU
          */
         edges(Sizeof.cl_float4),
 
+        /*
+        Hulls
+         */
+
         /**
          * Positions of tracked hulls. Values are float4 with the following mappings:
          * -
@@ -260,17 +323,6 @@ public class GPU
          * -
          */
         hulls(Sizeof.cl_float4),
-
-        /**
-         * Axis-aligned bounding boxes of tracked physics hulls. Values are float4 with the following mappings:
-         * -
-         * x: corner x position
-         * y: corner y position
-         * z: width
-         * w: height
-         * -
-         */
-        aabb(Sizeof.cl_float4),
 
         /**
          * Rotation information about tracked physics hulls. Values are float2 with the following mappings:
@@ -302,6 +354,17 @@ public class GPU
         hull_flags(Sizeof.cl_int2),
 
         /**
+         * Axis-aligned bounding boxes of tracked physics hulls. Values are float4 with the following mappings:
+         * -
+         * x: corner x position
+         * y: corner y position
+         * z: width
+         * w: height
+         * -
+         */
+        aabb(Sizeof.cl_float4),
+
+        /**
          * Spatial partition index information for tracked physics hulls. Values are int4 with the following mappings:
          * -
          * x: minimum x key index
@@ -321,46 +384,9 @@ public class GPU
          */
         aabb_key_table(Sizeof.cl_int2),
 
-        /**
-         * Vertex information for loaded models. Values are float2 with the following mappings:
-         * -
-         * x: x position
-         * y: y position
-         * -
+        /*
+        Bones
          */
-        vertex_references(Sizeof.cl_float2),
-
-        /**
-         * Indexing table for points of tracked physics hulls. Values are int2 with the following mappings:
-         * -
-         * x: reference vertex index
-         * y: bone index (todo: also used as a proxy for hull ID, based on alignment, but they should be separate)
-         * -
-         */
-        vertex_table(Sizeof.cl_int2),
-
-        /**
-         * Bone offset reference matrices of loaded models. Values are float16 with the following mappings:
-         * -
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         * -
-         */
-        bone_references(Sizeof.cl_float16),
 
         /**
          * Bone offset animation matrices of tracked physics hulls. Values are float16 with the following mappings:
@@ -392,6 +418,10 @@ public class GPU
          * -
          */
         bone_index(Sizeof.cl_int),
+
+        /*
+        Armatures
+         */
 
         /**
          * Armature information for tracked physics hulls. Values are float4 with the following mappings:
@@ -860,6 +890,17 @@ public class GPU
 
         var complete_bounds_multi_block_k = new CompleteBoundsMultiBlock_k(command_queue, Program.scan_key_bank.gpu);
         Kernel.complete_bounds_multi_block.set_kernel(complete_bounds_multi_block_k);
+
+        // scan for deleted objects
+
+        var scan_deletes_single_block_out_k = new ScanCandidatesSingleBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        Kernel.scan_deletes_single_block_out.set_kernel(scan_deletes_single_block_out_k);
+
+        var scan_deletes_multi_block_out_k = new ScanCandidatesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        Kernel.scan_deletes_multi_block_out.set_kernel(scan_deletes_multi_block_out_k);
+
+        var complete_deletes_multi_block_out_k = new CompleteCandidatesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        Kernel.complete_deletes_multi_block_out.set_kernel(complete_deletes_multi_block_out_k);
     }
 
     //#endregion

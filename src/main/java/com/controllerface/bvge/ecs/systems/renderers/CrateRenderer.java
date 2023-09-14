@@ -153,8 +153,6 @@ public class CrateRenderer extends GameSystem
         // todo: will need to account for this happening more than once
         if (Models.is_model_dirty(Models.CRATE_MODEL))
         {
-            // todo: change to loading model, not mesh
-
             var instances = Models.get_model_instances(Models.CRATE_MODEL);
             int[] indices = new int[instances.size()];
             int[] counter = new int[1];
