@@ -260,6 +260,9 @@ public class PhysicsSimulation extends GameSystem
         // Once all points have been relocated, all hulls are in their required positions for the next frame.
         // Movements applied to hulls are now accumulated and applied to their parent armatures.
         GPU.move_armatures();
+
+        // todo: test and handle deleted objects
+        GPU.delete_and_compact();
     }
 
     private void simulate(float dt)

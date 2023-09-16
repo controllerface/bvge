@@ -893,13 +893,19 @@ public class GPU
 
         // scan for deleted objects
 
-        var scan_deletes_single_block_out_k = new ScanCandidatesSingleBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        var scan_deletes_single_block_out_k = new ScanDeletesSingleBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        scan_deletes_single_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
+        scan_deletes_single_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         Kernel.scan_deletes_single_block_out.set_kernel(scan_deletes_single_block_out_k);
 
-        var scan_deletes_multi_block_out_k = new ScanCandidatesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        var scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        scan_deletes_multi_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
+        scan_deletes_multi_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         Kernel.scan_deletes_multi_block_out.set_kernel(scan_deletes_multi_block_out_k);
 
-        var complete_deletes_multi_block_out_k = new CompleteCandidatesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        var complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        complete_deletes_multi_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
+        complete_deletes_multi_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         Kernel.complete_deletes_multi_block_out.set_kernel(complete_deletes_multi_block_out_k);
     }
 
@@ -1289,6 +1295,32 @@ public class GPU
         physics_buffer.set_candidate_match_count(match_count);
     }
 
+    public static void delete_and_compact()
+    {
+        int buffer_count = Main.Memory.armature_count();
+        long output_buf_size = (long) Sizeof.cl_int * buffer_count;
+        long output_buf_size2 = (long) Sizeof.cl_int4 * buffer_count;
+
+        var output_buf_data = cl_new_buffer(output_buf_size);
+        var output_buf_data2 = cl_new_buffer(output_buf_size2);
+
+        var b_mem = new GPUMemory(output_buf_data);
+        var b_mem2 = new GPUMemory(output_buf_data2);
+
+        int[] m = scan_deletes(b_mem.memory(), b_mem2.memory(), buffer_count);
+
+        // todo: b_mem and b_mem2 now contain the delete counts aligned with armatures
+        //  a compaction step must now happen, with all the indices being shifted
+        //  down by the appropriate count.
+
+        // todo: after compaction, Main memory offsets must be adjusted to reflect the
+        //  new buffer sizes for each object type that was deleted.
+
+        b_mem.release();
+        b_mem2.release();
+
+    }
+
     public static void aabb_collide()
     {
         var gpu_kernel = Kernel.aabb_collide.gpu;
@@ -1498,6 +1530,19 @@ public class GPU
         }
     }
 
+    private static int[] scan_deletes(cl_mem o1_data, cl_mem o2_data, int n)
+    {
+        int k = work_group_count(n);
+        if (k == 1)
+        {
+            return scan_single_block_deletes_out(o1_data, o2_data, n);
+        }
+        else
+        {
+            return scan_multi_block_deletes_out(o1_data, o2_data, n, k);
+        }
+    }
+
     private static void scan_single_block_int(cl_mem d_data, int n)
     {
         var gpu_kernel = Kernel.scan_int_single_block.gpu;
@@ -1588,6 +1633,42 @@ public class GPU
         gpu_kernel_2.call(global_work_size, local_work_default);
 
         clReleaseMemObject(part_data);
+    }
+
+    private static int[] scan_single_block_deletes_out(cl_mem o1_data, cl_mem o2_data, int n)
+    {
+        var gpu_kernel = Kernel.scan_deletes_single_block_out.gpu;
+        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
+
+        int[] sz = new int[]{ 0, 0, 0, 0, 0 };
+        var dst_size = Pointer.to(sz);
+        var size_data = cl_new_buffer(Sizeof.cl_int + Sizeof.cl_int4);
+        var src_size = Pointer.to(size_data);
+
+        var dst_data = Pointer.to(o1_data);
+        var dst_data2 = Pointer.to(o2_data);
+
+        gpu_kernel.set_arg(2, dst_data);
+        gpu_kernel.set_arg(3, dst_data2);
+        gpu_kernel.set_arg(4, src_size);
+        gpu_kernel.new_arg(5, local_buffer_size);
+        gpu_kernel.new_arg(6, local_buffer_size2);
+        gpu_kernel.set_arg(7, Pointer.to(arg_int(n)));
+        gpu_kernel.call(local_work_default, local_work_default);
+
+        cl_read_buffer(size_data, Sizeof.cl_int, dst_size);
+
+        clReleaseMemObject(size_data);
+
+        return sz;
+    }
+
+    private static int[] scan_multi_block_deletes_out(cl_mem d_data, cl_mem o_data, int n, int k)
+    {
+        // todo: need int4 compatible generic int scan for the intermediate step
+
+        return new int[0];
     }
 
     private static int scan_single_block_candidates_out(cl_mem d_data, cl_mem o_data, int n)

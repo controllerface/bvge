@@ -3,7 +3,7 @@ plugins {
 }
 
 ext {
-    lwjglVersion = '3.3.2'
+    lwjglVersion = '3.3.3'
     jomlVersion = "1.10.5"
     lwjglNatives = "natives-windows"
     //imguiVersion = '1.86.10'
