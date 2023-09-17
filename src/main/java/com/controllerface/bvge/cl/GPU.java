@@ -1664,8 +1664,41 @@ public class GPU
         return sz;
     }
 
-    private static int[] scan_multi_block_deletes_out(cl_mem d_data, cl_mem o_data, int n, int k)
+    private static int[] scan_multi_block_deletes_out(cl_mem o1_data, cl_mem o2_data, int n, int k)
     {
+        var gpu_kernel_1 = Kernel.scan_candidates_multi_block_out.gpu;
+        var gpu_kernel_2 = Kernel.complete_candidates_multi_block_out.gpu;
+
+        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
+
+        long gx = k * max_scan_block_size;
+        long[] global_work_size = arg_long(gx);
+        int part_size = k * 2;
+
+        long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
+        long part_buf_size2 = ((long) Sizeof.cl_int4 * ((long) part_size));
+
+        var p_data = cl_new_buffer(part_buf_size);
+        var p_data2 = cl_new_buffer(part_buf_size2);
+
+        var dst_data = Pointer.to(o1_data);
+        var src_part = Pointer.to(p_data);
+        var dst_data2 = Pointer.to(o2_data);
+        var src_part2 = Pointer.to(p_data2);
+        var src_n = Pointer.to(new int[]{n});
+
+        gpu_kernel_1.set_arg(2, dst_data);
+        gpu_kernel_1.set_arg(3, dst_data2);
+        gpu_kernel_1.new_arg(4, local_buffer_size);
+        gpu_kernel_1.new_arg(5, local_buffer_size2);
+        gpu_kernel_1.set_arg(6, src_part);
+        gpu_kernel_1.set_arg(7, src_part2);
+        gpu_kernel_1.set_arg(8, src_n);
+        gpu_kernel_1.call(global_work_size, local_work_default);
+
+        // note the partial buffers are scanned and updated in-place
+        scan_int(p_data, part_size);
         // todo: need int4 compatible generic int scan for the intermediate step
 
         return new int[0];
@@ -1704,6 +1737,7 @@ public class GPU
         var gpu_kernel_2 = Kernel.complete_candidates_multi_block_out.gpu;
 
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+
         long gx = k * max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;

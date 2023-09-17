@@ -8,6 +8,12 @@ import java.util.List;
 import static com.controllerface.bvge.cl.CLUtils.k_call;
 import static org.jocl.CL.clSetKernelArg;
 
+/**
+ * A class for defining and organizing GPU kernel functions. This class is used to wrap an Open Cl kernel
+ * making it easier to reason about in the host Java code. Helpers are provided for setting arguments
+ * and calling the kernel itself. Kernels are typically provided by {@link GPUProgram} objects, which are
+ * compiled first before their constituent kernels are linked and loaded via implementations of this class.
+ */
 public class GPUKernel
 {
     final cl_command_queue command_queue;
@@ -22,6 +28,14 @@ public class GPUKernel
         this.arg_sizes = new long[arg_count];
     }
 
+    /**
+     * Allows calling code to designate a memory buffer as being shared between Open CL and Open Gl contexts.
+     * This allows the kernel call to automatically acquire and release the shared objects, before and after
+     * the kernel call, respectively. The shared memory list si also cleared after each call, so memory
+     * objects must be shared individually before every call.
+     *
+     * @param mem the memory buffer to mark as shared with this kernel
+     */
     public void share_mem(cl_mem mem)
     {
         shared_memory.add(mem);
@@ -83,11 +97,24 @@ public class GPUKernel
         clSetKernelArg(this.kernel, pos, arg_sizes[pos], pointer);
     }
 
+    /**
+     * Call this kernel, executing it on the GPU. This variant lets the GPu decide the best size for the local work
+     * group. This is useful for cases where the work does not depend on properly sized local groups.
+     *
+     * @param global_work_size total number of threads that will execute in the call
+     */
     public void call(long[] global_work_size)
     {
         call(global_work_size, null);
     }
 
+    /**
+     * Call this kernel, executing it on the GPU. Global and local work sizes are provided that tell the GPU
+     * how best to divide up the work being done.
+     *
+     * @param global_work_size total number of threads that will execute in the call
+     * @param local_work_size number of threads that will execute in a single work group
+     */
     public void call(long[] global_work_size, long[] local_work_size)
     {
         var shared_ = shared_memory.toArray(new cl_mem[]{});
