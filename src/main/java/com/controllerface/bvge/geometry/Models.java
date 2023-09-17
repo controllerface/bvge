@@ -198,7 +198,6 @@ public class Models
 
 
         // todo: generate the convex hull here, just once and re-use later
-        //  possibly use indices into the vertex array to save memory when storing
 
         Meshes.register_mesh(mesh_name, new_mesh);
         meshes[mesh_index] = new_mesh;
