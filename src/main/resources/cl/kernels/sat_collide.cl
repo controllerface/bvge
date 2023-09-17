@@ -189,8 +189,8 @@ __kernel void apply_reactions(__global float2 *reactions,
 
     // some anti-gravity experiment values. It may be useful to define a multiplier value on some particles
     // to get interesting effects. 
+    if (ag > 0.0f) ag = 1.0f;
     //if (ag > 0.0f) ag *= 2.0f;
-    //if (ag > 0.0f) ag = 1.0f;
 
     anti_gravity[gid] = ag;
     points[gid] = point;

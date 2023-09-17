@@ -10,22 +10,24 @@ __kernel void scan_int_single_block(__global int *data, __local int *buffer, int
     // calculate the total length of the local buffer array
     int m = 2 * get_local_size(0);
 
-    // load the gloabl value sinto the local buffer, and with extra zeroes
-    // so the buffer size matches the work group
+    // load the global values into the local buffer, with extra zeroes
+    // if needed, so the buffer size matches the work group size
     buffer[a_index] = a_index < n ? data[a_index] : 0;
     buffer[b_index] = b_index < n ? data[b_index] : 0;
 
     // perform the "up sweep" traversing from leaf to root of the tree
     upsweep(buffer, m);
 
-    // set lane 1 to 0? todo: determine why
+    // set lane b to 0 if the count was odd, since the b index will be unused
     if (b_index == (m - 1)) 
     {
         buffer[b_index] = 0;
     }
 
+    // perform the "down sweep" from root back down to the leaves
     downsweep(buffer, m);
 
+    // for each index that is in range, copy the local buffer to the data buffer
     if (a_index < n) 
     {
         data[a_index] = buffer[a_index];
@@ -52,12 +54,12 @@ __kernel void scan_int_multi_block(__global int *data,
     // workgroup size
     int wx = get_local_size(0);
 
-    // global identifiers and indexes
+    // global identifiers and indicies
     int global_id = get_global_id(0);
     int a_index = (2 * global_id);
     int b_index = (2 * global_id) + 1;
 
-    // local identifiers and indexes
+    // local identifiers and indicies
     int local_id = get_local_id(0);
     int local_a_index = (2 * local_id);
     int local_b_index = (2 * local_id) + 1;
@@ -71,7 +73,6 @@ __kernel void scan_int_multi_block(__global int *data,
     buffer[local_a_index] = (a_index < n) ? data[a_index] : 0;
     buffer[local_b_index] = (b_index < n) ? data[b_index] : 0;
 
-    // ON EACH SUBARRAY
     // a reduce on each subarray
     upsweep(buffer, m);
 

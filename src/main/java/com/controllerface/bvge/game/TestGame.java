@@ -206,7 +206,7 @@ public class TestGame extends GameMode
         //ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
-        //ecs.registerSystem(new CrateRenderer(ecs));
+        ecs.registerSystem(new CrateRenderer(ecs));
     }
 
     @Override
@@ -267,10 +267,10 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
 
 
-        //genCircles(50, 9f, 8f, 0, 5000);
-        genCrates(100,  9f, 8f, 100, 3000);
-        //genCrates2(5,  12, 0.05f, 200, 1000);
-        //genTriangles(100,  9f, 8f, 0, 1000);
+        //genCircles(50, 9f, 8f, 0, 1000);
+        //genCrates(50,  9f, 8f, 100, 3000);
+        //genCrates2(50,  12, 0.05f, 200, 1000);
+        genTriangles(50,  9f, 8f, 0, 1000);
 
 
 
