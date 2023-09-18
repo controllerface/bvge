@@ -127,14 +127,15 @@ public class PhysicsSimulation extends GameSystem
 
 
         // Now that all animated hulls are in their initial frame positions, we perform the mathematical steps
-        // to calculate where the individual points of each hull currently are. When this call returns,  all
-        // tracked physics objects are will be in their new locations.
+        // to calculate where the individual points of each hull currently are. When this call returns, all
+        // tracked physics objects will be in their new locations, and points will have their current and
+        // previous location values updated for the current tick.
         GPU.integrate(dt, uniform_grid);
 
         // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain their
         // defined shapes. Without this step, the individual points of the tracked physics hulls will deform on
-        // impact, flying off in all directions, typically causing simulation failure. The number of steps that
-        // are performed each tick has an impact on the accuracy of the hull boundaries within the simulation.
+        // impact, and may fly off in random directions, typically causing simulation failure. The number of steps
+        // that are performed each tick has an impact on the accuracy of the hull boundaries within the simulation.
         GPU.resolve_constraints(EDGE_STEPS);
 
         /*
@@ -143,20 +144,20 @@ public class PhysicsSimulation extends GameSystem
         Before the final and more computationally expensive collision checks are performed, A broad phase check
         is done to narrow down the potential collision candidates. Because this is implemented using parallelized
         compute kernels, the process is more verbose than a traditional CPU based approach. At a high level, this
-        process is used in place of higher level constructs like Map<> and Set<>, but with the capacities of these
+        process is used in place of more complex constructs like Map<> and Set<>, but with capacities of backing
         structures being pre-computed, to fulfill the fixed memory size requirements of the GPU kernel.
 
         There are two top-level "conceptual" structures, a key bank and a key map, and there is the concept
         of a key itself.
 
         Keys in this context are simply two-dimensional integer vectors that point to a "cell" of the uniform
-        grid which is a structure that imposes a rough grid over the viewable area of the screen. For every hull,
+        grid, which is a structure that imposes a coarse grid over the viewable area of the screen. For every hull,
         if it is within view, it will be inside, or overlapping one or more of these cells. A "key" value simply
         describes this cell location.
 
         The key bank is a large block of memory that holds the actual key data for each object. Objects with entries
         in the key bank will have their corresponding key bank tables updated to point to their start and offset
-        within this key bank. It is recomputed every tick, because the values and numbers of keys changes depending
+        within this key bank. It is recomputed every tick, because the values and number of keys changes depending
         on object location and orientation. Objects that are off-screen are handled such that they always have empty
         key banks, removing them from consideration before the broad phase even starts.
 

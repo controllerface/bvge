@@ -1,3 +1,7 @@
+/**
+Sweep variants for scanning a scalar int buffer 
+ */
+
 inline void upsweep(__local int *buffer, int m) 
 {
     // the local ID for this thread
@@ -57,6 +61,10 @@ inline void downsweep(__local int *buffer, int m)
         }
     }
 }
+
+/**
+Sweep variants for scanning an int4 vector buffer 
+ */
 
 inline void upsweep_vec(__local int4 *buffer2, int m) 
 {
@@ -118,6 +126,10 @@ inline void downsweep_vec(__local int4 *buffer2, int m)
         }
     }
 }
+
+/**
+Sweep variants for scanning one scalar int and one int4 vector buffer simultaneously 
+ */
 
 inline void upsweep_ex(__local int *buffer, __local int4 *buffer2, int m) 
 {
