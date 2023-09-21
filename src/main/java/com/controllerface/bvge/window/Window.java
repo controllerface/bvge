@@ -167,7 +167,6 @@ public class Window
      */
     private class BlankSystem extends GameSystem
     {
-
         public BlankSystem(ECS ecs) {
             super(ecs);
         }
@@ -175,11 +174,6 @@ public class Window
         @Override
         public void run(float dt) {
             windowUpkeep();
-        }
-
-        @Override
-        public void shutdown() {
-
         }
     }
 

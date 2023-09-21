@@ -13,5 +13,9 @@ public abstract class GameSystem
 
     abstract public void run(float dt);
 
-    abstract public void shutdown();
+    public void shutdown()
+    {
+        // todo: some systems probably should implement this in final code, or if unneeded,
+        //  it should be removed
+    }
 }

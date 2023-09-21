@@ -315,9 +315,4 @@ public class PhysicsSimulation extends GameSystem
 
         simulate(dt);
     }
-
-    @Override
-    public void shutdown()
-    {
-    }
 }

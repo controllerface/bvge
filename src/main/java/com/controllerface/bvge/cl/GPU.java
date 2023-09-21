@@ -1000,15 +1000,19 @@ public class GPU
      * @param edge_offset offset into the edges array to start the transfer
      * @param batch_size  number of edge objects to transfer in this batch
      */
-    public static void GL_edges(int vbo_id, int edge_offset, int batch_size)
+    public static void GL_edges(int vbo_id, int vbo_id2, int edge_offset, int batch_size)
     {
         var gpu_kernel = Kernel.prepare_edges.gpu;
 
         var vbo_mem = shared_mem.get(vbo_id);
+        var vbo_mem2 = shared_mem.get(vbo_id2);
 
         gpu_kernel.share_mem(vbo_mem);
+        gpu_kernel.share_mem(vbo_mem2);
+
         gpu_kernel.set_arg(2, Pointer.to(vbo_mem));
-        gpu_kernel.set_arg(3, Pointer.to(arg_long(edge_offset)));
+        gpu_kernel.set_arg(3, Pointer.to(vbo_mem2));
+        gpu_kernel.set_arg(4, Pointer.to(arg_long(edge_offset)));
         gpu_kernel.call(arg_long(batch_size));
     }
 

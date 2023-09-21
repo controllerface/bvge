@@ -5,6 +5,7 @@ the vertices that make up an edge, the star of the subset is defined by the offs
 __kernel void prepare_edges(__global float4 *points, 
                             __global float4 *edges,
                             __global float4 *vbo,
+                            __global float2 *vbo2,
                             int offset)
 {
     int gid = get_global_id(0);
@@ -13,6 +14,8 @@ __kernel void prepare_edges(__global float4 *points,
     float4 edge = edges[edge_id];
     int p1_index = (int)edge.s0;
     int p2_index = (int)edge.s1;
+    int interior = (int)edge.s3;
+    float2 inter = (float2)(interior, interior);
     
     float4 p1 = points[p1_index];
     float4 p2 = points[p2_index];
@@ -23,4 +26,7 @@ __kernel void prepare_edges(__global float4 *points,
     float4 d = (float4)(p1_v, p2_v);
     
     vbo[gid] = d;
+    vbo2[gid] = inter;
+    
+   // if (interior != 0) printf("debug: %d", interior);
 }

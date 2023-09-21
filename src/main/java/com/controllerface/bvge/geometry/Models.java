@@ -259,7 +259,7 @@ public class Models
         // an array to hold all the parsed meshes
         Mesh[] meshes;
 
-        // used to map nodes by their node names, move convenient than tree for loading process
+        // used to map nodes by their node names, more convenient than tree for loading process
         var node_map = new HashMap<String, SceneNode>();
 
         // similar to the node map, though this map is returned in the output value
@@ -269,7 +269,7 @@ public class Models
         var bone_transforms = new HashMap<String, Matrix4f>();
 
         // read initial data
-        try(AIScene aiScene = loadModelResource(model_path);)
+        try (AIScene aiScene = loadModelResource(model_path))
         {
             numMeshes = aiScene.mNumMeshes();
             root_node = aiScene.mRootNode();
@@ -303,9 +303,9 @@ public class Models
         return loaded_models.get(index);
     }
 
-    public static void register_model_instance(int model_id, int hull_id)
+    public static void register_model_instance(int model_id, int object_id)
     {
-        model_instances.computeIfAbsent(model_id, _k -> new HashSet<>()).add(hull_id);
+        model_instances.computeIfAbsent(model_id, _k -> new HashSet<>()).add(object_id);
         dirty_models.put(model_id, true);
     }
 

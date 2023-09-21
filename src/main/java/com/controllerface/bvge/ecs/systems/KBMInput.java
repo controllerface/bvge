@@ -68,12 +68,6 @@ public class KBMInput extends GameSystem
         }
     }
 
-    @Override
-    public void shutdown()
-    {
-
-    }
-
     public void keyCallback(long window, int key, int scancode, int action, int mods)
     {
         if (key == GLFW_KEY_UNKNOWN)

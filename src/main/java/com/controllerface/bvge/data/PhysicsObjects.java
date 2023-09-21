@@ -74,6 +74,8 @@ public class PhysicsObjects
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, hull_id);
+
+        // particles register with the hull ID for more straight-forward rendering
         Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
         return armature_id;
     }
@@ -132,6 +134,7 @@ public class PhysicsObjects
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, hull_id);
 
+        // triangles also register with the hull ID instead of the armature ID
         Models.register_model_instance(TRIANGLE_MODEL, hull_id);
         return armature_id;
     }
@@ -190,8 +193,9 @@ public class PhysicsObjects
         int [] _flag = CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int armature_id = Main.Memory.new_armature(x, y,hull_table, hull_id);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, hull_id);
 
+        // basic boxes also register with the hull ID instead of the armature ID
         Models.register_model_instance(CRATE_MODEL, hull_id);
         return armature_id;
     }
@@ -396,7 +400,9 @@ public class PhysicsObjects
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
         int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, root_hull_id);
-        Models.register_model_instance(model_index, root_hull_id);
+
+        // armatures are registered with their associated model ID
+        Models.register_model_instance(model_index, armature_id);
         return armature_id;
     }
 

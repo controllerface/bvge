@@ -43,10 +43,4 @@ public class CameraTracking extends GameSystem
         camera.position.y = new_y;
         uniformGrid.updateOrigin(new_origin_x, new_origin_y);
     }
-
-    @Override
-    public void shutdown()
-    {
-
-    }
 }
