@@ -166,6 +166,11 @@ public class CircleRenderer extends GameSystem
             shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
             shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
 
+            // todo: instead of using pre-defined indices, an additional CL call can be made,
+            //  and/or the current one modified to get all the model instances to render
+            //  each frame. This decouples the render batch from the actual models, allowing
+            //  seamless support for removing models at runtime
+
             GPU.GL_transforms(index_buffer_id, transform_buffer_id, numModels);
 
             glBindVertexArray(vaoID);

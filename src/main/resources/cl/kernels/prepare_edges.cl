@@ -27,6 +27,4 @@ __kernel void prepare_edges(__global float4 *points,
     
     vbo[gid] = d;
     vbo2[gid] = inter;
-    
-   // if (interior != 0) printf("debug: %d", interior);
 }

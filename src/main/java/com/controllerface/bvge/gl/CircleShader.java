@@ -33,28 +33,30 @@ public class CircleShader extends AbstractShader
     {
         try
         {
-            var st= CircleShader.class.getResourceAsStream("/gl/" + filePath);
-            String glsl_source = new String(st.readAllBytes(), StandardCharsets.UTF_8);
+            var resource = CircleShader.class.getResourceAsStream("/gl/" + filePath);
+            var glsl_source = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
 
             // normalize source so it works on all platforms
             glsl_source = glsl_source.replaceAll("\\r\\n?", "\n");
-            String[] shaders = glsl_source.split("(#type)( )+([a-zA-Z]+)");
+
+            // split out each of the shader stages' source
+            String[] shader_stages = glsl_source.split("(#type)( )+([a-zA-Z]+)");
 
             int index = glsl_source.indexOf("#type") + 6;
             int eol = glsl_source.indexOf("\n", index);
-            String firstPattern = glsl_source.substring(index, eol).trim();
+            var type_1 = glsl_source.substring(index, eol).trim();
 
             index = glsl_source.indexOf("#type", eol) + 6;
             eol = glsl_source.indexOf("\n", index);
-            String secondPattern = glsl_source.substring(index, eol).trim();
+            var type_2 = glsl_source.substring(index, eol).trim();
 
             index = glsl_source.indexOf("#type", eol) + 6;
             eol = glsl_source.indexOf("\n", index);
-            String thirdPattern = glsl_source.substring(index, eol).trim();
+            var type_3 = glsl_source.substring(index, eol).trim();
 
-            setSource(firstPattern, shaders[1]);
-            setSource(secondPattern, shaders[2]);
-            setSource(thirdPattern, shaders[3]);
+            setSource(type_1, shader_stages[1]);
+            setSource(type_2, shader_stages[2]);
+            setSource(type_3, shader_stages[3]);
         }
         catch (IOException ioe)
         {

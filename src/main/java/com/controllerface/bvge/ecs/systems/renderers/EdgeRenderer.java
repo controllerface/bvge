@@ -20,7 +20,6 @@ import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
-import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
 /**
  * Manages rendering of edge constraints. All edges that are defined in the currently
@@ -84,9 +83,10 @@ public class EdgeRenderer extends GameSystem
         GPU.share_memory(vboID2);
         glVertexAttribPointer(1, FLAG_SIZE, GL_FLOAT, false, FLAG_SIZE_BYTES, 0);
 
+        // bind zero to unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        // unbind the vao since we're done defining things for now
+        // unbind the vao since we're done defining things
         glBindVertexArray(0);
     }
 
@@ -95,7 +95,6 @@ public class EdgeRenderer extends GameSystem
         for (EdgeRenderBatch batch : batches)
         {
             batch.render();
-            batch.clear();
         }
     }
 
@@ -109,7 +108,7 @@ public class EdgeRenderer extends GameSystem
         {
             last_edge_count = edge_count;
 
-            // calculate the 5total number of batches needed. If the number of edges does not
+            // calculate the total number of batches needed. If the number of edges does not
             // divide evenly into the number of edges per batch, one extra batch is created
             // that will render the remaining objects.
             var needed_batches = edge_count / Constants.Rendering.MAX_BATCH_SIZE;

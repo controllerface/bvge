@@ -99,7 +99,7 @@ public class Shader extends AbstractShader
         glAttachShader(shaderProgramId, fragmentID);
         glLinkProgram(shaderProgramId);
 
-        // check erorr
+        // check error
         success = glGetProgrami(shaderProgramId, GL_LINK_STATUS);
         if (success == GL_FALSE)
         {

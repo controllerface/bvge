@@ -154,33 +154,33 @@ __kernel void integrate(
             prv.x = pos.x;
             prv.y = pos.y;
 
-            if (diff.x < MINIMUM_DIFF && diff.x > -MINIMUM_DIFF)
-            {
-                diff.x = 0.0f;
-            }
+            // if (diff.x < MINIMUM_DIFF && diff.x > -MINIMUM_DIFF)
+            // {
+            //     diff.x = 0.0f;
+            // }
 
-            if (diff.y < MINIMUM_DIFF && diff.y > -MINIMUM_DIFF)
-            {
-                diff.y = 0.0f;
-            }
+            // if (diff.y < MINIMUM_DIFF && diff.y > -MINIMUM_DIFF)
+            // {
+            //     diff.y = 0.0f;
+            // }
 
-            if (diff.x > MAXIMUM_DIFF)
-            {
-                diff.x = MAXIMUM_DIFF;
-            }
-            if (diff.x < -MAXIMUM_DIFF)
-            {
-                diff.x = -MAXIMUM_DIFF;
-            }
+            // if (diff.x > MAXIMUM_DIFF)
+            // {
+            //     diff.x = MAXIMUM_DIFF;
+            // }
+            // if (diff.x < -MAXIMUM_DIFF)
+            // {
+            //     diff.x = -MAXIMUM_DIFF;
+            // }
 
-            if (diff.y > MAXIMUM_DIFF)
-            {
-                diff.y = MAXIMUM_DIFF;
-            }
-            if (diff.y < -MAXIMUM_DIFF)
-            {
-                diff.y = -MAXIMUM_DIFF;
-            }
+            // if (diff.y > MAXIMUM_DIFF)
+            // {
+            //     diff.y = MAXIMUM_DIFF;
+            // }
+            // if (diff.y < -MAXIMUM_DIFF)
+            // {
+            //     diff.y = -MAXIMUM_DIFF;
+            // }
 
             // update pos
             pos = pos + diff;

@@ -145,17 +145,18 @@ public class Meshes
 
     }
 
-    public static int register_mesh(String mesh_name, Mesh mesh)
+    public static int register_mesh(String model_name, String mesh_name, Mesh mesh)
     {
-        if (mesh_index_map.containsKey(mesh_name))
+        var mesh_key =  model_name + ":" + mesh_name;
+        if (mesh_index_map.containsKey(mesh_key))
         {
-            throw new IllegalStateException("mesh: " + mesh_name + "already registered.");
+            throw new IllegalStateException("mesh: " + mesh_key + "already registered.");
         }
 
         var mesh_id = next_mesh_index.getAndIncrement();
-        mesh_index_map.put(mesh_name, mesh_id);
+        mesh_index_map.put(mesh_key, mesh_id);
         register_mesh(mesh_id, mesh);
-        System.out.printf("registered mesh [%s] with id [%d]\n", mesh_name, mesh_id);
+        System.out.printf("registered mesh [%s] with id [%d]\n", mesh_key, mesh_id);
         return mesh_id;
     }
 

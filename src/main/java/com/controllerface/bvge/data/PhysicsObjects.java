@@ -399,9 +399,13 @@ public class PhysicsObjects
 
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
+
+        // todo: flag value needs to be expanded to int2, the model ID and root hull ID can be vectorized
+        //  armature should keep model reference ID and allow it to be queried via GL/CL sharing
         int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, root_hull_id);
 
         // armatures are registered with their associated model ID
+        // todo: registering should be a simple count and not need and object ids
         Models.register_model_instance(model_index, armature_id);
         return armature_id;
     }

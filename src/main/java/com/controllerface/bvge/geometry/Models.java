@@ -177,6 +177,7 @@ public class Models
     }
 
     private static void load_mesh(int mesh_index,
+                                  String model_name,
                                   AIMesh raw_mesh,
                                   Mesh[] meshes,
                                   Map<String, SceneNode> node_map,
@@ -199,11 +200,12 @@ public class Models
 
         // todo: generate the convex hull here, just once and re-use later
 
-        Meshes.register_mesh(mesh_name, new_mesh);
+        Meshes.register_mesh(model_name, mesh_name, new_mesh);
         meshes[mesh_index] = new_mesh;
     }
 
     private static void load_raw_meshes(int numMeshes,
+                                        String model_name,
                                         Mesh[] meshes,
                                         PointerBuffer mesh_buffer,
                                         Map<String, SceneNode> node_map,
@@ -213,7 +215,7 @@ public class Models
         for (int i = 0; i < numMeshes; i++)
         {
             var raw_mesh = AIMesh.create(mesh_buffer.get(i));
-            load_mesh(i, raw_mesh, meshes, node_map, bone_map);
+            load_mesh(i, model_name, raw_mesh, meshes, node_map, bone_map);
         }
     }
 
@@ -242,7 +244,7 @@ public class Models
         return root_index;
     }
 
-    private static int load_model(String model_path)
+    private static int load_model(String model_path, String model_name)
     {
         // the number of meshes associated with the loaded model
         int numMeshes;
@@ -282,7 +284,7 @@ public class Models
             throw new RuntimeException("Unable to load model data", e);
         }
 
-        load_raw_meshes(numMeshes, meshes, mesh_buffer, node_map, bone_map);
+        load_raw_meshes(numMeshes, model_name, meshes, mesh_buffer, node_map, bone_map);
 
         // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
         // the root bone is determined by checking if the current bone's parent is a direct descendant of the scene
@@ -302,6 +304,13 @@ public class Models
     {
         return loaded_models.get(index);
     }
+
+    // todo: need to move to just tracking a count of models and not holding onto their
+    //  object ids. Instead, renderers should use a CL call to set up batches. Main
+    //  memory segments will still be kept at accurate counts, so batching logic can
+    //  still work the same as it currently does.
+
+    // todo: need a way to decrement a model count when an instance is deleted
 
     public static void register_model_instance(int model_id, int object_id)
     {
@@ -336,8 +345,8 @@ public class Models
         loaded_models.put(TRIANGLE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
         loaded_models.put(CRATE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
-        TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx");
-        TEST_SQUARE_INDEX = load_model("/models/test_square.fbx");
+        TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
+        TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
     }
 
     private static SceneNode process_node_hierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)
