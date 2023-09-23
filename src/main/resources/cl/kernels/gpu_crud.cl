@@ -24,11 +24,11 @@ __kernel void create_edge(__global float4 *edges,
 }
 
 __kernel void create_armature(__global float4 *armatures,
-                              __global int *armature_flags,
+                              __global int2 *armature_flags,
                               __global int2 *hull_tables,
                               int target,
                               float4 new_armature,
-                              int new_armature_flag,
+                              int2 new_armature_flag,
                               int2 new_hull_table)
 {
     armatures[target] = new_armature; 

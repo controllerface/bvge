@@ -155,7 +155,7 @@ public class Main
             return idx / Width.HULL;
         }
 
-        public static int new_armature(float x, float y, int[] table, int flags)
+        public static int new_armature(float x, float y, int[] table, int[] flags)
         {
             GPU.create_armature(armature_count(), x, y, table, flags);
             var idx = armature_index;

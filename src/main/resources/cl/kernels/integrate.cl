@@ -1,6 +1,3 @@
-#define MINIMUM_DIFF FLT_MIN //0.005
-#define MAXIMUM_DIFF FLT_MAX //0.01
-
 inline float2 generate_counter_vector(float2 vector, float counter_scale)
 {
     // if (counter_scale < .01)
@@ -23,7 +20,7 @@ them before this kernel completes.
 __kernel void integrate(
     __global float4 *hulls,
     __global float4 *armatures,
-    __global int *armature_flags,
+    __global int2 *armature_flags,
     __global int4 *element_tables,
     __global float2 *armature_accel,
     __global float2 *hull_rotations,
@@ -56,7 +53,7 @@ __kernel void integrate(
     int4 element_table = element_tables[gid];
     int2 hull_1_flags = hull_flags[gid];
     float4 armature = armatures[hull_1_flags.y];
-    int armature_flag = armature_flags[hull_1_flags.y];
+    int2 armature_flag = armature_flags[hull_1_flags.y];
     float2 acceleration = armature_accel[hull_1_flags.y];
     float2 rotation = hull_rotations[gid];
     float4 bounding_box = bounds[gid];
@@ -125,17 +122,11 @@ __kernel void integrate(
     float2 anti_grav = generate_counter_vector(gravity, anti_grav_scale);
     float2 i_acc = anti_grav * (dt * dt);
 
-    //bool inv_r = gid % 2 == 0;
-
     for (int i = start; i <= end; i++)
     {
         // get this point
         float4 point = points[i];
         
-        // this was a very basic orbital motion test, worth saving for something else
-        //float rot  = /*inv_r ? -.00001 :*/ .00001;
-        //point = rotate_point(point, (float2)(0,0), rot);
-
         // get pos/prv vectors
         float2 pos = point.xy;
         float2 prv = point.zw;
@@ -153,34 +144,6 @@ __kernel void integrate(
             // set the prv to current pos
             prv.x = pos.x;
             prv.y = pos.y;
-
-            // if (diff.x < MINIMUM_DIFF && diff.x > -MINIMUM_DIFF)
-            // {
-            //     diff.x = 0.0f;
-            // }
-
-            // if (diff.y < MINIMUM_DIFF && diff.y > -MINIMUM_DIFF)
-            // {
-            //     diff.y = 0.0f;
-            // }
-
-            // if (diff.x > MAXIMUM_DIFF)
-            // {
-            //     diff.x = MAXIMUM_DIFF;
-            // }
-            // if (diff.x < -MAXIMUM_DIFF)
-            // {
-            //     diff.x = -MAXIMUM_DIFF;
-            // }
-
-            // if (diff.y > MAXIMUM_DIFF)
-            // {
-            //     diff.y = MAXIMUM_DIFF;
-            // }
-            // if (diff.y < -MAXIMUM_DIFF)
-            // {
-            //     diff.y = -MAXIMUM_DIFF;
-            // }
 
             // update pos
             pos = pos + diff;
@@ -223,7 +186,7 @@ __kernel void integrate(
     }
 
     // only update the aramture during the update of the root hull, otherwise movement would be magnified 
-    if (armature_flag == gid)
+    if (armature_flag.x == gid)
     {
         float2 pos = armature.xy;
         float2 prv = armature.zw;
@@ -246,16 +209,6 @@ __kernel void integrate(
             // set the prv to current pos
             prv.x = pos.x;
             prv.y = pos.y;
-
-            if (diff.x < MINIMUM_DIFF && diff.x > -MINIMUM_DIFF)
-            {
-                diff.x = 0.0f;
-            }
-
-            if (diff.y < MINIMUM_DIFF && diff.y > -MINIMUM_DIFF)
-            {
-                diff.y = 0.0f;
-            }
 
             // update pos
             pos = pos + diff;

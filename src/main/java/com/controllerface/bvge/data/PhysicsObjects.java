@@ -13,8 +13,7 @@ import org.joml.Vector4f;
 import java.util.*;
 import java.util.stream.IntStream;
 
-import static com.controllerface.bvge.geometry.Models.CRATE_MODEL;
-import static com.controllerface.bvge.geometry.Models.TRIANGLE_MODEL;
+import static com.controllerface.bvge.geometry.Models.*;
 
 /**
  * This is the core "factory" class for all physics based objects. It contains named archetype
@@ -48,7 +47,7 @@ public class PhysicsObjects
         int next_armature_id = Main.Memory.next_armature_id();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
-        var mesh = Models.get_model_by_index(Models.CIRCLE_MODEL).meshes()[0];
+        var mesh = Models.get_model_by_index(CIRCLE_MODEL).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
         int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
@@ -73,10 +72,11 @@ public class PhysicsObjects
         int[] _flag = CLUtils.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int armature_id = Main.Memory.new_armature(x, y, hull_table, hull_id);
+        int[] armature_flags = CLUtils.arg_int2(hull_id, CIRCLE_MODEL);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // particles register with the hull ID for more straight-forward rendering
-        Models.register_model_instance(Models.CIRCLE_MODEL, hull_id);
+        Models.register_model_instance(CIRCLE_MODEL, hull_id);
         return armature_id;
     }
 
@@ -132,7 +132,8 @@ public class PhysicsObjects
         int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int armature_id = Main.Memory.new_armature(x, y, hull_table, hull_id);
+        int[] armature_flags = CLUtils.arg_int2(hull_id, TRIANGLE_MODEL);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // triangles also register with the hull ID instead of the armature ID
         Models.register_model_instance(TRIANGLE_MODEL, hull_id);
@@ -193,7 +194,8 @@ public class PhysicsObjects
         int [] _flag = CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int armature_id = Main.Memory.new_armature(x, y, hull_table, hull_id);
+        int[] armature_flags = CLUtils.arg_int2(hull_id, CRATE_MODEL);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // basic boxes also register with the hull ID instead of the armature ID
         Models.register_model_instance(CRATE_MODEL, hull_id);
@@ -402,7 +404,8 @@ public class PhysicsObjects
 
         // todo: flag value needs to be expanded to int2, the model ID and root hull ID can be vectorized
         //  armature should keep model reference ID and allow it to be queried via GL/CL sharing
-        int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, root_hull_id);
+        int[] armature_flags = CLUtils.arg_int2(root_hull_id, model_index);
+        int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, armature_flags);
 
         // armatures are registered with their associated model ID
         // todo: registering should be a simple count and not need and object ids

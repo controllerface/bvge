@@ -439,12 +439,13 @@ public class GPU
         armatures(Sizeof.cl_float4),
 
         /**
-         * Hull index of root hull for an armature. Values are int with the following mapping:
+         * Flags for an armature. Values are int with the following mapping:
          * -
-         * value: hull index
+         * x: root hull index
+         * y: model id
          * -
          */
-        armature_flags(Sizeof.cl_int),
+        armature_flags(Sizeof.cl_int2),
 
         /**
          * Acceleration value of an armature. Values are float2 with the following mappings:
@@ -796,7 +797,6 @@ public class GPU
         animate_hulls_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         animate_hulls_k.set_vertex_table(Memory.vertex_table.gpu.pointer());
         animate_hulls_k.set_armatures(Memory.armatures.gpu.pointer());
-        animate_hulls_k.set_armatures_flags(Memory.armature_flags.gpu.pointer());
         animate_hulls_k.set_vertex_refs(Memory.vertex_references.gpu.pointer());
         animate_hulls_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
         Kernel.animate_hulls.set_kernel(animate_hulls_k);
@@ -1067,12 +1067,12 @@ public class GPU
         gpu_kernel.call(global_single_size);
     }
 
-    public static void create_armature(int armature_index, float x, float y, int[] table, int flags)
+    public static void create_armature(int armature_index, float x, float y, int[] table, int[] flags)
     {
         var gpu_kernel = Kernel.create_armature.gpu;
         gpu_kernel.set_arg(3, Pointer.to(arg_int(armature_index)));
         gpu_kernel.set_arg(4, Pointer.to(arg_float4(x, y, x, y)));
-        gpu_kernel.set_arg(5, Pointer.to(arg_int(flags)));
+        gpu_kernel.set_arg(5, Pointer.to(flags));
         gpu_kernel.set_arg(6, Pointer.to(table));
         gpu_kernel.call(global_single_size);
     }

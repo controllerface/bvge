@@ -3,7 +3,6 @@ __kernel void animate_hulls(__global float4 *points,
                             __global int2 *hull_flags,
                             __global int2 *vertex_tables,
                             __global float4 *armatures,
-                            __global int *armature_flags,
                             __global float2 *vertex_references,
                             __global float16 *bones)
 {
