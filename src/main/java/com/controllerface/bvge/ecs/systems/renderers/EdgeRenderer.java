@@ -9,17 +9,14 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
-import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
+import static org.lwjgl.opengl.GL11C.GL_FLOAT;
+import static org.lwjgl.opengl.GL15C.*;
+import static org.lwjgl.opengl.GL15C.GL_DYNAMIC_DRAW;
+import static org.lwjgl.opengl.GL20C.glDisableVertexAttribArray;
+import static org.lwjgl.opengl.GL20C.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
+import static org.lwjgl.opengl.GL30C.glBindVertexArray;
+import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
 
 /**
  * Manages rendering of edge constraints. All edges that are defined in the currently
@@ -40,22 +37,18 @@ public class EdgeRenderer extends GameSystem
     private static final int BATCH_FLAG_SIZE = BATCH_FLAG_COUNT * Float.BYTES;
 
     private final AbstractShader shader;
-    private final List<EdgeRenderBatch> batches;
     private int vaoID;
-    private int vboID;
-    private int vboID2;
-
-    private int last_edge_count = 0;
+    private int vertex_vbo;
+    private int flag_vbo;
 
     public EdgeRenderer(ECS ecs)
     {
         super(ecs);
-        this.batches = new ArrayList<>();
         this.shader = Assets.shader("object_outline.glsl");
-        start();
+        init();
     }
 
-    public void start()
+    public void init()
     {
         // Generate and bind a Vertex Array Object
         vaoID = glGenVertexArrays();
@@ -63,24 +56,24 @@ public class EdgeRenderer extends GameSystem
 
         // generate and bind a Vertex Buffer Object, note that because our vao is currently active,
         // the new vbo is "attached" to it implicitly when it is bound
-        vboID = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vboID);
+        vertex_vbo = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
 
         // allocates enough space for the vertices we can handle in this batch, but doesn't transfer any data
         // into the buffer just yet
         glBufferData(GL_ARRAY_BUFFER, BATCH_BUFFER_SIZE, GL_DYNAMIC_DRAW);
 
         // share the buffer with the CL context
-        GPU.share_memory(vboID);
+        GPU.share_memory(vertex_vbo);
 
         // define the buffer attribute pointers
         glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, 0);
 
         // create buffer for edge flags, used to modify rendering output
-        vboID2 = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vboID2);
+        flag_vbo = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, flag_vbo);
         glBufferData(GL_ARRAY_BUFFER, BATCH_FLAG_SIZE, GL_DYNAMIC_DRAW);
-        GPU.share_memory(vboID2);
+        GPU.share_memory(flag_vbo);
         glVertexAttribPointer(1, FLAG_SIZE, GL_FLOAT, false, FLAG_SIZE_BYTES, 0);
 
         // bind zero to unbind
@@ -90,116 +83,39 @@ public class EdgeRenderer extends GameSystem
         glBindVertexArray(0);
     }
 
-    private void render()
+    private void render_batch(int offset, int edge_count)
     {
-        for (EdgeRenderBatch batch : batches)
-        {
-            batch.render();
-        }
+        GPU.GL_edges(vertex_vbo, flag_vbo, offset, edge_count);
+        glDrawArrays(GL_LINES, 0, edge_count * 2);
     }
-
 
     @Override
     public void run(float dt)
     {
         var edge_count = Main.Memory.edge_count();
 
-        if (edge_count != last_edge_count)
-        {
-            last_edge_count = edge_count;
+        glBindVertexArray(vaoID);
 
-            // calculate the total number of batches needed. If the number of edges does not
-            // divide evenly into the number of edges per batch, one extra batch is created
-            // that will render the remaining objects.
-            var needed_batches = edge_count / Constants.Rendering.MAX_BATCH_SIZE;
-            var r = edge_count % Constants.Rendering.MAX_BATCH_SIZE;
-            if (r > 0)
-            {
-                needed_batches++;
-            }
+        // Use shader
+        shader.use();
+        shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
+        shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
 
-            // create more batches if needed
-            while (needed_batches > batches.size())
-            {
-                var b = new EdgeRenderBatch(shader, vaoID, vboID, vboID2);
-                batches.add(b);
-            }
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
 
-            // remove excess batches if needed
-            while (batches.size() > needed_batches)
-            {
-                batches.remove(0);
-            }
-        }
-
-        int next = 0;
         int offset = 0;
         for (int i = edge_count; i > 0; i -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, i);
-            var b = batches.get(next++);
-            b.setLineCount(count);
-            b.setOffset(offset);
+            render_batch(offset, count);
             offset += count;
         }
 
-        render();
-    }
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glBindVertexArray(0);
 
-    private static class EdgeRenderBatch
-    {
-        private int edge_count;
-        private int offset;
-        private final int vaoID;
-        private final int vboID;
-        private final int vboID2;
-        private final AbstractShader shader;
-
-        public EdgeRenderBatch(AbstractShader shader, int vaoID, int vboID, int vboID2)
-        {
-            this.edge_count = 0;
-            this.shader = shader;
-            this.vaoID = vaoID;
-            this.vboID = vboID;
-            this.vboID2 = vboID2;
-        }
-
-        public void clear()
-        {
-            edge_count = 0;
-        }
-
-        public void setLineCount(int numLines)
-        {
-            this.edge_count = numLines;
-        }
-
-        public void setOffset(int offset)
-        {
-            this.offset = offset;
-        }
-
-        public void render()
-        {
-            if (edge_count == 0) return;
-
-            glBindVertexArray(vaoID);
-
-            GPU.GL_edges(vboID, vboID2, offset, edge_count);
-
-            // Use shader
-            shader.use();
-            shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
-            shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
-
-            glEnableVertexAttribArray(0);
-            glEnableVertexAttribArray(1);
-            glDrawArrays(GL_LINES, 0, edge_count * 2);
-            glDisableVertexAttribArray(0);
-            glDisableVertexAttribArray(1);
-            glBindVertexArray(0);
-
-            shader.detach();
-        }
+        shader.detach();
     }
 }

@@ -27,6 +27,7 @@ public class CircleRenderer extends GameSystem
     private final AbstractShader shader;
     private final List<CircleRenderBatch> batches;
     private int transform_buffer_id;
+    private int vaoID;
 
     public CircleRenderer(ECS ecs)
     {
@@ -38,6 +39,9 @@ public class CircleRenderer extends GameSystem
 
     public void start()
     {
+        // Generate and bind a Vertex Array Object
+        vaoID = glGenVertexArrays();
+
         // create buffer for transforms, batches will use this during the rendering process
         transform_buffer_id = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_id); // this attribute comes from a different vertex buffer
@@ -61,9 +65,14 @@ public class CircleRenderer extends GameSystem
     @Override
     public void run(float dt)
     {
-//        // todo: will need to account for this happening more than once
+        // todo: when checking batch size, the memory should be scanned for those objects
+        //  to determine the indices, instead of relying on the Model loader to keep track
+        //  of the hull ids. A new kernel will be needed to accommodate this.
+
+        // todo: will need to account for this happening more than once
         if (Models.is_model_dirty(Models.CIRCLE_MODEL))
         {
+            // todo: replace this with a CL kernel to get the instance IDs
             var hull_instances = Models.get_model_instances(Models.CIRCLE_MODEL);
             int[] indices = new int[hull_instances.size()];
             int[] counter = new int[1];
@@ -80,7 +89,7 @@ public class CircleRenderer extends GameSystem
             }
             while (needed_batches > batches.size())
             {
-                var b = new CircleRenderBatch(shader, transform_buffer_id);
+                var b = new CircleRenderBatch(shader, transform_buffer_id, vaoID);
                 batches.add(b);
             }
 
@@ -98,7 +107,6 @@ public class CircleRenderer extends GameSystem
                 offset += count;
             }
 
-
             Models.set_model_clean(Models.CIRCLE_MODEL);
         }
 
@@ -109,20 +117,22 @@ public class CircleRenderer extends GameSystem
     {
         private final AbstractShader shader;
         private int numModels;
-        private int vaoID, index_buffer_id;
+        private final int vaoID;
+        private int index_buffer_id;
         private final int transform_buffer_id;
         private int[] indices; // will be large enough to hold a full batch, but may only contain a partial one
 
-        public CircleRenderBatch(AbstractShader shader, int transform_buffer_id)
+        public CircleRenderBatch(AbstractShader shader, int transform_buffer_id, int vaoID)
         {
             this.shader = shader;
             this.transform_buffer_id = transform_buffer_id;
+            this.vaoID = vaoID;
         }
 
+        // todo: need to refactor to remove this, indices will be calculated each frame
+        //  or cached higher up
         public void start()
         {
-            // Generate and bind a Vertex Array Object
-            vaoID = glGenVertexArrays();
             glBindVertexArray(vaoID); // this sets this VAO as being active
 
             index_buffer_id = glGenBuffers();
@@ -143,11 +153,6 @@ public class CircleRenderer extends GameSystem
             glBindVertexArray(0);
         }
 
-        public void clear()
-        {
-            numModels = 0;
-        }
-
         public void setIndices(int[] indices)
         {
             this.indices = indices;
@@ -157,7 +162,6 @@ public class CircleRenderer extends GameSystem
         {
             this.numModels = numModels;
         }
-
 
         public void render()
         {
@@ -170,6 +174,8 @@ public class CircleRenderer extends GameSystem
             //  and/or the current one modified to get all the model instances to render
             //  each frame. This decouples the render batch from the actual models, allowing
             //  seamless support for removing models at runtime
+
+            // todo: implement GL_circles instead of using generic transforms
 
             GPU.GL_transforms(index_buffer_id, transform_buffer_id, numModels);
 

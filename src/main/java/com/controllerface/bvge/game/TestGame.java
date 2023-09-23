@@ -267,10 +267,10 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
 
 
-        //genCircles(50, 6f, 5f, 0, 5000);
+        //genCircles(100, 6f, 5f, 0, 1000);
         genCrates(100,  6f, 5f, 100, 1000);
         //genCrates2(50,  6, 0.025f, 0, 2000);
-        //genTriangles(50,  6f, 5f, 0, 3000);
+        genTriangles(50,  6f, 5f, 0, 3000);
 
 
 
