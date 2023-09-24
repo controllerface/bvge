@@ -18,7 +18,9 @@ Eventually, I intend to meander this code toward something game-like, but for th
 
 I also want to ensure that the prototype, while not fully-featured in any sense of the word, does have one _complete_ component that can be used in a later alpha phase, before I would consider the prototype "done". This component is what I generally refer to as GPU-CRUD or in other words, the full set of create, read, update, and delete operations targeting objects stored in memory on the GPU.
 
-At a high level, this key thing that is needed is the ability to spawn, as well as de-spawn, some arbitrary "entities". A player is an entity, and so is an enemy or NPC, or rock or tree. This design is meant to support an ECS layout, which is a paradigm that is used in game development that serves a somewhat analogous purpose as MVC (model, view controller) does in front end frameworks. 
+At a high level, the key thing that is needed is the ability to spawn, as well as de-spawn, some arbitrary "entities". A player is an entity, an enemy or NPC, and so is a rock or tree or anything that exists in the game world. 
+
+This design is meant to support an ECS layout, which is a paradigm that is used in game development that serves a somewhat analogous purpose as MVC (model, view controller) does in front end frameworks. 
 
 General Layout
 -
@@ -27,9 +29,9 @@ There are a few core classes that comprise most of the important functionality i
 
 - ECS: Entity Component System
   - This is an overall container class that provides a mechanism for creating tracked entities, giving those entities values by way of attaching components to them, and then defining systems that operate on these entities and their components.
-  - Every tracked objects in the engine is an entity, and entities are stored in memory as a standard String, so effectively that unique String is all  that is needed to reference that entity within the methods provided by the ECS class.
-  - Components are attached to entities and contain some value. The value is open-ended, so may be any kind of class, as long as it implements the required interface. Only a few components are defined, but the way the design works, it should never be expensive to have more, as all looks ups use hash maps and categorized queries. Generally speaking, looping over components or entities is discouraged.
-  - Systems are effectively mini programs that are all run in a defined order every frame. Systems implement an interface and then are registered to ensure they are run during the game loop. The intention fo this design is to implement core mechanics of the game engine as systems.
+  - Every tracked object in the engine is an entity, and entities are stored in memory as a standard String, so effectively that unique String is all that is needed to reference that entity within the methods provided by the ECS class.
+  - Components are attached to entities and contain some value. The value is open-ended, so may be any kind of class, as long as it implements the required interface. Only a few components are defined, but the way the design works, adding new components should not affect performance, as all looks ups use hash maps and categorized queries. Generally speaking, looping over components or entities is discouraged and could be forbidden at some point.
+  - Systems are effectively mini programs that are run in a defined order every frame. Systems implement an interface and then are registered to ensure they are run during the game loop. The intention of this design is to implement core mechanics of the game engine as systems.
 
 
 - GPU: Generalized GPU Computing
