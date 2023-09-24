@@ -27,20 +27,20 @@ General Layout
 
 There are a few core classes that comprise most of the important functionality in the engine:
 
-- ECS: Entity Component System
+- [ECS](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/ecs/ECS.java): Entity Component System
   - This is an overall container class that provides a mechanism for creating tracked entities, giving those entities values by way of attaching components to them, and then defining systems that operate on these entities and their components.
   - Every tracked object in the engine is an entity, and entities are stored in memory as a standard String, so effectively that unique String is all that is needed to reference that entity within the methods provided by the ECS class.
   - Components are attached to entities and contain some value. The value is open-ended, so may be any kind of class, as long as it implements the required interface. Only a few components are defined, but the way the design works, adding new components should not affect performance, as all looks ups use hash maps and categorized queries. Generally speaking, looping over components or entities is discouraged and could be forbidden at some point.
   - Systems are effectively mini programs that are run in a defined order every frame. Systems implement an interface and then are registered to ensure they are run during the game loop. The intention of this design is to implement core mechanics of the game engine as systems.
 
 
-- GPU: Generalized GPU Computing
+- [GPU](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/cl/GPU.java): Generalized GPU Computing
   - Primarily used for physics calculations, this class represents the interface between the CPU and GPU and defines all the kernel entry points that can be called.
   - Also includes some interop functions to allow Open GL and Open CL to share data without requiring round-trips to the CPU.
   - This class is used in tandem with the Main.Memory utils to ensure that the CPU and GPU are kept in sync for data counts and offsets
 
 
-- PhysicsSimulation: Core System
+- [PhysicsSimulation](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/ecs/systems/physics/PhysicsSimulation.java): Core System
   - A core system that implements the physics simulation that the game runs within. This class leans heavily on the GPU utility to call kernel functions on the GPU, which are what drives the simulation.
   - There is a concept of a "tick" which is disconnected from a frame. The simulation runs at 60 fps, but each frame is broken into sub-steps (currently 4) and the physics simulation is "ticked" once for each sub-step. If sub-steps were disabled, the simulation tick-rate and frame-rate would be the same, but since we have 4 sub-steps the tick rate is effectively 60 frames * 4 steps, i.e. 240 fps.
   - Physics objects are represented as a collections of 5 constituent objects:
@@ -61,14 +61,14 @@ There are a few core classes that comprise most of the important functionality i
        - there is a call made during the physics tick that enforces these constraints
 
 
-- PhysicsObjects: Spawning Utils
+- [PhysicsObjects](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/data/PhysicsObjects.java): Spawning Utils
   - A utility class that provides functions for spawning objects in the game world
   - The goal is to have a simple generic way to create physics objects
   - creation functions return a single ID representing the tracked armature
   - the armature ID is attached to an entity as a component
 
 
-- Main.Memory: CPU/GPU Boundary
+- [Main.Memory](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/Main.java): CPU/GPU Boundary
   - This subclass of Main provides a centralized point where CPU code (Java) can interact with memory buffers created on the GPU
   - When a new objects is spawned, it delegates to calls to this sub-class that actually put the object into memory
   - the current design requires objects are be created all at once, essentially atomically
@@ -76,7 +76,7 @@ There are a few core classes that comprise most of the important functionality i
   - THIS MECHANISM IS NOT THREAD SAFE! ONLY ONE THREAD CAN CREATE OBJECTS AT A TIME!
 
 
-- TestGame: As is says...
+- [TestGame](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/game/TestGame.java): As is says...
   - This is the current "test game" that loads all the systems, spwans the player and otehr objects, and just generally gets things going
   - load() is the main method where I generally spawn different things to test out the effects of changes
 
