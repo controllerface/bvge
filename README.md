@@ -124,6 +124,41 @@ here is a short list of a few of the more vital kernels:
   - Unlike many common implementations, this process does not require collision manifolds. Instead, there is a point-aligned memory buffer that is used to store accumulated reactions on each point
   - Because the same point may be affected in more than one collision, care is taken to ensure reaction vectors are applied _cumulatively_.  
 
+
+### Renderers
+
+This project uses the Open GL API to render objects that are present in the game world. Like most modern uses of this API, this project uses the programmable shader pipeline. rendering of objects uses the common vertex/fragment shader pairs to render geometry.
+
+In practice, each shader is paired with a Java class that loads and uses it. The renderer logic will typically set up required uniform values, call an Open CL kernel that sets up the geometry in a buffer, and then render from that buffer to screen.
+
+At the moment, this part of the engine is the most subject to change, as requirements of the CPU and kernel code often require updates to the shaders. In particular, shaders that render models will require changes to support deletion/de-spawning of objects.
+
+Currently, vertex and fragment shaders are stored in a single `.glsl` file, but this may change in the future. Here are a few of the most used shaders, along with the class that loads them:
+
+- [EdgeRenderer](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/ecs/systems/renderers/EdgeRenderer.java) | [object_outline.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/gl/object_outline.glsl): Edge Rendering
+  - Probably the simplest renderer to look at as an example
+  - All data is calculated per-frame, so there is no state to save in the renderer class 
+  - At a high level, this asks Open CL to "forward" all the vertices that are being tracked as part of physics hull edges, into a vertex buffer that can be rendered from Open GL
+
+
+_The following renderers will need updates for deleting objects. The changes to the shader code should be minimal, but the Java classes will need to calculate object indices rather than have them provided by the model class._
+
+
+- [CircleRenderer](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/ecs/systems/renderers/CircleRenderer.java) | [circle_shader.glsl](https://github.com/controllerface/bvge/blob/main/src/main/resources/gl/circle_shader.glsl)
+  - Handles rendering of circle objects, which are a special case compared to polygons
+  - In addition to the vertex and Fragment shaders, this renderer also uses a geometry shader to generate what is essentially a "bounding quad"
+  - This is required because Open GL does not have primitives for circles, only points, lines, and triangles
+  - Essentially, circles are treated as points, that are expanded outward to form a quad, which is then rendered onto as if it were a billboard
+  - The shader code uses the quad surface space to "draw" a circle making it visible the same as edges
+
+
+- [CrateRenderer](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/ecs/systems/renderers/CrateRenderer.java) | [box_model.glsl](https://github.com/controllerface/bvge/blob/main/src/main/resources/gl/box_model.glsl)
+  - So far, this is the only "production" renderer (for lack of a better term)
+  - The shader code renders a texture to a square that looks like a basic wooden crate
+  - In order to ensure the rendered texture matches up with the physics object, the values from the hull are forwarded to the shader, including position and rotation
+  - The rendered model data "shadows" the physics hulls, maintaining a clear separation between the displayed graphics and the physics hulls.  
+  - Vertex colors are supported, though in the current implementation they are hard-coded
+
 Current Status
 -
 Currently, the engine supports creating, reading, and updating of all required objects. There are several debugging renderers and one texture renderer implemented. The last main hurdle remains support for deleting of objects.
