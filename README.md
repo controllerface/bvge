@@ -42,8 +42,8 @@ There are a few core classes that comprise most of the important functionality i
 
 - [PhysicsSimulation](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/ecs/systems/physics/PhysicsSimulation.java): Core System
   - A core system that implements the physics simulation that the game runs within. This class leans heavily on the GPU utility to call kernel functions on the GPU, which are what drives the simulation.
-  - There is a concept of a "tick" which is disconnected from a frame. The simulation runs at 60 fps, but each frame is broken into sub-steps (currently 4) and the physics simulation is "ticked" once for each sub-step. If sub-steps were disabled, the simulation tick-rate and frame-rate would be the same, but since we have 4 sub-steps the tick rate is effectively 60 frames * 4 steps, i.e. 240 fps.
-  - Physics objects are represented as a collections of 5 constituent objects:
+  - There is a concept of a "tick" which is disconnected from a frame. The simulation runs at `60 fps`, but each frame is broken into sub-steps (currently `4`) and the physics simulation is "ticked" once for each sub-step. If sub-steps were disabled, the simulation tick-rate and frame-rate would be the same, but since we have `4` sub-steps the tick rate is effectively `60` frames * `4` steps, i.e. `240 fps`.
+  - Physics objects are represented as collections of 5 constituent objects:
      - armature: the top-level object, every entity has exactly 1 armature
        - the armature is effectively a "copy" or instance of a model that ahs been loaded.
        - many copies of the same model are individually spawned with a unique Armature, but the same reference model.
@@ -52,10 +52,10 @@ There are a few core classes that comprise most of the important functionality i
      - bone: bones are 4x4 transformation matrices that are used to animate hulls
        - the loaded model will have reference frames that are used to modify the bones, making the armature animate.
        - *animation is not fully implemented yet*
-   - point: a hull has 1 or more points, which define the extents of the hull in physical space
+     - point: a hull has 1 or more points, which define the extents of the hull in physical space
        - generally, only circles will have a single point, and all other objects will have 3 or more
        - points are associated with bones providing an easy way to perform animations directly
-   - edge: a hull has 0 or more edges, which define the edges of the hull that make it a rigid body
+     - edge: a hull has 0 or more edges, which define the edges of the hull that make it a rigid body
        - circles are the only objects that don't have an edge, their boundary is defined by their radius
        - edges are recorded as constraints which must be maintained
        - there is a call made during the physics tick that enforces these constraints
@@ -70,14 +70,14 @@ There are a few core classes that comprise most of the important functionality i
 
 - [Main.Memory](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/Main.java): CPU/GPU Boundary
   - This subclass of Main provides a centralized point where CPU code (Java) can interact with memory buffers created on the GPU
-  - When a new objects is spawned, it delegates to calls to this sub-class that actually put the object into memory
+  - When a new object is spawned, this subclass delegates to calls to the GPU, which actually puts the object into memory
   - the current design requires objects are be created all at once, essentially atomically
   - this ensures that buffers remain "aligned", vital when entities must be deleted
   - THIS MECHANISM IS NOT THREAD SAFE! ONLY ONE THREAD CAN CREATE OBJECTS AT A TIME!
 
 
 - [TestGame](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/game/TestGame.java): As is says...
-  - This is the current "test game" that loads all the systems, spwans the player and otehr objects, and just generally gets things going
+  - This is the current "test game" that loads all the systems, spawns the player and other objects, and just generally gets things going
   - load() is the main method where I generally spawn different things to test out the effects of changes
 
 
@@ -87,7 +87,7 @@ Currently, the engine supports creating, reading, and updating of all required o
 
 Toward implementing deleting objects, I have made some progress both on the Open CL kernels required to perform the required buffer scan and compaction, and the changes to the renderers that will be needed.
 
-I did refactor the edge renderer to be able to handle deletes and took the oppportunity to clean up, so it is quite a bit less code now. This is a very good example of how the memory layout can be employed to make a simple and efficient renderer in this prototype engine.
+I did refactor the edge renderer to be able to handle deletes and took the opportunity to clean up, so it is quite a bit less code now. This is a very good example of how the memory layout can be employed to make a simple and efficient renderer in this prototype engine.
 
 In doing this process, I did find an issue with models that makes the current design cumbersome, so I have started in on a refactor to the circle renderer, which will serve as a basis for more complex models. The new design will work very similarly to how it functions today, accept the `indices` value that is commonly used by the render batches will be computed rather than taken from the `Models` class.
 
