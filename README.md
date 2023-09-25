@@ -46,19 +46,25 @@ There are a few core classes that comprise most of the important functionality i
 - [PhysicsSimulation](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/ecs/systems/physics/PhysicsSimulation.java): Core System
   - A core system that implements the physics simulation that the game runs within. This class leans heavily on the GPU utility to call kernel functions on the GPU, which are what drives the simulation.
   - There is a concept of a "tick" which is disconnected from a frame. The simulation runs at `60 fps`, but each frame is broken into sub-steps (currently `4`) and the physics simulation is "ticked" once for each sub-step. If sub-steps were disabled, the simulation tick-rate and frame-rate would be the same, but since we have `4` sub-steps the tick rate is effectively `60` frames * `4` steps, i.e. `240 fps`.
-  - Physics objects are represented as collections of 5 constituent objects:
-     - **armature**: the top-level object, every entity has exactly 1 armature
-       - the armature is effectively a "copy" or instance of a model that ahs been loaded.
+  - Physical entities are represented as collections of 5 constituent base objects:
+     - **armature**: 
+       - the top-level object, every entity has exactly 1 armature
+       - the armature is effectively a "copy" or instance of a model that has been loaded.
        - many copies of the same model are individually spawned with a unique Armature, but the same reference model.
-     - **hull**: an armature contains 1 or more hulls, which represent the space the object takes up
+     - **hull**: 
+       - an armature contains 1 or more hulls, which represent the space the object takes up
        - these are the primary objects that are used in collision checks
-     - **bone**: bones are 4x4 transformation matrices that are used to animate hulls
-       - the loaded model will have reference frames that are used to modify the bones, making the armature animate.
-       - *animation is not fully implemented yet*
-     - **point**: a hull has 1 or more points, which define the extents of the hull in physical space
+     - **bone**: 
+       - bones are 4x4 transformation matrices that are used to animate hulls
+       - Currently, there is exactly 1 bone for each hull, however in the future this will likely change to have some _number_ of bones per vertex, up to a maximum.
+       - The loaded model will have reference frames that are used to modify the bones, making the armature animate.
+         - *animation is not fully implemented yet*
+     - **point**: 
+       - a hull has 1 or more points, which define the extents of the hull in physical space
        - generally, only circles will have a single point, and all other objects will have 3 or more
        - points are associated with bones providing an easy way to perform animations directly
-     - **edge**: a hull has 0 or more edges, which define the edges of the hull that make it a rigid body
+     - **edge**: 
+       - a hull has 0 or more edges, which define the edges of the hull that make it a rigid body
        - circles are the only objects that don't have an edge, their boundary is defined by their radius
        - edges are recorded as constraints which must be maintained
        - there is a call made during the physics tick that enforces these constraints
@@ -74,9 +80,8 @@ There are a few core classes that comprise most of the important functionality i
 - [Main.Memory](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/Main.java): CPU/GPU Boundary
   - This subclass of Main provides a centralized point where CPU code (Java) can interact with memory buffers created on the GPU
   - When a new object is spawned, this subclass delegates to calls to the GPU, which actually puts the object into memory
-  - the current design requires objects are be created all at once, essentially atomically
-  - this ensures that buffers remain "aligned", vital when entities must be deleted
-  - THIS MECHANISM IS NOT THREAD SAFE! ONLY ONE THREAD CAN CREATE OBJECTS AT A TIME!
+  - The current design requires objects are created atomically, with all their components stored before the components of the next object. This ensures that buffers remain aligned, vital when entities must be deleted.
+  - _**This mechanism is not thread safe. only one thread can create objects at a time**_
 
 
 - [Models](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/geometry/Models.java): FBX model Loader
