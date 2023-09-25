@@ -22,6 +22,13 @@ At a high level, the key thing that is needed is the ability to spawn, as well a
 
 This design is meant to support an ECS layout, which is a paradigm that is used in game development that serves a somewhat analogous purpose as MVC (model, view, controller) does in front end frameworks. 
 
+Non-Goals
+-
+- 3D. The focus is on a 2D game design, though physics entities are defined and tracked in a fully polygonal model. I did not want to use a 2.5D design with 3D geometry with a camera lock to make it 2D, or a sprite focused design that would require a more traditional animation approach. Instead, I'm kind of splitting the difference with a 2D polygonal approach, with models that are zero thickness in the Z dimension.
+
+
+- Re-usable engine. This is not a project that aims to make an externally useable, general purpose game engine. The engine will evolve specifically to suit the game that is made with it in later phases. I am planning a different approach to level design, editing, and general development, that is different from the standard "widget-based" UI of modern game engines.  
+
 General Layout
 -
 Below are some basic points about how the engine is currently laid out. As this is a prototype, details are subject to change, but I expect for the foreseeable future the following notes will generally be accurate.
