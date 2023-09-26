@@ -249,6 +249,7 @@ public class GPU
          */
         bone_references(Sizeof.cl_float16),
 
+
         /*
         Points
          */
@@ -297,6 +298,7 @@ public class GPU
          */
         vertex_table(Sizeof.cl_int2),
 
+
         /*
         Edges
          */
@@ -312,6 +314,7 @@ public class GPU
          * note: x, y, and w values are cast to int during use
          */
         edges(Sizeof.cl_float4),
+
 
         /*
         Hulls
@@ -388,6 +391,7 @@ public class GPU
          */
         aabb_key_table(Sizeof.cl_int2),
 
+
         /*
         Bones
          */
@@ -422,6 +426,7 @@ public class GPU
          * -
          */
         bone_index(Sizeof.cl_int),
+
 
         /*
         Armatures
@@ -1187,7 +1192,7 @@ public class GPU
                 (float) uniform_grid.getY_subdivisions(),
                 physics_buffer.get_gravity_x(),
                 physics_buffer.get_gravity_y(),
-                physics_buffer.get_friction()
+                physics_buffer.get_damping()
             };
 
         var srcArgs = Pointer.to(args);
@@ -1677,15 +1682,6 @@ public class GPU
         clReleaseMemObject(part_data);
     }
 
-
-
-
-
-
-
-
-
-
     private static void scan_single_block_int_out(cl_mem d_data, cl_mem o_data, int n)
     {
         var gpu_kernel = Kernel.scan_int_single_block_out.gpu;
@@ -1798,9 +1794,6 @@ public class GPU
         // note the partial buffers are scanned and updated in-place
         scan_int(p_data, part_size);
         scan_int4(p_data2, part_size);
-
-
-        //TODO: do completion part to finish the process
 
         int[] sz = new int[]{ 0, 0, 0, 0, 0 };
         var dst_size = Pointer.to(sz);

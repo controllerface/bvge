@@ -16,7 +16,7 @@ Goal Summary
 -
 Eventually, I intend to meander this code toward something game-like, but for the immediate future, the main goal is to create a basic prototype game engine that includes a physics simulation, rendering system, and some basic input handling for controlling a player character. 
 
-I also want to ensure that the prototype, while not fully-featured in any sense of the word, does have one _complete_ component that can be used in a later alpha phase, before I would consider the prototype "done". This component is what I generally refer to as GPU-CRUD or in other words, the full set of create, read, update, and delete operations targeting objects stored in memory on the GPU.
+I also want to ensure that the prototype, while not fully-featured in any sense of the word, does have one _complete_ component that can be used in a later phase, before I would consider the prototype "done". This component is what I generally refer to as GPU-CRUD or in other words, the full set of create, read, update, and delete operations targeting objects stored in memory on the GPU.
 
 At a high level, the key thing that is needed is the ability to spawn, as well as de-spawn, some arbitrary "entities". A player is an entity, an enemy or NPC is also, and so is a rock or tree or really, anything that exists in the game world. 
 

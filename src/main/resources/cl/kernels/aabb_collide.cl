@@ -60,8 +60,7 @@ __kernel void aabb_collide(__global float4 *bounds,
         {
             int next = key_map[map_index]; 
 
-            // todo: add static-to-static
-            // todo: add layer check 
+            // todo: add layer check
             // todo: add non-interact flag check
 
             // no mirror or self-matches

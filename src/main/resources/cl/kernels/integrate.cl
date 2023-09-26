@@ -202,7 +202,7 @@ __kernel void integrate(
             float2 diff = pos - prv;
             diff = acc + i_acc + diff;
 
-            // add damping component todo: take this in as an argument, gravity too
+            // add damping component
             diff.x *= damping;
             diff.y *= damping;
             
@@ -223,7 +223,7 @@ __kernel void integrate(
         armatures[hull_1_flags.y] = armature;
     }
 
-    // calculate centroid // todo: account for circles
+    // calculate centroid
     hull.x = x_sum / point_count;
     hull.y = y_sum / point_count;
 

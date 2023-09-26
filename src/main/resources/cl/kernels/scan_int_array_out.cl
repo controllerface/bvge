@@ -13,7 +13,7 @@ __kernel void scan_int_single_block_out(__global int *input,
     // calculate the total length of the local buffer array
     int m = 2 * get_local_size(0);
 
-    // load the gloabl value sinto the local buffer, and with extra zeroes
+    // load the global values into the local buffer, and with extra zeroes
     // so the buffer size matches the work group
     buffer[a_index] = a_index < n ? input[a_index] : 0;
     buffer[b_index] = b_index < n ? input[b_index] : 0;

@@ -13,7 +13,7 @@ __kernel void scan_bounds_single_block(__global int2 *bounds_bank_data,
     // calculate the total length of the local buffer array
     int m = 2 * get_local_size(0);
 
-    // load the gloabl values into the local buffer, and with extra zeroes
+    // load the global values into the local buffer, and with extra zeroes
     // so the buffer size matches the work group
     buffer[a_index] = a_index < n ? bounds_bank_data[a_index].y : 0;
     buffer[b_index] = b_index < n ? bounds_bank_data[b_index].y : 0;

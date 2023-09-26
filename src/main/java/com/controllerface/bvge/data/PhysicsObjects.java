@@ -23,12 +23,6 @@ public class PhysicsObjects
 {
     private static final Vector2f vector_buffer = new Vector2f();
 
-    // todo: this will need some kind of protection from overflow, or re-use of IDs.
-    //  it will likely be the case that objects will eventually spawn and get despawned,
-    //  but IDs like this will not be re-used so eventually the game could run out of ids.
-    //  ideally, this would be set to some ID that actually is associated directly with
-    //  the model but the current design makes this hard to do.
-
     public static int FLAG_NONE = 0x00;
     public static int FLAG_STATIC_OBJECT = 0x01;
     public static int FLAG_CIRCLE = 0x02;
@@ -402,8 +396,6 @@ public class PhysicsObjects
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
 
-        // todo: flag value needs to be expanded to int2, the model ID and root hull ID can be vectorized
-        //  armature should keep model reference ID and allow it to be queried via GL/CL sharing
         int[] armature_flags = CLUtils.arg_int2(root_hull_id, model_index);
         int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, armature_flags);
 

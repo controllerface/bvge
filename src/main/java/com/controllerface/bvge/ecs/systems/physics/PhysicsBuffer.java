@@ -29,7 +29,7 @@ public class PhysicsBuffer
 
     private float gravity_x = 0f;
     private float gravity_y = 0f;
-    private float friction = 0f;
+    private float damping = 0f;
 
     public float get_gravity_x()
     {
@@ -51,14 +51,14 @@ public class PhysicsBuffer
         this.gravity_y = gravity_y;
     }
 
-    public float get_friction()
+    public float get_damping()
     {
-        return friction;
+        return damping;
     }
 
-    public void set_friction(float friction)
+    public void set_damping(float friction)
     {
-        this.friction = friction;
+        this.damping = friction;
     }
 
     public int get_candidate_buffer_count()

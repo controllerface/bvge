@@ -17,17 +17,14 @@ public class PhysicsSimulation extends GameSystem
     private final static int EDGE_STEPS = 4;
     private float accumulator = 0.0f;
 
-    // todo: these values should not be global, but per-object.
-    //  When an object is considered "in-contact" with a static object,
-    //  it should be assigned friction based on that object. There should
-    //  be some type of ambient friction (i.e. friction of the "air" or ambient medium)
-    //  that applies when no other friction value is set, and then friction
-    //  values applied by objects could not go above the ambient friction.
-    //  In this way, friction is a "status effect" that is cleared every frame
-    //  and applied when contact occurs.
+    // todo: gravity should not be a constant but calculated based on proximity next to planets and other large bodies
     private final static float GRAVITY_X = 0;
     private final static float GRAVITY_Y = -(9.8f * 50) * SUB_STEPS;
-    private final static float FRICTION = .990f;
+
+    // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
+    //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
+    //  or make damping interact with the gravity vector in some way.
+    private final static float MOTION_DAMPING = .990f;
 
     private final UniformGrid uniform_grid;
     private PhysicsBuffer physics_buffer;
@@ -309,7 +306,7 @@ public class PhysicsSimulation extends GameSystem
             this.physics_buffer = new PhysicsBuffer();
             this.physics_buffer.set_gravity_x(GRAVITY_X);
             this.physics_buffer.set_gravity_y(GRAVITY_Y);
-            this.physics_buffer.set_friction(FRICTION);
+            this.physics_buffer.set_damping(MOTION_DAMPING);
             GPU.set_physics_buffer(physics_buffer);
         }
 
