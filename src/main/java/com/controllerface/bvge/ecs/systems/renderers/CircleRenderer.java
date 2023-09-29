@@ -42,6 +42,10 @@ public class CircleRenderer extends GameSystem
         // Generate and bind a Vertex Array Object
         vaoID = glGenVertexArrays();
 
+        // todo: will need a new buffer for holding hull indices, and accompanying
+        //  logic to ensure it is destroyed and recreated if needed when counts or
+        //  index positions change.
+
         // create buffer for transforms, batches will use this during the rendering process
         transform_buffer_id = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_id); // this attribute comes from a different vertex buffer
@@ -69,7 +73,8 @@ public class CircleRenderer extends GameSystem
         //  to determine the indices, instead of relying on the Model loader to keep track
         //  of the hull ids. A new kernel will be needed to accommodate this.
 
-        // todo: will need to account for this happening more than once
+        // todo: will need to account for this happening more than once as well as cases where
+        //  model count stays clean, but buffers were compacted, changing indices
         if (Models.is_model_dirty(Models.CIRCLE_MODEL))
         {
             // todo: replace this with a CL kernel to get the instance IDs
@@ -138,13 +143,12 @@ public class CircleRenderer extends GameSystem
             index_buffer_id = glGenBuffers();
             glBindBuffer(GL_ARRAY_BUFFER, index_buffer_id);
             glBufferData(GL_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+            GPU.share_memory(index_buffer_id);
 
             glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_id);
             glEnableVertexAttribArray(0);
             glVertexAttribPointer(0, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
 
-            // share the buffer with the CL context
-            GPU.share_memory(index_buffer_id);
 
             // unbind
             glBindBuffer(GL_ARRAY_BUFFER, 0);

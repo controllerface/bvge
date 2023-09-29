@@ -76,21 +76,18 @@ public class EdgeRenderer extends GameSystem
     @Override
     public void run(float dt)
     {
-        var edge_count = Main.Memory.edge_count();
-
         glBindVertexArray(vaoID);
 
         shader.use();
-        shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
-        shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
+        shader.uploadMat4f("uVP", Window.get().camera().getuVP());
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
         int offset = 0;
-        for (int i = edge_count; i > 0; i -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int edges = Main.Memory.edge_count(); edges > 0; edges -= Constants.Rendering.MAX_BATCH_SIZE)
         {
-            int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, i);
+            int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, edges);
             GPU.GL_edges(vertex_vbo, flag_vbo, offset, count);
             glDrawArrays(GL_LINES, 0, count * 2);
             offset += count;

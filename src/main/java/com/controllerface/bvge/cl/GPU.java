@@ -1002,6 +1002,7 @@ public class GPU
      * into a vertex structure that can be rendered as a line.
      *
      * @param vbo_id      id of the shared GL buffer object
+     * @param vbo_id2     id of the shared GL buffer object
      * @param edge_offset offset into the edges array to start the transfer
      * @param batch_size  number of edge objects to transfer in this batch
      */

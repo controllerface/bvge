@@ -164,10 +164,23 @@ public class Models
         int vert_index = 0;
         var mesh_vertices = new Vertex[aiMesh.mNumVertices()];
         var buffer = aiMesh.mVertices();
+        var tex = aiMesh.mTextureCoords(0);
+        // todo: add texture co-ordinates to the Vertex class and extract them here. requires
+        //  a model with a texture attached
         while (buffer.remaining() > 0)
         {
             int this_vert = vert_index++;
             var aiVertex = buffer.get();
+            if (tex != null)
+            {
+                // todo: this needs to check if the text co-ord buffer is empty, not null. Seems
+                //  it is always some value.
+
+                // todo: need to update the base model to have UV mappings and a texture
+                //AIBone.create(bone_buffer.get(bone_index));
+                //var t = AIVector3D.create(tex.get());
+                //System.out.println("test");
+            }
             float bone_weight = bone_weight_map.get(this_vert);
             var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y());
             //System.out.printf("DEBUG CPU (in): id: %d x:%f y:%f\n", vert_ref_id, aiVertex.x(), aiVertex.y());
@@ -196,7 +209,6 @@ public class Models
         var mesh_faces = load_faces(raw_mesh);
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
         var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node, hull_table);
-
 
         // todo: generate the convex hull here, just once and re-use later
 

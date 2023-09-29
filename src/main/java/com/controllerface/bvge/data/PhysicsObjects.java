@@ -210,7 +210,7 @@ public class PhysicsObjects
     {
         // we need to know the next armature ID before we create it so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
-        int next_armature_id =  Main.Memory.next_armature_id();
+        int next_armature_id = Main.Memory.next_armature_id();
 
         // get the model from the registry
         var model = Models.get_model_by_index(model_index);

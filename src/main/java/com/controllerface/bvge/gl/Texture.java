@@ -55,6 +55,7 @@ public class Texture
         IntBuffer height = BufferUtils.createIntBuffer(1);
         IntBuffer channels = BufferUtils.createIntBuffer(1);
         stbi_set_flip_vertically_on_load(true);
+
         // todo: load the data using stbi_load_from_memory instead, so the image data could be
         //  packaged instead of read from disk.
         ByteBuffer image = stbi_load(filePath, width, height, channels, 0);

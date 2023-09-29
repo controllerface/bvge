@@ -16,7 +16,7 @@ public class ECS
 
     public ECS()
     {
-        // register all components at creation time. This is necessary p2 ensure all the
+        // register all components at creation time. This is necessary to ensure all the
         // available components can be used before any systems or entities make use of them
         Arrays.stream(Component.values()).forEach(this::registerComponent);
     }
@@ -70,7 +70,7 @@ public class ECS
 
     public void run(float dt)
     {
-        systems.forEach(system_EX_ -> system_EX_.run(dt));
+        systems.forEach(system -> system.run(dt));
     }
 
     public void shutdown()

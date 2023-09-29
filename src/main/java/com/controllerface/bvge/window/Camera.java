@@ -11,8 +11,7 @@ public class Camera
 
     private final Matrix4f projectionMatrix;
     private final Matrix4f viewMatrix;
-    //private final Matrix4f inverseProjection;
-    //private final Matrix4f inverseView;
+    private final Matrix4f uVP;
     public Vector2f position;
     public Vector2f projectionSize = new Vector2f(projWidth, projHeight);
 
@@ -23,8 +22,7 @@ public class Camera
         this.position = position;
         this.projectionMatrix = new Matrix4f();
         this.viewMatrix = new Matrix4f();
-        //this.inverseProjection = new Matrix4f();
-        //this.inverseView = new Matrix4f();
+        this.uVP = new Matrix4f();
         adjustProjection();
     }
 
@@ -38,7 +36,7 @@ public class Camera
             0.0f,
             100.0f);
 
-        //projectionMatrix.invert(inverseProjection);
+        projectionMatrix.mul(getViewMatrix(), uVP);
     }
 
     public Matrix4f getViewMatrix()
@@ -49,9 +47,6 @@ public class Camera
         var eye = new Vector3f(position.x, position.y, 0.0f);
         var center = cameraFront.add(position.x, position.y, 0.0f);
         this.viewMatrix.lookAt(eye, center, cameraUp);
-
-        //this.viewMatrix.invert(inverseView);
-
         return this.viewMatrix;
     }
 
@@ -60,14 +55,14 @@ public class Camera
         return this.projectionMatrix;
     }
 
+    public Matrix4f getuVP()
+    {
+        return uVP;
+    }
+
     public float getZoom()
     {
         return zoom;
-    }
-
-    public void setZoom(float zoom)
-    {
-        this.zoom = zoom;
     }
 
     public void addZoom(float value)

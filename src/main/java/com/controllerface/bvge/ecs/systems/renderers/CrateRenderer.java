@@ -48,25 +48,26 @@ public class CrateRenderer extends GameSystem
         var mdl = Models.get_model_by_index(Models.CRATE_MODEL);
         var base_model = mdl.meshes()[0];
         var vbo_model = new float[12];
-        vbo_model[0] = base_model.vertices()[0].x();  // tri 1 // p1 x
-        vbo_model[1] = base_model.vertices()[0].y();           // p1 y
+        vbo_model[0] = base_model.vertices()[0].x();  // tri 1 // p0 x
+        vbo_model[1] = base_model.vertices()[0].y();           // p0 y
 
-        vbo_model[2] = base_model.vertices()[1].x();           // p2 x
-        vbo_model[3] = base_model.vertices()[1].y();           // p2 y
+        vbo_model[2] = base_model.vertices()[1].x();           // p1 x
+        vbo_model[3] = base_model.vertices()[1].y();           // p1 y
 
-        vbo_model[4] = base_model.vertices()[2].x();           // p3 x
-        vbo_model[5] = base_model.vertices()[2].y();           // p3 y
+        vbo_model[4] = base_model.vertices()[2].x();           // p2 x
+        vbo_model[5] = base_model.vertices()[2].y();           // p2 y
 
-        vbo_model[6] = base_model.vertices()[0].x();  // tri 2 // p1 x
-        vbo_model[7] = base_model.vertices()[0].y();           // p1 y
+        vbo_model[6] = base_model.vertices()[0].x();  // tri 2 // p0 x
+        vbo_model[7] = base_model.vertices()[0].y();           // p0 y
 
-        vbo_model[8] = base_model.vertices()[2].x();           // p3 x
-        vbo_model[9] = base_model.vertices()[2].y();           // p3 y
+        vbo_model[8] = base_model.vertices()[2].x();           // p2 x
+        vbo_model[9] = base_model.vertices()[2].y();           // p2 y
 
-        vbo_model[10] = base_model.vertices()[3].x();          // p4 x
-        vbo_model[11] = base_model.vertices()[3].y();          // p4 y
+        vbo_model[10] = base_model.vertices()[3].x();          // p3 x
+        vbo_model[11] = base_model.vertices()[3].y();          // p3 y
 
 
+        // todo: update model loader to import UV co-ords
         var vbo_tex_coords = new float[12];
         vbo_tex_coords[0] = 0f;  // tri 1 // p1 u
         vbo_tex_coords[1] = 0f;           // p1 v
@@ -87,6 +88,8 @@ public class CrateRenderer extends GameSystem
         vbo_tex_coords[11] = 1f;          // p4 v
 
 
+        // todo: decide if colors should be generated per-instance for variety or possibly algorithmically based
+        //  on some other factors, like a modulus check based on object index
         var vbo_colors = new float[24];
         vbo_colors[0] = 0.5f;   // tri 1 // p1 r
         vbo_colors[1] = 0.35f;           // p1 g
@@ -243,20 +246,16 @@ public class CrateRenderer extends GameSystem
             glBufferData(GL_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 
             glBindBuffer(GL_ARRAY_BUFFER, model_buffer_id);
-            glEnableVertexAttribArray(0);
             glVertexAttribPointer(0, VECTOR_2D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_2D_SIZE, 0);
 
             glBindBuffer(GL_ARRAY_BUFFER, transform_buffer_ID);
-            glEnableVertexAttribArray(1);
             glVertexAttribPointer(1, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
             glVertexAttribDivisor(1, 1);
 
             glBindBuffer(GL_ARRAY_BUFFER, texture_uv_buffer_id);
-            glEnableVertexAttribArray(2);
             glVertexAttribPointer(2, VECTOR_2D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_2D_SIZE, 0);
 
             glBindBuffer(GL_ARRAY_BUFFER, color_buffer_id);
-            glEnableVertexAttribArray(3);
             glVertexAttribPointer(3, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
 
             // share the buffer with the CL context
@@ -287,6 +286,8 @@ public class CrateRenderer extends GameSystem
 
         public void render()
         {
+            glBindVertexArray(vao);
+
             shader.use();
             texture.bind();
 
@@ -299,7 +300,6 @@ public class CrateRenderer extends GameSystem
             //  not in GL
             GPU.GL_transforms(index_buffer_id, transform_buffer_ID, mesh_count);
 
-            glBindVertexArray(vao);
             glActiveTexture(GL_TEXTURE0);
             glEnableVertexAttribArray(0);
             glEnableVertexAttribArray(1);
