@@ -156,7 +156,7 @@ public class CrateRenderer extends GameSystem
     }
 
     @Override
-    public void run(float dt)
+    public void tick(float dt)
     {
         // todo: will need to account for this happening more than once
         if (Models.is_model_dirty(Models.CRATE_MODEL))
@@ -289,9 +289,9 @@ public class CrateRenderer extends GameSystem
             glBindVertexArray(vao);
 
             shader.use();
-            texture.bind();
+            texture.bind(GL_TEXTURE0);
 
-            shader.uploadMat4f("uVP", Window.get().camera().getuVP());
+            shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
             shader.uploadIntArray("uTextures", texture_slots);
 
             // this call moves the physics transforms of the tracked hulls into the buffer for rendering
@@ -299,7 +299,7 @@ public class CrateRenderer extends GameSystem
             //  not in GL
             GPU.GL_transforms(index_buffer_id, transform_buffer_ID, mesh_count);
 
-            glActiveTexture(GL_TEXTURE0);
+
             glEnableVertexAttribArray(0);
             glEnableVertexAttribArray(1);
             glEnableVertexAttribArray(2);

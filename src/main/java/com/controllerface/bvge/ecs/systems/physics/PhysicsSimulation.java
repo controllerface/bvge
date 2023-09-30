@@ -299,7 +299,7 @@ public class PhysicsSimulation extends GameSystem
 
 
     @Override
-    public void run(float dt)
+    public void tick(float dt)
     {
         if (physics_buffer == null)
         {

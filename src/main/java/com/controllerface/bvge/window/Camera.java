@@ -55,7 +55,13 @@ public class Camera
         return this.projectionMatrix;
     }
 
-    public Matrix4f getuVP()
+    /**
+     * This is the view-projection matrix used in uniform values within shaders. It is required
+     * to translate world space objects to view space for rendering.
+     *
+     * @return the current view-projection matrix
+     */
+    public Matrix4f get_uVP()
     {
         return uVP;
     }

@@ -172,7 +172,7 @@ public class Window
         }
 
         @Override
-        public void run(float dt) {
+        public void tick(float dt) {
             windowUpkeep();
         }
     }
@@ -214,7 +214,7 @@ public class Window
 
             if (dt >= 0)
             {
-                ecs.run(dt);
+                ecs.tick(dt);
                 currentGameMode.update(dt);
             }
 

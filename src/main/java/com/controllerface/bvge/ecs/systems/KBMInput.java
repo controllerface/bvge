@@ -18,7 +18,7 @@ public class KBMInput extends GameSystem
     }
 
     @Override
-    public void run(float dt)
+    public void tick(float dt)
     {
         var controllables = ecs.getComponents(Component.ControlPoints);
         controllables.forEach((entity, component) ->

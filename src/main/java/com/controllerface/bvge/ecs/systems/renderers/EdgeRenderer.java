@@ -42,7 +42,7 @@ public class EdgeRenderer extends GameSystem
 
     private final AbstractShader shader;
     private int vaoID;
-    private int vertex_vbo;
+    private int edge_vbo;
     private int flag_vbo;
 
     public EdgeRenderer(ECS ecs)
@@ -57,11 +57,11 @@ public class EdgeRenderer extends GameSystem
         vaoID = glGenVertexArrays();
         glBindVertexArray(vaoID);
 
-        vertex_vbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
+        edge_vbo = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, edge_vbo);
         glBufferData(GL_ARRAY_BUFFER, BATCH_BUFFER_SIZE, GL_DYNAMIC_DRAW);
         glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, 0);
-        GPU.share_memory(vertex_vbo);
+        GPU.share_memory(edge_vbo);
 
         flag_vbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, flag_vbo);
@@ -74,12 +74,12 @@ public class EdgeRenderer extends GameSystem
     }
 
     @Override
-    public void run(float dt)
+    public void tick(float dt)
     {
         glBindVertexArray(vaoID);
 
         shader.use();
-        shader.uploadMat4f("uVP", Window.get().camera().getuVP());
+        shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
@@ -88,7 +88,7 @@ public class EdgeRenderer extends GameSystem
         for (int edges = Main.Memory.edge_count(); edges > 0; edges -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, edges);
-            GPU.GL_edges(vertex_vbo, flag_vbo, offset, count);
+            GPU.GL_edges(edge_vbo, flag_vbo, offset, count);
             glDrawArrays(GL_LINES, 0, count * 2);
             offset += count;
         }

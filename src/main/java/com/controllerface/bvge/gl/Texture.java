@@ -7,6 +7,8 @@ import java.nio.IntBuffer;
 import java.util.Objects;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.stb.STBImage.*;
 
 public class Texture
@@ -89,8 +91,14 @@ public class Texture
         stbi_image_free(image);
     }
 
-    public void bind()
+    /**
+     * Binds this texture to the provided texture unit slot
+     *
+     * @param texture_slot texture slot into which this texture will be stored
+     */
+    public void bind(int texture_slot)
     {
+        glActiveTexture(texture_slot);
         glBindTexture(GL_TEXTURE_2D, texId);
     }
 

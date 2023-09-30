@@ -78,7 +78,7 @@ public class BoneRenderer extends GameSystem
     }
 
     @Override
-    public void run(float dt)
+    public void tick(float dt)
     {
         // todo: right now, this check only adds batches, never reducing them if the count goes
         //  low enough that some batches would be unneeded. This will leak memory resources
@@ -152,7 +152,7 @@ public class BoneRenderer extends GameSystem
 
             // Use shader
             currentShader.use();
-            currentShader.uploadMat4f("uVP", Window.get().camera().getuVP());
+            currentShader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
             glEnableVertexAttribArray(0);
             glDrawArrays(GL_POINTS, 0, numBones);

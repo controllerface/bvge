@@ -67,7 +67,7 @@ public class CircleRenderer extends GameSystem
     }
 
     @Override
-    public void run(float dt)
+    public void tick(float dt)
     {
         // todo: when checking batch size, the memory should be scanned for those objects
         //  to determine the indices, instead of relying on the Model loader to keep track
@@ -171,7 +171,7 @@ public class CircleRenderer extends GameSystem
         {
             //glPointSize(10f);
             shader.use();
-            shader.uploadMat4f("uVP", Window.get().camera().getuVP());
+            shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
             // todo: instead of using pre-defined indices, an additional CL call can be made,
             //  and/or the current one modified to get all the model instances to render

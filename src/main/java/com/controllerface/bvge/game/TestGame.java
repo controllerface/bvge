@@ -202,8 +202,8 @@ public class TestGame extends GameMode
         // these are debug-level renderers for visualizing the modeled physics boundaries
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
-        ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        ecs.registerSystem(new BoneRenderer(ecs));
+        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        //ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
         ecs.registerSystem(new CrateRenderer(ecs));
@@ -267,10 +267,10 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
 
 
-        genCircles(100, 5f, 4f, 0, 2000);
-        //genCrates(100,  6f, 5f, 100, 2000);
-        genCrates2(50,  6, 0.025f, 0, 1000);
-        //genTriangles(50,  6f, 5f, 0, 3000);
+        //genCircles(100, 5f, 4f, 0, 2000);
+        //genCrates(100,  6f, 5f, 100, 3000);
+        genCrates2(100,  6, 0.025f, 0, 1000);
+        //genTriangles(100,  6f, 5f, 0, 1000);
 
 
 

@@ -68,9 +68,14 @@ public class ECS
         return components.get(type);
     }
 
-    public void run(float dt)
+    /**
+     * Each registered system should do dt amount of work
+     *
+     * @param dt amount of work time to spend
+     */
+    public void tick(float dt)
     {
-        systems.forEach(system -> system.run(dt));
+        systems.forEach(system -> system.tick(dt));
     }
 
     public void shutdown()

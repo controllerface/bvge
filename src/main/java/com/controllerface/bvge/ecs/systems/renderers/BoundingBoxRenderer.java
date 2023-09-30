@@ -78,7 +78,7 @@ public class BoundingBoxRenderer extends GameSystem
     }
 
     @Override
-    public void run(float dt)
+    public void tick(float dt)
     {
         // todo: right now, this check only adds batches, never reducing them if the count goes
         //  low enough that some batches would be unneeded. This will leak memory resources
@@ -153,13 +153,12 @@ public class BoundingBoxRenderer extends GameSystem
         public void render()
         {
             glBindVertexArray(vaoID);
-            glBindBuffer(GL_ARRAY_BUFFER, vboID);
 
             GPU.GL_bounds(vboID, offset, box_count);
 
             // Use shader
             currentShader.use();
-            currentShader.uploadMat4f("uVP", Window.get().camera().getuVP());
+            currentShader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
             glEnableVertexAttribArray(0);
 

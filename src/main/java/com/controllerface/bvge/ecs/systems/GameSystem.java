@@ -11,7 +11,7 @@ public abstract class GameSystem
         this.ecs = ecs;
     }
 
-    abstract public void run(float dt);
+    abstract public void tick(float dt);
 
     public void shutdown()
     {

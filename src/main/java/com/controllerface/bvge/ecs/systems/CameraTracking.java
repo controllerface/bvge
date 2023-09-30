@@ -17,7 +17,7 @@ public class CameraTracking extends GameSystem
     }
 
     @Override
-    public void run(float dt)
+    public void tick(float dt)
     {
         var focusTargets = ecs.getComponents(Component.CameraFocus);
         var focusTarget = focusTargets.entrySet().stream().findAny().orElseThrow();
