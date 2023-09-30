@@ -8,8 +8,7 @@ layout (location = 3) in vec4 aColor;
 out vec4 fColor;
 out vec2 fTexCoords;
 
-uniform mat4 uView;
-uniform mat4 uProjection;
+uniform mat4 uVP;
 
 vec2 rotate(vec2 vec, float angleDeg, vec2 origin)
 {
@@ -43,7 +42,7 @@ void main()
     vec2 scaled = aPos * aTransform.w;
     vec2 translated = scaled + pos_offset;
     vec2 rotated = rotate(translated, aTransform.z, pos_offset);
-    gl_Position = uProjection * uView * vec4(rotated, 0.0, 1.0);
+    gl_Position = uVP * vec4(rotated, 0.0, 1.0);
 }
 
 #type fragment

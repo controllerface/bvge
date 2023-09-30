@@ -4,14 +4,13 @@ layout (location = 0) in vec2 aPos;
 
 out vec3 fColor;
 
-uniform mat4 uView;
-uniform mat4 uProjection;
+uniform mat4 uVP;
 
 void main()
 {
     fColor = vec3(0, .1, 0);
 
-    gl_Position = uProjection * uView * vec4(aPos, 0.0, 1.0);
+    gl_Position = uVP * vec4(aPos, 0.0, 1.0);
 }
 
 #type fragment

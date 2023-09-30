@@ -291,8 +291,7 @@ public class CrateRenderer extends GameSystem
             shader.use();
             texture.bind();
 
-            shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
-            shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
+            shader.uploadMat4f("uVP", Window.get().camera().getuVP());
             shader.uploadIntArray("uTextures", texture_slots);
 
             // this call moves the physics transforms of the tracked hulls into the buffer for rendering

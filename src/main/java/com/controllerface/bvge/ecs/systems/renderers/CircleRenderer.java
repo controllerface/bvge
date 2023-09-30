@@ -171,8 +171,7 @@ public class CircleRenderer extends GameSystem
         {
             //glPointSize(10f);
             shader.use();
-            shader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
-            shader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
+            shader.uploadMat4f("uVP", Window.get().camera().getuVP());
 
             // todo: instead of using pre-defined indices, an additional CL call can be made,
             //  and/or the current one modified to get all the model instances to render

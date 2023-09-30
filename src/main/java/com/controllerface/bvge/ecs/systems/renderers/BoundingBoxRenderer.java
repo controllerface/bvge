@@ -159,8 +159,7 @@ public class BoundingBoxRenderer extends GameSystem
 
             // Use shader
             currentShader.use();
-            currentShader.uploadMat4f("uProjection", Window.get().camera().getProjectionMatrix());
-            currentShader.uploadMat4f("uView", Window.get().camera().getViewMatrix());
+            currentShader.uploadMat4f("uVP", Window.get().camera().getuVP());
 
             glEnableVertexAttribArray(0);
 
