@@ -1,12 +1,9 @@
 package com.controllerface.bvge;
 
-import org.jocl.*;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 
 import java.util.Arrays;
-
-import static org.jocl.CL.*;
 
 public class TestBed
 {

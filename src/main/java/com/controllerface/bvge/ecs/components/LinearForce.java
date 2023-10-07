@@ -1,4 +1,4 @@
-package com.controllerface.bvge.data;
+package com.controllerface.bvge.ecs.components;
 
 import com.controllerface.bvge.ecs.components.GameComponent;
 

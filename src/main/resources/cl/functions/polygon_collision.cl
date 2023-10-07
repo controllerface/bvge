@@ -178,7 +178,25 @@ inline void polygon_collision(int b1_id, int b2_id,
 
     float2 normal = normalBuffer;
 
+    // todo: calculate tangent as well to add friction support
+    //  the goal is to find the normalized tangent to the colliding edge, and apply a reaction
+    //  that is opposite to the tangent, equal to the component portion of the effective velocity
+    //  that is the same direction as the tangent. Note, static objects apply friction to non-statics.
+    //  non-statics resolve to largest object, in case of tie, largest friction value
+    // the above changes will need to be made to the other collision kernels as well
+
     float2 collision_vector = normal * min_distance;
+    
+
+    // todo: magnitude should be proportional to mass
+    // hulls will need to reference the mass of the parent armature to modify the reaction magnitude. Currently, 
+    // objects behave as if everything has a mass of 1, splitting reaction magnitudes 50/50. Instead, the mass of 
+    // the colliding objects should proportinally scale reactions to be more or less based on the difference between 
+    // the masses of the two objects. When two objects with equal mass collide, it should work as it does now, with
+    // an even split.
+    //
+    // the above changes will need to be made to the other collision kernels as well
+    
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 

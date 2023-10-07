@@ -1,8 +1,8 @@
 package com.controllerface.bvge.game;
 
-import com.controllerface.bvge.data.ArmatureIndex;
-import com.controllerface.bvge.data.LinearForce;
-import com.controllerface.bvge.data.PhysicsObjects;
+import com.controllerface.bvge.ecs.components.ArmatureIndex;
+import com.controllerface.bvge.ecs.components.LinearForce;
+import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.CameraFocus;
 import com.controllerface.bvge.ecs.components.Component;
@@ -15,7 +15,7 @@ import com.controllerface.bvge.ecs.systems.renderers.*;
 import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.geometry.Models;
 
-import static com.controllerface.bvge.data.PhysicsObjects.*;
+import static com.controllerface.bvge.ecs.systems.physics.PhysicsObjects.*;
 import static com.controllerface.bvge.geometry.Models.*;
 
 
@@ -60,9 +60,6 @@ public class TestGame extends GameMode
             {
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-//                var npc = ecs.registerEntity(null);
-//                var armature_index = PhysicsObjects.dynamic_Box(x, y, size);
-//                ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
                 genBoxModelNPC(size, x, y);
             }
         }
@@ -188,8 +185,6 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
-        // todo: write bone animator system, it should put all bones in their current positions
-
         // all physics calculations should be done first
         ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid));
 
@@ -203,7 +198,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        //ecs.registerSystem(new BoneRenderer(ecs));
+        ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
         ecs.registerSystem(new CrateRenderer(ecs));
@@ -267,9 +262,10 @@ public class TestGame extends GameMode
         //genNPCs(100, 7f, 10f, 0, 1000);
 
 
-        //genCircles(100, 5f, 4f, 0, 2000);
+
+        genCircles(50, 1f, 2f, 0, 100);
         //genCrates(100,  6f, 5f, 100, 3000);
-        genCrates2(100,  6, 0.025f, 0, 1000);
+        //genCrates2(50,  6, 0.015f, 0, 2000);
         //genTriangles(100,  6f, 5f, 0, 1000);
 
 

@@ -77,7 +77,7 @@ out vec4 color;
 
 void main()
 {
-    vec4 circleColor = vec4(0, 0, .5, 1);
+    vec4 circleColor = vec4(0.761, 0.698, 0.502, 1);
     float thickness = 1;
     float fade = .0005;
 

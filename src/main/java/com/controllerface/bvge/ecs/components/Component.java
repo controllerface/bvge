@@ -1,7 +1,5 @@
 package com.controllerface.bvge.ecs.components;
 
-import com.controllerface.bvge.data.ArmatureIndex;
-import com.controllerface.bvge.data.LinearForce;
 import com.controllerface.bvge.ecs.ECS;
 
 public enum Component

@@ -1,5 +1,6 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
+import com.controllerface.bvge.cl.GPUMemory;
 import org.jocl.Pointer;
 
 public class PhysicsBuffer

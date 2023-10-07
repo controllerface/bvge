@@ -1,12 +1,18 @@
 package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPU;
-import com.controllerface.bvge.data.ArmatureIndex;
+import com.controllerface.bvge.ecs.components.ArmatureIndex;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import com.controllerface.bvge.window.Window;
 
+/**
+ * A simple system that ensures the game camera tracks the player. This class has an implicit assumption that
+ * only one entity will have a CameraFocus component, and that this entity is the player. In the future, it
+ * may be possible that this assumption is not held, however this class should still operate correctly, in that
+ * _some_ element will get focused.
+ */
 public class CameraTracking extends GameSystem
 {
     private final UniformGrid uniformGrid;

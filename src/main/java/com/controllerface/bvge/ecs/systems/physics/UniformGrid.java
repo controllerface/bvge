@@ -1,7 +1,7 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
 /**
- * Container class for the runtime values for a uniform grid spatial partition. The grid boundary is
+ * Container class for the runtime values of a uniform grid spatial partition. The grid boundary is
  * dynamically resizable and is calculated relative to the screen dimensions.
  */
 public class UniformGrid
@@ -9,9 +9,8 @@ public class UniformGrid
     private float width = 0;
     private float height = 0;
 
-    // note: sub-divisions should always be divisible by 2
-    private int x_subdivisions = 120;
-    private int y_subdivisions = 120;
+    private final int x_subdivisions = 120;
+    private final int y_subdivisions = 120;
     private int directoryLength;
     private float x_spacing = 0;
     private float y_spacing = 0;
@@ -25,9 +24,6 @@ public class UniformGrid
         init();
     }
 
-    // todo: partitioning needs to change a bit, instead of specifying subdivisions, the spacing is what
-    //  should be static, so the resize operation will keep the space cell size but make the tracking area
-    //  alone bigger or smaller. right now, resize changes the cell size which is not ideal.
     void init()
     {
         x_spacing = width / x_subdivisions;
@@ -56,12 +52,12 @@ public class UniformGrid
     }
 
 
-    public int getDirectoryLength()
+    public int get_directory_length()
     {
         return directoryLength;
     }
 
-    public int getKey_bank_size()
+    public int get_key_bank_size()
     {
         return key_bank_size;
     }

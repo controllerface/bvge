@@ -1,7 +1,7 @@
 package com.controllerface.bvge.geometry;
 
 import com.controllerface.bvge.Main;
-import com.controllerface.bvge.data.PhysicsObjects;
+import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
 import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
@@ -19,9 +19,9 @@ public class Models
 {
     private static final AtomicInteger next_model_index = new AtomicInteger(0);
 
-    public static final int CIRCLE_MODEL = next_model_index.getAndIncrement();
-    public static final int TRIANGLE_MODEL = next_model_index.getAndIncrement();
-    public static final int CRATE_MODEL = next_model_index.getAndIncrement();
+    public static final int CIRCLE_PARTICLE = next_model_index.getAndIncrement();
+    public static final int TRIANGLE_PARTICLE = next_model_index.getAndIncrement();
+    public static final int SQUARE_PARTICLE = next_model_index.getAndIncrement();
     public static final int POLYGON1_MODEL = next_model_index.getAndIncrement();
 
     public static int TEST_MODEL_INDEX = -1;
@@ -353,9 +353,9 @@ public class Models
 
     public static void init()
     {
-        loaded_models.put(CIRCLE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
-        loaded_models.put(TRIANGLE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
-        loaded_models.put(CRATE_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
+        loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
+        loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
+        loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
@@ -386,7 +386,8 @@ public class Models
     }
 
     // todo: this method or a variant needs to be callable in the game loop, this will be required
-    //  to add animations.
+    //  to add animations. The method will need to derive the current transform matrix by doing a
+    //  lerp between the most recent and next keyframes.
     private static void generate_transforms(SceneNode current_node,
                                             Map<String, Bone> bone_map,
                                             Map<String, Matrix4f> transforms,
@@ -406,6 +407,13 @@ public class Models
             .forEach(child -> generate_transforms(child, bone_map, transforms, global_transform));
     }
 
+    /**
+     * A container class used for storing a tree of nodes, as is present in a model with an armature.
+     * Typically, a model is defined with some starting mesh, and child nodes beneath that mesh that
+     * contain more meshes. Bones are defined in a similar way, in fact the bone structure will generally
+     * be used to define the actual structure of the model when loaded into memory, hierarchy of the
+     * meshes themselves in the data is largely irrelevant.
+     */
     public static class SceneNode
     {
         public final String name;

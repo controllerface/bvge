@@ -75,16 +75,16 @@ public class CircleRenderer extends GameSystem
 
         // todo: will need to account for this happening more than once as well as cases where
         //  model count stays clean, but buffers were compacted, changing indices
-        if (Models.is_model_dirty(Models.CIRCLE_MODEL))
+        if (Models.is_model_dirty(Models.CIRCLE_PARTICLE))
         {
             // todo: replace this with a CL kernel to get the instance IDs
-            var hull_instances = Models.get_model_instances(Models.CIRCLE_MODEL);
+            var hull_instances = Models.get_model_instances(Models.CIRCLE_PARTICLE);
             int[] indices = new int[hull_instances.size()];
             int[] counter = new int[1];
             hull_instances.forEach(integer -> indices[counter[0]++] = integer);
 
             // get the number of models that need to be rendered
-            var model_count = Models.get_instance_count(Models.CIRCLE_MODEL);
+            var model_count = Models.get_instance_count(Models.CIRCLE_PARTICLE);
 
             var needed_batches = model_count / Constants.Rendering.MAX_BATCH_SIZE;
             var r = model_count % Constants.Rendering.MAX_BATCH_SIZE;
@@ -112,7 +112,7 @@ public class CircleRenderer extends GameSystem
                 offset += count;
             }
 
-            Models.set_model_clean(Models.CIRCLE_MODEL);
+            Models.set_model_clean(Models.CIRCLE_PARTICLE);
         }
 
         render();

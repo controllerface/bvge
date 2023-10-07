@@ -1,4 +1,4 @@
-package com.controllerface.bvge.data;
+package com.controllerface.bvge.ecs.systems.physics;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.CLUtils;
@@ -41,7 +41,7 @@ public class PhysicsObjects
         int next_armature_id = Main.Memory.next_armature_id();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
-        var mesh = Models.get_model_by_index(CIRCLE_MODEL).meshes()[0];
+        var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
         int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
@@ -66,11 +66,11 @@ public class PhysicsObjects
         int[] _flag = CLUtils.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int2(hull_id, CIRCLE_MODEL);
+        int[] armature_flags = CLUtils.arg_int2(hull_id, CIRCLE_PARTICLE);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // particles register with the hull ID for more straight-forward rendering
-        Models.register_model_instance(CIRCLE_MODEL, hull_id);
+        Models.register_model_instance(CIRCLE_PARTICLE, hull_id);
         return armature_id;
     }
 
@@ -79,7 +79,7 @@ public class PhysicsObjects
         int next_armature_id = Main.Memory.next_armature_id();
 
         // get the box mesh
-        var mesh = Models.get_model_by_index(TRIANGLE_MODEL).meshes()[0];
+        var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
         int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
@@ -126,11 +126,11 @@ public class PhysicsObjects
         int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int2(hull_id, TRIANGLE_MODEL);
+        int[] armature_flags = CLUtils.arg_int2(hull_id, TRIANGLE_PARTICLE);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // triangles also register with the hull ID instead of the armature ID
-        Models.register_model_instance(TRIANGLE_MODEL, hull_id);
+        Models.register_model_instance(TRIANGLE_PARTICLE, hull_id);
         return armature_id;
     }
 
@@ -139,7 +139,7 @@ public class PhysicsObjects
         int next_armature_id = Main.Memory.next_armature_id();
 
         // get the box mesh
-        var mesh = Models.get_model_by_index(CRATE_MODEL).meshes()[0];
+        var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
         int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
@@ -188,11 +188,11 @@ public class PhysicsObjects
         int [] _flag = CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int2(hull_id, CRATE_MODEL);
+        int[] armature_flags = CLUtils.arg_int2(hull_id, SQUARE_PARTICLE);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // basic boxes also register with the hull ID instead of the armature ID
-        Models.register_model_instance(CRATE_MODEL, hull_id);
+        Models.register_model_instance(SQUARE_PARTICLE, hull_id);
         return armature_id;
     }
 

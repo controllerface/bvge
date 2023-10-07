@@ -3,7 +3,6 @@ package com.controllerface.bvge.cl;
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
-import com.controllerface.bvge.ecs.systems.physics.GPUMemory;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import org.jocl.*;
@@ -112,7 +111,7 @@ public class GPU
         integrate(new Integrate()),
         locate_in_bounds(new LocateInBounds()),
         prepare_bones(new PrepareBones()),
-        prepare_bounds(new com.controllerface.bvge.cl.programs.PrepareBounds()),
+        prepare_bounds(new PrepareBounds()),
         prepare_edges(new PrepareEdges()),
         prepare_transforms(new PrepareTransforms()),
         resolve_constraints(new ResolveConstraints()),
@@ -576,6 +575,8 @@ public class GPU
         // var ctx = glXGetCurrentContext();
         // var dc = glXGetCurrentDrawable();
         // contextProperties.addProperty(CL_GLX_DISPLAY_KHR, dc);
+
+
 
         // Initialize the context properties
         var contextProperties = new cl_context_properties();
@@ -1215,15 +1216,15 @@ public class GPU
 
     public static void generate_keys(UniformGrid uniform_grid)
     {
-        if (uniform_grid.getKey_bank_size() < 1)
+        if (uniform_grid.get_key_bank_size() < 1)
         {
             return;
         }
 
         var gpu_kernel = Kernel.generate_keys.gpu;
 
-        long bank_buf_size = (long) Sizeof.cl_int * uniform_grid.getKey_bank_size();
-        long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.getDirectoryLength();
+        long bank_buf_size = (long) Sizeof.cl_int * uniform_grid.get_key_bank_size();
+        long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.get_directory_length();
 
         var bank_data = cl_new_buffer(bank_buf_size);
         var counts_data = cl_new_buffer(counts_buf_size);
@@ -1235,14 +1236,14 @@ public class GPU
         gpu_kernel.set_arg(2, Pointer.to(bank_data));
         gpu_kernel.set_arg(3, Pointer.to(counts_data));
         gpu_kernel.set_arg(4, Pointer.to(arg_int(uniform_grid.getX_subdivisions())));
-        gpu_kernel.set_arg(5, Pointer.to(arg_int(uniform_grid.getKey_bank_size())));
-        gpu_kernel.set_arg(6, Pointer.to(arg_int(uniform_grid.getDirectoryLength())));
+        gpu_kernel.set_arg(5, Pointer.to(arg_int(uniform_grid.get_key_bank_size())));
+        gpu_kernel.set_arg(6, Pointer.to(arg_int(uniform_grid.get_directory_length())));
         gpu_kernel.call(arg_long(Main.Memory.hull_count()));
     }
 
     public static void calculate_map_offsets(UniformGrid uniform_grid)
     {
-        int n = uniform_grid.getDirectoryLength();
+        int n = uniform_grid.get_directory_length();
         long data_buf_size = (long) Sizeof.cl_int * n;
         var o_data = cl_new_buffer(data_buf_size);
         physics_buffer.key_offsets = new GPUMemory(o_data);
@@ -1254,7 +1255,7 @@ public class GPU
         var gpu_kernel = Kernel.build_key_map.gpu;
 
         long map_buf_size = (long) Sizeof.cl_int * uniform_grid.getKey_map_size();
-        long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.getDirectoryLength();
+        long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.get_directory_length();
 
         var map_data = cl_new_buffer(map_buf_size);
         var counts_data = cl_new_buffer(counts_buf_size);
@@ -1268,7 +1269,7 @@ public class GPU
         gpu_kernel.set_arg(3, physics_buffer.key_offsets.pointer());
         gpu_kernel.set_arg(4, Pointer.to(counts_data));
         gpu_kernel.set_arg(5, Pointer.to(arg_int(uniform_grid.getX_subdivisions())));
-        gpu_kernel.set_arg(6, Pointer.to(arg_int(uniform_grid.getDirectoryLength())));
+        gpu_kernel.set_arg(6, Pointer.to(arg_int(uniform_grid.get_directory_length())));
         gpu_kernel.call(arg_long(Main.Memory.hull_count()));
 
         clReleaseMemObject(counts_data);
@@ -1282,7 +1283,7 @@ public class GPU
 
         int x_subdivisions = uniform_grid.getX_subdivisions();
         physics_buffer.x_sub_divisions = Pointer.to(arg_int(x_subdivisions));
-        physics_buffer.key_count_length = Pointer.to(arg_int(uniform_grid.getDirectoryLength()));
+        physics_buffer.key_count_length = Pointer.to(arg_int(uniform_grid.get_directory_length()));
 
         long inbound_buf_size = (long) Sizeof.cl_int * hull_count;
         var inbound_data = cl_new_buffer(inbound_buf_size);

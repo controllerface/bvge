@@ -1,4 +1,4 @@
-package com.controllerface.bvge.ecs.systems.physics;
+package com.controllerface.bvge.cl;
 
 import org.jocl.Pointer;
 import org.jocl.cl_mem;

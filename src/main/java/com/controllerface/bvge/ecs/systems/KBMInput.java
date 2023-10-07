@@ -87,7 +87,7 @@ public class KBMInput extends GameSystem
     }
 
     private int mouseButtonsDown = 0;
-    private boolean[] mouseButtonsPressed =  new boolean[9];
+    private boolean[] mouseButtonsPressed = new boolean[9];
     private boolean isDragging;
     private double xPos;
     private double yPos;

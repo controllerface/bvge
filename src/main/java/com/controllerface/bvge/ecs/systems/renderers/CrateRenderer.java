@@ -45,7 +45,7 @@ public class CrateRenderer extends GameSystem
 
     public void start()
     {
-        var mdl = Models.get_model_by_index(Models.CRATE_MODEL);
+        var mdl = Models.get_model_by_index(Models.SQUARE_PARTICLE);
         var base_model = mdl.meshes()[0];
         var vbo_model = new float[12];
         vbo_model[0] = base_model.vertices()[0].x();  // tri 1 // p0 x
@@ -159,15 +159,15 @@ public class CrateRenderer extends GameSystem
     public void tick(float dt)
     {
         // todo: will need to account for this happening more than once
-        if (Models.is_model_dirty(Models.CRATE_MODEL))
+        if (Models.is_model_dirty(Models.SQUARE_PARTICLE))
         {
-            var instances = Models.get_model_instances(Models.CRATE_MODEL);
+            var instances = Models.get_model_instances(Models.SQUARE_PARTICLE);
             int[] indices = new int[instances.size()];
             int[] counter = new int[1];
             instances.forEach(integer -> indices[counter[0]++] = integer);
 
             // get the number of models that need to be rendered
-            var model_count = Models.get_instance_count(Models.CRATE_MODEL);
+            var model_count = Models.get_instance_count(Models.SQUARE_PARTICLE);
 
             var needed_batches = model_count / Constants.Rendering.MAX_BATCH_SIZE;
             var r = model_count % Constants.Rendering.MAX_BATCH_SIZE;
@@ -200,7 +200,7 @@ public class CrateRenderer extends GameSystem
                 offset += count;
             }
 
-            Models.set_model_clean(Models.CRATE_MODEL);
+            Models.set_model_clean(Models.SQUARE_PARTICLE);
         }
 
         render();

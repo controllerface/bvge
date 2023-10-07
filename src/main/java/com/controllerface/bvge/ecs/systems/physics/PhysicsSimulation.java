@@ -1,7 +1,6 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
 import com.controllerface.bvge.cl.GPU;
-import com.controllerface.bvge.data.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
@@ -30,10 +29,10 @@ public class PhysicsSimulation extends GameSystem
     private PhysicsBuffer physics_buffer;
 
     /**
-     * These buffers are reused each tick p2 avoid creating a new one every frame and for each object.
-     * They should always be zeroed before each use.
+     * This buffer is reused each tick to avoid creating a new one every frame and for each object.
+     * It should always be zeroed before each use.
      */
-    private final Vector2f vectorBuffer1 = new Vector2f();
+    private final Vector2f vectorBuffer = new Vector2f();
 
     public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
     {
@@ -56,31 +55,31 @@ public class PhysicsSimulation extends GameSystem
             Objects.requireNonNull(armature);
             Objects.requireNonNull(force);
 
-            vectorBuffer1.zero();
+            vectorBuffer.zero();
             if (controlPoints.is_moving_left())
             {
-                vectorBuffer1.x -= force.magnitude();
+                vectorBuffer.x -= force.magnitude();
             }
             if (controlPoints.is_moving_right())
             {
-                vectorBuffer1.x += force.magnitude();
+                vectorBuffer.x += force.magnitude();
             }
             if (controlPoints.is_moving_up())
             {
-                vectorBuffer1.y += force.magnitude();
+                vectorBuffer.y += force.magnitude();
             }
             if (controlPoints.is_moving_down())
             {
-                vectorBuffer1.y -= force.magnitude();
+                vectorBuffer.y -= force.magnitude();
             }
             if (controlPoints.is_space_bar_down())
             {
-                vectorBuffer1.y -= GRAVITY_Y;
+                vectorBuffer.y -= GRAVITY_Y;
             }
 
-            if (vectorBuffer1.x != 0f || vectorBuffer1.y != 0)
+            if (vectorBuffer.x != 0f || vectorBuffer.y != 0)
             {
-                GPU.update_accel(armature.index(), vectorBuffer1.x, vectorBuffer1.y);
+                GPU.update_accel(armature.index(), vectorBuffer.x, vectorBuffer.y);
             }
 
             // todo: implement this for armatures
@@ -154,7 +153,7 @@ public class PhysicsSimulation extends GameSystem
 
         The key bank is a large block of memory that holds the actual key data for each object. Objects with entries
         in the key bank will have their corresponding key bank tables updated to point to their start and offset
-        within this key bank. It is recomputed every tick, because the values and number of keys changes depending
+        within this key bank. It is recomputed every tick, because the values and number of keys change depending
         on object location and orientation. Objects that are off-screen are handled such that they always have empty
         key banks, removing them from consideration before the broad phase even starts.
 
@@ -171,8 +170,8 @@ public class PhysicsSimulation extends GameSystem
         GPU.calculate_bank_offsets(uniform_grid);
 
         // As a fail-safe, if the total bank size is zero, it means there's no tracked objects, so simply return.
-        // This condition is unlikely to occur accept when the engine is first starting up.
-        if (uniform_grid.getKey_bank_size() == 0)
+        // This condition is unlikely to occur accept when the simulation is first starting up.
+        if (uniform_grid.get_key_bank_size() == 0)
         {
             return;
         }
@@ -255,7 +254,7 @@ public class PhysicsSimulation extends GameSystem
         // enforcing constraints on the velocities of the affected points.
         GPU.apply_reactions();
 
-        // Once all points have been relocated, all hulls are in their required positions for the next frame.
+        // Once all points have been relocated, all hulls are in their required positions for this frame.
         // Movements applied to hulls are now accumulated and applied to their parent armatures.
         GPU.move_armatures();
 
