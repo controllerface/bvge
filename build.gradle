@@ -5,7 +5,7 @@ plugins {
 ext {
     lwjglVersion = '3.3.3'
     jomlVersion = "1.10.5"
-    lwjglNatives = "natives-windows"
+    lwjglNatives = "natives-linux"
     //imguiVersion = '1.86.10'
 }
 
