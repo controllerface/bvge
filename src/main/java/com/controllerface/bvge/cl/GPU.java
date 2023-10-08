@@ -574,21 +574,17 @@ public class GPU
 
         // Initialize the CL/GL sharing context properties
         var contextProperties = new cl_context_properties();
+        contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
+
         if (os.toLowerCase().contains("windows"))
         {
-            var dc = wglGetCurrentDC();
-            var ctx = wglGetCurrentContext();
-            contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
-            contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
-            contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
+            contextProperties.addProperty(CL_GL_CONTEXT_KHR, wglGetCurrentContext());
+            contextProperties.addProperty(CL_WGL_HDC_KHR, wglGetCurrentDC());
         }
         else
         {
-            var dc = glXGetCurrentDrawable();
-            var ctx = glXGetCurrentContext();
-            contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
-            contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
-            contextProperties.addProperty(CL_GLX_DISPLAY_KHR, dc);
+            contextProperties.addProperty(CL_GL_CONTEXT_KHR, glXGetCurrentContext());
+            contextProperties.addProperty(CL_GLX_DISPLAY_KHR, glXGetCurrentDrawable());
         }
 
 //        OpenCL.printDeviceDetails(device_ids);
