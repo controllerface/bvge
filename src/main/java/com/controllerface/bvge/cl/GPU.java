@@ -11,6 +11,8 @@ import java.util.*;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.jocl.CL.*;
+import static org.lwjgl.opengl.GLX.glXGetCurrentContext;
+import static org.lwjgl.opengl.GLX.glXGetCurrentDrawable;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
@@ -536,6 +538,9 @@ public class GPU
 
     private static cl_device_id[] init_device()
     {
+        String os = System.getProperty("os.name");
+        System.out.println("OS: " + os + "\n");
+
         // The platform, device type and device number
         // that will be used
         int platformIndex = 0;
@@ -567,24 +572,27 @@ public class GPU
 
         var device_ids = new cl_device_id[]{device};
 
-        var dc = wglGetCurrentDC();
-        var ctx = wglGetCurrentContext();
-
-        // todo: the above code is windows specific add linux code path,
-        //  should look something like this:
-        // var ctx = glXGetCurrentContext();
-        // var dc = glXGetCurrentDrawable();
-        // contextProperties.addProperty(CL_GLX_DISPLAY_KHR, dc);
-
-
-
-        // Initialize the context properties
+        // Initialize the CL/GL sharing context properties
         var contextProperties = new cl_context_properties();
-        contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
-        contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
-        contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
+        if (os.toLowerCase().contains("windows"))
+        {
+            var dc = wglGetCurrentDC();
+            var ctx = wglGetCurrentContext();
+            contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
+            contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
+            contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
+        }
+        else
+        {
+            var dc = glXGetCurrentDrawable();
+            var ctx = glXGetCurrentContext();
+            contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
+            contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
+            contextProperties.addProperty(CL_GLX_DISPLAY_KHR, dc);
+        }
 
 //        OpenCL.printDeviceDetails(device_ids);
+
         // Create a context for the selected device
         context = clCreateContext(
             contextProperties, 1, device_ids,
