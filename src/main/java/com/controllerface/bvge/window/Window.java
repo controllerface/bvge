@@ -6,11 +6,21 @@ import com.controllerface.bvge.ecs.systems.KBMInput;
 import com.controllerface.bvge.game.GameMode;
 import com.controllerface.bvge.game.TestGame;
 import org.joml.Vector2f;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+
+import static java.awt.SystemColor.window;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -144,6 +154,57 @@ public class Window
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         glViewport(0,0,this.width, this.height);
+
+        // mouse cursor
+//        InputStream stream = Window.class.getResourceAsStream("/img/reticule2.png");
+//        BufferedImage image = null;
+//        try {
+//            image = ImageIO.read(stream);
+//        } catch (IOException e) {
+//            assert false: "Couldn't load mouse icon";
+//            throw new RuntimeException(e);
+//        }
+//
+//        int width = image.getWidth();
+//        int height = image.getHeight();
+//
+//        int[] pixels = new int[width * height];
+//        image.getRGB(0, 0, width, height, pixels, 0, width);
+//
+//        // convert image to RGBA format
+//        ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * 4);
+//
+//        for (int y = 0; y < height; y++)
+//        {
+//            for (int x = 0; x < width; x++)
+//            {
+//                int pixel = pixels[y * width + x];
+//
+//                buffer.put((byte) ((pixel >> 16) & 0xFF));  // red
+//                buffer.put((byte) ((pixel >> 8) & 0xFF));   // green
+//                buffer.put((byte) (pixel & 0xFF));          // blue
+//                buffer.put((byte) ((pixel >> 24) & 0xFF));  // alpha
+//            }
+//        }
+//        buffer.flip(); // this will flip the cursor image vertically
+//
+//        // create a GLFWImage
+//        GLFWImage cursorImg= GLFWImage.create();
+//        cursorImg.width(width);     // set up image width
+//        cursorImg.height(height);   // set up image height
+//        cursorImg.pixels(buffer);   // pass image data
+//
+//        // the hotspot indicates the displacement of the sprite to the
+//        // position where mouse clicks are registered (see image below)
+//        int hotspotX = width/2;
+//        int hotspotY = height/2;
+//
+//        // create custom cursor and store its ID
+//        long cursorID = org.lwjgl.glfw.GLFW.glfwCreateCursor(cursorImg, hotspotX , hotspotY);
+//
+//        // set current cursor
+//        glfwSetCursor(glfwWindow, cursorID);
+
 
         System.out.println("\n-------- OPEN GL DEVICE -----------");
         System.out.println(glGetString(GL_VENDOR));
