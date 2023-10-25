@@ -115,6 +115,7 @@ public class GPU
         prepare_edges(new PrepareEdges()),
         prepare_transforms(new PrepareTransforms()),
         resolve_constraints(new ResolveConstraints()),
+        root_hull_filter(new RootHullFilter()),
         sat_collide(new SatCollide()),
         scan_candidates(new ScanCandidates()),
         scan_deletes(new ScanDeletes()),
@@ -172,6 +173,8 @@ public class GPU
         prepare_transforms,
         read_position,
         resolve_constraints,
+        root_hull_count,
+        root_hull_filter,
         rotate_hull,
         sat_collide,
         scan_bounds_multi_block,
@@ -701,6 +704,14 @@ public class GPU
         prep_transforms_k.set_rotations(Memory.hull_rotation.gpu.pointer());
         Kernel.prepare_transforms.set_kernel(prep_transforms_k);
 
+        var root_hull_count_k = new RootHullCount_k(command_queue, Program.root_hull_filter.gpu);
+        root_hull_count_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
+        Kernel.root_hull_count.set_kernel(root_hull_count_k);
+
+        var root_hull_filter_k = new RootHullFilter_k(command_queue, Program.root_hull_filter.gpu);
+        root_hull_filter_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
+        Kernel.root_hull_filter.set_kernel(root_hull_filter_k);
+
         var prep_edges_k = new PrepareEdges_k(command_queue, Program.prepare_edges.gpu);
         prep_edges_k.set_points(Memory.points.gpu.pointer());
         prep_edges_k.set_edges(Memory.edges.gpu.pointer());
@@ -1021,6 +1032,68 @@ public class GPU
         gpu_kernel.set_arg(3, Pointer.to(vbo_mem2));
         gpu_kernel.set_arg(4, Pointer.to(arg_long(edge_offset)));
         gpu_kernel.call(arg_long(batch_size));
+    }
+
+    /**
+     * outputs an array of hulls matching model id given
+     *
+     * @param model_id ID of model to filter on
+     */
+    public static HullFilteredData GL_hull_filter(int model_id)
+    {
+        var gpu_kernel = Kernel.root_hull_count.gpu;
+        var gpu_kernel_2 = Kernel.root_hull_filter.gpu;
+
+        // the kernel will use this value as an internal atomic counter, always initialize to zero
+        int[] counter = new int[]{0};
+        var dst_counter = Pointer.to(counter);
+        var counter_data = cl_new_int_arg_buffer(dst_counter);
+
+        gpu_kernel.set_arg(1,Pointer.to(counter_data));
+        gpu_kernel.set_arg(2,Pointer.to(arg_int(model_id)));
+
+        gpu_kernel.call(arg_long(Main.Memory.armature_count()));
+        cl_read_buffer(counter_data, Sizeof.cl_int, dst_counter);
+
+        int final_count = counter[0];
+        long final_buffer_size = (long) Sizeof.cl_int * final_count;
+        var hulls_out = cl_new_buffer(final_buffer_size);
+
+        // the kernel will use this value as an internal atomic counter, always initialize to zero
+        int[] hulls_counter = new int[]{0};
+        var dst_hulls_counter = Pointer.to(hulls_counter);
+        var hulls_counter_data = cl_new_int_arg_buffer(dst_hulls_counter);
+
+        gpu_kernel_2.set_arg(1,Pointer.to(hulls_out));
+        gpu_kernel_2.set_arg(2,Pointer.to(hulls_counter_data));
+        gpu_kernel_2.set_arg(3,Pointer.to(arg_int(model_id)));
+
+        gpu_kernel_2.call(arg_long(Main.Memory.armature_count()));
+
+        return new HullFilteredData(hulls_out, final_count);
+    }
+
+    /**
+     * Transfers a subset of all hull transforms from CL memory into GL memory. Hulls
+     * are generally not rendered directly using this data, but it is used to transform
+     * model reference data from memory into the position of the mesh that the hull
+     * represents within the simulation.
+     *
+     * @param vbo_id        id of the shared GL buffer object
+     * @param hulls_out     array of hulls filtered to be circles only
+     * @param offset        where we are starting in the hulls_out array
+     * @param batch_size         number of hull objects to transfer in this batch
+     */
+    public static void GL_circles(int vbo_id, cl_mem hulls_out, int offset, int batch_size)
+    {
+        var gpu_kernel = Kernel.prepare_transforms.gpu;
+
+        var vbo_index_buffer = shared_mem.get(vbo_id);
+        gpu_kernel.share_mem(vbo_index_buffer);
+
+        gpu_kernel.set_arg(2, Pointer.to(hulls_out));
+        gpu_kernel.set_arg(3, Pointer.to(vbo_index_buffer));
+        gpu_kernel.call(arg_long(batch_size), offset);
     }
 
     /**
