@@ -87,6 +87,7 @@ public class CircleRenderer extends GameSystem
         for (int circles = data.hull_count(); circles > 0; circles -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, circles);
+            System.out.println("offset: " + offset + " c= " + data.hull_count() + " bc=" + count);
             GPU.GL_circles(circles_vbo, data.hulls_out(), offset, count);
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

@@ -102,12 +102,6 @@ public class CLUtils
             global_work_size, null, 0, null, null);
     }
 
-    public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size, int offset)
-    {
-        clEnqueueNDRangeKernel(commandQueue, kernel, 1, arg_long(offset),
-                global_work_size, null, 0, null, null);
-    }
-
     public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size, long[] local_work_size)
     {
         clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,

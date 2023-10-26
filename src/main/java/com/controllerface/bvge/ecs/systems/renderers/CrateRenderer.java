@@ -297,7 +297,7 @@ public class CrateRenderer extends GameSystem
             // this call moves the physics transforms of the tracked hulls into the buffer for rendering
             // todo: this will need to change to use bone weights, but possibly processing them in CL
             //  not in GL
-            GPU.GL_transforms(index_buffer_id, transform_buffer_ID, mesh_count);
+            GPU.GL_transforms(index_buffer_id, transform_buffer_ID, mesh_count, 0);
 
 
             glEnableVertexAttribArray(0);

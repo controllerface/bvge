@@ -1049,8 +1049,8 @@ public class GPU
         var dst_counter = Pointer.to(counter);
         var counter_data = cl_new_int_arg_buffer(dst_counter);
 
-        gpu_kernel.set_arg(1,Pointer.to(counter_data));
-        gpu_kernel.set_arg(2,Pointer.to(arg_int(model_id)));
+        gpu_kernel.set_arg(1, Pointer.to(counter_data));
+        gpu_kernel.set_arg(2, Pointer.to(arg_int(model_id)));
 
         gpu_kernel.call(arg_long(Main.Memory.armature_count()));
         cl_read_buffer(counter_data, Sizeof.cl_int, dst_counter);
@@ -1097,7 +1097,8 @@ public class GPU
 
         gpu_kernel.set_arg(2, Pointer.to(hulls_out));
         gpu_kernel.set_arg(3, Pointer.to(vbo_index_buffer));
-        gpu_kernel.call(arg_long(batch_size), offset);
+        gpu_kernel.set_arg(4, Pointer.to(arg_int(offset)));
+        gpu_kernel.call(arg_long(batch_size));
     }
 
     /**
@@ -1110,7 +1111,7 @@ public class GPU
      * @param transforms_id   id of the shared GL buffer object
      * @param batch_size      number of hull objects to transfer in this batch
      */
-    public static void GL_transforms(int index_buffer_id, int transforms_id, int batch_size)
+    public static void GL_transforms(int index_buffer_id, int transforms_id, int batch_size, int offset)
     {
         var gpu_kernel = Kernel.prepare_transforms.gpu;
 
@@ -1121,6 +1122,7 @@ public class GPU
         gpu_kernel.share_mem(vbo_transforms);
         gpu_kernel.set_arg(2, Pointer.to(vbo_index_buffer));
         gpu_kernel.set_arg(3, Pointer.to(vbo_transforms));
+        gpu_kernel.set_arg(4, Pointer.to(arg_int(offset)));
         gpu_kernel.call(arg_long(batch_size));
     }
 

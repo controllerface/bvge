@@ -133,23 +133,4 @@ public class GPUKernel
 
         shared_memory.clear();
     }
-
-    public void call(long[] global_work_size, int offset)
-    {
-        var shared_ = shared_memory.toArray(new cl_mem[]{});
-
-        if (shared_.length > 0)
-        {
-            CLUtils.gl_acquire(command_queue, shared_);
-        }
-
-        k_call(command_queue, kernel, global_work_size, offset);
-
-        if (shared_.length > 0)
-        {
-            CLUtils.gl_release(command_queue, shared_);
-        }
-
-        shared_memory.clear();
-    }
 }
