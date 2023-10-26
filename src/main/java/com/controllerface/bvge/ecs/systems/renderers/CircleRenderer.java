@@ -11,6 +11,7 @@ import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
+import static org.jocl.CL.clReleaseMemObject;
 import static org.lwjgl.opengl.GL11C.GL_FLOAT;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15.GL_POINTS;
@@ -80,5 +81,7 @@ public class CircleRenderer extends GameSystem
         glDisableVertexAttribArray(0);
         glBindVertexArray(0);
         shader.detach();
+
+        clReleaseMemObject(data.hulls_out());
     }
 }

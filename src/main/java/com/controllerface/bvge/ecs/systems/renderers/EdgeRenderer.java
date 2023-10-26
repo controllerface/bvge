@@ -41,7 +41,7 @@ public class EdgeRenderer extends GameSystem
     private static final int BATCH_FLAG_SIZE = BATCH_FLAG_COUNT * Float.BYTES;
 
     private final AbstractShader shader;
-    private int vaoID;
+    private int vao_id;
     private int edge_vbo;
     private int flag_vbo;
 
@@ -54,8 +54,8 @@ public class EdgeRenderer extends GameSystem
 
     public void init()
     {
-        vaoID = glGenVertexArrays();
-        glBindVertexArray(vaoID);
+        vao_id = glGenVertexArrays();
+        glBindVertexArray(vao_id);
 
         edge_vbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, edge_vbo);
@@ -76,7 +76,7 @@ public class EdgeRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        glBindVertexArray(vaoID);
+        glBindVertexArray(vao_id);
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
