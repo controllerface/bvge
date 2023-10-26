@@ -19,7 +19,7 @@ inline DropCounts calculate_drop_counts(int armature_id,
     drop_counts.armature_count = 0;
 
     // todo: need deleted flag in armature data. Set this to true to simulate deleting everything
-    bool deleted = true;
+    bool deleted = false;
             
     if (deleted)
     {

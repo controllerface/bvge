@@ -1,6 +1,7 @@
 package com.controllerface.bvge.ecs.systems.renderers;
 
 import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.HullFilteredData;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.geometry.Models;
@@ -57,15 +58,28 @@ public class CircleRenderer extends GameSystem
 
     }
 
+    private HullFilteredData data;
+
     @Override
     public void tick(float dt)
     {
+        if (Models.get_instance_count(Models.CIRCLE_PARTICLE) <= 0) return;
+
         glBindVertexArray(vao_id);
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        var data = GPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
+        if (Models.is_model_dirty(Models.CIRCLE_PARTICLE))
+        {
+            System.out.println("dirty");
+            if (data != null)
+            {
+                clReleaseMemObject(data.hulls_out());
+            }
+            data = GPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
+            Models.set_model_clean(Models.CIRCLE_PARTICLE);
+        }
 
         glEnableVertexAttribArray(0);
 
@@ -82,6 +96,6 @@ public class CircleRenderer extends GameSystem
         glBindVertexArray(0);
         shader.detach();
 
-        clReleaseMemObject(data.hulls_out());
+        //clReleaseMemObject(data.hulls_out());
     }
 }

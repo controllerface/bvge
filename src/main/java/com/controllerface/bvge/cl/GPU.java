@@ -1055,6 +1055,8 @@ public class GPU
         gpu_kernel.call(arg_long(Main.Memory.armature_count()));
         cl_read_buffer(counter_data, Sizeof.cl_int, dst_counter);
 
+        clReleaseMemObject(counter_data);
+
         int final_count = counter[0];
         long final_buffer_size = (long) Sizeof.cl_int * final_count;
         var hulls_out = cl_new_buffer(final_buffer_size);
@@ -1069,6 +1071,8 @@ public class GPU
         gpu_kernel_2.set_arg(3,Pointer.to(arg_int(model_id)));
 
         gpu_kernel_2.call(arg_long(Main.Memory.armature_count()));
+
+        clReleaseMemObject(hulls_counter_data);
 
         return new HullFilteredData(hulls_out, final_count);
     }

@@ -343,7 +343,7 @@ public class Models
 
     public static int get_instance_count(int model_id)
     {
-        return model_instances.get(model_id).size();
+        return model_instances.get(model_id) == null ? 0 : model_instances.get(model_id).size();
     }
 
     public static void set_model_clean(int model_id)
