@@ -1035,11 +1035,13 @@ public class GPU
     }
 
     /**
-     * outputs an array of hulls matching model id given
+     * Performs a filter query on all physics hulls, returning an index buffer and count of items.
+     * The returned object will contain the indices of all hulls that match the model with the given ID.
      *
      * @param model_id ID of model to filter on
+     * @return a HullIndexData object with the query result
      */
-    public static HullFilteredData GL_hull_filter(int model_id)
+    public static HullIndexData GL_hull_filter(int model_id)
     {
         var gpu_kernel = Kernel.root_hull_count.gpu;
         var gpu_kernel_2 = Kernel.root_hull_filter.gpu;
@@ -1074,7 +1076,7 @@ public class GPU
 
         clReleaseMemObject(hulls_counter_data);
 
-        return new HullFilteredData(hulls_out, final_count);
+        return new HullIndexData(hulls_out, final_count);
     }
 
     /**
@@ -1085,7 +1087,7 @@ public class GPU
      *
      * @param vbo_id        id of the shared GL buffer object
      * @param hulls_out     array of hulls filtered to be circles only
-     * @param offset        where we are starting in the hulls_out array
+     * @param offset        where we are starting in the indices array
      * @param batch_size         number of hull objects to transfer in this batch
      */
     public static void GL_circles(int vbo_id, cl_mem hulls_out, int offset, int batch_size)
