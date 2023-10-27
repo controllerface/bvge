@@ -20,7 +20,7 @@ them before this kernel completes.
 __kernel void integrate(
     __global float4 *hulls,
     __global float4 *armatures,
-    __global int2 *armature_flags,
+    __global int4 *armature_flags,
     __global int4 *element_tables,
     __global float2 *armature_accel,
     __global float2 *hull_rotations,
@@ -53,7 +53,7 @@ __kernel void integrate(
     int4 element_table = element_tables[gid];
     int2 hull_1_flags = hull_flags[gid];
     float4 armature = armatures[hull_1_flags.y];
-    int2 armature_flag = armature_flags[hull_1_flags.y];
+    int4 armature_flag = armature_flags[hull_1_flags.y];
     float2 acceleration = armature_accel[hull_1_flags.y];
     float2 rotation = hull_rotations[gid];
     float4 bounding_box = bounds[gid];
@@ -68,9 +68,7 @@ __kernel void integrate(
     //  or something, so it can be handled differently for collisions as well.
     if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
-        // todo: set out-of-bounds flag for this hull, later the armature can be checked
-        //  for constituent hulls that are outside the bounds, and if all are, it can be
-        //  marked for deletion.
+        hull_flags[gid] |= hull_1_flags & OUT_OF_BOUNDS;
 
         // acceleration.x = 0;
         // acceleration.y = 0;

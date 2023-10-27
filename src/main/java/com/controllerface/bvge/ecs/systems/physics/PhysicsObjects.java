@@ -68,7 +68,7 @@ public class PhysicsObjects
         int[] _flag = CLUtils.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int2(hull_id, CIRCLE_PARTICLE);
+        int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // particles register with the hull ID for more straight-forward rendering
@@ -128,7 +128,7 @@ public class PhysicsObjects
         int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int2(hull_id, TRIANGLE_PARTICLE);
+        int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0,0);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // triangles also register with the hull ID instead of the armature ID
@@ -190,7 +190,7 @@ public class PhysicsObjects
         int [] _flag = CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int2(hull_id, SQUARE_PARTICLE);
+        int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // basic boxes also register with the hull ID instead of the armature ID
@@ -398,7 +398,7 @@ public class PhysicsObjects
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
 
-        int[] armature_flags = CLUtils.arg_int2(root_hull_id, model_index);
+        int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, 0);
         int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, armature_flags);
 
         // armatures are registered with their associated model ID

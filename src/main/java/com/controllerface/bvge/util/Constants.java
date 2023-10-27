@@ -25,6 +25,7 @@ public class Constants
         IS_CIRCLE(0x02),
         IS_POLYGON(0x04),
         NO_BONES(0x08),
+        OUT_OF_BOUNDS(0x16),
 
         ;
 

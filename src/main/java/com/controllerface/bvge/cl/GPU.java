@@ -286,7 +286,7 @@ public class GPU
         /**
          * Non-real force modeled for stability of colliding particles. Values are float with the following mapping:
          * -
-         * value: anti-gravity magnitude
+         * value: antigravity magnitude
          * -
          */
         point_anti_gravity(Sizeof.cl_float),
@@ -311,7 +311,7 @@ public class GPU
          * x: point 1 index
          * y: point 2 index
          * z: distance constraint
-         * w: edge flags
+         * w: edge flags (bit-field)
          * -
          * note: x, y, and w values are cast to int during use
          */
@@ -356,7 +356,7 @@ public class GPU
         /**
          * Flags that related to tracked physics hulls. Values are int2 with the following mappings:
          * -
-         * x: hull flags
+         * x: hull flags (bit-field)
          * y: armature id
          * -
          */
@@ -450,9 +450,10 @@ public class GPU
          * -
          * x: root hull index
          * y: model id
+         * z: armature flags (bit-field)
          * -
          */
-        armature_flags(Sizeof.cl_int2),
+        armature_flags(Sizeof.cl_int4),
 
         /**
          * Acceleration value of an armature. Values are float2 with the following mappings:
