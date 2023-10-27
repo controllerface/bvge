@@ -15,7 +15,7 @@ __kernel void prepare_edges(__global float4 *points,
     int p1_index = (int)edge.s0;
     int p2_index = (int)edge.s1;
     int flags = (int)edge.s3;
-    bool isInterior = (flags & 0x01) !=0;
+    bool isInterior = (flags & IS_STATIC) !=0;
     float alpha = isInterior ? .3 : 1;
     float2 alpha_vec = (float2)(alpha, alpha);
     

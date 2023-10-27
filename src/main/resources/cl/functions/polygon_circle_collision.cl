@@ -145,8 +145,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 
-    bool vs = (vo_f.x & 0x01) !=0;
-    bool es = (eo_f.x & 0x01) !=0;
+    bool vs = (vo_f.x & IS_STATIC) !=0;
+    bool es = (eo_f.x & IS_STATIC) !=0;
     
     if (vs || es)
     {

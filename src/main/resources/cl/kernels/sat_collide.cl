@@ -32,19 +32,19 @@ __kernel void sat_collide(__global int2 *candidates,
     int b2_id = current_pair.y;
     int2 hull_1_flags = hull_flags[b1_id];
     int2 hull_2_flags = hull_flags[b2_id];
-    bool b1s = (hull_1_flags.x & 0x01) !=0;
-    bool b2s = (hull_2_flags.x & 0x01) !=0;
+    bool b1s = (hull_1_flags.x & IS_STATIC) !=0;
+    bool b2s = (hull_2_flags.x & IS_STATIC) !=0;
     
     if (b1s && b2s) // no collisions between static objects todo: probably can weed these out earlier, during aabb checks
     {
         return;
     }
 
-    bool b1_is_circle = (hull_1_flags.x & 0x02) !=0;
-    bool b2_is_circle = (hull_2_flags.x & 0x02) !=0;
+    bool b1_is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
+    bool b2_is_circle = (hull_2_flags.x & IS_CIRCLE) !=0;
 
-    bool b1_is_polygon = (hull_1_flags.x & 0x04) !=0;
-    bool b2_is_polygon = (hull_2_flags.x & 0x04) !=0;
+    bool b1_is_polygon = (hull_1_flags.x & IS_POLYGON) !=0;
+    bool b2_is_polygon = (hull_2_flags.x & IS_POLYGON) !=0;
 
     int c_id = b1_is_circle ? b1_id : b2_id;
     int p_id = b1_is_circle ? b2_id : b1_id;
@@ -222,7 +222,7 @@ __kernel void move_armatures(__global float4 *hulls,
         float4 hull = hulls[n];
         int2 hull_flag = hull_flags[n];
         int4 element_table = element_tables[n];
-        bool no_bones = (hull_flag.x & 0x08) !=0;
+        bool no_bones = (hull_flag.x & NO_BONES) !=0;
 
         if (!no_bones)
         {

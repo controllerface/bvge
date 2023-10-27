@@ -66,24 +66,28 @@ __kernel void integrate(
 
     // todo: instead of punting on these, we can maybe update differently and tag the hull
     //  or something, so it can be handled differently for collisions as well.
-    // if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
-    // {
-    //     acceleration.x = 0;
-    //     acceleration.y = 0;
-    //     armature_accel[gid] = acceleration;
+    if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
+    {
+        // todo: set out-of-bounds flag for this hull, later the armature can be checked
+        //  for constituent hulls that are outside the bounds, and if all are, it can be
+        //  marked for deletion.
 
-    //     bounds_bank.y = 0;
-    //     bounds_bank_data[gid] = bounds_bank;
-    //     return;
-    // }
+        // acceleration.x = 0;
+        // acceleration.y = 0;
+        // armature_accel[gid] = acceleration;
+
+        // bounds_bank.y = 0;
+        // bounds_bank_data[gid] = bounds_bank;
+        // return;
+    }
 
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
     acc.x = acceleration.x;
     acc.y = acceleration.y;
-    bool is_static = (hull_1_flags.x & 0x01) !=0;
-    bool is_circle = (hull_1_flags.x & 0x02) !=0;
-    bool no_bones = (hull_1_flags.x & 0x08) !=0;
+    bool is_static = (hull_1_flags.x & IS_STATIC) !=0;
+    bool is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
+    bool no_bones = (hull_1_flags.x & NO_BONES) !=0;
 
     if (!is_static)
     {

@@ -10,6 +10,7 @@ public class Integrate extends GPUProgram
     @Override
     protected void init()
     {
+        src.add(const_hull_flags);
         src.add(func_angle_between);
         src.add(func_rotate_point);
         src.add(func_is_in_bounds);

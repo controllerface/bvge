@@ -28,6 +28,13 @@ import static org.jocl.CL.clReleaseProgram;
 public abstract class GPUProgram
 {
     /**
+     * Constant values that can be used within kernels. There is a general expectation that the CPU
+     * code will define matching constants for easy interoperability.
+     * todo: generate the GPU code from the CPU constants instead of duplicating the code in both places
+     */
+    protected static String const_hull_flags             = read_src("constants/hull_flags.cl");
+
+    /**
      * Helper functions. Program implementations can use these functions to build out a program,
      * in addition to the main source file of the program. This allows for utility functions to be
      * reused and also kept separate from the core kernel code, which helps keep these functions

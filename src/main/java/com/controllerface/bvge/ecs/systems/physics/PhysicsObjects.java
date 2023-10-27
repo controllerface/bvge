@@ -5,6 +5,7 @@ import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -23,11 +24,12 @@ public class PhysicsObjects
 {
     private static final Vector2f vector_buffer = new Vector2f();
 
-    public static int FLAG_NONE = 0x00;
-    public static int FLAG_STATIC_OBJECT = 0x01;
-    public static int FLAG_CIRCLE = 0x02;
-    public static int FLAG_POLYGON = 0x04;
-    public static int FLAG_NO_BONES = 0x08;
+    public static int FLAG_NONE             = Constants.HullFlags.EMPTY.bits;
+    public static int FLAG_STATIC_OBJECT    = Constants.HullFlags.IS_STATIC.bits;
+    public static int FLAG_CIRCLE           = Constants.HullFlags.IS_CIRCLE.bits;
+    public static int FLAG_POLYGON          = Constants.HullFlags.IS_POLYGON.bits;
+    public static int FLAG_NO_BONES         = Constants.HullFlags.NO_BONES.bits;
+
 
     public static int FLAG_INTERIOR_EDGE = 0x01;
 

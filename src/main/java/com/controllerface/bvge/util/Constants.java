@@ -17,4 +17,22 @@ public class Constants
         public static final int VECTOR_FLOAT_4D_SIZE = VECTOR_4D_LENGTH * Float.BYTES;
         public static final int VECTOR_INT_4D_SIZE = VECTOR_4D_LENGTH * Integer.BYTES;
     }
+
+    public enum HullFlags
+    {
+        EMPTY(0x00),
+        IS_STATIC(0x01),
+        IS_CIRCLE(0x02),
+        IS_POLYGON(0x04),
+        NO_BONES(0x08),
+
+        ;
+
+        public final int bits;
+
+        HullFlags(int bits)
+        {
+            this.bits = bits;
+        }
+    }
 }
