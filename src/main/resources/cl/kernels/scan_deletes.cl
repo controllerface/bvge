@@ -42,7 +42,6 @@ inline DropCounts calculate_drop_counts(int armature_id,
     return drop_counts;
 }
 
-
 __kernel void locate_out_of_bounds(__global int2 *hull_tables,
                                    __global int2 *hull_flags,
                                    __global int4 *armature_flags)
@@ -329,4 +328,116 @@ __kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
             sz[4] = (output2[b_index].w + b_counts.armature_count);
         }
     }
+}
+
+
+__kernel void perform_deletes(__global int *buffer_in,
+                              __global int4 *buffer_in_2,
+                              __global float4 *armatures,
+                              __global int4 *armature_flags,
+                              __global int2 *hull_tables,
+                              __global float4 *hulls,
+                              __global int2 *hull_flags,
+                              __global float2 *hull_rotations,
+                              __global int4 *element_tables,
+                              __global float16 *bone_instances,
+                              __global int *bone_indices,
+                              __global float4 *points,
+                              __global float *point_anti_grav,
+                              __global int2 *vertex_tables,
+                              __global float4 *edges)
+{
+    // get drop counts for this armature
+    int gid = get_global_id(0);
+    int buffer_1 = buffer_in[gid];
+    int4 buffer_2 = buffer_in_2[gid];
+
+    // todo: check armature for deleted flag, if true do nothing. Adjustments are
+    //  only valid for items that are not being removed, their data will overwrite
+    //  the data of the deleted objects.
+
+    DropCounts drop;
+    drop.edge_count = buffer_1;
+    drop.bone_count = buffer_2.x;
+    drop.point_count = buffer_2.y;
+    drop.hull_count = buffer_2.z;
+    drop.armature_count = buffer_2.w;
+
+    float4 armature = armatures[gid];
+    int4 armature_flag = armature_flags[gid];
+    int2 hull_table = hull_tables[gid];
+
+    int new_armature_index = gid - drop.armature_count;
+    // for this armature,
+    // -move current float4 position data to new index
+    armatures[new_armature_index] = armature;
+
+    // update armature flags .x by hull offset
+    int4 new_armature_flag = armature_flag;
+    new_armature_flag.x -= drop.hull_count;
+
+    // -move new int4 flag data to new index
+    armature_flags[new_armature_index] = new_armature_flag;
+
+    // update hull table .x/.y by hull offset
+    int2 new_hull_table = hull_table;
+    new_hull_table.x -= drop.hull_count;
+    new_hull_table.y -= drop.hull_count;
+
+    // -move new int2 hull table data to new index
+    hull_tables[new_armature_index] = new_hull_table;
+
+    // loop current hulls,
+    int hull_count = hull_table.y - hull_table.x + 1;
+    for (int i = 0; i < hull_count; i++)
+    {
+        int current_hull = hull_table.x + i;
+        float4 hull = hulls[current_hull];
+        float2 hull_rotation = hull_rotations[current_hull];
+        int2 hull_flag = hull_flags[current_hull];
+        int4 element_table = element_tables[current_hull];
+
+        int new_hull_index = current_hull - drop.hull_count;
+
+        //  -move current float4 position data to new index
+        hulls[new_hull_index] = hull;
+
+        //  -move current float2 rotation data to new index
+        hull_rotations[new_hull_index] = hull_rotation;
+
+        //  update hull flags.y by armature offset
+        int2 new_hull_flag = hull_flag;
+        new_hull_flag.y -= drop.armature_count;
+
+        //  -move new int2 flag data to new index
+        hull_flags[new_hull_index] = new_hull_flag;
+
+        //  update element table .x/.y by point offset
+        //  update element table .z/.w by edges offset
+        int4 new_element_table = element_table;
+        new_element_table.x -= drop.point_count;
+        new_element_table.y -= drop.point_count;
+        new_element_table.z -= drop.edge_count;
+        new_element_table.w -= drop.edge_count;
+        
+        //  -move new int4 element data to new index
+        element_tables[new_hull_index] = new_element_table;
+        
+        int point_count = element_table.y - element_table.x + 1;
+        int edge_count = element_table.w - element_table.z + 1;
+
+        //  loop current edges,
+        //   update edge .x/.y by point offset
+        //   -move new float4 edge data to new index
+        //  loop current points,
+        //   -move current float4 position data to new index
+        //   -move current float anti-grav data to new index
+        //   update vertex table .y by bone offset
+        //   -move new int2 vertex table data to new index
+        //   get current bone,
+        //    -move current float16 matrix data to new index
+        //    -move current int bone ref data to new index
+    }
+
+
 }

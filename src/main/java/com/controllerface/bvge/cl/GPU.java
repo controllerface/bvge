@@ -1434,9 +1434,9 @@ public class GPU
 
     public static void delete_and_compact()
     {
-        int buffer_count = Main.Memory.armature_count();
-        long output_buf_size = (long) Sizeof.cl_int * buffer_count;
-        long output_buf_size2 = (long) Sizeof.cl_int4 * buffer_count;
+        int armature_count = Main.Memory.armature_count();
+        long output_buf_size = (long) Sizeof.cl_int * armature_count;
+        long output_buf_size2 = (long) Sizeof.cl_int4 * armature_count;
 
         var output_buf_data = cl_new_buffer(output_buf_size);
         var output_buf_data2 = cl_new_buffer(output_buf_size2);
@@ -1444,7 +1444,7 @@ public class GPU
         var b_mem = new GPUMemory(output_buf_data);
         var b_mem2 = new GPUMemory(output_buf_data2);
 
-        int[] m = scan_deletes(b_mem.memory(), b_mem2.memory(), buffer_count);
+        int[] m = scan_deletes(b_mem.memory(), b_mem2.memory(), armature_count);
 
         // todo: b_mem and b_mem2 now contain the delete counts aligned with armatures
         //  a compaction step must now happen, with all the indices being shifted
@@ -1452,6 +1452,26 @@ public class GPU
 
         // todo: after compaction, Main memory offsets must be adjusted to reflect the
         //  new buffer sizes for each object type that was deleted.
+
+//        - bones
+//            01 calculate new bone index
+//            02 copy data to new index
+//        - points
+//            03 calculate new point index
+//            04 update vertex table bone entry
+//            05 copy data to new index
+//        - edges
+//            06 calculate new edge index
+//            07 update point indices
+//            08 copy data to new index
+//        - hulls
+//            09 calculate new hull index
+//            10 update element table point and edge entries
+//            11 copy data to new index
+//        - armatures
+//            12 calculate new armature index
+//            13 update hull table with new hull entries
+//            14 copy data to new index
 
         //System.out.println(Arrays.toString(m));
 
