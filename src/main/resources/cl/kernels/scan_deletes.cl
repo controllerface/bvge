@@ -8,6 +8,7 @@ typedef struct
 } DropCounts;
 
 inline DropCounts calculate_drop_counts(int armature_id,
+                                        __global int4 *armature_flags,
                                         __global int2 *hull_tables,
                                         __global int4 *element_tables)
 {
@@ -18,8 +19,8 @@ inline DropCounts calculate_drop_counts(int armature_id,
     drop_counts.hull_count = 0;
     drop_counts.armature_count = 0;
 
-    // todo: need deleted flag in armature data. Set this to true to simulate deleting everything
-    bool deleted = false;
+    int4 armature_flag = armature_flags[armature_id];
+    bool deleted = (armature_flag.z & OUT_OF_BOUNDS) !=0;
             
     if (deleted)
     {
@@ -41,14 +42,38 @@ inline DropCounts calculate_drop_counts(int armature_id,
     return drop_counts;
 }
 
-// output buffer layout:
-// - int : edge count
-// - int4 x: bone count
-//        y: point count
-//        z: hull count
-//        w: armature count
-//
-__kernel void scan_deletes_single_block_out(__global int2 *hull_tables,
+
+__kernel void locate_out_of_bounds(__global int2 *hull_tables,
+                                   __global int2 *hull_flags,
+                                   __global int4 *armature_flags)
+{
+    int gid = get_global_id(0);
+    int2 hull_table = hull_tables[gid];
+    int hull_count = hull_table.y - hull_table.x + 1;
+    
+    int out_count = 0;
+    for (int i = 0; i < hull_count; i++)
+    {
+        int current_hull = hull_table.x + i;
+        int2 hull_flag = hull_flags[current_hull];
+        bool is_out = (hull_flag.x & OUT_OF_BOUNDS) !=0;
+        if (is_out)
+        {
+            out_count++;
+        }
+    }
+
+    if (out_count == hull_count)
+    {
+        int4 armature_flag = armature_flags[gid];
+        int z = armature_flag.z;
+        z = (z | OUT_OF_BOUNDS);
+        armature_flags[gid].z = z;
+    }
+}
+
+__kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
+                                            __global int2 *hull_tables,
                                             __global int4 *element_tables,
                                             __global int *output,
                                             __global int4 *output2,
@@ -62,8 +87,8 @@ __kernel void scan_deletes_single_block_out(__global int2 *hull_tables,
     int a_index = (global_id * 2);
     int b_index = (global_id * 2) + 1;
 
-    DropCounts a_counts = calculate_drop_counts(a_index, hull_tables, element_tables);
-    DropCounts b_counts = calculate_drop_counts(b_index, hull_tables, element_tables);
+    DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables);
+    DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables);
 
     int m = 2 * get_local_size(0);
 
@@ -143,7 +168,8 @@ __kernel void scan_deletes_single_block_out(__global int2 *hull_tables,
     }
 }
 
-__kernel void scan_deletes_multi_block_out(__global int2 *hull_tables,
+__kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
+                                           __global int2 *hull_tables,
                                            __global int4 *element_tables,
                                            __global int *output,
                                            __global int4 *output2,
@@ -159,8 +185,8 @@ __kernel void scan_deletes_multi_block_out(__global int2 *hull_tables,
     int a_index = (2 * global_id);
     int b_index = (2 * global_id) + 1;
 
-    DropCounts a_counts = calculate_drop_counts(a_index, hull_tables, element_tables);
-    DropCounts b_counts = calculate_drop_counts(b_index, hull_tables, element_tables);
+    DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables);
+    DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables);
 
     int local_id = get_local_id(0);
     int local_a_index = (2 * local_id);
@@ -225,7 +251,8 @@ __kernel void scan_deletes_multi_block_out(__global int2 *hull_tables,
     }
 }
 
-__kernel void complete_deletes_multi_block_out(__global int2 *hull_tables,
+__kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
+                                               __global int2 *hull_tables,
                                                __global int4 *element_tables,
                                                __global int *output,
                                                __global int4 *output2,
@@ -280,7 +307,7 @@ __kernel void complete_deletes_multi_block_out(__global int2 *hull_tables,
         output2[a_index] = buffer2[local_a_index];
         if (a_index == n - 1)
         {
-            DropCounts a_counts = calculate_drop_counts(a_index, hull_tables, element_tables);
+            DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables);
             sz[0] = (output[a_index] + a_counts.edge_count);
             sz[1] = (output2[a_index].x + a_counts.bone_count);
             sz[2] = (output2[a_index].y + a_counts.point_count);
@@ -294,7 +321,7 @@ __kernel void complete_deletes_multi_block_out(__global int2 *hull_tables,
         output2[b_index] = buffer2[local_b_index];
         if (b_index == n - 1)
         {
-            DropCounts b_counts = calculate_drop_counts(b_index, hull_tables, element_tables);
+            DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables);
             sz[0] = (output[b_index] + b_counts.edge_count);
             sz[1] = (output2[b_index].x + b_counts.bone_count);
             sz[2] = (output2[b_index].y + b_counts.point_count);

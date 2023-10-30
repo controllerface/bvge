@@ -258,7 +258,8 @@ public class PhysicsSimulation extends GameSystem
         // Movements applied to hulls are now accumulated and applied to their parent armatures.
         GPU.move_armatures();
 
-        // todo: test and handle deleted objects
+        GPU.locate_out_of_bounds();
+
         GPU.delete_and_compact();
     }
 

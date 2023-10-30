@@ -64,11 +64,28 @@ __kernel void integrate(
     int start = element_table.x;
     int end   = element_table.y;
 
+
+    bool is_static = (hull_1_flags.x & IS_STATIC) !=0;
+    bool is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
+    bool no_bones = (hull_1_flags.x & NO_BONES) !=0;
+
+    bool out_bounds = (hull_1_flags.x & OUT_OF_BOUNDS) !=0;
+
+
+
     // todo: instead of punting on these, we can maybe update differently and tag the hull
     //  or something, so it can be handled differently for collisions as well.
     if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
-        hull_flags[gid] |= hull_1_flags & OUT_OF_BOUNDS;
+        if (!is_static && !out_bounds)
+        {
+            int x = hull_1_flags.x;
+            printf("debug integ before: %x %x", x, OUT_OF_BOUNDS);
+            x = (x | OUT_OF_BOUNDS);
+            printf("debug integ after: %x", x);
+            hull_flags[gid].x = x;
+        }
+        
 
         // acceleration.x = 0;
         // acceleration.y = 0;
@@ -83,9 +100,6 @@ __kernel void integrate(
    	float2 acc;
     acc.x = acceleration.x;
     acc.y = acceleration.y;
-    bool is_static = (hull_1_flags.x & IS_STATIC) !=0;
-    bool is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
-    bool no_bones = (hull_1_flags.x & NO_BONES) !=0;
 
     if (!is_static)
     {

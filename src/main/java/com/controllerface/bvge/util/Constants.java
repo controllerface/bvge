@@ -20,12 +20,12 @@ public class Constants
 
     public enum HullFlags
     {
-        EMPTY(0x00),
-        IS_STATIC(0x01),
-        IS_CIRCLE(0x02),
-        IS_POLYGON(0x04),
-        NO_BONES(0x08),
-        OUT_OF_BOUNDS(0x16),
+        EMPTY         (0x0000),
+        IS_STATIC     (0x0001),
+        IS_CIRCLE     (0x0002),
+        IS_POLYGON    (0x0004),
+        NO_BONES      (0x0008),
+        OUT_OF_BOUNDS (0x0010),
 
         ;
 
