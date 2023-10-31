@@ -475,6 +475,14 @@ public class GPU
          */
         armature_hull_table(Sizeof.cl_int2),
 
+
+        bone_shift(Sizeof.cl_int),
+
+        point_shift(Sizeof.cl_int),
+
+        edge_shift(Sizeof.cl_int),
+
+        hull_shift(Sizeof.cl_int),
         ;
 
         GPUMemory gpu;
@@ -632,6 +640,12 @@ public class GPU
         Memory.armature_flags.init(max_points);
         Memory.armature_hull_table.init(max_hulls);
 
+        Memory.bone_shift.init(max_points);
+        Memory.point_shift.init(max_points);
+        Memory.edge_shift.init(max_points);
+        Memory.hull_shift.init(max_hulls);
+
+
         // Debugging info
         int total = Memory.hulls.length
             + Memory.armature_accel.length
@@ -653,7 +667,11 @@ public class GPU
             + Memory.bone_index.length
             + Memory.armatures.length
             + Memory.armature_flags.length
-            + Memory.armature_hull_table.length;
+            + Memory.armature_hull_table.length
+            + Memory.bone_shift.length
+            + Memory.point_shift.length
+            + Memory.edge_shift.length
+            + Memory.hull_shift.length;
 
         System.out.println("------------- BUFFERS -------------");
         System.out.println("points            : " + Memory.points.length);
@@ -677,6 +695,10 @@ public class GPU
         System.out.println("armatures         : " + Memory.armatures.length);
         System.out.println("armature flags    : " + Memory.armature_flags.length);
         System.out.println("hull table        : " + Memory.armature_hull_table.length);
+        System.out.println("bone shift        : " + Memory.armature_hull_table.length);
+        System.out.println("point shift       : " + Memory.armature_hull_table.length);
+        System.out.println("edge shift        : " + Memory.armature_hull_table.length);
+        System.out.println("hull shift        : " + Memory.armature_hull_table.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)    : " + total);
         System.out.println("               KB : " + ((float) total / 1024f));
@@ -1453,25 +1475,7 @@ public class GPU
         // todo: after compaction, Main memory offsets must be adjusted to reflect the
         //  new buffer sizes for each object type that was deleted.
 
-//        - bones
-//            01 calculate new bone index
-//            02 copy data to new index
-//        - points
-//            03 calculate new point index
-//            04 update vertex table bone entry
-//            05 copy data to new index
-//        - edges
-//            06 calculate new edge index
-//            07 update point indices
-//            08 copy data to new index
-//        - hulls
-//            09 calculate new hull index
-//            10 update element table point and edge entries
-//            11 copy data to new index
-//        - armatures
-//            12 calculate new armature index
-//            13 update hull table with new hull entries
-//            14 copy data to new index
+
 
         //System.out.println(Arrays.toString(m));
 
