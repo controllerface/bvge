@@ -148,11 +148,16 @@ public class GPU
         animate_hulls,
         apply_reactions,
         build_key_map,
+        compact_armatures,
+        compact_bones,
+        compact_edges,
+        compact_hulls,
+        compact_points,
         complete_bounds_multi_block,
         complete_candidates_multi_block_out,
         complete_deletes_multi_block_out,
-        complete_int_multi_block,
         complete_int4_multi_block,
+        complete_int_multi_block,
         complete_int_multi_block_out,
         count_candidates,
         create_armature,
@@ -184,11 +189,11 @@ public class GPU
         scan_candidates_single_block_out,
         scan_deletes_multi_block_out,
         scan_deletes_single_block_out,
-        scan_int_multi_block,
         scan_int4_multi_block,
+        scan_int4_single_block,
+        scan_int_multi_block,
         scan_int_multi_block_out,
         scan_int_single_block,
-        scan_int4_single_block,
         scan_int_single_block_out,
         sort_reactions,
         update_accel,
@@ -984,6 +989,48 @@ public class GPU
         complete_deletes_multi_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
         complete_deletes_multi_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         Kernel.complete_deletes_multi_block_out.set_kernel(complete_deletes_multi_block_out_k);
+
+        var compact_armatures_k = new CompactArmatures_k(command_queue, Program.scan_deletes.gpu);
+        compact_armatures_k.set_armatures(Memory.armatures.gpu.pointer());
+        compact_armatures_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
+        compact_armatures_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
+        compact_armatures_k.set_hulls(Memory.hulls.gpu.pointer());
+        compact_armatures_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        compact_armatures_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        compact_armatures_k.set_points(Memory.points.gpu.pointer());
+        compact_armatures_k.set_vertex_tables(Memory.vertex_table.gpu.pointer());
+        compact_armatures_k.set_edges(Memory.edges.gpu.pointer());
+        compact_armatures_k.set_bone_shift(Memory.bone_shift.gpu.pointer());
+        compact_armatures_k.set_point_shift(Memory.point_shift.gpu.pointer());
+        compact_armatures_k.set_edge_shift(Memory.edge_shift.gpu.pointer());
+        compact_armatures_k.set_hull_shift(Memory.hull_shift.gpu.pointer());
+        Kernel.compact_armatures.set_kernel(compact_armatures_k);
+
+        var compact_hulls_k = new CompactHulls_k(command_queue, Program.scan_deletes.gpu);
+        compact_hulls_k.set_hull_shift(Memory.hull_shift.gpu.pointer());
+        compact_hulls_k.set_hulls(Memory.hulls.gpu.pointer());
+        compact_hulls_k.set_hull_rotations(Memory.hull_rotation.gpu.pointer());
+        compact_hulls_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        compact_hulls_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        Kernel.compact_hulls.set_kernel(create_point_k);
+
+        var compact_edges_k = new CompactEdges_k(command_queue, Program.scan_deletes.gpu);
+        compact_edges_k.set_edge_shift(Memory.edge_shift.gpu.pointer());
+        compact_edges_k.set_edges(Memory.edges.gpu.pointer());
+        Kernel.compact_edges.set_kernel(compact_edges_k);
+
+        var compact_points_k = new CompactPoints_k(command_queue, Program.scan_deletes.gpu);
+        compact_points_k.set_point_shift(Memory.point_shift.gpu.pointer());
+        compact_points_k.set_points(Memory.points.gpu.pointer());
+        compact_points_k.set_anti_gravity(Memory.point_anti_gravity.gpu.pointer());
+        compact_points_k.set_vertex_tables(Memory.vertex_table.gpu.pointer());
+        Kernel.compact_points.set_kernel(compact_points_k);
+
+        var compact_bones_k = new CompactBones_k(command_queue, Program.scan_deletes.gpu);
+        compact_bones_k.set_bone_shift(Memory.bone_shift.gpu.pointer());
+        compact_bones_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
+        compact_bones_k.set_bone_indices(Memory.bone_index.gpu.pointer());
+        Kernel.compact_bones.set_kernel(compact_bones_k);
     }
 
     //#endregion

@@ -330,35 +330,26 @@ __kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
     }
 }
 
-__kernel void perform_deletes(__global int *buffer_in,
-                              __global int4 *buffer_in_2,
-                              __global float4 *armatures,
-                              __global int4 *armature_flags,
-                              __global int2 *hull_tables,
-                              __global float4 *hulls,
-                              __global int2 *hull_flags,
-                              __global float2 *hull_rotations,
-                              __global int4 *element_tables,
-                              __global float16 *bone_instances,
-                              __global int *bone_indices,
-                              __global float4 *points,
-                              __global float *point_anti_grav,
-                              __global int2 *vertex_tables,
-                              __global float4 *edges,
-                              __global int *bone_shift,
-                              __global int *point_shift,
-                              __global int *edge_shift,
-                              __global int *hull_shift)
+__kernel void compact_armatures(__global int *buffer_in,
+                                __global int4 *buffer_in_2,
+                                __global float4 *armatures,
+                                __global int4 *armature_flags,
+                                __global int2 *hull_tables,
+                                __global float4 *hulls,
+                                __global int2 *hull_flags,
+                                __global int4 *element_tables,
+                                __global float4 *points,
+                                __global int2 *vertex_tables,
+                                __global float4 *edges,
+                                __global int *bone_shift,
+                                __global int *point_shift,
+                                __global int *edge_shift,
+                                __global int *hull_shift)
 {
     // get drop counts for this armature
     int gid = get_global_id(0);
     int buffer_1 = buffer_in[gid];
     int4 buffer_2 = buffer_in_2[gid];
-
-    // todo: check armature for deleted flag, if true do nothing. Adjustments are
-    //  only valid for items that are not being removed, their data will overwrite
-    //  the data of the deleted objects.
-
     DropCounts drop;
     drop.edge_count = buffer_1;
     drop.bone_count = buffer_2.x;
@@ -366,13 +357,22 @@ __kernel void perform_deletes(__global int *buffer_in,
     drop.hull_count = buffer_2.z;
     drop.armature_count = buffer_2.w;
 
-    // get current data
+    // todo: check armature for deleted flag, if true do nothing. Adjustments are
+    //  only valid for items that are not being removed, their data will overwrite
+    //  the data of the deleted objects.
+
+    // armature
+
     float4 armature = armatures[gid];
     int4 armature_flag = armature_flags[gid];
     int2 hull_table = hull_tables[gid];
-
+    
     // make sure all armatures have read their current data
     barrier(CLK_GLOBAL_MEM_FENCE);
+
+    bool is_out = (armature_flag.z & OUT_OF_BOUNDS) !=0;
+
+    if (is_out) return;
 
     // update with drop counts
     int new_armature_index = gid - drop.armature_count;
@@ -389,57 +389,135 @@ __kernel void perform_deletes(__global int *buffer_in,
     armature_flags[new_armature_index] = new_armature_flag;
     hull_tables[new_armature_index] = new_hull_table;
 
-    // loop current hulls,
+    // Note: hull, point, edge, and bone data may be adjusted, but the buffers are not
+    // compacted immediately. Bceause these buffers require memory barriers to ensure 
+    // they compact successfully, the offset each object would be moved by, is stored 
+    // in an object aliged "shift buffer". Subsequent kernels are then called with the 
+    // shift buffers to perform the compaction.
+
+    // hulls
     int hull_count = hull_table.y - hull_table.x + 1;
     for (int i = 0; i < hull_count; i++)
     {
         int current_hull = hull_table.x + i;
-
-        // get current data
-
         int2 hull_flag = hull_flags[current_hull];
         int4 element_table = element_tables[current_hull];
 
-        hull_flag.y -= drop.armature_count;
-        element_table.x -= drop.point_count;
-        element_table.y -= drop.point_count;
-        element_table.z -= drop.edge_count;
-        element_table.w -= drop.edge_count;
+        int4 new_element_table = element_table;
 
+        hull_flag.y -= drop.armature_count;
+        new_element_table.x -= drop.point_count;
+        new_element_table.y -= drop.point_count;
+        new_element_table.z -= drop.edge_count;
+        new_element_table.w -= drop.edge_count;
         hull_flags[current_hull] = hull_flag;
-        element_tables[current_hull] = element_table;
+        element_tables[current_hull] = new_element_table;
 
         hull_shift[current_hull] = drop.hull_count;
         
-        //  loop current edges,    
+        // edges
         int edge_count = element_table.w - element_table.z + 1;
         for (int j = 0; j < edge_count; j++)
         {
             int current_edge = element_table.z + j;
-            int new_edge_index = current_edge - drop.edge_count;
             float4 edge = edges[current_edge];
+            edge.x -= drop.point_count;
+            edge.y -= drop.point_count;
+            edges[current_edge] = edge;
 
-            //   update edge .x/.y by point offset
-            float4 new_edge = edge;
-            new_edge.x -= drop.point_count;
-            new_edge.y -= drop.point_count;
-            
-            //   -move new float4 edge data to new index    
-            edges[new_edge_index] = new_edge;
+            edge_shift[current_edge] = drop.edge_count;
         }
 
-        //  loop current points,
+        // points
         int point_count = element_table.y - element_table.x + 1;
         for (int k = 0; k < edge_count; k++)
         {
             int current_point = element_table.x + k;
-            //   -move current float4 position data to new index
-            //   -move current float anti-grav data to new index
-            //   update vertex table .y by bone offset
-            //   -move new int2 vertex table data to new index
-            //   get current bone,
-            //    -move current float16 matrix data to new index
-            //    -move current int bone ref data to new index
+            int2 vertex_table = vertex_tables[current_point];
+            int2 new_vertex_table = vertex_table;
+
+            new_vertex_table.y -= drop.bone_count;
+            vertex_tables[current_point] = new_vertex_table;
+            point_shift[current_point] = drop.point_count;
+
+            // bones
+            // todo: in the future, will need to account for multiple bones
+            int current_bone = vertex_table.y;
+            bone_shift[current_bone] = drop.bone_count;
         }
+    }
+}
+
+__kernel void compact_hulls(__global int *hull_shift,
+                            __global float4 *hulls,
+                            __global float2 *hull_rotations,
+                            __global int2 *hull_flags,
+                            __global int4 *element_tables)
+{
+    int current_hull = get_global_id(0);
+    int shift = hull_shift[current_hull];
+    float4 hull = hulls[current_hull];
+    float2 rotation = hull_rotations[current_hull];
+    int2 hull_flag = hull_flags[current_hull];
+    int4 element_table = element_tables[current_hull];
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    if (shift > 0)
+    {
+        int new_hull_index = current_hull - shift;
+        hulls[new_hull_index] = hull;
+        hull_rotations[new_hull_index] = rotation;
+        hull_flags[new_hull_index] = hull_flag;
+        element_tables[new_hull_index] = element_table;
+    }
+}
+
+__kernel void compact_edges(__global int *edge_shift,
+                            __global float4 *edges)
+{
+    int current_edge = get_global_id(0);
+    int shift = edge_shift[current_edge];
+    float4 edge = edges[current_edge];
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    if (shift > 0)
+    {
+        int new_edge_index = current_edge - shift;
+        edges[new_edge_index] = edge;
+    }
+}
+
+__kernel void compact_points(__global int *point_shift,
+                             __global float4 *points,
+                             __global float *anti_gravity,
+                             __global int2 *vertex_tables)
+{
+    int current_point = get_global_id(0);
+    int shift = point_shift[current_point];
+    float4 point = points[current_point];
+    float anti_grav = anti_gravity[current_point];
+    int2 vertex_table = vertex_tables[current_point];
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    if (shift > 0)
+    {
+        int new_point_index = current_point - shift;
+        points[new_point_index] = point;
+        anti_gravity[new_point_index] = anti_grav;
+        vertex_tables[new_point_index] = vertex_table;
+    }
+}
+
+__kernel void compact_bones(__global int *bone_shift,
+                            __global float16 *bone_instances,
+                            __global int *bone_indices)
+{
+    int current_bone = get_global_id(0);
+    int shift = bone_shift[current_bone];
+    float16 instance = bone_instances[current_bone];
+    int index = bone_indices[current_bone];
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    if (shift > 0)
+    {
+        int new_bone_index = current_bone - shift;
+        bone_instances[new_bone_index] = instance;
+        bone_indices[new_bone_index] = index;
     }
 }
