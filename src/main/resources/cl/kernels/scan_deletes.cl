@@ -379,7 +379,7 @@ __kernel void compact_armatures(__global int *buffer_in,
 
     if (is_out) 
     {
-        printf("debug-out %d", gid);
+        //printf("debug-out %d", gid);
         return;
     }
 
@@ -525,7 +525,7 @@ __kernel void compact_points(__global int *point_shift,
     if (shift > 0)
     {
         int new_point_index = current_point - shift;
-        //printf("debug-edge shift: %d current %d new: %d", shift, current_point, new_point_index);
+        //("debug-edge shift: %d current %d new: %d", shift, current_point, new_point_index);
         points[new_point_index] = point;
         anti_gravity[new_point_index] = anti_grav;
         vertex_tables[new_point_index] = vertex_table;

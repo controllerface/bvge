@@ -132,6 +132,7 @@ public class PhysicsSimulation extends GameSystem
 
         GPU.delete_and_compact();
 
+
         // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain their
         // defined shapes. Without this step, the individual points of the tracked physics hulls will deform on
         // impact, and may fly off in random directions, typically causing simulation failure. The number of steps
@@ -261,6 +262,10 @@ public class PhysicsSimulation extends GameSystem
         // Once all points have been relocated, all hulls are in their required positions for this frame.
         // Movements applied to hulls are now accumulated and applied to their parent armatures.
         GPU.move_armatures();
+
+//        GPU.locate_out_of_bounds();
+//
+//        GPU.delete_and_compact();
     }
 
     private void simulate(float dt)
