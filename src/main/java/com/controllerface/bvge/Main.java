@@ -1,8 +1,6 @@
 package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.GPU;
-import com.controllerface.bvge.geometry.Meshes;
-import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.window.Window;
 
 
@@ -185,6 +183,19 @@ public class Main
             var idx = bone_index;
             bone_index += Width.BONE;
             return idx / Width.BONE;
+        }
+
+        public static void notify_compaction(int edge_shift,
+                                             int bone_shift,
+                                             int point_shift,
+                                             int hull_shift,
+                                             int armature_shift)
+        {
+            edge_index -= (edge_shift * Width.EDGE);
+            bone_index -= (bone_shift * Width.BONE);
+            point_index -= (point_shift * Width.POINT);
+            hull_index -= (hull_shift * Width.HULL);
+            armature_index -= (armature_shift * Width.ARMATURE);
         }
     }
 

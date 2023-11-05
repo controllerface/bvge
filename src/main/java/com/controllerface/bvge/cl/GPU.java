@@ -992,6 +992,7 @@ public class GPU
 
         var compact_armatures_k = new CompactArmatures_k(command_queue, Program.scan_deletes.gpu);
         compact_armatures_k.set_armatures(Memory.armatures.gpu.pointer());
+        compact_armatures_k.set_armature_accel(Memory.armature_accel.gpu.pointer());
         compact_armatures_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
         compact_armatures_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
         compact_armatures_k.set_hulls(Memory.hulls.gpu.pointer());
@@ -1012,7 +1013,10 @@ public class GPU
         compact_hulls_k.set_hull_rotations(Memory.hull_rotation.gpu.pointer());
         compact_hulls_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         compact_hulls_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
-        Kernel.compact_hulls.set_kernel(create_point_k);
+        compact_hulls_k.set_bounds(Memory.aabb.gpu.pointer());
+        compact_hulls_k.set_bounds_index(Memory.aabb_index.gpu.pointer());
+        compact_hulls_k.set_bounds_bank(Memory.aabb_key_table.gpu.pointer());
+        Kernel.compact_hulls.set_kernel(compact_hulls_k);
 
         var compact_edges_k = new CompactEdges_k(command_queue, Program.scan_deletes.gpu);
         compact_edges_k.set_edge_shift(Memory.edge_shift.gpu.pointer());
@@ -1515,20 +1519,27 @@ public class GPU
 
         int[] m = scan_deletes(b_mem.memory(), b_mem2.memory(), armature_count);
 
-        // todo: b_mem and b_mem2 now contain the delete counts aligned with armatures
-        //  a compaction step must now happen, with all the indices being shifted
-        //  down by the appropriate count.
+        if (m[0] == 0) return;
 
-        // todo: after compaction, Main memory offsets must be adjusted to reflect the
-        //  new buffer sizes for each object type that was deleted.
+        Memory.hull_shift.clear();
+        Memory.edge_shift.clear();
+        Memory.point_shift.clear();
+        Memory.bone_shift.clear();
 
+        var kernel_1 = Kernel.compact_armatures.gpu;
+        kernel_1.set_arg(0, b_mem.pointer());
+        kernel_1.set_arg(1, b_mem2.pointer());
+        kernel_1.call(arg_long(armature_count));
 
+        Kernel.compact_hulls.gpu.call(arg_long(Main.Memory.hull_count()));
+        Kernel.compact_edges.gpu.call(arg_long(Main.Memory.edge_count()));
+        Kernel.compact_points.gpu.call(arg_long(Main.Memory.point_count()));
+        Kernel.compact_bones.gpu.call(arg_long(Main.Memory.bone_count()));
 
-        //System.out.println(Arrays.toString(m));
+        Main.Memory.notify_compaction(m[0], m[1], m[2], m[3], m[4]);
 
         b_mem.release();
         b_mem2.release();
-
     }
 
     public static void aabb_collide()
@@ -1918,12 +1929,12 @@ public class GPU
         var dst_data = Pointer.to(o1_data);
         var dst_data2 = Pointer.to(o2_data);
 
-        gpu_kernel.set_arg(1, dst_data);
-        gpu_kernel.set_arg(2, dst_data2);
-        gpu_kernel.set_arg(3, src_size);
-        gpu_kernel.new_arg(4, local_buffer_size);
-        gpu_kernel.new_arg(5, local_buffer_size2);
-        gpu_kernel.set_arg(6, Pointer.to(arg_int(n)));
+        gpu_kernel.set_arg(3, dst_data);
+        gpu_kernel.set_arg(4, dst_data2);
+        gpu_kernel.set_arg(5, src_size);
+        gpu_kernel.new_arg(6, local_buffer_size);
+        gpu_kernel.new_arg(7, local_buffer_size2);
+        gpu_kernel.set_arg(8, Pointer.to(arg_int(n)));
         gpu_kernel.call(local_work_default, local_work_default);
 
         cl_read_buffer(size_data, Sizeof.cl_int + Sizeof.cl_int4, dst_size);

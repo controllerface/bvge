@@ -29,12 +29,15 @@ inline DropCounts calculate_drop_counts(int armature_id,
         int hull_count = hull_table.y - hull_table.x + 1;
         drop_counts.hull_count = hull_count;
         drop_counts.bone_count = hull_count; // todo: this is true for now, but may change
+
         for (int i = 0; i < hull_count; i++)
         {
             int current_hull = hull_table.x + i;
             int4 element_table = element_tables[current_hull];
             int point_count = element_table.y - element_table.x + 1;
-            int edge_count = element_table.w - element_table.z + 1;
+            int edge_count = element_table.w >= 0 
+                ? element_table.w - element_table.z + 1 
+                : 0;
             drop_counts.point_count += point_count;
             drop_counts.edge_count += edge_count;
         }
@@ -333,6 +336,7 @@ __kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
 __kernel void compact_armatures(__global int *buffer_in,
                                 __global int4 *buffer_in_2,
                                 __global float4 *armatures,
+                                __global float2 *armature_accel,
                                 __global int4 *armature_flags,
                                 __global int2 *hull_tables,
                                 __global float4 *hulls,
@@ -364,6 +368,7 @@ __kernel void compact_armatures(__global int *buffer_in,
     // armature
 
     float4 armature = armatures[gid];
+    float2 accel = armature_accel[gid];
     int4 armature_flag = armature_flags[gid];
     int2 hull_table = hull_tables[gid];
     
@@ -372,10 +377,16 @@ __kernel void compact_armatures(__global int *buffer_in,
 
     bool is_out = (armature_flag.z & OUT_OF_BOUNDS) !=0;
 
-    if (is_out) return;
+    if (is_out) 
+    {
+        printf("debug-out %d", gid);
+        return;
+    }
 
     // update with drop counts
     int new_armature_index = gid - drop.armature_count;
+
+    //printf("debug-in %d new: %d", gid, new_armature_index);
 
     int4 new_armature_flag = armature_flag;
     new_armature_flag.x -= drop.hull_count;
@@ -386,6 +397,7 @@ __kernel void compact_armatures(__global int *buffer_in,
 
     // store updated data at the new index
     armatures[new_armature_index] = armature;
+    armature_accel[new_armature_index] = accel;
     armature_flags[new_armature_index] = new_armature_flag;
     hull_tables[new_armature_index] = new_hull_table;
 
@@ -415,6 +427,10 @@ __kernel void compact_armatures(__global int *buffer_in,
 
         hull_shift[current_hull] = drop.hull_count;
         
+        // bones
+        // todo: in the future, will need to account for multiple bones
+        bone_shift[current_hull] = drop.bone_count;
+
         // edges
         int edge_count = element_table.w - element_table.z + 1;
         for (int j = 0; j < edge_count; j++)
@@ -430,20 +446,13 @@ __kernel void compact_armatures(__global int *buffer_in,
 
         // points
         int point_count = element_table.y - element_table.x + 1;
-        for (int k = 0; k < edge_count; k++)
+        for (int k = 0; k < point_count; k++)
         {
             int current_point = element_table.x + k;
             int2 vertex_table = vertex_tables[current_point];
-            int2 new_vertex_table = vertex_table;
-
-            new_vertex_table.y -= drop.bone_count;
-            vertex_tables[current_point] = new_vertex_table;
+            vertex_table.y -= drop.bone_count;
+            vertex_tables[current_point] = vertex_table;
             point_shift[current_point] = drop.point_count;
-
-            // bones
-            // todo: in the future, will need to account for multiple bones
-            int current_bone = vertex_table.y;
-            bone_shift[current_bone] = drop.bone_count;
         }
     }
 }
@@ -452,7 +461,10 @@ __kernel void compact_hulls(__global int *hull_shift,
                             __global float4 *hulls,
                             __global float2 *hull_rotations,
                             __global int2 *hull_flags,
-                            __global int4 *element_tables)
+                            __global int4 *element_tables,
+                            __global float4 *bounds,
+                            __global int4 *bounds_index_data,
+                            __global int2 *bounds_bank_data)
 {
     int current_hull = get_global_id(0);
     int shift = hull_shift[current_hull];
@@ -460,14 +472,24 @@ __kernel void compact_hulls(__global int *hull_shift,
     float2 rotation = hull_rotations[current_hull];
     int2 hull_flag = hull_flags[current_hull];
     int4 element_table = element_tables[current_hull];
+    float4 bound = bounds[current_hull];
+    int4 bounds_index = bounds_index_data[current_hull];
+    int2 bounds_bank = bounds_bank_data[current_hull];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_hull_index = current_hull - shift;
+        //printf("debug-hull shift: %d current %d new: %d", shift, current_hull, new_hull_index);
+
         hulls[new_hull_index] = hull;
         hull_rotations[new_hull_index] = rotation;
         hull_flags[new_hull_index] = hull_flag;
         element_tables[new_hull_index] = element_table;
+        //printf("debug-hull element table: x: %d y: %d z: %d w: %d", element_table.x, element_table.y, element_table.z, element_table.w);
+
+        bounds[new_hull_index] = bound;
+        bounds_index_data[new_hull_index] = bounds_index;
+        bounds_bank_data[new_hull_index] = bounds_bank;
     }
 }
 
@@ -481,6 +503,10 @@ __kernel void compact_edges(__global int *edge_shift,
     if (shift > 0)
     {
         int new_edge_index = current_edge - shift;
+        //printf("debug-edge %d new: %d", current_edge, new_edge_index);
+
+        //printf("debug-edge shift: %d current %d new: %d", shift, current_edge, new_edge_index);
+
         edges[new_edge_index] = edge;
     }
 }
@@ -499,6 +525,7 @@ __kernel void compact_points(__global int *point_shift,
     if (shift > 0)
     {
         int new_point_index = current_point - shift;
+        //printf("debug-edge shift: %d current %d new: %d", shift, current_point, new_point_index);
         points[new_point_index] = point;
         anti_gravity[new_point_index] = anti_grav;
         vertex_tables[new_point_index] = vertex_table;
