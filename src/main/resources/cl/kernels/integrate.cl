@@ -68,33 +68,29 @@ __kernel void integrate(
     bool is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
     bool no_bones = (hull_1_flags.x & NO_BONES) !=0;
 
+    int x = hull_1_flags.x;
+    x = x & (~OUT_OF_BOUNDS);
+    hull_flags[gid].x = x;
+
     // todo: instead of punting on these, we can maybe update differently and tag the hull
     //  or something, so it can be handled differently for collisions as well.
-    if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
-    {
+    // if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
+    // {
         
-        int x = hull_1_flags.x;
-        x = (x | OUT_OF_BOUNDS);
-        hull_flags[gid].x = x;
-        //printf("marked: %d", gid);
+    //     int x = hull_1_flags.x;
+    //     x = (x | OUT_OF_BOUNDS);
+    //     hull_flags[gid].x = x;
+    //     //printf("marked: %d", gid);
         
     
-        // acceleration.x = 0;
-        // acceleration.y = 0;
-        // armature_accel[gid] = acceleration;
+    //     // acceleration.x = 0;
+    //     // acceleration.y = 0;
+    //     // armature_accel[gid] = acceleration;
 
-        // bounds_bank.y = 0;
-        // bounds_bank_data[gid] = bounds_bank;
-        // return;
-    }
-    else
-    {
-        int x = hull_1_flags.x;
-        x = x & (~OUT_OF_BOUNDS);
-        hull_flags[gid].x = x;
-        //printf("set back");
-    }
-
+    //     // bounds_bank.y = 0;
+    //     // bounds_bank_data[gid] = bounds_bank;
+    //     // return;
+    // }
 
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
@@ -319,6 +315,24 @@ __kernel void integrate(
     // reset acceleration to zero for the next frame
     acceleration.x = 0;
     acceleration.y = 0;
+
+    if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
+    {
+        
+        int x = hull_1_flags.x;
+        x = (x | OUT_OF_BOUNDS);
+        hull_flags[gid].x = x;
+        //printf("marked: %d", gid);
+        
+    
+        // acceleration.x = 0;
+        // acceleration.y = 0;
+        // armature_accel[gid] = acceleration;
+
+        // bounds_bank.y = 0;
+        // bounds_bank_data[gid] = bounds_bank;
+        // return;
+    }
 
     // store updated hull and bounds data in result buffers
     bounds[gid] = bounding_box;

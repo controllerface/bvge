@@ -44,9 +44,9 @@ public class TestGame extends GameMode
             {
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-                var npc = ecs.registerEntity(null);
+                //var npc = ecs.registerEntity(null);
                 var armature_index = PhysicsObjects.dynamic_Box(x, y, size);
-                ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
     }
@@ -74,9 +74,9 @@ public class TestGame extends GameMode
             {
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-                var npc = ecs.registerEntity(null);
+                //var npc = ecs.registerEntity(null);
                 var armature_index = PhysicsObjects.tri(x, y, size, 0);
-                ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
     }
@@ -90,9 +90,9 @@ public class TestGame extends GameMode
             {
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-                var npc = ecs.registerEntity(null);
+                //var npc = ecs.registerEntity(null);
                 var armature_index = PhysicsObjects.particle(x, y, size);
-                ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
     }
@@ -104,9 +104,9 @@ public class TestGame extends GameMode
         {
             float x = start_x + i * spacing;
             float y = start_y;
-            var npc = ecs.registerEntity(null);
+            //var npc = ecs.registerEntity(null);
             var armature_index = PhysicsObjects.static_box(x, y, size);
-            ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+            //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
 
@@ -117,31 +117,31 @@ public class TestGame extends GameMode
         {
             float x = start_x;
             float y = start_y + i * spacing;
-            var npc = ecs.registerEntity(null);
+            //var npc = ecs.registerEntity(null);
             var armature_index = PhysicsObjects.static_box(x, y, size);
-            ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+            //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
 
     private void genTestCircle(float size, float x, float y)
     {
-        var npc = ecs.registerEntity(null);
+        //var npc = ecs.registerEntity(null);
         var armature_index = PhysicsObjects.particle(x, y, size);
-        ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+        //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestCrate(float size, float x, float y)
     {
-        var npc = ecs.registerEntity(null);
+        //var npc = ecs.registerEntity(null);
         var armature_index = PhysicsObjects.dynamic_Box(x, y, size);
-        ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+        //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestTriangle(float size, float x, float y)
     {
-        var npc = ecs.registerEntity(null);
+       // var npc = ecs.registerEntity(null);
         var armature_index = PhysicsObjects.tri(x, y, size, 0);
-        ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+        //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestFigure(float size, float x, float y)
@@ -158,16 +158,16 @@ public class TestGame extends GameMode
 
     private void genTestFigureNPC(float size, float x, float y)
     {
-        var figure = ecs.registerEntity(null);
+        //var figure = ecs.registerEntity(null);
         var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
-        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
+        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genBoxModelNPC(float size, float x, float y)
     {
-        var figure = ecs.registerEntity(null);
+        //var figure = ecs.registerEntity(null);
         var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
-        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
+        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
 
@@ -198,7 +198,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        ecs.registerSystem(new BoneRenderer(ecs));
+        //ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
         //ecs.registerSystem(new CrateRenderer(ecs));
@@ -264,17 +264,17 @@ public class TestGame extends GameMode
         //genNPCs(1, 41f, 40f, 100, 300);
 
 
-
-
-
-        //genCircles(10, 1f, 2f, 0, 1000);
-        genCrates(10,  6f, 5f, 100, 100);
-        //genCrates2(50,  6, 0.015f, 0, 2000);
-        genTriangles(10,  6f, 5f, 0, 100);
-
         genFloor(10, 120f, 150f, -100, -100);
         genWall(5, 120f, 150f, -220, -100);
         genWall(5, 120f, 150f, 1100, -100);
+
+        //genCircles(10, 1f, 2f, 0, 1000);
+        genCrates(25,  25f, 10f, 100, 100);
+        //genCrates2(20,  6, 0.015f, 0, 100);
+        //genTriangles(10,  6f, 5f, 0, 100);
+
+
+
 
 //        genTriangles(50, 5f, 5f, 100, 1000);a
 //        genTriangles(50, 5f, 5f, 200, 1100);

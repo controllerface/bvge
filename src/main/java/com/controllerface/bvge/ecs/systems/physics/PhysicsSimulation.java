@@ -128,11 +128,6 @@ public class PhysicsSimulation extends GameSystem
         // previous location values updated for the current tick.
         GPU.integrate(dt, uniform_grid);
 
-        GPU.locate_out_of_bounds();
-
-        GPU.delete_and_compact();
-
-
         // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain their
         // defined shapes. Without this step, the individual points of the tracked physics hulls will deform on
         // impact, and may fly off in random directions, typically causing simulation failure. The number of steps
@@ -290,6 +285,10 @@ public class PhysicsSimulation extends GameSystem
                 physics_buffer.finishTick();
             }
         }
+
+        GPU.locate_out_of_bounds();
+
+        GPU.delete_and_compact();
 
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)

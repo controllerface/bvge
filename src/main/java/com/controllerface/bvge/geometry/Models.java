@@ -45,7 +45,9 @@ public class Models
         data.put(model_data);
         data.flip();
         int flags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
-        return aiImportFileFromMemory(data, flags, "");
+        var x = aiImportFileFromMemory(data, flags, "");
+        MemoryUtil.memFree(data);
+        return x;
     }
 
     private static Bone load_bone(AIMesh aiMesh,

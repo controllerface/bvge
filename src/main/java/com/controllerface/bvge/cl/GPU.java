@@ -1521,6 +1521,9 @@ public class GPU
 
         if (m[0] == 0) return;
 
+        assert m[0] % 6 == 0;
+        assert m[2] % 4 == 0;
+
         Memory.hull_shift.clear();
         Memory.edge_shift.clear();
         Memory.point_shift.clear();
@@ -1531,10 +1534,18 @@ public class GPU
         kernel_1.set_arg(1, b_mem2.pointer());
         kernel_1.call(arg_long(armature_count));
 
-        Kernel.compact_hulls.gpu.call(arg_long(Main.Memory.hull_count()));
-        Kernel.compact_edges.gpu.call(arg_long(Main.Memory.edge_count()));
-        Kernel.compact_points.gpu.call(arg_long(Main.Memory.point_count()));
-        Kernel.compact_bones.gpu.call(arg_long(Main.Memory.bone_count()));
+        try
+        {
+            Kernel.compact_hulls.gpu.call(arg_long(Main.Memory.hull_count()));
+            Kernel.compact_bones.gpu.call(arg_long(Main.Memory.bone_count()));
+            Kernel.compact_points.gpu.call(arg_long(Main.Memory.point_count()));
+            Kernel.compact_edges.gpu.call(arg_long(Main.Memory.edge_count()));
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
 
         Main.Memory.notify_compaction(m[0], m[1], m[2], m[3], m[4]);
 

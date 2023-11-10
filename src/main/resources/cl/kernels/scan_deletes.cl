@@ -226,7 +226,10 @@ __kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
     else 
     {
         buffer[local_b_index] = 0;
-        buffer2[local_b_index] = (int4)(0, 0, 0, 0);
+        buffer2[local_b_index].x = 0;
+        buffer2[local_b_index].y = 0;
+        buffer2[local_b_index].z = 0;
+        buffer2[local_b_index].w = 0;
     }
 
     upsweep_ex(buffer, buffer2, m);
@@ -375,8 +378,8 @@ __kernel void compact_armatures(__global int *buffer_in,
     // make sure all armatures have read their current data
     barrier(CLK_GLOBAL_MEM_FENCE);
 
+    // any armature that is being deleted can be ignored
     bool is_out = (armature_flag.z & OUT_OF_BOUNDS) !=0;
-
     if (is_out) 
     {
         //printf("debug-out %d", gid);
@@ -388,12 +391,12 @@ __kernel void compact_armatures(__global int *buffer_in,
 
     //printf("debug-in %d new: %d", gid, new_armature_index);
 
-    int4 new_armature_flag = armature_flag;
-    new_armature_flag.x -= drop.hull_count;
+    int4 new_armature_flag;
+    new_armature_flag.x = armature_flag.x - drop.hull_count;
 
-    int2 new_hull_table = hull_table;
-    new_hull_table.x -= drop.hull_count;
-    new_hull_table.y -= drop.hull_count;
+    int2 new_hull_table;
+    new_hull_table.x = hull_table.x - drop.hull_count;
+    new_hull_table.y = hull_table.y - drop.hull_count;
 
     // store updated data at the new index
     armatures[new_armature_index] = armature;
@@ -415,20 +418,21 @@ __kernel void compact_armatures(__global int *buffer_in,
         int2 hull_flag = hull_flags[current_hull];
         int4 element_table = element_tables[current_hull];
 
-        int4 new_element_table = element_table;
+        int4 new_element_table;
 
-        hull_flag.y -= drop.armature_count;
-        new_element_table.x -= drop.point_count;
-        new_element_table.y -= drop.point_count;
-        new_element_table.z -= drop.edge_count;
-        new_element_table.w -= drop.edge_count;
+        hull_flag.y = hull_flag.y - drop.armature_count;
+        new_element_table.x = element_table.x - drop.point_count;
+        new_element_table.y = element_table.y - drop.point_count;
+        new_element_table.z = element_table.z - drop.edge_count;
+        new_element_table.w = element_table.w - drop.edge_count;
         hull_flags[current_hull] = hull_flag;
         element_tables[current_hull] = new_element_table;
 
         hull_shift[current_hull] = drop.hull_count;
         
         // bones
-        // todo: in the future, will need to account for multiple bones
+        // todo: in the future, will need to account for multiple bones,and they may
+        //  be more closely aligend with a different structure other than hulls
         bone_shift[current_hull] = drop.bone_count;
 
         // edges
@@ -437,8 +441,8 @@ __kernel void compact_armatures(__global int *buffer_in,
         {
             int current_edge = element_table.z + j;
             float4 edge = edges[current_edge];
-            edge.x -= drop.point_count;
-            edge.y -= drop.point_count;
+            edge.x = edge.x - drop.point_count;
+            edge.y = edge.y - drop.point_count;
             edges[current_edge] = edge;
 
             edge_shift[current_edge] = drop.edge_count;
@@ -450,7 +454,7 @@ __kernel void compact_armatures(__global int *buffer_in,
         {
             int current_point = element_table.x + k;
             int2 vertex_table = vertex_tables[current_point];
-            vertex_table.y -= drop.bone_count;
+            vertex_table.y = vertex_table.y - drop.bone_count;
             vertex_tables[current_point] = vertex_table;
             point_shift[current_point] = drop.point_count;
         }
