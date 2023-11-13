@@ -103,8 +103,12 @@ public class CLUtils
 
     public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size, long[] local_work_size)
     {
-        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
+        int r = clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
             global_work_size, local_work_size, 0, null, null);
+        if (r != CL_SUCCESS)
+        {
+            System.out.println("WTF!");
+        }
     }
 
     public static void gl_acquire(cl_command_queue commandQueue, cl_mem[] mem)

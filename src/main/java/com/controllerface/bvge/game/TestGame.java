@@ -208,7 +208,7 @@ public class TestGame extends GameMode
     public void load()
     {
         //genPlayer();
-        genTestFigure(1, 500, 0);
+        genTestFigure(1, 600, 0);
 
         //genTestTriangle(20f, 190, 250);
 
@@ -264,19 +264,19 @@ public class TestGame extends GameMode
         //genNPCs(1, 41f, 40f, 100, 300);
 
 
+
+
+        //genCircles(10, 1f, 2f, 0, 1000);
+        genCrates(40,  10f, 5f, 100, 100);
+        //genCrates2(4,  6, 0.15f, 0, 100);
+        //genTriangles(50,  7f, 5f, 0, 100);
+
         genFloor(10, 120f, 150f, -100, -100);
         genWall(5, 120f, 150f, -220, -100);
         genWall(5, 120f, 150f, 1100, -100);
 
-        //genCircles(10, 1f, 2f, 0, 1000);
-        genCrates(25,  25f, 10f, 100, 100);
-        //genCrates2(20,  6, 0.015f, 0, 100);
-        //genTriangles(10,  6f, 5f, 0, 100);
 
-
-
-
-//        genTriangles(50, 5f, 5f, 100, 1000);a
+//        genTriangles(50, 5f, 5f, 100, 1000);
 //        genTriangles(50, 5f, 5f, 200, 1100);
 //        genTriangles(50, 5f, 5f, 300, 1200);
 //        genTriangles(50, 5f, 5f, 400, 1300);

@@ -11,10 +11,11 @@ public class LocateOutOfBounds_k extends GPUKernel
 {
     public LocateOutOfBounds_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.locate_out_of_bounds), 3);
+        super(command_queue, program.kernels().get(GPU.Kernel.locate_out_of_bounds), 4);
         def_arg(0, Sizeof.cl_mem); // hull tables
         def_arg(1, Sizeof.cl_mem); // hull flags
         def_arg(2, Sizeof.cl_mem); // armature flags
+        def_arg(3, Sizeof.cl_mem);
     }
 
     public void set_hull_tables(Pointer hull_tables)

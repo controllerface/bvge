@@ -47,7 +47,8 @@ inline DropCounts calculate_drop_counts(int armature_id,
 
 __kernel void locate_out_of_bounds(__global int2 *hull_tables,
                                    __global int2 *hull_flags,
-                                   __global int4 *armature_flags)
+                                   __global int4 *armature_flags,
+                                   __global int *counter)
 {
     int gid = get_global_id(0);
     int2 hull_table = hull_tables[gid];
@@ -67,10 +68,15 @@ __kernel void locate_out_of_bounds(__global int2 *hull_tables,
 
     if (out_count == hull_count)
     {
-        int4 armature_flag = armature_flags[gid];
-        int z = armature_flag.z;
-        z = (z | OUT_OF_BOUNDS);
-        armature_flags[gid].z = z;
+        //int i = atomic_inc(&counter[0]);
+
+        //if (i == 0)
+        //{
+            int4 armature_flag = armature_flags[gid];
+            int z = armature_flag.z;
+            z = (z | OUT_OF_BOUNDS);
+            armature_flags[gid].z = z;
+        //}
     }
 }
 
@@ -380,7 +386,7 @@ __kernel void compact_armatures(__global int *buffer_in,
 
     // any armature that is being deleted can be ignored
     bool is_out = (armature_flag.z & OUT_OF_BOUNDS) !=0;
-    if (is_out) 
+    if (is_out || drop.armature_count == 0) 
     {
         //printf("debug-out %d", gid);
         return;
@@ -389,7 +395,7 @@ __kernel void compact_armatures(__global int *buffer_in,
     // update with drop counts
     int new_armature_index = gid - drop.armature_count;
 
-    //printf("debug-in %d new: %d", gid, new_armature_index);
+    printf("debug-in %d new: %d", gid, new_armature_index);
 
     int4 new_armature_flag;
     new_armature_flag.x = armature_flag.x - drop.hull_count;
@@ -419,6 +425,8 @@ __kernel void compact_armatures(__global int *buffer_in,
         int4 element_table = element_tables[current_hull];
 
         int4 new_element_table;
+
+       // printf("debug: a: %d an: %d h: %d", gid, new_armature_index, hull_flag.y);
 
         hull_flag.y = hull_flag.y - drop.armature_count;
         new_element_table.x = element_table.x - drop.point_count;
@@ -483,13 +491,13 @@ __kernel void compact_hulls(__global int *hull_shift,
     if (shift > 0)
     {
         int new_hull_index = current_hull - shift;
-        //printf("debug-hull shift: %d current %d new: %d", shift, current_hull, new_hull_index);
+        printf("debug-hull shift: %d current %d new: %d", shift, current_hull, new_hull_index);
 
         hulls[new_hull_index] = hull;
         hull_rotations[new_hull_index] = rotation;
         hull_flags[new_hull_index] = hull_flag;
         element_tables[new_hull_index] = element_table;
-        //printf("debug-hull element table: x: %d y: %d z: %d w: %d", element_table.x, element_table.y, element_table.z, element_table.w);
+        printf("debug-hull element table: x: %d y: %d z: %d w: %d", element_table.x, element_table.y, element_table.z, element_table.w);
 
         bounds[new_hull_index] = bound;
         bounds_index_data[new_hull_index] = bounds_index;
@@ -507,9 +515,9 @@ __kernel void compact_edges(__global int *edge_shift,
     if (shift > 0)
     {
         int new_edge_index = current_edge - shift;
-        //printf("debug-edge %d new: %d", current_edge, new_edge_index);
+        printf("debug-edge %d new: %d", current_edge, new_edge_index);
 
-        //printf("debug-edge shift: %d current %d new: %d", shift, current_edge, new_edge_index);
+        printf("debug-edge shift: %d current %d new: %d", shift, current_edge, new_edge_index);
 
         edges[new_edge_index] = edge;
     }
@@ -529,7 +537,7 @@ __kernel void compact_points(__global int *point_shift,
     if (shift > 0)
     {
         int new_point_index = current_point - shift;
-        //("debug-edge shift: %d current %d new: %d", shift, current_point, new_point_index);
+        printf("debug-point shift: %d current %d new: %d", shift, current_point, new_point_index);
         points[new_point_index] = point;
         anti_gravity[new_point_index] = anti_grav;
         vertex_tables[new_point_index] = vertex_table;

@@ -1475,7 +1475,15 @@ public class GPU
     {
         var gpu_kernel = Kernel.locate_out_of_bounds.gpu;
         int armature_count = Main.Memory.armature_count();
+
+        int[] counter = new int[]{0};
+        var dst_counter = Pointer.to(counter);
+        var counter_data = cl_new_int_arg_buffer(dst_counter);
+        var p = Pointer.to(counter_data);
+        gpu_kernel.set_arg(3, p);
         gpu_kernel.call(arg_long(armature_count));
+
+        clReleaseMemObject(counter_data);
     }
 
     public static void count_candidates()
@@ -1519,16 +1527,32 @@ public class GPU
 
         int[] m = scan_deletes(b_mem.memory(), b_mem2.memory(), armature_count);
 
-        if (m[0] == 0) return;
+        if (m[0] == 0)
+        {
+            b_mem.release();
+            b_mem2.release();
+            return;
+        }
 
-        assert m[0] % 6 == 0;
-        assert m[2] % 4 == 0;
+        //System.out.println(Arrays.toString(m));
 
+        boolean edge_ok = m[0] % 6 == 0;
+        boolean vert_ok = m[2] % 4 == 0;
+        boolean hull_ok = m[1] == m[3];
+        boolean bone_ok = m[1] == m[4];
+
+        assert edge_ok;
+        assert vert_ok;
+        assert hull_ok;
+        assert bone_ok;
+
+        // shift buffers are cleared before compacting
         Memory.hull_shift.clear();
         Memory.edge_shift.clear();
         Memory.point_shift.clear();
         Memory.bone_shift.clear();
 
+        // as armatures are compacted, the shift buffers for the other components are updated
         var kernel_1 = Kernel.compact_armatures.gpu;
         kernel_1.set_arg(0, b_mem.pointer());
         kernel_1.set_arg(1, b_mem2.pointer());
@@ -1546,8 +1570,31 @@ public class GPU
             e.printStackTrace();
         }
 
+        int arma_count = Main.Memory.armature_count();
+        int point_count = Main.Memory.point_count();
+        int hull_count = Main.Memory.hull_count();
+        int edge_count = Main.Memory.edge_count();
+        int bone_count = Main.Memory.bone_count();
 
         Main.Memory.notify_compaction(m[0], m[1], m[2], m[3], m[4]);
+
+        int arma_count2 = Main.Memory.armature_count();
+        int point_count2 = Main.Memory.point_count();
+        int hull_count2 = Main.Memory.hull_count();
+        int edge_count2 = Main.Memory.edge_count();
+        int bone_count2 = Main.Memory.bone_count();
+
+        boolean ec_ok = edge_count2 == edge_count - m[0];
+        boolean bc_ok = bone_count2 == bone_count - m[1];
+        boolean pc_ok = point_count2 == point_count - m[2];
+        boolean hc_ok = hull_count2 == hull_count - m[3];
+        boolean ac_ok = arma_count2 == arma_count - m[4];
+
+        assert ec_ok;
+        assert bc_ok;
+        assert pc_ok;
+        assert hc_ok;
+        assert ac_ok;
 
         b_mem.release();
         b_mem2.release();
@@ -2007,7 +2054,7 @@ public class GPU
         gpu_kernel_2.set_arg(10, src_n);
         gpu_kernel_2.call(global_work_size, local_work_default);
 
-        cl_read_buffer(size_data, Sizeof.cl_int + Sizeof.cl_int4, dst_size);
+        cl_read_buffer(size_data, Sizeof.cl_int * 5, dst_size);
 
         clReleaseMemObject(p_data);
         clReleaseMemObject(p_data2);

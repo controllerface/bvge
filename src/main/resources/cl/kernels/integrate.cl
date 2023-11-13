@@ -325,11 +325,11 @@ __kernel void integrate(
         //printf("marked: %d", gid);
         
     
-        // acceleration.x = 0;
-        // acceleration.y = 0;
+        acceleration.x = 0;
+        acceleration.y = 0;
         // armature_accel[gid] = acceleration;
 
-        // bounds_bank.y = 0;
+        bounds_bank.y = 0;
         // bounds_bank_data[gid] = bounds_bank;
         // return;
     }
