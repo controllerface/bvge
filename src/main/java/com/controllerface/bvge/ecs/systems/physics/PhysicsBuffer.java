@@ -16,7 +16,8 @@ public class PhysicsBuffer
     public GPUMemory matches;
     public GPUMemory matches_used;
 
-    public GPUMemory reactions;
+    public GPUMemory reactions_in;
+    public GPUMemory reactions_out;
     public GPUMemory reaction_index;
 
     public Pointer x_sub_divisions;
@@ -127,7 +128,8 @@ public class PhysicsBuffer
         if (matches_used != null) matches_used.release();
         if (matches != null) matches.release();
         if (candidates != null) candidates.release();
-        if (reactions != null) reactions.release();
+        if (reactions_in != null) reactions_in.release();
+        if (reactions_out != null) reactions_out.release();
         if (reaction_index != null) reaction_index.release();
 
         key_map = null;
@@ -140,7 +142,8 @@ public class PhysicsBuffer
         candidate_offsets = null;
         matches_used = null;
         matches = null;
-        reactions = null;
+        reactions_in = null;
+        reactions_out = null;
         reaction_index = null;
     }
 }

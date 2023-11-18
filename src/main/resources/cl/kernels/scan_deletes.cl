@@ -395,7 +395,7 @@ __kernel void compact_armatures(__global int *buffer_in,
     // update with drop counts
     int new_armature_index = gid - drop.armature_count;
 
-    printf("debug-in %d new: %d", gid, new_armature_index);
+    //printf("debug-in %d new: %d", gid, new_armature_index);
 
     int4 new_armature_flag;
     new_armature_flag.x = armature_flag.x - drop.hull_count;
@@ -491,13 +491,13 @@ __kernel void compact_hulls(__global int *hull_shift,
     if (shift > 0)
     {
         int new_hull_index = current_hull - shift;
-        printf("debug-hull shift: %d current %d new: %d", shift, current_hull, new_hull_index);
+        //printf("debug-hull shift: %d current %d new: %d", shift, current_hull, new_hull_index);
 
         hulls[new_hull_index] = hull;
         hull_rotations[new_hull_index] = rotation;
         hull_flags[new_hull_index] = hull_flag;
         element_tables[new_hull_index] = element_table;
-        printf("debug-hull element table: x: %d y: %d z: %d w: %d", element_table.x, element_table.y, element_table.z, element_table.w);
+        //printf("debug-hull element table: x: %d y: %d z: %d w: %d", element_table.x, element_table.y, element_table.z, element_table.w);
 
         bounds[new_hull_index] = bound;
         bounds_index_data[new_hull_index] = bounds_index;
@@ -515,8 +515,8 @@ __kernel void compact_edges(__global int *edge_shift,
     if (shift > 0)
     {
         int new_edge_index = current_edge - shift;
-        printf("debug-edge %d new: %d", current_edge, new_edge_index);
 
+        //printf("debug-test");
         printf("debug-edge shift: %d current %d new: %d", shift, current_edge, new_edge_index);
 
         edges[new_edge_index] = edge;
@@ -537,7 +537,7 @@ __kernel void compact_points(__global int *point_shift,
     if (shift > 0)
     {
         int new_point_index = current_point - shift;
-        printf("debug-point shift: %d current %d new: %d", shift, current_point, new_point_index);
+        //printf("debug-point shift: %d current %d new: %d", shift, current_point, new_point_index);
         points[new_point_index] = point;
         anti_gravity[new_point_index] = anti_grav;
         vertex_tables[new_point_index] = vertex_table;

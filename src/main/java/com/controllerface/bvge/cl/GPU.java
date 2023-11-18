@@ -1690,13 +1690,15 @@ public class GPU
         long index_buf_size = (long) Sizeof.cl_int * max_point_count;
 
         var reaction_data = cl_new_buffer(reaction_buf_size);
+        var reaction_data_out = cl_new_buffer(reaction_buf_size);
         var index_data = cl_new_buffer(index_buf_size);
 
-        physics_buffer.reactions = new GPUMemory(reaction_data);
+        physics_buffer.reactions_in = new GPUMemory(reaction_data);
+        physics_buffer.reactions_out = new GPUMemory(reaction_data_out);
         physics_buffer.reaction_index = new GPUMemory(index_data);
 
         gpu_kernel.set_arg(0, physics_buffer.candidates.pointer());
-        gpu_kernel.set_arg(6, physics_buffer.reactions.pointer());
+        gpu_kernel.set_arg(6, physics_buffer.reactions_in.pointer());
         gpu_kernel.set_arg(7, physics_buffer.reaction_index.pointer());
         gpu_kernel.set_arg(9, Pointer.to(size_data));
 
@@ -1720,15 +1722,16 @@ public class GPU
     public static void sort_reactions()
     {
         var gpu_kernel = Kernel.sort_reactions.gpu;
-        gpu_kernel.set_arg(0, physics_buffer.reactions.pointer());
-        gpu_kernel.set_arg(1, physics_buffer.reaction_index.pointer());
+        gpu_kernel.set_arg(0, physics_buffer.reactions_in.pointer());
+        gpu_kernel.set_arg(1, physics_buffer.reactions_out.pointer());
+        gpu_kernel.set_arg(2, physics_buffer.reaction_index.pointer());
         gpu_kernel.call(arg_long(physics_buffer.get_reaction_count()));
     }
 
     public static void apply_reactions()
     {
         var gpu_kernel = Kernel.apply_reactions.gpu;
-        gpu_kernel.set_arg(0, physics_buffer.reactions.pointer());
+        gpu_kernel.set_arg(0, physics_buffer.reactions_out.pointer());
         gpu_kernel.call(arg_long(Main.Memory.point_count()));
     }
 

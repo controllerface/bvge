@@ -65,13 +65,13 @@ public class Main
         private static final int MAX_HULLS  = 100_000;
         private static final int MAX_POINTS = 1_000_000;
 
-        private static int hull_index       = 0;
-        private static int point_index      = 0;
-        private static int edge_index       = 0;
-        private static int vertex_ref_index = 0;
-        private static int bone_ref_index   = 0;
-        private static int bone_index       = 0;
-        private static int armature_index   = 0;
+        private volatile static int hull_index       = 0;
+        private volatile static int point_index      = 0;
+        private volatile static int edge_index       = 0;
+        private volatile static int vertex_ref_index = 0;
+        private volatile static int bone_ref_index   = 0;
+        private volatile static int bone_index       = 0;
+        private volatile static int armature_index   = 0;
 
         // The current count of the various types of memory objects are available
         // through the following accessor methods.

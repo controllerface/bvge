@@ -98,27 +98,19 @@ has an implicit assumption that the values in point_reactions have been zeroed o
 called. These values will have been consumed in a prior call to scan the points for applicable
 reactions.
  */
-__kernel void sort_reactions(__global float2 *reactions,
+__kernel void sort_reactions(__global float2 *reactions_in,
+                             __global float2 *reactions_out,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global int *point_offsets)
 {
     int gid = get_global_id(0);
-    
-    float2 reaction = reactions[gid];
+    float2 reaction = reactions_in[gid];
     int index = reaction_index[gid];
-
     int reaction_offset = point_offsets[index];
     int local_offset = atomic_inc(&point_reactions[index]);
-
-    // this barrier is extremely important, it ensures all threads have read their reactions before 
-    // moving them to their correct positions.
-    barrier(CLK_GLOBAL_MEM_FENCE);
-
     int next = reaction_offset + local_offset;
-
-    reactions[next] = reaction;
-    reaction_index[next] = index;
+    reactions_out[next] = reaction;
 }
 
 /**
