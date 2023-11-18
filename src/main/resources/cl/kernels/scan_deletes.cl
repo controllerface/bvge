@@ -68,15 +68,10 @@ __kernel void locate_out_of_bounds(__global int2 *hull_tables,
 
     if (out_count == hull_count)
     {
-        //int i = atomic_inc(&counter[0]);
-
-        //if (i == 0)
-        //{
-            int4 armature_flag = armature_flags[gid];
-            int z = armature_flag.z;
-            z = (z | OUT_OF_BOUNDS);
-            armature_flags[gid].z = z;
-        //}
+        int4 armature_flag = armature_flags[gid];
+        int z = armature_flag.z;
+        z = (z | OUT_OF_BOUNDS);
+        armature_flags[gid].z = z;
     }
 }
 
@@ -375,15 +370,11 @@ __kernel void compact_armatures(__global int *buffer_in,
     //  the data of the deleted objects.
 
     // armature
-
     float4 armature = armatures[gid];
     float2 accel = armature_accel[gid];
     int4 armature_flag = armature_flags[gid];
     int2 hull_table = hull_tables[gid];
     
-    // make sure all armatures have read their current data
-    barrier(CLK_GLOBAL_MEM_FENCE);
-
     // any armature that is being deleted can be ignored
     bool is_out = (armature_flag.z & OUT_OF_BOUNDS) !=0;
     if (is_out || drop.armature_count == 0) 
@@ -431,8 +422,8 @@ __kernel void compact_armatures(__global int *buffer_in,
         hull_flag.y = hull_flag.y - drop.armature_count;
         new_element_table.x = element_table.x - drop.point_count;
         new_element_table.y = element_table.y - drop.point_count;
-        new_element_table.z = element_table.z - drop.edge_count;
-        new_element_table.w = element_table.w - drop.edge_count;
+        new_element_table.z = element_table.z == -1 ? -1 : element_table.z - drop.edge_count;
+        new_element_table.w = element_table.w == -1 ? -1 : element_table.w - drop.edge_count;
         hull_flags[current_hull] = hull_flag;
         element_tables[current_hull] = new_element_table;
 
@@ -444,7 +435,10 @@ __kernel void compact_armatures(__global int *buffer_in,
         bone_shift[current_hull] = drop.bone_count;
 
         // edges
-        int edge_count = element_table.w - element_table.z + 1;
+        int edge_count = element_table.w == -1
+            ? 0 
+            : element_table.w - element_table.z + 1;
+
         for (int j = 0; j < edge_count; j++)
         {
             int current_edge = element_table.z + j;
@@ -487,7 +481,6 @@ __kernel void compact_hulls(__global int *hull_shift,
     float4 bound = bounds[current_hull];
     int4 bounds_index = bounds_index_data[current_hull];
     int2 bounds_bank = bounds_bank_data[current_hull];
-    barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_hull_index = current_hull - shift;
@@ -511,7 +504,6 @@ __kernel void compact_edges(__global int *edge_shift,
     int current_edge = get_global_id(0);
     int shift = edge_shift[current_edge];
     float4 edge = edges[current_edge];
-    barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_edge_index = current_edge - shift;
@@ -533,7 +525,6 @@ __kernel void compact_points(__global int *point_shift,
     float4 point = points[current_point];
     float anti_grav = anti_gravity[current_point];
     int2 vertex_table = vertex_tables[current_point];
-    barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_point_index = current_point - shift;
@@ -552,7 +543,6 @@ __kernel void compact_bones(__global int *bone_shift,
     int shift = bone_shift[current_bone];
     float16 instance = bone_instances[current_bone];
     int index = bone_indices[current_bone];
-    barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_bone_index = current_bone - shift;

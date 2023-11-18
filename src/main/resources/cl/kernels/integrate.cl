@@ -318,20 +318,12 @@ __kernel void integrate(
 
     if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
-        
         int x = hull_1_flags.x;
         x = (x | OUT_OF_BOUNDS);
         hull_flags[gid].x = x;
-        //printf("marked: %d", gid);
-        
-    
         acceleration.x = 0;
         acceleration.y = 0;
-        // armature_accel[gid] = acceleration;
-
         bounds_bank.y = 0;
-        // bounds_bank_data[gid] = bounds_bank;
-        // return;
     }
 
     // store updated hull and bounds data in result buffers
