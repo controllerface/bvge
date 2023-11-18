@@ -517,7 +517,7 @@ __kernel void compact_edges(__global int *edge_shift,
         int new_edge_index = current_edge - shift;
 
         //printf("debug-test");
-        printf("debug-edge shift: %d current %d new: %d", shift, current_edge, new_edge_index);
+        //printf("debug-edge shift: %d current %d new: %d", shift, current_edge, new_edge_index);
 
         edges[new_edge_index] = edge;
     }

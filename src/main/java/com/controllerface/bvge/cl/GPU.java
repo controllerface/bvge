@@ -5,12 +5,15 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
+import com.controllerface.bvge.util.Constants;
 import org.jocl.*;
 
 import java.util.*;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.jocl.CL.*;
+import static org.lwjgl.opengl.GL11C.GL_LINES;
+import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
@@ -52,6 +55,7 @@ public class GPU
      * The local work default is simply the max group size formatted as a single element argument array,
      * making it simpler to use for Open Cl calls which expect that format.
      */
+    private static int max_work_group_size = 0;
     private static long max_scan_block_size = 0;
     private static long[] local_work_default = arg_long(0);
 
@@ -1552,23 +1556,71 @@ public class GPU
         Memory.point_shift.clear();
         Memory.bone_shift.clear();
 
+
         // as armatures are compacted, the shift buffers for the other components are updated
         var kernel_1 = Kernel.compact_armatures.gpu;
         kernel_1.set_arg(0, b_mem.pointer());
         kernel_1.set_arg(1, b_mem2.pointer());
-        kernel_1.call(arg_long(armature_count));
 
-        try
+        int offset = 0;
+        for (int remaining = armature_count; remaining > 0; remaining -= max_work_group_size)
         {
-            Kernel.compact_hulls.gpu.call(arg_long(Main.Memory.hull_count()));
-            Kernel.compact_bones.gpu.call(arg_long(Main.Memory.bone_count()));
-            Kernel.compact_points.gpu.call(arg_long(Main.Memory.point_count()));
-            Kernel.compact_edges.gpu.call(arg_long(Main.Memory.edge_count()));
+            int count = Math.min(max_work_group_size, remaining);
+            var sz = count == max_work_group_size ? local_work_default : arg_long(count);
+            kernel_1.call(sz, sz, arg_long(offset));
+            offset += count;
         }
-        catch (Exception e)
+
+        offset = 0;
+        for (int remaining = Main.Memory.hull_count(); remaining > 0; remaining -= max_work_group_size)
         {
-            e.printStackTrace();
+            int count = Math.min(max_work_group_size, remaining);
+            var sz = count == max_work_group_size ? local_work_default : arg_long(count);
+            Kernel.compact_hulls.gpu.call(sz, sz, arg_long(offset));
+            offset += count;
         }
+
+
+        offset = 0;
+        for (int remaining = Main.Memory.edge_count(); remaining > 0; remaining -= max_work_group_size)
+        {
+            int count = Math.min(max_work_group_size, remaining);
+            var sz = count == max_work_group_size ? local_work_default : arg_long(count);
+            Kernel.compact_edges.gpu.call(sz, sz, arg_long(offset));
+            offset += count;
+        }
+
+        offset = 0;
+        for (int remaining = Main.Memory.point_count(); remaining > 0; remaining -= max_work_group_size)
+        {
+            int count = Math.min(max_work_group_size, remaining);
+            var sz = count == max_work_group_size ? local_work_default : arg_long(count);
+            Kernel.compact_points.gpu.call(sz, sz, arg_long(offset));
+            offset += count;
+        }
+
+        offset = 0;
+        for (int remaining = Main.Memory.bone_count(); remaining > 0; remaining -= max_work_group_size)
+        {
+            int count = Math.min(max_work_group_size, remaining);
+            var sz = count == max_work_group_size ? local_work_default : arg_long(count);
+            Kernel.compact_bones.gpu.call(sz, sz, arg_long(offset));
+            offset += count;
+        }
+
+
+
+//        try
+//        {
+//            Kernel.compact_hulls.gpu.call(arg_long(Main.Memory.hull_count()));
+//            Kernel.compact_bones.gpu.call(arg_long(Main.Memory.bone_count()));
+//            Kernel.compact_points.gpu.call(arg_long(Main.Memory.point_count()));
+//            Kernel.compact_edges.gpu.call(arg_long(Main.Memory.edge_count()));
+//        }
+//        catch (Exception e)
+//        {
+//            e.printStackTrace();
+//        }
 
         int arma_count = Main.Memory.armature_count();
         int point_count = Main.Memory.point_count();
@@ -2230,8 +2282,8 @@ public class GPU
         System.out.println(getString(device, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
-        long max_work_group_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
-        max_scan_block_size = max_work_group_size * 2;
+        max_work_group_size = (int) getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        max_scan_block_size = (long) max_work_group_size * 2;
         local_work_default = arg_long(max_work_group_size);
 
         // initialize gpu programs
