@@ -1174,6 +1174,11 @@ public class GPU
         clReleaseMemObject(counter_data);
 
         int final_count = counter[0];
+        if (final_count == 0)
+        {
+            return new HullIndexData(null, final_count);
+        }
+
         long final_buffer_size = (long) Sizeof.cl_int * final_count;
         var hulls_out = cl_new_buffer(final_buffer_size);
 
@@ -1563,12 +1568,13 @@ public class GPU
             return;
         }
 
+        System.out.println("DEBUG: "+ Arrays.toString(m));
+
         // shift buffers are cleared before compacting
         Memory.hull_shift.clear();
         Memory.edge_shift.clear();
         Memory.point_shift.clear();
         Memory.bone_shift.clear();
-
 
         // as armatures are compacted, the shift buffers for the other components are updated
         var armature_kernel = Kernel.compact_armatures.gpu;

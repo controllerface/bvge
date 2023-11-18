@@ -57,10 +57,18 @@ public class PhysicsObjects
 
         // store the single point for the circle
         var p1_index = Main.Memory.new_point(p1, t1);
+
+
+
+
+        var edge_index = Main.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1));
+
+
+
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angleBetween2Lines(l1, l2);
-        var table = CLUtils.arg_int4(p1_index, p1_index, -1, -1);
+        var table = CLUtils.arg_int4(p1_index, p1_index, edge_index, edge_index);
         var transform = CLUtils.arg_float4(x, y, size, size / 2.0f);
         var rotation = CLUtils.arg_float2(0, angle);
 

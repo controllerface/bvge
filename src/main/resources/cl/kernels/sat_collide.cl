@@ -170,7 +170,7 @@ __kernel void apply_reactions(__global float2 *reactions,
     // maintain stability with small numbers of stacked objects. 
     float2 g = (float2)(0.0, -1.0);
     float2 heading = point.xy - point.zw;
-    float ag = calculate_anti_gravity(g, heading);
+    float ag = 0.0f;//calculate_anti_gravity(g, heading);
 
     // todo: actual gravity vector should be provided, when it can change this should also be changable
     //  right now it is a static direction. note that magnitude of gravity is not important, only direction

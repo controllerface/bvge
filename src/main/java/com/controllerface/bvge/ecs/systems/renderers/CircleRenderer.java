@@ -62,22 +62,21 @@ public class CircleRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        if (Models.get_instance_count(Models.CIRCLE_PARTICLE) <= 0) return;
+        if (circle_hulls != null && circle_hulls.indices() != null)
+        {
+            clReleaseMemObject(circle_hulls.indices());
+        }
+        circle_hulls = GPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
+
+        if (circle_hulls.count() == 0) return;
 
         glBindVertexArray(vao_id);
+
+        System.out.println("Rendering: " + circle_hulls.count() + " circles");
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        if (Models.is_model_dirty(Models.CIRCLE_PARTICLE))
-        {
-            if (circle_hulls != null)
-            {
-                clReleaseMemObject(circle_hulls.indices());
-            }
-            circle_hulls = GPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
-            Models.set_model_clean(Models.CIRCLE_PARTICLE);
-        }
 
         glEnableVertexAttribArray(0);
 

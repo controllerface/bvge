@@ -22,6 +22,8 @@ inline DropCounts calculate_drop_counts(int armature_id,
     int4 armature_flag = armature_flags[armature_id];
     bool deleted = (armature_flag.z & OUT_OF_BOUNDS) !=0;
             
+    //printf("debug delete hit: %d", deleted);
+            
     if (deleted)
     {
         drop_counts.armature_count = 1;
@@ -72,6 +74,7 @@ __kernel void locate_out_of_bounds(__global int2 *hull_tables,
         int z = armature_flag.z;
         z = (z | OUT_OF_BOUNDS);
         armature_flags[gid].z = z;
+        //printf("debug locate hit: %d", gid);
     }
 }
 
@@ -388,7 +391,7 @@ __kernel void compact_armatures(__global int *buffer_in,
 
     //printf("debug-in %d new: %d", gid, new_armature_index);
 
-    int4 new_armature_flag;
+    int4 new_armature_flag = armature_flag;
     new_armature_flag.x = armature_flag.x - drop.hull_count;
 
     int2 new_hull_table;
@@ -422,8 +425,8 @@ __kernel void compact_armatures(__global int *buffer_in,
         hull_flag.y = hull_flag.y - drop.armature_count;
         new_element_table.x = element_table.x - drop.point_count;
         new_element_table.y = element_table.y - drop.point_count;
-        new_element_table.z = element_table.z == -1 ? -1 : element_table.z - drop.edge_count;
-        new_element_table.w = element_table.w == -1 ? -1 : element_table.w - drop.edge_count;
+        new_element_table.z = element_table.z - drop.edge_count;
+        new_element_table.w = element_table.w - drop.edge_count;
         hull_flags[current_hull] = hull_flag;
         element_tables[current_hull] = new_element_table;
 
