@@ -72,26 +72,6 @@ __kernel void integrate(
     x = x & (~OUT_OF_BOUNDS);
     hull_flags[gid].x = x;
 
-    // todo: instead of punting on these, we can maybe update differently and tag the hull
-    //  or something, so it can be handled differently for collisions as well.
-    // if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
-    // {
-        
-    //     int x = hull_1_flags.x;
-    //     x = (x | OUT_OF_BOUNDS);
-    //     hull_flags[gid].x = x;
-    //     //printf("marked: %d", gid);
-        
-    
-    //     // acceleration.x = 0;
-    //     // acceleration.y = 0;
-    //     // armature_accel[gid] = acceleration;
-
-    //     // bounds_bank.y = 0;
-    //     // bounds_bank_data[gid] = bounds_bank;
-    //     // return;
-    // }
-
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
     acc.x = acceleration.x;

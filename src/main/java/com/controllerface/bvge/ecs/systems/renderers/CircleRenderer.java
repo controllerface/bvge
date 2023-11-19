@@ -72,11 +72,8 @@ public class CircleRenderer extends GameSystem
 
         glBindVertexArray(vao_id);
 
-        System.out.println("Rendering: " + circle_hulls.count() + " circles");
-
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
-
 
         glEnableVertexAttribArray(0);
 

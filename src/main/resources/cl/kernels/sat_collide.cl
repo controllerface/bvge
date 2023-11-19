@@ -170,7 +170,7 @@ __kernel void apply_reactions(__global float2 *reactions,
     // maintain stability with small numbers of stacked objects. 
     float2 g = (float2)(0.0, -1.0);
     float2 heading = point.xy - point.zw;
-    float ag = 0.0f;//calculate_anti_gravity(g, heading);
+    float ag = calculate_anti_gravity(g, heading);
 
     // todo: actual gravity vector should be provided, when it can change this should also be changable
     //  right now it is a static direction. note that magnitude of gravity is not important, only direction
@@ -181,7 +181,7 @@ __kernel void apply_reactions(__global float2 *reactions,
 
     // some anti-gravity experiment values. It may be useful to define a multiplier value on some particles
     // to get interesting effects. 
-    //if (ag > 0.0f) ag = 1.0f;
+    if (ag > 0.0f) ag = 1.0f;
     //if (ag > 0.0f) ag *= 2.0f;
 
     anti_gravity[gid] = ag;

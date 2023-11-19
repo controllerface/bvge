@@ -1568,8 +1568,6 @@ public class GPU
             return;
         }
 
-        System.out.println("DEBUG: "+ Arrays.toString(m));
-
         // shift buffers are cleared before compacting
         Memory.hull_shift.clear();
         Memory.edge_shift.clear();
@@ -1582,10 +1580,10 @@ public class GPU
         armature_kernel.set_arg(1, b_mem2.pointer());
 
         linearize_kernel(armature_kernel, armature_count);
-        linearize_kernel(Kernel.compact_hulls.gpu, Main.Memory.hull_count());
-        linearize_kernel(Kernel.compact_edges.gpu, Main.Memory.edge_count());
-        linearize_kernel(Kernel.compact_points.gpu, Main.Memory.point_count());
         linearize_kernel(Kernel.compact_bones.gpu, Main.Memory.bone_count());
+        linearize_kernel(Kernel.compact_points.gpu, Main.Memory.point_count());
+        linearize_kernel(Kernel.compact_edges.gpu, Main.Memory.edge_count());
+        linearize_kernel(Kernel.compact_hulls.gpu, Main.Memory.hull_count());
 
         Main.Memory.notify_compaction(m[0], m[1], m[2], m[3], m[4]);
 

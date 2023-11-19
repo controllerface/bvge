@@ -22,6 +22,10 @@ inline DropCounts calculate_drop_counts(int armature_id,
     int4 armature_flag = armature_flags[armature_id];
     bool deleted = (armature_flag.z & OUT_OF_BOUNDS) !=0;
             
+            
+    //printf("debug delete hit: %d", deleted);
+            
+                        
     //printf("debug delete hit: %d", deleted);
             
     if (deleted)
@@ -70,11 +74,14 @@ __kernel void locate_out_of_bounds(__global int2 *hull_tables,
 
     if (out_count == hull_count)
     {
-        int4 armature_flag = armature_flags[gid];
-        int z = armature_flag.z;
-        z = (z | OUT_OF_BOUNDS);
-        armature_flags[gid].z = z;
-        //printf("debug locate hit: %d", gid);
+        int i = atomic_inc(&counter[0]);
+        if (i < 2048)
+        {
+            int4 armature_flag = armature_flags[gid];
+            int z = armature_flag.z;
+            z = (z | OUT_OF_BOUNDS);
+            armature_flags[gid].z = z;
+        }
     }
 }
 
@@ -368,10 +375,6 @@ __kernel void compact_armatures(__global int *buffer_in,
     drop.hull_count = buffer_2.z;
     drop.armature_count = buffer_2.w;
 
-    // todo: check armature for deleted flag, if true do nothing. Adjustments are
-    //  only valid for items that are not being removed, their data will overwrite
-    //  the data of the deleted objects.
-
     // armature
     float4 armature = armatures[gid];
     float2 accel = armature_accel[gid];
@@ -382,21 +385,18 @@ __kernel void compact_armatures(__global int *buffer_in,
     bool is_out = (armature_flag.z & OUT_OF_BOUNDS) !=0;
     if (is_out || drop.armature_count == 0) 
     {
-        //printf("debug-out %d", gid);
         return;
     }
 
     // update with drop counts
     int new_armature_index = gid - drop.armature_count;
 
-    //printf("debug-in %d new: %d", gid, new_armature_index);
-
     int4 new_armature_flag = armature_flag;
-    new_armature_flag.x = armature_flag.x - drop.hull_count;
+    new_armature_flag.x -= drop.hull_count;
 
-    int2 new_hull_table;
-    new_hull_table.x = hull_table.x - drop.hull_count;
-    new_hull_table.y = hull_table.y - drop.hull_count;
+    int2 new_hull_table = hull_table;
+    new_hull_table.x -= drop.hull_count;
+    new_hull_table.y -= drop.hull_count;
 
     // store updated data at the new index
     armatures[new_armature_index] = armature;
@@ -405,8 +405,7 @@ __kernel void compact_armatures(__global int *buffer_in,
     hull_tables[new_armature_index] = new_hull_table;
 
     // Note: hull, point, edge, and bone data may be adjusted, but the buffers are not
-    // compacted immediately. Bceause these buffers require memory barriers to ensure 
-    // they compact successfully, the offset each object would be moved by, is stored 
+    // compacted immediately. The offset each object would be moved by, is stored 
     // in an object aliged "shift buffer". Subsequent kernels are then called with the 
     // shift buffers to perform the compaction.
 
@@ -429,7 +428,6 @@ __kernel void compact_armatures(__global int *buffer_in,
         new_element_table.w = element_table.w - drop.edge_count;
         hull_flags[current_hull] = hull_flag;
         element_tables[current_hull] = new_element_table;
-
         hull_shift[current_hull] = drop.hull_count;
         
         // bones
@@ -438,10 +436,7 @@ __kernel void compact_armatures(__global int *buffer_in,
         bone_shift[current_hull] = drop.bone_count;
 
         // edges
-        int edge_count = element_table.w == -1
-            ? 0 
-            : element_table.w - element_table.z + 1;
-
+        int edge_count = element_table.w - element_table.z + 1;
         for (int j = 0; j < edge_count; j++)
         {
             int current_edge = element_table.z + j;
@@ -449,7 +444,6 @@ __kernel void compact_armatures(__global int *buffer_in,
             edge.x = edge.x - drop.point_count;
             edge.y = edge.y - drop.point_count;
             edges[current_edge] = edge;
-
             edge_shift[current_edge] = drop.edge_count;
         }
 
@@ -487,14 +481,11 @@ __kernel void compact_hulls(__global int *hull_shift,
     if (shift > 0)
     {
         int new_hull_index = current_hull - shift;
-        //printf("debug-hull shift: %d current %d new: %d", shift, current_hull, new_hull_index);
 
         hulls[new_hull_index] = hull;
         hull_rotations[new_hull_index] = rotation;
         hull_flags[new_hull_index] = hull_flag;
         element_tables[new_hull_index] = element_table;
-        //printf("debug-hull element table: x: %d y: %d z: %d w: %d", element_table.x, element_table.y, element_table.z, element_table.w);
-
         bounds[new_hull_index] = bound;
         bounds_index_data[new_hull_index] = bounds_index;
         bounds_bank_data[new_hull_index] = bounds_bank;
@@ -510,10 +501,6 @@ __kernel void compact_edges(__global int *edge_shift,
     if (shift > 0)
     {
         int new_edge_index = current_edge - shift;
-
-        //printf("debug-test");
-        //printf("debug-edge shift: %d current %d new: %d", shift, current_edge, new_edge_index);
-
         edges[new_edge_index] = edge;
     }
 }
@@ -531,7 +518,6 @@ __kernel void compact_points(__global int *point_shift,
     if (shift > 0)
     {
         int new_point_index = current_point - shift;
-        //printf("debug-point shift: %d current %d new: %d", shift, current_point, new_point_index);
         points[new_point_index] = point;
         anti_gravity[new_point_index] = anti_grav;
         vertex_tables[new_point_index] = vertex_table;
