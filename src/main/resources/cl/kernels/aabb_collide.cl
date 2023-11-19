@@ -85,13 +85,13 @@ __kernel void aabb_collide(__global float4 *bounds,
                 continue;
             }
 
-            // if (no_bones != no_bones_c)
-            // {
-            //     if (!is_static_c && !is_static_c)
-            //     {
-            //         continue;
-            //     }
-            // }
+            if (no_bones != no_bones_c)
+            {
+                if (!is_static_c && !is_static_c)
+                {
+                    continue;
+                }
+            }
 
             // broad phase collision check
             float4 candidate = bounds[next];

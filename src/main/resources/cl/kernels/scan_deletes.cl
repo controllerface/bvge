@@ -74,8 +74,10 @@ __kernel void locate_out_of_bounds(__global int2 *hull_tables,
 
     if (out_count == hull_count)
     {
-        int i = atomic_inc(&counter[0]);
-        if (i < 2048)
+        // todo: this could be made configurable. This effectively limits 
+        // how many objects can be deleted per physics tick.
+        // int i = atomic_inc(&counter[0]);
+        // if (i < 1024)
         {
             int4 armature_flag = armature_flags[gid];
             int z = armature_flag.z;
@@ -381,6 +383,9 @@ __kernel void compact_armatures(__global int *buffer_in,
     int4 armature_flag = armature_flags[gid];
     int2 hull_table = hull_tables[gid];
     
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
+
     // any armature that is being deleted can be ignored
     bool is_out = (armature_flag.z & OUT_OF_BOUNDS) !=0;
     if (is_out || drop.armature_count == 0) 
@@ -417,15 +422,13 @@ __kernel void compact_armatures(__global int *buffer_in,
         int2 hull_flag = hull_flags[current_hull];
         int4 element_table = element_tables[current_hull];
 
-        int4 new_element_table;
-
-       // printf("debug: a: %d an: %d h: %d", gid, new_armature_index, hull_flag.y);
+        int4 new_element_table = element_table;
 
         hull_flag.y = hull_flag.y - drop.armature_count;
-        new_element_table.x = element_table.x - drop.point_count;
-        new_element_table.y = element_table.y - drop.point_count;
-        new_element_table.z = element_table.z - drop.edge_count;
-        new_element_table.w = element_table.w - drop.edge_count;
+        new_element_table.x -= drop.point_count;
+        new_element_table.y -= drop.point_count;
+        new_element_table.z -= drop.edge_count;
+        new_element_table.w -= drop.edge_count;
         hull_flags[current_hull] = hull_flag;
         element_tables[current_hull] = new_element_table;
         hull_shift[current_hull] = drop.hull_count;
@@ -441,8 +444,8 @@ __kernel void compact_armatures(__global int *buffer_in,
         {
             int current_edge = element_table.z + j;
             float4 edge = edges[current_edge];
-            edge.x = edge.x - drop.point_count;
-            edge.y = edge.y - drop.point_count;
+            edge.x -= drop.point_count;
+            edge.y -= drop.point_count;
             edges[current_edge] = edge;
             edge_shift[current_edge] = drop.edge_count;
         }
@@ -453,7 +456,7 @@ __kernel void compact_armatures(__global int *buffer_in,
         {
             int current_point = element_table.x + k;
             int2 vertex_table = vertex_tables[current_point];
-            vertex_table.y = vertex_table.y - drop.bone_count;
+            vertex_table.y -= drop.bone_count;
             vertex_tables[current_point] = vertex_table;
             point_shift[current_point] = drop.point_count;
         }
@@ -478,6 +481,7 @@ __kernel void compact_hulls(__global int *hull_shift,
     float4 bound = bounds[current_hull];
     int4 bounds_index = bounds_index_data[current_hull];
     int2 bounds_bank = bounds_bank_data[current_hull];
+    barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_hull_index = current_hull - shift;
@@ -498,6 +502,7 @@ __kernel void compact_edges(__global int *edge_shift,
     int current_edge = get_global_id(0);
     int shift = edge_shift[current_edge];
     float4 edge = edges[current_edge];
+    barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_edge_index = current_edge - shift;
@@ -515,6 +520,7 @@ __kernel void compact_points(__global int *point_shift,
     float4 point = points[current_point];
     float anti_grav = anti_gravity[current_point];
     int2 vertex_table = vertex_tables[current_point];
+    barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_point_index = current_point - shift;
@@ -532,6 +538,7 @@ __kernel void compact_bones(__global int *bone_shift,
     int shift = bone_shift[current_bone];
     float16 instance = bone_instances[current_bone];
     int index = bone_indices[current_bone];
+    barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_bone_index = current_bone - shift;
