@@ -17,7 +17,7 @@ public class CreateArmature_k extends GPUKernel
         def_arg(2, Sizeof.cl_mem);
         def_arg(3, Sizeof.cl_int);
         def_arg(4, Sizeof.cl_float4);
-        def_arg(5, Sizeof.cl_int2);
+        def_arg(5, Sizeof.cl_int4);
         def_arg(6, Sizeof.cl_int2);
     }
 

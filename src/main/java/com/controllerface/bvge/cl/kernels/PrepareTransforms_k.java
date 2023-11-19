@@ -11,11 +11,12 @@ public class PrepareTransforms_k extends GPUKernel
 {
     public PrepareTransforms_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.prepare_transforms), 4);
+        super(command_queue, program.kernels().get(GPU.Kernel.prepare_transforms), 5);
         def_arg(0, Sizeof.cl_mem);
         def_arg(1, Sizeof.cl_mem);
         def_arg(2, Sizeof.cl_mem);
         def_arg(3, Sizeof.cl_mem);
+        def_arg(4, Sizeof.cl_int);
     }
 
     public void set_hulls(Pointer hulls)

@@ -1,0 +1,5 @@
+#define IS_STATIC     0b00000001
+#define IS_CIRCLE     0b00000010
+#define IS_POLYGON    0b00000100
+#define NO_BONES      0b00001000
+#define OUT_OF_BOUNDS 0b00010000

@@ -18,12 +18,12 @@ public class PhysicsSimulation extends GameSystem
 
     // todo: gravity should not be a constant but calculated based on proximity next to planets and other large bodies
     private final static float GRAVITY_X = 0;
-    private final static float GRAVITY_Y = -(9.8f * 50) * SUB_STEPS;
+    private final static float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
 
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
     //  or make damping interact with the gravity vector in some way.
-    private final static float MOTION_DAMPING = .990f;
+    private final static float MOTION_DAMPING = 1;//.990f;
 
     private final UniformGrid uniform_grid;
     private PhysicsBuffer physics_buffer;
@@ -258,8 +258,9 @@ public class PhysicsSimulation extends GameSystem
         // Movements applied to hulls are now accumulated and applied to their parent armatures.
         GPU.move_armatures();
 
-        // todo: test and handle deleted objects
-        GPU.delete_and_compact();
+//        GPU.locate_out_of_bounds();
+//
+//        GPU.delete_and_compact();
     }
 
     private void simulate(float dt)
@@ -283,7 +284,13 @@ public class PhysicsSimulation extends GameSystem
                 this.accumulator -= sub_step;
                 physics_buffer.finishTick();
             }
+
         }
+
+        GPU.locate_out_of_bounds();
+
+        GPU.delete_and_compact();
+
 
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)

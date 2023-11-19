@@ -32,19 +32,19 @@ __kernel void sat_collide(__global int2 *candidates,
     int b2_id = current_pair.y;
     int2 hull_1_flags = hull_flags[b1_id];
     int2 hull_2_flags = hull_flags[b2_id];
-    bool b1s = (hull_1_flags.x & 0x01) !=0;
-    bool b2s = (hull_2_flags.x & 0x01) !=0;
+    bool b1s = (hull_1_flags.x & IS_STATIC) !=0;
+    bool b2s = (hull_2_flags.x & IS_STATIC) !=0;
     
     if (b1s && b2s) // no collisions between static objects todo: probably can weed these out earlier, during aabb checks
     {
         return;
     }
 
-    bool b1_is_circle = (hull_1_flags.x & 0x02) !=0;
-    bool b2_is_circle = (hull_2_flags.x & 0x02) !=0;
+    bool b1_is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
+    bool b2_is_circle = (hull_2_flags.x & IS_CIRCLE) !=0;
 
-    bool b1_is_polygon = (hull_1_flags.x & 0x04) !=0;
-    bool b2_is_polygon = (hull_2_flags.x & 0x04) !=0;
+    bool b1_is_polygon = (hull_1_flags.x & IS_POLYGON) !=0;
+    bool b2_is_polygon = (hull_2_flags.x & IS_POLYGON) !=0;
 
     int c_id = b1_is_circle ? b1_id : b2_id;
     int p_id = b1_is_circle ? b2_id : b1_id;
@@ -98,27 +98,19 @@ has an implicit assumption that the values in point_reactions have been zeroed o
 called. These values will have been consumed in a prior call to scan the points for applicable
 reactions.
  */
-__kernel void sort_reactions(__global float2 *reactions,
+__kernel void sort_reactions(__global float2 *reactions_in,
+                             __global float2 *reactions_out,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global int *point_offsets)
 {
     int gid = get_global_id(0);
-    
-    float2 reaction = reactions[gid];
+    float2 reaction = reactions_in[gid];
     int index = reaction_index[gid];
-
     int reaction_offset = point_offsets[index];
     int local_offset = atomic_inc(&point_reactions[index]);
-
-    // this barrier is extremely important, it ensures all threads have read their reactions before 
-    // moving them to their correct positions.
-    barrier(CLK_GLOBAL_MEM_FENCE);
-
     int next = reaction_offset + local_offset;
-
-    reactions[next] = reaction;
-    reaction_index[next] = index;
+    reactions_out[next] = reaction;
 }
 
 /**
@@ -189,8 +181,8 @@ __kernel void apply_reactions(__global float2 *reactions,
 
     // some anti-gravity experiment values. It may be useful to define a multiplier value on some particles
     // to get interesting effects. 
-    //if (ag > 0.0f) ag = 1.0f;
-    //if (ag > 0.0f) ag *= 2.0f;
+    if (ag > 0.0f) ag = 1.0f;
+    if (ag > 0.0f) ag *= 2.0f;
 
     anti_gravity[gid] = ag;
     points[gid] = point;
@@ -222,7 +214,7 @@ __kernel void move_armatures(__global float4 *hulls,
         float4 hull = hulls[n];
         int2 hull_flag = hull_flags[n];
         int4 element_table = element_tables[n];
-        bool no_bones = (hull_flag.x & 0x08) !=0;
+        bool no_bones = (hull_flag.x & NO_BONES) !=0;
 
         if (!no_bones)
         {

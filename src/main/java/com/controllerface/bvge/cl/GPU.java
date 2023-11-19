@@ -52,6 +52,7 @@ public class GPU
      * The local work default is simply the max group size formatted as a single element argument array,
      * making it simpler to use for Open Cl calls which expect that format.
      */
+    private static int max_work_group_size = 0;
     private static long max_scan_block_size = 0;
     private static long[] local_work_default = arg_long(0);
 
@@ -148,11 +149,16 @@ public class GPU
         animate_hulls,
         apply_reactions,
         build_key_map,
+        compact_armatures,
+        compact_bones,
+        compact_edges,
+        compact_hulls,
+        compact_points,
         complete_bounds_multi_block,
         complete_candidates_multi_block_out,
         complete_deletes_multi_block_out,
-        complete_int_multi_block,
         complete_int4_multi_block,
+        complete_int_multi_block,
         complete_int_multi_block_out,
         count_candidates,
         create_armature,
@@ -166,6 +172,7 @@ public class GPU
         generate_keys,
         integrate,
         locate_in_bounds,
+        locate_out_of_bounds,
         move_armatures,
         prepare_bones,
         prepare_bounds,
@@ -183,11 +190,11 @@ public class GPU
         scan_candidates_single_block_out,
         scan_deletes_multi_block_out,
         scan_deletes_single_block_out,
-        scan_int_multi_block,
         scan_int4_multi_block,
+        scan_int4_single_block,
+        scan_int_multi_block,
         scan_int_multi_block_out,
         scan_int_single_block,
-        scan_int4_single_block,
         scan_int_single_block_out,
         sort_reactions,
         update_accel,
@@ -286,7 +293,7 @@ public class GPU
         /**
          * Non-real force modeled for stability of colliding particles. Values are float with the following mapping:
          * -
-         * value: anti-gravity magnitude
+         * value: antigravity magnitude
          * -
          */
         point_anti_gravity(Sizeof.cl_float),
@@ -311,7 +318,7 @@ public class GPU
          * x: point 1 index
          * y: point 2 index
          * z: distance constraint
-         * w: edge flags
+         * w: edge flags (bit-field)
          * -
          * note: x, y, and w values are cast to int during use
          */
@@ -356,7 +363,7 @@ public class GPU
         /**
          * Flags that related to tracked physics hulls. Values are int2 with the following mappings:
          * -
-         * x: hull flags
+         * x: hull flags (bit-field)
          * y: armature id
          * -
          */
@@ -450,9 +457,11 @@ public class GPU
          * -
          * x: root hull index
          * y: model id
+         * z: armature flags (bit-field)
+         * w: -unused-
          * -
          */
-        armature_flags(Sizeof.cl_int2),
+        armature_flags(Sizeof.cl_int4),
 
         /**
          * Acceleration value of an armature. Values are float2 with the following mappings:
@@ -472,6 +481,14 @@ public class GPU
          */
         armature_hull_table(Sizeof.cl_int2),
 
+
+        bone_shift(Sizeof.cl_int),
+
+        point_shift(Sizeof.cl_int),
+
+        edge_shift(Sizeof.cl_int),
+
+        hull_shift(Sizeof.cl_int),
         ;
 
         GPUMemory gpu;
@@ -531,6 +548,34 @@ public class GPU
     private static int work_group_count(int n)
     {
         return (int) Math.ceil((float) n / (float) max_scan_block_size);
+    }
+
+    /**
+     * Typically, kernels that operate on core objects are called with the maximum count and no group
+     * size, allowing the OpenCL implementation to slice up all tasks into workgroups, and queue them
+     * as needed. However, in some cases it is necessary to ensure that, at most, only one workgroup
+     * executes at a time. Cases like buffer compaction, that must be computed in ascending order, with
+     * a guarantee that items that are of a higher index value are always processed after ones with
+     * lower values. This method serves the later use case. The provided kernel is called in a loop,
+     * with each call containing a local work size equal to the global size, forcing all work into a
+     * single work group. The loop uses a global offset to ensure that, on each iteration, the next
+     * group is processed.
+     *
+     * @param kernel the GPU kernel to linearize
+     * @param object_count the number of total kernel threads that will run
+     */
+    private static void linearize_kernel(GPUKernel kernel, int object_count)
+    {
+        int offset = 0;
+        for (int remaining = object_count; remaining > 0; remaining -= max_work_group_size)
+        {
+            int count = Math.min(max_work_group_size, remaining);
+            var sz = count == max_work_group_size
+                ? local_work_default
+                : arg_long(count);
+            kernel.call(sz, sz, arg_long(offset));
+            offset += count;
+        }
     }
 
     //#endregion
@@ -629,6 +674,12 @@ public class GPU
         Memory.armature_flags.init(max_points);
         Memory.armature_hull_table.init(max_hulls);
 
+        Memory.bone_shift.init(max_points);
+        Memory.point_shift.init(max_points);
+        Memory.edge_shift.init(max_points);
+        Memory.hull_shift.init(max_hulls);
+
+
         // Debugging info
         int total = Memory.hulls.length
             + Memory.armature_accel.length
@@ -650,7 +701,11 @@ public class GPU
             + Memory.bone_index.length
             + Memory.armatures.length
             + Memory.armature_flags.length
-            + Memory.armature_hull_table.length;
+            + Memory.armature_hull_table.length
+            + Memory.bone_shift.length
+            + Memory.point_shift.length
+            + Memory.edge_shift.length
+            + Memory.hull_shift.length;
 
         System.out.println("------------- BUFFERS -------------");
         System.out.println("points            : " + Memory.points.length);
@@ -674,6 +729,10 @@ public class GPU
         System.out.println("armatures         : " + Memory.armatures.length);
         System.out.println("armature flags    : " + Memory.armature_flags.length);
         System.out.println("hull table        : " + Memory.armature_hull_table.length);
+        System.out.println("bone shift        : " + Memory.armature_hull_table.length);
+        System.out.println("point shift       : " + Memory.armature_hull_table.length);
+        System.out.println("edge shift        : " + Memory.armature_hull_table.length);
+        System.out.println("hull shift        : " + Memory.armature_hull_table.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)    : " + total);
         System.out.println("               KB : " + ((float) total / 1024f));
@@ -936,20 +995,75 @@ public class GPU
 
         // scan for deleted objects
 
+        var locate_out_of_bounds_k = new LocateOutOfBounds_k(command_queue, Program.scan_deletes.gpu);
+        locate_out_of_bounds_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
+        locate_out_of_bounds_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        locate_out_of_bounds_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
+        Kernel.locate_out_of_bounds.set_kernel(locate_out_of_bounds_k);
+
         var scan_deletes_single_block_out_k = new ScanDeletesSingleBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        scan_deletes_single_block_out_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
         scan_deletes_single_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
         scan_deletes_single_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         Kernel.scan_deletes_single_block_out.set_kernel(scan_deletes_single_block_out_k);
 
         var scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        scan_deletes_multi_block_out_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
         scan_deletes_multi_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
         scan_deletes_multi_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         Kernel.scan_deletes_multi_block_out.set_kernel(scan_deletes_multi_block_out_k);
 
         var complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
+        complete_deletes_multi_block_out_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
         complete_deletes_multi_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
         complete_deletes_multi_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         Kernel.complete_deletes_multi_block_out.set_kernel(complete_deletes_multi_block_out_k);
+
+        var compact_armatures_k = new CompactArmatures_k(command_queue, Program.scan_deletes.gpu);
+        compact_armatures_k.set_armatures(Memory.armatures.gpu.pointer());
+        compact_armatures_k.set_armature_accel(Memory.armature_accel.gpu.pointer());
+        compact_armatures_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
+        compact_armatures_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
+        compact_armatures_k.set_hulls(Memory.hulls.gpu.pointer());
+        compact_armatures_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        compact_armatures_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        compact_armatures_k.set_points(Memory.points.gpu.pointer());
+        compact_armatures_k.set_vertex_tables(Memory.vertex_table.gpu.pointer());
+        compact_armatures_k.set_edges(Memory.edges.gpu.pointer());
+        compact_armatures_k.set_bone_shift(Memory.bone_shift.gpu.pointer());
+        compact_armatures_k.set_point_shift(Memory.point_shift.gpu.pointer());
+        compact_armatures_k.set_edge_shift(Memory.edge_shift.gpu.pointer());
+        compact_armatures_k.set_hull_shift(Memory.hull_shift.gpu.pointer());
+        Kernel.compact_armatures.set_kernel(compact_armatures_k);
+
+        var compact_hulls_k = new CompactHulls_k(command_queue, Program.scan_deletes.gpu);
+        compact_hulls_k.set_hull_shift(Memory.hull_shift.gpu.pointer());
+        compact_hulls_k.set_hulls(Memory.hulls.gpu.pointer());
+        compact_hulls_k.set_hull_rotations(Memory.hull_rotation.gpu.pointer());
+        compact_hulls_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        compact_hulls_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        compact_hulls_k.set_bounds(Memory.aabb.gpu.pointer());
+        compact_hulls_k.set_bounds_index(Memory.aabb_index.gpu.pointer());
+        compact_hulls_k.set_bounds_bank(Memory.aabb_key_table.gpu.pointer());
+        Kernel.compact_hulls.set_kernel(compact_hulls_k);
+
+        var compact_edges_k = new CompactEdges_k(command_queue, Program.scan_deletes.gpu);
+        compact_edges_k.set_edge_shift(Memory.edge_shift.gpu.pointer());
+        compact_edges_k.set_edges(Memory.edges.gpu.pointer());
+        Kernel.compact_edges.set_kernel(compact_edges_k);
+
+        var compact_points_k = new CompactPoints_k(command_queue, Program.scan_deletes.gpu);
+        compact_points_k.set_point_shift(Memory.point_shift.gpu.pointer());
+        compact_points_k.set_points(Memory.points.gpu.pointer());
+        compact_points_k.set_anti_gravity(Memory.point_anti_gravity.gpu.pointer());
+        compact_points_k.set_vertex_tables(Memory.vertex_table.gpu.pointer());
+        Kernel.compact_points.set_kernel(compact_points_k);
+
+        var compact_bones_k = new CompactBones_k(command_queue, Program.scan_deletes.gpu);
+        compact_bones_k.set_bone_shift(Memory.bone_shift.gpu.pointer());
+        compact_bones_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
+        compact_bones_k.set_bone_indices(Memory.bone_index.gpu.pointer());
+        Kernel.compact_bones.set_kernel(compact_bones_k);
     }
 
     //#endregion
@@ -1035,11 +1149,13 @@ public class GPU
     }
 
     /**
-     * outputs an array of hulls matching model id given
+     * Performs a filter query on all physics hulls, returning an index buffer and count of items.
+     * The returned object will contain the indices of all hulls that match the model with the given ID.
      *
      * @param model_id ID of model to filter on
+     * @return a HullIndexData object with the query result
      */
-    public static HullFilteredData GL_hull_filter(int model_id)
+    public static HullIndexData GL_hull_filter(int model_id)
     {
         var gpu_kernel = Kernel.root_hull_count.gpu;
         var gpu_kernel_2 = Kernel.root_hull_filter.gpu;
@@ -1049,13 +1165,20 @@ public class GPU
         var dst_counter = Pointer.to(counter);
         var counter_data = cl_new_int_arg_buffer(dst_counter);
 
-        gpu_kernel.set_arg(1,Pointer.to(counter_data));
-        gpu_kernel.set_arg(2,Pointer.to(arg_int(model_id)));
+        gpu_kernel.set_arg(1, Pointer.to(counter_data));
+        gpu_kernel.set_arg(2, Pointer.to(arg_int(model_id)));
 
         gpu_kernel.call(arg_long(Main.Memory.armature_count()));
         cl_read_buffer(counter_data, Sizeof.cl_int, dst_counter);
 
+        clReleaseMemObject(counter_data);
+
         int final_count = counter[0];
+        if (final_count == 0)
+        {
+            return new HullIndexData(null, final_count);
+        }
+
         long final_buffer_size = (long) Sizeof.cl_int * final_count;
         var hulls_out = cl_new_buffer(final_buffer_size);
 
@@ -1070,7 +1193,9 @@ public class GPU
 
         gpu_kernel_2.call(arg_long(Main.Memory.armature_count()));
 
-        return new HullFilteredData(hulls_out, final_count);
+        clReleaseMemObject(hulls_counter_data);
+
+        return new HullIndexData(hulls_out, final_count);
     }
 
     /**
@@ -1081,7 +1206,7 @@ public class GPU
      *
      * @param vbo_id        id of the shared GL buffer object
      * @param hulls_out     array of hulls filtered to be circles only
-     * @param offset        where we are starting in the hulls_out array
+     * @param offset        where we are starting in the indices array
      * @param batch_size         number of hull objects to transfer in this batch
      */
     public static void GL_circles(int vbo_id, cl_mem hulls_out, int offset, int batch_size)
@@ -1093,7 +1218,8 @@ public class GPU
 
         gpu_kernel.set_arg(2, Pointer.to(hulls_out));
         gpu_kernel.set_arg(3, Pointer.to(vbo_index_buffer));
-        gpu_kernel.call(arg_long(batch_size), offset);
+        gpu_kernel.set_arg(4, Pointer.to(arg_int(offset)));
+        gpu_kernel.call(arg_long(batch_size));
     }
 
     /**
@@ -1106,7 +1232,7 @@ public class GPU
      * @param transforms_id   id of the shared GL buffer object
      * @param batch_size      number of hull objects to transfer in this batch
      */
-    public static void GL_transforms(int index_buffer_id, int transforms_id, int batch_size)
+    public static void GL_transforms(int index_buffer_id, int transforms_id, int batch_size, int offset)
     {
         var gpu_kernel = Kernel.prepare_transforms.gpu;
 
@@ -1117,6 +1243,7 @@ public class GPU
         gpu_kernel.share_mem(vbo_transforms);
         gpu_kernel.set_arg(2, Pointer.to(vbo_index_buffer));
         gpu_kernel.set_arg(3, Pointer.to(vbo_transforms));
+        gpu_kernel.set_arg(4, Pointer.to(arg_int(offset)));
         gpu_kernel.call(arg_long(batch_size));
     }
 
@@ -1378,6 +1505,21 @@ public class GPU
         physics_buffer.set_candidate_buffer_count(size[0]);
     }
 
+    public static void locate_out_of_bounds()
+    {
+        var gpu_kernel = Kernel.locate_out_of_bounds.gpu;
+        int armature_count = Main.Memory.armature_count();
+
+        int[] counter = new int[]{0};
+        var dst_counter = Pointer.to(counter);
+        var counter_data = cl_new_int_arg_buffer(dst_counter);
+        var p = Pointer.to(counter_data);
+        gpu_kernel.set_arg(3, p);
+        gpu_kernel.call(arg_long(armature_count));
+
+        clReleaseMemObject(counter_data);
+    }
+
     public static void count_candidates()
     {
         var gpu_kernel = Kernel.count_candidates.gpu;
@@ -1407,9 +1549,9 @@ public class GPU
 
     public static void delete_and_compact()
     {
-        int buffer_count = Main.Memory.armature_count();
-        long output_buf_size = (long) Sizeof.cl_int * buffer_count;
-        long output_buf_size2 = (long) Sizeof.cl_int4 * buffer_count;
+        int armature_count = Main.Memory.armature_count();
+        long output_buf_size = (long) Sizeof.cl_int * armature_count;
+        long output_buf_size2 = (long) Sizeof.cl_int4 * armature_count;
 
         var output_buf_data = cl_new_buffer(output_buf_size);
         var output_buf_data2 = cl_new_buffer(output_buf_size2);
@@ -1417,18 +1559,36 @@ public class GPU
         var b_mem = new GPUMemory(output_buf_data);
         var b_mem2 = new GPUMemory(output_buf_data2);
 
-        int[] m = scan_deletes(b_mem.memory(), b_mem2.memory(), buffer_count);
+        int[] m = scan_deletes(b_mem.memory(), b_mem2.memory(), armature_count);
 
-        // todo: b_mem and b_mem2 now contain the delete counts aligned with armatures
-        //  a compaction step must now happen, with all the indices being shifted
-        //  down by the appropriate count.
+        if (m[0] == 0)
+        {
+            b_mem.release();
+            b_mem2.release();
+            return;
+        }
 
-        // todo: after compaction, Main memory offsets must be adjusted to reflect the
-        //  new buffer sizes for each object type that was deleted.
+        // shift buffers are cleared before compacting
+        Memory.hull_shift.clear();
+        Memory.edge_shift.clear();
+        Memory.point_shift.clear();
+        Memory.bone_shift.clear();
+
+        // as armatures are compacted, the shift buffers for the other components are updated
+        var armature_kernel = Kernel.compact_armatures.gpu;
+        armature_kernel.set_arg(0, b_mem.pointer());
+        armature_kernel.set_arg(1, b_mem2.pointer());
+
+        linearize_kernel(armature_kernel, armature_count);
+        linearize_kernel(Kernel.compact_bones.gpu, Main.Memory.bone_count());
+        linearize_kernel(Kernel.compact_points.gpu, Main.Memory.point_count());
+        linearize_kernel(Kernel.compact_edges.gpu, Main.Memory.edge_count());
+        linearize_kernel(Kernel.compact_hulls.gpu, Main.Memory.hull_count());
+
+        Main.Memory.notify_compaction(m[0], m[1], m[2], m[3], m[4]);
 
         b_mem.release();
         b_mem2.release();
-
     }
 
     public static void aabb_collide()
@@ -1521,13 +1681,15 @@ public class GPU
         long index_buf_size = (long) Sizeof.cl_int * max_point_count;
 
         var reaction_data = cl_new_buffer(reaction_buf_size);
+        var reaction_data_out = cl_new_buffer(reaction_buf_size);
         var index_data = cl_new_buffer(index_buf_size);
 
-        physics_buffer.reactions = new GPUMemory(reaction_data);
+        physics_buffer.reactions_in = new GPUMemory(reaction_data);
+        physics_buffer.reactions_out = new GPUMemory(reaction_data_out);
         physics_buffer.reaction_index = new GPUMemory(index_data);
 
         gpu_kernel.set_arg(0, physics_buffer.candidates.pointer());
-        gpu_kernel.set_arg(6, physics_buffer.reactions.pointer());
+        gpu_kernel.set_arg(6, physics_buffer.reactions_in.pointer());
         gpu_kernel.set_arg(7, physics_buffer.reaction_index.pointer());
         gpu_kernel.set_arg(9, Pointer.to(size_data));
 
@@ -1551,15 +1713,16 @@ public class GPU
     public static void sort_reactions()
     {
         var gpu_kernel = Kernel.sort_reactions.gpu;
-        gpu_kernel.set_arg(0, physics_buffer.reactions.pointer());
-        gpu_kernel.set_arg(1, physics_buffer.reaction_index.pointer());
+        gpu_kernel.set_arg(0, physics_buffer.reactions_in.pointer());
+        gpu_kernel.set_arg(1, physics_buffer.reactions_out.pointer());
+        gpu_kernel.set_arg(2, physics_buffer.reaction_index.pointer());
         gpu_kernel.call(arg_long(physics_buffer.get_reaction_count()));
     }
 
     public static void apply_reactions()
     {
         var gpu_kernel = Kernel.apply_reactions.gpu;
-        gpu_kernel.set_arg(0, physics_buffer.reactions.pointer());
+        gpu_kernel.set_arg(0, physics_buffer.reactions_out.pointer());
         gpu_kernel.call(arg_long(Main.Memory.point_count()));
     }
 
@@ -1818,12 +1981,12 @@ public class GPU
         var dst_data = Pointer.to(o1_data);
         var dst_data2 = Pointer.to(o2_data);
 
-        gpu_kernel.set_arg(2, dst_data);
-        gpu_kernel.set_arg(3, dst_data2);
-        gpu_kernel.set_arg(4, src_size);
-        gpu_kernel.new_arg(5, local_buffer_size);
-        gpu_kernel.new_arg(6, local_buffer_size2);
-        gpu_kernel.set_arg(7, Pointer.to(arg_int(n)));
+        gpu_kernel.set_arg(3, dst_data);
+        gpu_kernel.set_arg(4, dst_data2);
+        gpu_kernel.set_arg(5, src_size);
+        gpu_kernel.new_arg(6, local_buffer_size);
+        gpu_kernel.new_arg(7, local_buffer_size2);
+        gpu_kernel.set_arg(8, Pointer.to(arg_int(n)));
         gpu_kernel.call(local_work_default, local_work_default);
 
         cl_read_buffer(size_data, Sizeof.cl_int + Sizeof.cl_int4, dst_size);
@@ -1857,13 +2020,13 @@ public class GPU
         var src_part2 = Pointer.to(p_data2);
         var src_n = Pointer.to(new int[]{n});
 
-        gpu_kernel_1.set_arg(2, dst_data);
-        gpu_kernel_1.set_arg(3, dst_data2);
-        gpu_kernel_1.new_arg(4, local_buffer_size);
-        gpu_kernel_1.new_arg(5, local_buffer_size2);
-        gpu_kernel_1.set_arg(6, src_part);
-        gpu_kernel_1.set_arg(7, src_part2);
-        gpu_kernel_1.set_arg(8, src_n);
+        gpu_kernel_1.set_arg(3, dst_data);
+        gpu_kernel_1.set_arg(4, dst_data2);
+        gpu_kernel_1.new_arg(5, local_buffer_size);
+        gpu_kernel_1.new_arg(6, local_buffer_size2);
+        gpu_kernel_1.set_arg(7, src_part);
+        gpu_kernel_1.set_arg(8, src_part2);
+        gpu_kernel_1.set_arg(9, src_n);
         gpu_kernel_1.call(global_work_size, local_work_default);
 
         // note the partial buffers are scanned and updated in-place
@@ -1875,17 +2038,17 @@ public class GPU
         var size_data = cl_new_buffer(Sizeof.cl_int + Sizeof.cl_int4);
         var src_size = Pointer.to(size_data);
 
-        gpu_kernel_2.set_arg(2, dst_data);
-        gpu_kernel_2.set_arg(3, dst_data2);
-        gpu_kernel_2.set_arg(4, src_size);
-        gpu_kernel_2.new_arg(5, local_buffer_size);
-        gpu_kernel_2.new_arg(6, local_buffer_size2);
-        gpu_kernel_2.set_arg(7, src_part);
-        gpu_kernel_2.set_arg(8, src_part2);
-        gpu_kernel_2.set_arg(9, src_n);
+        gpu_kernel_2.set_arg(3, dst_data);
+        gpu_kernel_2.set_arg(4, dst_data2);
+        gpu_kernel_2.set_arg(5, src_size);
+        gpu_kernel_2.new_arg(6, local_buffer_size);
+        gpu_kernel_2.new_arg(7, local_buffer_size2);
+        gpu_kernel_2.set_arg(8, src_part);
+        gpu_kernel_2.set_arg(9, src_part2);
+        gpu_kernel_2.set_arg(10, src_n);
         gpu_kernel_2.call(global_work_size, local_work_default);
 
-        cl_read_buffer(size_data, Sizeof.cl_int + Sizeof.cl_int4, dst_size);
+        cl_read_buffer(size_data, Sizeof.cl_int * 5, dst_size);
 
         clReleaseMemObject(p_data);
         clReleaseMemObject(p_data2);
@@ -2058,8 +2221,8 @@ public class GPU
         System.out.println(getString(device, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
-        long max_work_group_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
-        max_scan_block_size = max_work_group_size * 2;
+        max_work_group_size = (int) getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        max_scan_block_size = (long) max_work_group_size * 2;
         local_work_default = arg_long(max_work_group_size);
 
         // initialize gpu programs

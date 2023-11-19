@@ -20,7 +20,7 @@ them before this kernel completes.
 __kernel void integrate(
     __global float4 *hulls,
     __global float4 *armatures,
-    __global int2 *armature_flags,
+    __global int4 *armature_flags,
     __global int4 *element_tables,
     __global float2 *armature_accel,
     __global float2 *hull_rotations,
@@ -53,7 +53,7 @@ __kernel void integrate(
     int4 element_table = element_tables[gid];
     int2 hull_1_flags = hull_flags[gid];
     float4 armature = armatures[hull_1_flags.y];
-    int2 armature_flag = armature_flags[hull_1_flags.y];
+    int4 armature_flag = armature_flags[hull_1_flags.y];
     float2 acceleration = armature_accel[hull_1_flags.y];
     float2 rotation = hull_rotations[gid];
     float4 bounding_box = bounds[gid];
@@ -64,26 +64,18 @@ __kernel void integrate(
     int start = element_table.x;
     int end   = element_table.y;
 
-    // todo: instead of punting on these, we can maybe update differently and tag the hull
-    //  or something, so it can be handled differently for collisions as well.
-    // if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
-    // {
-    //     acceleration.x = 0;
-    //     acceleration.y = 0;
-    //     armature_accel[gid] = acceleration;
+    bool is_static = (hull_1_flags.x & IS_STATIC) !=0;
+    bool is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
+    bool no_bones = (hull_1_flags.x & NO_BONES) !=0;
 
-    //     bounds_bank.y = 0;
-    //     bounds_bank_data[gid] = bounds_bank;
-    //     return;
-    // }
+    int x = hull_1_flags.x;
+    x = x & (~OUT_OF_BOUNDS);
+    hull_flags[gid].x = x;
 
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
     acc.x = acceleration.x;
     acc.y = acceleration.y;
-    bool is_static = (hull_1_flags.x & 0x01) !=0;
-    bool is_circle = (hull_1_flags.x & 0x02) !=0;
-    bool no_bones = (hull_1_flags.x & 0x08) !=0;
 
     if (!is_static)
     {
@@ -303,6 +295,16 @@ __kernel void integrate(
     // reset acceleration to zero for the next frame
     acceleration.x = 0;
     acceleration.y = 0;
+
+    if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
+    {
+        int x = hull_1_flags.x;
+        x = (x | OUT_OF_BOUNDS);
+        hull_flags[gid].x = x;
+        acceleration.x = 0;
+        acceleration.y = 0;
+        bounds_bank.y = 0;
+    }
 
     // store updated hull and bounds data in result buffers
     bounds[gid] = bounding_box;

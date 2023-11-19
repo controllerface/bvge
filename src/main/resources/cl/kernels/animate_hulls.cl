@@ -15,7 +15,7 @@ __kernel void animate_hulls(__global float4 *points,
     float4 hull = hulls[vertex_table.y];
     int2 hull_flag = hull_flags[vertex_table.y];
     float4 armature = armatures[hull_flag.y]; 
-    bool no_bones = (hull_flag.x & 0x08) !=0;
+    bool no_bones = (hull_flag.x & NO_BONES) !=0;
     if (no_bones) return;
 
     float4 padded = (float4)(reference_vertex.x, reference_vertex.y, 0.0f, 1.0f);

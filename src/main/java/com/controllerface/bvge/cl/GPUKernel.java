@@ -108,6 +108,11 @@ public class GPUKernel
         call(global_work_size, null);
     }
 
+    public void call(long[] global_work_size, long[] local_work_size)
+    {
+        call(global_work_size, local_work_size, null);
+    }
+
     /**
      * Call this kernel, executing it on the GPU. Global and local work sizes are provided that tell the GPU
      * how best to divide up the work being done.
@@ -115,7 +120,7 @@ public class GPUKernel
      * @param global_work_size total number of threads that will execute in the call
      * @param local_work_size number of threads that will execute in a single work group
      */
-    public void call(long[] global_work_size, long[] local_work_size)
+    public void call(long[] global_work_size, long[] local_work_size, long[] global_work_offset)
     {
         var shared_ = shared_memory.toArray(new cl_mem[]{});
 
@@ -124,26 +129,7 @@ public class GPUKernel
             CLUtils.gl_acquire(command_queue, shared_);
         }
 
-        k_call(command_queue, kernel, global_work_size, local_work_size);
-
-        if (shared_.length > 0)
-        {
-            CLUtils.gl_release(command_queue, shared_);
-        }
-
-        shared_memory.clear();
-    }
-
-    public void call(long[] global_work_size, int offset)
-    {
-        var shared_ = shared_memory.toArray(new cl_mem[]{});
-
-        if (shared_.length > 0)
-        {
-            CLUtils.gl_acquire(command_queue, shared_);
-        }
-
-        k_call(command_queue, kernel, global_work_size, offset);
+        k_call(command_queue, kernel, global_work_size, local_work_size, global_work_offset);
 
         if (shared_.length > 0)
         {

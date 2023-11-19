@@ -200,8 +200,8 @@ inline void polygon_collision(int b1_id, int b2_id,
     float vertex_magnitude = .5f;
     float edge_magnitude = .5f;
 
-    bool vs = (vo_f.x & 0x01) !=0;
-    bool es = (eo_f.x & 0x01) !=0;
+    bool vs = (vo_f.x & IS_STATIC) !=0;
+    bool es = (eo_f.x & IS_STATIC) !=0;
     
     if (vs || es)
     {

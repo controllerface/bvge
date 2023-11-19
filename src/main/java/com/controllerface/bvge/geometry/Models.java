@@ -45,7 +45,9 @@ public class Models
         data.put(model_data);
         data.flip();
         int flags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
-        return aiImportFileFromMemory(data, flags, "");
+        var x = aiImportFileFromMemory(data, flags, "");
+        MemoryUtil.memFree(data);
+        return x;
     }
 
     private static Bone load_bone(AIMesh aiMesh,
@@ -343,7 +345,7 @@ public class Models
 
     public static int get_instance_count(int model_id)
     {
-        return model_instances.get(model_id).size();
+        return model_instances.get(model_id) == null ? 0 : model_instances.get(model_id).size();
     }
 
     public static void set_model_clean(int model_id)

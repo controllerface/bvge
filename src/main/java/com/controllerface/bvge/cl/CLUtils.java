@@ -14,8 +14,7 @@ public class CLUtils
 {
     public static String read_src(String file)
     {
-        var stream = GPU.class.getResourceAsStream("/cl/" + file);
-        try
+        try (var stream = GPU.class.getResourceAsStream("/cl/" + file))
         {
             byte [] bytes = stream.readAllBytes();
             return new String(bytes, StandardCharsets.UTF_8);
@@ -102,16 +101,28 @@ public class CLUtils
             global_work_size, null, 0, null, null);
     }
 
-    public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size, int offset)
-    {
-        clEnqueueNDRangeKernel(commandQueue, kernel, 1, arg_long(offset),
-                global_work_size, null, 0, null, null);
-    }
-
     public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size, long[] local_work_size)
     {
-        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
+        int r = clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
             global_work_size, local_work_size, 0, null, null);
+        if (r != CL_SUCCESS)
+        {
+            System.out.println("WTF!");
+        }
+    }
+
+    public static void k_call(cl_command_queue commandQueue,
+                              cl_kernel kernel,
+                              long[] global_work_size,
+                              long[] local_work_size,
+                              long[] global_work_offset)
+    {
+        int r = clEnqueueNDRangeKernel(commandQueue, kernel, 1, global_work_offset,
+            global_work_size, local_work_size, 0, null, null);
+        if (r != CL_SUCCESS)
+        {
+            System.out.println("WTF!");
+        }
     }
 
     public static void gl_acquire(cl_command_queue commandQueue, cl_mem[] mem)
@@ -166,7 +177,7 @@ public class CLUtils
             System.out.printf("CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS:\t%d\n", maxWorkItemDimensions);
 
             // CL_DEVICE_MAX_WORK_ITEM_SIZES
-            long maxWorkItemSizes[] = getSizes(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, 3);
+            long[] maxWorkItemSizes = getSizes(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, 3);
             System.out.printf("CL_DEVICE_MAX_WORK_ITEM_SIZES:\t\t%d / %d / %d \n",
                 maxWorkItemSizes[0], maxWorkItemSizes[1], maxWorkItemSizes[2]);
 
@@ -287,8 +298,8 @@ public class CLUtils
      */
     private static int[] getInts(cl_device_id device, int paramName, int numValues)
     {
-        int values[] = new int[numValues];
-        clGetDeviceInfo(device, paramName, Sizeof.cl_int * numValues, Pointer.to(values), null);
+        int[] values = new int[numValues];
+        clGetDeviceInfo(device, paramName, (long) Sizeof.cl_int * numValues, Pointer.to(values), null);
         return values;
     }
 
@@ -314,8 +325,8 @@ public class CLUtils
      */
     private static long[] getLongs(cl_device_id device, int paramName, int numValues)
     {
-        long values[] = new long[numValues];
-        clGetDeviceInfo(device, paramName, Sizeof.cl_long * numValues, Pointer.to(values), null);
+        long[] values = new long[numValues];
+        clGetDeviceInfo(device, paramName, (long) Sizeof.cl_long * numValues, Pointer.to(values), null);
         return values;
     }
 
@@ -329,11 +340,11 @@ public class CLUtils
     public static String getString(cl_device_id device, int paramName)
     {
         // Obtain the length of the string that will be queried
-        long size[] = new long[1];
+        long[] size = new long[1];
         clGetDeviceInfo(device, paramName, 0, null, size);
 
         // Create a buffer of the appropriate size and fill it with the info
-        byte buffer[] = new byte[(int)size[0]];
+        byte[] buffer = new byte[(int)size[0]];
         clGetDeviceInfo(device, paramName, buffer.length, Pointer.to(buffer), null);
 
         // Create a string p1 the buffer (excluding the trailing \0 byte)
@@ -366,9 +377,9 @@ public class CLUtils
         // the size of a size_t, which is handled here
         ByteBuffer buffer = ByteBuffer.allocate(
             numValues * Sizeof.size_t).order(ByteOrder.nativeOrder());
-        clGetDeviceInfo(device, paramName, Sizeof.size_t * numValues,
+        clGetDeviceInfo(device, paramName, (long) Sizeof.size_t * numValues,
             Pointer.to(buffer), null);
-        long values[] = new long[numValues];
+        long[] values = new long[numValues];
         if (Sizeof.size_t == 4)
         {
             for (int i=0; i<numValues; i++)

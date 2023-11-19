@@ -5,6 +5,7 @@ import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -23,11 +24,12 @@ public class PhysicsObjects
 {
     private static final Vector2f vector_buffer = new Vector2f();
 
-    public static int FLAG_NONE = 0x00;
-    public static int FLAG_STATIC_OBJECT = 0x01;
-    public static int FLAG_CIRCLE = 0x02;
-    public static int FLAG_POLYGON = 0x04;
-    public static int FLAG_NO_BONES = 0x08;
+    public static int FLAG_NONE             = Constants.HullFlags.EMPTY.bits;
+    public static int FLAG_STATIC_OBJECT    = Constants.HullFlags.IS_STATIC.bits;
+    public static int FLAG_CIRCLE           = Constants.HullFlags.IS_CIRCLE.bits;
+    public static int FLAG_POLYGON          = Constants.HullFlags.IS_POLYGON.bits;
+    public static int FLAG_NO_BONES         = Constants.HullFlags.NO_BONES.bits;
+
 
     public static int FLAG_INTERIOR_EDGE = 0x01;
 
@@ -55,10 +57,18 @@ public class PhysicsObjects
 
         // store the single point for the circle
         var p1_index = Main.Memory.new_point(p1, t1);
+
+
+
+
+        var edge_index = Main.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1));
+
+
+
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angleBetween2Lines(l1, l2);
-        var table = CLUtils.arg_int4(p1_index, p1_index, -1, -1);
+        var table = CLUtils.arg_int4(p1_index, p1_index, edge_index, edge_index);
         var transform = CLUtils.arg_float4(x, y, size, size / 2.0f);
         var rotation = CLUtils.arg_float2(0, angle);
 
@@ -66,7 +76,7 @@ public class PhysicsObjects
         int[] _flag = CLUtils.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int2(hull_id, CIRCLE_PARTICLE);
+        int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // particles register with the hull ID for more straight-forward rendering
@@ -126,7 +136,7 @@ public class PhysicsObjects
         int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int2(hull_id, TRIANGLE_PARTICLE);
+        int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0,0);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // triangles also register with the hull ID instead of the armature ID
@@ -188,7 +198,7 @@ public class PhysicsObjects
         int [] _flag = CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int2(hull_id, SQUARE_PARTICLE);
+        int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
         int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
 
         // basic boxes also register with the hull ID instead of the armature ID
@@ -396,7 +406,7 @@ public class PhysicsObjects
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
 
-        int[] armature_flags = CLUtils.arg_int2(root_hull_id, model_index);
+        int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, 0);
         int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, armature_flags);
 
         // armatures are registered with their associated model ID
