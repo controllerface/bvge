@@ -257,10 +257,6 @@ public class PhysicsSimulation extends GameSystem
         // Once all points have been relocated, all hulls are in their required positions for this frame.
         // Movements applied to hulls are now accumulated and applied to their parent armatures.
         GPU.move_armatures();
-
-//        GPU.locate_out_of_bounds();
-//
-//        GPU.delete_and_compact();
     }
 
     private void simulate(float dt)
@@ -287,15 +283,16 @@ public class PhysicsSimulation extends GameSystem
 
         }
 
+        // deletion of objects happens only once per simulation cycle, instead of every tick
+        // to ensure buffer compaction happens as infrequently as possible.
         GPU.locate_out_of_bounds();
-
         GPU.delete_and_compact();
 
 
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)
         {
-            // todo: once work starts in on renderer in earnest, check if this needs to be done or not
+            // todo: check if this needs to be done or not
             //  initial visuals without it don't look bad, but would be good to see if there's some
             //  kind of improvement if the lerp is done. It should only affect the visual location of
             //  objects, not their actual location.

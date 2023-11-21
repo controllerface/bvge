@@ -1168,7 +1168,7 @@ public class GPU
         gpu_kernel.set_arg(1, Pointer.to(counter_data));
         gpu_kernel.set_arg(2, Pointer.to(arg_int(model_id)));
 
-        gpu_kernel.call(arg_long(Main.Memory.armature_count()));
+        gpu_kernel.call(arg_long(Main.Memory.next_armature()));
         cl_read_buffer(counter_data, Sizeof.cl_int, dst_counter);
 
         clReleaseMemObject(counter_data);
@@ -1191,7 +1191,7 @@ public class GPU
         gpu_kernel_2.set_arg(2,Pointer.to(hulls_counter_data));
         gpu_kernel_2.set_arg(3,Pointer.to(arg_int(model_id)));
 
-        gpu_kernel_2.call(arg_long(Main.Memory.armature_count()));
+        gpu_kernel_2.call(arg_long(Main.Memory.next_armature()));
 
         clReleaseMemObject(hulls_counter_data);
 
@@ -1374,7 +1374,7 @@ public class GPU
 
     public static void animate_hulls()
     {
-        Kernel.animate_hulls.gpu.call(arg_long(Main.Memory.point_count()));
+        Kernel.animate_hulls.gpu.call(arg_long(Main.Memory.next_point()));
     }
 
     public static void integrate(float delta_time, UniformGrid uniform_grid)
@@ -1403,14 +1403,14 @@ public class GPU
         var argMem = cl_new_read_only_buffer(size, srcArgs);
 
         gpu_kernel.set_arg(12, Pointer.to(argMem));
-        gpu_kernel.call(arg_long(Main.Memory.hull_count()));
+        gpu_kernel.call(arg_long(Main.Memory.next_hull()));
 
         clReleaseMemObject(argMem);
     }
 
     public static void calculate_bank_offsets(UniformGrid uniform_grid)
     {
-        int bank_size = scan_key_bounds(Memory.aabb_key_table.gpu.memory(), Main.Memory.hull_count());
+        int bank_size = scan_key_bounds(Memory.aabb_key_table.gpu.memory(), Main.Memory.next_hull());
         uniform_grid.resizeBank(bank_size);
     }
 
@@ -1438,7 +1438,7 @@ public class GPU
         gpu_kernel.set_arg(4, Pointer.to(arg_int(uniform_grid.getX_subdivisions())));
         gpu_kernel.set_arg(5, Pointer.to(arg_int(uniform_grid.get_key_bank_size())));
         gpu_kernel.set_arg(6, Pointer.to(arg_int(uniform_grid.get_directory_length())));
-        gpu_kernel.call(arg_long(Main.Memory.hull_count()));
+        gpu_kernel.call(arg_long(Main.Memory.next_hull()));
     }
 
     public static void calculate_map_offsets(UniformGrid uniform_grid)
@@ -1470,7 +1470,7 @@ public class GPU
         gpu_kernel.set_arg(4, Pointer.to(counts_data));
         gpu_kernel.set_arg(5, Pointer.to(arg_int(uniform_grid.getX_subdivisions())));
         gpu_kernel.set_arg(6, Pointer.to(arg_int(uniform_grid.get_directory_length())));
-        gpu_kernel.call(arg_long(Main.Memory.hull_count()));
+        gpu_kernel.call(arg_long(Main.Memory.next_hull()));
 
         clReleaseMemObject(counts_data);
     }
@@ -1479,7 +1479,7 @@ public class GPU
     {
         var gpu_kernel = Kernel.locate_in_bounds.gpu;
 
-        int hull_count = Main.Memory.hull_count();
+        int hull_count = Main.Memory.next_hull();
 
         int x_subdivisions = uniform_grid.getX_subdivisions();
         physics_buffer.x_sub_divisions = Pointer.to(arg_int(x_subdivisions));
@@ -1508,7 +1508,7 @@ public class GPU
     public static void locate_out_of_bounds()
     {
         var gpu_kernel = Kernel.locate_out_of_bounds.gpu;
-        int armature_count = Main.Memory.armature_count();
+        int armature_count = Main.Memory.next_armature();
 
         int[] counter = new int[]{0};
         var dst_counter = Pointer.to(counter);
@@ -1549,7 +1549,7 @@ public class GPU
 
     public static void delete_and_compact()
     {
-        int armature_count = Main.Memory.armature_count();
+        int armature_count = Main.Memory.next_armature();
         long output_buf_size = (long) Sizeof.cl_int * armature_count;
         long output_buf_size2 = (long) Sizeof.cl_int4 * armature_count;
 
@@ -1580,10 +1580,10 @@ public class GPU
         armature_kernel.set_arg(1, b_mem2.pointer());
 
         linearize_kernel(armature_kernel, armature_count);
-        linearize_kernel(Kernel.compact_bones.gpu, Main.Memory.bone_count());
-        linearize_kernel(Kernel.compact_points.gpu, Main.Memory.point_count());
-        linearize_kernel(Kernel.compact_edges.gpu, Main.Memory.edge_count());
-        linearize_kernel(Kernel.compact_hulls.gpu, Main.Memory.hull_count());
+        linearize_kernel(Kernel.compact_bones.gpu, Main.Memory.next_bone());
+        linearize_kernel(Kernel.compact_points.gpu, Main.Memory.next_point());
+        linearize_kernel(Kernel.compact_edges.gpu, Main.Memory.next_edge());
+        linearize_kernel(Kernel.compact_hulls.gpu, Main.Memory.next_hull());
 
         Main.Memory.notify_compaction(m[0], m[1], m[2], m[3], m[4]);
 
@@ -1704,7 +1704,7 @@ public class GPU
 
     public static void scan_reactions()
     {
-        scan_int_out(Memory.point_reactions.gpu.memory(), Memory.point_offsets.gpu.memory(), Main.Memory.point_count());
+        scan_int_out(Memory.point_reactions.gpu.memory(), Memory.point_offsets.gpu.memory(), Main.Memory.next_point());
 
         // it is important to zero out the reactions buffer after the scan. It will be reused during sorting
         Memory.point_reactions.clear();
@@ -1723,12 +1723,12 @@ public class GPU
     {
         var gpu_kernel = Kernel.apply_reactions.gpu;
         gpu_kernel.set_arg(0, physics_buffer.reactions_out.pointer());
-        gpu_kernel.call(arg_long(Main.Memory.point_count()));
+        gpu_kernel.call(arg_long(Main.Memory.next_point()));
     }
 
     public static void move_armatures()
     {
-        Kernel.move_armatures.gpu.call(arg_long(Main.Memory.armature_count()));
+        Kernel.move_armatures.gpu.call(arg_long(Main.Memory.next_armature()));
     }
 
     public static void resolve_constraints(int edge_steps)
@@ -1743,7 +1743,7 @@ public class GPU
                 ? 1
                 : 0;
             gpu_kernel.set_arg(4, Pointer.to(arg_int(n)));
-            gpu_kernel.call(arg_long(Main.Memory.hull_count()));
+            gpu_kernel.call(arg_long(Main.Memory.next_hull()));
         }
     }
 

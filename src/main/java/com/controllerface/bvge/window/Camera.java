@@ -6,14 +6,11 @@ import org.joml.Vector3f;
 
 public class Camera
 {
-    float projWidth = 100;
-    float projHeight = 100;
-
     private final Matrix4f projectionMatrix;
     private final Matrix4f viewMatrix;
     private final Matrix4f uVP;
     public Vector2f position;
-    public Vector2f projectionSize = new Vector2f(projWidth, projHeight);
+    public Vector2f projectionSize = new Vector2f(1, 1);
 
     private float zoom = 1f;
 
@@ -50,11 +47,6 @@ public class Camera
         return this.viewMatrix;
     }
 
-    public Matrix4f getProjectionMatrix()
-    {
-        return this.projectionMatrix;
-    }
-
     /**
      * This is the view-projection matrix used in uniform values within shaders. It is required
      * to translate world space objects to view space for rendering.
@@ -66,12 +58,12 @@ public class Camera
         return uVP;
     }
 
-    public float getZoom()
+    public float get_zoom()
     {
         return zoom;
     }
 
-    public void addZoom(float value)
+    public void add_zoom(float value)
     {
         this.zoom += value;
         if (zoom < .5f)

@@ -32,7 +32,7 @@ public abstract class GPUProgram
      * code will define matching constants for easy interoperability.
      * todo: generate the GPU code from the CPU constants instead of duplicating the code in both places
      */
-    protected static String const_hull_flags             = read_src("constants/hull_flags.cl");
+    protected static String const_hull_flags              = read_src("constants/hull_flags.cl");
 
     /**
      * Helper functions. Program implementations can use these functions to build out a program,
@@ -76,7 +76,7 @@ public abstract class GPUProgram
     protected Map<Kernel, cl_kernel> kernels = new HashMap<>();
 
     /**
-     * Contains the raw source data, in compilation order, of the program.
+     * Contains the raw source data of the program, in compilation order.
      */
     protected List<String> src = new ArrayList<>();
 

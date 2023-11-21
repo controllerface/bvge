@@ -84,7 +84,7 @@ public class BoneRenderer extends GameSystem
         //  low enough that some batches would be unneeded. This will leak memory resources
         //  so should be adjusted when deleting entities is added.
 
-        var bone_count = Main.Memory.bone_count();
+        var bone_count = Main.Memory.next_bone();
         var needed_batches = bone_count / Constants.Rendering.MAX_BATCH_SIZE;
         var r = bone_count % Constants.Rendering.MAX_BATCH_SIZE;
         if (r > 0)

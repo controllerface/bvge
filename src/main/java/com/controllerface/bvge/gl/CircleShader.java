@@ -31,9 +31,8 @@ public class CircleShader extends AbstractShader
 
     public CircleShader(String filePath)
     {
-        try
+        try (var resource = CircleShader.class.getResourceAsStream("/gl/" + filePath))
         {
-            var resource = CircleShader.class.getResourceAsStream("/gl/" + filePath);
             var glsl_source = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
 
             // normalize source so it works on all platforms

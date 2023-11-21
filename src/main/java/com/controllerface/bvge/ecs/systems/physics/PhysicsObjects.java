@@ -40,7 +40,7 @@ public class PhysicsObjects
 
     public static int particle(float x, float y, float size)
     {
-        int next_armature_id = Main.Memory.next_armature_id();
+        int next_armature_id = Main.Memory.next_armature();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
         var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
@@ -86,7 +86,7 @@ public class PhysicsObjects
 
     public static int tri(float x, float y, float size, int flags)
     {
-        int next_armature_id = Main.Memory.next_armature_id();
+        int next_armature_id = Main.Memory.next_armature();
 
         // get the box mesh
         var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
@@ -146,7 +146,7 @@ public class PhysicsObjects
 
     public static int box(float x, float y, float size, int flags)
     {
-        int next_armature_id = Main.Memory.next_armature_id();
+        int next_armature_id = Main.Memory.next_armature();
 
         // get the box mesh
         var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
@@ -220,7 +220,7 @@ public class PhysicsObjects
     {
         // we need to know the next armature ID before we create it so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
-        int next_armature_id = Main.Memory.next_armature_id();
+        int next_armature_id = Main.Memory.next_armature();
 
         // get the model from the registry
         var model = Models.get_model_by_index(model_index);

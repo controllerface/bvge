@@ -31,12 +31,6 @@ public class Models
     private static final Map<Integer, Boolean> dirty_models = new HashMap<>();
     private static final Map<Integer, Set<Integer>> model_instances = new HashMap<>();
 
-    private static AIScene loadFile(String path)
-    {
-        int flags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
-        return aiImportFile(path, flags);
-    }
-
     private static AIScene loadModelResource(String name) throws IOException
     {
         var model_stream = Models.class.getResourceAsStream(name);
@@ -45,9 +39,9 @@ public class Models
         data.put(model_data);
         data.flip();
         int flags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
-        var x = aiImportFileFromMemory(data, flags, "");
+        var imported = aiImportFileFromMemory(data, flags, "");
         MemoryUtil.memFree(data);
-        return x;
+        return imported;
     }
 
     private static Bone load_bone(AIMesh aiMesh,

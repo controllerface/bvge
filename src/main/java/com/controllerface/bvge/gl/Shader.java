@@ -16,7 +16,7 @@ public class Shader extends AbstractShader
     {
         try
         {
-            // todo: stop this string split stuff and just put the shaders in their own files
+            // todo: clean this up a bit, make it lok more like the circle shader
             var st= Shader.class.getResourceAsStream("/gl/" + filePath);
             String source = new String(st.readAllBytes(), StandardCharsets.UTF_8);//new String(Files.readAllBytes(Paths.get(filePath)));
             source = source.replaceAll("\\r\\n?", "\n");

@@ -59,12 +59,12 @@ public class KBMInput extends GameSystem
 
         if (keyDown[GLFW_KEY_COMMA])
         {
-            Window.get().camera().addZoom(.5f);
+            Window.get().camera().add_zoom(.5f);
         }
 
         if (keyDown[GLFW_KEY_PERIOD])
         {
-            Window.get().camera().addZoom(-.5f);
+            Window.get().camera().add_zoom(-.5f);
         }
     }
 
@@ -99,7 +99,7 @@ public class KBMInput extends GameSystem
     {
         scrollX = xOffset;
         scrollY = yOffset;
-        Window.get().camera().addZoom(-(float) yOffset / 2);
+        Window.get().camera().add_zoom(-(float) yOffset / 2);
     }
 
     public void mouseButtonCallback(long window, int button, int action, int mods)

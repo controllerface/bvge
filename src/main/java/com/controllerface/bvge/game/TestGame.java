@@ -152,6 +152,10 @@ public class TestGame extends GameMode
         var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
         ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
+        // todo: determine if a different ID may be used for identifying entities that is not tied to the
+        //  armature index directly. Now that objects can be deleted, this value can change frequently
+        //  and there is not a mechanism to keep ECS entities updated to compensate. Instead, some unique
+        //  monotonically increasing value could be used, which doesn't change during entity life time
         ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
         ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1500));
     }

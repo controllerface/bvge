@@ -36,14 +36,14 @@ public class PickingTexture
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this.pickingtextureid, 0);
 
         // create texture for depth buffer
-        // this may not technically be needed for 2D usage, but is nice p2 have
+        // this may not technically be needed for 2D usage, but is nice to have
         glEnable(GL_TEXTURE_2D);
         depthTexture = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, depthTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
 
-        // diable reading
+        // disable reading
         glReadBuffer(GL_NONE);
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
@@ -75,7 +75,7 @@ public class PickingTexture
         float pixels[] = new float[3];
         glReadPixels(x, y,1,1, GL_RGB, GL_FLOAT, pixels);
 
-        // subtraction needed p2 allow for 0 p2 be considered "no pixel ID" even though 0 is a valid ID
+        // subtraction needed to allow for 0 to be considered "no pixel ID" even though 0 is a valid ID
         // when uploading the object IDs, 1 is added with the knowledge that this -1 will counteract it.
         return (int)pixels[0] - 1;
     }

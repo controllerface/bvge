@@ -65,61 +65,54 @@ public class Main
         private static final int MAX_HULLS  = 100_000;
         private static final int MAX_POINTS = 1_000_000;
 
-        private volatile static int hull_index       = 0;
-        private volatile static int point_index      = 0;
-        private volatile static int edge_index       = 0;
-        private volatile static int vertex_ref_index = 0;
-        private volatile static int bone_ref_index   = 0;
-        private volatile static int bone_index       = 0;
-        private volatile static int armature_index   = 0;
+        private static int hull_index       = 0;
+        private static int point_index      = 0;
+        private static int edge_index       = 0;
+        private static int vertex_ref_index = 0;
+        private static int bone_ref_index   = 0;
+        private static int bone_index       = 0;
+        private static int armature_index   = 0;
 
-        // The current count of the various types of memory objects are available
-        // through the following accessor methods.
+        /** Pre-calculating the next ID that will be used is helpful for setting up
+         * data structures, for example when loading models, as it allows you to
+         * know the index of an object you will create later. This is helpful when
+         * a child object needs to have a reference to a parent, but the parent
+         * object can't be created until all children have been created.
+         */
 
-        public static int armature_count()
+        public static int next_armature()
         {
             return armature_index / Width.ARMATURE;
         }
 
-        public static int hull_count()
+        public static int next_hull()
         {
             return hull_index / Width.HULL;
         }
 
-        public static int point_count()
+        public static int next_point()
         {
             return point_index / Width.POINT;
         }
 
-        public static int edge_count()
+        public static int next_edge()
         {
             return edge_index / Width.EDGE;
         }
 
-        public static int vertex_ref_count()
+        public static int next_vertex_ref()
         {
             return vertex_ref_index / Width.VERTEX;
         }
 
-        public static int bone_ref_count()
+        public static int next_bone_ref()
         {
             return bone_ref_index / Width.BONE;
         }
 
-        public static int bone_count()
+        public static int next_bone()
         {
             return bone_index / Width.BONE;
-        }
-
-        // Pre-calculating the next ID that will be used is useful for setting up
-        // data structures, for example when loading models, as it allows you to
-        // know the index of an object you will create later. This is helpful when
-        // a child object needs to have a reference to a parent, but the parent
-        // object can't be created until all children have been created.
-
-        public static int next_armature_id()
-        {
-            return armature_index / Width.ARMATURE;
         }
 
         // Creation of new memory objects is available using the following methods
@@ -131,7 +124,7 @@ public class Main
 
         public static int new_edge(int p1, int p2, float l, int flags)
         {
-            GPU.create_edge(edge_count(), p1, p2, l, flags);
+            GPU.create_edge(next_edge(), p1, p2, l, flags);
             var idx = edge_index;
             edge_index += Width.EDGE;
             return idx / Width.EDGE;
@@ -139,7 +132,7 @@ public class Main
 
         public static int new_point(float[] p, int[] t)
         {
-            GPU.create_point(point_count(), p[0], p[1], p[0], p[1], t[0], t[1]);
+            GPU.create_point(next_point(), p[0], p[1], p[0], p[1], t[0], t[1]);
             var idx = point_index;
             point_index += Width.POINT;
             return idx / Width.POINT;
@@ -147,7 +140,7 @@ public class Main
 
         public static int new_hull(float[] transform, float[] rotation, int[] table, int[] flags)
         {
-            GPU.create_hull(hull_count(), transform, rotation, table, flags);
+            GPU.create_hull(next_hull(), transform, rotation, table, flags);
             var idx = hull_index;
             hull_index += Width.HULL;
             return idx / Width.HULL;
@@ -155,7 +148,7 @@ public class Main
 
         public static int new_armature(float x, float y, int[] table, int[] flags)
         {
-            GPU.create_armature(armature_count(), x, y, table, flags);
+            GPU.create_armature(next_armature(), x, y, table, flags);
             var idx = armature_index;
             armature_index += Width.ARMATURE;
             return idx / Width.ARMATURE;
@@ -163,7 +156,7 @@ public class Main
 
         public static int new_vertex_reference(float x, float y)
         {
-            GPU.create_vertex_reference(vertex_ref_count(), x, y);
+            GPU.create_vertex_reference(next_vertex_ref(), x, y);
             var idx = vertex_ref_index;
             vertex_ref_index += Width.VERTEX;
             return idx / Width.VERTEX;
@@ -171,7 +164,7 @@ public class Main
 
         public static int new_bone_reference(float[] bone_data)
         {
-            GPU.create_bone_reference(bone_ref_count(), bone_data);
+            GPU.create_bone_reference(next_bone_ref(), bone_data);
             var idx = bone_ref_index;
             bone_ref_index += Width.BONE;
             return idx / Width.BONE;
@@ -179,7 +172,7 @@ public class Main
 
         public static int new_bone(int id, float[] bone_data)
         {
-            GPU.create_bone(bone_count(), id, bone_data);
+            GPU.create_bone(next_bone(), id, bone_data);
             var idx = bone_index;
             bone_index += Width.BONE;
             return idx / Width.BONE;
@@ -191,10 +184,10 @@ public class Main
                                              int hull_shift,
                                              int armature_shift)
         {
-            edge_index -= (edge_shift * Width.EDGE);
-            bone_index -= (bone_shift * Width.BONE);
-            point_index -= (point_shift * Width.POINT);
-            hull_index -= (hull_shift * Width.HULL);
+            edge_index     -= (edge_shift * Width.EDGE);
+            bone_index     -= (bone_shift * Width.BONE);
+            point_index    -= (point_shift * Width.POINT);
+            hull_index     -= (hull_shift * Width.HULL);
             armature_index -= (armature_shift * Width.ARMATURE);
         }
     }
