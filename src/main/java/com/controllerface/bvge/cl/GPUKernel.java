@@ -122,18 +122,18 @@ public class GPUKernel
      */
     public void call(long[] global_work_size, long[] local_work_size, long[] global_work_offset)
     {
-        var shared_ = shared_memory.toArray(new cl_mem[]{});
+        var shared = shared_memory.toArray(new cl_mem[]{});
 
-        if (shared_.length > 0)
+        if (shared.length > 0)
         {
-            CLUtils.gl_acquire(command_queue, shared_);
+            CLUtils.gl_acquire(command_queue, shared);
         }
 
         k_call(command_queue, kernel, global_work_size, local_work_size, global_work_offset);
 
-        if (shared_.length > 0)
+        if (shared.length > 0)
         {
-            CLUtils.gl_release(command_queue, shared_);
+            CLUtils.gl_release(command_queue, shared);
         }
 
         shared_memory.clear();

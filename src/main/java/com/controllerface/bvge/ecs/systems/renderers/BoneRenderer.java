@@ -27,9 +27,8 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 public class BoneRenderer extends GameSystem
 {
     private static final int VERTEX_SIZE = 2; // a vertex is 2 floats (x,y)
-    //private static final int VERTS_PER_EDGE = 2;
     private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
-    private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * /* VERTS_PER_EDGE * */ VERTEX_SIZE;
+    private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VERTEX_SIZE;
     private static final int BATCH_BUFFER_SIZE = BATCH_VERTEX_COUNT * Float.BYTES;
 
     private final AbstractShader shader;

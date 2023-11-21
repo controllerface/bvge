@@ -178,11 +178,11 @@ public class Main
             return idx / Width.BONE;
         }
 
-        public static void notify_compaction(int edge_shift,
-                                             int bone_shift,
-                                             int point_shift,
-                                             int hull_shift,
-                                             int armature_shift)
+        public static void compact_buffers(int edge_shift,
+                                           int bone_shift,
+                                           int point_shift,
+                                           int hull_shift,
+                                           int armature_shift)
         {
             edge_index     -= (edge_shift * Width.EDGE);
             bone_index     -= (bone_shift * Width.BONE);

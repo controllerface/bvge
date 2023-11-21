@@ -97,18 +97,16 @@ public class CLUtils
 
     public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size)
     {
-        clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
-            global_work_size, null, 0, null, null);
+        k_call(commandQueue, kernel, global_work_size, null, null);
     }
 
-    public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size, long[] local_work_size)
+    public static void k_call(cl_command_queue commandQueue,
+                              cl_kernel kernel,
+                              long[] global_work_size,
+                              long[] local_work_size)
     {
-        int r = clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
-            global_work_size, local_work_size, 0, null, null);
-        if (r != CL_SUCCESS)
-        {
-            System.out.println("WTF!");
-        }
+
+        k_call(commandQueue, kernel, global_work_size, local_work_size, null);
     }
 
     public static void k_call(cl_command_queue commandQueue,
@@ -117,9 +115,17 @@ public class CLUtils
                               long[] local_work_size,
                               long[] global_work_offset)
     {
-        int r = clEnqueueNDRangeKernel(commandQueue, kernel, 1, global_work_offset,
-            global_work_size, local_work_size, 0, null, null);
-        if (r != CL_SUCCESS)
+        int kernel_result = clEnqueueNDRangeKernel(commandQueue,
+            kernel,
+            1,
+            global_work_offset,
+            global_work_size,
+            local_work_size,
+            0,
+            null,
+            null);
+
+        if (kernel_result != CL_SUCCESS)
         {
             System.out.println("WTF!");
         }
@@ -396,5 +402,4 @@ public class CLUtils
         }
         return values;
     }
-
 }

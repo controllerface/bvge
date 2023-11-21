@@ -16,6 +16,7 @@ import com.controllerface.bvge.window.Window;
 public class CameraTracking extends GameSystem
 {
     private final UniformGrid uniformGrid;
+
     public CameraTracking(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);

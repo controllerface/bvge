@@ -520,8 +520,15 @@ public class GPU
 
     private static void cl_read_buffer(cl_mem src, long size, Pointer dst)
     {
-        clEnqueueReadBuffer(command_queue, src, CL_TRUE, 0, size, dst,
-            0, null, null);
+        clEnqueueReadBuffer(command_queue,
+            src,
+            CL_TRUE,
+            0,
+            size,
+            dst,
+            0,
+            null,
+            null);
     }
 
     private static cl_mem cl_new_buffer(long size)
@@ -541,8 +548,15 @@ public class GPU
 
     private static void cl_zero_buffer(cl_mem buffer, long buffer_size)
     {
-        clEnqueueFillBuffer(command_queue, buffer, ZERO_PATTERN, 1, 0, buffer_size,
-            0, null, null);
+        clEnqueueFillBuffer(command_queue,
+            buffer,
+            ZERO_PATTERN,
+            1,
+            0,
+            buffer_size,
+            0,
+            null,
+            null);
     }
 
     private static int work_group_count(int n)
@@ -552,14 +566,14 @@ public class GPU
 
     /**
      * Typically, kernels that operate on core objects are called with the maximum count and no group
-     * size, allowing the OpenCL implementation to slice up all tasks into workgroups, and queue them
+     * size, allowing the OpenCL implementation to slice up all tasks into workgroups and queue them
      * as needed. However, in some cases it is necessary to ensure that, at most, only one workgroup
-     * executes at a time. Cases like buffer compaction, that must be computed in ascending order, with
-     * a guarantee that items that are of a higher index value are always processed after ones with
-     * lower values. This method serves the later use case. The provided kernel is called in a loop,
-     * with each call containing a local work size equal to the global size, forcing all work into a
-     * single work group. The loop uses a global offset to ensure that, on each iteration, the next
-     * group is processed.
+     * executes at a time. For example, buffer compaction, which must be computed in ascending order,
+     * with a guarantee that items that are of a higher index value are always processed after ones
+     * with lower values. This method serves the later use case. The provided kernel is called in a
+     * loop, with each call containing a local work size equal to the global size, forcing all work
+     * into a single work group. The loop uses a global offset to ensure that, on each iteration, the
+     * next group is processed.
      *
      * @param kernel the GPU kernel to linearize
      * @param object_count the number of total kernel threads that will run
@@ -1556,15 +1570,15 @@ public class GPU
         var output_buf_data = cl_new_buffer(output_buf_size);
         var output_buf_data2 = cl_new_buffer(output_buf_size2);
 
-        var b_mem = new GPUMemory(output_buf_data);
-        var b_mem2 = new GPUMemory(output_buf_data2);
+        var del_buffer_1 = new GPUMemory(output_buf_data);
+        var del_buffer_2 = new GPUMemory(output_buf_data2);
 
-        int[] m = scan_deletes(b_mem.memory(), b_mem2.memory(), armature_count);
+        int[] m = scan_deletes(del_buffer_1.memory(), del_buffer_2.memory(), armature_count);
 
         if (m[0] == 0)
         {
-            b_mem.release();
-            b_mem2.release();
+            del_buffer_1.release();
+            del_buffer_2.release();
             return;
         }
 
@@ -1576,8 +1590,8 @@ public class GPU
 
         // as armatures are compacted, the shift buffers for the other components are updated
         var armature_kernel = Kernel.compact_armatures.gpu;
-        armature_kernel.set_arg(0, b_mem.pointer());
-        armature_kernel.set_arg(1, b_mem2.pointer());
+        armature_kernel.set_arg(0, del_buffer_1.pointer());
+        armature_kernel.set_arg(1, del_buffer_2.pointer());
 
         linearize_kernel(armature_kernel, armature_count);
         linearize_kernel(Kernel.compact_bones.gpu, Main.Memory.next_bone());
@@ -1585,10 +1599,10 @@ public class GPU
         linearize_kernel(Kernel.compact_edges.gpu, Main.Memory.next_edge());
         linearize_kernel(Kernel.compact_hulls.gpu, Main.Memory.next_hull());
 
-        Main.Memory.notify_compaction(m[0], m[1], m[2], m[3], m[4]);
+        Main.Memory.compact_buffers(m[0], m[1], m[2], m[3], m[4]);
 
-        b_mem.release();
-        b_mem2.release();
+        del_buffer_1.release();
+        del_buffer_2.release();
     }
 
     public static void aabb_collide()
@@ -2196,7 +2210,7 @@ public class GPU
 
     //#endregion
 
-    //#region Public API
+    //#region Misc. Public API
 
     public static cl_program gpu_p(List<String> src_strings)
     {
