@@ -51,5 +51,4 @@ public class PrepareBones_k extends GPUKernel
     {
         new_arg(5, Sizeof.cl_mem, hull_flags);
     }
-
 }

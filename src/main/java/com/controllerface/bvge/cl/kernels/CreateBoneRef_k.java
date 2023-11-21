@@ -21,5 +21,4 @@ public class CreateBoneRef_k extends GPUKernel
     {
         new_arg(0, Sizeof.cl_mem, bone_ref);
     }
-
 }

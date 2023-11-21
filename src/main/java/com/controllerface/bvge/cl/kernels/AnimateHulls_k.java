@@ -55,5 +55,4 @@ public class AnimateHulls_k extends GPUKernel
     {
         new_arg(6, Sizeof.cl_mem, bone_instances);
     }
-
 }

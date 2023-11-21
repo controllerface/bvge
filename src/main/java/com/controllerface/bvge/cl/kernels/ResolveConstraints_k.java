@@ -38,5 +38,4 @@ public class ResolveConstraints_k extends GPUKernel
     {
         new_arg(3, Sizeof.cl_mem, edges);
     }
-
 }

@@ -67,7 +67,7 @@ public class PhysicsObjects
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
-        var angle = MathEX.angleBetween2Lines(l1, l2);
+        var angle = MathEX.angle_between_lines(l1, l2);
         var table = CLUtils.arg_int4(p1_index, p1_index, edge_index, edge_index);
         var transform = CLUtils.arg_float4(x, y, size, size / 2.0f);
         var rotation = CLUtils.arg_float2(0, angle);
@@ -114,7 +114,7 @@ public class PhysicsObjects
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
         var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
-        var angle = MathEX.angleBetween2Lines(l1, l2);
+        var angle = MathEX.angle_between_lines(l1, l2);
 
         // box sides
         var start_edge = Main.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
@@ -177,7 +177,7 @@ public class PhysicsObjects
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
         var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
-        var angle = MathEX.angleBetween2Lines(l1, l2);
+        var angle = MathEX.angle_between_lines(l1, l2);
 
         // box sides
         var start_edge = Main.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
@@ -368,7 +368,7 @@ public class PhysicsObjects
             MathEX.centroid(vector_buffer, hull);
             var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
             var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, hull[0].x(), hull[0].y());
-            var angle = MathEX.angleBetween2Lines(l1, l2);
+            var angle = MathEX.angle_between_lines(l1, l2);
 
             var table = CLUtils.arg_int4(start_point, end_point, start_edge, end_edge);
             var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);

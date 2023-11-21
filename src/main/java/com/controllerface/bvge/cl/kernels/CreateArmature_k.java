@@ -35,6 +35,4 @@ public class CreateArmature_k extends GPUKernel
     {
         new_arg(2, Sizeof.cl_mem, hull_table);
     }
-
-
 }

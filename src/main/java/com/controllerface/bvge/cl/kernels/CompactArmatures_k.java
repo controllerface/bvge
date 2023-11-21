@@ -99,5 +99,4 @@ public class CompactArmatures_k extends GPUKernel
     {
         new_arg(15, Sizeof.cl_mem, hull_shift);
     }
-
 }

@@ -30,5 +30,4 @@ public class BuildKeyMap_k extends GPUKernel
     {
         new_arg(1, Sizeof.cl_mem, edges);
     }
-
 }

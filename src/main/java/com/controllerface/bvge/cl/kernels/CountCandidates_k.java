@@ -25,5 +25,4 @@ public class CountCandidates_k extends GPUKernel
     {
         new_arg(0, Sizeof.cl_mem, aabb_key_table);
     }
-
 }

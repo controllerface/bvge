@@ -86,5 +86,4 @@ public class Integrate_k extends GPUKernel
     {
         new_arg(11, Sizeof.cl_mem, point_anti_gravity);
     }
-
 }

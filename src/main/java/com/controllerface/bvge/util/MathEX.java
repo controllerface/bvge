@@ -60,17 +60,17 @@ public class MathEX
         vec.y = yPrime;
     }
 
-    public static float degreesToRadians(float degrees)
+    public static float degrees_to_radians(float degrees)
     {
         return (float)(degrees * (Math.PI / 180));
     }
 
-    public static float radiansToDegrees(float radians)
+    public static float radians_to_degrees(float radians)
     {
         return (float)(Math.PI / radians);
     }
 
-    public static float angleBetween2Lines(float[] line1, float[] line2)
+    public static float angle_between_lines(float[] line1, float[] line2)
     {
         float l1x1 = line1[0];
         float l1y1 = line1[1];

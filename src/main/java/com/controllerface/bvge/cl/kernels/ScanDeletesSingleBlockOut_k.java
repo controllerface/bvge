@@ -37,5 +37,4 @@ public class ScanDeletesSingleBlockOut_k extends GPUKernel
     {
         new_arg(2, Sizeof.cl_mem, element_tables);
     }
-
 }
