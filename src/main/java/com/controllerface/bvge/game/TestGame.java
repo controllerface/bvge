@@ -35,7 +35,7 @@ public class TestGame extends GameMode
 
     private final UniformGrid uniformGrid = new UniformGrid();
 
-    private void genCrates(int box_size, float spacing, float size, float start_x, float start_y)
+    private void genSquares(int box_size, float spacing, float size, float start_x, float start_y)
     {
         System.out.println("generating: " + box_size * box_size + " Crates..");
         for (int i = 0; i < box_size; i++)
@@ -271,10 +271,10 @@ public class TestGame extends GameMode
 
 
 
-        genCircles(70, 9f, 5f, 0, 100);
-        genCrates(70,  5f, 5f, 100, 100);
-        //genCrates2(20,  6, 0.015f, 0, 100);
-        genTriangles(70,  7f, 5f, 0, 100);
+        //genCircles(100, 6f, 5f, 0, 100);
+        genSquares(100,  6f, 5f, 100, 100);
+        //genCrates2(100,  6, 0.020f, 0, 100);
+        //genTriangles(100,  7f, 5f, 0, 100);
 
         genFloor(10, 120f, 150f, -100, -100);
         genWall(5, 120f, 150f, -220, -100);

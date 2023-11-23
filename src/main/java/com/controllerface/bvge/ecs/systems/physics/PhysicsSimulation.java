@@ -18,12 +18,12 @@ public class PhysicsSimulation extends GameSystem
 
     // todo: gravity should not be a constant but calculated based on proximity next to planets and other large bodies
     private final static float GRAVITY_X = 0;
-    private final static float GRAVITY_Y = 0;//-(9.8f * 50) * SUB_STEPS;
+    private final static float GRAVITY_Y = -(9.8f * 50) * SUB_STEPS;
 
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
     //  or make damping interact with the gravity vector in some way.
-    private final static float MOTION_DAMPING = 1;//.990f;
+    private final static float MOTION_DAMPING = .990f;
 
     private final UniformGrid uniform_grid;
     private PhysicsBuffer physics_buffer;
@@ -125,14 +125,8 @@ public class PhysicsSimulation extends GameSystem
         // Now that all animated hulls are in their initial frame positions, we perform the mathematical steps
         // to calculate where the individual points of each hull currently are. When this call returns, all
         // tracked physics objects will be in their new locations, and points will have their current and
-        // previous location values updated for the current tick.
+        // previous location values updated for this tick cycle.
         GPU.integrate(dt, uniform_grid);
-
-        // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain their
-        // defined shapes. Without this step, the individual points of the tracked physics hulls will deform on
-        // impact, and may fly off in random directions, typically causing simulation failure. The number of steps
-        // that are performed each tick has an impact on the accuracy of the hull boundaries within the simulation.
-        GPU.resolve_constraints(EDGE_STEPS);
 
         /*
         - Broad Phase Collision -
@@ -140,11 +134,10 @@ public class PhysicsSimulation extends GameSystem
         Before the final and more computationally expensive collision checks are performed, A broad phase check
         is done to narrow down the potential collision candidates. Because this is implemented using parallelized
         compute kernels, the process is more verbose than a traditional CPU based approach. At a high level, this
-        process is used in place of more complex constructs like Map<> and Set<>, but with capacities of backing
-        structures being pre-computed, to fulfill the fixed memory size requirements of the GPU kernel.
+        process is used in place of more complex constructs like Map<> and Set<>, with capacities of backing
+        structures being pre-computed to fulfill the fixed memory size requirements of the GPU kernel.
 
-        There are two top-level "conceptual" structures, a key bank and a key map, and there is the concept
-        of a key itself.
+        There are three top-level "conceptual" structures, a key bank and a key map, and the key itself.
 
         Keys in this context are simply two-dimensional integer vectors that point to a "cell" of the uniform
         grid, which is a structure that imposes a coarse grid over the viewable area of the screen. For every hull,
@@ -190,19 +183,21 @@ public class PhysicsSimulation extends GameSystem
         GPU.build_key_map(uniform_grid);
 
         // Hulls are now filtered to ensure that only objects that are within the uniform grid boundary
-        // are considered for collisions.
+        // are considered for collisions. In this step, the maximum size of the match table is calculated
+        // as well, which is needed in subsequent steps.
         GPU.locate_in_bounds(uniform_grid);
 
-        // In a first pass, the number of total possible candidates is calculated for each hull. This is
-        // necessary to correctly size a match table buffer which is used in the GPU kernel.
-        GPU.count_candidates();
+        // In the first pass, the number of total possible candidates is calculated for each hull. This is
+        // necessary to correctly determine how much of the table each hull will require.
+        GPU.calculate_match_candidates();
 
-        // In a second pass, candidate sizes are scanned to calculate the required size of the match table.
-        GPU.count_matches();
+        // In a second pass, candidate counts are scanned to determine the offsets into the match table that
+        // correspond to each hull that will be checked for collisions.
+        GPU.calculate_match_offsets();
 
         // Finally, the actual broad phase collision check is performed. Once complete, the match table will
         // be filled in with all matches. There may be some unused sections of the table, because some objects
-        // may be eliminated as candidates during the check.
+        // may be eliminated during the check.
         GPU.aabb_collide();
 
         // This last step cleans up the match table, retaining only the used sections of the buffer.
@@ -272,12 +267,17 @@ public class PhysicsSimulation extends GameSystem
         this.accumulator += dt;
         while (this.accumulator >= TICK_RATE)
         {
-            //run_once = true;
             float sub_step = TICK_RATE / SUB_STEPS;
             for (int i = 0; i < SUB_STEPS; i++)
             {
                 this.tickSimulation(sub_step);
                 this.accumulator -= sub_step;
+
+                // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain their
+                // defined shapes. Without this step, the individual points of the tracked physics hulls will deform on
+                // impact, and may fly off in random directions, typically causing simulation failure. The number of steps
+                // that are performed each tick has an impact on the accuracy of the hull boundaries within the simulation.
+                GPU.resolve_constraints(EDGE_STEPS);
                 physics_buffer.finishTick();
             }
 
@@ -287,7 +287,6 @@ public class PhysicsSimulation extends GameSystem
         // to ensure buffer compaction happens as infrequently as possible.
         GPU.locate_out_of_bounds();
         GPU.delete_and_compact();
-
 
         float drift = this.accumulator / TICK_RATE;
         if (drift != 0)

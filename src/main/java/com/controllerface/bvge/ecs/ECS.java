@@ -23,10 +23,6 @@ public class ECS
 
     private void registerComponent(Component component)
     {
-        // todo: define a "defaults" system that maps component enum type to a factory
-        //  of some kind that generates a proper initial or "empty" value to use here.
-        //  Then optionally, calling code may chose to provide a pre-constructed object
-        //  that can be used to override the default.
         components.put(component, new HashMap<>());
     }
 
@@ -60,7 +56,7 @@ public class ECS
     /**
      * Retrieve the Map of components (by entity) for a given component.
      *
-     * @param type the type of component map p2 retrieve
+     * @param type the type of component map to retrieve
      * @return the components map for the given component type. may be empty
      */
     public Map<String, GameComponent> getComponents(Component type)
@@ -69,7 +65,7 @@ public class ECS
     }
 
     /**
-     * Each registered system should do dt amount of work
+     * Each registered system should do an amount of work equal to the delta time (dt).
      *
      * @param dt amount of work time to spend
      */

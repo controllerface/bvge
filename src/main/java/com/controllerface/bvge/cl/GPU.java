@@ -923,7 +923,7 @@ public class GPU
         locate_in_bounds_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
         Kernel.locate_in_bounds.set_kernel(locate_in_bounds_k);
 
-        var count_candidates_k = new  CountCandidates_k(command_queue, Program.locate_in_bounds.gpu);
+        var count_candidates_k = new CountCandidates_k(command_queue, Program.locate_in_bounds.gpu);
         count_candidates_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
         Kernel.count_candidates.set_kernel(count_candidates_k);
 
@@ -1534,7 +1534,7 @@ public class GPU
         clReleaseMemObject(counter_data);
     }
 
-    public static void count_candidates()
+    public static void calculate_match_candidates()
     {
         var gpu_kernel = Kernel.count_candidates.gpu;
 
@@ -1551,7 +1551,7 @@ public class GPU
         gpu_kernel.call(arg_long(physics_buffer.get_candidate_buffer_count()));
     }
 
-    public static void count_matches()
+    public static void calculate_match_offsets()
     {
         int buffer_count = physics_buffer.get_candidate_buffer_count();
         long offset_buf_size = (long) Sizeof.cl_int * buffer_count;
@@ -1582,7 +1582,7 @@ public class GPU
             return;
         }
 
-        // shift buffers are cleared before compacting
+        // shift buffers are cleared before compacting to clean out any data from the last tick
         Memory.hull_shift.clear();
         Memory.edge_shift.clear();
         Memory.point_shift.clear();
