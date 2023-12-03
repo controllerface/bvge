@@ -80,18 +80,19 @@ __kernel void aabb_collide(__global float4 *bounds,
             bool no_bones_c = (candiate_flags.x & NO_BONES) !=0;
             bool is_static_c = (candiate_flags.x & IS_STATIC) !=0;
 
+            // no static/static collision permitted
             if (is_static && is_static_c)
             {
                 continue;
             }
 
-            if (no_bones != no_bones_c)
-            {
-                if (!is_static_c && !is_static_c)
-                {
-                    continue;
-                }
-            }
+            // if (no_bones != no_bones_c)
+            // {
+            //     if (!is_static_c && !is_static_c)
+            //     {
+            //         continue;
+            //     }
+            // }
 
             // broad phase collision check
             float4 candidate = bounds[next];

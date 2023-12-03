@@ -182,7 +182,7 @@ inline void polygon_collision(int b1_id, int b2_id,
     //  the goal is to find the normalized tangent to the colliding edge, and apply a reaction
     //  that is opposite to the tangent, equal to the component portion of the effective velocity
     //  that is the same direction as the tangent. Note, static objects apply friction to non-statics.
-    //  non-statics resolve to largest object, in case of tie, largest friction value
+    //  non-statics resolve to largest object, in case of tie, split the difference?
     // the above changes will need to be made to the other collision kernels as well
 
     float2 collision_vector = normal * min_distance;

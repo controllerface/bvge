@@ -35,11 +35,6 @@ __kernel void sat_collide(__global int2 *candidates,
     bool b1s = (hull_1_flags.x & IS_STATIC) !=0;
     bool b2s = (hull_2_flags.x & IS_STATIC) !=0;
     
-    if (b1s && b2s) // no collisions between static objects todo: probably can weed these out earlier, during aabb checks
-    {
-        return;
-    }
-
     bool b1_is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
     bool b2_is_circle = (hull_2_flags.x & IS_CIRCLE) !=0;
 
@@ -135,7 +130,7 @@ __kernel void apply_reactions(__global float2 *reactions,
     // get the offset into the reaction buffer corresponding to this point
     int reaction_offset = point_offsets[gid];
     
-    // store the initial distance and previous position. These are usedf after
+    // store the initial distance and previous position. These are used after
     // adjustment is made to re-adjust the previous position of the point. This
     // is done as a best effort to conserve momentum. 
     float2 initial_tail = point.zw;
@@ -164,6 +159,9 @@ __kernel void apply_reactions(__global float2 *reactions,
         point.zw = point.xy - initial_dist * adjusted_offset;
     }
 
+    // todo: actual gravity vector should be provided, when it can change this should also be changable
+    //  right now it is a static direction. note that magnitude of gravity is not important, only direction
+
     // in addition to velocity preservation, to aid in stabiliy, a non-real force of anti-gravity
     // is modeled to assist in keeping objects from colliding in the direction of gravity. This
     // adjustment is subtle and does not overcome all rigid-body simulation errors, but helps
@@ -172,17 +170,9 @@ __kernel void apply_reactions(__global float2 *reactions,
     float2 heading = point.xy - point.zw;
     float ag = calculate_anti_gravity(g, heading);
 
-    // todo: actual gravity vector should be provided, when it can change this should also be changable
-    //  right now it is a static direction. note that magnitude of gravity is not important, only direction
-
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
-    // than it is against it, so we clamp to 0. 
-    if (ag < 0.0f) ag = 0.0f;
-
-    // some anti-gravity experiment values. It may be useful to define a multiplier value on some particles
-    // to get interesting effects. 
-    if (ag > 0.0f) ag = 1.0f;
-    //if (ag > 0.0f) ag *= 2.0f;
+    // than it is against it, so we clamp to 0.Otherwise boost to 1 for the best stability enchancement.
+    ag = ag < 0.0f ? 0.0f : 1.0f;
 
     anti_gravity[gid] = ag;
     points[gid] = point;

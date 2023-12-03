@@ -12,9 +12,9 @@ public class Main
      * Calling code uses this object as single access point to the core memory that
      * is involved in the game engine's operation. The memory being used is resident
      * on the GPU, so this class is essentially a direct interface into GPU memory.
-     * This class keeps track of the number of each "top-level" memory object, which
-     * are generally categorized as any object that is composed of various primitive
-     * types.
+     * This class keeps track of the number of "top-level" memory objects, which are
+     * generally defined as any "logical object" that is composed of various primitive
+     * values.
      * Typically, a method is exposed, that accepts as parameters, the various
      * components that describe an object. These methods in turn delegate the memory
      * access calls to the GPU class. In practice, this means that the actual buffers
@@ -73,13 +73,6 @@ public class Main
         private static int bone_index       = 0;
         private static int armature_index   = 0;
 
-        /** Pre-calculating the next ID that will be used is helpful for setting up
-         * data structures, for example when loading models, as it allows you to
-         * know the index of an object you will create later. This is helpful when
-         * a child object needs to have a reference to a parent, but the parent
-         * object can't be created until all children have been created.
-         */
-
         public static int next_armature()
         {
             return armature_index / Width.ARMATURE;
@@ -114,8 +107,6 @@ public class Main
         {
             return bone_index / Width.BONE;
         }
-
-        // Creation of new memory objects is available using the following methods
 
         public static int new_edge(int p1, int p2, float l)
         {

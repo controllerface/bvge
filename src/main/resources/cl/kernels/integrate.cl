@@ -1,10 +1,5 @@
 inline float2 generate_counter_vector(float2 vector, float counter_scale)
 {
-    // if (counter_scale < .01)
-    // {
-    //     return (float2)(0.0f, 0.0f);
-    // }
-
     float2 neg;
     neg.x = -vector.x * (counter_scale);  
     neg.y = -vector.y * (counter_scale); 
@@ -306,7 +301,6 @@ __kernel void integrate(
         bounds_bank.y = 0;
     }
 
-    // store updated hull and bounds data in result buffers
     bounds[gid] = bounding_box;
     hulls[gid] = hull;
     armature_accel[gid] = acceleration;

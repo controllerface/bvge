@@ -22,12 +22,6 @@ inline DropCounts calculate_drop_counts(int armature_id,
     int4 armature_flag = armature_flags[armature_id];
     bool deleted = (armature_flag.z & OUT_OF_BOUNDS) !=0;
             
-            
-    //printf("debug delete hit: %d", deleted);
-            
-                        
-    //printf("debug delete hit: %d", deleted);
-            
     if (deleted)
     {
         drop_counts.armature_count = 1;
@@ -74,16 +68,10 @@ __kernel void locate_out_of_bounds(__global int2 *hull_tables,
 
     if (out_count == hull_count)
     {
-        // todo: this could be made configurable. This effectively limits 
-        // how many objects can be deleted per physics tick.
-        // int i = atomic_inc(&counter[0]);
-        // if (i < 1024)
-        {
-            int4 armature_flag = armature_flags[gid];
-            int z = armature_flag.z;
-            z = (z | OUT_OF_BOUNDS);
-            armature_flags[gid].z = z;
-        }
+        int4 armature_flag = armature_flags[gid];
+        int z = armature_flag.z;
+        z = (z | OUT_OF_BOUNDS);
+        armature_flags[gid].z = z;
     }
 }
 

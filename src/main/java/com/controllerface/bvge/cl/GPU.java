@@ -38,29 +38,36 @@ public class GPU
     private static final Pointer ZERO_PATTERN = Pointer.to(new int[]{0});
 
     /**
-     * Memory that is shared between Open CL and Open GL contexts
+     * Memory that is shared between Open CL and Open GL contexts.
      */
     private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
     //#endregion
 
     //#region Workgroup Variables
 
+    /*
+      These values are re-calculated at startup to match the user's hardware.
+     */
+
     /**
-     * These values are re-calculated at startup to match the user's hardware. The max work group is the
-     * largest group of calculations that can be done in a single "warp" or "wave" of GPU processing.
-     * Related to this, we store a max scan block, which is used for variants of the prefix scan kernels.
-     * The local work default is simply the max group size formatted as a single element argument array,
-     * making it simpler to use for Open Cl calls which expect that format.
+     * The largest group of calculations that can be done in a single "warp" or "wave" of GPU processing.
      */
     private static int max_work_group_size = 0;
+
+    /**
+     * Used for the prefix scan kernels and their variants.
+     */
     private static long max_scan_block_size = 0;
+
+    /**
+     * The max group size formatted as a single element array, making it simpler to use for Open Cl calls.
+     */
     private static long[] local_work_default = arg_long(0);
 
     /**
-     * This convenience array defines a work group size of 1, which is primarily used for setting up
-     * data buffers at startup. Generally speaking, kernels of this size should be used sparingly, and
-     * code should favor making bulk calls, however there are certain use cases where it makes sense to
-     * perform a single operation on some GPU memory.
+     * This convenience array defines a work group size of 1, used primarily for setting up data buffers at
+     * startup. Kernels of this size should be used sparingly, favor making bulk calls. However, there are
+     * specific use cases where it makes sense to perform a singular operation on GPU memory.
      */
     private static final long[] global_single_size = arg_long(1);
 
@@ -96,12 +103,6 @@ public class GPU
 
     //#region Program Objects
 
-    /**
-     * Enumerates all existing GPU programs. Programs contain one or more "kernels". A kernel is
-     * effectively an entry point into a small, self-contained, function that operates on memory.
-     * Program implementations are responsible for creating and registering these kernel objects.
-     * At runtime, the kernels are called using the Open CL API.
-     */
     private enum Program
     {
         aabb_collide(new AabbCollide()),
@@ -139,10 +140,6 @@ public class GPU
 
     //#region Kernel Objects
 
-    /**
-     * Kernel function names. Program implementations use this enum to instantiate kernel objects
-     * with a specific name, which are then called using the various methods of the GPU class.
-     */
     public enum Kernel
     {
         aabb_collide,
@@ -213,11 +210,6 @@ public class GPU
 
     //#region Memory Objects
 
-    /**
-     * Memory buffers that store data used within the various kernel functions. Each buffer
-     * has a different layout, but will align to an Open CL supported primitive type, such as
-     * int, float or some vectorized type like, int2 or float4.
-     */
     private enum Memory
     {
         /*
@@ -227,7 +219,7 @@ public class GPU
          */
 
         /**
-         * Vertex information for loaded models. Values are float2 with the following mappings:
+         * Vertex information for loaded models:
          * -
          * x: x position
          * y: y position
@@ -236,7 +228,7 @@ public class GPU
         vertex_references(Sizeof.cl_float2),
 
         /**
-         * Bone offset reference matrices of loaded models. Values are float16 with the following mappings:
+         * Bone offset reference matrices of loaded models:
          * -
          * s0: (m00) transformation matrix column 1 row 1
          * s1: (m01) transformation matrix column 1 row 2
@@ -264,7 +256,7 @@ public class GPU
          */
 
         /**
-         * Individual points (vertices) of tracked physics hulls. Values are float4 with the following mappings:
+         * Individual points (vertices) of tracked physics hulls:
          * -
          * x: current x position
          * y: current y position
@@ -275,7 +267,7 @@ public class GPU
         points(Sizeof.cl_float4),
 
         /**
-         * Reaction counts for points on tracked physics hulls. Values are int with the following mapping:
+         * Reaction counts for points on tracked physics hulls:
          * -
          * value: reaction count
          * -
@@ -283,7 +275,7 @@ public class GPU
         point_reactions(Sizeof.cl_int),
 
         /**
-         * Reaction offsets for points on tracked physics hulls. Values are int with the following mapping:
+         * Reaction offsets for points on tracked physics hulls:
          * -
          * value: reaction buffer offset
          * -
@@ -291,7 +283,7 @@ public class GPU
         point_offsets(Sizeof.cl_int),
 
         /**
-         * Non-real force modeled for stability of colliding particles. Values are float with the following mapping:
+         * Non-real force modeled for stability of colliding particles:
          * -
          * value: antigravity magnitude
          * -
@@ -299,7 +291,7 @@ public class GPU
         point_anti_gravity(Sizeof.cl_float),
 
         /**
-         * Indexing table for points of tracked physics hulls. Values are int2 with the following mappings:
+         * Indexing table for points of tracked physics hulls:
          * -
          * x: reference vertex index
          * y: bone index (todo: also used as a proxy for hull ID, based on alignment, but they should be separate)
@@ -313,7 +305,7 @@ public class GPU
          */
 
         /**
-         * Edges of tracked physics hulls. Values are float4 with the following mappings:
+         * Edges of tracked physics hulls:
          * -
          * x: point 1 index
          * y: point 2 index
@@ -330,7 +322,7 @@ public class GPU
          */
 
         /**
-         * Positions of tracked hulls. Values are float4 with the following mappings:
+         * Positions of tracked hulls:
          * -
          * x: current x position
          * y: current y position
@@ -341,7 +333,7 @@ public class GPU
         hulls(Sizeof.cl_float4),
 
         /**
-         * Rotation information about tracked physics hulls. Values are float2 with the following mappings:
+         * Rotation information about tracked physics hulls:
          * -
          * x: initial reference angle
          * y: current rotation
@@ -350,7 +342,7 @@ public class GPU
         hull_rotation(Sizeof.cl_float2),
 
         /**
-         * Indexing table for tracked physics hulls. Values are int4 with the following mappings:
+         * Indexing table for tracked physics hulls:
          * -
          * x: start point index
          * y: end point index
@@ -361,7 +353,7 @@ public class GPU
         hull_element_table(Sizeof.cl_int4),
 
         /**
-         * Flags that related to tracked physics hulls. Values are int2 with the following mappings:
+         * Flags that related to tracked physics hulls:
          * -
          * x: hull flags (bit-field)
          * y: armature id
@@ -370,7 +362,7 @@ public class GPU
         hull_flags(Sizeof.cl_int2),
 
         /**
-         * Axis-aligned bounding boxes of tracked physics hulls. Values are float4 with the following mappings:
+         * Axis-aligned bounding boxes of tracked physics hulls:
          * -
          * x: corner x position
          * y: corner y position
@@ -381,7 +373,7 @@ public class GPU
         aabb(Sizeof.cl_float4),
 
         /**
-         * Spatial partition index information for tracked physics hulls. Values are int4 with the following mappings:
+         * Spatial partition index information for tracked physics hulls:
          * -
          * x: minimum x key index
          * y: maximum x key index
@@ -392,7 +384,7 @@ public class GPU
         aabb_index(Sizeof.cl_int4),
 
         /**
-         * Spatial partition key bank information for tracked physics hulls. Values are int2 with the following mappings:
+         * Spatial partition key bank information for tracked physics hulls:
          * -
          * x: key bank offset
          * y: key bank size
@@ -406,7 +398,7 @@ public class GPU
          */
 
         /**
-         * Bone offset animation matrices of tracked physics hulls. Values are float16 with the following mappings:
+         * Bone offset animation matrices of tracked physics hulls:
          * -
          * s0: (m00) transformation matrix column 1 row 1
          * s1: (m01) transformation matrix column 1 row 2
@@ -429,7 +421,7 @@ public class GPU
         bone_instances(Sizeof.cl_float16),
 
         /**
-         * Reference bone index of bones used for tracked physics hulls. Values are int with the following mapping:
+         * Index into the bone reference buffer used for tracked physics hulls:
          * -
          * value: bone reference index
          * -
@@ -442,7 +434,7 @@ public class GPU
          */
 
         /**
-         * Armature information for tracked physics hulls. Values are float4 with the following mappings:
+         * Armature information for tracked physics hulls:
          * -
          * x: current x position
          * y: current y position
@@ -453,7 +445,7 @@ public class GPU
         armatures(Sizeof.cl_float4),
 
         /**
-         * Flags for an armature. Values are int with the following mapping:
+         * Flags for an armature:
          * -
          * x: root hull index
          * y: model id
@@ -464,7 +456,7 @@ public class GPU
         armature_flags(Sizeof.cl_int4),
 
         /**
-         * Acceleration value of an armature. Values are float2 with the following mappings:
+         * Acceleration value of an armature:
          * -
          * x: current x acceleration
          * y: current y acceleration
@@ -473,7 +465,7 @@ public class GPU
         armature_accel(Sizeof.cl_float2),
 
         /**
-         * Indexing table for tracked armatures. Values are int2 with the following mappings:
+         * Indexing table for tracked armatures:
          * -
          * x: start hull index
          * y: end hull index
@@ -481,14 +473,18 @@ public class GPU
          */
         armature_hull_table(Sizeof.cl_int2),
 
-
+        /**
+         * During the armature deletion process, these buffers are written to, and store the number of
+         * positions that the corresponding values must shift left within their own buffers when the
+         * buffer compaction step is reached. Each index is aligned with the corresponding data type
+         * that will be shifted. I.e. every bone in the bone buffer has a corresponding entry in the
+         * bone shift buffer. Points, edges, and bones work the same way.
+         */
         bone_shift(Sizeof.cl_int),
-
         point_shift(Sizeof.cl_int),
-
         edge_shift(Sizeof.cl_int),
-
         hull_shift(Sizeof.cl_int),
+
         ;
 
         GPUMemory gpu;

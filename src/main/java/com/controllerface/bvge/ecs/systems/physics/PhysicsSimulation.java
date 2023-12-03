@@ -12,13 +12,15 @@ public class PhysicsSimulation extends GameSystem
 {
     private final static float TARGET_FPS = 60.0f;
     private final static float TICK_RATE = 1.0f / TARGET_FPS;
-    private final static int SUB_STEPS = 4;
-    private final static int EDGE_STEPS = 4;
+    private final static int SUB_STEPS = 8;
+    private final static int EDGE_STEPS = 8;
+    private final static float GRAVITY_MAGNITUDE = -9.8f * 4;
+
     private float accumulator = 0.0f;
 
     // todo: gravity should not be a constant but calculated based on proximity next to planets and other large bodies
     private final static float GRAVITY_X = 0;
-    private final static float GRAVITY_Y = -(9.8f * 50) * SUB_STEPS;
+    private final static float GRAVITY_Y = GRAVITY_MAGNITUDE * TARGET_FPS;
 
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
@@ -120,7 +122,6 @@ public class PhysicsSimulation extends GameSystem
         // what is actually moved, and the result of the hull movement is used to position the original mesh for
         // rendering. This separation is necessary as model geometry is too complex to use as a collision boundary.
         GPU.animate_hulls();
-
 
         // Now that all animated hulls are in their initial frame positions, we perform the mathematical steps
         // to calculate where the individual points of each hull currently are. When this call returns, all
@@ -288,15 +289,16 @@ public class PhysicsSimulation extends GameSystem
         GPU.locate_out_of_bounds();
         GPU.delete_and_compact();
 
-        float drift = this.accumulator / TICK_RATE;
-        if (drift != 0)
-        {
-            // todo: check if this needs to be done or not
-            //  initial visuals without it don't look bad, but would be good to see if there's some
-            //  kind of improvement if the lerp is done. It should only affect the visual location of
-            //  objects, not their actual location.
-            //this.lerp(drift);
-        }
+        // todo: check if this needs to be done or not
+        //  initial visuals without it don't look bad, but would be good to see if there's some
+        //  kind of improvement if the lerp is done. It should only affect the visual location of
+        //  objects, not their actual location.
+//        float drift = this.accumulator / TICK_RATE;
+//        if (drift != 0)
+//        {
+//
+//            //this.lerp(drift);
+//        }
     }
 
 
