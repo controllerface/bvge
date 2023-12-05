@@ -206,8 +206,6 @@ public class Models
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
         var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node, hull_table);
 
-        // todo: generate the convex hull here, just once and re-use later
-
         Meshes.register_mesh(model_name, mesh_name, new_mesh);
         meshes[mesh_index] = new_mesh;
     }
