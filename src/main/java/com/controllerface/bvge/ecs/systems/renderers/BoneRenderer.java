@@ -31,13 +31,15 @@ public class BoneRenderer extends GameSystem {
     private final AbstractShader shader;
     private int vao_id, vbo_id;
 
-    public BoneRenderer(ECS ecs) {
+    public BoneRenderer(ECS ecs)
+    {
         super(ecs);
         this.shader = Assets.shader("bone_shader.glsl");
         init();
     }
 
-    public void init() {
+    public void init()
+    {
         // Generate and bind a Vertex Array Object
         vao_id = glGenVertexArrays();
         glBindVertexArray(vao_id); // this sets this VAO as being active
@@ -61,7 +63,8 @@ public class BoneRenderer extends GameSystem {
     }
 
     @Override
-    public void tick(float dt) {
+    public void tick(float dt)
+    {
         glBindVertexArray(vao_id);
 
         shader.use();
