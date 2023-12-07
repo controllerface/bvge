@@ -465,6 +465,14 @@ public class GPU
         armature_accel(Sizeof.cl_float2),
 
         /**
+         * Mass value of an armature:
+         * -
+         * value: mass of the armature
+         * -
+         */
+        armature_mass(Sizeof.cl_float),
+
+        /**
          * Indexing table for tracked armatures:
          * -
          * x: start hull index
@@ -663,6 +671,7 @@ public class GPU
         //  limits on armatures and other data types.
 
         Memory.armature_accel.init(max_hulls);
+        Memory.armature_mass.init(max_hulls);
         Memory.hull_rotation.init(max_hulls);
         Memory.hull_element_table.init(max_hulls);
         Memory.hull_flags.init(max_hulls);
@@ -693,6 +702,7 @@ public class GPU
         // Debugging info
         int total = Memory.hulls.length
             + Memory.armature_accel.length
+            + Memory.armature_mass.length
             + Memory.hull_rotation.length
             + Memory.hull_element_table.length
             + Memory.hull_flags.length
@@ -722,6 +732,7 @@ public class GPU
         System.out.println("edges             : " + Memory.edges.length);
         System.out.println("hulls             : " + Memory.hulls.length);
         System.out.println("acceleration      : " + Memory.armature_accel.length);
+        System.out.println("mass              : " + Memory.armature_mass.length);
         System.out.println("rotation          : " + Memory.hull_rotation.length);
         System.out.println("element table     : " + Memory.hull_element_table.length);
         System.out.println("hull flags        : " + Memory.hull_flags.length);
@@ -852,6 +863,7 @@ public class GPU
         create_armature_k.set_armatures(Memory.armatures.gpu.pointer());
         create_armature_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
         create_armature_k.set_hull_table(Memory.armature_hull_table.gpu.pointer());
+        create_armature_k.set_armature_mass(Memory.armature_mass.gpu.pointer());
         Kernel.create_armature.set_kernel(create_armature_k);
 
         var create_bone_k = new CreateBone_k(command_queue, Program.gpu_crud.gpu);
@@ -1284,13 +1296,14 @@ public class GPU
         gpu_kernel.call(global_single_size);
     }
 
-    public static void create_armature(int armature_index, float x, float y, int[] table, int[] flags)
+    public static void create_armature(int armature_index, float x, float y, int[] table, int[] flags, float mass)
     {
         var gpu_kernel = Kernel.create_armature.gpu;
-        gpu_kernel.set_arg(3, Pointer.to(arg_int(armature_index)));
-        gpu_kernel.set_arg(4, Pointer.to(arg_float4(x, y, x, y)));
-        gpu_kernel.set_arg(5, Pointer.to(flags));
-        gpu_kernel.set_arg(6, Pointer.to(table));
+        gpu_kernel.set_arg(4, Pointer.to(arg_int(armature_index)));
+        gpu_kernel.set_arg(5, Pointer.to(arg_float4(x, y, x, y)));
+        gpu_kernel.set_arg(6, Pointer.to(flags));
+        gpu_kernel.set_arg(7, Pointer.to(table));
+        gpu_kernel.set_arg(8, Pointer.to(arg_float(mass)));
         gpu_kernel.call(global_single_size);
     }
 

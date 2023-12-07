@@ -77,7 +77,7 @@ public class PhysicsObjects
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
-        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags, 1);
 
         // particles register with the hull ID for more straight-forward rendering
         Models.register_model_instance(CIRCLE_PARTICLE, hull_id);
@@ -137,7 +137,7 @@ public class PhysicsObjects
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0,0);
-        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags, 1);
 
         // triangles also register with the hull ID instead of the armature ID
         Models.register_model_instance(TRIANGLE_PARTICLE, hull_id);
@@ -199,7 +199,7 @@ public class PhysicsObjects
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
-        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags, 1);
 
         // basic boxes also register with the hull ID instead of the armature ID
         Models.register_model_instance(SQUARE_PARTICLE, hull_id);
@@ -407,7 +407,7 @@ public class PhysicsObjects
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
 
         int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, 0);
-        int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, armature_flags);
+        int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, armature_flags, 1);
 
         // armatures are registered with their associated model ID
         // todo: registering should be a simple count and not need and object ids
