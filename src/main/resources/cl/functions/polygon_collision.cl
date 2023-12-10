@@ -8,6 +8,7 @@ inline void polygon_collision(int b1_id, int b2_id,
                              __global float2 *reactions,
                              __global int *reaction_index,
                              __global int *point_reactions,
+                             __global float *masses,
                              __global int *counter)
 {
 
@@ -176,6 +177,11 @@ inline void polygon_collision(int b1_id, int b2_id,
     int2 vo_f = hull_flags[(int)vertex_object_id];
     int2 eo_f = hull_flags[(int)edge_object_id];
 
+    float vo_mass = masses[vo_f.y];
+    float eo_mass = masses[eo_f.y];
+
+    float total_mass = vo_mass + eo_mass;
+
     float2 normal = normalBuffer;
 
     // todo: calculate tangent as well to add friction support
@@ -197,12 +203,13 @@ inline void polygon_collision(int b1_id, int b2_id,
     //
     // the above changes will need to be made to the other collision kernels as well
     
-    float vertex_magnitude = .5f;
-    float edge_magnitude = .5f;
+    float vertex_magnitude = eo_mass / total_mass;
+    float edge_magnitude = vo_mass / total_mass;
 
     bool vs = (vo_f.x & IS_STATIC) !=0;
     bool es = (eo_f.x & IS_STATIC) !=0;
     
+    // todo: convert to ternary expression for warp efficiency 
     if (vs || es)
     {
         if (vs)

@@ -692,7 +692,6 @@ public class GPU
         Memory.armatures.init(max_points);
         Memory.armature_flags.init(max_points);
         Memory.armature_hull_table.init(max_hulls);
-
         Memory.bone_shift.init(max_points);
         Memory.point_shift.init(max_points);
         Memory.edge_shift.init(max_points);
@@ -816,6 +815,7 @@ public class GPU
         sat_collide_k.set_points(Memory.points.gpu.pointer());
         sat_collide_k.set_edges(Memory.edges.gpu.pointer());
         sat_collide_k.set_reactions(Memory.point_reactions.gpu.pointer());
+        sat_collide_k.set_masses(Memory.armature_mass.gpu.pointer());
         Kernel.sat_collide.set_kernel(sat_collide_k);
 
         var sort_reactions_k = new SortReactions_k(command_queue, Program.sat_collide.gpu);
@@ -1714,7 +1714,7 @@ public class GPU
         gpu_kernel.set_arg(0, physics_buffer.candidates.pointer());
         gpu_kernel.set_arg(6, physics_buffer.reactions_in.pointer());
         gpu_kernel.set_arg(7, physics_buffer.reaction_index.pointer());
-        gpu_kernel.set_arg(9, Pointer.to(size_data));
+        gpu_kernel.set_arg(10, Pointer.to(size_data));
 
         gpu_kernel.call(global_work_size);
 
@@ -2267,17 +2267,18 @@ public class GPU
     {
         for (Memory buffer : Memory.values())
         {
-            Optional.ofNullable(buffer.gpu)
-                .ifPresent(GPUMemory::release);
+            if (buffer.gpu != null) buffer.gpu.release();
         }
 
         for (Program program : Program.values())
         {
-            Optional.ofNullable(program.gpu)
-                .ifPresent(GPUProgram::destroy);
+            if (program.gpu != null) program.gpu.destroy();
         }
 
-        shared_mem.values().forEach(CL::clReleaseMemObject);
+        for (cl_mem clMem : shared_mem.values())
+        {
+            clReleaseMemObject(clMem);
+        }
 
         clReleaseCommandQueue(command_queue);
         clReleaseContext(context);

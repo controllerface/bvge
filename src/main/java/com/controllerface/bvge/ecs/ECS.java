@@ -18,7 +18,10 @@ public class ECS
     {
         // register all components at creation time. This is necessary to ensure all the
         // available components can be used before any systems or entities make use of them
-        Arrays.stream(Component.values()).forEach(this::registerComponent);
+        for (Component component : Component.values())
+        {
+            registerComponent(component);
+        }
     }
 
     private void registerComponent(Component component)
@@ -71,11 +74,17 @@ public class ECS
      */
     public void tick(float dt)
     {
-        systems.forEach(system -> system.tick(dt));
+        for (GameSystem system : systems)
+        {
+            system.tick(dt);
+        }
     }
 
     public void shutdown()
     {
-        systems.forEach(GameSystem::shutdown);
+        for (GameSystem system : systems)
+        {
+            system.shutdown();
+        }
     }
 }

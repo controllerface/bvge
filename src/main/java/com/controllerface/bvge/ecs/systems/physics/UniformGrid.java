@@ -9,8 +9,8 @@ public class UniformGrid
     private float width = 0;
     private float height = 0;
 
-    private final int x_subdivisions = 120;
-    private final int y_subdivisions = 120;
+    private final int x_subdivisions = 80;
+    private final int y_subdivisions = 80;
     private int directoryLength;
     private float x_spacing = 0;
     private float y_spacing = 0;

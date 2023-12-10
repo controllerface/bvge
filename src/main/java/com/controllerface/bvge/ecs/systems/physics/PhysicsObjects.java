@@ -38,7 +38,7 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int particle(float x, float y, float size)
+    public static int particle(float x, float y, float size, float mass)
     {
         int next_armature_id = Main.Memory.next_armature();
 
@@ -77,14 +77,14 @@ public class PhysicsObjects
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
-        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags, 1);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags, mass);
 
         // particles register with the hull ID for more straight-forward rendering
         Models.register_model_instance(CIRCLE_PARTICLE, hull_id);
         return armature_id;
     }
 
-    public static int tri(float x, float y, float size, int flags)
+    public static int tri(float x, float y, float size, int flags, float mass)
     {
         int next_armature_id = Main.Memory.next_armature();
 
@@ -137,14 +137,14 @@ public class PhysicsObjects
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0,0);
-        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags, 1);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags, mass);
 
         // triangles also register with the hull ID instead of the armature ID
         Models.register_model_instance(TRIANGLE_PARTICLE, hull_id);
         return armature_id;
     }
 
-    public static int box(float x, float y, float size, int flags)
+    public static int box(float x, float y, float size, int flags, float mass)
     {
         int next_armature_id = Main.Memory.next_armature();
 
@@ -199,24 +199,24 @@ public class PhysicsObjects
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
-        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags, 1);
+        int armature_id = Main.Memory.new_armature(x, y, hull_table, armature_flags, mass);
 
         // basic boxes also register with the hull ID instead of the armature ID
         Models.register_model_instance(SQUARE_PARTICLE, hull_id);
         return armature_id;
     }
 
-    public static int dynamic_Box(float x, float y, float size)
+    public static int dynamic_Box(float x, float y, float size, float mass)
     {
-        return box(x, y, size, FLAG_NONE | FLAG_NO_BONES);
+        return box(x, y, size, FLAG_NONE | FLAG_NO_BONES, mass);
     }
 
-    public static int static_box(float x, float y, float size)
+    public static int static_box(float x, float y, float size, float mass)
     {
-        return box(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES);
+        return box(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass);
     }
 
-    public static int wrap_model(int model_index, float x, float y, float size, int flags)
+    public static int wrap_model(int model_index, float x, float y, float size, int flags, float mass)
     {
         // we need to know the next armature ID before we create it so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
@@ -407,7 +407,7 @@ public class PhysicsObjects
         // todo: calculate the mesh tree, it should match the bone tree for bones that control meshes
 
         int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, 0);
-        int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, armature_flags, 1);
+        int armature_id = Main.Memory.new_armature(root_x, root_y, hull_table, armature_flags, mass);
 
         // armatures are registered with their associated model ID
         // todo: registering should be a simple count and not need and object ids

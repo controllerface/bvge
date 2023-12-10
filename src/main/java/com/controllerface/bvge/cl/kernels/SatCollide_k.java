@@ -11,7 +11,7 @@ public class SatCollide_k extends GPUKernel
 {
     public SatCollide_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.sat_collide), 10);
+        super(command_queue, program.kernels().get(GPU.Kernel.sat_collide), 11);
         def_arg(0, Sizeof.cl_mem);
         def_arg(1, Sizeof.cl_mem);
         def_arg(2, Sizeof.cl_mem);
@@ -22,6 +22,7 @@ public class SatCollide_k extends GPUKernel
         def_arg(7, Sizeof.cl_mem);
         def_arg(8, Sizeof.cl_mem);
         def_arg(9, Sizeof.cl_mem);
+        def_arg(10, Sizeof.cl_mem);
 
     }
 
@@ -53,5 +54,10 @@ public class SatCollide_k extends GPUKernel
     public void set_reactions(Pointer reactions)
     {
         new_arg(8, Sizeof.cl_mem, reactions);
+    }
+
+    public void set_masses(Pointer masses)
+    {
+        new_arg(9, Sizeof.cl_mem, masses);
     }
 }

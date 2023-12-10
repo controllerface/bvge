@@ -397,8 +397,10 @@ public class Models
             var bone = bone_map.get(name);
             transforms.put(name, global_transform.mul(bone.offset(), new Matrix4f()));
         }
-        current_node.children
-            .forEach(child -> generate_transforms(child, bone_map, transforms, global_transform));
+        for (SceneNode child : current_node.children)
+        {
+            generate_transforms(child, bone_map, transforms, global_transform);
+        }
     }
 
     /**
