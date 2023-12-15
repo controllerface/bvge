@@ -40,52 +40,60 @@ public class CrateRenderer extends GameSystem
         this.batches = new ArrayList<>();
         this.shader = Assets.shader("box_model.glsl");
         this.texture = Assets.texture("src/main/resources/img/crate.png");
-        start();
+        init();
     }
 
-    public void start()
+    public void init()
     {
-        var mdl = Models.get_model_by_index(Models.SQUARE_PARTICLE);
-        var base_model = mdl.meshes()[0];
+        var mdl = Models.get_model_by_index(Models.TEST_SQUARE_INDEX);
+        var base_mesh = mdl.meshes()[0];
         var vbo_model = new float[12];
-        vbo_model[0] = base_model.vertices()[0].x();  // tri 1 // p0 x
-        vbo_model[1] = base_model.vertices()[0].y();           // p0 y
-
-        vbo_model[2] = base_model.vertices()[1].x();           // p1 x
-        vbo_model[3] = base_model.vertices()[1].y();           // p1 y
-
-        vbo_model[4] = base_model.vertices()[2].x();           // p2 x
-        vbo_model[5] = base_model.vertices()[2].y();           // p2 y
-
-        vbo_model[6] = base_model.vertices()[0].x();  // tri 2 // p0 x
-        vbo_model[7] = base_model.vertices()[0].y();           // p0 y
-
-        vbo_model[8] = base_model.vertices()[2].x();           // p2 x
-        vbo_model[9] = base_model.vertices()[2].y();           // p2 y
-
-        vbo_model[10] = base_model.vertices()[3].x();          // p3 x
-        vbo_model[11] = base_model.vertices()[3].y();          // p3 y
-
-
-        // todo: update model loader to import UV co-ords
         var vbo_tex_coords = new float[12];
-        vbo_tex_coords[0] = 0f;  // tri 1 // p1 u
-        vbo_tex_coords[1] = 0f;           // p1 v
+        int count=0;
 
-        vbo_tex_coords[2] = 1f;           // p2 u
-        vbo_tex_coords[3] = 0f;           // p2 v
+        for(int i=0;i< base_mesh.faces().length; i++)
+        {
+            var face = base_mesh.faces()[i];
+            var p0 = base_mesh.vertices()[face.p0()];
+            var p1 = base_mesh.vertices()[face.p1()];
+            var p2 = base_mesh.vertices()[face.p2()];
 
-        vbo_tex_coords[4] = 1f;           // p3 u
-        vbo_tex_coords[5] = 1f;           // p3 v
+            vbo_model[count] = p0.x();                          //tri i     // p0 x
+            vbo_model[count+1] = p0.y();                                    // p0 y
+            vbo_tex_coords[count] = p0.uv_data().get(0).x;                  // p0 u
+            vbo_tex_coords[count+1] = p0.uv_data().get(0).y;                // p0 v
 
-        vbo_tex_coords[6] = 0f;  // tri 2 // p1 u
-        vbo_tex_coords[7] = 0f;           // p1 v
+            vbo_model[count+2] = p1.x();                                    // p1 x
+            vbo_model[count+3] = p1.y();                                    // p1 y
+            vbo_tex_coords[count+2] = p1.uv_data().get(0).x;                // p0 u
+            vbo_tex_coords[count+3] = p1.uv_data().get(0).y;                // p0 v
 
-        vbo_tex_coords[8] = 1f;           // p3 u
-        vbo_tex_coords[9] = 1f;           // p3 v
+            vbo_model[count+4] = p2.x();                                    // p2 x
+            vbo_model[count+5] = p2.y();                                    // p2 y
+            vbo_tex_coords[count+4] = p2.uv_data().get(0).x;                // p0 u
+            vbo_tex_coords[count+5] = p2.uv_data().get(0).y;                // p0 v
+            count += 6;
+        }
 
-        vbo_tex_coords[10] = 0f;          // p4 u
-        vbo_tex_coords[11] = 1f;          // p4 v
+//        // todo: update model loader to import UV co-ords
+//
+//        vbo_tex_coords[0] = 0f;  // tri 1 // p1 u
+//        vbo_tex_coords[1] = 0f;           // p1 v
+//
+//        vbo_tex_coords[2] = 1f;           // p2 u
+//        vbo_tex_coords[3] = 0f;           // p2 v
+//
+//        vbo_tex_coords[4] = 1f;           // p3 u
+//        vbo_tex_coords[5] = 1f;           // p3 v
+//
+//        vbo_tex_coords[6] = 0f;  // tri 2 // p1 u
+//        vbo_tex_coords[7] = 0f;           // p1 v
+//
+//        vbo_tex_coords[8] = 1f;           // p3 u
+//        vbo_tex_coords[9] = 1f;           // p3 v
+//
+//        vbo_tex_coords[10] = 0f;          // p4 u
+//        vbo_tex_coords[11] = 1f;          // p4 v
 
 
         // todo: decide if colors should be generated per-instance for variety or possibly algorithmically based
@@ -159,15 +167,15 @@ public class CrateRenderer extends GameSystem
     public void tick(float dt)
     {
         // todo: will need to account for this happening more than once
-        if (Models.is_model_dirty(Models.SQUARE_PARTICLE))
+        if (Models.is_model_dirty(Models.TEST_SQUARE_INDEX))
         {
-            var instances = Models.get_model_instances(Models.SQUARE_PARTICLE);
+            var instances = Models.get_model_instances(Models.TEST_SQUARE_INDEX);
             int[] indices = new int[instances.size()];
             int[] counter = new int[1];
             instances.forEach(integer -> indices[counter[0]++] = integer);
 
             // get the number of models that need to be rendered
-            var model_count = Models.get_instance_count(Models.SQUARE_PARTICLE);
+            var model_count = Models.get_instance_count(Models.TEST_SQUARE_INDEX);
 
             var needed_batches = model_count / Constants.Rendering.MAX_BATCH_SIZE;
             var r = model_count % Constants.Rendering.MAX_BATCH_SIZE;
@@ -200,7 +208,7 @@ public class CrateRenderer extends GameSystem
                 offset += count;
             }
 
-            Models.set_model_clean(Models.SQUARE_PARTICLE);
+            Models.set_model_clean(Models.TEST_SQUARE_INDEX);
         }
 
         render();

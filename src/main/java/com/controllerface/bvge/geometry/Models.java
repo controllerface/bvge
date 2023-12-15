@@ -3,6 +3,7 @@ package com.controllerface.bvge.geometry;
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryUtil;
@@ -160,27 +161,36 @@ public class Models
         int vert_index = 0;
         var mesh_vertices = new Vertex[aiMesh.mNumVertices()];
         var buffer = aiMesh.mVertices();
-        var tex = aiMesh.mTextureCoords(0);
-        // todo: add texture co-ordinates to the Vertex class and extract them here. requires
-        //  a model with a texture attached
+
+        List<List<AIVector3D>> uvChannels = new ArrayList<>();
+        for(int i = 0;i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++)
+        {
+            var uvBuffer = aiMesh.mTextureCoords(i);
+            if(uvBuffer != null) {
+                List<AIVector3D> currentChannel = new ArrayList<>();
+                while (uvBuffer.remaining() > 0) {
+                    var aiVector = uvBuffer.get();
+                    currentChannel.add(aiVector);
+                }
+                uvChannels.add(currentChannel);
+            }
+        }
+
+        AtomicInteger count = new AtomicInteger();
         while (buffer.remaining() > 0)
         {
             int this_vert = vert_index++;
             var aiVertex = buffer.get();
-            if (tex != null)
-            {
-                // todo: this needs to check if the text co-ord buffer is empty, not null. Seems
-                //  it is always some value.
-
-                // todo: need to update the base model to have UV mappings and a texture
-                //AIBone.create(bone_buffer.get(bone_index));
-                //var t = AIVector3D.create(tex.get());
-                //System.out.println("test");
-            }
+            List<Vector2f> uvData = new ArrayList<>();
             float bone_weight = bone_weight_map.get(this_vert);
             var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y());
-            //System.out.printf("DEBUG CPU (in): id: %d x:%f y:%f\n", vert_ref_id, aiVertex.x(), aiVertex.y());
-            mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), mesh_bone.name(), bone_weight);
+
+            uvChannels.forEach(channel -> {
+                var next = channel.get(count.get());
+                uvData.add(new Vector2f(next.x(),next.y()));
+            });
+            mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), uvData, mesh_bone.name(), bone_weight);
+            count.getAndIncrement();
         }
         return mesh_vertices;
     }
@@ -352,7 +362,7 @@ public class Models
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
-        TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
+        TEST_SQUARE_INDEX = load_model("/models/another_test_square.fbx", "Crate");
     }
 
     private static SceneNode process_node_hierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)

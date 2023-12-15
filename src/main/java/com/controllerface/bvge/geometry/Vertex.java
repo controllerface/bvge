@@ -1,15 +1,19 @@
 package com.controllerface.bvge.geometry;
 
-public record Vertex(int vert_ref_id, float x, float y, String bone_name, float bone_weight)
+import org.joml.Vector2f;
+
+import java.util.List;
+
+public record Vertex(int vert_ref_id, float x, float y, List<Vector2f> uv_data,String bone_name, float bone_weight)
 {
     public Vertex uniform_scale(float s)
     {
-        return new Vertex(vert_ref_id, x * s, y * s, bone_name, bone_weight);
+        return new Vertex(vert_ref_id, x * s, y * s, uv_data,bone_name, bone_weight);
     }
 
     public Vertex translate(float tx, float ty)
     {
-        return new Vertex(vert_ref_id, x + tx, y + ty, bone_name, bone_weight);
+        return new Vertex(vert_ref_id, x + tx, y + ty, uv_data, bone_name, bone_weight);
     }
 
     public double angle_between(Vertex point)

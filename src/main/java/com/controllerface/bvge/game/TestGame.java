@@ -202,7 +202,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new EdgeRenderer(ecs));
         ecs.registerSystem(new CircleRenderer(ecs));
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        ecs.registerSystem(new BoneRenderer(ecs));
+        //ecs.registerSystem(new BoneRenderer(ecs));
 
         // main renderers go here, one for each model type that can be rendered
         // todo: rewrite using hull/model filter
@@ -272,7 +272,7 @@ public class TestGame extends GameMode
 
 
         //genCircles(100, 6f, 5f, 0, 100);
-        genSquares(100,  6f, 5f, 100, 100);
+        genSquares(50,  6f, 5f, 100, 100);
         //genCrates2(10,  6f, 0.025f, 100, 100);
         //genTriangles(100,  7f, 5f, 0, 100);
 
