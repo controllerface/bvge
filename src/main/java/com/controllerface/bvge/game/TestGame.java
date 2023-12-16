@@ -91,7 +91,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.particle(x, y, size, .1f);
+                var armature_index = PhysicsObjects.particle(x, y, size, 1f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -206,14 +206,14 @@ public class TestGame extends GameMode
 
         // main renderers go here, one for each model type that can be rendered
         // todo: rewrite using hull/model filter
-        ecs.registerSystem(new CrateRenderer(ecs));
+        //ecs.registerSystem(new CrateRenderer(ecs));
     }
 
     @Override
     public void load()
     {
         //genPlayer();
-        genTestFigure(1f, 600, 0);
+        genTestFigure(1f, 300, 700);
 
         //genTestTriangle(20f, 190, 250);
 
@@ -271,10 +271,10 @@ public class TestGame extends GameMode
 
 
 
-        //genCircles(100, 6f, 5f, 0, 100);
-        //genSquares(100,  7f, 5f, 100, 100);
+        genCircles(100, 6f, 5f, 0, 100);
+        //genSquares(100,  9f, 5f, 100, 100);
         //genCrates2(100,  7f, 0.025f, 100, 100);
-        //genTriangles(100,  7f, 5f, 0, 100);
+        //genTriangles(100,  9f, 5f, 0, 100);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);
