@@ -1714,22 +1714,11 @@ public class GPU
         // candidates are pairs of integer indices, so the global size is half the count
         long[] global_work_size = new long[]{candidates_size / 2};
 
-
         if (sat_counter == null)
         {
             sat_counter = cl_new_pinned_int();
         }
         cl_zero_buffer(sat_counter, Sizeof.cl_int);
-
-//        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-//        var size_data = clCreateBuffer(context, flags, Sizeof.cl_int, null, null);
-//        cl_zero_buffer(size_data, Sizeof.cl_int);
-
-
-        // atomic counter
-//        int[] size = arg_int(0);
-//        var dst_size = Pointer.to(size);
-//        var size_data = cl_new_int_arg_buffer(dst_size);
 
         long max_point_count = physics_buffer.get_final_size()
             * 2  // there are two bodies per collision pair
@@ -1755,11 +1744,6 @@ public class GPU
 
         var size = cl_read_pinned_int(sat_counter);
         physics_buffer.set_reaction_count(size);
-
-//        cl_read_buffer(size_data, Sizeof.cl_int, dst_size);
-//        physics_buffer.set_reaction_count(size[0]);
-
-        //clReleaseMemObject(size_data);
     }
 
     public static void scan_reactions()
@@ -2281,6 +2265,15 @@ public class GPU
         for (cl_mem clMem : shared_mem.values())
         {
             clReleaseMemObject(clMem);
+        }
+
+        if (aabb_counter != null)
+        {
+            clReleaseMemObject(aabb_counter);
+        }
+        if (sat_counter != null)
+        {
+            clReleaseMemObject(sat_counter);
         }
 
         clReleaseCommandQueue(command_queue);
