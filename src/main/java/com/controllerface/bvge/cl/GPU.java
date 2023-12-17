@@ -6,14 +6,10 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import org.jocl.*;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opencl.CL10;
-import org.lwjgl.opencl.CL11;
-import org.lwjgl.opencl.CL12;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.jocl.CL.*;
@@ -41,11 +37,7 @@ public class GPU
     /**
      * A convenience object, used when clearing out buffers to fill them with zeroes
      */
-    private static final ByteBuffer ZERO_PATTERN = BufferUtils.createByteBuffer(4)
-        .put(0, (byte) 0x0)
-        .put(1, (byte) 0x0)
-        .put(2, (byte) 0x0)
-        .put(3, (byte) 0x0);
+    private static final Pointer ZERO_PATTERN = Pointer.to(new int[]{0});
 
     /**
      * Memory that is shared between Open CL and Open GL contexts.
@@ -228,13 +220,6 @@ public class GPU
         public void set_arg(int pos, Pointer pointer)
         {
             kernel.set_arg(pos, pointer);
-        }
-
-        public void set_arg_ptr(int pos, long pointer)
-        {
-            var pb = BufferUtils.createPointerBuffer(1);
-            pb.put(0, pointer);
-            CL10.clSetKernelArg(kernel.kernel.getNativePointer(), pos, pb);
         }
 
         public void share_mem(cl_mem mem)
@@ -566,7 +551,7 @@ public class GPU
 
         public void clear()
         {
-            cl_zero_buffer_ex(this.gpu.memory().getNativePointer(), this.length);
+            cl_zero_buffer(this.gpu.memory(), this.length);
         }
     }
 
@@ -602,13 +587,15 @@ public class GPU
         return clCreateBuffer(context, FLAGS_READ_CPU_COPY, size, src, null);
     }
 
-    private static void cl_zero_buffer_ex(long buffer, long buffer_size)
+    private static void cl_zero_buffer(cl_mem buffer, long buffer_size)
     {
-        CL12.clEnqueueFillBuffer(command_queue.getNativePointer(),
+        clEnqueueFillBuffer(command_queue,
             buffer,
             ZERO_PATTERN,
-            0L,
+            1,
+            0,
             buffer_size,
+            0,
             null,
             null);
     }
@@ -1401,7 +1388,7 @@ public class GPU
         int[] index = arg_int(armature_index);
 
         var result_data = cl_new_buffer(Sizeof.cl_float2);
-        cl_zero_buffer_ex(result_data.getNativePointer(), Sizeof.cl_float2);
+        cl_zero_buffer(result_data, Sizeof.cl_float2);
 
         Kernel.read_position.set_arg(1, Pointer.to(result_data));
         Kernel.read_position.set_arg(2, Pointer.to(index));
@@ -1470,7 +1457,7 @@ public class GPU
 
         var bank_data = cl_new_buffer(bank_buf_size);
         var counts_data = cl_new_buffer(counts_buf_size);
-        cl_zero_buffer_ex(counts_data.getNativePointer(), counts_buf_size);
+        cl_zero_buffer(counts_data, counts_buf_size);
 
         physics_buffer.key_counts = new GPUMemory(counts_data);
         physics_buffer.key_bank = new GPUMemory(bank_data);
@@ -1501,7 +1488,7 @@ public class GPU
         var counts_data = cl_new_buffer(counts_buf_size);
 
         // the counts buffer needs to start off filled with all zeroes
-        cl_zero_buffer_ex(counts_data.getNativePointer(), counts_buf_size);
+        cl_zero_buffer(counts_data, counts_buf_size);
 
         physics_buffer.key_map = new GPUMemory(map_data);
 
@@ -1628,10 +1615,6 @@ public class GPU
 
     public static void aabb_collide()
     {
-        // todo: this method is an example of converting from JOCL to LWJGL bindings for Open CL.
-        //  more of these should be converted until it is possible to migrate over completely
-        //  and drop JOCL as a dependency.
-
         long matches_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_match_count();
         var matches_data = cl_new_buffer(matches_buf_size);
         physics_buffer.matches = new GPUMemory(matches_data);
@@ -1640,11 +1623,10 @@ public class GPU
         var used_data = cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
-        // todo: this is using pinned memory to hopefully make it as fast as possible,
-        //  after profiling, if it does help, do this for other counter uses too
-        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        var counter_ptr = CL10.clCreateBuffer(context.getNativePointer(), flags, Sizeof.cl_int, null);
-        cl_zero_buffer_ex(counter_ptr, Sizeof.cl_int);
+        // this buffer will contain the total number of candidates that were found
+        int[] count = arg_int(0);
+        var dst_count = Pointer.to(count);
+        var count_data = cl_new_int_arg_buffer(dst_count);
 
         Kernel.aabb_collide.set_arg(3, physics_buffer.candidate_counts.pointer());
         Kernel.aabb_collide.set_arg(4, physics_buffer.candidate_offsets.pointer());
@@ -1654,25 +1636,16 @@ public class GPU
         Kernel.aabb_collide.set_arg(8, physics_buffer.key_offsets.pointer());
         Kernel.aabb_collide.set_arg(9, physics_buffer.matches.pointer());
         Kernel.aabb_collide.set_arg(10, physics_buffer.matches_used.pointer());
-
-        Kernel.aabb_collide.set_arg_ptr(11, counter_ptr);
-
+        Kernel.aabb_collide.set_arg(11, Pointer.to(count_data));
         Kernel.aabb_collide.set_arg(12, physics_buffer.x_sub_divisions);
         Kernel.aabb_collide.set_arg(13, physics_buffer.key_count_length);
         Kernel.aabb_collide.call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
-        var mapped_buffer = CL11.clEnqueueMapBuffer(command_queue.getNativePointer(), counter_ptr, true,
-            CL10.CL_MAP_READ, 0L, Sizeof.cl_int, null, null, (int[])null, null);
+        cl_read_buffer(count_data, Sizeof.cl_int, dst_count);
 
-        assert mapped_buffer != null;
+        clReleaseMemObject(count_data);
 
-        var count = mapped_buffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-
-        CL11.clEnqueueUnmapMemObject(command_queue.getNativePointer(), counter_ptr, mapped_buffer, null, null);
-
-        CL10.clReleaseMemObject(counter_ptr);
-
-        physics_buffer.set_candidate_count(count);
+        physics_buffer.set_candidate_count(count[0]);
     }
 
     public static void finalize_candidates()
