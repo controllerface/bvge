@@ -2090,8 +2090,10 @@ public class GPU
         Kernel.scan_candidates_single_block_out.set_arg(4, Pointer.to(arg_int(n)));
         Kernel.scan_candidates_single_block_out.call(local_work_default, local_work_default);
 
+        int x = cl_read_pinned_int(size_data);
+
         clReleaseMemObject(size_data);
-        return cl_read_pinned_int(size_data);
+        return x;
     }
 
     private static int scan_multi_block_candidates_out(cl_mem d_data, cl_mem o_data, int n, int k)
