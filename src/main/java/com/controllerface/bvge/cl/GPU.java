@@ -6,6 +6,7 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import org.jocl.*;
+import org.lwjgl.opencl.CL10;
 
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -612,8 +613,10 @@ public class GPU
 
     private static int[] cl_read_pinned_int_buffer(cl_mem pinned, long size, int count)
     {
-        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, size, 0,
-            null, null, null);
+        var out = CL10.clEnqueueMapBuffer(command_queue.getNativePointer(), pinned.getNativePointer(), true,
+            CL10.CL_MAP_READ, 0, size, null, null, (int[])null, null);
+//        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, size, 0,
+//            null, null, null);
         assert out != null;
         int[] xa = new int[count];
         var ib = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
@@ -633,8 +636,11 @@ public class GPU
 
     private static int cl_read_pinned_int(cl_mem pinned)
     {
-        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
-            null, null, null);
+        var out = CL10.clEnqueueMapBuffer(command_queue.getNativePointer(), pinned.getNativePointer(), true,
+            CL10.CL_MAP_READ, 0, Sizeof.cl_int, null, null, (int[])null, null);
+
+//        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
+//            null, null, null);
         assert out != null;
         int x = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
         //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
