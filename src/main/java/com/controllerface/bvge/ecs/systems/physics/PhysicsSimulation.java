@@ -138,7 +138,7 @@ public class PhysicsSimulation extends GameSystem
         process is used in place of more complex constructs like Map<> and Set<>, with capacities of backing
         structures being pre-computed to fulfill the fixed memory size requirements of the GPU kernel.
 
-        There are three top-level "conceptual" structures, a key bank and a key map, and the key itself.
+        There are three top-level "conceptual" structures, a key bank, a key map, and the key itself.
 
         Keys in this context are simply two-dimensional integer vectors that point to a "cell" of the uniform
         grid, which is a structure that imposes a coarse grid over the viewable area of the screen. For every hull,

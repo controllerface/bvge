@@ -11,7 +11,7 @@ public class UniformGrid
 
     private final int x_subdivisions = 120;
     private final int y_subdivisions = 120;
-    private int directoryLength;
+    private final int directoryLength;
     private float x_spacing = 0;
     private float y_spacing = 0;
     private float x_origin = 0;
@@ -21,6 +21,7 @@ public class UniformGrid
 
     public UniformGrid()
     {
+        directoryLength = x_subdivisions * y_subdivisions;
         init();
     }
 
@@ -28,7 +29,6 @@ public class UniformGrid
     {
         x_spacing = width / x_subdivisions;
         y_spacing = height / y_subdivisions;
-        directoryLength = x_subdivisions * y_subdivisions;
     }
 
     public void resize(float width, float height)
