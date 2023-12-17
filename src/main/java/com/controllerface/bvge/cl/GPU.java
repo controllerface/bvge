@@ -7,6 +7,7 @@ import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import org.jocl.*;
 
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1623,10 +1624,14 @@ public class GPU
         var used_data = cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
+        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+        var count_data = clCreateBuffer(context, flags, Sizeof.cl_int, null, null);
+        cl_zero_buffer(count_data, Sizeof.cl_int);
+
         // this buffer will contain the total number of candidates that were found
-        int[] count = arg_int(0);
-        var dst_count = Pointer.to(count);
-        var count_data = cl_new_int_arg_buffer(dst_count);
+//        int[] count = arg_int(0);
+//        var dst_count = Pointer.to(count);
+//        var count_data = cl_new_int_arg_buffer(dst_count);
 
         Kernel.aabb_collide.set_arg(3, physics_buffer.candidate_counts.pointer());
         Kernel.aabb_collide.set_arg(4, physics_buffer.candidate_offsets.pointer());
@@ -1641,11 +1646,18 @@ public class GPU
         Kernel.aabb_collide.set_arg(13, physics_buffer.key_count_length);
         Kernel.aabb_collide.call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
-        cl_read_buffer(count_data, Sizeof.cl_int, dst_count);
+        var out = clEnqueueMapBuffer(command_queue, count_data, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
+            null, null, null);
+        assert out != null;
+        var count = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+
+        physics_buffer.set_candidate_count(count);
+
+//        cl_read_buffer(count_data, Sizeof.cl_int, dst_count);
+//        physics_buffer.set_candidate_count(count[0]);
+
 
         clReleaseMemObject(count_data);
-
-        physics_buffer.set_candidate_count(count[0]);
     }
 
     public static void finalize_candidates()
