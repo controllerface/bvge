@@ -621,7 +621,7 @@ public class GPU
         {
             xa[i] = ib.get(i);
         }
-        clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
         return xa;
     }
 
@@ -636,7 +636,7 @@ public class GPU
         var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
             null, null, null);
         assert out != null;
-        int x =  out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+        int x = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
         //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
         return x;
     }
