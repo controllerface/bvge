@@ -634,7 +634,7 @@ public class GPU
             null, null, null);
         assert out != null;
         int x =  out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-        clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
         return x;
     }
 
@@ -1647,6 +1647,8 @@ public class GPU
         del_buffer_2.release();
     }
 
+    private static cl_mem aabb_counter = null;
+
     public static void aabb_collide()
     {
         long matches_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_match_count();
@@ -1657,7 +1659,11 @@ public class GPU
         var used_data = cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
-        var aabb_counter = cl_new_pinned_int();
+        if (aabb_counter == null)
+        {
+            aabb_counter = cl_new_pinned_int();
+        }
+        //var aabb_counter = cl_new_pinned_int();
         cl_zero_buffer(aabb_counter, Sizeof.cl_int);
 
         Kernel.aabb_collide.set_arg(3, physics_buffer.candidate_counts.pointer());
@@ -1676,7 +1682,7 @@ public class GPU
         var count = cl_read_pinned_int(aabb_counter);
         physics_buffer.set_candidate_count(count);
 
-        clReleaseMemObject(aabb_counter);
+        //clReleaseMemObject(aabb_counter);
     }
 
     public static void finalize_candidates()
