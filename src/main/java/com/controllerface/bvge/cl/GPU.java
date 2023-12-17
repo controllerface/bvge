@@ -601,6 +601,20 @@ public class GPU
             null);
     }
 
+    private static cl_mem cl_new_pinned_int()
+    {
+        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+        return clCreateBuffer(context, flags, Sizeof.cl_int, null, null);
+    }
+
+    private static int cl_read_pinned_int(cl_mem pinned)
+    {
+        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
+            null, null, null);
+        assert out != null;
+        return out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+    }
+
     private static int work_group_count(int n)
     {
         return (int) Math.ceil((float) n / (float) max_scan_block_size);
@@ -1614,6 +1628,8 @@ public class GPU
         del_buffer_2.release();
     }
 
+    private static cl_mem aabb_counter = null;
+
     public static void aabb_collide()
     {
         long matches_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_match_count();
@@ -1624,9 +1640,11 @@ public class GPU
         var used_data = cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
-        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        var count_data = clCreateBuffer(context, flags, Sizeof.cl_int, null, null);
-        cl_zero_buffer(count_data, Sizeof.cl_int);
+        if (aabb_counter == null)
+        {
+            aabb_counter = cl_new_pinned_int();
+        }
+        cl_zero_buffer(aabb_counter, Sizeof.cl_int);
 
         // this buffer will contain the total number of candidates that were found
 //        int[] count = arg_int(0);
@@ -1641,23 +1659,19 @@ public class GPU
         Kernel.aabb_collide.set_arg(8, physics_buffer.key_offsets.pointer());
         Kernel.aabb_collide.set_arg(9, physics_buffer.matches.pointer());
         Kernel.aabb_collide.set_arg(10, physics_buffer.matches_used.pointer());
-        Kernel.aabb_collide.set_arg(11, Pointer.to(count_data));
+        Kernel.aabb_collide.set_arg(11, Pointer.to(aabb_counter));
         Kernel.aabb_collide.set_arg(12, physics_buffer.x_sub_divisions);
         Kernel.aabb_collide.set_arg(13, physics_buffer.key_count_length);
         Kernel.aabb_collide.call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
-        var out = clEnqueueMapBuffer(command_queue, count_data, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
-            null, null, null);
-        assert out != null;
-        var count = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-
+        var count = cl_read_pinned_int(aabb_counter);
         physics_buffer.set_candidate_count(count);
 
 //        cl_read_buffer(count_data, Sizeof.cl_int, dst_count);
 //        physics_buffer.set_candidate_count(count[0]);
 
 
-        clReleaseMemObject(count_data);
+        //clReleaseMemObject(count_data);
     }
 
     public static void finalize_candidates()
@@ -1690,6 +1704,9 @@ public class GPU
         clReleaseMemObject(counter_data);
     }
 
+    private static cl_mem sat_counter = null;
+
+
     public static void sat_collide()
     {
         int candidates_size = (int) physics_buffer.get_final_size() / Sizeof.cl_int;
@@ -1697,10 +1714,22 @@ public class GPU
         // candidates are pairs of integer indices, so the global size is half the count
         long[] global_work_size = new long[]{candidates_size / 2};
 
+
+        if (sat_counter == null)
+        {
+            sat_counter = cl_new_pinned_int();
+        }
+        cl_zero_buffer(sat_counter, Sizeof.cl_int);
+
+//        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+//        var size_data = clCreateBuffer(context, flags, Sizeof.cl_int, null, null);
+//        cl_zero_buffer(size_data, Sizeof.cl_int);
+
+
         // atomic counter
-        int[] size = arg_int(0);
-        var dst_size = Pointer.to(size);
-        var size_data = cl_new_int_arg_buffer(dst_size);
+//        int[] size = arg_int(0);
+//        var dst_size = Pointer.to(size);
+//        var size_data = cl_new_int_arg_buffer(dst_size);
 
         long max_point_count = physics_buffer.get_final_size()
             * 2  // there are two bodies per collision pair
@@ -1721,14 +1750,16 @@ public class GPU
         Kernel.sat_collide.set_arg(0, physics_buffer.candidates.pointer());
         Kernel.sat_collide.set_arg(6, physics_buffer.reactions_in.pointer());
         Kernel.sat_collide.set_arg(7, physics_buffer.reaction_index.pointer());
-        Kernel.sat_collide.set_arg(10, Pointer.to(size_data));
+        Kernel.sat_collide.set_arg(10, Pointer.to(sat_counter));
         Kernel.sat_collide.call(global_work_size);
 
-        cl_read_buffer(size_data, Sizeof.cl_int, dst_size);
+        var size = cl_read_pinned_int(sat_counter);
+        physics_buffer.set_reaction_count(size);
 
-        clReleaseMemObject(size_data);
+//        cl_read_buffer(size_data, Sizeof.cl_int, dst_size);
+//        physics_buffer.set_reaction_count(size[0]);
 
-        physics_buffer.set_reaction_count(size[0]);
+        //clReleaseMemObject(size_data);
     }
 
     public static void scan_reactions()
