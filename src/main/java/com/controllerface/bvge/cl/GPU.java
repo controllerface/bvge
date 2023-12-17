@@ -1998,6 +1998,7 @@ public class GPU
         long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
 
         var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 5);
+        cl_zero_buffer(size_data, Sizeof.cl_int * 5);
 
         var dst_data = Pointer.to(o1_data);
         var dst_data2 = Pointer.to(o2_data);
@@ -2052,6 +2053,7 @@ public class GPU
         scan_int4(p_data2, part_size);
 
         var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 5);
+        cl_zero_buffer(size_data, Sizeof.cl_int * 5);
 
         Kernel.complete_deletes_multi_block_out.set_arg(3, dst_data);
         Kernel.complete_deletes_multi_block_out.set_arg(4, dst_data2);
