@@ -7,8 +7,11 @@ import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import org.jocl.*;
 import org.lwjgl.opencl.CL10;
+import org.lwjgl.opencl.CL11;
+import org.lwjgl.system.Checks;
 
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,6 +20,7 @@ import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.jocl.CL.*;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
+import static org.lwjgl.system.APIUtil.apiGetMappedBuffer;
 
 /**
  * Core class used for executing GPU programs.
@@ -83,6 +87,7 @@ public class GPU
      * The Open CL command queue that this class uses to issue GPU commands.
      */
     private static cl_command_queue command_queue;
+    private static long cmd_native_ptr;
 
     /**
      * The Open CL context associated with this class.
@@ -613,10 +618,8 @@ public class GPU
 
     private static int[] cl_read_pinned_int_buffer(cl_mem pinned, long size, int count)
     {
-        var out = CL10.clEnqueueMapBuffer(command_queue.getNativePointer(), pinned.getNativePointer(), true,
-            CL10.CL_MAP_READ, 0, size, null, null, (int[])null, null);
-//        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, size, 0,
-//            null, null, null);
+        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, size, 0,
+            null, null, null);
         assert out != null;
         int[] xa = new int[count];
         var ib = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
@@ -636,11 +639,8 @@ public class GPU
 
     private static int cl_read_pinned_int(cl_mem pinned)
     {
-        var out = CL10.clEnqueueMapBuffer(command_queue.getNativePointer(), pinned.getNativePointer(), true,
-            CL10.CL_MAP_READ, 0, Sizeof.cl_int, null, null, (int[])null, null);
-
-//        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
-//            null, null, null);
+        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
+            null, null, null);
         assert out != null;
         int x = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
         //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
@@ -744,6 +744,7 @@ public class GPU
         var properties = new cl_queue_properties();
         command_queue = clCreateCommandQueueWithProperties(
             context, device, properties, null);
+        cmd_native_ptr = command_queue.getNativePointer();
 
         return device_ids;
 
