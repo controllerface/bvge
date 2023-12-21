@@ -631,6 +631,21 @@ public class GPU
         return xa;
     }
 
+    private static float[] cl_read_pinned_float_buffer(cl_mem pinned, long size, int count)
+    {
+        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, size, 0,
+            null, null, null);
+        assert out != null;
+        float[] xa = new float[count];
+        var ib = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+        for (int i = 0; i < count; i++)
+        {
+            xa[i] = ib.get(i);
+        }
+        //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        return xa;
+    }
+
     private static cl_mem cl_new_pinned_int()
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
@@ -1432,17 +1447,15 @@ public class GPU
 
         int[] index = arg_int(armature_index);
 
-        var result_data = cl_new_buffer(Sizeof.cl_float2);
+        var result_data = cl_new_pinned_buffer(Sizeof.cl_float2);
         cl_zero_buffer(result_data, Sizeof.cl_float2);
 
         Kernel.read_position.set_arg(1, Pointer.to(result_data));
         Kernel.read_position.set_arg(2, Pointer.to(index));
         Kernel.read_position.call(global_single_size);
 
-        float[] result = arg_float2(0, 0);
-        cl_read_buffer(result_data, Sizeof.cl_float2, Pointer.to(result));
+        float[] result = cl_read_pinned_float_buffer(result_data, Sizeof.cl_float2, 2);
         clReleaseMemObject(result_data);
-
         return result;
     }
 
