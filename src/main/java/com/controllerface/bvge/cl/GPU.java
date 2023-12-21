@@ -6,8 +6,12 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import org.jocl.*;
+import org.lwjgl.opencl.CL10;
+import org.lwjgl.opencl.CL11;
+import org.lwjgl.system.Checks;
 
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,6 +20,7 @@ import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.jocl.CL.*;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
+import static org.lwjgl.system.APIUtil.apiGetMappedBuffer;
 
 /**
  * Core class used for executing GPU programs.
@@ -82,6 +87,7 @@ public class GPU
      * The Open CL command queue that this class uses to issue GPU commands.
      */
     private static cl_command_queue command_queue;
+    private static long cmd_native_ptr;
 
     /**
      * The Open CL context associated with this class.
@@ -100,6 +106,9 @@ public class GPU
      * easier to reason about the logic and add or remove objects as needed for new features.
      */
     private static PhysicsBuffer physics_buffer;
+
+    private static cl_mem counter_buffer = null;
+    private static Pointer counter_pointer = null;
 
 
     //#endregion
@@ -601,6 +610,42 @@ public class GPU
             null);
     }
 
+    private static cl_mem cl_new_pinned_buffer(long size)
+    {
+        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+        return clCreateBuffer(context, flags, size, null, null);
+    }
+
+    private static int[] cl_read_pinned_int_buffer(cl_mem pinned, long size, int count)
+    {
+        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, size, 0,
+            null, null, null);
+        assert out != null;
+        int[] xa = new int[count];
+        var ib = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+        for (int i = 0; i < count; i++)
+        {
+            xa[i] = ib.get(i);
+        }
+        //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        return xa;
+    }
+
+    private static float[] cl_read_pinned_float_buffer(cl_mem pinned, long size, int count)
+    {
+        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, size, 0,
+            null, null, null);
+        assert out != null;
+        float[] xa = new float[count];
+        var ib = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+        for (int i = 0; i < count; i++)
+        {
+            xa[i] = ib.get(i);
+        }
+        //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        return xa;
+    }
+
     private static cl_mem cl_new_pinned_int()
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
@@ -612,7 +657,9 @@ public class GPU
         var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
             null, null, null);
         assert out != null;
-        return out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+        int x = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+        //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        return x;
     }
 
     private static int work_group_count(int n)
@@ -712,6 +759,7 @@ public class GPU
         var properties = new cl_queue_properties();
         command_queue = clCreateCommandQueueWithProperties(
             context, device, properties, null);
+        cmd_native_ptr = command_queue.getNativePointer();
 
         return device_ids;
 
@@ -719,6 +767,8 @@ public class GPU
 
     private static void init_memory(int max_hulls, int max_points)
     {
+        counter_buffer = cl_new_pinned_int();
+        counter_pointer = Pointer.to(counter_buffer);
         // todo: there should be more granularity than just max hulls and points. There should be
         //  limits on armatures and other data types.
 
@@ -1224,19 +1274,14 @@ public class GPU
      */
     public static HullIndexData GL_hull_filter(int model_id)
     {
-        // the kernel will use this value as an internal atomic counter, always initialize to zero
-        int[] counter = new int[]{0};
-        var dst_counter = Pointer.to(counter);
-        var counter_data = cl_new_int_arg_buffer(dst_counter);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
-        Kernel.root_hull_count.set_arg(1, Pointer.to(counter_data));
+        Kernel.root_hull_count.set_arg(1, counter_pointer);
         Kernel.root_hull_count.set_arg(2, Pointer.to(arg_int(model_id)));
         Kernel.root_hull_count.call(arg_long(Main.Memory.next_armature()));
-        cl_read_buffer(counter_data, Sizeof.cl_int, dst_counter);
 
-        clReleaseMemObject(counter_data);
+        int final_count = cl_read_pinned_int(counter_buffer);
 
-        int final_count = counter[0];
         if (final_count == 0)
         {
             return new HullIndexData(null, final_count);
@@ -1402,17 +1447,15 @@ public class GPU
 
         int[] index = arg_int(armature_index);
 
-        var result_data = cl_new_buffer(Sizeof.cl_float2);
+        var result_data = cl_new_pinned_buffer(Sizeof.cl_float2);
         cl_zero_buffer(result_data, Sizeof.cl_float2);
 
         Kernel.read_position.set_arg(1, Pointer.to(result_data));
         Kernel.read_position.set_arg(2, Pointer.to(index));
         Kernel.read_position.call(global_single_size);
 
-        float[] result = arg_float2(0, 0);
-        cl_read_buffer(result_data, Sizeof.cl_float2, Pointer.to(result));
+        float[] result = cl_read_pinned_float_buffer(result_data, Sizeof.cl_float2, 2);
         clReleaseMemObject(result_data);
-
         return result;
     }
 
@@ -1530,19 +1573,15 @@ public class GPU
 
         physics_buffer.in_bounds = new GPUMemory(inbound_data);
 
-        int[] size = arg_int(0);
-        var dst_size = Pointer.to(size);
-        var size_data = cl_new_int_arg_buffer(dst_size);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.locate_in_bounds.set_arg(1, physics_buffer.in_bounds.pointer());
-        Kernel.locate_in_bounds.set_arg(2, Pointer.to(size_data));
+        Kernel.locate_in_bounds.set_arg(2, counter_pointer);
         Kernel.locate_in_bounds.call(arg_long(hull_count));
 
-        cl_read_buffer(size_data, Sizeof.cl_int, dst_size);
+        int size = cl_read_pinned_int(counter_buffer);
 
-        clReleaseMemObject(size_data);
-
-        physics_buffer.set_candidate_buffer_count(size[0]);
+        physics_buffer.set_candidate_buffer_count(size);
     }
 
     public static void locate_out_of_bounds()
@@ -1628,8 +1667,6 @@ public class GPU
         del_buffer_2.release();
     }
 
-    private static cl_mem aabb_counter = null;
-
     public static void aabb_collide()
     {
         long matches_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_match_count();
@@ -1640,16 +1677,7 @@ public class GPU
         var used_data = cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
-        if (aabb_counter == null)
-        {
-            aabb_counter = cl_new_pinned_int();
-        }
-        cl_zero_buffer(aabb_counter, Sizeof.cl_int);
-
-        // this buffer will contain the total number of candidates that were found
-//        int[] count = arg_int(0);
-//        var dst_count = Pointer.to(count);
-//        var count_data = cl_new_int_arg_buffer(dst_count);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.aabb_collide.set_arg(3, physics_buffer.candidate_counts.pointer());
         Kernel.aabb_collide.set_arg(4, physics_buffer.candidate_offsets.pointer());
@@ -1659,19 +1687,15 @@ public class GPU
         Kernel.aabb_collide.set_arg(8, physics_buffer.key_offsets.pointer());
         Kernel.aabb_collide.set_arg(9, physics_buffer.matches.pointer());
         Kernel.aabb_collide.set_arg(10, physics_buffer.matches_used.pointer());
-        Kernel.aabb_collide.set_arg(11, Pointer.to(aabb_counter));
+        Kernel.aabb_collide.set_arg(11, counter_pointer);
         Kernel.aabb_collide.set_arg(12, physics_buffer.x_sub_divisions);
         Kernel.aabb_collide.set_arg(13, physics_buffer.key_count_length);
         Kernel.aabb_collide.call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
-        var count = cl_read_pinned_int(aabb_counter);
+        int count = cl_read_pinned_int(counter_buffer);
         physics_buffer.set_candidate_count(count);
 
-//        cl_read_buffer(count_data, Sizeof.cl_int, dst_count);
-//        physics_buffer.set_candidate_count(count[0]);
-
-
-        //clReleaseMemObject(count_data);
+        //clReleaseMemObject(aabb_counter);
     }
 
     public static void finalize_candidates()
@@ -1704,9 +1728,6 @@ public class GPU
         clReleaseMemObject(counter_data);
     }
 
-    private static cl_mem sat_counter = null;
-
-
     public static void sat_collide()
     {
         int candidates_size = (int) physics_buffer.get_final_size() / Sizeof.cl_int;
@@ -1714,11 +1735,7 @@ public class GPU
         // candidates are pairs of integer indices, so the global size is half the count
         long[] global_work_size = new long[]{candidates_size / 2};
 
-        if (sat_counter == null)
-        {
-            sat_counter = cl_new_pinned_int();
-        }
-        cl_zero_buffer(sat_counter, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         long max_point_count = physics_buffer.get_final_size()
             * 2  // there are two bodies per collision pair
@@ -1739,11 +1756,13 @@ public class GPU
         Kernel.sat_collide.set_arg(0, physics_buffer.candidates.pointer());
         Kernel.sat_collide.set_arg(6, physics_buffer.reactions_in.pointer());
         Kernel.sat_collide.set_arg(7, physics_buffer.reaction_index.pointer());
-        Kernel.sat_collide.set_arg(10, Pointer.to(sat_counter));
+        Kernel.sat_collide.set_arg(10, counter_pointer);
         Kernel.sat_collide.call(global_work_size);
 
-        var size = cl_read_pinned_int(sat_counter);
+        int size = cl_read_pinned_int(counter_buffer);
         physics_buffer.set_reaction_count(size);
+
+        //clReleaseMemObject(sat_counter);
     }
 
     public static void scan_reactions()
@@ -1996,23 +2015,21 @@ public class GPU
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
         long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
 
-        int[] sz = new int[]{ 0, 0, 0, 0, 0 };
-        var dst_size = Pointer.to(sz);
-        var size_data = cl_new_buffer(Sizeof.cl_int + Sizeof.cl_int4);
-        var src_size = Pointer.to(size_data);
+        var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 5);
+        cl_zero_buffer(size_data, Sizeof.cl_int * 5);
 
         var dst_data = Pointer.to(o1_data);
         var dst_data2 = Pointer.to(o2_data);
 
         Kernel.scan_deletes_single_block_out.set_arg(3, dst_data);
         Kernel.scan_deletes_single_block_out.set_arg(4, dst_data2);
-        Kernel.scan_deletes_single_block_out.set_arg(5, src_size);
+        Kernel.scan_deletes_single_block_out.set_arg(5, Pointer.to(size_data));
         Kernel.scan_deletes_single_block_out.new_arg(6, local_buffer_size);
         Kernel.scan_deletes_single_block_out.new_arg(7, local_buffer_size2);
         Kernel.scan_deletes_single_block_out.set_arg(8, Pointer.to(arg_int(n)));
         Kernel.scan_deletes_single_block_out.call(local_work_default, local_work_default);
 
-        cl_read_buffer(size_data, Sizeof.cl_int + Sizeof.cl_int4, dst_size);
+        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 5, 5);
 
         clReleaseMemObject(size_data);
 
@@ -2053,14 +2070,12 @@ public class GPU
         scan_int(p_data, part_size);
         scan_int4(p_data2, part_size);
 
-        int[] sz = new int[]{ 0, 0, 0, 0, 0 };
-        var dst_size = Pointer.to(sz);
-        var size_data = cl_new_buffer(Sizeof.cl_int + Sizeof.cl_int4);
-        var src_size = Pointer.to(size_data);
+        var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 5);
+        cl_zero_buffer(size_data, Sizeof.cl_int * 5);
 
         Kernel.complete_deletes_multi_block_out.set_arg(3, dst_data);
         Kernel.complete_deletes_multi_block_out.set_arg(4, dst_data2);
-        Kernel.complete_deletes_multi_block_out.set_arg(5, src_size);
+        Kernel.complete_deletes_multi_block_out.set_arg(5, Pointer.to(size_data));
         Kernel.complete_deletes_multi_block_out.new_arg(6, local_buffer_size);
         Kernel.complete_deletes_multi_block_out.new_arg(7, local_buffer_size2);
         Kernel.complete_deletes_multi_block_out.set_arg(8, src_part);
@@ -2068,7 +2083,7 @@ public class GPU
         Kernel.complete_deletes_multi_block_out.set_arg(10, src_n);
         Kernel.complete_deletes_multi_block_out.call(global_work_size, local_work_default);
 
-        cl_read_buffer(size_data, Sizeof.cl_int * 5, dst_size);
+        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 5, 5);
 
         clReleaseMemObject(p_data);
         clReleaseMemObject(p_data2);
@@ -2083,23 +2098,18 @@ public class GPU
         var src_data = Pointer.to(d_data);
         var dst_data = Pointer.to(o_data);
 
-        int[] sz = new int[]{0};
-        var dst_size = Pointer.to(sz);
-        var size_data = cl_new_buffer(Sizeof.cl_int);
-        var src_size = Pointer.to(size_data);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.scan_candidates_single_block_out.set_arg(0, src_data);
         Kernel.scan_candidates_single_block_out.set_arg(1, dst_data);
-        Kernel.scan_candidates_single_block_out.set_arg(2, src_size);
+        Kernel.scan_candidates_single_block_out.set_arg(2, counter_pointer);
         Kernel.scan_candidates_single_block_out.new_arg(3, local_buffer_size);
         Kernel.scan_candidates_single_block_out.set_arg(4, Pointer.to(arg_int(n)));
         Kernel.scan_candidates_single_block_out.call(local_work_default, local_work_default);
 
-        cl_read_buffer(size_data, Sizeof.cl_int, dst_size);
+        int x = cl_read_pinned_int(counter_buffer);
 
-        clReleaseMemObject(size_data);
-
-        return sz[0];
+        return x;
     }
 
     private static int scan_multi_block_candidates_out(cl_mem d_data, cl_mem o_data, int n, int k)
@@ -2125,45 +2135,37 @@ public class GPU
 
         scan_int(p_data, part_size);
 
-        int[] sz = new int[]{0};
-        var dst_size = Pointer.to(sz);
-        var size_data = cl_new_buffer(Sizeof.cl_int);
-        var src_size = Pointer.to(size_data);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.complete_candidates_multi_block_out.set_arg(0, src_data);
         Kernel.complete_candidates_multi_block_out.set_arg(1, dst_data);
-        Kernel.complete_candidates_multi_block_out.set_arg(2, src_size);
+        Kernel.complete_candidates_multi_block_out.set_arg(2, counter_pointer);
         Kernel.complete_candidates_multi_block_out.new_arg(3, local_buffer_size);
         Kernel.complete_candidates_multi_block_out.set_arg(4, src_part);
         Kernel.complete_candidates_multi_block_out.set_arg(5, src_n);
         Kernel.complete_candidates_multi_block_out.call(global_work_size, local_work_default);
 
-        cl_read_buffer(size_data, Sizeof.cl_int, dst_size);
+        int x = cl_read_pinned_int(counter_buffer);
 
         clReleaseMemObject(p_data);
-        clReleaseMemObject(size_data);
 
-        return sz[0];
+        return x;
     }
 
     private static int scan_bounds_single_block(cl_mem input_data, int n)
     {
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
 
-        int[] sz = new int[]{0};
-        var size_data = cl_new_buffer(Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.scan_bounds_single_block.set_arg(0, Pointer.to(input_data));
-        Kernel.scan_bounds_single_block.set_arg(1, Pointer.to(size_data));
+        Kernel.scan_bounds_single_block.set_arg(1, counter_pointer);
         Kernel.scan_bounds_single_block.new_arg(2, local_buffer_size);
         Kernel.scan_bounds_single_block.set_arg(3, Pointer.to(arg_int(n)));
         Kernel.scan_bounds_single_block.call(local_work_default, local_work_default);
 
-        cl_read_buffer(size_data, Sizeof.cl_int, Pointer.to(sz));
-
-        clReleaseMemObject(size_data);
-
-        return sz[0];
+        int x = cl_read_pinned_int(counter_buffer);
+        return x;
     }
 
     private static int scan_bounds_multi_block(cl_mem input_data, int n, int k)
@@ -2186,22 +2188,20 @@ public class GPU
 
         scan_int(p_data, part_size);
 
-        int[] sz = new int[1];
-        var size_data = cl_new_buffer(Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.complete_bounds_multi_block.set_arg(0, src_data);
-        Kernel.complete_bounds_multi_block.set_arg(1, Pointer.to(size_data));
+        Kernel.complete_bounds_multi_block.set_arg(1, counter_pointer);
         Kernel.complete_bounds_multi_block.new_arg(2, local_buffer_size);
         Kernel.complete_bounds_multi_block.set_arg(3, src_part);
         Kernel.complete_bounds_multi_block.set_arg(4, src_n);
         Kernel.complete_bounds_multi_block.call(global_work_size, local_work_default);
 
-        cl_read_buffer(size_data, Sizeof.cl_int, Pointer.to(sz));
+        int x = cl_read_pinned_int(counter_buffer);
 
-        clReleaseMemObject(size_data);
         clReleaseMemObject(p_data);
 
-        return sz[0];
+        return x;
     }
 
     //#endregion
@@ -2265,15 +2265,6 @@ public class GPU
         for (cl_mem clMem : shared_mem.values())
         {
             clReleaseMemObject(clMem);
-        }
-
-        if (aabb_counter != null)
-        {
-            clReleaseMemObject(aabb_counter);
-        }
-        if (sat_counter != null)
-        {
-            clReleaseMemObject(sat_counter);
         }
 
         clReleaseCommandQueue(command_queue);

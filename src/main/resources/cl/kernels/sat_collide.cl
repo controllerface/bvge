@@ -173,11 +173,11 @@ __kernel void apply_reactions(__global float2 *reactions,
     // maintain stability with small numbers of stacked objects. 
     float2 g = (float2)(0.0, -1.0);
     float2 heading = point.xy - point.zw;
-    float ag = 0.0f;//calculate_anti_gravity(g, heading);
+    float ag = calculate_anti_gravity(g, heading);
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.Otherwise boost to 1 for the best stability enchancement.
-    ag = ag <= 0.0f ? 0.0f : ag;
+    ag = ag <= 0.0f ? 0.0f : 1.0f;
 
     anti_gravity[gid] = ag;
     points[gid] = point;
