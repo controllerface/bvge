@@ -23,6 +23,7 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global float2 *reactions,
                           __global int *reaction_index,
                           __global int *point_reactions,
+                          __global float *masses,
                           __global int *counter)
 {
     int gid = get_global_id(0);
@@ -57,17 +58,20 @@ __kernel void sat_collide(__global int2 *candidates,
             reactions,
             reaction_index,
             point_reactions,
+            masses,
             counter); 
     }
     else if (b1_is_circle && b2_is_circle) 
     {
         circle_collision(b1_id, b2_id, 
             hulls, 
+            hull_flags,
             element_tables, 
             points, 
             reactions,
             reaction_index,
             point_reactions,
+            masses,
             counter); 
     }
     else 
@@ -81,6 +85,7 @@ __kernel void sat_collide(__global int2 *candidates,
             reactions,
             reaction_index,
             point_reactions,
+            masses,
             counter); 
     }
 }
@@ -172,7 +177,7 @@ __kernel void apply_reactions(__global float2 *reactions,
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.Otherwise boost to 1 for the best stability enchancement.
-    ag = ag < 0.0f ? 0.0f : 1.0f;
+    ag = ag <= 0.0f ? 0.0f : 1.0f;
 
     anti_gravity[gid] = ag;
     points[gid] = point;

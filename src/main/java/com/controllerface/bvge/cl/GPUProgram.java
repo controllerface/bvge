@@ -122,6 +122,9 @@ public abstract class GPUProgram
     public void destroy()
     {
         clReleaseProgram(program);
-        kernels.values().forEach(CL::clReleaseKernel);
+        for (cl_kernel clKernel : kernels.values())
+        {
+            CL.clReleaseKernel(clKernel);
+        }
     }
 }

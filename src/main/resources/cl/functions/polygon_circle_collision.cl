@@ -9,6 +9,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
                                      __global float2 *reactions,
                                      __global int *reaction_index,
                                      __global int *point_reactions,
+                                     __global float *masses,
                                      __global int *counter)
 {
     float4 polygon = hulls[polygon_id];
@@ -139,11 +140,17 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     int2 vo_f = hull_flags[(int)vertex_object_id];
     int2 eo_f = hull_flags[(int)edge_object_id];
 
+    float vo_mass = masses[vo_f.y];
+    float eo_mass = masses[eo_f.y];
+
+    float total_mass = vo_mass + eo_mass;
+
     float2 normal = normalBuffer;
 
     float2 collision_vector = normal * min_distance;
-    float vertex_magnitude = .5f;
-    float edge_magnitude = .5f;
+    
+    float vertex_magnitude = eo_mass / total_mass;
+    float edge_magnitude = vo_mass / total_mass;
 
     bool vs = (vo_f.x & IS_STATIC) !=0;
     bool es = (eo_f.x & IS_STATIC) !=0;

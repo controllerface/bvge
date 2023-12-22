@@ -45,7 +45,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.dynamic_Box(x, y, size);
+                var armature_index = PhysicsObjects.dynamic_Box(x, y, size, .1f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -75,7 +75,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.tri(x, y, size, 0);
+                var armature_index = PhysicsObjects.tri(x, y, size, 0, .1f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -91,7 +91,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.particle(x, y, size);
+                var armature_index = PhysicsObjects.particle(x, y, size, 1f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -105,7 +105,7 @@ public class TestGame extends GameMode
             float x = start_x + i * spacing;
             float y = start_y;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
@@ -118,7 +118,7 @@ public class TestGame extends GameMode
             float x = start_x;
             float y = start_y + i * spacing;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
@@ -126,21 +126,21 @@ public class TestGame extends GameMode
     private void genTestCircle(float size, float x, float y)
     {
         //var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.particle(x, y, size);
+        var armature_index = PhysicsObjects.particle(x, y, size, .1f);
         //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestCrate(float size, float x, float y)
     {
         //var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.dynamic_Box(x, y, size);
+        var armature_index = PhysicsObjects.dynamic_Box(x, y, size, .1f);
         //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestTriangle(float size, float x, float y)
     {
        // var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.tri(x, y, size, 0);
+        var armature_index = PhysicsObjects.tri(x, y, size, 0, .1f);
         //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -149,7 +149,7 @@ public class TestGame extends GameMode
         // circle entity
         var figure = ecs.registerEntity("player");
 
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON, 100.5f);
         ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
         // todo: determine if a different ID may be used for identifying entities that is not tied to the
@@ -163,14 +163,14 @@ public class TestGame extends GameMode
     private void genTestFigureNPC(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON, 1);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genBoxModelNPC(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON);
+        var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON, .1f);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -179,7 +179,7 @@ public class TestGame extends GameMode
     {
         // player entity
         var player = ecs.registerEntity("player");
-        var armature_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, FLAG_NONE | FLAG_POLYGON | FLAG_NO_BONES);
+        var armature_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, FLAG_NONE | FLAG_POLYGON | FLAG_NO_BONES, 1);
         ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
         ecs.attachComponent(player, Component.Armature, new ArmatureIndex(armature_index));
@@ -213,7 +213,7 @@ public class TestGame extends GameMode
     public void load()
     {
         //genPlayer();
-        genTestFigure(1, 600, 0);
+        genTestFigure(1f, 300, 0);
 
         //genTestTriangle(20f, 190, 250);
 
@@ -271,10 +271,10 @@ public class TestGame extends GameMode
 
 
 
-        //genCircles(100, 6f, 5f, 0, 100);
-        genSquares(50,  6f, 5f, 100, 100);
-        //genCrates2(10,  6f, 0.025f, 100, 100);
-        //genTriangles(100,  7f, 5f, 0, 100);
+        genCircles(40, 7f, 5f, -120, 100);
+        //genSquares(100,  9f, 5f, -120, 100);
+        //genCrates2(100,  7f, 0.025f, 100, 100);
+        //genTriangles(100,  9f, 5f, -200, 100);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);

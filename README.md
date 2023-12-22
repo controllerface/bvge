@@ -173,14 +173,8 @@ _The following renderers will need updates for deleting objects. The changes to 
 
 Current Status
 -
-Currently, the engine supports creating, reading, and updating of all required objects. There are several debugging renderers and one texture renderer implemented. The last main hurdle remains support for deleting of objects.
+Currently, the engine supports creating, reading, updating, and deleting of all required objects. There are two debugging renderers (edge and circle) and one texture renderer (crates) implemented. As such, this initial phase of the prototype is "done" though I will continue to tinker on until the new year.
 
-Toward implementing deleting objects, I have made some progress both on the Open CL kernels required to perform the buffer scan and compaction, and the changes to the renderers that will be needed.
+There are still tweaks to be made to the physics simulation, as well as completing the work to add basic animation support. I have added basic mass calculations, so heavier objects move a lot less than lighter ones during reactions, though the same amount of overall movement is still maintained. 
 
-I refactored the edge renderer to be able to handle deletes and took the opportunity to clean it up, so it is quite a bit less code now. This is a very good example of how the memory layout can be employed to make a simple and efficient renderer in this prototype engine.
-
-In doing this process, I did find an issue with models that makes the current design cumbersome, so I have started in on a refactor to the circle renderer, which will serve as a basis for more complex models. The new design will work very similarly to how it functions today, accept the `indices` value that is commonly used by the render batches will be computed rather than taken from the `Models` class.
-
-This new design required extending the armature flag data to `int2` with the current root hull ID stored in `x` and the model ID in `y`. This will allow CL kernels to easily scan the buffers for instances of a specific model to render, the ultimate destination being a GL buffer that is used to render the models using instanced rendering.
-
-The intent is to only store a raw model count in the Models class, instead of the current design where a root hull or armature ID is mapped to each instance. The current model renderers rely on this, which is why they need to be updated. Moving to this new design also makes it possible to do the final stage of the delete process, which can be reduced to simple counter decrement instead of needing to remove a value in a mapped list.  
+I made an initial attempt at separating reactions into distinct displacement and reaction steps, but put that back into the backlog to work on some lighter things. I do think I will need to come back to this though, so will continue to think about how it could work. The existing "anti-gravity experiment" still does provide the most stable behavior I have been able to achieve with non-circles, circles work well even without it.

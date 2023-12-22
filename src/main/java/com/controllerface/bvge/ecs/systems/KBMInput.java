@@ -3,7 +3,10 @@ package com.controllerface.bvge.ecs.systems;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.window.Window;
+
+import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
@@ -21,11 +24,13 @@ public class KBMInput extends GameSystem
     public void tick(float dt)
     {
         var controllables = ecs.getComponents(Component.ControlPoints);
-        controllables.forEach((entity, component) ->
+        for (Map.Entry<String, GameComponent> entry : controllables.entrySet())
         {
+            String entity = entry.getKey();
+            GameComponent component = entry.getValue();
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
             assert controlPoints != null : "Component was null";
-            if (controlPoints.is_disabled()) return;
+            if (controlPoints.is_disabled()) continue;
 
             controlPoints.set_moving_up(keyDown[GLFW_KEY_W]);
             controlPoints.set_moving_Left(keyDown[GLFW_KEY_A]);
@@ -34,7 +39,7 @@ public class KBMInput extends GameSystem
             controlPoints.set_rot_right(keyDown[GLFW_KEY_E]);
             controlPoints.set_rotating_Left(keyDown[GLFW_KEY_Q]);
             controlPoints.set_space_bar(keyDown[GLFW_KEY_SPACE]);
-        });
+        }
 
         // test camera moving code
         if (keyDown[GLFW_KEY_LEFT])
