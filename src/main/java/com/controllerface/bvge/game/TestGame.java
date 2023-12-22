@@ -206,7 +206,7 @@ public class TestGame extends GameMode
 
         // main renderers go here, one for each model type that can be rendered
         // todo: rewrite using hull/model filter
-        //ecs.registerSystem(new CrateRenderer(ecs));
+        ecs.registerSystem(new CrateRenderer(ecs));
     }
 
     @Override
@@ -271,9 +271,9 @@ public class TestGame extends GameMode
 
 
 
-        genCircles(40, 7f, 5f, -120, 100);
-        //genSquares(100,  9f, 5f, -120, 100);
-        //genCrates2(100,  7f, 0.025f, 100, 100);
+        //genCircles(40, 7f, 5f, -120, 100);
+        //genSquares(40,  9f, 5f, -120, 100);
+        genCrates2(50, 7f, 0.025f, 100, 100);
         //genTriangles(100,  9f, 5f, -200, 100);
 
         genFloor(8, 150f, 150f, -70, -100);

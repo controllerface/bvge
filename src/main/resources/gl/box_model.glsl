@@ -39,7 +39,7 @@ void main()
     vec2 pos_offset;
     pos_offset.x = aTransform.x;
     pos_offset.y = aTransform.y;
-    vec2 scaled = aPos * aTransform.w;
+    vec2 scaled = aPos * (aTransform.w * 100);
     vec2 translated = scaled + pos_offset;
     vec2 rotated = rotate(translated, aTransform.z, pos_offset);
     gl_Position = uVP * vec4(rotated, 0.0, 1.0);
