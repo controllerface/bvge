@@ -362,7 +362,7 @@ public class Models
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
-        TEST_SQUARE_INDEX = load_model("/models/another_test_square.fbx", "Crate");
+        TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
     }
 
     private static SceneNode process_node_hierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)
