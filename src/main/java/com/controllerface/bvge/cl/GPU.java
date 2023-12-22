@@ -6,12 +6,8 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
 import org.jocl.*;
-import org.lwjgl.opencl.CL10;
-import org.lwjgl.opencl.CL11;
-import org.lwjgl.system.Checks;
 
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,7 +16,6 @@ import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.jocl.CL.*;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
-import static org.lwjgl.system.APIUtil.apiGetMappedBuffer;
 
 /**
  * Core class used for executing GPU programs.
@@ -1332,18 +1327,16 @@ public class GPU
      * model reference data from memory into the position of the mesh that the hull
      * represents within the simulation.
      *
-     * @param index_buffer_id id of the shared GL buffer object
      * @param transforms_id   id of the shared GL buffer object
+     * @param hulls_out id of the shared GL buffer object
      * @param batch_size      number of hull objects to transfer in this batch
      */
-    public static void GL_transforms(int index_buffer_id, int transforms_id, int batch_size, int offset)
+    public static void GL_transforms(int transforms_id, cl_mem hulls_out, int batch_size, int offset)
     {
-        var vbo_index_buffer = shared_mem.get(index_buffer_id);
         var vbo_transforms = shared_mem.get(transforms_id);
 
-        Kernel.prepare_transforms.share_mem(vbo_index_buffer);
         Kernel.prepare_transforms.share_mem(vbo_transforms);
-        Kernel.prepare_transforms.set_arg(2, Pointer.to(vbo_index_buffer));
+        Kernel.prepare_transforms.set_arg(2, Pointer.to(hulls_out));
         Kernel.prepare_transforms.set_arg(3, Pointer.to(vbo_transforms));
         Kernel.prepare_transforms.set_arg(4, Pointer.to(arg_int(offset)));
         Kernel.prepare_transforms.call(arg_long(batch_size));
