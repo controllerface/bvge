@@ -11,7 +11,7 @@ public class GpuCrud extends GPUProgram
     protected void init()
     {
         src.add(func_rotate_point);
-        src.add(read_src("kernels/gpu_crud.cl"));
+        src.add(read_src("programs/gpu_crud.cl"));
 
         make_program();
 

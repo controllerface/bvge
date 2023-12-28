@@ -11,7 +11,7 @@ public class ScanCandidates extends GPUProgram
     protected void init()
     {
         src.add(func_exclusive_scan);
-        src.add(read_src("kernels/scan_key_candidates.cl"));
+        src.add(read_src("programs/scan_key_candidates.cl"));
 
         make_program();
 

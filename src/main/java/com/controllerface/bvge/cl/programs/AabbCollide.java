@@ -13,7 +13,7 @@ public class AabbCollide extends GPUProgram
         src.add(const_hull_flags);
         src.add(func_do_bounds_intersect);
         src.add(func_calculate_key_index);
-        src.add(read_src("kernels/aabb_collide.cl"));
+        src.add(read_src("programs/aabb_collide.cl"));
 
         make_program();
 

@@ -11,7 +11,7 @@ public class ScanIntArrayOut extends GPUProgram
     protected void init()
     {
         src.add(func_exclusive_scan);
-        src.add(read_src("kernels/scan_int_array_out.cl"));
+        src.add(read_src("programs/scan_int_array_out.cl"));
 
         make_program();
 

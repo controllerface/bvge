@@ -10,7 +10,7 @@ public class PrepareBounds extends GPUProgram
     @Override
     protected void init()
     {
-        src.add(read_src("kernels/prepare_bounds.cl"));
+        src.add(read_src("programs/prepare_bounds.cl"));
 
         make_program();
 

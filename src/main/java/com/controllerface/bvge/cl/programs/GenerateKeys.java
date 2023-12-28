@@ -12,7 +12,7 @@ public class GenerateKeys extends GPUProgram
     {
         src.add(prag_int32_base_atomics);
         src.add(func_calculate_key_index);
-        src.add(read_src("kernels/generate_keys.cl"));
+        src.add(read_src("programs/generate_keys.cl"));
 
         make_program();
 

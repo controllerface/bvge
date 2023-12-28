@@ -13,7 +13,7 @@ public class LocateInBounds extends GPUProgram
         src.add(prag_int32_base_atomics);
         src.add(func_do_bounds_intersect);
         src.add(func_calculate_key_index);
-        src.add(read_src("kernels/locate_in_bounds.cl"));
+        src.add(read_src("programs/locate_in_bounds.cl"));
 
         make_program();
 

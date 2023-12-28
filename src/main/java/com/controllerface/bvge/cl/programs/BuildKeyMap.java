@@ -12,7 +12,7 @@ public class BuildKeyMap extends GPUProgram
     {
         src.add(prag_int32_base_atomics);
         src.add(func_calculate_key_index);
-        src.add(read_src("kernels/build_key_map.cl"));
+        src.add(read_src("programs/build_key_map.cl"));
 
         make_program();
 

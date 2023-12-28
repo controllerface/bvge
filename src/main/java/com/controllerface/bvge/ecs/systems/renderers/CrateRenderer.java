@@ -20,7 +20,8 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
 import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
-public class CrateRenderer extends GameSystem {
+public class CrateRenderer extends GameSystem
+{
     public static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_4D_LENGTH;
     public static final int TRANSFORM_BUFFER_SIZE = TRANSFORM_VERTEX_COUNT * Float.BYTES;
     private final AbstractShader shader;
@@ -33,21 +34,24 @@ public class CrateRenderer extends GameSystem {
     private int texture_uv_buffer_id;
     private int vao;
 
-    public CrateRenderer(ECS ecs) {
+    public CrateRenderer(ECS ecs)
+    {
         super(ecs);
         this.shader = Assets.shader("box_model.glsl");
         this.texture = Assets.texture("src/main/resources/img/crate.png");
         init();
     }
 
-    public void init() {
+    public void init()
+    {
         var mdl = Models.get_model_by_index(Models.TEST_SQUARE_INDEX);
         var base_mesh = mdl.meshes()[0];
         var vbo_model = new float[12];
         var vbo_tex_coords = new float[12];
         int count = 0;
 
-        for (int i = 0; i < base_mesh.faces().length; i++) {
+        for (int i = 0; i < base_mesh.faces().length; i++)
+        {
             var face = base_mesh.faces()[i];
             var p0 = base_mesh.vertices()[face.p0()];
             var p1 = base_mesh.vertices()[face.p1()];
@@ -141,13 +145,18 @@ public class CrateRenderer extends GameSystem {
 
 
     @Override
-    public void tick(float dt) {
-        if (crate_hulls != null && crate_hulls.indices() != null) {
+    public void tick(float dt)
+    {
+        if (crate_hulls != null && crate_hulls.indices() != null)
+        {
             clReleaseMemObject(crate_hulls.indices());
         }
         crate_hulls = GPU.GL_hull_filter(Models.TEST_SQUARE_INDEX);
 
-        if (crate_hulls.count() == 0) return;
+        if (crate_hulls.count() == 0)
+        {
+            return;
+        }
 
         glBindVertexArray(vao);
 
@@ -163,7 +172,8 @@ public class CrateRenderer extends GameSystem {
         glEnableVertexAttribArray(3);
 
         int offset = 0;
-        for (int remaining = crate_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE) {
+        for (int remaining = crate_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             GPU.GL_transforms(transform_buffer_id, crate_hulls.indices(), count, offset);
             glDrawArraysInstanced(GL_TRIANGLES, 0, 6, count);

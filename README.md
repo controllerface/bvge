@@ -104,38 +104,43 @@ There are a few core classes that comprise most of the important functionality i
 
 ### GPU Kernels
 
-Aside from the CPU side Java code, a number of Open CL kernels have been written, mostly to implement the physics simulation. In Open CL, code is compiled into programs, which may expose 1 or more `kernels`, which are the functions that are callable from the CPU. 
+Aside from the CPU side Java code, a number of Open CL kernels have been written, mostly to implement the physics simulation. In Open CL, code is compiled into `programs`, which may expose 1 or more `kernels`, which are the functions that are callable from the CPU. 
 
-All the kernels are required for the simulation to run, but some are more central to the systems operation, where others are generally more in a "supporting" role providing some logic to set up buffers or other secondary tasks.
+All the programs and kernels are required for the simulation to run, but some are vital than others.
 
-here is a short list of a few of the more vital kernels:
+here is a short list of a few of the more vital programs:
 
-- [gpu_crud.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/cl/kernels/gpu_crud.cl): Create, Read, Update, Delete; On GPU
+- [gpu_crud.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/cl/programs/gpu_crud.cl): Create, Read, Update, Delete; On GPU
     - Critical functionality for physics interactions
     - Because all object data is resident on the GPU, this API layer is required to allow the CPU program to use the memory
     - Conceptually similar to something like a NoSQL database, though with very strict object structures, rather than open-ended object types.
     - Objects are largely _implied_ structures, there are no literal classes or objects in the GPU layer. All data is stored sequentially in pre-sized arrays. 
 
 
-- [integrate.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/cl/kernels/integrate.cl): Equations of Motion
+- [integrate.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/cl/programs/integrate.cl): Equations of Motion
   - All physics simulations must perform some logic that uses the equations of motion to determine where all the objects are in the current frame. These calculations take into account position, velocity, acceleration, and other forces. 
   - This physics simulation uses an integration algorithm that is based on the [Verlet](https://en.wikipedia.org/wiki/Verlet_integration) integration method. This is a slightly different process than the possibly more well-known Euler method, but it serves the same purpose.
   - Because the integration process involves calculating several properties that are useful for bounding box generation, the kernel does double duty as a [bounding box](https://en.wikipedia.org/wiki/Minimum_bounding_box) generator. This reduces the number of kernel calls needed per frame.
 
 
-- [aabb_collide.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/cl/kernels/aabb_collide.cl): Broad-Phase Collision; Axis Aligned Bounding Box (AABB)
+- [aabb_collide.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/cl/programs/aabb_collide.cl): Broad-Phase Collision; Axis Aligned Bounding Box (AABB)
   - The first stage of collision detection, this uses AABBs calculated during integration, to do a rough spatial check between objects for collision
   - Less computationally expensive than narrow-phase, helps reduce the number of objects that would be processed in that later, more expensive step.
   - Can be thought of as a check to see if two objects are "close enough" to require further inspection to see if they _really_ touch.
 
 
-- [sat_collide.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/cl/kernels/sat_collide.cl): Narrow-Phase Collision; Separating-Axis Theorem
-  - Objects that are found to have AABB collisions are allowed to be further processed to determine if they actually do overlap in physical space
+- [sat_collide.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/cl/programs/sat_collide.cl): Narrow-Phase Collision; Separating-Axis Theorem
+  - Objects that are found to have AABB collisions are allowed to be further processed to determine if they actually do overlap in physical space.
   - Uses the well studied and widely used [Separating-Axis Theorem](https://en.wikipedia.org/wiki/Hyperplane_separation_theorem) (which is grouped into the broader concept of Hyperplane separation) though in this case we are only concerned with the separating axes.  
   - Exposes extra kernels that help apply reactions to objects that are found to be colliding. 
   - Unlike many common implementations, this process does not require collision manifolds. Instead, there is a point-aligned memory buffer that is used to store accumulated reactions on each point
   - Because the same point may be affected in more than one collision, care is taken to ensure reaction vectors are applied _cumulatively_.  
 
+
+- [scan_deletes.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/cl/programs/scan_deletes.cl): Deletion of Objects and Buffer Compaction
+  - Provides all the logic that removes objects when they are marked for deletion.
+  - Used with a "linearization" method CPU-side, to ensure that buffer compaction happens sequentially, while still allowing for some level of parallelization.
+  - The maximum number of items shifted on each tick of buffer compaction is GPU dependant and is queried from the hardware at startup.
 
 ### Renderers
 
@@ -147,7 +152,7 @@ At the moment, this part of the engine is the most subject to change, as require
 
 Currently, vertex and fragment shaders are stored in a single `.glsl` file, but this may change in the future. Here are a few of the most used shaders, along with the class that loads them:
 
-- [EdgeRenderer](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/ecs/systems/renderers/EdgeRenderer.java) | [object_outline.cl](https://github.com/controllerface/bvge/blob/main/src/main/resources/gl/object_outline.glsl): Edge Rendering
+- [EdgeRenderer](https://github.com/controllerface/bvge/blob/main/src/main/java/com/controllerface/bvge/ecs/systems/renderers/EdgeRenderer.java) | [object_outline.glsl](https://github.com/controllerface/bvge/blob/main/src/main/resources/gl/object_outline.glsl): Edge Rendering
   - Probably the simplest renderer to look at as an example
   - All data is calculated per-frame, so there is no state to save in the renderer class 
   - At a high level, this asks Open CL to "forward" all the vertices that are being tracked as part of physics hull edges, into a vertex buffer that can be rendered from Open GL

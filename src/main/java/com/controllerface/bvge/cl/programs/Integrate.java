@@ -16,7 +16,7 @@ public class Integrate extends GPUProgram
         src.add(func_is_in_bounds);
         src.add(func_get_extents);
         src.add(func_get_key_for_point);
-        src.add(read_src("kernels/integrate.cl"));
+        src.add(read_src("programs/integrate.cl"));
 
         make_program();
 

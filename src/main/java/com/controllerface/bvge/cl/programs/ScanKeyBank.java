@@ -11,7 +11,7 @@ public class ScanKeyBank extends GPUProgram
     protected void init()
     {
         src.add(func_exclusive_scan);
-        src.add(read_src("kernels/scan_key_bank.cl"));
+        src.add(read_src("programs/scan_key_bank.cl"));
 
         make_program();
 

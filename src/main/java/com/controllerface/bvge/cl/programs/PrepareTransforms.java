@@ -10,7 +10,7 @@ public class PrepareTransforms extends GPUProgram
     @Override
     protected void init()
     {
-        src.add(read_src("kernels/prepare_transforms.cl"));
+        src.add(read_src("programs/prepare_transforms.cl"));
 
         make_program();
 

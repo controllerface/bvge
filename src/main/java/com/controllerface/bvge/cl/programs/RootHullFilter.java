@@ -10,7 +10,7 @@ public class RootHullFilter extends GPUProgram
     @Override
     protected void init()
     {
-        src.add(read_src("kernels/root_hull_filter.cl"));
+        src.add(read_src("programs/root_hull_filter.cl"));
 
         make_program();
 

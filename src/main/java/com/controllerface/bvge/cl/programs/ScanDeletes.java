@@ -12,7 +12,7 @@ public class ScanDeletes extends GPUProgram
     {
         src.add(const_hull_flags);
         src.add(func_exclusive_scan);
-        src.add(read_src("kernels/scan_deletes.cl"));
+        src.add(read_src("programs/scan_deletes.cl"));
 
         make_program();
 

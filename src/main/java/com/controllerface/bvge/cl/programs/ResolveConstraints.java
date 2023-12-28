@@ -10,7 +10,7 @@ public class ResolveConstraints extends GPUProgram
     @Override
     protected void init()
     {
-        src.add(read_src("kernels/resolve_constraints.cl"));
+        src.add(read_src("programs/resolve_constraints.cl"));
 
         make_program();
 

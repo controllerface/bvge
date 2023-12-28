@@ -11,7 +11,7 @@ public class PrepareBones extends GPUProgram
     protected void init()
     {
         src.add(func_matrix_transform);
-        src.add(read_src("kernels/prepare_bones.cl"));
+        src.add(read_src("programs/prepare_bones.cl"));
 
         make_program();
 
