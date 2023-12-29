@@ -40,7 +40,7 @@ public class BoundingBoxRenderer extends GameSystem
     {
         super(ecs);
         this.batches = new ArrayList<>();
-        this.shader = Assets.shader("bounding_outline.glsl");
+        this.shader = Assets.load_shader("bounding_outline.glsl");
         start();
     }
 

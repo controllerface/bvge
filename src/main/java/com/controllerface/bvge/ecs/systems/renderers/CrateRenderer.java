@@ -37,7 +37,7 @@ public class CrateRenderer extends GameSystem
     public CrateRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.shader("box_model.glsl");
+        this.shader = Assets.load_shader("box_model.glsl");
         init();
     }
 

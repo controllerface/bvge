@@ -14,7 +14,7 @@ public class Assets
     private static Map<String, AbstractShader> shaders = new HashMap<>();
     private static Map<String, Texture> textures = new HashMap<>();
 
-    public static AbstractShader shader(String resourceName)
+    public static AbstractShader load_shader(String resourceName)
     {
         if (shaders.containsKey(resourceName))
         {
@@ -38,7 +38,7 @@ public class Assets
         }
     }
 
-    public static Texture texture(AITexture textureData)
+    public static Texture load_texture(AITexture textureData)
     {
         var resourceName = textureData.mFilename().dataString();
         if (textures.containsKey(resourceName))
@@ -48,7 +48,7 @@ public class Assets
         else
         {
             Texture texture = new Texture();
-            texture.init_ex(textureData);
+            texture.init(textureData);
             Assets.textures.put(resourceName, texture);
             return texture;
         }

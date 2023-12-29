@@ -3,12 +3,10 @@ package com.controllerface.bvge.gl;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Objects;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.stb.STBImage.*;
 
@@ -39,7 +37,7 @@ public class Texture
             GL_RGB, GL_UNSIGNED_BYTE, 0);
     }
 
-    public void init_ex(AITexture raw_texture)
+    public void init(AITexture raw_texture)
     {
         this.filepath = raw_texture.mFilename().dataString();
 
@@ -90,24 +88,6 @@ public class Texture
 
         // do this or it will leak memory
         stbi_image_free(image);
-
-
-
-//        var buf = raw_texture.pcDataCompressed();
-//
-//        System.out.println("debug:"
-//            + " h=" + raw_texture.mHeight()
-//            + " w=" + raw_texture.mWidth()
-//            + " ?=" + raw_texture.achFormatHintString()
-//            + " f=" + raw_texture.mFilename().dataString()
-//            + " b=" + buf.capacity());
-//
-//        int[] x = new int[1];
-//        int[] y = new int[1];
-//        int[] c = new int[1];
-//        stbi_info_from_memory(buf, x, y, c);
-//        System.out.println("debug info : " + x[0] + " : " + y[0] + " : " + c[0]);
-
     }
 
     /**
@@ -139,11 +119,6 @@ public class Texture
     public int getTexId()
     {
         return texId;
-    }
-
-    public String getFilepath()
-    {
-        return filepath;
     }
 
     @Override

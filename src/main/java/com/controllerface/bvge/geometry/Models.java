@@ -10,17 +10,12 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryUtil;
 
-import javax.imageio.ImageIO;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.lwjgl.assimp.Assimp.*;
-import static org.lwjgl.assimp.Assimp.aiImportFile;
-import static org.lwjgl.stb.STBImage.stbi_info;
-import static org.lwjgl.stb.STBImage.stbi_info_from_memory;
 
 public class Models
 {
@@ -268,14 +263,13 @@ public class Models
 
     private static void load_textures(AIScene aiScene, List<Texture> textures)
     {
-        System.out.println("debug: " + aiScene.mNumTextures());
         if (aiScene.mNumTextures() <= 0) return;
 
         var texture_buffer = aiScene.mTextures();
         for (int tex_index = 0; tex_index < aiScene.mNumTextures(); tex_index++)
         {
             var raw_texture = AITexture.create(texture_buffer.get(tex_index));
-            textures.add(Assets.texture(raw_texture));
+            textures.add(Assets.load_texture(raw_texture));
         }
     }
 
