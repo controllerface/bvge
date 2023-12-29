@@ -217,6 +217,8 @@ public class Models
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
         var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node, hull_table);
 
+        //System.out.println("Debug mat index:" + raw_mesh.mMaterialIndex() + " for: " + mesh_name);
+
         Meshes.register_mesh(model_name, mesh_name, new_mesh);
         meshes[mesh_index] = new_mesh;
     }
@@ -259,6 +261,51 @@ public class Models
         }
 
         return root_index;
+    }
+
+    private static void load_materials(AIScene aiScene)
+    {
+        System.out.println("Debug materials: " + aiScene.mNumMaterials());
+        if (aiScene.mNumMaterials() <=0) return;
+
+        var buffer = aiScene.mMaterials();
+
+        for (int i = 0; i < aiScene.mNumMaterials(); i++)
+        {
+            var raw_mat = AIMaterial.create(buffer.get(i));
+            System.out.println("Debug mat data: prop count=" + raw_mat.mNumProperties());
+            var p_buf = raw_mat.mProperties();
+            for (int j = 0; j < raw_mat.mNumProperties(); j++)
+            {
+                var raw_prop = AIMaterialProperty.create(p_buf.get(j));
+                var prop_name = raw_prop.mKey().dataString();
+
+
+
+                if (prop_name.startsWith("$clr."))
+                {
+                    float r = raw_prop.mData().asFloatBuffer().get(0);
+                    float g = raw_prop.mData().asFloatBuffer().get(1);
+                    float b = raw_prop.mData().asFloatBuffer().get(2);
+                    System.out.println("Mat name="+prop_name+ " r=" + r + " g=" + g + " b=" + b);
+                }
+                else if (prop_name.startsWith("$mat."))
+                {
+                    float v = raw_prop.mData().asFloatBuffer().get(0);
+                    System.out.println("Mat name="+prop_name+ " v=" + v);
+                }
+                else
+                {
+                    System.out.println("Debug mat prop:"
+                    + " type=" + raw_prop.mType()
+                    + " index=" + raw_prop.mIndex()
+                    + " semantic=" + raw_prop.mSemantic()
+                    + " len=" + raw_prop.mDataLength()
+                    + " key=" + raw_prop.mKey().dataString());
+                }
+            }
+
+        }
     }
 
     private static void load_textures(AIScene aiScene, List<Texture> textures)
@@ -311,6 +358,7 @@ public class Models
             meshes = new Mesh[numMeshes];
             mesh_buffer = aiScene.mMeshes();
             load_textures(aiScene, textures);
+            load_materials(aiScene);
         }
         catch (NullPointerException | IOException e)
         {
