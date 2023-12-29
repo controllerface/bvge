@@ -2,12 +2,16 @@ package com.controllerface.bvge.geometry;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
+import com.controllerface.bvge.gl.Texture;
+import com.controllerface.bvge.util.Assets;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryUtil;
 
+import javax.imageio.ImageIO;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -15,6 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.lwjgl.assimp.Assimp.*;
 import static org.lwjgl.assimp.Assimp.aiImportFile;
+import static org.lwjgl.stb.STBImage.stbi_info;
+import static org.lwjgl.stb.STBImage.stbi_info_from_memory;
 
 public class Models
 {
@@ -260,6 +266,19 @@ public class Models
         return root_index;
     }
 
+    private static void load_textures(AIScene aiScene, List<Texture> textures)
+    {
+        System.out.println("debug: " + aiScene.mNumTextures());
+        if (aiScene.mNumTextures() <= 0) return;
+
+        var texture_buffer = aiScene.mTextures();
+        for (int tex_index = 0; tex_index < aiScene.mNumTextures(); tex_index++)
+        {
+            var raw_texture = AITexture.create(texture_buffer.get(tex_index));
+            textures.add(Assets.texture(raw_texture));
+        }
+    }
+
     private static int load_model(String model_path, String model_name)
     {
         // the number of meshes associated with the loaded model
@@ -286,6 +305,9 @@ public class Models
         // maps each bone to a calculated bind pose transformation matrix
         var bone_transforms = new HashMap<String, Matrix4f>();
 
+        // if textures are present in the model, they are loaded into this list
+        var textures = new ArrayList<Texture>();
+
         // read initial data
         try (AIScene aiScene = loadModelResource(model_path))
         {
@@ -294,6 +316,7 @@ public class Models
             scene_node = process_node_hierarchy(root_node, null, node_map);
             meshes = new Mesh[numMeshes];
             mesh_buffer = aiScene.mMeshes();
+            load_textures(aiScene, textures);
         }
         catch (NullPointerException | IOException e)
         {
@@ -311,7 +334,7 @@ public class Models
 
         // register the model
         var next_model_id = next_model_index.getAndIncrement();
-        var model = new Model(meshes, bone_map, bone_transforms, root_index);
+        var model = new Model(meshes, bone_map, bone_transforms, textures, root_index);
         loaded_models.put(next_model_id, model);
         return next_model_id;
     }
