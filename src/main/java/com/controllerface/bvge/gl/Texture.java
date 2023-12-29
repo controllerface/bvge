@@ -1,13 +1,12 @@
 package com.controllerface.bvge.gl;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.assimp.AITexture;
 
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Objects;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.stb.STBImage.*;
 
@@ -38,9 +37,9 @@ public class Texture
             GL_RGB, GL_UNSIGNED_BYTE, 0);
     }
 
-    public void init(String filePath)
+    public void init(AITexture raw_texture)
     {
-        this.filepath = filePath;
+        this.filepath = raw_texture.mFilename().dataString();
 
         texId = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, texId);
@@ -58,9 +57,9 @@ public class Texture
         IntBuffer channels = BufferUtils.createIntBuffer(1);
         stbi_set_flip_vertically_on_load(true);
 
-        // todo: load the data using stbi_load_from_memory instead, so the image data could be
-        //  packaged instead of read from disk.
-        ByteBuffer image = stbi_load(filePath, width, height, channels, 0);
+        var byteBuffer = raw_texture.pcDataCompressed();
+
+        var image = stbi_load_from_memory(byteBuffer, width, height, channels, 3);
 
         if (image != null)
         {
@@ -84,7 +83,7 @@ public class Texture
         }
         else
         {
-            assert false : "Error: couldn't load image: " + filePath;
+            assert false : "Error: couldn't load image: " + this.filepath;
         }
 
         // do this or it will leak memory
@@ -120,11 +119,6 @@ public class Texture
     public int getTexId()
     {
         return texId;
-    }
-
-    public String getFilepath()
-    {
-        return filepath;
     }
 
     @Override

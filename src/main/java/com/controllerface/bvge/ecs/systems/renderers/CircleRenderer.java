@@ -40,7 +40,7 @@ public class CircleRenderer extends GameSystem
     public CircleRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.shader("circle_shader.glsl");
+        this.shader = Assets.load_shader("circle_shader.glsl");
         init();
     }
 

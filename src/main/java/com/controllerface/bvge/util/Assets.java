@@ -4,6 +4,7 @@ import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.CircleShader;
 import com.controllerface.bvge.gl.Texture;
+import org.lwjgl.assimp.AITexture;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +14,7 @@ public class Assets
     private static Map<String, AbstractShader> shaders = new HashMap<>();
     private static Map<String, Texture> textures = new HashMap<>();
 
-    public static AbstractShader shader(String resourceName)
+    public static AbstractShader load_shader(String resourceName)
     {
         if (shaders.containsKey(resourceName))
         {
@@ -37,8 +38,9 @@ public class Assets
         }
     }
 
-    public static Texture texture(String resourceName)
+    public static Texture load_texture(AITexture textureData)
     {
+        var resourceName = textureData.mFilename().dataString();
         if (textures.containsKey(resourceName))
         {
             return textures.get(resourceName);
@@ -46,7 +48,7 @@ public class Assets
         else
         {
             Texture texture = new Texture();
-            texture.init(resourceName);
+            texture.init(textureData);
             Assets.textures.put(resourceName, texture);
             return texture;
         }

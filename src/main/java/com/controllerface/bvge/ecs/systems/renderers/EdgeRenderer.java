@@ -48,7 +48,7 @@ public class EdgeRenderer extends GameSystem
     public EdgeRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.shader("object_outline.glsl");
+        this.shader = Assets.load_shader("object_outline.glsl");
         init();
     }
 

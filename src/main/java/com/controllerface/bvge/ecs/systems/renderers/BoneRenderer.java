@@ -34,7 +34,7 @@ public class BoneRenderer extends GameSystem {
     public BoneRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.shader("bone_shader.glsl");
+        this.shader = Assets.load_shader("bone_shader.glsl");
         init();
     }
 

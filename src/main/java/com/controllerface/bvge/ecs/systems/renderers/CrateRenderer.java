@@ -25,7 +25,7 @@ public class CrateRenderer extends GameSystem
     public static final int TRANSFORM_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_4D_LENGTH;
     public static final int TRANSFORM_BUFFER_SIZE = TRANSFORM_VERTEX_COUNT * Float.BYTES;
     private final AbstractShader shader;
-    private final Texture texture;
+    private Texture texture;
     private final int[] texture_slots = {0};
     private HullIndexData crate_hulls;
     private int color_buffer_id;
@@ -37,14 +37,14 @@ public class CrateRenderer extends GameSystem
     public CrateRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.shader("box_model.glsl");
-        this.texture = Assets.texture("src/main/resources/img/crate.png");
+        this.shader = Assets.load_shader("box_model.glsl");
         init();
     }
 
     public void init()
     {
         var mdl = Models.get_model_by_index(Models.TEST_SQUARE_INDEX);
+        this.texture = mdl.textures().get(0);
         var base_mesh = mdl.meshes()[0];
         var vbo_model = new float[12];
         var vbo_tex_coords = new float[12];
