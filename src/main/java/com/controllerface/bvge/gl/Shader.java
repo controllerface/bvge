@@ -94,18 +94,18 @@ public class Shader extends AbstractShader
         }
 
         // link and check step
-        shaderProgramId = glCreateProgram();
-        glAttachShader(shaderProgramId, vertexID);
-        glAttachShader(shaderProgramId, fragmentID);
-        glLinkProgram(shaderProgramId);
+        shader_program_id = glCreateProgram();
+        glAttachShader(shader_program_id, vertexID);
+        glAttachShader(shader_program_id, fragmentID);
+        glLinkProgram(shader_program_id);
 
         // check error
-        success = glGetProgrami(shaderProgramId, GL_LINK_STATUS);
+        success = glGetProgrami(shader_program_id, GL_LINK_STATUS);
         if (success == GL_FALSE)
         {
-            int len = glGetProgrami(shaderProgramId, GL_INFO_LOG_LENGTH);
+            int len = glGetProgrami(shader_program_id, GL_INFO_LOG_LENGTH);
             System.out.println("ERROR: shader linking failed");
-            System.out.println(glGetProgramInfoLog(shaderProgramId, len));
+            System.out.println(glGetProgramInfoLog(shader_program_id, len));
             assert false : "";
         }
     }
@@ -114,7 +114,7 @@ public class Shader extends AbstractShader
     {
         if (!beingUsed)
         {
-            glUseProgram(shaderProgramId);
+            glUseProgram(shader_program_id);
             beingUsed = true;
         }
     }

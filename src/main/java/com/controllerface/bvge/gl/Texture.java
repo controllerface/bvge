@@ -1,9 +1,8 @@
 package com.controllerface.bvge.gl;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
+import org.lwjgl.system.MemoryStack;
 
-import java.nio.IntBuffer;
 import java.util.Objects;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -13,14 +12,17 @@ import static org.lwjgl.stb.STBImage.*;
 public class Texture
 {
     private String filepath;
-    private transient int texId;
-    private int width, height;
+    private int texId;
+    private int width;
+    private int height;
+    private int channels;
 
     public Texture()
     {
         texId = -1;
         width = -1;
         height = -1;
+        channels = -1;
     }
 
     public Texture(int width, int height)
@@ -52,19 +54,21 @@ public class Texture
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        IntBuffer width = BufferUtils.createIntBuffer(1);
-        IntBuffer height = BufferUtils.createIntBuffer(1);
-        IntBuffer channels = BufferUtils.createIntBuffer(1);
-        stbi_set_flip_vertically_on_load(true);
-
-        var byteBuffer = raw_texture.pcDataCompressed();
-
-        var image = stbi_load_from_memory(byteBuffer, width, height, channels, 3);
-
-        if (image != null)
+        try (var stack = MemoryStack.stackPush())
         {
-            this.width = width.get(0);
-            this.height = height.get(0);
+            var width = stack.mallocInt(1);
+            var height = stack.mallocInt(1);
+            var channels = stack.mallocInt(1);
+            var texture_buffer = raw_texture.pcDataCompressed();
+
+            stbi_set_flip_vertically_on_load(true);
+            var image = stbi_load_from_memory(texture_buffer, width, height, channels, 0);
+
+            if (image != null)
+            {
+                this.width = width.get(0);
+                this.height = height.get(0);
+                this.channels = channels.get(0);
 
             if (channels.get(0) == 3)
             {
@@ -86,8 +90,9 @@ public class Texture
             assert false : "Error: couldn't load image: " + this.filepath;
         }
 
-        // do this or it will leak memory
-        stbi_image_free(image);
+            // do this or it will leak memory
+            stbi_image_free(image);
+        }
     }
 
     /**
@@ -104,16 +109,6 @@ public class Texture
     public void unbind()
     {
         glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    public int getWidth()
-    {
-        return width;
-    }
-
-    public int getHeight()
-    {
-        return height;
     }
 
     public int getTexId()
@@ -147,6 +142,10 @@ public class Texture
         {
             return false;
         }
+        if (channels != texture.channels)
+        {
+            return false;
+        }
         return Objects.equals(filepath, texture.filepath);
     }
 
@@ -159,6 +158,7 @@ public class Texture
         result = 31 * result + texId;
         result = 31 * result + width;
         result = 31 * result + height;
+        result = 31 * result + channels;
         return result;
     }
 }

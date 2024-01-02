@@ -12,6 +12,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -94,16 +95,16 @@ public class Models
         var mOffset = raw_bone.mOffsetMatrix();
         Matrix4f offset = new Matrix4f();
         var raw_matrix = new float[16];
-        raw_matrix[0]  = mOffset.a1();
-        raw_matrix[1]  = mOffset.b1();
-        raw_matrix[2]  = mOffset.c1();
-        raw_matrix[3]  = mOffset.d1();
-        raw_matrix[4]  = mOffset.a2();
-        raw_matrix[5]  = mOffset.b2();
-        raw_matrix[6]  = mOffset.c2();
-        raw_matrix[7]  = mOffset.d2();
-        raw_matrix[8]  = mOffset.a3();
-        raw_matrix[9]  = mOffset.b3();
+        raw_matrix[0] = mOffset.a1();
+        raw_matrix[1] = mOffset.b1();
+        raw_matrix[2] = mOffset.c1();
+        raw_matrix[3] = mOffset.d1();
+        raw_matrix[4] = mOffset.a2();
+        raw_matrix[5] = mOffset.b2();
+        raw_matrix[6] = mOffset.c2();
+        raw_matrix[7] = mOffset.d2();
+        raw_matrix[8] = mOffset.a3();
+        raw_matrix[9] = mOffset.b3();
         raw_matrix[10] = mOffset.c3();
         raw_matrix[11] = mOffset.d3();
         raw_matrix[12] = mOffset.a4();
@@ -164,12 +165,14 @@ public class Models
         var buffer = aiMesh.mVertices();
 
         List<List<AIVector3D>> uvChannels = new ArrayList<>();
-        for(int i = 0;i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++)
+        for (int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++)
         {
             var uvBuffer = aiMesh.mTextureCoords(i);
-            if(uvBuffer != null) {
+            if (uvBuffer != null)
+            {
                 List<AIVector3D> currentChannel = new ArrayList<>();
-                while (uvBuffer.remaining() > 0) {
+                while (uvBuffer.remaining() > 0)
+                {
                     var aiVector = uvBuffer.get();
                     currentChannel.add(aiVector);
                 }
@@ -186,10 +189,12 @@ public class Models
             float bone_weight = bone_weight_map.get(this_vert);
             var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y());
 
-            uvChannels.forEach(channel -> {
+            uvChannels.forEach(channel ->
+            {
                 var next = channel.get(count.get());
-                uvData.add(new Vector2f(next.x(),next.y()));
+                uvData.add(new Vector2f(next.x(), next.y()));
             });
+
             mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), uvData, mesh_bone.name(), bone_weight);
             count.getAndIncrement();
         }
@@ -263,45 +268,75 @@ public class Models
         return root_index;
     }
 
+    // todo: material list needs to be built and made available during mesh loading,
+    //  and each mesh should have it's material set during construction.
     private static void load_materials(AIScene aiScene)
     {
-        System.out.println("Debug materials: " + aiScene.mNumMaterials());
-        if (aiScene.mNumMaterials() <=0) return;
+        if (aiScene.mNumMaterials() <= 0)
+        {
+            return;
+        }
 
         var buffer = aiScene.mMaterials();
 
         for (int i = 0; i < aiScene.mNumMaterials(); i++)
         {
             var raw_mat = AIMaterial.create(buffer.get(i));
-            System.out.println("Debug mat data: prop count=" + raw_mat.mNumProperties());
             var p_buf = raw_mat.mProperties();
             for (int j = 0; j < raw_mat.mNumProperties(); j++)
             {
                 var raw_prop = AIMaterialProperty.create(p_buf.get(j));
                 var prop_name = raw_prop.mKey().dataString();
 
-
-
                 if (prop_name.startsWith("$clr."))
                 {
-                    float r = raw_prop.mData().asFloatBuffer().get(0);
-                    float g = raw_prop.mData().asFloatBuffer().get(1);
-                    float b = raw_prop.mData().asFloatBuffer().get(2);
-                    System.out.println("Mat name="+prop_name+ " r=" + r + " g=" + g + " b=" + b);
+                    var color_data = raw_prop.mData().asFloatBuffer();
+                    float r = color_data.get(0);
+                    float g = color_data.get(1);
+                    float b = color_data.get(2);
+                    System.out.println("Mat name=" + prop_name + " r=" + r + " g=" + g + " b=" + b);
                 }
                 else if (prop_name.startsWith("$mat."))
                 {
                     float v = raw_prop.mData().asFloatBuffer().get(0);
-                    System.out.println("Mat name="+prop_name+ " v=" + v);
+                    System.out.println("Mat name=" + prop_name + " v=" + v);
                 }
                 else
                 {
-                    System.out.println("Debug mat prop:"
-                    + " type=" + raw_prop.mType()
-                    + " index=" + raw_prop.mIndex()
-                    + " semantic=" + raw_prop.mSemantic()
-                    + " len=" + raw_prop.mDataLength()
-                    + " key=" + raw_prop.mKey().dataString());
+                    switch (raw_prop.mType())
+                    {
+                        case 1:
+                            var float_buffer = raw_prop.mData().asFloatBuffer();
+                            int f_count = raw_prop.mDataLength() / 4;
+                            float[] float_out = new float[f_count];
+                            float_buffer.get(float_out);
+                            System.out.println("Mat name=" + prop_name + " float=" + Arrays.toString(float_out));
+                            break;
+
+                        case 3:
+                            var string_buffer = raw_prop.mData();
+                            int s_count = raw_prop.mDataLength();
+                            byte[] bytes_out = new byte[s_count];
+                            string_buffer.get(bytes_out);
+                            var string = new String(bytes_out, StandardCharsets.UTF_8);
+                            System.out.println("Mat name=" + prop_name + " string=" + string);
+                            break;
+
+                        case 4:
+                            var int_buffer = raw_prop.mData().asIntBuffer();
+                            int i_count = raw_prop.mDataLength() / 4;
+                            int[] int_out = new int[i_count];
+                            int_buffer.get(int_out);
+                            System.out.println("Mat name=" + prop_name + " int=" + Arrays.toString(int_out));
+                            break;
+
+                        default:
+                            System.out.println("Debug mat prop:"
+                                + " type=" + raw_prop.mType()
+                                + " len=" + raw_prop.mDataLength()
+                                + " key=" + raw_prop.mKey().dataString());
+                            break;
+                    }
                 }
             }
 
@@ -310,7 +345,10 @@ public class Models
 
     private static void load_textures(AIScene aiScene, List<Texture> textures)
     {
-        if (aiScene.mNumTextures() <= 0) return;
+        if (aiScene.mNumTextures() <= 0)
+        {
+            return;
+        }
 
         var texture_buffer = aiScene.mTextures();
         for (int tex_index = 0; tex_index < aiScene.mNumTextures(); tex_index++)
@@ -412,7 +450,9 @@ public class Models
 
     public static int get_instance_count(int model_id)
     {
-        return model_instances.get(model_id) == null ? 0 : model_instances.get(model_id).size();
+        return model_instances.get(model_id) == null
+            ? 0
+            : model_instances.get(model_id).size();
     }
 
     public static void set_model_clean(int model_id)

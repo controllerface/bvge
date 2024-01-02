@@ -43,9 +43,9 @@ public class CrateRenderer extends GameSystem
 
     public void init()
     {
-        var mdl = Models.get_model_by_index(Models.TEST_SQUARE_INDEX);
-        this.texture = mdl.textures().get(0);
-        var base_mesh = mdl.meshes()[0];
+        var model = Models.get_model_by_index(Models.TEST_SQUARE_INDEX);
+        this.texture = model.textures().get(0);
+        var base_mesh = model.meshes()[0];
         var vbo_model = new float[12];
         var vbo_tex_coords = new float[12];
         int count = 0;
@@ -57,54 +57,62 @@ public class CrateRenderer extends GameSystem
             var p1 = base_mesh.vertices()[face.p1()];
             var p2 = base_mesh.vertices()[face.p2()];
 
-            vbo_model[count] = p0.x();                            //tri i     // p0 x
-            vbo_model[count + 1] = p0.y();                                    // p0 y
-            vbo_tex_coords[count] = p0.uv_data().get(0).x;                    // p0 u
-            vbo_tex_coords[count + 1] = p0.uv_data().get(0).y;                // p0 v
+            var offset_0 = count;
+            var offset_1 = count + 1;
+            var offset_2 = count + 2;
+            var offset_3 = count + 3;
+            var offset_4 = count + 4;
+            var offset_5 = count + 5;
 
-            vbo_model[count + 2] = p1.x();                                    // p1 x
-            vbo_model[count + 3] = p1.y();                                    // p1 y
-            vbo_tex_coords[count + 2] = p1.uv_data().get(0).x;                // p0 u
-            vbo_tex_coords[count + 3] = p1.uv_data().get(0).y;                // p0 v
+            vbo_model[offset_0] = p0.x();                        //tri i     // p0 x
+            vbo_model[offset_1] = p0.y();                                    // p0 y
+            vbo_model[offset_2] = p1.x();                                    // p1 x
+            vbo_model[offset_3] = p1.y();                                    // p1 y
+            vbo_model[offset_4] = p2.x();                                    // p2 x
+            vbo_model[offset_5] = p2.y();                                    // p2 y
 
-            vbo_model[count + 4] = p2.x();                                    // p2 x
-            vbo_model[count + 5] = p2.y();                                    // p2 y
-            vbo_tex_coords[count + 4] = p2.uv_data().get(0).x;                // p0 u
-            vbo_tex_coords[count + 5] = p2.uv_data().get(0).y;                // p0 v
+            vbo_tex_coords[offset_0] = p0.uv_data().get(0).x;                // p0 u
+            vbo_tex_coords[offset_1] = p0.uv_data().get(0).y;                // p0 v
+            vbo_tex_coords[offset_2] = p1.uv_data().get(0).x;                // p1 u
+            vbo_tex_coords[offset_3] = p1.uv_data().get(0).y;                // p1 v
+            vbo_tex_coords[offset_4] = p2.uv_data().get(0).x;                // p2 u
+            vbo_tex_coords[offset_5] = p2.uv_data().get(0).y;                // p2 v
+
             count += 6;
         }
 
         // todo: decide if colors should be generated per-instance for variety or possibly algorithmically based
         //  on some other factors, like a modulus check based on object index
         var vbo_colors = new float[24];
+
         vbo_colors[0] = 0.5f;   // tri 1 // p1 r
-        vbo_colors[1] = 0.35f;           // p1 g
-        vbo_colors[2] = 0.05f;           // p1 b
+        vbo_colors[1] = 0.5f;           // p1 g
+        vbo_colors[2] = 0.5f;           // p1 b
         vbo_colors[3] = 1f;              // p1 a
 
-        vbo_colors[4] = 0.23f;           // p2 r
-        vbo_colors[5] = 0.21f;           // p2 g
-        vbo_colors[6] = 0.2f;            // p2 b
+        vbo_colors[4] = 0.5f;           // p2 r
+        vbo_colors[5] = 0.5f;           // p2 g
+        vbo_colors[6] = 0.5f;            // p2 b
         vbo_colors[7] = 1f;              // p2 a
 
-        vbo_colors[8] = 0.55f;           // p3 r
+        vbo_colors[8] = 0.5f;           // p3 r
         vbo_colors[9] = 0.5f;            // p3 g
-        vbo_colors[10] = 0.48f;          // p3 b
+        vbo_colors[10] = 0.5f;          // p3 b
         vbo_colors[11] = 1f;             // p3 a
 
         vbo_colors[12] = 0.5f;  // tri 2 // p1 r
-        vbo_colors[13] = 0.35f;          // p1 g
-        vbo_colors[14] = 0.05f;          // p1 b
+        vbo_colors[13] = 0.5f;          // p1 g
+        vbo_colors[14] = 0.5f;          // p1 b
         vbo_colors[15] = 1f;             // p1 a
 
-        vbo_colors[16] = 0.55f;          // p3 r
+        vbo_colors[16] = 0.5f;          // p3 r
         vbo_colors[17] = 0.5f;           // p3 g
-        vbo_colors[18] = 0.48f;          // p3 b
+        vbo_colors[18] = 0.5f;          // p3 b
         vbo_colors[19] = 1f;             // p3 a
 
-        vbo_colors[20] = .5f;            // p4 r
-        vbo_colors[21] = .5f;            // p4 g
-        vbo_colors[22] = .5f;            // p4 b
+        vbo_colors[20] = 0.5f;            // p4 r
+        vbo_colors[21] = 0.5f;            // p4 g
+        vbo_colors[22] = 0.5f;            // p4 b
         vbo_colors[23] = 1f;             // p4 a
 
         vao = glGenVertexArrays();
