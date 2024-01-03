@@ -6,6 +6,8 @@ __kernel void animate_hulls(__global float4 *points,
                             __global float2 *vertex_references,
                             __global float16 *bones)
 {
+    // todo: this kernel shoudl change to pulling out 4 bones and using the weights in reference vertex, 
+    //  modifiy the point's location. 
     int gid = get_global_id(0);
     float4 point = points[gid];
     int2 vertex_table = vertex_tables[gid];
