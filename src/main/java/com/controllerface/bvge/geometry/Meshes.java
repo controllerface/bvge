@@ -5,7 +5,7 @@ import com.controllerface.bvge.Main;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.controllerface.bvge.geometry.Bone.IDENTITY_BONE_NAME;
+import static com.controllerface.bvge.geometry.MeshBone.IDENTITY_BONE_NAME;
 
 public class Meshes
 {
@@ -30,7 +30,7 @@ public class Meshes
         var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f) };
         var faces = new Face[]{ new Face(0, 0, 0) };
         var hull = new int[]{ 0 };
-        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, MeshBone.identity(), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -61,7 +61,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2 };
 
-        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, MeshBone.identity(), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -97,7 +97,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2, 3 };
 
-        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, MeshBone.identity(), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -138,7 +138,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2, 3, 4 };
 
-        return new Mesh(vertices, faces, Bone.identity(), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, MeshBone.identity(), Models.SceneNode.empty(), hull);
 
     }
 

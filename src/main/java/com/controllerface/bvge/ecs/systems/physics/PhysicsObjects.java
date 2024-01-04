@@ -41,19 +41,20 @@ public class PhysicsObjects
     public static int particle(float x, float y, float size, float mass)
     {
         int next_armature_id = Main.Memory.next_armature();
+        int next_hull_index = Main.Memory.next_hull();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
         var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
-        int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
+        Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
 
         var vert = mesh.vertices()[0];
 
         // the model points are always zero so the * and + are for educational purposes
         var p1 = CLUtils.arg_float2(vert.x() * size + x, vert.y() * size + y);
 
-        var t1 = CLUtils.arg_int2(vert.vert_ref_id(), bone_id);
+        var t1 = CLUtils.arg_int2(vert.vert_ref_id(), next_hull_index);
 
         // store the single point for the circle
         var p1_index = Main.Memory.new_point(p1, t1);
@@ -87,12 +88,13 @@ public class PhysicsObjects
     public static int tri(float x, float y, float size, int flags, float mass)
     {
         int next_armature_id = Main.Memory.next_armature();
+        int next_hull_index = Main.Memory.next_hull();
 
         // get the box mesh
         var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
-        int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
+        Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
 
         var hull = mesh.vertices();
         hull = scale_hull(hull, size);
@@ -106,9 +108,9 @@ public class PhysicsObjects
         var p2 = CLUtils.arg_float2(v2.x(), v2.y());
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
 
-        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), bone_id));
-        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), bone_id));
-        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), bone_id));
+        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), next_hull_index));
+        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), next_hull_index));
+        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), next_hull_index));
 
         MathEX.centroid(vector_buffer, p1, p2, p3);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -147,12 +149,13 @@ public class PhysicsObjects
     public static int box(float x, float y, float size, int flags, float mass)
     {
         int next_armature_id = Main.Memory.next_armature();
+        int next_hull_index = Main.Memory.next_hull();
 
         // get the box mesh
         var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
-        int bone_id = Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
+        Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
 
         var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
@@ -168,10 +171,10 @@ public class PhysicsObjects
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
         var p4 = CLUtils.arg_float2(v4.x(), v4.y());
 
-        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), bone_id));
-        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), bone_id));
-        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), bone_id));
-        var p4_index = Main.Memory.new_point(p4, CLUtils.arg_int2(v4.vert_ref_id(), bone_id));
+        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), next_hull_index));
+        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), next_hull_index));
+        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), next_hull_index));
+        var p4_index = Main.Memory.new_point(p4, CLUtils.arg_int2(v4.vert_ref_id(), next_hull_index));
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -241,6 +244,8 @@ public class PhysicsObjects
         int last_hull = -1;
         for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)
         {
+            int next_hull_index = Main.Memory.next_hull();
+
             // get the next mesh
             var next_mesh = meshes[mesh_index];
 
@@ -255,12 +260,11 @@ public class PhysicsObjects
             //
             //hull = transform_hull(hull, next_mesh.sceneNode().transform);
 
-            // use bone transform to position the hull
-            var bone_transform = model.bone_transforms().get(next_bone.name());
+            // generate the initial bone position
+            var bone_transform = model.bone_transforms().get(next_bone.name())
+                .mul(next_bone.offset(), new Matrix4f());
 
-            var tvec = new Vector4f(0.0f,0.0f,0.0f,1.0f);
-            bone_transform.transform(tvec);
-
+            // use bone transform to transform the hull
             hull = transform_hull(hull, bone_transform);
 
             // scale to desired size in model space
@@ -271,7 +275,7 @@ public class PhysicsObjects
 
             // make a new bone instance for this mesh
             var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
-            int bone_id = Main.Memory.new_bone(next_bone.bone_ref_id(), raw_matrix);
+            Main.Memory.new_bone(next_bone.bone_ref_id(), raw_matrix);
 
             // generate the points in memory for this object
             int start_point = -1;
@@ -282,7 +286,7 @@ public class PhysicsObjects
             {
                 var next_vertex = hull[point_index];
                 var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
-                var new_table = CLUtils.arg_int2(next_vertex.vert_ref_id(), bone_id);
+                var new_table = CLUtils.arg_int2(next_vertex.vert_ref_id(), next_hull_index);
                 var p_index = Main.Memory.new_point(new_point, new_table);
                 if (start_point == -1)
                 {
@@ -383,9 +387,9 @@ public class PhysicsObjects
             }
             last_hull = hull_id;
 
-            if (bone_id != hull_id)
+            if (next_hull_index != hull_id)
             {
-                throw new RuntimeException("hull/bone alignment error: h=" + hull_id + " b=" + bone_id);
+                throw new RuntimeException("hull/bone alignment error: h=" + hull_id + " b=" + next_hull_index);
             }
             if (mesh_index == model.root_index())
             {

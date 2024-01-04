@@ -47,20 +47,19 @@ public class Models
         return imported;
     }
 
-    private static Bone load_bone(AIMesh aiMesh,
-                                  Map<String, SceneNode> node_map,
-                                  Map<String, Bone> bone_map,
-                                  Map<Integer, Float> bone_weight_map)
+    private static MeshBone load_bone(AIMesh aiMesh,
+                                      Map<String, SceneNode> node_map,
+                                      Map<String, MeshBone> bone_map,
+                                      Map<Integer, Float> bone_weight_map)
     {
         int bone_count = aiMesh.mNumBones();
         PointerBuffer bone_buffer = aiMesh.mBones();
-        Bone mesh_bone = null;
+        MeshBone mesh_bone = null;
 
         for (int bone_index = 0; bone_index < bone_count; bone_index++)
         {
             var raw_bone = AIBone.create(bone_buffer.get(bone_index));
-            boolean expect_empty = mesh_bone != null;
-            var next_bone = load_raw_bone(raw_bone, node_map, bone_map, bone_weight_map, expect_empty);
+            var next_bone = load_raw_bone(raw_bone, node_map, bone_map, bone_weight_map);
             if (next_bone != null)
             {
                 mesh_bone = next_bone;
@@ -75,21 +74,12 @@ public class Models
         return mesh_bone;
     }
 
-    private static Bone load_raw_bone(AIBone raw_bone,
-                                      Map<String, SceneNode> node_map,
-                                      Map<String, Bone> bone_map,
-                                      Map<Integer, Float> bone_weight_map,
-                                      boolean expect_empty)
+    private static MeshBone load_raw_bone(AIBone raw_bone,
+                                          Map<String, SceneNode> node_map,
+                                          Map<String, MeshBone> bone_map,
+                                          Map<Integer, Float> bone_weight_map)
     {
-        Bone bone;
-        if (raw_bone.mNumWeights() <= 0)
-        {
-            return null;
-        }
-        if (expect_empty)
-        {
-            throw new IllegalStateException("Multiple bones per mesh is not currently supported");
-        }
+        MeshBone bone;
 
         var bone_name = raw_bone.mName().dataString();
         var mOffset = raw_bone.mOffsetMatrix();
@@ -113,26 +103,31 @@ public class Models
         raw_matrix[15] = mOffset.d4();
         offset.set(raw_matrix);
 
-        int weight_index = 0;
+        if (bone_map.get(bone_name) == null && raw_bone.mNumWeights() > 0)
+        {
+            var bone_node = node_map.get(bone_name);
+            int bone_ref_id = Main.Memory.new_bone_reference(raw_matrix);
+            bone = new MeshBone(bone_ref_id, bone_name, offset, bone_node);
+            bone_map.put(bone_name, bone);
+        }
+        else
+        {
+            bone = bone_map.get(bone_name);
+        }
+
+        if (raw_bone.mNumWeights() <= 0)
+        {
+            return null;
+        }
+
+
         AIVertexWeight.Buffer w_buf = raw_bone.mWeights();
-        BoneWeight[] weights = new BoneWeight[raw_bone.mNumWeights()];
         while (w_buf.remaining() > 0)
         {
             AIVertexWeight weight = w_buf.get();
-            weights[weight_index++] = new BoneWeight(weight.mVertexId(), weight.mWeight());
             bone_weight_map.put(weight.mVertexId(), weight.mWeight());
         }
 
-        var bone_node = node_map.get(bone_name);
-        if (bone_node == null)
-        {
-            throw new NullPointerException("No scene node for bone: " + bone_name
-                + " ensure node and geometry names match in blender");
-        }
-
-        int bone_ref_id = Main.Memory.new_bone_reference(raw_matrix);
-        bone = new Bone(bone_ref_id, bone_name, offset, weights, bone_node);
-        bone_map.put(bone_name, bone);
         return bone;
     }
 
@@ -158,7 +153,7 @@ public class Models
 
     private static Vertex[] load_vertices(AIMesh aiMesh,
                                           Map<Integer, Float> bone_weight_map,
-                                          Bone mesh_bone)
+                                          MeshBone mesh_bone)
     {
         int vert_index = 0;
         var mesh_vertices = new Vertex[aiMesh.mNumVertices()];
@@ -206,7 +201,7 @@ public class Models
                                   AIMesh raw_mesh,
                                   Mesh[] meshes,
                                   Map<String, SceneNode> node_map,
-                                  Map<String, Bone> bone_map)
+                                  Map<String, MeshBone> bone_map)
     {
         var mesh_name = raw_mesh.mName().dataString();
         var mesh_node = node_map.get(mesh_name);
@@ -233,7 +228,7 @@ public class Models
                                         Mesh[] meshes,
                                         PointerBuffer mesh_buffer,
                                         Map<String, SceneNode> node_map,
-                                        Map<String, Bone> bone_map)
+                                        Map<String, MeshBone> bone_map)
     {
         // load raw mesh data for all meshes
         for (int i = 0; i < numMeshes; i++)
@@ -378,8 +373,8 @@ public class Models
         // used to map nodes by their node names, more convenient than tree for loading process
         var node_map = new HashMap<String, SceneNode>();
 
-        // similar to the node map, though this map is returned in the output value
-        var bone_map = new HashMap<String, Bone>();
+        // similar to the node map, must be linked to maintain insertion order
+        var bone_map = new LinkedHashMap<String, MeshBone>();
 
         // maps each bone to a calculated bind pose transformation matrix
         var bone_transforms = new HashMap<String, Matrix4f>();
@@ -410,7 +405,7 @@ public class Models
         int root_index = find_root_index(meshes);
 
         // generate the bind pose transforms, setting the initial state of the armature
-        generate_transforms(scene_node, bone_map, bone_transforms, new Matrix4f());
+        generate_transforms(scene_node, bone_transforms, new Matrix4f());
 
         // register the model
         var next_model_id = next_model_index.getAndIncrement();
@@ -498,7 +493,6 @@ public class Models
     //  to add animations. The method will need to derive the current transform matrix by doing a
     //  lerp between the most recent and next keyframes.
     private static void generate_transforms(SceneNode current_node,
-                                            Map<String, Bone> bone_map,
                                             Map<String, Matrix4f> transforms,
                                             Matrix4f parent_transform)
     {
@@ -507,14 +501,13 @@ public class Models
         var global_transform = parent_transform.mul(node_transform, new Matrix4f());
 
         // if this node is a bone, update the
-        if (bone_map.containsKey(name))
+        if (name.toLowerCase().contains("bone"))
         {
-            var bone = bone_map.get(name);
-            transforms.put(name, global_transform.mul(bone.offset(), new Matrix4f()));
+            transforms.put(name, global_transform);
         }
         for (SceneNode child : current_node.children)
         {
-            generate_transforms(child, bone_map, transforms, global_transform);
+            generate_transforms(child, transforms, global_transform);
         }
     }
 
