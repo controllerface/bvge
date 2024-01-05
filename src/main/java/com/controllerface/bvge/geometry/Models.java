@@ -90,12 +90,9 @@ public class Models
         var bone_transforms = new HashMap<String, Matrix4f>();
 
         // generate the bind pose transforms, setting the initial state of the armature
-        generate_transforms(scene_node, bone_transforms, new Matrix4f());
+        generate_transforms(scene_node, bone_transforms, new Matrix4f(), -1);
 
-        // similar to the node map, but must be linked to maintain insertion order
-        var bone_map = new LinkedHashMap<String, BoneOffset>();
-
-        load_raw_meshes(numMeshes, model_name, meshes, mesh_buffer, node_map, bone_map);
+        load_raw_meshes(numMeshes, model_name, meshes, mesh_buffer, node_map);
 
         // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
         // the root bone is determined by checking if the current bone's parent is a direct descendant of the scene
@@ -110,7 +107,6 @@ public class Models
 
     private static List<BoneOffset> load_mesh_bones(AIMesh aiMesh,
                                                     Map<String, SceneNode> node_map,
-                                                    Map<String, BoneOffset> bone_map,
                                                     Map<Integer, Float> bone_weight_map)
     {
         int bone_count = aiMesh.mNumBones();
@@ -120,7 +116,7 @@ public class Models
         for (int bone_index = 0; bone_index < bone_count; bone_index++)
         {
             var raw_bone = AIBone.create(bone_buffer.get(bone_index));
-            var next_bone = load_raw_bone(raw_bone, node_map, bone_map, bone_weight_map);
+            var next_bone = load_raw_bone(raw_bone, node_map, bone_weight_map);
             if (next_bone != null)
             {
                 mesh_boneOffset.add(next_bone);
@@ -137,7 +133,6 @@ public class Models
 
     private static BoneOffset load_raw_bone(AIBone raw_bone,
                                             Map<String, SceneNode> node_map,
-                                            Map<String, BoneOffset> bone_map,
                                             Map<Integer, Float> bone_weight_map)
     {
         BoneOffset bone_offset;
@@ -165,19 +160,13 @@ public class Models
         raw_matrix[15] = mOffset.d4();
         offset.set(raw_matrix);
 
-        if (bone_map.get(bone_name) == null && raw_bone.mNumWeights() > 0)
+        if (raw_bone.mNumWeights() > 0)
         {
             var bone_node = node_map.get(bone_name);
             int bone_ref_id = Main.Memory.new_bone_reference(raw_matrix);
             bone_offset = new BoneOffset(bone_ref_id, bone_name, offset, bone_node);
-            bone_map.put(bone_name, bone_offset);
         }
         else
-        {
-            bone_offset = bone_map.get(bone_name);
-        }
-
-        if (raw_bone.mNumWeights() <= 0)
         {
             return null;
         }
@@ -261,8 +250,7 @@ public class Models
                                   String model_name,
                                   AIMesh raw_mesh,
                                   Mesh[] meshes,
-                                  Map<String, SceneNode> node_map,
-                                  Map<String, BoneOffset> bone_map)
+                                  Map<String, SceneNode> node_map)
     {
         var mesh_name = raw_mesh.mName().dataString();
         var mesh_node = node_map.get(mesh_name);
@@ -272,7 +260,7 @@ public class Models
                 + " ensure node and geometry names match in blender");
         }
         var bone_weight_map = new HashMap<Integer, Float>();
-        var mesh_bones = load_mesh_bones(raw_mesh, node_map, bone_map, bone_weight_map);
+        var mesh_bones = load_mesh_bones(raw_mesh, node_map, bone_weight_map);
         var mesh_vertices = load_vertices(raw_mesh, bone_weight_map);
         var mesh_faces = load_faces(raw_mesh);
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
@@ -288,14 +276,13 @@ public class Models
                                         String model_name,
                                         Mesh[] meshes,
                                         PointerBuffer mesh_buffer,
-                                        Map<String, SceneNode> node_map,
-                                        Map<String, BoneOffset> bone_map)
+                                        Map<String, SceneNode> node_map)
     {
         // load raw mesh data for all meshes
         for (int i = 0; i < numMeshes; i++)
         {
             var raw_mesh = AIMesh.create(mesh_buffer.get(i));
-            load_mesh(i, model_name, raw_mesh, meshes, node_map, bone_map);
+            load_mesh(i, model_name, raw_mesh, meshes, node_map);
         }
     }
 
@@ -475,20 +462,41 @@ public class Models
     //  lerp between the most recent and next keyframes.
     private static void generate_transforms(SceneNode current_node,
                                             Map<String, Matrix4f> transforms,
-                                            Matrix4f parent_transform)
+                                            Matrix4f parent_transform,
+                                            int parent_index)
     {
         var name = current_node.name;
         var node_transform = current_node.transform;
         var global_transform = parent_transform.mul(node_transform, new Matrix4f());
 
+        var parent = parent_index;
+
         // if this node is a bone, update the
         if (name.toLowerCase().contains("bone"))
         {
+            var raw_matrix = new float[16];
+            raw_matrix[0] = node_transform.m00();
+            raw_matrix[1] = node_transform.m01();
+            raw_matrix[2] = node_transform.m02();
+            raw_matrix[3] = node_transform.m03();
+            raw_matrix[4] = node_transform.m10();
+            raw_matrix[5] = node_transform.m11();
+            raw_matrix[6] = node_transform.m12();
+            raw_matrix[7] = node_transform.m13();
+            raw_matrix[8] = node_transform.m20();
+            raw_matrix[9] = node_transform.m21();
+            raw_matrix[10] = node_transform.m22();
+            raw_matrix[11] = node_transform.m23();
+            raw_matrix[12] = node_transform.m30();
+            raw_matrix[13] = node_transform.m31();
+            raw_matrix[14] = node_transform.m32();
+            raw_matrix[15] = node_transform.m33();
+            parent = Main.Memory.new_bone_bind_pose(parent, raw_matrix);
             transforms.put(name, global_transform);
         }
         for (SceneNode child : current_node.children)
         {
-            generate_transforms(child, transforms, global_transform);
+            generate_transforms(child, transforms, global_transform, parent);
         }
     }
 
