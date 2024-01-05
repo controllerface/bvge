@@ -70,6 +70,7 @@ public class Main
         private static int point_index      = 0;
         private static int edge_index       = 0;
         private static int vertex_ref_index = 0;
+        private static int bone_bind_index  = 0;
         private static int bone_ref_index   = 0;
         private static int bone_index       = 0;
         private static int armature_index   = 0;
@@ -97,6 +98,11 @@ public class Main
         public static int next_vertex_ref()
         {
             return vertex_ref_index / Width.VERTEX;
+        }
+
+        public static int next_bone_bind()
+        {
+            return bone_bind_index / Width.BONE;
         }
 
         public static int next_bone_ref()
@@ -152,6 +158,14 @@ public class Main
             var idx = vertex_ref_index;
             vertex_ref_index += Width.VERTEX;
             return idx / Width.VERTEX;
+        }
+
+        public static int new_bone_bind_pose(float[] bone_data)
+        {
+            GPU.create_bone_bind_pose(next_bone_bind(), bone_data);
+            var idx = bone_bind_index;
+            bone_bind_index += Width.BONE;
+            return idx / Width.BONE;
         }
 
         public static int new_bone_reference(float[] bone_data)

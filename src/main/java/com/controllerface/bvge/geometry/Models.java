@@ -307,8 +307,10 @@ public class Models
             // note the chained parent call, the logic is that we find the first bone that is a direct
             // descendant of the armature, which is itself a child of the root scene node, which is
             // given the default name "RootNode".
-            var grandparent = meshes[mi].bone().get(0).sceneNode().parent.parent;
-            if (grandparent.name.equalsIgnoreCase("RootNode"))
+            var match = meshes[mi].bones().stream()
+                .anyMatch(b->b.sceneNode().parent.parent.name.equalsIgnoreCase("RootNode"));
+
+            if (match)
             {
                 root_index = mi;
                 break;
