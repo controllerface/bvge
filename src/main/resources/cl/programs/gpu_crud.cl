@@ -46,6 +46,13 @@ __kernel void create_vertex_reference(__global float2 *vertex_references,
     vertex_references[target] = new_vertex_reference; 
 }
 
+__kernel void create_bone_bind_pose(__global float16 *bone_bind_poses,
+                                    int target,
+                                    float16 new_bone_bind_pose)
+{
+    bone_bind_poses[target] = new_bone_bind_pose; 
+}
+
 __kernel void create_bone_reference(__global float16 *bone_references,
                                     int target,
                                     float16 new_bone_reference)

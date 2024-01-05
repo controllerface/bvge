@@ -168,6 +168,7 @@ public class GPU
         create_armature,
         create_bone,
         create_bone_reference,
+        create_bone_bind_pose,
         create_edge,
         create_hull,
         create_point,
@@ -292,6 +293,8 @@ public class GPU
          */
         bone_references(Sizeof.cl_float16),
 
+
+        bone_bind_poses(Sizeof.cl_float16),
 
         /*
         Points
@@ -440,7 +443,7 @@ public class GPU
          */
 
         /**
-         * Bone offset animation matrices of tracked physics hulls:
+         * Bone animation matrices of tracked physics hulls:
          * -
          * s0: (m00) transformation matrix column 1 row 1
          * s1: (m01) transformation matrix column 1 row 2
@@ -783,6 +786,7 @@ public class GPU
         Memory.edges.init(max_points);
         Memory.vertex_table.init(max_points);
         Memory.vertex_references.init(max_points);
+        Memory.bone_bind_poses.init(max_hulls);
         Memory.bone_references.init(max_points);
         Memory.bone_instances.init(max_points);
         Memory.bone_index.init(max_points);
@@ -812,6 +816,7 @@ public class GPU
             + Memory.edges.length
             + Memory.vertex_table.length
             + Memory.vertex_references.length
+            + Memory.bone_bind_poses.length
             + Memory.bone_references.length
             + Memory.bone_instances.length
             + Memory.bone_index.length
@@ -840,6 +845,7 @@ public class GPU
         System.out.println("spatial key bank  : " + Memory.aabb_key_table.length);
         System.out.println("vertex table      : " + Memory.vertex_table.length);
         System.out.println("vertex references : " + Memory.vertex_references.length);
+        System.out.println("bone bind poses   : " + Memory.bone_bind_poses.length);
         System.out.println("bone references   : " + Memory.bone_references.length);
         System.out.println("bone instances    : " + Memory.bone_instances.length);
         System.out.println("bone index        : " + Memory.bone_index.length);
@@ -951,6 +957,10 @@ public class GPU
         var create_vertex_ref_k = new CreateVertexRef_k(command_queue, Program.gpu_crud.gpu);
         create_vertex_ref_k.set_vertex_refs(Memory.vertex_references.gpu.pointer());
         Kernel.create_vertex_reference.set_kernel(create_vertex_ref_k);
+
+        var create_bone_bind_k = new CreateBoneBindPose_k(command_queue, Program.gpu_crud.gpu);
+        create_bone_bind_k.set_bone_binds(Memory.bone_bind_poses.gpu.pointer());
+        Kernel.create_bone_bind_pose.set_kernel(create_bone_bind_k);
 
         var create_bone_ref_k = new CreateBoneRef_k(command_queue, Program.gpu_crud.gpu);
         create_bone_ref_k.set_bone_refs(Memory.bone_references.gpu.pointer());
@@ -1382,6 +1392,13 @@ public class GPU
         Kernel.create_vertex_reference.set_arg(1, Pointer.to(arg_int(vert_ref_index)));
         Kernel.create_vertex_reference.set_arg(2, Pointer.to(arg_float2(x, y)));
         Kernel.create_vertex_reference.call(global_single_size);
+    }
+
+    public static void create_bone_bind_pose(int bone_bind_index, float[] matrix)
+    {
+        Kernel.create_bone_bind_pose.set_arg(1, Pointer.to(arg_int(bone_bind_index)));
+        Kernel.create_bone_bind_pose.set_arg(2, Pointer.to(matrix));
+        Kernel.create_bone_bind_pose.call(global_single_size);
     }
 
     public static void create_bone_reference(int bone_ref_index, float[] matrix)

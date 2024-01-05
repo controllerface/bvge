@@ -15,7 +15,7 @@ public record Model(Mesh[] meshes,
     public static Model fromBasicMesh(Mesh mesh)
     {
         return new Model(new Mesh[]{ mesh },
-            Map.of(MeshBone.IDENTITY_BONE_NAME, new Matrix4f()),
+            Map.of(Bone.IDENTITY_BONE_NAME, new Matrix4f()),
             Collections.emptyList(),
             0);
     }
