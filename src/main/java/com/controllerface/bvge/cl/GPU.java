@@ -296,6 +296,8 @@ public class GPU
 
         bone_bind_poses(Sizeof.cl_float16),
 
+        bone_bind_parents(Sizeof.cl_int),
+
         /*
         Points
          */
@@ -787,6 +789,7 @@ public class GPU
         Memory.vertex_table.init(max_points);
         Memory.vertex_references.init(max_points);
         Memory.bone_bind_poses.init(max_hulls);
+        Memory.bone_bind_parents.init(max_hulls);
         Memory.bone_references.init(max_points);
         Memory.bone_instances.init(max_points);
         Memory.bone_index.init(max_points);
@@ -817,6 +820,7 @@ public class GPU
             + Memory.vertex_table.length
             + Memory.vertex_references.length
             + Memory.bone_bind_poses.length
+            + Memory.bone_bind_parents.length
             + Memory.bone_references.length
             + Memory.bone_instances.length
             + Memory.bone_index.length
@@ -846,6 +850,7 @@ public class GPU
         System.out.println("vertex table      : " + Memory.vertex_table.length);
         System.out.println("vertex references : " + Memory.vertex_references.length);
         System.out.println("bone bind poses   : " + Memory.bone_bind_poses.length);
+        System.out.println("bone bind parents : " + Memory.bone_bind_parents.length);
         System.out.println("bone references   : " + Memory.bone_references.length);
         System.out.println("bone instances    : " + Memory.bone_instances.length);
         System.out.println("bone index        : " + Memory.bone_index.length);
@@ -960,6 +965,7 @@ public class GPU
 
         var create_bone_bind_k = new CreateBoneBindPose_k(command_queue, Program.gpu_crud.gpu);
         create_bone_bind_k.set_bone_binds(Memory.bone_bind_poses.gpu.pointer());
+        create_bone_bind_k.set_bone_parents(Memory.bone_bind_parents.gpu.pointer());
         Kernel.create_bone_bind_pose.set_kernel(create_bone_bind_k);
 
         var create_bone_ref_k = new CreateBoneRef_k(command_queue, Program.gpu_crud.gpu);
@@ -1394,10 +1400,11 @@ public class GPU
         Kernel.create_vertex_reference.call(global_single_size);
     }
 
-    public static void create_bone_bind_pose(int bone_bind_index, float[] matrix)
+    public static void create_bone_bind_pose(int bone_bind_index, int bone_bond_parent, float[] matrix)
     {
-        Kernel.create_bone_bind_pose.set_arg(1, Pointer.to(arg_int(bone_bind_index)));
-        Kernel.create_bone_bind_pose.set_arg(2, Pointer.to(matrix));
+        Kernel.create_bone_bind_pose.set_arg(2, Pointer.to(arg_int(bone_bind_index)));
+        Kernel.create_bone_bind_pose.set_arg(3, Pointer.to(matrix));
+        Kernel.create_bone_bind_pose.set_arg(4, Pointer.to(arg_int(bone_bond_parent)));
         Kernel.create_bone_bind_pose.call(global_single_size);
     }
 

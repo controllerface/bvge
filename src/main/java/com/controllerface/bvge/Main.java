@@ -128,6 +128,7 @@ public class Main
             return idx / Width.EDGE;
         }
 
+        // todo: points need bone indices and weights
         public static int new_point(float[] p, int[] t)
         {
             GPU.create_point(next_point(), p[0], p[1], p[0], p[1], t[0], t[1]);
@@ -160,9 +161,9 @@ public class Main
             return idx / Width.VERTEX;
         }
 
-        public static int new_bone_bind_pose(float[] bone_data)
+        public static int new_bone_bind_pose(int bind_parent, float[] bone_data)
         {
-            GPU.create_bone_bind_pose(next_bone_bind(), bone_data);
+            GPU.create_bone_bind_pose(next_bone_bind(), bind_parent, bone_data);
             var idx = bone_bind_index;
             bone_bind_index += Width.BONE;
             return idx / Width.BONE;

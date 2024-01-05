@@ -28,7 +28,7 @@ public class Meshes
         var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList()) };
         var faces = new Face[]{ new Face(0, 0, 0) };
         var hull = new int[]{ 0 };
-        return new Mesh(vertices, faces, List.of(Bone.identity()), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -59,7 +59,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2 };
 
-        return new Mesh(vertices, faces, List.of(Bone.identity()), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -95,7 +95,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2, 3 };
 
-        return new Mesh(vertices, faces, List.of(Bone.identity()), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -136,7 +136,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2, 3, 4 };
 
-        return new Mesh(vertices, faces, List.of(Bone.identity()), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
 
     }
 

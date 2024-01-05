@@ -93,7 +93,7 @@ public class Models
         generate_transforms(scene_node, bone_transforms, new Matrix4f());
 
         // similar to the node map, but must be linked to maintain insertion order
-        var bone_map = new LinkedHashMap<String, Bone>();
+        var bone_map = new LinkedHashMap<String, BoneOffset>();
 
         load_raw_meshes(numMeshes, model_name, meshes, mesh_buffer, node_map, bone_map);
 
@@ -108,14 +108,14 @@ public class Models
         return next_model_id;
     }
 
-    private static List<Bone> load_bone(AIMesh aiMesh,
-                                        Map<String, SceneNode> node_map,
-                                        Map<String, Bone> bone_map,
-                                        Map<Integer, Float> bone_weight_map)
+    private static List<BoneOffset> load_mesh_bones(AIMesh aiMesh,
+                                                    Map<String, SceneNode> node_map,
+                                                    Map<String, BoneOffset> bone_map,
+                                                    Map<Integer, Float> bone_weight_map)
     {
         int bone_count = aiMesh.mNumBones();
         PointerBuffer bone_buffer = aiMesh.mBones();
-        List<Bone> mesh_bone = new ArrayList<>();
+        List<BoneOffset> mesh_boneOffset = new ArrayList<>();
 
         for (int bone_index = 0; bone_index < bone_count; bone_index++)
         {
@@ -123,26 +123,27 @@ public class Models
             var next_bone = load_raw_bone(raw_bone, node_map, bone_map, bone_weight_map);
             if (next_bone != null)
             {
-                mesh_bone.add(next_bone);
+                mesh_boneOffset.add(next_bone);
             }
         }
 
-        if (mesh_bone == null)
+        if (mesh_boneOffset == null)
         {
             throw new NullPointerException("No bone for mesh: " + aiMesh.mName().dataString()
                 + " ensure mesh has an assigned bone");
         }
-        return mesh_bone;
+        return mesh_boneOffset;
     }
 
-    private static Bone load_raw_bone(AIBone raw_bone,
-                                      Map<String, SceneNode> node_map,
-                                      Map<String, Bone> bone_map,
-                                      Map<Integer, Float> bone_weight_map)
+    private static BoneOffset load_raw_bone(AIBone raw_bone,
+                                            Map<String, SceneNode> node_map,
+                                            Map<String, BoneOffset> bone_map,
+                                            Map<Integer, Float> bone_weight_map)
     {
-        Bone bone;
+        BoneOffset bone_offset;
 
         var bone_name = raw_bone.mName().dataString();
+
         var mOffset = raw_bone.mOffsetMatrix();
         Matrix4f offset = new Matrix4f();
         var raw_matrix = new float[16];
@@ -168,12 +169,12 @@ public class Models
         {
             var bone_node = node_map.get(bone_name);
             int bone_ref_id = Main.Memory.new_bone_reference(raw_matrix);
-            bone = new Bone(bone_ref_id, bone_name, offset, bone_node);
-            bone_map.put(bone_name, bone);
+            bone_offset = new BoneOffset(bone_ref_id, bone_name, offset, bone_node);
+            bone_map.put(bone_name, bone_offset);
         }
         else
         {
-            bone = bone_map.get(bone_name);
+            bone_offset = bone_map.get(bone_name);
         }
 
         if (raw_bone.mNumWeights() <= 0)
@@ -189,7 +190,7 @@ public class Models
             bone_weight_map.put(weight.mVertexId(), weight.mWeight());
         }
 
-        return bone;
+        return bone_offset;
     }
 
     private static Face[] load_faces(AIMesh aiMesh)
@@ -213,8 +214,7 @@ public class Models
     }
 
     private static Vertex[] load_vertices(AIMesh aiMesh,
-                                          Map<Integer, Float> bone_weight_map,
-                                          List<Bone> mesh_bone)
+                                          Map<Integer, Float> bone_weight_map)
     {
         int vert_index = 0;
         var mesh_vertices = new Vertex[aiMesh.mNumVertices()];
@@ -262,7 +262,7 @@ public class Models
                                   AIMesh raw_mesh,
                                   Mesh[] meshes,
                                   Map<String, SceneNode> node_map,
-                                  Map<String, Bone> bone_map)
+                                  Map<String, BoneOffset> bone_map)
     {
         var mesh_name = raw_mesh.mName().dataString();
         var mesh_node = node_map.get(mesh_name);
@@ -272,11 +272,11 @@ public class Models
                 + " ensure node and geometry names match in blender");
         }
         var bone_weight_map = new HashMap<Integer, Float>();
-        var mesh_bone = load_bone(raw_mesh, node_map, bone_map, bone_weight_map);
-        var mesh_vertices = load_vertices(raw_mesh, bone_weight_map, mesh_bone);
+        var mesh_bones = load_mesh_bones(raw_mesh, node_map, bone_map, bone_weight_map);
+        var mesh_vertices = load_vertices(raw_mesh, bone_weight_map);
         var mesh_faces = load_faces(raw_mesh);
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
-        var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bone, mesh_node, hull_table);
+        var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bones, mesh_node, hull_table);
 
         //System.out.println("Debug mat index:" + raw_mesh.mMaterialIndex() + " for: " + mesh_name);
 
@@ -289,7 +289,7 @@ public class Models
                                         Mesh[] meshes,
                                         PointerBuffer mesh_buffer,
                                         Map<String, SceneNode> node_map,
-                                        Map<String, Bone> bone_map)
+                                        Map<String, BoneOffset> bone_map)
     {
         // load raw mesh data for all meshes
         for (int i = 0; i < numMeshes; i++)
@@ -307,7 +307,7 @@ public class Models
             // note the chained parent call, the logic is that we find the first bone that is a direct
             // descendant of the armature, which is itself a child of the root scene node, which is
             // given the default name "RootNode".
-            var match = meshes[mi].bones().stream()
+            var match = meshes[mi].bone_offsets().stream()
                 .anyMatch(b->b.sceneNode().parent.parent.name.equalsIgnoreCase("RootNode"));
 
             if (match)

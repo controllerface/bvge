@@ -13,7 +13,10 @@ __kernel void animate_hulls(__global float4 *points,
     int2 vertex_table = vertex_tables[gid];
     
     float2 reference_vertex = vertex_references[vertex_table.x];
+
+    // todo: this will be 4 bones that are used to adjust the point
     float16 bone = bones[vertex_table.y];
+    
     float4 hull = hulls[vertex_table.y];
     int2 hull_flag = hull_flags[vertex_table.y];
     float4 armature = armatures[hull_flag.y]; 
