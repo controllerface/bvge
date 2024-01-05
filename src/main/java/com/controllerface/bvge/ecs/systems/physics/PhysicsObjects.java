@@ -453,7 +453,7 @@ public class PhysicsObjects
         {
             var next = input[i];
             var vec = matrix4f.transform(new Vector4f(next.x(), next.y(), 0.0f, 1.0f));
-            output[i] = new Vertex(next.vert_ref_id(), vec.x, vec.y, next.uv_data());
+            output[i] = new Vertex(next.vert_ref_id(), vec.x, vec.y, next.uv_data(), next.bone_names(), next.bone_weights());
         }
         return output;
     }

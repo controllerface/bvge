@@ -4,6 +4,7 @@ __kernel void animate_hulls(__global float4 *points,
                             __global int2 *vertex_tables,
                             __global float4 *armatures,
                             __global float2 *vertex_references,
+                            // todo: need to add bone index and weight arrays for vertices
                             __global float16 *bones)
 {
     // todo: this kernel shoudl change to pulling out 4 bones and using the weights in reference vertex, 
