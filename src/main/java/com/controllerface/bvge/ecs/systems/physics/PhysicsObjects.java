@@ -46,8 +46,8 @@ public class PhysicsObjects
         // get the circle mesh. this is almost silly to do but just for consistency :-)
         var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
 
-        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
-        Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
+        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().get(0).offset());
+        Main.Memory.new_bone(mesh.bone().get(0).bone_ref_id(), raw_matrix);
 
         var vert = mesh.vertices()[0];
 
@@ -93,8 +93,8 @@ public class PhysicsObjects
         // get the box mesh
         var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
 
-        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
-        Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
+        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().get(0).offset());
+        Main.Memory.new_bone(mesh.bone().get(0).bone_ref_id(), raw_matrix);
 
         var hull = mesh.vertices();
         hull = scale_hull(hull, size);
@@ -154,8 +154,8 @@ public class PhysicsObjects
         // get the box mesh
         var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
 
-        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().offset());
-        Main.Memory.new_bone(mesh.bone().bone_ref_id(), raw_matrix);
+        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone().get(0).offset());
+        Main.Memory.new_bone(mesh.bone().get(0).bone_ref_id(), raw_matrix);
 
         var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
@@ -249,7 +249,7 @@ public class PhysicsObjects
             // get the next mesh
             var next_mesh = meshes[mesh_index];
 
-            var next_bone = next_mesh.bone();
+            var mesh_bone = next_mesh.bone();
 
             // generate the hull
             var hull = generate_convex_hull(next_mesh);
@@ -260,9 +260,12 @@ public class PhysicsObjects
             //
             //hull = transform_hull(hull, next_mesh.sceneNode().transform);
 
+            // todo: meshes will have up to 4 bones, and weights for each, that need to be
+            //  taken into consideration for the following transform
+
             // generate the initial bone position
-            var bone_transform = model.bone_transforms().get(next_bone.name())
-                .mul(next_bone.offset(), new Matrix4f());
+            var bone_transform = model.bone_transforms().get(mesh_bone.get(0).name())
+                .mul(mesh_bone.get(0).offset(), new Matrix4f());
 
             // use bone transform to transform the hull
             hull = transform_hull(hull, bone_transform);
@@ -275,7 +278,7 @@ public class PhysicsObjects
 
             // make a new bone instance for this mesh
             var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
-            Main.Memory.new_bone(next_bone.bone_ref_id(), raw_matrix);
+            Main.Memory.new_bone(mesh_bone.get(0).bone_ref_id(), raw_matrix);
 
             // generate the points in memory for this object
             int start_point = -1;
@@ -447,7 +450,7 @@ public class PhysicsObjects
         {
             var next = input[i];
             var vec = matrix4f.transform(new Vector4f(next.x(), next.y(), 0.0f, 1.0f));
-            output[i] = new Vertex(next.vert_ref_id(), vec.x, vec.y, next.uv_data(), next.bone_name(), next.bone_weight());
+            output[i] = new Vertex(next.vert_ref_id(), vec.x, vec.y, next.uv_data());
         }
         return output;
     }

@@ -5,8 +5,6 @@ import com.controllerface.bvge.Main;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.controllerface.bvge.geometry.MeshBone.IDENTITY_BONE_NAME;
-
 public class Meshes
 {
     private static final AtomicInteger next_mesh_index = new AtomicInteger(0);
@@ -27,10 +25,10 @@ public class Meshes
     private static Mesh generate_circle_mesh()
     {
         var vert_ref_id = Main.Memory.new_vertex_reference(0,0);
-        var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f) };
+        var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList()) };
         var faces = new Face[]{ new Face(0, 0, 0) };
         var hull = new int[]{ 0 };
-        return new Mesh(vertices, faces, MeshBone.identity(), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, List.of(MeshBone.identity()), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -53,15 +51,15 @@ public class Meshes
         float y3 = 0.866f;
         int v3 = Main.Memory.new_vertex_reference(x3, y3);
 
-        vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
-        vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
-        vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
+        vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList());
+        vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList());
+        vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList());
 
         faces[0] = new Face(0, 1, 2);
 
         var hull = new int[]{ 0, 1, 2 };
 
-        return new Mesh(vertices, faces, MeshBone.identity(), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, List.of(MeshBone.identity()), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -87,17 +85,17 @@ public class Meshes
         float y4 = halfSize;
         int v4 = Main.Memory.new_vertex_reference(x4, y4);
 
-        vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
-        vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
-        vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
-        vertices[3] = new Vertex(v4, x4, y4, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
+        vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList());
+        vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList());
+        vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList());
+        vertices[3] = new Vertex(v4, x4, y4, Collections.emptyList());
 
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 3);
 
         var hull = new int[]{ 0, 1, 2, 3 };
 
-        return new Mesh(vertices, faces, MeshBone.identity(), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, List.of(MeshBone.identity()), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -126,11 +124,11 @@ public class Meshes
         float y5 = halfSize;
         int v5 = Main.Memory.new_vertex_reference(x1, y1);
 
-        vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
-        vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
-        vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
-        vertices[3] = new Vertex(v4, x4, y4, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
-        vertices[4] = new Vertex(v5, x5, y5, Collections.emptyList(), IDENTITY_BONE_NAME, 1.0f);
+        vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList());
+        vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList());
+        vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList());
+        vertices[3] = new Vertex(v4, x4, y4, Collections.emptyList());
+        vertices[4] = new Vertex(v5, x5, y5, Collections.emptyList());
 
         faces[0] = new Face(0, 1, 2);
         faces[1] = new Face(0, 2, 4);
@@ -138,7 +136,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2, 3, 4 };
 
-        return new Mesh(vertices, faces, MeshBone.identity(), Models.SceneNode.empty(), hull);
+        return new Mesh(vertices, faces, List.of(MeshBone.identity()), Models.SceneNode.empty(), hull);
 
     }
 

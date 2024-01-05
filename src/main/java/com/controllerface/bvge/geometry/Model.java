@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 public record Model(Mesh[] meshes,
-                    Map<String, MeshBone> boneMap,
                     Map<String, Matrix4f> bone_transforms,
                     List<Texture> textures,
                     int root_index)
@@ -16,7 +15,6 @@ public record Model(Mesh[] meshes,
     public static Model fromBasicMesh(Mesh mesh)
     {
         return new Model(new Mesh[]{ mesh },
-            Map.of(MeshBone.IDENTITY_BONE_NAME, mesh.bone()),
             Map.of(MeshBone.IDENTITY_BONE_NAME, new Matrix4f()),
             Collections.emptyList(),
             0);

@@ -47,14 +47,14 @@ public class Models
         return imported;
     }
 
-    private static MeshBone load_bone(AIMesh aiMesh,
+    private static List<MeshBone> load_bone(AIMesh aiMesh,
                                       Map<String, SceneNode> node_map,
                                       Map<String, MeshBone> bone_map,
                                       Map<Integer, Float> bone_weight_map)
     {
         int bone_count = aiMesh.mNumBones();
         PointerBuffer bone_buffer = aiMesh.mBones();
-        MeshBone mesh_bone = null;
+        List<MeshBone> mesh_bone = new ArrayList<>();
 
         for (int bone_index = 0; bone_index < bone_count; bone_index++)
         {
@@ -62,7 +62,7 @@ public class Models
             var next_bone = load_raw_bone(raw_bone, node_map, bone_map, bone_weight_map);
             if (next_bone != null)
             {
-                mesh_bone = next_bone;
+                mesh_bone.add(next_bone);
             }
         }
 
@@ -153,7 +153,7 @@ public class Models
 
     private static Vertex[] load_vertices(AIMesh aiMesh,
                                           Map<Integer, Float> bone_weight_map,
-                                          MeshBone mesh_bone)
+                                          List<MeshBone> mesh_bone)
     {
         int vert_index = 0;
         var mesh_vertices = new Vertex[aiMesh.mNumVertices()];
@@ -190,7 +190,7 @@ public class Models
                 uvData.add(new Vector2f(next.x(), next.y()));
             });
 
-            mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), uvData, mesh_bone.name(), bone_weight);
+            mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), uvData);
             count.getAndIncrement();
         }
         return mesh_vertices;
@@ -246,7 +246,7 @@ public class Models
             // note the chained parent call, the logic is that we find the first bone that is a direct
             // descendant of the armature, which is itself a child of the root scene node, which is
             // given the default name "RootNode".
-            var grandparent = meshes[mi].bone().sceneNode().parent.parent;
+            var grandparent = meshes[mi].bone().get(0).sceneNode().parent.parent;
             if (grandparent.name.equalsIgnoreCase("RootNode"))
             {
                 root_index = mi;
@@ -373,12 +373,6 @@ public class Models
         // used to map nodes by their node names, more convenient than tree for loading process
         var node_map = new HashMap<String, SceneNode>();
 
-        // similar to the node map, must be linked to maintain insertion order
-        var bone_map = new LinkedHashMap<String, MeshBone>();
-
-        // maps each bone to a calculated bind pose transformation matrix
-        var bone_transforms = new HashMap<String, Matrix4f>();
-
         // if textures are present in the model, they are loaded into this list
         var textures = new ArrayList<Texture>();
 
@@ -398,18 +392,24 @@ public class Models
             throw new RuntimeException("Unable to load model data", e);
         }
 
+        // similar to the node map, but must be linked to maintain insertion order
+        var bone_map = new LinkedHashMap<String, MeshBone>();
+
         load_raw_meshes(numMeshes, model_name, meshes, mesh_buffer, node_map, bone_map);
 
         // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
         // the root bone is determined by checking if the current bone's parent is a direct descendant of the scene
         int root_index = find_root_index(meshes);
 
+        // maps each bone to a calculated bind pose transformation matrix
+        var bone_transforms = new HashMap<String, Matrix4f>();
+
         // generate the bind pose transforms, setting the initial state of the armature
         generate_transforms(scene_node, bone_transforms, new Matrix4f());
 
         // register the model
         var next_model_id = next_model_index.getAndIncrement();
-        var model = new Model(meshes, bone_map, bone_transforms, textures, root_index);
+        var model = new Model(meshes, bone_transforms, textures, root_index);
         loaded_models.put(next_model_id, model);
         return next_model_id;
     }
