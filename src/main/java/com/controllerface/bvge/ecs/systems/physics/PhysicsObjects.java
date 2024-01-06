@@ -60,12 +60,7 @@ public class PhysicsObjects
         // store the single point for the circle
         var p1_index = Main.Memory.new_point(p1, t1);
 
-
-
-
         var edge_index = Main.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1));
-
-
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
@@ -222,6 +217,7 @@ public class PhysicsObjects
         return box(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass);
     }
 
+    // todo: add support for boneless models
     public static int wrap_model(int model_index, float x, float y, float size, int flags, float mass)
     {
         // we need to know the next armature ID before we create it so it can be used for hulls

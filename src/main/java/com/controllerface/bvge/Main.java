@@ -198,14 +198,6 @@ public class Main
         }
     }
 
-    private static final float[] identity_matrix = new float[]
-        {
-            1f,0f,0f,0f,
-            0f,1f,0f,0f,
-            0f,0f,1f,0f,
-            0f,0f,0f,1f,
-        };
-
     public static void main(String[] args)
     {
         //Configuration.DISABLE_CHECKS.set(true);
@@ -215,8 +207,6 @@ public class Main
         // todo: the maximum number of certain objects should be collapsed into a single "limits"
         //  object and passed in, this will make it cleaner to add more limits, which is needed
         GPU.init(Memory.MAX_HULLS, Memory.MAX_POINTS);
-
-        Main.Memory.new_bone_bind_pose(-1, identity_matrix);
 
         window.initGameMode();
         window.run();
