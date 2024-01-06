@@ -343,7 +343,7 @@ public class GPU
          * Indexing table for points of tracked physics hulls:
          * -
          * x: reference vertex index
-         * y: bone index (todo: also used as a proxy for hull ID, based on alignment, but they should be separate)
+         * y: hull index (todo: also used as a proxy for bone ID, based on alignment, but they should be separate)
          * -
          */
         vertex_table(Sizeof.cl_int2),
@@ -472,7 +472,8 @@ public class GPU
         /**
          * Index into the bone reference buffer used for tracked physics hulls:
          * -
-         * value: bone reference index
+         * x: bone inverse bind pose index
+         * y: bone bind pose index
          * -
          */
         bone_index_tables(Sizeof.cl_int2),

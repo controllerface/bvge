@@ -444,7 +444,7 @@ __kernel void compact_armatures(__global int *buffer_in,
         {
             int current_point = element_table.x + k;
             int2 vertex_table = vertex_tables[current_point];
-            vertex_table.y -= drop.bone_count;
+            vertex_table.y -= drop.hull_count;
             vertex_tables[current_point] = vertex_table;
             point_shift[current_point] = drop.point_count;
         }
