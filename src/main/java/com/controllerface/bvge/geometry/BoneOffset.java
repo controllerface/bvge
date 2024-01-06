@@ -2,7 +2,7 @@ package com.controllerface.bvge.geometry;
 
 import org.joml.Matrix4f;
 
-public record BoneOffset(int bone_ref_id, String name, Matrix4f transform, Models.SceneNode sceneNode)
+public record BoneOffset(int offset_ref_id, String name, Matrix4f transform, Models.SceneNode sceneNode)
 {
     public static String IDENTITY_BONE_NAME = "<identity>";
 

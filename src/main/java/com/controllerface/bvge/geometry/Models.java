@@ -90,9 +90,10 @@ public class Models
         var bone_transforms = new HashMap<String, Matrix4f>();
 
         var bind_pose_map = new HashMap<Integer, BoneBindPose>();
+        var bind_name_map = new HashMap<String, Integer>();
 
         // generate the bind pose transforms, setting the initial state of the armature
-        generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_pose_map, -1);
+        generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, -1);
 
         load_raw_meshes(numMeshes, model_name, meshes, mesh_buffer, node_map);
 
@@ -102,7 +103,7 @@ public class Models
 
         // register the model
         var next_model_id = next_model_index.getAndIncrement();
-        var model = new Model(meshes, bone_transforms, textures, root_index);
+        var model = new Model(meshes, bone_transforms, bind_name_map, bind_pose_map, textures, root_index);
         loaded_models.put(next_model_id, model);
         return next_model_id;
     }
@@ -485,6 +486,7 @@ public class Models
     private static void generate_transforms(SceneNode current_node,
                                             Map<String, Matrix4f> transforms,
                                             Matrix4f parent_transform,
+                                            Map<String, Integer> bind_name_map,
                                             Map<Integer, BoneBindPose> bind_pose_map,
                                             int parent_index)
     {
@@ -515,19 +517,15 @@ public class Models
             raw_matrix[14] = node_transform.m32();
             raw_matrix[15] = node_transform.m33();
 
-            // note that the bind pose object is set with the current parent,
-            // that parent is written to memory which returns the actual index
-            // of this pose (which becomes the new parent) and then this bind
-            // pose is mapped to _its_ index in memory. This may look wrong if
-            // you stare at it too hard, but it is right.
             var p = new BoneBindPose(parent, node_transform);
             parent = Main.Memory.new_bone_bind_pose(parent, raw_matrix);
+            bind_name_map.put(name, parent);
             bind_pose_map.put(parent, p);
             transforms.put(name, global_transform);
         }
         for (SceneNode child : current_node.children)
         {
-            generate_transforms(child, transforms, global_transform, bind_pose_map, parent);
+            generate_transforms(child, transforms, global_transform, bind_name_map, bind_pose_map, parent);
         }
     }
 
