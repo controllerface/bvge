@@ -75,7 +75,7 @@ public class PhysicsObjects
         var rotation = CLUtils.arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int[] _flag = CLUtils.arg_int2(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id);
+        int[] _flag = CLUtils.arg_int4(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id,0,0);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
@@ -137,7 +137,7 @@ public class PhysicsObjects
 
 
         // there is only one hull, so it is the main hull ID by default
-        int [] _flag =  CLUtils.arg_int2(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id);
+        int [] _flag =  CLUtils.arg_int4(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id, 0, 0);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0,0);
@@ -201,7 +201,7 @@ public class PhysicsObjects
 
 
         // there is only one hull, so it is the main hull ID by default
-        int [] _flag = CLUtils.arg_int2(flags | FLAG_POLYGON, next_armature_id);
+        int [] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON, next_armature_id, 0, 0);
         int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
@@ -290,7 +290,7 @@ public class PhysicsObjects
             // todo: store bone ID in map with bone name so points can get their
             //  bones' memory offset. Also, bone memory needs ref to bind pose as
             //  well as the existing bone ref id.
-            int[] bone_table = new int[]{bone_offset.offset_ref_id(), bind_pose_index};
+            int[] bone_table = new int[]{ bone_offset.offset_ref_id(), bind_pose_index };
             Main.Memory.new_bone(bone_table, raw_matrix);
 
             // generate the points in memory for this object
@@ -398,7 +398,7 @@ public class PhysicsObjects
             var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
             var rotation = CLUtils.arg_float2(0, angle);
 
-            int[] hull_flags = CLUtils.arg_int2(flags, next_armature_id);
+            int[] hull_flags = CLUtils.arg_int4(flags, next_armature_id, 0, 0);
             int hull_id = Main.Memory.new_hull(transform, rotation, table, hull_flags);
 
             if (first_hull == -1)

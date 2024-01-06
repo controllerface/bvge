@@ -408,7 +408,7 @@ public class GPU
          * y: armature id
          * -
          */
-        hull_flags(Sizeof.cl_int2),
+        hull_flags(Sizeof.cl_int4),
 
         /**
          * Axis-aligned bounding boxes of tracked physics hulls:

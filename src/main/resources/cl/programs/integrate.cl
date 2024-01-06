@@ -23,7 +23,7 @@ __kernel void integrate(
     __global float4 *bounds,
     __global int4 *bounds_index_data,
     __global int2 *bounds_bank_data,
-    __global int2 *hull_flags,
+    __global int4 *hull_flags,
     __global float *anti_gravity,
     __global float *args)
 {
@@ -46,7 +46,7 @@ __kernel void integrate(
     // get hull from array
     float4 hull = hulls[gid];
     int4 element_table = element_tables[gid];
-    int2 hull_1_flags = hull_flags[gid];
+    int4 hull_1_flags = hull_flags[gid];
     float4 armature = armatures[hull_1_flags.y];
     int4 armature_flag = armature_flags[hull_1_flags.y];
     float2 acceleration = armature_accel[hull_1_flags.y];

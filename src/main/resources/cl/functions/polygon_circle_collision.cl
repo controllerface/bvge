@@ -2,7 +2,7 @@
 
 inline void polygon_circle_collision(int polygon_id, int circle_id,
                                      __global float4 *hulls,
-                                     __global int2 *hull_flags,
+                                     __global int4 *hull_flags,
                                      __global int4 *element_tables,
                                      __global float4 *points,
                                      __global float4 *edges,
@@ -137,8 +137,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
 
 
     // vertex and edge object flags
-    int2 vo_f = hull_flags[(int)vertex_object_id];
-    int2 eo_f = hull_flags[(int)edge_object_id];
+    int4 vo_f = hull_flags[(int)vertex_object_id];
+    int4 eo_f = hull_flags[(int)edge_object_id];
 
     float vo_mass = masses[vo_f.y];
     float eo_mass = masses[eo_f.y];

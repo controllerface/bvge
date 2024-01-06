@@ -79,12 +79,12 @@ __kernel void create_bone(__global float16 *bones,
 __kernel void create_hull(__global float4 *hulls,
                           __global float2 *hull_rotations,
                           __global int4 *element_tables,
-                          __global int2 *hull_flags,
+                          __global int4 *hull_flags,
                           int target,
                           float4 new_hull,
                           float2 new_rotation,
                           int4 new_table,
-                          int2 new_flags)
+                          int4 new_flags)
 {
     hulls[target] = new_hull; 
     hull_rotations[target] = new_rotation; 

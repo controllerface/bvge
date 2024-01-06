@@ -46,7 +46,7 @@ inline DropCounts calculate_drop_counts(int armature_id,
 }
 
 __kernel void locate_out_of_bounds(__global int2 *hull_tables,
-                                   __global int2 *hull_flags,
+                                   __global int4 *hull_flags,
                                    __global int4 *armature_flags,
                                    __global int *counter)
 {
@@ -58,7 +58,7 @@ __kernel void locate_out_of_bounds(__global int2 *hull_tables,
     for (int i = 0; i < hull_count; i++)
     {
         int current_hull = hull_table.x + i;
-        int2 hull_flag = hull_flags[current_hull];
+        int4 hull_flag = hull_flags[current_hull];
         bool is_out = (hull_flag.x & OUT_OF_BOUNDS) !=0;
         if (is_out)
         {
@@ -344,7 +344,7 @@ __kernel void compact_armatures(__global int *buffer_in,
                                 __global int4 *armature_flags,
                                 __global int2 *hull_tables,
                                 __global float4 *hulls,
-                                __global int2 *hull_flags,
+                                __global int4 *hull_flags,
                                 __global int4 *element_tables,
                                 __global float4 *points,
                                 __global int2 *vertex_tables,
@@ -407,7 +407,7 @@ __kernel void compact_armatures(__global int *buffer_in,
     for (int i = 0; i < hull_count; i++)
     {
         int current_hull = hull_table.x + i;
-        int2 hull_flag = hull_flags[current_hull];
+        int4 hull_flag = hull_flags[current_hull];
         int4 element_table = element_tables[current_hull];
 
         int4 new_element_table = element_table;
@@ -454,7 +454,7 @@ __kernel void compact_armatures(__global int *buffer_in,
 __kernel void compact_hulls(__global int *hull_shift,
                             __global float4 *hulls,
                             __global float2 *hull_rotations,
-                            __global int2 *hull_flags,
+                            __global int4 *hull_flags,
                             __global int4 *element_tables,
                             __global float4 *bounds,
                             __global int4 *bounds_index_data,
@@ -464,7 +464,7 @@ __kernel void compact_hulls(__global int *hull_shift,
     int shift = hull_shift[current_hull];
     float4 hull = hulls[current_hull];
     float2 rotation = hull_rotations[current_hull];
-    int2 hull_flag = hull_flags[current_hull];
+    int4 hull_flag = hull_flags[current_hull];
     int4 element_table = element_tables[current_hull];
     float4 bound = bounds[current_hull];
     int4 bounds_index = bounds_index_data[current_hull];

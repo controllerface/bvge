@@ -17,7 +17,7 @@ Circle/circle collisions use a simple distance/radius check.
 __kernel void sat_collide(__global int2 *candidates,
                           __global float4 *hulls,
                           __global int4 *element_tables,
-                          __global int2 *hull_flags,
+                          __global int4 *hull_flags,
                           __global float4 *points,
                           __global float4 *edges,
                           __global float2 *reactions,
@@ -31,8 +31,8 @@ __kernel void sat_collide(__global int2 *candidates,
     int2 current_pair = candidates[gid];
     int b1_id = current_pair.x;
     int b2_id = current_pair.y;
-    int2 hull_1_flags = hull_flags[b1_id];
-    int2 hull_2_flags = hull_flags[b2_id];
+    int4 hull_1_flags = hull_flags[b1_id];
+    int4 hull_2_flags = hull_flags[b2_id];
     bool b1s = (hull_1_flags.x & IS_STATIC) !=0;
     bool b2s = (hull_2_flags.x & IS_STATIC) !=0;
     
@@ -192,7 +192,7 @@ __kernel void move_armatures(__global float4 *hulls,
                              __global float4 *armatures,
                              __global int2 *hull_tables,
                              __global int4 *element_tables,
-                             __global int2 *hull_flags,
+                             __global int4 *hull_flags,
                              __global float4 *points)
 {
     int gid = get_global_id(0);
@@ -207,7 +207,7 @@ __kernel void move_armatures(__global float4 *hulls,
     {
         int n = start + i;
         float4 hull = hulls[n];
-        int2 hull_flag = hull_flags[n];
+        int4 hull_flag = hull_flags[n];
         int4 element_table = element_tables[n];
         bool no_bones = (hull_flag.x & NO_BONES) !=0;
 

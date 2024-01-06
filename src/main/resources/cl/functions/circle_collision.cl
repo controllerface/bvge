@@ -1,6 +1,6 @@
 inline void circle_collision(int b1_id, int b2_id,
                              __global float4 *hulls,
-                             __global int2 *hull_flags,
+                             __global int4 *hull_flags,
                              __global int4 *element_tables,
                              __global float4 *points,
                              __global float2 *reactions,
@@ -27,8 +27,8 @@ inline void circle_collision(int b1_id, int b2_id,
     normal = normalize(sub);
     depth = radii - _distance;
     
-    int2 vo_f = hull_flags[b1_id];
-    int2 eo_f = hull_flags[b2_id];
+    int4 vo_f = hull_flags[b1_id];
+    int4 eo_f = hull_flags[b2_id];
 
     float mass1 = masses[vo_f.y];
     float mass2 = masses[eo_f.y];
