@@ -58,7 +58,7 @@ public class PhysicsObjects
         var t1 = CLUtils.arg_int2(vert.vert_ref_id(), next_hull_index);
 
         // store the single point for the circle
-        var p1_index = Main.Memory.new_point(p1, t1);
+        var p1_index = Main.Memory.new_point(p1, t1, new int[4]);
 
         var edge_index = Main.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1));
 
@@ -105,9 +105,9 @@ public class PhysicsObjects
         var p2 = CLUtils.arg_float2(v2.x(), v2.y());
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
 
-        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), next_hull_index));
-        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), next_hull_index));
-        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), next_hull_index));
+        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), next_hull_index), new int[4]);
+        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), next_hull_index), new int[4]);
+        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), next_hull_index), new int[4]);
 
         MathEX.centroid(vector_buffer, p1, p2, p3);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -169,10 +169,10 @@ public class PhysicsObjects
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
         var p4 = CLUtils.arg_float2(v4.x(), v4.y());
 
-        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), next_hull_index));
-        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), next_hull_index));
-        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), next_hull_index));
-        var p4_index = Main.Memory.new_point(p4, CLUtils.arg_int2(v4.vert_ref_id(), next_hull_index));
+        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), next_hull_index), new int[4]);
+        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), next_hull_index), new int[4]);
+        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), next_hull_index), new int[4]);
+        var p4_index = Main.Memory.new_point(p4, CLUtils.arg_int2(v4.vert_ref_id(), next_hull_index), new int[4]);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -289,7 +289,8 @@ public class PhysicsObjects
             int[] bone_table = new int[]{ bone_offset.offset_ref_id(), bind_pose_index };
 
             // todo: store all bones for hull, not just one
-            int bone_id = Main.Memory.new_bone(bone_table, raw_matrix);
+            int start_bone = Main.Memory.new_bone(bone_table, raw_matrix);
+            int end_bone = start_bone;
 
             // generate the points in memory for this object
             int start_point = -1;
@@ -303,7 +304,7 @@ public class PhysicsObjects
                 var next_vertex = hull[point_index];
                 var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
                 var new_table = CLUtils.arg_int2(next_vertex.vert_ref_id(), next_hull_index);
-                var p_index = Main.Memory.new_point(new_point, new_table);
+                var p_index = Main.Memory.new_point(new_point, new_table, new int[4]);
                 if (start_point == -1)
                 {
                     start_point = p_index;
@@ -394,7 +395,7 @@ public class PhysicsObjects
             var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
             var rotation = CLUtils.arg_float2(0, angle);
 
-            int[] hull_flags = CLUtils.arg_int4(flags, next_armature_id, bone_id, bone_id);
+            int[] hull_flags = CLUtils.arg_int4(flags, next_armature_id, start_bone, end_bone);
             int hull_id = Main.Memory.new_hull(transform, rotation, table, hull_flags);
 
             if (first_hull == -1)

@@ -8,12 +8,15 @@ are designed to operate on a single target object.
 
 __kernel void create_point(__global float4 *points,
                            __global int2 *vertex_tables,
+                           __global int4 *bone_tables,
                            int target,
                            float4 new_point,
-                           int2 new_vertex_table)
+                           int2 new_vertex_table,
+                           int4 new_bone_table)
 {
     points[target] = new_point; 
     vertex_tables[target] = new_vertex_table; 
+    bone_tables[target] = new_bone_table; 
 }
 
 __kernel void create_edge(__global float4 *edges,

@@ -128,9 +128,9 @@ public class Main
         }
 
         // todo: points need bone indices and weights
-        public static int new_point(float[] p, int[] t)
+        public static int new_point(float[] p, int[] t, int[] b)
         {
-            GPU.create_point(next_point(), p[0], p[1], p[0], p[1], t[0], t[1]);
+            GPU.create_point(next_point(), p[0], p[1], p[0], p[1], t[0], t[1], b);
             var idx = point_index;
             point_index += Width.POINT;
             return idx / Width.POINT;

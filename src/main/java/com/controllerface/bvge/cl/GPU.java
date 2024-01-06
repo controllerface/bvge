@@ -340,14 +340,15 @@ public class GPU
         point_anti_gravity(Sizeof.cl_float),
 
         /**
-         * Indexing table for points of tracked physics hulls:
+         * Indexing tables for points of tracked physics hulls:
          * -
          * x: reference vertex index
          * y: hull index (todo: also used as a proxy for bone ID, based on alignment, but they should be separate)
          * -
          */
-        vertex_table(Sizeof.cl_int2),
+        point_vertex_tables(Sizeof.cl_int2),
 
+        point_bone_tables(Sizeof.cl_int4),
 
         /*
         Edges
@@ -789,7 +790,8 @@ public class GPU
         Memory.point_offsets.init(max_points);
         Memory.point_anti_gravity.init(max_points);
         Memory.edges.init(max_points);
-        Memory.vertex_table.init(max_points);
+        Memory.point_vertex_tables.init(max_points);
+        Memory.point_bone_tables.init(max_points);
         Memory.vertex_references.init(max_points);
         Memory.vertex_weights.init(max_points);
         Memory.bone_bind_poses.init(max_hulls);
@@ -821,7 +823,8 @@ public class GPU
             + Memory.point_offsets.length
             + Memory.point_anti_gravity.length
             + Memory.edges.length
-            + Memory.vertex_table.length
+            + Memory.point_vertex_tables.length
+            + Memory.point_bone_tables.length
             + Memory.vertex_references.length
             + Memory.vertex_weights.length
             + Memory.bone_bind_poses.length
@@ -837,42 +840,43 @@ public class GPU
             + Memory.edge_shift.length
             + Memory.hull_shift.length;
 
-        System.out.println("------------- BUFFERS -------------");
-        System.out.println("points            : " + Memory.points.length);
-        System.out.println("edges             : " + Memory.edges.length);
-        System.out.println("hulls             : " + Memory.hulls.length);
-        System.out.println("acceleration      : " + Memory.armature_accel.length);
-        System.out.println("mass              : " + Memory.armature_mass.length);
-        System.out.println("rotation          : " + Memory.hull_rotation.length);
-        System.out.println("element table     : " + Memory.hull_element_table.length);
-        System.out.println("hull flags        : " + Memory.hull_flags.length);
-        System.out.println("point reactions   : " + Memory.point_reactions.length);
-        System.out.println("point offsets     : " + Memory.point_offsets.length);
-        System.out.println("point anti-grav   : " + Memory.point_anti_gravity.length);
-        System.out.println("bounding box      : " + Memory.aabb.length);
-        System.out.println("spatial index     : " + Memory.aabb_index.length);
-        System.out.println("spatial key bank  : " + Memory.aabb_key_table.length);
-        System.out.println("vertex table      : " + Memory.vertex_table.length);
-        System.out.println("vertex references : " + Memory.vertex_references.length);
-        System.out.println("vertex weights    : " + Memory.vertex_weights.length);
-        System.out.println("bone bind poses   : " + Memory.bone_bind_poses.length);
-        System.out.println("bone bind parents : " + Memory.bone_bind_parents.length);
-        System.out.println("bone references   : " + Memory.bone_references.length);
-        System.out.println("bone instances    : " + Memory.bone_instances.length);
-        System.out.println("bone index        : " + Memory.bone_index_tables.length);
-        System.out.println("armatures         : " + Memory.armatures.length);
-        System.out.println("armature flags    : " + Memory.armature_flags.length);
-        System.out.println("hull table        : " + Memory.armature_hull_table.length);
-        System.out.println("bone shift        : " + Memory.armature_hull_table.length);
-        System.out.println("point shift       : " + Memory.armature_hull_table.length);
-        System.out.println("edge shift        : " + Memory.armature_hull_table.length);
-        System.out.println("hull shift        : " + Memory.armature_hull_table.length);
+        System.out.println("---------------------------- BUFFERS ----------------------------");
+        System.out.println("points               : " + Memory.points.length);
+        System.out.println("edges                : " + Memory.edges.length);
+        System.out.println("hulls                : " + Memory.hulls.length);
+        System.out.println("acceleration         : " + Memory.armature_accel.length);
+        System.out.println("mass                 : " + Memory.armature_mass.length);
+        System.out.println("rotation             : " + Memory.hull_rotation.length);
+        System.out.println("element table        : " + Memory.hull_element_table.length);
+        System.out.println("hull flags           : " + Memory.hull_flags.length);
+        System.out.println("point reactions      : " + Memory.point_reactions.length);
+        System.out.println("point offsets        : " + Memory.point_offsets.length);
+        System.out.println("point anti-grav      : " + Memory.point_anti_gravity.length);
+        System.out.println("bounding box         : " + Memory.aabb.length);
+        System.out.println("spatial index        : " + Memory.aabb_index.length);
+        System.out.println("spatial key bank     : " + Memory.aabb_key_table.length);
+        System.out.println("point vertex tables  : " + Memory.point_vertex_tables.length);
+        System.out.println("point bone tables    : " + Memory.point_bone_tables.length);
+        System.out.println("vertex references    : " + Memory.vertex_references.length);
+        System.out.println("vertex weights       : " + Memory.vertex_weights.length);
+        System.out.println("bone bind poses      : " + Memory.bone_bind_poses.length);
+        System.out.println("bone bind parents    : " + Memory.bone_bind_parents.length);
+        System.out.println("bone references      : " + Memory.bone_references.length);
+        System.out.println("bone instances       : " + Memory.bone_instances.length);
+        System.out.println("bone index           : " + Memory.bone_index_tables.length);
+        System.out.println("armatures            : " + Memory.armatures.length);
+        System.out.println("armature flags       : " + Memory.armature_flags.length);
+        System.out.println("hull table           : " + Memory.armature_hull_table.length);
+        System.out.println("bone shift           : " + Memory.armature_hull_table.length);
+        System.out.println("point shift          : " + Memory.armature_hull_table.length);
+        System.out.println("edge shift           : " + Memory.armature_hull_table.length);
+        System.out.println("hull shift           : " + Memory.armature_hull_table.length);
         System.out.println("=====================================");
-        System.out.println(" Total (Bytes)    : " + total);
-        System.out.println("               KB : " + ((float) total / 1024f));
-        System.out.println("               MB : " + ((float) total / 1024f / 1024f));
-        System.out.println("               GB : " + ((float) total / 1024f / 1024f / 1024f));
-        System.out.println("-----------------------------------\n");
+        System.out.println(" Total (Bytes)       : " + total);
+        System.out.println("                  KB : " + ((float) total / 1024f));
+        System.out.println("                  MB : " + ((float) total / 1024f / 1024f));
+        System.out.println("                  GB : " + ((float) total / 1024f / 1024f / 1024f));
+        System.out.println("---------------------------------------------------------------\n");
     }
 
     /**
@@ -958,7 +962,8 @@ public class GPU
 
         var create_point_k = new CreatePoint_k(command_queue, Program.gpu_crud.gpu);
         create_point_k.set_points(Memory.points.gpu.pointer());
-        create_point_k.set_vertex_table(Memory.vertex_table.gpu.pointer());
+        create_point_k.set_vertex_tables(Memory.point_vertex_tables.gpu.pointer());
+        create_point_k.set_bone_tables(Memory.point_bone_tables.gpu.pointer());
         Kernel.create_point.set_kernel(create_point_k);
 
         var create_edge_k = new CreateEdge_k(command_queue, Program.gpu_crud.gpu);
@@ -1013,7 +1018,7 @@ public class GPU
         animate_hulls_k.set_points(Memory.points.gpu.pointer());
         animate_hulls_k.set_hulls(Memory.hulls.gpu.pointer());
         animate_hulls_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
-        animate_hulls_k.set_vertex_table(Memory.vertex_table.gpu.pointer());
+        animate_hulls_k.set_vertex_table(Memory.point_vertex_tables.gpu.pointer());
         animate_hulls_k.set_armatures(Memory.armatures.gpu.pointer());
         animate_hulls_k.set_vertex_refs(Memory.vertex_references.gpu.pointer());
         animate_hulls_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
@@ -1173,7 +1178,7 @@ public class GPU
         compact_armatures_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         compact_armatures_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         compact_armatures_k.set_points(Memory.points.gpu.pointer());
-        compact_armatures_k.set_vertex_tables(Memory.vertex_table.gpu.pointer());
+        compact_armatures_k.set_vertex_tables(Memory.point_vertex_tables.gpu.pointer());
         compact_armatures_k.set_edges(Memory.edges.gpu.pointer());
         compact_armatures_k.set_bone_shift(Memory.bone_shift.gpu.pointer());
         compact_armatures_k.set_point_shift(Memory.point_shift.gpu.pointer());
@@ -1201,7 +1206,7 @@ public class GPU
         compact_points_k.set_point_shift(Memory.point_shift.gpu.pointer());
         compact_points_k.set_points(Memory.points.gpu.pointer());
         compact_points_k.set_anti_gravity(Memory.point_anti_gravity.gpu.pointer());
-        compact_points_k.set_vertex_tables(Memory.vertex_table.gpu.pointer());
+        compact_points_k.set_vertex_tables(Memory.point_vertex_tables.gpu.pointer());
         Kernel.compact_points.set_kernel(compact_points_k);
 
         var compact_bones_k = new CompactBones_k(command_queue, Program.scan_deletes.gpu);
@@ -1378,11 +1383,13 @@ public class GPU
                                     float prv_x,
                                     float prv_y,
                                     int vert_index,
-                                    int bone_index)
+                                    int hull_index,
+                                    int[] bone_indices)
     {
-        Kernel.create_point.set_arg(2, Pointer.to(arg_int(point_index)));
-        Kernel.create_point.set_arg(3, Pointer.to(arg_float4(pos_x, pos_y, prv_x, prv_y)));
-        Kernel.create_point.set_arg(4, Pointer.to(arg_int2(vert_index, bone_index)));
+        Kernel.create_point.set_arg(3, Pointer.to(arg_int(point_index)));
+        Kernel.create_point.set_arg(4, Pointer.to(arg_float4(pos_x, pos_y, prv_x, prv_y)));
+        Kernel.create_point.set_arg(5, Pointer.to(arg_int2(vert_index, hull_index)));
+        Kernel.create_point.set_arg(6, Pointer.to(bone_indices));
         Kernel.create_point.call(global_single_size);
     }
 
