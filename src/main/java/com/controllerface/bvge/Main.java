@@ -176,7 +176,7 @@ public class Main
             return idx / Width.BONE;
         }
 
-        public static int new_bone(int offset_id, float[] bone_data)
+        public static int new_bone(int[] offset_id, float[] bone_data)
         {
             GPU.create_bone(next_bone(), offset_id, bone_data);
             var idx = bone_index;

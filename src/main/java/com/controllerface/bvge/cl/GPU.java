@@ -475,7 +475,7 @@ public class GPU
          * value: bone reference index
          * -
          */
-        bone_index(Sizeof.cl_int),
+        bone_index_tables(Sizeof.cl_int2),
 
 
         /*
@@ -795,7 +795,7 @@ public class GPU
         Memory.bone_bind_parents.init(max_hulls);
         Memory.bone_references.init(max_points);
         Memory.bone_instances.init(max_points);
-        Memory.bone_index.init(max_points);
+        Memory.bone_index_tables.init(max_points);
         Memory.armatures.init(max_points);
         Memory.armature_flags.init(max_points);
         Memory.armature_hull_table.init(max_hulls);
@@ -827,7 +827,7 @@ public class GPU
             + Memory.bone_bind_parents.length
             + Memory.bone_references.length
             + Memory.bone_instances.length
-            + Memory.bone_index.length
+            + Memory.bone_index_tables.length
             + Memory.armatures.length
             + Memory.armature_flags.length
             + Memory.armature_hull_table.length
@@ -858,7 +858,7 @@ public class GPU
         System.out.println("bone bind parents : " + Memory.bone_bind_parents.length);
         System.out.println("bone references   : " + Memory.bone_references.length);
         System.out.println("bone instances    : " + Memory.bone_instances.length);
-        System.out.println("bone index        : " + Memory.bone_index.length);
+        System.out.println("bone index        : " + Memory.bone_index_tables.length);
         System.out.println("armatures         : " + Memory.armatures.length);
         System.out.println("armature flags    : " + Memory.armature_flags.length);
         System.out.println("hull table        : " + Memory.armature_hull_table.length);
@@ -912,7 +912,7 @@ public class GPU
         var prep_bones_k = new PrepareBones_k(command_queue, Program.prepare_bones.gpu);
         prep_bones_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
         prep_bones_k.set_bone_references(Memory.bone_references.gpu.pointer());
-        prep_bones_k.set_bone_index(Memory.bone_index.gpu.pointer());
+        prep_bones_k.set_bone_index_tables(Memory.bone_index_tables.gpu.pointer());
         prep_bones_k.set_hulls(Memory.hulls.gpu.pointer());
         prep_bones_k.set_armatures(Memory.armatures.gpu.pointer());
         prep_bones_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
@@ -987,7 +987,7 @@ public class GPU
 
         var create_bone_k = new CreateBone_k(command_queue, Program.gpu_crud.gpu);
         create_bone_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
-        create_bone_k.set_bone_index(Memory.bone_index.gpu.pointer());
+        create_bone_k.set_bone_index_tables(Memory.bone_index_tables.gpu.pointer());
         Kernel.create_bone.set_kernel(create_bone_k);
 
         var create_hull_k = new CreateHull_k(command_queue, Program.gpu_crud.gpu);
@@ -1203,7 +1203,7 @@ public class GPU
         var compact_bones_k = new CompactBones_k(command_queue, Program.scan_deletes.gpu);
         compact_bones_k.set_bone_shift(Memory.bone_shift.gpu.pointer());
         compact_bones_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
-        compact_bones_k.set_bone_indices(Memory.bone_index.gpu.pointer());
+        compact_bones_k.set_bone_indices(Memory.bone_index_tables.gpu.pointer());
         Kernel.compact_bones.set_kernel(compact_bones_k);
     }
 
@@ -1422,11 +1422,11 @@ public class GPU
         Kernel.create_bone_reference.call(global_single_size);
     }
 
-    public static void create_bone(int bone_index, int bone_ref_index, float[] matrix)
+    public static void create_bone(int bone_index, int[] bone_index_table, float[] matrix)
     {
         Kernel.create_bone.set_arg(2, Pointer.to(arg_int(bone_index)));
         Kernel.create_bone.set_arg(3, Pointer.to(matrix));
-        Kernel.create_bone.set_arg(4, Pointer.to(arg_int(bone_ref_index)));
+        Kernel.create_bone.set_arg(4, Pointer.to(bone_index_table));
         Kernel.create_bone.call(global_single_size);
     }
 

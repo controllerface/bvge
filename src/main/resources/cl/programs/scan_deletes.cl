@@ -520,12 +520,12 @@ __kernel void compact_points(__global int *point_shift,
 
 __kernel void compact_bones(__global int *bone_shift,
                             __global float16 *bone_instances,
-                            __global int *bone_indices)
+                            __global int2 *bone_indices)
 {
     int current_bone = get_global_id(0);
     int shift = bone_shift[current_bone];
     float16 instance = bone_instances[current_bone];
-    int index = bone_indices[current_bone];
+    int2 index = bone_indices[current_bone];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {

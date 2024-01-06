@@ -67,13 +67,13 @@ __kernel void create_bone_reference(__global float16 *bone_references,
 }
 
 __kernel void create_bone(__global float16 *bones,
-                          __global int *bone_ref_index,
+                          __global int2 *bone_ref_tables,
                           int target,
                           float16 new_bone,
-                          int new_bone_ref_id)
+                          int2 new_bone_table)
 {
     bones[target] = new_bone; 
-    bone_ref_index[target] = new_bone_ref_id; 
+    bone_ref_tables[target] = new_bone_table; 
 }
 
 __kernel void create_hull(__global float4 *hulls,

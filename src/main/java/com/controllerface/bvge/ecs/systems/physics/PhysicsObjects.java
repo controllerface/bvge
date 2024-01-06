@@ -47,7 +47,8 @@ public class PhysicsObjects
         var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
-        Main.Memory.new_bone(mesh.bone_offsets().get(0).offset_ref_id(), raw_matrix);
+        int[] bone_index_table = { mesh.bone_offsets().get(0).offset_ref_id(), 0 };
+        Main.Memory.new_bone(bone_index_table, raw_matrix);
 
         var vert = mesh.vertices()[0];
 
@@ -94,7 +95,8 @@ public class PhysicsObjects
         var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
-        Main.Memory.new_bone(mesh.bone_offsets().get(0).offset_ref_id(), raw_matrix);
+        int[] bone_index_table = { mesh.bone_offsets().get(0).offset_ref_id(), 0 };
+        Main.Memory.new_bone(bone_index_table, raw_matrix);
 
         var hull = mesh.vertices();
         hull = scale_hull(hull, size);
@@ -155,7 +157,8 @@ public class PhysicsObjects
         var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
-        Main.Memory.new_bone(mesh.bone_offsets().get(0).offset_ref_id(), raw_matrix);
+        int[] bone_index_table = { mesh.bone_offsets().get(0).offset_ref_id(), 0 };
+        Main.Memory.new_bone(bone_index_table, raw_matrix);
 
         var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
@@ -282,10 +285,13 @@ public class PhysicsObjects
             // make a new bone instance for this mesh
             var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
 
+            var bind_pose_index = model.bone_indices().get(bone_offset.name());
+
             // todo: store bone ID in map with bone name so points can get their
             //  bones' memory offset. Also, bone memory needs ref to bind pose as
             //  well as the existing bone ref id.
-            Main.Memory.new_bone(bone_offset.offset_ref_id(), raw_matrix);
+            int[] bone_table = new int[]{bone_offset.offset_ref_id(), bind_pose_index};
+            Main.Memory.new_bone(bone_table, raw_matrix);
 
             // generate the points in memory for this object
             int start_point = -1;

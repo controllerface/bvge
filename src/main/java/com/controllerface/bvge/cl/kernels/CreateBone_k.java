@@ -16,7 +16,7 @@ public class CreateBone_k extends GPUKernel
         def_arg(1, Sizeof.cl_mem);
         def_arg(2, Sizeof.cl_int);
         def_arg(3, Sizeof.cl_float16);
-        def_arg(4, Sizeof.cl_int);
+        def_arg(4, Sizeof.cl_int2);
     }
 
     public void set_bone_instances(Pointer bone_instances)
@@ -24,7 +24,7 @@ public class CreateBone_k extends GPUKernel
         new_arg(0, Sizeof.cl_mem, bone_instances);
     }
 
-    public void set_bone_index(Pointer bone_index)
+    public void set_bone_index_tables(Pointer bone_index)
     {
         new_arg(1, Sizeof.cl_mem, bone_index);
     }
