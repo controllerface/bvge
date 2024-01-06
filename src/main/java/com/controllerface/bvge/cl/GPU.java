@@ -1147,18 +1147,21 @@ public class GPU
         scan_deletes_single_block_out_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
         scan_deletes_single_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
         scan_deletes_single_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        scan_deletes_single_block_out_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         Kernel.scan_deletes_single_block_out.set_kernel(scan_deletes_single_block_out_k);
 
         var scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
         scan_deletes_multi_block_out_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
         scan_deletes_multi_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
         scan_deletes_multi_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        scan_deletes_multi_block_out_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         Kernel.scan_deletes_multi_block_out.set_kernel(scan_deletes_multi_block_out_k);
 
         var complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(command_queue, Program.scan_deletes.gpu);
         complete_deletes_multi_block_out_k.set_armature_flags(Memory.armature_flags.gpu.pointer());
         complete_deletes_multi_block_out_k.set_hull_tables(Memory.armature_hull_table.gpu.pointer());
         complete_deletes_multi_block_out_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
+        complete_deletes_multi_block_out_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         Kernel.complete_deletes_multi_block_out.set_kernel(complete_deletes_multi_block_out_k);
 
         var compact_armatures_k = new CompactArmatures_k(command_queue, Program.scan_deletes.gpu);
@@ -2046,12 +2049,12 @@ public class GPU
         var dst_data = Pointer.to(o1_data);
         var dst_data2 = Pointer.to(o2_data);
 
-        Kernel.scan_deletes_single_block_out.set_arg(3, dst_data);
-        Kernel.scan_deletes_single_block_out.set_arg(4, dst_data2);
-        Kernel.scan_deletes_single_block_out.set_arg(5, Pointer.to(size_data));
-        Kernel.scan_deletes_single_block_out.new_arg(6, local_buffer_size);
-        Kernel.scan_deletes_single_block_out.new_arg(7, local_buffer_size2);
-        Kernel.scan_deletes_single_block_out.set_arg(8, Pointer.to(arg_int(n)));
+        Kernel.scan_deletes_single_block_out.set_arg(4, dst_data);
+        Kernel.scan_deletes_single_block_out.set_arg(5, dst_data2);
+        Kernel.scan_deletes_single_block_out.set_arg(6, Pointer.to(size_data));
+        Kernel.scan_deletes_single_block_out.new_arg(7, local_buffer_size);
+        Kernel.scan_deletes_single_block_out.new_arg(8, local_buffer_size2);
+        Kernel.scan_deletes_single_block_out.set_arg(9, Pointer.to(arg_int(n)));
         Kernel.scan_deletes_single_block_out.call(local_work_default, local_work_default);
 
         int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 5, 5);
@@ -2082,13 +2085,13 @@ public class GPU
         var src_part2 = Pointer.to(p_data2);
         var src_n = Pointer.to(new int[]{n});
 
-        Kernel.scan_deletes_multi_block_out.set_arg(3, dst_data);
-        Kernel.scan_deletes_multi_block_out.set_arg(4, dst_data2);
-        Kernel.scan_deletes_multi_block_out.new_arg(5, local_buffer_size);
-        Kernel.scan_deletes_multi_block_out.new_arg(6, local_buffer_size2);
-        Kernel.scan_deletes_multi_block_out.set_arg(7, src_part);
-        Kernel.scan_deletes_multi_block_out.set_arg(8, src_part2);
-        Kernel.scan_deletes_multi_block_out.set_arg(9, src_n);
+        Kernel.scan_deletes_multi_block_out.set_arg(4, dst_data);
+        Kernel.scan_deletes_multi_block_out.set_arg(5, dst_data2);
+        Kernel.scan_deletes_multi_block_out.new_arg(6, local_buffer_size);
+        Kernel.scan_deletes_multi_block_out.new_arg(7, local_buffer_size2);
+        Kernel.scan_deletes_multi_block_out.set_arg(8, src_part);
+        Kernel.scan_deletes_multi_block_out.set_arg(9, src_part2);
+        Kernel.scan_deletes_multi_block_out.set_arg(10, src_n);
         Kernel.scan_deletes_multi_block_out.call(global_work_size, local_work_default);
 
         // note the partial buffers are scanned and updated in-place
@@ -2098,14 +2101,14 @@ public class GPU
         var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 5);
         cl_zero_buffer(size_data, Sizeof.cl_int * 5);
 
-        Kernel.complete_deletes_multi_block_out.set_arg(3, dst_data);
-        Kernel.complete_deletes_multi_block_out.set_arg(4, dst_data2);
-        Kernel.complete_deletes_multi_block_out.set_arg(5, Pointer.to(size_data));
-        Kernel.complete_deletes_multi_block_out.new_arg(6, local_buffer_size);
-        Kernel.complete_deletes_multi_block_out.new_arg(7, local_buffer_size2);
-        Kernel.complete_deletes_multi_block_out.set_arg(8, src_part);
-        Kernel.complete_deletes_multi_block_out.set_arg(9, src_part2);
-        Kernel.complete_deletes_multi_block_out.set_arg(10, src_n);
+        Kernel.complete_deletes_multi_block_out.set_arg(4, dst_data);
+        Kernel.complete_deletes_multi_block_out.set_arg(5, dst_data2);
+        Kernel.complete_deletes_multi_block_out.set_arg(6, Pointer.to(size_data));
+        Kernel.complete_deletes_multi_block_out.new_arg(7, local_buffer_size);
+        Kernel.complete_deletes_multi_block_out.new_arg(8, local_buffer_size2);
+        Kernel.complete_deletes_multi_block_out.set_arg(9, src_part);
+        Kernel.complete_deletes_multi_block_out.set_arg(10, src_part2);
+        Kernel.complete_deletes_multi_block_out.set_arg(11, src_n);
         Kernel.complete_deletes_multi_block_out.call(global_work_size, local_work_default);
 
         int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 5, 5);
