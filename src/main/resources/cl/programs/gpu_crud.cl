@@ -40,10 +40,13 @@ __kernel void create_armature(__global float4 *armatures,
 }
 
 __kernel void create_vertex_reference(__global float2 *vertex_references,
+                                      __global float4 *vertex_weights,
                                       int target,
-                                      float2 new_vertex_reference)
+                                      float2 new_vertex_reference,
+                                      float4 new_vertex_weights)
 {
     vertex_references[target] = new_vertex_reference; 
+    vertex_weights[target] = new_vertex_weights; 
 }
 
 __kernel void create_bone_bind_pose(__global float16 *bone_bind_poses,

@@ -152,9 +152,9 @@ public class Main
             return idx / Width.ARMATURE;
         }
 
-        public static int new_vertex_reference(float x, float y)
+        public static int new_vertex_reference(float x, float y, float[] weights)
         {
-            GPU.create_vertex_reference(next_vertex_ref(), x, y);
+            GPU.create_vertex_reference(next_vertex_ref(), x, y, weights);
             var idx = vertex_ref_index;
             vertex_ref_index += Width.VERTEX;
             return idx / Width.VERTEX;

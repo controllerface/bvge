@@ -252,7 +252,7 @@ public class Models
             List<Vector2f> uvData = new ArrayList<>();
             String[] names = bone_name_map.get(this_vert);
             float[] weights = bone_weight_map.get(this_vert);
-            var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y());
+            var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y(), weights);
 
             uvChannels.forEach(channel ->
             {

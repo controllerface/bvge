@@ -270,6 +270,8 @@ public class GPU
          */
         vertex_references(Sizeof.cl_float2),
 
+        vertex_weights(Sizeof.cl_float4),
+
         /**
          * Bone offset reference matrices of loaded models:
          * -
@@ -788,6 +790,7 @@ public class GPU
         Memory.edges.init(max_points);
         Memory.vertex_table.init(max_points);
         Memory.vertex_references.init(max_points);
+        Memory.vertex_weights.init(max_points);
         Memory.bone_bind_poses.init(max_hulls);
         Memory.bone_bind_parents.init(max_hulls);
         Memory.bone_references.init(max_points);
@@ -819,6 +822,7 @@ public class GPU
             + Memory.edges.length
             + Memory.vertex_table.length
             + Memory.vertex_references.length
+            + Memory.vertex_weights.length
             + Memory.bone_bind_poses.length
             + Memory.bone_bind_parents.length
             + Memory.bone_references.length
@@ -849,6 +853,7 @@ public class GPU
         System.out.println("spatial key bank  : " + Memory.aabb_key_table.length);
         System.out.println("vertex table      : " + Memory.vertex_table.length);
         System.out.println("vertex references : " + Memory.vertex_references.length);
+        System.out.println("vertex weights    : " + Memory.vertex_weights.length);
         System.out.println("bone bind poses   : " + Memory.bone_bind_poses.length);
         System.out.println("bone bind parents : " + Memory.bone_bind_parents.length);
         System.out.println("bone references   : " + Memory.bone_references.length);
@@ -961,6 +966,7 @@ public class GPU
 
         var create_vertex_ref_k = new CreateVertexRef_k(command_queue, Program.gpu_crud.gpu);
         create_vertex_ref_k.set_vertex_refs(Memory.vertex_references.gpu.pointer());
+        create_vertex_ref_k.set_vertex_weights(Memory.vertex_weights.gpu.pointer());
         Kernel.create_vertex_reference.set_kernel(create_vertex_ref_k);
 
         var create_bone_bind_k = new CreateBoneBindPose_k(command_queue, Program.gpu_crud.gpu);
@@ -1393,10 +1399,11 @@ public class GPU
         Kernel.create_armature.call(global_single_size);
     }
 
-    public static void create_vertex_reference(int vert_ref_index, float x, float y)
+    public static void create_vertex_reference(int vert_ref_index, float x, float y, float[] weights)
     {
-        Kernel.create_vertex_reference.set_arg(1, Pointer.to(arg_int(vert_ref_index)));
-        Kernel.create_vertex_reference.set_arg(2, Pointer.to(arg_float2(x, y)));
+        Kernel.create_vertex_reference.set_arg(2, Pointer.to(arg_int(vert_ref_index)));
+        Kernel.create_vertex_reference.set_arg(3, Pointer.to(arg_float2(x, y)));
+        Kernel.create_vertex_reference.set_arg(4, Pointer.to(weights));
         Kernel.create_vertex_reference.call(global_single_size);
     }
 

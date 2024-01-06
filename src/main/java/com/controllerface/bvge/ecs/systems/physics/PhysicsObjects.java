@@ -386,6 +386,8 @@ public class PhysicsObjects
             var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, hull[0].x(), hull[0].y());
             var angle = MathEX.angle_between_lines(l1, l2);
 
+            // todo: add bone instance table
+
             var table = CLUtils.arg_int4(start_point, end_point, start_edge, end_edge);
             var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
             var rotation = CLUtils.arg_float2(0, angle);
