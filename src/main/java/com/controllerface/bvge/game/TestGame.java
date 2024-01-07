@@ -213,7 +213,7 @@ public class TestGame extends GameMode
     public void load()
     {
         //genPlayer();
-        genTestFigure(1.5f, 300, 0);
+        genTestFigure(1f, 300, 0);
 
         //genTestTriangle(20f, 190, 250);
 
@@ -272,7 +272,7 @@ public class TestGame extends GameMode
 
 
         genCircles(20, 7f, 5f, 0, 100);
-        genSquares(20,  9f, 5f, -120, 100);
+        genSquares(100,  9f, 5f, -120, 100);
         genCrates2(20, 7f, 0.025f, 100, 100);
         genTriangles(20,  9f, 5f, 200, 100);
 

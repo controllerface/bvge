@@ -44,10 +44,6 @@ inline DropCounts calculate_drop_counts(int armature_id,
             drop_counts.point_count += point_count;
             drop_counts.edge_count += edge_count;
         }
-        if (drop_counts.hull_count != drop_counts.bone_count)
-        {
-            printf("problem: %d", armature_id);
-        }
     }
     return drop_counts;
 }
@@ -415,6 +411,7 @@ __kernel void compact_armatures(__global int *buffer_in,
 
     // hulls
     int hull_count = hull_table.y - hull_table.x + 1;
+    __attribute__((opencl_unroll_hint(8)))
     for (int i = 0; i < hull_count; i++)
     {
         int current_hull = hull_table.x + i;
@@ -437,6 +434,7 @@ __kernel void compact_armatures(__global int *buffer_in,
         
         // edges
         int edge_count = element_table.w - element_table.z + 1;
+        __attribute__((opencl_unroll_hint(4)))
         for (int j = 0; j < edge_count; j++)
         {
             int current_edge = element_table.z + j;
@@ -449,16 +447,17 @@ __kernel void compact_armatures(__global int *buffer_in,
 
         // points
         int point_count = element_table.y - element_table.x + 1;
+        __attribute__((opencl_unroll_hint(4)))
         for (int k = 0; k < point_count; k++)
         {
             int current_point = element_table.x + k;
             int2 vertex_table = vertex_tables[current_point];
             int4 bone_table = bone_tables[current_point];
             vertex_table.y -= drop.hull_count;
-            bone_table.x -= drop.bone_count; 
-            // bone_table.y -= drop.bone_count; 
-            // bone_table.z -= drop.bone_count; 
-            // bone_table.w -= drop.bone_count; 
+            bone_table.x -= bone_table.x > -1 ? drop.bone_count : 0; 
+            bone_table.y -= bone_table.y > -1 ? drop.bone_count : 0; 
+            bone_table.z -= bone_table.z > -1 ? drop.bone_count : 0; 
+            bone_table.w -= bone_table.w > -1 ? drop.bone_count : 0; 
             vertex_tables[current_point] = vertex_table;
             bone_tables[current_point] = bone_table;
             point_shift[current_point] = drop.point_count;
