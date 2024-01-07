@@ -19,6 +19,9 @@ __kernel void animate_hulls(__global float4 *points,
 
     float2 reference_vertex = vertex_references[vertex_table.x];
 
+    // todo: a separate kernel msut be called that actually updates all bones using
+    // an animation. Right now, all bones are in bind pose and then never change.
+
     // todo: use all four bones with weights
     float16 bone = bones[bone_table.x];
     

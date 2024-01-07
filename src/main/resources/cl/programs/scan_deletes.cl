@@ -411,7 +411,6 @@ __kernel void compact_armatures(__global int *buffer_in,
 
     // hulls
     int hull_count = hull_table.y - hull_table.x + 1;
-    __attribute__((opencl_unroll_hint(8)))
     for (int i = 0; i < hull_count; i++)
     {
         int current_hull = hull_table.x + i;
@@ -434,7 +433,6 @@ __kernel void compact_armatures(__global int *buffer_in,
         
         // edges
         int edge_count = element_table.w - element_table.z + 1;
-        __attribute__((opencl_unroll_hint(4)))
         for (int j = 0; j < edge_count; j++)
         {
             int current_edge = element_table.z + j;
@@ -447,7 +445,6 @@ __kernel void compact_armatures(__global int *buffer_in,
 
         // points
         int point_count = element_table.y - element_table.x + 1;
-        __attribute__((opencl_unroll_hint(4)))
         for (int k = 0; k < point_count; k++)
         {
             int current_point = element_table.x + k;
