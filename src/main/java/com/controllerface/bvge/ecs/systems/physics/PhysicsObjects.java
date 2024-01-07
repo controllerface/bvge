@@ -82,7 +82,6 @@ public class PhysicsObjects
         int next_armature_id = Main.Memory.next_armature();
         int next_hull_index = Main.Memory.next_hull();
 
-        // get the box mesh
         var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
@@ -111,16 +110,9 @@ public class PhysicsObjects
 
         var angle = MathEX.angle_between_lines(l1, l2);
 
-        // box sides
         var start_edge = Main.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
         Main.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2));
         var end_edge = Main.Memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1));
-//        Main.Memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3));
-//        Main.Memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4));
-
-        // corner braces
-//        Main.Memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR_EDGE);
-//        var end_edge = Main.Memory.new_edge(p2_index, p4_index, edgeDistance(p4, p2), FLAG_INTERIOR_EDGE);
 
         var table = CLUtils.arg_int4(p1_index, p3_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
@@ -220,9 +212,6 @@ public class PhysicsObjects
         int root_hull_id = -1;
         float root_x = 0;
         float root_y = 0;
-
-        // todo: need some kind of mesh buffer to store their relationships.
-        //  will be needed to implement pins/joints.
 
         var meshes = model.meshes();
         int first_hull = -1;
