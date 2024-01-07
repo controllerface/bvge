@@ -1019,6 +1019,7 @@ public class GPU
         animate_hulls_k.set_hulls(Memory.hulls.gpu.pointer());
         animate_hulls_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         animate_hulls_k.set_vertex_table(Memory.point_vertex_tables.gpu.pointer());
+        animate_hulls_k.set_bone_tables(Memory.point_bone_tables.gpu.pointer());
         animate_hulls_k.set_armatures(Memory.armatures.gpu.pointer());
         animate_hulls_k.set_vertex_refs(Memory.vertex_references.gpu.pointer());
         animate_hulls_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
@@ -1179,6 +1180,7 @@ public class GPU
         compact_armatures_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         compact_armatures_k.set_points(Memory.points.gpu.pointer());
         compact_armatures_k.set_vertex_tables(Memory.point_vertex_tables.gpu.pointer());
+        compact_armatures_k.set_bone_tables(Memory.point_bone_tables.gpu.pointer());
         compact_armatures_k.set_edges(Memory.edges.gpu.pointer());
         compact_armatures_k.set_bone_shift(Memory.bone_shift.gpu.pointer());
         compact_armatures_k.set_point_shift(Memory.point_shift.gpu.pointer());
@@ -1207,6 +1209,7 @@ public class GPU
         compact_points_k.set_points(Memory.points.gpu.pointer());
         compact_points_k.set_anti_gravity(Memory.point_anti_gravity.gpu.pointer());
         compact_points_k.set_vertex_tables(Memory.point_vertex_tables.gpu.pointer());
+        compact_points_k.set_bone_tables(Memory.point_bone_tables.gpu.pointer());
         Kernel.compact_points.set_kernel(compact_points_k);
 
         var compact_bones_k = new CompactBones_k(command_queue, Program.scan_deletes.gpu);
@@ -1339,7 +1342,7 @@ public class GPU
      * @param vbo_id        id of the shared GL buffer object
      * @param hulls_out     array of hulls filtered to be circles only
      * @param offset        where we are starting in the indices array
-     * @param batch_size         number of hull objects to transfer in this batch
+     * @param batch_size    number of hull objects to transfer in this batch
      */
     public static void GL_circles(int vbo_id, cl_mem hulls_out, int offset, int batch_size)
     {

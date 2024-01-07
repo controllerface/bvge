@@ -31,8 +31,6 @@ public class Models
     public static int TEST_SQUARE_INDEX = -1;
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
-    private static final Map<Integer, Boolean> dirty_models = new HashMap<>();
-    private static final Map<Integer, Set<Integer>> model_instances = new HashMap<>();
 
     private static AIScene loadModelResource(String name) throws IOException
     {
@@ -442,8 +440,6 @@ public class Models
 
     public static void register_model_instance(int model_id, int object_id)
     {
-        model_instances.computeIfAbsent(model_id, _k -> new HashSet<>()).add(object_id);
-        dirty_models.put(model_id, true);
     }
 
     public static void init()
