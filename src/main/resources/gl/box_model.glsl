@@ -1,9 +1,8 @@
 #type vertex
 #version 330 core
 layout (location = 0) in vec2 v_position;
-layout (location = 1) in vec4 v_transform;
-layout (location = 2) in vec2 v_tex_coords;
-layout (location = 3) in vec4 v_color;
+layout (location = 1) in vec2 v_tex_coords;
+layout (location = 2) in vec4 v_transform;
 
 out vec4 f_color;
 out vec2 f_tex_coords;
@@ -34,7 +33,6 @@ vec2 rotate(vec2 vec, float angleDeg, vec2 origin)
 
 void main()
 {
-    f_color = v_color;
     f_tex_coords = v_tex_coords;
     vec2 pos_offset;
     pos_offset.x = v_transform.x;
@@ -47,7 +45,6 @@ void main()
 
 #type fragment
 #version 330 core
-in vec4 f_color;
 in vec2 f_tex_coords;
 
 out vec4 color;
@@ -57,5 +54,5 @@ uniform sampler2D uTextures[1];
 void main()
 {
     vec4 texColor = texture(uTextures[0], f_tex_coords);
-    color = f_color * texColor;
+    color = texColor;
 }
