@@ -164,13 +164,12 @@ __kernel void apply_reactions(__global float2 *reactions,
         point.zw = point.xy - initial_dist * adjusted_offset;
     }
 
-    // todo: actual gravity vector should be provided, when it can change this should also be changable
-    //  right now it is a static direction. note that magnitude of gravity is not important, only direction
-
     // in addition to velocity preservation, to aid in stabiliy, a non-real force of anti-gravity
     // is modeled to assist in keeping objects from colliding in the direction of gravity. This
     // adjustment is subtle and does not overcome all rigid-body simulation errors, but helps
     // maintain stability with small numbers of stacked objects. 
+    // todo: actual gravity vector should be provided, when it can change this should also be changable
+    //  right now it is a static direction. note that magnitude of gravity is not important, only direction
     float2 g = (float2)(0.0, -1.0);
     float2 heading = point.xy - point.zw;
     float ag = calculate_anti_gravity(g, heading);

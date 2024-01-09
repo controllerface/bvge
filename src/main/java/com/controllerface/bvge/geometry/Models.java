@@ -107,11 +107,11 @@ public class Models
     }
 
     private static List<BoneOffset> load_mesh_bones(AIMesh aiMesh,
-                                                    List<BoneOffset> mesh_bone_offsets,
                                                     Map<String, SceneNode> node_map,
                                                     Map<Integer, String[]> mesh_bone_names,
                                                     Map<Integer, float[]> bone_weight_map)
     {
+        var mesh_bone_offsets = new ArrayList<BoneOffset>();
         int bone_count = aiMesh.mNumBones();
         PointerBuffer bone_buffer = aiMesh.mBones();
 
@@ -280,8 +280,7 @@ public class Models
 
         var bone_name_map = new HashMap<Integer, String[]>();
         var bone_weight_map = new HashMap<Integer, float[]>();
-        var mesh_bone_offsets = new ArrayList<BoneOffset>();
-        var mesh_bones = load_mesh_bones(raw_mesh, mesh_bone_offsets, node_map, bone_name_map, bone_weight_map);
+        var mesh_bones = load_mesh_bones(raw_mesh, node_map, bone_name_map, bone_weight_map);
         var mesh_vertices = load_vertices(raw_mesh, bone_name_map, bone_weight_map);
         var mesh_faces = load_faces(raw_mesh);
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);

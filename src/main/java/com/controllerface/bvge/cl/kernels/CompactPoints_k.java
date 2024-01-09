@@ -13,11 +13,11 @@ public class CompactPoints_k extends GPUKernel
     {
         super(command_queue, program.kernels().get(GPU.Kernel.compact_points), 5);
         int arg_index = 0;
-        def_arg(0, Sizeof.cl_mem);  // __global int *point_shift
-        def_arg(1, Sizeof.cl_mem);  // __global float4 *points
-        def_arg(2, Sizeof.cl_mem);  // __global float *anti_gravity
-        def_arg(3, Sizeof.cl_mem);  // __global int2 *vertex_tables
-        def_arg(3, Sizeof.cl_mem);  // __global int4 *bone_tables
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int *point_shift
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global float4 *points
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global float *anti_gravity
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int2 *vertex_tables
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int4 *bone_tables
         System.out.printf("set %d args for %s\n", arg_index, this.getClass().getSimpleName());
     }
 
