@@ -2,7 +2,8 @@ package com.controllerface.bvge.geometry;
 
 import java.util.List;
 
-public record Mesh(Vertex[] vertices,
+public record Mesh(int mesh_id,
+                   Vertex[] vertices,
                    Face[] faces,
                    List<BoneOffset> bone_offsets,
                    Models.SceneNode sceneNode,

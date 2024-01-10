@@ -11,7 +11,7 @@ public class CompactArmatures_k extends GPUKernel
 {
     public CompactArmatures_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.compact_armatures), 17);
+        super(command_queue, program.kernels().get(GPU.Kernel.compact_armatures), 18);
         int arg_index = 0;
         def_arg(arg_index++, Sizeof.cl_mem);  // __global int *buffer_in
         def_arg(arg_index++, Sizeof.cl_mem);  // __global int4 *buffer_in_2

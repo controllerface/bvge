@@ -71,7 +71,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
-        int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
+        int hull_id = Main.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
         return Main.Memory.new_armature(x, y, hull_table, armature_flags, mass);
@@ -121,7 +121,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int [] _flag =  CLUtils.arg_int4(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
-        int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
+        int hull_id = Main.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0,0);
         return Main.Memory.new_armature(x, y, hull_table, armature_flags, mass);
@@ -181,7 +181,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int [] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON, next_armature_id, bone_id, bone_id);
-        int hull_id = Main.Memory.new_hull(transform, rotation, table, _flag);
+        int hull_id = Main.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
         return Main.Memory.new_armature(x, y, hull_table, armature_flags, mass);
@@ -224,10 +224,15 @@ public class PhysicsObjects
             // The hull is generated based on the mesh, so it's initial position and rotation
             // are set from the mesh data using its transform. Then, the mesh is scaled to the
             // desired size and moved to the spawn location in world space.
-            var hull = generate_convex_hull(hull_mesh);
-            hull = transform_hull(hull, hull_mesh.sceneNode().transform);
-            hull = scale_hull(hull, size);
-            hull = translate_hull(hull, x, y);
+            var new_hull = generate_convex_hull(hull_mesh);
+            new_hull = transform_hull(new_hull, hull_mesh.sceneNode().transform);
+            new_hull = scale_hull(new_hull, size);
+            new_hull = translate_hull(new_hull, x, y);
+
+            if (new_hull.length != hull_mesh.vertices().length)
+            {
+                System.out.println("diff");
+            }
 
             var bone_map = new HashMap<String, Integer>();
             int start_bone = -1;
@@ -253,11 +258,11 @@ public class PhysicsObjects
             // generate the points in memory for this object
             int point_start = -1;
             int point_end = -1;
-            int[] point_table = new int[hull.length];
+            int[] point_table = new int[new_hull.length];
             List<float[]> point_buffer = new ArrayList<>();
             for (int point_index = 0; point_index < point_table.length; point_index++)
             {
-                var next_vertex = hull[point_index];
+                var next_vertex = new_hull[point_index];
                 var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
                 var new_table = CLUtils.arg_int2(next_vertex.vert_ref_id(), next_hull);
 
@@ -281,10 +286,10 @@ public class PhysicsObjects
             // generate edges in memory for this object
             int edge_start = -1;
             int edge_end = -1;
-            for (int point_1_index = 0; point_1_index < hull.length; point_1_index++)
+            for (int point_1_index = 0; point_1_index < new_hull.length; point_1_index++)
             {
                 int point_2_index = point_1_index + 1;
-                if (point_2_index == hull.length)
+                if (point_2_index == new_hull.length)
                 {
                     point_2_index = 0;
                 }
@@ -302,10 +307,10 @@ public class PhysicsObjects
             // calculate interior edges
 
             // connect every other
-            if (hull.length > 4)
+            if (new_hull.length > 4)
             {
                 //pass 1
-                for (int p1_index = 0; p1_index < hull.length; p1_index++)
+                for (int p1_index = 0; p1_index < new_hull.length; p1_index++)
                 {
                     int p2_index = p1_index + 2;
                     if (p2_index > point_buffer.size() - 1)
@@ -320,8 +325,8 @@ public class PhysicsObjects
             }
 
             // pass 2
-            boolean odd_count = hull.length % 2 != 0;
-            int half_count = hull.length / 2;
+            boolean odd_count = new_hull.length % 2 != 0;
+            int half_count = new_hull.length / 2;
             int quarter_count = half_count / 2;
             for (int p1_index = 0; p1_index < half_count; p1_index++)
             {
@@ -349,9 +354,9 @@ public class PhysicsObjects
             }
 
             // calculate centroid and reference angle
-            MathEX.centroid(vector_buffer, hull);
+            MathEX.centroid(vector_buffer, new_hull);
             var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
-            var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, hull[0].x(), hull[0].y());
+            var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, new_hull[0].x(), new_hull[0].y());
             var angle = MathEX.angle_between_lines(l1, l2);
 
             var table = CLUtils.arg_int4(point_start, point_end, edge_start, edge_end);
@@ -359,7 +364,7 @@ public class PhysicsObjects
             var rotation = CLUtils.arg_float2(0, angle);
 
             int[] hull_flags = CLUtils.arg_int4(flags, next_armature_id, start_bone, end_bone);
-            int hull_id = Main.Memory.new_hull(transform, rotation, table, hull_flags);
+            int hull_id = Main.Memory.new_hull(hull_mesh.mesh_id(), transform, rotation, table, hull_flags);
 
             if (first_hull == -1)
             {

@@ -284,7 +284,7 @@ public class Models
         var mesh_vertices = load_vertices(raw_mesh, bone_name_map, bone_weight_map);
         var mesh_faces = load_faces(raw_mesh);
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
-        var new_mesh = new Mesh(mesh_vertices, mesh_faces, mesh_bones, mesh_node, hull_table);
+        var new_mesh = new Mesh(0, mesh_vertices, mesh_faces, mesh_bones, mesh_node, hull_table);
 
         //System.out.println("Debug mat index:" + raw_mesh.mMaterialIndex() + " for: " + mesh_name);
 

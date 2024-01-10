@@ -472,6 +472,7 @@ __kernel void compact_armatures(__global int *buffer_in,
 
 __kernel void compact_hulls(__global int *hull_shift,
                             __global float4 *hulls,
+                            __global int *hull_mesh_ids,
                             __global float2 *hull_rotations,
                             __global int4 *hull_flags,
                             __global int4 *element_tables,
@@ -488,6 +489,7 @@ __kernel void compact_hulls(__global int *hull_shift,
     float4 bound = bounds[current_hull];
     int4 bounds_index = bounds_index_data[current_hull];
     int2 bounds_bank = bounds_bank_data[current_hull];
+    int hull_mesh_id = hull_mesh_ids[current_hull];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
@@ -500,6 +502,7 @@ __kernel void compact_hulls(__global int *hull_shift,
         bounds[new_hull_index] = bound;
         bounds_index_data[new_hull_index] = bounds_index;
         bounds_bank_data[new_hull_index] = bounds_bank;
+        hull_mesh_ids[new_hull_index] = hull_mesh_id;
     }
 }
 

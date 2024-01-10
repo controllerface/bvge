@@ -82,7 +82,6 @@ public class GPU
      * The Open CL command queue that this class uses to issue GPU commands.
      */
     private static cl_command_queue command_queue;
-    private static long cmd_native_ptr;
 
     /**
      * The Open CL context associated with this class.
@@ -102,9 +101,16 @@ public class GPU
      */
     private static PhysicsBuffer physics_buffer;
 
+    /**
+     * There are several kernels that use an atomic counter, so rather than re-allocate a new
+     * buffer for every call, this buffer is reused in all kernels that need a counter.
+     */
     private static cl_mem counter_buffer = null;
-    private static Pointer counter_pointer = null;
 
+    /**
+     * This pointer to the counter buffer is used to pass the buffer to certain API calls.
+     */
+    private static Pointer counter_pointer = null;
 
     //#endregion
 
@@ -383,6 +389,11 @@ public class GPU
         hulls(Sizeof.cl_float4),
 
         /**
+         * todo: describe usage
+         */
+        hull_mesh_ids(Sizeof.cl_int),
+
+        /**
          * Rotation information about tracked physics hulls:
          * -
          * x: initial reference angle
@@ -407,6 +418,8 @@ public class GPU
          * -
          * x: hull flags (bit-field)
          * y: armature id
+         * z: start bone
+         * w: end bone
          * -
          */
         hull_flags(Sizeof.cl_int4),
@@ -763,7 +776,6 @@ public class GPU
         var properties = new cl_queue_properties();
         command_queue = clCreateCommandQueueWithProperties(
             context, device, properties, null);
-        cmd_native_ptr = command_queue.getNativePointer();
 
         return device_ids;
 
@@ -784,6 +796,7 @@ public class GPU
         Memory.aabb_index.init(max_hulls);
         Memory.aabb_key_table.init(max_hulls);
         Memory.hulls.init(max_hulls);
+        Memory.hull_mesh_ids.init(max_hulls);
         Memory.aabb.init(max_hulls);
         Memory.points.init(max_points);
         Memory.point_reactions.init(max_points);
@@ -810,6 +823,7 @@ public class GPU
 
         // Debugging info
         int total = Memory.hulls.length
+            + Memory.hull_mesh_ids.length
             + Memory.armature_accel.length
             + Memory.armature_mass.length
             + Memory.hull_rotation.length
@@ -844,6 +858,7 @@ public class GPU
         System.out.println("points               : " + Memory.points.length);
         System.out.println("edges                : " + Memory.edges.length);
         System.out.println("hulls                : " + Memory.hulls.length);
+        System.out.println("hull mesh ids        : " + Memory.hull_mesh_ids.length);
         System.out.println("acceleration         : " + Memory.armature_accel.length);
         System.out.println("mass                 : " + Memory.armature_mass.length);
         System.out.println("rotation             : " + Memory.hull_rotation.length);
@@ -999,8 +1014,9 @@ public class GPU
         var create_hull_k = new CreateHull_k(command_queue, Program.gpu_crud.gpu);
         create_hull_k.set_hulls(Memory.hulls.gpu.pointer());
         create_hull_k.set_hull_rotations(Memory.hull_rotation.gpu.pointer());
-        create_hull_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         create_hull_k.set_element_table(Memory.hull_element_table.gpu.pointer());
+        create_hull_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        create_hull_k.set_hull_mesh_ids(Memory.hull_mesh_ids.gpu.pointer());
         Kernel.create_hull.set_kernel(create_hull_k);
 
         var read_position_k = new ReadPosition_k(command_queue, Program.gpu_crud.gpu);
@@ -1191,6 +1207,7 @@ public class GPU
         var compact_hulls_k = new CompactHulls_k(command_queue, Program.scan_deletes.gpu);
         compact_hulls_k.set_hull_shift(Memory.hull_shift.gpu.pointer());
         compact_hulls_k.set_hulls(Memory.hulls.gpu.pointer());
+        compact_hulls_k.set_hull_mesh_ids(Memory.hull_mesh_ids.gpu.pointer());
         compact_hulls_k.set_hull_rotations(Memory.hull_rotation.gpu.pointer());
         compact_hulls_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         compact_hulls_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
@@ -1444,13 +1461,14 @@ public class GPU
         Kernel.create_bone.call(global_single_size);
     }
 
-    public static void create_hull(int hull_index, float[] hull, float[] rotation, int[] table, int[] flags)
+    public static void create_hull(int hull_index, int mesh_index, float[] hull, float[] rotation, int[] table, int[] flags)
     {
-        Kernel.create_hull.set_arg(4, Pointer.to(arg_int(hull_index)));
-        Kernel.create_hull.set_arg(5, Pointer.to(hull));
-        Kernel.create_hull.set_arg(6, Pointer.to(rotation));
-        Kernel.create_hull.set_arg(7, Pointer.to(table));
-        Kernel.create_hull.set_arg(8, Pointer.to(flags));
+        Kernel.create_hull.set_arg(5, Pointer.to(arg_int(hull_index)));
+        Kernel.create_hull.set_arg(6, Pointer.to(hull));
+        Kernel.create_hull.set_arg(7, Pointer.to(rotation));
+        Kernel.create_hull.set_arg(8, Pointer.to(table));
+        Kernel.create_hull.set_arg(9, Pointer.to(flags));
+        Kernel.create_hull.set_arg(10, Pointer.to(arg_int(mesh_index)));
         Kernel.create_hull.call(global_single_size);
     }
 
@@ -2068,7 +2086,6 @@ public class GPU
         Kernel.scan_deletes_single_block_out.call(local_work_default, local_work_default);
 
         int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 5, 5);
-
         clReleaseMemObject(size_data);
 
         return sz;
@@ -2121,10 +2138,10 @@ public class GPU
         Kernel.complete_deletes_multi_block_out.set_arg(11, src_n);
         Kernel.complete_deletes_multi_block_out.call(global_work_size, local_work_default);
 
-        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 5, 5);
-
         clReleaseMemObject(p_data);
         clReleaseMemObject(p_data2);
+
+        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 5, 5);
         clReleaseMemObject(size_data);
 
         return sz;
@@ -2145,9 +2162,7 @@ public class GPU
         Kernel.scan_candidates_single_block_out.set_arg(4, Pointer.to(arg_int(n)));
         Kernel.scan_candidates_single_block_out.call(local_work_default, local_work_default);
 
-        int x = cl_read_pinned_int(counter_buffer);
-
-        return x;
+        return cl_read_pinned_int(counter_buffer);
     }
 
     private static int scan_multi_block_candidates_out(cl_mem d_data, cl_mem o_data, int n, int k)
@@ -2183,11 +2198,9 @@ public class GPU
         Kernel.complete_candidates_multi_block_out.set_arg(5, src_n);
         Kernel.complete_candidates_multi_block_out.call(global_work_size, local_work_default);
 
-        int x = cl_read_pinned_int(counter_buffer);
-
         clReleaseMemObject(p_data);
 
-        return x;
+        return cl_read_pinned_int(counter_buffer);
     }
 
     private static int scan_bounds_single_block(cl_mem input_data, int n)
@@ -2202,8 +2215,7 @@ public class GPU
         Kernel.scan_bounds_single_block.set_arg(3, Pointer.to(arg_int(n)));
         Kernel.scan_bounds_single_block.call(local_work_default, local_work_default);
 
-        int x = cl_read_pinned_int(counter_buffer);
-        return x;
+        return cl_read_pinned_int(counter_buffer);
     }
 
     private static int scan_bounds_multi_block(cl_mem input_data, int n, int k)
@@ -2235,11 +2247,9 @@ public class GPU
         Kernel.complete_bounds_multi_block.set_arg(4, src_n);
         Kernel.complete_bounds_multi_block.call(global_work_size, local_work_default);
 
-        int x = cl_read_pinned_int(counter_buffer);
-
         clReleaseMemObject(p_data);
 
-        return x;
+        return cl_read_pinned_int(counter_buffer);
     }
 
     //#endregion

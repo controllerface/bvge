@@ -136,9 +136,9 @@ public class Main
             return idx / Width.POINT;
         }
 
-        public static int new_hull(float[] transform, float[] rotation, int[] table, int[] flags)
+        public static int new_hull(int mesh_id, float[] transform, float[] rotation, int[] table, int[] flags)
         {
-            GPU.create_hull(next_hull(), transform, rotation, table, flags);
+            GPU.create_hull(next_hull(), 0, transform, rotation, table, flags);
             var idx = hull_index;
             hull_index += Width.HULL;
             return idx / Width.HULL;

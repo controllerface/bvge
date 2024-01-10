@@ -79,20 +79,30 @@ __kernel void create_bone(__global float16 *bones,
     bone_ref_tables[target] = new_bone_table; 
 }
 
+__kernel void create_mesh_reference(__global int4 *mesh_ref_tables,
+                                   int target,
+                                   int4 new_mesh_ref_table)
+{
+    mesh_ref_tables[target] = new_mesh_ref_table;
+}
+
 __kernel void create_hull(__global float4 *hulls,
                           __global float2 *hull_rotations,
                           __global int4 *element_tables,
                           __global int4 *hull_flags,
+                          __global int *hull_mesh_ids,
                           int target,
                           float4 new_hull,
                           float2 new_rotation,
                           int4 new_table,
-                          int4 new_flags)
+                          int4 new_flags,
+                          int new_hull_mesh_id)
 {
     hulls[target] = new_hull; 
     hull_rotations[target] = new_rotation; 
     element_tables[target] = new_table; 
     hull_flags[target] = new_flags; 
+    hull_mesh_ids[target] = new_hull_mesh_id;
 }
 
 // read functions
