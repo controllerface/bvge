@@ -55,6 +55,8 @@ public class Main
         public static class Width
         {
             public static final int ARMATURE = 4;
+            public static final int MESH     = 4;
+            public static final int FACE     = 4;
             public static final int VERTEX   = 2;
             public static final int HULL     = 4;
             public static final int POINT    = 4;
@@ -73,6 +75,18 @@ public class Main
         private static int bone_ref_index   = 0;
         private static int bone_index       = 0;
         private static int armature_index   = 0;
+        private static int mesh_index       = 0;
+        private static int face_index       = 0;
+
+        public static int next_face()
+        {
+            return face_index / Width.FACE;
+        }
+
+        public static int next_mesh()
+        {
+            return mesh_index / Width.MESH;
+        }
 
         public static int next_armature()
         {
@@ -127,7 +141,6 @@ public class Main
             return idx / Width.EDGE;
         }
 
-        // todo: points need bone indices and weights
         public static int new_point(float[] p, int[] t, int[] b)
         {
             GPU.create_point(next_point(), p[0], p[1], p[0], p[1], t[0], t[1], b);
@@ -138,10 +151,26 @@ public class Main
 
         public static int new_hull(int mesh_id, float[] transform, float[] rotation, int[] table, int[] flags)
         {
-            GPU.create_hull(next_hull(), 0, transform, rotation, table, flags);
+            GPU.create_hull(next_hull(), mesh_id, transform, rotation, table, flags);
             var idx = hull_index;
             hull_index += Width.HULL;
             return idx / Width.HULL;
+        }
+
+        public static int new_mesh_reference(int[] mesh_ref_table)
+        {
+            GPU.create_mesh_reference(next_mesh(), mesh_ref_table);
+            var idx = mesh_index;
+            mesh_index += Width.MESH;
+            return idx / Width.MESH;
+        }
+
+        public static int new_mesh_face(int[] face)
+        {
+            GPU.create_mesh_face(next_face(), face);
+            var idx = face_index;
+            face_index += Width.FACE;
+            return idx / Width.FACE;
         }
 
         public static int new_armature(float x, float y, int[] table, int[] flags, float mass)

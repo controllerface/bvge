@@ -26,7 +26,7 @@ public class Meshes
     {
         var vert_ref_id = Main.Memory.new_vertex_reference(0,0, new float[4]);
         var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList(), new String[0], new float[0]) };
-        var faces = new Face[]{ new Face(0, 0, 0) };
+        var faces = new Face[]{ new Face(-1,0, 0, 0) };
         var hull = new int[]{ 0 };
         return new Mesh(-1, vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
     }
@@ -55,7 +55,7 @@ public class Meshes
         vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList(), new String[0], new float[0]);
         vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList(), new String[0], new float[0]);
 
-        faces[0] = new Face(0, 1, 2);
+        faces[0] = new Face(-1,0, 1, 2);
 
         var hull = new int[]{ 0, 1, 2 };
 
@@ -90,8 +90,8 @@ public class Meshes
         vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList(), new String[0], new float[0]);
         vertices[3] = new Vertex(v4, x4, y4, Collections.emptyList(), new String[0], new float[0]);
 
-        faces[0] = new Face(0, 1, 2);
-        faces[1] = new Face(0, 2, 3);
+        faces[0] = new Face(-1,0, 1, 2);
+        faces[1] = new Face(-1,0, 2, 3);
 
         var hull = new int[]{ 0, 1, 2, 3 };
 
@@ -130,9 +130,9 @@ public class Meshes
         vertices[3] = new Vertex(v4, x4, y4, Collections.emptyList(), new String[0], new float[0]);
         vertices[4] = new Vertex(v5, x5, y5, Collections.emptyList(), new String[0], new float[0]);
 
-        faces[0] = new Face(0, 1, 2);
-        faces[1] = new Face(0, 2, 4);
-        faces[2] = new Face(4, 2, 3);
+        faces[0] = new Face(-1,0, 1, 2);
+        faces[1] = new Face(-1,0, 2, 4);
+        faces[2] = new Face(-1,4, 2, 3);
 
         var hull = new int[]{ 0, 1, 2, 3, 4 };
 

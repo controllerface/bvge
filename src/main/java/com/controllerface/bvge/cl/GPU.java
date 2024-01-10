@@ -177,6 +177,8 @@ public class GPU
         create_bone_bind_pose,
         create_edge,
         create_hull,
+        create_mesh_reference,
+        create_mesh_face,
         create_point,
         create_vertex_reference,
         finalize_candidates,
@@ -349,12 +351,21 @@ public class GPU
          * Indexing tables for points of tracked physics hulls:
          * -
          * x: reference vertex index
-         * y: hull index (todo: also used as a proxy for bone ID, based on alignment, but they should be separate)
+         * y: hull index
          * -
          */
         point_vertex_tables(Sizeof.cl_int2),
 
+        /**
+         * todo: describe
+         */
         point_bone_tables(Sizeof.cl_int4),
+
+        // todo: need mesh reference tables and face data buffer
+
+        mesh_references(Sizeof.cl_int4),
+
+        mesh_faces(Sizeof.cl_int4),
 
         /*
         Edges
@@ -797,6 +808,8 @@ public class GPU
         Memory.aabb_key_table.init(max_hulls);
         Memory.hulls.init(max_hulls);
         Memory.hull_mesh_ids.init(max_hulls);
+        Memory.mesh_references.init(max_hulls);
+        Memory.mesh_faces.init(max_hulls);
         Memory.aabb.init(max_hulls);
         Memory.points.init(max_points);
         Memory.point_reactions.init(max_points);
@@ -829,6 +842,8 @@ public class GPU
             + Memory.hull_rotation.length
             + Memory.hull_element_table.length
             + Memory.hull_flags.length
+            + Memory.mesh_references.length
+            + Memory.mesh_faces.length
             + Memory.aabb.length
             + Memory.aabb_index.length
             + Memory.aabb_key_table.length
@@ -864,6 +879,8 @@ public class GPU
         System.out.println("rotation             : " + Memory.hull_rotation.length);
         System.out.println("element table        : " + Memory.hull_element_table.length);
         System.out.println("hull flags           : " + Memory.hull_flags.length);
+        System.out.println("mesh references      : " + Memory.mesh_references.length);
+        System.out.println("mesh faces           : " + Memory.mesh_faces.length);
         System.out.println("point reactions      : " + Memory.point_reactions.length);
         System.out.println("point offsets        : " + Memory.point_offsets.length);
         System.out.println("point anti-grav      : " + Memory.point_anti_gravity.length);
@@ -1018,6 +1035,14 @@ public class GPU
         create_hull_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
         create_hull_k.set_hull_mesh_ids(Memory.hull_mesh_ids.gpu.pointer());
         Kernel.create_hull.set_kernel(create_hull_k);
+
+        var create_mesh_ref_k = new CreateMeshReference_k(command_queue, Program.gpu_crud.gpu);
+        create_mesh_ref_k.set_mesh_ref_tables(Memory.mesh_references.gpu.pointer());
+        Kernel.create_mesh_reference.set_kernel(create_mesh_ref_k);
+
+        var create_mesh_face_k = new CreateMeshFace_k(command_queue, Program.gpu_crud.gpu);
+        create_mesh_face_k.set_mesh_faces(Memory.mesh_faces.gpu.pointer());
+        Kernel.create_mesh_face.set_kernel(create_mesh_face_k);
 
         var read_position_k = new ReadPosition_k(command_queue, Program.gpu_crud.gpu);
         read_position_k.set_armatures(Memory.armatures.gpu.pointer());
@@ -1470,6 +1495,20 @@ public class GPU
         Kernel.create_hull.set_arg(9, Pointer.to(flags));
         Kernel.create_hull.set_arg(10, Pointer.to(arg_int(mesh_index)));
         Kernel.create_hull.call(global_single_size);
+    }
+
+    public static void create_mesh_reference(int mesh_index, int[] mesh_ref_table)
+    {
+        Kernel.create_mesh_reference.set_arg(1, Pointer.to(arg_int(mesh_index)));
+        Kernel.create_mesh_reference.set_arg(2, Pointer.to(mesh_ref_table));
+        Kernel.create_mesh_reference.call(global_single_size);
+    }
+
+    public static void create_mesh_face(int face_index, int[] face)
+    {
+        Kernel.create_mesh_face.set_arg(1, Pointer.to(arg_int(face_index)));
+        Kernel.create_mesh_face.set_arg(2, Pointer.to(face));
+        Kernel.create_mesh_face.call(global_single_size);
     }
 
     public static void update_accel(int armature_index, float acc_x, float acc_y)

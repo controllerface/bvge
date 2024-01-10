@@ -80,10 +80,17 @@ __kernel void create_bone(__global float16 *bones,
 }
 
 __kernel void create_mesh_reference(__global int4 *mesh_ref_tables,
-                                   int target,
-                                   int4 new_mesh_ref_table)
+                                    int target,
+                                    int4 new_mesh_ref_table)
 {
     mesh_ref_tables[target] = new_mesh_ref_table;
+}
+
+__kernel void create_mesh_face(__global int4 *mesh_faces,
+                               int target,
+                               int4 new_mesh_face)
+{
+    mesh_faces[target] = new_mesh_face;
 }
 
 __kernel void create_hull(__global float4 *hulls,

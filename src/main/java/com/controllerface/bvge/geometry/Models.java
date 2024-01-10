@@ -198,7 +198,7 @@ public class Models
         return bone_offset;
     }
 
-    private static Face[] load_faces(AIMesh aiMesh)
+    private static Face[] load_faces(AIMesh aiMesh, int mesh_id)
     {
         int face_index = 0;
         var mesh_faces = new Face[aiMesh.mNumFaces()];
@@ -213,7 +213,13 @@ public class Models
                 int index = b.get(x);
                 indices.add(index);
             }
-            mesh_faces[face_index++] = new Face(indices.get(0), indices.get(1), indices.get(2));
+            int[] raw_face = new int[4];
+            raw_face[0] = indices.get(0);
+            raw_face[1] = indices.get(1);
+            raw_face[2] = indices.get(2);
+            raw_face[3] = mesh_id;
+            int face_id = Main.Memory.new_mesh_face(raw_face);
+            mesh_faces[face_index++] = new Face(face_id, indices.get(0), indices.get(1), indices.get(2));
         }
         return mesh_faces;
     }
@@ -278,13 +284,23 @@ public class Models
                 + " ensure node and geometry names match in blender");
         }
 
+        int next_mesh = Main.Memory.next_mesh();
         var bone_name_map = new HashMap<Integer, String[]>();
         var bone_weight_map = new HashMap<Integer, float[]>();
         var mesh_bones = load_mesh_bones(raw_mesh, node_map, bone_name_map, bone_weight_map);
         var mesh_vertices = load_vertices(raw_mesh, bone_name_map, bone_weight_map);
-        var mesh_faces = load_faces(raw_mesh);
+        var mesh_faces = load_faces(raw_mesh, next_mesh);
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
-        var new_mesh = new Mesh(0, mesh_vertices, mesh_faces, mesh_bones, mesh_node, hull_table);
+        int[] table = new int[4];
+        table[0] = mesh_vertices[0].vert_ref_id();
+        table[1] = mesh_vertices[mesh_vertices.length - 1].vert_ref_id();
+        table[2] = mesh_faces[0].index();
+        table[3] = mesh_faces[mesh_faces.length - 1].index();
+        var mesh_id = Main.Memory.new_mesh_reference(table);
+
+        assert mesh_id == next_mesh : "Mesh alignment error";
+
+        var new_mesh = new Mesh(mesh_id, mesh_vertices, mesh_faces, mesh_bones, mesh_node, hull_table);
 
         //System.out.println("Debug mat index:" + raw_mesh.mMaterialIndex() + " for: " + mesh_name);
 
