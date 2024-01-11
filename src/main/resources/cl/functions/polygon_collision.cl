@@ -3,6 +3,7 @@ inline void polygon_collision(int b1_id, int b2_id,
                              __global float4 *hulls,
                              __global int4 *hull_flags,
                              __global int4 *element_tables,
+                             __global int4 *vertex_tables,
                              __global float4 *points,
                              __global float4 *edges,
                              __global float2 *reactions,
@@ -67,8 +68,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = project_polygon(points, hull_1_table, vectorBuffer1);
-        float3 proj_b = project_polygon(points, hull_2_table, vectorBuffer1);
+        float3 proj_a = project_polygon(points, vertex_tables, hull_1_table, vectorBuffer1);
+        float3 proj_b = project_polygon(points, vertex_tables, hull_2_table, vectorBuffer1);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -114,8 +115,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = project_polygon(points, hull_1_table, vectorBuffer1);
-        float3 proj_b = project_polygon(points, hull_2_table, vectorBuffer1);
+        float3 proj_a = project_polygon(points, vertex_tables, hull_1_table, vectorBuffer1);
+        float3 proj_b = project_polygon(points, vertex_tables, hull_2_table, vectorBuffer1);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -168,7 +169,7 @@ inline void polygon_collision(int b1_id, int b2_id,
         normalBuffer.y = normalBuffer.y * -1;
     }
 
-    float3 final_proj = project_polygon(points, vertex_table, normalBuffer);
+    float3 final_proj = project_polygon(points, vertex_tables, vertex_table, normalBuffer);
     vert_index = final_proj.z;
     min_distance = min_distance / length(normalBuffer);
 

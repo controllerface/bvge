@@ -962,6 +962,7 @@ public class GPU
         sat_collide_k.set_hulls(Memory.hulls.gpu.pointer());
         sat_collide_k.set_element_tables(Memory.hull_element_table.gpu.pointer());
         sat_collide_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        sat_collide_k.set_vertex_tables(Memory.point_vertex_tables.gpu.pointer());
         sat_collide_k.set_points(Memory.points.gpu.pointer());
         sat_collide_k.set_edges(Memory.edges.gpu.pointer());
         sat_collide_k.set_reactions(Memory.point_reactions.gpu.pointer());
@@ -1845,9 +1846,9 @@ public class GPU
         physics_buffer.reaction_index = new GPUMemory(index_data);
 
         Kernel.sat_collide.set_arg(0, physics_buffer.candidates.pointer());
-        Kernel.sat_collide.set_arg(6, physics_buffer.reactions_in.pointer());
-        Kernel.sat_collide.set_arg(7, physics_buffer.reaction_index.pointer());
-        Kernel.sat_collide.set_arg(10, counter_pointer);
+        Kernel.sat_collide.set_arg(7, physics_buffer.reactions_in.pointer());
+        Kernel.sat_collide.set_arg(8, physics_buffer.reaction_index.pointer());
+        Kernel.sat_collide.set_arg(11, counter_pointer);
         Kernel.sat_collide.call(global_work_size);
 
         int size = cl_read_pinned_int(counter_buffer);
