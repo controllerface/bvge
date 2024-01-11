@@ -5,6 +5,8 @@ the point that have the mininum value.
  */
 inline float3 project_polygon(__global const float4 *points, int4 hull, float2 normal)
 {
+    // todo: needs to take in point flags so interior points can be avoided
+
     int start = hull.x;
     int end   = hull.y;
 	int vert_count = end - start + 1;

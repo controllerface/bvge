@@ -209,21 +209,16 @@ inline void polygon_collision(int b1_id, int b2_id,
     bool vs = (vo_f.x & IS_STATIC) !=0;
     bool es = (eo_f.x & IS_STATIC) !=0;
     
-    // todo: convert to ternary expression for warp efficiency 
-    if (vs || es)
-    {
-        if (vs)
-        {
-            vertex_magnitude = 0.0f;
-            edge_magnitude = 1.0f;
-        }
-        if (es)
-        {
-            vertex_magnitude = 1.0f;
-            edge_magnitude = 0.0f;
-        }
-    }
+    bool any_s = (vs || es);
 
+    // ugly ternaries are for warp efficiency 
+    vertex_magnitude = any_s 
+        ? vs ? 0.0f : 1.0f
+        : vertex_magnitude;
+
+    edge_magnitude = any_s 
+        ? es ? 0.0f : 1.0f
+        : edge_magnitude;
 
     float4 vert_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];

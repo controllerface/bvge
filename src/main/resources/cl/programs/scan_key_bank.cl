@@ -21,7 +21,6 @@ __kernel void scan_bounds_single_block(__global int2 *bounds_bank_data,
     // perform the "up sweep" traversing from leaf to root of the tree
     upsweep(buffer, m);
 
-    // set lane 1 to 0? todo: determine why
     if (b_index == (m - 1)) 
     {
         buffer[b_index] = 0;

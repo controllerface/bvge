@@ -3,6 +3,7 @@ Returns the index of the closest point on the polygon to the center of the circl
  */
 inline int closest_point_circle(float2 circle_center, int4 polygon_table, __global const float4 *points)
 {
+    // todo: needs to take in point flags so interior points can be avoided
     int result = -1;
     float minDistance = FLT_MAX;
 

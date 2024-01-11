@@ -30,8 +30,7 @@ public class PhysicsObjects
     public static int FLAG_POLYGON          = Constants.HullFlags.IS_POLYGON.bits;
     public static int FLAG_NO_BONES         = Constants.HullFlags.NO_BONES.bits;
 
-
-    public static int FLAG_INTERIOR_EDGE = 0x01;
+    public static int FLAG_INTERIOR = 0x01;
 
     public static float edgeDistance(float[] a, float[] b)
     {
@@ -180,8 +179,8 @@ public class PhysicsObjects
         Main.Memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4));
 
         // corner braces
-        Main.Memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR_EDGE);
-        var end_edge = Main.Memory.new_edge(p2_index, p4_index, edgeDistance(p4, p2), FLAG_INTERIOR_EDGE);
+        Main.Memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR);
+        var end_edge = Main.Memory.new_edge(p2_index, p4_index, edgeDistance(p4, p2), FLAG_INTERIOR);
 
         var table = CLUtils.arg_int4(p1_index, p4_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
@@ -329,7 +328,7 @@ public class PhysicsObjects
                     var p1 = point_buffer.get(p1_index);
                     var p2 = point_buffer.get(p2_index);
                     var distance = edgeDistance(p2, p1);
-                    edge_end = Main.Memory.new_edge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
+                    edge_end = Main.Memory.new_edge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR);
                 }
             }
 
@@ -343,14 +342,14 @@ public class PhysicsObjects
                 var p1 = point_buffer.get(p1_index);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                edge_end = Main.Memory.new_edge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
+                edge_end = Main.Memory.new_edge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR);
 
                 if (quarter_count > 1)
                 {
                     int p3_index = p1_index + quarter_count;
                     var p3 = point_buffer.get(p3_index);
                     var distance2 = edgeDistance(p3, p1);
-                    edge_end = Main.Memory.new_edge(point_table[p1_index], point_table[p3_index], distance2, FLAG_INTERIOR_EDGE);
+                    edge_end = Main.Memory.new_edge(point_table[p1_index], point_table[p3_index], distance2, FLAG_INTERIOR);
                 }
             }
             if (odd_count) // if there was an odd vertex at the end, connect it to the mid-point
@@ -359,7 +358,7 @@ public class PhysicsObjects
                 var p1 = point_buffer.get(half_count+1);
                 var p2 = point_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                edge_end = Main.Memory.new_edge(point_table[half_count+1], point_table[p2_index], distance, FLAG_INTERIOR_EDGE);
+                edge_end = Main.Memory.new_edge(point_table[half_count+1], point_table[p2_index], distance, FLAG_INTERIOR);
             }
 
             // calculate centroid and reference angle
