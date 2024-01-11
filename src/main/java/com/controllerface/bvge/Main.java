@@ -141,9 +141,10 @@ public class Main
             return idx / Width.EDGE;
         }
 
-        public static int new_point(float[] p, int[] t, int[] b)
+        public static int new_point(float[] position, int[] vertex_table, int[] bone_ids)
         {
-            GPU.create_point(next_point(), p[0], p[1], p[0], p[1], t[0], t[1], b);
+            var init_vert = new float[]{position[0], position[1], position[0], position[1]};
+            GPU.create_point(next_point(), init_vert, vertex_table, bone_ids);
             var idx = point_index;
             point_index += Width.POINT;
             return idx / Width.POINT;

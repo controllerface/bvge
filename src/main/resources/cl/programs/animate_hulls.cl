@@ -1,7 +1,7 @@
 __kernel void animate_hulls(__global float4 *points,
                             __global float4 *hulls,
                             __global int4 *hull_flags,
-                            __global int2 *vertex_tables,
+                            __global int4 *vertex_tables,
                             __global int4 *bone_tables,
                             __global float4 *armatures,
                             __global float2 *vertex_references,
@@ -10,7 +10,7 @@ __kernel void animate_hulls(__global float4 *points,
 
     int gid = get_global_id(0);
     float4 point = points[gid];
-    int2 vertex_table = vertex_tables[gid];
+    int4 vertex_table = vertex_tables[gid];
     int4 hull_flag = hull_flags[vertex_table.y];
     bool no_bones = (hull_flag.x & NO_BONES) !=0;
     if (no_bones) return;

@@ -7,11 +7,11 @@ are designed to operate on a single target object.
 // create functions
 
 __kernel void create_point(__global float4 *points,
-                           __global int2 *vertex_tables,
+                           __global int4 *vertex_tables,
                            __global int4 *bone_tables,
                            int target,
                            float4 new_point,
-                           int2 new_vertex_table,
+                           int4 new_vertex_table,
                            int4 new_bone_table)
 {
     points[target] = new_point; 

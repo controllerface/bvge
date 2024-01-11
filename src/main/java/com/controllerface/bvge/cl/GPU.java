@@ -354,7 +354,7 @@ public class GPU
          * y: hull index
          * -
          */
-        point_vertex_tables(Sizeof.cl_int2),
+        point_vertex_tables(Sizeof.cl_int4),
 
         /**
          * todo: describe
@@ -1423,17 +1423,13 @@ public class GPU
     //#region CPU Create/Read/Update/Delete Functions
 
     public static void create_point(int point_index,
-                                    float pos_x,
-                                    float pos_y,
-                                    float prv_x,
-                                    float prv_y,
-                                    int vert_index,
-                                    int hull_index,
+                                    float[] position,
+                                    int[] vertex_table,
                                     int[] bone_indices)
     {
         Kernel.create_point.set_arg(3, Pointer.to(arg_int(point_index)));
-        Kernel.create_point.set_arg(4, Pointer.to(arg_float4(pos_x, pos_y, prv_x, prv_y)));
-        Kernel.create_point.set_arg(5, Pointer.to(arg_int2(vert_index, hull_index)));
+        Kernel.create_point.set_arg(4, Pointer.to(position));
+        Kernel.create_point.set_arg(5, Pointer.to(vertex_table));
         Kernel.create_point.set_arg(6, Pointer.to(bone_indices));
         Kernel.create_point.call(global_single_size);
     }

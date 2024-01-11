@@ -353,7 +353,7 @@ __kernel void compact_armatures(__global int *buffer_in,
                                 __global int4 *hull_flags,
                                 __global int4 *element_tables,
                                 __global float4 *points,
-                                __global int2 *vertex_tables,
+                                __global int4 *vertex_tables,
                                 __global int4 *bone_tables,
                                 __global float4 *edges,
                                 __global int *bone_shift,
@@ -448,7 +448,7 @@ __kernel void compact_armatures(__global int *buffer_in,
         for (int k = 0; k < point_count; k++)
         {
             int current_point = element_table.x + k;
-            int2 vertex_table = vertex_tables[current_point];
+            int4 vertex_table = vertex_tables[current_point];
             int4 bone_table = bone_tables[current_point];
             vertex_table.y -= drop.hull_count;
             bone_table.x -= bone_table.x > -1 ? drop.bone_count : 0; 
@@ -523,14 +523,14 @@ __kernel void compact_edges(__global int *edge_shift,
 __kernel void compact_points(__global int *point_shift,
                              __global float4 *points,
                              __global float *anti_gravity,
-                             __global int2 *vertex_tables,
+                             __global int4 *vertex_tables,
                              __global int4 *bone_tables)
 {
     int current_point = get_global_id(0);
     int shift = point_shift[current_point];
     float4 point = points[current_point];
     float anti_grav = anti_gravity[current_point];
-    int2 vertex_table = vertex_tables[current_point];
+    int4 vertex_table = vertex_tables[current_point];
     int4 bone_table = bone_tables[current_point];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)

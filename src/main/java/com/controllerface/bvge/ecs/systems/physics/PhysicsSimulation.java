@@ -300,17 +300,6 @@ public class PhysicsSimulation extends GameSystem
         // the expected location for rendering. The interplay between animation and edge constraints may leave
         // the points in slightly incorrect positions. This makes sure everything is good for the render step.
         GPU.animate_hulls();
-
-        // todo: check if this needs to be done or not
-        //  initial visuals without it don't look bad, but would be good to see if there's some
-        //  kind of improvement if the lerp is done. It should only affect the visual location of
-        //  objects, not their actual location.
-//        float drift = this.accumulator / TICK_RATE;
-//        if (drift != 0)
-//        {
-//
-//            //this.lerp(drift);
-//        }
     }
 
 

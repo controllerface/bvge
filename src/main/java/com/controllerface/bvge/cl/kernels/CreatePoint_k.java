@@ -18,7 +18,7 @@ public class CreatePoint_k extends GPUKernel
         def_arg(arg_index++, Sizeof.cl_mem);    // __global int4 *bone_tables,
         def_arg(arg_index++, Sizeof.cl_int);    // int target,
         def_arg(arg_index++, Sizeof.cl_float4); // float4 new_point,
-        def_arg(arg_index++, Sizeof.cl_int2);   // int2 new_vertex_table,
+        def_arg(arg_index++, Sizeof.cl_int4);   // int4 new_vertex_table,
         def_arg(arg_index++, Sizeof.cl_int4);   // int4 new_bone_table
         System.out.printf("set %d args for %s\n", arg_index, this.getClass().getSimpleName());
     }

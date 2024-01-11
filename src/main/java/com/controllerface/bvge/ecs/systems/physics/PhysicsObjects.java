@@ -55,7 +55,7 @@ public class PhysicsObjects
         // the model points are always zero so the * and + are for educational purposes
         var p1 = CLUtils.arg_float2(vert.x() * size + x, vert.y() * size + y);
 
-        var t1 = CLUtils.arg_int2(vert.vert_ref_id(), next_hull_index);
+        var t1 = CLUtils.arg_int4(vert.vert_ref_id(), next_hull_index, 0,0);
 
         // store the single point for the circle
         var p1_index = Main.Memory.new_point(p1, t1, new int[4]);
@@ -100,9 +100,13 @@ public class PhysicsObjects
         var p2 = CLUtils.arg_float2(v2.x(), v2.y());
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
 
-        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), next_hull_index), new int[4]);
-        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), next_hull_index), new int[4]);
-        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), next_hull_index), new int[4]);
+        var t1 = CLUtils.arg_int4(v1.vert_ref_id(), next_hull_index, 0, 0);
+        var t2 = CLUtils.arg_int4(v2.vert_ref_id(), next_hull_index, 0, 0);
+        var t3 = CLUtils.arg_int4(v3.vert_ref_id(), next_hull_index, 0, 0);
+
+        var p1_index = Main.Memory.new_point(p1, t1, new int[4]);
+        var p2_index = Main.Memory.new_point(p2, t2, new int[4]);
+        var p3_index = Main.Memory.new_point(p3, t3, new int[4]);
 
         MathEX.centroid(vector_buffer, p1, p2, p3);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -153,10 +157,15 @@ public class PhysicsObjects
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
         var p4 = CLUtils.arg_float2(v4.x(), v4.y());
 
-        var p1_index = Main.Memory.new_point(p1, CLUtils.arg_int2(v1.vert_ref_id(), next_hull_index), new int[4]);
-        var p2_index = Main.Memory.new_point(p2, CLUtils.arg_int2(v2.vert_ref_id(), next_hull_index), new int[4]);
-        var p3_index = Main.Memory.new_point(p3, CLUtils.arg_int2(v3.vert_ref_id(), next_hull_index), new int[4]);
-        var p4_index = Main.Memory.new_point(p4, CLUtils.arg_int2(v4.vert_ref_id(), next_hull_index), new int[4]);
+        var t1 = CLUtils.arg_int4(v1.vert_ref_id(), next_hull_index, 0, 0);
+        var t2 = CLUtils.arg_int4(v2.vert_ref_id(), next_hull_index, 0, 0);
+        var t3 = CLUtils.arg_int4(v3.vert_ref_id(), next_hull_index, 0, 0);
+        var t4 = CLUtils.arg_int4(v4.vert_ref_id(), next_hull_index, 0, 0);
+
+        var p1_index = Main.Memory.new_point(p1, t1, new int[4]);
+        var p2_index = Main.Memory.new_point(p2, t2, new int[4]);
+        var p3_index = Main.Memory.new_point(p3, t3, new int[4]);
+        var p4_index = Main.Memory.new_point(p4, t4, new int[4]);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -264,7 +273,7 @@ public class PhysicsObjects
             {
                 var next_vertex = new_hull[point_index];
                 var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
-                var new_table = CLUtils.arg_int2(next_vertex.vert_ref_id(), next_hull);
+                var new_table = CLUtils.arg_int4(next_vertex.vert_ref_id(), next_hull, 0, 0);
 
                 var bone_names = next_vertex.bone_names();
                 int[] bone_ids = new int[4];
