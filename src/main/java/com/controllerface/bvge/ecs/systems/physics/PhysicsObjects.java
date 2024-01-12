@@ -232,10 +232,12 @@ public class PhysicsObjects
             // The hull is generated based on the mesh, so it's initial position and rotation
             // are set from the mesh data using its transform. Then, the mesh is scaled to the
             // desired size and moved to the spawn location in world space.
-            var new_hull = generate_convex_hull(hull_mesh);
-            new_hull = transform_hull(new_hull, hull_mesh.sceneNode().transform);
-            new_hull = scale_hull(new_hull, size);
-            new_hull = translate_hull(new_hull, x, y);
+            var new_mesh = transform_hull(hull_mesh.vertices(), hull_mesh.sceneNode().transform);
+            new_mesh = scale_hull(new_mesh, size);
+            new_mesh = translate_hull(new_mesh, x, y);
+            var new_hull = generate_convex_hull(hull_mesh, new_mesh);
+            var new_chull = generate_interior_hull(hull_mesh, new_mesh);
+
 
             if (new_hull.length != hull_mesh.vertices().length)
             {
@@ -266,9 +268,11 @@ public class PhysicsObjects
             // generate the points in memory for this object
             int point_start = -1;
             int point_end = -1;
-            int[] point_table = new int[new_hull.length];
-            List<float[]> point_buffer = new ArrayList<>();
-            for (int point_index = 0; point_index < point_table.length; point_index++)
+
+            int[] convex_table = new int[new_hull.length];
+            List<float[]> convex_buffer = new ArrayList<>();
+
+            for (int point_index = 0; point_index < new_hull.length; point_index++)
             {
                 var next_vertex = new_hull[point_index];
                 var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
@@ -287,9 +291,31 @@ public class PhysicsObjects
                     point_start = next_point;
                 }
                 point_end = next_point;
-                point_table[point_index] = next_point;
-                point_buffer.add(new_point);
+
+                convex_table[point_index] = next_point;
+                convex_buffer.add(new_point);
             }
+
+
+
+            for (int point_index = 0; point_index < new_chull.length; point_index++)
+            {
+                var next_vertex = new_chull[point_index];
+                var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
+                var new_table = CLUtils.arg_int4(next_vertex.vert_ref_id(), next_hull, FLAG_INTERIOR, 0);
+
+                var bone_names = next_vertex.bone_names();
+                int[] bone_ids = new int[4];
+                bone_ids[0] = bone_names[0] == null ? -1 : bone_map.get(bone_names[0]);
+                bone_ids[1] = bone_names[1] == null ? -1 : bone_map.get(bone_names[1]);
+                bone_ids[2] = bone_names[2] == null ? -1 : bone_map.get(bone_names[2]);
+                bone_ids[3] = bone_names[3] == null ? -1 : bone_map.get(bone_names[3]);
+                var next_point = Main.Memory.new_point(new_point, new_table, bone_ids);
+                point_end = next_point;
+            }
+
+
+
 
             // generate edges in memory for this object
             int edge_start = -1;
@@ -301,10 +327,10 @@ public class PhysicsObjects
                 {
                     point_2_index = 0;
                 }
-                var point_1 = point_buffer.get(point_1_index);
-                var point_2 = point_buffer.get(point_2_index);
+                var point_1 = convex_buffer.get(point_1_index);
+                var point_2 = convex_buffer.get(point_2_index);
                 var distance = edgeDistance(point_2, point_1);
-                var next_edge = Main.Memory.new_edge(point_table[point_1_index], point_table[point_2_index], distance);
+                var next_edge = Main.Memory.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance);
                 if (edge_start == -1)
                 {
                     edge_start = next_edge;
@@ -321,14 +347,14 @@ public class PhysicsObjects
                 for (int p1_index = 0; p1_index < new_hull.length; p1_index++)
                 {
                     int p2_index = p1_index + 2;
-                    if (p2_index > point_buffer.size() - 1)
+                    if (p2_index > convex_buffer.size() - 1)
                     {
                         continue;
                     }
-                    var p1 = point_buffer.get(p1_index);
-                    var p2 = point_buffer.get(p2_index);
+                    var p1 = convex_buffer.get(p1_index);
+                    var p2 = convex_buffer.get(p2_index);
                     var distance = edgeDistance(p2, p1);
-                    edge_end = Main.Memory.new_edge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR);
+                    edge_end = Main.Memory.new_edge(convex_table[p1_index], convex_table[p2_index], distance, FLAG_INTERIOR);
                 }
             }
 
@@ -339,26 +365,26 @@ public class PhysicsObjects
             for (int p1_index = 0; p1_index < half_count; p1_index++)
             {
                 int p2_index = p1_index + half_count;
-                var p1 = point_buffer.get(p1_index);
-                var p2 = point_buffer.get(p2_index);
+                var p1 = convex_buffer.get(p1_index);
+                var p2 = convex_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                edge_end = Main.Memory.new_edge(point_table[p1_index], point_table[p2_index], distance, FLAG_INTERIOR);
+                edge_end = Main.Memory.new_edge(convex_table[p1_index], convex_table[p2_index], distance, FLAG_INTERIOR);
 
                 if (quarter_count > 1)
                 {
                     int p3_index = p1_index + quarter_count;
-                    var p3 = point_buffer.get(p3_index);
+                    var p3 = convex_buffer.get(p3_index);
                     var distance2 = edgeDistance(p3, p1);
-                    edge_end = Main.Memory.new_edge(point_table[p1_index], point_table[p3_index], distance2, FLAG_INTERIOR);
+                    edge_end = Main.Memory.new_edge(convex_table[p1_index], convex_table[p3_index], distance2, FLAG_INTERIOR);
                 }
             }
             if (odd_count) // if there was an odd vertex at the end, connect it to the mid-point
             {
-                int p2_index = point_table.length - 1;
-                var p1 = point_buffer.get(half_count+1);
-                var p2 = point_buffer.get(p2_index);
+                int p2_index = convex_table.length - 1;
+                var p1 = convex_buffer.get(half_count+1);
+                var p2 = convex_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                edge_end = Main.Memory.new_edge(point_table[half_count+1], point_table[p2_index], distance, FLAG_INTERIOR);
+                edge_end = Main.Memory.new_edge(convex_table[half_count+1], convex_table[p2_index], distance, FLAG_INTERIOR);
             }
 
             // calculate centroid and reference angle
@@ -462,13 +488,36 @@ public class PhysicsObjects
         return points;
     }
 
-    public static Vertex[] generate_convex_hull(Mesh mesh)
+    public static Vertex[] generate_convex_hull(Mesh mesh, Vertex[] source)
     {
         var out = new Vertex[mesh.hull().length];
         for (int i = 0; i < mesh.hull().length; i++)
         {
             var next_index = mesh.hull()[i];
-            out[i] = mesh.vertices()[next_index];
+            out[i] = source[next_index];
+        }
+        return out;
+    }
+
+    public static Vertex[] generate_interior_hull(Mesh mesh, Vertex[] source)
+    {
+        int cx = source.length - mesh.hull().length;
+        if (cx <= 0) return new Vertex[0];
+        var out = new Vertex[cx];
+
+        Set<Integer> conv = new HashSet<>();
+        for (int i = 0; i < mesh.hull().length; i++)
+        {
+            conv.add(mesh.hull()[i]);
+        }
+
+        int c = 0;
+        for (int i = 0; i < source.length; i++)
+        {
+            if (!conv.contains(i))
+            {
+                out[c++] = source[i];
+            }
         }
         return out;
     }

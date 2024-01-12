@@ -16,7 +16,9 @@ inline int closest_point_circle(float2 circle_center,
     {
         int n = start + i;
         int4 vertex_table = vertex_tables[n];
-        if (vertex_table.z == 1) continue;
+        
+        bool x = (vertex_table.z & 0x01) !=0;
+        if (x) continue;
 
         float2 v = points[n].xy;
         float _distance = distance(v, circle_center);

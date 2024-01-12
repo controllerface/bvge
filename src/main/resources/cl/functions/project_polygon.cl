@@ -4,7 +4,7 @@ The return vector contains the min/max distances, and the index of
 the point that have the mininum value.
  */
 inline float3 project_polygon(__global const float4 *points, 
-                              __global const int *vertex_tables, 
+                              __global const int4 *vertex_tables, 
                               int4 hull, 
                               float2 normal)
 {
@@ -22,7 +22,10 @@ inline float3 project_polygon(__global const float4 *points,
     {
         int n = start + i;
         int4 vertex_table = vertex_tables[n];
-        if (vertex_table.z == 1) continue;
+        
+        bool x = (vertex_table.z & 0x01) !=0;
+        if (x) continue;
+
         float2 v = points[n].xy;
         float proj = dot(v, normal);
         if (proj < result.x || !minYet)
