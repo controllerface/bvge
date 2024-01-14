@@ -292,6 +292,7 @@ public class Models
         var mesh_faces = load_faces(raw_mesh, next_mesh);
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
         int[] table = new int[4];
+        //
         table[0] = mesh_vertices[0].vert_ref_id();
         table[1] = mesh_vertices[mesh_vertices.length - 1].vert_ref_id();
         table[2] = mesh_faces[0].index();

@@ -125,6 +125,7 @@ public class GPU
         gpu_crud(new GpuCrud()),
         integrate(new Integrate()),
         locate_in_bounds(new LocateInBounds()),
+        mesh_query(new MeshQuery()),
         prepare_bones(new PrepareBones()),
         prepare_bounds(new PrepareBounds()),
         prepare_edges(new PrepareEdges()),
@@ -159,6 +160,7 @@ public class GPU
         animate_hulls,
         apply_reactions,
         build_key_map,
+        calculate_batch_offsets,
         compact_armatures,
         compact_bones,
         compact_edges,
@@ -171,6 +173,8 @@ public class GPU
         complete_int_multi_block,
         complete_int_multi_block_out,
         count_candidates,
+        count_mesh_batches,
+        count_mesh_instances,
         create_armature,
         create_bone,
         create_bone_reference,
@@ -211,6 +215,7 @@ public class GPU
         scan_int_single_block_out,
         sort_reactions,
         update_accel,
+        write_mesh_data,
 
         ;
 
@@ -281,7 +286,7 @@ public class GPU
         vertex_weights(Sizeof.cl_float4),
 
         /**
-         * Bone offset reference matrices of loaded models:
+         * Bone offset (inverse bind pose) reference matrices of loaded models:
          * -
          * s0: (m00) transformation matrix column 1 row 1
          * s1: (m01) transformation matrix column 1 row 2
@@ -303,10 +308,58 @@ public class GPU
          */
         bone_references(Sizeof.cl_float16),
 
-
+        /**
+         * Bone bind post reference matrices of loaded models:
+         * -
+         * s0: (m00) transformation matrix column 1 row 1
+         * s1: (m01) transformation matrix column 1 row 2
+         * s2: (m02) transformation matrix column 1 row 3
+         * s3: (m03) transformation matrix column 1 row 4
+         * s4: (m10) transformation matrix column 2 row 1
+         * s5: (m11) transformation matrix column 2 row 2
+         * s6: (m12) transformation matrix column 2 row 3
+         * s7: (m13) transformation matrix column 2 row 4
+         * s8: (m20) transformation matrix column 3 row 1
+         * s9: (m21) transformation matrix column 3 row 2
+         * sA: (m22) transformation matrix column 3 row 3
+         * sB: (m23) transformation matrix column 3 row 4
+         * sC: (m30) transformation matrix column 4 row 1
+         * sD: (m31) transformation matrix column 4 row 2
+         * sE: (m32) transformation matrix column 4 row 3
+         * sF: (m33) transformation matrix column 4 row 4
+         * -
+         */
         bone_bind_poses(Sizeof.cl_float16),
 
+        /**
+         * Parent references for bone hierarchy.
+         * -
+         * value: reference index of the parent bone bind pose
+         * -
+         */
         bone_bind_parents(Sizeof.cl_int),
+
+        /**
+         * Indexing tables for mesh references.
+         * -
+         * x: start vertex index
+         * y: end vertex index
+         * z: start face index
+         * w: end face index
+         * -
+         */
+        mesh_references(Sizeof.cl_int4),
+
+        /**
+         * Face references.
+         * -
+         * x: vertex 1 index
+         * y: vertex 2 index
+         * z: vertex 3 index
+         * w: parent reference mesh ID
+         * -
+         */
+        mesh_faces(Sizeof.cl_int4),
 
         /*
         Points
@@ -361,11 +414,7 @@ public class GPU
          */
         point_bone_tables(Sizeof.cl_int4),
 
-        // todo: need mesh reference tables and face data buffer
 
-        mesh_references(Sizeof.cl_int4),
-
-        mesh_faces(Sizeof.cl_int4),
 
         /*
         Edges
@@ -597,7 +646,7 @@ public class GPU
 
     //#region Utility Methods
 
-    private static void cl_read_buffer(cl_mem src, long size, Pointer dst)
+    public static void cl_read_buffer(cl_mem src, long size, Pointer dst)
     {
         clEnqueueReadBuffer(command_queue,
             src,
@@ -620,7 +669,7 @@ public class GPU
         return clCreateBuffer(context, FLAGS_WRITE_CPU_COPY, Sizeof.cl_int, src, null);
     }
 
-    private static cl_mem cl_new_read_only_buffer(long size, Pointer src)
+    private static cl_mem cl_new_cpu_copy_buffer(long size, Pointer src)
     {
         return clCreateBuffer(context, FLAGS_READ_CPU_COPY, size, src, null);
     }
@@ -674,20 +723,20 @@ public class GPU
         return xa;
     }
 
-    private static cl_mem cl_new_pinned_int()
+    public static cl_mem cl_new_pinned_int()
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
         return clCreateBuffer(context, flags, Sizeof.cl_int, null, null);
     }
 
-    private static int cl_read_pinned_int(cl_mem pinned)
+    public static int cl_read_pinned_int(cl_mem pinned)
     {
         var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
             null, null, null);
         assert out != null;
-        int x = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-        //clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
-        return x;
+        int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+        clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        return result;
     }
 
     private static int work_group_count(int n)
@@ -1113,6 +1162,22 @@ public class GPU
         Kernel.finalize_candidates.set_kernel(finalize_candidates_k);
 
 
+        var calculate_batch_offsets_k = new CalculateBatchOffsets_k(command_queue, Program.mesh_query.gpu);
+        Kernel.calculate_batch_offsets.set_kernel(calculate_batch_offsets_k);
+
+        var count_mesh_batches_k = new CountMeshBatches_k(command_queue, Program.mesh_query.gpu);
+        Kernel.count_mesh_batches.set_kernel(count_mesh_batches_k);
+
+        var count_mesh_instances_k = new CountMeshInstances_k(command_queue, Program.mesh_query.gpu);
+        count_mesh_instances_k.set_mesh_ids(Memory.hull_mesh_ids.gpu.pointer());
+        Kernel.count_mesh_instances.set_kernel(count_mesh_instances_k);
+
+        var write_mesh_data_k = new WriteMeshData_k(command_queue, Program.mesh_query.gpu);
+        write_mesh_data_k.set_mesh_ids(Memory.hull_mesh_ids.gpu.pointer());
+        write_mesh_data_k.set_mesh_refs(Memory.mesh_references.gpu.pointer());
+        Kernel.write_mesh_data.set_kernel(write_mesh_data_k);
+
+
         // constraint solver
 
         var resolve_constraints_k = new ResolveConstraints_k(command_queue, Program.resolve_constraints.gpu);
@@ -1279,6 +1344,28 @@ public class GPU
         shared_mem.put(vboID, vbo_mem);
     }
 
+    public static cl_mem new_mutable_buffer(long size, Pointer src)
+    {
+        return cl_new_cpu_copy_buffer(size, src);
+    }
+
+    public static cl_mem new_empty_buffer(long size)
+    {
+        var x = cl_new_buffer(size);
+        cl_zero_buffer(x, size);
+        return x;
+    }
+
+    public static void clear_buffer(cl_mem mem, long size)
+    {
+        cl_zero_buffer(mem, size);
+    }
+
+    public static void release_buffer(cl_mem mem)
+    {
+        clReleaseMemObject(mem);
+    }
+
     /**
      * Transfers a subset of all bounding boxes from CL memory into GL memory, converting the bounds
      * into a vertex structure that can be rendered as a line loop.
@@ -1417,6 +1504,46 @@ public class GPU
         Kernel.prepare_transforms.set_arg(3, Pointer.to(vbo_transforms));
         Kernel.prepare_transforms.set_arg(4, Pointer.to(arg_int(offset)));
         Kernel.prepare_transforms.call(arg_long(batch_size));
+    }
+
+    public static void count_mesh_instances(cl_mem query, cl_mem counters, cl_mem total, int count)
+    {
+        Kernel.count_mesh_instances.set_arg(1, Pointer.to(counters));
+        Kernel.count_mesh_instances.set_arg(2, Pointer.to(query));
+        Kernel.count_mesh_instances.set_arg(3, Pointer.to(total));
+        Kernel.count_mesh_instances.set_arg(4, Pointer.to(arg_int(count)));
+        Kernel.count_mesh_instances.call(arg_long(Main.Memory.next_hull()));
+    }
+
+    public static void test_query_2(cl_mem counts, cl_mem offsets, int count)
+    {
+        scan_int_out(counts, offsets, count);
+    }
+
+    public static void write_mesh_data(cl_mem query, cl_mem counters, cl_mem offsets, cl_mem mesh_details, int count)
+    {
+        Kernel.write_mesh_data.set_arg(2, Pointer.to(counters));
+        Kernel.write_mesh_data.set_arg(3, Pointer.to(query));
+        Kernel.write_mesh_data.set_arg(4, Pointer.to(offsets));
+        Kernel.write_mesh_data.set_arg(5, Pointer.to(mesh_details));
+        Kernel.write_mesh_data.set_arg(6, Pointer.to(arg_int(count)));
+        Kernel.write_mesh_data.call(arg_long(Main.Memory.next_hull()));
+    }
+
+    public static void count_mesh_batches(cl_mem mesh_details, cl_mem total, int count)
+    {
+        Kernel.count_mesh_batches.set_arg(0, Pointer.to(mesh_details));
+        Kernel.count_mesh_batches.set_arg(1, Pointer.to(total));
+        Kernel.count_mesh_batches.set_arg(2, Pointer.to(arg_int(count)));
+        Kernel.count_mesh_batches.call(global_single_size);
+    }
+
+    public static void calculate_batch_offsets(cl_mem mesh_offsets, cl_mem mesh_details, int count)
+    {
+        Kernel.calculate_batch_offsets.set_arg(0, Pointer.to(mesh_offsets));
+        Kernel.calculate_batch_offsets.set_arg(1, Pointer.to(mesh_details));
+        Kernel.calculate_batch_offsets.set_arg(2, Pointer.to(arg_int(count)));
+        Kernel.calculate_batch_offsets.call(global_single_size);
     }
 
     //#endregion
@@ -1581,7 +1708,7 @@ public class GPU
         var src_args = Pointer.to(args);
 
         long size = Sizeof.cl_float * args.length;
-        var arg_mem = cl_new_read_only_buffer(size, src_args);
+        var arg_mem = cl_new_cpu_copy_buffer(size, src_args);
 
         Kernel.integrate.set_arg(12, Pointer.to(arg_mem));
         Kernel.integrate.call(arg_long(Main.Memory.next_hull()));

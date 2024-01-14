@@ -238,12 +238,6 @@ public class PhysicsObjects
             var new_hull = generate_convex_hull(hull_mesh, new_mesh);
             var new_chull = generate_interior_hull(hull_mesh, new_mesh);
 
-
-            if (new_hull.length != hull_mesh.vertices().length)
-            {
-                System.out.println("diff");
-            }
-
             var bone_map = new HashMap<String, Integer>();
             int start_bone = -1;
             int end_bone = -1;
