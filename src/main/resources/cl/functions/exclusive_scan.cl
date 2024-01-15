@@ -63,10 +63,10 @@ inline void downsweep(__local int *buffer, int m)
 }
 
 /**
-Sweep variants for scanning an int4 vector buffer 
+Sweep variants for scanning an int2 vector buffer 
  */
 
-inline void upsweep_vec(__local int4 *buffer2, int m) 
+inline void upsweep_vec2(__local int2 *buffer2, int m) 
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;
@@ -87,7 +87,56 @@ inline void upsweep_vec(__local int4 *buffer2, int m)
     }
 }
 
-inline void downsweep_vec(__local int4 *buffer2, int m)
+inline void downsweep_vec2(__local int2 *buffer2, int m)
+{
+    int local_id = get_local_id(0);
+    int b_index = (local_id * 2) + 1;
+    int max_depth = (int)log2((float)m);
+
+    for (int depth = max_depth; depth > -1; depth--) 
+    {
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        int mask = (0x1 << depth) - 1;
+        
+        if ((local_id & mask) == mask) 
+        {
+            int offset = (0x1 << depth);
+            int a_index = b_index - offset;
+
+            int2 temp2 = buffer2[a_index];
+            buffer2[a_index] = buffer2[b_index];
+            buffer2[b_index] += temp2;
+        }
+    }
+}
+
+/**
+Sweep variants for scanning an int4 vector buffer 
+ */
+
+inline void upsweep_vec4(__local int4 *buffer2, int m) 
+{
+    int local_id = get_local_id(0);
+    int b_index = (local_id * 2) + 1;
+    int max_depth = 1 + (int)log2((float)m);
+
+    for (int depth = 0; depth < max_depth; depth++) 
+    {
+        barrier(CLK_LOCAL_MEM_FENCE);
+        
+        int mask = (0x1 << depth) - 1;
+        
+        if ((local_id & mask) == mask) 
+        {
+            int offset = (0x1 << depth);
+            int a_index = b_index - offset;
+            buffer2[b_index] += buffer2[a_index];
+        }
+    }
+}
+
+inline void downsweep_vec4(__local int4 *buffer2, int m)
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;

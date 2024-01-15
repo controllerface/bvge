@@ -1,4 +1,6 @@
-__kernel void scan_int4_single_block(__global int4 *data, __local int4 *buffer, int n) 
+__kernel void scan_int4_single_block(__global int4 *data, 
+                                     __local int4 *buffer, 
+                                     int n) 
 {
     // the global ID for this thread
     int global_id = get_global_id(0);
@@ -16,7 +18,7 @@ __kernel void scan_int4_single_block(__global int4 *data, __local int4 *buffer, 
     buffer[b_index] = b_index < n ? data[b_index] : 0;
 
     // perform the "up sweep" traversing from leaf to root of the tree
-    upsweep_vec(buffer, m);
+    upsweep_vec4(buffer, m);
 
     // set lane b to 0 if the count was odd, since the b index will be unused
     if (b_index == (m - 1)) 
@@ -25,7 +27,7 @@ __kernel void scan_int4_single_block(__global int4 *data, __local int4 *buffer, 
     }
 
     // perform the "down sweep" from root back down to the leaves
-    downsweep_vec(buffer, m);
+    downsweep_vec4(buffer, m);
 
     // for each index that is in range, copy the local buffer to the data buffer
     if (a_index < n) 
@@ -47,9 +49,9 @@ __kernel void scan_int4_single_block(__global int4 *data, __local int4 *buffer, 
  * n is the total number of elements in the entire global data array.
  */
 __kernel void scan_int4_multi_block(__global int4 *data, 
-                               __local int4 *buffer, 
-                               __global int4 *part, 
-                               int n)
+                                    __local int4 *buffer, 
+                                    __global int4 *part, 
+                                    int n)
 {
     // workgroup size
     int wx = get_local_size(0);
@@ -74,7 +76,7 @@ __kernel void scan_int4_multi_block(__global int4 *data,
     buffer[local_b_index] = (b_index < n) ? data[b_index] : 0;
 
     // a reduce on each subarray
-    upsweep(buffer, m);
+    upsweep_vec4(buffer, m);
 
     // last workitem per workgroup saves last element of each subarray in [part]
     // before zeroing
@@ -85,7 +87,7 @@ __kernel void scan_int4_multi_block(__global int4 *data,
     }
 
     // a sweepdown on each subarray
-    downsweep(buffer, m);
+    downsweep_vec4(buffer, m);
 
     // copy back to global data
     if (a_index < n) 
@@ -99,9 +101,9 @@ __kernel void scan_int4_multi_block(__global int4 *data,
 }
 
 __kernel void complete_int4_multi_block(__global int4 *data, 
-                                   __local int4 *buffer, 
-                                   __global int4 *part, 
-                                   int n)
+                                        __local int4 *buffer, 
+                                        __global int4 *part, 
+                                        int n)
 {
     // global identifiers and indexes
     int global_id = get_global_id(0);

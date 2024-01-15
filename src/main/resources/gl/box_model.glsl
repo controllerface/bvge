@@ -4,7 +4,6 @@ layout (location = 0) in vec2 v_position;
 layout (location = 1) in vec2 v_tex_coords;
 layout (location = 2) in vec4 v_transform;
 
-out vec4 f_color;
 out vec2 f_tex_coords;
 
 uniform mat4 uVP;

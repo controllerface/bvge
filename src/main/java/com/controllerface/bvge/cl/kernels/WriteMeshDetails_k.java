@@ -7,11 +7,11 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class WriteMeshData_k extends GPUKernel
+public class WriteMeshDetails_k extends GPUKernel
 {
-    public WriteMeshData_k(cl_command_queue command_queue, GPUProgram program)
+    public WriteMeshDetails_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.write_mesh_data), 7);
+        super(command_queue, program.kernels().get(GPU.Kernel.write_mesh_details), 7);
         int arg_index = 0;
         def_arg(arg_index++, Sizeof.cl_mem);  // __global int *hull_mesh_ids,
         def_arg(arg_index++, Sizeof.cl_mem);  // __global int4 *mesh_references,

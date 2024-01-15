@@ -215,10 +215,10 @@ public class TestGame extends GameMode
     {
         //genPlayer();
         genTestFigure(1f, 300, 0);
-        genTestFigureNPC(1, 200, 50);
-        genTestFigureNPC(1, 200, 100);
-        genTestFigureNPC(1, 200, 200);
-        genTestFigureNPC(1, 100, 50);
+//        genTestFigureNPC(1, 200, 50);
+//        genTestFigureNPC(1, 200, 100);
+//        genTestFigureNPC(1, 200, 200);
+//        genTestFigureNPC(1, 100, 50);
 
         //genTestTriangle(20f, 190, 250);
 
@@ -276,10 +276,10 @@ public class TestGame extends GameMode
 
 
 
-//        genCircles(20, 7f, 5f, 0, 100);
-//        genSquares(20,  9f, 5f, -120, 100);
-//        genCrates2(20, 7f, 0.025f, 100, 100);
-//        genTriangles(20,  9f, 5f, 200, 100);
+        //genCircles(100, 7f, 5f, 0, 100);
+        genSquares(100,  9f, 5f, -120, 100);
+        genCrates2(20, 7f, 0.025f, 100, 100);
+        //genTriangles(100,  9f, 5f, 200, 100);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);
