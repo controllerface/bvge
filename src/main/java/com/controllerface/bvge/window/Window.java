@@ -259,13 +259,11 @@ public class Window
         float currentTime;
         float dt = -1.0f;
 
-        int go = 0;
-
         while (!glfwWindowShouldClose(glfwWindow))
         {
             glfwPollEvents();
 
-            if (dt >= 0 && go <= 1)
+            if (dt >= 0)
             {
                 ecs.tick(dt);
                 currentGameMode.update(dt);
@@ -273,12 +271,9 @@ public class Window
 
             }
 
-
             currentTime = (float) glfwGetTime();
             dt = currentTime - lastTime;
             lastTime = currentTime;
-
-            go++;
         }
     }
 

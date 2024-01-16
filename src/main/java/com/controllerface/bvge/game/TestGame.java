@@ -208,7 +208,7 @@ public class TestGame extends GameMode
         // todo: rewrite using hull/model filter
         ecs.registerSystem(new CrateRenderer(ecs));
         ecs.registerSystem(new HumanoidRenderer(ecs));
-        ecs.registerSystem(new PointRenderer(ecs));
+        //ecs.registerSystem(new PointRenderer(ecs));
     }
 
     @Override

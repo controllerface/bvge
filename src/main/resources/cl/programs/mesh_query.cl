@@ -68,7 +68,7 @@ __kernel void count_mesh_batches(__global int4 *mesh_details,
         }
         next.w = current_batch;
         mesh_details[i] = next;
-        current_batch_count += max_per_batch;//next.y;
+        current_batch_count += next.y;
     }
     int bc = current_batch + 1;
     //printf("debug: batches=%d", bc);
@@ -142,7 +142,7 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
         float2 pos = point.xy;
         int ref_offset = vertex_table.x - mesh_reference.x + transfer.x;
         vertex_buffer[ref_offset] = pos;
-        printf("point offset vbo=%d table=%d ref=%d hull=%d_", ref_offset, point_id, vertex_table.x, hull_id);
+        //printf("point offset vbo=%d table=%d ref=%d hull=%d_", ref_offset, point_id, vertex_table.x, hull_id);
     }
 
     int start_face = mesh_reference.z;
@@ -161,10 +161,10 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
         element_buffer[o1] = p1;
         element_buffer[o2] = p2;
         element_buffer[o3] = p3;
-        printf("element offset ebo1=%d ebo2=%d ebo3=%d p1=%d p2=%d p3=%d hull=%d_", 
-        o1, o2, o3,
-        p1, p2, p3,
-        hull_id);
+        //printf("element offset ebo1=%d ebo2=%d ebo3=%d p1=%d p2=%d p3=%d hull=%d_", 
+        //o1, o2, o3,
+        //p1, p2, p3,
+        //hull_id);
 
 
     }

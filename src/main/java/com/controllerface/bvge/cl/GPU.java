@@ -1630,20 +1630,6 @@ public class GPU
         Kernel.transfer_render_data.set_arg(10, Pointer.to(mesh_transfer));
         Kernel.transfer_render_data.set_arg(11, Pointer.to(arg_int(offset)));
         Kernel.transfer_render_data.call(arg_long(count));
-
-        int[] debug_ebo = new int[200];
-        float[] debug_mesh = new float[100 * 2];
-        int[] debug_cmd = new int[count * 5];
-        cl_read_buffer(cbo_mem, (long)count * Sizeof.cl_int * 5, Pointer.to(debug_cmd));
-        cl_read_buffer(vbo_mem, (long)100 * Sizeof.cl_float2, Pointer.to(debug_mesh));
-        cl_read_buffer(ebo_mem, (long)200 * Sizeof.cl_int, Pointer.to(debug_ebo));
-
-//        cl_read_buffer(vbo_mem, Constants.Rendering.MAX_BATCH_SIZE *
-//            Constants.Rendering.VECTOR_FLOAT_2D_SIZE, Pointer.to(debug_2));
-//
-        System.out.println(Arrays.toString(debug_ebo));
-        System.out.println(Arrays.toString(debug_mesh));
-        System.out.println(Arrays.toString(debug_cmd));
     }
 
     //#endregion
