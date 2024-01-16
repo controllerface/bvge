@@ -29,7 +29,10 @@ import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
+import static org.lwjgl.opengl.GL32C.GL_SYNC_FENCE;
 import static org.lwjgl.opengl.GL40C.GL_DRAW_INDIRECT_BUFFER;
+import static org.lwjgl.opengl.GL42C.GL_ALL_BARRIER_BITS;
+import static org.lwjgl.opengl.GL42C.glMemoryBarrier;
 import static org.lwjgl.opengl.GL43C.glMultiDrawElementsIndirect;
 
 public class HumanoidRenderer extends GameSystem
@@ -155,8 +158,94 @@ public class HumanoidRenderer extends GameSystem
             // calculate mesh data offsets for this batch
             GPU.transfer_detail_data(details_buffer, mesh_transfer, count, start);
             GPU.transfer_render_data(ebo, vbo, cbo, details_buffer, mesh_transfer, count, start);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+            //glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_INT, 0);
+
 
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
+
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
         }
 
         glDisableVertexAttribArray(0);

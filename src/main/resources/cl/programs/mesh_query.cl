@@ -68,7 +68,7 @@ __kernel void count_mesh_batches(__global int4 *mesh_details,
         }
         next.w = current_batch;
         mesh_details[i] = next;
-        current_batch_count += next.y;
+        current_batch_count += max_per_batch;//next.y;
     }
     int bc = current_batch + 1;
     //printf("debug: batches=%d", bc);
