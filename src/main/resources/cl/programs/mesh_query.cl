@@ -35,7 +35,7 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
         {
             int4 ref_mesh = mesh_references[mesh_id];
             int offset = offsets[i];
-            int bank = atomic_dec(&counters[i]) - 1;
+            int bank = atomic_inc(&counters[i]);
             int4 out;
             out.x = ref_mesh.y - ref_mesh.x + 1;
             out.y = (ref_mesh.w - ref_mesh.z + 1) * 3;
@@ -54,7 +54,7 @@ __kernel void count_mesh_batches(__global int4 *mesh_details,
                                  int count)
 {
     // todo: this needs to be configurable
-    int max_per_batch = 400;
+    int max_per_batch = 10000;
     int current_batch_count = 0;
     int current_batch = 0;
     for (int i = 0; i < count; i++)
@@ -142,19 +142,30 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
         float2 pos = point.xy;
         int ref_offset = vertex_table.x - mesh_reference.x + transfer.x;
         vertex_buffer[ref_offset] = pos;
+        printf("point offset vbo=%d table=%d ref=%d hull=%d_", ref_offset, point_id, vertex_table.x, hull_id);
     }
 
-    int face_offset = 0;
     int start_face = mesh_reference.z;
     int end_face = mesh_reference.w;
     for (int face_id = start_face; face_id <= end_face; face_id++)
     {
         int4 face = mesh_faces[face_id];
-        int ref_offset = face_id - start_face + transfer.y + face_offset;
-        element_buffer[ref_offset] = face.x;
-        element_buffer[ref_offset + 1] = face.y;
-        element_buffer[ref_offset + 2] = face.z;
-        face_offset += 3;
-        printf("face debug: x=%d y=%d z=%d", face.x, face.y, face.z);
+        int base_offset = face_id - start_face;
+        int inner_offset = base_offset * 3;
+        int o1 = inner_offset + transfer.y;
+        int o2 = o1 + 1;
+        int o3 = o1 + 2;
+        int p1 =  face.x;
+        int p2 =  face.y;
+        int p3 =  face.z;
+        element_buffer[o1] = p1;
+        element_buffer[o2] = p2;
+        element_buffer[o3] = p3;
+        printf("element offset ebo1=%d ebo2=%d ebo3=%d p1=%d p2=%d p3=%d hull=%d_", 
+        o1, o2, o3,
+        p1, p2, p3,
+        hull_id);
+
+
     }
 }

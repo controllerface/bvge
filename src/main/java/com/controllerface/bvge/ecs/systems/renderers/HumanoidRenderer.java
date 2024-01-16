@@ -12,6 +12,7 @@ import com.controllerface.bvge.window.Window;
 import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_mem;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43C;
 
@@ -29,13 +30,13 @@ import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
 import static org.lwjgl.opengl.GL40C.GL_DRAW_INDIRECT_BUFFER;
+import static org.lwjgl.opengl.GL43C.glMultiDrawElementsIndirect;
 
 public class HumanoidRenderer extends GameSystem
 {
-    private static final int ELEMENT_COUNT = Constants.Rendering.MAX_BATCH_SIZE;
-    private static final int ELEMENT_BUFFER_SIZE = ELEMENT_COUNT * Integer.BYTES;
-    private static final int VERTEX_BUFFER_SIZE = ELEMENT_COUNT * VECTOR_FLOAT_2D_SIZE;
-    private static final int COMMAND_BUFFER_SIZE = ELEMENT_COUNT * Integer.BYTES * 5;
+    private static final int ELEMENT_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * Integer.BYTES;
+    private static final int VERTEX_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
+    private static final int COMMAND_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * Integer.BYTES * 5;
 
     // todo: determine the sizes required for a single render batch and calculate them
     private Texture texture;
@@ -121,6 +122,7 @@ public class HumanoidRenderer extends GameSystem
         int total_instances = GPU.cl_read_pinned_int(total);
         long data_size = (long)total_instances * Sizeof.cl_int4;
         var details_buffer = GPU.new_empty_buffer(data_size);
+        GPU.clear_buffer(counters, mesh_size);
 
         GPU.write_mesh_details(query, counters, offsets, details_buffer, mesh_count);
         GPU.count_mesh_batches(details_buffer, total, total_instances);
@@ -154,7 +156,7 @@ public class HumanoidRenderer extends GameSystem
             GPU.transfer_detail_data(details_buffer, mesh_transfer, count, start);
             GPU.transfer_render_data(ebo, vbo, cbo, details_buffer, mesh_transfer, count, start);
 
-            GL43C.glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
+            glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
         }
 
         glDisableVertexAttribArray(0);
