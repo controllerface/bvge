@@ -22,6 +22,7 @@ public class GpuCrud extends GPUProgram
         load_kernel(Kernel.create_point);
         load_kernel(Kernel.create_edge);
         load_kernel(Kernel.create_bone_reference);
+        load_kernel(Kernel.create_texture_uv);
         load_kernel(Kernel.create_vertex_reference);
         load_kernel(Kernel.create_mesh_reference);
         load_kernel(Kernel.create_mesh_face);

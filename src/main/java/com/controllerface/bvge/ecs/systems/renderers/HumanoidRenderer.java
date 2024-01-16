@@ -12,27 +12,17 @@ import com.controllerface.bvge.window.Window;
 import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_mem;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL43C;
-
-import java.util.Arrays;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static org.lwjgl.opengl.GL11C.GL_FLOAT;
-import static org.lwjgl.opengl.GL15C.GL_ARRAY_BUFFER;
-import static org.lwjgl.opengl.GL15C.glBindBuffer;
 import static org.lwjgl.opengl.GL15C.*;
 import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
-import static org.lwjgl.opengl.GL32C.GL_SYNC_FENCE;
 import static org.lwjgl.opengl.GL40C.GL_DRAW_INDIRECT_BUFFER;
-import static org.lwjgl.opengl.GL42C.GL_ALL_BARRIER_BITS;
-import static org.lwjgl.opengl.GL42C.glMemoryBarrier;
 import static org.lwjgl.opengl.GL43C.glMultiDrawElementsIndirect;
 
 public class HumanoidRenderer extends GameSystem
@@ -123,9 +113,6 @@ public class HumanoidRenderer extends GameSystem
         int total_instances = GPU.cl_read_pinned_int(total);
         long data_size = (long)total_instances * Sizeof.cl_int4;
         var details_buffer = GPU.new_empty_buffer(data_size);
-
-        // todo: maybe remove and replace with atomic_dec again, after it is working properly
-        GPU.clear_buffer(counters, mesh_size);
 
         GPU.write_mesh_details(query, counters, offsets, details_buffer, mesh_count);
         GPU.count_mesh_batches(details_buffer, total, total_instances);

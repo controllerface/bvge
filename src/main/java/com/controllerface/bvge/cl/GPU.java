@@ -5,11 +5,9 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
 import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
-import com.controllerface.bvge.util.Constants;
 import org.jocl.*;
 
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -189,6 +187,7 @@ public class GPU
         create_mesh_reference,
         create_mesh_face,
         create_point,
+        create_texture_uv,
         create_vertex_reference,
         finalize_candidates,
         generate_keys,
@@ -294,6 +293,10 @@ public class GPU
         vertex_references(Sizeof.cl_float2),
 
         vertex_weights(Sizeof.cl_float4),
+
+        texture_uvs(Sizeof.cl_float2),
+
+        uv_tables(Sizeof.cl_int2),
 
         /**
          * Bone offset (inverse bind pose) reference matrices of loaded models:
@@ -881,6 +884,8 @@ public class GPU
         Memory.point_bone_tables.init(max_points);
         Memory.vertex_references.init(max_points);
         Memory.vertex_weights.init(max_points);
+        Memory.texture_uvs.init(max_points);
+        Memory.uv_tables.init(max_points);
         Memory.bone_bind_poses.init(max_hulls);
         Memory.bone_bind_parents.init(max_hulls);
         Memory.bone_references.init(max_points);
@@ -917,6 +922,8 @@ public class GPU
             + Memory.point_bone_tables.length
             + Memory.vertex_references.length
             + Memory.vertex_weights.length
+            + Memory.texture_uvs.length
+            + Memory.uv_tables.length
             + Memory.bone_bind_poses.length
             + Memory.bone_bind_parents.length
             + Memory.bone_references.length
@@ -952,6 +959,8 @@ public class GPU
         System.out.println("point bone tables    : " + Memory.point_bone_tables.length);
         System.out.println("vertex references    : " + Memory.vertex_references.length);
         System.out.println("vertex weights       : " + Memory.vertex_weights.length);
+        System.out.println("texture uvs          : " + Memory.texture_uvs.length);
+        System.out.println("uv maps              : " + Memory.uv_tables.length);
         System.out.println("bone bind poses      : " + Memory.bone_bind_poses.length);
         System.out.println("bone bind parents    : " + Memory.bone_bind_parents.length);
         System.out.println("bone references      : " + Memory.bone_references.length);
@@ -1065,6 +1074,11 @@ public class GPU
         create_point_k.set_bone_tables(Memory.point_bone_tables.gpu.pointer());
         Kernel.create_point.set_kernel(create_point_k);
 
+
+        var create_texture_uv_k = new CreateTextureUV_k(command_queue, Program.gpu_crud.gpu);
+        create_texture_uv_k.set_texture_uvs(Memory.texture_uvs.gpu.pointer());
+        Kernel.create_texture_uv.set_kernel(create_texture_uv_k);
+
         var create_edge_k = new CreateEdge_k(command_queue, Program.gpu_crud.gpu);
         create_edge_k.set_edges(Memory.edges.gpu.pointer());
         Kernel.create_edge.set_kernel(create_edge_k);
@@ -1072,6 +1086,7 @@ public class GPU
         var create_vertex_ref_k = new CreateVertexRef_k(command_queue, Program.gpu_crud.gpu);
         create_vertex_ref_k.set_vertex_refs(Memory.vertex_references.gpu.pointer());
         create_vertex_ref_k.set_vertex_weights(Memory.vertex_weights.gpu.pointer());
+        create_vertex_ref_k.set_uv_tables(Memory.uv_tables.gpu.pointer());
         Kernel.create_vertex_reference.set_kernel(create_vertex_ref_k);
 
         var create_bone_bind_k = new CreateBoneBindPose_k(command_queue, Program.gpu_crud.gpu);
@@ -1648,6 +1663,13 @@ public class GPU
         Kernel.create_point.call(global_single_size);
     }
 
+    public static void create_texture_uv(int uv_index, float u, float v)
+    {
+        Kernel.create_texture_uv.set_arg(1, Pointer.to(arg_int(uv_index)));
+        Kernel.create_texture_uv.set_arg(2, Pointer.to(arg_float2(u, v)));
+        Kernel.create_texture_uv.call(global_single_size);
+    }
+
     public static void create_edge(int edge_index, float p1, float p2, float l, int flags)
     {
         Kernel.create_edge.set_arg(1, Pointer.to(arg_int(edge_index)));
@@ -1665,11 +1687,12 @@ public class GPU
         Kernel.create_armature.call(global_single_size);
     }
 
-    public static void create_vertex_reference(int vert_ref_index, float x, float y, float[] weights)
+    public static void create_vertex_reference(int vert_ref_index, float x, float y, float[] weights, int[] uv_table)
     {
-        Kernel.create_vertex_reference.set_arg(2, Pointer.to(arg_int(vert_ref_index)));
-        Kernel.create_vertex_reference.set_arg(3, Pointer.to(arg_float2(x, y)));
-        Kernel.create_vertex_reference.set_arg(4, Pointer.to(weights));
+        Kernel.create_vertex_reference.set_arg(3, Pointer.to(arg_int(vert_ref_index)));
+        Kernel.create_vertex_reference.set_arg(4, Pointer.to(arg_float2(x, y)));
+        Kernel.create_vertex_reference.set_arg(5, Pointer.to(weights));
+        Kernel.create_vertex_reference.set_arg(6, Pointer.to(uv_table));
         Kernel.create_vertex_reference.call(global_single_size);
     }
 

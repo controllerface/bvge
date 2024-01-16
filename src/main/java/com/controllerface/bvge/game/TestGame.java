@@ -216,10 +216,10 @@ public class TestGame extends GameMode
     {
         //genPlayer();
         genTestFigure(1f, 300, 0);
-//        genTestFigureNPC(1, 200, 50);
-//        genTestFigureNPC(1, 200, 100);
-//        genTestFigureNPC(1, 200, 200);
-//        genTestFigureNPC(1, 100, 50);
+        genTestFigureNPC(1, 200, 50);
+        genTestFigureNPC(1, 200, 100);
+        genTestFigureNPC(1, 200, 200);
+        genTestFigureNPC(1, 100, 50);
 
         //genTestTriangle(20f, 190, 250);
 

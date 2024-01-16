@@ -58,6 +58,7 @@ public class Main
             public static final int MESH     = 4;
             public static final int FACE     = 4;
             public static final int VERTEX   = 2;
+            public static final int UV       = 2;
             public static final int HULL     = 4;
             public static final int POINT    = 4;
             public static final int EDGE     = 4;
@@ -77,6 +78,12 @@ public class Main
         private static int armature_index   = 0;
         private static int mesh_index       = 0;
         private static int face_index       = 0;
+        private static int uv_index         = 0;
+
+        public static int next_uv()
+        {
+            return uv_index / Width.UV;
+        }
 
         public static int next_face()
         {
@@ -133,6 +140,14 @@ public class Main
             return new_edge(p1, p2, l, 0);
         }
 
+        public static int new_texture_uv(float u, float v)
+        {
+            GPU.create_texture_uv(next_uv(), u, v);
+            var idx = uv_index;
+            uv_index += Width.UV;
+            return idx / Width.UV;
+        }
+
         public static int new_edge(int p1, int p2, float l, int flags)
         {
             GPU.create_edge(next_edge(), p1, p2, l, flags);
@@ -182,9 +197,9 @@ public class Main
             return idx / Width.ARMATURE;
         }
 
-        public static int new_vertex_reference(float x, float y, float[] weights)
+        public static int new_vertex_reference(float x, float y, float[] weights, int[] uv_table)
         {
-            GPU.create_vertex_reference(next_vertex_ref(), x, y, weights);
+            GPU.create_vertex_reference(next_vertex_ref(), x, y, weights, uv_table);
             var idx = vertex_ref_index;
             vertex_ref_index += Width.VERTEX;
             return idx / Width.VERTEX;

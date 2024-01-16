@@ -35,7 +35,7 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
         {
             int4 ref_mesh = mesh_references[mesh_id];
             int offset = offsets[i];
-            int bank = atomic_inc(&counters[i]);
+            int bank = atomic_dec(&counters[i]) - 1;
             int4 out;
             out.x = ref_mesh.y - ref_mesh.x + 1;
             out.y = (ref_mesh.w - ref_mesh.z + 1) * 3;

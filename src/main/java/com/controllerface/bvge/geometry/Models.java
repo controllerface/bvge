@@ -256,13 +256,27 @@ public class Models
             List<Vector2f> uvData = new ArrayList<>();
             String[] names = bone_name_map.get(this_vert);
             float[] weights = bone_weight_map.get(this_vert);
-            var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y(), weights);
 
             uvChannels.forEach(channel ->
             {
                 var next = channel.get(count.get());
                 uvData.add(new Vector2f(next.x(), next.y()));
             });
+
+            int[] uv_table =  new int[2];
+            uv_table[0] = -1;
+            uvData.forEach(uv ->
+            {
+                var uv_ref = Main.Memory.new_texture_uv(uv.x, uv.y);
+                if (uv_table[0] == -1)
+                {
+                    uv_table[0] = uv_ref;
+                }
+                uv_table[1] = uv_ref;
+            });
+
+
+            var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y(), weights, uv_table);
 
             mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), uvData, names, weights);
             count.getAndIncrement();

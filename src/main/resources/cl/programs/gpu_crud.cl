@@ -26,6 +26,13 @@ __kernel void create_edge(__global float4 *edges,
     edges[target] = new_edge; 
 }
 
+__kernel void create_texture_uv(__global float2 *texture_uvs,
+                                int target,
+                                float2 new_texture_uv)
+{
+    texture_uvs[target] = new_texture_uv; 
+}
+
 __kernel void create_armature(__global float4 *armatures,
                               __global int4 *armature_flags,
                               __global int2 *hull_tables,
@@ -44,12 +51,15 @@ __kernel void create_armature(__global float4 *armatures,
 
 __kernel void create_vertex_reference(__global float2 *vertex_references,
                                       __global float4 *vertex_weights,
+                                      __global int2 *uv_tables,
                                       int target,
                                       float2 new_vertex_reference,
-                                      float4 new_vertex_weights)
+                                      float4 new_vertex_weights,
+                                      int2 new_uv_table)
 {
     vertex_references[target] = new_vertex_reference; 
     vertex_weights[target] = new_vertex_weights; 
+    uv_tables[target] = new_uv_table;
 }
 
 __kernel void create_bone_bind_pose(__global float16 *bone_bind_poses,
