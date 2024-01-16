@@ -42,9 +42,6 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
             out.z = hull_id;
             int id = offset + bank;
             mesh_details[id] = out;
-            // printf("debug: hull id: %d mesh id: %d offset: %d bank: %d vc: %d fc: %d", 
-            //     hull_id, mesh_id, offset, bank, out.x, out.y);
-            //printf("debug: out.x=%d out.y=%d out.z=%d", out.x, out.y, out.z);
         }
     }
 }
@@ -71,7 +68,6 @@ __kernel void count_mesh_batches(__global int4 *mesh_details,
         current_batch_count += next.y;
     }
     int bc = current_batch + 1;
-    //printf("debug: batches=%d", bc);
     total[0] = bc;
 }
 
@@ -88,7 +84,6 @@ __kernel void calculate_batch_offsets(__global int *mesh_offsets,
         {
             last_new = next.w;
             mesh_offsets[current_batch++] = i;
-            //printf("debug: batch=%d offset=%d", current_batch, i);
         }
     }
 }
@@ -101,7 +96,6 @@ __kernel void transfer_detail_data(__global int4 *mesh_details,
     int d_index = t_index + offset;
     int2 details = mesh_details[d_index].xy;
     mesh_transfer[t_index] = details;
-    //printf("counts: x=%d y=%d t_id=%d d_id=%d", details.x, details.y, t_index, d_index);
 }
 
 __kernel void transfer_render_data(__global int4 *hull_element_tables,
@@ -110,8 +104,11 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
                                    __global int4 *mesh_faces,
                                    __global float4 *points,
                                    __global int4 *vertex_tables,
+                                   __global int2 *uv_tables,
+                                   __global float2 *texture_uvs,
                                    __global int *command_buffer,
                                    __global float2 *vertex_buffer,
+                                   __global float2 *uv_buffer,
                                    __global int *element_buffer,
                                    __global int4 *mesh_details,
                                    __global int2 *mesh_transfer,
@@ -139,10 +136,12 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
     {
         float4 point = points[point_id];
         int4 vertex_table = vertex_tables[point_id];
+        int2 uv_table = uv_tables[vertex_table.x];
+        float2 uv = texture_uvs[uv_table.x]; // todo: select from available uvs based on hull data
         float2 pos = point.xy;
         int ref_offset = vertex_table.x - mesh_reference.x + transfer.x;
         vertex_buffer[ref_offset] = pos;
-        //printf("point offset vbo=%d table=%d ref=%d hull=%d_", ref_offset, point_id, vertex_table.x, hull_id);
+        uv_buffer[ref_offset] = uv;
     }
 
     int start_face = mesh_reference.z;
@@ -161,11 +160,5 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
         element_buffer[o1] = p1;
         element_buffer[o2] = p2;
         element_buffer[o3] = p3;
-        //printf("element offset ebo1=%d ebo2=%d ebo3=%d p1=%d p2=%d p3=%d hull=%d_", 
-        //o1, o2, o3,
-        //p1, p2, p3,
-        //hull_id);
-
-
     }
 }

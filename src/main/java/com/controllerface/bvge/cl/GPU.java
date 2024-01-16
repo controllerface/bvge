@@ -1221,6 +1221,8 @@ public class GPU
         transfer_render_data_k.set_mesh_faces(Memory.mesh_faces.gpu.pointer());
         transfer_render_data_k.set_points(Memory.points.gpu.pointer());
         transfer_render_data_k.set_vertex_tables(Memory.point_vertex_tables.gpu.pointer());
+        transfer_render_data_k.set_uv_tables(Memory.uv_tables.gpu.pointer());
+        transfer_render_data_k.set_texture_uvs(Memory.texture_uvs.gpu.pointer());
         Kernel.transfer_render_data.set_kernel(transfer_render_data_k);
 
 
@@ -1626,6 +1628,7 @@ public class GPU
     public static void transfer_render_data(int ebo,
                                             int vbo,
                                             int cbo,
+                                            int uvo,
                                             cl_mem mesh_details,
                                             cl_mem mesh_transfer,
                                             int count,
@@ -1634,16 +1637,19 @@ public class GPU
         var ebo_mem = shared_mem.get(ebo);
         var vbo_mem = shared_mem.get(vbo);
         var cbo_mem = shared_mem.get(cbo);
+        var uvo_mem = shared_mem.get(uvo);
         Kernel.transfer_render_data.share_mem(ebo_mem);
         Kernel.transfer_render_data.share_mem(vbo_mem);
         Kernel.transfer_render_data.share_mem(cbo_mem);
+        Kernel.transfer_render_data.share_mem(uvo_mem);
 
-        Kernel.transfer_render_data.set_arg(6, Pointer.to(cbo_mem));
-        Kernel.transfer_render_data.set_arg(7, Pointer.to(vbo_mem));
-        Kernel.transfer_render_data.set_arg(8, Pointer.to(ebo_mem));
-        Kernel.transfer_render_data.set_arg(9, Pointer.to(mesh_details));
-        Kernel.transfer_render_data.set_arg(10, Pointer.to(mesh_transfer));
-        Kernel.transfer_render_data.set_arg(11, Pointer.to(arg_int(offset)));
+        Kernel.transfer_render_data.set_arg(8, Pointer.to(cbo_mem));
+        Kernel.transfer_render_data.set_arg(9, Pointer.to(vbo_mem));
+        Kernel.transfer_render_data.set_arg(10, Pointer.to(uvo_mem));
+        Kernel.transfer_render_data.set_arg(11, Pointer.to(ebo_mem));
+        Kernel.transfer_render_data.set_arg(12, Pointer.to(mesh_details));
+        Kernel.transfer_render_data.set_arg(13, Pointer.to(mesh_transfer));
+        Kernel.transfer_render_data.set_arg(14, Pointer.to(arg_int(offset)));
         Kernel.transfer_render_data.call(arg_long(count));
     }
 
