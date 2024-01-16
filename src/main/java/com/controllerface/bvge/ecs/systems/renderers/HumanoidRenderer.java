@@ -119,8 +119,12 @@ public class HumanoidRenderer extends GameSystem
         GPU.count_mesh_instances(query, counters, total, mesh_count);
         GPU.scan_mesh_offsets(counters, offsets, mesh_count);
 
-        // todo: bail if none? even though unlikely?
         int total_instances = GPU.cl_read_pinned_int(total);
+        if (total_instances == 0) // highly unlikely, but just in case
+        {
+            return;
+        }
+
         long data_size = (long)total_instances * Sizeof.cl_int4;
         var details_b = GPU.new_empty_buffer(data_size);
 
