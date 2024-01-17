@@ -57,6 +57,14 @@ public class GPUKernel
         clSetKernelArg(this.kernel, pos, size, pointer);
     }
 
+
+    public GPUKernel mem_arg(int pos, Pointer pointer)
+    {
+        def_arg(pos, Sizeof.cl_mem);
+        clSetKernelArg(this.kernel, pos, Sizeof.cl_mem, pointer);
+        return this;
+    }
+
     /**
      * Sets a new argument to a null pointer. This is used for defining buffers that are local to the
      * GPU kernel execution. Buffers of this nature are sized but have no data transferred, the empty

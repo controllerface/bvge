@@ -1049,11 +1049,11 @@ public class GPU
         sort_reactions_k.set_offsets(Memory.point_offsets.gpu.pointer());
         Kernel.sort_reactions.set_kernel(sort_reactions_k);
 
-        var apply_reactions_k = new ApplyReactions_k(command_queue, Program.sat_collide.gpu);
-        apply_reactions_k.set_points(Memory.points.gpu.pointer());
-        apply_reactions_k.set_point_anti_grav(Memory.point_anti_gravity.gpu.pointer());
-        apply_reactions_k.set_point_reactions(Memory.point_reactions.gpu.pointer());
-        apply_reactions_k.set_point_offsets(Memory.point_offsets.gpu.pointer());
+        var apply_reactions_k = new ApplyReactions_k(command_queue, Program.sat_collide.gpu)
+            .mem_arg(ApplyReactions_k.Arg.points.ordinal(), Memory.points.gpu.pointer())
+            .mem_arg(ApplyReactions_k.Arg.anti_gravity.ordinal(), Memory.point_anti_gravity.gpu.pointer())
+            .mem_arg(ApplyReactions_k.Arg.point_reactions.ordinal(), Memory.point_reactions.gpu.pointer())
+            .mem_arg(ApplyReactions_k.Arg.point_offsets.ordinal(), Memory.point_offsets.gpu.pointer());
         Kernel.apply_reactions.set_kernel(apply_reactions_k);
 
         var move_armatures_k = new MoveArmatures_k(command_queue, Program.sat_collide.gpu);
@@ -1137,15 +1137,16 @@ public class GPU
 
         // movement
 
-        var animate_hulls_k = new AnimateHulls_k(command_queue, Program.animate_hulls.gpu);
-        animate_hulls_k.set_points(Memory.points.gpu.pointer());
-        animate_hulls_k.set_hulls(Memory.hulls.gpu.pointer());
-        animate_hulls_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
-        animate_hulls_k.set_vertex_table(Memory.point_vertex_tables.gpu.pointer());
-        animate_hulls_k.set_bone_tables(Memory.point_bone_tables.gpu.pointer());
-        animate_hulls_k.set_armatures(Memory.armatures.gpu.pointer());
-        animate_hulls_k.set_vertex_refs(Memory.vertex_references.gpu.pointer());
-        animate_hulls_k.set_bone_instances(Memory.bone_instances.gpu.pointer());
+        var animate_hulls_k = new AnimateHulls_k(command_queue, Program.animate_hulls.gpu)
+            .mem_arg(AnimateHulls_k.Arg.points.ordinal(), Memory.points.gpu.pointer())
+            .mem_arg(AnimateHulls_k.Arg.hulls.ordinal(), Memory.hulls.gpu.pointer())
+            .mem_arg(AnimateHulls_k.Arg.hull_flags.ordinal(), Memory.hull_flags.gpu.pointer())
+            .mem_arg(AnimateHulls_k.Arg.vertex_tables.ordinal(), Memory.point_vertex_tables.gpu.pointer())
+            .mem_arg(AnimateHulls_k.Arg.bone_tables.ordinal(), Memory.point_bone_tables.gpu.pointer())
+            .mem_arg(AnimateHulls_k.Arg.armatures.ordinal(), Memory.armatures.gpu.pointer())
+            .mem_arg(AnimateHulls_k.Arg.vertex_references.ordinal(), Memory.vertex_references.gpu.pointer())
+            .mem_arg(AnimateHulls_k.Arg.bones.ordinal(), Memory.bone_instances.gpu.pointer());
+
         Kernel.animate_hulls.set_kernel(animate_hulls_k);
 
         var integrate_k = new Integrate_k(command_queue, Program.integrate.gpu);
@@ -1184,10 +1185,10 @@ public class GPU
         count_candidates_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
         Kernel.count_candidates.set_kernel(count_candidates_k);
 
-        var aabb_collide_k = new AABBCollide_k(command_queue, Program.aabb_collide.gpu);
-        aabb_collide_k.set_aabb(Memory.aabb.gpu.pointer());
-        aabb_collide_k.set_aabb_key_table(Memory.aabb_key_table.gpu.pointer());
-        aabb_collide_k.set_hull_flags(Memory.hull_flags.gpu.pointer());
+        var aabb_collide_k = new AABBCollide_k(command_queue, Program.aabb_collide.gpu)
+            .mem_arg(AABBCollide_k.Arg.bounds.ordinal(), Memory.aabb.gpu.pointer())
+            .mem_arg(AABBCollide_k.Arg.bounds_bank_data.ordinal(), Memory.aabb_key_table.gpu.pointer())
+            .mem_arg(AABBCollide_k.Arg.hull_flags.ordinal(), Memory.hull_flags.gpu.pointer());
         Kernel.aabb_collide.set_kernel(aabb_collide_k);
 
         var finalize_candidates_k = new FinalizeCandidates_k(command_queue, Program.locate_in_bounds.gpu);
@@ -1601,9 +1602,9 @@ public class GPU
 
     public static void count_mesh_batches(cl_mem mesh_details, cl_mem total, int count)
     {
-        Kernel.count_mesh_batches.set_arg(0, Pointer.to(mesh_details));
-        Kernel.count_mesh_batches.set_arg(1, Pointer.to(total));
-        Kernel.count_mesh_batches.set_arg(2, Pointer.to(arg_int(count)));
+        Kernel.count_mesh_batches.set_arg(CountMeshBatches_k.Arg.mesh_details.ordinal(), Pointer.to(mesh_details));
+        Kernel.count_mesh_batches.set_arg(CountMeshBatches_k.Arg.total.ordinal(), Pointer.to(total));
+        Kernel.count_mesh_batches.set_arg(CountMeshBatches_k.Arg.count.ordinal(), Pointer.to(arg_int(count)));
         Kernel.count_mesh_batches.call(global_single_size);
     }
 
@@ -2013,23 +2014,21 @@ public class GPU
 
         cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
-        Kernel.aabb_collide.set_arg(3, physics_buffer.candidate_counts.pointer());
-        Kernel.aabb_collide.set_arg(4, physics_buffer.candidate_offsets.pointer());
-        Kernel.aabb_collide.set_arg(5, physics_buffer.key_map.pointer());
-        Kernel.aabb_collide.set_arg(6, physics_buffer.key_bank.pointer());
-        Kernel.aabb_collide.set_arg(7, physics_buffer.key_counts.pointer());
-        Kernel.aabb_collide.set_arg(8, physics_buffer.key_offsets.pointer());
-        Kernel.aabb_collide.set_arg(9, physics_buffer.matches.pointer());
-        Kernel.aabb_collide.set_arg(10, physics_buffer.matches_used.pointer());
-        Kernel.aabb_collide.set_arg(11, counter_pointer);
-        Kernel.aabb_collide.set_arg(12, physics_buffer.x_sub_divisions);
-        Kernel.aabb_collide.set_arg(13, physics_buffer.key_count_length);
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.candidates.ordinal(), physics_buffer.candidate_counts.pointer());
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.match_offsets.ordinal(), physics_buffer.candidate_offsets.pointer());
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.key_map.ordinal(), physics_buffer.key_map.pointer());
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.key_bank.ordinal(), physics_buffer.key_bank.pointer());
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.key_counts.ordinal(), physics_buffer.key_counts.pointer());
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.key_offsets.ordinal(), physics_buffer.key_offsets.pointer());
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.matches.ordinal(), physics_buffer.matches.pointer());
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.used.ordinal(), physics_buffer.matches_used.pointer());
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.counter.ordinal(), counter_pointer);
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.x_subdivisions.ordinal(), physics_buffer.x_sub_divisions);
+        Kernel.aabb_collide.set_arg(AABBCollide_k.Arg.key_count_length.ordinal(), physics_buffer.key_count_length);
         Kernel.aabb_collide.call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
         int count = cl_read_pinned_int(counter_buffer);
         physics_buffer.set_candidate_count(count);
-
-        //clReleaseMemObject(aabb_counter);
     }
 
     public static void finalize_candidates()
@@ -2116,7 +2115,7 @@ public class GPU
 
     public static void apply_reactions()
     {
-        Kernel.apply_reactions.set_arg(0, physics_buffer.reactions_out.pointer());
+        Kernel.apply_reactions.set_arg(ApplyReactions_k.Arg.reactions.ordinal(), physics_buffer.reactions_out.pointer());
         Kernel.apply_reactions.call(arg_long(Main.Memory.next_point()));
     }
 
