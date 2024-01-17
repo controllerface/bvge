@@ -2,8 +2,9 @@
 
 inline void polygon_circle_collision(int polygon_id, int circle_id,
                                      __global float4 *hulls,
-                                     __global int2 *hull_flags,
+                                     __global int4 *hull_flags,
                                      __global int4 *element_tables,
+                                     __global int4 *vertex_tables,
                                      __global float4 *points,
                                      __global float4 *edges,
                                      __global float2 *reactions,
@@ -36,7 +37,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     float2 normalBuffer;
     int4 vertex_table;
 
-    int cp_index = closest_point_circle(circle.xy, polygon_table, points);
+    int cp_index = closest_point_circle(circle.xy, polygon_table, points, vertex_tables);
     
     // polygon
     for (int i = 0; i < b1_edge_count; i++)
@@ -61,7 +62,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = project_polygon(points, polygon_table, vectorBuffer1);
+        float3 proj_a = project_polygon(points, vertex_tables, polygon_table, vectorBuffer1);
         float3 proj_b = project_circle(circle, vectorBuffer1);
         float distance = polygon_distance(proj_a, proj_b);
 
@@ -91,7 +92,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     float2 collision_point = points[cp_index].xy;
     float2 edge = collision_point - points[circle_table.x].xy;
     float2 axis = fast_normalize(edge);
-    float3 proj_p = project_polygon(points, polygon_table, axis);
+    float3 proj_p = project_polygon(points, vertex_tables, polygon_table, axis);
     float3 proj_c = project_circle(circle, axis);
     float _distance = polygon_distance(proj_c, proj_p) / (circle.z / 2);
     if (_distance > 0)
@@ -137,8 +138,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
 
 
     // vertex and edge object flags
-    int2 vo_f = hull_flags[(int)vertex_object_id];
-    int2 eo_f = hull_flags[(int)edge_object_id];
+    int4 vo_f = hull_flags[(int)vertex_object_id];
+    int4 eo_f = hull_flags[(int)edge_object_id];
 
     float vo_mass = masses[vo_f.y];
     float eo_mass = masses[eo_f.y];

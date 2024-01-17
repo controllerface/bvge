@@ -3,7 +3,7 @@ __kernel void prepare_bones(__global float16 *bones,
                             __global int *bone_index, 
                             __global float4 *hulls,
                             __global float4 *armatures,
-                            __global int2 *hull_flags,
+                            __global int4 *hull_flags,
                             __global float2 *vbo,
                             int offset)
 {
@@ -12,7 +12,7 @@ __kernel void prepare_bones(__global float16 *bones,
     
     float4 hull = hulls[bone_id];
     float16 bone = bones[bone_id];
-    int2 hull_1_flags = hull_flags[bone_id];
+    int4 hull_1_flags = hull_flags[bone_id];
     float4 armature = armatures[hull_1_flags.y];
 
     int bone_idx = bone_index[bone_id];

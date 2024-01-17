@@ -21,7 +21,6 @@ __kernel void scan_int_single_block_out(__global int *input,
     // perform the "up sweep" traversing from leaf to root of the tree
     upsweep(buffer, m);
 
-    // set lane 1 to 0? todo: determine why
     if (b_index == (m - 1)) 
     {
         buffer[b_index] = 0;

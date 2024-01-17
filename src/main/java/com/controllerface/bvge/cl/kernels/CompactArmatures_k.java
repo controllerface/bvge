@@ -11,23 +11,26 @@ public class CompactArmatures_k extends GPUKernel
 {
     public CompactArmatures_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.compact_armatures), 16);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_mem);
-        def_arg(2, Sizeof.cl_mem);
-        def_arg(3, Sizeof.cl_mem);
-        def_arg(4, Sizeof.cl_mem);
-        def_arg(5, Sizeof.cl_mem);
-        def_arg(6, Sizeof.cl_mem);
-        def_arg(7, Sizeof.cl_mem);
-        def_arg(8, Sizeof.cl_mem);
-        def_arg(9, Sizeof.cl_mem);
-        def_arg(10, Sizeof.cl_mem);
-        def_arg(11, Sizeof.cl_mem);
-        def_arg(12, Sizeof.cl_mem);
-        def_arg(13, Sizeof.cl_mem);
-        def_arg(14, Sizeof.cl_mem);
-        def_arg(15, Sizeof.cl_mem);
+        super(command_queue, program.kernels().get(GPU.Kernel.compact_armatures), 18);
+        int arg_index = 0;
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int *buffer_in
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int4 *buffer_in_2
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global float4 *armatures
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global float2 *armature_accel
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int4 *armature_flags
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int2 *hull_tables
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global float4 *hulls
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int4 *hull_flags
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int4 *element_tables
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global float4 *points
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int2 *vertex_tables
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int4 *bone_tables
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global float4 *edges
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int *bone_shift
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int *point_shift
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int *edge_shift
+        def_arg(arg_index++, Sizeof.cl_mem);  // __global int *hull_shift
+        System.out.printf("set %d args for %s\n", arg_index, this.getClass().getSimpleName());
     }
 
     public void set_armatures(Pointer armatures)
@@ -75,28 +78,33 @@ public class CompactArmatures_k extends GPUKernel
         new_arg(10, Sizeof.cl_mem, vertex_tables);
     }
 
+    public void set_bone_tables(Pointer bone_tables)
+    {
+        new_arg(11, Sizeof.cl_mem, bone_tables);
+    }
+
     public void set_edges(Pointer edges)
     {
-        new_arg(11, Sizeof.cl_mem, edges);
+        new_arg(12, Sizeof.cl_mem, edges);
     }
 
     public void set_bone_shift(Pointer bone_shift)
     {
-        new_arg(12, Sizeof.cl_mem, bone_shift);
+        new_arg(13, Sizeof.cl_mem, bone_shift);
     }
 
     public void set_point_shift(Pointer point_shift)
     {
-        new_arg(13, Sizeof.cl_mem, point_shift);
+        new_arg(14, Sizeof.cl_mem, point_shift);
     }
 
     public void set_edge_shift(Pointer edge_shift)
     {
-        new_arg(14, Sizeof.cl_mem, edge_shift);
+        new_arg(15, Sizeof.cl_mem, edge_shift);
     }
 
     public void set_hull_shift(Pointer hull_shift)
     {
-        new_arg(15, Sizeof.cl_mem, hull_shift);
+        new_arg(16, Sizeof.cl_mem, hull_shift);
     }
 }

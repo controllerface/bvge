@@ -32,9 +32,9 @@ public class PrepareBones_k extends GPUKernel
         new_arg(1, Sizeof.cl_mem, bone_references);
     }
 
-    public void set_bone_index(Pointer bone_index)
+    public void set_bone_index_tables(Pointer bone_index_table)
     {
-        new_arg(2, Sizeof.cl_mem, bone_index);
+        new_arg(2, Sizeof.cl_mem, bone_index_table);
     }
 
     public void set_hulls(Pointer hulls)

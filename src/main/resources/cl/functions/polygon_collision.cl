@@ -1,8 +1,9 @@
 
 inline void polygon_collision(int b1_id, int b2_id,
                              __global float4 *hulls,
-                             __global int2 *hull_flags,
+                             __global int4 *hull_flags,
                              __global int4 *element_tables,
+                             __global int4 *vertex_tables,
                              __global float4 *points,
                              __global float4 *edges,
                              __global float2 *reactions,
@@ -67,8 +68,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = project_polygon(points, hull_1_table, vectorBuffer1);
-        float3 proj_b = project_polygon(points, hull_2_table, vectorBuffer1);
+        float3 proj_a = project_polygon(points, vertex_tables, hull_1_table, vectorBuffer1);
+        float3 proj_b = project_polygon(points, vertex_tables, hull_2_table, vectorBuffer1);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -114,8 +115,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
         vectorBuffer1 = fast_normalize(vectorBuffer1);
 
-        float3 proj_a = project_polygon(points, hull_1_table, vectorBuffer1);
-        float3 proj_b = project_polygon(points, hull_2_table, vectorBuffer1);
+        float3 proj_a = project_polygon(points, vertex_tables, hull_1_table, vectorBuffer1);
+        float3 proj_b = project_polygon(points, vertex_tables, hull_2_table, vectorBuffer1);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -168,14 +169,14 @@ inline void polygon_collision(int b1_id, int b2_id,
         normalBuffer.y = normalBuffer.y * -1;
     }
 
-    float3 final_proj = project_polygon(points, vertex_table, normalBuffer);
+    float3 final_proj = project_polygon(points, vertex_tables, vertex_table, normalBuffer);
     vert_index = final_proj.z;
     min_distance = min_distance / length(normalBuffer);
 
 
     // vertex and edge object flags
-    int2 vo_f = hull_flags[(int)vertex_object_id];
-    int2 eo_f = hull_flags[(int)edge_object_id];
+    int4 vo_f = hull_flags[(int)vertex_object_id];
+    int4 eo_f = hull_flags[(int)edge_object_id];
 
     float vo_mass = masses[vo_f.y];
     float eo_mass = masses[eo_f.y];
@@ -209,21 +210,16 @@ inline void polygon_collision(int b1_id, int b2_id,
     bool vs = (vo_f.x & IS_STATIC) !=0;
     bool es = (eo_f.x & IS_STATIC) !=0;
     
-    // todo: convert to ternary expression for warp efficiency 
-    if (vs || es)
-    {
-        if (vs)
-        {
-            vertex_magnitude = 0.0f;
-            edge_magnitude = 1.0f;
-        }
-        if (es)
-        {
-            vertex_magnitude = 1.0f;
-            edge_magnitude = 0.0f;
-        }
-    }
+    bool any_s = (vs || es);
 
+    // ugly ternaries are for warp efficiency 
+    vertex_magnitude = any_s 
+        ? vs ? 0.0f : 1.0f
+        : vertex_magnitude;
+
+    edge_magnitude = any_s 
+        ? es ? 0.0f : 1.0f
+        : edge_magnitude;
 
     float4 vert_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];

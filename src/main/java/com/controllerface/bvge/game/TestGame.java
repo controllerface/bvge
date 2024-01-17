@@ -163,7 +163,7 @@ public class TestGame extends GameMode
     private void genTestFigureNPC(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON, 1);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, FLAG_NONE | FLAG_POLYGON, 50);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -207,6 +207,8 @@ public class TestGame extends GameMode
         // main renderers go here, one for each model type that can be rendered
         // todo: rewrite using hull/model filter
         ecs.registerSystem(new CrateRenderer(ecs));
+        ecs.registerSystem(new HumanoidRenderer(ecs));
+        //ecs.registerSystem(new PointRenderer(ecs));
     }
 
     @Override
@@ -214,6 +216,10 @@ public class TestGame extends GameMode
     {
         //genPlayer();
         genTestFigure(1f, 300, 0);
+        genTestFigureNPC(1, 200, 50);
+        genTestFigureNPC(1, 200, 100);
+        genTestFigureNPC(1, 200, 200);
+        genTestFigureNPC(1, 100, 50);
 
         //genTestTriangle(20f, 190, 250);
 
@@ -271,10 +277,10 @@ public class TestGame extends GameMode
 
 
 
-        genCircles(100, 7f, 5f, -120, 100);
-        //genSquares(100,  9f, 5f, -120, 100);
-        //genCrates2(40, 7f, 0.025f, 100, 100);
-        //genTriangles(100,  9f, 5f, -200, 100);
+        //genCircles(100, 7f, 5f, 0, 100);
+        genSquares(100,  9f, 5f, -120, 100);
+        genCrates2(20, 7f, 0.025f, 100, 100);
+        //genTriangles(100,  9f, 5f, 200, 100);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);

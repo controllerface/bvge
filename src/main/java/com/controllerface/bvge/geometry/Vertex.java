@@ -4,16 +4,16 @@ import org.joml.Vector2f;
 
 import java.util.List;
 
-public record Vertex(int vert_ref_id, float x, float y, List<Vector2f> uv_data,String bone_name, float bone_weight)
+public record Vertex(int vert_ref_id, float x, float y, List<Vector2f> uv_data, String[] bone_names, float[] bone_weights)
 {
     public Vertex uniform_scale(float s)
     {
-        return new Vertex(vert_ref_id, x * s, y * s, uv_data,bone_name, bone_weight);
+        return new Vertex(vert_ref_id, x * s, y * s, uv_data, bone_names, bone_weights);
     }
 
     public Vertex translate(float tx, float ty)
     {
-        return new Vertex(vert_ref_id, x + tx, y + ty, uv_data, bone_name, bone_weight);
+        return new Vertex(vert_ref_id, x + tx, y + ty, uv_data, bone_names, bone_weights);
     }
 
     public double angle_between(Vertex point)

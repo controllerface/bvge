@@ -7,13 +7,16 @@ are designed to operate on a single target object.
 // create functions
 
 __kernel void create_point(__global float4 *points,
-                           __global int2 *vertex_tables,
+                           __global int4 *vertex_tables,
+                           __global int4 *bone_tables,
                            int target,
                            float4 new_point,
-                           int2 new_vertex_table)
+                           int4 new_vertex_table,
+                           int4 new_bone_table)
 {
     points[target] = new_point; 
     vertex_tables[target] = new_vertex_table; 
+    bone_tables[target] = new_bone_table; 
 }
 
 __kernel void create_edge(__global float4 *edges,
@@ -21,6 +24,13 @@ __kernel void create_edge(__global float4 *edges,
                            float4 new_edge)
 {
     edges[target] = new_edge; 
+}
+
+__kernel void create_texture_uv(__global float2 *texture_uvs,
+                                int target,
+                                float2 new_texture_uv)
+{
+    texture_uvs[target] = new_texture_uv; 
 }
 
 __kernel void create_armature(__global float4 *armatures,
@@ -40,10 +50,26 @@ __kernel void create_armature(__global float4 *armatures,
 }
 
 __kernel void create_vertex_reference(__global float2 *vertex_references,
+                                      __global float4 *vertex_weights,
+                                      __global int2 *uv_tables,
                                       int target,
-                                      float2 new_vertex_reference)
+                                      float2 new_vertex_reference,
+                                      float4 new_vertex_weights,
+                                      int2 new_uv_table)
 {
     vertex_references[target] = new_vertex_reference; 
+    vertex_weights[target] = new_vertex_weights; 
+    uv_tables[target] = new_uv_table;
+}
+
+__kernel void create_bone_bind_pose(__global float16 *bone_bind_poses,
+                                    __global int *bone_bind_parents,
+                                    int target,
+                                    float16 new_bone_bind_pose,
+                                    int bone_bind_parent)
+{
+    bone_bind_poses[target] = new_bone_bind_pose; 
+    bone_bind_parents[target] = bone_bind_parent; 
 }
 
 __kernel void create_bone_reference(__global float16 *bone_references,
@@ -54,29 +80,46 @@ __kernel void create_bone_reference(__global float16 *bone_references,
 }
 
 __kernel void create_bone(__global float16 *bones,
-                          __global int *bone_ref_index,
+                          __global int2 *bone_ref_tables,
                           int target,
                           float16 new_bone,
-                          int new_bone_ref_id)
+                          int2 new_bone_table)
 {
     bones[target] = new_bone; 
-    bone_ref_index[target] = new_bone_ref_id; 
+    bone_ref_tables[target] = new_bone_table; 
+}
+
+__kernel void create_mesh_reference(__global int4 *mesh_ref_tables,
+                                    int target,
+                                    int4 new_mesh_ref_table)
+{
+    mesh_ref_tables[target] = new_mesh_ref_table;
+}
+
+__kernel void create_mesh_face(__global int4 *mesh_faces,
+                               int target,
+                               int4 new_mesh_face)
+{
+    mesh_faces[target] = new_mesh_face;
 }
 
 __kernel void create_hull(__global float4 *hulls,
                           __global float2 *hull_rotations,
                           __global int4 *element_tables,
-                          __global int2 *hull_flags,
+                          __global int4 *hull_flags,
+                          __global int *hull_mesh_ids,
                           int target,
                           float4 new_hull,
                           float2 new_rotation,
                           int4 new_table,
-                          int2 new_flags)
+                          int4 new_flags,
+                          int new_hull_mesh_id)
 {
     hulls[target] = new_hull; 
     hull_rotations[target] = new_rotation; 
     element_tables[target] = new_table; 
     hull_flags[target] = new_flags; 
+    hull_mesh_ids[target] = new_hull_mesh_id;
 }
 
 // read functions

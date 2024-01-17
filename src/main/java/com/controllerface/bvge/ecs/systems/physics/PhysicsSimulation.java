@@ -115,18 +115,10 @@ public class PhysicsSimulation extends GameSystem
         * GPU Side - Physics
         * */
 
-        // The first step is to animate the vertices of bone-tracked hulls. This ensures that all tracked objects
-        // that have animation will have their hulls moved into position for the current frame. It may seem odd
-        // to process animations as part of physics and not rendering, however this is required as the animated
-        // objects need to be accounted for in physical space. The hulls representing the rendered meshes are
-        // what is actually moved, and the result of the hull movement is used to position the original mesh for
-        // rendering. This separation is necessary as model geometry is too complex to use as a collision boundary.
-        GPU.animate_hulls();
-
-        // Now that all animated hulls are in their initial frame positions, we perform the mathematical steps
-        // to calculate where the individual points of each hull currently are. When this call returns, all
-        // tracked physics objects will be in their new locations, and points will have their current and
-        // previous location values updated for this tick cycle.
+        // The first order of business is to perform the mathematical steps required to calculate where the
+        // individual points of each hull currently are. When this call returns, all tracked physics objects
+        // will be in their new locations, and points will have their current and previous location values
+        // updated for this tick cycle.
         GPU.integrate(dt, uniform_grid);
 
         /*
@@ -265,6 +257,11 @@ public class PhysicsSimulation extends GameSystem
             return;
         }
 
+        // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
+        // convex shape. Animations may move points into positions where the geometry is slightly concave,
+        // so this call acts as a small hedge against this happening before collision checks can be performed.
+        GPU.resolve_constraints(EDGE_STEPS);
+
         this.accumulator += dt;
         while (this.accumulator >= TICK_RATE)
         {
@@ -274,31 +271,35 @@ public class PhysicsSimulation extends GameSystem
                 this.tickSimulation(sub_step);
                 this.accumulator -= sub_step;
 
-                // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain their
-                // defined shapes. Without this step, the individual points of the tracked physics hulls will deform on
-                // impact, and may fly off in random directions, typically causing simulation failure. The number of steps
-                // that are performed each tick has an impact on the accuracy of the hull boundaries within the simulation.
+                // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
+                // objects that have animation will have their hulls moved into position for the current tick. It
+                // may seem odd to process animations as part of physics and not rendering, however this is required
+                // as the animated objects need to be accounted for in physical space. The hulls representing the
+                // rendered meshes are what is actually moved, and the result of the hull movement is used to position
+                // the original mesh for rendering. This separation is necessary as model geometry is too complex to
+                // use as a collision boundary.
+                GPU.animate_hulls();
+
+                // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain
+                // their defined shapes. Without this step, the individual points of the tracked physics hulls will
+                // deform on impact, and may fly off in random directions, typically causing simulation failure. The
+                // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
+                // within the simulation.
                 GPU.resolve_constraints(EDGE_STEPS);
+
                 physics_buffer.finishTick();
             }
-
         }
 
-        // deletion of objects happens only once per simulation cycle, instead of every tick
+        // Deletion of objects happens only once per simulation cycle, instead of every tick
         // to ensure buffer compaction happens as infrequently as possible.
         GPU.locate_out_of_bounds();
         GPU.delete_and_compact();
 
-        // todo: check if this needs to be done or not
-        //  initial visuals without it don't look bad, but would be good to see if there's some
-        //  kind of improvement if the lerp is done. It should only affect the visual location of
-        //  objects, not their actual location.
-//        float drift = this.accumulator / TICK_RATE;
-//        if (drift != 0)
-//        {
-//
-//            //this.lerp(drift);
-//        }
+        // After all simulation is done for this pass, do one last animate pass so that vertices are all in
+        // the expected location for rendering. The interplay between animation and edge constraints may leave
+        // the points in slightly incorrect positions. This makes sure everything is good for the render step.
+        GPU.animate_hulls();
     }
 
 
