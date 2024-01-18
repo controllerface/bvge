@@ -24,9 +24,4 @@ public class UpdateAccel_k extends GPUKernel<UpdateAccel_k.Args>
     {
         super(command_queue, program.kernels().get(GPU.Kernel.update_accel), Args.values());
     }
-
-    public void set_accel(Pointer accel)
-    {
-        new_arg(0, Sizeof.cl_mem, accel);
-    }
 }

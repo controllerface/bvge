@@ -2,6 +2,7 @@ package com.controllerface.bvge.ecs.systems.physics;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.CLUtils;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
@@ -39,15 +40,15 @@ public class PhysicsObjects
 
     public static int particle(float x, float y, float size, float mass)
     {
-        int next_armature_id = Main.Memory.next_armature();
-        int next_hull_index = Main.Memory.next_hull();
+        int next_armature_id = GPU.Memory.next_armature();
+        int next_hull_index = GPU.Memory.next_hull();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
         var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
         int[] bone_index_table = { mesh.bone_offsets().get(0).offset_ref_id(), 0 };
-        int bone_id = Main.Memory.new_bone(bone_index_table, raw_matrix);
+        int bone_id = GPU.Memory.new_bone(bone_index_table, raw_matrix);
 
         var vert = mesh.vertices()[0];
 
@@ -57,9 +58,9 @@ public class PhysicsObjects
         var t1 = CLUtils.arg_int4(vert.vert_ref_id(), next_hull_index, 0,0);
 
         // store the single point for the circle
-        var p1_index = Main.Memory.new_point(p1, t1, new int[4]);
+        var p1_index = GPU.Memory.new_point(p1, t1, new int[4]);
 
-        var edge_index = Main.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1));
+        var edge_index = GPU.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1));
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
@@ -70,22 +71,22 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
-        int hull_id = Main.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
+        int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
-        return Main.Memory.new_armature(x, y, hull_table, armature_flags, mass);
+        return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
     }
 
     public static int tri(float x, float y, float size, int flags, float mass)
     {
-        int next_armature_id = Main.Memory.next_armature();
-        int next_hull_index = Main.Memory.next_hull();
+        int next_armature_id = GPU.Memory.next_armature();
+        int next_hull_index = GPU.Memory.next_hull();
 
         var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
         int[] bone_index_table = { mesh.bone_offsets().get(0).offset_ref_id(), 0 };
-        int bone_id = Main.Memory.new_bone(bone_index_table, raw_matrix);
+        int bone_id = GPU.Memory.new_bone(bone_index_table, raw_matrix);
 
         var hull = mesh.vertices();
         hull = scale_hull(hull, size);
@@ -103,9 +104,9 @@ public class PhysicsObjects
         var t2 = CLUtils.arg_int4(v2.vert_ref_id(), next_hull_index, 0, 0);
         var t3 = CLUtils.arg_int4(v3.vert_ref_id(), next_hull_index, 0, 0);
 
-        var p1_index = Main.Memory.new_point(p1, t1, new int[4]);
-        var p2_index = Main.Memory.new_point(p2, t2, new int[4]);
-        var p3_index = Main.Memory.new_point(p3, t3, new int[4]);
+        var p1_index = GPU.Memory.new_point(p1, t1, new int[4]);
+        var p2_index = GPU.Memory.new_point(p2, t2, new int[4]);
+        var p3_index = GPU.Memory.new_point(p3, t3, new int[4]);
 
         MathEX.centroid(vector_buffer, p1, p2, p3);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -113,9 +114,9 @@ public class PhysicsObjects
 
         var angle = MathEX.angle_between_lines(l1, l2);
 
-        var start_edge = Main.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
-        Main.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2));
-        var end_edge = Main.Memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1));
+        var start_edge = GPU.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
+        GPU.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2));
+        var end_edge = GPU.Memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1));
 
         var table = CLUtils.arg_int4(p1_index, p3_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
@@ -124,23 +125,23 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int [] _flag =  CLUtils.arg_int4(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
-        int hull_id = Main.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
+        int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0,0);
-        return Main.Memory.new_armature(x, y, hull_table, armature_flags, mass);
+        return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
     }
 
     public static int box(float x, float y, float size, int flags, float mass)
     {
-        int next_armature_id = Main.Memory.next_armature();
-        int next_hull_index = Main.Memory.next_hull();
+        int next_armature_id = GPU.Memory.next_armature();
+        int next_hull_index = GPU.Memory.next_hull();
 
         // get the box mesh
         var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
         int[] bone_index_table = { mesh.bone_offsets().get(0).offset_ref_id(), 0 };
-        int bone_id = Main.Memory.new_bone(bone_index_table, raw_matrix);
+        int bone_id = GPU.Memory.new_bone(bone_index_table, raw_matrix);
 
         var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
@@ -161,10 +162,10 @@ public class PhysicsObjects
         var t3 = CLUtils.arg_int4(v3.vert_ref_id(), next_hull_index, 0, 0);
         var t4 = CLUtils.arg_int4(v4.vert_ref_id(), next_hull_index, 0, 0);
 
-        var p1_index = Main.Memory.new_point(p1, t1, new int[4]);
-        var p2_index = Main.Memory.new_point(p2, t2, new int[4]);
-        var p3_index = Main.Memory.new_point(p3, t3, new int[4]);
-        var p4_index = Main.Memory.new_point(p4, t4, new int[4]);
+        var p1_index = GPU.Memory.new_point(p1, t1, new int[4]);
+        var p2_index = GPU.Memory.new_point(p2, t2, new int[4]);
+        var p3_index = GPU.Memory.new_point(p3, t3, new int[4]);
+        var p4_index = GPU.Memory.new_point(p4, t4, new int[4]);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -173,14 +174,14 @@ public class PhysicsObjects
         var angle = MathEX.angle_between_lines(l1, l2);
 
         // box sides
-        var start_edge = Main.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
-        Main.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2));
-        Main.Memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3));
-        Main.Memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4));
+        var start_edge = GPU.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
+        GPU.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2));
+        GPU.Memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3));
+        GPU.Memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4));
 
         // corner braces
-        Main.Memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR);
-        var end_edge = Main.Memory.new_edge(p2_index, p4_index, edgeDistance(p4, p2), FLAG_INTERIOR);
+        GPU.Memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR);
+        var end_edge = GPU.Memory.new_edge(p2_index, p4_index, edgeDistance(p4, p2), FLAG_INTERIOR);
 
         var table = CLUtils.arg_int4(p1_index, p4_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
@@ -189,10 +190,10 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int [] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON, next_armature_id, bone_id, bone_id);
-        int hull_id = Main.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
+        int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
-        return Main.Memory.new_armature(x, y, hull_table, armature_flags, mass);
+        return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
     }
 
     public static int dynamic_Box(float x, float y, float size, float mass)
@@ -211,7 +212,7 @@ public class PhysicsObjects
     {
         // we need to know the next armature ID before we create it so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
-        int next_armature_id = Main.Memory.next_armature();
+        int next_armature_id = GPU.Memory.next_armature();
 
         // get the model from the registry
         var model = Models.get_model_by_index(model_index);
@@ -226,7 +227,7 @@ public class PhysicsObjects
         int last_hull = -1;
         for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)
         {
-            int next_hull = Main.Memory.next_hull();
+            int next_hull = GPU.Memory.next_hull();
             var hull_mesh = meshes[mesh_index];
 
             // The hull is generated based on the mesh, so it's initial position and rotation
@@ -249,7 +250,7 @@ public class PhysicsObjects
                 var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
                 var bind_pose_id = model.bone_indices().get(bone_offset.name());
                 int[] bone_table = new int[]{ bone_offset.offset_ref_id(), bind_pose_id };
-                int next_bone = Main.Memory.new_bone(bone_table, raw_matrix);
+                int next_bone = GPU.Memory.new_bone(bone_table, raw_matrix);
                 bone_map.put(bone_offset.name(), next_bone);
 
                 if (start_bone == -1)
@@ -278,7 +279,7 @@ public class PhysicsObjects
                 bone_ids[1] = bone_names[1] == null ? -1 : bone_map.get(bone_names[1]);
                 bone_ids[2] = bone_names[2] == null ? -1 : bone_map.get(bone_names[2]);
                 bone_ids[3] = bone_names[3] == null ? -1 : bone_map.get(bone_names[3]);
-                var next_point = Main.Memory.new_point(new_point, new_table, bone_ids);
+                var next_point = GPU.Memory.new_point(new_point, new_table, bone_ids);
 
                 if (point_start == -1)
                 {
@@ -304,7 +305,7 @@ public class PhysicsObjects
                 bone_ids[1] = bone_names[1] == null ? -1 : bone_map.get(bone_names[1]);
                 bone_ids[2] = bone_names[2] == null ? -1 : bone_map.get(bone_names[2]);
                 bone_ids[3] = bone_names[3] == null ? -1 : bone_map.get(bone_names[3]);
-                var next_point = Main.Memory.new_point(new_point, new_table, bone_ids);
+                var next_point = GPU.Memory.new_point(new_point, new_table, bone_ids);
                 point_end = next_point;
             }
 
@@ -324,7 +325,7 @@ public class PhysicsObjects
                 var point_1 = convex_buffer.get(point_1_index);
                 var point_2 = convex_buffer.get(point_2_index);
                 var distance = edgeDistance(point_2, point_1);
-                var next_edge = Main.Memory.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance);
+                var next_edge = GPU.Memory.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance);
                 if (edge_start == -1)
                 {
                     edge_start = next_edge;
@@ -348,7 +349,7 @@ public class PhysicsObjects
                     var p1 = convex_buffer.get(p1_index);
                     var p2 = convex_buffer.get(p2_index);
                     var distance = edgeDistance(p2, p1);
-                    edge_end = Main.Memory.new_edge(convex_table[p1_index], convex_table[p2_index], distance, FLAG_INTERIOR);
+                    edge_end = GPU.Memory.new_edge(convex_table[p1_index], convex_table[p2_index], distance, FLAG_INTERIOR);
                 }
             }
 
@@ -362,14 +363,14 @@ public class PhysicsObjects
                 var p1 = convex_buffer.get(p1_index);
                 var p2 = convex_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                edge_end = Main.Memory.new_edge(convex_table[p1_index], convex_table[p2_index], distance, FLAG_INTERIOR);
+                edge_end = GPU.Memory.new_edge(convex_table[p1_index], convex_table[p2_index], distance, FLAG_INTERIOR);
 
                 if (quarter_count > 1)
                 {
                     int p3_index = p1_index + quarter_count;
                     var p3 = convex_buffer.get(p3_index);
                     var distance2 = edgeDistance(p3, p1);
-                    edge_end = Main.Memory.new_edge(convex_table[p1_index], convex_table[p3_index], distance2, FLAG_INTERIOR);
+                    edge_end = GPU.Memory.new_edge(convex_table[p1_index], convex_table[p3_index], distance2, FLAG_INTERIOR);
                 }
             }
             if (odd_count) // if there was an odd vertex at the end, connect it to the mid-point
@@ -378,7 +379,7 @@ public class PhysicsObjects
                 var p1 = convex_buffer.get(half_count+1);
                 var p2 = convex_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                edge_end = Main.Memory.new_edge(convex_table[half_count+1], convex_table[p2_index], distance, FLAG_INTERIOR);
+                edge_end = GPU.Memory.new_edge(convex_table[half_count+1], convex_table[p2_index], distance, FLAG_INTERIOR);
             }
 
             // calculate centroid and reference angle
@@ -392,7 +393,7 @@ public class PhysicsObjects
             var rotation = CLUtils.arg_float2(0, angle);
 
             int[] hull_flags = CLUtils.arg_int4(flags, next_armature_id, start_bone, end_bone);
-            int hull_id = Main.Memory.new_hull(hull_mesh.mesh_id(), transform, rotation, table, hull_flags);
+            int hull_id = GPU.Memory.new_hull(hull_mesh.mesh_id(), transform, rotation, table, hull_flags);
 
             if (first_hull == -1)
             {
@@ -420,7 +421,7 @@ public class PhysicsObjects
 
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, 0);
-        return Main.Memory.new_armature(root_x, root_y, hull_table, armature_flags, mass);
+        return GPU.Memory.new_armature(root_x, root_y, hull_table, armature_flags, mass);
     }
 
 

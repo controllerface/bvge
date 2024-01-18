@@ -85,7 +85,7 @@ public class EdgeRenderer extends GameSystem
         glEnableVertexAttribArray(1);
 
         int offset = 0;
-        for (int remaining = Main.Memory.next_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPU.Memory.next_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             GPU.GL_edges(edge_vbo, flag_vbo, offset, count);

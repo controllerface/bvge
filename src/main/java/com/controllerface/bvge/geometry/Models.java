@@ -1,6 +1,7 @@
 package com.controllerface.bvge.geometry;
 
 import com.controllerface.bvge.Main;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
@@ -166,7 +167,7 @@ public class Models
         if (raw_bone.mNumWeights() > 0)
         {
             var bone_node = node_map.get(bone_name);
-            int bone_ref_id = Main.Memory.new_bone_reference(raw_matrix);
+            int bone_ref_id = GPU.Memory.new_bone_reference(raw_matrix);
             bone_offset = new BoneOffset(bone_ref_id, bone_name, offset, bone_node);
         }
         else
@@ -218,7 +219,7 @@ public class Models
             raw_face[1] = indices.get(1);
             raw_face[2] = indices.get(2);
             raw_face[3] = mesh_id;
-            int face_id = Main.Memory.new_mesh_face(raw_face);
+            int face_id = GPU.Memory.new_mesh_face(raw_face);
             mesh_faces[face_index++] = new Face(face_id, indices.get(0), indices.get(1), indices.get(2));
         }
         return mesh_faces;
@@ -267,7 +268,7 @@ public class Models
             uv_table[0] = -1;
             uvData.forEach(uv ->
             {
-                var uv_ref = Main.Memory.new_texture_uv(uv.x, uv.y);
+                var uv_ref = GPU.Memory.new_texture_uv(uv.x, uv.y);
                 if (uv_table[0] == -1)
                 {
                     uv_table[0] = uv_ref;
@@ -276,7 +277,7 @@ public class Models
             });
 
 
-            var vert_ref_id = Main.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y(), weights, uv_table);
+            var vert_ref_id = GPU.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y(), weights, uv_table);
 
             mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), uvData, names, weights);
             count.getAndIncrement();
@@ -298,7 +299,7 @@ public class Models
                 + " ensure node and geometry names match in blender");
         }
 
-        int next_mesh = Main.Memory.next_mesh();
+        int next_mesh = GPU.Memory.next_mesh();
         var bone_name_map = new HashMap<Integer, String[]>();
         var bone_weight_map = new HashMap<Integer, float[]>();
         var mesh_bones = load_mesh_bones(raw_mesh, node_map, bone_name_map, bone_weight_map);
@@ -311,7 +312,7 @@ public class Models
         table[1] = mesh_vertices[mesh_vertices.length - 1].vert_ref_id();
         table[2] = mesh_faces[0].index();
         table[3] = mesh_faces[mesh_faces.length - 1].index();
-        var mesh_id = Main.Memory.new_mesh_reference(table);
+        var mesh_id = GPU.Memory.new_mesh_reference(table);
 
         assert mesh_id == next_mesh : "Mesh alignment error";
 
@@ -462,7 +463,7 @@ public class Models
     }
 
     // todo: need to move to just tracking a count of models and not holding onto their
-    //  object ids. Instead, renderers should use a CL call to set up batches. Main
+    //  object ids. Instead, renderers should use a CL call to set up batches. GPU
     //  memory segments will still be kept at accurate counts, so batching logic can
     //  still work the same as it currently does.
 
@@ -544,7 +545,7 @@ public class Models
             raw_matrix[15] = node_transform.m33();
 
             var p = new BoneBindPose(parent, node_transform);
-            parent = Main.Memory.new_bone_bind_pose(parent, raw_matrix);
+            parent = GPU.Memory.new_bone_bind_pose(parent, raw_matrix);
             bind_name_map.put(name, parent);
             bind_pose_map.put(parent, p);
             transforms.put(name, global_transform);

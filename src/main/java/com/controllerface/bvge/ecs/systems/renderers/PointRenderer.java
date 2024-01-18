@@ -62,7 +62,7 @@ public class PointRenderer extends GameSystem
         glEnableVertexAttribArray(0);
 
         int offset = 0;
-        for (int remaining = Main.Memory.next_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPU.Memory.next_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             GPU.GL_points(point_vbo, offset, count);

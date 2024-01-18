@@ -84,7 +84,7 @@ public class BoundingBoxRenderer extends GameSystem
         //  low enough that some batches would be unneeded. This will leak memory resources
         //  so should be adjusted when deleting entities is added.
 
-        var hull_count = Main.Memory.next_hull();
+        var hull_count = GPU.Memory.next_hull();
         var needed_batches = hull_count / Constants.Rendering.MAX_BATCH_SIZE;
         var r = hull_count % Constants.Rendering.MAX_BATCH_SIZE;
         if (r > 0)
