@@ -716,8 +716,6 @@ public class GPU
         Memory.edge_shift.init(max_points);
         Memory.hull_shift.init(max_hulls);
 
-
-        // Debugging info
         int total = Memory.hulls.length
             + Memory.hull_mesh_ids.length
             + Memory.armature_accel.length
