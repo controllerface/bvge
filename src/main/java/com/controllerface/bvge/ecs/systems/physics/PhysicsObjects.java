@@ -60,7 +60,7 @@ public class PhysicsObjects
         // store the single point for the circle
         var p1_index = GPU.Memory.new_point(p1, t1, new int[4]);
 
-        var edge_index = GPU.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1));
+        var edge_index = GPU.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1), FLAG_NONE);
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
@@ -114,9 +114,9 @@ public class PhysicsObjects
 
         var angle = MathEX.angle_between_lines(l1, l2);
 
-        var start_edge = GPU.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
-        GPU.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2));
-        var end_edge = GPU.Memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1));
+        var start_edge = GPU.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), FLAG_NONE);
+        GPU.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), FLAG_NONE);
+        var end_edge = GPU.Memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1), FLAG_NONE);
 
         var table = CLUtils.arg_int4(p1_index, p3_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
@@ -174,10 +174,10 @@ public class PhysicsObjects
         var angle = MathEX.angle_between_lines(l1, l2);
 
         // box sides
-        var start_edge = GPU.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1));
-        GPU.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2));
-        GPU.Memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3));
-        GPU.Memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4));
+        var start_edge = GPU.Memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), FLAG_NONE);
+        GPU.Memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), FLAG_NONE);
+        GPU.Memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3), FLAG_NONE);
+        GPU.Memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4), FLAG_NONE);
 
         // corner braces
         GPU.Memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), FLAG_INTERIOR);
@@ -325,7 +325,7 @@ public class PhysicsObjects
                 var point_1 = convex_buffer.get(point_1_index);
                 var point_2 = convex_buffer.get(point_2_index);
                 var distance = edgeDistance(point_2, point_1);
-                var next_edge = GPU.Memory.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance);
+                var next_edge = GPU.Memory.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance, FLAG_NONE);
                 if (edge_start == -1)
                 {
                     edge_start = next_edge;

@@ -116,8 +116,8 @@ public class HumanoidRenderer extends GameSystem
         GPU.clear_buffer(total, Sizeof.cl_int);
         GPU.clear_buffer(mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
 
-        GPU.count_mesh_instances(query, counters, total, mesh_count);
-        GPU.scan_mesh_offsets(counters, offsets, mesh_count);
+        GPU.GL_count_mesh_instances(query, counters, total, mesh_count);
+        GPU.GL_scan_mesh_offsets(counters, offsets, mesh_count);
 
         int total_instances = GPU.cl_read_pinned_int(total);
         if (total_instances == 0) // highly unlikely, but just in case
@@ -128,15 +128,15 @@ public class HumanoidRenderer extends GameSystem
         long data_size = (long)total_instances * Sizeof.cl_int4;
         var details_b = GPU.new_empty_buffer(data_size);
 
-        GPU.write_mesh_details(query, counters, offsets, details_b, mesh_count);
-        GPU.count_mesh_batches(details_b, total, total_instances);
+        GPU.GL_write_mesh_details(query, counters, offsets, details_b, mesh_count);
+        GPU.GL_count_mesh_batches(details_b, total, total_instances);
 
         int total_batches = GPU.cl_read_pinned_int(total);
         long batch_index_size = (long) total_batches * Sizeof.cl_int;
 
         var batch_offset_b = GPU.new_empty_buffer(batch_index_size);
 
-        GPU.calculate_batch_offsets(batch_offset_b, details_b, total_instances);
+        GPU.GL_calculate_batch_offsets(batch_offset_b, details_b, total_instances);
 
         int[] raw_offsets = new int[total_batches];
         GPU.cl_read_buffer(batch_offset_b, batch_index_size, Pointer.to(raw_offsets));
@@ -159,8 +159,8 @@ public class HumanoidRenderer extends GameSystem
                 ? total_instances - start
                 : raw_offsets[next_batch] - start;
 
-            GPU.transfer_detail_data(details_b, mesh_transfer, count, start);
-            GPU.transfer_render_data(element_b, vertex_b, command_b, texture_uv_b, details_b, mesh_transfer, count, start);
+            GPU.GL_transfer_detail_data(details_b, mesh_transfer, count, start);
+            GPU.GL_transfer_render_data(element_b, vertex_b, command_b, texture_uv_b, details_b, mesh_transfer, count, start);
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
         }
 

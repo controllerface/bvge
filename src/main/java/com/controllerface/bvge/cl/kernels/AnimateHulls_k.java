@@ -24,8 +24,8 @@ public class AnimateHulls_k extends GPUKernel<AnimateHulls_k.Args>
         @Override public long size() { return size; }
     }
 
-    public AnimateHulls_k(cl_command_queue command_queue, GPUProgram program)
+    public AnimateHulls_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.animate_hulls), Args.values());
+        super(command_queue, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_hulls), Args.values());
     }
 }

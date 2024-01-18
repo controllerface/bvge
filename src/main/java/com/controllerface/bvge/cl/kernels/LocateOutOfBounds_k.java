@@ -21,8 +21,8 @@ public class LocateOutOfBounds_k extends GPUKernel<LocateOutOfBounds_k.Args>
         @Override public long size() { return size; }
     }
 
-    public LocateOutOfBounds_k(cl_command_queue command_queue, GPUProgram program)
+    public LocateOutOfBounds_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.locate_out_of_bounds), Args.values());
+        super(command_queue, GPU.Program.scan_deletes.gpu.kernels().get(GPU.Kernel.locate_out_of_bounds), Args.values());
     }
 }

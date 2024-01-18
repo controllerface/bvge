@@ -22,8 +22,8 @@ public class PrepareTransforms_k extends GPUKernel<PrepareTransforms_k.Args>
         @Override public long size() { return size; }
     }
 
-    public PrepareTransforms_k(cl_command_queue command_queue, GPUProgram program)
+    public PrepareTransforms_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.prepare_transforms), Args.values());
+        super(command_queue, GPU.Program.prepare_transforms.gpu.kernels().get(GPU.Kernel.prepare_transforms), Args.values());
     }
 }

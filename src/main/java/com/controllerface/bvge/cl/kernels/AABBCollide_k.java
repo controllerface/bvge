@@ -30,8 +30,8 @@ public class AABBCollide_k extends GPUKernel<AABBCollide_k.Args>
         @Override public long size() { return this.size; }
     }
 
-    public AABBCollide_k(cl_command_queue command_queue, GPUProgram program)
+    public AABBCollide_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.aabb_collide), Args.values());
+        super(command_queue, GPU.Program.aabb_collide.gpu.kernels().get(GPU.Kernel.aabb_collide), Args.values());
     }
 }

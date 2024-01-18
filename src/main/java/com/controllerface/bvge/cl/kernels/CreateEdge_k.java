@@ -20,8 +20,8 @@ public class CreateEdge_k extends GPUKernel<CreateEdge_k.Args>
         @Override public long size() { return size; }
     }
 
-    public CreateEdge_k(cl_command_queue command_queue, GPUProgram program)
+    public CreateEdge_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.create_edge), Args.values());
+        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_edge), Args.values());
     }
 }

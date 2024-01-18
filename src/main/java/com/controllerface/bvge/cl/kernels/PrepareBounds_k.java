@@ -20,8 +20,8 @@ public class PrepareBounds_k extends GPUKernel<PrepareBounds_k.Args>
         @Override public long size() { return size; }
     }
 
-    public PrepareBounds_k(cl_command_queue command_queue, GPUProgram program)
+    public PrepareBounds_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.prepare_bounds), Args.values());
+        super(command_queue, GPU.Program.prepare_bounds.gpu.kernels().get(GPU.Kernel.prepare_bounds), Args.values());
     }
 }

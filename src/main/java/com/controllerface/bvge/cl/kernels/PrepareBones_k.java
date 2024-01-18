@@ -25,8 +25,8 @@ public class PrepareBones_k extends GPUKernel<PrepareBones_k.Args>
         @Override public long size() { return size; }
     }
 
-    public PrepareBones_k(cl_command_queue command_queue, GPUProgram program)
+    public PrepareBones_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.prepare_bones), Args.values());
+        super(command_queue, GPU.Program.prepare_bones.gpu.kernels().get(GPU.Kernel.prepare_bones), Args.values());
     }
 }

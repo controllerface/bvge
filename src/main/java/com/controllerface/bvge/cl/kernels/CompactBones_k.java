@@ -19,8 +19,8 @@ public class CompactBones_k extends GPUKernel<CompactBones_k.Args>
         @Override public long size() { return size; }
     }
 
-    public CompactBones_k(cl_command_queue command_queue, GPUProgram program)
+    public CompactBones_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.compact_bones), Args.values());
+        super(command_queue, GPU.Program.scan_deletes.gpu.kernels().get(GPU.Kernel.compact_bones), Args.values());
     }
 }

@@ -25,8 +25,8 @@ public class CompactHulls_k extends GPUKernel<CompactHulls_k.Args>
         @Override public long size() { return size; }
     }
 
-    public CompactHulls_k(cl_command_queue command_queue, GPUProgram program)
+    public CompactHulls_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.compact_hulls), Args.values());
+        super(command_queue, GPU.Program.scan_deletes.gpu.kernels().get(GPU.Kernel.compact_hulls), Args.values());
     }
 }

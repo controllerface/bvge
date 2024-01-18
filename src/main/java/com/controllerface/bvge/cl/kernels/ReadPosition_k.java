@@ -20,8 +20,8 @@ public class ReadPosition_k extends GPUKernel<ReadPosition_k.Args>
         @Override public long size() { return size; }
     }
 
-    public ReadPosition_k(cl_command_queue command_queue, GPUProgram program)
+    public ReadPosition_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.read_position), Args.values());
+        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.read_position), Args.values());
     }
 }

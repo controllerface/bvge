@@ -29,8 +29,8 @@ public class CompleteDeletesMultiBlockOut_k extends GPUKernel<CompleteDeletesMul
         @Override public long size() { return size; }
     }
 
-    public CompleteDeletesMultiBlockOut_k(cl_command_queue command_queue, GPUProgram program)
+    public CompleteDeletesMultiBlockOut_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.complete_deletes_multi_block_out), Args.values());
+        super(command_queue, GPU.Program.scan_deletes.gpu.kernels().get(GPU.Kernel.complete_deletes_multi_block_out), Args.values());
     }
 }

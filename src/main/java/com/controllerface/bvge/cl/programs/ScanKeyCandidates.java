@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.GPUProgram;
 import static com.controllerface.bvge.cl.GPU.*;
 import static com.controllerface.bvge.cl.CLUtils.read_src;
 
-public class ScanCandidates extends GPUProgram
+public class ScanKeyCandidates extends GPUProgram
 {
     @Override
     protected void init()

@@ -20,8 +20,8 @@ public class PreparePoints_k extends GPUKernel<PreparePoints_k.Args>
         @Override public long size() { return size; }
     }
 
-    public PreparePoints_k(cl_command_queue command_queue, GPUProgram program)
+    public PreparePoints_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.prepare_points), Args.values());
+        super(command_queue, GPU.Program.prepare_points.gpu.kernels().get(GPU.Kernel.prepare_points), Args.values());
     }
 }

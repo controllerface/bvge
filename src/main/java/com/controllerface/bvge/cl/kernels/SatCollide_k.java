@@ -29,8 +29,8 @@ public class SatCollide_k extends GPUKernel<SatCollide_k.Args>
         @Override public long size() { return size; }
     }
 
-    public SatCollide_k(cl_command_queue command_queue, GPUProgram program)
+    public SatCollide_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.sat_collide), Args.values());
+        super(command_queue, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.sat_collide), Args.values());
     }
 }

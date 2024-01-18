@@ -21,8 +21,8 @@ public class RootHullFilter_k extends GPUKernel<RootHullFilter_k.Args>
         @Override public long size() { return size; }
     }
 
-    public RootHullFilter_k(cl_command_queue command_queue, GPUProgram program)
+    public RootHullFilter_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.root_hull_filter), Args.values());
+        super(command_queue, GPU.Program.root_hull_filter.gpu.kernels().get(GPU.Kernel.root_hull_filter), Args.values());
     }
 }

@@ -19,8 +19,8 @@ public class ScanInt4SingleBlock_k extends GPUKernel<ScanInt4SingleBlock_k.Args>
         @Override public long size() { return size; }
     }
 
-    public ScanInt4SingleBlock_k(cl_command_queue command_queue, GPUProgram program)
+    public ScanInt4SingleBlock_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.scan_int4_single_block), Args.values());
+        super(command_queue, GPU.Program.scan_int4_array.gpu.kernels().get(GPU.Kernel.scan_int4_single_block), Args.values());
     }
 }

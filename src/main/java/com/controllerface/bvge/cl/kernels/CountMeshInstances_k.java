@@ -22,9 +22,9 @@ public class CountMeshInstances_k extends GPUKernel<CountMeshInstances_k.Args>
         @Override public long size() { return size; }
     }
 
-    public CountMeshInstances_k(cl_command_queue command_queue, GPUProgram program)
+    public CountMeshInstances_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.count_mesh_instances), Args.values());
+        super(command_queue, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.count_mesh_instances), Args.values());
     }
 
 }

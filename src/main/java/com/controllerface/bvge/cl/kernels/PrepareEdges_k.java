@@ -22,8 +22,8 @@ public class PrepareEdges_k extends GPUKernel<PrepareEdges_k.Args>
         @Override public long size() { return size; }
     }
 
-    public PrepareEdges_k(cl_command_queue command_queue, GPUProgram program)
+    public PrepareEdges_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.prepare_edges), Args.values());
+        super(command_queue,  GPU.Program.prepare_edges.gpu.kernels().get(GPU.Kernel.prepare_edges), Args.values());
     }
 }

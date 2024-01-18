@@ -19,8 +19,8 @@ public class CalculateBatchOffsets_k extends GPUKernel<CalculateBatchOffsets_k.A
         @Override public long size() { return size; }
     }
 
-    public CalculateBatchOffsets_k(cl_command_queue command_queue, GPUProgram program)
+    public CalculateBatchOffsets_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.calculate_batch_offsets), Args.values());
+        super(command_queue, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.calculate_batch_offsets), Args.values());
     }
 }

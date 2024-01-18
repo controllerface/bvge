@@ -22,8 +22,8 @@ public class SortReactions_k extends GPUKernel<SortReactions_k.Args>
         @Override public long size() { return size; }
     }
 
-    public SortReactions_k(cl_command_queue command_queue, GPUProgram program)
+    public SortReactions_k(cl_command_queue command_queue)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.sort_reactions), Args.values());
+        super(command_queue, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.sort_reactions), Args.values());
     }
 }
