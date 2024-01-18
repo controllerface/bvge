@@ -7,19 +7,22 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class RootHullFilter_k extends GPUKernel
+public class RootHullFilter_k extends GPUKernel<RootHullFilter_k.Args>
 {
-    public RootHullFilter_k(cl_command_queue command_queue, GPUProgram program)
+    public enum Args implements GPUKernelArg
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.root_hull_filter), 4);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_mem);
-        def_arg(2, Sizeof.cl_mem);
-        def_arg(3, Sizeof.cl_int);
+        armature_flags(Sizeof.cl_mem),
+        hulls_out(Sizeof.cl_mem),
+        counter(Sizeof.cl_mem),
+        model_id(Sizeof.cl_int);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
     }
 
-    public void set_armature_flags(Pointer armatures_flags)
+    public RootHullFilter_k(cl_command_queue command_queue, GPUProgram program)
     {
-        new_arg(0, Sizeof.cl_mem, armatures_flags);
+        super(command_queue, program.kernels().get(GPU.Kernel.root_hull_filter), Args.values());
     }
 }

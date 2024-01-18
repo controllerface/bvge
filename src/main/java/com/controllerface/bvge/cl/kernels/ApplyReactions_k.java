@@ -6,9 +6,9 @@ import com.controllerface.bvge.cl.GPUProgram;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class ApplyReactions_k extends GPUKernel
+public class ApplyReactions_k extends GPUKernel<ApplyReactions_k.Args>
 {
-    public enum Arg
+    public enum Args implements GPUKernelArg
     {
         reactions(Sizeof.cl_float2),
         points(Sizeof.cl_float4),
@@ -17,19 +17,12 @@ public class ApplyReactions_k extends GPUKernel
         point_offsets(Sizeof.cl_int);
 
         public final long size;
-
-        Arg(long size)
-        {
-            this.size = size;
-        }
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
     }
 
     public ApplyReactions_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.apply_reactions), Arg.values().length);
-        for (var arg : Arg.values())
-        {
-            def_arg(arg.ordinal(), arg.size);
-        }
+        super(command_queue, program.kernels().get(GPU.Kernel.apply_reactions), Args.values());
     }
 }

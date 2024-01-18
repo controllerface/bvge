@@ -12,20 +12,19 @@ in a process that updates all the tracked vertices each frame.
 Some meta-data about the hulls that are updated is stored within
 them before this kernel completes. 
  */
-__kernel void integrate(
-    __global float4 *hulls,
-    __global float4 *armatures,
-    __global int4 *armature_flags,
-    __global int4 *element_tables,
-    __global float2 *armature_accel,
-    __global float2 *hull_rotations,
-    __global float4 *points,
-    __global float4 *bounds,
-    __global int4 *bounds_index_data,
-    __global int2 *bounds_bank_data,
-    __global int4 *hull_flags,
-    __global float *anti_gravity,
-    __global float *args)
+__kernel void integrate(__global float4 *hulls,
+                        __global float4 *armatures,
+                        __global int4 *armature_flags,
+                        __global int4 *element_tables,
+                        __global float2 *armature_accel,
+                        __global float2 *hull_rotations,
+                        __global float4 *points,
+                        __global float4 *bounds,
+                        __global int4 *bounds_index_data,
+                        __global int2 *bounds_bank_data,
+                        __global int4 *hull_flags,
+                        __global float *anti_gravity,
+                        __global float *args)
 {
     int gid = get_global_id(0);
 

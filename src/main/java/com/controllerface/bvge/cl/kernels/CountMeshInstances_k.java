@@ -7,23 +7,24 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class CountMeshInstances_k extends GPUKernel
+public class CountMeshInstances_k extends GPUKernel<CountMeshInstances_k.Args>
 {
-    public CountMeshInstances_k(cl_command_queue command_queue, GPUProgram program)
+    public enum Args implements GPUKernelArg
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.count_mesh_instances), 5);
-        int arg_index = 0;
-        def_arg(arg_index++, Sizeof.cl_mem);
-        def_arg(arg_index++, Sizeof.cl_mem);
-        def_arg(arg_index++, Sizeof.cl_mem);
-        def_arg(arg_index++, Sizeof.cl_mem);
-        def_arg(arg_index++, Sizeof.cl_int);
-        System.out.printf("set %d args for %s\n", arg_index, this.getClass().getSimpleName());
+        hull_mesh_ids(Sizeof.cl_mem),
+        counters(Sizeof.cl_mem),
+        query(Sizeof.cl_mem),
+        total(Sizeof.cl_mem),
+        count(Sizeof.cl_int);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
     }
 
-    public void set_mesh_ids(Pointer mesh_ids)
+    public CountMeshInstances_k(cl_command_queue command_queue, GPUProgram program)
     {
-        new_arg(0, Sizeof.cl_mem, mesh_ids);
+        super(command_queue, program.kernels().get(GPU.Kernel.count_mesh_instances), Args.values());
     }
 
 }

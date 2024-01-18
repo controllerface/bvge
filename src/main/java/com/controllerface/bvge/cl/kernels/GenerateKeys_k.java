@@ -7,27 +7,25 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class GenerateKeys_k extends GPUKernel
+public class GenerateKeys_k extends GPUKernel<GenerateKeys_k.Args>
 {
+    public enum Args implements GPUKernelArg
+    {
+        bounds_index_data(Sizeof.cl_mem),
+        bounds_bank_data(Sizeof.cl_mem),
+        key_bank(Sizeof.cl_mem),
+        key_counts(Sizeof.cl_mem),
+        x_subdivisions(Sizeof.cl_int),
+        key_bank_length(Sizeof.cl_int),
+        key_count_length(Sizeof.cl_int);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
+    }
+
     public GenerateKeys_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.generate_keys), 7);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_mem);
-        def_arg(2, Sizeof.cl_mem);
-        def_arg(3, Sizeof.cl_mem);
-        def_arg(4, Sizeof.cl_int);
-        def_arg(5, Sizeof.cl_int);
-        def_arg(6, Sizeof.cl_int);
-    }
-
-    public void set_aabb_index(Pointer aabb_index)
-    {
-        new_arg(0, Sizeof.cl_mem, aabb_index);
-    }
-
-    public void set_aabb_key_table(Pointer aabb_key_table)
-    {
-        new_arg(1, Sizeof.cl_mem, aabb_key_table);
+        super(command_queue, program.kernels().get(GPU.Kernel.generate_keys), Args.values());
     }
 }

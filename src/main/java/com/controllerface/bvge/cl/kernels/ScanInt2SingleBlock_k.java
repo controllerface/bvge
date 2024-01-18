@@ -6,13 +6,21 @@ import com.controllerface.bvge.cl.GPUProgram;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class ScanInt2SingleBlock_k extends GPUKernel
+public class ScanInt2SingleBlock_k extends GPUKernel<ScanInt2SingleBlock_k.Args>
 {
+    public enum Args implements GPUKernelArg
+    {
+        data(Sizeof.cl_mem),
+        buffer(Sizeof.cl_mem),
+        n(Sizeof.cl_int);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
+    }
+
     public ScanInt2SingleBlock_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.scan_int2_single_block), 3);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, -1);
-        def_arg(2, Sizeof.cl_int);
+        super(command_queue, program.kernels().get(GPU.Kernel.scan_int2_single_block), Args.values());
     }
 }

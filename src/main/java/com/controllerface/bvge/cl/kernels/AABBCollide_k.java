@@ -6,9 +6,9 @@ import com.controllerface.bvge.cl.GPUProgram;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class AABBCollide_k extends GPUKernel
+public class AABBCollide_k extends GPUKernel<AABBCollide_k.Args>
 {
-    public enum Arg
+    public enum Args implements GPUKernelArg
     {
         bounds(Sizeof.cl_mem),
         bounds_bank_data(Sizeof.cl_mem),
@@ -26,19 +26,12 @@ public class AABBCollide_k extends GPUKernel
         key_count_length(Sizeof.cl_int);
 
         public final long size;
-
-        Arg(long size)
-        {
-            this.size = size;
-        }
+        Args(long size) { this.size = size; }
+        @Override public long size() { return this.size; }
     }
 
     public AABBCollide_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.aabb_collide), Arg.values().length);
-        for (var arg : Arg.values())
-        {
-            def_arg(arg.ordinal(), arg.size);
-        }
+        super(command_queue, program.kernels().get(GPU.Kernel.aabb_collide), Args.values());
     }
 }

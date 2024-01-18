@@ -6,15 +6,21 @@ import com.controllerface.bvge.cl.GPUProgram;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class TransferDetailData_k extends GPUKernel
+public class TransferDetailData_k extends GPUKernel<TransferDetailData_k.Args>
 {
+    public enum Args implements GPUKernelArg
+    {
+        mesh_details(Sizeof.cl_mem),
+        mesh_transfer(Sizeof.cl_mem),
+        offset(Sizeof.cl_int);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
+    }
+
     public TransferDetailData_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.transfer_detail_data), 3);
-        int arg_index = 0;
-        def_arg(arg_index++, Sizeof.cl_mem);
-        def_arg(arg_index++, Sizeof.cl_mem);
-        def_arg(arg_index++, Sizeof.cl_int);
-        System.out.printf("set %d args for %s\n", arg_index, this.getClass().getSimpleName());
+        super(command_queue, program.kernels().get(GPU.Kernel.transfer_detail_data), Args.values());
     }
 }

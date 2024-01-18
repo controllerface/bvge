@@ -1,6 +1,6 @@
-__kernel void count_mesh_instances(__global int *hull_mesh_ids, 
-                                   __global int *counters, 
-                                   __global int *query, 
+__kernel void count_mesh_instances(__global int *hull_mesh_ids,
+                                   __global int *counters,
+                                   __global int *query,
                                    __global int *total,
                                    int count)
 {

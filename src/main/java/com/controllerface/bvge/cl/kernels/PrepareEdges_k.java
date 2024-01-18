@@ -7,25 +7,23 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class PrepareEdges_k extends GPUKernel
+public class PrepareEdges_k extends GPUKernel<PrepareEdges_k.Args>
 {
+    public enum Args implements GPUKernelArg
+    {
+        points(Sizeof.cl_mem),
+        edges(Sizeof.cl_mem),
+        vertex_vbo(Sizeof.cl_mem),
+        flag_vbo(Sizeof.cl_mem),
+        offset(Sizeof.cl_int);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
+    }
+
     public PrepareEdges_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.prepare_edges), 5);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_mem);
-        def_arg(2, Sizeof.cl_mem);
-        def_arg(3, Sizeof.cl_mem);
-        def_arg(4, Sizeof.cl_int);
-    }
-
-    public void set_points(Pointer points)
-    {
-        new_arg(0, Sizeof.cl_mem, points);
-    }
-
-    public void set_edges(Pointer edges)
-    {
-        new_arg(1, Sizeof.cl_mem, edges);
+        super(command_queue, program.kernels().get(GPU.Kernel.prepare_edges), Args.values());
     }
 }

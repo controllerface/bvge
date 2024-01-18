@@ -7,14 +7,22 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class UpdateAccel_k extends GPUKernel
+public class UpdateAccel_k extends GPUKernel<UpdateAccel_k.Args>
 {
+    public enum Args implements GPUKernelArg
+    {
+        armature_accel(Sizeof.cl_mem),
+        target(Sizeof.cl_int),
+        new_value(Sizeof.cl_float2);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
+    }
+
     public UpdateAccel_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.update_accel), 3);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_int);
-        def_arg(2, Sizeof.cl_float2);
+        super(command_queue, program.kernels().get(GPU.Kernel.update_accel), Args.values());
     }
 
     public void set_accel(Pointer accel)

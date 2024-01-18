@@ -7,22 +7,25 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class CountCandidates_k extends GPUKernel
+public class CountCandidates_k extends GPUKernel<CountCandidates_k.Args>
 {
-    public CountCandidates_k(cl_command_queue command_queue, GPUProgram program)
+    public enum Args implements GPUKernelArg
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.count_candidates), 7);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_mem);
-        def_arg(2, Sizeof.cl_mem);
-        def_arg(3, Sizeof.cl_mem);
-        def_arg(4, Sizeof.cl_mem);
-        def_arg(5, Sizeof.cl_int);
-        def_arg(6, Sizeof.cl_int);
+        bounds_bank_data(Sizeof.cl_mem),
+        in_bounds(Sizeof.cl_mem),
+        key_bank(Sizeof.cl_mem),
+        key_counts(Sizeof.cl_mem),
+        candidates(Sizeof.cl_mem),
+        x_subdivisions(Sizeof.cl_int),
+        key_count_length(Sizeof.cl_int);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
     }
 
-    public void set_aabb_key_table(Pointer aabb_key_table)
+    public CountCandidates_k(cl_command_queue command_queue, GPUProgram program)
     {
-        new_arg(0, Sizeof.cl_mem, aabb_key_table);
+        super(command_queue, program.kernels().get(GPU.Kernel.count_candidates), Args.values());
     }
 }

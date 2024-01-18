@@ -32,10 +32,6 @@ public class CameraTracking extends GameSystem
         if (armature == null) return;
 
         float[] pos = GPU.read_position(armature.index());
-
-        // will be null for the first few frames while the loop is primed
-        if (pos == null) return;
-
         float pos_x = pos[0];
         float pos_y = pos[1];
 

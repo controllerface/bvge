@@ -7,25 +7,23 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class CreateBone_k extends GPUKernel
+public class CreateBone_k extends GPUKernel<CreateBone_k.Args>
 {
+    public enum Args implements GPUKernelArg
+    {
+        bones(Sizeof.cl_mem),
+        bone_ref_tables(Sizeof.cl_mem),
+        target(Sizeof.cl_int),
+        new_bone(Sizeof.cl_float16),
+        new_bone_table(Sizeof.cl_int2);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
+    }
+
     public CreateBone_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.create_bone), 5);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_mem);
-        def_arg(2, Sizeof.cl_int);
-        def_arg(3, Sizeof.cl_float16);
-        def_arg(4, Sizeof.cl_int2);
-    }
-
-    public void set_bone_instances(Pointer bone_instances)
-    {
-        new_arg(0, Sizeof.cl_mem, bone_instances);
-    }
-
-    public void set_bone_index_tables(Pointer bone_index)
-    {
-        new_arg(1, Sizeof.cl_mem, bone_index);
+        super(command_queue, program.kernels().get(GPU.Kernel.create_bone), Args.values());
     }
 }

@@ -6,9 +6,9 @@ import com.controllerface.bvge.cl.GPUProgram;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class AnimateHulls_k extends GPUKernel
+public class AnimateHulls_k extends GPUKernel<AnimateHulls_k.Args>
 {
-    public enum Arg
+    public enum Args implements GPUKernelArg
     {
         points(Sizeof.cl_mem),
         hulls(Sizeof.cl_mem),
@@ -20,19 +20,12 @@ public class AnimateHulls_k extends GPUKernel
         bones(Sizeof.cl_mem);
 
         public final long size;
-
-        Arg(long size)
-        {
-            this.size = size;
-        }
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
     }
 
     public AnimateHulls_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.animate_hulls), Arg.values().length);
-        for (var arg : Arg.values())
-        {
-            def_arg(arg.ordinal(), arg.size);
-        }
+        super(command_queue, program.kernels().get(GPU.Kernel.animate_hulls), Args.values());
     }
 }

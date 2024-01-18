@@ -7,18 +7,21 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class LocateInBounds_k extends GPUKernel
+public class LocateInBounds_k extends GPUKernel<LocateInBounds_k.Args>
 {
-    public LocateInBounds_k(cl_command_queue command_queue, GPUProgram program)
+    public enum Args implements GPUKernelArg
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.locate_in_bounds), 3);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_mem);
-        def_arg(2, Sizeof.cl_mem);
+        bounds_bank_data(Sizeof.cl_mem),
+        in_bounds(Sizeof.cl_mem),
+        counter(Sizeof.cl_mem);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
     }
 
-    public void set_aabb_key_table(Pointer aabb_key_table)
+    public LocateInBounds_k(cl_command_queue command_queue, GPUProgram program)
     {
-        new_arg(0, Sizeof.cl_mem, aabb_key_table);
+        super(command_queue, program.kernels().get(GPU.Kernel.locate_in_bounds), Args.values());
     }
 }

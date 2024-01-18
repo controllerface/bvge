@@ -14,18 +14,38 @@ import static org.jocl.CL.clSetKernelArg;
  * and calling the kernel itself. Kernels are typically provided by {@link GPUProgram} objects, which are
  * compiled first before their constituent kernels are linked and loaded via implementations of this class.
  */
-public class GPUKernel
+public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
 {
     final cl_command_queue command_queue;
     final cl_kernel kernel;
     final List<cl_mem> shared_memory = new ArrayList<>();
     final long[] arg_sizes;
 
+    /**
+     * Kernel subclasses must define an enum that implements this simple interface in order to rigidly
+     * define kernel argument positions and data sizes.
+     */
+    public interface GPUKernelArg
+    {
+        long size();
+    }
+
     public GPUKernel(cl_command_queue command_queue, cl_kernel kernel, int arg_count)
     {
         this.command_queue = command_queue;
         this.kernel = kernel;
         this.arg_sizes = new long[arg_count];
+    }
+
+    public GPUKernel(cl_command_queue command_queue, cl_kernel kernel, E[] args)
+    {
+        this.command_queue = command_queue;
+        this.kernel = kernel;
+        this.arg_sizes = new long[args.length];
+        for (var arg : args)
+        {
+            def_arg(arg.ordinal(), arg.size());
+        }
     }
 
     /**
@@ -57,11 +77,19 @@ public class GPUKernel
         clSetKernelArg(this.kernel, pos, size, pointer);
     }
 
-
-    public GPUKernel mem_arg(int pos, Pointer pointer)
+    /**
+     * Convenience method for setting kernel arguments that are pointers to memory. The primary use
+     * case for this method is providing points to memory buffers that do not change at runtime. The
+     * intent is that these pointers are set ars kernel arguments once at startup. This helps increase
+     * efficiency as setting arguments on kernels involves a small driver overhead.
+     * @param val the Enum value of the argument position to set
+     * @param gpu_memory GPUMemory object containing the memory buffer which will be set as the argument
+     * @return this kernel instance, allowing for chaining of argument setting calls
+     */
+    public GPUKernel<?> mem_arg(Enum<?> val, GPUMemory gpu_memory)
     {
-        def_arg(pos, Sizeof.cl_mem);
-        clSetKernelArg(this.kernel, pos, Sizeof.cl_mem, pointer);
+        def_arg(val.ordinal(), Sizeof.cl_mem);
+        clSetKernelArg(this.kernel, val.ordinal(), Sizeof.cl_mem, gpu_memory.pointer());
         return this;
     }
 

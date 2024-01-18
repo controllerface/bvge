@@ -7,20 +7,21 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class CreateMeshReference_k extends GPUKernel
+public class CreateMeshReference_k extends GPUKernel<CreateMeshReference_k.Args>
 {
-    public CreateMeshReference_k(cl_command_queue command_queue, GPUProgram program)
+    public enum Args implements GPUKernelArg
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.create_mesh_reference), 3);
-        int arg_index = 0;
-        def_arg(arg_index++, Sizeof.cl_mem);
-        def_arg(arg_index++, Sizeof.cl_int);
-        def_arg(arg_index++, Sizeof.cl_float4);
-        System.out.printf("set %d args for %s\n", arg_index, this.getClass().getSimpleName());
+        mesh_ref_tables(Sizeof.cl_mem),
+        target(Sizeof.cl_int),
+        new_mesh_ref_table(Sizeof.cl_float4);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
     }
 
-    public void set_mesh_ref_tables(Pointer mesh_ref_tables)
+    public CreateMeshReference_k(cl_command_queue command_queue, GPUProgram program)
     {
-        new_arg(0, Sizeof.cl_mem, mesh_ref_tables);
+        super(command_queue, program.kernels().get(GPU.Kernel.create_mesh_reference), Args.values());
     }
 }

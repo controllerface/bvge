@@ -7,26 +7,23 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class SortReactions_k extends GPUKernel
+public class SortReactions_k extends GPUKernel<SortReactions_k.Args>
 {
+    public enum Args implements GPUKernelArg
+    {
+        reactions_in(Sizeof.cl_mem),
+        reactions_out(Sizeof.cl_mem),
+        reaction_index(Sizeof.cl_mem),
+        point_reactions(Sizeof.cl_mem),
+        point_offsets(Sizeof.cl_mem);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
+    }
+
     public SortReactions_k(cl_command_queue command_queue, GPUProgram program)
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.sort_reactions), 5);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_mem);
-        def_arg(2, Sizeof.cl_mem);
-        def_arg(3, Sizeof.cl_mem);
-        def_arg(4, Sizeof.cl_mem);
-
-    }
-
-    public void set_reactions(Pointer reactions)
-    {
-        new_arg(3, Sizeof.cl_mem, reactions);
-    }
-
-    public void set_offsets(Pointer offsets)
-    {
-        new_arg(4, Sizeof.cl_mem, offsets);
+        super(command_queue, program.kernels().get(GPU.Kernel.sort_reactions), Args.values());
     }
 }

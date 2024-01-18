@@ -7,18 +7,21 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class RootHullCount_k extends GPUKernel
+public class RootHullCount_k extends GPUKernel<RootHullCount_k.Args>
 {
-    public RootHullCount_k(cl_command_queue command_queue, GPUProgram program)
+    public enum Args implements GPUKernelArg
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.root_hull_count), 3);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_mem);
-        def_arg(2, Sizeof.cl_int);
+        armature_flags(Sizeof.cl_mem),
+        counter(Sizeof.cl_mem),
+        model_id(Sizeof.cl_int);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
     }
 
-    public void set_armature_flags(Pointer armatures_flags)
+    public RootHullCount_k(cl_command_queue command_queue, GPUProgram program)
     {
-        new_arg(0, Sizeof.cl_mem, armatures_flags);
+        super(command_queue, program.kernels().get(GPU.Kernel.root_hull_count), Args.values());
     }
 }

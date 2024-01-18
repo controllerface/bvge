@@ -7,18 +7,21 @@ import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class ReadPosition_k extends GPUKernel
+public class ReadPosition_k extends GPUKernel<ReadPosition_k.Args>
 {
-    public ReadPosition_k(cl_command_queue command_queue, GPUProgram program)
+    public enum Args implements GPUKernelArg
     {
-        super(command_queue, program.kernels().get(GPU.Kernel.read_position), 3);
-        def_arg(0, Sizeof.cl_mem);
-        def_arg(1, Sizeof.cl_float2);
-        def_arg(2, Sizeof.cl_int);
+        armatures(Sizeof.cl_mem),
+        output(Sizeof.cl_float2),
+        target(Sizeof.cl_int);
+
+        public final long size;
+        Args(long size) { this.size = size; }
+        @Override public long size() { return size; }
     }
 
-    public void set_armatures(Pointer armatures)
+    public ReadPosition_k(cl_command_queue command_queue, GPUProgram program)
     {
-        new_arg(0, Sizeof.cl_mem, armatures);
+        super(command_queue, program.kernels().get(GPU.Kernel.read_position), Args.values());
     }
 }
