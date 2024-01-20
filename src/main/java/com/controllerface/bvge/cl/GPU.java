@@ -1273,6 +1273,7 @@ public class GPU
             .mem_arg(AnimateHulls_k.Args.hull_flags, Buffer.hull_flags.memory)
             .mem_arg(AnimateHulls_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
             .mem_arg(AnimateHulls_k.Args.bone_tables, Buffer.point_bone_tables.memory)
+            .mem_arg(AnimateHulls_k.Args.vertex_weights, Buffer.vertex_weights.memory)
             .mem_arg(AnimateHulls_k.Args.armatures, Buffer.armatures.memory)
             .mem_arg(AnimateHulls_k.Args.vertex_references, Buffer.vertex_references.memory)
             .mem_arg(AnimateHulls_k.Args.bones, Buffer.bone_instances.memory);

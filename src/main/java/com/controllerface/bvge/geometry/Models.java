@@ -479,7 +479,7 @@ public class Models
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
-        TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
+        TEST_MODEL_INDEX = load_model("/models/test_humanoid_b.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
     }
 

@@ -15,6 +15,7 @@ public class AnimateHulls_k extends GPUKernel<AnimateHulls_k.Args>
         hull_flags(Sizeof.cl_mem),
         vertex_tables(Sizeof.cl_mem),
         bone_tables(Sizeof.cl_mem),
+        vertex_weights(Sizeof.cl_mem),
         armatures(Sizeof.cl_mem),
         vertex_references(Sizeof.cl_mem),
         bones(Sizeof.cl_mem);
