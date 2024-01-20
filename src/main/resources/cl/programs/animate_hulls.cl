@@ -1,3 +1,11 @@
+
+constant float16 identityMatrix = (float16)(
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f
+);
+
 __kernel void animate_hulls(__global float4 *points,
                             __global float4 *hulls,
                             __global int4 *hull_flags,
@@ -19,18 +27,31 @@ __kernel void animate_hulls(__global float4 *points,
     int4 bone_table = bone_tables[gid];
 
     float2 reference_vertex = vertex_references[vertex_table.x];
+    float4 reference_weights = vertex_weights[vertex_table.x];
 
     // todo: a separate kernel msut be called that actually updates all bones using
     // an animation. Right now, all bones are in bind pose and then never change.
 
     // todo: use all four bones with weights
-    float16 bone = bones[bone_table.x];
+    float16 bone1 = bone_table.x == -1 ? identityMatrix : bones[bone_table.x];
+    float16 bone2 = bone_table.y == -1 ? identityMatrix : bones[bone_table.y];
+    float16 bone3 = bone_table.z == -1 ? identityMatrix : bones[bone_table.z];
+    float16 bone4 = bone_table.w == -1 ? identityMatrix : bones[bone_table.w];
+
+    float16 test_bone = bone1 * reference_weights.x;
+    test_bone += bone2 * reference_weights.y;
+    test_bone += bone3 * reference_weights.z;
+    test_bone += bone4 * reference_weights.w;
+
+    //printf("debug: x:%d", bone_table.x);
+    //printf("debug: xw:%f ", reference_weights.x);
+
     
     float4 hull = hulls[vertex_table.y];
     float4 armature = armatures[hull_flag.y]; 
 
     float4 padded = (float4)(reference_vertex.x, reference_vertex.y, 0.0f, 1.0f);
-    float4 after_bone = matrix_transform(bone, padded);
+    float4 after_bone = matrix_transform(test_bone, padded);
     float2 un_padded = after_bone.xy;
     
     // this is effectively a model transform with just scale and position

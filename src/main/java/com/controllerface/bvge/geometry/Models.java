@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.lwjgl.assimp.Assimp.*;
 
@@ -257,6 +258,16 @@ public class Models
             List<Vector2f> uvData = new ArrayList<>();
             String[] names = bone_name_map.get(this_vert);
             float[] weights = bone_weight_map.get(this_vert);
+
+            float sum = 0;
+            for (float w : weights)
+            {
+                sum += w;
+            }
+            weights[0] /= sum;
+            weights[1] /= sum;
+            weights[2] /= sum;
+            weights[3] /= sum;
 
             uvChannels.forEach(channel ->
             {

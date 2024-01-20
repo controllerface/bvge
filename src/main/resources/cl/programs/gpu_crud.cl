@@ -58,6 +58,7 @@ __kernel void create_vertex_reference(__global float2 *vertex_references,
                                       int2 new_uv_table)
 {
     vertex_references[target] = new_vertex_reference; 
+    //printf("debug weights: ^f")
     vertex_weights[target] = new_vertex_weights; 
     uv_tables[target] = new_uv_table;
 }
