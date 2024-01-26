@@ -45,6 +45,13 @@ public class HumanoidRenderer extends GameSystem
 
     private int mesh_count;
     private long mesh_size;
+
+    // todo: these memory buffers are set as arguments into the relevant kernels on each call, but
+    //  they could be set once and kept as-is, if the kernel being used was local to this class. At
+    //  the moment, this isn't possible due to how the memory objects, programs, and kernels are
+    //  are tied directly to the GPU class, but in the future it will probably be a good idea to
+    //  consider allowing individual classes to have private kernels. It will increase efficiency,
+    //  especially if multiple classes end up needing the same kernel calls a lot.
     private cl_mem query;
     private cl_mem counters;
     private cl_mem total;

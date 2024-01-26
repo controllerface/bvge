@@ -158,7 +158,9 @@ public class GPU
     public enum Kernel
     {
         aabb_collide,
+        animate_armatures,
         animate_hulls,
+        animate_points,
         apply_reactions,
         build_key_map,
         calculate_batch_offsets,
@@ -178,6 +180,7 @@ public class GPU
         count_mesh_batches,
         count_mesh_instances,
         create_armature,
+        create_armature_bone,
         create_bone,
         create_bone_reference,
         create_bone_bind_pose,
@@ -517,10 +520,37 @@ public class GPU
         bone_instances(Sizeof.cl_float16),
 
         /**
-         * x: bone inverse bind pose index
-         * y: bone bind pose index
+         * x: bone inverse bind pose index (mesh-space)
+         * y: bone bind pose index (model space)
          */
         bone_index_tables(Sizeof.cl_int2),
+
+
+        /**
+         * s0: (m00) transformation matrix column 1 row 1
+         * s1: (m01) transformation matrix column 1 row 2
+         * s2: (m02) transformation matrix column 1 row 3
+         * s3: (m03) transformation matrix column 1 row 4
+         * s4: (m10) transformation matrix column 2 row 1
+         * s5: (m11) transformation matrix column 2 row 2
+         * s6: (m12) transformation matrix column 2 row 3
+         * s7: (m13) transformation matrix column 2 row 4
+         * s8: (m20) transformation matrix column 3 row 1
+         * s9: (m21) transformation matrix column 3 row 2
+         * sA: (m22) transformation matrix column 3 row 3
+         * sB: (m23) transformation matrix column 3 row 4
+         * sC: (m30) transformation matrix column 4 row 1
+         * sD: (m31) transformation matrix column 4 row 2
+         * sE: (m32) transformation matrix column 4 row 3
+         * sF: (m33) transformation matrix column 4 row 4
+         */
+        armatures_bones(Sizeof.cl_float16),
+
+        /**
+         * x: armature bone parent id
+         * y: bind post reference id
+         */
+        bone_bind_tables(Sizeof.cl_int2),
 
         /*
         Armatures
@@ -556,8 +586,12 @@ public class GPU
         /**
          * x: start hull index
          * y: end hull index
+         * z: start bone anim index // todo: extend buffer for this
+         * w: end bone anim index   // todo: extend buffer for this
          */
-        armature_hull_table(Sizeof.cl_int2),
+        armature_hull_table(Sizeof.cl_int4),
+
+        // todo: add armature bone animation objects
 
         /*
         Buffer Compaction
@@ -663,17 +697,18 @@ public class GPU
             public static final int VERTEX   = 2;
         }
 
-        private static int hull_index       = 0;
-        private static int point_index      = 0;
-        private static int edge_index       = 0;
-        private static int vertex_ref_index = 0;
-        private static int bone_bind_index  = 0;
-        private static int bone_ref_index   = 0;
-        private static int bone_index       = 0;
-        private static int armature_index   = 0;
-        private static int mesh_index       = 0;
-        private static int face_index       = 0;
-        private static int uv_index         = 0;
+        private static int hull_index          = 0;
+        private static int point_index         = 0;
+        private static int edge_index          = 0;
+        private static int vertex_ref_index    = 0;
+        private static int bone_bind_index     = 0;
+        private static int bone_ref_index      = 0;
+        private static int bone_index          = 0;
+        private static int armature_bone_index = 0;
+        private static int armature_index      = 0;
+        private static int mesh_index          = 0;
+        private static int face_index          = 0;
+        private static int uv_index            = 0;
 
         public static int next_uv()
         {
@@ -728,6 +763,11 @@ public class GPU
         public static int next_bone()
         {
             return bone_index / GPU.Memory.Width.BONE;
+        }
+
+        public static int next_armature_bone()
+        {
+            return armature_bone_index / GPU.Memory.Width.BONE;
         }
 
         public static int new_texture_uv(float u, float v)
@@ -816,6 +856,14 @@ public class GPU
             GPU.create_bone(next_bone(), offset_id, bone_data);
             var idx = bone_index;
             bone_index += GPU.Memory.Width.BONE;
+            return idx / GPU.Memory.Width.BONE;
+        }
+
+        public static int new_armature_bone(int[] bone_bind_table, float[] bone_data)
+        {
+            GPU.create_armature_bone(next_armature_bone(), bone_bind_table, bone_data);
+            var idx = armature_bone_index;
+            armature_bone_index += GPU.Memory.Width.BONE;
             return idx / GPU.Memory.Width.BONE;
         }
 
@@ -937,8 +985,10 @@ public class GPU
         Buffer.bone_references.init(max_points);
         Buffer.bone_instances.init(max_points);
         Buffer.bone_index_tables.init(max_points);
+        Buffer.bone_bind_tables.init(max_points);
         Buffer.armatures.init(max_points);
         Buffer.armature_flags.init(max_points);
+        Buffer.armatures_bones.init(max_points);
         Buffer.armature_hull_table.init(max_hulls);
         Buffer.bone_shift.init(max_points);
         Buffer.point_shift.init(max_points);
@@ -973,8 +1023,10 @@ public class GPU
             + Buffer.bone_references.length
             + Buffer.bone_instances.length
             + Buffer.bone_index_tables.length
+            + Buffer.bone_bind_tables.length
             + Buffer.armatures.length
             + Buffer.armature_flags.length
+            + Buffer.armatures_bones.length
             + Buffer.armature_hull_table.length
             + Buffer.bone_shift.length
             + Buffer.point_shift.length
@@ -1010,9 +1062,11 @@ public class GPU
         System.out.println("bone references      : " + Buffer.bone_references.length);
         System.out.println("bone instances       : " + Buffer.bone_instances.length);
         System.out.println("bone index           : " + Buffer.bone_index_tables.length);
+        System.out.println("bone bind indices    : " + Buffer.bone_bind_tables.length);
         System.out.println("armatures            : " + Buffer.armatures.length);
         System.out.println("armature flags       : " + Buffer.armature_flags.length);
-        System.out.println("hull table           : " + Buffer.armature_hull_table.length);
+        System.out.println("armature bones       : " + Buffer.armatures_bones.length);
+        System.out.println("hull tables          : " + Buffer.armature_hull_table.length);
         System.out.println("bone shift           : " + Buffer.armature_hull_table.length);
         System.out.println("point shift          : " + Buffer.armature_hull_table.length);
         System.out.println("edge shift           : " + Buffer.armature_hull_table.length);
@@ -1175,6 +1229,10 @@ public class GPU
             .mem_arg(CreateBone_k.Args.bones, Buffer.bone_instances.memory)
             .mem_arg(CreateBone_k.Args.bone_ref_tables, Buffer.bone_index_tables.memory);
 
+        Kernel.create_armature_bone.set_kernel(new CreateArmatureBone_k(command_queue))
+            .mem_arg(CreateArmatureBone_k.Args.armature_bones, Buffer.armatures_bones.memory)
+            .mem_arg(CreateArmatureBone_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory);
+
         Kernel.create_hull.set_kernel(new CreateHull_k(command_queue))
             .mem_arg(CreateHull_k.Args.hulls, Buffer.hulls.memory)
             .mem_arg(CreateHull_k.Args.hull_rotations, Buffer.hull_rotation.memory)
@@ -1267,16 +1325,16 @@ public class GPU
 
         // movement
 
-        Kernel.animate_hulls.set_kernel(new AnimateHulls_k(command_queue))
-            .mem_arg(AnimateHulls_k.Args.points, Buffer.points.memory)
-            .mem_arg(AnimateHulls_k.Args.hulls, Buffer.hulls.memory)
-            .mem_arg(AnimateHulls_k.Args.hull_flags, Buffer.hull_flags.memory)
-            .mem_arg(AnimateHulls_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
-            .mem_arg(AnimateHulls_k.Args.bone_tables, Buffer.point_bone_tables.memory)
-            .mem_arg(AnimateHulls_k.Args.vertex_weights, Buffer.vertex_weights.memory)
-            .mem_arg(AnimateHulls_k.Args.armatures, Buffer.armatures.memory)
-            .mem_arg(AnimateHulls_k.Args.vertex_references, Buffer.vertex_references.memory)
-            .mem_arg(AnimateHulls_k.Args.bones, Buffer.bone_instances.memory);
+        Kernel.animate_points.set_kernel(new AnimatePoints_k(command_queue))
+            .mem_arg(AnimatePoints_k.Args.points, Buffer.points.memory)
+            .mem_arg(AnimatePoints_k.Args.hulls, Buffer.hulls.memory)
+            .mem_arg(AnimatePoints_k.Args.hull_flags, Buffer.hull_flags.memory)
+            .mem_arg(AnimatePoints_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
+            .mem_arg(AnimatePoints_k.Args.bone_tables, Buffer.point_bone_tables.memory)
+            .mem_arg(AnimatePoints_k.Args.vertex_weights, Buffer.vertex_weights.memory)
+            .mem_arg(AnimatePoints_k.Args.armatures, Buffer.armatures.memory)
+            .mem_arg(AnimatePoints_k.Args.vertex_references, Buffer.vertex_references.memory)
+            .mem_arg(AnimatePoints_k.Args.bones, Buffer.bone_instances.memory);
 
         Kernel.integrate.set_kernel(new Integrate_k(command_queue))
             .mem_arg(Integrate_k.Args.hulls, Buffer.hulls.memory)
@@ -1804,6 +1862,15 @@ public class GPU
             .call(global_single_size);
     }
 
+    public static void create_armature_bone(int armature_bone_index, int[] bone_bind_table, float[] matrix)
+    {
+        Kernel.create_armature_bone
+            .set_arg(CreateArmatureBone_k.Args.target, Pointer.to(arg_int(armature_bone_index)))
+            .set_arg(CreateArmatureBone_k.Args.new_armature_bone, Pointer.to(matrix))
+            .set_arg(CreateArmatureBone_k.Args.new_bone_bind_table, Pointer.to(bone_bind_table))
+            .call(global_single_size);
+    }
+
     public static void create_hull(int hull_index, int mesh_index, float[] hull, float[] rotation, int[] table, int[] flags)
     {
         Kernel.create_hull
@@ -1876,7 +1943,7 @@ public class GPU
 
     public static void animate_hulls()
     {
-        Kernel.animate_hulls.call(arg_long(GPU.Memory.next_point()));
+        Kernel.animate_points.call(arg_long(GPU.Memory.next_point()));
     }
 
     public static void integrate(float delta_time, UniformGrid uniform_grid)
@@ -2041,6 +2108,7 @@ public class GPU
         physics_buffer.set_candidate_match_count(match_count);
     }
 
+    // todo: extend buffers to account for armature bones
     public static void delete_and_compact()
     {
         int armature_count = GPU.Memory.next_armature();

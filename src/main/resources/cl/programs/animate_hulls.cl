@@ -1,12 +1,30 @@
 
-constant float16 identityMatrix = (float16)(
+constant float16 identityMatrix = (float16)
+(
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 1.0f
 );
 
-__kernel void animate_hulls(__global float4 *points,
+
+__kernel void animate_armatures()
+{
+    // todo: stub out
+
+}
+
+__kernel void animate_hulls()
+{
+    // get hull bone table
+    // get bone instances
+    // get bone index tables
+    // get mesh-space inverse bind matrix
+    // get armature aligned current animation
+
+}
+
+__kernel void animate_points(__global float4 *points,
                             __global float4 *hulls,
                             __global int4 *hull_flags,
                             __global int4 *vertex_tables,
@@ -29,10 +47,6 @@ __kernel void animate_hulls(__global float4 *points,
     float2 reference_vertex = vertex_references[vertex_table.x];
     float4 reference_weights = vertex_weights[vertex_table.x];
 
-    // todo: a separate kernel msut be called that actually updates all bones using
-    // an animation. Right now, all bones are in bind pose and then never change.
-
-    // todo: use all four bones with weights
     float16 bone1 = bone_table.x == -1 ? identityMatrix : bones[bone_table.x];
     float16 bone2 = bone_table.y == -1 ? identityMatrix : bones[bone_table.y];
     float16 bone3 = bone_table.z == -1 ? identityMatrix : bones[bone_table.z];
@@ -42,10 +56,6 @@ __kernel void animate_hulls(__global float4 *points,
     test_bone += bone2 * reference_weights.y;
     test_bone += bone3 * reference_weights.z;
     test_bone += bone4 * reference_weights.w;
-
-    //printf("debug: x:%d", bone_table.x);
-    //printf("debug: xw:%f ", reference_weights.x);
-
     
     float4 hull = hulls[vertex_table.y];
     float4 armature = armatures[hull_flag.y]; 

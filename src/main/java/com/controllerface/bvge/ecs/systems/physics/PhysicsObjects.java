@@ -1,8 +1,8 @@
 package com.controllerface.bvge.ecs.systems.physics;
 
-import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.geometry.BoneBindPose;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
@@ -25,11 +25,11 @@ public class PhysicsObjects
 {
     private static final Vector2f vector_buffer = new Vector2f();
 
-    public static int FLAG_NONE             = Constants.HullFlags.EMPTY.bits;
-    public static int FLAG_STATIC_OBJECT    = Constants.HullFlags.IS_STATIC.bits;
-    public static int FLAG_CIRCLE           = Constants.HullFlags.IS_CIRCLE.bits;
-    public static int FLAG_POLYGON          = Constants.HullFlags.IS_POLYGON.bits;
-    public static int FLAG_NO_BONES         = Constants.HullFlags.NO_BONES.bits;
+    public static int FLAG_NONE = Constants.HullFlags.EMPTY.bits;
+    public static int FLAG_STATIC_OBJECT = Constants.HullFlags.IS_STATIC.bits;
+    public static int FLAG_CIRCLE = Constants.HullFlags.IS_CIRCLE.bits;
+    public static int FLAG_POLYGON = Constants.HullFlags.IS_POLYGON.bits;
+    public static int FLAG_NO_BONES = Constants.HullFlags.NO_BONES.bits;
 
     public static int FLAG_INTERIOR = 0x01;
 
@@ -47,7 +47,7 @@ public class PhysicsObjects
         var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
-        int[] bone_index_table = { mesh.bone_offsets().get(0).offset_ref_id(), 0 };
+        int[] bone_index_table = {mesh.bone_offsets().get(0).offset_ref_id(), 0};
         int bone_id = GPU.Memory.new_bone(bone_index_table, raw_matrix);
 
         var vert = mesh.vertices()[0];
@@ -55,7 +55,7 @@ public class PhysicsObjects
         // the model points are always zero so the * and + are for educational purposes
         var p1 = CLUtils.arg_float2(vert.x() * size + x, vert.y() * size + y);
 
-        var t1 = CLUtils.arg_int4(vert.vert_ref_id(), next_hull_index, 0,0);
+        var t1 = CLUtils.arg_int4(vert.vert_ref_id(), next_hull_index, 0, 0);
 
         // store the single point for the circle
         var p1_index = GPU.Memory.new_point(p1, t1, new int[4]);
@@ -72,7 +72,7 @@ public class PhysicsObjects
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
-        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0,0);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
         return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
     }
@@ -85,7 +85,7 @@ public class PhysicsObjects
         var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
-        int[] bone_index_table = { mesh.bone_offsets().get(0).offset_ref_id(), 0 };
+        int[] bone_index_table = {mesh.bone_offsets().get(0).offset_ref_id(), 0};
         int bone_id = GPU.Memory.new_bone(bone_index_table, raw_matrix);
 
         var hull = mesh.vertices();
@@ -124,10 +124,10 @@ public class PhysicsObjects
 
 
         // there is only one hull, so it is the main hull ID by default
-        int [] _flag =  CLUtils.arg_int4(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
+        int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
-        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0,0);
+        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, 0);
+        int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0, 0);
         return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
     }
 
@@ -140,7 +140,7 @@ public class PhysicsObjects
         var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
 
         var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
-        int[] bone_index_table = { mesh.bone_offsets().get(0).offset_ref_id(), 0 };
+        int[] bone_index_table = {mesh.bone_offsets().get(0).offset_ref_id(), 0};
         int bone_id = GPU.Memory.new_bone(bone_index_table, raw_matrix);
 
         var hull = calculate_convex_hull(mesh.vertices());
@@ -189,9 +189,9 @@ public class PhysicsObjects
 
 
         // there is only one hull, so it is the main hull ID by default
-        int [] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON, next_armature_id, bone_id, bone_id);
+        int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON, next_armature_id, bone_id, bone_id);
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
-        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, 0);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
         return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
     }
@@ -225,6 +225,46 @@ public class PhysicsObjects
         var meshes = model.meshes();
         int first_hull = -1;
         int last_hull = -1;
+        int first_armature_bone = -1;
+        int last_armature_bone = -1;
+
+        // todo: armature bone anim table needs to be built, each new anim bone instance
+        //  will need to reference the static bind pose reference for frames where it
+        //  has no animation deformation.
+        var armature_bone_map = new HashMap<String, Integer>();
+        var armature_bone_parent_map = new HashMap<Integer, Integer>();
+        for (Map.Entry<Integer, BoneBindPose> entry : model.bind_poses().entrySet())
+        {
+            Integer k = entry.getKey();
+            BoneBindPose v = entry.getValue();
+            var bind_pose_id = model.bone_indices().get(v.bone_name());
+            // todo: each bind pose needs to be stored in memory with a link to the "this id" value
+            //  to use as its default pose when there is no animation. The initial implementation should
+            //  just assume this to start. It will also need a link to it's parent anim instance, so
+            //  it is crucial this loop be in top-down bone hierarchy order.
+            System.out.println("Armature id: " + next_armature_id
+                + " this id: " + k
+                + " parent id: " + v.parent()
+                + " ref id: " + bind_pose_id
+                + " bone: " + v.bone_name());
+            var raw_matrix = CLUtils.arg_float16_matrix(v.transform());
+            int[] bind_table = new int[2];
+            bind_table[0] = k;
+            bind_table[1] = v.parent() == -1
+                ? -1
+                : armature_bone_parent_map.get(v.parent());
+
+            int next_armature_bone = GPU.Memory.new_armature_bone(bind_table, raw_matrix);
+            if (first_armature_bone == -1)
+            {
+                first_armature_bone = next_armature_bone;
+            }
+            last_armature_bone = next_armature_bone;
+
+            armature_bone_map.put(v.bone_name(), next_armature_bone);
+            armature_bone_parent_map.put(k, next_armature_bone);
+        }
+
         for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)
         {
             int next_hull = GPU.Memory.next_hull();
@@ -237,36 +277,49 @@ public class PhysicsObjects
             new_mesh = scale_hull(new_mesh, size);
             new_mesh = translate_hull(new_mesh, x, y);
             var new_hull = generate_convex_hull(hull_mesh, new_mesh);
-            var new_chull = generate_interior_hull(hull_mesh, new_mesh);
+            var new_interior_hull = generate_interior_hull(hull_mesh, new_mesh);
 
             var bone_map = new HashMap<String, Integer>();
-            int start_bone = -1;
-            int end_bone = -1;
+            int start_hull_bone = -1;
+            int end_hull_bone = -1;
             for (int bone_index = 0; bone_index < hull_mesh.bone_offsets().size(); bone_index++)
             {
                 var bone_offset = hull_mesh.bone_offsets().get(bone_index);
                 var bone_bind_pose = model.bone_transforms().get(bone_offset.name());
                 var bone_transform = bone_bind_pose.mul(bone_offset.transform(), new Matrix4f());
                 var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
-                var bind_pose_id = model.bone_indices().get(bone_offset.name());
-                int[] bone_table = new int[]{ bone_offset.offset_ref_id(), bind_pose_id };
+
+                // todo: this needs to refer to the armature bone anim instance instead of the
+                //  bind pose reference
+                //var bind_pose_id = model.bone_indices().get(bone_offset.name());
+                var bind_pose_id = armature_bone_map.get(bone_offset.name());
+
+
+                int[] bone_table = new int[]{bone_offset.offset_ref_id(), bind_pose_id};
+                System.out.println("Armature: " + next_armature_id
+                    + " Hull: " + next_hull
+                    + " Bone ID: " + GPU.Memory.next_bone()
+                    + " Bone: " + bone_offset.name()
+                    + " Table: " + Arrays.toString(bone_table));
+
                 int next_bone = GPU.Memory.new_bone(bone_table, raw_matrix);
                 bone_map.put(bone_offset.name(), next_bone);
 
-                if (start_bone == -1)
+                if (start_hull_bone == -1)
                 {
-                    start_bone = next_bone;
+                    start_hull_bone = next_bone;
                 }
-                end_bone = next_bone;
+                end_hull_bone = next_bone;
             }
 
             // generate the points in memory for this object
-            int point_start = -1;
-            int point_end = -1;
+            int start_point = -1;
+            int end_point = -1;
 
             int[] convex_table = new int[new_hull.length];
             List<float[]> convex_buffer = new ArrayList<>();
 
+            // create convex hull points first, in hull order (not mesh order)
             for (int point_index = 0; point_index < new_hull.length; point_index++)
             {
                 var next_vertex = new_hull[point_index];
@@ -275,42 +328,37 @@ public class PhysicsObjects
 
                 var bone_names = next_vertex.bone_names();
                 int[] bone_ids = new int[4];
-                bone_ids[0] = bone_names[0] == null ? -1 : bone_map.get(bone_names[0]);
-                bone_ids[1] = bone_names[1] == null ? -1 : bone_map.get(bone_names[1]);
-                bone_ids[2] = bone_names[2] == null ? -1 : bone_map.get(bone_names[2]);
-                bone_ids[3] = bone_names[3] == null ? -1 : bone_map.get(bone_names[3]);
+                for (int i = 0; i < bone_ids.length; i++)
+                {
+                    bone_ids[i] = find_bone_index(bone_map, bone_names, i);
+                }
                 var next_point = GPU.Memory.new_point(new_point, new_table, bone_ids);
 
-                if (point_start == -1)
+                if (start_point == -1)
                 {
-                    point_start = next_point;
+                    start_point = next_point;
                 }
-                point_end = next_point;
+                end_point = next_point;
 
                 convex_table[point_index] = next_point;
                 convex_buffer.add(new_point);
             }
 
-
-
-            for (int point_index = 0; point_index < new_chull.length; point_index++)
+            // any interior points are added after convex points. Points retain their original
+            // reference vertex ID, allowing them to be accessed in mesh-order when necessary
+            for (Vertex next_vertex : new_interior_hull)
             {
-                var next_vertex = new_chull[point_index];
                 var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
                 var new_table = CLUtils.arg_int4(next_vertex.vert_ref_id(), next_hull, FLAG_INTERIOR, 0);
 
                 var bone_names = next_vertex.bone_names();
                 int[] bone_ids = new int[4];
-                bone_ids[0] = bone_names[0] == null ? -1 : bone_map.get(bone_names[0]);
-                bone_ids[1] = bone_names[1] == null ? -1 : bone_map.get(bone_names[1]);
-                bone_ids[2] = bone_names[2] == null ? -1 : bone_map.get(bone_names[2]);
-                bone_ids[3] = bone_names[3] == null ? -1 : bone_map.get(bone_names[3]);
-                var next_point = GPU.Memory.new_point(new_point, new_table, bone_ids);
-                point_end = next_point;
+                for (int i = 0; i < bone_ids.length; i++)
+                {
+                    bone_ids[i] = find_bone_index(bone_map, bone_names, i);
+                }
+                end_point = GPU.Memory.new_point(new_point, new_table, bone_ids);
             }
-
-
-
 
             // generate edges in memory for this object
             int edge_start = -1;
@@ -376,10 +424,10 @@ public class PhysicsObjects
             if (odd_count) // if there was an odd vertex at the end, connect it to the mid-point
             {
                 int p2_index = convex_table.length - 1;
-                var p1 = convex_buffer.get(half_count+1);
+                var p1 = convex_buffer.get(half_count + 1);
                 var p2 = convex_buffer.get(p2_index);
                 var distance = edgeDistance(p2, p1);
-                edge_end = GPU.Memory.new_edge(convex_table[half_count+1], convex_table[p2_index], distance, FLAG_INTERIOR);
+                edge_end = GPU.Memory.new_edge(convex_table[half_count + 1], convex_table[p2_index], distance, FLAG_INTERIOR);
             }
 
             // calculate centroid and reference angle
@@ -388,11 +436,11 @@ public class PhysicsObjects
             var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, new_hull[0].x(), new_hull[0].y());
             var angle = MathEX.angle_between_lines(l1, l2);
 
-            var table = CLUtils.arg_int4(point_start, point_end, edge_start, edge_end);
+            var table = CLUtils.arg_int4(start_point, end_point, edge_start, edge_end);
             var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
             var rotation = CLUtils.arg_float2(0, angle);
 
-            int[] hull_flags = CLUtils.arg_int4(flags, next_armature_id, start_bone, end_bone);
+            int[] hull_flags = CLUtils.arg_int4(flags, next_armature_id, start_hull_bone, end_hull_bone);
             int hull_id = GPU.Memory.new_hull(hull_mesh.mesh_id(), transform, rotation, table, hull_flags);
 
             if (first_hull == -1)
@@ -419,11 +467,19 @@ public class PhysicsObjects
                 + "Check model data to ensure it is correct");
         }
 
-        int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
+        // todo: extend to int 4 to accommodate armature bones
+        int[] hull_table = CLUtils.arg_int4(first_hull, last_hull, first_armature_bone, last_armature_bone);
         int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, 0);
         return GPU.Memory.new_armature(root_x, root_y, hull_table, armature_flags, mass);
     }
 
+
+    private static int find_bone_index(Map<String, Integer> bone_map, String[] bone_names, int index)
+    {
+        return bone_names[index] == null
+            ? -1
+            : bone_map.get(bone_names[index]);
+    }
 
     public static Vertex[] scale_hull(Vertex[] input, float scale)
     {
@@ -497,7 +553,10 @@ public class PhysicsObjects
     public static Vertex[] generate_interior_hull(Mesh mesh, Vertex[] source)
     {
         int cx = source.length - mesh.hull().length;
-        if (cx <= 0) return new Vertex[0];
+        if (cx <= 0)
+        {
+            return new Vertex[0];
+        }
         var out = new Vertex[cx];
 
         Set<Integer> conv = new HashSet<>();
@@ -561,7 +620,7 @@ public class PhysicsObjects
 
             // now iterate through the points and find the next candidate
             double minorPolarAngle = 180D;
-            for (int i = points.length - 1; i >=0; i--)
+            for (int i = points.length - 1; i >= 0; i--)
             {
                 if (!points[i].equals(q))
                 {

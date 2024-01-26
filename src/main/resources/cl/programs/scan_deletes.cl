@@ -9,10 +9,11 @@ typedef struct
 
 inline DropCounts calculate_drop_counts(int armature_id,
                                         __global int4 *armature_flags,
-                                        __global int2 *hull_tables,
+                                        __global int4 *hull_tables,
                                         __global int4 *element_tables,
                                         __global int4 *hull_flags)
 {
+    // todo: add armature bone counts
     DropCounts drop_counts;
     drop_counts.bone_count = 0;
     drop_counts.point_count = 0;
@@ -26,7 +27,7 @@ inline DropCounts calculate_drop_counts(int armature_id,
     if (deleted)
     {
         drop_counts.armature_count = 1;
-        int2 hull_table = hull_tables[armature_id];
+        int4 hull_table = hull_tables[armature_id];
         int hull_count = hull_table.y - hull_table.x + 1;
         drop_counts.hull_count = hull_count;
 
@@ -48,13 +49,13 @@ inline DropCounts calculate_drop_counts(int armature_id,
     return drop_counts;
 }
 
-__kernel void locate_out_of_bounds(__global int2 *hull_tables,
+__kernel void locate_out_of_bounds(__global int4 *hull_tables,
                                    __global int4 *hull_flags,
                                    __global int4 *armature_flags,
                                    __global int *counter)
 {
     int gid = get_global_id(0);
-    int2 hull_table = hull_tables[gid];
+    int4 hull_table = hull_tables[gid];
     int hull_count = hull_table.y - hull_table.x + 1;
     
     int out_count = 0;
@@ -79,13 +80,13 @@ __kernel void locate_out_of_bounds(__global int2 *hull_tables,
 }
 
 __kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
-                                            __global int2 *hull_tables,
+                                            __global int4 *hull_tables,
                                             __global int4 *element_tables,
                                             __global int4 *hull_flags,
-                                            __global int *output,
+                                            __global int *output, // todo: extend to int2 for armature bones
                                             __global int4 *output2,
                                             __global int *sz,
-                                            __local int *buffer, 
+                                            __local int *buffer,  // todo: extend to int2 for armature bones
                                             __local int4 *buffer2, 
                                             int n) 
 {
@@ -176,7 +177,7 @@ __kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
 }
 
 __kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
-                                           __global int2 *hull_tables,
+                                           __global int4 *hull_tables,
                                            __global int4 *element_tables,
                                            __global int4 *hull_flags,
                                            __global int *output,
@@ -263,7 +264,7 @@ __kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
 }
 
 __kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
-                                               __global int2 *hull_tables,
+                                               __global int4 *hull_tables,
                                                __global int4 *element_tables,
                                                __global int4 *hull_flags,
                                                __global int *output,
@@ -348,7 +349,7 @@ __kernel void compact_armatures(__global int *buffer_in,
                                 __global float4 *armatures,
                                 __global float2 *armature_accel,
                                 __global int4 *armature_flags,
-                                __global int2 *hull_tables,
+                                __global int4 *hull_tables,
                                 __global float4 *hulls,
                                 __global int4 *hull_flags,
                                 __global int4 *element_tables,
@@ -376,7 +377,7 @@ __kernel void compact_armatures(__global int *buffer_in,
     float4 armature = armatures[gid];
     float2 accel = armature_accel[gid];
     int4 armature_flag = armature_flags[gid];
-    int2 hull_table = hull_tables[gid];
+    int4 hull_table = hull_tables[gid];
     
     barrier(CLK_GLOBAL_MEM_FENCE);
 
@@ -394,7 +395,7 @@ __kernel void compact_armatures(__global int *buffer_in,
     int4 new_armature_flag = armature_flag;
     new_armature_flag.x -= drop.hull_count;
 
-    int2 new_hull_table = hull_table;
+    int4 new_hull_table = hull_table;
     new_hull_table.x -= drop.hull_count;
     new_hull_table.y -= drop.hull_count;
 

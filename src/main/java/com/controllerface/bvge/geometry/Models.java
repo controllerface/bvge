@@ -50,7 +50,7 @@ public class Models
     private static int load_model(String model_path, String model_name)
     {
         // the number of meshes associated with the loaded model
-        int numMeshes;
+        int mesh_count;
 
         // the root node of the imported file. contains raw mesh buffer data
         AINode root_node;
@@ -73,11 +73,13 @@ public class Models
         // read initial data
         try (AIScene aiScene = loadModelResource(model_path))
         {
-            numMeshes = aiScene.mNumMeshes();
+            mesh_count = aiScene.mNumMeshes();
             root_node = aiScene.mRootNode();
             scene_node = process_node_hierarchy(root_node, null, node_map);
-            meshes = new Mesh[numMeshes];
+            meshes = new Mesh[mesh_count];
             mesh_buffer = aiScene.mMeshes();
+            var anims = aiScene.mNumAnimations();
+            System.out.println("anim count: " + anims);
             load_textures(aiScene, textures);
             load_materials(aiScene);
         }
@@ -89,13 +91,14 @@ public class Models
         // maps each bone to a calculated bind pose transformation matrix
         var bone_transforms = new HashMap<String, Matrix4f>();
 
-        var bind_pose_map = new HashMap<Integer, BoneBindPose>();
+        // this map must be linked to preserve insert order
+        var bind_pose_map = new LinkedHashMap<Integer, BoneBindPose>();
         var bind_name_map = new HashMap<String, Integer>();
 
         // generate the bind pose transforms, setting the initial state of the armature
         generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, -1);
 
-        load_raw_meshes(numMeshes, model_name, meshes, mesh_buffer, node_map);
+        load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map);
 
         // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
         // the root bone is determined by checking if the current bone's parent is a direct descendant of the scene
@@ -473,16 +476,6 @@ public class Models
         return loaded_models.get(index);
     }
 
-    // todo: need to move to just tracking a count of models and not holding onto their
-    //  object ids. Instead, renderers should use a CL call to set up batches. GPU
-    //  memory segments will still be kept at accurate counts, so batching logic can
-    //  still work the same as it currently does.
-
-    // todo: need a way to decrement a model count when an instance is deleted
-
-    public static void register_model_instance(int model_id, int object_id)
-    {
-    }
 
     public static void init()
     {
@@ -535,7 +528,8 @@ public class Models
         var parent = parent_index;
 
         // if this node is a bone, update the
-        if (name.toLowerCase().contains("bone"))
+        if (name.toLowerCase().contains("bone")
+            && !name.toLowerCase().contains("_end"))
         {
             var raw_matrix = new float[16];
             raw_matrix[0] = node_transform.m00();
@@ -555,7 +549,7 @@ public class Models
             raw_matrix[14] = node_transform.m32();
             raw_matrix[15] = node_transform.m33();
 
-            var p = new BoneBindPose(parent, node_transform);
+            var p = new BoneBindPose(parent, node_transform, name);
             parent = GPU.Memory.new_bone_bind_pose(parent, raw_matrix);
             bind_name_map.put(name, parent);
             bind_pose_map.put(parent, p);

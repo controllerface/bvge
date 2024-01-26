@@ -28,6 +28,7 @@ public class GpuCrud extends GPUProgram
         load_kernel(Kernel.create_mesh_face);
         load_kernel(Kernel.create_bone);
         load_kernel(Kernel.create_armature);
+        load_kernel(Kernel.create_armature_bone);
         load_kernel(Kernel.create_bone_bind_pose);
     }
 }

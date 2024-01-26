@@ -2,6 +2,7 @@ package com.controllerface.bvge.game;
 
 import com.controllerface.bvge.ecs.components.ArmatureIndex;
 import com.controllerface.bvge.ecs.components.LinearForce;
+import com.controllerface.bvge.ecs.systems.BoneAnimator;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.CameraFocus;
@@ -189,26 +190,30 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
-        // all physics calculations should be done first
+        // skeletal animation pass happens first to put objects into current positions
+        ecs.registerSystem(new BoneAnimator(ecs));
+
+        // all physics calculations should be done immediately after animation
         ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid));
 
-        // camera movement must be handled before rendering occurs, but after objects are in position
+        // camera movement must be handled before rendering occurs, but after collision has been resolved
         ecs.registerSystem(new CameraTracking(ecs, uniformGrid));
 
         // the blanking system clears the screen before rendering passes
         ecs.registerSystem(screenBlankSystem);
 
-        // these are debug-level renderers for visualizing the modeled physics boundaries
-        ecs.registerSystem(new EdgeRenderer(ecs));
-        ecs.registerSystem(new CircleRenderer(ecs));
-        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        //ecs.registerSystem(new BoneRenderer(ecs));
-
         // main renderers go here, one for each model type that can be rendered
         // todo: rewrite using hull/model filter
         ecs.registerSystem(new CrateRenderer(ecs));
         ecs.registerSystem(new HumanoidRenderer(ecs));
-        //ecs.registerSystem(new PointRenderer(ecs));
+
+        // these are debug-level renderers for visualizing the modeled physics boundaries
+        ecs.registerSystem(new EdgeRenderer(ecs));
+        ecs.registerSystem(new CircleRenderer(ecs));
+        ecs.registerSystem(new PointRenderer(ecs));
+
+        //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        //ecs.registerSystem(new BoneRenderer(ecs));
     }
 
     @Override
@@ -216,9 +221,9 @@ public class TestGame extends GameMode
     {
         //genPlayer();
         genTestFigure(1f, 300, 0);
-        genTestFigureNPC(1, 200, 50);
+        genTestFigureNPC(1, 200, 0);
         genTestFigureNPC(1, 200, 100);
-        genTestFigureNPC(1, 200, 200);
+        genTestFigureNPC(1, 200, 250);
         genTestFigureNPC(1, 100, 50);
 
         //genTestTriangle(20f, 190, 250);
