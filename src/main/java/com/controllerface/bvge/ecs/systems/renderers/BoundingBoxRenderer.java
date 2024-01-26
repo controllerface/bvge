@@ -8,9 +8,9 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import static org.lwjgl.opengl.GL11.GL_LINE_LOOP;
+import static org.lwjgl.opengl.GL11C.GL_LINE_LOOP;
 import static org.lwjgl.opengl.GL11C.GL_FLOAT;
-import static org.lwjgl.opengl.GL14.glMultiDrawArrays;
+import static org.lwjgl.opengl.GL14C.glMultiDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL15C.GL_DYNAMIC_DRAW;
 import static org.lwjgl.opengl.GL15C.glBindBuffer;
