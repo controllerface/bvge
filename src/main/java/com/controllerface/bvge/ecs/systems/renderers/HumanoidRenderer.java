@@ -136,7 +136,7 @@ public class HumanoidRenderer extends GameSystem
         var details_b = GPU.new_empty_buffer(data_size);
 
         GPU.GL_write_mesh_details(query, counters, offsets, details_b, mesh_count);
-        GPU.GL_count_mesh_batches(details_b, total, total_instances);
+        GPU.GL_count_mesh_batches(details_b, total, total_instances, Constants.Rendering.MAX_BATCH_SIZE);
 
         int total_batches = GPU.cl_read_pinned_int(total);
         long batch_index_size = (long) total_batches * Sizeof.cl_int;

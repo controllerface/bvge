@@ -1727,11 +1727,12 @@ public class GPU
             .call(arg_long(GPU.Memory.next_hull()));
     }
 
-    public static void GL_count_mesh_batches(cl_mem mesh_details, cl_mem total, int count)
+    public static void GL_count_mesh_batches(cl_mem mesh_details, cl_mem total, int count, int max_per_batch)
     {
         Kernel.count_mesh_batches
             .set_arg(CountMeshBatches_k.Args.mesh_details, Pointer.to(mesh_details))
             .set_arg(CountMeshBatches_k.Args.total, Pointer.to(total))
+            .set_arg(CountMeshBatches_k.Args.max_per_batch, Pointer.to(arg_int(max_per_batch)))
             .set_arg(CountMeshBatches_k.Args.count, Pointer.to(arg_int(count)))
             .call(global_single_size);
     }

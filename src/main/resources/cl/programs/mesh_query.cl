@@ -13,7 +13,6 @@ __kernel void count_mesh_instances(__global int *hull_mesh_ids,
         {
             int x = atomic_inc(&counters[i]);
             int y = atomic_inc(&total[0]);
-            //printf("debug: hull id: %d mesh id: %d count: %d total: %d", hull_id, mesh_id, x+1, y+1);
         }
     }
 }
@@ -48,10 +47,9 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
 
 __kernel void count_mesh_batches(__global int4 *mesh_details, 
                                  __global int *total,
+                                 int max_per_batch,
                                  int count)
 {
-    // todo: this needs to be configurable
-    int max_per_batch = 10000;
     int current_batch_count = 0;
     int current_batch = 0;
     for (int i = 0; i < count; i++)
