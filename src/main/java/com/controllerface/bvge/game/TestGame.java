@@ -213,6 +213,7 @@ public class TestGame extends GameMode
         ecs.registerSystem(new PointRenderer(ecs));
 
         //ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        ecs.registerSystem(new BoundingBoxRenderer(ecs));
         //ecs.registerSystem(new BoneRenderer(ecs));
     }
 
