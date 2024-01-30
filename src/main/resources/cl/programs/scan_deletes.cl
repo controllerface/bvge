@@ -5,6 +5,7 @@ typedef struct
     int point_count;
     int hull_count;
     int armature_count;
+    int bone_bind_count;
 } DropCounts;
 
 inline DropCounts calculate_drop_counts(int armature_id,
@@ -20,6 +21,7 @@ inline DropCounts calculate_drop_counts(int armature_id,
     drop_counts.edge_count = 0;
     drop_counts.hull_count = 0;
     drop_counts.armature_count = 0;
+    drop_counts.bone_bind_count = 0;
 
     int4 armature_flag = armature_flags[armature_id];
     bool deleted = (armature_flag.z & OUT_OF_BOUNDS) !=0;
@@ -29,7 +31,14 @@ inline DropCounts calculate_drop_counts(int armature_id,
         drop_counts.armature_count = 1;
         int4 hull_table = hull_tables[armature_id];
         int hull_count = hull_table.y - hull_table.x + 1;
+        int bone_bind_count = hull_table.w - hull_table.z + 1;
         drop_counts.hull_count = hull_count;
+        drop_counts.bone_bind_count = bone_bind_count;
+
+        if (bone_bind_count > 1)
+        {
+            printf("debug bind: %d", bone_bind_count);
+        }
 
         for (int i = 0; i < hull_count; i++)
         {
