@@ -26,7 +26,8 @@ public class CompactArmatures_k extends GPUKernel<CompactArmatures_k.Args>
         bone_shift(Sizeof.cl_mem),
         point_shift(Sizeof.cl_mem),
         edge_shift(Sizeof.cl_mem),
-        hull_shift(Sizeof.cl_mem);
+        hull_shift(Sizeof.cl_mem),
+        bone_bind_shift(Sizeof.cl_mem);
 
         public final long size;
         Args(long size) { this.size = size; }

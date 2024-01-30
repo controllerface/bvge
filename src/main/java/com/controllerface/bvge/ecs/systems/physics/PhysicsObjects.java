@@ -242,11 +242,11 @@ public class PhysicsObjects
             //  to use as its default pose when there is no animation. The initial implementation should
             //  just assume this to start. It will also need a link to it's parent anim instance, so
             //  it is crucial this loop be in top-down bone hierarchy order.
-            System.out.println("Armature id: " + next_armature_id
-                + " this id: " + k
-                + " parent id: " + v.parent()
-                + " ref id: " + bind_pose_id
-                + " bone: " + v.bone_name());
+//            System.out.println("Armature id: " + next_armature_id
+//                + " this id: " + k
+//                + " parent id: " + v.parent()
+//                + " ref id: " + bind_pose_id
+//                + " bone: " + v.bone_name());
             var raw_matrix = CLUtils.arg_float16_matrix(v.transform());
             int[] bind_table = new int[2];
             bind_table[0] = k;
@@ -296,11 +296,11 @@ public class PhysicsObjects
 
 
                 int[] bone_table = new int[]{bone_offset.offset_ref_id(), bind_pose_id};
-                System.out.println("Armature: " + next_armature_id
-                    + " Hull: " + next_hull
-                    + " Bone ID: " + GPU.Memory.next_bone()
-                    + " Bone: " + bone_offset.name()
-                    + " Table: " + Arrays.toString(bone_table));
+//                System.out.println("Armature: " + next_armature_id
+//                    + " Hull: " + next_hull
+//                    + " Bone ID: " + GPU.Memory.next_bone()
+//                    + " Bone: " + bone_offset.name()
+//                    + " Table: " + Arrays.toString(bone_table));
 
                 int next_bone = GPU.Memory.new_bone(bone_table, raw_matrix);
                 bone_map.put(bone_offset.name(), next_bone);

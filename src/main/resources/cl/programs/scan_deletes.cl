@@ -360,7 +360,8 @@ __kernel void compact_armatures(__global int *buffer_in,
                                 __global int *bone_shift,
                                 __global int *point_shift,
                                 __global int *edge_shift,
-                                __global int *hull_shift)
+                                __global int *hull_shift,
+                                __global int *bone_bind_shift)
 {
     // get drop counts for this armature
     int gid = get_global_id(0);

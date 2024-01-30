@@ -608,6 +608,7 @@ public class GPU
         point_shift(Sizeof.cl_int),
         edge_shift(Sizeof.cl_int),
         hull_shift(Sizeof.cl_int),
+        bone_bind_shift(Sizeof.cl_int),
 
         ;
 
@@ -994,6 +995,7 @@ public class GPU
         Buffer.point_shift.init(max_points);
         Buffer.edge_shift.init(max_points);
         Buffer.hull_shift.init(max_hulls);
+        Buffer.bone_bind_shift.init(max_hulls);
 
         int total = Buffer.hulls.length
             + Buffer.hull_mesh_ids.length
@@ -1031,7 +1033,8 @@ public class GPU
             + Buffer.bone_shift.length
             + Buffer.point_shift.length
             + Buffer.edge_shift.length
-            + Buffer.hull_shift.length;
+            + Buffer.hull_shift.length
+            + Buffer.bone_bind_shift.length;
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
         System.out.println("points               : " + Buffer.points.length);
@@ -1067,10 +1070,11 @@ public class GPU
         System.out.println("armature flags       : " + Buffer.armature_flags.length);
         System.out.println("armature bones       : " + Buffer.armatures_bones.length);
         System.out.println("hull tables          : " + Buffer.armature_hull_table.length);
-        System.out.println("bone shift           : " + Buffer.armature_hull_table.length);
-        System.out.println("point shift          : " + Buffer.armature_hull_table.length);
-        System.out.println("edge shift           : " + Buffer.armature_hull_table.length);
-        System.out.println("hull shift           : " + Buffer.armature_hull_table.length);
+        System.out.println("bone shift           : " + Buffer.bone_shift.length);
+        System.out.println("point shift          : " + Buffer.point_shift.length);
+        System.out.println("edge shift           : " + Buffer.edge_shift.length);
+        System.out.println("hull shift           : " + Buffer.hull_shift.length);
+        System.out.println("bone bind shift      : " + Buffer.bone_bind_shift.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)       : " + total);
         System.out.println("                  KB : " + ((float) total / 1024f));
@@ -1294,7 +1298,8 @@ public class GPU
             .mem_arg(CompactArmatures_k.Args.bone_shift, Buffer.bone_shift.memory)
             .mem_arg(CompactArmatures_k.Args.point_shift, Buffer.point_shift.memory)
             .mem_arg(CompactArmatures_k.Args.edge_shift, Buffer.edge_shift.memory)
-            .mem_arg(CompactArmatures_k.Args.hull_shift, Buffer.hull_shift.memory);
+            .mem_arg(CompactArmatures_k.Args.hull_shift, Buffer.hull_shift.memory)
+            .mem_arg(CompactArmatures_k.Args.bone_bind_shift, Buffer.bone_bind_shift.memory);
 
         Kernel.compact_hulls.set_kernel(new CompactHulls_k(command_queue))
             .mem_arg(CompactHulls_k.Args.hull_shift, Buffer.hull_shift.memory)
