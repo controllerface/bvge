@@ -2129,7 +2129,7 @@ public class GPU
 
         int[] shift_counts = scan_deletes(del_buffer_1.memory(), del_buffer_2.memory(), armature_count);
 
-        if (shift_counts[0] == 0)
+        if (shift_counts[4] == 0)
         {
             del_buffer_1.release();
             del_buffer_2.release();
