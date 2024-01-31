@@ -72,7 +72,7 @@ public class PhysicsObjects
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
-        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0,0);
+        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0,-1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
         return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
     }
@@ -126,7 +126,7 @@ public class PhysicsObjects
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
-        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, 0);
+        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0, 0);
         return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
     }
@@ -191,7 +191,7 @@ public class PhysicsObjects
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON, next_armature_id, bone_id, bone_id);
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
-        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, 0);
+        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
         return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
     }
@@ -225,7 +225,7 @@ public class PhysicsObjects
         var meshes = model.meshes();
         int first_hull = -1;
         int last_hull = -1;
-        int first_armature_bone = -1;
+        int first_armature_bone = 0;
         int last_armature_bone = -1;
 
         // todo: armature bone anim table needs to be built, each new anim bone instance

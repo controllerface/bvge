@@ -2118,7 +2118,7 @@ public class GPU
     public static void delete_and_compact()
     {
         int armature_count = GPU.Memory.next_armature();
-        long output_buf_size = (long) Sizeof.cl_int * armature_count;
+        long output_buf_size = (long) Sizeof.cl_int2 * armature_count;
         long output_buf_size2 = (long) Sizeof.cl_int4 * armature_count;
 
         var output_buf_data = cl_new_buffer(output_buf_size);
@@ -2571,11 +2571,11 @@ public class GPU
 
     private static int[] scan_single_block_deletes_out(cl_mem o1_data, cl_mem o2_data, int n)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = Sizeof.cl_int2 * max_scan_block_size;
         long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
 
-        var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 5);
-        cl_zero_buffer(size_data, Sizeof.cl_int * 5);
+        var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 6);
+        cl_zero_buffer(size_data, Sizeof.cl_int * 6);
 
         var dst_data = Pointer.to(o1_data);
         var dst_data2 = Pointer.to(o2_data);
@@ -2589,7 +2589,7 @@ public class GPU
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
 
-        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 5, 5);
+        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 6, 6);
         clReleaseMemObject(size_data);
 
         return sz;
@@ -2597,14 +2597,14 @@ public class GPU
 
     private static int[] scan_multi_block_deletes_out(cl_mem o1_data, cl_mem o2_data, int n, int k)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = Sizeof.cl_int2 * max_scan_block_size;
         long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
 
         long gx = k * max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
 
-        long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
+        long part_buf_size = ((long) Sizeof.cl_int2 * ((long) part_size));
         long part_buf_size2 = ((long) Sizeof.cl_int4 * ((long) part_size));
 
         var p_data = cl_new_buffer(part_buf_size);
@@ -2627,11 +2627,11 @@ public class GPU
             .call(global_work_size, local_work_default);
 
         // note the partial buffers are scanned and updated in-place
-        scan_int(p_data, part_size);
+        scan_int2(p_data, part_size);
         scan_int4(p_data2, part_size);
 
-        var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 5);
-        cl_zero_buffer(size_data, Sizeof.cl_int * 5);
+        var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 6);
+        cl_zero_buffer(size_data, Sizeof.cl_int * 6);
 
         Kernel.complete_deletes_multi_block_out
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.output, dst_data)
@@ -2647,7 +2647,7 @@ public class GPU
         clReleaseMemObject(p_data);
         clReleaseMemObject(p_data2);
 
-        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 5, 5);
+        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 6, 6);
         clReleaseMemObject(size_data);
 
         return sz;
