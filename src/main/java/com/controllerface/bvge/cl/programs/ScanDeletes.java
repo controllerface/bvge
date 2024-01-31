@@ -25,5 +25,6 @@ public class ScanDeletes extends GPUProgram
         load_kernel(Kernel.compact_edges);
         load_kernel(Kernel.compact_points);
         load_kernel(Kernel.compact_bones);
+        load_kernel(Kernel.compact_armature_bones);
     }
 }

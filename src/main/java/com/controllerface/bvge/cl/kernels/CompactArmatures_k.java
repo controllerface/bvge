@@ -22,6 +22,7 @@ public class CompactArmatures_k extends GPUKernel<CompactArmatures_k.Args>
         points(Sizeof.cl_mem),
         vertex_tables(Sizeof.cl_mem),
         bone_tables(Sizeof.cl_mem),
+        bone_bind_tables(Sizeof.cl_mem),
         edges(Sizeof.cl_mem),
         bone_shift(Sizeof.cl_mem),
         point_shift(Sizeof.cl_mem),

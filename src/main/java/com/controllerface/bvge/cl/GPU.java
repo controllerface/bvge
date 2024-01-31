@@ -165,6 +165,7 @@ public class GPU
         build_key_map,
         calculate_batch_offsets,
         compact_armatures,
+        compact_armature_bones,
         compact_bones,
         compact_edges,
         compact_hulls,
@@ -547,8 +548,8 @@ public class GPU
         armatures_bones(Sizeof.cl_float16),
 
         /**
-         * x: armature bone parent id
-         * y: bind post reference id
+         * x: bind pose reference id
+         * y: armature bone parent id
          */
         bone_bind_tables(Sizeof.cl_int2),
 
@@ -872,13 +873,15 @@ public class GPU
                                            int bone_shift,
                                            int point_shift,
                                            int hull_shift,
-                                           int armature_shift)
+                                           int armature_shift,
+                                           int armature_bone_shift)
         {
-            edge_index     -= (edge_shift * GPU.Memory.Width.EDGE);
-            bone_index     -= (bone_shift * GPU.Memory.Width.BONE);
-            point_index    -= (point_shift * GPU.Memory.Width.POINT);
-            hull_index     -= (hull_shift * GPU.Memory.Width.HULL);
-            armature_index -= (armature_shift * GPU.Memory.Width.ARMATURE);
+            edge_index          -= (edge_shift * GPU.Memory.Width.EDGE);
+            bone_index          -= (bone_shift * GPU.Memory.Width.BONE);
+            point_index         -= (point_shift * GPU.Memory.Width.POINT);
+            hull_index          -= (hull_shift * GPU.Memory.Width.HULL);
+            armature_index      -= (armature_shift * GPU.Memory.Width.ARMATURE);
+            armature_bone_index -= (armature_bone_shift * GPU.Memory.Width.BONE);
         }
     }
 
@@ -1294,6 +1297,7 @@ public class GPU
             .mem_arg(CompactArmatures_k.Args.points, Buffer.points.memory)
             .mem_arg(CompactArmatures_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
             .mem_arg(CompactArmatures_k.Args.bone_tables, Buffer.point_bone_tables.memory)
+            .mem_arg(CompactArmatures_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory)
             .mem_arg(CompactArmatures_k.Args.edges, Buffer.edges.memory)
             .mem_arg(CompactArmatures_k.Args.bone_shift, Buffer.bone_shift.memory)
             .mem_arg(CompactArmatures_k.Args.point_shift, Buffer.point_shift.memory)
@@ -1327,6 +1331,11 @@ public class GPU
             .mem_arg(CompactBones_k.Args.bone_shift, Buffer.bone_shift.memory)
             .mem_arg(CompactBones_k.Args.bone_instances, Buffer.bone_instances.memory)
             .mem_arg(CompactBones_k.Args.bone_indices, Buffer.bone_index_tables.memory);
+
+        Kernel.compact_armature_bones.set_kernel(new CompactArmatureBones_k(command_queue))
+            .mem_arg(CompactArmatureBones_k.Args.armature_bone_shift, Buffer.bone_bind_shift.memory)
+            .mem_arg(CompactArmatureBones_k.Args.armature_bones, Buffer.armatures_bones.memory)
+            .mem_arg(CompactArmatureBones_k.Args.armature_bone_tables, Buffer.bone_bind_tables.memory);
 
         // movement
 
@@ -2141,6 +2150,7 @@ public class GPU
         Buffer.edge_shift.clear();
         Buffer.point_shift.clear();
         Buffer.bone_shift.clear();
+        Buffer.bone_bind_shift.clear();
 
         // as armatures are compacted, the shift buffers for the other components are updated
         Kernel.compact_armatures
@@ -2152,8 +2162,10 @@ public class GPU
         linearize_kernel(Kernel.compact_points, GPU.Memory.next_point());
         linearize_kernel(Kernel.compact_edges, GPU.Memory.next_edge());
         linearize_kernel(Kernel.compact_hulls, GPU.Memory.next_hull());
+        linearize_kernel(Kernel.compact_armature_bones, GPU.Memory.next_armature_bone());
 
-        GPU.Memory.compact_buffers(shift_counts[0], shift_counts[1], shift_counts[2], shift_counts[3], shift_counts[4]);
+        GPU.Memory.compact_buffers(shift_counts[0], shift_counts[1], shift_counts[2],
+            shift_counts[3], shift_counts[4], shift_counts[5]);
 
         del_buffer_1.release();
         del_buffer_2.release();

@@ -223,9 +223,8 @@ public class PhysicsObjects
         var armature_bone_parent_map = new HashMap<Integer, Integer>();
         for (Map.Entry<Integer, BoneBindPose> entry : model.bind_poses().entrySet())
         {
-            Integer k = entry.getKey();
-            BoneBindPose v = entry.getValue();
-            var bind_pose_id = model.bone_indices().get(v.bone_name());
+            var bind_pose_id = entry.getKey();
+            var bind_pose = entry.getValue();
             // todo: each bind pose needs to be stored in memory with a link to the "this id" value
             //  to use as its default pose when there is no animation. The initial implementation should
             //  just assume this to start. It will also need a link to it's parent anim instance, so
@@ -235,12 +234,12 @@ public class PhysicsObjects
 //                + " parent id: " + v.parent()
 //                + " ref id: " + bind_pose_id
 //                + " bone: " + v.bone_name());
-            var raw_matrix = CLUtils.arg_float16_matrix(v.transform());
+            var raw_matrix = CLUtils.arg_float16_matrix(bind_pose.transform());
             int[] bind_table = new int[2];
-            bind_table[0] = k;
-            bind_table[1] = v.parent() == -1
+            bind_table[0] = bind_pose_id;
+            bind_table[1] = bind_pose.parent() == -1
                 ? -1
-                : armature_bone_parent_map.get(v.parent());
+                : armature_bone_parent_map.get(bind_pose.parent());
 
             int next_armature_bone = GPU.Memory.new_armature_bone(bind_table, raw_matrix);
             if (first_armature_bone == -1)
@@ -249,8 +248,8 @@ public class PhysicsObjects
             }
             last_armature_bone = next_armature_bone;
 
-            armature_bone_map.put(v.bone_name(), next_armature_bone);
-            armature_bone_parent_map.put(k, next_armature_bone);
+            armature_bone_map.put(bind_pose.bone_name(), next_armature_bone);
+            armature_bone_parent_map.put(bind_pose_id, next_armature_bone);
         }
 
         for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)

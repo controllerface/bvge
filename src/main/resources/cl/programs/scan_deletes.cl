@@ -87,10 +87,10 @@ __kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
                                             __global int4 *hull_tables,
                                             __global int4 *element_tables,
                                             __global int4 *hull_flags,
-                                            __global int2 *output, // todo: extend to int2 for armature bones
+                                            __global int2 *output,
                                             __global int4 *output2,
                                             __global int *sz,
-                                            __local int2 *buffer,  // todo: extend to int2 for armature bones
+                                            __local int2 *buffer,
                                             __local int4 *buffer2, 
                                             int n) 
 {
@@ -373,6 +373,7 @@ __kernel void compact_armatures(__global int2 *buffer_in,
                                 __global float4 *points,
                                 __global int4 *vertex_tables,
                                 __global int4 *bone_tables,
+                                __global int2 *bone_bind_tables,
                                 __global float4 *edges,
                                 __global int *bone_shift,
                                 __global int *point_shift,
@@ -416,6 +417,8 @@ __kernel void compact_armatures(__global int2 *buffer_in,
     int4 new_hull_table = hull_table;
     new_hull_table.x -= drop.hull_count;
     new_hull_table.y -= drop.hull_count;
+    new_hull_table.z -= drop.bone_bind_count;
+    new_hull_table.w -= drop.bone_bind_count;
 
     // store updated data at the new index
     armatures[new_armature_index] = armature;
@@ -427,6 +430,18 @@ __kernel void compact_armatures(__global int2 *buffer_in,
     // compacted immediately. The offset each object would be moved by, is stored 
     // in an object aliged "shift buffer". Subsequent kernels are then called with the 
     // shift buffers to perform the compaction.
+
+    int armature_bone_count = hull_table.w - hull_table.z + 1;
+    for (int i = 0; i < armature_bone_count; i++)
+    {
+        int current_bone_bind = hull_table.z + i;
+        int2 bone_bind_table = bone_bind_tables[current_bone_bind];
+        bone_bind_table.y = bone_bind_table.y == -1
+            ? -1
+            : bone_bind_table.y - drop.bone_bind_count;
+        bone_bind_tables[current_bone_bind] = bone_bind_table;
+        bone_bind_shift[current_bone_bind] = drop.bone_bind_count;
+    }
 
     // hulls
     int hull_count = hull_table.y - hull_table.x + 1;
@@ -576,5 +591,22 @@ __kernel void compact_bones(__global int *bone_shift,
         int new_bone_index = current_bone - shift;
         bone_instances[new_bone_index] = instance;
         bone_indices[new_bone_index] = index;
+    }
+}
+
+__kernel void compact_armature_bones(__global int *bone_bind_shift,
+                                     __global float16 *armatures_bones,
+                                     __global int2 *bind_tables)
+{
+    int current_armature_bone = get_global_id(0);
+    int shift = bone_bind_shift[current_armature_bone];
+    float16 armature_bone = armatures_bones[current_armature_bone];
+    int2 bind_table = bind_tables[current_armature_bone];
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    if (shift > 0)
+    {
+        int new_bone_index = current_armature_bone - shift;
+        armatures_bones[new_bone_index] = armature_bone;
+        bind_tables[new_bone_index] = bind_table;
     }
 }
