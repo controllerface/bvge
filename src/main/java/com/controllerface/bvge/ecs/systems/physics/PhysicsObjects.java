@@ -46,10 +46,6 @@ public class PhysicsObjects
         // get the circle mesh. this is almost silly to do but just for consistency :-)
         var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
 
-        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
-        int[] bone_index_table = {mesh.bone_offsets().get(0).offset_ref_id(), 0};
-        int bone_id = GPU.Memory.new_bone(bone_index_table, raw_matrix);
-
         var vert = mesh.vertices()[0];
 
         // the model points are always zero so the * and + are for educational purposes
@@ -60,17 +56,17 @@ public class PhysicsObjects
         // store the single point for the circle
         var p1_index = GPU.Memory.new_point(p1, t1, new int[4]);
 
-        var edge_index = GPU.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1), FLAG_NONE);
+        //var edge_index = GPU.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1), FLAG_NONE);
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angle_between_lines(l1, l2);
-        var table = CLUtils.arg_int4(p1_index, p1_index, edge_index, edge_index);
+        var table = CLUtils.arg_int4(p1_index, p1_index, 0, -1);
         var transform = CLUtils.arg_float4(x, y, size, size / 2.0f);
         var rotation = CLUtils.arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int[] _flag = CLUtils.arg_int4(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
+        int[] _flag = CLUtils.arg_int4(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id, 0, -1);
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0,-1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
@@ -83,10 +79,6 @@ public class PhysicsObjects
         int next_hull_index = GPU.Memory.next_hull();
 
         var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
-
-        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
-        int[] bone_index_table = {mesh.bone_offsets().get(0).offset_ref_id(), 0};
-        int bone_id = GPU.Memory.new_bone(bone_index_table, raw_matrix);
 
         var hull = mesh.vertices();
         hull = scale_hull(hull, size);
@@ -124,7 +116,7 @@ public class PhysicsObjects
 
 
         // there is only one hull, so it is the main hull ID by default
-        int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id, bone_id, bone_id);
+        int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id, 0, -1);
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0, 0);
@@ -138,10 +130,6 @@ public class PhysicsObjects
 
         // get the box mesh
         var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
-
-        var raw_matrix = CLUtils.arg_float16_matrix(mesh.bone_offsets().get(0).transform());
-        int[] bone_index_table = {mesh.bone_offsets().get(0).offset_ref_id(), 0};
-        int bone_id = GPU.Memory.new_bone(bone_index_table, raw_matrix);
 
         var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
@@ -189,7 +177,7 @@ public class PhysicsObjects
 
 
         // there is only one hull, so it is the main hull ID by default
-        int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON, next_armature_id, bone_id, bone_id);
+        int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON, next_armature_id, 0, -1);
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);

@@ -282,7 +282,7 @@ public class TestGame extends GameMode
 
 
         genCircles(20, 7f, 5f, 0, 100);
-        genSquares(100,  9f, 5f, -120, 100);
+        genSquares(20,  9f, 5f, -120, 100);
         genCrates2(20, 7f, 0.025f, 100, 100);
         genTriangles(20,  9f, 5f, 200, 100);
 
