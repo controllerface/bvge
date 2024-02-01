@@ -223,7 +223,7 @@ public class PhysicsObjects
         var armature_bone_parent_map = new HashMap<Integer, Integer>();
         for (Map.Entry<Integer, BoneBindPose> entry : model.bind_poses().entrySet())
         {
-            var bind_pose_id = entry.getKey();
+            var bind_pose_ref_id = entry.getKey();
             var bind_pose = entry.getValue();
             // todo: each bind pose needs to be stored in memory with a link to the "this id" value
             //  to use as its default pose when there is no animation. The initial implementation should
@@ -236,7 +236,7 @@ public class PhysicsObjects
 //                + " bone: " + v.bone_name());
             var raw_matrix = CLUtils.arg_float16_matrix(bind_pose.transform());
             int[] bind_table = new int[2];
-            bind_table[0] = bind_pose_id;
+            bind_table[0] = bind_pose_ref_id;
             bind_table[1] = bind_pose.parent() == -1
                 ? -1
                 : armature_bone_parent_map.get(bind_pose.parent());
@@ -249,7 +249,7 @@ public class PhysicsObjects
             last_armature_bone = next_armature_bone;
 
             armature_bone_map.put(bind_pose.bone_name(), next_armature_bone);
-            armature_bone_parent_map.put(bind_pose_id, next_armature_bone);
+            armature_bone_parent_map.put(bind_pose_ref_id, next_armature_bone);
         }
 
         for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)
@@ -280,7 +280,6 @@ public class PhysicsObjects
                 //  bind pose reference
                 //var bind_pose_id = model.bone_indices().get(bone_offset.name());
                 var bind_pose_id = armature_bone_map.get(bone_offset.name());
-
 
                 int[] bone_table = new int[]{bone_offset.offset_ref_id(), bind_pose_id};
 //                System.out.println("Armature: " + next_armature_id

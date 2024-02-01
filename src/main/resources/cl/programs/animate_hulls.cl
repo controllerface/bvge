@@ -1,5 +1,5 @@
 
-constant float16 identityMatrix = (float16)
+constant float16 identity_matrix = (float16)
 (
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
@@ -8,31 +8,52 @@ constant float16 identityMatrix = (float16)
 );
 
 
-__kernel void animate_armatures()
+__kernel void animate_armatures(__global float16 *armature_bones,
+                                __global float16 *bone_bind_poses,
+                                __global int2 *bone_bind_tables,
+                                __global int4 *hull_tables)
 {
-    // todo: stub out
+    int current_armature = get_global_id(0);
+    int4 hull_table = hull_tables[current_armature];
 
+    int armature_bone_count = hull_table.w - hull_table.z + 1;
+    for (int i = 0; i < armature_bone_count; i++)
+    {
+        int current_bone_bind = hull_table.z + i;
+        int2 bone_bind_table = bone_bind_tables[current_bone_bind];
+
+        float16 parent_transform = bone_bind_table.y == -1 
+            ? identity_matrix 
+            : armature_bones[bone_bind_table.y];
+
+        // todo: when there is animation, there will be a check to determine where the transform comes from
+        float16 node_transform = bone_bind_poses[bone_bind_table.x];
+        float16 global_transform = parent_transform * node_transform;
+        armature_bones[current_bone_bind] = global_transform;
+    }
 }
 
-__kernel void animate_hulls()
+__kernel void animate_hulls(__global float16 *bones,
+                            __global float16 *bone_references,
+                            __global float16 *armature_bones,
+                            __global int2 *bone_index_tables)
 {
-    // get hull bone table
-    // get bone instances
-    // get bone index tables
-    // get mesh-space inverse bind matrix
-    // get armature aligned current animation
-
+    int current_bone = get_global_id(0);
+    int2 index_table = bone_index_tables[current_bone];
+    float16 bone_reference = bone_references[index_table.x];
+    float16 armature_bone = armature_bones[index_table.y];
+    bones[current_bone] = armature_bone * bone_reference;
 }
 
 __kernel void animate_points(__global float4 *points,
-                            __global float4 *hulls,
-                            __global int4 *hull_flags,
-                            __global int4 *vertex_tables,
-                            __global int4 *bone_tables,
-                            __global float4 *vertex_weights,
-                            __global float4 *armatures,
-                            __global float2 *vertex_references,
-                            __global float16 *bones)
+                             __global float4 *hulls,
+                             __global int4 *hull_flags,
+                             __global int4 *vertex_tables,
+                             __global int4 *bone_tables,
+                             __global float4 *vertex_weights,
+                             __global float4 *armatures,
+                             __global float2 *vertex_references,
+                             __global float16 *bones)
 {
 
     int gid = get_global_id(0);
@@ -47,10 +68,10 @@ __kernel void animate_points(__global float4 *points,
     float2 reference_vertex = vertex_references[vertex_table.x];
     float4 reference_weights = vertex_weights[vertex_table.x];
 
-    float16 bone1 = bone_table.x == -1 ? identityMatrix : bones[bone_table.x];
-    float16 bone2 = bone_table.y == -1 ? identityMatrix : bones[bone_table.y];
-    float16 bone3 = bone_table.z == -1 ? identityMatrix : bones[bone_table.z];
-    float16 bone4 = bone_table.w == -1 ? identityMatrix : bones[bone_table.w];
+    float16 bone1 = bone_table.x == -1 ? identity_matrix : bones[bone_table.x];
+    float16 bone2 = bone_table.y == -1 ? identity_matrix : bones[bone_table.y];
+    float16 bone3 = bone_table.z == -1 ? identity_matrix : bones[bone_table.z];
+    float16 bone4 = bone_table.w == -1 ? identity_matrix : bones[bone_table.w];
 
     float16 test_bone = bone1 * reference_weights.x;
     test_bone += bone2 * reference_weights.y;

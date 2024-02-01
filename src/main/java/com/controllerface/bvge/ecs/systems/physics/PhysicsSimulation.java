@@ -257,6 +257,9 @@ public class PhysicsSimulation extends GameSystem
             return;
         }
 
+        GPU.animate_armatures();
+        GPU.animate_hulls();
+
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
         // convex shape. Animations may move points into positions where the geometry is slightly concave,
         // so this call acts as a small hedge against this happening before collision checks can be performed.
@@ -278,7 +281,7 @@ public class PhysicsSimulation extends GameSystem
                 // rendered meshes are what is actually moved, and the result of the hull movement is used to position
                 // the original mesh for rendering. This separation is necessary as model geometry is too complex to
                 // use as a collision boundary.
-                GPU.animate_hulls();
+                GPU.animate_points();
 
                 // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain
                 // their defined shapes. Without this step, the individual points of the tracked physics hulls will
@@ -299,7 +302,7 @@ public class PhysicsSimulation extends GameSystem
         // After all simulation is done for this pass, do one last animate pass so that vertices are all in
         // the expected location for rendering. The interplay between animation and edge constraints may leave
         // the points in slightly incorrect positions. This makes sure everything is good for the render step.
-        GPU.animate_hulls();
+        GPU.animate_points();
     }
 
 

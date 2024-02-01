@@ -587,12 +587,10 @@ public class GPU
         /**
          * x: start hull index
          * y: end hull index
-         * z: start bone anim index // todo: extend buffer for this
-         * w: end bone anim index   // todo: extend buffer for this
+         * z: start bone anim index
+         * w: end bone anim index
          */
         armature_hull_table(Sizeof.cl_int4),
-
-        // todo: add armature bone animation objects
 
         /*
         Buffer Compaction
@@ -1339,6 +1337,18 @@ public class GPU
 
         // movement
 
+        Kernel.animate_armatures.set_kernel(new AnimateArmatures_k(command_queue))
+            .mem_arg(AnimateArmatures_k.Args.armature_bones, Buffer.armatures_bones.memory)
+            .mem_arg(AnimateArmatures_k.Args.bone_bind_poses, Buffer.bone_bind_poses.memory)
+            .mem_arg(AnimateArmatures_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory)
+            .mem_arg(AnimateArmatures_k.Args.hull_tables, Buffer.armature_hull_table.memory);
+
+        Kernel.animate_hulls.set_kernel(new AnimateHulls_k(command_queue))
+            .mem_arg(AnimateHulls_k.Args.bones, Buffer.bone_instances.memory)
+            .mem_arg(AnimateHulls_k.Args.bone_references, Buffer.bone_references.memory)
+            .mem_arg(AnimateHulls_k.Args.armature_bones, Buffer.armatures_bones.memory)
+            .mem_arg(AnimateHulls_k.Args.bone_index_tables, Buffer.bone_index_tables.memory);
+
         Kernel.animate_points.set_kernel(new AnimatePoints_k(command_queue))
             .mem_arg(AnimatePoints_k.Args.points, Buffer.points.memory)
             .mem_arg(AnimatePoints_k.Args.hulls, Buffer.hulls.memory)
@@ -1956,7 +1966,17 @@ public class GPU
 
     //#region Physics Simulation
 
+    public static void animate_armatures()
+    {
+        Kernel.animate_armatures.call(arg_long(GPU.Memory.next_armature()));
+    }
+
     public static void animate_hulls()
+    {
+        Kernel.animate_hulls.call(arg_long(GPU.Memory.next_hull()));
+    }
+
+    public static void animate_points()
     {
         Kernel.animate_points.call(arg_long(GPU.Memory.next_point()));
     }
