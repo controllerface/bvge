@@ -2,8 +2,6 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
@@ -12,7 +10,7 @@ public class CreateBone_k extends GPUKernel<CreateBone_k.Args>
     public enum Args implements GPUKernelArg
     {
         bones(Sizeof.cl_mem),
-        bone_ref_tables(Sizeof.cl_mem),
+        bone_index_tables(Sizeof.cl_mem),
         target(Sizeof.cl_int),
         new_bone(Sizeof.cl_float16),
         new_bone_table(Sizeof.cl_int2);

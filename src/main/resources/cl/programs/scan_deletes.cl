@@ -374,6 +374,7 @@ __kernel void compact_armatures(__global int2 *buffer_in,
                                 __global int4 *vertex_tables,
                                 __global int4 *bone_tables,
                                 __global int2 *bone_bind_tables,
+                                __global int2 *bone_index_tables,
                                 __global float4 *edges,
                                 __global int *bone_shift,
                                 __global int *point_shift,
@@ -499,6 +500,9 @@ __kernel void compact_armatures(__global int2 *buffer_in,
         for (int l = 0; l < bone_count; l++)
         {
             int current_bone = hull_flag.z + l;
+            int2 bone_index_table = bone_index_tables[current_bone];
+            bone_index_table.y -= drop.bone_bind_count;
+            bone_index_tables[current_bone] = bone_index_table;
             bone_shift[current_bone] = drop.bone_count;
         }
     }
@@ -579,18 +583,18 @@ __kernel void compact_points(__global int *point_shift,
 
 __kernel void compact_bones(__global int *bone_shift,
                             __global float16 *bone_instances,
-                            __global int2 *bone_indices)
+                            __global int2 *bone_index_tables)
 {
     int current_bone = get_global_id(0);
     int shift = bone_shift[current_bone];
     float16 instance = bone_instances[current_bone];
-    int2 index = bone_indices[current_bone];
+    int2 index = bone_index_tables[current_bone];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_bone_index = current_bone - shift;
         bone_instances[new_bone_index] = instance;
-        bone_indices[new_bone_index] = index;
+        bone_index_tables[new_bone_index] = index;
     }
 }
 

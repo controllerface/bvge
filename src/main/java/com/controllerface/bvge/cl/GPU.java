@@ -159,7 +159,7 @@ public class GPU
     {
         aabb_collide,
         animate_armatures,
-        animate_hulls,
+        animate_bones,
         animate_points,
         apply_reactions,
         build_key_map,
@@ -1232,7 +1232,7 @@ public class GPU
 
         Kernel.create_bone.set_kernel(new CreateBone_k(command_queue))
             .mem_arg(CreateBone_k.Args.bones, Buffer.bone_instances.memory)
-            .mem_arg(CreateBone_k.Args.bone_ref_tables, Buffer.bone_index_tables.memory);
+            .mem_arg(CreateBone_k.Args.bone_index_tables, Buffer.bone_index_tables.memory);
 
         Kernel.create_armature_bone.set_kernel(new CreateArmatureBone_k(command_queue))
             .mem_arg(CreateArmatureBone_k.Args.armature_bones, Buffer.armatures_bones.memory)
@@ -1296,6 +1296,7 @@ public class GPU
             .mem_arg(CompactArmatures_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
             .mem_arg(CompactArmatures_k.Args.bone_tables, Buffer.point_bone_tables.memory)
             .mem_arg(CompactArmatures_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory)
+            .mem_arg(CompactArmatures_k.Args.bone_index_tables, Buffer.bone_index_tables.memory)
             .mem_arg(CompactArmatures_k.Args.edges, Buffer.edges.memory)
             .mem_arg(CompactArmatures_k.Args.bone_shift, Buffer.bone_shift.memory)
             .mem_arg(CompactArmatures_k.Args.point_shift, Buffer.point_shift.memory)
@@ -1328,7 +1329,7 @@ public class GPU
         Kernel.compact_bones.set_kernel(new CompactBones_k(command_queue))
             .mem_arg(CompactBones_k.Args.bone_shift, Buffer.bone_shift.memory)
             .mem_arg(CompactBones_k.Args.bone_instances, Buffer.bone_instances.memory)
-            .mem_arg(CompactBones_k.Args.bone_indices, Buffer.bone_index_tables.memory);
+            .mem_arg(CompactBones_k.Args.bone_index_tables, Buffer.bone_index_tables.memory);
 
         Kernel.compact_armature_bones.set_kernel(new CompactArmatureBones_k(command_queue))
             .mem_arg(CompactArmatureBones_k.Args.armature_bone_shift, Buffer.bone_bind_shift.memory)
@@ -1343,11 +1344,11 @@ public class GPU
             .mem_arg(AnimateArmatures_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory)
             .mem_arg(AnimateArmatures_k.Args.hull_tables, Buffer.armature_hull_table.memory);
 
-        Kernel.animate_hulls.set_kernel(new AnimateHulls_k(command_queue))
-            .mem_arg(AnimateHulls_k.Args.bones, Buffer.bone_instances.memory)
-            .mem_arg(AnimateHulls_k.Args.bone_references, Buffer.bone_references.memory)
-            .mem_arg(AnimateHulls_k.Args.armature_bones, Buffer.armatures_bones.memory)
-            .mem_arg(AnimateHulls_k.Args.bone_index_tables, Buffer.bone_index_tables.memory);
+        Kernel.animate_bones.set_kernel(new AnimateBones_k(command_queue))
+            .mem_arg(AnimateBones_k.Args.bones, Buffer.bone_instances.memory)
+            .mem_arg(AnimateBones_k.Args.bone_references, Buffer.bone_references.memory)
+            .mem_arg(AnimateBones_k.Args.armature_bones, Buffer.armatures_bones.memory)
+            .mem_arg(AnimateBones_k.Args.bone_index_tables, Buffer.bone_index_tables.memory);
 
         Kernel.animate_points.set_kernel(new AnimatePoints_k(command_queue))
             .mem_arg(AnimatePoints_k.Args.points, Buffer.points.memory)
@@ -1971,9 +1972,9 @@ public class GPU
         Kernel.animate_armatures.call(arg_long(GPU.Memory.next_armature()));
     }
 
-    public static void animate_hulls()
+    public static void animate_bones()
     {
-        Kernel.animate_hulls.call(arg_long(GPU.Memory.next_hull()));
+        Kernel.animate_bones.call(arg_long(GPU.Memory.next_bone()));
     }
 
     public static void animate_points()

@@ -1,4 +1,13 @@
 
+constant float16 armature_matrix = (float16)
+(
+ 6.224E+0,  0.000E+0,   0.000E+0,  0.000E+0,
+ 0.000E+0, -1.014E-6,  -6.224E+0,  0.000E+0,
+ 0.000E+0,  6.224E+0,  -1.014E-6,  0.000E+0,
+ 1.472E-1,  2.841E+1,   0.000E+0,  1.000E+0
+
+);
+
 constant float16 identity_matrix = (float16)
 (
     1.0f, 0.0f, 0.0f, 0.0f,
@@ -7,6 +16,52 @@ constant float16 identity_matrix = (float16)
     0.0f, 0.0f, 0.0f, 1.0f
 );
 
+inline float16 matrix_mul_affine(float16 matrixA, float16 matrixB) 
+{
+    float16 result;
+
+    float m00 = matrixA.s0;
+    float m01 = matrixA.s1;
+    float m02 = matrixA.s2;
+    float m10 = matrixA.s4;
+    float m11 = matrixA.s5;
+    float m12 = matrixA.s6;
+    float m20 = matrixA.s8;
+    float m21 = matrixA.s9;
+    float m22 = matrixA.sA;
+
+    float rm00 = matrixB.s0;
+    float rm01 = matrixB.s1;
+    float rm02 = matrixB.s2;
+    float rm10 = matrixB.s4;
+    float rm11 = matrixB.s5;
+    float rm12 = matrixB.s6;
+    float rm20 = matrixB.s8;
+    float rm21 = matrixB.s9;
+    float rm22 = matrixB.sA;
+    float rm30 = matrixB.sC;
+    float rm31 = matrixB.sD;
+    float rm32 = matrixB.sE;
+
+    result.s0 = fma(m00, rm00, fma(m10, rm01, m20 * rm02));
+    result.s1 = fma(m01, rm00, fma(m11, rm01, m21 * rm02)); 
+    result.s2 = fma(m02, rm00, fma(m12, rm01, m22 * rm02)); 
+    result.s3 = matrixA.s3; 
+    result.s4 = fma(m00, rm10, fma(m10, rm11, m20 * rm12)); 
+    result.s5 = fma(m01, rm10, fma(m11, rm11, m21 * rm12)); 
+    result.s6 = fma(m02, rm10, fma(m12, rm11, m22 * rm12)); 
+    result.s7 = matrixA.s7; 
+    result.s8 = fma(m00, rm20, fma(m10, rm21, m20 * rm22)); 
+    result.s9 = fma(m01, rm20, fma(m11, rm21, m21 * rm22)); 
+    result.sA = fma(m02, rm20, fma(m12, rm21, m22 * rm22)); 
+    result.sB = matrixA.sB; 
+    result.sC = fma(m00, rm30, fma(m10, rm31, fma(m20, rm32, matrixA.sC))); 
+    result.sD = fma(m01, rm30, fma(m11, rm31, fma(m21, rm32, matrixA.sD))); 
+    result.sE = fma(m02, rm30, fma(m12, rm31, fma(m22, rm32, matrixA.sE))); 
+    result.sF = matrixA.sF; 
+
+    return result;
+}
 
 __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global float16 *bone_bind_poses,
@@ -16,6 +71,7 @@ __kernel void animate_armatures(__global float16 *armature_bones,
     int current_armature = get_global_id(0);
     int4 hull_table = hull_tables[current_armature];
 
+    // note that armatures with no bones simply do nothing as the bone count will be zero
     int armature_bone_count = hull_table.w - hull_table.z + 1;
     for (int i = 0; i < armature_bone_count; i++)
     {
@@ -23,17 +79,17 @@ __kernel void animate_armatures(__global float16 *armature_bones,
         int2 bone_bind_table = bone_bind_tables[current_bone_bind];
 
         float16 parent_transform = bone_bind_table.y == -1 
-            ? identity_matrix 
+            ? armature_matrix // todo: pull from armature data
             : armature_bones[bone_bind_table.y];
 
         // todo: when there is animation, there will be a check to determine where the transform comes from
         float16 node_transform = bone_bind_poses[bone_bind_table.x];
-        float16 global_transform = parent_transform * node_transform;
+        float16 global_transform = matrix_mul_affine(parent_transform, node_transform);
         armature_bones[current_bone_bind] = global_transform;
     }
 }
 
-__kernel void animate_hulls(__global float16 *bones,
+__kernel void animate_bones(__global float16 *bones,
                             __global float16 *bone_references,
                             __global float16 *armature_bones,
                             __global int2 *bone_index_tables)
@@ -42,7 +98,8 @@ __kernel void animate_hulls(__global float16 *bones,
     int2 index_table = bone_index_tables[current_bone];
     float16 bone_reference = bone_references[index_table.x];
     float16 armature_bone = armature_bones[index_table.y];
-    bones[current_bone] = armature_bone * bone_reference;
+    float16 next_position = matrix_mul_affine(armature_bone, bone_reference);
+    bones[current_bone] = next_position;
 }
 
 __kernel void animate_points(__global float4 *points,

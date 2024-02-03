@@ -17,7 +17,7 @@ public class AnimateHulls extends GPUProgram
         make_program();
 
         load_kernel(GPU.Kernel.animate_armatures);
-        load_kernel(GPU.Kernel.animate_hulls);
+        load_kernel(GPU.Kernel.animate_bones);
         load_kernel(GPU.Kernel.animate_points);
     }
 }

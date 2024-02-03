@@ -21,6 +21,6 @@ public class AnimateArmatures_k extends GPUKernel<AnimateArmatures_k.Args>
 
     public AnimateArmatures_k(cl_command_queue command_queue)
     {
-        super(command_queue, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_points), Args.values());
+        super(command_queue, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_armatures), Args.values());
     }
 }

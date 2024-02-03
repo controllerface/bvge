@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.GPUKernel;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
-public class AnimateHulls_k extends GPUKernel<AnimateHulls_k.Args>
+public class AnimateBones_k extends GPUKernel<AnimateBones_k.Args>
 {
     public enum Args implements GPUKernelArg
     {
@@ -19,8 +19,8 @@ public class AnimateHulls_k extends GPUKernel<AnimateHulls_k.Args>
         @Override public long size() { return size; }
     }
 
-    public AnimateHulls_k(cl_command_queue command_queue)
+    public AnimateBones_k(cl_command_queue command_queue)
     {
-        super(command_queue, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_points), Args.values());
+        super(command_queue, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_bones), Args.values());
     }
 }

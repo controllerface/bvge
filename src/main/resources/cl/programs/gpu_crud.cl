@@ -80,13 +80,13 @@ __kernel void create_bone_reference(__global float16 *bone_references,
 }
 
 __kernel void create_bone(__global float16 *bones,
-                          __global int2 *bone_ref_tables,
+                          __global int2 *bone_index_tables,
                           int target,
                           float16 new_bone,
                           int2 new_bone_table)
 {
     bones[target] = new_bone; 
-    bone_ref_tables[target] = new_bone_table; 
+    bone_index_tables[target] = new_bone_table; 
 }
 
 __kernel void create_armature_bone(__global float16 *armature_bones,

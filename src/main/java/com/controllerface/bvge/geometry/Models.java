@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static org.lwjgl.assimp.Assimp.*;
@@ -95,8 +96,10 @@ public class Models
         var bind_pose_map = new LinkedHashMap<Integer, BoneBindPose>();
         var bind_name_map = new HashMap<String, Integer>();
 
+        var matrix_reference = new AtomicReference<Matrix4f>();
+
         // generate the bind pose transforms, setting the initial state of the armature
-        generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, -1);
+        generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, matrix_reference, -1);
 
         load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map);
 
@@ -519,18 +522,25 @@ public class Models
                                             Matrix4f parent_transform,
                                             Map<String, Integer> bind_name_map,
                                             Map<Integer, BoneBindPose> bind_pose_map,
+                                            AtomicReference<Matrix4f> init_matrix,
                                             int parent_index)
     {
         var name = current_node.name;
+
+        boolean is_bone = name.toLowerCase().contains("bone")
+            && !name.toLowerCase().contains("_end");
         var node_transform = current_node.transform;
         var global_transform = parent_transform.mul(node_transform, new Matrix4f());
 
         var parent = parent_index;
 
         // if this node is a bone, update the
-        if (name.toLowerCase().contains("bone")
-            && !name.toLowerCase().contains("_end"))
+        if (is_bone)
         {
+            if (init_matrix.get() == null)
+            {
+                init_matrix.set(parent_transform);
+            }
             var raw_matrix = new float[16];
             raw_matrix[0] = node_transform.m00();
             raw_matrix[1] = node_transform.m01();
@@ -550,14 +560,15 @@ public class Models
             raw_matrix[15] = node_transform.m33();
 
             var p = new BoneBindPose(parent, node_transform, name);
-            parent = GPU.Memory.new_bone_bind_pose(parent, raw_matrix);
-            bind_name_map.put(name, parent);
-            bind_pose_map.put(parent, p);
+            int next = GPU.Memory.new_bone_bind_pose(parent, raw_matrix);
+            bind_name_map.put(name, next);
+            bind_pose_map.put(next, p);
             transforms.put(name, global_transform);
+            parent = next;
         }
         for (SceneNode child : current_node.children)
         {
-            generate_transforms(child, transforms, global_transform, bind_name_map, bind_pose_map, parent);
+            generate_transforms(child, transforms, global_transform, bind_name_map, bind_pose_map, init_matrix, parent);
         }
     }
 

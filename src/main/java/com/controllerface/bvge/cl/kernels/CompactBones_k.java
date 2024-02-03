@@ -2,7 +2,6 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
 
@@ -12,7 +11,7 @@ public class CompactBones_k extends GPUKernel<CompactBones_k.Args>
     {
         bone_shift(Sizeof.cl_mem),
         bone_instances(Sizeof.cl_mem),
-        bone_indices(Sizeof.cl_mem);
+        bone_index_tables(Sizeof.cl_mem);
 
         public final long size;
         Args(long size) { this.size = size; }

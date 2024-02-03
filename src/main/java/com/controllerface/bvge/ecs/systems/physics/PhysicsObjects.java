@@ -213,7 +213,7 @@ public class PhysicsObjects
         var meshes = model.meshes();
         int first_hull = -1;
         int last_hull = -1;
-        int first_armature_bone = 0;
+        int first_armature_bone = -1;
         int last_armature_bone = -1;
 
         // todo: armature bone anim table needs to be built, each new anim bone instance
@@ -289,6 +289,7 @@ public class PhysicsObjects
 //                    + " Table: " + Arrays.toString(bone_table));
 
                 int next_bone = GPU.Memory.new_bone(bone_table, raw_matrix);
+                //System.out.println("in bone instance debug: " + next_bone + " : " + raw_matrix[0]);
                 bone_map.put(bone_offset.name(), next_bone);
 
                 if (start_hull_bone == -1)
@@ -452,6 +453,11 @@ public class PhysicsObjects
             throw new IllegalStateException("There was no root hull determined. "
                 + "Check model data to ensure it is correct");
         }
+
+        System.out.println("next arm debug: " + next_armature_id
+            + " first: " + first_armature_bone
+            + " last: " + last_armature_bone
+            + " x= " + (last_armature_bone - first_armature_bone));
 
         // todo: extend to int 4 to accommodate armature bones
         int[] hull_table = CLUtils.arg_int4(first_hull, last_hull, first_armature_bone, last_armature_bone);
