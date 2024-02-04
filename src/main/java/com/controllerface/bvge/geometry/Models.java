@@ -5,6 +5,7 @@ import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
+import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
@@ -109,7 +110,12 @@ public class Models
 
         // register the model
         var next_model_id = next_model_index.getAndIncrement();
-        var model = new Model(meshes, bone_transforms, bind_name_map, bind_pose_map, textures, root_index);
+        int transform_index = -1;
+        if (matrix_reference.get() != null)
+        {
+            transform_index = GPU.Memory.new_model_transform(MathEX.raw_matrix(matrix_reference.get()));
+        }
+        var model = new Model(meshes, bone_transforms, bind_name_map, bind_pose_map, textures, root_index, transform_index);
         loaded_models.put(next_model_id, model);
         return next_model_id;
     }
@@ -537,28 +543,8 @@ public class Models
         // if this node is a bone, update the
         if (is_bone)
         {
-            if (init_matrix.get() == null)
-            {
-                init_matrix.set(parent_transform);
-            }
-            var raw_matrix = new float[16];
-            raw_matrix[0] = node_transform.m00();
-            raw_matrix[1] = node_transform.m01();
-            raw_matrix[2] = node_transform.m02();
-            raw_matrix[3] = node_transform.m03();
-            raw_matrix[4] = node_transform.m10();
-            raw_matrix[5] = node_transform.m11();
-            raw_matrix[6] = node_transform.m12();
-            raw_matrix[7] = node_transform.m13();
-            raw_matrix[8] = node_transform.m20();
-            raw_matrix[9] = node_transform.m21();
-            raw_matrix[10] = node_transform.m22();
-            raw_matrix[11] = node_transform.m23();
-            raw_matrix[12] = node_transform.m30();
-            raw_matrix[13] = node_transform.m31();
-            raw_matrix[14] = node_transform.m32();
-            raw_matrix[15] = node_transform.m33();
-
+            init_matrix.compareAndSet(null, parent_transform);
+            var raw_matrix = MathEX.raw_matrix(node_transform);
             var p = new BoneBindPose(parent, node_transform, name);
             int next = GPU.Memory.new_bone_bind_pose(parent, raw_matrix);
             bind_name_map.put(name, next);

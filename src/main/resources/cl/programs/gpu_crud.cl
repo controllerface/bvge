@@ -62,6 +62,13 @@ __kernel void create_vertex_reference(__global float2 *vertex_references,
     uv_tables[target] = new_uv_table;
 }
 
+__kernel void create_model_transform(__global float16 *model_transforms,
+                                     int target,
+                                     float16 new_model_transform)
+{
+    model_transforms[target] = new_model_transform; 
+}
+
 __kernel void create_bone_bind_pose(__global float16 *bone_bind_poses,
                                     __global int *bone_bind_parents,
                                     int target,

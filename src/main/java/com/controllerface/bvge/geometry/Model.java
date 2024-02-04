@@ -12,7 +12,8 @@ public record Model(Mesh[] meshes,
                     Map<String, Integer> bone_indices,
                     Map<Integer, BoneBindPose> bind_poses,
                     List<Texture> textures,
-                    int root_index)
+                    int root_index,
+                    int transform_index)
 {
     public static Model fromBasicMesh(Mesh mesh)
     {
@@ -21,6 +22,7 @@ public record Model(Mesh[] meshes,
             Collections.emptyMap(),
             Collections.emptyMap(),
             Collections.emptyList(),
-            0);
+            0,
+            -1);
     }
 }

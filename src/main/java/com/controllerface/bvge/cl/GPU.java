@@ -189,6 +189,7 @@ public class GPU
         create_hull,
         create_mesh_reference,
         create_mesh_face,
+        create_model_transform,
         create_point,
         create_texture_uv,
         create_vertex_reference,
@@ -317,6 +318,27 @@ public class GPU
          * y: end UV index
          */
         uv_tables(Sizeof.cl_int2),
+
+
+        /**
+         * s0: (m00) transformation matrix column 1 row 1
+         * s1: (m01) transformation matrix column 1 row 2
+         * s2: (m02) transformation matrix column 1 row 3
+         * s3: (m03) transformation matrix column 1 row 4
+         * s4: (m10) transformation matrix column 2 row 1
+         * s5: (m11) transformation matrix column 2 row 2
+         * s6: (m12) transformation matrix column 2 row 3
+         * s7: (m13) transformation matrix column 2 row 4
+         * s8: (m20) transformation matrix column 3 row 1
+         * s9: (m21) transformation matrix column 3 row 2
+         * sA: (m22) transformation matrix column 3 row 3
+         * sB: (m23) transformation matrix column 3 row 4
+         * sC: (m30) transformation matrix column 4 row 1
+         * sD: (m31) transformation matrix column 4 row 2
+         * sE: (m32) transformation matrix column 4 row 3
+         * sF: (m33) transformation matrix column 4 row 4
+         */
+        model_transforms(Sizeof.cl_float16),
 
         /**
          * s0: (m00) transformation matrix column 1 row 1
@@ -686,29 +708,37 @@ public class GPU
     {
         public static class Width
         {
-            public static final int ARMATURE = 4;
-            public static final int BONE     = 16;
-            public static final int EDGE     = 4;
-            public static final int FACE     = 4;
-            public static final int HULL     = 4;
-            public static final int MESH     = 4;
-            public static final int POINT    = 4;
-            public static final int UV       = 2;
-            public static final int VERTEX   = 2;
+            public static final int ARMATURE  = 4;
+            public static final int TRANSFORM = 16;
+            public static final int EDGE      = 4;
+            public static final int FACE      = 4;
+            public static final int HULL      = 4;
+            public static final int MESH      = 4;
+            public static final int POINT     = 4;
+            public static final int UV        = 2;
+            public static final int VERTEX    = 2;
         }
 
-        private static int hull_index          = 0;
-        private static int point_index         = 0;
-        private static int edge_index          = 0;
-        private static int vertex_ref_index    = 0;
-        private static int bone_bind_index     = 0;
-        private static int bone_ref_index      = 0;
-        private static int bone_index          = 0;
-        private static int armature_bone_index = 0;
-        private static int armature_index      = 0;
-        private static int mesh_index          = 0;
-        private static int face_index          = 0;
-        private static int uv_index            = 0;
+        private static int hull_index            = 0;
+        private static int point_index           = 0;
+        private static int edge_index            = 0;
+        private static int vertex_ref_index      = 0;
+        private static int bone_bind_index       = 0;
+        private static int bone_ref_index        = 0;
+        private static int bone_index            = 0;
+        private static int model_transform_index = 0;
+        private static int armature_bone_index   = 0;
+        private static int armature_index        = 0;
+        private static int mesh_index            = 0;
+        private static int face_index            = 0;
+        private static int uv_index              = 0;
+
+        // index methods
+
+        public static int next_model_transform()
+        {
+            return model_transform_index / Width.TRANSFORM;
+        }
 
         public static int next_uv()
         {
@@ -752,23 +782,26 @@ public class GPU
 
         public static int next_bone_bind()
         {
-            return bone_bind_index / GPU.Memory.Width.BONE;
+            return bone_bind_index / GPU.Memory.Width.TRANSFORM;
         }
 
         public static int next_bone_ref()
         {
-            return bone_ref_index / GPU.Memory.Width.BONE;
+            return bone_ref_index / GPU.Memory.Width.TRANSFORM;
         }
 
         public static int next_bone()
         {
-            return bone_index / GPU.Memory.Width.BONE;
+            return bone_index / GPU.Memory.Width.TRANSFORM;
         }
 
         public static int next_armature_bone()
         {
-            return armature_bone_index / GPU.Memory.Width.BONE;
+            return armature_bone_index / GPU.Memory.Width.TRANSFORM;
         }
+
+
+        // creation methods
 
         public static int new_texture_uv(float u, float v)
         {
@@ -839,32 +872,40 @@ public class GPU
         {
             GPU.create_bone_bind_pose(next_bone_bind(), bind_parent, bone_data);
             var idx = bone_bind_index;
-            bone_bind_index += GPU.Memory.Width.BONE;
-            return idx / GPU.Memory.Width.BONE;
+            bone_bind_index += GPU.Memory.Width.TRANSFORM;
+            return idx / GPU.Memory.Width.TRANSFORM;
         }
 
         public static int new_bone_reference(float[] bone_data)
         {
             GPU.create_bone_reference(next_bone_ref(), bone_data);
             var idx = bone_ref_index;
-            bone_ref_index += GPU.Memory.Width.BONE;
-            return idx / GPU.Memory.Width.BONE;
+            bone_ref_index += GPU.Memory.Width.TRANSFORM;
+            return idx / GPU.Memory.Width.TRANSFORM;
         }
 
         public static int new_bone(int[] offset_id, float[] bone_data)
         {
             GPU.create_bone(next_bone(), offset_id, bone_data);
             var idx = bone_index;
-            bone_index += GPU.Memory.Width.BONE;
-            return idx / GPU.Memory.Width.BONE;
+            bone_index += GPU.Memory.Width.TRANSFORM;
+            return idx / GPU.Memory.Width.TRANSFORM;
         }
 
         public static int new_armature_bone(int[] bone_bind_table, float[] bone_data)
         {
             GPU.create_armature_bone(next_armature_bone(), bone_bind_table, bone_data);
             var idx = armature_bone_index;
-            armature_bone_index += GPU.Memory.Width.BONE;
-            return idx / GPU.Memory.Width.BONE;
+            armature_bone_index += GPU.Memory.Width.TRANSFORM;
+            return idx / GPU.Memory.Width.TRANSFORM;
+        }
+
+        public static int new_model_transform(float[] transform_data)
+        {
+            GPU.create_model_transform(next_model_transform(), transform_data);
+            var idx = model_transform_index;
+            model_transform_index += GPU.Memory.Width.TRANSFORM;
+            return idx / GPU.Memory.Width.TRANSFORM;
         }
 
         public static void compact_buffers(int edge_shift,
@@ -875,11 +916,11 @@ public class GPU
                                            int armature_bone_shift)
         {
             edge_index          -= (edge_shift * GPU.Memory.Width.EDGE);
-            bone_index          -= (bone_shift * GPU.Memory.Width.BONE);
+            bone_index          -= (bone_shift * GPU.Memory.Width.TRANSFORM);
             point_index         -= (point_shift * GPU.Memory.Width.POINT);
             hull_index          -= (hull_shift * GPU.Memory.Width.HULL);
             armature_index      -= (armature_shift * GPU.Memory.Width.ARMATURE);
-            armature_bone_index -= (armature_bone_shift * GPU.Memory.Width.BONE);
+            armature_bone_index -= (armature_bone_shift * GPU.Memory.Width.TRANSFORM);
         }
     }
 
@@ -988,6 +1029,7 @@ public class GPU
         Buffer.bone_instances.init(max_points);
         Buffer.bone_index_tables.init(max_points);
         Buffer.bone_bind_tables.init(max_points);
+        Buffer.model_transforms.init(max_points);
         Buffer.armatures.init(max_points);
         Buffer.armature_flags.init(max_points);
         Buffer.armatures_bones.init(max_points);
@@ -1027,6 +1069,7 @@ public class GPU
             + Buffer.bone_instances.length
             + Buffer.bone_index_tables.length
             + Buffer.bone_bind_tables.length
+            + Buffer.model_transforms.length
             + Buffer.armatures.length
             + Buffer.armature_flags.length
             + Buffer.armatures_bones.length
@@ -1067,6 +1110,7 @@ public class GPU
         System.out.println("bone instances       : " + Buffer.bone_instances.length);
         System.out.println("bone index           : " + Buffer.bone_index_tables.length);
         System.out.println("bone bind indices    : " + Buffer.bone_bind_tables.length);
+        System.out.println("model transforms     : " + Buffer.model_transforms.length);
         System.out.println("armatures            : " + Buffer.armatures.length);
         System.out.println("armature flags       : " + Buffer.armature_flags.length);
         System.out.println("armature bones       : " + Buffer.armatures_bones.length);
@@ -1238,6 +1282,9 @@ public class GPU
             .mem_arg(CreateArmatureBone_k.Args.armature_bones, Buffer.armatures_bones.memory)
             .mem_arg(CreateArmatureBone_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory);
 
+        Kernel.create_model_transform.set_kernel(new CreateModelTransform_k(command_queue))
+            .mem_arg(CreateModelTransform_k.Args.model_transforms, Buffer.model_transforms.memory);
+
         Kernel.create_hull.set_kernel(new CreateHull_k(command_queue))
             .mem_arg(CreateHull_k.Args.hulls, Buffer.hulls.memory)
             .mem_arg(CreateHull_k.Args.hull_rotations, Buffer.hull_rotation.memory)
@@ -1341,7 +1388,9 @@ public class GPU
         Kernel.animate_armatures.set_kernel(new AnimateArmatures_k(command_queue))
             .mem_arg(AnimateArmatures_k.Args.armature_bones, Buffer.armatures_bones.memory)
             .mem_arg(AnimateArmatures_k.Args.bone_bind_poses, Buffer.bone_bind_poses.memory)
+            .mem_arg(AnimateArmatures_k.Args.model_transforms, Buffer.model_transforms.memory)
             .mem_arg(AnimateArmatures_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory)
+            .mem_arg(AnimateArmatures_k.Args.armature_flags, Buffer.armature_flags.memory)
             .mem_arg(AnimateArmatures_k.Args.hull_tables, Buffer.armature_hull_table.memory);
 
         Kernel.animate_bones.set_kernel(new AnimateBones_k(command_queue))
@@ -1894,6 +1943,14 @@ public class GPU
             .set_arg(CreateArmatureBone_k.Args.target, Pointer.to(arg_int(armature_bone_index)))
             .set_arg(CreateArmatureBone_k.Args.new_armature_bone, Pointer.to(matrix))
             .set_arg(CreateArmatureBone_k.Args.new_bone_bind_table, Pointer.to(bone_bind_table))
+            .call(global_single_size);
+    }
+
+    public static void create_model_transform(int model_transform_index, float[] matrix)
+    {
+        Kernel.create_model_transform
+            .set_arg(CreateModelTransform_k.Args.target, Pointer.to(arg_int(model_transform_index)))
+            .set_arg(CreateModelTransform_k.Args.new_model_transform, Pointer.to(matrix))
             .call(global_single_size);
     }
 

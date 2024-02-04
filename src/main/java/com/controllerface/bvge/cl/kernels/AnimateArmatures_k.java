@@ -11,7 +11,9 @@ public class AnimateArmatures_k extends GPUKernel<AnimateArmatures_k.Args>
     {
         armature_bones(Sizeof.cl_mem),
         bone_bind_poses(Sizeof.cl_mem),
+        model_transforms(Sizeof.cl_mem),
         bone_bind_tables(Sizeof.cl_mem),
+        armature_flags(Sizeof.cl_mem),
         hull_tables(Sizeof.cl_mem);
 
         public final long size;

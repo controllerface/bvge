@@ -1,13 +1,4 @@
 
-constant float16 armature_matrix = (float16)
-(
- 6.224E+0,  0.000E+0,   0.000E+0,  0.000E+0,
- 0.000E+0, -1.014E-6,  -6.224E+0,  0.000E+0,
- 0.000E+0,  6.224E+0,  -1.014E-6,  0.000E+0,
- 1.472E-1,  2.841E+1,   0.000E+0,  1.000E+0
-
-);
-
 constant float16 identity_matrix = (float16)
 (
     1.0f, 0.0f, 0.0f, 0.0f,
@@ -65,11 +56,15 @@ inline float16 matrix_mul_affine(float16 matrixA, float16 matrixB)
 
 __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global float16 *bone_bind_poses,
+                                __global float16 *model_transforms,
                                 __global int2 *bone_bind_tables,
+                                __global int4 *armature_flags,
                                 __global int4 *hull_tables)
 {
     int current_armature = get_global_id(0);
     int4 hull_table = hull_tables[current_armature];
+    int4 armature_flag = armature_flags[current_armature];
+    float16 model_transform = model_transforms[armature_flag.w];
 
     // note that armatures with no bones simply do nothing as the bone count will be zero
     int armature_bone_count = hull_table.w - hull_table.z + 1;
@@ -79,7 +74,7 @@ __kernel void animate_armatures(__global float16 *armature_bones,
         int2 bone_bind_table = bone_bind_tables[current_bone_bind];
 
         float16 parent_transform = bone_bind_table.y == -1 
-            ? armature_matrix // todo: pull from armature data
+            ? model_transform 
             : armature_bones[bone_bind_table.y];
 
         // todo: when there is animation, there will be a check to determine where the transform comes from

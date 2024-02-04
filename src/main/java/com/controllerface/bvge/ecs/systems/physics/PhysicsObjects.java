@@ -216,24 +216,12 @@ public class PhysicsObjects
         int first_armature_bone = -1;
         int last_armature_bone = -1;
 
-        // todo: armature bone anim table needs to be built, each new anim bone instance
-        //  will need to reference the static bind pose reference for frames where it
-        //  has no animation deformation.
         var armature_bone_map = new HashMap<String, Integer>();
         var armature_bone_parent_map = new HashMap<Integer, Integer>();
         for (Map.Entry<Integer, BoneBindPose> entry : model.bind_poses().entrySet())
         {
             var bind_pose_ref_id = entry.getKey();
             var bind_pose = entry.getValue();
-            // todo: each bind pose needs to be stored in memory with a link to the "this id" value
-            //  to use as its default pose when there is no animation. The initial implementation should
-            //  just assume this to start. It will also need a link to it's parent anim instance, so
-            //  it is crucial this loop be in top-down bone hierarchy order.
-//            System.out.println("Armature id: " + next_armature_id
-//                + " this id: " + k
-//                + " parent id: " + v.parent()
-//                + " ref id: " + bind_pose_id
-//                + " bone: " + v.bone_name());
             var raw_matrix = CLUtils.arg_float16_matrix(bind_pose.transform());
             int[] bind_table = new int[2];
             bind_table[0] = bind_pose_ref_id;
@@ -275,21 +263,9 @@ public class PhysicsObjects
                 var bone_bind_pose = model.bone_transforms().get(bone_offset.name());
                 var bone_transform = bone_bind_pose.mul(bone_offset.transform(), new Matrix4f());
                 var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
-
-                // todo: this needs to refer to the armature bone anim instance instead of the
-                //  bind pose reference
-                //var bind_pose_id = model.bone_indices().get(bone_offset.name());
                 var bind_pose_id = armature_bone_map.get(bone_offset.name());
-
                 int[] bone_table = new int[]{bone_offset.offset_ref_id(), bind_pose_id};
-//                System.out.println("Armature: " + next_armature_id
-//                    + " Hull: " + next_hull
-//                    + " Bone ID: " + GPU.Memory.next_bone()
-//                    + " Bone: " + bone_offset.name()
-//                    + " Table: " + Arrays.toString(bone_table));
-
                 int next_bone = GPU.Memory.new_bone(bone_table, raw_matrix);
-                //System.out.println("in bone instance debug: " + next_bone + " : " + raw_matrix[0]);
                 bone_map.put(bone_offset.name(), next_bone);
 
                 if (start_hull_bone == -1)
@@ -454,14 +430,8 @@ public class PhysicsObjects
                 + "Check model data to ensure it is correct");
         }
 
-        System.out.println("next arm debug: " + next_armature_id
-            + " first: " + first_armature_bone
-            + " last: " + last_armature_bone
-            + " x= " + (last_armature_bone - first_armature_bone));
-
-        // todo: extend to int 4 to accommodate armature bones
         int[] hull_table = CLUtils.arg_int4(first_hull, last_hull, first_armature_bone, last_armature_bone);
-        int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, 0);
+        int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, model.transform_index());
         return GPU.Memory.new_armature(root_x, root_y, hull_table, armature_flags, mass);
     }
 
