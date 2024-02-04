@@ -1,4 +1,4 @@
-package com.controllerface.bvge.ecs.systems.physics;
+package com.controllerface.bvge.physics;
 
 /**
  * Container class for the runtime values of a uniform grid spatial partition. The grid boundary is

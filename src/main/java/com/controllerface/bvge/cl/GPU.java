@@ -2,8 +2,8 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
-import com.controllerface.bvge.ecs.systems.physics.PhysicsBuffer;
-import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
+import com.controllerface.bvge.physics.PhysicsBuffer;
+import com.controllerface.bvge.physics.UniformGrid;
 import org.jocl.*;
 
 import java.nio.ByteOrder;

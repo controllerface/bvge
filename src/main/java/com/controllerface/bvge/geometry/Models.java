@@ -1,8 +1,7 @@
 package com.controllerface.bvge.geometry;
 
-import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.GPU;
-import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
+import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.MathEX;
@@ -18,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 import static org.lwjgl.assimp.Assimp.*;
 
@@ -414,12 +412,12 @@ public class Models
                     float r = color_data.get(0);
                     float g = color_data.get(1);
                     float b = color_data.get(2);
-                    System.out.println("Mat name=" + prop_name + " r=" + r + " g=" + g + " b=" + b);
+                    //System.out.println("Mat name=" + prop_name + " r=" + r + " g=" + g + " b=" + b);
                 }
                 else if (prop_name.startsWith("$mat."))
                 {
                     float v = raw_prop.mData().asFloatBuffer().get(0);
-                    System.out.println("Mat name=" + prop_name + " v=" + v);
+                    //System.out.println("Mat name=" + prop_name + " v=" + v);
                 }
                 else
                 {
@@ -430,7 +428,7 @@ public class Models
                             int f_count = raw_prop.mDataLength() / 4;
                             float[] float_out = new float[f_count];
                             float_buffer.get(float_out);
-                            System.out.println("Mat name=" + prop_name + " float=" + Arrays.toString(float_out));
+                            //System.out.println("Mat name=" + prop_name + " float=" + Arrays.toString(float_out));
                             break;
 
                         case 3:
@@ -439,7 +437,7 @@ public class Models
                             byte[] bytes_out = new byte[s_count];
                             string_buffer.get(bytes_out);
                             var string = new String(bytes_out, StandardCharsets.UTF_8);
-                            System.out.println("Mat name=" + prop_name + " string=" + string);
+                            //System.out.println("Mat name=" + prop_name + " string=" + string);
                             break;
 
                         case 4:
@@ -447,7 +445,7 @@ public class Models
                             int i_count = raw_prop.mDataLength() / 4;
                             int[] int_out = new int[i_count];
                             int_buffer.get(int_out);
-                            System.out.println("Mat name=" + prop_name + " int=" + Arrays.toString(int_out));
+                            //System.out.println("Mat name=" + prop_name + " int=" + Arrays.toString(int_out));
                             break;
 
                         default:

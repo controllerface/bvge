@@ -1,4 +1,4 @@
-package com.controllerface.bvge.ecs.systems.physics;
+package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.cl.GPUMemory;
 import org.jocl.Pointer;

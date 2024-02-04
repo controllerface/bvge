@@ -1,4 +1,4 @@
-package com.controllerface.bvge.ecs.systems.renderers;
+package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.GPU;

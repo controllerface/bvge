@@ -3,20 +3,20 @@ package com.controllerface.bvge.game;
 import com.controllerface.bvge.ecs.components.ArmatureIndex;
 import com.controllerface.bvge.ecs.components.LinearForce;
 import com.controllerface.bvge.ecs.systems.BoneAnimator;
-import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
+import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.CameraFocus;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
-import com.controllerface.bvge.ecs.systems.physics.PhysicsSimulation;
-import com.controllerface.bvge.ecs.systems.renderers.*;
+import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.geometry.Models;
+import com.controllerface.bvge.gl.renderers.*;
 
-import static com.controllerface.bvge.ecs.systems.physics.PhysicsObjects.*;
+import static com.controllerface.bvge.physics.PhysicsObjects.*;
 import static com.controllerface.bvge.geometry.Models.*;
 
 
@@ -281,10 +281,10 @@ public class TestGame extends GameMode
 
 
 
-//        genCircles(20, 7f, 5f, 0, 100);
-//        genSquares(20,  9f, 5f, -120, 100);
+        genCircles(20, 7f, 5f, 0, 100);
+        genSquares(20,  9f, 5f, -120, 100);
         genCrates2(20, 7f, 0.025f, 100, 100);
-//        genTriangles(20,  9f, 5f, 200, 100);
+        genTriangles(20,  9f, 5f, 200, 100);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);
