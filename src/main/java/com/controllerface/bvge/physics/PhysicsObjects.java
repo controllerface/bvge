@@ -70,7 +70,7 @@ public class PhysicsObjects
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0,-1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
-        return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
+        return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass, -1, -1d);
     }
 
     public static int tri(float x, float y, float size, int flags, float mass)
@@ -120,7 +120,7 @@ public class PhysicsObjects
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0, 0);
-        return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
+        return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass, -1, -1d);
     }
 
     public static int box(float x, float y, float size, int flags, float mass)
@@ -181,7 +181,7 @@ public class PhysicsObjects
         int hull_id = GPU.Memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
         int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
-        return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass);
+        return GPU.Memory.new_armature(x, y, hull_table, armature_flags, mass, -1, -1d);
     }
 
     public static int dynamic_Box(float x, float y, float size, float mass)
@@ -432,7 +432,7 @@ public class PhysicsObjects
 
         int[] hull_table = CLUtils.arg_int4(first_hull, last_hull, first_armature_bone, last_armature_bone);
         int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, model.transform_index());
-        return GPU.Memory.new_armature(root_x, root_y, hull_table, armature_flags, mass);
+        return GPU.Memory.new_armature(root_x, root_y, hull_table, armature_flags, mass, 0, 0.0d);
     }
 
 

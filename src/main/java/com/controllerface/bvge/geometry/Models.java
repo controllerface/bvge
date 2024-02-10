@@ -372,7 +372,7 @@ public class Models
     }
 
     // todo: material list needs to be built and made available during mesh loading,
-    //  and each mesh should have it's material set during construction.
+    //  and each mesh should have its material set during construction.
     private static void load_materials(AIScene aiScene)
     {
         if (aiScene.mNumMaterials() <= 0)
@@ -442,7 +442,6 @@ public class Models
                     }
                 }
             }
-
         }
     }
 

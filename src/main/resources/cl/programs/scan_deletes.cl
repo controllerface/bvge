@@ -366,6 +366,8 @@ __kernel void compact_armatures(__global int2 *buffer_in,
                                 __global float4 *armatures,
                                 __global float2 *armature_accel,
                                 __global int4 *armature_flags,
+                                __global int *armature_animation_indices,
+                                __global double *armature_animation_elapsed,
                                 __global int4 *hull_tables,
                                 __global float4 *hulls,
                                 __global int4 *hull_flags,
@@ -399,6 +401,8 @@ __kernel void compact_armatures(__global int2 *buffer_in,
     float2 accel = armature_accel[gid];
     int4 armature_flag = armature_flags[gid];
     int4 hull_table = hull_tables[gid];
+    int anim_index = armature_animation_indices[gid];
+    double anim_time = armature_animation_elapsed[gid];
     
     barrier(CLK_GLOBAL_MEM_FENCE);
 
@@ -426,6 +430,8 @@ __kernel void compact_armatures(__global int2 *buffer_in,
     armature_accel[new_armature_index] = accel;
     armature_flags[new_armature_index] = new_armature_flag;
     hull_tables[new_armature_index] = new_hull_table;
+    armature_animation_indices[new_armature_index] = anim_index;
+    armature_animation_elapsed[new_armature_index] = anim_time;
 
     // Note: hull, point, edge, and bone data may be adjusted, but the buffers are not
     // compacted immediately. The offset each object would be moved by, is stored 

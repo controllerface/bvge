@@ -13,8 +13,15 @@ public class AnimateArmatures_k extends GPUKernel<AnimateArmatures_k.Args>
         bone_bind_poses(Sizeof.cl_mem),
         model_transforms(Sizeof.cl_mem),
         bone_bind_tables(Sizeof.cl_mem),
+        bone_channel_tables(Sizeof.cl_mem),
+        bone_pos_channel_tables(Sizeof.cl_mem),
+        bone_rot_channel_tables(Sizeof.cl_mem),
+        bone_scl_channel_tables(Sizeof.cl_mem),
         armature_flags(Sizeof.cl_mem),
-        hull_tables(Sizeof.cl_mem);
+        hull_tables(Sizeof.cl_mem),
+        animation_timing_indices(Sizeof.cl_mem),
+        animation_timings(Sizeof.cl_mem),
+        delta_time(Sizeof.cl_float);
 
         public final long size;
         Args(long size) { this.size = size; }

@@ -14,6 +14,8 @@ public class CompactArmatures_k extends GPUKernel<CompactArmatures_k.Args>
         armatures(Sizeof.cl_mem),
         armature_accel(Sizeof.cl_mem),
         armature_flags(Sizeof.cl_mem),
+        armature_animation_indices(Sizeof.cl_mem),
+        armature_animation_elapsed(Sizeof.cl_mem),
         hull_tables(Sizeof.cl_mem),
         hulls(Sizeof.cl_mem),
         hull_flags(Sizeof.cl_mem),

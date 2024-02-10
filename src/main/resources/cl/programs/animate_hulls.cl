@@ -6,19 +6,42 @@ constant float16 identity_matrix = (float16)
     0.0f, 0.0f, 0.0f, 1.0f
 );
 
+inline float16 get_node_transform(__global float16 *bone_bind_poses,
+                                  __global int2 *bone_channel_tables,
+                                  __global int2 *bone_pos_channel_tables,
+                                  __global int2 *bone_rot_channel_tables,
+                                  __global int2 *bone_scl_channel_tables,
+                                  __global int *animation_timing_indices,
+                                  __global double2 *animation_timings,
+                                  float delta_time,
+                                  int animtation_index,
+                                  int bone_id)
+{
+    // todo: when there is animation, there will be a check to determine where the transform comes from
+    return bone_bind_poses[bone_id];
+}
+
 __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global float16 *bone_bind_poses,
                                 __global float16 *model_transforms,
                                 __global int2 *bone_bind_tables,
+                                __global int2 *bone_channel_tables,
+                                __global int2 *bone_pos_channel_tables,
+                                __global int2 *bone_rot_channel_tables,
+                                __global int2 *bone_scl_channel_tables,
                                 __global int4 *armature_flags,
-                                __global int4 *hull_tables)
+                                __global int4 *hull_tables,
+                                __global int *animation_timing_indices,
+                                __global double2 *animation_timings,
+                                float delta_time)
 {
     int current_armature = get_global_id(0);
     int4 hull_table = hull_tables[current_armature];
     int4 armature_flag = armature_flags[current_armature];
     float16 model_transform = model_transforms[armature_flag.w];
 
-    int current_animation = 0; // todo: get from armature
+    int current_animation = 0; // todo: get from armature,
+                               //  maybe use -1 for unanimated models that have bones?
 
     // note that armatures with no bones simply do nothing as the bone count will be zero
     int armature_bone_count = hull_table.w - hull_table.z + 1;
@@ -31,8 +54,17 @@ __kernel void animate_armatures(__global float16 *armature_bones,
             ? model_transform 
             : armature_bones[bone_bind_table.y];
 
-        // todo: when there is animation, there will be a check to determine where the transform comes from
-        float16 node_transform = bone_bind_poses[bone_bind_table.x];
+        float16 node_transform = get_node_transform(bone_bind_poses,
+                                                    bone_channel_tables,
+                                                    bone_pos_channel_tables,
+                                                    bone_rot_channel_tables,
+                                                    bone_scl_channel_tables,
+                                                    animation_timing_indices,
+                                                    animation_timings,
+                                                    delta_time,
+                                                    current_animation,
+                                                    bone_bind_table.x);
+
         float16 global_transform = matrix_mul_affine(parent_transform, node_transform);
         armature_bones[current_bone_bind] = global_transform;
     }
