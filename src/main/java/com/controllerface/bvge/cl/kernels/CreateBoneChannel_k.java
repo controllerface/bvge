@@ -9,10 +9,12 @@ public class CreateBoneChannel_k extends GPUKernel<CreateBoneChannel_k.Args>
 {
     public enum Args implements GPUKernelArg
     {
+        animation_timing_indices(Sizeof.cl_mem),
         bone_pos_channel_tables(Sizeof.cl_mem),
         bone_rot_channel_tables(Sizeof.cl_mem),
         bone_scl_channel_tables(Sizeof.cl_mem),
         target(Sizeof.cl_int),
+        new_animation_timing_index(Sizeof.cl_int),
         new_bone_pos_channel_table(Sizeof.cl_int2),
         new_bone_rot_channel_table(Sizeof.cl_int2),
         new_bone_scl_channel_table(Sizeof.cl_int2);

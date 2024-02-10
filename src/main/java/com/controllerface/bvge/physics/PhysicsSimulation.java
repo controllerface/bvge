@@ -258,8 +258,7 @@ public class PhysicsSimulation extends GameSystem
         }
 
         // Bones are animated once per time tick
-        // todo: pass in dt
-        GPU.animate_armatures();
+        GPU.animate_armatures(dt);
         GPU.animate_bones();
 
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"

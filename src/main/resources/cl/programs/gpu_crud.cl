@@ -26,24 +26,34 @@ __kernel void create_edge(__global float4 *edges,
     edges[target] = new_edge; 
 }
 
-__kernel void create_bone_channel(__global int2 *bone_pos_channel_tables,
+__kernel void create_bone_channel(__global int *animation_timing_indices,
+                                  __global int2 *bone_pos_channel_tables,
                                   __global int2 *bone_rot_channel_tables,
                                   __global int2 *bone_scl_channel_tables,
                                   int target,
+                                  int new_animation_timing_index,
                                   int2 new_bone_pos_channel_table,
                                   int2 new_bone_rot_channel_table,
                                   int2 new_bone_scl_channel_table)
 {
+    animation_timing_indices[target] = new_animation_timing_index;
     bone_pos_channel_tables[target] = new_bone_pos_channel_table;
     bone_rot_channel_tables[target] = new_bone_rot_channel_table;
     bone_scl_channel_tables[target] = new_bone_scl_channel_table;
 }
 
-__kernel void create_bone_channel_table(__global int2 *bone_channel_tables,
-                                        int target,
-                                        int2 new_bone_channel_table)
+__kernel void set_bone_channel_table(__global int2 *bone_channel_tables,
+                                     int target,
+                                     int2 new_bone_channel_table)
 {
     bone_channel_tables[target] = new_bone_channel_table;
+}
+
+__kernel void create_animation_timings(__global double2 *animation_timings,
+                                       int target,
+                                       double2 new_animation_timing)
+{
+    animation_timings[target] = new_animation_timing;
 }
 
 __kernel void create_keyframe(__global float4 *key_frames,

@@ -180,12 +180,12 @@ public class GPU
         count_candidates,
         count_mesh_batches,
         count_mesh_instances,
+        create_animation_timings,
         create_armature,
         create_armature_bone,
         create_bone,
         create_bone_bind_pose,
         create_bone_channel,
-        create_bone_channel_table,
         create_bone_reference,
         create_edge,
         create_hull,
@@ -227,6 +227,7 @@ public class GPU
         scan_int_multi_block_out,
         scan_int_single_block,
         scan_int_single_block_out,
+        set_bone_channel_table,
         sort_reactions,
         transfer_detail_data,
         transfer_render_data,
@@ -416,14 +417,40 @@ public class GPU
          */
         frame_times(Sizeof.cl_double),
 
-
+        /**
+         * x: position channel start index
+         * y: position channel end index
+         */
         bone_pos_channel_tables(Sizeof.cl_int2),
 
+        /**
+         * x: rotation channel start index
+         * y: rotation channel end index
+         */
         bone_rot_channel_tables(Sizeof.cl_int2),
 
+        /**
+         * x: scaling channel start index
+         * y: scaling channel end index
+         */
         bone_scl_channel_tables(Sizeof.cl_int2),
 
+        /**
+         * x: bone channel start index
+         * y: bone channel end index
+         */
         bone_channel_tables(Sizeof.cl_int2),
+
+        /**
+         * x: animation duration
+         * y: ticks per second (FPS)
+         */
+        animation_timings(Sizeof.cl_double2),
+
+        /**
+         * value: animation timing index
+         */
+        animation_timing_indices(Sizeof.cl_int),
 
         /*
         Points
@@ -730,21 +757,6 @@ public class GPU
      */
     public static class Memory
     {
-        public static class Width
-        {
-            public static final int ARMATURE  = 4;
-            public static final int TRANSFORM = 16;
-            public static final int KEYFRAME  = 4;
-            public static final int EDGE      = 4;
-            public static final int FACE      = 4;
-            public static final int HULL      = 4;
-            public static final int MESH      = 4;
-            public static final int POINT     = 4;
-            public static final int UV        = 2;
-            public static final int VERTEX    = 2;
-            public static final int CHANNEL   = 1;
-        }
-
         private static int hull_index            = 0;
         private static int point_index           = 0;
         private static int edge_index            = 0;
@@ -760,213 +772,188 @@ public class GPU
         private static int uv_index              = 0;
         private static int keyframe_index        = 0;
         private static int bone_channel_index    = 0;
+        private static int animation_index       = 0;
 
         // index methods
 
+        public static int next_animation_index()
+        {
+            return animation_index;
+        }
+
         public static int next_bone_channel()
         {
-            return bone_channel_index / Width.CHANNEL;
+            return bone_channel_index;
         }
 
         public static int next_keyframe()
         {
-            return keyframe_index / Width.KEYFRAME;
+            return keyframe_index;
         }
 
         public static int next_model_transform()
         {
-            return model_transform_index / Width.TRANSFORM;
+            return model_transform_index;
         }
 
         public static int next_uv()
         {
-            return uv_index / GPU.Memory.Width.UV;
+            return uv_index;
         }
 
         public static int next_face()
         {
-            return face_index / GPU.Memory.Width.FACE;
+            return face_index;
         }
 
         public static int next_mesh()
         {
-            return mesh_index / GPU.Memory.Width.MESH;
+            return mesh_index;
         }
 
         public static int next_armature()
         {
-            return armature_index / GPU.Memory.Width.ARMATURE;
+            return armature_index;
         }
 
         public static int next_hull()
         {
-            return hull_index / GPU.Memory.Width.HULL;
+            return hull_index;
         }
 
         public static int next_point()
         {
-            return point_index / GPU.Memory.Width.POINT;
+            return point_index;
         }
 
         public static int next_edge()
         {
-            return edge_index / GPU.Memory.Width.EDGE;
+            return edge_index;
         }
 
         public static int next_vertex_ref()
         {
-            return vertex_ref_index / GPU.Memory.Width.VERTEX;
+            return vertex_ref_index;
         }
 
         public static int next_bone_bind()
         {
-            return bone_bind_index / GPU.Memory.Width.TRANSFORM;
+            return bone_bind_index;
         }
 
         public static int next_bone_ref()
         {
-            return bone_ref_index / GPU.Memory.Width.TRANSFORM;
+            return bone_ref_index;
         }
 
         public static int next_bone()
         {
-            return bone_index / GPU.Memory.Width.TRANSFORM;
+            return bone_index;
         }
 
         public static int next_armature_bone()
         {
-            return armature_bone_index / GPU.Memory.Width.TRANSFORM;
+            return armature_bone_index;
         }
 
 
         // creation methods
 
-        public static int new_bone_channel(int[] pos_table, int[] rot_table, int[] scl_table)
+        public static int new_animation_timings(double[] timings)
         {
-            GPU.create_bone_channel(next_keyframe(), pos_table, rot_table, scl_table);
-            var idx = bone_channel_index;
-            bone_channel_index += Width.CHANNEL;
-            return idx / Width.CHANNEL;
+            GPU.create_animation_timings(next_animation_index(), timings);
+            return animation_index++;
+        }
+
+        public static int new_bone_channel(int anim_timing_index, int[] pos_table, int[] rot_table, int[] scl_table)
+        {
+            GPU.create_bone_channel(next_bone_channel(), anim_timing_index, pos_table, rot_table, scl_table);
+            return bone_channel_index++;
         }
 
         public static int new_keyframe(float[] frame, double time)
         {
             GPU.create_keyframe(next_keyframe(), frame, time);
-            var idx = keyframe_index;
-            keyframe_index += Width.KEYFRAME;
-            return idx / Width.KEYFRAME;
+            return keyframe_index++;
         }
 
         public static int new_texture_uv(float u, float v)
         {
             GPU.create_texture_uv(next_uv(), u, v);
-            var idx = uv_index;
-            uv_index += GPU.Memory.Width.UV;
-            return idx / GPU.Memory.Width.UV;
+            return uv_index++;
         }
 
         public static int new_edge(int p1, int p2, float l, int flags)
         {
             GPU.create_edge(next_edge(), p1, p2, l, flags);
-            var idx = edge_index;
-            edge_index += GPU.Memory.Width.EDGE;
-            return idx / GPU.Memory.Width.EDGE;
+            return edge_index++;
         }
 
         public static int new_point(float[] position, int[] vertex_table, int[] bone_ids)
         {
             var init_vert = new float[]{position[0], position[1], position[0], position[1]};
             GPU.create_point(next_point(), init_vert, vertex_table, bone_ids);
-            var idx = point_index;
-            point_index += GPU.Memory.Width.POINT;
-            return idx / GPU.Memory.Width.POINT;
+            return point_index++;
         }
 
         public static int new_hull(int mesh_id, float[] transform, float[] rotation, int[] table, int[] flags)
         {
             GPU.create_hull(next_hull(), mesh_id, transform, rotation, table, flags);
-            var idx = hull_index;
-            hull_index += GPU.Memory.Width.HULL;
-            return idx / GPU.Memory.Width.HULL;
+            return hull_index++;
         }
 
         public static int new_mesh_reference(int[] mesh_ref_table)
         {
             GPU.create_mesh_reference(next_mesh(), mesh_ref_table);
-            var idx = mesh_index;
-            mesh_index += GPU.Memory.Width.MESH;
-            return idx / GPU.Memory.Width.MESH;
+            return mesh_index++;
         }
 
         public static int new_mesh_face(int[] face)
         {
             GPU.create_mesh_face(next_face(), face);
-            var idx = face_index;
-            face_index += GPU.Memory.Width.FACE;
-            return idx / GPU.Memory.Width.FACE;
+            return face_index++;
         }
 
         public static int new_armature(float x, float y, int[] table, int[] flags, float mass)
         {
             GPU.create_armature(next_armature(), x, y, table, flags, mass);
-            var idx = armature_index;
-            armature_index += GPU.Memory.Width.ARMATURE;
-            return idx / GPU.Memory.Width.ARMATURE;
+            return armature_index++;
         }
 
         public static int new_vertex_reference(float x, float y, float[] weights, int[] uv_table)
         {
             GPU.create_vertex_reference(next_vertex_ref(), x, y, weights, uv_table);
-            var idx = vertex_ref_index;
-            vertex_ref_index += GPU.Memory.Width.VERTEX;
-            return idx / GPU.Memory.Width.VERTEX;
+            return vertex_ref_index++;
         }
 
         public static int new_bone_bind_pose(int bind_parent, float[] bone_data)
         {
             GPU.create_bone_bind_pose(next_bone_bind(), bind_parent, bone_data);
-            var idx = bone_bind_index;
-            bone_bind_index += GPU.Memory.Width.TRANSFORM;
-            return idx / GPU.Memory.Width.TRANSFORM;
-        }
-
-        // the channel table will be aligned with a pre-existing bone bind pose
-        public static int new_bone_channel_table(int bind_pose_id, int[] channel_table)
-        {
-            GPU.create_bone_channel_table(bind_pose_id, channel_table);
-            return bind_pose_id;
+            return bone_bind_index++;
         }
 
         public static int new_bone_reference(float[] bone_data)
         {
             GPU.create_bone_reference(next_bone_ref(), bone_data);
-            var idx = bone_ref_index;
-            bone_ref_index += GPU.Memory.Width.TRANSFORM;
-            return idx / GPU.Memory.Width.TRANSFORM;
+            return bone_ref_index++;
         }
 
         public static int new_bone(int[] offset_id, float[] bone_data)
         {
             GPU.create_bone(next_bone(), offset_id, bone_data);
-            var idx = bone_index;
-            bone_index += GPU.Memory.Width.TRANSFORM;
-            return idx / GPU.Memory.Width.TRANSFORM;
+            return bone_index++;
         }
 
         public static int new_armature_bone(int[] bone_bind_table, float[] bone_data)
         {
             GPU.create_armature_bone(next_armature_bone(), bone_bind_table, bone_data);
-            var idx = armature_bone_index;
-            armature_bone_index += GPU.Memory.Width.TRANSFORM;
-            return idx / GPU.Memory.Width.TRANSFORM;
+            return armature_bone_index++;
         }
 
         public static int new_model_transform(float[] transform_data)
         {
             GPU.create_model_transform(next_model_transform(), transform_data);
-            var idx = model_transform_index;
-            model_transform_index += GPU.Memory.Width.TRANSFORM;
-            return idx / GPU.Memory.Width.TRANSFORM;
+            return model_transform_index++;
         }
 
         public static void compact_buffers(int edge_shift,
@@ -976,12 +963,12 @@ public class GPU
                                            int armature_shift,
                                            int armature_bone_shift)
         {
-            edge_index          -= (edge_shift * GPU.Memory.Width.EDGE);
-            bone_index          -= (bone_shift * GPU.Memory.Width.TRANSFORM);
-            point_index         -= (point_shift * GPU.Memory.Width.POINT);
-            hull_index          -= (hull_shift * GPU.Memory.Width.HULL);
-            armature_index      -= (armature_shift * GPU.Memory.Width.ARMATURE);
-            armature_bone_index -= (armature_bone_shift * GPU.Memory.Width.TRANSFORM);
+            edge_index          -= (edge_shift);
+            bone_index          -= (bone_shift);
+            point_index         -= (point_shift);
+            hull_index          -= (hull_shift);
+            armature_index      -= (armature_shift);
+            armature_bone_index -= (armature_bone_shift);
         }
     }
 
@@ -1101,6 +1088,8 @@ public class GPU
         Buffer.bone_rot_channel_tables.init(max_points);
         Buffer.bone_scl_channel_tables.init(max_points);
         Buffer.bone_channel_tables.init(max_points);
+        Buffer.animation_timings.init(max_points);
+        Buffer.animation_timing_indices.init(max_points);
         Buffer.bone_shift.init(max_points);
         Buffer.point_shift.init(max_points);
         Buffer.edge_shift.init(max_points);
@@ -1147,6 +1136,8 @@ public class GPU
             + Buffer.bone_rot_channel_tables.length
             + Buffer.bone_scl_channel_tables.length
             + Buffer.bone_channel_tables.length
+            + Buffer.animation_timings.length
+            + Buffer.animation_timing_indices.length
             + Buffer.bone_shift.length
             + Buffer.point_shift.length
             + Buffer.edge_shift.length
@@ -1194,6 +1185,8 @@ public class GPU
         System.out.println("rotation channels    : " + Buffer.bone_rot_channel_tables.length);
         System.out.println("scaling channels     : " + Buffer.bone_scl_channel_tables.length);
         System.out.println("bone channels        : " + Buffer.bone_channel_tables.length);
+        System.out.println("animation timings    : " + Buffer.animation_timings.length);
+        System.out.println("animation indices    : " + Buffer.animation_timing_indices.length);
         System.out.println("bone shift           : " + Buffer.bone_shift.length);
         System.out.println("point shift          : " + Buffer.point_shift.length);
         System.out.println("edge shift           : " + Buffer.edge_shift.length);
@@ -1352,12 +1345,10 @@ public class GPU
             .mem_arg(CreateBoneRef_k.Args.bone_references, Buffer.bone_references.memory);
 
         Kernel.create_bone_channel.set_kernel(new CreateBoneChannel_k(command_queue))
+            .mem_arg(CreateBoneChannel_k.Args.animation_timing_indices, Buffer.animation_timing_indices.memory)
             .mem_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, Buffer.bone_pos_channel_tables.memory)
             .mem_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, Buffer.bone_rot_channel_tables.memory)
             .mem_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, Buffer.bone_scl_channel_tables.memory);
-
-        Kernel.create_bone_channel_table.set_kernel(new CreateBoneChannelTable_k(command_queue))
-            .mem_arg(CreateBoneChannelTable_k.Args.bone_channel_tables, Buffer.bone_channel_tables.memory);
 
         Kernel.create_armature.set_kernel(new CreateArmature_k(command_queue))
             .mem_arg(CreateArmature_k.Args.armatures, Buffer.armatures.memory)
@@ -1389,11 +1380,17 @@ public class GPU
         Kernel.create_mesh_face.set_kernel(new CreateMeshFace_k(command_queue))
             .mem_arg(CreateMeshFace_k.Args.mesh_faces, Buffer.mesh_faces.memory);
 
+        Kernel.create_animation_timings.set_kernel(new CreateAnimationTimings_k(command_queue))
+            .mem_arg(CreateAnimationTimings_k.Args.animation_timings, Buffer.animation_timings.memory);
+
         Kernel.read_position.set_kernel(new ReadPosition_k(command_queue))
             .mem_arg(ReadPosition_k.Args.armatures, Buffer.armatures.memory);
 
         Kernel.update_accel.set_kernel(new UpdateAccel_k(command_queue))
             .mem_arg(UpdateAccel_k.Args.armature_accel, Buffer.armature_accel.memory);
+
+        Kernel.set_bone_channel_table.set_kernel(new SetBoneChannelTable_k(command_queue))
+            .mem_arg(SetBoneChannelTable_k.Args.bone_channel_tables, Buffer.bone_channel_tables.memory);
 
         // object delete support
 
@@ -2028,21 +2025,22 @@ public class GPU
             .call(global_single_size);
     }
 
-    public static void create_bone_channel(int bone_channel_index, int[] pos_table, int[] rot_table, int[] scl_table)
+    public static void create_bone_channel(int bone_channel_index, int timing_index, int[] pos_table, int[] rot_table, int[] scl_table)
     {
         Kernel.create_bone_channel
             .set_arg(CreateBoneChannel_k.Args.target, Pointer.to(arg_int(bone_channel_index)))
+            .set_arg(CreateBoneChannel_k.Args.new_animation_timing_index, Pointer.to(arg_int(timing_index)))
             .set_arg(CreateBoneChannel_k.Args.new_bone_pos_channel_table, Pointer.to(pos_table))
             .set_arg(CreateBoneChannel_k.Args.new_bone_rot_channel_table, Pointer.to(rot_table))
             .set_arg(CreateBoneChannel_k.Args.new_bone_scl_channel_table, Pointer.to(scl_table))
             .call(global_single_size);
     }
 
-    public static void create_bone_channel_table(int bone_channel_index, int[] channel_table)
+    public static void set_bone_channel_table(int bone_channel_index, int[] channel_table)
     {
-        Kernel.create_bone_channel_table
-            .set_arg(CreateBoneChannelTable_k.Args.target, Pointer.to(arg_int(bone_channel_index)))
-            .set_arg(CreateBoneChannelTable_k.Args.new_bone_channel_table, Pointer.to(channel_table))
+        Kernel.set_bone_channel_table
+            .set_arg(SetBoneChannelTable_k.Args.target, Pointer.to(arg_int(bone_channel_index)))
+            .set_arg(SetBoneChannelTable_k.Args.new_bone_channel_table, Pointer.to(channel_table))
             .call(global_single_size);
     }
 
@@ -2100,6 +2098,14 @@ public class GPU
             .call(global_single_size);
     }
 
+    public static void create_animation_timings(int animation_index, double[] timings)
+    {
+        Kernel.create_animation_timings
+            .set_arg(CreateAnimationTimings_k.Args.target, Pointer.to(arg_int(animation_index)))
+            .set_arg(CreateAnimationTimings_k.Args.new_animation_timing, Pointer.to(timings))
+            .call(global_single_size);
+    }
+
     public static void update_accel(int armature_index, float acc_x, float acc_y)
     {
         Kernel.update_accel
@@ -2142,8 +2148,9 @@ public class GPU
 
     //#region Physics Simulation
 
-    public static void animate_armatures()
+    public static void animate_armatures(float dt)
     {
+        // todo: pass in dt to kernel
         Kernel.animate_armatures.call(arg_long(GPU.Memory.next_armature()));
     }
 

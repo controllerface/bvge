@@ -464,6 +464,16 @@ public class Models
             System.out.println("Animation: " + animation_index);
             System.out.println("channel count: " + channel_count);
 
+            // todo: at some point, the name of the animation may need to have significance for determining
+            //  common animations, like walk/run/idle, etc.
+            System.out.println("name: " + raw_animation.mName().dataString());
+
+            // store the timings so bone channels can use them
+            double[] timings = new double[]{ raw_animation.mDuration(), raw_animation.mTicksPerSecond() };
+            int anim_timing_id = GPU.Memory.new_animation_timings(timings);
+            System.out.println("duration: " + raw_animation.mDuration());
+            System.out.println("ticks: " + raw_animation.mTicksPerSecond());
+
             for (int channel_index = 0; channel_index < channel_count; channel_index++)
             {
                 var raw_channel = AINodeAnim.create(channel_buffer.get(channel_index));
@@ -497,7 +507,7 @@ public class Models
                     var pos_vector = raw_pos_key.mValue();
                     float[] frame_data = new float[]{ pos_vector.x(), pos_vector.y(), pos_vector.z(), 0.0f };
                     int next_pos_key = GPU.Memory.new_keyframe(frame_data, raw_pos_key.mTime());
-                    if (p_start == -1) { p_start = next_pos_key; }
+                    if (p_start == -1) p_start = next_pos_key;
                     p_end = next_pos_key;
                 }
 
@@ -507,7 +517,7 @@ public class Models
                     var rot_quaternion = raw_rot_key.mValue();
                     float[] frame_data = new float[]{ rot_quaternion.x(), rot_quaternion.y(), rot_quaternion.z(), rot_quaternion.w() };
                     int next_rot_key = GPU.Memory.new_keyframe(frame_data, raw_rot_key.mTime());
-                    if (r_start == -1) { r_start = next_rot_key; }
+                    if (r_start == -1) r_start = next_rot_key;
                     r_end = next_rot_key;
                 }
 
@@ -517,11 +527,11 @@ public class Models
                     var scale_vector = raw_scl_key.mValue();
                     float[] frame_data = new float[]{ scale_vector.x(), scale_vector.y(), scale_vector.z(), 0.0f };
                     int next_scl_key = GPU.Memory.new_keyframe(frame_data, raw_scl_key.mTime());
-                    if (s_start == -1) { s_start = next_scl_key; }
+                    if (s_start == -1) s_start = next_scl_key;
                     s_end = next_scl_key;
                 }
 
-                var new_channel = new BoneChannel(p_start, p_end, r_start, r_end, s_start, s_end);
+                var new_channel = new BoneChannel(anim_timing_id, p_start, p_end, r_start, r_end, s_start, s_end);
                 var channels = anim_map.computeIfAbsent(bind_pose_id, (_k) -> new BoneChannel[animation_count]);
                 channels[animation_index] = new_channel;
             }
@@ -533,16 +543,16 @@ public class Models
             int c_end = -1;
             for (BoneChannel channel : bone_channels)
             {
-                int[] p = new int[]{channel.pos_start(), channel.pos_end()};
-                int[] r = new int[]{channel.rot_start(), channel.rot_end()};
-                int[] s = new int[]{channel.scl_start(), channel.scl_end()};
+                int[] pos_table = new int[]{ channel.pos_start(), channel.pos_end() };
+                int[] rot_table = new int[]{ channel.rot_start(), channel.rot_end() };
+                int[] scl_table = new int[]{ channel.scl_start(), channel.scl_end() };
 
-                int next_channel = GPU.Memory.new_bone_channel(p, r, s);
+                int next_channel = GPU.Memory.new_bone_channel(channel.anim_timing_id(), pos_table, rot_table, scl_table);
                 if (c_start == -1) c_start = next_channel;
                 c_end = next_channel;
             }
 
-            GPU.create_bone_channel_table(bind_pose_id, new int[]{ c_start, c_end });
+            GPU.set_bone_channel_table(bind_pose_id, new int[]{ c_start, c_end });
         });
     }
 
@@ -572,7 +582,7 @@ public class Models
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
-        TEST_MODEL_INDEX = load_model("/models/test_humanoid_b.fbx", "Humanoid");
+        TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
     }
 
