@@ -26,6 +26,36 @@ __kernel void create_edge(__global float4 *edges,
     edges[target] = new_edge; 
 }
 
+__kernel void create_bone_channel(__global int2 *bone_pos_channel_tables,
+                                  __global int2 *bone_rot_channel_tables,
+                                  __global int2 *bone_scl_channel_tables,
+                                  int target,
+                                  int2 new_bone_pos_channel_table,
+                                  int2 new_bone_rot_channel_table,
+                                  int2 new_bone_scl_channel_table)
+{
+    bone_pos_channel_tables[target] = new_bone_pos_channel_table;
+    bone_rot_channel_tables[target] = new_bone_rot_channel_table;
+    bone_scl_channel_tables[target] = new_bone_scl_channel_table;
+}
+
+__kernel void create_bone_channel_table(__global int2 *bone_channel_tables,
+                                        int target,
+                                        int2 new_bone_channel_table)
+{
+    bone_channel_tables[target] = new_bone_channel_table;
+}
+
+__kernel void create_keyframe(__global float4 *key_frames,
+                              __global double *frame_times,
+                              int target,
+                              float4 new_keyframe,
+                              double new_frame_time)
+{
+    key_frames[target] = new_keyframe;
+    frame_times[target] = new_frame_time;
+}
+
 __kernel void create_texture_uv(__global float2 *texture_uvs,
                                 int target,
                                 float2 new_texture_uv)

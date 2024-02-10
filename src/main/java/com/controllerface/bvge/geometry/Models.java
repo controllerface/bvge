@@ -1,5 +1,6 @@
 package com.controllerface.bvge.geometry;
 
+import com.controllerface.bvge.animation.BoneChannel;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.gl.Texture;
@@ -70,52 +71,52 @@ public class Models
         // if textures are present in the model, they are loaded into this list
         var textures = new ArrayList<Texture>();
 
-        // read initial data
-        try (AIScene aiScene = loadModelResource(model_path))
-        {
-            mesh_count = aiScene.mNumMeshes();
-            root_node = aiScene.mRootNode();
-            scene_node = process_node_hierarchy(root_node, null, node_map);
-            meshes = new Mesh[mesh_count];
-            mesh_buffer = aiScene.mMeshes();
-            var anims = aiScene.mNumAnimations();
-            System.out.println("anim count: " + anims);
-            load_textures(aiScene, textures);
-            load_materials(aiScene);
-        }
-        catch (NullPointerException | IOException e)
-        {
-            throw new RuntimeException("Unable to load model data", e);
-        }
-
         // maps each bone to a calculated bind pose transformation matrix
         var bone_transforms = new HashMap<String, Matrix4f>();
 
         // this map must be linked to preserve insert order
         var bind_pose_map = new LinkedHashMap<Integer, BoneBindPose>();
+
         var bind_name_map = new HashMap<String, Integer>();
+        var model_transform = new AtomicReference<Matrix4f>();
 
-        var matrix_reference = new AtomicReference<Matrix4f>();
-
-        // generate the bind pose transforms, setting the initial state of the armature
-        generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, matrix_reference, -1);
-
-        load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map);
-
-        // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
-        // the root bone is determined by checking if the current bone's parent is a direct descendant of the scene
-        int root_index = find_root_index(meshes);
-
-        // register the model
-        var next_model_id = next_model_index.getAndIncrement();
-        int transform_index = -1;
-        if (matrix_reference.get() != null)
+        // read scene data
+        try (AIScene ai_scene = loadModelResource(model_path))
         {
-            transform_index = GPU.Memory.new_model_transform(MathEX.raw_matrix(matrix_reference.get()));
+            mesh_count = ai_scene.mNumMeshes();
+            root_node = ai_scene.mRootNode();
+            scene_node = process_node_hierarchy(root_node, null, node_map);
+            meshes = new Mesh[mesh_count];
+            mesh_buffer = ai_scene.mMeshes();
+
+            load_textures(ai_scene, textures);
+            load_materials(ai_scene);
+
+            // generate the bind pose transforms, setting the initial state of the armature
+            generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, model_transform, -1);
+
+            load_animations(ai_scene, bind_name_map);
+            load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map);
+
+            // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
+            // the root bone is determined by checking if the current bone's parent is a direct descendant of the scene
+            int root_index = find_root_index(meshes);
+
+            // register the model
+            var next_model_id = next_model_index.getAndIncrement();
+            int transform_index = -1;
+            if (model_transform.get() != null)
+            {
+                transform_index = GPU.Memory.new_model_transform(MathEX.raw_matrix(model_transform.get()));
+            }
+            var model = new Model(meshes, bone_transforms, bind_name_map, bind_pose_map, textures, root_index, transform_index);
+            loaded_models.put(next_model_id, model);
+            return next_model_id;
         }
-        var model = new Model(meshes, bone_transforms, bind_name_map, bind_pose_map, textures, root_index, transform_index);
-        loaded_models.put(next_model_id, model);
-        return next_model_id;
+        catch (NullPointerException | IOException e)
+        {
+            throw new RuntimeException("Unable to load model data", e);
+        }
     }
 
     private static List<BoneOffset> load_mesh_bones(AIMesh aiMesh,
@@ -156,23 +157,7 @@ public class Models
 
         var mOffset = raw_bone.mOffsetMatrix();
         Matrix4f offset = new Matrix4f();
-        var raw_matrix = new float[16];
-        raw_matrix[0] = mOffset.a1();
-        raw_matrix[1] = mOffset.b1();
-        raw_matrix[2] = mOffset.c1();
-        raw_matrix[3] = mOffset.d1();
-        raw_matrix[4] = mOffset.a2();
-        raw_matrix[5] = mOffset.b2();
-        raw_matrix[6] = mOffset.c2();
-        raw_matrix[7] = mOffset.d2();
-        raw_matrix[8] = mOffset.a3();
-        raw_matrix[9] = mOffset.b3();
-        raw_matrix[10] = mOffset.c3();
-        raw_matrix[11] = mOffset.d3();
-        raw_matrix[12] = mOffset.a4();
-        raw_matrix[13] = mOffset.b4();
-        raw_matrix[14] = mOffset.c4();
-        raw_matrix[15] = mOffset.d4();
+        var raw_matrix = MathEX.raw_matrix(mOffset);
         offset.set(raw_matrix);
 
         if (raw_bone.mNumWeights() > 0)
@@ -461,6 +446,106 @@ public class Models
         }
     }
 
+    private static void load_animations(AIScene aiScene, Map<String, Integer> bind_name_map)
+    {
+        var animation_count = aiScene.mNumAnimations();
+        if (animation_count < 1) return;
+
+        var anim_map = new HashMap<Integer, BoneChannel[]>();
+
+        System.out.println("animation count: " + animation_count);
+
+        var anim_buffer = aiScene.mAnimations();
+        for (int animation_index = 0; animation_index < animation_count; animation_index++)
+        {
+            var raw_animation = AIAnimation.create(anim_buffer.get(animation_index));
+            int channel_count = raw_animation.mNumChannels();
+            var channel_buffer = raw_animation.mChannels();
+            System.out.println("Animation: " + animation_index);
+            System.out.println("channel count: " + channel_count);
+
+            for (int channel_index = 0; channel_index < channel_count; channel_index++)
+            {
+                var raw_channel = AINodeAnim.create(channel_buffer.get(channel_index));
+                var bone_name = raw_channel.mNodeName().dataString();
+
+                // armature frames aren't saved, only bones
+                if (bind_name_map.get(bone_name) == null) continue;
+
+                int bind_pose_id = bind_name_map.get(bone_name);
+
+                int pos_key_count = raw_channel.mNumPositionKeys();
+                int rot_key_count = raw_channel.mNumRotationKeys();
+                int scl_key_count = raw_channel.mNumScalingKeys();
+
+                var pos_buffer = raw_channel.mPositionKeys();
+                var rot_buffer = raw_channel.mRotationKeys();
+                var scl_buffer = raw_channel.mScalingKeys();
+
+                int p_start = -1;
+                int p_end = -1;
+
+                int r_start = -1;
+                int r_end = -1;
+
+                int s_start = -1;
+                int s_end = -1;
+
+                for (int current_pos_key = 0; current_pos_key < pos_key_count; current_pos_key++)
+                {
+                    var raw_pos_key = pos_buffer.get(current_pos_key);
+                    var pos_vector = raw_pos_key.mValue();
+                    float[] frame_data = new float[]{ pos_vector.x(), pos_vector.y(), pos_vector.z(), 0.0f };
+                    int next_pos_key = GPU.Memory.new_keyframe(frame_data, raw_pos_key.mTime());
+                    if (p_start == -1) { p_start = next_pos_key; }
+                    p_end = next_pos_key;
+                }
+
+                for (int current_rot_key = 0; current_rot_key < rot_key_count; current_rot_key++)
+                {
+                    var raw_rot_key = rot_buffer.get(current_rot_key);
+                    var rot_quaternion = raw_rot_key.mValue();
+                    float[] frame_data = new float[]{ rot_quaternion.x(), rot_quaternion.y(), rot_quaternion.z(), rot_quaternion.w() };
+                    int next_rot_key = GPU.Memory.new_keyframe(frame_data, raw_rot_key.mTime());
+                    if (r_start == -1) { r_start = next_rot_key; }
+                    r_end = next_rot_key;
+                }
+
+                for (int current_scl_key = 0; current_scl_key < scl_key_count; current_scl_key++)
+                {
+                    var raw_scl_key = scl_buffer.get(current_scl_key);
+                    var scale_vector = raw_scl_key.mValue();
+                    float[] frame_data = new float[]{ scale_vector.x(), scale_vector.y(), scale_vector.z(), 0.0f };
+                    int next_scl_key = GPU.Memory.new_keyframe(frame_data, raw_scl_key.mTime());
+                    if (s_start == -1) { s_start = next_scl_key; }
+                    s_end = next_scl_key;
+                }
+
+                var new_channel = new BoneChannel(p_start, p_end, r_start, r_end, s_start, s_end);
+                var channels = anim_map.computeIfAbsent(bind_pose_id, (_k) -> new BoneChannel[animation_count]);
+                channels[animation_index] = new_channel;
+            }
+        }
+
+        anim_map.forEach((bind_pose_id, bone_channels) ->
+        {
+            int c_start = -1;
+            int c_end = -1;
+            for (BoneChannel channel : bone_channels)
+            {
+                int[] p = new int[]{channel.pos_start(), channel.pos_end()};
+                int[] r = new int[]{channel.rot_start(), channel.rot_end()};
+                int[] s = new int[]{channel.scl_start(), channel.scl_end()};
+
+                int next_channel = GPU.Memory.new_bone_channel(p, r, s);
+                if (c_start == -1) c_start = next_channel;
+                c_end = next_channel;
+            }
+
+            GPU.create_bone_channel_table(bind_pose_id, new int[]{ c_start, c_end });
+        });
+    }
+
     private static void load_textures(AIScene aiScene, List<Texture> textures)
     {
         if (aiScene.mNumTextures() <= 0)
@@ -476,13 +561,10 @@ public class Models
         }
     }
 
-
-
     public static Model get_model_by_index(int index)
     {
         return loaded_models.get(index);
     }
-
 
     public static void init()
     {

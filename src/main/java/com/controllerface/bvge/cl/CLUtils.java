@@ -37,6 +37,11 @@ public class CLUtils
         return clCreateKernel(program, kernel_name, null);
     }
 
+    public static double[] arg_double(double arg)
+    {
+        return new double[]{arg};
+    }
+
     public static long[] arg_long(long arg)
     {
         return new long[]{arg};

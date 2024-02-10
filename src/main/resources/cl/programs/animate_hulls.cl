@@ -1,4 +1,3 @@
-
 constant float16 identity_matrix = (float16)
 (
     1.0f, 0.0f, 0.0f, 0.0f,
@@ -6,53 +5,6 @@ constant float16 identity_matrix = (float16)
     0.0f, 0.0f, 1.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 1.0f
 );
-
-inline float16 matrix_mul_affine(float16 matrixA, float16 matrixB) 
-{
-    float16 result;
-
-    float m00 = matrixA.s0;
-    float m01 = matrixA.s1;
-    float m02 = matrixA.s2;
-    float m10 = matrixA.s4;
-    float m11 = matrixA.s5;
-    float m12 = matrixA.s6;
-    float m20 = matrixA.s8;
-    float m21 = matrixA.s9;
-    float m22 = matrixA.sA;
-
-    float rm00 = matrixB.s0;
-    float rm01 = matrixB.s1;
-    float rm02 = matrixB.s2;
-    float rm10 = matrixB.s4;
-    float rm11 = matrixB.s5;
-    float rm12 = matrixB.s6;
-    float rm20 = matrixB.s8;
-    float rm21 = matrixB.s9;
-    float rm22 = matrixB.sA;
-    float rm30 = matrixB.sC;
-    float rm31 = matrixB.sD;
-    float rm32 = matrixB.sE;
-
-    result.s0 = fma(m00, rm00, fma(m10, rm01, m20 * rm02));
-    result.s1 = fma(m01, rm00, fma(m11, rm01, m21 * rm02)); 
-    result.s2 = fma(m02, rm00, fma(m12, rm01, m22 * rm02)); 
-    result.s3 = matrixA.s3; 
-    result.s4 = fma(m00, rm10, fma(m10, rm11, m20 * rm12)); 
-    result.s5 = fma(m01, rm10, fma(m11, rm11, m21 * rm12)); 
-    result.s6 = fma(m02, rm10, fma(m12, rm11, m22 * rm12)); 
-    result.s7 = matrixA.s7; 
-    result.s8 = fma(m00, rm20, fma(m10, rm21, m20 * rm22)); 
-    result.s9 = fma(m01, rm20, fma(m11, rm21, m21 * rm22)); 
-    result.sA = fma(m02, rm20, fma(m12, rm21, m22 * rm22)); 
-    result.sB = matrixA.sB; 
-    result.sC = fma(m00, rm30, fma(m10, rm31, fma(m20, rm32, matrixA.sC))); 
-    result.sD = fma(m01, rm30, fma(m11, rm31, fma(m21, rm32, matrixA.sD))); 
-    result.sE = fma(m02, rm30, fma(m12, rm31, fma(m22, rm32, matrixA.sE))); 
-    result.sF = matrixA.sF; 
-
-    return result;
-}
 
 __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global float16 *bone_bind_poses,
@@ -65,6 +17,8 @@ __kernel void animate_armatures(__global float16 *armature_bones,
     int4 hull_table = hull_tables[current_armature];
     int4 armature_flag = armature_flags[current_armature];
     float16 model_transform = model_transforms[armature_flag.w];
+
+    int current_animation = 0; // todo: get from armature
 
     // note that armatures with no bones simply do nothing as the bone count will be zero
     int armature_bone_count = hull_table.w - hull_table.z + 1;
