@@ -276,7 +276,6 @@ public class Window
                 ecs.tick(dt);
                 currentGameMode.update(dt);
                 glfwSwapBuffers(glfwWindow);
-
             }
 
             currentTime = (float) glfwGetTime();

@@ -12,6 +12,7 @@ public class AnimateHulls extends GPUProgram
     {
         src.add(const_hull_flags);
         src.add(func_matrix_transform);
+        src.add(func_matrix_multiply);
         src.add(func_matrix_mul_affine);
         src.add(read_src("programs/animate_hulls.cl"));
 

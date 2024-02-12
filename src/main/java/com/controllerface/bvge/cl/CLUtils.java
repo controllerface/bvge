@@ -28,7 +28,7 @@ public class CLUtils
     public static cl_program cl_p(cl_context context, cl_device_id[] device_ids, String ... src)
     {
         var program = clCreateProgramWithSource(context, src.length, src, null, null);
-        clBuildProgram(program, 1, device_ids, null, null, null);
+        var r = clBuildProgram(program, 1, device_ids, null, null, null);
         return program;
     }
 

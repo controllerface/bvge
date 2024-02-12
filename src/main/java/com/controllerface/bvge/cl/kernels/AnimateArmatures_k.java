@@ -19,8 +19,12 @@ public class AnimateArmatures_k extends GPUKernel<AnimateArmatures_k.Args>
         bone_scl_channel_tables(Sizeof.cl_mem),
         armature_flags(Sizeof.cl_mem),
         hull_tables(Sizeof.cl_mem),
+        key_frames(Sizeof.cl_mem),
+        frame_times(Sizeof.cl_mem),
         animation_timing_indices(Sizeof.cl_mem),
         animation_timings(Sizeof.cl_mem),
+        armature_animation_indices(Sizeof.cl_mem),
+        armature_animation_elapsed(Sizeof.cl_mem),
         delta_time(Sizeof.cl_float);
 
         public final long size;

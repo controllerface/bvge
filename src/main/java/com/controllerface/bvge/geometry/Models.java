@@ -6,14 +6,14 @@ import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.MathEX;
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
+import org.joml.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -470,8 +470,8 @@ public class Models
             // store the timings so bone channels can use them
             double[] timings = new double[]{ raw_animation.mDuration(), raw_animation.mTicksPerSecond() };
             int anim_timing_id = GPU.Memory.new_animation_timings(timings);
-            System.out.println("duration: " + raw_animation.mDuration());
-            System.out.println("ticks: " + raw_animation.mTicksPerSecond());
+            System.out.println("duration (ticks): " + raw_animation.mDuration());
+            System.out.println("ticks/second: " + raw_animation.mTicksPerSecond());
 
             for (int channel_index = 0; channel_index < channel_count; channel_index++)
             {
@@ -504,7 +504,7 @@ public class Models
                 {
                     var raw_pos_key = pos_buffer.get(current_pos_key);
                     var pos_vector = raw_pos_key.mValue();
-                    float[] frame_data = new float[]{ pos_vector.x(), pos_vector.y(), pos_vector.z(), 0.0f };
+                    float[] frame_data = new float[]{ pos_vector.x(), pos_vector.y(), pos_vector.z(), 1.0f };
                     int next_pos_key = GPU.Memory.new_keyframe(frame_data, raw_pos_key.mTime());
                     if (p_start == -1) p_start = next_pos_key;
                     p_end = next_pos_key;
@@ -524,7 +524,7 @@ public class Models
                 {
                     var raw_scl_key = scl_buffer.get(current_scl_key);
                     var scale_vector = raw_scl_key.mValue();
-                    float[] frame_data = new float[]{ scale_vector.x(), scale_vector.y(), scale_vector.z(), 0.0f };
+                    float[] frame_data = new float[]{ scale_vector.x(), scale_vector.y(), scale_vector.z(), 1.0f };
                     int next_scl_key = GPU.Memory.new_keyframe(frame_data, raw_scl_key.mTime());
                     if (s_start == -1) s_start = next_scl_key;
                     s_end = next_scl_key;
@@ -581,7 +581,7 @@ public class Models
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
-        TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
+        TEST_MODEL_INDEX = load_model("/models/test_humanoid_b.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
     }
 

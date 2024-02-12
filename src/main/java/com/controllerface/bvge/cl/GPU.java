@@ -1371,7 +1371,7 @@ public class GPU
             .mem_arg(CreateArmature_k.Args.armature_flags, Buffer.armature_flags.memory)
             .mem_arg(CreateArmature_k.Args.hull_tables, Buffer.armature_hull_table.memory)
             .mem_arg(CreateArmature_k.Args.armature_masses, Buffer.armature_mass.memory)
-            .mem_arg(CreateArmature_k.Args.armature_animation_indices, Buffer.animation_timing_indices.memory)
+            .mem_arg(CreateArmature_k.Args.armature_animation_indices, Buffer.armature_animation_indices.memory)
             .mem_arg(CreateArmature_k.Args.armature_animation_elapsed, Buffer.armature_animation_elapsed.memory);
 
         Kernel.create_bone.set_kernel(new CreateBone_k(command_queue))
@@ -1503,9 +1503,13 @@ public class GPU
             .mem_arg(AnimateArmatures_k.Args.bone_rot_channel_tables, Buffer.bone_rot_channel_tables.memory)
             .mem_arg(AnimateArmatures_k.Args.bone_scl_channel_tables, Buffer.bone_scl_channel_tables.memory)
             .mem_arg(AnimateArmatures_k.Args.armature_flags, Buffer.armature_flags.memory)
+            .mem_arg(AnimateArmatures_k.Args.hull_tables, Buffer.armature_hull_table.memory)
+            .mem_arg(AnimateArmatures_k.Args.key_frames, Buffer.key_frames.memory)
+            .mem_arg(AnimateArmatures_k.Args.frame_times, Buffer.frame_times.memory)
             .mem_arg(AnimateArmatures_k.Args.animation_timing_indices, Buffer.animation_timing_indices.memory)
             .mem_arg(AnimateArmatures_k.Args.animation_timings, Buffer.animation_timings.memory)
-            .mem_arg(AnimateArmatures_k.Args.hull_tables, Buffer.armature_hull_table.memory);
+            .mem_arg(AnimateArmatures_k.Args.armature_animation_indices, Buffer.armature_animation_indices.memory)
+            .mem_arg(AnimateArmatures_k.Args.armature_animation_elapsed, Buffer.armature_animation_elapsed.memory);
 
         Kernel.animate_bones.set_kernel(new AnimateBones_k(command_queue))
             .mem_arg(AnimateBones_k.Args.bones, Buffer.bone_instances.memory)
