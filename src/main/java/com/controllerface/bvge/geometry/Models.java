@@ -518,6 +518,16 @@ public class Models
                     int next_rot_key = GPU.Memory.new_keyframe(frame_data, raw_rot_key.mTime());
                     if (r_start == -1) r_start = next_rot_key;
                     r_end = next_rot_key;
+
+                    if (bind_pose_id == 0)
+                    {
+                        System.out.printf("debug: bone: %d key %d ch: %d x: %f y: %f z: %f w: %f t: %f\n",
+                            bind_pose_id,
+                            next_rot_key,
+                            channel_index,
+                            rot_quaternion.x(), rot_quaternion.y(), rot_quaternion.z(), rot_quaternion.w(),
+                            raw_rot_key.mTime());
+                    }
                 }
 
                 for (int current_scl_key = 0; current_scl_key < scl_key_count; current_scl_key++)
@@ -581,7 +591,7 @@ public class Models
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
-        TEST_MODEL_INDEX = load_model("/models/test_humanoid_b.fbx", "Humanoid");
+        TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
     }
 

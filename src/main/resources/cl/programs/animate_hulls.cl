@@ -12,18 +12,18 @@ inline float16 translation_vector_to_matrix(float4 vector)
     matrix.s0 = 1;
     matrix.s1 = 0;
     matrix.s2 = 0;
-    matrix.s3 = vector.x;
+    matrix.s3 = 0;
     matrix.s4 = 0;
     matrix.s5 = 1;
     matrix.s6 = 0;
-    matrix.s7 = vector.y;
+    matrix.s7 = 0;
     matrix.s8 = 0;
     matrix.s9 = 0;
     matrix.sA = 1;
-    matrix.sB = vector.z;
-    matrix.sC = 0;
-    matrix.sD = 0;
-    matrix.sE = 0;
+    matrix.sB = 0;
+    matrix.sC = vector.x;
+    matrix.sD = vector.y;
+    matrix.sE = vector.z;
     matrix.sF = vector.w;
     return matrix;
 }
@@ -35,14 +35,17 @@ inline float16 scaling_vector_to_matrix(float4 vector)
     matrix.s1 = 0;
     matrix.s2 = 0;
     matrix.s3 = 0;
+
     matrix.s4 = 0;
     matrix.s5 = vector.y;
     matrix.s6 = 0;
     matrix.s7 = 0;
+
     matrix.s8 = 0;
     matrix.s9 = 0;
     matrix.sA = vector.z;
     matrix.sB = 0;
+
     matrix.sC = 0;
     matrix.sD = 0;
     matrix.sE = 0;
@@ -53,70 +56,70 @@ inline float16 scaling_vector_to_matrix(float4 vector)
 inline float16 rotation_quaternion_to_matrix(float4 quaternion)
 {
     float16 matrix;
-    // float w2 = quaternion.w * quaternion.w;
-    // float x2 = quaternion.x * quaternion.x;
-    // float y2 = quaternion.y * quaternion.y;
-    // float z2 = quaternion.z * quaternion.z;
-    // float zw = quaternion.z * quaternion.w;
-    // float xy = quaternion.x * quaternion.y;
-    // float xz = quaternion.x * quaternion.z;
-    // float yw = quaternion.y * quaternion.w;
-    // float yz = quaternion.y * quaternion.z;
-    // float xw = quaternion.x * quaternion.w;
-    // matrix.s0 = w2 + x2 - z2 - y2;
-    // matrix.s1 = xy + zw + zw + xy;
-    // matrix.s2 = xz - yw + xz - yw;
-    // matrix.s3 = 0.0F;
-    // matrix.s4 = -zw + xy - zw + xy;
-    // matrix.s5 = y2 - z2 + w2 - x2;
-    // matrix.s6 = yz + yz + xw + xw;
-    // matrix.s7 = 0.0F;
-    // matrix.s8 = yw + xz + xz + yw;
-    // matrix.s9 = yz + yz - xw - xw;
-    // matrix.sA = z2 - y2 - x2 + w2;
-    // matrix.sB = 0.0F;
-    // matrix.sC = 0.0F;
-    // matrix.sD = 0.0F;
-    // matrix.sE = 0.0F;
-    // matrix.sF = 1.0F;
-    // return matrix;
-
-    float w = quaternion.x;
-    float x = quaternion.y;
-    float y = quaternion.z;
-    float z = quaternion.w;
-
-    float xx = x * x;
-    float xy = x * y;
-    float xz = x * z;
-    float xw = x * w;
-
-    float yy = y * y;
-    float yz = y * z;
-    float yw = y * w;
-
-    float zz = z * z;
-    float zw = z * w;
-
-
-    matrix.s0 = 1 - 2 * (yy + zz);
-    matrix.s1 = 2 * (xy - zw);
-    matrix.s2 = 2 * (xz + yw);
-    matrix.s3 = 0;
-    matrix.s4 = 2 * (xy + zw);
-    matrix.s5 = 1 - 2 * (xx + zz);
-    matrix.s6 = 2 * (yz - xw);
-    matrix.s7 = 0;
-    matrix.s8 = 2 * (xz - yw);
-    matrix.s9 = 2 * (yz + xw);
-    matrix.sA = 1 - 2 * (xx + yy);
-    matrix.sB = 0;
-    matrix.sC = 0;
-    matrix.sD = 0;
-    matrix.sE = 0;
-    matrix.sF = 1;
-
+    float w2 = quaternion.w * quaternion.w;
+    float x2 = quaternion.x * quaternion.x;
+    float y2 = quaternion.y * quaternion.y;
+    float z2 = quaternion.z * quaternion.z;
+    float zw = quaternion.z * quaternion.w;
+    float xy = quaternion.x * quaternion.y;
+    float xz = quaternion.x * quaternion.z;
+    float yw = quaternion.y * quaternion.w;
+    float yz = quaternion.y * quaternion.z;
+    float xw = quaternion.x * quaternion.w;
+    matrix.s0 = w2 + x2 - z2 - y2;
+    matrix.s1 = xy + zw + zw + xy;
+    matrix.s2 = xz - yw + xz - yw;
+    matrix.s3 = 0.0F;
+    matrix.s4 = -zw + xy - zw + xy;
+    matrix.s5 = y2 - z2 + w2 - x2;
+    matrix.s6 = yz + yz + xw + xw;
+    matrix.s7 = 0.0F;
+    matrix.s8 = yw + xz + xz + yw;
+    matrix.s9 = yz + yz - xw - xw;
+    matrix.sA = z2 - y2 - x2 + w2;
+    matrix.sB = 0.0F;
+    matrix.sC = 0.0F;
+    matrix.sD = 0.0F;
+    matrix.sE = 0.0F;
+    matrix.sF = 1.0F;
     return matrix;
+
+    // float w = quaternion.x;
+    // float x = quaternion.y;
+    // float y = quaternion.z;
+    // float z = quaternion.w;
+
+    // float xx = x * x;
+    // float xy = x * y;
+    // float xz = x * z;
+    // float xw = x * w;
+
+    // float yy = y * y;
+    // float yz = y * z;
+    // float yw = y * w;
+
+    // float zz = z * z;
+    // float zw = z * w;
+
+
+    // matrix.s0 = 1 - 2 * (yy + zz);
+    // matrix.s1 = 2 * (xy - zw);
+    // matrix.s2 = 2 * (xz + yw);
+    // matrix.s3 = 0;
+    // matrix.s4 = 2 * (xy + zw);
+    // matrix.s5 = 1 - 2 * (xx + zz);
+    // matrix.s6 = 2 * (yz - xw);
+    // matrix.s7 = 0;
+    // matrix.s8 = 2 * (xz - yw);
+    // matrix.s9 = 2 * (yz + xw);
+    // matrix.sA = 1 - 2 * (xx + yy);
+    // matrix.sB = 0;
+    // matrix.sC = 0;
+    // matrix.sD = 0;
+    // matrix.sE = 0;
+    // matrix.sF = 1;
+
+    // return matrix;
 }
 
 inline float4 vector_lerp(float4 a, float4 b, float t) 
@@ -232,7 +235,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     for (int rot_index_b = rot_channel_table.x; rot_index_b <= rot_channel_table.y; rot_index_b++)
     {
         double time_b = frame_times[rot_index_b];
-        if (time_b < anim_time_ticks)
+        if (time_b > anim_time_ticks)
         {
             int rot_index_a = rot_index_b - 1;
             rot_a = key_frames[rot_index_a];
@@ -248,11 +251,11 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     for (int scl_index_b = scl_channel_table.x; scl_index_b <= scl_channel_table.y; scl_index_b++)
     {
         double time_b = frame_times[scl_index_b];
-        if (time_b < anim_time_ticks)
+        if (time_b > anim_time_ticks)
         {
-            int scl_index_a = scl_index_b + 1;
-            scl_a = key_frames[scl_index_b];
-            scl_b = key_frames[scl_index_a];
+            int scl_index_a = scl_index_b - 1;
+            scl_a = key_frames[scl_index_a];
+            scl_b = key_frames[scl_index_b];
 
             double time_a = frame_times[scl_index_a];
             float delta = (float)time_b - (float)time_a;
@@ -269,9 +272,27 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     float16 rot_matrix = rotation_quaternion_to_matrix(rot_final);
     float16 scl_matrix = scaling_vector_to_matrix(scl_final);
 
-    float16 fmat_1 = matrix_mul(scl_matrix, rot_matrix);
-    float16 fmat_2 = matrix_mul(fmat_1, pos_matrix);
-    // float16 fmat_3 = matrix_mul_affine(fmat_2, scl_matrix);
+    float16 fmat_1 = matrix_mul(pos_matrix, rot_matrix);
+    float16 fmat_2 = matrix_mul(fmat_1, scl_matrix);
+    //float16 fmat_3 = matrix_mul_affine(fmat_2, bone_bind_poses[bone_id]);
+
+    //float16 expected = bone_bind_poses[bone_id];
+    //if (bone_id == 0)
+    //{
+        // printf("debug e: id=%d \n e.s0: %f e.s1: %f e.s2: %f e.s3: %f \n e.s4: %f e.s5: %f e.s6: %f e.s7: %f \n e.s8: %f e.s9: %f e.sA: %f e.sB: %f \n e.sC: %f e.sD: %f e.sE: %f e.sF: %f", 
+        //     bone_id,
+        //     expected.s0, expected.s1, expected.s2, expected.s3,
+        //     expected.s4, expected.s5, expected.s6, expected.s7,
+        //     expected.s8, expected.s9, expected.sA, expected.sB,
+        //     expected.sC, expected.sD, expected.sE, expected.sF);
+
+        // printf("debug a: id=%d \n a.s0: %f a.s1: %f a.s2: %f a.s3: %f \n a.s4: %f a.s5: %f a.s6: %f a.s7: %f \n a.s8: %f a.s9: %f a.sA: %f a.sB: %f \n a.sC: %f a.sD: %f a.sE: %f a.sF: %f",
+        //     bone_id,
+        //     fmat_2.s0, fmat_2.s1, fmat_2.s2, fmat_2.s3,
+        //     fmat_2.s4, fmat_2.s5, fmat_2.s6, fmat_2.s7,
+        //     fmat_2.s8, fmat_2.s9, fmat_2.sA, fmat_2.sB,
+        //     fmat_2.sC, fmat_2.sD, fmat_2.sE, fmat_2.sF);
+    //}
 
     return fmat_2;
 }
