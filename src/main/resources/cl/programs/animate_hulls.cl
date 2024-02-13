@@ -83,43 +83,6 @@ inline float16 rotation_quaternion_to_matrix(float4 quaternion)
     matrix.sE = 0.0F;
     matrix.sF = 1.0F;
     return matrix;
-
-    // float w = quaternion.x;
-    // float x = quaternion.y;
-    // float y = quaternion.z;
-    // float z = quaternion.w;
-
-    // float xx = x * x;
-    // float xy = x * y;
-    // float xz = x * z;
-    // float xw = x * w;
-
-    // float yy = y * y;
-    // float yz = y * z;
-    // float yw = y * w;
-
-    // float zz = z * z;
-    // float zw = z * w;
-
-
-    // matrix.s0 = 1 - 2 * (yy + zz);
-    // matrix.s1 = 2 * (xy - zw);
-    // matrix.s2 = 2 * (xz + yw);
-    // matrix.s3 = 0;
-    // matrix.s4 = 2 * (xy + zw);
-    // matrix.s5 = 1 - 2 * (xx + zz);
-    // matrix.s6 = 2 * (yz - xw);
-    // matrix.s7 = 0;
-    // matrix.s8 = 2 * (xz - yw);
-    // matrix.s9 = 2 * (yz + xw);
-    // matrix.sA = 1 - 2 * (xx + yy);
-    // matrix.sB = 0;
-    // matrix.sC = 0;
-    // matrix.sD = 0;
-    // matrix.sE = 0;
-    // matrix.sF = 1;
-
-    // return matrix;
 }
 
 inline float4 vector_lerp(float4 a, float4 b, float t) 
@@ -139,7 +102,7 @@ inline float4 quaternion_lerp(float4 a, float4 b, float factor)
     dest.z = fma(scale0, a.z, scale1 * b.z);
     dest.w = fma(scale0, a.w, scale1 * b.w);
 
-    float s = rsqrt(fma(dest.x, dest.x, fma(dest.y, dest.y, fma(dest.z, dest.z, dest.w * dest.w))));
+    float s = native_rsqrt(fma(dest.x, dest.x, fma(dest.y, dest.y, fma(dest.z, dest.z, dest.w * dest.w))));
     
     dest.x *= s;
     dest.y *= s;
@@ -148,31 +111,6 @@ inline float4 quaternion_lerp(float4 a, float4 b, float factor)
     
     return dest;
 }
-
-
-// inline float4 quaternion_lerp(float4 a, float4 b, float t) 
-// {
-//     float4 result;
-
-//     // Perform linear interpolation for each quaternion component individually
-//     result.x = (1 - t) * a.x + t * b.x;
-//     result.y = (1 - t) * a.y + t * b.y;
-//     result.z = (1 - t) * a.z + t * b.z;
-//     result.w = (1 - t) * a.w + t * b.w;
-
-//     // Normalize the interpolated quaternion
-//     float norm = (float) sqrt(result.x * result.x + result.y * result.y +
-//                                 result.z * result.z + result.w * result.w);
-//     if (norm != 0) 
-//     {
-//         result.x /= norm;
-//         result.y /= norm;
-//         result.z /= norm;
-//         result.w /= norm;
-//     }
-
-//     return result;
-// }
 
 float16 get_node_transform(__global float16 *bone_bind_poses,
                                   __global int2 *bone_channel_tables,
@@ -272,29 +210,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     float16 rot_matrix = rotation_quaternion_to_matrix(rot_final);
     float16 scl_matrix = scaling_vector_to_matrix(scl_final);
 
-    float16 fmat_1 = matrix_mul(pos_matrix, rot_matrix);
-    float16 fmat_2 = matrix_mul(fmat_1, scl_matrix);
-    //float16 fmat_3 = matrix_mul_affine(fmat_2, bone_bind_poses[bone_id]);
-
-    //float16 expected = bone_bind_poses[bone_id];
-    //if (bone_id == 0)
-    //{
-        // printf("debug e: id=%d \n e.s0: %f e.s1: %f e.s2: %f e.s3: %f \n e.s4: %f e.s5: %f e.s6: %f e.s7: %f \n e.s8: %f e.s9: %f e.sA: %f e.sB: %f \n e.sC: %f e.sD: %f e.sE: %f e.sF: %f", 
-        //     bone_id,
-        //     expected.s0, expected.s1, expected.s2, expected.s3,
-        //     expected.s4, expected.s5, expected.s6, expected.s7,
-        //     expected.s8, expected.s9, expected.sA, expected.sB,
-        //     expected.sC, expected.sD, expected.sE, expected.sF);
-
-        // printf("debug a: id=%d \n a.s0: %f a.s1: %f a.s2: %f a.s3: %f \n a.s4: %f a.s5: %f a.s6: %f a.s7: %f \n a.s8: %f a.s9: %f a.sA: %f a.sB: %f \n a.sC: %f a.sD: %f a.sE: %f a.sF: %f",
-        //     bone_id,
-        //     fmat_2.s0, fmat_2.s1, fmat_2.s2, fmat_2.s3,
-        //     fmat_2.s4, fmat_2.s5, fmat_2.s6, fmat_2.s7,
-        //     fmat_2.s8, fmat_2.s9, fmat_2.sA, fmat_2.sB,
-        //     fmat_2.sC, fmat_2.sD, fmat_2.sE, fmat_2.sF);
-    //}
-
-    return fmat_2;
+    return matrix_mul(matrix_mul(pos_matrix, rot_matrix), scl_matrix);
 }
 
 __kernel void animate_armatures(__global float16 *armature_bones,

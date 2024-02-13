@@ -2,7 +2,6 @@ package com.controllerface.bvge.game;
 
 import com.controllerface.bvge.ecs.components.ArmatureIndex;
 import com.controllerface.bvge.ecs.components.LinearForce;
-import com.controllerface.bvge.ecs.systems.BoneAnimator;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.CameraFocus;
@@ -16,6 +15,8 @@ import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.gl.renderers.*;
 
+import java.util.EnumSet;
+
 import static com.controllerface.bvge.physics.PhysicsObjects.*;
 import static com.controllerface.bvge.geometry.Models.*;
 
@@ -23,6 +24,18 @@ import static com.controllerface.bvge.geometry.Models.*;
 public class TestGame extends GameMode
 {
     private final GameSystem screenBlankSystem;
+
+    private enum RenderType
+    {
+        MODELS, // normal objects
+        HULLS,   // physics hulls
+        BOUNDS,  // bounding boxes
+        POINTS,  // model vertices
+    }
+
+    private static EnumSet<RenderType> ACTIVE_RENDERERS =
+        EnumSet.of(RenderType.MODELS, RenderType.HULLS);
+
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {
@@ -190,9 +203,6 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
-        // skeletal animation pass happens first to put objects into current positions
-        ecs.registerSystem(new BoneAnimator(ecs));
-
         // all physics calculations should be done immediately after animation
         ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid));
 
@@ -203,15 +213,31 @@ public class TestGame extends GameMode
         ecs.registerSystem(screenBlankSystem);
 
         // main renderers go here, one for each model type that can be rendered
-        // todo: rewrite using hull/model filter
-        ecs.registerSystem(new CrateRenderer(ecs));
-        ecs.registerSystem(new HumanoidRenderer(ecs));
+
+        if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
+        {
+            ecs.registerSystem(new CrateRenderer(ecs));
+            ecs.registerSystem(new HumanoidRenderer(ecs));
+        }
 
         // these are debug-level renderers for visualizing the modeled physics boundaries
-        ecs.registerSystem(new EdgeRenderer(ecs));
-        ecs.registerSystem(new CircleRenderer(ecs));
-//        ecs.registerSystem(new PointRenderer(ecs));
-//        ecs.registerSystem(new BoundingBoxRenderer(ecs));
+
+        if (ACTIVE_RENDERERS.contains(RenderType.HULLS))
+        {
+            ecs.registerSystem(new EdgeRenderer(ecs));
+            ecs.registerSystem(new CircleRenderer(ecs));
+        }
+
+        if (ACTIVE_RENDERERS.contains(RenderType.BOUNDS))
+        {
+            ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        }
+
+        if (ACTIVE_RENDERERS.contains(RenderType.POINTS))
+        {
+            ecs.registerSystem(new PointRenderer(ecs));
+        }
+
         //ecs.registerSystem(new BoneRenderer(ecs));
     }
 

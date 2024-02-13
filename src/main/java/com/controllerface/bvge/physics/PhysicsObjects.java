@@ -25,11 +25,11 @@ public class PhysicsObjects
 {
     private static final Vector2f vector_buffer = new Vector2f();
 
-    public static int FLAG_NONE = Constants.HullFlags.EMPTY.bits;
+    public static int FLAG_NONE          = Constants.HullFlags.EMPTY.bits;
     public static int FLAG_STATIC_OBJECT = Constants.HullFlags.IS_STATIC.bits;
-    public static int FLAG_CIRCLE = Constants.HullFlags.IS_CIRCLE.bits;
-    public static int FLAG_POLYGON = Constants.HullFlags.IS_POLYGON.bits;
-    public static int FLAG_NO_BONES = Constants.HullFlags.NO_BONES.bits;
+    public static int FLAG_CIRCLE        = Constants.HullFlags.IS_CIRCLE.bits;
+    public static int FLAG_POLYGON       = Constants.HullFlags.IS_POLYGON.bits;
+    public static int FLAG_NO_BONES      = Constants.HullFlags.NO_BONES.bits;
 
     public static int FLAG_INTERIOR = 0x01;
 

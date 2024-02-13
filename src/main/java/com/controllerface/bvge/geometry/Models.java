@@ -458,20 +458,17 @@ public class Models
         for (int animation_index = 0; animation_index < animation_count; animation_index++)
         {
             var raw_animation = AIAnimation.create(anim_buffer.get(animation_index));
-            int channel_count = raw_animation.mNumChannels();
-            var channel_buffer = raw_animation.mChannels();
-            System.out.println("Animation: " + animation_index);
-            System.out.println("channel count: " + channel_count);
 
             // todo: at some point, the name of the animation may need to have significance for determining
             //  common animations, like walk/run/idle, etc.
-            System.out.println("name: " + raw_animation.mName().dataString());
+            //System.out.println("name: " + raw_animation.mName().dataString());
+
+            int channel_count = raw_animation.mNumChannels();
+            var channel_buffer = raw_animation.mChannels();
 
             // store the timings so bone channels can use them
             double[] timings = new double[]{ raw_animation.mDuration(), raw_animation.mTicksPerSecond() };
             int anim_timing_id = GPU.Memory.new_animation_timings(timings);
-            System.out.println("duration (ticks): " + raw_animation.mDuration());
-            System.out.println("ticks/second: " + raw_animation.mTicksPerSecond());
 
             for (int channel_index = 0; channel_index < channel_count; channel_index++)
             {
@@ -518,16 +515,6 @@ public class Models
                     int next_rot_key = GPU.Memory.new_keyframe(frame_data, raw_rot_key.mTime());
                     if (r_start == -1) r_start = next_rot_key;
                     r_end = next_rot_key;
-
-                    if (bind_pose_id == 0)
-                    {
-                        System.out.printf("debug: bone: %d key %d ch: %d x: %f y: %f z: %f w: %f t: %f\n",
-                            bind_pose_id,
-                            next_rot_key,
-                            channel_index,
-                            rot_quaternion.x(), rot_quaternion.y(), rot_quaternion.z(), rot_quaternion.w(),
-                            raw_rot_key.mTime());
-                    }
                 }
 
                 for (int current_scl_key = 0; current_scl_key < scl_key_count; current_scl_key++)
@@ -631,7 +618,6 @@ public class Models
                                             int parent_index)
     {
         var name = current_node.name;
-
         boolean is_bone = name.toLowerCase().contains("bone")
             && !name.toLowerCase().contains("_end");
         var node_transform = current_node.transform;
@@ -639,17 +625,16 @@ public class Models
 
         var parent = parent_index;
 
-        // if this node is a bone, update the
         if (is_bone)
         {
             init_matrix.compareAndSet(null, parent_transform);
             var raw_matrix = MathEX.raw_matrix(node_transform);
-            var p = new BoneBindPose(parent, node_transform, name);
-            int next = GPU.Memory.new_bone_bind_pose(parent, raw_matrix);
-            bind_name_map.put(name, next);
-            bind_pose_map.put(next, p);
+            var bind_pose = new BoneBindPose(parent, node_transform, name);
+            int bind_pose_id = GPU.Memory.new_bone_bind_pose(parent, raw_matrix);
+            bind_name_map.put(name, bind_pose_id);
+            bind_pose_map.put(bind_pose_id, bind_pose);
             transforms.put(name, global_transform);
-            parent = next;
+            parent = bind_pose_id;
         }
         for (SceneNode child : current_node.children)
         {
