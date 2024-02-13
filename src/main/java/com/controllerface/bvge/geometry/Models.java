@@ -1,6 +1,8 @@
 package com.controllerface.bvge.geometry;
 
+import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.animation.BoneChannel;
+import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.gl.Texture;
@@ -13,7 +15,6 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;

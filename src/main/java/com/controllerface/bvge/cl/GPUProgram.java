@@ -33,6 +33,7 @@ public abstract class GPUProgram
      * todo: generate the GPU code from the CPU constants instead of duplicating the code in both places
      */
     protected static String const_hull_flags              = read_src("constants/hull_flags.cl");
+    protected static String const_identity_matrix          = read_src("constants/identity_matrix.cl");
 
     /**
      * Helper functions. Program implementations can use these functions to build out a program,
@@ -51,15 +52,20 @@ public abstract class GPUProgram
     protected static String func_get_extents              = read_src("functions/get_extents.cl");
     protected static String func_get_key_for_point        = read_src("functions/get_key_for_point.cl");
     protected static String func_is_in_bounds             = read_src("functions/is_in_bounds.cl");
-    protected static String func_matrix_multiply          = read_src("functions/matrix_multiply.cl");
     protected static String func_matrix_mul_affine        = read_src("functions/matrix_multiply_affine.cl");
+    protected static String func_matrix_multiply          = read_src("functions/matrix_multiply.cl");
     protected static String func_matrix_transform         = read_src("functions/matrix_transform.cl");
     protected static String func_polygon_circle_collision = read_src("functions/polygon_circle_collision.cl");
     protected static String func_polygon_collision        = read_src("functions/polygon_collision.cl");
     protected static String func_polygon_distance         = read_src("functions/polygon_distance.cl");
+    protected static String func_pos_vector_to_matrix     = read_src("functions/translation_vector_to_matrix.cl");
     protected static String func_project_circle           = read_src("functions/project_circle.cl");
     protected static String func_project_polygon          = read_src("functions/project_polygon.cl");
+    protected static String func_quaternion_lerp          = read_src("functions/quaternion_lerp.cl");
+    protected static String func_rot_quaternion_to_matrix = read_src("functions/rotation_quaternion_to_matrix.cl");
     protected static String func_rotate_point             = read_src("functions/rotate_point.cl");
+    protected static String func_scl_vector_to_matrix     = read_src("functions/scaling_vector_to_matrix.cl");
+    protected static String func_vector_lerp              = read_src("functions/vector_lerp.cl");
 
     /**
      * Simple header line to ensure atomics are enabled. May not be required in more modern drivers, but

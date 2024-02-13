@@ -33,7 +33,7 @@ public class TestGame extends GameMode
         POINTS,  // model vertices
     }
 
-    private static EnumSet<RenderType> ACTIVE_RENDERERS =
+    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(RenderType.MODELS, RenderType.HULLS);
 
 
@@ -246,10 +246,10 @@ public class TestGame extends GameMode
     {
         //genPlayer();
         genTestFigure(1f, 300, 0);
-        genTestFigureNPC(1, 200, 0);
-        genTestFigureNPC(1, 200, 100);
-        genTestFigureNPC(1, 200, 250);
-        genTestFigureNPC(1, 100, 50);
+        genTestFigureNPC(1f, 200, 0);
+        genTestFigureNPC(1f, 200, 100);
+        genTestFigureNPC(1f, 200, 250);
+        genTestFigureNPC(1f, 100, 50);
 
         //genTestTriangle(20f, 190, 250);
 
@@ -309,7 +309,7 @@ public class TestGame extends GameMode
 
         genCircles(20, 7f, 5f, 0, 100);
         genSquares(20,  9f, 5f, -120, 100);
-        genCrates2(20, 7f, 0.025f, 100, 100);
+        //genCrates2(20, 7f, 0.025f, 100, 100);
         genTriangles(20,  9f, 5f, 200, 100);
 
         genFloor(8, 150f, 150f, -70, -100);

@@ -1,5 +1,7 @@
 package com.controllerface.bvge.geometry;
 
+import com.controllerface.bvge.animation.BoneOffset;
+
 import java.util.List;
 
 public record Mesh(int mesh_id,

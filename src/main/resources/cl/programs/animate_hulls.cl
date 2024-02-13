@@ -1,129 +1,46 @@
-constant float16 identity_matrix = (float16)
-(
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f
-);
-
-inline float16 translation_vector_to_matrix(float4 vector)
+typedef struct 
 {
-    float16 matrix;
-    matrix.s0 = 1;
-    matrix.s1 = 0;
-    matrix.s2 = 0;
-    matrix.s3 = 0;
-    matrix.s4 = 0;
-    matrix.s5 = 1;
-    matrix.s6 = 0;
-    matrix.s7 = 0;
-    matrix.s8 = 0;
-    matrix.s9 = 0;
-    matrix.sA = 1;
-    matrix.sB = 0;
-    matrix.sC = vector.x;
-    matrix.sD = vector.y;
-    matrix.sE = vector.z;
-    matrix.sF = vector.w;
-    return matrix;
-}
+    float4 frame_a;
+    float4 frame_b;
+    float lerp_factor;
+} KeyFramePair;
 
-inline float16 scaling_vector_to_matrix(float4 vector)
+inline KeyFramePair find_keyframe_pair(__global float4 *key_frames, 
+                                       __global double *frame_times,
+                                       double anim_time_ticks,
+                                       int2 channel_table)
 {
-    float16 matrix;
-    matrix.s0 = vector.x;
-    matrix.s1 = 0;
-    matrix.s2 = 0;
-    matrix.s3 = 0;
-
-    matrix.s4 = 0;
-    matrix.s5 = vector.y;
-    matrix.s6 = 0;
-    matrix.s7 = 0;
-
-    matrix.s8 = 0;
-    matrix.s9 = 0;
-    matrix.sA = vector.z;
-    matrix.sB = 0;
-
-    matrix.sC = 0;
-    matrix.sD = 0;
-    matrix.sE = 0;
-    matrix.sF = vector.w;
-    return matrix;
-}
-
-inline float16 rotation_quaternion_to_matrix(float4 quaternion)
-{
-    float16 matrix;
-    float w2 = quaternion.w * quaternion.w;
-    float x2 = quaternion.x * quaternion.x;
-    float y2 = quaternion.y * quaternion.y;
-    float z2 = quaternion.z * quaternion.z;
-    float zw = quaternion.z * quaternion.w;
-    float xy = quaternion.x * quaternion.y;
-    float xz = quaternion.x * quaternion.z;
-    float yw = quaternion.y * quaternion.w;
-    float yz = quaternion.y * quaternion.z;
-    float xw = quaternion.x * quaternion.w;
-    matrix.s0 = w2 + x2 - z2 - y2;
-    matrix.s1 = xy + zw + zw + xy;
-    matrix.s2 = xz - yw + xz - yw;
-    matrix.s3 = 0.0F;
-    matrix.s4 = -zw + xy - zw + xy;
-    matrix.s5 = y2 - z2 + w2 - x2;
-    matrix.s6 = yz + yz + xw + xw;
-    matrix.s7 = 0.0F;
-    matrix.s8 = yw + xz + xz + yw;
-    matrix.s9 = yz + yz - xw - xw;
-    matrix.sA = z2 - y2 - x2 + w2;
-    matrix.sB = 0.0F;
-    matrix.sC = 0.0F;
-    matrix.sD = 0.0F;
-    matrix.sE = 0.0F;
-    matrix.sF = 1.0F;
-    return matrix;
-}
-
-inline float4 vector_lerp(float4 a, float4 b, float t) 
-{
-    return fma(b - a, t, a);
-}
-
-inline float4 quaternion_lerp(float4 a, float4 b, float factor) 
-{
-    float4 dest;
-    float cosom = fma(a.x, b.x, fma(a.y, b.y, fma(a.z, b.z, a.w * b.w)));
-    float scale0 = 1.0F - factor;
-    float scale1 = cosom >= 0.0F ? factor : -factor;
-    
-    dest.x = fma(scale0, a.x, scale1 * b.x);
-    dest.y = fma(scale0, a.y, scale1 * b.y);
-    dest.z = fma(scale0, a.z, scale1 * b.z);
-    dest.w = fma(scale0, a.w, scale1 * b.w);
-
-    float s = native_rsqrt(fma(dest.x, dest.x, fma(dest.y, dest.y, fma(dest.z, dest.z, dest.w * dest.w))));
-    
-    dest.x *= s;
-    dest.y *= s;
-    dest.z *= s;
-    dest.w *= s;
-    
-    return dest;
+    KeyFramePair result;
+    for (int pos_index_b = channel_table.x; pos_index_b <= channel_table.y; pos_index_b++)
+    {
+        double time_b = frame_times[pos_index_b];
+        if (time_b > anim_time_ticks)
+        {
+            int pos_index_a = pos_index_b - 1;
+            result.frame_a = key_frames[pos_index_a];
+            result.frame_b = key_frames[pos_index_b];
+            
+            double time_a = frame_times[pos_index_a];
+            float delta = (float)time_b - (float)time_a;
+            result.lerp_factor = ((float)anim_time_ticks - (float)time_a) / delta;
+            break;
+        }
+    }
+    return result;
 }
 
 float16 get_node_transform(__global float16 *bone_bind_poses,
-                                  __global int2 *bone_channel_tables,
-                                  __global int2 *bone_pos_channel_tables,
-                                  __global int2 *bone_rot_channel_tables,
-                                  __global int2 *bone_scl_channel_tables,
-                                  __global int *animation_timing_indices,
-                                  __global double2 *animation_timings,
-                                  __global float4 *key_frames,
-                                  __global double *frame_times,
-                                  double current_time,
-                                  int animation_index,
-                                  int bone_id)
+                           __global int2 *bone_channel_tables,
+                           __global int2 *bone_pos_channel_tables,
+                           __global int2 *bone_rot_channel_tables,
+                           __global int2 *bone_scl_channel_tables,
+                           __global int *animation_timing_indices,
+                           __global double2 *animation_timings,
+                           __global float4 *key_frames,
+                           __global double *frame_times,
+                           double current_time,
+                           int animation_index,
+                           int bone_id)
 {
     if (animation_index < 0) return bone_bind_poses[bone_id];
 
@@ -138,73 +55,13 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     double time_in_ticks = current_time * timings.y;
     double anim_time_ticks = fmod(time_in_ticks, timings.x);
 
-    int pos_count = pos_channel_table.y - pos_channel_table.x + 1;
-    int rot_count = rot_channel_table.y - rot_channel_table.x + 1;
-    int scl_count = scl_channel_table.y - scl_channel_table.x + 1;
+    KeyFramePair pos_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, pos_channel_table);
+    KeyFramePair rot_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, rot_channel_table);
+    KeyFramePair scl_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, scl_channel_table);
 
-    float4 pos_a;
-    float4 pos_b;
-    float pos_factor;
-
-    float4 rot_a;
-    float4 rot_b;
-    float rot_factor;
-
-    float4 scl_a;
-    float4 scl_b;
-    float scl_factor;
-
-    for (int pos_index_b = pos_channel_table.x; pos_index_b <= pos_channel_table.y; pos_index_b++)
-    {
-        double time_b = frame_times[pos_index_b];
-        if (time_b > anim_time_ticks)
-        {
-            int pos_index_a = pos_index_b - 1;
-            pos_a = key_frames[pos_index_a];
-            pos_b = key_frames[pos_index_b];
-            
-            double time_a = frame_times[pos_index_a];
-            float delta = (float)time_b - (float)time_a;
-            pos_factor = ((float)anim_time_ticks - (float)time_a) / delta;
-            break;
-        }
-    }
-
-    for (int rot_index_b = rot_channel_table.x; rot_index_b <= rot_channel_table.y; rot_index_b++)
-    {
-        double time_b = frame_times[rot_index_b];
-        if (time_b > anim_time_ticks)
-        {
-            int rot_index_a = rot_index_b - 1;
-            rot_a = key_frames[rot_index_a];
-            rot_b = key_frames[rot_index_b];
-
-            double time_a = frame_times[rot_index_a];
-            float delta = (float)time_b - (float)time_a;
-            rot_factor = ((float)anim_time_ticks - (float)time_a) / delta;
-            break;
-        }
-    }
-
-    for (int scl_index_b = scl_channel_table.x; scl_index_b <= scl_channel_table.y; scl_index_b++)
-    {
-        double time_b = frame_times[scl_index_b];
-        if (time_b > anim_time_ticks)
-        {
-            int scl_index_a = scl_index_b - 1;
-            scl_a = key_frames[scl_index_a];
-            scl_b = key_frames[scl_index_b];
-
-            double time_a = frame_times[scl_index_a];
-            float delta = (float)time_b - (float)time_a;
-            scl_factor = ((float)anim_time_ticks - (float)time_a) / delta;
-            break;
-        }
-    }
-
-    float4 pos_final = vector_lerp(pos_a, pos_b, pos_factor);
-    float4 rot_final = quaternion_lerp(rot_a, rot_b, rot_factor);
-    float4 scl_final = vector_lerp(scl_a, scl_b, scl_factor);
+    float4 pos_final = vector_lerp(pos_pair.frame_a, pos_pair.frame_b, pos_pair.lerp_factor);
+    float4 rot_final = quaternion_lerp(rot_pair.frame_a, rot_pair.frame_b, rot_pair.lerp_factor);
+    float4 scl_final = vector_lerp(scl_pair.frame_a, scl_pair.frame_b, scl_pair.lerp_factor);
 
     float16 pos_matrix = translation_vector_to_matrix(pos_final);
     float16 rot_matrix = rotation_quaternion_to_matrix(rot_final);

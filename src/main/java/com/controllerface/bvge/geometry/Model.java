@@ -1,5 +1,7 @@
 package com.controllerface.bvge.geometry;
 
+import com.controllerface.bvge.animation.BoneBindPose;
+import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.gl.Texture;
 import org.joml.Matrix4f;
 

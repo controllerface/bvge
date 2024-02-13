@@ -1,5 +1,6 @@
-package com.controllerface.bvge.geometry;
+package com.controllerface.bvge.animation;
 
+import com.controllerface.bvge.geometry.Models;
 import org.joml.Matrix4f;
 
 public record BoneOffset(int offset_ref_id, String name, Matrix4f transform, Models.SceneNode sceneNode)

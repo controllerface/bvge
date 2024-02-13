@@ -1,6 +1,6 @@
 package com.controllerface.bvge.geometry;
 
-import com.controllerface.bvge.Main;
+import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.cl.GPU;
 
 import java.util.*;

@@ -161,7 +161,7 @@ inline void downsweep_vec4(__local int4 *buffer2, int m)
 }
 
 /**
-Sweep variants for scanning one scalar int and one int4 vector buffer simultaneously 
+Sweep variants for scanning one int2 vector and one int4 vector buffer simultaneously 
  */
 
 inline void upsweep_ex(__local int2 *buffer, __local int4 *buffer2, int m) 
