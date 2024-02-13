@@ -1,7 +1,9 @@
 package com.controllerface.bvge.util;
 
 import com.controllerface.bvge.geometry.Vertex;
+import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.lwjgl.assimp.AIMatrix4x4;
 
 public class MathEX
 {
@@ -101,5 +103,49 @@ public class MathEX
 
     public static boolean compare(Vector2f vec1, Vector2f vec2) {
         return compare(vec1.x, vec2.x) && compare(vec1.y, vec2.y);
+    }
+
+    public static float[] raw_matrix(Matrix4f input_matrix)
+    {
+        var raw_matrix = new float[16];
+        raw_matrix[0] = input_matrix.m00();
+        raw_matrix[1] = input_matrix.m01();
+        raw_matrix[2] = input_matrix.m02();
+        raw_matrix[3] = input_matrix.m03();
+        raw_matrix[4] = input_matrix.m10();
+        raw_matrix[5] = input_matrix.m11();
+        raw_matrix[6] = input_matrix.m12();
+        raw_matrix[7] = input_matrix.m13();
+        raw_matrix[8] = input_matrix.m20();
+        raw_matrix[9] = input_matrix.m21();
+        raw_matrix[10] = input_matrix.m22();
+        raw_matrix[11] = input_matrix.m23();
+        raw_matrix[12] = input_matrix.m30();
+        raw_matrix[13] = input_matrix.m31();
+        raw_matrix[14] = input_matrix.m32();
+        raw_matrix[15] = input_matrix.m33();
+        return raw_matrix;
+    }
+
+    public static float[] raw_matrix(AIMatrix4x4 input_matrix)
+    {
+        var raw_matrix = new float[16];
+        raw_matrix[0] = input_matrix.a1();
+        raw_matrix[1] = input_matrix.b1();
+        raw_matrix[2] = input_matrix.c1();
+        raw_matrix[3] = input_matrix.d1();
+        raw_matrix[4] = input_matrix.a2();
+        raw_matrix[5] = input_matrix.b2();
+        raw_matrix[6] = input_matrix.c2();
+        raw_matrix[7] = input_matrix.d2();
+        raw_matrix[8] = input_matrix.a3();
+        raw_matrix[9] = input_matrix.b3();
+        raw_matrix[10] = input_matrix.c3();
+        raw_matrix[11] = input_matrix.d3();
+        raw_matrix[12] = input_matrix.a4();
+        raw_matrix[13] = input_matrix.b4();
+        raw_matrix[14] = input_matrix.c4();
+        raw_matrix[15] = input_matrix.d4();
+        return raw_matrix;
     }
 }

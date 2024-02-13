@@ -74,8 +74,6 @@ public class Window
 
     public void run()
     {
-        System.out.println("LWJGL version: " + Version.getVersion());
-
         glfwShowWindow(glfwWindow);
         loop();
 
@@ -204,6 +202,7 @@ public class Window
         // set current cursor
         glfwSetCursor(glfwWindow, cursorID);
 
+        System.out.println("LWJGL version: " + Version.getVersion());
 
         System.out.println("\n-------- OPEN GL DEVICE -----------");
         System.out.println(glGetString(GL_VENDOR));
@@ -277,7 +276,6 @@ public class Window
                 ecs.tick(dt);
                 currentGameMode.update(dt);
                 glfwSwapBuffers(glfwWindow);
-
             }
 
             currentTime = (float) glfwGetTime();

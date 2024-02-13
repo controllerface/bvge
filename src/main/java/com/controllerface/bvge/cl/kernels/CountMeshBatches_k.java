@@ -12,6 +12,7 @@ public class CountMeshBatches_k extends GPUKernel<CountMeshBatches_k.Args>
     {
         mesh_details(Sizeof.cl_mem),
         total(Sizeof.cl_mem),
+        max_per_batch(Sizeof.cl_int),
         count(Sizeof.cl_int);
 
         public final long size;

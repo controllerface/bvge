@@ -152,7 +152,7 @@ public class Meshes
         var mesh_id = next_mesh_index.getAndIncrement();
         mesh_index_map.put(mesh_key, mesh_id);
         register_mesh(mesh_id, mesh);
-        System.out.printf("registered mesh [%s] with id [%d]\n", mesh_key, mesh_id);
+        //System.out.printf("registered mesh [%s] with id [%d]\n", mesh_key, mesh_id);
         return mesh_id;
     }
 

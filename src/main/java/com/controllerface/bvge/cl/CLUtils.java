@@ -28,13 +28,18 @@ public class CLUtils
     public static cl_program cl_p(cl_context context, cl_device_id[] device_ids, String ... src)
     {
         var program = clCreateProgramWithSource(context, src.length, src, null, null);
-        clBuildProgram(program, 1, device_ids, null, null, null);
+        var r = clBuildProgram(program, 1, device_ids, null, null, null);
         return program;
     }
 
     public static cl_kernel cl_k(cl_program program, String kernel_name)
     {
         return clCreateKernel(program, kernel_name, null);
+    }
+
+    public static double[] arg_double(double arg)
+    {
+        return new double[]{arg};
     }
 
     public static long[] arg_long(long arg)

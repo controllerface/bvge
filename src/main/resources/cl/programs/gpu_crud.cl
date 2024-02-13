@@ -26,6 +26,46 @@ __kernel void create_edge(__global float4 *edges,
     edges[target] = new_edge; 
 }
 
+__kernel void create_bone_channel(__global int *animation_timing_indices,
+                                  __global int2 *bone_pos_channel_tables,
+                                  __global int2 *bone_rot_channel_tables,
+                                  __global int2 *bone_scl_channel_tables,
+                                  int target,
+                                  int new_animation_timing_index,
+                                  int2 new_bone_pos_channel_table,
+                                  int2 new_bone_rot_channel_table,
+                                  int2 new_bone_scl_channel_table)
+{
+    animation_timing_indices[target] = new_animation_timing_index;
+    bone_pos_channel_tables[target] = new_bone_pos_channel_table;
+    bone_rot_channel_tables[target] = new_bone_rot_channel_table;
+    bone_scl_channel_tables[target] = new_bone_scl_channel_table;
+}
+
+__kernel void set_bone_channel_table(__global int2 *bone_channel_tables,
+                                     int target,
+                                     int2 new_bone_channel_table)
+{
+    bone_channel_tables[target] = new_bone_channel_table;
+}
+
+__kernel void create_animation_timings(__global double2 *animation_timings,
+                                       int target,
+                                       double2 new_animation_timing)
+{
+    animation_timings[target] = new_animation_timing;
+}
+
+__kernel void create_keyframe(__global float4 *key_frames,
+                              __global double *frame_times,
+                              int target,
+                              float4 new_keyframe,
+                              double new_frame_time)
+{
+    key_frames[target] = new_keyframe;
+    frame_times[target] = new_frame_time;
+}
+
 __kernel void create_texture_uv(__global float2 *texture_uvs,
                                 int target,
                                 float2 new_texture_uv)
@@ -35,18 +75,24 @@ __kernel void create_texture_uv(__global float2 *texture_uvs,
 
 __kernel void create_armature(__global float4 *armatures,
                               __global int4 *armature_flags,
-                              __global int2 *hull_tables,
+                              __global int4 *hull_tables,
                               __global float *armature_masses,
+                              __global int *armature_animation_indices,
+                              __global double *armature_animation_elapsed,
                               int target,
                               float4 new_armature,
                               int4 new_armature_flags,
-                              int2 new_hull_table,
-                              float new_armature_mass)
+                              int4 new_hull_table,
+                              float new_armature_mass,
+                              int new_armature_animation_index,
+                              double new_armature_animation_time)
 {
     armatures[target] = new_armature; 
     armature_flags[target] = new_armature_flags; 
     hull_tables[target] = new_hull_table; 
     armature_masses[target] = new_armature_mass;
+    armature_animation_indices[target] = new_armature_animation_index; 
+    armature_animation_elapsed[target] = new_armature_animation_time;
 }
 
 __kernel void create_vertex_reference(__global float2 *vertex_references,
@@ -60,6 +106,13 @@ __kernel void create_vertex_reference(__global float2 *vertex_references,
     vertex_references[target] = new_vertex_reference; 
     vertex_weights[target] = new_vertex_weights; 
     uv_tables[target] = new_uv_table;
+}
+
+__kernel void create_model_transform(__global float16 *model_transforms,
+                                     int target,
+                                     float16 new_model_transform)
+{
+    model_transforms[target] = new_model_transform; 
 }
 
 __kernel void create_bone_bind_pose(__global float16 *bone_bind_poses,
@@ -80,13 +133,23 @@ __kernel void create_bone_reference(__global float16 *bone_references,
 }
 
 __kernel void create_bone(__global float16 *bones,
-                          __global int2 *bone_ref_tables,
+                          __global int2 *bone_index_tables,
                           int target,
                           float16 new_bone,
                           int2 new_bone_table)
 {
     bones[target] = new_bone; 
-    bone_ref_tables[target] = new_bone_table; 
+    bone_index_tables[target] = new_bone_table; 
+}
+
+__kernel void create_armature_bone(__global float16 *armature_bones,
+                                   __global int2 *bone_bind_tables,
+                                   int target,
+                                   float16 new_armature_bone,
+                                   int2 new_bone_bind_table)
+{
+    armature_bones[target] = new_armature_bone; 
+    bone_bind_tables[target] = new_bone_bind_table; 
 }
 
 __kernel void create_mesh_reference(__global int4 *mesh_ref_tables,

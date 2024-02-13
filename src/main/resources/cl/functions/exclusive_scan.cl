@@ -164,7 +164,7 @@ inline void downsweep_vec4(__local int4 *buffer2, int m)
 Sweep variants for scanning one scalar int and one int4 vector buffer simultaneously 
  */
 
-inline void upsweep_ex(__local int *buffer, __local int4 *buffer2, int m) 
+inline void upsweep_ex(__local int2 *buffer, __local int4 *buffer2, int m) 
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;
@@ -186,7 +186,7 @@ inline void upsweep_ex(__local int *buffer, __local int4 *buffer2, int m)
     }
 }
 
-inline void downsweep_ex(__local int *buffer, __local int4 *buffer2, int m)
+inline void downsweep_ex(__local int2 *buffer, __local int4 *buffer2, int m)
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;
@@ -203,7 +203,7 @@ inline void downsweep_ex(__local int *buffer, __local int4 *buffer2, int m)
             int offset = (0x1 << depth);
             int a_index = b_index - offset;
 
-            int temp = buffer[a_index];
+            int2 temp = buffer[a_index];
             buffer[a_index] = buffer[b_index];
             buffer[b_index] += temp;
 

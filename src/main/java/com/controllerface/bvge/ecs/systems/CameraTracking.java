@@ -4,7 +4,7 @@ import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.ecs.components.ArmatureIndex;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
+import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.window.Window;
 
 /**

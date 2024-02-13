@@ -2,26 +2,40 @@ package com.controllerface.bvge.game;
 
 import com.controllerface.bvge.ecs.components.ArmatureIndex;
 import com.controllerface.bvge.ecs.components.LinearForce;
-import com.controllerface.bvge.ecs.systems.physics.PhysicsObjects;
+import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.CameraFocus;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.physics.UniformGrid;
-import com.controllerface.bvge.ecs.systems.physics.PhysicsSimulation;
-import com.controllerface.bvge.ecs.systems.renderers.*;
+import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.geometry.Models;
+import com.controllerface.bvge.gl.renderers.*;
 
-import static com.controllerface.bvge.ecs.systems.physics.PhysicsObjects.*;
+import java.util.EnumSet;
+
+import static com.controllerface.bvge.physics.PhysicsObjects.*;
 import static com.controllerface.bvge.geometry.Models.*;
 
 
 public class TestGame extends GameMode
 {
     private final GameSystem screenBlankSystem;
+
+    private enum RenderType
+    {
+        MODELS, // normal objects
+        HULLS,   // physics hulls
+        BOUNDS,  // bounding boxes
+        POINTS,  // model vertices
+    }
+
+    private static EnumSet<RenderType> ACTIVE_RENDERERS =
+        EnumSet.of(RenderType.MODELS, RenderType.HULLS);
+
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {
@@ -189,26 +203,42 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
-        // all physics calculations should be done first
+        // all physics calculations should be done immediately after animation
         ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid));
 
-        // camera movement must be handled before rendering occurs, but after objects are in position
+        // camera movement must be handled before rendering occurs, but after collision has been resolved
         ecs.registerSystem(new CameraTracking(ecs, uniformGrid));
 
         // the blanking system clears the screen before rendering passes
         ecs.registerSystem(screenBlankSystem);
 
-        // these are debug-level renderers for visualizing the modeled physics boundaries
-        ecs.registerSystem(new EdgeRenderer(ecs));
-        ecs.registerSystem(new CircleRenderer(ecs));
-        ecs.registerSystem(new BoundingBoxRenderer(ecs));
-        //ecs.registerSystem(new BoneRenderer(ecs));
-
         // main renderers go here, one for each model type that can be rendered
-        // todo: rewrite using hull/model filter
-        ecs.registerSystem(new CrateRenderer(ecs));
-        ecs.registerSystem(new HumanoidRenderer(ecs));
-        //ecs.registerSystem(new PointRenderer(ecs));
+
+        if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
+        {
+            ecs.registerSystem(new CrateRenderer(ecs));
+            ecs.registerSystem(new HumanoidRenderer(ecs));
+        }
+
+        // these are debug-level renderers for visualizing the modeled physics boundaries
+
+        if (ACTIVE_RENDERERS.contains(RenderType.HULLS))
+        {
+            ecs.registerSystem(new EdgeRenderer(ecs));
+            ecs.registerSystem(new CircleRenderer(ecs));
+        }
+
+        if (ACTIVE_RENDERERS.contains(RenderType.BOUNDS))
+        {
+            ecs.registerSystem(new BoundingBoxRenderer(ecs));
+        }
+
+        if (ACTIVE_RENDERERS.contains(RenderType.POINTS))
+        {
+            ecs.registerSystem(new PointRenderer(ecs));
+        }
+
+        //ecs.registerSystem(new BoneRenderer(ecs));
     }
 
     @Override
@@ -216,9 +246,9 @@ public class TestGame extends GameMode
     {
         //genPlayer();
         genTestFigure(1f, 300, 0);
-        genTestFigureNPC(1, 200, 50);
+        genTestFigureNPC(1, 200, 0);
         genTestFigureNPC(1, 200, 100);
-        genTestFigureNPC(1, 200, 200);
+        genTestFigureNPC(1, 200, 250);
         genTestFigureNPC(1, 100, 50);
 
         //genTestTriangle(20f, 190, 250);
@@ -277,10 +307,10 @@ public class TestGame extends GameMode
 
 
 
-        //genCircles(100, 7f, 5f, 0, 100);
-        //genSquares(100,  9f, 5f, -120, 100);
+        genCircles(20, 7f, 5f, 0, 100);
+        genSquares(20,  9f, 5f, -120, 100);
         genCrates2(20, 7f, 0.025f, 100, 100);
-        //genTriangles(100,  9f, 5f, 200, 100);
+        genTriangles(20,  9f, 5f, 200, 100);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);

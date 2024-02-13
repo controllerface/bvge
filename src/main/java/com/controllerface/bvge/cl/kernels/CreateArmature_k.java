@@ -15,11 +15,15 @@ public class CreateArmature_k extends GPUKernel<CreateArmature_k.Args>
         armature_flags(Sizeof.cl_mem),
         hull_tables(Sizeof.cl_mem),
         armature_masses(Sizeof.cl_mem),
+        armature_animation_indices(Sizeof.cl_mem),
+        armature_animation_elapsed(Sizeof.cl_mem),
         target(Sizeof.cl_int),
         new_armature(Sizeof.cl_float4),
         new_armature_flags(Sizeof.cl_int4),
-        new_hull_table(Sizeof.cl_int2),
-        new_armature_mass(Sizeof.cl_float);
+        new_hull_table(Sizeof.cl_int4),
+        new_armature_mass(Sizeof.cl_float),
+        new_armature_animation_index(Sizeof.cl_int),
+        new_armature_animation_time(Sizeof.cl_double);
 
         public final long size;
         Args(long size) { this.size = size; }
