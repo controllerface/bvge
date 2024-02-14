@@ -120,7 +120,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         clSetKernelArg(this.kernel, pos, arg_sizes[pos], pointer);
     }
 
-    public void set_arg(int pos, long pointer)
+    public void ptr_arg(int pos, long pointer)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
