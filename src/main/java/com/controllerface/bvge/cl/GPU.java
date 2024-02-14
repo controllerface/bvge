@@ -246,18 +246,11 @@ public class GPU
             return this.kernel;
         }
 
-        public Kernel new_arg(Enum<?> val, long size)
+        public Kernel loc_arg(Enum<?> val, long size)
         {
-            kernel.new_arg(val.ordinal(), size);
+            kernel.loc_arg(val.ordinal(), size);
             return this;
         }
-
-        public Kernel new_arg(Enum<?> val, long size, Pointer pointer)
-        {
-            kernel.new_arg(val.ordinal(), size, pointer);
-            return this;
-        }
-
 
         public Kernel set_arg(Enum<?> val, Pointer pointer)
         {
@@ -2656,7 +2649,7 @@ public class GPU
 
         Kernel.scan_int_single_block
             .set_arg(ScanIntSingleBlock_k.Args.data, Pointer.to(d_data))
-            .new_arg(ScanIntSingleBlock_k.Args.buffer, local_buffer_size, null)
+            .loc_arg(ScanIntSingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanIntSingleBlock_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
     }
@@ -2676,7 +2669,7 @@ public class GPU
 
         Kernel.scan_int_multi_block
             .set_arg(ScanIntMultiBlock_k.Args.data, src_data)
-            .new_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanIntMultiBlock_k.Args.part, src_part)
             .set_arg(ScanIntMultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2685,7 +2678,7 @@ public class GPU
 
         Kernel.complete_int_multi_block
             .set_arg(CompleteIntMultiBlock_k.Args.data, src_data)
-            .new_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
             .set_arg(CompleteIntMultiBlock_k.Args.part, src_part)
             .set_arg(CompleteIntMultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2699,7 +2692,7 @@ public class GPU
 
         Kernel.scan_int2_single_block
             .set_arg(ScanInt2SingleBlock_k.Args.data, Pointer.to(d_data))
-            .new_arg(ScanInt2SingleBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanInt2SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt2SingleBlock_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
     }
@@ -2719,7 +2712,7 @@ public class GPU
 
         Kernel.scan_int2_multi_block
             .set_arg(ScanInt2MultiBlock_k.Args.data, src_data)
-            .new_arg(ScanInt2MultiBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt2MultiBlock_k.Args.part, src_part)
             .set_arg(ScanInt2MultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2728,7 +2721,7 @@ public class GPU
 
         Kernel.complete_int2_multi_block
             .set_arg(CompleteInt2MultiBlock_k.Args.data, src_data)
-            .new_arg(CompleteInt2MultiBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(CompleteInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .set_arg(CompleteInt2MultiBlock_k.Args.part, src_part)
             .set_arg(CompleteInt2MultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2742,7 +2735,7 @@ public class GPU
 
         Kernel.scan_int4_single_block
             .set_arg(ScanInt4SingleBlock_k.Args.data, Pointer.to(d_data))
-            .new_arg(ScanInt4SingleBlock_k.Args.buffer, local_buffer_size, null)
+            .loc_arg(ScanInt4SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt4SingleBlock_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
     }
@@ -2762,7 +2755,7 @@ public class GPU
 
         Kernel.scan_int4_multi_block
             .set_arg(ScanInt4MultiBlock_k.Args.data, src_data)
-            .new_arg(ScanInt4MultiBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanInt4MultiBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt4MultiBlock_k.Args.part, src_part)
             .set_arg(ScanInt4MultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2771,7 +2764,7 @@ public class GPU
 
         Kernel.complete_int4_multi_block
             .set_arg(CompleteInt4MultiBlock_k.Args.data, src_data)
-            .new_arg(CompleteInt4MultiBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(CompleteInt4MultiBlock_k.Args.buffer, local_buffer_size)
             .set_arg(CompleteInt4MultiBlock_k.Args.part, src_part)
             .set_arg(CompleteInt4MultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2786,7 +2779,7 @@ public class GPU
         Kernel.scan_int_single_block_out
             .set_arg(ScanIntSingleBlockOut_k.Args.input, Pointer.to(d_data))
             .set_arg(ScanIntSingleBlockOut_k.Args.output, Pointer.to(o_data))
-            .new_arg(ScanIntSingleBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanIntSingleBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(ScanIntSingleBlockOut_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
     }
@@ -2807,7 +2800,7 @@ public class GPU
         Kernel.scan_int_multi_block_out
             .set_arg(ScanIntMultiBlockOut_k.Args.input, src_data)
             .set_arg(ScanIntMultiBlockOut_k.Args.output, dst_data)
-            .new_arg(ScanIntMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanIntMultiBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(ScanIntMultiBlockOut_k.Args.part, src_part)
             .set_arg(ScanIntMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2816,7 +2809,7 @@ public class GPU
 
         Kernel.complete_int_multi_block_out
             .set_arg(CompleteIntMultiBlockOut_k.Args.output, dst_data)
-            .new_arg(CompleteIntMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(CompleteIntMultiBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(CompleteIntMultiBlockOut_k.Args.part, src_part)
             .set_arg(CompleteIntMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2839,8 +2832,8 @@ public class GPU
             .set_arg(ScanDeletesSingleBlockOut_k.Args.output, dst_data)
             .set_arg(ScanDeletesSingleBlockOut_k.Args.output2, dst_data2)
             .set_arg(ScanDeletesSingleBlockOut_k.Args.sz, Pointer.to(size_data))
-            .new_arg(ScanDeletesSingleBlockOut_k.Args.buffer, local_buffer_size)
-            .new_arg(ScanDeletesSingleBlockOut_k.Args.buffer2, local_buffer_size2)
+            .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer2, local_buffer_size2)
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
 
@@ -2874,8 +2867,8 @@ public class GPU
         Kernel.scan_deletes_multi_block_out
             .set_arg(ScanDeletesMultiBlockOut_k.Args.output, dst_data)
             .set_arg(ScanDeletesMultiBlockOut_k.Args.output2, dst_data2)
-            .new_arg(ScanDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .new_arg(ScanDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
+            .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
             .set_arg(ScanDeletesMultiBlockOut_k.Args.part, src_part)
             .set_arg(ScanDeletesMultiBlockOut_k.Args.part2, src_part2)
             .set_arg(ScanDeletesMultiBlockOut_k.Args.n, src_n)
@@ -2892,8 +2885,8 @@ public class GPU
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.output, dst_data)
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.output2, dst_data2)
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.sz, Pointer.to(size_data))
-            .new_arg(CompleteDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .new_arg(CompleteDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
+            .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.part, src_part)
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.part2, src_part2)
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, src_n)
@@ -2920,7 +2913,7 @@ public class GPU
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.input, src_data)
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.output, dst_data)
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.sz, counter_pointer)
-            .new_arg(ScanCandidatesSingleBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanCandidatesSingleBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
 
@@ -2944,7 +2937,7 @@ public class GPU
         Kernel.scan_candidates_multi_block_out
             .set_arg(ScanCandidatesMultiBlockOut_k.Args.input, src_data)
             .set_arg(ScanCandidatesMultiBlockOut_k.Args.output, dst_data)
-            .new_arg(ScanCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(ScanCandidatesMultiBlockOut_k.Args.part, src_part)
             .set_arg(ScanCandidatesMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2957,7 +2950,7 @@ public class GPU
             .set_arg(CompleteCandidatesMultiBlockOut_k.Args.input, src_data)
             .set_arg(CompleteCandidatesMultiBlockOut_k.Args.output, dst_data)
             .set_arg(CompleteCandidatesMultiBlockOut_k.Args.sz, counter_pointer)
-            .new_arg(CompleteCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(CompleteCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(CompleteCandidatesMultiBlockOut_k.Args.part, src_part)
             .set_arg(CompleteCandidatesMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -2976,7 +2969,7 @@ public class GPU
         Kernel.scan_bounds_single_block
             .set_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, Pointer.to(input_data))
             .set_arg(ScanBoundsSingleBlock_k.Args.sz, counter_pointer)
-            .new_arg(ScanBoundsSingleBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanBoundsSingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanBoundsSingleBlock_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
 
@@ -2997,7 +2990,7 @@ public class GPU
 
         Kernel.scan_bounds_multi_block
             .set_arg(ScanBoundsMultiBlock_k.Args.bounds_bank_data, src_data)
-            .new_arg(ScanBoundsMultiBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanBoundsMultiBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanBoundsMultiBlock_k.Args.part, src_part)
             .set_arg(ScanBoundsMultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
@@ -3009,7 +3002,7 @@ public class GPU
         Kernel.complete_bounds_multi_block
             .set_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, src_data)
             .set_arg(CompleteBoundsMultiBlock_k.Args.sz, counter_pointer)
-            .new_arg(CompleteBoundsMultiBlock_k.Args.buffer, local_buffer_size)
+            .loc_arg(CompleteBoundsMultiBlock_k.Args.buffer, local_buffer_size)
             .set_arg(CompleteBoundsMultiBlock_k.Args.part, src_part)
             .set_arg(CompleteBoundsMultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);

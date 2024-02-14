@@ -1,8 +1,6 @@
 package com.controllerface.bvge.cl;
 
 import org.jocl.*;
-import org.lwjgl.opencl.CL12;
-import org.lwjgl.system.MemoryStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,22 +62,6 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
     }
 
     /**
-     * Sets a new argument in this kernel. Can be used for arguments that are set once and then
-     * do not change for the life of the program, though calling code is not prevented from
-     * calling this function to update arguments. Other options are provided solely for convenience
-     * to calling code.
-     *
-     * @param pos argument position
-     * @param size size of the memory buffer being passed for the argument
-     * @param pointer pointer to the memory buffer being passed
-     */
-    public void new_arg(int pos, long size, Pointer pointer)
-    {
-        def_arg(pos, size);
-        clSetKernelArg(this.kernel, pos, size, pointer);
-    }
-
-    /**
      * Convenience method for setting kernel arguments that are pointers to memory. The primary use
      * case for this method is providing points to memory buffers that do not change at runtime. The
      * intent is that these pointers are set ars kernel arguments once at startup. This helps increase
@@ -102,9 +84,10 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      * @param pos argument position
      * @param size size of the empty buffer to be created for the argument
      */
-    public void new_arg(int pos, long size)
+    public void loc_arg(int pos, long size)
     {
-        new_arg(pos, size, null);
+        def_arg(pos, size);
+        clSetKernelArg(this.kernel, pos, size, null);
     }
 
     /**
