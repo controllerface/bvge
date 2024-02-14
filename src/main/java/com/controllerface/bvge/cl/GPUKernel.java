@@ -1,6 +1,8 @@
 package com.controllerface.bvge.cl;
 
 import org.jocl.*;
+import org.lwjgl.opencl.CL12;
+import org.lwjgl.system.MemoryStack;
 
 import java.util.ArrayList;
 import java.util.List;

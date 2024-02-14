@@ -5,6 +5,8 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.physics.PhysicsBuffer;
 import com.controllerface.bvge.physics.UniformGrid;
 import org.jocl.*;
+import org.lwjgl.opencl.CL12;
+import org.lwjgl.opencl.KHRGLSharing;
 
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -1032,9 +1034,9 @@ public class GPU
 
         // Initialize the context properties
         var contextProperties = new cl_context_properties();
-        contextProperties.addProperty(CL_CONTEXT_PLATFORM, platform);
-        contextProperties.addProperty(CL_GL_CONTEXT_KHR, ctx);
-        contextProperties.addProperty(CL_WGL_HDC_KHR, dc);
+        contextProperties.addProperty(CL12.CL_CONTEXT_PLATFORM, platform);
+        contextProperties.addProperty(KHRGLSharing.CL_GL_CONTEXT_KHR, ctx);
+        contextProperties.addProperty(KHRGLSharing.CL_WGL_HDC_KHR, dc);
 
 //        OpenCL.printDeviceDetails(device_ids);
         // Create a context for the selected device
@@ -3061,12 +3063,12 @@ public class GPU
         var device = device_ids[0];
 
         System.out.println("-------- OPEN CL DEVICE -----------");
-        System.out.println(getString(device, CL_DEVICE_VENDOR));
-        System.out.println(getString(device, CL_DEVICE_NAME));
-        System.out.println(getString(device, CL_DRIVER_VERSION));
+        System.out.println(getString(device, CL12.CL_DEVICE_VENDOR));
+        System.out.println(getString(device, CL12.CL_DEVICE_NAME));
+        System.out.println(getString(device, CL12.CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
-        max_work_group_size = (int) getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        max_work_group_size = (int) getSize(device, CL12.CL_DEVICE_MAX_WORK_GROUP_SIZE);
         max_scan_block_size = (long) max_work_group_size * 2;
         local_work_default = arg_long(max_work_group_size);
 

@@ -3,6 +3,7 @@ package com.controllerface.bvge.cl;
 import org.jocl.CL;
 import org.jocl.cl_kernel;
 import org.jocl.cl_program;
+import org.lwjgl.opencl.CL12;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -129,10 +130,10 @@ public abstract class GPUProgram
      */
     public void destroy()
     {
-        clReleaseProgram(program);
+        CL12.clReleaseProgram(program.getNativePointer());
         for (cl_kernel clKernel : kernels.values())
         {
-            CL.clReleaseKernel(clKernel);
+            CL12.clReleaseKernel(clKernel.getNativePointer());
         }
     }
 }
