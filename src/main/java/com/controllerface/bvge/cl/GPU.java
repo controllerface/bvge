@@ -108,11 +108,6 @@ public class GPU
      */
     private static cl_mem counter_buffer = null;
 
-    /**
-     * This pointer to the counter buffer is used to pass the buffer to certain API calls.
-     */
-    private static Pointer counter_pointer = null;
-
     //#endregion
 
     //#region Program Objects
@@ -253,6 +248,12 @@ public class GPU
         }
 
         public Kernel set_arg(Enum<?> val, Pointer pointer)
+        {
+            kernel.set_arg(val.ordinal(), pointer);
+            return this;
+        }
+
+        public Kernel set_arg(Enum<?> val, long pointer)
         {
             kernel.set_arg(val.ordinal(), pointer);
             return this;
@@ -1049,7 +1050,6 @@ public class GPU
     private static void init_memory(int max_hulls, int max_points)
     {
         counter_buffer = cl_new_pinned_int();
-        counter_pointer = Pointer.to(counter_buffer);
         // todo: there should be more granularity than just max hulls and points. There should be
         //  limits on armatures and other data types.
 
@@ -1745,7 +1745,7 @@ public class GPU
 
         Kernel.prepare_bounds
             .share_mem(vbo_mem)
-            .set_arg(PrepareBounds_k.Args.vbo, Pointer.to(vbo_mem))
+            .set_arg(PrepareBounds_k.Args.vbo, vbo_mem.getNativePointer())
             .set_arg(PrepareBounds_k.Args.offset, Pointer.to(arg_long(bounds_offset)))
             .call(arg_long(batch_size));
     }
@@ -1764,7 +1764,7 @@ public class GPU
 
         Kernel.prepare_bones
             .share_mem(vbo_mem)
-            .set_arg(PrepareBones_k.Args.vbo, Pointer.to(vbo_mem))
+            .set_arg(PrepareBones_k.Args.vbo, vbo_mem.getNativePointer())
             .set_arg(PrepareBones_k.Args.offset, Pointer.to(arg_long(bone_offset)))
             .call(arg_long(batch_size));
     }
@@ -1786,8 +1786,8 @@ public class GPU
         Kernel.prepare_edges
             .share_mem(vbo_mem1)
             .share_mem(vbo_mem2)
-            .set_arg(PrepareEdges_k.Args.vertex_vbo, Pointer.to(vbo_mem1))
-            .set_arg(PrepareEdges_k.Args.flag_vbo, Pointer.to(vbo_mem2))
+            .set_arg(PrepareEdges_k.Args.vertex_vbo, vbo_mem1.getNativePointer())
+            .set_arg(PrepareEdges_k.Args.flag_vbo, vbo_mem2.getNativePointer())
             .set_arg(PrepareEdges_k.Args.offset, Pointer.to(arg_int(edge_offset)))
             .call(arg_long(batch_size));
     }
@@ -1798,7 +1798,7 @@ public class GPU
 
         Kernel.prepare_points
             .share_mem(vbo_mem)
-            .set_arg(PreparePoints_k.Args.vertex_vbo, Pointer.to(vbo_mem))
+            .set_arg(PreparePoints_k.Args.vertex_vbo, vbo_mem.getNativePointer())
             .set_arg(PreparePoints_k.Args.offset, Pointer.to(arg_int(point_offset)))
             .call(arg_long(batch_size));
     }
@@ -1815,7 +1815,7 @@ public class GPU
         cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.root_hull_count
-            .set_arg(RootHullCount_k.Args.counter, counter_pointer)
+            .set_arg(RootHullCount_k.Args.counter, counter_buffer.getNativePointer())
             .set_arg(RootHullCount_k.Args.model_id, Pointer.to(arg_int(model_id)))
             .call(arg_long(GPU.Memory.next_armature()));
 
@@ -1834,8 +1834,8 @@ public class GPU
         var hulls_counter_data = cl_new_int_arg_buffer(dst_hulls_counter);
 
         Kernel.root_hull_filter
-            .set_arg(RootHullFilter_k.Args.hulls_out, Pointer.to(hulls_out))
-            .set_arg(RootHullFilter_k.Args.counter, Pointer.to(hulls_counter_data))
+            .set_arg(RootHullFilter_k.Args.hulls_out, hulls_out.getNativePointer())
+            .set_arg(RootHullFilter_k.Args.counter, hulls_counter_data.getNativePointer())
             .set_arg(RootHullFilter_k.Args.model_id, Pointer.to(arg_int(model_id)))
             .call(arg_long(GPU.Memory.next_armature()));
 
@@ -1860,8 +1860,8 @@ public class GPU
         var vbo_mem = shared_mem.get(vbo_id);
         Kernel.prepare_transforms
             .share_mem(vbo_mem)
-            .set_arg(PrepareTransforms_k.Args.indices, Pointer.to(hulls_out))
-            .set_arg(PrepareTransforms_k.Args.transforms_out, Pointer.to(vbo_mem))
+            .set_arg(PrepareTransforms_k.Args.indices, hulls_out.getNativePointer())
+            .set_arg(PrepareTransforms_k.Args.transforms_out, vbo_mem.getNativePointer())
             .set_arg(PrepareTransforms_k.Args.offset, Pointer.to(arg_int(offset)))
             .call(arg_long(batch_size));
     }
@@ -1882,8 +1882,8 @@ public class GPU
 
         Kernel.prepare_transforms
             .share_mem(vbo_transforms)
-            .set_arg(PrepareTransforms_k.Args.indices, Pointer.to(hulls_out))
-            .set_arg(PrepareTransforms_k.Args.transforms_out, Pointer.to(vbo_transforms))
+            .set_arg(PrepareTransforms_k.Args.indices, hulls_out.getNativePointer())
+            .set_arg(PrepareTransforms_k.Args.transforms_out, vbo_transforms.getNativePointer())
             .set_arg(PrepareTransforms_k.Args.offset, Pointer.to(arg_int(offset)))
             .call(arg_long(batch_size));
     }
@@ -1891,9 +1891,9 @@ public class GPU
     public static void GL_count_mesh_instances(cl_mem query, cl_mem counters, cl_mem total, int count)
     {
         Kernel.count_mesh_instances
-            .set_arg(CountMeshInstances_k.Args.counters, Pointer.to(counters))
-            .set_arg(CountMeshInstances_k.Args.query, Pointer.to(query))
-            .set_arg(CountMeshInstances_k.Args.total, Pointer.to(total))
+            .set_arg(CountMeshInstances_k.Args.counters, counters.getNativePointer())
+            .set_arg(CountMeshInstances_k.Args.query, query.getNativePointer())
+            .set_arg(CountMeshInstances_k.Args.total, total.getNativePointer())
             .set_arg(CountMeshInstances_k.Args.count, Pointer.to(arg_int(count)))
             .call(arg_long(GPU.Memory.next_hull()));
     }
@@ -1906,10 +1906,10 @@ public class GPU
     public static void GL_write_mesh_details(cl_mem query, cl_mem counters, cl_mem offsets, cl_mem mesh_details, int count)
     {
         Kernel.write_mesh_details
-            .set_arg(WriteMeshDetails_k.Args.counters, Pointer.to(counters))
-            .set_arg(WriteMeshDetails_k.Args.query, Pointer.to(query))
-            .set_arg(WriteMeshDetails_k.Args.offsets, Pointer.to(offsets))
-            .set_arg(WriteMeshDetails_k.Args.mesh_details, Pointer.to(mesh_details))
+            .set_arg(WriteMeshDetails_k.Args.counters, counters.getNativePointer())
+            .set_arg(WriteMeshDetails_k.Args.query, query.getNativePointer())
+            .set_arg(WriteMeshDetails_k.Args.offsets, offsets.getNativePointer())
+            .set_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details.getNativePointer())
             .set_arg(WriteMeshDetails_k.Args.count, Pointer.to(arg_int(count)))
             .call(arg_long(GPU.Memory.next_hull()));
     }
@@ -1917,8 +1917,8 @@ public class GPU
     public static void GL_count_mesh_batches(cl_mem mesh_details, cl_mem total, int count, int max_per_batch)
     {
         Kernel.count_mesh_batches
-            .set_arg(CountMeshBatches_k.Args.mesh_details, Pointer.to(mesh_details))
-            .set_arg(CountMeshBatches_k.Args.total, Pointer.to(total))
+            .set_arg(CountMeshBatches_k.Args.mesh_details, mesh_details.getNativePointer())
+            .set_arg(CountMeshBatches_k.Args.total, total.getNativePointer())
             .set_arg(CountMeshBatches_k.Args.max_per_batch, Pointer.to(arg_int(max_per_batch)))
             .set_arg(CountMeshBatches_k.Args.count, Pointer.to(arg_int(count)))
             .call(global_single_size);
@@ -1927,8 +1927,8 @@ public class GPU
     public static void GL_calculate_batch_offsets(cl_mem mesh_offsets, cl_mem mesh_details, int count)
     {
         Kernel.calculate_batch_offsets
-            .set_arg(CalculateBatchOffsets_k.Args.mesh_offsets, Pointer.to(mesh_offsets))
-            .set_arg(CalculateBatchOffsets_k.Args.mesh_details, Pointer.to(mesh_details))
+            .set_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offsets.getNativePointer())
+            .set_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details.getNativePointer())
             .set_arg(CalculateBatchOffsets_k.Args.count, Pointer.to(arg_int(count)))
             .call(global_single_size);
     }
@@ -1936,8 +1936,8 @@ public class GPU
     public static void GL_transfer_detail_data(cl_mem mesh_details, cl_mem mesh_transfer, int count, int offset)
     {
         Kernel.transfer_detail_data
-            .set_arg(TransferDetailData_k.Args.mesh_details, Pointer.to(mesh_details))
-            .set_arg(TransferDetailData_k.Args.mesh_transfer, Pointer.to(mesh_transfer))
+            .set_arg(TransferDetailData_k.Args.mesh_details, mesh_details.getNativePointer())
+            .set_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer.getNativePointer())
             .set_arg(TransferDetailData_k.Args.offset, Pointer.to(arg_int(offset)))
             .call(arg_long(count));
 
@@ -1963,12 +1963,12 @@ public class GPU
             .share_mem(vbo_mem)
             .share_mem(cbo_mem)
             .share_mem(uvo_mem)
-            .set_arg(TransferRenderData_k.Args.command_buffer, Pointer.to(cbo_mem))
-            .set_arg(TransferRenderData_k.Args.vertex_buffer, Pointer.to(vbo_mem))
-            .set_arg(TransferRenderData_k.Args.uv_buffer, Pointer.to(uvo_mem))
-            .set_arg(TransferRenderData_k.Args.element_buffer, Pointer.to(ebo_mem))
-            .set_arg(TransferRenderData_k.Args.mesh_details, Pointer.to(mesh_details))
-            .set_arg(TransferRenderData_k.Args.mesh_transfer, Pointer.to(mesh_transfer))
+            .set_arg(TransferRenderData_k.Args.command_buffer, cbo_mem.getNativePointer())
+            .set_arg(TransferRenderData_k.Args.vertex_buffer, vbo_mem.getNativePointer())
+            .set_arg(TransferRenderData_k.Args.uv_buffer, uvo_mem.getNativePointer())
+            .set_arg(TransferRenderData_k.Args.element_buffer, ebo_mem.getNativePointer())
+            .set_arg(TransferRenderData_k.Args.mesh_details, mesh_details.getNativePointer())
+            .set_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer.getNativePointer())
             .set_arg(TransferRenderData_k.Args.offset, Pointer.to(arg_int(offset)))
             .call(arg_long(count));
     }
@@ -2167,7 +2167,7 @@ public class GPU
         cl_zero_buffer(result_data, Sizeof.cl_float2);
 
         Kernel.read_position
-            .set_arg(ReadPosition_k.Args.output, Pointer.to(result_data))
+            .set_arg(ReadPosition_k.Args.output, result_data.getNativePointer())
             .set_arg(ReadPosition_k.Args.target, Pointer.to(arg_int(armature_index)))
             .call(global_single_size);
 
@@ -2221,7 +2221,7 @@ public class GPU
         var arg_mem = cl_new_cpu_copy_buffer(size, src_args);
 
         Kernel.integrate
-            .set_arg(Integrate_k.Args.args, Pointer.to(arg_mem))
+            .set_arg(Integrate_k.Args.args, arg_mem.getNativePointer())
             .call(arg_long(GPU.Memory.next_hull()));
 
         clReleaseMemObject(arg_mem);
@@ -2251,8 +2251,8 @@ public class GPU
         physics_buffer.key_bank = new GPUMemory(bank_data);
 
         Kernel.generate_keys
-            .set_arg(GenerateKeys_k.Args.key_bank, Pointer.to(bank_data))
-            .set_arg(GenerateKeys_k.Args.key_counts, Pointer.to(counts_data))
+            .set_arg(GenerateKeys_k.Args.key_bank, bank_data.getNativePointer())
+            .set_arg(GenerateKeys_k.Args.key_counts, counts_data.getNativePointer())
             .set_arg(GenerateKeys_k.Args.x_subdivisions, Pointer.to(arg_int(uniform_grid.getX_subdivisions())))
             .set_arg(GenerateKeys_k.Args.key_bank_length, Pointer.to(arg_int(uniform_grid.get_key_bank_size())))
             .set_arg(GenerateKeys_k.Args.key_count_length, Pointer.to(arg_int(uniform_grid.get_directory_length())))
@@ -2282,9 +2282,9 @@ public class GPU
         physics_buffer.key_map = new GPUMemory(map_data);
 
         Kernel.build_key_map
-            .set_arg(BuildKeyMap_k.Args.key_map, Pointer.to(map_data))
-            .set_arg(BuildKeyMap_k.Args.key_offsets, physics_buffer.key_offsets.pointer())
-            .set_arg(BuildKeyMap_k.Args.key_counts, Pointer.to(counts_data))
+            .set_arg(BuildKeyMap_k.Args.key_map, map_data.getNativePointer())
+            .set_arg(BuildKeyMap_k.Args.key_offsets, physics_buffer.key_offsets.memory().getNativePointer())
+            .set_arg(BuildKeyMap_k.Args.key_counts, counts_data.getNativePointer())
             .set_arg(BuildKeyMap_k.Args.x_subdivisions, Pointer.to(arg_int(uniform_grid.getX_subdivisions())))
             .set_arg(BuildKeyMap_k.Args.key_count_length, Pointer.to(arg_int(uniform_grid.get_directory_length())))
             .call(arg_long(GPU.Memory.next_hull()));
@@ -2308,8 +2308,8 @@ public class GPU
         cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.locate_in_bounds
-            .set_arg(LocateInBounds_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
-            .set_arg(LocateInBounds_k.Args.counter, counter_pointer)
+            .set_arg(LocateInBounds_k.Args.in_bounds, physics_buffer.in_bounds.memory().getNativePointer())
+            .set_arg(LocateInBounds_k.Args.counter, counter_buffer.getNativePointer())
             .call(arg_long(hull_count));
 
         int size = cl_read_pinned_int(counter_buffer);
@@ -2324,10 +2324,9 @@ public class GPU
         int[] counter = new int[]{0};
         var dst_counter = Pointer.to(counter);
         var counter_data = cl_new_int_arg_buffer(dst_counter);
-        var p = Pointer.to(counter_data);
 
         Kernel.locate_out_of_bounds
-            .set_arg(LocateOutOfBounds_k.Args.counter, p)
+            .set_arg(LocateOutOfBounds_k.Args.counter, counter_data.getNativePointer())
             .call(arg_long(armature_count));
 
         clReleaseMemObject(counter_data);
@@ -2340,10 +2339,10 @@ public class GPU
         physics_buffer.candidate_counts = new GPUMemory(candidate_data);
 
         Kernel.count_candidates
-            .set_arg(CountCandidates_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
-            .set_arg(CountCandidates_k.Args.key_bank, physics_buffer.key_bank.pointer())
-            .set_arg(CountCandidates_k.Args.key_counts, physics_buffer.key_counts.pointer())
-            .set_arg(CountCandidates_k.Args.candidates, physics_buffer.candidate_counts.pointer())
+            .set_arg(CountCandidates_k.Args.in_bounds, physics_buffer.in_bounds.memory().getNativePointer())
+            .set_arg(CountCandidates_k.Args.key_bank, physics_buffer.key_bank.memory().getNativePointer())
+            .set_arg(CountCandidates_k.Args.key_counts, physics_buffer.key_counts.memory().getNativePointer())
+            .set_arg(CountCandidates_k.Args.candidates, physics_buffer.candidate_counts.memory().getNativePointer())
             .set_arg(CountCandidates_k.Args.x_subdivisions, physics_buffer.x_sub_divisions)
             .set_arg(CountCandidates_k.Args.key_count_length, physics_buffer.key_count_length)
             .call(arg_long(physics_buffer.get_candidate_buffer_count()));
@@ -2390,8 +2389,8 @@ public class GPU
 
         // as armatures are compacted, the shift buffers for the other components are updated
         Kernel.compact_armatures
-            .set_arg(CompactArmatures_k.Args.buffer_in, del_buffer_1.pointer())
-            .set_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.pointer());
+            .set_arg(CompactArmatures_k.Args.buffer_in, del_buffer_1.memory().getNativePointer())
+            .set_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.memory().getNativePointer());
 
         linearize_kernel(Kernel.compact_armatures, armature_count);
         linearize_kernel(Kernel.compact_bones, GPU.Memory.next_bone());
@@ -2420,15 +2419,15 @@ public class GPU
         cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.aabb_collide
-            .set_arg(AABBCollide_k.Args.candidates, physics_buffer.candidate_counts.pointer())
-            .set_arg(AABBCollide_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
-            .set_arg(AABBCollide_k.Args.key_map, physics_buffer.key_map.pointer())
-            .set_arg(AABBCollide_k.Args.key_bank, physics_buffer.key_bank.pointer())
-            .set_arg(AABBCollide_k.Args.key_counts, physics_buffer.key_counts.pointer())
-            .set_arg(AABBCollide_k.Args.key_offsets, physics_buffer.key_offsets.pointer())
-            .set_arg(AABBCollide_k.Args.matches, physics_buffer.matches.pointer())
-            .set_arg(AABBCollide_k.Args.used, physics_buffer.matches_used.pointer())
-            .set_arg(AABBCollide_k.Args.counter, counter_pointer)
+            .set_arg(AABBCollide_k.Args.candidates, physics_buffer.candidate_counts.memory().getNativePointer())
+            .set_arg(AABBCollide_k.Args.match_offsets, physics_buffer.candidate_offsets.memory().getNativePointer())
+            .set_arg(AABBCollide_k.Args.key_map, physics_buffer.key_map.memory().getNativePointer())
+            .set_arg(AABBCollide_k.Args.key_bank, physics_buffer.key_bank.memory().getNativePointer())
+            .set_arg(AABBCollide_k.Args.key_counts, physics_buffer.key_counts.memory().getNativePointer())
+            .set_arg(AABBCollide_k.Args.key_offsets, physics_buffer.key_offsets.memory().getNativePointer())
+            .set_arg(AABBCollide_k.Args.matches, physics_buffer.matches.memory().getNativePointer())
+            .set_arg(AABBCollide_k.Args.used, physics_buffer.matches_used.memory().getNativePointer())
+            .set_arg(AABBCollide_k.Args.counter, counter_buffer.getNativePointer())
             .set_arg(AABBCollide_k.Args.x_subdivisions, physics_buffer.x_sub_divisions)
             .set_arg(AABBCollide_k.Args.key_count_length, physics_buffer.key_count_length)
             .call(arg_long(physics_buffer.get_candidate_buffer_count()));
@@ -2457,12 +2456,12 @@ public class GPU
         physics_buffer.candidates = new GPUMemory(finals_data);
 
         Kernel.finalize_candidates
-            .set_arg(FinalizeCandidates_k.Args.input_candidates, physics_buffer.candidate_counts.pointer())
-            .set_arg(FinalizeCandidates_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
-            .set_arg(FinalizeCandidates_k.Args.matches, physics_buffer.matches.pointer())
-            .set_arg(FinalizeCandidates_k.Args.used, physics_buffer.matches_used.pointer())
-            .set_arg(FinalizeCandidates_k.Args.counter, Pointer.to(counter_data))
-            .set_arg(FinalizeCandidates_k.Args.final_candidates, physics_buffer.candidates.pointer())
+            .set_arg(FinalizeCandidates_k.Args.input_candidates, physics_buffer.candidate_counts.memory().getNativePointer())
+            .set_arg(FinalizeCandidates_k.Args.match_offsets, physics_buffer.candidate_offsets.memory().getNativePointer())
+            .set_arg(FinalizeCandidates_k.Args.matches, physics_buffer.matches.memory().getNativePointer())
+            .set_arg(FinalizeCandidates_k.Args.used, physics_buffer.matches_used.memory().getNativePointer())
+            .set_arg(FinalizeCandidates_k.Args.counter, counter_data.getNativePointer())
+            .set_arg(FinalizeCandidates_k.Args.final_candidates, physics_buffer.candidates.memory().getNativePointer())
             .call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
         clReleaseMemObject(counter_data);
@@ -2494,10 +2493,10 @@ public class GPU
         physics_buffer.reaction_index = new GPUMemory(index_data);
 
         Kernel.sat_collide
-            .set_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.pointer())
-            .set_arg(SatCollide_k.Args.reactions, physics_buffer.reactions_in.pointer())
-            .set_arg(SatCollide_k.Args.reaction_index, physics_buffer.reaction_index.pointer())
-            .set_arg(SatCollide_k.Args.counter, counter_pointer)
+            .set_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.memory().getNativePointer())
+            .set_arg(SatCollide_k.Args.reactions, physics_buffer.reactions_in.memory().getNativePointer())
+            .set_arg(SatCollide_k.Args.reaction_index, physics_buffer.reaction_index.memory().getNativePointer())
+            .set_arg(SatCollide_k.Args.counter, counter_buffer.getNativePointer())
             .call(global_work_size);
 
         int size = cl_read_pinned_int(counter_buffer);
@@ -2514,16 +2513,16 @@ public class GPU
     public static void sort_reactions()
     {
         Kernel.sort_reactions
-            .set_arg(SortReactions_k.Args.reactions_in, physics_buffer.reactions_in.pointer())
-            .set_arg(SortReactions_k.Args.reactions_out, physics_buffer.reactions_out.pointer())
-            .set_arg(SortReactions_k.Args.reaction_index, physics_buffer.reaction_index.pointer())
+            .set_arg(SortReactions_k.Args.reactions_in, physics_buffer.reactions_in.memory().getNativePointer())
+            .set_arg(SortReactions_k.Args.reactions_out, physics_buffer.reactions_out.memory().getNativePointer())
+            .set_arg(SortReactions_k.Args.reaction_index, physics_buffer.reaction_index.memory().getNativePointer())
             .call(arg_long(physics_buffer.get_reaction_count()));
     }
 
     public static void apply_reactions()
     {
         Kernel.apply_reactions
-            .set_arg(ApplyReactions_k.Args.reactions, physics_buffer.reactions_out.pointer())
+            .set_arg(ApplyReactions_k.Args.reactions, physics_buffer.reactions_out.memory().getNativePointer())
             .call(arg_long(GPU.Memory.next_point()));
     }
 
@@ -2648,7 +2647,7 @@ public class GPU
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
 
         Kernel.scan_int_single_block
-            .set_arg(ScanIntSingleBlock_k.Args.data, Pointer.to(d_data))
+            .set_arg(ScanIntSingleBlock_k.Args.data, d_data.getNativePointer())
             .loc_arg(ScanIntSingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanIntSingleBlock_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
@@ -2663,23 +2662,21 @@ public class GPU
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
 
         var part_data = cl_new_buffer(part_buf_size);
-        var src_data = Pointer.to(d_data);
-        var src_part = Pointer.to(part_data);
         var src_n = Pointer.to(new int[]{n});
 
         Kernel.scan_int_multi_block
-            .set_arg(ScanIntMultiBlock_k.Args.data, src_data)
+            .set_arg(ScanIntMultiBlock_k.Args.data, d_data.getNativePointer())
             .loc_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanIntMultiBlock_k.Args.part, src_part)
+            .set_arg(ScanIntMultiBlock_k.Args.part, part_data.getNativePointer())
             .set_arg(ScanIntMultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
         scan_int(part_data, part_size);
 
         Kernel.complete_int_multi_block
-            .set_arg(CompleteIntMultiBlock_k.Args.data, src_data)
+            .set_arg(CompleteIntMultiBlock_k.Args.data, d_data.getNativePointer())
             .loc_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(CompleteIntMultiBlock_k.Args.part, src_part)
+            .set_arg(CompleteIntMultiBlock_k.Args.part, part_data.getNativePointer())
             .set_arg(CompleteIntMultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
@@ -2691,7 +2688,7 @@ public class GPU
         long local_buffer_size = Sizeof.cl_int2 * max_scan_block_size;
 
         Kernel.scan_int2_single_block
-            .set_arg(ScanInt2SingleBlock_k.Args.data, Pointer.to(d_data))
+            .set_arg(ScanInt2SingleBlock_k.Args.data, d_data.getNativePointer())
             .loc_arg(ScanInt2SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt2SingleBlock_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
@@ -2706,23 +2703,21 @@ public class GPU
         long part_buf_size = ((long) Sizeof.cl_int2 * ((long) part_size));
 
         var part_data = cl_new_buffer(part_buf_size);
-        var src_data = Pointer.to(d_data);
-        var src_part = Pointer.to(part_data);
         var src_n = Pointer.to(new int[]{n});
 
         Kernel.scan_int2_multi_block
-            .set_arg(ScanInt2MultiBlock_k.Args.data, src_data)
+            .set_arg(ScanInt2MultiBlock_k.Args.data, d_data.getNativePointer())
             .loc_arg(ScanInt2MultiBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanInt2MultiBlock_k.Args.part, src_part)
+            .set_arg(ScanInt2MultiBlock_k.Args.part, part_data.getNativePointer())
             .set_arg(ScanInt2MultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
         scan_int2(part_data, part_size);
 
         Kernel.complete_int2_multi_block
-            .set_arg(CompleteInt2MultiBlock_k.Args.data, src_data)
+            .set_arg(CompleteInt2MultiBlock_k.Args.data, d_data.getNativePointer())
             .loc_arg(CompleteInt2MultiBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(CompleteInt2MultiBlock_k.Args.part, src_part)
+            .set_arg(CompleteInt2MultiBlock_k.Args.part, part_data.getNativePointer())
             .set_arg(CompleteInt2MultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
@@ -2734,7 +2729,7 @@ public class GPU
         long local_buffer_size = Sizeof.cl_int4 * max_scan_block_size;
 
         Kernel.scan_int4_single_block
-            .set_arg(ScanInt4SingleBlock_k.Args.data, Pointer.to(d_data))
+            .set_arg(ScanInt4SingleBlock_k.Args.data, d_data.getNativePointer())
             .loc_arg(ScanInt4SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt4SingleBlock_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
@@ -2749,23 +2744,21 @@ public class GPU
         long part_buf_size = ((long) Sizeof.cl_int4 * ((long) part_size));
 
         var part_data = cl_new_buffer(part_buf_size);
-        var src_data = Pointer.to(d_data);
-        var src_part = Pointer.to(part_data);
         var src_n = Pointer.to(new int[]{n});
 
         Kernel.scan_int4_multi_block
-            .set_arg(ScanInt4MultiBlock_k.Args.data, src_data)
+            .set_arg(ScanInt4MultiBlock_k.Args.data, d_data.getNativePointer())
             .loc_arg(ScanInt4MultiBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanInt4MultiBlock_k.Args.part, src_part)
+            .set_arg(ScanInt4MultiBlock_k.Args.part, part_data.getNativePointer())
             .set_arg(ScanInt4MultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
         scan_int4(part_data, part_size);
 
         Kernel.complete_int4_multi_block
-            .set_arg(CompleteInt4MultiBlock_k.Args.data, src_data)
+            .set_arg(CompleteInt4MultiBlock_k.Args.data, d_data.getNativePointer())
             .loc_arg(CompleteInt4MultiBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(CompleteInt4MultiBlock_k.Args.part, src_part)
+            .set_arg(CompleteInt4MultiBlock_k.Args.part, part_data.getNativePointer())
             .set_arg(CompleteInt4MultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
@@ -2777,8 +2770,8 @@ public class GPU
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
 
         Kernel.scan_int_single_block_out
-            .set_arg(ScanIntSingleBlockOut_k.Args.input, Pointer.to(d_data))
-            .set_arg(ScanIntSingleBlockOut_k.Args.output, Pointer.to(o_data))
+            .set_arg(ScanIntSingleBlockOut_k.Args.input, d_data.getNativePointer())
+            .set_arg(ScanIntSingleBlockOut_k.Args.output, o_data.getNativePointer())
             .loc_arg(ScanIntSingleBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(ScanIntSingleBlockOut_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
@@ -2792,25 +2785,22 @@ public class GPU
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
         var part_data = cl_new_buffer(part_buf_size);
-        var src_data = Pointer.to(input_data);
-        var src_part = Pointer.to(part_data);
-        var dst_data = Pointer.to(o_data);
         var src_n = Pointer.to(new int[]{n});
 
         Kernel.scan_int_multi_block_out
-            .set_arg(ScanIntMultiBlockOut_k.Args.input, src_data)
-            .set_arg(ScanIntMultiBlockOut_k.Args.output, dst_data)
+            .set_arg(ScanIntMultiBlockOut_k.Args.input, input_data.getNativePointer())
+            .set_arg(ScanIntMultiBlockOut_k.Args.output, o_data.getNativePointer())
             .loc_arg(ScanIntMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanIntMultiBlockOut_k.Args.part, src_part)
+            .set_arg(ScanIntMultiBlockOut_k.Args.part, part_data.getNativePointer())
             .set_arg(ScanIntMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
         scan_int(part_data, part_size);
 
         Kernel.complete_int_multi_block_out
-            .set_arg(CompleteIntMultiBlockOut_k.Args.output, dst_data)
+            .set_arg(CompleteIntMultiBlockOut_k.Args.output, o_data.getNativePointer())
             .loc_arg(CompleteIntMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .set_arg(CompleteIntMultiBlockOut_k.Args.part, src_part)
+            .set_arg(CompleteIntMultiBlockOut_k.Args.part, part_data.getNativePointer())
             .set_arg(CompleteIntMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
@@ -2825,13 +2815,10 @@ public class GPU
         var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 6);
         cl_zero_buffer(size_data, Sizeof.cl_int * 6);
 
-        var dst_data = Pointer.to(o1_data);
-        var dst_data2 = Pointer.to(o2_data);
-
         Kernel.scan_deletes_single_block_out
-            .set_arg(ScanDeletesSingleBlockOut_k.Args.output, dst_data)
-            .set_arg(ScanDeletesSingleBlockOut_k.Args.output2, dst_data2)
-            .set_arg(ScanDeletesSingleBlockOut_k.Args.sz, Pointer.to(size_data))
+            .set_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data.getNativePointer())
+            .set_arg(ScanDeletesSingleBlockOut_k.Args.output2, o2_data.getNativePointer())
+            .set_arg(ScanDeletesSingleBlockOut_k.Args.sz, size_data.getNativePointer())
             .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer, local_buffer_size)
             .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer2, local_buffer_size2)
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, Pointer.to(arg_int(n)))
@@ -2857,20 +2844,15 @@ public class GPU
 
         var p_data = cl_new_buffer(part_buf_size);
         var p_data2 = cl_new_buffer(part_buf_size2);
-
-        var dst_data = Pointer.to(o1_data);
-        var src_part = Pointer.to(p_data);
-        var dst_data2 = Pointer.to(o2_data);
-        var src_part2 = Pointer.to(p_data2);
         var src_n = Pointer.to(new int[]{n});
 
         Kernel.scan_deletes_multi_block_out
-            .set_arg(ScanDeletesMultiBlockOut_k.Args.output, dst_data)
-            .set_arg(ScanDeletesMultiBlockOut_k.Args.output2, dst_data2)
+            .set_arg(ScanDeletesMultiBlockOut_k.Args.output, o1_data.getNativePointer())
+            .set_arg(ScanDeletesMultiBlockOut_k.Args.output2, o2_data.getNativePointer())
             .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
             .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
-            .set_arg(ScanDeletesMultiBlockOut_k.Args.part, src_part)
-            .set_arg(ScanDeletesMultiBlockOut_k.Args.part2, src_part2)
+            .set_arg(ScanDeletesMultiBlockOut_k.Args.part, p_data.getNativePointer())
+            .set_arg(ScanDeletesMultiBlockOut_k.Args.part2, p_data2.getNativePointer())
             .set_arg(ScanDeletesMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
@@ -2882,13 +2864,13 @@ public class GPU
         cl_zero_buffer(size_data, Sizeof.cl_int * 6);
 
         Kernel.complete_deletes_multi_block_out
-            .set_arg(CompleteDeletesMultiBlockOut_k.Args.output, dst_data)
-            .set_arg(CompleteDeletesMultiBlockOut_k.Args.output2, dst_data2)
-            .set_arg(CompleteDeletesMultiBlockOut_k.Args.sz, Pointer.to(size_data))
+            .set_arg(CompleteDeletesMultiBlockOut_k.Args.output, o1_data.getNativePointer())
+            .set_arg(CompleteDeletesMultiBlockOut_k.Args.output2, o2_data.getNativePointer())
+            .set_arg(CompleteDeletesMultiBlockOut_k.Args.sz, size_data.getNativePointer())
             .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
             .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
-            .set_arg(CompleteDeletesMultiBlockOut_k.Args.part, src_part)
-            .set_arg(CompleteDeletesMultiBlockOut_k.Args.part2, src_part2)
+            .set_arg(CompleteDeletesMultiBlockOut_k.Args.part, p_data.getNativePointer())
+            .set_arg(CompleteDeletesMultiBlockOut_k.Args.part2, p_data2.getNativePointer())
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
@@ -2904,15 +2886,13 @@ public class GPU
     private static int scan_single_block_candidates_out(cl_mem d_data, cl_mem o_data, int n)
     {
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
-        var src_data = Pointer.to(d_data);
-        var dst_data = Pointer.to(o_data);
 
         cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.scan_candidates_single_block_out
-            .set_arg(ScanCandidatesSingleBlockOut_k.Args.input, src_data)
-            .set_arg(ScanCandidatesSingleBlockOut_k.Args.output, dst_data)
-            .set_arg(ScanCandidatesSingleBlockOut_k.Args.sz, counter_pointer)
+            .set_arg(ScanCandidatesSingleBlockOut_k.Args.input, d_data.getNativePointer())
+            .set_arg(ScanCandidatesSingleBlockOut_k.Args.output, o_data.getNativePointer())
+            .set_arg(ScanCandidatesSingleBlockOut_k.Args.sz, counter_buffer.getNativePointer())
             .loc_arg(ScanCandidatesSingleBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
@@ -2929,16 +2909,13 @@ public class GPU
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
         var p_data = cl_new_buffer(part_buf_size);
-        var src_data = Pointer.to(d_data);
-        var src_part = Pointer.to(p_data);
-        var dst_data = Pointer.to(o_data);
         var src_n = Pointer.to(new int[]{n});
 
         Kernel.scan_candidates_multi_block_out
-            .set_arg(ScanCandidatesMultiBlockOut_k.Args.input, src_data)
-            .set_arg(ScanCandidatesMultiBlockOut_k.Args.output, dst_data)
+            .set_arg(ScanCandidatesMultiBlockOut_k.Args.input, d_data.getNativePointer())
+            .set_arg(ScanCandidatesMultiBlockOut_k.Args.output, o_data.getNativePointer())
             .loc_arg(ScanCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanCandidatesMultiBlockOut_k.Args.part, src_part)
+            .set_arg(ScanCandidatesMultiBlockOut_k.Args.part, p_data.getNativePointer())
             .set_arg(ScanCandidatesMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
@@ -2947,11 +2924,11 @@ public class GPU
         cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.complete_candidates_multi_block_out
-            .set_arg(CompleteCandidatesMultiBlockOut_k.Args.input, src_data)
-            .set_arg(CompleteCandidatesMultiBlockOut_k.Args.output, dst_data)
-            .set_arg(CompleteCandidatesMultiBlockOut_k.Args.sz, counter_pointer)
+            .set_arg(CompleteCandidatesMultiBlockOut_k.Args.input, d_data.getNativePointer())
+            .set_arg(CompleteCandidatesMultiBlockOut_k.Args.output, o_data.getNativePointer())
+            .set_arg(CompleteCandidatesMultiBlockOut_k.Args.sz, counter_buffer.getNativePointer())
             .loc_arg(CompleteCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .set_arg(CompleteCandidatesMultiBlockOut_k.Args.part, src_part)
+            .set_arg(CompleteCandidatesMultiBlockOut_k.Args.part, p_data.getNativePointer())
             .set_arg(CompleteCandidatesMultiBlockOut_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
@@ -2967,8 +2944,8 @@ public class GPU
         cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.scan_bounds_single_block
-            .set_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, Pointer.to(input_data))
-            .set_arg(ScanBoundsSingleBlock_k.Args.sz, counter_pointer)
+            .set_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, input_data.getNativePointer())
+            .set_arg(ScanBoundsSingleBlock_k.Args.sz, counter_buffer.getNativePointer())
             .loc_arg(ScanBoundsSingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanBoundsSingleBlock_k.Args.n, Pointer.to(arg_int(n)))
             .call(local_work_default, local_work_default);
@@ -2984,14 +2961,12 @@ public class GPU
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
         var p_data = cl_new_buffer(part_buf_size);
-        var src_data = Pointer.to(input_data);
-        var src_part = Pointer.to(p_data);
         var src_n = Pointer.to(new int[]{n});
 
         Kernel.scan_bounds_multi_block
-            .set_arg(ScanBoundsMultiBlock_k.Args.bounds_bank_data, src_data)
+            .set_arg(ScanBoundsMultiBlock_k.Args.bounds_bank_data, input_data.getNativePointer())
             .loc_arg(ScanBoundsMultiBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanBoundsMultiBlock_k.Args.part, src_part)
+            .set_arg(ScanBoundsMultiBlock_k.Args.part, p_data.getNativePointer())
             .set_arg(ScanBoundsMultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 
@@ -3000,10 +2975,10 @@ public class GPU
         cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.complete_bounds_multi_block
-            .set_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, src_data)
-            .set_arg(CompleteBoundsMultiBlock_k.Args.sz, counter_pointer)
+            .set_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, input_data.getNativePointer())
+            .set_arg(CompleteBoundsMultiBlock_k.Args.sz, counter_buffer.getNativePointer())
             .loc_arg(CompleteBoundsMultiBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(CompleteBoundsMultiBlock_k.Args.part, src_part)
+            .set_arg(CompleteBoundsMultiBlock_k.Args.part, p_data.getNativePointer())
             .set_arg(CompleteBoundsMultiBlock_k.Args.n, src_n)
             .call(global_work_size, local_work_default);
 

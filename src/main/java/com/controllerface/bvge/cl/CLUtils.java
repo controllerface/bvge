@@ -171,8 +171,12 @@ public class CLUtils
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            CL12GL.clEnqueueAcquireGLObjects(commandQueue.getNativePointer(),
+            int r = CL12GL.clEnqueueAcquireGLObjects(commandQueue.getNativePointer(),
                 mem_to_buffer(mem_stack, mem), null, null);
+            if (r != 0)
+            {
+                System.out.println("error: " + r);
+            }
         }
     }
 
@@ -180,8 +184,12 @@ public class CLUtils
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            CL12GL.clEnqueueReleaseGLObjects(commandQueue.getNativePointer(),
+            int r = CL12GL.clEnqueueReleaseGLObjects(commandQueue.getNativePointer(),
                 mem_to_buffer(mem_stack, mem), null, null);
+            if (r != 0)
+            {
+                System.out.println("error: " + r);
+            }
         }
     }
 

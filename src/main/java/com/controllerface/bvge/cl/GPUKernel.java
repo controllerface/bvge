@@ -1,6 +1,8 @@
 package com.controllerface.bvge.cl;
 
 import org.jocl.*;
+import org.lwjgl.opencl.CL12;
+import org.lwjgl.system.MemoryStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +89,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
     public void loc_arg(int pos, long size)
     {
         def_arg(pos, size);
-        clSetKernelArg(this.kernel, pos, size, null);
+        CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, size);
     }
 
     /**
@@ -116,6 +118,15 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
     public void set_arg(int pos, Pointer pointer)
     {
         clSetKernelArg(this.kernel, pos, arg_sizes[pos], pointer);
+    }
+
+    public void set_arg(int pos, long pointer)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var pb = mem_stack.callocPointer(1).put(0, pointer);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, pb);
+        }
     }
 
     /**
