@@ -32,10 +32,12 @@ public class CLUtils
         }
     }
 
-    public static cl_program cl_p(cl_context context, cl_device_id[] device_ids, String ... src)
+    public static long cl_p(cl_context context, cl_device_id[] device_ids, String ... src)
     {
-        var program = clCreateProgramWithSource(context, src.length, src, null, null);
-        CL12.clBuildProgram(program.getNativePointer(), device_ids[0].getNativePointer(), "", null, 0);
+        long program = CL12.clCreateProgramWithSource(context.getNativePointer(),
+            src, null);
+        //var program = clCreateProgramWithSource(context, src.length, src, null, null);
+        CL12.clBuildProgram(program, device_ids[0].getNativePointer(), "", null, 0);
         return program;
     }
 

@@ -3061,7 +3061,7 @@ public class GPU
 
     //#region Misc. Public API
 
-    public static cl_program gpu_p(List<String> src_strings)
+    public static long gpu_p(List<String> src_strings)
     {
         String[] src = src_strings.toArray(new String[]{});
         return CLUtils.cl_p(context, device_ids, src);
