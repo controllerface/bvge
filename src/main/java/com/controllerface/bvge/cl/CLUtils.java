@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 
 import static org.jocl.CL.*;
@@ -154,18 +155,18 @@ public class CLUtils
         }
     }
 
-    private static PointerBuffer mem_to_buffer(MemoryStack mem_stack, cl_mem[] mem)
+    private static PointerBuffer mem_to_buffer(MemoryStack mem_stack, List<Long> mem)
     {
         Objects.requireNonNull(mem);
-        var pointer_buffer = mem_stack.callocPointer(mem.length);
-        for (int i = 0; i < mem.length; i++)
+        var pointer_buffer = mem_stack.callocPointer(mem.size());
+        for (int i = 0; i < mem.size(); i++)
         {
-            pointer_buffer.put(i, mem[i].getNativePointer());
+            pointer_buffer.put(i, mem.get(i));
         }
         return pointer_buffer;
     }
 
-    public static void gl_acquire(long command_queue_ptr, cl_mem[] mem)
+    public static void gl_acquire(long command_queue_ptr, List<Long> mem)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
@@ -178,7 +179,7 @@ public class CLUtils
         }
     }
 
-    public static void gl_release(long command_queue_ptr, cl_mem[] mem)
+    public static void gl_release(long command_queue_ptr, List<Long> mem)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {

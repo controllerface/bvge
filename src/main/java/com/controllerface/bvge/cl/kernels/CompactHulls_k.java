@@ -8,6 +8,9 @@ import org.jocl.cl_command_queue;
 
 public class CompactHulls_k extends GPUKernel<CompactHulls_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.scan_deletes;
+    private static final GPU.Kernel kernel = GPU.Kernel.compact_hulls;
+
     public enum Args implements GPUKernelArg
     {
         hull_shift(Sizeof.cl_mem),
@@ -27,6 +30,6 @@ public class CompactHulls_k extends GPUKernel<CompactHulls_k.Args>
 
     public CompactHulls_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.scan_deletes.gpu.kernels().get(GPU.Kernel.compact_hulls), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

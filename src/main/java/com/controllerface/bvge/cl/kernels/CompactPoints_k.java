@@ -8,6 +8,9 @@ import org.jocl.cl_command_queue;
 
 public class CompactPoints_k extends GPUKernel<CompactPoints_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.scan_deletes;
+    private static final GPU.Kernel kernel = GPU.Kernel.compact_points;
+
     public enum Args implements GPUKernelArg
     {
         point_shift(Sizeof.cl_mem),
@@ -23,6 +26,6 @@ public class CompactPoints_k extends GPUKernel<CompactPoints_k.Args>
 
     public CompactPoints_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.scan_deletes.gpu.kernels().get(GPU.Kernel.compact_points), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

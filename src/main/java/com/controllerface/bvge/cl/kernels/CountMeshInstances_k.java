@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class CountMeshInstances_k extends GPUKernel<CountMeshInstances_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.mesh_query;
+    private static final GPU.Kernel kernel = GPU.Kernel.count_mesh_instances;
+
     public enum Args implements GPUKernelArg
     {
         hull_mesh_ids(Sizeof.cl_mem),
@@ -24,7 +27,6 @@ public class CountMeshInstances_k extends GPUKernel<CountMeshInstances_k.Args>
 
     public CountMeshInstances_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.count_mesh_instances), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
-
 }

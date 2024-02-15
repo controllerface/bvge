@@ -7,6 +7,9 @@ import org.jocl.cl_command_queue;
 
 public class CompleteCandidatesMultiBlockOut_k extends GPUKernel<CompleteCandidatesMultiBlockOut_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.scan_key_candidates;
+    private static final GPU.Kernel kernel = GPU.Kernel.complete_candidates_multi_block_out;
+
     public enum Args implements GPUKernelArg
     {
         input(Sizeof.cl_mem),
@@ -23,6 +26,6 @@ public class CompleteCandidatesMultiBlockOut_k extends GPUKernel<CompleteCandida
 
     public CompleteCandidatesMultiBlockOut_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.scan_key_candidates.gpu.kernels().get(GPU.Kernel.complete_candidates_multi_block_out), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

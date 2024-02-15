@@ -8,6 +8,9 @@ import org.jocl.cl_command_queue;
 
 public class BuildKeyMap_k extends GPUKernel<BuildKeyMap_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.build_key_map;
+    private static final GPU.Kernel kernel = GPU.Kernel.build_key_map;
+
     public enum Args implements GPUKernelArg
     {
         bounds_index_data(Sizeof.cl_mem),
@@ -26,6 +29,6 @@ public class BuildKeyMap_k extends GPUKernel<BuildKeyMap_k.Args>
 
     public BuildKeyMap_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.build_key_map.gpu.kernels().get(GPU.Kernel.build_key_map), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

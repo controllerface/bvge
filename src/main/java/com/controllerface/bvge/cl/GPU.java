@@ -148,6 +148,11 @@ public class GPU
         {
             this.gpu = program;
         }
+
+        public final long kernel_ptr(Kernel kernel)
+        {
+           return gpu.kernels.get(kernel).getNativePointer();
+        }
     }
 
     //#endregion
@@ -298,9 +303,7 @@ public class GPU
             return this;
         }
 
-
-
-        public Kernel share_mem(cl_mem mem)
+        public Kernel share_mem(long mem)
         {
             kernel.share_mem(mem);
             return this;
@@ -1813,7 +1816,7 @@ public class GPU
         var vbo_mem = shared_mem.get(vbo_id);
 
         Kernel.prepare_bounds
-            .share_mem(vbo_mem)
+            .share_mem(vbo_mem.getNativePointer())
             .ptr_arg(PrepareBounds_k.Args.vbo, vbo_mem.getNativePointer())
             .set_arg(PrepareBounds_k.Args.offset, bounds_offset)
             .call(arg_long(batch_size));
@@ -1832,7 +1835,7 @@ public class GPU
         var vbo_mem = shared_mem.get(vbo_id);
 
         Kernel.prepare_bones
-            .share_mem(vbo_mem)
+            .share_mem(vbo_mem.getNativePointer())
             .ptr_arg(PrepareBones_k.Args.vbo, vbo_mem.getNativePointer())
             .set_arg(PrepareBones_k.Args.offset, bone_offset)
             .call(arg_long(batch_size));
@@ -1853,8 +1856,8 @@ public class GPU
         var vbo_mem2 = shared_mem.get(vbo_id2);
 
         Kernel.prepare_edges
-            .share_mem(vbo_mem1)
-            .share_mem(vbo_mem2)
+            .share_mem(vbo_mem1.getNativePointer())
+            .share_mem(vbo_mem2.getNativePointer())
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vbo_mem1.getNativePointer())
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, vbo_mem2.getNativePointer())
             .set_arg(PrepareEdges_k.Args.offset, edge_offset)
@@ -1866,7 +1869,7 @@ public class GPU
         var vbo_mem = shared_mem.get(vbo_id);
 
         Kernel.prepare_points
-            .share_mem(vbo_mem)
+            .share_mem(vbo_mem.getNativePointer())
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vbo_mem.getNativePointer())
             .set_arg(PreparePoints_k.Args.offset, point_offset)
             .call(arg_long(batch_size));
@@ -1928,7 +1931,7 @@ public class GPU
     {
         var vbo_mem = shared_mem.get(vbo_id);
         Kernel.prepare_transforms
-            .share_mem(vbo_mem)
+            .share_mem(vbo_mem.getNativePointer())
             .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out.getNativePointer())
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_mem.getNativePointer())
             .set_arg(PrepareTransforms_k.Args.offset, offset)
@@ -1950,7 +1953,7 @@ public class GPU
         var vbo_transforms = shared_mem.get(transforms_id);
 
         Kernel.prepare_transforms
-            .share_mem(vbo_transforms)
+            .share_mem(vbo_transforms.getNativePointer())
             .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out.getNativePointer())
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_transforms.getNativePointer())
             .set_arg(PrepareTransforms_k.Args.offset, offset)
@@ -2028,10 +2031,10 @@ public class GPU
         var uvo_mem = shared_mem.get(uvo);
 
         Kernel.transfer_render_data
-            .share_mem(ebo_mem)
-            .share_mem(vbo_mem)
-            .share_mem(cbo_mem)
-            .share_mem(uvo_mem)
+            .share_mem(ebo_mem.getNativePointer())
+            .share_mem(vbo_mem.getNativePointer())
+            .share_mem(cbo_mem.getNativePointer())
+            .share_mem(uvo_mem.getNativePointer())
             .ptr_arg(TransferRenderData_k.Args.command_buffer, cbo_mem.getNativePointer())
             .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vbo_mem.getNativePointer())
             .ptr_arg(TransferRenderData_k.Args.uv_buffer, uvo_mem.getNativePointer())

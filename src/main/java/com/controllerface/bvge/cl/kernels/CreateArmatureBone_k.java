@@ -7,6 +7,9 @@ import org.jocl.cl_command_queue;
 
 public class CreateArmatureBone_k extends GPUKernel<CreateArmatureBone_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.gpu_crud;
+    private static final GPU.Kernel kernel = GPU.Kernel.create_armature_bone;
+
     public enum Args implements GPUKernelArg
     {
         armature_bones(Sizeof.cl_mem),
@@ -22,6 +25,6 @@ public class CreateArmatureBone_k extends GPUKernel<CreateArmatureBone_k.Args>
 
     public CreateArmatureBone_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_armature_bone), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

@@ -7,6 +7,9 @@ import org.jocl.cl_command_queue;
 
 public class AnimatePoints_k extends GPUKernel<AnimatePoints_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.animate_hulls;
+    private static final GPU.Kernel kernel = GPU.Kernel.animate_points;
+
     public enum Args implements GPUKernelArg
     {
         points(Sizeof.cl_mem),
@@ -26,6 +29,6 @@ public class AnimatePoints_k extends GPUKernel<AnimatePoints_k.Args>
 
     public AnimatePoints_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_points), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

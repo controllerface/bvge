@@ -1,6 +1,7 @@
 package com.controllerface.bvge.cl;
 
-import org.jocl.*;
+import org.jocl.Sizeof;
+import org.jocl.cl_kernel;
 import org.lwjgl.opencl.CL12;
 import org.lwjgl.system.MemoryStack;
 
@@ -8,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.k_call;
-import static org.jocl.CL.clSetKernelArg;
 
 /**
  * A class for defining and organizing GPU kernel functions. This class is used to wrap an Open Cl kernel
@@ -19,8 +19,8 @@ import static org.jocl.CL.clSetKernelArg;
 public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
 {
     final long command_queue_ptr;
-    final cl_kernel kernel;
-    final List<cl_mem> shared_memory = new ArrayList<>();
+    final long kernel_ptr;
+    final List<Long> shared_memory_ptrs = new ArrayList<>();
     final long[] arg_sizes;
 
     /**
@@ -34,8 +34,13 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
 
     public GPUKernel(long command_queue_ptr, cl_kernel kernel, E[] args)
     {
+        this(command_queue_ptr, kernel.getNativePointer(), args);
+    }
+
+    public GPUKernel(long command_queue_ptr, long kernel_ptr, E[] args)
+    {
         this.command_queue_ptr = command_queue_ptr;
-        this.kernel = kernel;
+        this.kernel_ptr = kernel_ptr;
         this.arg_sizes = new long[args.length];
         for (var arg : args)
         {
@@ -49,11 +54,11 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      * the kernel call, respectively. The shared memory list si also cleared after each call, so memory
      * objects must be shared individually before every call.
      *
-     * @param mem the memory buffer to mark as shared with this kernel
+     * @param mem_ptr pointer to the memory buffer to mark as shared with this kernel
      */
-    public void share_mem(cl_mem mem)
+    public void share_mem(long mem_ptr)
     {
-        shared_memory.add(mem);
+        shared_memory_ptrs.add(mem_ptr);
     }
 
     /**
@@ -68,7 +73,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
     public GPUKernel<?> mem_arg(Enum<?> val, GPUMemory gpu_memory)
     {
         def_arg(val.ordinal(), Sizeof.cl_mem);
-        clSetKernelArg(this.kernel, val.ordinal(), Sizeof.cl_mem, gpu_memory.pointer());
+        ptr_arg(val.ordinal(), gpu_memory.memory().getNativePointer());
         return this;
     }
 
@@ -82,7 +87,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
     public void loc_arg(int pos, long size)
     {
         def_arg(pos, size);
-        CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, size);
+        CL12.clSetKernelArg(this.kernel_ptr, pos, size);
     }
 
     /**
@@ -113,7 +118,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         try (var mem_stack = MemoryStack.stackPush())
         {
             var pointerBuffer = mem_stack.callocPointer(1).put(0, pointer);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, pointerBuffer);
+            CL12.clSetKernelArg(this.kernel_ptr, pos, pointerBuffer);
         }
     }
 
@@ -123,7 +128,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         try (var mem_stack = MemoryStack.stackPush())
         {
             var doubleBuffer = mem_stack.doubles(value);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, doubleBuffer);
+            CL12.clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
         }
     }
 
@@ -132,7 +137,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         try (var mem_stack = MemoryStack.stackPush())
         {
             var doubleBuffer = mem_stack.doubles(value);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, doubleBuffer);
+            CL12.clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
         }
     }
 
@@ -142,7 +147,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         try (var mem_stack = MemoryStack.stackPush())
         {
             var floatBuffer = mem_stack.floats(value);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, floatBuffer);
+            CL12.clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
         }
     }
 
@@ -151,7 +156,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         try (var mem_stack = MemoryStack.stackPush())
         {
             var floatBuffer = mem_stack.floats(value);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, floatBuffer);
+            CL12.clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
         }
     }
 
@@ -160,7 +165,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         try (var mem_stack = MemoryStack.stackPush())
         {
             var intBuffer = mem_stack.ints(value);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, intBuffer);
+            CL12.clSetKernelArg(this.kernel_ptr, pos, intBuffer);
         }
     }
 
@@ -169,7 +174,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         try (var mem_stack = MemoryStack.stackPush())
         {
             var intBuffer = mem_stack.ints(value);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, intBuffer);
+            CL12.clSetKernelArg(this.kernel_ptr, pos, intBuffer);
         }
     }
 
@@ -201,20 +206,18 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      */
     public void call(long[] global_work_size, long[] local_work_size, long[] global_work_offset)
     {
-        var shared = shared_memory.toArray(new cl_mem[]{});
-
-        if (shared.length > 0)
+        if (!shared_memory_ptrs.isEmpty())
         {
-            CLUtils.gl_acquire(command_queue_ptr, shared);
+            CLUtils.gl_acquire(command_queue_ptr, shared_memory_ptrs);
         }
 
-        k_call(command_queue_ptr, kernel.getNativePointer(), global_work_size, local_work_size, global_work_offset);
+        k_call(command_queue_ptr, kernel_ptr, global_work_size, local_work_size, global_work_offset);
 
-        if (shared.length > 0)
+        if (!shared_memory_ptrs.isEmpty())
         {
-            CLUtils.gl_release(command_queue_ptr, shared);
+            CLUtils.gl_release(command_queue_ptr, shared_memory_ptrs);
         }
 
-        shared_memory.clear();
+        shared_memory_ptrs.clear();
     }
 }

@@ -8,6 +8,9 @@ import org.jocl.cl_command_queue;
 
 public class CalculateBatchOffsets_k extends GPUKernel<CalculateBatchOffsets_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.mesh_query;
+    private static final GPU.Kernel kernel = GPU.Kernel.calculate_batch_offsets;
+
     public enum Args implements GPUKernelArg
     {
         mesh_offsets(Sizeof.cl_mem),
@@ -21,6 +24,6 @@ public class CalculateBatchOffsets_k extends GPUKernel<CalculateBatchOffsets_k.A
 
     public CalculateBatchOffsets_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.calculate_batch_offsets), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

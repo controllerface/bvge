@@ -7,6 +7,9 @@ import org.jocl.cl_command_queue;
 
 public class CreateBoneChannel_k extends GPUKernel<CreateBoneChannel_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.gpu_crud;
+    private static final GPU.Kernel kernel = GPU.Kernel.create_bone_channel;
+
     public enum Args implements GPUKernelArg
     {
         animation_timing_indices(Sizeof.cl_mem),
@@ -26,6 +29,6 @@ public class CreateBoneChannel_k extends GPUKernel<CreateBoneChannel_k.Args>
 
     public CreateBoneChannel_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_bone_channel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

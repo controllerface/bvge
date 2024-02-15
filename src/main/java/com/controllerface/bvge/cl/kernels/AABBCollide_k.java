@@ -8,6 +8,9 @@ import org.jocl.cl_command_queue;
 
 public class AABBCollide_k extends GPUKernel<AABBCollide_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.aabb_collide;
+    private static final GPU.Kernel kernel = GPU.Kernel.aabb_collide;
+
     public enum Args implements GPUKernelArg
     {
         bounds(Sizeof.cl_mem),
@@ -32,6 +35,6 @@ public class AABBCollide_k extends GPUKernel<AABBCollide_k.Args>
 
     public AABBCollide_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.aabb_collide.gpu.kernels().get(GPU.Kernel.aabb_collide), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

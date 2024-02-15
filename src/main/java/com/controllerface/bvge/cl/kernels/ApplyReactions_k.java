@@ -8,6 +8,9 @@ import org.jocl.cl_command_queue;
 
 public class ApplyReactions_k extends GPUKernel<ApplyReactions_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.sat_collide;
+    private static final GPU.Kernel kernel = GPU.Kernel.apply_reactions;
+
     public enum Args implements GPUKernelArg
     {
         reactions(Sizeof.cl_float2),
@@ -23,6 +26,6 @@ public class ApplyReactions_k extends GPUKernel<ApplyReactions_k.Args>
 
     public ApplyReactions_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.apply_reactions), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

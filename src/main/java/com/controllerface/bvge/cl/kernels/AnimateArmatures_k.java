@@ -7,6 +7,9 @@ import org.jocl.cl_command_queue;
 
 public class AnimateArmatures_k extends GPUKernel<AnimateArmatures_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.animate_hulls;
+    private static final GPU.Kernel kernel = GPU.Kernel.animate_armatures;
+
     public enum Args implements GPUKernelArg
     {
         armature_bones(Sizeof.cl_mem),
@@ -34,6 +37,6 @@ public class AnimateArmatures_k extends GPUKernel<AnimateArmatures_k.Args>
 
     public AnimateArmatures_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_armatures), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

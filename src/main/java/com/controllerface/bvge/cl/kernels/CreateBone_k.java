@@ -7,6 +7,9 @@ import org.jocl.cl_command_queue;
 
 public class CreateBone_k extends GPUKernel<CreateBone_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.gpu_crud;
+    private static final GPU.Kernel kernel = GPU.Kernel.create_bone;
+
     public enum Args implements GPUKernelArg
     {
         bones(Sizeof.cl_mem),
@@ -22,6 +25,6 @@ public class CreateBone_k extends GPUKernel<CreateBone_k.Args>
 
     public CreateBone_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_bone), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }
