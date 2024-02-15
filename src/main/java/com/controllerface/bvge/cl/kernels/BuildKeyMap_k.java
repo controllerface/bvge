@@ -24,8 +24,8 @@ public class BuildKeyMap_k extends GPUKernel<BuildKeyMap_k.Args>
         @Override public long size() { return size; }
     }
 
-    public BuildKeyMap_k(cl_command_queue command_queue)
+    public BuildKeyMap_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.build_key_map.gpu.kernels().get(GPU.Kernel.build_key_map), Args.values());
+        super(command_queue_ptr, GPU.Program.build_key_map.gpu.kernels().get(GPU.Kernel.build_key_map), Args.values());
     }
 }

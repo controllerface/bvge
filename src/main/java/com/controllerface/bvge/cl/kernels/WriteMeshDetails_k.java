@@ -24,8 +24,8 @@ public class WriteMeshDetails_k extends GPUKernel<WriteMeshDetails_k.Args>
         @Override public long size() { return size; }
     }
 
-    public WriteMeshDetails_k(cl_command_queue command_queue)
+    public WriteMeshDetails_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.write_mesh_details), Args.values());
+        super(command_queue_ptr, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.write_mesh_details), Args.values());
     }
 }

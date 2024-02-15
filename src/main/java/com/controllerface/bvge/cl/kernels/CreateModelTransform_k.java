@@ -18,8 +18,8 @@ public class CreateModelTransform_k extends GPUKernel<CreateModelTransform_k.Arg
         @Override public long size() { return size; }
     }
 
-    public CreateModelTransform_k(cl_command_queue command_queue)
+    public CreateModelTransform_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_model_transform), Args.values());
+        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_model_transform), Args.values());
     }
 }

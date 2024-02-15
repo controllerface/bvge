@@ -18,7 +18,7 @@ import static org.jocl.CL.clSetKernelArg;
  */
 public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
 {
-    final cl_command_queue command_queue;
+    final long command_queue_ptr;
     final cl_kernel kernel;
     final List<cl_mem> shared_memory = new ArrayList<>();
     final long[] arg_sizes;
@@ -32,9 +32,9 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         long size();
     }
 
-    public GPUKernel(cl_command_queue command_queue, cl_kernel kernel, E[] args)
+    public GPUKernel(long command_queue_ptr, cl_kernel kernel, E[] args)
     {
-        this.command_queue = command_queue;
+        this.command_queue_ptr = command_queue_ptr;
         this.kernel = kernel;
         this.arg_sizes = new long[args.length];
         for (var arg : args)
@@ -205,14 +205,14 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
 
         if (shared.length > 0)
         {
-            CLUtils.gl_acquire(command_queue.getNativePointer(), shared);
+            CLUtils.gl_acquire(command_queue_ptr, shared);
         }
 
-        k_call(command_queue.getNativePointer(), kernel.getNativePointer(), global_work_size, local_work_size, global_work_offset);
+        k_call(command_queue_ptr, kernel.getNativePointer(), global_work_size, local_work_size, global_work_offset);
 
         if (shared.length > 0)
         {
-            CLUtils.gl_release(command_queue.getNativePointer(), shared);
+            CLUtils.gl_release(command_queue_ptr, shared);
         }
 
         shared_memory.clear();

@@ -28,8 +28,8 @@ public class CreateHull_k extends GPUKernel<CreateHull_k.Args>
         @Override public long size() { return size; }
     }
 
-    public CreateHull_k(cl_command_queue command_queue)
+    public CreateHull_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_hull), Args.values());
+        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_hull), Args.values());
     }
 }

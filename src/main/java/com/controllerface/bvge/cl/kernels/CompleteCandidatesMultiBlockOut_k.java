@@ -21,8 +21,8 @@ public class CompleteCandidatesMultiBlockOut_k extends GPUKernel<CompleteCandida
         @Override public long size() { return size; }
     }
 
-    public CompleteCandidatesMultiBlockOut_k(cl_command_queue command_queue)
+    public CompleteCandidatesMultiBlockOut_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.scan_key_candidates.gpu.kernels().get(GPU.Kernel.complete_candidates_multi_block_out), Args.values());
+        super(command_queue_ptr, GPU.Program.scan_key_candidates.gpu.kernels().get(GPU.Kernel.complete_candidates_multi_block_out), Args.values());
     }
 }

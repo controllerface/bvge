@@ -24,8 +24,8 @@ public class CreateBoneChannel_k extends GPUKernel<CreateBoneChannel_k.Args>
         @Override public long size() { return size; }
     }
 
-    public CreateBoneChannel_k(cl_command_queue command_queue)
+    public CreateBoneChannel_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_bone_channel), Args.values());
+        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_bone_channel), Args.values());
     }
 }

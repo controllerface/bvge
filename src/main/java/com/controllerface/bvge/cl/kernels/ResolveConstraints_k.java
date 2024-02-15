@@ -22,8 +22,8 @@ public class ResolveConstraints_k extends GPUKernel<ResolveConstraints_k.Args>
         @Override public long size() { return size; }
     }
 
-    public ResolveConstraints_k(cl_command_queue command_queue)
+    public ResolveConstraints_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.resolve_constraints.gpu.kernels().get(GPU.Kernel.resolve_constraints), Args.values());
+        super(command_queue_ptr, GPU.Program.resolve_constraints.gpu.kernels().get(GPU.Kernel.resolve_constraints), Args.values());
     }
 }

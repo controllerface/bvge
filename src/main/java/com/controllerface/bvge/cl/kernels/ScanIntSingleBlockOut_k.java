@@ -20,8 +20,8 @@ public class ScanIntSingleBlockOut_k extends GPUKernel<ScanIntSingleBlockOut_k.A
         @Override public long size() { return size; }
     }
 
-    public ScanIntSingleBlockOut_k(cl_command_queue command_queue)
+    public ScanIntSingleBlockOut_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.scan_int_array_out.gpu.kernels().get(GPU.Kernel.scan_int_single_block_out), Args.values());
+        super(command_queue_ptr, GPU.Program.scan_int_array_out.gpu.kernels().get(GPU.Kernel.scan_int_single_block_out), Args.values());
     }
 }

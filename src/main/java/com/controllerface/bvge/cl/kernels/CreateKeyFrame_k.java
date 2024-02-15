@@ -20,8 +20,8 @@ public class CreateKeyFrame_k extends GPUKernel<CreateKeyFrame_k.Args>
         @Override public long size() { return size; }
     }
 
-    public CreateKeyFrame_k(cl_command_queue command_queue)
+    public CreateKeyFrame_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_keyframe), Args.values());
+        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_keyframe), Args.values());
     }
 }

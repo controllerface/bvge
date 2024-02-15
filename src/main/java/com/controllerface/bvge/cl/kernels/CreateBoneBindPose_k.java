@@ -22,8 +22,8 @@ public class CreateBoneBindPose_k extends GPUKernel<CreateBoneBindPose_k.Args>
         @Override public long size() { return size; }
     }
 
-    public CreateBoneBindPose_k(cl_command_queue command_queue)
+    public CreateBoneBindPose_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_bone_bind_pose), Args.values());
+        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_bone_bind_pose), Args.values());
     }
 }

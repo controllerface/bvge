@@ -18,8 +18,8 @@ public class CreateAnimationTimings_k extends GPUKernel<CreateAnimationTimings_k
         @Override public long size() { return size; }
     }
 
-    public CreateAnimationTimings_k(cl_command_queue command_queue)
+    public CreateAnimationTimings_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_animation_timings), Args.values());
+        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_animation_timings), Args.values());
     }
 }

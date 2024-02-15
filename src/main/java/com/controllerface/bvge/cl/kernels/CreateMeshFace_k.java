@@ -20,8 +20,8 @@ public class CreateMeshFace_k extends GPUKernel<CreateMeshFace_k.Args>
         @Override public long size() { return size; }
     }
 
-    public CreateMeshFace_k(cl_command_queue command_queue)
+    public CreateMeshFace_k(long command_queue_ptr)
     {
-        super(command_queue,  GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_mesh_face), Args.values());
+        super(command_queue_ptr,  GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_mesh_face), Args.values());
     }
 }

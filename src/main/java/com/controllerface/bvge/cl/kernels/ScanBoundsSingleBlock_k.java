@@ -20,8 +20,8 @@ public class ScanBoundsSingleBlock_k extends GPUKernel<ScanBoundsSingleBlock_k.A
         @Override public long size() { return size; }
     }
 
-    public ScanBoundsSingleBlock_k(cl_command_queue command_queue)
+    public ScanBoundsSingleBlock_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.scan_key_bank.gpu.kernels().get(GPU.Kernel.scan_bounds_single_block), Args.values());
+        super(command_queue_ptr, GPU.Program.scan_key_bank.gpu.kernels().get(GPU.Kernel.scan_bounds_single_block), Args.values());
     }
 }

@@ -30,8 +30,8 @@ public class Integrate_k extends GPUKernel<Integrate_k.Args>
         @Override public long size() { return size; }
     }
 
-    public Integrate_k(cl_command_queue command_queue)
+    public Integrate_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.integrate.gpu.kernels().get(GPU.Kernel.integrate), Args.values());
+        super(command_queue_ptr, GPU.Program.integrate.gpu.kernels().get(GPU.Kernel.integrate), Args.values());
     }
 }

@@ -18,8 +18,8 @@ public class SetBoneChannelTable_k extends GPUKernel<SetBoneChannelTable_k.Args>
         @Override public long size() { return size; }
     }
 
-    public SetBoneChannelTable_k(cl_command_queue command_queue)
+    public SetBoneChannelTable_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.set_bone_channel_table), Args.values());
+        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.set_bone_channel_table), Args.values());
     }
 }

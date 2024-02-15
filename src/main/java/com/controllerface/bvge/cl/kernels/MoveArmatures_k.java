@@ -23,8 +23,8 @@ public class MoveArmatures_k extends GPUKernel<MoveArmatures_k.Args>
         @Override public long size() { return size; }
     }
 
-    public MoveArmatures_k(cl_command_queue command_queue)
+    public MoveArmatures_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.move_armatures), Args.values());
+        super(command_queue_ptr, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.move_armatures), Args.values());
     }
 }

@@ -20,8 +20,8 @@ public class ScanIntMultiBlock_k extends GPUKernel<ScanIntMultiBlock_k.Args>
         @Override public long size() { return size; }
     }
 
-    public ScanIntMultiBlock_k(cl_command_queue command_queue)
+    public ScanIntMultiBlock_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.scan_int_array.gpu.kernels().get(GPU.Kernel.scan_int_multi_block), Args.values());
+        super(command_queue_ptr, GPU.Program.scan_int_array.gpu.kernels().get(GPU.Kernel.scan_int_multi_block), Args.values());
     }
 }

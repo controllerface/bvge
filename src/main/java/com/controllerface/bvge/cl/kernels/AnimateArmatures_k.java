@@ -32,8 +32,8 @@ public class AnimateArmatures_k extends GPUKernel<AnimateArmatures_k.Args>
         @Override public long size() { return size; }
     }
 
-    public AnimateArmatures_k(cl_command_queue command_queue)
+    public AnimateArmatures_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_armatures), Args.values());
+        super(command_queue_ptr, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_armatures), Args.values());
     }
 }

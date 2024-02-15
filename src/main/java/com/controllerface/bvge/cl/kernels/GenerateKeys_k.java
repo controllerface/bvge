@@ -24,8 +24,8 @@ public class GenerateKeys_k extends GPUKernel<GenerateKeys_k.Args>
         @Override public long size() { return size; }
     }
 
-    public GenerateKeys_k(cl_command_queue command_queue)
+    public GenerateKeys_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.generate_keys.gpu.kernels().get(GPU.Kernel.generate_keys), Args.values());
+        super(command_queue_ptr, GPU.Program.generate_keys.gpu.kernels().get(GPU.Kernel.generate_keys), Args.values());
     }
 }

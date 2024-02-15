@@ -20,8 +20,8 @@ public class CompleteInt4MultiBlock_k extends GPUKernel<CompleteInt4MultiBlock_k
         @Override public long size() { return size; }
     }
 
-    public CompleteInt4MultiBlock_k(cl_command_queue command_queue)
+    public CompleteInt4MultiBlock_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.scan_int4_array.gpu.kernels().get(GPU.Kernel.complete_int4_multi_block), Args.values());
+        super(command_queue_ptr, GPU.Program.scan_int4_array.gpu.kernels().get(GPU.Kernel.complete_int4_multi_block), Args.values());
     }
 }

@@ -21,8 +21,8 @@ public class ApplyReactions_k extends GPUKernel<ApplyReactions_k.Args>
         @Override public long size() { return size; }
     }
 
-    public ApplyReactions_k(cl_command_queue command_queue)
+    public ApplyReactions_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.apply_reactions), Args.values());
+        super(command_queue_ptr, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.apply_reactions), Args.values());
     }
 }

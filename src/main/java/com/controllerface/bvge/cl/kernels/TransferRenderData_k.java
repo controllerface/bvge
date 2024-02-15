@@ -32,8 +32,8 @@ public class TransferRenderData_k extends GPUKernel<TransferRenderData_k.Args>
         @Override public long size() { return size; }
     }
 
-    public TransferRenderData_k(cl_command_queue command_queue)
+    public TransferRenderData_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.transfer_render_data), Args.values());
+        super(command_queue_ptr, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.transfer_render_data), Args.values());
     }
 }

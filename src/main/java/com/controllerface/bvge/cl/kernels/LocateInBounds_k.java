@@ -20,8 +20,8 @@ public class LocateInBounds_k extends GPUKernel<LocateInBounds_k.Args>
         @Override public long size() { return size; }
     }
 
-    public LocateInBounds_k(cl_command_queue command_queue)
+    public LocateInBounds_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.locate_in_bounds.gpu.kernels().get(GPU.Kernel.locate_in_bounds), Args.values());
+        super(command_queue_ptr, GPU.Program.locate_in_bounds.gpu.kernels().get(GPU.Kernel.locate_in_bounds), Args.values());
     }
 }

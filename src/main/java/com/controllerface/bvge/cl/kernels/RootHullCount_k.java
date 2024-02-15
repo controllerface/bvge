@@ -20,8 +20,8 @@ public class RootHullCount_k extends GPUKernel<RootHullCount_k.Args>
         @Override public long size() { return size; }
     }
 
-    public RootHullCount_k(cl_command_queue command_queue)
+    public RootHullCount_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.root_hull_filter.gpu.kernels().get(GPU.Kernel.root_hull_count), Args.values());
+        super(command_queue_ptr, GPU.Program.root_hull_filter.gpu.kernels().get(GPU.Kernel.root_hull_count), Args.values());
     }
 }
