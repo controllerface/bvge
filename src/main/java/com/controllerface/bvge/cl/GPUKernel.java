@@ -115,15 +115,6 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      * @param pos argument position
      * @param pointer pointer to the memory buffer being passed
      */
-    public void set_arg(int pos, Pointer pointer)
-    {
-        clSetKernelArg(this.kernel, pos, arg_sizes[pos], pointer);
-    }
-
-
-
-
-
     public void ptr_arg(int pos, long pointer)
     {
         try (var mem_stack = MemoryStack.stackPush())
@@ -221,14 +212,14 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
 
         if (shared.length > 0)
         {
-            CLUtils.gl_acquire(command_queue, shared);
+            CLUtils.gl_acquire(command_queue.getNativePointer(), shared);
         }
 
-        k_call(command_queue, kernel, global_work_size, local_work_size, global_work_offset);
+        k_call(command_queue.getNativePointer(), kernel.getNativePointer(), global_work_size, local_work_size, global_work_offset);
 
         if (shared.length > 0)
         {
-            CLUtils.gl_release(command_queue, shared);
+            CLUtils.gl_release(command_queue.getNativePointer(), shared);
         }
 
         shared_memory.clear();

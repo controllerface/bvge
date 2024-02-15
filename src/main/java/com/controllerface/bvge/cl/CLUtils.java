@@ -2,7 +2,6 @@ package com.controllerface.bvge.cl;
 
 import org.jocl.*;
 import org.joml.Matrix4f;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.opencl.CL12;
 import org.lwjgl.opencl.CL12GL;
@@ -11,7 +10,6 @@ import org.lwjgl.system.MemoryStack;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
@@ -107,18 +105,18 @@ public class CLUtils
             matrix.m30(), matrix.m31(), matrix.m32(), matrix.m33());
     }
 
-    public static void k_call(cl_command_queue commandQueue, cl_kernel kernel, long[] global_work_size)
+    public static void k_call(long command_queue_ptr, long kernel_ptr, long[] global_work_size)
     {
-        k_call(commandQueue, kernel, global_work_size, null, null);
+        k_call(command_queue_ptr, kernel_ptr, global_work_size, null, null);
     }
 
-    public static void k_call(cl_command_queue commandQueue,
-                              cl_kernel kernel,
+    public static void k_call(long command_queue_ptr,
+                              long kernel_ptr,
                               long[] global_work_size,
                               long[] local_work_size)
     {
 
-        k_call(commandQueue, kernel, global_work_size, local_work_size, null);
+        k_call(command_queue_ptr, kernel_ptr, global_work_size, local_work_size, null);
     }
 
     private static PointerBuffer int_to_buffer(MemoryStack mem_stack, long[] int_array)
@@ -128,8 +126,8 @@ public class CLUtils
             : mem_stack.callocPointer(1).put(0, int_array[0]);
     }
 
-    public static void k_call(cl_command_queue commandQueue,
-                              cl_kernel kernel,
+    public static void k_call(long command_queue_ptr,
+                              long kernel_ptr,
                               long[] global_work_size,
                               long[] local_work_size,
                               long[] global_work_offset)
@@ -141,8 +139,8 @@ public class CLUtils
             var global_work_ptr = int_to_buffer(mem_stack, global_work_size);
             var local_work_ptr = int_to_buffer(mem_stack, local_work_size);
 
-            int r = CL12.clEnqueueNDRangeKernel(commandQueue.getNativePointer(),
-                kernel.getNativePointer(),
+            int r = CL12.clEnqueueNDRangeKernel(command_queue_ptr,
+                kernel_ptr,
                 1,
                 global_offset_ptr,
                 global_work_ptr,
@@ -167,11 +165,11 @@ public class CLUtils
         return pointer_buffer;
     }
 
-    public static void gl_acquire(cl_command_queue commandQueue, cl_mem[] mem)
+    public static void gl_acquire(long command_queue_ptr, cl_mem[] mem)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            int r = CL12GL.clEnqueueAcquireGLObjects(commandQueue.getNativePointer(),
+            int r = CL12GL.clEnqueueAcquireGLObjects(command_queue_ptr,
                 mem_to_buffer(mem_stack, mem), null, null);
             if (r != 0)
             {
@@ -180,11 +178,11 @@ public class CLUtils
         }
     }
 
-    public static void gl_release(cl_command_queue commandQueue, cl_mem[] mem)
+    public static void gl_release(long command_queue_ptr, cl_mem[] mem)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            int r = CL12GL.clEnqueueReleaseGLObjects(commandQueue.getNativePointer(),
+            int r = CL12GL.clEnqueueReleaseGLObjects(command_queue_ptr,
                 mem_to_buffer(mem_stack, mem), null, null);
             if (r != 0)
             {
