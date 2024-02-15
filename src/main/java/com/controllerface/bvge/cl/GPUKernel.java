@@ -32,13 +32,6 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         long size();
     }
 
-    public GPUKernel(cl_command_queue command_queue, cl_kernel kernel, int arg_count)
-    {
-        this.command_queue = command_queue;
-        this.kernel = kernel;
-        this.arg_sizes = new long[arg_count];
-    }
-
     public GPUKernel(cl_command_queue command_queue, cl_kernel kernel, E[] args)
     {
         this.command_queue = command_queue;

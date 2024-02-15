@@ -9,6 +9,7 @@ import org.lwjgl.opencl.CL12;
 import org.lwjgl.opencl.KHRGLSharing;
 
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1676,8 +1677,17 @@ public class GPU
 
     private static int[] cl_read_pinned_int_buffer(cl_mem pinned, long size, int count)
     {
-        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, size, 0,
-            null, null, null);
+        var out = CL12.clEnqueueMapBuffer(command_queue.getNativePointer(),
+            pinned.getNativePointer(),
+            true,
+            CL12.CL_MAP_READ,
+            0,
+            size,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
         assert out != null;
         int[] xa = new int[count];
         var ib = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
@@ -1685,14 +1695,23 @@ public class GPU
         {
             xa[i] = ib.get(i);
         }
-        clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned.getNativePointer(), out, null, null);
         return xa;
     }
 
     private static float[] cl_read_pinned_float_buffer(cl_mem pinned, long size, int count)
     {
-        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, size, 0,
-            null, null, null);
+        var out = CL12.clEnqueueMapBuffer(command_queue.getNativePointer(),
+            pinned.getNativePointer(),
+            true,
+            CL12.CL_MAP_READ,
+            0,
+            size,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
         assert out != null;
         float[] xa = new float[count];
         var ib = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
@@ -1700,7 +1719,7 @@ public class GPU
         {
             xa[i] = ib.get(i);
         }
-        clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned.getNativePointer(), out, null, null);
         return xa;
     }
 
@@ -1712,11 +1731,20 @@ public class GPU
 
     public static int cl_read_pinned_int(cl_mem pinned)
     {
-        var out = clEnqueueMapBuffer(command_queue, pinned, true, CL_MAP_READ, 0, Sizeof.cl_int, 0,
-            null, null, null);
+        var out = CL12.clEnqueueMapBuffer(command_queue.getNativePointer(),
+            pinned.getNativePointer(),
+            true,
+            CL12.CL_MAP_READ,
+            0,
+            Sizeof.cl_int,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
         assert out != null;
         int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-        clEnqueueUnmapMemObject(command_queue, pinned, out, 0, null, null);
+        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned.getNativePointer(), out, null, null);
         return result;
     }
 
