@@ -253,6 +253,18 @@ public class GPU
             return this;
         }
 
+        public Kernel set_arg(Enum<?> val, int value)
+        {
+            kernel.set_arg(val.ordinal(), value);
+            return this;
+        }
+
+        public Kernel set_arg(Enum<?> val, long value)
+        {
+            kernel.set_arg(val.ordinal(), value);
+            return this;
+        }
+
         public Kernel ptr_arg(Enum<?> val, long pointer)
         {
             kernel.ptr_arg(val.ordinal(), pointer);
@@ -1746,7 +1758,7 @@ public class GPU
         Kernel.prepare_bounds
             .share_mem(vbo_mem)
             .ptr_arg(PrepareBounds_k.Args.vbo, vbo_mem.getNativePointer())
-            .set_arg(PrepareBounds_k.Args.offset, Pointer.to(arg_long(bounds_offset)))
+            .set_arg(PrepareBounds_k.Args.offset, bounds_offset)
             .call(arg_long(batch_size));
     }
 
@@ -1765,7 +1777,7 @@ public class GPU
         Kernel.prepare_bones
             .share_mem(vbo_mem)
             .ptr_arg(PrepareBones_k.Args.vbo, vbo_mem.getNativePointer())
-            .set_arg(PrepareBones_k.Args.offset, Pointer.to(arg_long(bone_offset)))
+            .set_arg(PrepareBones_k.Args.offset, bone_offset)
             .call(arg_long(batch_size));
     }
 
@@ -1788,7 +1800,7 @@ public class GPU
             .share_mem(vbo_mem2)
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vbo_mem1.getNativePointer())
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, vbo_mem2.getNativePointer())
-            .set_arg(PrepareEdges_k.Args.offset, Pointer.to(arg_int(edge_offset)))
+            .set_arg(PrepareEdges_k.Args.offset, edge_offset)
             .call(arg_long(batch_size));
     }
 
@@ -1799,7 +1811,7 @@ public class GPU
         Kernel.prepare_points
             .share_mem(vbo_mem)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vbo_mem.getNativePointer())
-            .set_arg(PreparePoints_k.Args.offset, Pointer.to(arg_int(point_offset)))
+            .set_arg(PreparePoints_k.Args.offset, point_offset)
             .call(arg_long(batch_size));
     }
 
@@ -1816,7 +1828,7 @@ public class GPU
 
         Kernel.root_hull_count
             .ptr_arg(RootHullCount_k.Args.counter, counter_buffer.getNativePointer())
-            .set_arg(RootHullCount_k.Args.model_id, Pointer.to(arg_int(model_id)))
+            .set_arg(RootHullCount_k.Args.model_id, model_id)
             .call(arg_long(GPU.Memory.next_armature()));
 
         int final_count = cl_read_pinned_int(counter_buffer);
@@ -1836,7 +1848,7 @@ public class GPU
         Kernel.root_hull_filter
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out.getNativePointer())
             .ptr_arg(RootHullFilter_k.Args.counter, hulls_counter_data.getNativePointer())
-            .set_arg(RootHullFilter_k.Args.model_id, Pointer.to(arg_int(model_id)))
+            .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .call(arg_long(GPU.Memory.next_armature()));
 
         clReleaseMemObject(hulls_counter_data);
@@ -1862,7 +1874,7 @@ public class GPU
             .share_mem(vbo_mem)
             .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out.getNativePointer())
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_mem.getNativePointer())
-            .set_arg(PrepareTransforms_k.Args.offset, Pointer.to(arg_int(offset)))
+            .set_arg(PrepareTransforms_k.Args.offset, offset)
             .call(arg_long(batch_size));
     }
 
@@ -1884,7 +1896,7 @@ public class GPU
             .share_mem(vbo_transforms)
             .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out.getNativePointer())
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_transforms.getNativePointer())
-            .set_arg(PrepareTransforms_k.Args.offset, Pointer.to(arg_int(offset)))
+            .set_arg(PrepareTransforms_k.Args.offset, offset)
             .call(arg_long(batch_size));
     }
 

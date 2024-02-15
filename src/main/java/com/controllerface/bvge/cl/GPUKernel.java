@@ -129,6 +129,24 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         }
     }
 
+    public void set_arg(int pos, int value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var pb = mem_stack.ints(value);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, pb);
+        }
+    }
+
+    public void set_arg(int pos, long value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var pb = mem_stack.longs(value);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, pb);
+        }
+    }
+
     /**
      * Call this kernel, executing it on the GPU. This variant lets the GPu decide the best size for the local work
      * group. This is useful for cases where the work does not depend on properly sized local groups.
