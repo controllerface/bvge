@@ -151,7 +151,7 @@ public class GPU
 
         public final long kernel_ptr(Kernel kernel)
         {
-           return gpu.kernels.get(kernel).getNativePointer();
+           return gpu.kernels.get(kernel);
         }
     }
 

@@ -82,7 +82,7 @@ public abstract class GPUProgram
     /**
      * After init is called, this will contain all the Open CL kernels that are defined in the program
      */
-    protected Map<Kernel, cl_kernel> kernels = new HashMap<>();
+    protected Map<Kernel, Long> kernels = new HashMap<>();
 
     /**
      * Contains the raw source data of the program, in compilation order.
@@ -93,16 +93,6 @@ public abstract class GPUProgram
      * Signals the program implementation to compile itself, and load any kernels into the kernel map.
      */
     protected abstract void init();
-
-    /**
-     * Accessor for loaded kernels.
-     *
-     * @return the map of the currently loaded kernels.
-     */
-    public Map<Kernel, cl_kernel> kernels()
-    {
-        return kernels;
-    }
 
     /**
      * Compiles this program, making the kernels it provides ready for use in an Open CL context.
@@ -122,7 +112,7 @@ public abstract class GPUProgram
      */
     protected void load_kernel(Kernel kernel)
     {
-        this.kernels.put(kernel, CLUtils.cl_k(program, kernel.name()));
+        this.kernels.put(kernel, CLUtils.cl_k(program.getNativePointer(), kernel.name()));
     }
 
     /**
@@ -131,9 +121,9 @@ public abstract class GPUProgram
     public void destroy()
     {
         CL12.clReleaseProgram(program.getNativePointer());
-        for (cl_kernel clKernel : kernels.values())
+        for (long clKernel : kernels.values())
         {
-            CL12.clReleaseKernel(clKernel.getNativePointer());
+            CL12.clReleaseKernel(clKernel);
         }
     }
 }

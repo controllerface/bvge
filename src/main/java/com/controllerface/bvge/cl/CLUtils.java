@@ -10,6 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
@@ -38,9 +39,9 @@ public class CLUtils
         return program;
     }
 
-    public static cl_kernel cl_k(cl_program program, String kernel_name)
+    public static long cl_k(long program_ptr, String kernel_name)
     {
-        return clCreateKernel(program, kernel_name, null);
+        return CL12.clCreateKernel(program_ptr, kernel_name, (IntBuffer) null);
     }
 
     public static double[] arg_double(double arg)
