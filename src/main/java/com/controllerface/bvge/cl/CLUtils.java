@@ -34,9 +34,7 @@ public class CLUtils
 
     public static long cl_p(cl_context context, cl_device_id[] device_ids, String ... src)
     {
-        long program = CL12.clCreateProgramWithSource(context.getNativePointer(),
-            src, null);
-        //var program = clCreateProgramWithSource(context, src.length, src, null, null);
+        long program = CL12.clCreateProgramWithSource(context.getNativePointer(), src, null);
         CL12.clBuildProgram(program, device_ids[0].getNativePointer(), "", null, 0);
         return program;
     }

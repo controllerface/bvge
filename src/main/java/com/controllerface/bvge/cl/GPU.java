@@ -5,9 +5,11 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.physics.PhysicsBuffer;
 import com.controllerface.bvge.physics.UniformGrid;
 import org.jocl.*;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opencl.CL12;
 import org.lwjgl.opencl.KHRGLSharing;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.HashMap;
@@ -40,7 +42,8 @@ public class GPU
     /**
      * A convenience object, used when clearing out buffers to fill them with zeroes
      */
-    private static final Pointer ZERO_PATTERN = Pointer.to(new int[]{0});
+    private static final ByteBuffer ZERO_PATTERN_BUFFER = BufferUtils.createByteBuffer(1)
+        .put(0, (byte) 0);
 
     /**
      * Memory that is shared between Open CL and Open GL contexts.
@@ -1663,15 +1666,14 @@ public class GPU
 
     private static void cl_zero_buffer(cl_mem buffer, long buffer_size)
     {
-        clEnqueueFillBuffer(command_queue,
-            buffer,
-            ZERO_PATTERN,
-            1,
+        CL12.clEnqueueFillBuffer(command_queue_ptr,
+            buffer.getNativePointer(),
+            ZERO_PATTERN_BUFFER,
             0,
             buffer_size,
-            0,
             null,
-            null);
+            null
+            );
     }
 
     private static cl_mem cl_new_pinned_buffer(long size)
