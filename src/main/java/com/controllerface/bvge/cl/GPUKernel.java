@@ -120,12 +120,63 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
         clSetKernelArg(this.kernel, pos, arg_sizes[pos], pointer);
     }
 
+
+
+
+
     public void ptr_arg(int pos, long pointer)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            var pb = mem_stack.callocPointer(1).put(0, pointer);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, pb);
+            var pointerBuffer = mem_stack.callocPointer(1).put(0, pointer);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, pointerBuffer);
+        }
+    }
+
+
+    public void set_arg(int pos, double[] value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var doubleBuffer = mem_stack.doubles(value);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, doubleBuffer);
+        }
+    }
+
+    public void set_arg(int pos, double value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var doubleBuffer = mem_stack.doubles(value);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, doubleBuffer);
+        }
+    }
+
+
+    public void set_arg(int pos, float[] value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var floatBuffer = mem_stack.floats(value);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, floatBuffer);
+        }
+    }
+
+    public void set_arg(int pos, float value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var floatBuffer = mem_stack.floats(value);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, floatBuffer);
+        }
+    }
+
+    public void set_arg(int pos, int[] value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var intBuffer = mem_stack.ints(value);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, intBuffer);
         }
     }
 
@@ -133,19 +184,13 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            var pb = mem_stack.ints(value);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, pb);
+            var intBuffer = mem_stack.ints(value);
+            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, intBuffer);
         }
     }
 
-    public void set_arg(int pos, long value)
-    {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var pb = mem_stack.longs(value);
-            CL12.clSetKernelArg(this.kernel.getNativePointer(), pos, pb);
-        }
-    }
+
+
 
     /**
      * Call this kernel, executing it on the GPU. This variant lets the GPu decide the best size for the local work
