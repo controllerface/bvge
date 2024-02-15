@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class ResolveConstraints_k extends GPUKernel<ResolveConstraints_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.resolve_constraints;
+    private static final GPU.Kernel kernel = GPU.Kernel.resolve_constraints;
+
     public enum Args implements GPUKernelArg
     {
         element_table(Sizeof.cl_mem),
@@ -24,6 +27,6 @@ public class ResolveConstraints_k extends GPUKernel<ResolveConstraints_k.Args>
 
     public ResolveConstraints_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.resolve_constraints.gpu.kernels().get(GPU.Kernel.resolve_constraints), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class UpdateAccel_k extends GPUKernel<UpdateAccel_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.gpu_crud;
+    private static final GPU.Kernel kernel = GPU.Kernel.update_accel;
+
     public enum Args implements GPUKernelArg
     {
         armature_accel(Sizeof.cl_mem),
@@ -22,6 +25,6 @@ public class UpdateAccel_k extends GPUKernel<UpdateAccel_k.Args>
 
     public UpdateAccel_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.update_accel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

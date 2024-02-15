@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class SatCollide_k extends GPUKernel<SatCollide_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.sat_collide;
+    private static final GPU.Kernel kernel = GPU.Kernel.sat_collide;
+
     public enum Args implements GPUKernelArg
     {
         candidates(Sizeof.cl_mem),
@@ -31,6 +34,6 @@ public class SatCollide_k extends GPUKernel<SatCollide_k.Args>
 
     public SatCollide_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.sat_collide), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

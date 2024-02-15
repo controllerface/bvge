@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class LocateOutOfBounds_k extends GPUKernel<LocateOutOfBounds_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.scan_deletes;
+    private static final GPU.Kernel kernel = GPU.Kernel.locate_out_of_bounds;
+
     public enum Args implements GPUKernelArg
     {
         hull_tables(Sizeof.cl_mem),
@@ -23,6 +26,6 @@ public class LocateOutOfBounds_k extends GPUKernel<LocateOutOfBounds_k.Args>
 
     public LocateOutOfBounds_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.scan_deletes.gpu.kernels().get(GPU.Kernel.locate_out_of_bounds), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class TransferRenderData_k extends GPUKernel<TransferRenderData_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.mesh_query;
+    private static final GPU.Kernel kernel = GPU.Kernel.transfer_render_data;
+
     public enum Args implements GPUKernelArg
     {
         hull_element_tables(Sizeof.cl_mem),
@@ -34,6 +37,6 @@ public class TransferRenderData_k extends GPUKernel<TransferRenderData_k.Args>
 
     public TransferRenderData_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.transfer_render_data), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

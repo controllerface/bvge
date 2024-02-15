@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class FinalizeCandidates_k extends GPUKernel<FinalizeCandidates_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.locate_in_bounds;
+    private static final GPU.Kernel kernel = GPU.Kernel.finalize_candidates;
+
     public enum Args implements GPUKernelArg
     {
         input_candidates(Sizeof.cl_mem),
@@ -25,6 +28,6 @@ public class FinalizeCandidates_k extends GPUKernel<FinalizeCandidates_k.Args>
 
     public FinalizeCandidates_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.locate_in_bounds.gpu.kernels().get(GPU.Kernel.finalize_candidates), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

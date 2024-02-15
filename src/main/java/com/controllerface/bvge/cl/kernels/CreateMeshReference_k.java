@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class CreateMeshReference_k extends GPUKernel<CreateMeshReference_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.gpu_crud;
+    private static final GPU.Kernel kernel = GPU.Kernel.create_mesh_reference;
+
     public enum Args implements GPUKernelArg
     {
         mesh_ref_tables(Sizeof.cl_mem),
@@ -22,6 +25,6 @@ public class CreateMeshReference_k extends GPUKernel<CreateMeshReference_k.Args>
 
     public CreateMeshReference_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_mesh_reference), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

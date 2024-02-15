@@ -1,7 +1,6 @@
 package com.controllerface.bvge.cl;
 
 import org.jocl.Sizeof;
-import org.jocl.cl_kernel;
 import org.lwjgl.opencl.CL12;
 import org.lwjgl.system.MemoryStack;
 
@@ -30,11 +29,6 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
     public interface GPUKernelArg
     {
         long size();
-    }
-
-    public GPUKernel(long command_queue_ptr, cl_kernel kernel, E[] args)
-    {
-        this(command_queue_ptr, kernel.getNativePointer(), args);
     }
 
     public GPUKernel(long command_queue_ptr, long kernel_ptr, E[] args)

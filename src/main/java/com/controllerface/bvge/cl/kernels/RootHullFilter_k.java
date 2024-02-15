@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class RootHullFilter_k extends GPUKernel<RootHullFilter_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.root_hull_filter;
+    private static final GPU.Kernel kernel = GPU.Kernel.root_hull_filter;
+
     public enum Args implements GPUKernelArg
     {
         armature_flags(Sizeof.cl_mem),
@@ -23,6 +26,6 @@ public class RootHullFilter_k extends GPUKernel<RootHullFilter_k.Args>
 
     public RootHullFilter_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.root_hull_filter.gpu.kernels().get(GPU.Kernel.root_hull_filter), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

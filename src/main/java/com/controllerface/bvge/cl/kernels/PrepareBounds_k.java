@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class PrepareBounds_k extends GPUKernel<PrepareBounds_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.prepare_bounds;
+    private static final GPU.Kernel kernel = GPU.Kernel.prepare_bounds;
+
     public enum Args implements GPUKernelArg
     {
         bounds(Sizeof.cl_mem),
@@ -22,6 +25,6 @@ public class PrepareBounds_k extends GPUKernel<PrepareBounds_k.Args>
 
     public PrepareBounds_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.prepare_bounds.gpu.kernels().get(GPU.Kernel.prepare_bounds), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

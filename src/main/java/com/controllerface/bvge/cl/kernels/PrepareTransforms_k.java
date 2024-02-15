@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class PrepareTransforms_k extends GPUKernel<PrepareTransforms_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.prepare_transforms;
+    private static final GPU.Kernel kernel = GPU.Kernel.prepare_transforms;
+
     public enum Args implements GPUKernelArg
     {
         transforms(Sizeof.cl_mem),
@@ -24,6 +27,6 @@ public class PrepareTransforms_k extends GPUKernel<PrepareTransforms_k.Args>
 
     public PrepareTransforms_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.prepare_transforms.gpu.kernels().get(GPU.Kernel.prepare_transforms), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

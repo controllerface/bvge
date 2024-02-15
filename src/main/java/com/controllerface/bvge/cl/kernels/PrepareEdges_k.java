@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class PrepareEdges_k extends GPUKernel<PrepareEdges_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.prepare_edges;
+    private static final GPU.Kernel kernel = GPU.Kernel.prepare_edges;
+
     public enum Args implements GPUKernelArg
     {
         points(Sizeof.cl_mem),
@@ -24,6 +27,6 @@ public class PrepareEdges_k extends GPUKernel<PrepareEdges_k.Args>
 
     public PrepareEdges_k(long command_queue_ptr)
     {
-        super(command_queue_ptr,  GPU.Program.prepare_edges.gpu.kernels().get(GPU.Kernel.prepare_edges), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

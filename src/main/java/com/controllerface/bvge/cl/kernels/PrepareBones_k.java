@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class PrepareBones_k extends GPUKernel<PrepareBones_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.prepare_bones;
+    private static final GPU.Kernel kernel = GPU.Kernel.prepare_bones;
+
     public enum Args implements GPUKernelArg
     {
         bones(Sizeof.cl_mem),
@@ -27,6 +30,6 @@ public class PrepareBones_k extends GPUKernel<PrepareBones_k.Args>
 
     public PrepareBones_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.prepare_bones.gpu.kernels().get(GPU.Kernel.prepare_bones), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

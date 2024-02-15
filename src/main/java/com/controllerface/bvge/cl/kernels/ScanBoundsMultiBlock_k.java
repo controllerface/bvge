@@ -8,6 +8,9 @@ import org.jocl.cl_command_queue;
 
 public class ScanBoundsMultiBlock_k extends GPUKernel<ScanBoundsMultiBlock_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.scan_key_bank;
+    private static final GPU.Kernel kernel = GPU.Kernel.scan_bounds_multi_block;
+
     public enum Args implements GPUKernelArg
     {
         bounds_bank_data(Sizeof.cl_mem),
@@ -22,6 +25,6 @@ public class ScanBoundsMultiBlock_k extends GPUKernel<ScanBoundsMultiBlock_k.Arg
 
     public ScanBoundsMultiBlock_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.scan_key_bank.gpu.kernels().get(GPU.Kernel.scan_bounds_multi_block), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

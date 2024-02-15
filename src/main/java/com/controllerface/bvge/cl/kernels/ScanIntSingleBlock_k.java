@@ -8,6 +8,9 @@ import org.jocl.cl_command_queue;
 
 public class ScanIntSingleBlock_k extends GPUKernel<ScanIntSingleBlock_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.scan_int_array;
+    private static final GPU.Kernel kernel = GPU.Kernel.scan_int_single_block;
+
     public enum Args implements GPUKernelArg
     {
         data(Sizeof.cl_mem),
@@ -21,6 +24,6 @@ public class ScanIntSingleBlock_k extends GPUKernel<ScanIntSingleBlock_k.Args>
 
     public ScanIntSingleBlock_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.scan_int_array.gpu.kernels().get(GPU.Kernel.scan_int_single_block), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class PreparePoints_k extends GPUKernel<PreparePoints_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.prepare_points;
+    private static final GPU.Kernel kernel = GPU.Kernel.prepare_points;
+
     public enum Args implements GPUKernelArg
     {
         points(Sizeof.cl_mem),
@@ -22,6 +25,6 @@ public class PreparePoints_k extends GPUKernel<PreparePoints_k.Args>
 
     public PreparePoints_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.prepare_points.gpu.kernels().get(GPU.Kernel.prepare_points), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class MoveArmatures_k extends GPUKernel<MoveArmatures_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.sat_collide;
+    private static final GPU.Kernel kernel = GPU.Kernel.move_armatures;
+
     public enum Args implements GPUKernelArg
     {
         hulls(Sizeof.cl_mem),
@@ -25,6 +28,6 @@ public class MoveArmatures_k extends GPUKernel<MoveArmatures_k.Args>
 
     public MoveArmatures_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.move_armatures), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class GenerateKeys_k extends GPUKernel<GenerateKeys_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.generate_keys;
+    private static final GPU.Kernel kernel = GPU.Kernel.generate_keys;
+
     public enum Args implements GPUKernelArg
     {
         bounds_index_data(Sizeof.cl_mem),
@@ -26,6 +29,6 @@ public class GenerateKeys_k extends GPUKernel<GenerateKeys_k.Args>
 
     public GenerateKeys_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.generate_keys.gpu.kernels().get(GPU.Kernel.generate_keys), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

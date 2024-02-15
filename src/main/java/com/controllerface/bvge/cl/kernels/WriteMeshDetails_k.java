@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class WriteMeshDetails_k extends GPUKernel<WriteMeshDetails_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.mesh_query;
+    private static final GPU.Kernel kernel = GPU.Kernel.write_mesh_details;
+
     public enum Args implements GPUKernelArg
     {
         hull_mesh_ids(Sizeof.cl_mem),
@@ -26,6 +29,6 @@ public class WriteMeshDetails_k extends GPUKernel<WriteMeshDetails_k.Args>
 
     public WriteMeshDetails_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.write_mesh_details), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }

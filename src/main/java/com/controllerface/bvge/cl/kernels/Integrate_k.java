@@ -9,6 +9,9 @@ import org.jocl.cl_command_queue;
 
 public class Integrate_k extends GPUKernel<Integrate_k.Args>
 {
+    private static final GPU.Program program = GPU.Program.integrate;
+    private static final GPU.Kernel kernel = GPU.Kernel.integrate;
+
     public enum Args implements GPUKernelArg
     {
         hulls(Sizeof.cl_mem),
@@ -32,6 +35,6 @@ public class Integrate_k extends GPUKernel<Integrate_k.Args>
 
     public Integrate_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, GPU.Program.integrate.gpu.kernels().get(GPU.Kernel.integrate), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
     }
 }
