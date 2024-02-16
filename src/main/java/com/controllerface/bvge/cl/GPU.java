@@ -1674,16 +1674,16 @@ public class GPU
             );
     }
 
-    private static cl_mem cl_new_pinned_buffer(long size)
+    private static long cl_new_pinned_buffer(long size)
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        return clCreateBuffer(context, flags, size, null, null);
+        return CL12.clCreateBuffer(context.getNativePointer(), flags, size, null);
     }
 
-    private static int[] cl_read_pinned_int_buffer(cl_mem pinned, long size, int count)
+    private static int[] cl_read_pinned_int_buffer(long pinned_ptr, long size, int count)
     {
         var out = CL12.clEnqueueMapBuffer(command_queue.getNativePointer(),
-            pinned.getNativePointer(),
+            pinned_ptr,
             true,
             CL12.CL_MAP_READ,
             0,
@@ -1700,14 +1700,14 @@ public class GPU
         {
             xa[i] = ib.get(i);
         }
-        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned.getNativePointer(), out, null, null);
+        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned_ptr, out, null, null);
         return xa;
     }
 
-    private static float[] cl_read_pinned_float_buffer(cl_mem pinned, long size, int count)
+    private static float[] cl_read_pinned_float_buffer(long pinned_ptr, long size, int count)
     {
         var out = CL12.clEnqueueMapBuffer(command_queue.getNativePointer(),
-            pinned.getNativePointer(),
+            pinned_ptr,
             true,
             CL12.CL_MAP_READ,
             0,
@@ -1724,7 +1724,7 @@ public class GPU
         {
             xa[i] = ib.get(i);
         }
-        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned.getNativePointer(), out, null, null);
+        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned_ptr, out, null, null);
         return xa;
     }
 
@@ -2245,15 +2245,15 @@ public class GPU
     public static float[] read_position(int armature_index)
     {
         var result_data = cl_new_pinned_buffer(Sizeof.cl_float2);
-        cl_zero_buffer(result_data.getNativePointer(), Sizeof.cl_float2);
+        cl_zero_buffer(result_data, Sizeof.cl_float2);
 
         Kernel.read_position
-            .ptr_arg(ReadPosition_k.Args.output, result_data.getNativePointer())
+            .ptr_arg(ReadPosition_k.Args.output, result_data)
             .set_arg(ReadPosition_k.Args.target, armature_index)
             .call(global_single_size);
 
         float[] result = cl_read_pinned_float_buffer(result_data, Sizeof.cl_float2, 2);
-        clReleaseMemObject(result_data);
+        CL12.clReleaseMemObject(result_data);
         return result;
     }
 
@@ -2883,19 +2883,19 @@ public class GPU
         long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
 
         var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 6);
-        cl_zero_buffer(size_data.getNativePointer(), Sizeof.cl_int * 6);
+        cl_zero_buffer(size_data, Sizeof.cl_int * 6);
 
         Kernel.scan_deletes_single_block_out
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output2, o2_data_ptr)
-            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, size_data.getNativePointer())
+            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, size_data)
             .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer, local_buffer_size)
             .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer2, local_buffer_size2)
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(local_work_default, local_work_default);
 
         int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 6, 6);
-        clReleaseMemObject(size_data);
+        CL12.clReleaseMemObject(size_data);
 
         return sz;
     }
@@ -2930,12 +2930,12 @@ public class GPU
         scan_int4(p_data2, part_size);
 
         var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 6);
-        cl_zero_buffer(size_data.getNativePointer(), Sizeof.cl_int * 6);
+        cl_zero_buffer(size_data, Sizeof.cl_int * 6);
 
         Kernel.complete_deletes_multi_block_out
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output2, o2_data_ptr)
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.sz, size_data.getNativePointer())
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.sz, size_data)
             .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
             .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.part, p_data)
@@ -2947,7 +2947,7 @@ public class GPU
         CL12.clReleaseMemObject(p_data2);
 
         int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 6, 6);
-        clReleaseMemObject(size_data);
+        CL12.clReleaseMemObject(size_data);
 
         return sz;
     }
