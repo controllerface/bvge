@@ -87,19 +87,18 @@ public class GPU
     /**
      * The Open CL command queue that this class uses to issue GPU commands.
      */
-    private static cl_command_queue command_queue;
     private static long command_queue_ptr;
 
     /**
      * The Open CL context associated with this class.
      */
-    private static cl_context context;
+    private static long context_ptr;
 
     /**
      * An array of devices that support being used with Open CL. In practice, this should
      * only ever have single element, and that device should be the main GPU in the system.
      */
-    private static cl_device_id[] device_ids;
+    private static long device_id_ptr;
 
     /**
      * Assists in managing data buffers and other variables used for physics calculations.
@@ -1030,38 +1029,34 @@ public class GPU
 
     //#region Init Methods
 
-    private static cl_device_id[] init_device()
+    private static long init_device()
     {
+        // TODO: may need some updates for cases where there's more than one possible device
+
         // The platform, device type and device number
         // that will be used
-        int platformIndex = 0;
-        long deviceType = CL_DEVICE_TYPE_ALL;
-        int deviceIndex = 0;
-
-        // Enable exceptions and subsequently omit error checks in this sample
-        CL.setExceptionsEnabled(true);
+        long deviceType = CL_DEVICE_TYPE_GPU;
 
         // Obtain the number of platforms
         int[] numPlatformsArray = new int[1];
-        clGetPlatformIDs(0, null, numPlatformsArray);
+        CL12.clGetPlatformIDs(null, numPlatformsArray);
         int numPlatforms = numPlatformsArray[0];
 
         // Obtain a platform ID
-        cl_platform_id[] platforms = new cl_platform_id[numPlatforms];
-        clGetPlatformIDs(platforms.length, platforms, null);
-        cl_platform_id platform = platforms[platformIndex];
+        var platform_buffer = BufferUtils.createPointerBuffer(numPlatforms);
+        CL12.clGetPlatformIDs(platform_buffer, (IntBuffer) null);
+        var platform = platform_buffer.get();
 
         // Obtain the number of devices for the platform
         int[] numDevicesArray = new int[1];
-        clGetDeviceIDs(platform, deviceType, 0, null, numDevicesArray);
+        CL12.clGetDeviceIDs(platform, deviceType, null, numDevicesArray);
         int numDevices = numDevicesArray[0];
 
         // Obtain a device ID
-        cl_device_id[] devices = new cl_device_id[numDevices];
-        clGetDeviceIDs(platform, deviceType, numDevices, devices, null);
-        var device = devices[deviceIndex];
+        var device_buffer = BufferUtils.createPointerBuffer(numDevices);
+        CL12.clGetDeviceIDs(platform, deviceType, device_buffer, (IntBuffer) null);
 
-        var device_ids = new cl_device_id[]{device};
+        long device = device_buffer.get();
 
         var dc = wglGetCurrentDC();
         var ctx = wglGetCurrentContext();
@@ -1069,31 +1064,28 @@ public class GPU
         // todo: the above code is windows specific add linux code path,
         //  should look something like this:
         // var ctx = glXGetCurrentContext();
-        // var dc = glXGetCurrentDrawable();
+        // var dc = glXGetCurrentDrawable(); OR glfwGetX11Display();
         // contextProperties.addProperty(CL_GLX_DISPLAY_KHR, dc);
 
-
-
-        // Initialize the context properties
-        var contextProperties = new cl_context_properties();
-        contextProperties.addProperty(CL12.CL_CONTEXT_PLATFORM, platform);
-        contextProperties.addProperty(KHRGLSharing.CL_GL_CONTEXT_KHR, ctx);
-        contextProperties.addProperty(KHRGLSharing.CL_WGL_HDC_KHR, dc);
-
-//        OpenCL.printDeviceDetails(device_ids);
         // Create a context for the selected device
-        context = clCreateContext(
-            contextProperties, 1, device_ids,
-            null, null, null);
+        var ctxProps = BufferUtils.createPointerBuffer(7);
+        ctxProps.put(CL12.CL_CONTEXT_PLATFORM)
+            .put(platform)
+            .put(KHRGLSharing.CL_GL_CONTEXT_KHR)
+            .put(ctx)
+            .put(KHRGLSharing.CL_WGL_HDC_KHR)
+            .put(dc)
+            .put(0L)
+            .flip();
+
+        context_ptr = CL12.clCreateContext(ctxProps,
+            device, null, 0L, null);
 
         // Create a command-queue for the selected device
-        var properties = new cl_queue_properties();
-        command_queue = clCreateCommandQueueWithProperties(
-            context, device, properties, null);
-        command_queue_ptr = command_queue.getNativePointer();
+        command_queue_ptr = CL12.clCreateCommandQueue(context_ptr,
+            device, 0, (IntBuffer) null);
 
-        return device_ids;
-
+        return device;
     }
 
     private static void init_memory(int max_hulls, int max_points)
@@ -1650,17 +1642,17 @@ public class GPU
 
     private static long cl_new_buffer(long size)
     {
-        return CL12.clCreateBuffer(context.getNativePointer(), FLAGS_WRITE_GPU, size, null);
+        return CL12.clCreateBuffer(context_ptr, FLAGS_WRITE_GPU, size, null);
     }
 
     private static long cl_new_int_arg_buffer(int[] src)
     {
-        return CL12.clCreateBuffer(context.getNativePointer(), FLAGS_WRITE_CPU_COPY, src, null);
+        return CL12.clCreateBuffer(context_ptr, FLAGS_WRITE_CPU_COPY, src, null);
     }
 
     private static long cl_new_cpu_copy_buffer(float[] src)
     {
-        return CL12.clCreateBuffer(context.getNativePointer(), FLAGS_READ_CPU_COPY, src, null);
+        return CL12.clCreateBuffer(context_ptr, FLAGS_READ_CPU_COPY, src, null);
     }
 
     private static void cl_zero_buffer(long buffer_ptr, long buffer_size)
@@ -1678,12 +1670,12 @@ public class GPU
     private static long cl_new_pinned_buffer(long size)
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        return CL12.clCreateBuffer(context.getNativePointer(), flags, size, null);
+        return CL12.clCreateBuffer(context_ptr, flags, size, null);
     }
 
     private static int[] cl_read_pinned_int_buffer(long pinned_ptr, long size, int count)
     {
-        var out = CL12.clEnqueueMapBuffer(command_queue.getNativePointer(),
+        var out = CL12.clEnqueueMapBuffer(command_queue_ptr,
             pinned_ptr,
             true,
             CL12.CL_MAP_READ,
@@ -1701,13 +1693,13 @@ public class GPU
         {
             xa[i] = ib.get(i);
         }
-        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned_ptr, out, null, null);
+        CL12.clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
         return xa;
     }
 
     private static float[] cl_read_pinned_float_buffer(long pinned_ptr, long size, int count)
     {
-        var out = CL12.clEnqueueMapBuffer(command_queue.getNativePointer(),
+        var out = CL12.clEnqueueMapBuffer(command_queue_ptr,
             pinned_ptr,
             true,
             CL12.CL_MAP_READ,
@@ -1725,19 +1717,19 @@ public class GPU
         {
             xa[i] = ib.get(i);
         }
-        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned_ptr, out, null, null);
+        CL12.clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
         return xa;
     }
 
     public static long cl_new_pinned_int()
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        return CL12.clCreateBuffer(context.getNativePointer(), flags, Sizeof.cl_int, null);
+        return CL12.clCreateBuffer(context_ptr, flags, Sizeof.cl_int, null);
     }
 
     public static int cl_read_pinned_int(long pinned_ptr)
     {
-        var out = CL12.clEnqueueMapBuffer(command_queue.getNativePointer(),
+        var out = CL12.clEnqueueMapBuffer(command_queue_ptr,
             pinned_ptr,
             true,
             CL12.CL_MAP_READ,
@@ -1750,7 +1742,7 @@ public class GPU
 
         assert out != null;
         int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned_ptr, out, null, null);
+        CL12.clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
         return result;
     }
 
@@ -1800,7 +1792,7 @@ public class GPU
      */
     public static void share_memory(int vboID)
     {
-        var vbo_mem = CL12GL.clCreateFromGLBuffer(context.getNativePointer(), FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
+        var vbo_mem = CL12GL.clCreateFromGLBuffer(context_ptr, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
         //var vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
         shared_mem.put(vboID, vbo_mem);
     }
@@ -3063,12 +3055,12 @@ public class GPU
     public static long gpu_p(List<String> src_strings)
     {
         String[] src = src_strings.toArray(new String[]{});
-        return CLUtils.cl_p(context.getNativePointer(), device_ids[0].getNativePointer(), src);
+        return CLUtils.cl_p(context_ptr, device_id_ptr, src);
     }
 
     public static long new_mutable_buffer(int[] src)
     {
-        return CL12.clCreateBuffer(context.getNativePointer(), FLAGS_READ_CPU_COPY, src, null);
+        return CL12.clCreateBuffer(context_ptr, FLAGS_READ_CPU_COPY, src, null);
     }
 
     public static long new_empty_buffer(long size)
@@ -3095,17 +3087,17 @@ public class GPU
 
     public static void init(int max_hulls, int max_points)
     {
-        device_ids = init_device();
+        device_id_ptr = init_device();
 
-        var device = device_ids[0];
+        var device = device_id_ptr;
 
         System.out.println("-------- OPEN CL DEVICE -----------");
-        System.out.println(getString(device.getNativePointer(), CL12.CL_DEVICE_VENDOR));
-        System.out.println(getString(device.getNativePointer(), CL12.CL_DEVICE_NAME));
-        System.out.println(getString(device.getNativePointer(), CL12.CL_DRIVER_VERSION));
+        System.out.println(getString(device, CL12.CL_DEVICE_VENDOR));
+        System.out.println(getString(device, CL12.CL_DEVICE_NAME));
+        System.out.println(getString(device, CL12.CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
-        max_work_group_size = (int) getSize(device.getNativePointer(), CL12.CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        max_work_group_size = (int) getSize(device, CL12.CL_DEVICE_MAX_WORK_GROUP_SIZE);
         max_scan_block_size = (long) max_work_group_size * 2;
         local_work_default = arg_long(max_work_group_size);
 
@@ -3142,7 +3134,7 @@ public class GPU
         }
 
         CL12.clReleaseCommandQueue(command_queue_ptr);
-        CL12.clReleaseContext(context.getNativePointer());
+        CL12.clReleaseContext(context_ptr);
     }
 
     //#endregion
