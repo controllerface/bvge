@@ -11,10 +11,6 @@ public class Main
 
     public static void main(String[] args)
     {
-        String bits = System.getProperty("sun.arch.data.model");
-
-        System.out.println("debug: bits=" + bits);
-
         //Configuration.DISABLE_CHECKS.set(true);
         Window window = Window.get();
         window.init();
