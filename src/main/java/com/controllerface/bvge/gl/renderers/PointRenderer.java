@@ -1,6 +1,5 @@
 package com.controllerface.bvge.gl.renderers;
 
-import com.controllerface.bvge.Main;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;

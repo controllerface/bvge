@@ -2,30 +2,27 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class CreateBoneChannel_k extends GPUKernel<CreateBoneChannel_k.Args>
+public class CreateBoneChannel_k extends GPUKernel
 {
-    public enum Args implements GPUKernelArg
-    {
-        animation_timing_indices(Sizeof.cl_mem),
-        bone_pos_channel_tables(Sizeof.cl_mem),
-        bone_rot_channel_tables(Sizeof.cl_mem),
-        bone_scl_channel_tables(Sizeof.cl_mem),
-        target(Sizeof.cl_int),
-        new_animation_timing_index(Sizeof.cl_int),
-        new_bone_pos_channel_table(Sizeof.cl_int2),
-        new_bone_rot_channel_table(Sizeof.cl_int2),
-        new_bone_scl_channel_table(Sizeof.cl_int2);
+    private static final GPU.Program program = GPU.Program.gpu_crud;
+    private static final GPU.Kernel kernel = GPU.Kernel.create_bone_channel;
 
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+    public enum Args
+    {
+        animation_timing_indices,
+        bone_pos_channel_tables,
+        bone_rot_channel_tables,
+        bone_scl_channel_tables,
+        target,
+        new_animation_timing_index,
+        new_bone_pos_channel_table,
+        new_bone_rot_channel_table,
+        new_bone_scl_channel_table;
     }
 
-    public CreateBoneChannel_k(cl_command_queue command_queue)
+    public CreateBoneChannel_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_bone_channel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

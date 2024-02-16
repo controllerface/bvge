@@ -2,26 +2,21 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Pointer;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class CreateMeshReference_k extends GPUKernel<CreateMeshReference_k.Args>
+public class CreateMeshReference_k extends GPUKernel
 {
-    public enum Args implements GPUKernelArg
-    {
-        mesh_ref_tables(Sizeof.cl_mem),
-        target(Sizeof.cl_int),
-        new_mesh_ref_table(Sizeof.cl_float4);
+    private static final GPU.Program program = GPU.Program.gpu_crud;
+    private static final GPU.Kernel kernel = GPU.Kernel.create_mesh_reference;
 
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+    public enum Args
+    {
+        mesh_ref_tables,
+        target,
+        new_mesh_ref_table;
     }
 
-    public CreateMeshReference_k(cl_command_queue command_queue)
+    public CreateMeshReference_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_mesh_reference), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

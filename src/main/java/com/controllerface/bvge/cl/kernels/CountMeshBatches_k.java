@@ -2,26 +2,22 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class CountMeshBatches_k extends GPUKernel<CountMeshBatches_k.Args>
+public class CountMeshBatches_k extends GPUKernel
 {
-    public enum Args implements GPUKernelArg
-    {
-        mesh_details(Sizeof.cl_mem),
-        total(Sizeof.cl_mem),
-        max_per_batch(Sizeof.cl_int),
-        count(Sizeof.cl_int);
+    private static final GPU.Program program = GPU.Program.mesh_query;
+    private static final GPU.Kernel kernel = GPU.Kernel.count_mesh_batches;
 
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+    public enum Args
+    {
+        mesh_details,
+        total,
+        max_per_batch,
+        count;
     }
 
-    public CountMeshBatches_k(cl_command_queue command_queue)
+    public CountMeshBatches_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.mesh_query.gpu.kernels().get(GPU.Kernel.count_mesh_batches), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

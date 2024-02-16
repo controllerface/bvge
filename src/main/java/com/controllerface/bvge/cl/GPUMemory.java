@@ -1,28 +1,18 @@
 package com.controllerface.bvge.cl;
 
-import org.jocl.Pointer;
-import org.jocl.cl_mem;
-
-import static org.jocl.CL.*;
+import static org.lwjgl.opencl.CL12.clReleaseMemObject;
 
 public class GPUMemory
 {
-    private final cl_mem src;
-    private final Pointer pointer;
+    private final long pointer;
     private boolean released = false;
 
-    public GPUMemory(cl_mem src)
+    public GPUMemory(long pointer)
     {
-        this.src = src;
-        this.pointer = Pointer.to(this.src);
+        this.pointer = pointer;
     }
 
-    public cl_mem memory()
-    {
-        return src;
-    }
-
-    public Pointer pointer()
+    public long pointer()
     {
         return pointer;
     }
@@ -31,7 +21,7 @@ public class GPUMemory
     {
         if (!released)
         {
-            clReleaseMemObject(src);
+            clReleaseMemObject(pointer);
             released = true;
         }
     }

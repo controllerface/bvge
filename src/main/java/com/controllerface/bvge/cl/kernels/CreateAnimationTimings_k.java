@@ -2,24 +2,21 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class CreateAnimationTimings_k extends GPUKernel<CreateAnimationTimings_k.Args>
+public class CreateAnimationTimings_k extends GPUKernel
 {
-    public enum Args implements GPUKernelArg
-    {
-        animation_timings(Sizeof.cl_mem),
-        target(Sizeof.cl_int),
-        new_animation_timing(Sizeof.cl_double2);
+    private static final GPU.Program program = GPU.Program.gpu_crud;
+    private static final GPU.Kernel kernel = GPU.Kernel.create_animation_timings;
 
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+    public enum Args
+    {
+        animation_timings,
+        target,
+        new_animation_timing;
     }
 
-    public CreateAnimationTimings_k(cl_command_queue command_queue)
+    public CreateAnimationTimings_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.gpu_crud.gpu.kernels().get(GPU.Kernel.create_animation_timings), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

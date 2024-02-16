@@ -2,25 +2,22 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class AnimateBones_k extends GPUKernel<AnimateBones_k.Args>
+public class AnimateBones_k extends GPUKernel
 {
-    public enum Args implements GPUKernelArg
-    {
-        bones(Sizeof.cl_mem),
-        bone_references(Sizeof.cl_mem),
-        armature_bones(Sizeof.cl_mem),
-        bone_index_tables(Sizeof.cl_mem);
+    private static final GPU.Program program = GPU.Program.animate_hulls;
+    private static final GPU.Kernel kernel = GPU.Kernel.animate_bones;
 
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+    public enum Args
+    {
+        bones,
+        bone_references,
+        armature_bones,
+        bone_index_tables;
     }
 
-    public AnimateBones_k(cl_command_queue command_queue)
+    public AnimateBones_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.animate_hulls.gpu.kernels().get(GPU.Kernel.animate_bones), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

@@ -1,17 +1,15 @@
 package com.controllerface.bvge.cl;
 
-import org.jocl.CL;
-import org.jocl.cl_kernel;
-import org.jocl.cl_program;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.controllerface.bvge.cl.CLUtils.read_src;
-import static com.controllerface.bvge.cl.GPU.*;
-import static org.jocl.CL.clReleaseProgram;
+import static com.controllerface.bvge.cl.GPU.Kernel;
+import static com.controllerface.bvge.cl.GPU.gpu_p;
+import static org.lwjgl.opencl.CL12.clReleaseKernel;
+import static org.lwjgl.opencl.CL12.clReleaseProgram;
 
 /**
  * An abstraction for general-purpose GPU programs. Implementations of various programs that
@@ -32,7 +30,7 @@ public abstract class GPUProgram
      * code will define matching constants for easy interoperability.
      * todo: generate the GPU code from the CPU constants instead of duplicating the code in both places
      */
-    protected static String const_hull_flags              = read_src("constants/hull_flags.cl");
+    protected static String const_hull_flags               = read_src("constants/hull_flags.cl");
     protected static String const_identity_matrix          = read_src("constants/identity_matrix.cl");
 
     /**
@@ -76,12 +74,12 @@ public abstract class GPUProgram
     /**
      * This is the backing Open CL program the implementation class wraps.
      */
-    protected cl_program program;
+    protected long program_ptr;
 
     /**
      * After init is called, this will contain all the Open CL kernels that are defined in the program
      */
-    protected Map<Kernel, cl_kernel> kernels = new HashMap<>();
+    protected Map<Kernel, Long> kernels = new HashMap<>();
 
     /**
      * Contains the raw source data of the program, in compilation order.
@@ -94,21 +92,11 @@ public abstract class GPUProgram
     protected abstract void init();
 
     /**
-     * Accessor for loaded kernels.
-     *
-     * @return the map of the currently loaded kernels.
-     */
-    public Map<Kernel, cl_kernel> kernels()
-    {
-        return kernels;
-    }
-
-    /**
      * Compiles this program, making the kernels it provides ready for use in an Open CL context.
      */
     protected void make_program()
     {
-        this.program = gpu_p(this.src);
+        this.program_ptr = gpu_p(this.src);
     }
 
     /**
@@ -121,7 +109,7 @@ public abstract class GPUProgram
      */
     protected void load_kernel(Kernel kernel)
     {
-        this.kernels.put(kernel, CLUtils.cl_k(program, kernel.name()));
+        this.kernels.put(kernel, CLUtils.cl_k(program_ptr, kernel.name()));
     }
 
     /**
@@ -129,10 +117,10 @@ public abstract class GPUProgram
      */
     public void destroy()
     {
-        clReleaseProgram(program);
-        for (cl_kernel clKernel : kernels.values())
+        clReleaseProgram(program_ptr);
+        for (long kernel_ptr : kernels.values())
         {
-            CL.clReleaseKernel(clKernel);
+            clReleaseKernel(kernel_ptr);
         }
     }
 }

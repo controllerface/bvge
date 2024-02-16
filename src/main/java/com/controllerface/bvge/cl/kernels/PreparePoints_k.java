@@ -2,26 +2,21 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Pointer;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class PreparePoints_k extends GPUKernel<PreparePoints_k.Args>
+public class PreparePoints_k extends GPUKernel
 {
-    public enum Args implements GPUKernelArg
-    {
-        points(Sizeof.cl_mem),
-        vertex_vbo(Sizeof.cl_mem),
-        offset(Sizeof.cl_int);
+    private static final GPU.Program program = GPU.Program.prepare_points;
+    private static final GPU.Kernel kernel = GPU.Kernel.prepare_points;
 
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+    public enum Args
+    {
+        points,
+        vertex_vbo,
+        offset;
     }
 
-    public PreparePoints_k(cl_command_queue command_queue)
+    public PreparePoints_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.prepare_points.gpu.kernels().get(GPU.Kernel.prepare_points), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

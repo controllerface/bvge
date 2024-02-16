@@ -9,23 +9,16 @@ import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
+import org.lwjgl.opencl.CL12;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
-import static org.jocl.CL.clReleaseMemObject;
-import static org.lwjgl.opengl.GL30C.GL_FLOAT;
+import static org.lwjgl.opencl.CL12.*;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
-import static org.lwjgl.opengl.GL15C.GL_ARRAY_BUFFER;
-import static org.lwjgl.opengl.GL15C.GL_DYNAMIC_DRAW;
-import static org.lwjgl.opengl.GL15C.GL_POINTS;
-import static org.lwjgl.opengl.GL15C.glBindBuffer;
-import static org.lwjgl.opengl.GL15C.glBufferData;
-import static org.lwjgl.opengl.GL15C.glGenBuffers;
-import static org.lwjgl.opengl.GL20C.glDisableVertexAttribArray;
-import static org.lwjgl.opengl.GL20C.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
-import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
+import static org.lwjgl.opengl.GL15C.*;
+import static org.lwjgl.opengl.GL20C.*;
+import static org.lwjgl.opengl.GL30C.GL_FLOAT;
+import static org.lwjgl.opengl.GL30C.*;
 
 public class CircleRenderer extends GameSystem
 {
@@ -62,7 +55,7 @@ public class CircleRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        if (circle_hulls != null && circle_hulls.indices() != null)
+        if (circle_hulls != null && circle_hulls.indices() != -1)
         {
             clReleaseMemObject(circle_hulls.indices());
         }

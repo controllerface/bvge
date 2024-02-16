@@ -1,12 +1,12 @@
 package com.controllerface.bvge.cl;
 
-import org.jocl.*;
+import org.lwjgl.system.MemoryStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.k_call;
-import static org.jocl.CL.clSetKernelArg;
+import static org.lwjgl.opencl.CL12.clSetKernelArg;
 
 /**
  * A class for defining and organizing GPU kernel functions. This class is used to wrap an Open Cl kernel
@@ -14,38 +14,16 @@ import static org.jocl.CL.clSetKernelArg;
  * and calling the kernel itself. Kernels are typically provided by {@link GPUProgram} objects, which are
  * compiled first before their constituent kernels are linked and loaded via implementations of this class.
  */
-public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
+public abstract class GPUKernel
 {
-    final cl_command_queue command_queue;
-    final cl_kernel kernel;
-    final List<cl_mem> shared_memory = new ArrayList<>();
-    final long[] arg_sizes;
+    final long command_queue_ptr;
+    final long kernel_ptr;
+    final List<Long> shared_memory_ptrs = new ArrayList<>();
 
-    /**
-     * Kernel subclasses must define an enum that implements this simple interface in order to rigidly
-     * define kernel argument positions and data sizes.
-     */
-    public interface GPUKernelArg
+    public GPUKernel(long command_queue_ptr, long kernel_ptr)
     {
-        long size();
-    }
-
-    public GPUKernel(cl_command_queue command_queue, cl_kernel kernel, int arg_count)
-    {
-        this.command_queue = command_queue;
-        this.kernel = kernel;
-        this.arg_sizes = new long[arg_count];
-    }
-
-    public GPUKernel(cl_command_queue command_queue, cl_kernel kernel, E[] args)
-    {
-        this.command_queue = command_queue;
-        this.kernel = kernel;
-        this.arg_sizes = new long[args.length];
-        for (var arg : args)
-        {
-            def_arg(arg.ordinal(), arg.size());
-        }
+        this.command_queue_ptr = command_queue_ptr;
+        this.kernel_ptr = kernel_ptr;
     }
 
     /**
@@ -54,27 +32,11 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      * the kernel call, respectively. The shared memory list si also cleared after each call, so memory
      * objects must be shared individually before every call.
      *
-     * @param mem the memory buffer to mark as shared with this kernel
+     * @param mem_ptr pointer to the memory buffer to mark as shared with this kernel
      */
-    public void share_mem(cl_mem mem)
+    public void share_mem(long mem_ptr)
     {
-        shared_memory.add(mem);
-    }
-
-    /**
-     * Sets a new argument in this kernel. Can be used for arguments that are set once and then
-     * do not change for the life of the program, though calling code is not prevented from
-     * calling this function to update arguments. Other options are provided solely for convenience
-     * to calling code.
-     *
-     * @param pos argument position
-     * @param size size of the memory buffer being passed for the argument
-     * @param pointer pointer to the memory buffer being passed
-     */
-    public void new_arg(int pos, long size, Pointer pointer)
-    {
-        def_arg(pos, size);
-        clSetKernelArg(this.kernel, pos, size, pointer);
+        shared_memory_ptrs.add(mem_ptr);
     }
 
     /**
@@ -86,10 +48,9 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      * @param gpu_memory GPUMemory object containing the memory buffer which will be set as the argument
      * @return this kernel instance, allowing for chaining of argument setting calls
      */
-    public GPUKernel<?> mem_arg(Enum<?> val, GPUMemory gpu_memory)
+    public GPUKernel mem_arg(Enum<?> val, GPUMemory gpu_memory)
     {
-        def_arg(val.ordinal(), Sizeof.cl_mem);
-        clSetKernelArg(this.kernel, val.ordinal(), Sizeof.cl_mem, gpu_memory.pointer());
+        ptr_arg(val.ordinal(), gpu_memory.pointer());
         return this;
     }
 
@@ -100,23 +61,9 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      * @param pos argument position
      * @param size size of the empty buffer to be created for the argument
      */
-    public void new_arg(int pos, long size)
+    public void loc_arg(int pos, long size)
     {
-        new_arg(pos, size, null);
-    }
-
-    /**
-     * Defines an argument position as having a specific size, without assigning it any data yet.
-     * This is used to predefine argument sizes, typically before a kernel is used, so that the
-     * values can be updated at runtime. This makes calling code more concise as the size value
-     * does not need to be passed in.
-     *
-     * @param pos argument position
-     * @param size size of the memory buffer being passed for the argument
-     */
-    public void def_arg(int pos, long size)
-    {
-        arg_sizes[pos] = size;
+        clSetKernelArg(this.kernel_ptr, pos, size);
     }
 
     /**
@@ -128,10 +75,73 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      * @param pos argument position
      * @param pointer pointer to the memory buffer being passed
      */
-    public void set_arg(int pos, Pointer pointer)
+    public void ptr_arg(int pos, long pointer)
     {
-        clSetKernelArg(this.kernel, pos, arg_sizes[pos], pointer);
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var pointerBuffer = mem_stack.callocPointer(1).put(0, pointer);
+            clSetKernelArg(this.kernel_ptr, pos, pointerBuffer);
+        }
     }
+
+
+    public void set_arg(int pos, double[] value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var doubleBuffer = mem_stack.doubles(value);
+            clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
+        }
+    }
+
+    public void set_arg(int pos, double value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var doubleBuffer = mem_stack.doubles(value);
+            clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
+        }
+    }
+
+
+    public void set_arg(int pos, float[] value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var floatBuffer = mem_stack.floats(value);
+            clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
+        }
+    }
+
+    public void set_arg(int pos, float value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var floatBuffer = mem_stack.floats(value);
+            clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
+        }
+    }
+
+    public void set_arg(int pos, int[] value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var intBuffer = mem_stack.ints(value);
+            clSetKernelArg(this.kernel_ptr, pos, intBuffer);
+        }
+    }
+
+    public void set_arg(int pos, int value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var intBuffer = mem_stack.ints(value);
+            clSetKernelArg(this.kernel_ptr, pos, intBuffer);
+        }
+    }
+
+
+
 
     /**
      * Call this kernel, executing it on the GPU. This variant lets the GPu decide the best size for the local work
@@ -158,20 +168,18 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      */
     public void call(long[] global_work_size, long[] local_work_size, long[] global_work_offset)
     {
-        var shared = shared_memory.toArray(new cl_mem[]{});
-
-        if (shared.length > 0)
+        if (!shared_memory_ptrs.isEmpty())
         {
-            CLUtils.gl_acquire(command_queue, shared);
+            CLUtils.gl_acquire(command_queue_ptr, shared_memory_ptrs);
         }
 
-        k_call(command_queue, kernel, global_work_size, local_work_size, global_work_offset);
+        k_call(command_queue_ptr, kernel_ptr, global_work_size, local_work_size, global_work_offset);
 
-        if (shared.length > 0)
+        if (!shared_memory_ptrs.isEmpty())
         {
-            CLUtils.gl_release(command_queue, shared);
+            CLUtils.gl_release(command_queue_ptr, shared_memory_ptrs);
         }
 
-        shared_memory.clear();
+        shared_memory_ptrs.clear();
     }
 }

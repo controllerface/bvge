@@ -34,7 +34,11 @@ public class TestGame extends GameMode
     }
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-        EnumSet.of(RenderType.MODELS, RenderType.HULLS);
+        EnumSet.of(
+            RenderType.MODELS,
+            RenderType.HULLS,
+            RenderType.BOUNDS,
+            RenderType.POINTS);
 
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
@@ -238,7 +242,7 @@ public class TestGame extends GameMode
             ecs.registerSystem(new PointRenderer(ecs));
         }
 
-        //ecs.registerSystem(new BoneRenderer(ecs));
+        ecs.registerSystem(new BoneRenderer(ecs));
     }
 
     @Override
@@ -309,7 +313,7 @@ public class TestGame extends GameMode
 
         genCircles(20, 7f, 5f, 0, 100);
         genSquares(20,  9f, 5f, -120, 100);
-        //genCrates2(20, 7f, 0.025f, 100, 100);
+        genCrates2(20, 7f, 0.025f, 100, 100);
         genTriangles(20,  9f, 5f, 200, 100);
 
         genFloor(8, 150f, 150f, -70, -100);

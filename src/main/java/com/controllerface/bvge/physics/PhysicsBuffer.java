@@ -1,7 +1,6 @@
 package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.cl.GPUMemory;
-import org.jocl.Pointer;
 
 public class PhysicsBuffer
 {
@@ -20,8 +19,8 @@ public class PhysicsBuffer
     public GPUMemory reactions_out;
     public GPUMemory reaction_index;
 
-    public Pointer x_sub_divisions;
-    public Pointer key_count_length;
+    public int x_sub_divisions;
+    public int key_count_length;
 
     private int candidate_buffer_count = 0;
     private int match_buffer_count = 0;

@@ -2,35 +2,30 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Pointer;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class SatCollide_k extends GPUKernel<SatCollide_k.Args>
+public class SatCollide_k extends GPUKernel
 {
-    public enum Args implements GPUKernelArg
-    {
-        candidates(Sizeof.cl_mem),
-        hulls(Sizeof.cl_mem),
-        element_tables(Sizeof.cl_mem),
-        hull_flags(Sizeof.cl_mem),
-        vertex_tables(Sizeof.cl_mem),
-        points(Sizeof.cl_mem),
-        edges(Sizeof.cl_mem),
-        reactions(Sizeof.cl_mem),
-        reaction_index(Sizeof.cl_mem),
-        point_reactions(Sizeof.cl_mem),
-        masses(Sizeof.cl_mem),
-        counter(Sizeof.cl_mem);
+    private static final GPU.Program program = GPU.Program.sat_collide;
+    private static final GPU.Kernel kernel = GPU.Kernel.sat_collide;
 
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+    public enum Args
+    {
+        candidates,
+        hulls,
+        element_tables,
+        hull_flags,
+        vertex_tables,
+        points,
+        edges,
+        reactions,
+        reaction_index,
+        point_reactions,
+        masses,
+        counter;
     }
 
-    public SatCollide_k(cl_command_queue command_queue)
+    public SatCollide_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.sat_collide.gpu.kernels().get(GPU.Kernel.sat_collide), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

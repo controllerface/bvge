@@ -2,27 +2,22 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Pointer;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class RootHullFilter_k extends GPUKernel<RootHullFilter_k.Args>
+public class RootHullFilter_k extends GPUKernel
 {
-    public enum Args implements GPUKernelArg
-    {
-        armature_flags(Sizeof.cl_mem),
-        hulls_out(Sizeof.cl_mem),
-        counter(Sizeof.cl_mem),
-        model_id(Sizeof.cl_int);
+    private static final GPU.Program program = GPU.Program.root_hull_filter;
+    private static final GPU.Kernel kernel = GPU.Kernel.root_hull_filter;
 
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+    public enum Args
+    {
+        armature_flags,
+        hulls_out,
+        counter,
+        model_id;
     }
 
-    public RootHullFilter_k(cl_command_queue command_queue)
+    public RootHullFilter_k(long command_queue_ptr)
     {
-        super(command_queue, GPU.Program.root_hull_filter.gpu.kernels().get(GPU.Kernel.root_hull_filter), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

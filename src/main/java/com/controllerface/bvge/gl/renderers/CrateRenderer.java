@@ -12,7 +12,7 @@ import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.util.Constants.Rendering.*;
-import static org.jocl.CL.clReleaseMemObject;
+import static org.lwjgl.opencl.CL12.clReleaseMemObject;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
@@ -78,7 +78,7 @@ public class CrateRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        if (crate_hulls != null && crate_hulls.indices() != null)
+        if (crate_hulls != null && crate_hulls.indices() != -1)
         {
             clReleaseMemObject(crate_hulls.indices());
         }
