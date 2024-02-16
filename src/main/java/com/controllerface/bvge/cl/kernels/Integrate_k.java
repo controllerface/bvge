@@ -2,39 +2,31 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Pointer;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class Integrate_k extends GPUKernel<Integrate_k.Args>
+public class Integrate_k extends GPUKernel
 {
     private static final GPU.Program program = GPU.Program.integrate;
     private static final GPU.Kernel kernel = GPU.Kernel.integrate;
 
-    public enum Args implements GPUKernelArg
+    public enum Args
     {
-        hulls(Sizeof.cl_mem),
-        armatures(Sizeof.cl_mem),
-        armature_flags(Sizeof.cl_mem),
-        element_tables(Sizeof.cl_mem),
-        armature_accel(Sizeof.cl_mem),
-        hull_rotations(Sizeof.cl_mem),
-        points(Sizeof.cl_mem),
-        bounds(Sizeof.cl_mem),
-        bounds_index_data(Sizeof.cl_mem),
-        bounds_bank_data(Sizeof.cl_mem),
-        hull_flags(Sizeof.cl_mem),
-        anti_gravity(Sizeof.cl_mem),
-        args(Sizeof.cl_mem);
-
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+        hulls,
+        armatures,
+        armature_flags,
+        element_tables,
+        armature_accel,
+        hull_rotations,
+        points,
+        bounds,
+        bounds_index_data,
+        bounds_bank_data,
+        hull_flags,
+        anti_gravity,
+        args;
     }
 
     public Integrate_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

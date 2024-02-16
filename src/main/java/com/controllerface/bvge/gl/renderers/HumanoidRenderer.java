@@ -9,9 +9,7 @@ import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
-import org.jocl.Pointer;
 import org.jocl.Sizeof;
-import org.jocl.cl_mem;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;

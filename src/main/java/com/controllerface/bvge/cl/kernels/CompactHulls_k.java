@@ -2,34 +2,27 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class CompactHulls_k extends GPUKernel<CompactHulls_k.Args>
+public class CompactHulls_k extends GPUKernel
 {
     private static final GPU.Program program = GPU.Program.scan_deletes;
     private static final GPU.Kernel kernel = GPU.Kernel.compact_hulls;
 
-    public enum Args implements GPUKernelArg
+    public enum Args
     {
-        hull_shift(Sizeof.cl_mem),
-        hulls(Sizeof.cl_mem),
-        hull_mesh_ids(Sizeof.cl_mem),
-        hull_rotations(Sizeof.cl_mem),
-        hull_flags(Sizeof.cl_mem),
-        element_tables(Sizeof.cl_mem),
-        bounds(Sizeof.cl_mem),
-        bounds_index_data(Sizeof.cl_mem),
-        bounds_bank_data(Sizeof.cl_mem);
-
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+        hull_shift,
+        hulls,
+        hull_mesh_ids,
+        hull_rotations,
+        hull_flags,
+        element_tables,
+        bounds,
+        bounds_index_data,
+        bounds_bank_data;
     }
 
     public CompactHulls_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

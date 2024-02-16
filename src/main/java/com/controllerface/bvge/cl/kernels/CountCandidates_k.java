@@ -2,33 +2,25 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Pointer;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class CountCandidates_k extends GPUKernel<CountCandidates_k.Args>
+public class CountCandidates_k extends GPUKernel
 {
     private static final GPU.Program program = GPU.Program.locate_in_bounds;
     private static final GPU.Kernel kernel = GPU.Kernel.count_candidates;
 
-    public enum Args implements GPUKernelArg
+    public enum Args
     {
-        bounds_bank_data(Sizeof.cl_mem),
-        in_bounds(Sizeof.cl_mem),
-        key_bank(Sizeof.cl_mem),
-        key_counts(Sizeof.cl_mem),
-        candidates(Sizeof.cl_mem),
-        x_subdivisions(Sizeof.cl_int),
-        key_count_length(Sizeof.cl_int);
-
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+        bounds_bank_data,
+        in_bounds,
+        key_bank,
+        key_counts,
+        candidates,
+        x_subdivisions,
+        key_count_length;
     }
 
     public CountCandidates_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

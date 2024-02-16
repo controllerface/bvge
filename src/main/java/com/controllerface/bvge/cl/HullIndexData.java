@@ -1,7 +1,5 @@
 package com.controllerface.bvge.cl;
 
-import org.jocl.cl_mem;
-
 /**
  * A container for results of a model id query. Typically used when CPU code queries the GPU
  * for the hull indices of all objects with a given model ID. This is useful for rendering

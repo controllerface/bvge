@@ -2,33 +2,25 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class BuildKeyMap_k extends GPUKernel<BuildKeyMap_k.Args>
+public class BuildKeyMap_k extends GPUKernel
 {
     private static final GPU.Program program = GPU.Program.build_key_map;
     private static final GPU.Kernel kernel = GPU.Kernel.build_key_map;
 
-    public enum Args implements GPUKernelArg
+    public enum Args
     {
-        bounds_index_data(Sizeof.cl_mem),
-        bounds_bank_data(Sizeof.cl_mem),
-        key_map(Sizeof.cl_mem),
-        key_offsets(Sizeof.cl_mem),
-        key_counts(Sizeof.cl_mem),
-        x_subdivisions(Sizeof.cl_int),
-        key_count_length(Sizeof.cl_int),
-        ;
-
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+        bounds_index_data,
+        bounds_bank_data,
+        key_map,
+        key_offsets,
+        key_counts,
+        x_subdivisions,
+        key_count_length;
     }
 
     public BuildKeyMap_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

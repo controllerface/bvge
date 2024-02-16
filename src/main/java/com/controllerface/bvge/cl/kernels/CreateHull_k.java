@@ -2,37 +2,29 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import org.jocl.Pointer;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class CreateHull_k extends GPUKernel<CreateHull_k.Args>
+public class CreateHull_k extends GPUKernel
 {
     private static final GPU.Program program = GPU.Program.gpu_crud;
     private static final GPU.Kernel kernel = GPU.Kernel.create_hull;
 
-    public enum Args implements GPUKernelArg
+    public enum Args
     {
-        hulls(Sizeof.cl_mem),
-        hull_rotations(Sizeof.cl_mem),
-        element_tables(Sizeof.cl_mem),
-        hull_flags(Sizeof.cl_mem),
-        hull_mesh_ids(Sizeof.cl_mem),
-        target(Sizeof.cl_int),
-        new_hull(Sizeof.cl_float4),
-        new_rotation(Sizeof.cl_float2),
-        new_table(Sizeof.cl_int4),
-        new_flags(Sizeof.cl_int4),
-        new_hull_mesh_id(Sizeof.cl_int);
-
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+        hulls,
+        hull_rotations,
+        element_tables,
+        hull_flags,
+        hull_mesh_ids,
+        target,
+        new_hull,
+        new_rotation,
+        new_table,
+        new_flags,
+        new_hull_mesh_id;
     }
 
     public CreateHull_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

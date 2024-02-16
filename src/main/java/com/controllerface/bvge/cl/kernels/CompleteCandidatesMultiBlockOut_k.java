@@ -2,30 +2,24 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class CompleteCandidatesMultiBlockOut_k extends GPUKernel<CompleteCandidatesMultiBlockOut_k.Args>
+public class CompleteCandidatesMultiBlockOut_k extends GPUKernel
 {
     private static final GPU.Program program = GPU.Program.scan_key_candidates;
     private static final GPU.Kernel kernel = GPU.Kernel.complete_candidates_multi_block_out;
 
-    public enum Args implements GPUKernelArg
+    public enum Args
     {
-        input(Sizeof.cl_mem),
-        output(Sizeof.cl_mem),
-        sz(Sizeof.cl_mem),
-        buffer(Sizeof.cl_mem),
-        part(Sizeof.cl_mem),
-        n(Sizeof.cl_int);
-
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+        input,
+        output,
+        sz,
+        buffer,
+        part,
+        n;
     }
 
     public CompleteCandidatesMultiBlockOut_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

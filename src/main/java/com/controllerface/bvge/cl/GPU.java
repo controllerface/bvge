@@ -4,7 +4,7 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.physics.PhysicsBuffer;
 import com.controllerface.bvge.physics.UniformGrid;
-import org.jocl.*;
+import org.jocl.Sizeof;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opencl.CL12;
 import org.lwjgl.opencl.CL12GL;
@@ -18,7 +18,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
-import static org.jocl.CL.*;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
@@ -36,9 +35,9 @@ public class GPU
 {
     //#region Constants
 
-    private static final long FLAGS_WRITE_GPU = CL_MEM_READ_WRITE;
-    private static final long FLAGS_WRITE_CPU_COPY = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
-    private static final long FLAGS_READ_CPU_COPY = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
+    private static final long FLAGS_WRITE_GPU = CL12.CL_MEM_READ_WRITE;
+    private static final long FLAGS_WRITE_CPU_COPY = CL12.CL_MEM_READ_WRITE | CL12.CL_MEM_COPY_HOST_PTR;
+    private static final long FLAGS_READ_CPU_COPY = CL12.CL_MEM_READ_ONLY | CL12.CL_MEM_COPY_HOST_PTR;
 
     /**
      * A convenience object, used when clearing out buffers to fill them with zeroes
@@ -243,9 +242,9 @@ public class GPU
 
         ;
 
-        GPUKernel<?> kernel;
+        GPUKernel kernel;
 
-        public GPUKernel<?> set_kernel(GPUKernel<?> gpu_kernel)
+        public GPUKernel set_kernel(GPUKernel gpu_kernel)
         {
             this.kernel = gpu_kernel;
             return this.kernel;
@@ -1035,7 +1034,7 @@ public class GPU
 
         // The platform, device type and device number
         // that will be used
-        long deviceType = CL_DEVICE_TYPE_GPU;
+        long deviceType = CL12.CL_DEVICE_TYPE_GPU;
 
         // Obtain the number of platforms
         int[] numPlatformsArray = new int[1];
@@ -1669,7 +1668,7 @@ public class GPU
 
     private static long cl_new_pinned_buffer(long size)
     {
-        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+        long flags = CL12.CL_MEM_HOST_READ_ONLY | CL12.CL_MEM_ALLOC_HOST_PTR;
         return CL12.clCreateBuffer(context_ptr, flags, size, null);
     }
 
@@ -1723,7 +1722,7 @@ public class GPU
 
     public static long cl_new_pinned_int()
     {
-        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+        long flags = CL12.CL_MEM_HOST_READ_ONLY | CL12.CL_MEM_ALLOC_HOST_PTR;
         return CL12.clCreateBuffer(context_ptr, flags, Sizeof.cl_int, null);
     }
 

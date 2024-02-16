@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.controllerface.bvge.cl.CLUtils.read_src;
-import static com.controllerface.bvge.cl.GPU.*;
+import static com.controllerface.bvge.cl.GPU.Kernel;
+import static com.controllerface.bvge.cl.GPU.gpu_p;
 
 /**
  * An abstraction for general-purpose GPU programs. Implementations of various programs that

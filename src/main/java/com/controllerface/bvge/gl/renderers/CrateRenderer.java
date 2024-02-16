@@ -13,7 +13,6 @@ import com.controllerface.bvge.window.Window;
 import org.lwjgl.opencl.CL12;
 
 import static com.controllerface.bvge.util.Constants.Rendering.*;
-import static org.jocl.CL.clReleaseMemObject;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;

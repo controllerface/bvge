@@ -2,41 +2,35 @@ package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
-import org.jocl.Sizeof;
-import org.jocl.cl_command_queue;
 
-public class AnimateArmatures_k extends GPUKernel<AnimateArmatures_k.Args>
+public class AnimateArmatures_k extends GPUKernel
 {
     private static final GPU.Program program = GPU.Program.animate_hulls;
     private static final GPU.Kernel kernel = GPU.Kernel.animate_armatures;
 
-    public enum Args implements GPUKernelArg
+    public enum Args
     {
-        armature_bones(Sizeof.cl_mem),
-        bone_bind_poses(Sizeof.cl_mem),
-        model_transforms(Sizeof.cl_mem),
-        bone_bind_tables(Sizeof.cl_mem),
-        bone_channel_tables(Sizeof.cl_mem),
-        bone_pos_channel_tables(Sizeof.cl_mem),
-        bone_rot_channel_tables(Sizeof.cl_mem),
-        bone_scl_channel_tables(Sizeof.cl_mem),
-        armature_flags(Sizeof.cl_mem),
-        hull_tables(Sizeof.cl_mem),
-        key_frames(Sizeof.cl_mem),
-        frame_times(Sizeof.cl_mem),
-        animation_timing_indices(Sizeof.cl_mem),
-        animation_timings(Sizeof.cl_mem),
-        armature_animation_indices(Sizeof.cl_mem),
-        armature_animation_elapsed(Sizeof.cl_mem),
-        delta_time(Sizeof.cl_float);
-
-        public final long size;
-        Args(long size) { this.size = size; }
-        @Override public long size() { return size; }
+        armature_bones,
+        bone_bind_poses,
+        model_transforms,
+        bone_bind_tables,
+        bone_channel_tables,
+        bone_pos_channel_tables,
+        bone_rot_channel_tables,
+        bone_scl_channel_tables,
+        armature_flags,
+        hull_tables,
+        key_frames,
+        frame_times,
+        animation_timing_indices,
+        animation_timings,
+        armature_animation_indices,
+        armature_animation_elapsed,
+        delta_time;
     }
 
     public AnimateArmatures_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel), Args.values());
+        super(command_queue_ptr, program.kernel_ptr(kernel));
     }
 }

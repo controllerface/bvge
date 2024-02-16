@@ -1,6 +1,5 @@
 package com.controllerface.bvge.cl;
 
-import org.jocl.Sizeof;
 import org.lwjgl.opencl.CL12;
 import org.lwjgl.system.MemoryStack;
 
@@ -15,31 +14,16 @@ import static com.controllerface.bvge.cl.CLUtils.k_call;
  * and calling the kernel itself. Kernels are typically provided by {@link GPUProgram} objects, which are
  * compiled first before their constituent kernels are linked and loaded via implementations of this class.
  */
-public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
+public abstract class GPUKernel
 {
     final long command_queue_ptr;
     final long kernel_ptr;
     final List<Long> shared_memory_ptrs = new ArrayList<>();
-    final long[] arg_sizes;
 
-    /**
-     * Kernel subclasses must define an enum that implements this simple interface in order to rigidly
-     * define kernel argument positions and data sizes.
-     */
-    public interface GPUKernelArg
-    {
-        long size();
-    }
-
-    public GPUKernel(long command_queue_ptr, long kernel_ptr, E[] args)
+    public GPUKernel(long command_queue_ptr, long kernel_ptr)
     {
         this.command_queue_ptr = command_queue_ptr;
         this.kernel_ptr = kernel_ptr;
-        this.arg_sizes = new long[args.length];
-        for (var arg : args)
-        {
-            def_arg(arg.ordinal(), arg.size());
-        }
     }
 
     /**
@@ -64,9 +48,8 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      * @param gpu_memory GPUMemory object containing the memory buffer which will be set as the argument
      * @return this kernel instance, allowing for chaining of argument setting calls
      */
-    public GPUKernel<?> mem_arg(Enum<?> val, GPUMemory gpu_memory)
+    public GPUKernel mem_arg(Enum<?> val, GPUMemory gpu_memory)
     {
-        def_arg(val.ordinal(), Sizeof.cl_mem);
         ptr_arg(val.ordinal(), gpu_memory.pointer());
         return this;
     }
@@ -80,22 +63,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
      */
     public void loc_arg(int pos, long size)
     {
-        def_arg(pos, size);
         CL12.clSetKernelArg(this.kernel_ptr, pos, size);
-    }
-
-    /**
-     * Defines an argument position as having a specific size, without assigning it any data yet.
-     * This is used to predefine argument sizes, typically before a kernel is used, so that the
-     * values can be updated at runtime. This makes calling code more concise as the size value
-     * does not need to be passed in.
-     *
-     * @param pos argument position
-     * @param size size of the memory buffer being passed for the argument
-     */
-    public void def_arg(int pos, long size)
-    {
-        arg_sizes[pos] = size;
     }
 
     /**
