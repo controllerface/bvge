@@ -52,7 +52,7 @@ public class HumanoidRenderer extends GameSystem
     //  are tied directly to the GPU class, but in the future it will probably be a good idea to
     //  consider allowing individual classes to have private kernels. It will increase efficiency,
     //  especially if multiple classes end up needing the same kernel calls a lot.
-    private cl_mem query;
+    private long query_ptr;
     private cl_mem counters;
     private cl_mem total;
     private cl_mem offsets;
@@ -80,7 +80,7 @@ public class HumanoidRenderer extends GameSystem
         }
 
         total = GPU.cl_new_pinned_int();
-        query = GPU.new_mutable_buffer(mesh_size, Pointer.to(raw_query));
+        query_ptr = GPU.new_mutable_buffer(raw_query);
         counters = GPU.new_empty_buffer(mesh_size);
         offsets = GPU.new_empty_buffer(mesh_size);
         mesh_transfer = GPU.new_empty_buffer(ELEMENT_BUFFER_SIZE * 2);
@@ -123,7 +123,7 @@ public class HumanoidRenderer extends GameSystem
         GPU.clear_buffer(total, Sizeof.cl_int);
         GPU.clear_buffer(mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
 
-        GPU.GL_count_mesh_instances(query, counters, total, mesh_count);
+        GPU.GL_count_mesh_instances(query_ptr, counters, total, mesh_count);
         GPU.GL_scan_mesh_offsets(counters, offsets, mesh_count);
 
         int total_instances = GPU.cl_read_pinned_int(total);
@@ -135,7 +135,7 @@ public class HumanoidRenderer extends GameSystem
         long data_size = (long)total_instances * Sizeof.cl_int4;
         var details_b = GPU.new_empty_buffer(data_size);
 
-        GPU.GL_write_mesh_details(query, counters, offsets, details_b, mesh_count);
+        GPU.GL_write_mesh_details(query_ptr, counters, offsets, details_b, mesh_count);
         GPU.GL_count_mesh_batches(details_b, total, total_instances, Constants.Rendering.MAX_BATCH_SIZE);
 
         int total_batches = GPU.cl_read_pinned_int(total);
@@ -186,7 +186,7 @@ public class HumanoidRenderer extends GameSystem
     public void shutdown()
     {
         GPU.release_buffer(total);
-        GPU.release_buffer(query);
+        GPU.release_buffer(query_ptr);
         GPU.release_buffer(counters);
         GPU.release_buffer(offsets);
         GPU.release_buffer(mesh_transfer);
