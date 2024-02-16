@@ -67,7 +67,7 @@ public abstract class GPUKernel<E extends Enum<E> & GPUKernel.GPUKernelArg>
     public GPUKernel<?> mem_arg(Enum<?> val, GPUMemory gpu_memory)
     {
         def_arg(val.ordinal(), Sizeof.cl_mem);
-        ptr_arg(val.ordinal(), gpu_memory.memory().getNativePointer());
+        ptr_arg(val.ordinal(), gpu_memory.pointer());
         return this;
     }
 

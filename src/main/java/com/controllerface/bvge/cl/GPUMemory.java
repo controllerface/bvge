@@ -1,20 +1,16 @@
 package com.controllerface.bvge.cl;
 
-import org.jocl.Pointer;
 import org.jocl.cl_mem;
-
-import static org.jocl.CL.*;
+import org.lwjgl.opencl.CL12;
 
 public class GPUMemory
 {
     private final cl_mem src;
-    private final Pointer pointer;
     private boolean released = false;
 
     public GPUMemory(cl_mem src)
     {
         this.src = src;
-        this.pointer = Pointer.to(this.src);
     }
 
     public cl_mem memory()
@@ -22,16 +18,16 @@ public class GPUMemory
         return src;
     }
 
-    public Pointer pointer()
+    public long pointer()
     {
-        return pointer;
+        return src.getNativePointer();
     }
 
     public void release()
     {
         if (!released)
         {
-            clReleaseMemObject(src);
+            CL12.clReleaseMemObject(src.getNativePointer());
             released = true;
         }
     }

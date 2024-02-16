@@ -756,7 +756,7 @@ public class GPU
 
         public void clear()
         {
-            cl_zero_buffer(this.memory.memory(), this.length);
+            cl_zero_buffer(this.memory.pointer(), this.length);
         }
     }
 
@@ -1664,10 +1664,10 @@ public class GPU
         return clCreateBuffer(context, FLAGS_READ_CPU_COPY, size, src, null);
     }
 
-    private static void cl_zero_buffer(cl_mem buffer, long buffer_size)
+    private static void cl_zero_buffer(long buffer_ptr, long buffer_size)
     {
         CL12.clEnqueueFillBuffer(command_queue_ptr,
-            buffer.getNativePointer(),
+            buffer_ptr,
             ZERO_PATTERN_BUFFER,
             0,
             buffer_size,
@@ -1886,7 +1886,7 @@ public class GPU
      */
     public static HullIndexData GL_hull_filter(int model_id)
     {
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
 
         Kernel.root_hull_count
             .ptr_arg(RootHullCount_k.Args.counter, counter_buffer.getNativePointer())
@@ -2244,7 +2244,7 @@ public class GPU
     public static float[] read_position(int armature_index)
     {
         var result_data = cl_new_pinned_buffer(Sizeof.cl_float2);
-        cl_zero_buffer(result_data, Sizeof.cl_float2);
+        cl_zero_buffer(result_data.getNativePointer(), Sizeof.cl_float2);
 
         Kernel.read_position
             .ptr_arg(ReadPosition_k.Args.output, result_data.getNativePointer())
@@ -2325,7 +2325,7 @@ public class GPU
 
         var bank_data = cl_new_buffer(bank_buf_size);
         var counts_data = cl_new_buffer(counts_buf_size);
-        cl_zero_buffer(counts_data, counts_buf_size);
+        cl_zero_buffer(counts_data.getNativePointer(), counts_buf_size);
 
         physics_buffer.key_counts = new GPUMemory(counts_data);
         physics_buffer.key_bank = new GPUMemory(bank_data);
@@ -2357,13 +2357,13 @@ public class GPU
         var counts_data = cl_new_buffer(counts_buf_size);
 
         // the counts buffer needs to start off filled with all zeroes
-        cl_zero_buffer(counts_data, counts_buf_size);
+        cl_zero_buffer(counts_data.getNativePointer(), counts_buf_size);
 
         physics_buffer.key_map = new GPUMemory(map_data);
 
         Kernel.build_key_map
             .ptr_arg(BuildKeyMap_k.Args.key_map, map_data.getNativePointer())
-            .ptr_arg(BuildKeyMap_k.Args.key_offsets, physics_buffer.key_offsets.memory().getNativePointer())
+            .ptr_arg(BuildKeyMap_k.Args.key_offsets, physics_buffer.key_offsets.pointer())
             .ptr_arg(BuildKeyMap_k.Args.key_counts, counts_data.getNativePointer())
             .set_arg(BuildKeyMap_k.Args.x_subdivisions, uniform_grid.getX_subdivisions())
             .set_arg(BuildKeyMap_k.Args.key_count_length, uniform_grid.get_directory_length())
@@ -2384,10 +2384,10 @@ public class GPU
 
         physics_buffer.in_bounds = new GPUMemory(inbound_data);
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
 
         Kernel.locate_in_bounds
-            .ptr_arg(LocateInBounds_k.Args.in_bounds, physics_buffer.in_bounds.memory().getNativePointer())
+            .ptr_arg(LocateInBounds_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
             .ptr_arg(LocateInBounds_k.Args.counter, counter_buffer.getNativePointer())
             .call(arg_long(hull_count));
 
@@ -2418,10 +2418,10 @@ public class GPU
         physics_buffer.candidate_counts = new GPUMemory(candidate_data);
 
         Kernel.count_candidates
-            .ptr_arg(CountCandidates_k.Args.in_bounds, physics_buffer.in_bounds.memory().getNativePointer())
-            .ptr_arg(CountCandidates_k.Args.key_bank, physics_buffer.key_bank.memory().getNativePointer())
-            .ptr_arg(CountCandidates_k.Args.key_counts, physics_buffer.key_counts.memory().getNativePointer())
-            .ptr_arg(CountCandidates_k.Args.candidates, physics_buffer.candidate_counts.memory().getNativePointer())
+            .ptr_arg(CountCandidates_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
+            .ptr_arg(CountCandidates_k.Args.key_bank, physics_buffer.key_bank.pointer())
+            .ptr_arg(CountCandidates_k.Args.key_counts, physics_buffer.key_counts.pointer())
+            .ptr_arg(CountCandidates_k.Args.candidates, physics_buffer.candidate_counts.pointer())
             .set_arg(CountCandidates_k.Args.x_subdivisions, physics_buffer.x_sub_divisions)
             .set_arg(CountCandidates_k.Args.key_count_length, physics_buffer.key_count_length)
             .call(arg_long(physics_buffer.get_candidate_buffer_count()));
@@ -2468,8 +2468,8 @@ public class GPU
 
         // as armatures are compacted, the shift buffers for the other components are updated
         Kernel.compact_armatures
-            .ptr_arg(CompactArmatures_k.Args.buffer_in, del_buffer_1.memory().getNativePointer())
-            .ptr_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.memory().getNativePointer());
+            .ptr_arg(CompactArmatures_k.Args.buffer_in, del_buffer_1.pointer())
+            .ptr_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.pointer());
 
         linearize_kernel(Kernel.compact_armatures, armature_count);
         linearize_kernel(Kernel.compact_bones, GPU.Memory.next_bone());
@@ -2495,17 +2495,17 @@ public class GPU
         var used_data = cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
 
         Kernel.aabb_collide
-            .ptr_arg(AABBCollide_k.Args.candidates, physics_buffer.candidate_counts.memory().getNativePointer())
-            .ptr_arg(AABBCollide_k.Args.match_offsets, physics_buffer.candidate_offsets.memory().getNativePointer())
-            .ptr_arg(AABBCollide_k.Args.key_map, physics_buffer.key_map.memory().getNativePointer())
-            .ptr_arg(AABBCollide_k.Args.key_bank, physics_buffer.key_bank.memory().getNativePointer())
-            .ptr_arg(AABBCollide_k.Args.key_counts, physics_buffer.key_counts.memory().getNativePointer())
-            .ptr_arg(AABBCollide_k.Args.key_offsets, physics_buffer.key_offsets.memory().getNativePointer())
-            .ptr_arg(AABBCollide_k.Args.matches, physics_buffer.matches.memory().getNativePointer())
-            .ptr_arg(AABBCollide_k.Args.used, physics_buffer.matches_used.memory().getNativePointer())
+            .ptr_arg(AABBCollide_k.Args.candidates, physics_buffer.candidate_counts.pointer())
+            .ptr_arg(AABBCollide_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
+            .ptr_arg(AABBCollide_k.Args.key_map, physics_buffer.key_map.pointer())
+            .ptr_arg(AABBCollide_k.Args.key_bank, physics_buffer.key_bank.pointer())
+            .ptr_arg(AABBCollide_k.Args.key_counts, physics_buffer.key_counts.pointer())
+            .ptr_arg(AABBCollide_k.Args.key_offsets, physics_buffer.key_offsets.pointer())
+            .ptr_arg(AABBCollide_k.Args.matches, physics_buffer.matches.pointer())
+            .ptr_arg(AABBCollide_k.Args.used, physics_buffer.matches_used.pointer())
             .ptr_arg(AABBCollide_k.Args.counter, counter_buffer.getNativePointer())
             .set_arg(AABBCollide_k.Args.x_subdivisions, physics_buffer.x_sub_divisions)
             .set_arg(AABBCollide_k.Args.key_count_length, physics_buffer.key_count_length)
@@ -2535,12 +2535,12 @@ public class GPU
         physics_buffer.candidates = new GPUMemory(finals_data);
 
         Kernel.finalize_candidates
-            .ptr_arg(FinalizeCandidates_k.Args.input_candidates, physics_buffer.candidate_counts.memory().getNativePointer())
-            .ptr_arg(FinalizeCandidates_k.Args.match_offsets, physics_buffer.candidate_offsets.memory().getNativePointer())
-            .ptr_arg(FinalizeCandidates_k.Args.matches, physics_buffer.matches.memory().getNativePointer())
-            .ptr_arg(FinalizeCandidates_k.Args.used, physics_buffer.matches_used.memory().getNativePointer())
+            .ptr_arg(FinalizeCandidates_k.Args.input_candidates, physics_buffer.candidate_counts.pointer())
+            .ptr_arg(FinalizeCandidates_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
+            .ptr_arg(FinalizeCandidates_k.Args.matches, physics_buffer.matches.pointer())
+            .ptr_arg(FinalizeCandidates_k.Args.used, physics_buffer.matches_used.pointer())
             .ptr_arg(FinalizeCandidates_k.Args.counter, counter_data.getNativePointer())
-            .ptr_arg(FinalizeCandidates_k.Args.final_candidates, physics_buffer.candidates.memory().getNativePointer())
+            .ptr_arg(FinalizeCandidates_k.Args.final_candidates, physics_buffer.candidates.pointer())
             .call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
         clReleaseMemObject(counter_data);
@@ -2553,7 +2553,7 @@ public class GPU
         // candidates are pairs of integer indices, so the global size is half the count
         long[] global_work_size = new long[]{candidates_size / 2};
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
 
         long max_point_count = physics_buffer.get_final_size()
             * 2  // there are two bodies per collision pair
@@ -2572,9 +2572,9 @@ public class GPU
         physics_buffer.reaction_index = new GPUMemory(index_data);
 
         Kernel.sat_collide
-            .ptr_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.memory().getNativePointer())
-            .ptr_arg(SatCollide_k.Args.reactions, physics_buffer.reactions_in.memory().getNativePointer())
-            .ptr_arg(SatCollide_k.Args.reaction_index, physics_buffer.reaction_index.memory().getNativePointer())
+            .ptr_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.pointer())
+            .ptr_arg(SatCollide_k.Args.reactions, physics_buffer.reactions_in.pointer())
+            .ptr_arg(SatCollide_k.Args.reaction_index, physics_buffer.reaction_index.pointer())
             .ptr_arg(SatCollide_k.Args.counter, counter_buffer.getNativePointer())
             .call(global_work_size);
 
@@ -2592,16 +2592,16 @@ public class GPU
     public static void sort_reactions()
     {
         Kernel.sort_reactions
-            .ptr_arg(SortReactions_k.Args.reactions_in, physics_buffer.reactions_in.memory().getNativePointer())
-            .ptr_arg(SortReactions_k.Args.reactions_out, physics_buffer.reactions_out.memory().getNativePointer())
-            .ptr_arg(SortReactions_k.Args.reaction_index, physics_buffer.reaction_index.memory().getNativePointer())
+            .ptr_arg(SortReactions_k.Args.reactions_in, physics_buffer.reactions_in.pointer())
+            .ptr_arg(SortReactions_k.Args.reactions_out, physics_buffer.reactions_out.pointer())
+            .ptr_arg(SortReactions_k.Args.reaction_index, physics_buffer.reaction_index.pointer())
             .call(arg_long(physics_buffer.get_reaction_count()));
     }
 
     public static void apply_reactions()
     {
         Kernel.apply_reactions
-            .ptr_arg(ApplyReactions_k.Args.reactions, physics_buffer.reactions_out.memory().getNativePointer())
+            .ptr_arg(ApplyReactions_k.Args.reactions, physics_buffer.reactions_out.pointer())
             .call(arg_long(GPU.Memory.next_point()));
     }
 
@@ -2888,7 +2888,7 @@ public class GPU
         long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
 
         var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 6);
-        cl_zero_buffer(size_data, Sizeof.cl_int * 6);
+        cl_zero_buffer(size_data.getNativePointer(), Sizeof.cl_int * 6);
 
         Kernel.scan_deletes_single_block_out
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data.getNativePointer())
@@ -2935,7 +2935,7 @@ public class GPU
         scan_int4(p_data2, part_size);
 
         var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 6);
-        cl_zero_buffer(size_data, Sizeof.cl_int * 6);
+        cl_zero_buffer(size_data.getNativePointer(), Sizeof.cl_int * 6);
 
         Kernel.complete_deletes_multi_block_out
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output, o1_data.getNativePointer())
@@ -2961,7 +2961,7 @@ public class GPU
     {
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
 
         Kernel.scan_candidates_single_block_out
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.input, d_data.getNativePointer())
@@ -2994,7 +2994,7 @@ public class GPU
 
         scan_int(p_data, part_size);
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
 
         Kernel.complete_candidates_multi_block_out
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.input, d_data.getNativePointer())
@@ -3014,7 +3014,7 @@ public class GPU
     {
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
 
         Kernel.scan_bounds_single_block
             .ptr_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, input_data.getNativePointer())
@@ -3044,7 +3044,7 @@ public class GPU
 
         scan_int(p_data, part_size);
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
 
         Kernel.complete_bounds_multi_block
             .ptr_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, input_data.getNativePointer())
@@ -3077,13 +3077,13 @@ public class GPU
     public static cl_mem new_empty_buffer(long size)
     {
         var new_buffer = cl_new_buffer(size);
-        cl_zero_buffer(new_buffer, size);
+        cl_zero_buffer(new_buffer.getNativePointer(), size);
         return new_buffer;
     }
 
     public static void clear_buffer(cl_mem mem, long size)
     {
-        cl_zero_buffer(mem, size);
+        cl_zero_buffer(mem.getNativePointer(), size);
     }
 
     public static void release_buffer(cl_mem mem)
