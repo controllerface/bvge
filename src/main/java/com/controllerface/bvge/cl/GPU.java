@@ -111,7 +111,7 @@ public class GPU
      * There are several kernels that use an atomic counter, so rather than re-allocate a new
      * buffer for every call, this buffer is reused in all kernels that need a counter.
      */
-    private static cl_mem counter_buffer = null;
+    private static long counter_buffer = -1;
 
     //#endregion
 
@@ -1728,16 +1728,16 @@ public class GPU
         return xa;
     }
 
-    public static cl_mem cl_new_pinned_int()
+    public static long cl_new_pinned_int()
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        return clCreateBuffer(context, flags, Sizeof.cl_int, null, null);
+        return CL12.clCreateBuffer(context.getNativePointer(), flags, Sizeof.cl_int, null);
     }
 
-    public static int cl_read_pinned_int(cl_mem pinned)
+    public static int cl_read_pinned_int(long pinned_ptr)
     {
         var out = CL12.clEnqueueMapBuffer(command_queue.getNativePointer(),
-            pinned.getNativePointer(),
+            pinned_ptr,
             true,
             CL12.CL_MAP_READ,
             0,
@@ -1749,7 +1749,7 @@ public class GPU
 
         assert out != null;
         int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned.getNativePointer(), out, null, null);
+        CL12.clEnqueueUnmapMemObject(command_queue.getNativePointer(), pinned_ptr, out, null, null);
         return result;
     }
 
@@ -1884,10 +1884,10 @@ public class GPU
      */
     public static HullIndexData GL_hull_filter(int model_id)
     {
-        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.root_hull_count
-            .ptr_arg(RootHullCount_k.Args.counter, counter_buffer.getNativePointer())
+            .ptr_arg(RootHullCount_k.Args.counter, counter_buffer)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .call(arg_long(GPU.Memory.next_armature()));
 
@@ -1959,12 +1959,12 @@ public class GPU
             .call(arg_long(batch_size));
     }
 
-    public static void GL_count_mesh_instances(long query_ptr, long counters_ptr, cl_mem total, int count)
+    public static void GL_count_mesh_instances(long query_ptr, long counters_ptr, long total_ptr, int count)
     {
         Kernel.count_mesh_instances
             .ptr_arg(CountMeshInstances_k.Args.counters, counters_ptr)
             .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
-            .ptr_arg(CountMeshInstances_k.Args.total, total.getNativePointer())
+            .ptr_arg(CountMeshInstances_k.Args.total, total_ptr)
             .set_arg(CountMeshInstances_k.Args.count, count)
             .call(arg_long(GPU.Memory.next_hull()));
     }
@@ -1989,11 +1989,11 @@ public class GPU
             .call(arg_long(GPU.Memory.next_hull()));
     }
 
-    public static void GL_count_mesh_batches(long mesh_details_ptr, cl_mem total, int count, int max_per_batch)
+    public static void GL_count_mesh_batches(long mesh_details_ptr, long total_ptr, int count, int max_per_batch)
     {
         Kernel.count_mesh_batches
             .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
-            .ptr_arg(CountMeshBatches_k.Args.total, total.getNativePointer())
+            .ptr_arg(CountMeshBatches_k.Args.total, total_ptr)
             .set_arg(CountMeshBatches_k.Args.max_per_batch, max_per_batch)
             .set_arg(CountMeshBatches_k.Args.count, count)
             .call(global_single_size);
@@ -2382,11 +2382,11 @@ public class GPU
 
         physics_buffer.in_bounds = new GPUMemory(inbound_data);
 
-        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.locate_in_bounds
             .ptr_arg(LocateInBounds_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
-            .ptr_arg(LocateInBounds_k.Args.counter, counter_buffer.getNativePointer())
+            .ptr_arg(LocateInBounds_k.Args.counter, counter_buffer)
             .call(arg_long(hull_count));
 
         int size = cl_read_pinned_int(counter_buffer);
@@ -2491,7 +2491,7 @@ public class GPU
         var used_data = cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
-        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.aabb_collide
             .ptr_arg(AABBCollide_k.Args.candidates, physics_buffer.candidate_counts.pointer())
@@ -2502,7 +2502,7 @@ public class GPU
             .ptr_arg(AABBCollide_k.Args.key_offsets, physics_buffer.key_offsets.pointer())
             .ptr_arg(AABBCollide_k.Args.matches, physics_buffer.matches.pointer())
             .ptr_arg(AABBCollide_k.Args.used, physics_buffer.matches_used.pointer())
-            .ptr_arg(AABBCollide_k.Args.counter, counter_buffer.getNativePointer())
+            .ptr_arg(AABBCollide_k.Args.counter, counter_buffer)
             .set_arg(AABBCollide_k.Args.x_subdivisions, physics_buffer.x_sub_divisions)
             .set_arg(AABBCollide_k.Args.key_count_length, physics_buffer.key_count_length)
             .call(arg_long(physics_buffer.get_candidate_buffer_count()));
@@ -2548,7 +2548,7 @@ public class GPU
         // candidates are pairs of integer indices, so the global size is half the count
         long[] global_work_size = new long[]{candidates_size / 2};
 
-        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         long max_point_count = physics_buffer.get_final_size()
             * 2  // there are two bodies per collision pair
@@ -2570,7 +2570,7 @@ public class GPU
             .ptr_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.pointer())
             .ptr_arg(SatCollide_k.Args.reactions, physics_buffer.reactions_in.pointer())
             .ptr_arg(SatCollide_k.Args.reaction_index, physics_buffer.reaction_index.pointer())
-            .ptr_arg(SatCollide_k.Args.counter, counter_buffer.getNativePointer())
+            .ptr_arg(SatCollide_k.Args.counter, counter_buffer)
             .call(global_work_size);
 
         int size = cl_read_pinned_int(counter_buffer);
@@ -2956,12 +2956,12 @@ public class GPU
     {
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
 
-        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.scan_candidates_single_block_out
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.output, o_data_ptr)
-            .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.sz, counter_buffer.getNativePointer())
+            .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.sz, counter_buffer)
             .loc_arg(ScanCandidatesSingleBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.n, n)
             .call(local_work_default, local_work_default);
@@ -2989,12 +2989,12 @@ public class GPU
 
         scan_int(p_data, part_size);
 
-        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.complete_candidates_multi_block_out
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.input, data_ptr)
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.output, o_data_ptr)
-            .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.sz, counter_buffer.getNativePointer())
+            .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.sz, counter_buffer)
             .loc_arg(CompleteCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.part, p_data)
             .set_arg(CompleteCandidatesMultiBlockOut_k.Args.n, n)
@@ -3009,11 +3009,11 @@ public class GPU
     {
         long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
 
-        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.scan_bounds_single_block
             .ptr_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, data_ptr)
-            .ptr_arg(ScanBoundsSingleBlock_k.Args.sz, counter_buffer.getNativePointer())
+            .ptr_arg(ScanBoundsSingleBlock_k.Args.sz, counter_buffer)
             .loc_arg(ScanBoundsSingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanBoundsSingleBlock_k.Args.n, n)
             .call(local_work_default, local_work_default);
@@ -3039,11 +3039,11 @@ public class GPU
 
         scan_int(p_data, part_size);
 
-        cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
 
         Kernel.complete_bounds_multi_block
             .ptr_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, data_ptr)
-            .ptr_arg(CompleteBoundsMultiBlock_k.Args.sz, counter_buffer.getNativePointer())
+            .ptr_arg(CompleteBoundsMultiBlock_k.Args.sz, counter_buffer)
             .loc_arg(CompleteBoundsMultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteBoundsMultiBlock_k.Args.part, p_data)
             .set_arg(CompleteBoundsMultiBlock_k.Args.n, n)

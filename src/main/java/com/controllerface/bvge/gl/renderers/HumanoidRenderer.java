@@ -54,7 +54,7 @@ public class HumanoidRenderer extends GameSystem
     //  especially if multiple classes end up needing the same kernel calls a lot.
     private long query_ptr;
     private long counters;
-    private cl_mem total;
+    private long total;
     private long offsets;
     private long mesh_transfer;
 
@@ -120,7 +120,7 @@ public class HumanoidRenderer extends GameSystem
     {
         GPU.clear_buffer(counters, mesh_size);
         GPU.clear_buffer(offsets, mesh_size);
-        GPU.clear_buffer(total.getNativePointer(), Sizeof.cl_int);
+        GPU.clear_buffer(total, Sizeof.cl_int);
         GPU.clear_buffer(mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
 
         GPU.GL_count_mesh_instances(query_ptr, counters, total, mesh_count);
