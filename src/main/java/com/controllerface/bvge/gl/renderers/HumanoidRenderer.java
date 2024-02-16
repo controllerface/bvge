@@ -1,5 +1,6 @@
 package com.controllerface.bvge.gl.renderers;
 
+import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
@@ -9,7 +10,6 @@ import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
-import org.jocl.Sizeof;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
@@ -69,7 +69,7 @@ public class HumanoidRenderer extends GameSystem
         this.texture = model.textures().get(0);
 
         mesh_count = model.meshes().length;
-        mesh_size = (long)mesh_count * Sizeof.cl_int;
+        mesh_size = (long)mesh_count * CLSize.cl_int;
         int[] raw_query = new int[mesh_count];
         for (int i = 0; i < model.meshes().length; i++)
         {
@@ -118,7 +118,7 @@ public class HumanoidRenderer extends GameSystem
     {
         GPU.clear_buffer(counters, mesh_size);
         GPU.clear_buffer(offsets, mesh_size);
-        GPU.clear_buffer(total, Sizeof.cl_int);
+        GPU.clear_buffer(total, CLSize.cl_int);
         GPU.clear_buffer(mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
 
         GPU.GL_count_mesh_instances(query_ptr, counters, total, mesh_count);
@@ -130,14 +130,14 @@ public class HumanoidRenderer extends GameSystem
             return;
         }
 
-        long data_size = (long)total_instances * Sizeof.cl_int4;
+        long data_size = (long)total_instances * CLSize.cl_int4;
         var details_b = GPU.new_empty_buffer(data_size);
 
         GPU.GL_write_mesh_details(query_ptr, counters, offsets, details_b, mesh_count);
         GPU.GL_count_mesh_batches(details_b, total, total_instances, Constants.Rendering.MAX_BATCH_SIZE);
 
         int total_batches = GPU.cl_read_pinned_int(total);
-        long batch_index_size = (long) total_batches * Sizeof.cl_int;
+        long batch_index_size = (long) total_batches * CLSize.cl_int;
 
         var batch_offset_b = GPU.new_empty_buffer(batch_index_size);
 

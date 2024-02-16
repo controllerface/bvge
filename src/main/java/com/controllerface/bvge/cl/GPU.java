@@ -4,7 +4,6 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.physics.PhysicsBuffer;
 import com.controllerface.bvge.physics.UniformGrid;
-import org.jocl.Sizeof;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opencl.CL12;
 import org.lwjgl.opencl.CL12GL;
@@ -343,7 +342,7 @@ public class GPU
          * x: x position
          * y: y position
          */
-        vertex_references(Sizeof.cl_float2),
+        vertex_references(CLSize.cl_float2),
 
         /**
          * x: bone 1 weight
@@ -351,19 +350,19 @@ public class GPU
          * z: bone 3 weight
          * w: bone 4 weight
          */
-        vertex_weights(Sizeof.cl_float4),
+        vertex_weights(CLSize.cl_float4),
 
         /**
          * x: u coordinate
          * y: v coordinate
          */
-        texture_uvs(Sizeof.cl_float2),
+        texture_uvs(CLSize.cl_float2),
 
         /**
          * x: start UV index
          * y: end UV index
          */
-        uv_tables(Sizeof.cl_int2),
+        uv_tables(CLSize.cl_int2),
 
         /**
          * s0: (m00) transformation matrix column 1 row 1
@@ -383,7 +382,7 @@ public class GPU
          * sE: (m32) transformation matrix column 4 row 3
          * sF: (m33) transformation matrix column 4 row 4
          */
-        model_transforms(Sizeof.cl_float16),
+        model_transforms(CLSize.cl_float16),
 
         /**
          * s0: (m00) transformation matrix column 1 row 1
@@ -403,7 +402,7 @@ public class GPU
          * sE: (m32) transformation matrix column 4 row 3
          * sF: (m33) transformation matrix column 4 row 4
          */
-        bone_references(Sizeof.cl_float16),
+        bone_references(CLSize.cl_float16),
 
         /**
          * s0: (m00) transformation matrix column 1 row 1
@@ -423,12 +422,12 @@ public class GPU
          * sE: (m32) transformation matrix column 4 row 3
          * sF: (m33) transformation matrix column 4 row 4
          */
-        bone_bind_poses(Sizeof.cl_float16),
+        bone_bind_poses(CLSize.cl_float16),
 
         /**
          * value: reference index of the parent bone bind pose
          */
-        bone_bind_parents(Sizeof.cl_int),
+        bone_bind_parents(CLSize.cl_int),
 
         /**
          * x: start vertex index
@@ -436,7 +435,7 @@ public class GPU
          * z: start face index
          * w: end face index
          */
-        mesh_references(Sizeof.cl_int4),
+        mesh_references(CLSize.cl_int4),
 
         /**
          * x: vertex 1 index
@@ -444,7 +443,7 @@ public class GPU
          * z: vertex 3 index
          * w: parent reference mesh ID
          */
-        mesh_faces(Sizeof.cl_int4),
+        mesh_faces(CLSize.cl_int4),
 
         /**
          * x: vector x / quaternion x
@@ -452,47 +451,47 @@ public class GPU
          * z: vector z / quaternion z
          * w: vector unused / quaternion w
          */
-        key_frames(Sizeof.cl_float4),
+        key_frames(CLSize.cl_float4),
 
         /**
          * value: key frame timestamp
          */
-        frame_times(Sizeof.cl_double),
+        frame_times(CLSize.cl_double),
 
         /**
          * x: position channel start index
          * y: position channel end index
          */
-        bone_pos_channel_tables(Sizeof.cl_int2),
+        bone_pos_channel_tables(CLSize.cl_int2),
 
         /**
          * x: rotation channel start index
          * y: rotation channel end index
          */
-        bone_rot_channel_tables(Sizeof.cl_int2),
+        bone_rot_channel_tables(CLSize.cl_int2),
 
         /**
          * x: scaling channel start index
          * y: scaling channel end index
          */
-        bone_scl_channel_tables(Sizeof.cl_int2),
+        bone_scl_channel_tables(CLSize.cl_int2),
 
         /**
          * x: bone channel start index
          * y: bone channel end index
          */
-        bone_channel_tables(Sizeof.cl_int2),
+        bone_channel_tables(CLSize.cl_int2),
 
         /**
          * x: animation duration
          * y: ticks per second (FPS)
          */
-        animation_timings(Sizeof.cl_double2),
+        animation_timings(CLSize.cl_double2),
 
         /**
          * value: animation timing index
          */
-        animation_timing_indices(Sizeof.cl_int),
+        animation_timing_indices(CLSize.cl_int),
 
         /*
         Points
@@ -504,22 +503,22 @@ public class GPU
          * z: previous x position
          * w: previous y position
          */
-        points(Sizeof.cl_float4),
+        points(CLSize.cl_float4),
 
         /**
          * value: reaction count
          */
-        point_reactions(Sizeof.cl_int),
+        point_reactions(CLSize.cl_int),
 
         /**
          * value: reaction buffer offset
          */
-        point_offsets(Sizeof.cl_int),
+        point_offsets(CLSize.cl_int),
 
         /**
          * value: antigravity magnitude
          */
-        point_anti_gravity(Sizeof.cl_float),
+        point_anti_gravity(CLSize.cl_float),
 
         /**
          * x: reference vertex index
@@ -527,7 +526,7 @@ public class GPU
          * z: vertex flags (bit field)
          * w: (unused)
          */
-        point_vertex_tables(Sizeof.cl_int4),
+        point_vertex_tables(CLSize.cl_int4),
 
         /**
          * x: bone 1 instance id
@@ -535,7 +534,7 @@ public class GPU
          * z: bone 3 instance id
          * w: bone 4 instance id
          */
-        point_bone_tables(Sizeof.cl_int4),
+        point_bone_tables(CLSize.cl_int4),
 
         /*
         Edges
@@ -548,7 +547,7 @@ public class GPU
          * w: edge flags (bit-field)
          * note: x, y, and w values are cast to int during use
          */
-        edges(Sizeof.cl_float4),
+        edges(CLSize.cl_float4),
 
         /*
         Hulls
@@ -560,18 +559,18 @@ public class GPU
          * z: scale x
          * w: scale y
          */
-        hulls(Sizeof.cl_float4),
+        hulls(CLSize.cl_float4),
 
         /**
          * value: reference mesh id
          */
-        hull_mesh_ids(Sizeof.cl_int),
+        hull_mesh_ids(CLSize.cl_int),
 
         /**
          * x: initial reference angle
          * y: current rotation
          */
-        hull_rotation(Sizeof.cl_float2),
+        hull_rotation(CLSize.cl_float2),
 
         /**
          * x: start point index
@@ -579,7 +578,7 @@ public class GPU
          * z: start edge index
          * w: end edge index
          */
-        hull_element_tables(Sizeof.cl_int4),
+        hull_element_tables(CLSize.cl_int4),
 
         /**
          * x: hull flags (bit-field)
@@ -587,7 +586,7 @@ public class GPU
          * z: start bone
          * w: end bone
          */
-        hull_flags(Sizeof.cl_int4),
+        hull_flags(CLSize.cl_int4),
 
         /**
          * x: corner x position
@@ -595,7 +594,7 @@ public class GPU
          * z: width
          * w: height
          */
-        aabb(Sizeof.cl_float4),
+        aabb(CLSize.cl_float4),
 
         /**
          * x: minimum x key index
@@ -603,13 +602,13 @@ public class GPU
          * z: minimum y key index
          * w: maximum y key index
          */
-        aabb_index(Sizeof.cl_int4),
+        aabb_index(CLSize.cl_int4),
 
         /**
          * x: key bank offset
          * y: key bank size
          */
-        aabb_key_table(Sizeof.cl_int2),
+        aabb_key_table(CLSize.cl_int2),
 
         /*
         Bones
@@ -633,13 +632,13 @@ public class GPU
          * sE: (m32) transformation matrix column 4 row 3
          * sF: (m33) transformation matrix column 4 row 4
          */
-        bone_instances(Sizeof.cl_float16),
+        bone_instances(CLSize.cl_float16),
 
         /**
          * x: bone inverse bind pose index (mesh-space)
          * y: bone bind pose index (model space)
          */
-        bone_index_tables(Sizeof.cl_int2),
+        bone_index_tables(CLSize.cl_int2),
 
 
         /**
@@ -660,13 +659,13 @@ public class GPU
          * sE: (m32) transformation matrix column 4 row 3
          * sF: (m33) transformation matrix column 4 row 4
          */
-        armatures_bones(Sizeof.cl_float16),
+        armatures_bones(CLSize.cl_float16),
 
         /**
          * x: bind pose reference id
          * y: armature bone parent id
          */
-        bone_bind_tables(Sizeof.cl_int2),
+        bone_bind_tables(CLSize.cl_int2),
 
         /*
         Armatures
@@ -678,7 +677,7 @@ public class GPU
          * z: previous x position
          * w: previous y position
          */
-        armatures(Sizeof.cl_float4),
+        armatures(CLSize.cl_float4),
 
         /**
          * x: root hull index
@@ -686,28 +685,28 @@ public class GPU
          * z: armature flags (bit-field)
          * w: model transform index
          */
-        armature_flags(Sizeof.cl_int4),
+        armature_flags(CLSize.cl_int4),
 
         /**
          * x: current x acceleration
          * y: current y acceleration
          */
-        armature_accel(Sizeof.cl_float2),
+        armature_accel(CLSize.cl_float2),
 
         /**
          * value: mass of the armature
          */
-        armature_mass(Sizeof.cl_float),
+        armature_mass(CLSize.cl_float),
 
         /**
          * value: the currently selected animation index
          */
-        armature_animation_indices(Sizeof.cl_int),
+        armature_animation_indices(CLSize.cl_int),
 
         /**
          * value: the last rendered timestamp
          */
-        armature_animation_elapsed(Sizeof.cl_double),
+        armature_animation_elapsed(CLSize.cl_double),
 
         /**
          * x: start hull index
@@ -715,7 +714,7 @@ public class GPU
          * z: start bone anim index
          * w: end bone anim index
          */
-        armature_hull_table(Sizeof.cl_int4),
+        armature_hull_table(CLSize.cl_int4),
 
         /*
         Buffer Compaction
@@ -728,11 +727,11 @@ public class GPU
          * that will be shifted. I.e. every bone in the bone buffer has a corresponding entry in the
          * bone shift buffer. Points, edges, and hulls work the same way.
          */
-        bone_shift(Sizeof.cl_int),
-        point_shift(Sizeof.cl_int),
-        edge_shift(Sizeof.cl_int),
-        hull_shift(Sizeof.cl_int),
-        bone_bind_shift(Sizeof.cl_int),
+        bone_shift(CLSize.cl_int),
+        point_shift(CLSize.cl_int),
+        edge_shift(CLSize.cl_int),
+        hull_shift(CLSize.cl_int),
+        bone_bind_shift(CLSize.cl_int),
 
         ;
 
@@ -1723,7 +1722,7 @@ public class GPU
     public static long cl_new_pinned_int()
     {
         long flags = CL12.CL_MEM_HOST_READ_ONLY | CL12.CL_MEM_ALLOC_HOST_PTR;
-        return CL12.clCreateBuffer(context_ptr, flags, Sizeof.cl_int, null);
+        return CL12.clCreateBuffer(context_ptr, flags, CLSize.cl_int, null);
     }
 
     public static int cl_read_pinned_int(long pinned_ptr)
@@ -1733,7 +1732,7 @@ public class GPU
             true,
             CL12.CL_MAP_READ,
             0,
-            Sizeof.cl_int,
+            CLSize.cl_int,
             null,
             null,
             (IntBuffer) null,
@@ -1877,7 +1876,7 @@ public class GPU
      */
     public static HullIndexData GL_hull_filter(int model_id)
     {
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, CLSize.cl_int);
 
         Kernel.root_hull_count
             .ptr_arg(RootHullCount_k.Args.counter, counter_buffer)
@@ -1891,7 +1890,7 @@ public class GPU
             return new HullIndexData(-1, final_count);
         }
 
-        long final_buffer_size = (long) Sizeof.cl_int * final_count;
+        long final_buffer_size = (long) CLSize.cl_int * final_count;
         var hulls_out = cl_new_buffer(final_buffer_size);
 
         int[] counter_value = new int[]{ 0 };
@@ -2226,26 +2225,26 @@ public class GPU
 //        var pnt_index = Pointer.to(arg_int(hull_index));
 //        var pnt_angle = Pointer.to(arg_float(angle));
 //
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 0, Sizeof.cl_mem, Memory.hulls.gpu.pointer());
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 1, Sizeof.cl_mem, Memory.hull_element_table.gpu.pointer());
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 2, Sizeof.cl_mem, Memory.points.gpu.pointer());
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 3, Sizeof.cl_int, pnt_index);
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 4, Sizeof.cl_float, pnt_angle);
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 0, CLSize.cl_mem, Memory.hulls.gpu.pointer());
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 1, CLSize.cl_mem, Memory.hull_element_table.gpu.pointer());
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 2, CLSize.cl_mem, Memory.points.gpu.pointer());
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 3, CLSize.cl_int, pnt_index);
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 4, CLSize.cl_float, pnt_angle);
 //
 //        k_call(command_queue, _k.get(Kernel.rotate_hull), global_single_size);
     }
 
     public static float[] read_position(int armature_index)
     {
-        var result_data = cl_new_pinned_buffer(Sizeof.cl_float2);
-        cl_zero_buffer(result_data, Sizeof.cl_float2);
+        var result_data = cl_new_pinned_buffer(CLSize.cl_float2);
+        cl_zero_buffer(result_data, CLSize.cl_float2);
 
         Kernel.read_position
             .ptr_arg(ReadPosition_k.Args.output, result_data)
             .set_arg(ReadPosition_k.Args.target, armature_index)
             .call(global_single_size);
 
-        float[] result = cl_read_pinned_float_buffer(result_data, Sizeof.cl_float2, 2);
+        float[] result = cl_read_pinned_float_buffer(result_data, CLSize.cl_float2, 2);
         CL12.clReleaseMemObject(result_data);
         return result;
     }
@@ -2311,8 +2310,8 @@ public class GPU
             return;
         }
 
-        long bank_buf_size = (long) Sizeof.cl_int * uniform_grid.get_key_bank_size();
-        long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.get_directory_length();
+        long bank_buf_size = (long) CLSize.cl_int * uniform_grid.get_key_bank_size();
+        long counts_buf_size = (long) CLSize.cl_int * uniform_grid.get_directory_length();
 
         var bank_data = cl_new_buffer(bank_buf_size);
         var counts_data = cl_new_buffer(counts_buf_size);
@@ -2333,7 +2332,7 @@ public class GPU
     public static void calculate_map_offsets(UniformGrid uniform_grid)
     {
         int n = uniform_grid.get_directory_length();
-        long data_buf_size = (long) Sizeof.cl_int * n;
+        long data_buf_size = (long) CLSize.cl_int * n;
         var o_data = cl_new_buffer(data_buf_size);
         physics_buffer.key_offsets = new GPUMemory(o_data);
         scan_int_out(physics_buffer.key_counts.pointer(), o_data, n);
@@ -2341,8 +2340,8 @@ public class GPU
 
     public static void build_key_map(UniformGrid uniform_grid)
     {
-        long map_buf_size = (long) Sizeof.cl_int * uniform_grid.getKey_map_size();
-        long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.get_directory_length();
+        long map_buf_size = (long) CLSize.cl_int * uniform_grid.getKey_map_size();
+        long counts_buf_size = (long) CLSize.cl_int * uniform_grid.get_directory_length();
 
         var map_data = cl_new_buffer(map_buf_size);
         var counts_data = cl_new_buffer(counts_buf_size);
@@ -2370,12 +2369,12 @@ public class GPU
         physics_buffer.x_sub_divisions = uniform_grid.getX_subdivisions();
         physics_buffer.key_count_length = uniform_grid.get_directory_length();
 
-        long inbound_buf_size = (long) Sizeof.cl_int * hull_count;
+        long inbound_buf_size = (long) CLSize.cl_int * hull_count;
         var inbound_data = cl_new_buffer(inbound_buf_size);
 
         physics_buffer.in_bounds = new GPUMemory(inbound_data);
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, CLSize.cl_int);
 
         Kernel.locate_in_bounds
             .ptr_arg(LocateInBounds_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
@@ -2403,7 +2402,7 @@ public class GPU
 
     public static void calculate_match_candidates()
     {
-        long candidate_buf_size = (long) Sizeof.cl_int2 * physics_buffer.get_candidate_buffer_count();
+        long candidate_buf_size = (long) CLSize.cl_int2 * physics_buffer.get_candidate_buffer_count();
         var candidate_data = cl_new_buffer(candidate_buf_size);
         physics_buffer.candidate_counts = new GPUMemory(candidate_data);
 
@@ -2420,7 +2419,7 @@ public class GPU
     public static void calculate_match_offsets()
     {
         int buffer_count = physics_buffer.get_candidate_buffer_count();
-        long offset_buf_size = (long) Sizeof.cl_int * buffer_count;
+        long offset_buf_size = (long) CLSize.cl_int * buffer_count;
         var offset_data = cl_new_buffer(offset_buf_size);
         physics_buffer.candidate_offsets = new GPUMemory(offset_data);
         int match_count = scan_key_candidates(physics_buffer.candidate_counts.pointer(), offset_data, buffer_count);
@@ -2430,8 +2429,8 @@ public class GPU
     public static void delete_and_compact()
     {
         int armature_count = GPU.Memory.next_armature();
-        long output_buf_size = (long) Sizeof.cl_int2 * armature_count;
-        long output_buf_size2 = (long) Sizeof.cl_int4 * armature_count;
+        long output_buf_size = (long) CLSize.cl_int2 * armature_count;
+        long output_buf_size2 = (long) CLSize.cl_int4 * armature_count;
 
         var output_buf_data = cl_new_buffer(output_buf_size);
         var output_buf_data2 = cl_new_buffer(output_buf_size2);
@@ -2476,15 +2475,15 @@ public class GPU
 
     public static void aabb_collide()
     {
-        long matches_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_match_count();
+        long matches_buf_size = (long) CLSize.cl_int * physics_buffer.get_candidate_match_count();
         var matches_data = cl_new_buffer(matches_buf_size);
         physics_buffer.matches = new GPUMemory(matches_data);
 
-        long used_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_buffer_count();
+        long used_buf_size = (long) CLSize.cl_int * physics_buffer.get_candidate_buffer_count();
         var used_data = cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, CLSize.cl_int);
 
         Kernel.aabb_collide
             .ptr_arg(AABBCollide_k.Args.candidates, physics_buffer.candidate_counts.pointer())
@@ -2512,7 +2511,7 @@ public class GPU
         }
 
         // create an empty buffer that the kernel will use to store finalized candidates
-        long final_buf_size = (long) Sizeof.cl_int2 * physics_buffer.get_candidate_count();
+        long final_buf_size = (long) CLSize.cl_int2 * physics_buffer.get_candidate_count();
         var finals_data = cl_new_buffer(final_buf_size);
 
         // the kernel will use this value as an internal atomic counter, always initialize to zero
@@ -2536,20 +2535,20 @@ public class GPU
 
     public static void sat_collide()
     {
-        int candidates_size = (int) physics_buffer.get_final_size() / Sizeof.cl_int;
+        int candidates_size = (int) physics_buffer.get_final_size() / CLSize.cl_int;
 
         // candidates are pairs of integer indices, so the global size is half the count
         long[] global_work_size = new long[]{candidates_size / 2};
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, CLSize.cl_int);
 
         long max_point_count = physics_buffer.get_final_size()
             * 2  // there are two bodies per collision pair
             * 2; // assume worst case is 2 points per body
 
         // sizes for the reaction buffers
-        long reaction_buf_size = (long) Sizeof.cl_float2 * max_point_count;
-        long index_buf_size = (long) Sizeof.cl_int * max_point_count;
+        long reaction_buf_size = (long) CLSize.cl_float2 * max_point_count;
+        long index_buf_size = (long) CLSize.cl_int * max_point_count;
 
         var reaction_data = cl_new_buffer(reaction_buf_size);
         var reaction_data_out = cl_new_buffer(reaction_buf_size);
@@ -2711,7 +2710,7 @@ public class GPU
 
     private static void scan_single_block_int(long data_ptr, int n)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
         Kernel.scan_int_single_block
             .ptr_arg(ScanIntSingleBlock_k.Args.data, data_ptr)
@@ -2722,11 +2721,11 @@ public class GPU
 
     private static void scan_multi_block_int(long data_ptr, int n, int k)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
         long gx = k * max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
-        long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
+        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
 
         var part_data = cl_new_buffer(part_buf_size);
 
@@ -2751,7 +2750,7 @@ public class GPU
 
     private static void scan_single_block_int2(long data_ptr, int n)
     {
-        long local_buffer_size = Sizeof.cl_int2 * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
 
         Kernel.scan_int2_single_block
             .ptr_arg(ScanInt2SingleBlock_k.Args.data, data_ptr)
@@ -2762,11 +2761,11 @@ public class GPU
 
     private static void scan_multi_block_int2(long data_ptr, int n, int k)
     {
-        long local_buffer_size = Sizeof.cl_int2 * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
         long gx = k * max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
-        long part_buf_size = ((long) Sizeof.cl_int2 * ((long) part_size));
+        long part_buf_size = ((long) CLSize.cl_int2 * ((long) part_size));
 
         var part_data = cl_new_buffer(part_buf_size);
 
@@ -2791,7 +2790,7 @@ public class GPU
 
     private static void scan_single_block_int4(long data_ptr, int n)
     {
-        long local_buffer_size = Sizeof.cl_int4 * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int4 * max_scan_block_size;
 
         Kernel.scan_int4_single_block
             .ptr_arg(ScanInt4SingleBlock_k.Args.data, data_ptr)
@@ -2802,11 +2801,11 @@ public class GPU
 
     private static void scan_multi_block_int4(long data_ptr, int n, int k)
     {
-        long local_buffer_size = Sizeof.cl_int4 * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int4 * max_scan_block_size;
         long gx = k * max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
-        long part_buf_size = ((long) Sizeof.cl_int4 * ((long) part_size));
+        long part_buf_size = ((long) CLSize.cl_int4 * ((long) part_size));
 
         var part_data = cl_new_buffer(part_buf_size);
 
@@ -2831,7 +2830,7 @@ public class GPU
 
     private static void scan_single_block_int_out(long data_ptr, long o_data_ptr, int n)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
         Kernel.scan_int_single_block_out
             .ptr_arg(ScanIntSingleBlockOut_k.Args.input, data_ptr)
@@ -2843,11 +2842,11 @@ public class GPU
 
     private static void scan_multi_block_int_out(long data_ptr, long o_data_ptr, int n, int k)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
         long gx = k * max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
-        long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
+        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
         var part_data = cl_new_buffer(part_buf_size);
 
         Kernel.scan_int_multi_block_out
@@ -2872,11 +2871,11 @@ public class GPU
 
     private static int[] scan_single_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n)
     {
-        long local_buffer_size = Sizeof.cl_int2 * max_scan_block_size;
-        long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
+        long local_buffer_size2 = CLSize.cl_int4 * max_scan_block_size;
 
-        var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 6);
-        cl_zero_buffer(size_data, Sizeof.cl_int * 6);
+        var size_data = cl_new_pinned_buffer(CLSize.cl_int * 6);
+        cl_zero_buffer(size_data, CLSize.cl_int * 6);
 
         Kernel.scan_deletes_single_block_out
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
@@ -2887,7 +2886,7 @@ public class GPU
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(local_work_default, local_work_default);
 
-        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 6, 6);
+        int[] sz = cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
         CL12.clReleaseMemObject(size_data);
 
         return sz;
@@ -2895,15 +2894,15 @@ public class GPU
 
     private static int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
     {
-        long local_buffer_size = Sizeof.cl_int2 * max_scan_block_size;
-        long local_buffer_size2 = Sizeof.cl_int4 * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
+        long local_buffer_size2 = CLSize.cl_int4 * max_scan_block_size;
 
         long gx = k * max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
 
-        long part_buf_size = ((long) Sizeof.cl_int2 * ((long) part_size));
-        long part_buf_size2 = ((long) Sizeof.cl_int4 * ((long) part_size));
+        long part_buf_size = ((long) CLSize.cl_int2 * ((long) part_size));
+        long part_buf_size2 = ((long) CLSize.cl_int4 * ((long) part_size));
 
         var p_data = cl_new_buffer(part_buf_size);
         var p_data2 = cl_new_buffer(part_buf_size2);
@@ -2922,8 +2921,8 @@ public class GPU
         scan_int2(p_data, part_size);
         scan_int4(p_data2, part_size);
 
-        var size_data = cl_new_pinned_buffer(Sizeof.cl_int * 6);
-        cl_zero_buffer(size_data, Sizeof.cl_int * 6);
+        var size_data = cl_new_pinned_buffer(CLSize.cl_int * 6);
+        cl_zero_buffer(size_data, CLSize.cl_int * 6);
 
         Kernel.complete_deletes_multi_block_out
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
@@ -2939,7 +2938,7 @@ public class GPU
         CL12.clReleaseMemObject(p_data);
         CL12.clReleaseMemObject(p_data2);
 
-        int[] sz = cl_read_pinned_int_buffer(size_data, Sizeof.cl_int * 6, 6);
+        int[] sz = cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
         CL12.clReleaseMemObject(size_data);
 
         return sz;
@@ -2947,9 +2946,9 @@ public class GPU
 
     private static int scan_single_block_candidates_out(long data_ptr, long o_data_ptr, int n)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, CLSize.cl_int);
 
         Kernel.scan_candidates_single_block_out
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.input, data_ptr)
@@ -2964,12 +2963,12 @@ public class GPU
 
     private static int scan_multi_block_candidates_out(long data_ptr, long o_data_ptr, int n, int k)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
         long gx = k * max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
-        long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
+        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
         var p_data = cl_new_buffer(part_buf_size);
 
         Kernel.scan_candidates_multi_block_out
@@ -2982,7 +2981,7 @@ public class GPU
 
         scan_int(p_data, part_size);
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, CLSize.cl_int);
 
         Kernel.complete_candidates_multi_block_out
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.input, data_ptr)
@@ -3000,9 +2999,9 @@ public class GPU
 
     private static int scan_bounds_single_block(long data_ptr, int n)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, CLSize.cl_int);
 
         Kernel.scan_bounds_single_block
             .ptr_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, data_ptr)
@@ -3016,11 +3015,11 @@ public class GPU
 
     private static int scan_bounds_multi_block(long data_ptr, int n, int k)
     {
-        long local_buffer_size = Sizeof.cl_int * max_scan_block_size;
+        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
         long gx = k * max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
-        long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
+        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
         var p_data = cl_new_buffer(part_buf_size);
 
         Kernel.scan_bounds_multi_block
@@ -3032,7 +3031,7 @@ public class GPU
 
         scan_int(p_data, part_size);
 
-        cl_zero_buffer(counter_buffer, Sizeof.cl_int);
+        cl_zero_buffer(counter_buffer, CLSize.cl_int);
 
         Kernel.complete_bounds_multi_block
             .ptr_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, data_ptr)

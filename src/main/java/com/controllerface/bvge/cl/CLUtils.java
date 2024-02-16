@@ -1,6 +1,5 @@
 package com.controllerface.bvge.cl;
 
-import org.jocl.Sizeof;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
@@ -240,25 +239,25 @@ public class CLUtils
         // The size of the returned data has p2 depend on
         // the size of a size_t, which is handled here
 
-        var buffer = BufferUtils.createByteBuffer(numValues * Sizeof.size_t)
+        var buffer = BufferUtils.createByteBuffer(numValues * CLSize.size_t)
             .order(ByteOrder.nativeOrder());
 
         CL12.clGetDeviceInfo(device_ptr,
             paramName, buffer, null);
 
         long[] values = new long[numValues];
-        if (Sizeof.size_t == 4)
+        if (CLSize.size_t == 4)
         {
             for (int i=0; i<numValues; i++)
             {
-                values[i] = buffer.getInt(i * Sizeof.size_t);
+                values[i] = buffer.getInt(i * CLSize.size_t);
             }
         }
         else
         {
             for (int i=0; i<numValues; i++)
             {
-                values[i] = buffer.getLong(i * Sizeof.size_t);
+                values[i] = buffer.getLong(i * CLSize.size_t);
             }
         }
         return values;
