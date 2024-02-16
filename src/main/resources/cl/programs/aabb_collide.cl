@@ -12,7 +12,7 @@ __kernel void aabb_collide(__global float4 *bounds,
                            __global int *key_offsets,
                            __global int *matches,
                            __global int *used,
-                           volatile __global int *counter,
+                           __global int *counter,
                            int x_subdivisions,
                            int key_count_length)
 {
@@ -33,7 +33,6 @@ __kernel void aabb_collide(__global float4 *bounds,
     int current_offset = match_offset;
     int slots_used = 0;
 
-    bool no_bones = (flags.x & NO_BONES) !=0;
     bool is_static = (flags.x & IS_STATIC) !=0;
 
     // loop through all the keys for this hull
@@ -76,8 +75,6 @@ __kernel void aabb_collide(__global float4 *bounds,
                 continue;
             }
 
-
-            bool no_bones_c = (candiate_flags.x & NO_BONES) !=0;
             bool is_static_c = (candiate_flags.x & IS_STATIC) !=0;
 
             // no static/static collision permitted
@@ -85,14 +82,6 @@ __kernel void aabb_collide(__global float4 *bounds,
             {
                 continue;
             }
-
-            // if (no_bones != no_bones_c)
-            // {
-            //     if (!is_static_c && !is_static_c)
-            //     {
-            //         continue;
-            //     }
-            // }
 
             // broad phase collision check
             float4 candidate = bounds[next];

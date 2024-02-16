@@ -5,7 +5,7 @@ Generates the spatial index keys for each object and stores them in the key bank
 __kernel void generate_keys(__global int4 *bounds_index_data,
                             __global int2 *bounds_bank_data,
                             __global int *key_bank,
-                            volatile __global int *key_counts,
+                            __global int *key_counts,
                             int x_subdivisions,
                             int key_bank_length,
                             int key_count_length)
