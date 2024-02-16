@@ -749,7 +749,7 @@ public class GPU
         public void init(int buffer_length)
         {
             this.length = buffer_length * size;
-            var mem = cl_new_buffer(this.length);
+            var mem = cl_new_buffer_ex(this.length);
             this.memory = new GPUMemory(mem);
             clear();
         }
@@ -2322,16 +2322,16 @@ public class GPU
         long bank_buf_size = (long) Sizeof.cl_int * uniform_grid.get_key_bank_size();
         long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.get_directory_length();
 
-        var bank_data = cl_new_buffer(bank_buf_size);
-        var counts_data = cl_new_buffer(counts_buf_size);
-        cl_zero_buffer(counts_data.getNativePointer(), counts_buf_size);
+        var bank_data = cl_new_buffer_ex(bank_buf_size);
+        var counts_data = cl_new_buffer_ex(counts_buf_size);
+        cl_zero_buffer(counts_data, counts_buf_size);
 
         physics_buffer.key_counts = new GPUMemory(counts_data);
         physics_buffer.key_bank = new GPUMemory(bank_data);
 
         Kernel.generate_keys
-            .ptr_arg(GenerateKeys_k.Args.key_bank, bank_data.getNativePointer())
-            .ptr_arg(GenerateKeys_k.Args.key_counts, counts_data.getNativePointer())
+            .ptr_arg(GenerateKeys_k.Args.key_bank, bank_data)
+            .ptr_arg(GenerateKeys_k.Args.key_counts, counts_data)
             .set_arg(GenerateKeys_k.Args.x_subdivisions, uniform_grid.getX_subdivisions())
             .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
             .set_arg(GenerateKeys_k.Args.key_count_length, uniform_grid.get_directory_length())
@@ -2342,9 +2342,9 @@ public class GPU
     {
         int n = uniform_grid.get_directory_length();
         long data_buf_size = (long) Sizeof.cl_int * n;
-        var o_data = cl_new_buffer(data_buf_size);
+        var o_data = cl_new_buffer_ex(data_buf_size);
         physics_buffer.key_offsets = new GPUMemory(o_data);
-        scan_int_out(physics_buffer.key_counts.pointer(), o_data.getNativePointer(), n);
+        scan_int_out(physics_buffer.key_counts.pointer(), o_data, n);
     }
 
     public static void build_key_map(UniformGrid uniform_grid)
@@ -2352,7 +2352,7 @@ public class GPU
         long map_buf_size = (long) Sizeof.cl_int * uniform_grid.getKey_map_size();
         long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.get_directory_length();
 
-        var map_data = cl_new_buffer(map_buf_size);
+        var map_data = cl_new_buffer_ex(map_buf_size);
         var counts_data = cl_new_buffer_ex(counts_buf_size);
 
         // the counts buffer needs to start off filled with all zeroes
@@ -2361,7 +2361,7 @@ public class GPU
         physics_buffer.key_map = new GPUMemory(map_data);
 
         Kernel.build_key_map
-            .ptr_arg(BuildKeyMap_k.Args.key_map, map_data.getNativePointer())
+            .ptr_arg(BuildKeyMap_k.Args.key_map, map_data)
             .ptr_arg(BuildKeyMap_k.Args.key_offsets, physics_buffer.key_offsets.pointer())
             .ptr_arg(BuildKeyMap_k.Args.key_counts, counts_data)
             .set_arg(BuildKeyMap_k.Args.x_subdivisions, uniform_grid.getX_subdivisions())
@@ -2379,7 +2379,7 @@ public class GPU
         physics_buffer.key_count_length = uniform_grid.get_directory_length();
 
         long inbound_buf_size = (long) Sizeof.cl_int * hull_count;
-        var inbound_data = cl_new_buffer(inbound_buf_size);
+        var inbound_data = cl_new_buffer_ex(inbound_buf_size);
 
         physics_buffer.in_bounds = new GPUMemory(inbound_data);
 
@@ -2412,7 +2412,7 @@ public class GPU
     public static void calculate_match_candidates()
     {
         long candidate_buf_size = (long) Sizeof.cl_int2 * physics_buffer.get_candidate_buffer_count();
-        var candidate_data = cl_new_buffer(candidate_buf_size);
+        var candidate_data = cl_new_buffer_ex(candidate_buf_size);
         physics_buffer.candidate_counts = new GPUMemory(candidate_data);
 
         Kernel.count_candidates
@@ -2429,9 +2429,9 @@ public class GPU
     {
         int buffer_count = physics_buffer.get_candidate_buffer_count();
         long offset_buf_size = (long) Sizeof.cl_int * buffer_count;
-        var offset_data = cl_new_buffer(offset_buf_size);
+        var offset_data = cl_new_buffer_ex(offset_buf_size);
         physics_buffer.candidate_offsets = new GPUMemory(offset_data);
-        int match_count = scan_key_candidates(physics_buffer.candidate_counts.pointer(), offset_data.getNativePointer(), buffer_count);
+        int match_count = scan_key_candidates(physics_buffer.candidate_counts.pointer(), offset_data, buffer_count);
         physics_buffer.set_candidate_match_count(match_count);
     }
 
@@ -2441,8 +2441,8 @@ public class GPU
         long output_buf_size = (long) Sizeof.cl_int2 * armature_count;
         long output_buf_size2 = (long) Sizeof.cl_int4 * armature_count;
 
-        var output_buf_data = cl_new_buffer(output_buf_size);
-        var output_buf_data2 = cl_new_buffer(output_buf_size2);
+        var output_buf_data = cl_new_buffer_ex(output_buf_size);
+        var output_buf_data2 = cl_new_buffer_ex(output_buf_size2);
 
         var del_buffer_1 = new GPUMemory(output_buf_data);
         var del_buffer_2 = new GPUMemory(output_buf_data2);
@@ -2485,11 +2485,11 @@ public class GPU
     public static void aabb_collide()
     {
         long matches_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_match_count();
-        var matches_data = cl_new_buffer(matches_buf_size);
+        var matches_data = cl_new_buffer_ex(matches_buf_size);
         physics_buffer.matches = new GPUMemory(matches_data);
 
         long used_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_buffer_count();
-        var used_data = cl_new_buffer(used_buf_size);
+        var used_data = cl_new_buffer_ex(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
         cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
@@ -2521,7 +2521,7 @@ public class GPU
 
         // create an empty buffer that the kernel will use to store finalized candidates
         long final_buf_size = (long) Sizeof.cl_int2 * physics_buffer.get_candidate_count();
-        var finals_data = cl_new_buffer(final_buf_size);
+        var finals_data = cl_new_buffer_ex(final_buf_size);
 
         // the kernel will use this value as an internal atomic counter, always initialize to zero
         int[] counter = new int[]{ 0 };
@@ -2559,9 +2559,9 @@ public class GPU
         long reaction_buf_size = (long) Sizeof.cl_float2 * max_point_count;
         long index_buf_size = (long) Sizeof.cl_int * max_point_count;
 
-        var reaction_data = cl_new_buffer(reaction_buf_size);
-        var reaction_data_out = cl_new_buffer(reaction_buf_size);
-        var index_data = cl_new_buffer(index_buf_size);
+        var reaction_data = cl_new_buffer_ex(reaction_buf_size);
+        var reaction_data_out = cl_new_buffer_ex(reaction_buf_size);
+        var index_data = cl_new_buffer_ex(index_buf_size);
 
         physics_buffer.reactions_in = new GPUMemory(reaction_data);
         physics_buffer.reactions_out = new GPUMemory(reaction_data_out);
