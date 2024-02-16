@@ -3066,7 +3066,7 @@ public class GPU
     public static long gpu_p(List<String> src_strings)
     {
         String[] src = src_strings.toArray(new String[]{});
-        return CLUtils.cl_p(context, device_ids, src);
+        return CLUtils.cl_p(context.getNativePointer(), device_ids[0].getNativePointer(), src);
     }
 
     public static cl_mem new_mutable_buffer(long size, Pointer src)
@@ -3103,12 +3103,12 @@ public class GPU
         var device = device_ids[0];
 
         System.out.println("-------- OPEN CL DEVICE -----------");
-        System.out.println(getString(device, CL12.CL_DEVICE_VENDOR));
-        System.out.println(getString(device, CL12.CL_DEVICE_NAME));
-        System.out.println(getString(device, CL12.CL_DRIVER_VERSION));
+        System.out.println(getString(device.getNativePointer(), CL12.CL_DEVICE_VENDOR));
+        System.out.println(getString(device.getNativePointer(), CL12.CL_DEVICE_NAME));
+        System.out.println(getString(device.getNativePointer(), CL12.CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
-        max_work_group_size = (int) getSize(device, CL12.CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        max_work_group_size = (int) getSize(device.getNativePointer(), CL12.CL_DEVICE_MAX_WORK_GROUP_SIZE);
         max_scan_block_size = (long) max_work_group_size * 2;
         local_work_default = arg_long(max_work_group_size);
 
