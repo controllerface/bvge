@@ -53,10 +53,10 @@ public class HumanoidRenderer extends GameSystem
     //  consider allowing individual classes to have private kernels. It will increase efficiency,
     //  especially if multiple classes end up needing the same kernel calls a lot.
     private long query_ptr;
-    private cl_mem counters;
+    private long counters;
     private cl_mem total;
-    private cl_mem offsets;
-    private cl_mem mesh_transfer;
+    private long offsets;
+    private long mesh_transfer;
 
     public HumanoidRenderer(ECS ecs)
     {
@@ -120,7 +120,7 @@ public class HumanoidRenderer extends GameSystem
     {
         GPU.clear_buffer(counters, mesh_size);
         GPU.clear_buffer(offsets, mesh_size);
-        GPU.clear_buffer(total, Sizeof.cl_int);
+        GPU.clear_buffer(total.getNativePointer(), Sizeof.cl_int);
         GPU.clear_buffer(mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
 
         GPU.GL_count_mesh_instances(query_ptr, counters, total, mesh_count);
@@ -146,7 +146,7 @@ public class HumanoidRenderer extends GameSystem
         GPU.GL_calculate_batch_offsets(batch_offset_b, details_b, total_instances);
 
         int[] raw_offsets = new int[total_batches];
-        GPU.cl_read_buffer(batch_offset_b.getNativePointer(), raw_offsets);
+        GPU.cl_read_buffer(batch_offset_b, raw_offsets);
 
         glBindVertexArray(vao);
         shader.use();

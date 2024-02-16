@@ -749,7 +749,7 @@ public class GPU
         public void init(int buffer_length)
         {
             this.length = buffer_length * size;
-            var mem = cl_new_buffer_ex(this.length);
+            var mem = cl_new_buffer(this.length);
             this.memory = new GPUMemory(mem);
             clear();
         }
@@ -1647,12 +1647,7 @@ public class GPU
             null);
     }
 
-    private static cl_mem cl_new_buffer(long size)
-    {
-        return clCreateBuffer(context, FLAGS_WRITE_GPU, size, null, null);
-    }
-
-    private static long cl_new_buffer_ex(long size)
+    private static long cl_new_buffer(long size)
     {
         return CL12.clCreateBuffer(context.getNativePointer(), FLAGS_WRITE_GPU, size, null);
     }
@@ -1900,7 +1895,7 @@ public class GPU
 
         if (final_count == 0)
         {
-            return new HullIndexData(null, final_count);
+            return new HullIndexData(-1, final_count);
         }
 
         long final_buffer_size = (long) Sizeof.cl_int * final_count;
@@ -1910,7 +1905,7 @@ public class GPU
         var hulls_counter_data_ptr = cl_new_int_arg_buffer(counter_value);
 
         Kernel.root_hull_filter
-            .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out.getNativePointer())
+            .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, hulls_counter_data_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .call(arg_long(GPU.Memory.next_armature()));
@@ -1927,16 +1922,16 @@ public class GPU
      * represents within the simulation.
      *
      * @param vbo_id        id of the shared GL buffer object
-     * @param hulls_out     array of hulls filtered to be circles only
+     * @param hulls_out_ptr     array of hulls filtered to be circles only
      * @param offset        where we are starting in the indices array
      * @param batch_size    number of hull objects to transfer in this batch
      */
-    public static void GL_circles(int vbo_id, cl_mem hulls_out, int offset, int batch_size)
+    public static void GL_circles(int vbo_id, long hulls_out_ptr, int offset, int batch_size)
     {
         var vbo_mem = shared_mem.get(vbo_id);
         Kernel.prepare_transforms
             .share_mem(vbo_mem.getNativePointer())
-            .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out.getNativePointer())
+            .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out_ptr)
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_mem.getNativePointer())
             .set_arg(PrepareTransforms_k.Args.offset, offset)
             .call(arg_long(batch_size));
@@ -1949,83 +1944,87 @@ public class GPU
      * represents within the simulation.
      *
      * @param transforms_id   id of the shared GL buffer object
-     * @param hulls_out id of the shared GL buffer object
+     * @param hulls_out_ptr id of the shared GL buffer object
      * @param batch_size      number of hull objects to transfer in this batch
      */
-    public static void GL_transforms(int transforms_id, cl_mem hulls_out, int batch_size, int offset)
+    public static void GL_transforms(int transforms_id, long hulls_out_ptr, int batch_size, int offset)
     {
         var vbo_transforms = shared_mem.get(transforms_id);
 
         Kernel.prepare_transforms
             .share_mem(vbo_transforms.getNativePointer())
-            .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out.getNativePointer())
+            .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out_ptr)
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_transforms.getNativePointer())
             .set_arg(PrepareTransforms_k.Args.offset, offset)
             .call(arg_long(batch_size));
     }
 
-    public static void GL_count_mesh_instances(long query_ptr, cl_mem counters, cl_mem total, int count)
+    public static void GL_count_mesh_instances(long query_ptr, long counters_ptr, cl_mem total, int count)
     {
         Kernel.count_mesh_instances
-            .ptr_arg(CountMeshInstances_k.Args.counters, counters.getNativePointer())
+            .ptr_arg(CountMeshInstances_k.Args.counters, counters_ptr)
             .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
             .ptr_arg(CountMeshInstances_k.Args.total, total.getNativePointer())
             .set_arg(CountMeshInstances_k.Args.count, count)
             .call(arg_long(GPU.Memory.next_hull()));
     }
 
-    public static void GL_scan_mesh_offsets(cl_mem counts, cl_mem offsets, int count)
+    public static void GL_scan_mesh_offsets(long counts_ptr, long offsets_ptr, int count)
     {
-        scan_int_out(counts.getNativePointer(), offsets.getNativePointer(), count);
+        scan_int_out(counts_ptr, offsets_ptr, count);
     }
 
-    public static void GL_write_mesh_details(long query_ptr, cl_mem counters, cl_mem offsets, cl_mem mesh_details, int count)
+    public static void GL_write_mesh_details(long query_ptr,
+                                             long counters_ptr,
+                                             long offsets_ptr,
+                                             long mesh_details_ptr,
+                                             int count)
     {
         Kernel.write_mesh_details
-            .ptr_arg(WriteMeshDetails_k.Args.counters, counters.getNativePointer())
+            .ptr_arg(WriteMeshDetails_k.Args.counters, counters_ptr)
             .ptr_arg(WriteMeshDetails_k.Args.query, query_ptr)
-            .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets.getNativePointer())
-            .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details.getNativePointer())
+            .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets_ptr)
+            .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(WriteMeshDetails_k.Args.count, count)
             .call(arg_long(GPU.Memory.next_hull()));
     }
 
-    public static void GL_count_mesh_batches(cl_mem mesh_details, cl_mem total, int count, int max_per_batch)
+    public static void GL_count_mesh_batches(long mesh_details_ptr, cl_mem total, int count, int max_per_batch)
     {
         Kernel.count_mesh_batches
-            .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details.getNativePointer())
+            .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
             .ptr_arg(CountMeshBatches_k.Args.total, total.getNativePointer())
             .set_arg(CountMeshBatches_k.Args.max_per_batch, max_per_batch)
             .set_arg(CountMeshBatches_k.Args.count, count)
             .call(global_single_size);
     }
 
-    public static void GL_calculate_batch_offsets(cl_mem mesh_offsets, cl_mem mesh_details, int count)
+    public static void GL_calculate_batch_offsets(long mesh_offsets_ptr, long mesh_details_ptr, int count)
     {
         Kernel.calculate_batch_offsets
-            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offsets.getNativePointer())
-            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details.getNativePointer())
+            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offsets_ptr)
+            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CalculateBatchOffsets_k.Args.count, count)
             .call(global_single_size);
     }
 
-    public static void GL_transfer_detail_data(cl_mem mesh_details, cl_mem mesh_transfer, int count, int offset)
+    public static void GL_transfer_detail_data(long mesh_details_ptr, long mesh_transfer_ptr, int count, int offset)
     {
         Kernel.transfer_detail_data
-            .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details.getNativePointer())
-            .ptr_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer.getNativePointer())
+            .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details_ptr)
+            .ptr_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_ptr)
             .set_arg(TransferDetailData_k.Args.offset, offset)
             .call(arg_long(count));
 
-        scan_int2(mesh_transfer.getNativePointer(), count);
+        scan_int2(mesh_transfer_ptr, count);
     }
 
     public static void GL_transfer_render_data(int ebo,
                                                int vbo,
                                                int cbo,
                                                int uvo,
-                                               cl_mem mesh_details,
-                                               cl_mem mesh_transfer,
+                                               long mesh_details_ptr,
+                                               long mesh_transfer_ptr,
                                                int count,
                                                int offset)
     {
@@ -2043,8 +2042,8 @@ public class GPU
             .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vbo_mem.getNativePointer())
             .ptr_arg(TransferRenderData_k.Args.uv_buffer, uvo_mem.getNativePointer())
             .ptr_arg(TransferRenderData_k.Args.element_buffer, ebo_mem.getNativePointer())
-            .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details.getNativePointer())
-            .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer.getNativePointer())
+            .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
+            .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
             .set_arg(TransferRenderData_k.Args.offset, offset)
             .call(arg_long(count));
     }
@@ -2322,8 +2321,8 @@ public class GPU
         long bank_buf_size = (long) Sizeof.cl_int * uniform_grid.get_key_bank_size();
         long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.get_directory_length();
 
-        var bank_data = cl_new_buffer_ex(bank_buf_size);
-        var counts_data = cl_new_buffer_ex(counts_buf_size);
+        var bank_data = cl_new_buffer(bank_buf_size);
+        var counts_data = cl_new_buffer(counts_buf_size);
         cl_zero_buffer(counts_data, counts_buf_size);
 
         physics_buffer.key_counts = new GPUMemory(counts_data);
@@ -2342,7 +2341,7 @@ public class GPU
     {
         int n = uniform_grid.get_directory_length();
         long data_buf_size = (long) Sizeof.cl_int * n;
-        var o_data = cl_new_buffer_ex(data_buf_size);
+        var o_data = cl_new_buffer(data_buf_size);
         physics_buffer.key_offsets = new GPUMemory(o_data);
         scan_int_out(physics_buffer.key_counts.pointer(), o_data, n);
     }
@@ -2352,8 +2351,8 @@ public class GPU
         long map_buf_size = (long) Sizeof.cl_int * uniform_grid.getKey_map_size();
         long counts_buf_size = (long) Sizeof.cl_int * uniform_grid.get_directory_length();
 
-        var map_data = cl_new_buffer_ex(map_buf_size);
-        var counts_data = cl_new_buffer_ex(counts_buf_size);
+        var map_data = cl_new_buffer(map_buf_size);
+        var counts_data = cl_new_buffer(counts_buf_size);
 
         // the counts buffer needs to start off filled with all zeroes
         cl_zero_buffer(counts_data, counts_buf_size);
@@ -2379,7 +2378,7 @@ public class GPU
         physics_buffer.key_count_length = uniform_grid.get_directory_length();
 
         long inbound_buf_size = (long) Sizeof.cl_int * hull_count;
-        var inbound_data = cl_new_buffer_ex(inbound_buf_size);
+        var inbound_data = cl_new_buffer(inbound_buf_size);
 
         physics_buffer.in_bounds = new GPUMemory(inbound_data);
 
@@ -2412,7 +2411,7 @@ public class GPU
     public static void calculate_match_candidates()
     {
         long candidate_buf_size = (long) Sizeof.cl_int2 * physics_buffer.get_candidate_buffer_count();
-        var candidate_data = cl_new_buffer_ex(candidate_buf_size);
+        var candidate_data = cl_new_buffer(candidate_buf_size);
         physics_buffer.candidate_counts = new GPUMemory(candidate_data);
 
         Kernel.count_candidates
@@ -2429,7 +2428,7 @@ public class GPU
     {
         int buffer_count = physics_buffer.get_candidate_buffer_count();
         long offset_buf_size = (long) Sizeof.cl_int * buffer_count;
-        var offset_data = cl_new_buffer_ex(offset_buf_size);
+        var offset_data = cl_new_buffer(offset_buf_size);
         physics_buffer.candidate_offsets = new GPUMemory(offset_data);
         int match_count = scan_key_candidates(physics_buffer.candidate_counts.pointer(), offset_data, buffer_count);
         physics_buffer.set_candidate_match_count(match_count);
@@ -2441,8 +2440,8 @@ public class GPU
         long output_buf_size = (long) Sizeof.cl_int2 * armature_count;
         long output_buf_size2 = (long) Sizeof.cl_int4 * armature_count;
 
-        var output_buf_data = cl_new_buffer_ex(output_buf_size);
-        var output_buf_data2 = cl_new_buffer_ex(output_buf_size2);
+        var output_buf_data = cl_new_buffer(output_buf_size);
+        var output_buf_data2 = cl_new_buffer(output_buf_size2);
 
         var del_buffer_1 = new GPUMemory(output_buf_data);
         var del_buffer_2 = new GPUMemory(output_buf_data2);
@@ -2485,11 +2484,11 @@ public class GPU
     public static void aabb_collide()
     {
         long matches_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_match_count();
-        var matches_data = cl_new_buffer_ex(matches_buf_size);
+        var matches_data = cl_new_buffer(matches_buf_size);
         physics_buffer.matches = new GPUMemory(matches_data);
 
         long used_buf_size = (long) Sizeof.cl_int * physics_buffer.get_candidate_buffer_count();
-        var used_data = cl_new_buffer_ex(used_buf_size);
+        var used_data = cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
         cl_zero_buffer(counter_buffer.getNativePointer(), Sizeof.cl_int);
@@ -2521,7 +2520,7 @@ public class GPU
 
         // create an empty buffer that the kernel will use to store finalized candidates
         long final_buf_size = (long) Sizeof.cl_int2 * physics_buffer.get_candidate_count();
-        var finals_data = cl_new_buffer_ex(final_buf_size);
+        var finals_data = cl_new_buffer(final_buf_size);
 
         // the kernel will use this value as an internal atomic counter, always initialize to zero
         int[] counter = new int[]{ 0 };
@@ -2559,9 +2558,9 @@ public class GPU
         long reaction_buf_size = (long) Sizeof.cl_float2 * max_point_count;
         long index_buf_size = (long) Sizeof.cl_int * max_point_count;
 
-        var reaction_data = cl_new_buffer_ex(reaction_buf_size);
-        var reaction_data_out = cl_new_buffer_ex(reaction_buf_size);
-        var index_data = cl_new_buffer_ex(index_buf_size);
+        var reaction_data = cl_new_buffer(reaction_buf_size);
+        var reaction_data_out = cl_new_buffer(reaction_buf_size);
+        var index_data = cl_new_buffer(index_buf_size);
 
         physics_buffer.reactions_in = new GPUMemory(reaction_data);
         physics_buffer.reactions_out = new GPUMemory(reaction_data_out);
@@ -2736,7 +2735,7 @@ public class GPU
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
 
-        var part_data = cl_new_buffer_ex(part_buf_size);
+        var part_data = cl_new_buffer(part_buf_size);
 
         Kernel.scan_int_multi_block
             .ptr_arg(ScanIntMultiBlock_k.Args.data, data_ptr)
@@ -2776,7 +2775,7 @@ public class GPU
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int2 * ((long) part_size));
 
-        var part_data = cl_new_buffer_ex(part_buf_size);
+        var part_data = cl_new_buffer(part_buf_size);
 
         Kernel.scan_int2_multi_block
             .ptr_arg(ScanInt2MultiBlock_k.Args.data, data_ptr)
@@ -2816,7 +2815,7 @@ public class GPU
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int4 * ((long) part_size));
 
-        var part_data = cl_new_buffer_ex(part_buf_size);
+        var part_data = cl_new_buffer(part_buf_size);
 
         Kernel.scan_int4_multi_block
             .ptr_arg(ScanInt4MultiBlock_k.Args.data, data_ptr)
@@ -2856,7 +2855,7 @@ public class GPU
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
-        var part_data = cl_new_buffer_ex(part_buf_size);
+        var part_data = cl_new_buffer(part_buf_size);
 
         Kernel.scan_int_multi_block_out
             .ptr_arg(ScanIntMultiBlockOut_k.Args.input, data_ptr)
@@ -2913,8 +2912,8 @@ public class GPU
         long part_buf_size = ((long) Sizeof.cl_int2 * ((long) part_size));
         long part_buf_size2 = ((long) Sizeof.cl_int4 * ((long) part_size));
 
-        var p_data = cl_new_buffer_ex(part_buf_size);
-        var p_data2 = cl_new_buffer_ex(part_buf_size2);
+        var p_data = cl_new_buffer(part_buf_size);
+        var p_data2 = cl_new_buffer(part_buf_size2);
 
         Kernel.scan_deletes_multi_block_out
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
@@ -2978,7 +2977,7 @@ public class GPU
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
-        var p_data = cl_new_buffer_ex(part_buf_size);
+        var p_data = cl_new_buffer(part_buf_size);
 
         Kernel.scan_candidates_multi_block_out
             .ptr_arg(ScanCandidatesMultiBlockOut_k.Args.input, data_ptr)
@@ -3029,7 +3028,7 @@ public class GPU
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
         long part_buf_size = ((long) Sizeof.cl_int * ((long) part_size));
-        var p_data = cl_new_buffer_ex(part_buf_size);
+        var p_data = cl_new_buffer(part_buf_size);
 
         Kernel.scan_bounds_multi_block
             .ptr_arg(ScanBoundsMultiBlock_k.Args.bounds_bank_data, data_ptr)
@@ -3070,16 +3069,16 @@ public class GPU
         return CL12.clCreateBuffer(context.getNativePointer(), FLAGS_READ_CPU_COPY, src, null);
     }
 
-    public static cl_mem new_empty_buffer(long size)
+    public static long new_empty_buffer(long size)
     {
-        var new_buffer = cl_new_buffer(size);
-        cl_zero_buffer(new_buffer.getNativePointer(), size);
-        return new_buffer;
+        var new_buffer_ptr = cl_new_buffer(size);
+        cl_zero_buffer(new_buffer_ptr, size);
+        return new_buffer_ptr;
     }
 
-    public static void clear_buffer(cl_mem mem, long size)
+    public static void clear_buffer(long mem_ptr, long size)
     {
-        cl_zero_buffer(mem.getNativePointer(), size);
+        cl_zero_buffer(mem_ptr, size);
     }
 
     public static void release_buffer(cl_mem mem)

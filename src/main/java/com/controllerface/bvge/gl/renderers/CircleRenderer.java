@@ -9,6 +9,7 @@ import com.controllerface.bvge.gl.AbstractShader;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
+import org.lwjgl.opencl.CL12;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
@@ -62,9 +63,9 @@ public class CircleRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        if (circle_hulls != null && circle_hulls.indices() != null)
+        if (circle_hulls != null && circle_hulls.indices() != -1)
         {
-            clReleaseMemObject(circle_hulls.indices());
+            CL12.clReleaseMemObject(circle_hulls.indices());
         }
         circle_hulls = GPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
 

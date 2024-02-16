@@ -10,4 +10,4 @@ import org.jocl.cl_mem;
  * @param indices a CL memory buffer that contains the indices of matching hulls
  * @param count the number of hull indices that are stored in the buffer
  */
-public record HullIndexData(cl_mem indices, int count) { }
+public record HullIndexData(long indices, int count) { }

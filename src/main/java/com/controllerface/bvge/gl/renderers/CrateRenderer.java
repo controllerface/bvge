@@ -10,6 +10,7 @@ import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
+import org.lwjgl.opencl.CL12;
 
 import static com.controllerface.bvge.util.Constants.Rendering.*;
 import static org.jocl.CL.clReleaseMemObject;
@@ -78,9 +79,9 @@ public class CrateRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        if (crate_hulls != null && crate_hulls.indices() != null)
+        if (crate_hulls != null && crate_hulls.indices() != -1)
         {
-            clReleaseMemObject(crate_hulls.indices());
+            CL12.clReleaseMemObject(crate_hulls.indices());
         }
         crate_hulls = GPU.GL_hull_filter(Models.TEST_SQUARE_INDEX);
 
