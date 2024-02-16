@@ -10,9 +10,9 @@ import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
-import org.lwjgl.opencl.CL12;
 
 import static com.controllerface.bvge.util.Constants.Rendering.*;
+import static org.lwjgl.opencl.CL12.clReleaseMemObject;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
@@ -80,7 +80,7 @@ public class CrateRenderer extends GameSystem
     {
         if (crate_hulls != null && crate_hulls.indices() != -1)
         {
-            CL12.clReleaseMemObject(crate_hulls.indices());
+            clReleaseMemObject(crate_hulls.indices());
         }
         crate_hulls = GPU.GL_hull_filter(Models.TEST_SQUARE_INDEX);
 

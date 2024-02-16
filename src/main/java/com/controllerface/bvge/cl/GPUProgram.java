@@ -1,7 +1,5 @@
 package com.controllerface.bvge.cl;
 
-import org.lwjgl.opencl.CL12;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +8,8 @@ import java.util.Map;
 import static com.controllerface.bvge.cl.CLUtils.read_src;
 import static com.controllerface.bvge.cl.GPU.Kernel;
 import static com.controllerface.bvge.cl.GPU.gpu_p;
+import static org.lwjgl.opencl.CL12.clReleaseKernel;
+import static org.lwjgl.opencl.CL12.clReleaseProgram;
 
 /**
  * An abstraction for general-purpose GPU programs. Implementations of various programs that
@@ -117,10 +117,10 @@ public abstract class GPUProgram
      */
     public void destroy()
     {
-        CL12.clReleaseProgram(program_ptr);
+        clReleaseProgram(program_ptr);
         for (long kernel_ptr : kernels.values())
         {
-            CL12.clReleaseKernel(kernel_ptr);
+            clReleaseKernel(kernel_ptr);
         }
     }
 }

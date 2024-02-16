@@ -1,6 +1,6 @@
 package com.controllerface.bvge.cl;
 
-import org.lwjgl.opencl.CL12;
+import static org.lwjgl.opencl.CL12.clReleaseMemObject;
 
 public class GPUMemory
 {
@@ -21,7 +21,7 @@ public class GPUMemory
     {
         if (!released)
         {
-            CL12.clReleaseMemObject(pointer);
+            clReleaseMemObject(pointer);
             released = true;
         }
     }

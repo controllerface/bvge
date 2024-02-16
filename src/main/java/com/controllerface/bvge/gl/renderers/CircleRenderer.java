@@ -13,6 +13,7 @@ import org.lwjgl.opencl.CL12;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
+import static org.lwjgl.opencl.CL12.*;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.*;
 import static org.lwjgl.opengl.GL20C.*;
@@ -56,7 +57,7 @@ public class CircleRenderer extends GameSystem
     {
         if (circle_hulls != null && circle_hulls.indices() != -1)
         {
-            CL12.clReleaseMemObject(circle_hulls.indices());
+            clReleaseMemObject(circle_hulls.indices());
         }
         circle_hulls = GPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
 

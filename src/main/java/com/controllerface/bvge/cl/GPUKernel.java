@@ -1,12 +1,12 @@
 package com.controllerface.bvge.cl;
 
-import org.lwjgl.opencl.CL12;
 import org.lwjgl.system.MemoryStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.k_call;
+import static org.lwjgl.opencl.CL12.clSetKernelArg;
 
 /**
  * A class for defining and organizing GPU kernel functions. This class is used to wrap an Open Cl kernel
@@ -63,7 +63,7 @@ public abstract class GPUKernel
      */
     public void loc_arg(int pos, long size)
     {
-        CL12.clSetKernelArg(this.kernel_ptr, pos, size);
+        clSetKernelArg(this.kernel_ptr, pos, size);
     }
 
     /**
@@ -80,7 +80,7 @@ public abstract class GPUKernel
         try (var mem_stack = MemoryStack.stackPush())
         {
             var pointerBuffer = mem_stack.callocPointer(1).put(0, pointer);
-            CL12.clSetKernelArg(this.kernel_ptr, pos, pointerBuffer);
+            clSetKernelArg(this.kernel_ptr, pos, pointerBuffer);
         }
     }
 
@@ -90,7 +90,7 @@ public abstract class GPUKernel
         try (var mem_stack = MemoryStack.stackPush())
         {
             var doubleBuffer = mem_stack.doubles(value);
-            CL12.clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
+            clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
         }
     }
 
@@ -99,7 +99,7 @@ public abstract class GPUKernel
         try (var mem_stack = MemoryStack.stackPush())
         {
             var doubleBuffer = mem_stack.doubles(value);
-            CL12.clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
+            clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
         }
     }
 
@@ -109,7 +109,7 @@ public abstract class GPUKernel
         try (var mem_stack = MemoryStack.stackPush())
         {
             var floatBuffer = mem_stack.floats(value);
-            CL12.clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
+            clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
         }
     }
 
@@ -118,7 +118,7 @@ public abstract class GPUKernel
         try (var mem_stack = MemoryStack.stackPush())
         {
             var floatBuffer = mem_stack.floats(value);
-            CL12.clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
+            clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
         }
     }
 
@@ -127,7 +127,7 @@ public abstract class GPUKernel
         try (var mem_stack = MemoryStack.stackPush())
         {
             var intBuffer = mem_stack.ints(value);
-            CL12.clSetKernelArg(this.kernel_ptr, pos, intBuffer);
+            clSetKernelArg(this.kernel_ptr, pos, intBuffer);
         }
     }
 
@@ -136,7 +136,7 @@ public abstract class GPUKernel
         try (var mem_stack = MemoryStack.stackPush())
         {
             var intBuffer = mem_stack.ints(value);
-            CL12.clSetKernelArg(this.kernel_ptr, pos, intBuffer);
+            clSetKernelArg(this.kernel_ptr, pos, intBuffer);
         }
     }
 

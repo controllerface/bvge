@@ -3,8 +3,6 @@ package com.controllerface.bvge.cl;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.opencl.CL12;
-import org.lwjgl.opencl.CL12GL;
 import org.lwjgl.system.MemoryStack;
 
 import java.io.IOException;
@@ -13,6 +11,10 @@ import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+
+import static org.lwjgl.opencl.CL12.*;
+import static org.lwjgl.opencl.CL12GL.clEnqueueAcquireGLObjects;
+import static org.lwjgl.opencl.CL12GL.clEnqueueReleaseGLObjects;
 
 public class CLUtils
 {
@@ -31,14 +33,14 @@ public class CLUtils
 
     public static long cl_p(long context_ptr, long device_id_ptr, String ... src)
     {
-        long program = CL12.clCreateProgramWithSource(context_ptr, src, null);
-        CL12.clBuildProgram(program, device_id_ptr, "", null, 0);
+        long program = clCreateProgramWithSource(context_ptr, src, null);
+        clBuildProgram(program, device_id_ptr, "", null, 0);
         return program;
     }
 
     public static long cl_k(long program_ptr, String kernel_name)
     {
-        return CL12.clCreateKernel(program_ptr, kernel_name, (IntBuffer) null);
+        return clCreateKernel(program_ptr, kernel_name, (IntBuffer) null);
     }
 
     public static double[] arg_double(double arg)
@@ -138,7 +140,7 @@ public class CLUtils
             var global_work_ptr = int_to_buffer(mem_stack, global_work_size);
             var local_work_ptr = int_to_buffer(mem_stack, local_work_size);
 
-            int r = CL12.clEnqueueNDRangeKernel(command_queue_ptr,
+            int r = clEnqueueNDRangeKernel(command_queue_ptr,
                 kernel_ptr,
                 1,
                 global_offset_ptr,
@@ -146,7 +148,7 @@ public class CLUtils
                 local_work_ptr,
                 null,null);
 
-            if (r != CL12.CL_SUCCESS)
+            if (r != CL_SUCCESS)
             {
                 System.out.println("WTF!");
             }
@@ -168,7 +170,7 @@ public class CLUtils
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            int r = CL12GL.clEnqueueAcquireGLObjects(command_queue_ptr,
+            int r = clEnqueueAcquireGLObjects(command_queue_ptr,
                 mem_to_buffer(mem_stack, mem), null, null);
             if (r != 0)
             {
@@ -181,7 +183,7 @@ public class CLUtils
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            int r = CL12GL.clEnqueueReleaseGLObjects(command_queue_ptr,
+            int r = clEnqueueReleaseGLObjects(command_queue_ptr,
                 mem_to_buffer(mem_stack, mem), null, null);
             if (r != 0)
             {
@@ -201,13 +203,13 @@ public class CLUtils
     {
         // Obtain the length of the string that will be queried
         var lp = BufferUtils.createPointerBuffer(1);
-        CL12.clGetDeviceInfo(device_id_ptr, paramName, (long[]) null, lp);
+        clGetDeviceInfo(device_id_ptr, paramName, (long[]) null, lp);
         long sz = lp.get();
 
         // Create a buffer of the appropriate size and fill it with the info
         var buffer = BufferUtils.createByteBuffer((int)sz);
         byte[] bytes = new byte[(int)sz];
-        CL12.clGetDeviceInfo(device_id_ptr, paramName, buffer, null);
+        clGetDeviceInfo(device_id_ptr, paramName, buffer, null);
         buffer.get(bytes);
 
         // Create a string with the buffer (excluding the trailing \0 byte)
@@ -242,7 +244,7 @@ public class CLUtils
         var buffer = BufferUtils.createByteBuffer(numValues * CLSize.size_t)
             .order(ByteOrder.nativeOrder());
 
-        CL12.clGetDeviceInfo(device_ptr,
+        clGetDeviceInfo(device_ptr,
             paramName, buffer, null);
 
         long[] values = new long[numValues];
