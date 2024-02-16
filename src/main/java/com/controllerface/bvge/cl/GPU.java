@@ -1636,15 +1636,13 @@ public class GPU
 
     //#region Utility Methods
 
-    public static void cl_read_buffer(cl_mem src, long size, Pointer dst)
+    public static void cl_read_buffer(long src_ptr, int[] dst)
     {
-        clEnqueueReadBuffer(command_queue,
-            src,
-            CL_TRUE,
+        CL12.clEnqueueReadBuffer(command_queue_ptr,
+            src_ptr,
+            true,
             0,
-            size,
             dst,
-            0,
             null,
             null);
     }
@@ -1654,9 +1652,9 @@ public class GPU
         return clCreateBuffer(context, FLAGS_WRITE_GPU, size, null, null);
     }
 
-    private static cl_mem cl_new_int_arg_buffer(Pointer src)
+    private static long cl_new_int_arg_buffer(int[] src)
     {
-        return clCreateBuffer(context, FLAGS_WRITE_CPU_COPY, Sizeof.cl_int, src, null);
+        return CL12.clCreateBuffer(context.getNativePointer(), FLAGS_WRITE_CPU_COPY, src, null);
     }
 
     private static cl_mem cl_new_cpu_copy_buffer(long size, Pointer src)
@@ -1903,17 +1901,16 @@ public class GPU
         long final_buffer_size = (long) Sizeof.cl_int * final_count;
         var hulls_out = cl_new_buffer(final_buffer_size);
 
-        // the kernel will use this value as an internal atomic counter, always initialize to zero
-        var dst_hulls_counter = Pointer.to(arg_int(0));
-        var hulls_counter_data = cl_new_int_arg_buffer(dst_hulls_counter);
+        int[] counter_value = new int[]{ 0 };
+        var hulls_counter_data_ptr = cl_new_int_arg_buffer(counter_value);
 
         Kernel.root_hull_filter
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out.getNativePointer())
-            .ptr_arg(RootHullFilter_k.Args.counter, hulls_counter_data.getNativePointer())
+            .ptr_arg(RootHullFilter_k.Args.counter, hulls_counter_data_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .call(arg_long(GPU.Memory.next_armature()));
 
-        clReleaseMemObject(hulls_counter_data);
+        CL12.clReleaseMemObject(hulls_counter_data_ptr);
 
         return new HullIndexData(hulls_out, final_count);
     }
@@ -2400,15 +2397,14 @@ public class GPU
     {
         int armature_count = GPU.Memory.next_armature();
 
-        int[] counter = new int[]{0};
-        var dst_counter = Pointer.to(counter);
-        var counter_data = cl_new_int_arg_buffer(dst_counter);
+        int[] counter = new int[]{ 0 };
+        var counter_ptr = cl_new_int_arg_buffer(counter);
 
         Kernel.locate_out_of_bounds
-            .ptr_arg(LocateOutOfBounds_k.Args.counter, counter_data.getNativePointer())
+            .ptr_arg(LocateOutOfBounds_k.Args.counter, counter_ptr)
             .call(arg_long(armature_count));
 
-        clReleaseMemObject(counter_data);
+        CL12.clReleaseMemObject(counter_ptr);
     }
 
     public static void calculate_match_candidates()
@@ -2527,9 +2523,8 @@ public class GPU
         var finals_data = cl_new_buffer(final_buf_size);
 
         // the kernel will use this value as an internal atomic counter, always initialize to zero
-        int[] counter = new int[]{0};
-        var dst_counter = Pointer.to(counter);
-        var counter_data = cl_new_int_arg_buffer(dst_counter);
+        int[] counter = new int[]{ 0 };
+        var counter_ptr = cl_new_int_arg_buffer(counter);
 
         physics_buffer.set_final_size(final_buf_size);
         physics_buffer.candidates = new GPUMemory(finals_data);
@@ -2539,11 +2534,11 @@ public class GPU
             .ptr_arg(FinalizeCandidates_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
             .ptr_arg(FinalizeCandidates_k.Args.matches, physics_buffer.matches.pointer())
             .ptr_arg(FinalizeCandidates_k.Args.used, physics_buffer.matches_used.pointer())
-            .ptr_arg(FinalizeCandidates_k.Args.counter, counter_data.getNativePointer())
+            .ptr_arg(FinalizeCandidates_k.Args.counter, counter_ptr)
             .ptr_arg(FinalizeCandidates_k.Args.final_candidates, physics_buffer.candidates.pointer())
             .call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
-        clReleaseMemObject(counter_data);
+        CL12.clReleaseMemObject(counter_ptr);
     }
 
     public static void sat_collide()

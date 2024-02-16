@@ -146,7 +146,7 @@ public class HumanoidRenderer extends GameSystem
         GPU.GL_calculate_batch_offsets(batch_offset_b, details_b, total_instances);
 
         int[] raw_offsets = new int[total_batches];
-        GPU.cl_read_buffer(batch_offset_b, batch_index_size, Pointer.to(raw_offsets));
+        GPU.cl_read_buffer(batch_offset_b.getNativePointer(), raw_offsets);
 
         glBindVertexArray(vao);
         shader.use();
