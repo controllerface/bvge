@@ -7,6 +7,7 @@ import com.controllerface.bvge.physics.UniformGrid;
 import org.jocl.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opencl.CL12;
+import org.lwjgl.opencl.CL12GL;
 import org.lwjgl.opencl.KHRGLSharing;
 
 import java.nio.ByteBuffer;
@@ -48,7 +49,7 @@ public class GPU
     /**
      * Memory that is shared between Open CL and Open GL contexts.
      */
-    private static final HashMap<Integer, cl_mem> shared_mem = new LinkedHashMap<>();
+    private static final HashMap<Integer, Long> shared_mem = new LinkedHashMap<>();
     //#endregion
 
     //#region Workgroup Variables
@@ -1799,7 +1800,8 @@ public class GPU
      */
     public static void share_memory(int vboID)
     {
-        var vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
+        var vbo_mem = CL12GL.clCreateFromGLBuffer(context.getNativePointer(), FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
+        //var vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
         shared_mem.put(vboID, vbo_mem);
     }
 
@@ -1816,8 +1818,8 @@ public class GPU
         var vbo_mem = shared_mem.get(vbo_id);
 
         Kernel.prepare_bounds
-            .share_mem(vbo_mem.getNativePointer())
-            .ptr_arg(PrepareBounds_k.Args.vbo, vbo_mem.getNativePointer())
+            .share_mem(vbo_mem)
+            .ptr_arg(PrepareBounds_k.Args.vbo, vbo_mem)
             .set_arg(PrepareBounds_k.Args.offset, bounds_offset)
             .call(arg_long(batch_size));
     }
@@ -1835,8 +1837,8 @@ public class GPU
         var vbo_mem = shared_mem.get(vbo_id);
 
         Kernel.prepare_bones
-            .share_mem(vbo_mem.getNativePointer())
-            .ptr_arg(PrepareBones_k.Args.vbo, vbo_mem.getNativePointer())
+            .share_mem(vbo_mem)
+            .ptr_arg(PrepareBones_k.Args.vbo, vbo_mem)
             .set_arg(PrepareBones_k.Args.offset, bone_offset)
             .call(arg_long(batch_size));
     }
@@ -1856,10 +1858,10 @@ public class GPU
         var vbo_mem2 = shared_mem.get(vbo_id2);
 
         Kernel.prepare_edges
-            .share_mem(vbo_mem1.getNativePointer())
-            .share_mem(vbo_mem2.getNativePointer())
-            .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vbo_mem1.getNativePointer())
-            .ptr_arg(PrepareEdges_k.Args.flag_vbo, vbo_mem2.getNativePointer())
+            .share_mem(vbo_mem1)
+            .share_mem(vbo_mem2)
+            .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vbo_mem1)
+            .ptr_arg(PrepareEdges_k.Args.flag_vbo, vbo_mem2)
             .set_arg(PrepareEdges_k.Args.offset, edge_offset)
             .call(arg_long(batch_size));
     }
@@ -1869,8 +1871,8 @@ public class GPU
         var vbo_mem = shared_mem.get(vbo_id);
 
         Kernel.prepare_points
-            .share_mem(vbo_mem.getNativePointer())
-            .ptr_arg(PreparePoints_k.Args.vertex_vbo, vbo_mem.getNativePointer())
+            .share_mem(vbo_mem)
+            .ptr_arg(PreparePoints_k.Args.vertex_vbo, vbo_mem)
             .set_arg(PreparePoints_k.Args.offset, point_offset)
             .call(arg_long(batch_size));
     }
@@ -1930,9 +1932,9 @@ public class GPU
     {
         var vbo_mem = shared_mem.get(vbo_id);
         Kernel.prepare_transforms
-            .share_mem(vbo_mem.getNativePointer())
+            .share_mem(vbo_mem)
             .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out_ptr)
-            .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_mem.getNativePointer())
+            .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_mem)
             .set_arg(PrepareTransforms_k.Args.offset, offset)
             .call(arg_long(batch_size));
     }
@@ -1952,9 +1954,9 @@ public class GPU
         var vbo_transforms = shared_mem.get(transforms_id);
 
         Kernel.prepare_transforms
-            .share_mem(vbo_transforms.getNativePointer())
+            .share_mem(vbo_transforms)
             .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out_ptr)
-            .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_transforms.getNativePointer())
+            .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_transforms)
             .set_arg(PrepareTransforms_k.Args.offset, offset)
             .call(arg_long(batch_size));
     }
@@ -2034,14 +2036,14 @@ public class GPU
         var uvo_mem = shared_mem.get(uvo);
 
         Kernel.transfer_render_data
-            .share_mem(ebo_mem.getNativePointer())
-            .share_mem(vbo_mem.getNativePointer())
-            .share_mem(cbo_mem.getNativePointer())
-            .share_mem(uvo_mem.getNativePointer())
-            .ptr_arg(TransferRenderData_k.Args.command_buffer, cbo_mem.getNativePointer())
-            .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vbo_mem.getNativePointer())
-            .ptr_arg(TransferRenderData_k.Args.uv_buffer, uvo_mem.getNativePointer())
-            .ptr_arg(TransferRenderData_k.Args.element_buffer, ebo_mem.getNativePointer())
+            .share_mem(ebo_mem)
+            .share_mem(vbo_mem)
+            .share_mem(cbo_mem)
+            .share_mem(uvo_mem)
+            .ptr_arg(TransferRenderData_k.Args.command_buffer, cbo_mem)
+            .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vbo_mem)
+            .ptr_arg(TransferRenderData_k.Args.uv_buffer, uvo_mem)
+            .ptr_arg(TransferRenderData_k.Args.element_buffer, ebo_mem)
             .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
             .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
             .set_arg(TransferRenderData_k.Args.offset, offset)
@@ -3081,11 +3083,6 @@ public class GPU
         cl_zero_buffer(mem_ptr, size);
     }
 
-    public static void release_buffer(cl_mem mem)
-    {
-        clReleaseMemObject(mem);
-    }
-
     public static void release_buffer(long mem_ptr)
     {
         CL12.clReleaseMemObject(mem_ptr);
@@ -3139,13 +3136,13 @@ public class GPU
             if (program.gpu != null) program.gpu.destroy();
         }
 
-        for (cl_mem clMem : shared_mem.values())
+        for (long mem_ptr : shared_mem.values())
         {
-            clReleaseMemObject(clMem);
+            CL12.clReleaseMemObject(mem_ptr);
         }
 
-        clReleaseCommandQueue(command_queue);
-        clReleaseContext(context);
+        CL12.clReleaseCommandQueue(command_queue_ptr);
+        CL12.clReleaseContext(context.getNativePointer());
     }
 
     //#endregion
