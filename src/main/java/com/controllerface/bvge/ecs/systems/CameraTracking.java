@@ -16,11 +16,15 @@ import com.controllerface.bvge.window.Window;
 public class CameraTracking extends GameSystem
 {
     private final UniformGrid uniformGrid;
+    private final float x_offset;
+    private final float y_offset;
 
     public CameraTracking(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
         this.uniformGrid = uniformGrid;
+        x_offset = uniformGrid.width / 2;
+        y_offset = uniformGrid.height / 2;
     }
 
     @Override
@@ -40,8 +44,8 @@ public class CameraTracking extends GameSystem
         var height = (float)Window.get().getHeight() * camera.get_zoom();
         var new_x = (pos_x - width / 2);
         var new_y = (pos_y - height / 2);
-        var new_origin_x = (pos_x - width / camera.get_zoom()) + (uniformGrid.getWidth() / 2);
-        var new_origin_y = (pos_y - height / camera.get_zoom()) + (uniformGrid.getHeight() / 2);
+        var new_origin_x = (pos_x - width / camera.get_zoom()) + x_offset;
+        var new_origin_y = (pos_y - height / camera.get_zoom()) + y_offset;
         camera.position.x = new_x;
         camera.position.y = new_y;
         uniformGrid.updateOrigin(new_origin_x, new_origin_y);

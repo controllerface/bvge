@@ -6,8 +6,7 @@ public class PhysicsBuffer
 {
     public GPUMemory key_map;
     public GPUMemory key_bank;
-    public GPUMemory key_counts;
-    public GPUMemory key_offsets;
+
     public GPUMemory in_bounds;
     public GPUMemory candidates;
     public GPUMemory candidate_counts;
@@ -18,9 +17,6 @@ public class PhysicsBuffer
     public GPUMemory reactions_in;
     public GPUMemory reactions_out;
     public GPUMemory reaction_index;
-
-    public int x_sub_divisions;
-    public int key_count_length;
 
     private int candidate_buffer_count = 0;
     private int match_buffer_count = 0;
@@ -119,8 +115,6 @@ public class PhysicsBuffer
         //  the new size. This should be easy to do on the frame tick.
         if (key_map != null) key_map.release();
         if (key_bank != null) key_bank.release();
-        if (key_counts != null) key_counts.release();
-        if (key_offsets != null) key_offsets.release();
         if (in_bounds != null) in_bounds.release();
         if (candidate_counts != null) candidate_counts.release();
         if (candidate_offsets != null) candidate_offsets.release();
@@ -133,8 +127,6 @@ public class PhysicsBuffer
 
         key_map = null;
         key_bank = null;
-        key_counts = null;
-        key_offsets = null;
         candidates = null;
         in_bounds = null;
         candidate_counts = null;

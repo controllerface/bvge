@@ -15,7 +15,5 @@ public abstract class GameMode
 
     abstract public void update(float dt);
 
-    abstract public void resizeSpatialMap(int width, int height);
-
     abstract public void load();
 }

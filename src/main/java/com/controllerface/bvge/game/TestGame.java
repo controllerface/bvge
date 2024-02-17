@@ -36,9 +36,7 @@ public class TestGame extends GameMode
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
             RenderType.MODELS,
-            RenderType.HULLS,
-            RenderType.BOUNDS,
-            RenderType.POINTS);
+            RenderType.HULLS);
 
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
@@ -242,7 +240,7 @@ public class TestGame extends GameMode
             ecs.registerSystem(new PointRenderer(ecs));
         }
 
-        ecs.registerSystem(new BoneRenderer(ecs));
+        //ecs.registerSystem(new BoneRenderer(ecs));
     }
 
     @Override
@@ -349,12 +347,5 @@ public class TestGame extends GameMode
     @Override
     public void update(float dt)
     {
-    }
-
-    @Override
-    public void resizeSpatialMap(int width, int height)
-    {
-        // todo: buffer resize operations and then apply ONLY after a frame is done rendering
-        uniformGrid.resize(width, height);
     }
 }
