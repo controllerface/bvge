@@ -312,7 +312,6 @@ public class GPU
             return this;
         }
 
-
         public Kernel set_arg(Enum<?> val, float value)
         {
             kernel.set_arg(val.ordinal(), value);
