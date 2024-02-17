@@ -138,7 +138,6 @@ public class Window
         {
             get().width = newWidth;
             get().height = newHeight;
-            currentGameMode.resizeSpatialMap(newWidth, newHeight);
         });
 
         glfwMakeContextCurrent(glfwWindow);
@@ -245,8 +244,6 @@ public class Window
 
         camera.projectionSize.x = this.width;
         camera.projectionSize.y = this.height;
-
-        currentGameMode.resizeSpatialMap(this.width, this.height);
 
         // order of system registry is important, systems run in the order they are added
         var inputSystem = new KBMInput(ecs);

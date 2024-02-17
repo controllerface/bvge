@@ -169,7 +169,7 @@ public class PhysicsSimulation extends GameSystem
 
         // After keys are generated, the next step is to calculate the space needed for the key map. This is
         // a similar process to calculating the bank offsets.
-        GPU.calculate_map_offsets(uniform_grid);
+        GPU.calculate_map_offsets();
 
         // Now, the keymap itself is built. This is the structure that provides the ability to query
         // objects within the uniform grid structure.
@@ -178,7 +178,7 @@ public class PhysicsSimulation extends GameSystem
         // Hulls are now filtered to ensure that only objects that are within the uniform grid boundary
         // are considered for collisions. In this step, the maximum size of the match table is calculated
         // as well, which is needed in subsequent steps.
-        GPU.locate_in_bounds(uniform_grid);
+        GPU.locate_in_bounds();
 
         // In the first pass, the number of total possible candidates is calculated for each hull. This is
         // necessary to correctly determine how much of the table each hull will require.
@@ -312,11 +312,12 @@ public class PhysicsSimulation extends GameSystem
     {
         if (physics_buffer == null)
         {
-            this.physics_buffer = new PhysicsBuffer();
-            this.physics_buffer.set_gravity_x(GRAVITY_X);
-            this.physics_buffer.set_gravity_y(GRAVITY_Y);
-            this.physics_buffer.set_damping(MOTION_DAMPING);
+            physics_buffer = new PhysicsBuffer();
+            physics_buffer.set_gravity_x(GRAVITY_X);
+            physics_buffer.set_gravity_y(GRAVITY_Y);
+            physics_buffer.set_damping(MOTION_DAMPING);
             GPU.set_physics_buffer(physics_buffer);
+            GPU.set_uniform_grid_constants(uniform_grid);
         }
 
         simulate(dt);

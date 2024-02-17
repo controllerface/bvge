@@ -348,11 +348,4 @@ public class TestGame extends GameMode
     public void update(float dt)
     {
     }
-
-    @Override
-    public void resizeSpatialMap(int width, int height)
-    {
-        // todo: buffer resize operations and then apply ONLY after a frame is done rendering
-        uniformGrid.resize(width, height);
-    }
 }
