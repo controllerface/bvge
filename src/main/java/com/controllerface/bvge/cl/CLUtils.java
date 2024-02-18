@@ -22,10 +22,10 @@ public class CLUtils
     {
         try (var stream = GPU.class.getResourceAsStream("/cl/" + file))
         {
-            byte [] bytes = stream.readAllBytes();
+            byte [] bytes = Objects.requireNonNull(stream).readAllBytes();
             return new String(bytes, StandardCharsets.UTF_8);
         }
-        catch (IOException e)
+        catch (NullPointerException | IOException e)
         {
             throw new RuntimeException(e);
         }
@@ -43,34 +43,14 @@ public class CLUtils
         return clCreateKernel(program_ptr, kernel_name, (IntBuffer) null);
     }
 
-    public static double[] arg_double(double arg)
-    {
-        return new double[]{arg};
-    }
-
     public static long[] arg_long(long arg)
     {
         return new long[]{arg};
     }
 
-    public static int[] arg_int(int arg)
-    {
-        return new int[]{arg};
-    }
-
-    public static int[] arg_int2(int x, int y)
-    {
-        return new int[]{x, y};
-    }
-
     public static int[] arg_int4(int x, int y, int z, int w)
     {
         return new int[]{x, y, z, w};
-    }
-
-    public static float[] arg_float(float arg)
-    {
-        return new float[]{arg};
     }
 
     public static float[] arg_float2(float x, float y)
@@ -170,9 +150,9 @@ public class CLUtils
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            int r = clEnqueueAcquireGLObjects(command_queue_ptr,
-                mem_to_buffer(mem_stack, mem), null, null);
-            if (r != 0)
+            var buffer = mem_to_buffer(mem_stack, mem);
+            int r = clEnqueueAcquireGLObjects(command_queue_ptr, buffer, null, null);
+            if (r != CL_SUCCESS)
             {
                 System.out.println("error: " + r);
             }
@@ -183,9 +163,9 @@ public class CLUtils
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
-            int r = clEnqueueReleaseGLObjects(command_queue_ptr,
-                mem_to_buffer(mem_stack, mem), null, null);
-            if (r != 0)
+            var buffer = mem_to_buffer(mem_stack, mem);
+            int r = clEnqueueReleaseGLObjects(command_queue_ptr, buffer, null, null);
+            if (r != CL_SUCCESS)
             {
                 System.out.println("error: " + r);
             }
@@ -220,48 +200,18 @@ public class CLUtils
      * Returns the value of the device info parameter with the given name
      *
      * @param device_ptr The device
-     * @param paramName The parameter name
+     * @param param_code The parameter name
      * @return The value
      */
-    public static long getSize(long device_ptr, int paramName)
+    public static long getSize(long device_ptr, int param_code)
     {
-        return getSizes(device_ptr, paramName, 1)[0];
-    }
-
-    /**
-     * Returns the values of the device info parameter with the given name
-     *
-     * @param device_ptr The device
-     * @param paramName The parameter name
-     * @param numValues The number of values
-     * @return The value
-     */
-    static long[] getSizes(long device_ptr, int paramName, int numValues)
-    {
-        // The size of the returned data has p2 depend on
-        // the size of a size_t, which is handled here
-
-        var buffer = BufferUtils.createByteBuffer(numValues * CLSize.size_t)
+        var buffer = BufferUtils.createByteBuffer(CLSize.size_t)
             .order(ByteOrder.nativeOrder());
 
-        clGetDeviceInfo(device_ptr,
-            paramName, buffer, null);
+        clGetDeviceInfo(device_ptr, param_code, buffer, null);
 
-        long[] values = new long[numValues];
-        if (CLSize.size_t == 4)
-        {
-            for (int i=0; i<numValues; i++)
-            {
-                values[i] = buffer.getInt(i * CLSize.size_t);
-            }
-        }
-        else
-        {
-            for (int i=0; i<numValues; i++)
-            {
-                values[i] = buffer.getLong(i * CLSize.size_t);
-            }
-        }
-        return values;
+        return CLSize.size_t == 4
+            ? buffer.getInt(0)
+            : buffer.getLong(0);
     }
 }

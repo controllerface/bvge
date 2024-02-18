@@ -18,8 +18,6 @@ import java.nio.ByteBuffer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWImage;
 
-
-
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -36,8 +34,6 @@ public class Window
     private static Window INSTANCE = null;
 
     private long glfwWindow;
-
-    //private PickingTexture pickingTexture;
 
     public float r, g, b, a;
 
@@ -134,7 +130,7 @@ public class Window
             throw new IllegalStateException("could not create window");
         }
 
-        glfwSetWindowSizeCallback(glfwWindow, (win, newWidth, newHeight)->
+        glfwSetWindowSizeCallback(glfwWindow, (win, newWidth, newHeight) ->
         {
             get().width = newWidth;
             get().height = newHeight;
