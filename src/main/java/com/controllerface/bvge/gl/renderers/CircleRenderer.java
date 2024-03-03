@@ -41,12 +41,14 @@ public class CircleRenderer extends GameSystem
     public void init()
     {
         vao_id = glCreateVertexArrays();
+
         circles_vbo = glCreateBuffers();
         glNamedBufferData(circles_vbo, CIRCLES_BUFFER_SIZE, GL_DYNAMIC_DRAW);
         glVertexArrayVertexBuffer(vao_id, 0, circles_vbo, 0, VECTOR_FLOAT_4D_SIZE);
         glEnableVertexArrayAttrib(vao_id, 0);
         glVertexArrayAttribFormat(vao_id, 0, VECTOR_4D_LENGTH, GL_FLOAT, false, 0);
         glVertexArrayAttribBinding(vao_id, 0, 0);
+
         GPU.share_memory(circles_vbo);
     }
 
