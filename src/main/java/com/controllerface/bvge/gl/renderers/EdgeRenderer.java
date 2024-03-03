@@ -8,11 +8,13 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static org.lwjgl.opengl.GL11C.GL_FLOAT;
 import static org.lwjgl.opengl.GL15C.*;
 import static org.lwjgl.opengl.GL20C.*;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
+import static org.lwjgl.opengl.GL45C.*;
 
 /**
  * Renders physics edge constraints. All defined edges are rendered as lines.
@@ -45,23 +47,24 @@ public class EdgeRenderer extends GameSystem
 
     public void init()
     {
-        vao_id = glGenVertexArrays();
-        glBindVertexArray(vao_id);
+        vao_id = glCreateVertexArrays();
 
-        edge_vbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, edge_vbo);
-        glBufferData(GL_ARRAY_BUFFER, BATCH_BUFFER_SIZE, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(0, VERTEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, 0);
+        edge_vbo = glCreateBuffers();
+        glNamedBufferData(edge_vbo, BATCH_BUFFER_SIZE, GL_DYNAMIC_DRAW);
+        glVertexArrayVertexBuffer(vao_id, 0, edge_vbo, 0, VERTEX_SIZE_BYTES);
+        glEnableVertexArrayAttrib(vao_id, 0);
+        glVertexArrayAttribFormat(vao_id, 0, VERTEX_SIZE, GL_FLOAT, false, 0);
+        glVertexArrayAttribBinding(vao_id, 0, 0);
+
+        flag_vbo = glCreateBuffers();
+        glNamedBufferData(flag_vbo, BATCH_FLAG_SIZE, GL_DYNAMIC_DRAW);
+        glVertexArrayVertexBuffer(vao_id, 1, flag_vbo, 0, FLAG_SIZE_BYTES);
+        glEnableVertexArrayAttrib(vao_id, 1);
+        glVertexArrayAttribFormat(vao_id, 1, FLAG_SIZE, GL_FLOAT, false, 0);
+        glVertexArrayAttribBinding(vao_id, 1, 1);
+
         GPU.share_memory(edge_vbo);
-
-        flag_vbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, flag_vbo);
-        glBufferData(GL_ARRAY_BUFFER, BATCH_FLAG_SIZE, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(1, FLAG_SIZE, GL_FLOAT, false, FLAG_SIZE_BYTES, 0);
         GPU.share_memory(flag_vbo);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
     }
 
     @Override
@@ -72,8 +75,8 @@ public class EdgeRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
+        glEnableVertexArrayAttrib(vao_id, 0);
+        glEnableVertexArrayAttrib(vao_id, 1);
 
         int offset = 0;
         for (int remaining = GPU.Memory.next_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
@@ -84,8 +87,6 @@ public class EdgeRenderer extends GameSystem
             offset += count;
         }
 
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
         glBindVertexArray(0);
 
         shader.detach();
