@@ -116,6 +116,5 @@ public class CrateRenderer extends GameSystem
         glBindVertexArray(0);
 
         shader.detach();
-        texture.unbind();
     }
 }

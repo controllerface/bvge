@@ -5,8 +5,7 @@ import org.lwjgl.system.MemoryStack;
 
 import java.util.Objects;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.opengl.GL45C.*;
 import static org.lwjgl.stb.STBImage.*;
 
 public class Texture
@@ -28,31 +27,22 @@ public class Texture
     public Texture(int width, int height)
     {
         this.filepath = "generated";
-
-        texId = glGenTextures();
-        glBindTexture(GL_TEXTURE_2D, texId);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
-            GL_RGB, GL_UNSIGNED_BYTE, 0);
+        texId = glCreateTextures(GL_TEXTURE_2D);
+        glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureStorage2D(texId, 1, GL_RGB8, width, height);
+        glTextureSubImage2D(texId, 0,0,0, width, height, GL_RGB, GL_UNSIGNED_BYTE, 0);
     }
 
     public void init(AITexture raw_texture)
     {
         this.filepath = raw_texture.mFilename().dataString();
 
-        texId = glGenTextures();
-        glBindTexture(GL_TEXTURE_2D, texId);
-
-        // repeat image
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        // when stretching, pixelate
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        texId = glCreateTextures(GL_TEXTURE_2D);
+        glTextureParameteri(texId, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(texId, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         try (var stack = MemoryStack.stackPush())
         {
@@ -72,13 +62,13 @@ public class Texture
 
             if (channels.get(0) == 3)
             {
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width.get(0), height.get(0), 0,
-                    GL_RGB, GL_UNSIGNED_BYTE, image);
+                glTextureStorage2D(texId, 1, GL_RGB8, width.get(0), height.get(0));
+                glTextureSubImage2D(texId, 0,0,0, width.get(0), height.get(0), GL_RGB, GL_UNSIGNED_BYTE, image);
             }
             else if (channels.get(0) == 4)
             {
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width.get(0), height.get(0), 0,
-                    GL_RGBA, GL_UNSIGNED_BYTE, image);
+                glTextureStorage2D(texId, 1, GL_RGBA8, width.get(0), height.get(0));
+                glTextureSubImage2D(texId, 0,0,0, width.get(0), height.get(0), GL_RGBA, GL_UNSIGNED_BYTE, image);
             }
             else
             {
@@ -102,13 +92,7 @@ public class Texture
      */
     public void bind(int texture_slot)
     {
-        glActiveTexture(texture_slot);
-        glBindTexture(GL_TEXTURE_2D, texId);
-    }
-
-    public void unbind()
-    {
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTextureUnit(texture_slot - GL_TEXTURE0, texId);
     }
 
     public int getTexId()

@@ -174,7 +174,6 @@ public class HumanoidRenderer extends GameSystem
         glBindVertexArray(0);
 
         shader.detach();
-        texture.unbind();
 
         GPU.release_buffer(details_b);
         GPU.release_buffer(batch_offset_b);
