@@ -8,6 +8,9 @@ public class Constants
         // todo: experiment with this, maybe make it configurable
         public static final int MAX_BATCH_SIZE = 10_000;
 
+        public static final int SCALAR_LENGTH = 1;
+        public static final int SCALAR_FLOAT_SIZE = Float.BYTES;
+
         public static final int VECTOR_2D_LENGTH = 2; // 2D vector; x,y
         public static final int VECTOR_FLOAT_2D_SIZE = VECTOR_2D_LENGTH * Float.BYTES;
         public static final int VECTOR_INT_2D_SIZE = VECTOR_2D_LENGTH * Integer.BYTES;

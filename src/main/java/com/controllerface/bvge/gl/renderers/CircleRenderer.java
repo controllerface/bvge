@@ -6,21 +6,18 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
-import org.lwjgl.opencl.CL12;
 
-import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
-import static org.lwjgl.opencl.CL12.*;
+import static org.lwjgl.opencl.CL12.clReleaseMemObject;
 import static org.lwjgl.opengl.ARBDirectStateAccess.glCreateVertexArrays;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
-import static org.lwjgl.opengl.GL15C.*;
-import static org.lwjgl.opengl.GL20C.*;
-import static org.lwjgl.opengl.GL30C.GL_FLOAT;
-import static org.lwjgl.opengl.GL30C.*;
-import static org.lwjgl.opengl.GL45C.*;
+import static org.lwjgl.opengl.GL15C.GL_POINTS;
+import static org.lwjgl.opengl.GL30C.glBindVertexArray;
+import static org.lwjgl.opengl.GL45C.glEnableVertexArrayAttrib;
 
 public class CircleRenderer extends GameSystem
 {
@@ -41,14 +38,7 @@ public class CircleRenderer extends GameSystem
     public void init()
     {
         vao_id = glCreateVertexArrays();
-
-        circles_vbo = glCreateBuffers();
-        glNamedBufferData(circles_vbo, CIRCLES_BUFFER_SIZE, GL_DYNAMIC_DRAW);
-        glVertexArrayVertexBuffer(vao_id, 0, circles_vbo, 0, VECTOR_FLOAT_4D_SIZE);
-        glEnableVertexArrayAttrib(vao_id, 0);
-        glVertexArrayAttribFormat(vao_id, 0, VECTOR_4D_LENGTH, GL_FLOAT, false, 0);
-        glVertexArrayAttribBinding(vao_id, 0, 0);
-
+        circles_vbo = GLUtils.create_buffer_vec4(vao_id, 0, CIRCLES_BUFFER_SIZE);
         GPU.share_memory(circles_vbo);
     }
 
