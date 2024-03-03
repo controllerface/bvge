@@ -14,16 +14,17 @@ import org.lwjgl.opencl.CL12;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
 import static org.lwjgl.opencl.CL12.*;
+import static org.lwjgl.opengl.ARBDirectStateAccess.glCreateVertexArrays;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.*;
 import static org.lwjgl.opengl.GL20C.*;
 import static org.lwjgl.opengl.GL30C.GL_FLOAT;
 import static org.lwjgl.opengl.GL30C.*;
+import static org.lwjgl.opengl.GL45C.*;
 
 public class CircleRenderer extends GameSystem
 {
-    public static final int CIRCLES_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_4D_LENGTH;
-    public static final int CIRCLES_BUFFER_SIZE = CIRCLES_VERTEX_COUNT * Float.BYTES;
+    public static final int CIRCLES_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
 
     private final AbstractShader shader;
     private int vao_id;
@@ -39,17 +40,14 @@ public class CircleRenderer extends GameSystem
 
     public void init()
     {
-        vao_id = glGenVertexArrays();
-        glBindVertexArray(vao_id);
-
-        circles_vbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, circles_vbo);
-        glBufferData(GL_ARRAY_BUFFER, CIRCLES_BUFFER_SIZE, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(0, VECTOR_4D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_4D_SIZE, 0);
+        vao_id = glCreateVertexArrays();
+        circles_vbo = glCreateBuffers();
+        glNamedBufferData(circles_vbo, CIRCLES_BUFFER_SIZE, GL_DYNAMIC_DRAW);
+        glVertexArrayVertexBuffer(vao_id, 0, circles_vbo, 0, VECTOR_FLOAT_4D_SIZE);
+        glEnableVertexArrayAttrib(vao_id, 0);
+        glVertexArrayAttribFormat(vao_id, 0, VECTOR_4D_LENGTH, GL_FLOAT, false, 0);
+        glVertexArrayAttribBinding(vao_id, 0, 0);
         GPU.share_memory(circles_vbo);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
     }
 
     @Override
@@ -68,7 +66,7 @@ public class CircleRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glEnableVertexAttribArray(0);
+        glEnableVertexArrayAttrib(vao_id, 0);
 
         int offset = 0;
         for (int remaining = circle_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
@@ -79,7 +77,6 @@ public class CircleRenderer extends GameSystem
             offset += count;
         }
 
-        glDisableVertexAttribArray(0);
         glBindVertexArray(0);
         shader.detach();
     }
