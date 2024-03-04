@@ -13,8 +13,8 @@ import static com.controllerface.bvge.util.Constants.Rendering.*;
 import static org.lwjgl.opengl.GL15C.GL_LINES;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL45C.glCreateVertexArrays;
-import static org.lwjgl.opengl.GL45C.glEnableVertexArrayAttrib;
+import static org.lwjgl.opengl.GL45C.*;
+import static org.lwjgl.opengl.GL45C.glDisableVertexArrayAttrib;
 
 /**
  * Renders physics edge constraints. All defined edges are rendered as lines.
@@ -73,6 +73,9 @@ public class EdgeRenderer extends GameSystem
             glDrawArrays(GL_LINES, 0, count * 2);
             offset += count;
         }
+
+        glDisableVertexArrayAttrib(vao_id, EDGE_ATTRIBUTE);
+        glDisableVertexArrayAttrib(vao_id, FLAG_ATTRIBUTE);
 
         glBindVertexArray(0);
 

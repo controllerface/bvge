@@ -17,11 +17,14 @@ import static org.lwjgl.opengl.ARBDirectStateAccess.glCreateVertexArrays;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
+import static org.lwjgl.opengl.GL45C.glDisableVertexArrayAttrib;
 import static org.lwjgl.opengl.GL45C.glEnableVertexArrayAttrib;
 
 public class CircleRenderer extends GameSystem
 {
     public static final int CIRCLES_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
+
+    private static final int TRANSFORM_ATTRIBUTE = 0;
 
     private final AbstractShader shader;
     private int vao_id;
@@ -38,7 +41,7 @@ public class CircleRenderer extends GameSystem
     public void init()
     {
         vao_id = glCreateVertexArrays();
-        circles_vbo = GLUtils.new_buffer_vec4(vao_id, 0, CIRCLES_BUFFER_SIZE);
+        circles_vbo = GLUtils.new_buffer_vec4(vao_id, TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
         GPU.share_memory(circles_vbo);
     }
 
@@ -58,7 +61,7 @@ public class CircleRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glEnableVertexArrayAttrib(vao_id, 0);
+        glEnableVertexArrayAttrib(vao_id, TRANSFORM_ATTRIBUTE);
 
         int offset = 0;
         for (int remaining = circle_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
@@ -68,6 +71,8 @@ public class CircleRenderer extends GameSystem
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;
         }
+
+        glDisableVertexArrayAttrib(vao_id, TRANSFORM_ATTRIBUTE);
 
         glBindVertexArray(0);
         shader.detach();

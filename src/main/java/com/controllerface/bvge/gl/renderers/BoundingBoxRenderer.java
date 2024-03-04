@@ -15,8 +15,7 @@ import static org.lwjgl.opengl.GL11C.GL_LINE_LOOP;
 import static org.lwjgl.opengl.GL15C.*;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
-import static org.lwjgl.opengl.GL45C.glCreateVertexArrays;
-import static org.lwjgl.opengl.GL45C.glEnableVertexArrayAttrib;
+import static org.lwjgl.opengl.GL45C.*;
 
 public class BoundingBoxRenderer extends GameSystem
 {
@@ -74,6 +73,8 @@ public class BoundingBoxRenderer extends GameSystem
             }
             offset += count;
         }
+
+        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
 
         glBindVertexArray(0);
 

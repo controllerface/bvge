@@ -159,6 +159,9 @@ public class HumanoidRenderer extends GameSystem
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
         }
 
+        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
+        glDisableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
+
         glBindVertexArray(0);
 
         shader.detach();

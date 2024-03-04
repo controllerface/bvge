@@ -99,6 +99,10 @@ public class CrateRenderer extends GameSystem
             offset += count;
         }
 
+        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
+        glDisableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
+        glDisableVertexArrayAttrib(vao_id, TRANSFORM_ATTRIBUTE);
+
         glBindVertexArray(0);
 
         shader.detach();

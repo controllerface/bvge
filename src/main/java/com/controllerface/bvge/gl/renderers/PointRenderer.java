@@ -13,8 +13,7 @@ import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_S
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL45C.glCreateVertexArrays;
-import static org.lwjgl.opengl.GL45C.glEnableVertexArrayAttrib;
+import static org.lwjgl.opengl.GL45C.*;
 
 /**
  * Renders physics edge constraints. All defined edges are rendered as lines.
@@ -61,6 +60,8 @@ public class PointRenderer extends GameSystem
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;
         }
+
+        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
 
         glBindVertexArray(0);
 
