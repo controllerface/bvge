@@ -33,13 +33,13 @@ public class TestGame extends GameMode
         POINTS,  // model vertices
     }
 
-//    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-//        EnumSet.of(
-//            RenderType.MODELS,
-//            RenderType.HULLS);
-
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-        EnumSet.allOf(RenderType.class);
+        EnumSet.of(
+            RenderType.MODELS,
+            RenderType.HULLS);
+
+//    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
+//        EnumSet.allOf(RenderType.class);
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {
@@ -250,10 +250,10 @@ public class TestGame extends GameMode
     {
         //genPlayer();
         genTestFigure(1f, 300, 0);
-//        genTestFigureNPC(1f, 200, 0);
-//        genTestFigureNPC(1f, 200, 100);
-//        genTestFigureNPC(1f, 200, 250);
-//        genTestFigureNPC(1f, 100, 50);
+        genTestFigureNPC(1f, 200, 0);
+        genTestFigureNPC(1f, 200, 100);
+        genTestFigureNPC(1f, 200, 250);
+        genTestFigureNPC(1f, 100, 50);
 
         //genTestTriangle(20f, 190, 250);
 
