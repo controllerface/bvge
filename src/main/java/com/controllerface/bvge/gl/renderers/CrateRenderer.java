@@ -11,12 +11,10 @@ import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
-import org.lwjgl.opengl.GL45C;
 
-import static com.controllerface.bvge.util.Constants.Rendering.*;
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static org.lwjgl.opencl.CL12.clReleaseMemObject;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
 import static org.lwjgl.opengl.GL45C.*;
 
@@ -53,7 +51,7 @@ public class CrateRenderer extends GameSystem
         vao_id = glCreateVertexArrays();
 
         int element_buffer_id = glCreateBuffers();
-        glNamedBufferData(element_buffer_id, raw.r_faces(), GL45C.GL_STATIC_DRAW);
+        glNamedBufferData(element_buffer_id, raw.r_faces(), GL_STATIC_DRAW);
         glVertexArrayElementBuffer(vao_id, element_buffer_id);
 
         GLUtils.fill_buffer_vec2(vao_id, POSITION_ATTRIBUTE, raw.r_vertices());
@@ -97,7 +95,7 @@ public class CrateRenderer extends GameSystem
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             GPU.GL_transforms(transform_buffer_id, crate_hulls.indices(), count, offset);
-            glDrawElementsInstanced(GL45C.GL_TRIANGLES, 6, GL45C.GL_UNSIGNED_INT, 0, count);
+            glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, count);
             offset += count;
         }
 
