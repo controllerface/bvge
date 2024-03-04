@@ -38,6 +38,8 @@ public class TestGame extends GameMode
             RenderType.MODELS,
             RenderType.HULLS);
 
+//    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
+//        EnumSet.allOf(RenderType.class);
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {

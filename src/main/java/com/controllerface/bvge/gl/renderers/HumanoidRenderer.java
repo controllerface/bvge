@@ -6,23 +6,18 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
-import static org.lwjgl.opengl.GL11C.GL_FLOAT;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL15C.*;
-import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
 import static org.lwjgl.opengl.GL40C.GL_DRAW_INDIRECT_BUFFER;
 import static org.lwjgl.opengl.GL43C.glMultiDrawElementsIndirect;
+import static org.lwjgl.opengl.GL45C.*;
 
 public class HumanoidRenderer extends GameSystem
 {
@@ -30,12 +25,15 @@ public class HumanoidRenderer extends GameSystem
     private static final int VERTEX_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
     private static final int COMMAND_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * Integer.BYTES * 5;
 
+    private static final int POSITION_ATTRIBUTE = 0;
+    private static final int UV_COORD_ATTRIBUTE = 1;
+
     // todo: determine the sizes required for a single render batch and calculate them
     private Texture texture;
     private final AbstractShader shader;
     private final int[] texture_slots = {0};
 
-    private int vao;
+    private int vao_id;
     private int vertex_b;
     private int texture_uv_b;
     private int element_b;
@@ -83,34 +81,25 @@ public class HumanoidRenderer extends GameSystem
         offsets = GPU.new_empty_buffer(mesh_size);
         mesh_transfer = GPU.new_empty_buffer(ELEMENT_BUFFER_SIZE * 2);
 
-        vao = glGenVertexArrays();
-        glBindVertexArray(vao);
+        vao_id = glCreateVertexArrays();
 
-        element_b = glGenBuffers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_b);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, ELEMENT_BUFFER_SIZE, GL_DYNAMIC_DRAW);
+        element_b = glCreateBuffers();
+        glNamedBufferData(element_b, ELEMENT_BUFFER_SIZE, GL_STATIC_DRAW);
+        glVertexArrayElementBuffer(vao_id, element_b);
 
-        vertex_b = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_b);
-        glBufferData(GL_ARRAY_BUFFER, VERTEX_BUFFER_SIZE, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(0, VECTOR_2D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_2D_SIZE, 0);
+        vertex_b = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
+        texture_uv_b = GLUtils.new_buffer_vec2(vao_id, UV_COORD_ATTRIBUTE, VERTEX_BUFFER_SIZE);
 
-        texture_uv_b = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, texture_uv_b);
-        glBufferData(GL_ARRAY_BUFFER, VERTEX_BUFFER_SIZE, GL_DYNAMIC_DRAW);
-        glVertexAttribPointer(1, VECTOR_2D_LENGTH, GL_FLOAT, false, VECTOR_FLOAT_2D_SIZE, 0);
-
-        command_b = glGenBuffers();
+        glBindVertexArray(vao_id);
+        command_b = glCreateBuffers();
+        glNamedBufferData(command_b, COMMAND_BUFFER_SIZE, GL_STATIC_DRAW);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, command_b);
-        glBufferData(GL_DRAW_INDIRECT_BUFFER, COMMAND_BUFFER_SIZE, GL_DYNAMIC_DRAW);
+        glBindVertexArray(0);
 
         GPU.share_memory(element_b);
         GPU.share_memory(vertex_b);
         GPU.share_memory(command_b);
         GPU.share_memory(texture_uv_b);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
     }
 
     @Override
@@ -146,15 +135,16 @@ public class HumanoidRenderer extends GameSystem
         int[] raw_offsets = new int[total_batches];
         GPU.cl_read_buffer(batch_offset_b, raw_offsets);
 
-        glBindVertexArray(vao);
+        glBindVertexArray(vao_id);
+
         shader.use();
-        texture.bind(GL_TEXTURE0);
+        texture.bind(0);
 
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         shader.uploadIntArray("uTextures", texture_slots);
 
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
+        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
 
         for (int current_batch = 0; current_batch < raw_offsets.length; current_batch++)
         {
@@ -169,12 +159,12 @@ public class HumanoidRenderer extends GameSystem
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
         }
 
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
+        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
+        glDisableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
+
         glBindVertexArray(0);
 
         shader.detach();
-        texture.unbind();
 
         GPU.release_buffer(details_b);
         GPU.release_buffer(batch_offset_b);
