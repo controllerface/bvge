@@ -38,7 +38,7 @@ public class CircleRenderer extends GameSystem
     public void init()
     {
         vao_id = glCreateVertexArrays();
-        circles_vbo = GLUtils.create_buffer_vec4(vao_id, 0, CIRCLES_BUFFER_SIZE);
+        circles_vbo = GLUtils.new_buffer_vec4(vao_id, 0, CIRCLES_BUFFER_SIZE);
         GPU.share_memory(circles_vbo);
     }
 

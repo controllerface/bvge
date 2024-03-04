@@ -39,7 +39,7 @@ public class PointRenderer extends GameSystem
     public void init()
     {
         vao_id = glCreateVertexArrays();
-        point_vbo = GLUtils.create_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        point_vbo = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         GPU.share_memory(point_vbo);
     }
 

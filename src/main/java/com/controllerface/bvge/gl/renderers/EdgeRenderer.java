@@ -48,8 +48,8 @@ public class EdgeRenderer extends GameSystem
     public void init()
     {
         vao_id = glCreateVertexArrays();
-        edge_vbo = GLUtils.create_buffer_vec2(vao_id, EDGE_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        flag_vbo = GLUtils.create_buffer_float(vao_id, FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
+        edge_vbo = GLUtils.new_buffer_vec2(vao_id, EDGE_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        flag_vbo = GLUtils.new_buffer_float(vao_id, FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
         GPU.share_memory(edge_vbo);
         GPU.share_memory(flag_vbo);
     }

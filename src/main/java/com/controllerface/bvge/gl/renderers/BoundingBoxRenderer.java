@@ -10,10 +10,6 @@ import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 import org.lwjgl.system.MemoryStack;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
-
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static org.lwjgl.opengl.GL11C.GL_LINE_LOOP;
 import static org.lwjgl.opengl.GL15C.*;
@@ -51,7 +47,7 @@ public class BoundingBoxRenderer extends GameSystem
     public void init()
     {
         vao_id = glCreateVertexArrays();
-        bounding_box_vbo = GLUtils.create_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        bounding_box_vbo = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         GPU.share_memory(bounding_box_vbo);
     }
 

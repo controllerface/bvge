@@ -148,7 +148,7 @@ public class HumanoidRenderer extends GameSystem
 
         glBindVertexArray(vao);
         shader.use();
-        texture.bind(GL_TEXTURE0);
+        texture.bind(0);
 
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         shader.uploadIntArray("uTextures", texture_slots);

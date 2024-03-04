@@ -92,7 +92,7 @@ public class Texture
      */
     public void bind(int texture_slot)
     {
-        glBindTextureUnit(texture_slot - GL_TEXTURE0, texId);
+        glBindTextureUnit(texture_slot, texId);
     }
 
     public int getTexId()
