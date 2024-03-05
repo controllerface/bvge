@@ -3170,6 +3170,7 @@ public class GPU
         while (size_cap >= max_local_buffer_size)
         {
             current_max_group_size /= 2;
+            current_max_block_size = current_max_group_size * 2;
             int2_max = CLSize.cl_int2 * current_max_block_size;
             int4_max = CLSize.cl_int4 * current_max_block_size;
             size_cap = int2_max + int4_max;
