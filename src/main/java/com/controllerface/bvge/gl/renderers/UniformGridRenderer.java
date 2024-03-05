@@ -49,8 +49,8 @@ public class UniformGridRenderer extends GameSystem
     public void tick(float dt)
     {
         float[] data = new float[8];
-        data[0] = uniformGrid.getX_origin();// - x_offset;
-        data[1] = uniformGrid.getY_origin();// - y_offset;
+        data[0] = uniformGrid.getX_origin();
+        data[1] = uniformGrid.getY_origin();
 
         data[2] = uniformGrid.getX_origin() + uniformGrid.width;
         data[3] = uniformGrid.getY_origin();

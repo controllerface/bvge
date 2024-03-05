@@ -82,9 +82,18 @@ public class GPU
      */
 
     /**
+     * The maximum size of a local buffer that can be used as a __local prefixed, GPU allocated
+     * buffer within a kernel. Note that in practice, local memory buffers should be _less_ than
+     * this value. Even though it is given a maximum, tests have shown that trying to allocate
+     * exactly this amount can fail, likely due to some small amount of the local buffer being
+     * used by the hardware either for individual arguments, or some other internal data.
+     */
+    private static long max_local_buffer_size = 0;
+
+    /**
      * The largest group of calculations that can be done in a single "warp" or "wave" of GPU processing.
      */
-    private static int max_work_group_size = 0;
+    private static long max_work_group_size = 0;
 
     /**
      * Used for the prefix scan kernels and their variants.
@@ -1805,9 +1814,9 @@ public class GPU
     private static void linearize_kernel(Kernel kernel, int object_count)
     {
         int offset = 0;
-        for (int remaining = object_count; remaining > 0; remaining -= max_work_group_size)
+        for (long remaining = object_count; remaining > 0; remaining -= max_work_group_size)
         {
-            int count = Math.min(max_work_group_size, remaining);
+            int count = (int) Math.min(max_work_group_size, remaining);
             var sz = count == max_work_group_size
                 ? local_work_default
                 : arg_long(count);
@@ -3144,25 +3153,32 @@ public class GPU
         System.out.println(getString(device, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
-        var max_local = getSize(device, CL_DEVICE_LOCAL_MEM_SIZE);
-        var max_grp = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        // At runtime, local buffers are used to perform prefix scan operations.
+        // It is vital that the max scan block size does not exceed the maximum
+        // local buffer size of the GPU. In order to ensure this doesn't happen,
+        // the following logic halves the effective max workgroup size, if needed
+        // to ensure that at runtime, the amount of local buffer storage requested
+        // does not meet or exceed the local memory size.
+        max_local_buffer_size = getSize(device, CL_DEVICE_LOCAL_MEM_SIZE);
+        long current_max_group_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        long current_max_block_size = current_max_group_size * 2;
 
-        long local_buffer_size = CLSize.cl_int2 * max_grp * 2;
-        long local_buffer_size2 = CLSize.cl_int4 * max_grp * 2;
-        long sz_cap = local_buffer_size + local_buffer_size2;
+        long int2_max = CLSize.cl_int2 * current_max_block_size;
+        long int4_max = CLSize.cl_int4 * current_max_block_size;
+        long size_cap = int2_max + int4_max;
 
-        while (sz_cap >= max_local)
+        while (size_cap >= max_local_buffer_size)
         {
-            max_grp /= 2;
-            local_buffer_size = CLSize.cl_int2 * max_grp * 2;
-            local_buffer_size2 = CLSize.cl_int4 * max_grp * 2;
-            sz_cap = local_buffer_size + local_buffer_size2;
+            current_max_group_size /= 2;
+            int2_max = CLSize.cl_int2 * current_max_block_size;
+            int4_max = CLSize.cl_int4 * current_max_block_size;
+            size_cap = int2_max + int4_max;
         }
 
-        assert max_grp > 0 : "Invalid Group Size";
+        assert current_max_group_size > 0 : "Invalid Group Size";
 
-        max_work_group_size = (int) max_grp;
-        max_scan_block_size = (long) max_work_group_size * 2;
+        max_work_group_size = current_max_group_size;
+        max_scan_block_size = current_max_block_size;
         local_work_default = arg_long(max_work_group_size);
 
         // initialize gpu programs
