@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
+import static org.lwjgl.opencl.CL10.CL_DEVICE_LOCAL_MEM_SIZE;
 import static org.lwjgl.opencl.CL12.CL_CONTEXT_PLATFORM;
 import static org.lwjgl.opencl.CL12.CL_DEVICE_MAX_WORK_GROUP_SIZE;
 import static org.lwjgl.opencl.CL12.CL_DEVICE_NAME;
@@ -3143,7 +3144,24 @@ public class GPU
         System.out.println(getString(device, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
-        max_work_group_size = (int) getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        var max_local = getSize(device, CL_DEVICE_LOCAL_MEM_SIZE);
+        var max_grp = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+
+        long local_buffer_size = CLSize.cl_int2 * max_grp * 2;
+        long local_buffer_size2 = CLSize.cl_int4 * max_grp * 2;
+        long sz_cap = local_buffer_size + local_buffer_size2;
+
+        while (sz_cap >= max_local)
+        {
+            max_grp /= 2;
+            local_buffer_size = CLSize.cl_int2 * max_grp * 2;
+            local_buffer_size2 = CLSize.cl_int4 * max_grp * 2;
+            sz_cap = local_buffer_size + local_buffer_size2;
+        }
+
+        assert max_grp > 0 : "Invalid Group Size";
+
+        max_work_group_size = (int) max_grp;
         max_scan_block_size = (long) max_work_group_size * 2;
         local_work_default = arg_long(max_work_group_size);
 
