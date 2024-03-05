@@ -242,7 +242,7 @@ public class TestGame extends GameMode
             ecs.registerSystem(new PointRenderer(ecs));
         }
 
-        //ecs.registerSystem(new BoneRenderer(ecs));
+        ecs.registerSystem(new UniformGridRenderer(ecs, uniformGrid));
     }
 
     @Override
