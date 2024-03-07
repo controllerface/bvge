@@ -14,6 +14,7 @@ public class PhysicsSimulation extends GameSystem
     private final static float TICK_RATE = 1.0f / TARGET_FPS;
     private final static int SUB_STEPS = 8;
     private final static int EDGE_STEPS = 8;
+    private final static int MAX_SUB_TICKS = SUB_STEPS * 2;
     private final static float GRAVITY_MAGNITUDE = -9.8f * 4;
 
     private float accumulator = 0.0f;
@@ -273,31 +274,32 @@ public class PhysicsSimulation extends GameSystem
             float sub_step = TICK_RATE / SUB_STEPS;
             for (int i = 0; i < SUB_STEPS; i++)
             {
-                sub_ticks++;
-                this.tickSimulation(sub_step);
                 this.accumulator -= sub_step;
+                sub_ticks++;
+                if (sub_ticks <= MAX_SUB_TICKS)
+                {
+                    this.tickSimulation(sub_step);
 
-                // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
-                // objects that have animation will have their hulls moved into position for the current tick. It
-                // may seem odd to process animations as part of physics and not rendering, however this is required
-                // as the animated objects need to be accounted for in physical space. The hulls representing the
-                // rendered meshes are what is actually moved, and the result of the hull movement is used to position
-                // the original mesh for rendering. This separation is necessary as model geometry is too complex to
-                // use as a collision boundary.
-                GPU.animate_points();
+                    // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
+                    // objects that have animation will have their hulls moved into position for the current tick. It
+                    // may seem odd to process animations as part of physics and not rendering, however this is required
+                    // as the animated objects need to be accounted for in physical space. The hulls representing the
+                    // rendered meshes are what is actually moved, and the result of the hull movement is used to position
+                    // the original mesh for rendering. This separation is necessary as model geometry is too complex to
+                    // use as a collision boundary.
+                    GPU.animate_points();
 
-                // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain
-                // their defined shapes. Without this step, the individual points of the tracked physics hulls will
-                // deform on impact, and may fly off in random directions, typically causing simulation failure. The
-                // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
-                // within the simulation.
-                GPU.resolve_constraints(EDGE_STEPS);
+                    // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain
+                    // their defined shapes. Without this step, the individual points of the tracked physics hulls will
+                    // deform on impact, and may fly off in random directions, typically causing simulation failure. The
+                    // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
+                    // within the simulation.
+                    GPU.resolve_constraints(EDGE_STEPS);
 
-                physics_buffer.finishTick();
+                    physics_buffer.finishTick();
+                }
             }
         }
-
-        System.out.println("sub ticks this frame: " + sub_ticks);
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
         // to ensure buffer compaction happens as infrequently as possible.
