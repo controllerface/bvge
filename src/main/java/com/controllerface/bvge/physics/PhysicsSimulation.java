@@ -269,6 +269,7 @@ public class PhysicsSimulation extends GameSystem
 
         this.accumulator += dt;
         int sub_ticks = 0;
+        float overage = 0f;
         while (this.accumulator >= TICK_RATE)
         {
             float sub_step = TICK_RATE / SUB_STEPS;
@@ -298,6 +299,19 @@ public class PhysicsSimulation extends GameSystem
 
                     physics_buffer.finishTick();
                 }
+                else overage+= sub_step;
+            }
+        }
+
+        if (overage > 0f)
+        {
+            float overage_tick = overage / SUB_STEPS;
+            for (int i = 0; i < SUB_STEPS; i++)
+            {
+                this.tickSimulation(overage_tick);
+                GPU.animate_points();
+                GPU.resolve_constraints(EDGE_STEPS);
+                physics_buffer.finishTick();
             }
         }
 
