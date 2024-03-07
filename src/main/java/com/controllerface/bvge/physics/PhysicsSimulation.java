@@ -267,11 +267,13 @@ public class PhysicsSimulation extends GameSystem
         GPU.resolve_constraints(EDGE_STEPS);
 
         this.accumulator += dt;
+        int sub_ticks = 0;
         while (this.accumulator >= TICK_RATE)
         {
             float sub_step = TICK_RATE / SUB_STEPS;
             for (int i = 0; i < SUB_STEPS; i++)
             {
+                sub_ticks++;
                 this.tickSimulation(sub_step);
                 this.accumulator -= sub_step;
 
@@ -294,6 +296,8 @@ public class PhysicsSimulation extends GameSystem
                 physics_buffer.finishTick();
             }
         }
+
+        System.out.println("sub ticks this frame: " + sub_ticks);
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
         // to ensure buffer compaction happens as infrequently as possible.
