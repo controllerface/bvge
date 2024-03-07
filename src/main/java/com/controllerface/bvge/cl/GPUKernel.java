@@ -54,6 +54,12 @@ public abstract class GPUKernel
         return this;
     }
 
+    public GPUKernel ptr_arg(Enum<?> val, long pointer)
+    {
+        ptr_arg(val.ordinal(), pointer);
+        return this;
+    }
+
     /**
      * Sets a new argument to a null pointer. This is used for defining buffers that are local to the
      * GPU kernel execution. Buffers of this nature are sized but have no data transferred, the empty

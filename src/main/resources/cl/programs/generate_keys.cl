@@ -14,15 +14,9 @@ __kernel void generate_keys(__global int4 *bounds_index_data,
     int4 bounds_index = bounds_index_data[gid];
     int2 bounds_bank = bounds_bank_data[gid];
 
-    bool inBounds = bounds_bank.y != 0;
-    if (!inBounds)
-    {
-        return;
-    }
-
     int offset = bounds_bank.x * 2;
 
-    int min_x = bounds_index.x;
+    int min_x = bounds_bank.y == 0 ? INT_MAX : bounds_index.x;
     int max_x = bounds_index.y;
     int min_y = bounds_index.z;
     int max_y = bounds_index.w;

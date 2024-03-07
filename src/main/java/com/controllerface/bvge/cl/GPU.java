@@ -166,6 +166,13 @@ public class GPU
     private static int x_subdivisions;
     private static int y_subdivisions;
 
+    private static long reaction_buf_size = 10500000L;
+    private static long index_buf_size = 5250000L;
+
+    private static GPUMemory reactions_in = new GPUMemory();
+    private static GPUMemory reactions_out = new GPUMemory();
+    private static GPUMemory reaction_index = new GPUMemory();
+
     //#endregion
 
     //#region Program Objects
@@ -1136,6 +1143,10 @@ public class GPU
 
     private static void init_memory(int max_hulls, int max_points)
     {
+        reactions_in = new GPUMemory(cl_new_buffer(reaction_buf_size));
+        reactions_out = new GPUMemory(cl_new_buffer(reaction_buf_size));
+        reaction_index = new GPUMemory(cl_new_buffer(index_buf_size));
+
         atomic_counter_ptr = cl_new_pinned_int();
         // todo: there should be more granularity than just max hulls and points. There should be
         //  limits on armatures and other data types.
@@ -1386,6 +1397,7 @@ public class GPU
         // narrow collision
 
         Kernel.sat_collide.set_kernel(new SatCollide_k(command_queue_ptr))
+            .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
             .mem_arg(SatCollide_k.Args.hulls, Buffer.hulls.memory)
             .mem_arg(SatCollide_k.Args.element_tables, Buffer.hull_element_tables.memory)
             .mem_arg(SatCollide_k.Args.hull_flags, Buffer.hull_flags.memory)
@@ -2570,19 +2582,29 @@ public class GPU
         long reaction_buf_size = (long) CLSize.cl_float2 * max_point_count;
         long index_buf_size = (long) CLSize.cl_int * max_point_count;
 
-        var reaction_data = cl_new_buffer(reaction_buf_size);
-        var reaction_data_out = cl_new_buffer(reaction_buf_size);
-        var index_data = cl_new_buffer(index_buf_size);
+        if (reaction_buf_size > GPU.reaction_buf_size
+            || index_buf_size > GPU.index_buf_size)
+        {
+            GPU.reactions_in.release();
+            GPU.reactions_out.release();
+            GPU.reaction_index.release();
 
-        physics_buffer.reactions_in = new GPUMemory(reaction_data);
-        physics_buffer.reactions_out = new GPUMemory(reaction_data_out);
-        physics_buffer.reaction_index = new GPUMemory(index_data);
+            GPU.reaction_buf_size = reaction_buf_size;
+            GPU.index_buf_size = index_buf_size;
+
+            var reaction_data = cl_new_buffer(reaction_buf_size);
+            var reaction_data_out = cl_new_buffer(reaction_buf_size);
+            var index_data = cl_new_buffer(index_buf_size);
+
+            GPU.reactions_in = new GPUMemory(reaction_data);
+            GPU.reactions_out = new GPUMemory(reaction_data_out);
+            GPU.reaction_index = new GPUMemory(index_data);
+        }
 
         Kernel.sat_collide
             .ptr_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.pointer())
-            .ptr_arg(SatCollide_k.Args.reactions, physics_buffer.reactions_in.pointer())
-            .ptr_arg(SatCollide_k.Args.reaction_index, physics_buffer.reaction_index.pointer())
-            .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
+            .ptr_arg(SatCollide_k.Args.reactions, GPU.reactions_in.pointer())
+            .ptr_arg(SatCollide_k.Args.reaction_index, GPU.reaction_index.pointer())
             .call(global_work_size);
 
         int size = cl_read_pinned_int(atomic_counter_ptr);
@@ -2599,16 +2621,16 @@ public class GPU
     public static void sort_reactions()
     {
         Kernel.sort_reactions
-            .ptr_arg(SortReactions_k.Args.reactions_in, physics_buffer.reactions_in.pointer())
-            .ptr_arg(SortReactions_k.Args.reactions_out, physics_buffer.reactions_out.pointer())
-            .ptr_arg(SortReactions_k.Args.reaction_index, physics_buffer.reaction_index.pointer())
+            .ptr_arg(SortReactions_k.Args.reactions_in, GPU.reactions_in.pointer())
+            .ptr_arg(SortReactions_k.Args.reactions_out, GPU.reactions_out.pointer())
+            .ptr_arg(SortReactions_k.Args.reaction_index, GPU.reaction_index.pointer())
             .call(arg_long(physics_buffer.get_reaction_count()));
     }
 
     public static void apply_reactions()
     {
         Kernel.apply_reactions
-            .ptr_arg(ApplyReactions_k.Args.reactions, physics_buffer.reactions_out.pointer())
+            .ptr_arg(ApplyReactions_k.Args.reactions, GPU.reactions_out.pointer())
             .call(arg_long(GPU.Memory.next_point()));
     }
 
