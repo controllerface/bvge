@@ -270,7 +270,6 @@ public class PhysicsSimulation extends GameSystem
 
         this.accumulator += dt;
         int sub_ticks = 0;
-        float overage = 0f;
         while (this.accumulator >= TICK_RATE)
         {
             for (int i = 0; i < SUB_STEPS; i++)
@@ -299,15 +298,7 @@ public class PhysicsSimulation extends GameSystem
 
                     physics_buffer.finishTick();
                 }
-                else overage += SUB_STEP;
             }
-        }
-
-        if (overage > 0f)
-        {
-            this.tickSimulation(SUB_STEP);
-            GPU.animate_points();
-            GPU.resolve_constraints(EDGE_STEPS);
         }
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
