@@ -15,7 +15,6 @@ public class PhysicsSimulation extends GameSystem
     private static final int SUB_STEPS = 8;
     private static final float SUB_STEP = TICK_RATE / SUB_STEPS;
     private static final int EDGE_STEPS = 8;
-    private static final int MAX_SUB_TICKS = SUB_STEPS * 2;
     private static final float GRAVITY_MAGNITUDE = -9.8f * 4;
 
 
@@ -278,7 +277,7 @@ public class PhysicsSimulation extends GameSystem
             {
                 this.accumulator -= SUB_STEP;
                 sub_ticks++;
-                if (sub_ticks <= MAX_SUB_TICKS)
+                if (sub_ticks <= SUB_STEPS)
                 {
                     this.tickSimulation(SUB_STEP);
 
@@ -308,7 +307,7 @@ public class PhysicsSimulation extends GameSystem
         {
             this.tickSimulation(SUB_STEP);
             GPU.animate_points();
-            GPU.resolve_constraints(1);
+            GPU.resolve_constraints(EDGE_STEPS);
         }
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
