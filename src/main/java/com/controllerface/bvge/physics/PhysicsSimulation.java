@@ -305,14 +305,7 @@ public class PhysicsSimulation extends GameSystem
 
         if (overage > 0f)
         {
-            float overage_tick = overage / SUB_STEPS;
-            for (int i = 0; i < SUB_STEPS; i++)
-            {
-                this.tickSimulation(overage_tick);
-                GPU.animate_points();
-                GPU.resolve_constraints(EDGE_STEPS);
-                physics_buffer.finishTick();
-            }
+            System.out.println("skipped simulation time: " + overage );
         }
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick

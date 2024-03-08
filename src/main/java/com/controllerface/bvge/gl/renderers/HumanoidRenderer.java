@@ -28,7 +28,6 @@ public class HumanoidRenderer extends GameSystem
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int UV_COORD_ATTRIBUTE = 1;
 
-    // todo: determine the sizes required for a single render batch and calculate them
     private Texture texture;
     private final AbstractShader shader;
     private final int[] texture_slots = {0};

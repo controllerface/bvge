@@ -11,6 +11,7 @@ import com.controllerface.bvge.util.MathEX;
 import org.joml.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
@@ -36,17 +37,23 @@ public class Models
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
 
+    private static final int DEFAULT_MODEL_LOAD_FLAGS =
+        aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
+
     private static AIScene loadModelResource(String name) throws IOException
     {
-        var model_stream = Models.class.getResourceAsStream(name);
-        var model_data = model_stream.readAllBytes();
-        ByteBuffer data = MemoryUtil.memCalloc(model_data.length);
-        data.put(model_data);
-        data.flip();
-        int flags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
-        var imported = aiImportFileFromMemory(data, flags, "");
-        MemoryUtil.memFree(data);
-        return imported;
+        ByteBuffer model_buffer = null;
+        try (var model_stream = Models.class.getResourceAsStream(name))
+        {
+            assert model_stream != null : "Model data is null: " + name;
+            byte[] model_data = model_stream.readAllBytes();
+            model_buffer = MemoryUtil.memCalloc(model_data.length).put(model_data).flip();
+            return aiImportFileFromMemory(model_buffer, DEFAULT_MODEL_LOAD_FLAGS, "");
+        }
+        finally
+        {
+            MemoryUtil.memFree(model_buffer);
+        }
     }
 
     private static int load_model(String model_path, String model_name)
@@ -171,7 +178,6 @@ public class Models
         {
             return null;
         }
-
 
         AIVertexWeight.Buffer w_buf = raw_bone.mWeights();
         while (w_buf.remaining() > 0)
