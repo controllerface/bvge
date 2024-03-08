@@ -10,12 +10,14 @@ import java.util.*;
 
 public class PhysicsSimulation extends GameSystem
 {
-    private final static float TARGET_FPS = 60.0f;
-    private final static float TICK_RATE = 1.0f / TARGET_FPS;
-    private final static int SUB_STEPS = 8;
-    private final static int EDGE_STEPS = 8;
-    private final static int MAX_SUB_TICKS = SUB_STEPS * 2;
-    private final static float GRAVITY_MAGNITUDE = -9.8f * 4;
+    private static final float TARGET_FPS = 60.0f;
+    private static final float TICK_RATE = 1.0f / TARGET_FPS;
+    private static final int SUB_STEPS = 8;
+    private static final float SUB_STEP = TICK_RATE / SUB_STEPS;
+    private static final int EDGE_STEPS = 8;
+    private static final int MAX_SUB_TICKS = SUB_STEPS * 2;
+    private static final float GRAVITY_MAGNITUDE = -9.8f * 4;
+
 
     private float accumulator = 0.0f;
 
@@ -272,14 +274,13 @@ public class PhysicsSimulation extends GameSystem
         float overage = 0f;
         while (this.accumulator >= TICK_RATE)
         {
-            float sub_step = TICK_RATE / SUB_STEPS;
             for (int i = 0; i < SUB_STEPS; i++)
             {
-                this.accumulator -= sub_step;
+                this.accumulator -= SUB_STEP;
                 sub_ticks++;
                 if (sub_ticks <= MAX_SUB_TICKS)
                 {
-                    this.tickSimulation(sub_step);
+                    this.tickSimulation(SUB_STEP);
 
                     // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
                     // objects that have animation will have their hulls moved into position for the current tick. It
@@ -299,13 +300,15 @@ public class PhysicsSimulation extends GameSystem
 
                     physics_buffer.finishTick();
                 }
-                else overage+= sub_step;
+                else overage += SUB_STEP;
             }
         }
 
         if (overage > 0f)
         {
-            System.out.println("skipped simulation time: " + overage );
+            this.tickSimulation(SUB_STEP);
+            GPU.animate_points();
+            GPU.resolve_constraints(1);
         }
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
