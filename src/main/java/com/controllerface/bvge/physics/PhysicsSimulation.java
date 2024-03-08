@@ -1,12 +1,16 @@
 package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.kernels.Integrate_k;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import org.joml.Vector2f;
 
 import java.util.*;
+
+import static com.controllerface.bvge.cl.CLUtils.arg_long;
+import static org.lwjgl.opencl.CL10.clReleaseMemObject;
 
 public class PhysicsSimulation extends GameSystem
 {
@@ -16,7 +20,6 @@ public class PhysicsSimulation extends GameSystem
     private static final float SUB_STEP = TICK_RATE / SUB_STEPS;
     private static final int EDGE_STEPS = 8;
     private static final float GRAVITY_MAGNITUDE = -9.8f * 4;
-
 
     private float accumulator = 0.0f;
 
@@ -276,6 +279,11 @@ public class PhysicsSimulation extends GameSystem
             {
                 this.accumulator -= SUB_STEP;
                 sub_ticks++;
+
+                // if we end up doing more sub ticks than is ideal, we will avoid ticking the simulation anymore
+                // for this frame. This forces slower hardware to slow down a bit, which is less than ideal, but
+                // is better than the alternative, which is system lockup.
+                // todo: test a few different values on some lower-end hardware and try to find a sweet spot.
                 if (sub_ticks <= SUB_STEPS)
                 {
                     this.tickSimulation(SUB_STEP);
@@ -328,4 +336,35 @@ public class PhysicsSimulation extends GameSystem
 
         simulate(dt);
     }
+
+
+
+    // WORKING AREA BELOW
+
+//    public void integrate(float delta_time, UniformGrid uniform_grid)
+//    {
+//        float[] args =
+//            {
+//                delta_time,
+//                uniform_grid.x_spacing,
+//                uniform_grid.y_spacing,
+//                uniform_grid.getX_origin(),
+//                uniform_grid.getY_origin(),
+//                uniform_grid.width,
+//                uniform_grid.height,
+//                (float) uniform_grid.x_subdivisions,
+//                (float) uniform_grid.y_subdivisions,
+//                physics_buffer.get_gravity_x(),
+//                physics_buffer.get_gravity_y(),
+//                physics_buffer.get_damping()
+//            };
+//
+//        var arg_mem_ptr = cl_new_cpu_copy_buffer(args);
+//
+//        GPU.Kernel.integrate
+//            .ptr_arg(Integrate_k.Args.args, arg_mem_ptr)
+//            .call(arg_long(GPU.Memory.next_hull()));
+//
+//        clReleaseMemObject(arg_mem_ptr);
+//    }
 }
