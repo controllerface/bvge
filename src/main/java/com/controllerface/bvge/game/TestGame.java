@@ -33,13 +33,13 @@ public class TestGame extends GameMode
         POINTS,  // model vertices
     }
 
-    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-        EnumSet.of(
-            RenderType.MODELS,
-            RenderType.HULLS);
-
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-//        EnumSet.allOf(RenderType.class);
+//        EnumSet.of(
+//            RenderType.MODELS,
+//            RenderType.HULLS);
+
+    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
+        EnumSet.allOf(RenderType.class);
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {
@@ -311,10 +311,10 @@ public class TestGame extends GameMode
 
 
 
-//        genCircles(100, 7f, 5f, 0, 100);
-        genSquares(100,  9f, 5f, -120, 100);
-//        genCrates2(100, 7f, 0.025f, 100, 100);
-        genTriangles(100,  9f, 5f, 200, 100);
+        genCircles(20, 7f, 5f, 0, 100);
+        genSquares(20,  9f, 5f, -120, 100);
+        genCrates2(20, 7f, 0.025f, 100, 100);
+        genTriangles(20,  9f, 5f, 200, 100);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);

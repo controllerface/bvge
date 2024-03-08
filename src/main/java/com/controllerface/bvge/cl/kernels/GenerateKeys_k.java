@@ -21,6 +21,6 @@ public class GenerateKeys_k extends GPUKernel
 
     public GenerateKeys_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel));
+        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
     }
 }

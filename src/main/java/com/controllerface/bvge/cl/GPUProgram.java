@@ -123,4 +123,9 @@ public abstract class GPUProgram
             clReleaseKernel(kernel_ptr);
         }
     }
+
+    public long kernel_ptr(Kernel kernel)
+    {
+        return kernels.get(kernel);
+    }
 }

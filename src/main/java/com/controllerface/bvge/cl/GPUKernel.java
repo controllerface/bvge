@@ -34,9 +34,10 @@ public abstract class GPUKernel
      *
      * @param mem_ptr pointer to the memory buffer to mark as shared with this kernel
      */
-    public void share_mem(long mem_ptr)
+    public GPUKernel share_mem(long mem_ptr)
     {
         shared_memory_ptrs.add(mem_ptr);
+        return this;
     }
 
     /**
@@ -50,14 +51,17 @@ public abstract class GPUKernel
      */
     public GPUKernel mem_arg(Enum<?> val, GPUMemory gpu_memory)
     {
-        ptr_arg(val.ordinal(), gpu_memory.pointer());
-        return this;
+        return ptr_arg(val.ordinal(), gpu_memory.pointer());
     }
 
     public GPUKernel ptr_arg(Enum<?> val, long pointer)
     {
-        ptr_arg(val.ordinal(), pointer);
-        return this;
+        return ptr_arg(val.ordinal(), pointer);
+    }
+
+    public GPUKernel loc_arg(Enum<?> pos, long size)
+    {
+        return loc_arg(pos.ordinal(), size);
     }
 
     /**
@@ -67,9 +71,10 @@ public abstract class GPUKernel
      * @param pos argument position
      * @param size size of the empty buffer to be created for the argument
      */
-    public void loc_arg(int pos, long size)
+    public GPUKernel loc_arg(int pos, long size)
     {
         clSetKernelArg(this.kernel_ptr, pos, size);
+        return this;
     }
 
     /**
@@ -81,69 +86,106 @@ public abstract class GPUKernel
      * @param pos argument position
      * @param pointer pointer to the memory buffer being passed
      */
-    public void ptr_arg(int pos, long pointer)
+    public GPUKernel ptr_arg(int pos, long pointer)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
             var pointerBuffer = mem_stack.callocPointer(1).put(0, pointer);
             clSetKernelArg(this.kernel_ptr, pos, pointerBuffer);
         }
+        return this;
     }
 
 
-    public void set_arg(int pos, double[] value)
+    public GPUKernel set_arg(Enum<?> pos, double[] value)
+    {
+        return set_arg(pos.ordinal(), value);
+    }
+
+    public GPUKernel set_arg(int pos, double[] value)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
             var doubleBuffer = mem_stack.doubles(value);
             clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
         }
+        return this;
     }
 
-    public void set_arg(int pos, double value)
+    public GPUKernel set_arg(Enum<?> pos, double value)
+    {
+        return set_arg(pos.ordinal(), value);
+    }
+
+    public GPUKernel set_arg(int pos, double value)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
             var doubleBuffer = mem_stack.doubles(value);
             clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
         }
+        return this;
     }
 
 
-    public void set_arg(int pos, float[] value)
+    public GPUKernel set_arg(Enum<?> pos, float[] value)
+    {
+        return set_arg(pos.ordinal(), value);
+    }
+
+    public GPUKernel set_arg(int pos, float[] value)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
             var floatBuffer = mem_stack.floats(value);
             clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
         }
+        return this;
     }
 
-    public void set_arg(int pos, float value)
+    public GPUKernel set_arg(Enum<?> pos, float value)
+    {
+        return set_arg(pos.ordinal(), value);
+    }
+
+    public GPUKernel set_arg(int pos, float value)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
             var floatBuffer = mem_stack.floats(value);
             clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
         }
+        return this;
     }
 
-    public void set_arg(int pos, int[] value)
+    public GPUKernel set_arg(Enum<?> pos, int[] value)
+    {
+        return set_arg(pos.ordinal(), value);
+    }
+
+    public GPUKernel set_arg(int pos, int[] value)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
             var intBuffer = mem_stack.ints(value);
             clSetKernelArg(this.kernel_ptr, pos, intBuffer);
         }
+        return this;
     }
 
-    public void set_arg(int pos, int value)
+    public GPUKernel set_arg(Enum<?> pos, int value)
+    {
+        return set_arg(pos.ordinal(), value);
+    }
+
+    public GPUKernel set_arg(int pos, int value)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
             var intBuffer = mem_stack.ints(value);
             clSetKernelArg(this.kernel_ptr, pos, intBuffer);
         }
+        return this;
     }
 
 

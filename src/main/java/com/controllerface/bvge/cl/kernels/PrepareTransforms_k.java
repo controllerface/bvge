@@ -19,6 +19,6 @@ public class PrepareTransforms_k extends GPUKernel
 
     public PrepareTransforms_k(long command_queue_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel));
+        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
     }
 }

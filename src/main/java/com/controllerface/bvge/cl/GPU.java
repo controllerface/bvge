@@ -2,6 +2,7 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
+import com.controllerface.bvge.gpu.GPUReferenceMemory;
 import com.controllerface.bvge.physics.PhysicsBuffer;
 import com.controllerface.bvge.physics.UniformGrid;
 import org.lwjgl.BufferUtils;
@@ -211,11 +212,6 @@ public class GPU
         {
             this.gpu = program;
         }
-
-        public final long kernel_ptr(Kernel kernel)
-        {
-           return gpu.kernels.get(kernel);
-        }
     }
 
     //#endregion
@@ -309,75 +305,6 @@ public class GPU
         {
             this.kernel = gpu_kernel;
             return this.kernel;
-        }
-
-        public Kernel loc_arg(Enum<?> val, long size)
-        {
-            kernel.loc_arg(val.ordinal(), size);
-            return this;
-        }
-
-        public Kernel set_arg(Enum<?> val, double value)
-        {
-            kernel.set_arg(val.ordinal(), value);
-            return this;
-        }
-
-        public Kernel set_arg(Enum<?> val, double[] value)
-        {
-            kernel.set_arg(val.ordinal(), value);
-            return this;
-        }
-
-        public Kernel set_arg(Enum<?> val, float value)
-        {
-            kernel.set_arg(val.ordinal(), value);
-            return this;
-        }
-
-        public Kernel set_arg(Enum<?> val, float[] value)
-        {
-            kernel.set_arg(val.ordinal(), value);
-            return this;
-        }
-
-        public Kernel set_arg(Enum<?> val, int value)
-        {
-            kernel.set_arg(val.ordinal(), value);
-            return this;
-        }
-
-        public Kernel set_arg(Enum<?> val, int[] value)
-        {
-            kernel.set_arg(val.ordinal(), value);
-            return this;
-        }
-
-        public Kernel ptr_arg(Enum<?> val, long pointer)
-        {
-            kernel.ptr_arg(val.ordinal(), pointer);
-            return this;
-        }
-
-        public Kernel share_mem(long mem)
-        {
-            kernel.share_mem(mem);
-            return this;
-        }
-
-        public void call(long[] global_work_size)
-        {
-            kernel.call(global_work_size);
-        }
-
-        public void call(long[] global_work_size, long[] local_work_size)
-        {
-            kernel.call(global_work_size, local_work_size);
-        }
-
-        public void call(long[] global_work_size, long[] local_work_size, long[] global_work_offset)
-        {
-            kernel.call(global_work_size, local_work_size, global_work_offset);
         }
     }
 
@@ -861,222 +788,7 @@ public class GPU
      * object, making access to a single "object" possible by indexing into all the
      * aligned arrays with the same index.
      */
-    public static class Memory
-    {
-        private static int hull_index            = 0;
-        private static int point_index           = 0;
-        private static int edge_index            = 0;
-        private static int vertex_ref_index      = 0;
-        private static int bone_bind_index       = 0;
-        private static int bone_ref_index        = 0;
-        private static int bone_index            = 0;
-        private static int model_transform_index = 0;
-        private static int armature_bone_index   = 0;
-        private static int armature_index        = 0;
-        private static int mesh_index            = 0;
-        private static int face_index            = 0;
-        private static int uv_index              = 0;
-        private static int keyframe_index        = 0;
-        private static int bone_channel_index    = 0;
-        private static int animation_index       = 0;
-
-        // index methods
-
-        public static int next_animation_index()
-        {
-            return animation_index;
-        }
-
-        public static int next_bone_channel()
-        {
-            return bone_channel_index;
-        }
-
-        public static int next_keyframe()
-        {
-            return keyframe_index;
-        }
-
-        public static int next_model_transform()
-        {
-            return model_transform_index;
-        }
-
-        public static int next_uv()
-        {
-            return uv_index;
-        }
-
-        public static int next_face()
-        {
-            return face_index;
-        }
-
-        public static int next_mesh()
-        {
-            return mesh_index;
-        }
-
-        public static int next_armature()
-        {
-            return armature_index;
-        }
-
-        public static int next_hull()
-        {
-            return hull_index;
-        }
-
-        public static int next_point()
-        {
-            return point_index;
-        }
-
-        public static int next_edge()
-        {
-            return edge_index;
-        }
-
-        public static int next_vertex_ref()
-        {
-            return vertex_ref_index;
-        }
-
-        public static int next_bone_bind()
-        {
-            return bone_bind_index;
-        }
-
-        public static int next_bone_ref()
-        {
-            return bone_ref_index;
-        }
-
-        public static int next_bone()
-        {
-            return bone_index;
-        }
-
-        public static int next_armature_bone()
-        {
-            return armature_bone_index;
-        }
-
-
-        // creation methods
-
-        public static int new_animation_timings(double[] timings)
-        {
-            GPU.create_animation_timings(next_animation_index(), timings);
-            return animation_index++;
-        }
-
-        public static int new_bone_channel(int anim_timing_index, int[] pos_table, int[] rot_table, int[] scl_table)
-        {
-            GPU.create_bone_channel(next_bone_channel(), anim_timing_index, pos_table, rot_table, scl_table);
-            return bone_channel_index++;
-        }
-
-        public static int new_keyframe(float[] frame, double time)
-        {
-            GPU.create_keyframe(next_keyframe(), frame, time);
-            return keyframe_index++;
-        }
-
-        public static int new_texture_uv(float u, float v)
-        {
-            GPU.create_texture_uv(next_uv(), u, v);
-            return uv_index++;
-        }
-
-        public static int new_edge(int p1, int p2, float l, int flags)
-        {
-            GPU.create_edge(next_edge(), p1, p2, l, flags);
-            return edge_index++;
-        }
-
-        public static int new_point(float[] position, int[] vertex_table, int[] bone_ids)
-        {
-            var init_vert = new float[]{position[0], position[1], position[0], position[1]};
-            GPU.create_point(next_point(), init_vert, vertex_table, bone_ids);
-            return point_index++;
-        }
-
-        public static int new_hull(int mesh_id, float[] transform, float[] rotation, int[] table, int[] flags)
-        {
-            GPU.create_hull(next_hull(), mesh_id, transform, rotation, table, flags);
-            return hull_index++;
-        }
-
-        public static int new_mesh_reference(int[] mesh_ref_table)
-        {
-            GPU.create_mesh_reference(next_mesh(), mesh_ref_table);
-            return mesh_index++;
-        }
-
-        public static int new_mesh_face(int[] face)
-        {
-            GPU.create_mesh_face(next_face(), face);
-            return face_index++;
-        }
-
-        public static int new_armature(float x, float y, int[] table, int[] flags, float mass, int anim_index, double anim_time)
-        {
-            GPU.create_armature(next_armature(), x, y, table, flags, mass, anim_index, anim_time);
-            return armature_index++;
-        }
-
-        public static int new_vertex_reference(float x, float y, float[] weights, int[] uv_table)
-        {
-            GPU.create_vertex_reference(next_vertex_ref(), x, y, weights, uv_table);
-            return vertex_ref_index++;
-        }
-
-        public static int new_bone_bind_pose(int bind_parent, float[] bone_data)
-        {
-            GPU.create_bone_bind_pose(next_bone_bind(), bind_parent, bone_data);
-            return bone_bind_index++;
-        }
-
-        public static int new_bone_reference(float[] bone_data)
-        {
-            GPU.create_bone_reference(next_bone_ref(), bone_data);
-            return bone_ref_index++;
-        }
-
-        public static int new_bone(int[] offset_id, float[] bone_data)
-        {
-            GPU.create_bone(next_bone(), offset_id, bone_data);
-            return bone_index++;
-        }
-
-        public static int new_armature_bone(int[] bone_bind_table, float[] bone_data)
-        {
-            GPU.create_armature_bone(next_armature_bone(), bone_bind_table, bone_data);
-            return armature_bone_index++;
-        }
-
-        public static int new_model_transform(float[] transform_data)
-        {
-            GPU.create_model_transform(next_model_transform(), transform_data);
-            return model_transform_index++;
-        }
-
-        public static void compact_buffers(int edge_shift,
-                                           int bone_shift,
-                                           int point_shift,
-                                           int hull_shift,
-                                           int armature_shift,
-                                           int armature_bone_shift)
-        {
-            edge_index          -= (edge_shift);
-            bone_index          -= (bone_shift);
-            point_index         -= (point_shift);
-            hull_index          -= (hull_shift);
-            armature_index      -= (armature_shift);
-            armature_bone_index -= (armature_bone_shift);
-        }
-    }
+    public static GPUReferenceMemory Memory = new GPUReferenceMemory();
 
     //#endregion
 
@@ -1832,7 +1544,7 @@ public class GPU
             var sz = count == max_work_group_size
                 ? local_work_default
                 : arg_long(count);
-            kernel.call(sz, sz, arg_long(offset));
+            kernel.kernel.call(sz, sz, arg_long(offset));
             offset += count;
         }
     }
@@ -1867,7 +1579,7 @@ public class GPU
     {
         var vbo_mem = shared_mem.get(vbo_id);
 
-        Kernel.prepare_bounds
+        Kernel.prepare_bounds.kernel
             .share_mem(vbo_mem)
             .ptr_arg(PrepareBounds_k.Args.vbo, vbo_mem)
             .set_arg(PrepareBounds_k.Args.offset, bounds_offset)
@@ -1886,7 +1598,7 @@ public class GPU
     {
         var vbo_mem = shared_mem.get(vbo_id);
 
-        Kernel.prepare_bones
+        Kernel.prepare_bones.kernel
             .share_mem(vbo_mem)
             .ptr_arg(PrepareBones_k.Args.vbo, vbo_mem)
             .set_arg(PrepareBones_k.Args.offset, bone_offset)
@@ -1907,7 +1619,7 @@ public class GPU
         var vbo_mem1 = shared_mem.get(vbo_id);
         var vbo_mem2 = shared_mem.get(vbo_id2);
 
-        Kernel.prepare_edges
+        Kernel.prepare_edges.kernel
             .share_mem(vbo_mem1)
             .share_mem(vbo_mem2)
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vbo_mem1)
@@ -1920,7 +1632,7 @@ public class GPU
     {
         var vbo_mem = shared_mem.get(vbo_id);
 
-        Kernel.prepare_points
+        Kernel.prepare_points.kernel
             .share_mem(vbo_mem)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vbo_mem)
             .set_arg(PreparePoints_k.Args.offset, point_offset)
@@ -1938,7 +1650,7 @@ public class GPU
     {
         cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        Kernel.root_hull_count
+        Kernel.root_hull_count.kernel
             .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .call(arg_long(GPU.Memory.next_armature()));
@@ -1956,7 +1668,7 @@ public class GPU
         int[] counter_value = new int[]{ 0 };
         var hulls_counter_data_ptr = cl_new_int_arg_buffer(counter_value);
 
-        Kernel.root_hull_filter
+        Kernel.root_hull_filter.kernel
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, hulls_counter_data_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
@@ -1981,7 +1693,7 @@ public class GPU
     public static void GL_circles(int vbo_id, long hulls_out_ptr, int offset, int batch_size)
     {
         var vbo_mem = shared_mem.get(vbo_id);
-        Kernel.prepare_transforms
+        Kernel.prepare_transforms.kernel
             .share_mem(vbo_mem)
             .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out_ptr)
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_mem)
@@ -2003,7 +1715,7 @@ public class GPU
     {
         var vbo_transforms = shared_mem.get(transforms_id);
 
-        Kernel.prepare_transforms
+        Kernel.prepare_transforms.kernel
             .share_mem(vbo_transforms)
             .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out_ptr)
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_transforms)
@@ -2013,7 +1725,7 @@ public class GPU
 
     public static void GL_count_mesh_instances(long query_ptr, long counters_ptr, long total_ptr, int count)
     {
-        Kernel.count_mesh_instances
+        Kernel.count_mesh_instances.kernel
             .ptr_arg(CountMeshInstances_k.Args.counters, counters_ptr)
             .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
             .ptr_arg(CountMeshInstances_k.Args.total, total_ptr)
@@ -2032,7 +1744,7 @@ public class GPU
                                              long mesh_details_ptr,
                                              int count)
     {
-        Kernel.write_mesh_details
+        Kernel.write_mesh_details.kernel
             .ptr_arg(WriteMeshDetails_k.Args.counters, counters_ptr)
             .ptr_arg(WriteMeshDetails_k.Args.query, query_ptr)
             .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets_ptr)
@@ -2043,7 +1755,7 @@ public class GPU
 
     public static void GL_count_mesh_batches(long mesh_details_ptr, long total_ptr, int count, int max_per_batch)
     {
-        Kernel.count_mesh_batches
+        Kernel.count_mesh_batches.kernel
             .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
             .ptr_arg(CountMeshBatches_k.Args.total, total_ptr)
             .set_arg(CountMeshBatches_k.Args.max_per_batch, max_per_batch)
@@ -2053,7 +1765,7 @@ public class GPU
 
     public static void GL_calculate_batch_offsets(long mesh_offsets_ptr, long mesh_details_ptr, int count)
     {
-        Kernel.calculate_batch_offsets
+        Kernel.calculate_batch_offsets.kernel
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offsets_ptr)
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CalculateBatchOffsets_k.Args.count, count)
@@ -2062,7 +1774,7 @@ public class GPU
 
     public static void GL_transfer_detail_data(long mesh_details_ptr, long mesh_transfer_ptr, int count, int offset)
     {
-        Kernel.transfer_detail_data
+        Kernel.transfer_detail_data.kernel
             .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details_ptr)
             .ptr_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_ptr)
             .set_arg(TransferDetailData_k.Args.offset, offset)
@@ -2085,7 +1797,7 @@ public class GPU
         var cbo_mem = shared_mem.get(cbo);
         var uvo_mem = shared_mem.get(uvo);
 
-        Kernel.transfer_render_data
+        Kernel.transfer_render_data.kernel
             .share_mem(ebo_mem)
             .share_mem(vbo_mem)
             .share_mem(cbo_mem)
@@ -2106,7 +1818,7 @@ public class GPU
 
     public static void create_point(int point_index, float[] position, int[] vertex_table, int[] bone_indices)
     {
-        Kernel.create_point
+        Kernel.create_point.kernel
             .set_arg(CreatePoint_k.Args.target, point_index)
             .set_arg(CreatePoint_k.Args.new_point, position)
             .set_arg(CreatePoint_k.Args.new_vertex_table, vertex_table)
@@ -2116,7 +1828,7 @@ public class GPU
 
     public static void create_texture_uv(int uv_index, float u, float v)
     {
-        Kernel.create_texture_uv
+        Kernel.create_texture_uv.kernel
             .set_arg(CreateTextureUV_k.Args.target, uv_index)
             .set_arg(CreateTextureUV_k.Args.new_texture_uv, arg_float2(u, v))
             .call(global_single_size);
@@ -2124,7 +1836,7 @@ public class GPU
 
     public static void create_keyframe(int frame_index, float[] frame_data, double frame_time)
     {
-        Kernel.create_keyframe
+        Kernel.create_keyframe.kernel
             .set_arg(CreateKeyFrame_k.Args.target, frame_index)
             .set_arg(CreateKeyFrame_k.Args.new_keyframe, frame_data)
             .set_arg(CreateKeyFrame_k.Args.new_frame_time, frame_time)
@@ -2133,7 +1845,7 @@ public class GPU
 
     public static void create_edge(int edge_index, float p1, float p2, float l, int flags)
     {
-        Kernel.create_edge
+        Kernel.create_edge.kernel
             .set_arg(CreateEdge_k.Args.target, edge_index)
             .set_arg(CreateEdge_k.Args.new_edge, arg_float4(p1, p2, l, flags))
             .call(global_single_size);
@@ -2148,7 +1860,7 @@ public class GPU
                                        int anim_index,
                                        double anim_time)
     {
-        Kernel.create_armature
+        Kernel.create_armature.kernel
             .set_arg(CreateArmature_k.Args.target, armature_index)
             .set_arg(CreateArmature_k.Args.new_armature, arg_float4(x, y, x, y))
             .set_arg(CreateArmature_k.Args.new_armature_flags, flags)
@@ -2161,7 +1873,7 @@ public class GPU
 
     public static void create_vertex_reference(int vert_ref_index, float x, float y, float[] weights, int[] uv_table)
     {
-        Kernel.create_vertex_reference
+        Kernel.create_vertex_reference.kernel
             .set_arg(CreateVertexRef_k.Args.target,vert_ref_index)
             .set_arg(CreateVertexRef_k.Args.new_vertex_reference, arg_float2(x, y))
             .set_arg(CreateVertexRef_k.Args.new_vertex_weights, weights)
@@ -2171,7 +1883,7 @@ public class GPU
 
     public static void create_bone_bind_pose(int bone_bind_index, int bone_bond_parent, float[] matrix)
     {
-        Kernel.create_bone_bind_pose
+        Kernel.create_bone_bind_pose.kernel
             .set_arg(CreateBoneBindPose_k.Args.target,bone_bind_index)
             .set_arg(CreateBoneBindPose_k.Args.new_bone_bind_pose, matrix)
             .set_arg(CreateBoneBindPose_k.Args.bone_bind_parent, bone_bond_parent)
@@ -2180,7 +1892,7 @@ public class GPU
 
     public static void create_bone_reference(int bone_ref_index, float[] matrix)
     {
-        Kernel.create_bone_reference
+        Kernel.create_bone_reference.kernel
             .set_arg(CreateBoneRef_k.Args.target, bone_ref_index)
             .set_arg(CreateBoneRef_k.Args.new_bone_reference, matrix)
             .call(global_single_size);
@@ -2192,7 +1904,7 @@ public class GPU
                                            int[] rot_table,
                                            int[] scl_table)
     {
-        Kernel.create_bone_channel
+        Kernel.create_bone_channel.kernel
             .set_arg(CreateBoneChannel_k.Args.target, bone_channel_index)
             .set_arg(CreateBoneChannel_k.Args.new_animation_timing_index, timing_index)
             .set_arg(CreateBoneChannel_k.Args.new_bone_pos_channel_table, pos_table)
@@ -2203,7 +1915,7 @@ public class GPU
 
     public static void set_bone_channel_table(int bone_channel_index, int[] channel_table)
     {
-        Kernel.set_bone_channel_table
+        Kernel.set_bone_channel_table.kernel
             .set_arg(SetBoneChannelTable_k.Args.target, bone_channel_index)
             .set_arg(SetBoneChannelTable_k.Args.new_bone_channel_table, channel_table)
             .call(global_single_size);
@@ -2211,7 +1923,7 @@ public class GPU
 
     public static void create_bone(int bone_index, int[] bone_index_table, float[] matrix)
     {
-        Kernel.create_bone
+        Kernel.create_bone.kernel
             .set_arg(CreateBone_k.Args.target, bone_index)
             .set_arg(CreateBone_k.Args.new_bone, matrix)
             .set_arg(CreateBone_k.Args.new_bone_table, bone_index_table)
@@ -2220,7 +1932,7 @@ public class GPU
 
     public static void create_armature_bone(int armature_bone_index, int[] bone_bind_table, float[] matrix)
     {
-        Kernel.create_armature_bone
+        Kernel.create_armature_bone.kernel
             .set_arg(CreateArmatureBone_k.Args.target, armature_bone_index)
             .set_arg(CreateArmatureBone_k.Args.new_armature_bone, matrix)
             .set_arg(CreateArmatureBone_k.Args.new_bone_bind_table, bone_bind_table)
@@ -2229,7 +1941,7 @@ public class GPU
 
     public static void create_model_transform(int model_transform_index, float[] matrix)
     {
-        Kernel.create_model_transform
+        Kernel.create_model_transform.kernel
             .set_arg(CreateModelTransform_k.Args.target, model_transform_index)
             .set_arg(CreateModelTransform_k.Args.new_model_transform, matrix)
             .call(global_single_size);
@@ -2237,7 +1949,7 @@ public class GPU
 
     public static void create_hull(int hull_index, int mesh_index, float[] hull, float[] rotation, int[] table, int[] flags)
     {
-        Kernel.create_hull
+        Kernel.create_hull.kernel
             .set_arg(CreateHull_k.Args.target, hull_index)
             .set_arg(CreateHull_k.Args.new_hull, hull)
             .set_arg(CreateHull_k.Args.new_rotation, rotation)
@@ -2249,7 +1961,7 @@ public class GPU
 
     public static void create_mesh_reference(int mesh_index, int[] mesh_ref_table)
     {
-        Kernel.create_mesh_reference
+        Kernel.create_mesh_reference.kernel
             .set_arg(CreateMeshReference_k.Args.target, mesh_index)
             .set_arg(CreateMeshReference_k.Args.new_mesh_ref_table, mesh_ref_table)
             .call(global_single_size);
@@ -2257,7 +1969,7 @@ public class GPU
 
     public static void create_mesh_face(int face_index, int[] face)
     {
-        Kernel.create_mesh_face
+        Kernel.create_mesh_face.kernel
             .set_arg(CreateMeshFace_k.Args.target, face_index)
             .set_arg(CreateMeshFace_k.Args.new_mesh_face, face)
             .call(global_single_size);
@@ -2265,7 +1977,7 @@ public class GPU
 
     public static void create_animation_timings(int animation_index, double[] timings)
     {
-        Kernel.create_animation_timings
+        Kernel.create_animation_timings.kernel
             .set_arg(CreateAnimationTimings_k.Args.target, animation_index)
             .set_arg(CreateAnimationTimings_k.Args.new_animation_timing, timings)
             .call(global_single_size);
@@ -2273,7 +1985,7 @@ public class GPU
 
     public static void update_accel(int armature_index, float acc_x, float acc_y)
     {
-        Kernel.update_accel
+        Kernel.update_accel.kernel
             .set_arg(UpdateAccel_k.Args.target, armature_index)
             .set_arg(UpdateAccel_k.Args.new_value, arg_float2(acc_x, acc_y))
             .call(global_single_size);
@@ -2299,7 +2011,7 @@ public class GPU
         var result_data = cl_new_pinned_buffer(CLSize.cl_float2);
         cl_zero_buffer(result_data, CLSize.cl_float2);
 
-        Kernel.read_position
+        Kernel.read_position.kernel
             .ptr_arg(ReadPosition_k.Args.output, result_data)
             .set_arg(ReadPosition_k.Args.target, armature_index)
             .call(global_single_size);
@@ -2315,19 +2027,19 @@ public class GPU
 
     public static void animate_armatures(float dt)
     {
-        Kernel.animate_armatures
+        Kernel.animate_armatures.kernel
             .set_arg(AnimateArmatures_k.Args.delta_time, dt)
             .call(arg_long(GPU.Memory.next_armature()));
     }
 
     public static void animate_bones()
     {
-        Kernel.animate_bones.call(arg_long(GPU.Memory.next_bone()));
+        Kernel.animate_bones.kernel.call(arg_long(GPU.Memory.next_bone()));
     }
 
     public static void animate_points()
     {
-        Kernel.animate_points.call(arg_long(GPU.Memory.next_point()));
+        Kernel.animate_points.kernel.call(arg_long(GPU.Memory.next_point()));
     }
 
     public static void integrate(float delta_time, UniformGrid uniform_grid)
@@ -2350,7 +2062,7 @@ public class GPU
 
         var arg_mem_ptr = cl_new_cpu_copy_buffer(args);
 
-        Kernel.integrate
+        Kernel.integrate.kernel
             .ptr_arg(Integrate_k.Args.args, arg_mem_ptr)
             .call(arg_long(GPU.Memory.next_hull()));
 
@@ -2378,7 +2090,7 @@ public class GPU
 
         physics_buffer.key_bank = new GPUMemory(bank_data_ptr);
 
-        Kernel.generate_keys
+        Kernel.generate_keys.kernel
             .ptr_arg(GenerateKeys_k.Args.key_bank, physics_buffer.key_bank.pointer())
             .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
             .call(arg_long(GPU.Memory.next_hull()));
@@ -2400,7 +2112,7 @@ public class GPU
 
         physics_buffer.key_map = new GPUMemory(map_data);
 
-        Kernel.build_key_map
+        Kernel.build_key_map.kernel
             .ptr_arg(BuildKeyMap_k.Args.key_map, map_data)
             .call(arg_long(GPU.Memory.next_hull()));
     }
@@ -2416,7 +2128,7 @@ public class GPU
 
         cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        Kernel.locate_in_bounds
+        Kernel.locate_in_bounds.kernel
             .ptr_arg(LocateInBounds_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
             .ptr_arg(LocateInBounds_k.Args.counter, atomic_counter_ptr)
             .call(arg_long(hull_count));
@@ -2433,7 +2145,7 @@ public class GPU
         int[] counter = new int[]{ 0 };
         var counter_ptr = cl_new_int_arg_buffer(counter);
 
-        Kernel.locate_out_of_bounds
+        Kernel.locate_out_of_bounds.kernel
             .ptr_arg(LocateOutOfBounds_k.Args.counter, counter_ptr)
             .call(arg_long(armature_count));
 
@@ -2446,7 +2158,7 @@ public class GPU
         var candidate_data = cl_new_buffer(candidate_buf_size);
         physics_buffer.candidate_counts = new GPUMemory(candidate_data);
 
-        Kernel.count_candidates
+        Kernel.count_candidates.kernel
             .ptr_arg(CountCandidates_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
             .ptr_arg(CountCandidates_k.Args.key_bank, physics_buffer.key_bank.pointer())
             .ptr_arg(CountCandidates_k.Args.candidates, physics_buffer.candidate_counts.pointer())
@@ -2492,7 +2204,7 @@ public class GPU
         Buffer.bone_bind_shift.clear();
 
         // as armatures are compacted, the shift buffers for the other components are updated
-        Kernel.compact_armatures
+        Kernel.compact_armatures.kernel
             .ptr_arg(CompactArmatures_k.Args.buffer_in, del_buffer_1.pointer())
             .ptr_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.pointer());
 
@@ -2522,7 +2234,7 @@ public class GPU
 
         cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        Kernel.aabb_collide
+        Kernel.aabb_collide.kernel
             .ptr_arg(AABBCollide_k.Args.candidates, physics_buffer.candidate_counts.pointer())
             .ptr_arg(AABBCollide_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
             .ptr_arg(AABBCollide_k.Args.key_map, physics_buffer.key_map.pointer())
@@ -2553,7 +2265,7 @@ public class GPU
         physics_buffer.set_final_size(final_buf_size);
         physics_buffer.candidates = new GPUMemory(finals_data);
 
-        Kernel.finalize_candidates
+        Kernel.finalize_candidates.kernel
             .ptr_arg(FinalizeCandidates_k.Args.input_candidates, physics_buffer.candidate_counts.pointer())
             .ptr_arg(FinalizeCandidates_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
             .ptr_arg(FinalizeCandidates_k.Args.matches, physics_buffer.matches.pointer())
@@ -2601,7 +2313,7 @@ public class GPU
             GPU.reaction_index = new GPUMemory(index_data);
         }
 
-        Kernel.sat_collide
+        Kernel.sat_collide.kernel
             .ptr_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.pointer())
             .ptr_arg(SatCollide_k.Args.reactions, GPU.reactions_in.pointer())
             .ptr_arg(SatCollide_k.Args.reaction_index, GPU.reaction_index.pointer())
@@ -2620,7 +2332,7 @@ public class GPU
 
     public static void sort_reactions()
     {
-        Kernel.sort_reactions
+        Kernel.sort_reactions.kernel
             .ptr_arg(SortReactions_k.Args.reactions_in, GPU.reactions_in.pointer())
             .ptr_arg(SortReactions_k.Args.reactions_out, GPU.reactions_out.pointer())
             .ptr_arg(SortReactions_k.Args.reaction_index, GPU.reaction_index.pointer())
@@ -2629,14 +2341,14 @@ public class GPU
 
     public static void apply_reactions()
     {
-        Kernel.apply_reactions
+        Kernel.apply_reactions.kernel
             .ptr_arg(ApplyReactions_k.Args.reactions, GPU.reactions_out.pointer())
             .call(arg_long(GPU.Memory.next_point()));
     }
 
     public static void move_armatures()
     {
-        Kernel.move_armatures.call(arg_long(GPU.Memory.next_armature()));
+        Kernel.move_armatures.kernel.call(arg_long(GPU.Memory.next_armature()));
     }
 
     public static void resolve_constraints(int edge_steps)
@@ -2649,7 +2361,7 @@ public class GPU
                 ? 1
                 : 0;
 
-            Kernel.resolve_constraints
+            Kernel.resolve_constraints.kernel
                 .set_arg(ResolveConstraints_k.Args.process_all, n)
                 .call(arg_long(GPU.Memory.next_hull()));
         }
@@ -2754,7 +2466,7 @@ public class GPU
     {
         long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
-        Kernel.scan_int_single_block
+        Kernel.scan_int_single_block.kernel
             .ptr_arg(ScanIntSingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanIntSingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanIntSingleBlock_k.Args.n, n)
@@ -2771,7 +2483,7 @@ public class GPU
 
         var part_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_int_multi_block
+        Kernel.scan_int_multi_block.kernel
             .ptr_arg(ScanIntMultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanIntMultiBlock_k.Args.part, part_data)
@@ -2780,7 +2492,7 @@ public class GPU
 
         scan_int(part_data, part_size);
 
-        Kernel.complete_int_multi_block
+        Kernel.complete_int_multi_block.kernel
             .ptr_arg(CompleteIntMultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteIntMultiBlock_k.Args.part, part_data)
@@ -2794,7 +2506,7 @@ public class GPU
     {
         long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
 
-        Kernel.scan_int2_single_block
+        Kernel.scan_int2_single_block.kernel
             .ptr_arg(ScanInt2SingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt2SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt2SingleBlock_k.Args.n, n)
@@ -2811,7 +2523,7 @@ public class GPU
 
         var part_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_int2_multi_block
+        Kernel.scan_int2_multi_block.kernel
             .ptr_arg(ScanInt2MultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanInt2MultiBlock_k.Args.part, part_data)
@@ -2820,7 +2532,7 @@ public class GPU
 
         scan_int2(part_data, part_size);
 
-        Kernel.complete_int2_multi_block
+        Kernel.complete_int2_multi_block.kernel
             .ptr_arg(CompleteInt2MultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteInt2MultiBlock_k.Args.part, part_data)
@@ -2834,7 +2546,7 @@ public class GPU
     {
         long local_buffer_size = CLSize.cl_int4 * max_scan_block_size;
 
-        Kernel.scan_int4_single_block
+        Kernel.scan_int4_single_block.kernel
             .ptr_arg(ScanInt4SingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt4SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt4SingleBlock_k.Args.n, n)
@@ -2851,7 +2563,7 @@ public class GPU
 
         var part_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_int4_multi_block
+        Kernel.scan_int4_multi_block.kernel
             .ptr_arg(ScanInt4MultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt4MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanInt4MultiBlock_k.Args.part, part_data)
@@ -2860,7 +2572,7 @@ public class GPU
 
         scan_int4(part_data, part_size);
 
-        Kernel.complete_int4_multi_block
+        Kernel.complete_int4_multi_block.kernel
             .ptr_arg(CompleteInt4MultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteInt4MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteInt4MultiBlock_k.Args.part, part_data)
@@ -2874,7 +2586,7 @@ public class GPU
     {
         long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
-        Kernel.scan_int_single_block_out
+        Kernel.scan_int_single_block_out.kernel
             .ptr_arg(ScanIntSingleBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanIntSingleBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(ScanIntSingleBlockOut_k.Args.buffer, local_buffer_size)
@@ -2891,7 +2603,7 @@ public class GPU
         long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
         var part_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_int_multi_block_out
+        Kernel.scan_int_multi_block_out.kernel
             .ptr_arg(ScanIntMultiBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanIntMultiBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(ScanIntMultiBlockOut_k.Args.buffer, local_buffer_size)
@@ -2901,7 +2613,7 @@ public class GPU
 
         scan_int(part_data, part_size);
 
-        Kernel.complete_int_multi_block_out
+        Kernel.complete_int_multi_block_out.kernel
             .ptr_arg(CompleteIntMultiBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(CompleteIntMultiBlockOut_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteIntMultiBlockOut_k.Args.part, part_data)
@@ -2919,7 +2631,7 @@ public class GPU
         var size_data = cl_new_pinned_buffer(CLSize.cl_int * 6);
         cl_zero_buffer(size_data, CLSize.cl_int * 6);
 
-        Kernel.scan_deletes_single_block_out
+        Kernel.scan_deletes_single_block_out.kernel
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output2, o2_data_ptr)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, size_data)
@@ -2949,7 +2661,7 @@ public class GPU
         var p_data = cl_new_buffer(part_buf_size);
         var p_data2 = cl_new_buffer(part_buf_size2);
 
-        Kernel.scan_deletes_multi_block_out
+        Kernel.scan_deletes_multi_block_out.kernel
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output2, o2_data_ptr)
             .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
@@ -2966,7 +2678,7 @@ public class GPU
         var size_data = cl_new_pinned_buffer(CLSize.cl_int * 6);
         cl_zero_buffer(size_data, CLSize.cl_int * 6);
 
-        Kernel.complete_deletes_multi_block_out
+        Kernel.complete_deletes_multi_block_out.kernel
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output2, o2_data_ptr)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.sz, size_data)
@@ -2992,7 +2704,7 @@ public class GPU
 
         cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        Kernel.scan_candidates_single_block_out
+        Kernel.scan_candidates_single_block_out.kernel
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.output, o_data_ptr)
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.sz, atomic_counter_ptr)
@@ -3013,7 +2725,7 @@ public class GPU
         long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
         var p_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_candidates_multi_block_out
+        Kernel.scan_candidates_multi_block_out.kernel
             .ptr_arg(ScanCandidatesMultiBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanCandidatesMultiBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(ScanCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
@@ -3025,7 +2737,7 @@ public class GPU
 
         cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        Kernel.complete_candidates_multi_block_out
+        Kernel.complete_candidates_multi_block_out.kernel
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.input, data_ptr)
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.output, o_data_ptr)
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.sz, atomic_counter_ptr)
@@ -3045,7 +2757,7 @@ public class GPU
 
         cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        Kernel.scan_bounds_single_block
+        Kernel.scan_bounds_single_block.kernel
             .ptr_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, data_ptr)
             .ptr_arg(ScanBoundsSingleBlock_k.Args.sz, atomic_counter_ptr)
             .loc_arg(ScanBoundsSingleBlock_k.Args.buffer, local_buffer_size)
@@ -3064,7 +2776,7 @@ public class GPU
         long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
         var p_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_bounds_multi_block
+        Kernel.scan_bounds_multi_block.kernel
             .ptr_arg(ScanBoundsMultiBlock_k.Args.bounds_bank_data, data_ptr)
             .loc_arg(ScanBoundsMultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanBoundsMultiBlock_k.Args.part, p_data)
@@ -3075,7 +2787,7 @@ public class GPU
 
         cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        Kernel.complete_bounds_multi_block
+        Kernel.complete_bounds_multi_block.kernel
             .ptr_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, data_ptr)
             .ptr_arg(CompleteBoundsMultiBlock_k.Args.sz, atomic_counter_ptr)
             .loc_arg(CompleteBoundsMultiBlock_k.Args.buffer, local_buffer_size)
@@ -3139,23 +2851,23 @@ public class GPU
         counts_data_ptr = cl_new_buffer(counts_buf_size);
         offsets_data_ptr = cl_new_buffer(counts_buf_size);
 
-        Kernel.generate_keys
+        Kernel.generate_keys.kernel
             .ptr_arg(GenerateKeys_k.Args.key_counts, counts_data_ptr)
             .set_arg(GenerateKeys_k.Args.x_subdivisions, x_subdivisions)
             .set_arg(GenerateKeys_k.Args.key_count_length, key_directory_length);
 
-        Kernel.build_key_map
+        Kernel.build_key_map.kernel
             .ptr_arg(BuildKeyMap_k.Args.key_offsets, offsets_data_ptr)
             .ptr_arg(BuildKeyMap_k.Args.key_counts, counts_data_ptr)
             .set_arg(BuildKeyMap_k.Args.x_subdivisions, x_subdivisions)
             .set_arg(BuildKeyMap_k.Args.key_count_length, key_directory_length);
 
-        Kernel.count_candidates
+        Kernel.count_candidates.kernel
             .ptr_arg(CountCandidates_k.Args.key_counts, counts_data_ptr)
             .set_arg(CountCandidates_k.Args.x_subdivisions, x_subdivisions)
             .set_arg(CountCandidates_k.Args.key_count_length, key_directory_length);
 
-        Kernel.aabb_collide
+        Kernel.aabb_collide.kernel
             .ptr_arg(AABBCollide_k.Args.key_counts, counts_data_ptr)
             .ptr_arg(AABBCollide_k.Args.key_offsets, offsets_data_ptr)
             .ptr_arg(AABBCollide_k.Args.counter, atomic_counter_ptr)
