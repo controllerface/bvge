@@ -96,6 +96,9 @@ public class HumanoidRenderer extends GameSystem
         this.vertex_b = GPU.share_memory_ex(vertex_b);
         this.command_b = GPU.share_memory_ex(command_b);
         this.texture_uv_b = GPU.share_memory_ex(texture_uv_b);
+
+        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
     }
 
     private void init_CL()
@@ -204,9 +207,6 @@ public class HumanoidRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         shader.uploadIntArray("uTextures", texture_slots);
 
-        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
-
         for (int current_batch = 0; current_batch < raw_offsets.length; current_batch++)
         {
             int next_batch = current_batch + 1;
@@ -237,9 +237,6 @@ public class HumanoidRenderer extends GameSystem
 
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
         }
-
-        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
-        glDisableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
 
         glBindVertexArray(0);
 

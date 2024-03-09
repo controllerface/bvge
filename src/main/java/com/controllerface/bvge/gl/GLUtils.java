@@ -86,7 +86,6 @@ public class GLUtils
         int buffer = glCreateBuffers();
         glNamedBufferData(buffer, buffer_size, flags);
         glVertexArrayVertexBuffer(vao, bind_index, buffer, buffer_offset, data_size);
-        glEnableVertexArrayAttrib(vao, bind_index);
         glVertexArrayAttribFormat(vao, bind_index, data_count, data_type, false, data_stride);
         glVertexArrayAttribBinding(vao, attribute_index, bind_index);
         return buffer;
@@ -106,7 +105,6 @@ public class GLUtils
         int buffer = glCreateBuffers();
         glNamedBufferData(buffer, buffer_data, flags);
         glVertexArrayVertexBuffer(vao, bind_index, buffer, buffer_offset, data_size);
-        glEnableVertexArrayAttrib(vao, bind_index);
         glVertexArrayAttribFormat(vao, bind_index, data_count, data_type, false, data_stride);
         glVertexArrayAttribBinding(vao, attribute_index, bind_index);
         return buffer;

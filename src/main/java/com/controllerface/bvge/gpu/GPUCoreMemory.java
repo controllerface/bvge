@@ -69,6 +69,8 @@ public class GPUCoreMemory
         gpu_crud.init();
         scan_deletes.init();
 
+        // create methods
+
         long create_point_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_point);
         create_point_k = new CreatePoint_k(GPU.command_queue_ptr, create_point_k_ptr)
             .mem_arg(CreatePoint_k.Args.points, GPU.Buffer.points.memory)
@@ -153,9 +155,13 @@ public class GPUCoreMemory
         create_animation_timings_k = new CreateAnimationTimings_k(GPU.command_queue_ptr, create_animation_timings_k_ptr)
             .mem_arg(CreateAnimationTimings_k.Args.animation_timings, GPU.Buffer.animation_timings.memory);
 
+        // read methods
+
         long read_position_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.read_position);
         read_position_k = new ReadPosition_k(GPU.command_queue_ptr, read_position_k_ptr)
             .mem_arg(ReadPosition_k.Args.armatures, GPU.Buffer.armatures.memory);
+
+        // update methods
 
         long update_accel_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.update_accel);
         update_accel_k = new UpdateAccel_k(GPU.command_queue_ptr, update_accel_k_ptr)
@@ -164,6 +170,8 @@ public class GPUCoreMemory
         long set_bone_channel_table_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.set_bone_channel_table);
         set_bone_channel_table_k = new SetBoneChannelTable_k(GPU.command_queue_ptr, set_bone_channel_table_k_ptr)
             .mem_arg(SetBoneChannelTable_k.Args.bone_channel_tables, GPU.Buffer.bone_channel_tables.memory);
+
+        // delete methods
 
         long locate_out_of_bounds_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.locate_out_of_bounds);
         locate_out_of_bounds_k = new LocateOutOfBounds_k(GPU.command_queue_ptr, locate_out_of_bounds_k_ptr)
@@ -191,8 +199,6 @@ public class GPUCoreMemory
             .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
             .mem_arg(CompleteDeletesMultiBlockOut_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
             .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_flags, GPU.Buffer.hull_flags.memory);
-
-        // post-delete buffer compaction
 
         long compact_armatures_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_armatures);
         compact_armatures_k = new CompactArmatures_k(GPU.command_queue_ptr, compact_armatures_k_ptr)
@@ -286,14 +292,6 @@ public class GPUCoreMemory
     {
         return bone_index;
     }
-
-    public int next_armature_bone()
-    {
-        return armature_bone_index;
-    }
-
-
-    // creation methods
 
     public int new_animation_timings(double[] timings)
     {
@@ -507,25 +505,19 @@ public class GPUCoreMemory
         return result;
     }
 
-    public void locate_out_of_bounds()
+    public void delete_and_compact()
     {
-        int armature_count = next_armature();
-
         int[] counter = new int[]{ 0 };
         var counter_ptr = GPU.cl_new_int_arg_buffer(counter);
 
         locate_out_of_bounds_k
             .ptr_arg(LocateOutOfBounds_k.Args.counter, counter_ptr)
-            .call(arg_long(armature_count));
+            .call(arg_long(armature_index));
 
         GPU.release_buffer(counter_ptr);
-    }
 
-    public void delete_and_compact()
-    {
-        int armature_count = GPU.core_memory.next_armature();
-        long output_buf_size = (long) CLSize.cl_int2 * armature_count;
-        long output_buf_size2 = (long) CLSize.cl_int4 * armature_count;
+        long output_buf_size = (long) CLSize.cl_int2 * armature_index;
+        long output_buf_size2 = (long) CLSize.cl_int4 * armature_index;
 
         var output_buf_data = GPU.cl_new_buffer(output_buf_size);
         var output_buf_data2 = GPU.cl_new_buffer(output_buf_size2);
@@ -533,7 +525,7 @@ public class GPUCoreMemory
         var del_buffer_1 = new GPUMemory(output_buf_data);
         var del_buffer_2 = new GPUMemory(output_buf_data2);
 
-        int[] shift_counts = scan_deletes(del_buffer_1.pointer(), del_buffer_2.pointer(), armature_count);
+        int[] shift_counts = scan_deletes(del_buffer_1.pointer(), del_buffer_2.pointer(), armature_index);
 
         if (shift_counts[4] == 0)
         {
@@ -554,21 +546,20 @@ public class GPUCoreMemory
             .ptr_arg(CompactArmatures_k.Args.buffer_in, del_buffer_1.pointer())
             .ptr_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.pointer());
 
-        linearize_kernel(compact_armatures_k, armature_count);
-        linearize_kernel(compact_bones_k, next_bone());
-        linearize_kernel(compact_points_k, next_point());
-        linearize_kernel(compact_edges_k, next_edge());
-        linearize_kernel(compact_hulls_k, next_hull());
-        linearize_kernel(compact_armature_bones_k, next_armature_bone());
+        linearize_kernel(compact_armatures_k, armature_index);
+        linearize_kernel(compact_bones_k, bone_index);
+        linearize_kernel(compact_points_k, point_index);
+        linearize_kernel(compact_edges_k, edge_index);
+        linearize_kernel(compact_hulls_k, hull_index);
+        linearize_kernel(compact_armature_bones_k, armature_bone_index);
 
-        compact_buffers(shift_counts[0], shift_counts[1], shift_counts[2],
-            shift_counts[3], shift_counts[4], shift_counts[5]);
+        compact_buffers(shift_counts);
 
         del_buffer_1.release();
         del_buffer_2.release();
     }
 
-    public static void linearize_kernel(GPUKernel kernel, int object_count)
+    private void linearize_kernel(GPUKernel kernel, int object_count)
     {
         int offset = 0;
         for (long remaining = object_count; remaining > 0; remaining -= GPU.max_work_group_size)
@@ -670,18 +661,13 @@ public class GPUCoreMemory
         return sz;
     }
 
-    private void compact_buffers(int edge_shift,
-                                 int bone_shift,
-                                 int point_shift,
-                                 int hull_shift,
-                                 int armature_shift,
-                                 int armature_bone_shift)
+    private void compact_buffers(int[] shift_counts)
     {
-        edge_index          -= (edge_shift);
-        bone_index          -= (bone_shift);
-        point_index         -= (point_shift);
-        hull_index          -= (hull_shift);
-        armature_index      -= (armature_shift);
-        armature_bone_index -= (armature_bone_shift);
+        edge_index          -= (shift_counts[0]);
+        bone_index          -= (shift_counts[1]);
+        point_index         -= (shift_counts[2]);
+        hull_index          -= (shift_counts[3]);
+        armature_index      -= (shift_counts[4]);
+        armature_bone_index -= (shift_counts[5]);
     }
 }

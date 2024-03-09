@@ -43,6 +43,7 @@ public class CircleRenderer extends GameSystem
         vao_id = glCreateVertexArrays();
         circles_vbo = GLUtils.new_buffer_vec4(vao_id, TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
         GPU.share_memory(circles_vbo);
+        glEnableVertexArrayAttrib(vao_id, TRANSFORM_ATTRIBUTE);
     }
 
     @Override
@@ -61,8 +62,6 @@ public class CircleRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glEnableVertexArrayAttrib(vao_id, TRANSFORM_ATTRIBUTE);
-
         int offset = 0;
         for (int remaining = circle_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
@@ -71,8 +70,6 @@ public class CircleRenderer extends GameSystem
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;
         }
-
-        glDisableVertexArrayAttrib(vao_id, TRANSFORM_ATTRIBUTE);
 
         glBindVertexArray(0);
         shader.detach();

@@ -21,8 +21,6 @@ public class UniformGridRenderer extends GameSystem
     private static final int POSITION_ATTRIBUTE = 0;
 
     private final UniformGrid uniformGrid;
-    private final float x_offset;
-    private final float y_offset;
 
     private int vao_id;
     private int point_vbo;
@@ -34,8 +32,6 @@ public class UniformGridRenderer extends GameSystem
         super(ecs);
         this.shader = Assets.load_shader("bounding_outline.glsl");
         this.uniformGrid = uniformGrid;
-        this.x_offset = uniformGrid.width / 2;
-        this.y_offset = uniformGrid.height / 2;
         init();
     }
 
@@ -43,6 +39,7 @@ public class UniformGridRenderer extends GameSystem
     {
         vao_id = glCreateVertexArrays();
         point_vbo = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BUFFER_SIZE);
+        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
     }
 
     @Override
@@ -66,10 +63,8 @@ public class UniformGridRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
         glNamedBufferData(point_vbo, data, GL_DYNAMIC_DRAW);
         glDrawArrays(GL_LINE_LOOP, 0, 4);
-        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
         glBindVertexArray(0);
         shader.detach();
     }

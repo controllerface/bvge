@@ -52,6 +52,8 @@ public class EdgeRenderer extends GameSystem
         flag_vbo = GLUtils.new_buffer_float(vao_id, FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
         GPU.share_memory(edge_vbo);
         GPU.share_memory(flag_vbo);
+        glEnableVertexArrayAttrib(vao_id, EDGE_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao_id, FLAG_ATTRIBUTE);
     }
 
     @Override
@@ -62,9 +64,6 @@ public class EdgeRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glEnableVertexArrayAttrib(vao_id, EDGE_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao_id, FLAG_ATTRIBUTE);
-
         int offset = 0;
         for (int remaining = GPU.core_memory.next_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
@@ -73,9 +72,6 @@ public class EdgeRenderer extends GameSystem
             glDrawArrays(GL_LINES, 0, count * 2);
             offset += count;
         }
-
-        glDisableVertexArrayAttrib(vao_id, EDGE_ATTRIBUTE);
-        glDisableVertexArrayAttrib(vao_id, FLAG_ATTRIBUTE);
 
         glBindVertexArray(0);
 

@@ -311,7 +311,6 @@ public class PhysicsSimulation extends GameSystem
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
         // to ensure buffer compaction happens as infrequently as possible.
-        GPU.core_memory.locate_out_of_bounds();
         GPU.core_memory.delete_and_compact();
 
         // After all simulation is done for this pass, do one last animate pass so that vertices are all in

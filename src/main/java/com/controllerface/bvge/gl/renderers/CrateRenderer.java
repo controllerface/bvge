@@ -61,6 +61,10 @@ public class CrateRenderer extends GameSystem
         glVertexArrayBindingDivisor(vao_id, TRANSFORM_ATTRIBUTE, 1);
 
         GPU.share_memory(transform_buffer_id);
+
+        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao_id, TRANSFORM_ATTRIBUTE);
     }
 
 
@@ -86,10 +90,6 @@ public class CrateRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         shader.uploadIntArray("uTextures", texture_slots);
 
-        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao_id, TRANSFORM_ATTRIBUTE);
-
         int offset = 0;
         for (int remaining = crate_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
@@ -98,10 +98,6 @@ public class CrateRenderer extends GameSystem
             glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, count);
             offset += count;
         }
-
-        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
-        glDisableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
-        glDisableVertexArrayAttrib(vao_id, TRANSFORM_ATTRIBUTE);
 
         glBindVertexArray(0);
 

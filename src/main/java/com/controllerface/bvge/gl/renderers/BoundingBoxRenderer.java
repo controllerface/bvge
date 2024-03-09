@@ -48,6 +48,7 @@ public class BoundingBoxRenderer extends GameSystem
         vao_id = glCreateVertexArrays();
         bounding_box_vbo = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         GPU.share_memory(bounding_box_vbo);
+        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
     }
 
     @Override
@@ -57,8 +58,6 @@ public class BoundingBoxRenderer extends GameSystem
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
-
-        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
 
         int offset = 0;
         for (int remaining = GPU.core_memory.next_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
@@ -73,8 +72,6 @@ public class BoundingBoxRenderer extends GameSystem
             }
             offset += count;
         }
-
-        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
 
         glBindVertexArray(0);
 
