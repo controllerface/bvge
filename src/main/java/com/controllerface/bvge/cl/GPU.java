@@ -180,9 +180,7 @@ public class GPU
 
     public enum Program
     {
-        aabb_collide(new AabbCollide()),
         animate_hulls(new AnimateHulls()),
-        build_key_map(new BuildKeyMap()),
         locate_in_bounds(new LocateInBounds()),
         prepare_bones(new PrepareBones()),
         prepare_bounds(new PrepareBounds()),
@@ -196,7 +194,6 @@ public class GPU
         scan_int4_array(new ScanInt4Array()),
         scan_int_array(new ScanIntArray()),
         scan_int_array_out(new ScanIntArrayOut()),
-        scan_key_candidates(new ScanKeyCandidates()),
 
         ;
 
@@ -1009,12 +1006,6 @@ public class GPU
         Kernel.scan_int_multi_block_out.set_kernel(new ScanIntMultiBlockOut_k(command_queue_ptr));
         Kernel.complete_int_multi_block_out.set_kernel(new CompleteIntMultiBlockOut_k(command_queue_ptr));
 
-        // collision candidate scan to output buffer
-
-        Kernel.scan_candidates_single_block_out.set_kernel(new ScanCandidatesSingleBlockOut_k(command_queue_ptr));
-        Kernel.scan_candidates_multi_block_out.set_kernel(new ScanCandidatesMultiBlockOut_k(command_queue_ptr));
-        Kernel.complete_candidates_multi_block_out.set_kernel(new CompleteCandidatesMultiBlockOut_k(command_queue_ptr));
-
         // constraint solver
 
         Kernel.resolve_constraints.set_kernel(new ResolveConstraints_k(command_queue_ptr))
@@ -1122,21 +1113,6 @@ public class GPU
             .mem_arg(AnimatePoints_k.Args.bones, Buffer.bone_instances.memory);
 
         // broad collision
-
-        Kernel.build_key_map.set_kernel(new BuildKeyMap_k(command_queue_ptr))
-            .mem_arg(BuildKeyMap_k.Args.bounds_index_data, Buffer.aabb_index.memory)
-            .mem_arg(BuildKeyMap_k.Args.bounds_bank_data, Buffer.aabb_key_table.memory);
-
-        Kernel.locate_in_bounds.set_kernel(new LocateInBounds_k(command_queue_ptr))
-            .mem_arg(LocateInBounds_k.Args.bounds_bank_data, Buffer.aabb_key_table.memory);
-
-        Kernel.count_candidates.set_kernel(new CountCandidates_k(command_queue_ptr))
-            .mem_arg(CountCandidates_k.Args.bounds_bank_data, Buffer.aabb_key_table.memory);
-
-        Kernel.aabb_collide.set_kernel(new AABBCollide_k(command_queue_ptr))
-            .mem_arg(AABBCollide_k.Args.bounds, Buffer.aabb.memory)
-            .mem_arg(AABBCollide_k.Args.bounds_bank_data, Buffer.aabb_key_table.memory)
-            .mem_arg(AABBCollide_k.Args.hull_flags, Buffer.hull_flags.memory);
 
         Kernel.finalize_candidates.set_kernel(new FinalizeCandidates_k(command_queue_ptr));
     }
@@ -1267,33 +1243,6 @@ public class GPU
         return (int) Math.ceil((float) n / (float) max_scan_block_size);
     }
 
-    /**
-     * Typically, kernels that operate on core objects are called with the maximum count and no group
-     * size, allowing the OpenCL implementation to slice up all tasks into workgroups and queue them
-     * as needed. However, in some cases it is necessary to ensure that, at most, only one workgroup
-     * executes at a time. For example, buffer compaction, which must be computed in ascending order,
-     * with a guarantee that items that are of a higher index value are always processed after ones
-     * with lower values. This method serves the later use case. The provided kernel is called in a
-     * loop, with each call containing a local work size equal to the global size, forcing all work
-     * into a single work group. The loop uses a global offset to ensure that, on each iteration, the
-     * next group is processed.
-     *
-     * @param kernel the GPU kernel to linearize
-     * @param object_count the number of total kernel threads that will run
-     */
-    public static void linearize_kernel(Kernel kernel, int object_count)
-    {
-        int offset = 0;
-        for (long remaining = object_count; remaining > 0; remaining -= max_work_group_size)
-        {
-            int count = (int) Math.min(max_work_group_size, remaining);
-            var sz = count == max_work_group_size
-                ? local_work_default
-                : arg_long(count);
-            kernel.kernel.call(sz, sz, arg_long(offset));
-            offset += count;
-        }
-    }
 
     //#endregion
 
@@ -1494,97 +1443,6 @@ public class GPU
         Kernel.animate_points.kernel.call(arg_long(GPU.core_memory.next_point()));
     }
 
-    public static void calculate_map_offsets()
-    {
-        scan_int_out(counts_data_ptr, offsets_data_ptr, key_directory_length);
-    }
-
-    public static void build_key_map(UniformGrid uniform_grid)
-    {
-        long map_buf_size = (long) CLSize.cl_int * uniform_grid.getKey_map_size();
-
-        var map_data = cl_new_buffer(map_buf_size);
-
-        // reset the counts buffer to all zeroes
-        cl_zero_buffer(counts_data_ptr, counts_buf_size);
-
-        physics_buffer.key_map = new GPUMemory(map_data);
-
-        Kernel.build_key_map.kernel
-            .ptr_arg(BuildKeyMap_k.Args.key_map, map_data)
-            .call(arg_long(GPU.core_memory.next_hull()));
-    }
-
-    public static void locate_in_bounds()
-    {
-        int hull_count = GPU.core_memory.next_hull();
-
-        long inbound_buf_size = (long) CLSize.cl_int * hull_count;
-        var inbound_data = cl_new_buffer(inbound_buf_size);
-
-        physics_buffer.in_bounds = new GPUMemory(inbound_data);
-
-        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
-
-        Kernel.locate_in_bounds.kernel
-            .ptr_arg(LocateInBounds_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
-            .ptr_arg(LocateInBounds_k.Args.counter, atomic_counter_ptr)
-            .call(arg_long(hull_count));
-
-        int size = cl_read_pinned_int(atomic_counter_ptr);
-
-        physics_buffer.set_candidate_buffer_count(size);
-    }
-
-    public static void calculate_match_candidates()
-    {
-        long candidate_buf_size = (long) CLSize.cl_int2 * physics_buffer.get_candidate_buffer_count();
-        var candidate_data = cl_new_buffer(candidate_buf_size);
-        physics_buffer.candidate_counts = new GPUMemory(candidate_data);
-
-        Kernel.count_candidates.kernel
-            .ptr_arg(CountCandidates_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
-            .ptr_arg(CountCandidates_k.Args.key_bank, physics_buffer.key_bank.pointer())
-            .ptr_arg(CountCandidates_k.Args.candidates, physics_buffer.candidate_counts.pointer())
-            .call(arg_long(physics_buffer.get_candidate_buffer_count()));
-    }
-
-    public static void calculate_match_offsets()
-    {
-        int buffer_count = physics_buffer.get_candidate_buffer_count();
-        long offset_buf_size = (long) CLSize.cl_int * buffer_count;
-        var offset_data = cl_new_buffer(offset_buf_size);
-        physics_buffer.candidate_offsets = new GPUMemory(offset_data);
-        int match_count = scan_key_candidates(physics_buffer.candidate_counts.pointer(), offset_data, buffer_count);
-        physics_buffer.set_candidate_match_count(match_count);
-    }
-
-
-    public static void aabb_collide()
-    {
-        long matches_buf_size = (long) CLSize.cl_int * physics_buffer.get_candidate_match_count();
-        var matches_data = cl_new_buffer(matches_buf_size);
-        physics_buffer.matches = new GPUMemory(matches_data);
-
-        long used_buf_size = (long) CLSize.cl_int * physics_buffer.get_candidate_buffer_count();
-        var used_data = cl_new_buffer(used_buf_size);
-        physics_buffer.matches_used = new GPUMemory(used_data);
-
-        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
-
-        Kernel.aabb_collide.kernel
-            .ptr_arg(AABBCollide_k.Args.candidates, physics_buffer.candidate_counts.pointer())
-            .ptr_arg(AABBCollide_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
-            .ptr_arg(AABBCollide_k.Args.key_map, physics_buffer.key_map.pointer())
-            .ptr_arg(AABBCollide_k.Args.key_bank, physics_buffer.key_bank.pointer())
-            .ptr_arg(AABBCollide_k.Args.matches, physics_buffer.matches.pointer())
-            .ptr_arg(AABBCollide_k.Args.used, physics_buffer.matches_used.pointer())
-            .call(arg_long(physics_buffer.get_candidate_buffer_count()));
-
-        int count = cl_read_pinned_int(atomic_counter_ptr);
-        physics_buffer.set_candidate_count(count);
-    }
-
     public static void finalize_candidates()
     {
         if (physics_buffer.get_candidate_count() <= 0)
@@ -1762,19 +1620,6 @@ public class GPU
     }
 
 
-    private static int scan_key_candidates(long data_ptr, long o_data_ptr, int n)
-    {
-        int k = work_group_count(n);
-        if (k == 1)
-        {
-            return scan_single_block_candidates_out(data_ptr, o_data_ptr, n);
-        }
-        else
-        {
-            return scan_multi_block_candidates_out(data_ptr, o_data_ptr, n, k);
-        }
-    }
-
     private static void scan_single_block_int(long data_ptr, int n)
     {
         long local_buffer_size = CLSize.cl_int * max_scan_block_size;
@@ -1936,60 +1781,6 @@ public class GPU
         clReleaseMemObject(part_data);
     }
 
-    private static int scan_single_block_candidates_out(long data_ptr, long o_data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-
-        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
-
-        Kernel.scan_candidates_single_block_out.kernel
-            .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.input, data_ptr)
-            .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.output, o_data_ptr)
-            .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.sz, atomic_counter_ptr)
-            .loc_arg(ScanCandidatesSingleBlockOut_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanCandidatesSingleBlockOut_k.Args.n, n)
-            .call(local_work_default, local_work_default);
-
-        return cl_read_pinned_int(atomic_counter_ptr);
-    }
-
-    private static int scan_multi_block_candidates_out(long data_ptr, long o_data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-
-        long gx = k * max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
-        var p_data = cl_new_buffer(part_buf_size);
-
-        Kernel.scan_candidates_multi_block_out.kernel
-            .ptr_arg(ScanCandidatesMultiBlockOut_k.Args.input, data_ptr)
-            .ptr_arg(ScanCandidatesMultiBlockOut_k.Args.output, o_data_ptr)
-            .loc_arg(ScanCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanCandidatesMultiBlockOut_k.Args.part, p_data)
-            .set_arg(ScanCandidatesMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        scan_int(p_data, part_size);
-
-        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
-
-        Kernel.complete_candidates_multi_block_out.kernel
-            .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.input, data_ptr)
-            .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.output, o_data_ptr)
-            .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.sz, atomic_counter_ptr)
-            .loc_arg(CompleteCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.part, p_data)
-            .set_arg(CompleteCandidatesMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        clReleaseMemObject(p_data);
-
-        return cl_read_pinned_int(atomic_counter_ptr);
-    }
-
-
     //#endregion
 
     //#region Misc. Public API
@@ -2040,24 +1831,6 @@ public class GPU
         counts_buf_size = (long) CLSize.cl_int * key_directory_length;
         counts_data_ptr = cl_new_buffer(counts_buf_size);
         offsets_data_ptr = cl_new_buffer(counts_buf_size);
-
-        Kernel.build_key_map.kernel
-            .ptr_arg(BuildKeyMap_k.Args.key_offsets, offsets_data_ptr)
-            .ptr_arg(BuildKeyMap_k.Args.key_counts, counts_data_ptr)
-            .set_arg(BuildKeyMap_k.Args.x_subdivisions, x_subdivisions)
-            .set_arg(BuildKeyMap_k.Args.key_count_length, key_directory_length);
-
-        Kernel.count_candidates.kernel
-            .ptr_arg(CountCandidates_k.Args.key_counts, counts_data_ptr)
-            .set_arg(CountCandidates_k.Args.x_subdivisions, x_subdivisions)
-            .set_arg(CountCandidates_k.Args.key_count_length, key_directory_length);
-
-        Kernel.aabb_collide.kernel
-            .ptr_arg(AABBCollide_k.Args.key_counts, counts_data_ptr)
-            .ptr_arg(AABBCollide_k.Args.key_offsets, offsets_data_ptr)
-            .ptr_arg(AABBCollide_k.Args.counter, atomic_counter_ptr)
-            .set_arg(AABBCollide_k.Args.x_subdivisions, x_subdivisions)
-            .set_arg(AABBCollide_k.Args.key_count_length, key_directory_length);
     }
 
     public static void init(int max_hulls, int max_points)

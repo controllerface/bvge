@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class CountCandidates_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.locate_in_bounds;
-    private static final GPU.Kernel kernel = GPU.Kernel.count_candidates;
-
     public enum Args
     {
         bounds_bank_data,
@@ -19,8 +15,8 @@ public class CountCandidates_k extends GPUKernel
         key_count_length;
     }
 
-    public CountCandidates_k(long command_queue_ptr)
+    public CountCandidates_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

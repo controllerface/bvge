@@ -559,6 +559,20 @@ public class GPUCoreMemory
         del_buffer_2.release();
     }
 
+    /**
+     * Typically, kernels that operate on core objects are called with the maximum count and no group
+     * size, allowing the OpenCL implementation to slice up all tasks into workgroups and queue them
+     * as needed. However, in some cases it is necessary to ensure that, at most, only one workgroup
+     * executes at a time. For example, buffer compaction, which must be computed in ascending order,
+     * with a guarantee that items that are of a higher index value are always processed after ones
+     * with lower values. This method serves the later use case. The provided kernel is called in a
+     * loop, with each call containing a local work size equal to the global size, forcing all work
+     * into a single work group. The loop uses a global offset to ensure that, on each iteration, the
+     * next group is processed.
+     *
+     * @param kernel the GPU kernel to linearize
+     * @param object_count the number of total kernel threads that will run
+     */
     private void linearize_kernel(GPUKernel kernel, int object_count)
     {
         int offset = 0;
