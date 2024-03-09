@@ -94,17 +94,17 @@ public class GPU
     /**
      * The largest group of calculations that can be done in a single "warp" or "wave" of GPU processing.
      */
-    private static long max_work_group_size = 0;
+    public static long max_work_group_size = 0;
 
     /**
      * Used for the prefix scan kernels and their variants.
      */
-    private static long max_scan_block_size = 0;
+    public static long max_scan_block_size = 0;
 
     /**
      * The max group size formatted as a single element array, making it simpler to use for Open Cl calls.
      */
-    private static long[] local_work_default = arg_long(0);
+    public static long[] local_work_default = arg_long(0);
 
     /**
      * This convenience array defines a work group size of 1, used primarily for setting up data buffers at
@@ -1094,87 +1094,6 @@ public class GPU
             .mem_arg(MoveArmatures_k.Args.hull_flags, Buffer.hull_flags.memory)
             .mem_arg(MoveArmatures_k.Args.points, Buffer.points.memory);
 
-        // object delete support
-
-        Kernel.locate_out_of_bounds.set_kernel(new LocateOutOfBounds_k(command_queue_ptr))
-            .mem_arg(LocateOutOfBounds_k.Args.hull_tables, Buffer.armature_hull_table.memory)
-            .mem_arg(LocateOutOfBounds_k.Args.hull_flags, Buffer.hull_flags.memory)
-            .mem_arg(LocateOutOfBounds_k.Args.armature_flags, Buffer.armature_flags.memory);
-
-        Kernel.scan_deletes_single_block_out.set_kernel(new ScanDeletesSingleBlockOut_k(command_queue_ptr))
-            .mem_arg(ScanDeletesSingleBlockOut_k.Args.armature_flags, Buffer.armature_flags.memory)
-            .mem_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, Buffer.armature_hull_table.memory)
-            .mem_arg(ScanDeletesSingleBlockOut_k.Args.element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(ScanDeletesSingleBlockOut_k.Args.hull_flags, Buffer.hull_flags.memory);
-
-        Kernel.scan_deletes_multi_block_out.set_kernel(new ScanDeletesMultiBlockOut_k(command_queue_ptr))
-            .mem_arg(ScanDeletesMultiBlockOut_k.Args.armature_flags, Buffer.armature_flags.memory)
-            .mem_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, Buffer.armature_hull_table.memory)
-            .mem_arg(ScanDeletesMultiBlockOut_k.Args.element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(ScanDeletesMultiBlockOut_k.Args.hull_flags, Buffer.hull_flags.memory);
-
-        Kernel.complete_deletes_multi_block_out.set_kernel(new CompleteDeletesMultiBlockOut_k(command_queue_ptr))
-            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.armature_flags, Buffer.armature_flags.memory)
-            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, Buffer.armature_hull_table.memory)
-            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_flags, Buffer.hull_flags.memory);
-
-        // post-delete buffer compaction
-
-        Kernel.compact_armatures.set_kernel(new CompactArmatures_k(command_queue_ptr))
-            .mem_arg(CompactArmatures_k.Args.armatures, Buffer.armatures.memory)
-            .mem_arg(CompactArmatures_k.Args.armature_accel, Buffer.armature_accel.memory)
-            .mem_arg(CompactArmatures_k.Args.armature_flags, Buffer.armature_flags.memory)
-            .mem_arg(CompactArmatures_k.Args.armature_animation_indices, Buffer.armature_animation_indices.memory)
-            .mem_arg(CompactArmatures_k.Args.armature_animation_elapsed, Buffer.armature_animation_elapsed.memory)
-            .mem_arg(CompactArmatures_k.Args.hull_tables, Buffer.armature_hull_table.memory)
-            .mem_arg(CompactArmatures_k.Args.hulls, Buffer.hulls.memory)
-            .mem_arg(CompactArmatures_k.Args.hull_flags, Buffer.hull_flags.memory)
-            .mem_arg(CompactArmatures_k.Args.element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.points, Buffer.points.memory)
-            .mem_arg(CompactArmatures_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.bone_tables, Buffer.point_bone_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.bone_index_tables, Buffer.bone_index_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.edges, Buffer.edges.memory)
-            .mem_arg(CompactArmatures_k.Args.bone_shift, Buffer.bone_shift.memory)
-            .mem_arg(CompactArmatures_k.Args.point_shift, Buffer.point_shift.memory)
-            .mem_arg(CompactArmatures_k.Args.edge_shift, Buffer.edge_shift.memory)
-            .mem_arg(CompactArmatures_k.Args.hull_shift, Buffer.hull_shift.memory)
-            .mem_arg(CompactArmatures_k.Args.bone_bind_shift, Buffer.bone_bind_shift.memory);
-
-        Kernel.compact_hulls.set_kernel(new CompactHulls_k(command_queue_ptr))
-            .mem_arg(CompactHulls_k.Args.hull_shift, Buffer.hull_shift.memory)
-            .mem_arg(CompactHulls_k.Args.hulls, Buffer.hulls.memory)
-            .mem_arg(CompactHulls_k.Args.hull_mesh_ids, Buffer.hull_mesh_ids.memory)
-            .mem_arg(CompactHulls_k.Args.hull_rotations, Buffer.hull_rotation.memory)
-            .mem_arg(CompactHulls_k.Args.hull_flags, Buffer.hull_flags.memory)
-            .mem_arg(CompactHulls_k.Args.element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(CompactHulls_k.Args.bounds, Buffer.aabb.memory)
-            .mem_arg(CompactHulls_k.Args.bounds_index_data, Buffer.aabb_index.memory)
-            .mem_arg(CompactHulls_k.Args.bounds_bank_data, Buffer.aabb_key_table.memory);
-
-        Kernel.compact_edges.set_kernel(new CompactEdges_k(command_queue_ptr))
-            .mem_arg(CompactEdges_k.Args.edge_shift, Buffer.edge_shift.memory)
-            .mem_arg(CompactEdges_k.Args.edges, Buffer.edges.memory);
-
-        Kernel.compact_points.set_kernel(new CompactPoints_k(command_queue_ptr))
-            .mem_arg(CompactPoints_k.Args.point_shift, Buffer.point_shift.memory)
-            .mem_arg(CompactPoints_k.Args.points, Buffer.points.memory)
-            .mem_arg(CompactPoints_k.Args.anti_gravity, Buffer.point_anti_gravity.memory)
-            .mem_arg(CompactPoints_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
-            .mem_arg(CompactPoints_k.Args.bone_tables, Buffer.point_bone_tables.memory);
-
-        Kernel.compact_bones.set_kernel(new CompactBones_k(command_queue_ptr))
-            .mem_arg(CompactBones_k.Args.bone_shift, Buffer.bone_shift.memory)
-            .mem_arg(CompactBones_k.Args.bone_instances, Buffer.bone_instances.memory)
-            .mem_arg(CompactBones_k.Args.bone_index_tables, Buffer.bone_index_tables.memory);
-
-        Kernel.compact_armature_bones.set_kernel(new CompactArmatureBones_k(command_queue_ptr))
-            .mem_arg(CompactArmatureBones_k.Args.armature_bone_shift, Buffer.bone_bind_shift.memory)
-            .mem_arg(CompactArmatureBones_k.Args.armature_bones, Buffer.armatures_bones.memory)
-            .mem_arg(CompactArmatureBones_k.Args.armature_bone_tables, Buffer.bone_bind_tables.memory);
-
         // movement
 
         Kernel.animate_armatures.set_kernel(new AnimateArmatures_k(command_queue_ptr))
@@ -1265,12 +1184,12 @@ public class GPU
             null);
     }
 
-    private static long cl_new_buffer(long size)
+    public static long cl_new_buffer(long size)
     {
         return clCreateBuffer(context_ptr, FLAGS_WRITE_GPU, size, null);
     }
 
-    private static long cl_new_int_arg_buffer(int[] src)
+    public static long cl_new_int_arg_buffer(int[] src)
     {
         return clCreateBuffer(context_ptr, FLAGS_WRITE_CPU_COPY, src, null);
     }
@@ -1298,7 +1217,7 @@ public class GPU
         return clCreateBuffer(context_ptr, flags, size, null);
     }
 
-    private static int[] cl_read_pinned_int_buffer(long pinned_ptr, long size, int count)
+    public static int[] cl_read_pinned_int_buffer(long pinned_ptr, long size, int count)
     {
         var out = clEnqueueMapBuffer(command_queue_ptr,
             pinned_ptr,
@@ -1371,7 +1290,7 @@ public class GPU
         return result;
     }
 
-    private static int work_group_count(int n)
+    public static int work_group_count(int n)
     {
         return (int) Math.ceil((float) n / (float) max_scan_block_size);
     }
@@ -1390,7 +1309,7 @@ public class GPU
      * @param kernel the GPU kernel to linearize
      * @param object_count the number of total kernel threads that will run
      */
-    private static void linearize_kernel(Kernel kernel, int object_count)
+    public static void linearize_kernel(Kernel kernel, int object_count)
     {
         int offset = 0;
         for (long remaining = object_count; remaining > 0; remaining -= max_work_group_size)
@@ -1718,20 +1637,6 @@ public class GPU
         physics_buffer.set_candidate_buffer_count(size);
     }
 
-    public static void locate_out_of_bounds()
-    {
-        int armature_count = GPU.core_memory.next_armature();
-
-        int[] counter = new int[]{ 0 };
-        var counter_ptr = cl_new_int_arg_buffer(counter);
-
-        Kernel.locate_out_of_bounds.kernel
-            .ptr_arg(LocateOutOfBounds_k.Args.counter, counter_ptr)
-            .call(arg_long(armature_count));
-
-        clReleaseMemObject(counter_ptr);
-    }
-
     public static void calculate_match_candidates()
     {
         long candidate_buf_size = (long) CLSize.cl_int2 * physics_buffer.get_candidate_buffer_count();
@@ -1755,52 +1660,6 @@ public class GPU
         physics_buffer.set_candidate_match_count(match_count);
     }
 
-    public static void delete_and_compact()
-    {
-        int armature_count = GPU.core_memory.next_armature();
-        long output_buf_size = (long) CLSize.cl_int2 * armature_count;
-        long output_buf_size2 = (long) CLSize.cl_int4 * armature_count;
-
-        var output_buf_data = cl_new_buffer(output_buf_size);
-        var output_buf_data2 = cl_new_buffer(output_buf_size2);
-
-        var del_buffer_1 = new GPUMemory(output_buf_data);
-        var del_buffer_2 = new GPUMemory(output_buf_data2);
-
-        int[] shift_counts = scan_deletes(del_buffer_1.pointer(), del_buffer_2.pointer(), armature_count);
-
-        if (shift_counts[4] == 0)
-        {
-            del_buffer_1.release();
-            del_buffer_2.release();
-            return;
-        }
-
-        // shift buffers are cleared before compacting to clean out any data from the last tick
-        Buffer.hull_shift.clear();
-        Buffer.edge_shift.clear();
-        Buffer.point_shift.clear();
-        Buffer.bone_shift.clear();
-        Buffer.bone_bind_shift.clear();
-
-        // as armatures are compacted, the shift buffers for the other components are updated
-        Kernel.compact_armatures.kernel
-            .ptr_arg(CompactArmatures_k.Args.buffer_in, del_buffer_1.pointer())
-            .ptr_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.pointer());
-
-        linearize_kernel(Kernel.compact_armatures, armature_count);
-        linearize_kernel(Kernel.compact_bones, GPU.core_memory.next_bone());
-        linearize_kernel(Kernel.compact_points, GPU.core_memory.next_point());
-        linearize_kernel(Kernel.compact_edges, GPU.core_memory.next_edge());
-        linearize_kernel(Kernel.compact_hulls, GPU.core_memory.next_hull());
-        linearize_kernel(Kernel.compact_armature_bones, GPU.core_memory.next_armature_bone());
-
-        GPU.core_memory.compact_buffers(shift_counts[0], shift_counts[1], shift_counts[2],
-            shift_counts[3], shift_counts[4], shift_counts[5]);
-
-        del_buffer_1.release();
-        del_buffer_2.release();
-    }
 
     public static void aabb_collide()
     {
@@ -1977,7 +1836,7 @@ public class GPU
         }
     }
 
-    private static void scan_int4(long data_ptr, int n)
+    public static void scan_int4(long data_ptr, int n)
     {
         int k = work_group_count(n);
         if (k == 1)
@@ -2026,19 +1885,6 @@ public class GPU
         else
         {
             return scan_multi_block_candidates_out(data_ptr, o_data_ptr, n, k);
-        }
-    }
-
-    private static int[] scan_deletes(long o1_data_ptr, long o2_data_ptr, int n)
-    {
-        int k = work_group_count(n);
-        if (k == 1)
-        {
-            return scan_single_block_deletes_out(o1_data_ptr, o2_data_ptr, n);
-        }
-        else
-        {
-            return scan_multi_block_deletes_out(o1_data_ptr, o2_data_ptr, n, k);
         }
     }
 
@@ -2201,81 +2047,6 @@ public class GPU
             .call(global_work_size, local_work_default);
 
         clReleaseMemObject(part_data);
-    }
-
-    private static int[] scan_single_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
-        long local_buffer_size2 = CLSize.cl_int4 * max_scan_block_size;
-
-        var size_data = cl_new_pinned_buffer(CLSize.cl_int * 6);
-        cl_zero_buffer(size_data, CLSize.cl_int * 6);
-
-        Kernel.scan_deletes_single_block_out.kernel
-            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
-            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output2, o2_data_ptr)
-            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, size_data)
-            .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer, local_buffer_size)
-            .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer2, local_buffer_size2)
-            .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
-            .call(local_work_default, local_work_default);
-
-        int[] sz = cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
-        clReleaseMemObject(size_data);
-
-        return sz;
-    }
-
-    private static int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
-        long local_buffer_size2 = CLSize.cl_int4 * max_scan_block_size;
-
-        long gx = k * max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-
-        long part_buf_size = ((long) CLSize.cl_int2 * ((long) part_size));
-        long part_buf_size2 = ((long) CLSize.cl_int4 * ((long) part_size));
-
-        var p_data = cl_new_buffer(part_buf_size);
-        var p_data2 = cl_new_buffer(part_buf_size2);
-
-        Kernel.scan_deletes_multi_block_out.kernel
-            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
-            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output2, o2_data_ptr)
-            .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
-            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.part, p_data)
-            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.part2, p_data2)
-            .set_arg(ScanDeletesMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        // note the partial buffers are scanned and updated in-place
-        scan_int2(p_data, part_size);
-        scan_int4(p_data2, part_size);
-
-        var size_data = cl_new_pinned_buffer(CLSize.cl_int * 6);
-        cl_zero_buffer(size_data, CLSize.cl_int * 6);
-
-        Kernel.complete_deletes_multi_block_out.kernel
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output2, o2_data_ptr)
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.sz, size_data)
-            .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.part, p_data)
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.part2, p_data2)
-            .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        clReleaseMemObject(p_data);
-        clReleaseMemObject(p_data2);
-
-        int[] sz = cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
-        clReleaseMemObject(size_data);
-
-        return sz;
     }
 
     private static int scan_single_block_candidates_out(long data_ptr, long o_data_ptr, int n)

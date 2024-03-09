@@ -1,15 +1,11 @@
 package com.controllerface.bvge.gpu;
 
-import com.controllerface.bvge.cl.CLSize;
-import com.controllerface.bvge.cl.GPU;
-import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
+import com.controllerface.bvge.cl.programs.ScanDeletes;
 
-import static com.controllerface.bvge.cl.CLUtils.arg_float2;
-import static com.controllerface.bvge.cl.CLUtils.arg_float4;
-import static org.lwjgl.opencl.CL10.clReleaseMemObject;
+import static com.controllerface.bvge.cl.CLUtils.*;
 
 public class GPUCoreMemory
 {
@@ -31,6 +27,7 @@ public class GPUCoreMemory
     private int animation_index       = 0;
 
     private final GPUProgram gpu_crud = new GPUCrud();
+    private final GPUProgram scan_deletes = new ScanDeletes();
 
     private GPUKernel create_animation_timings_k;
     private GPUKernel create_armature_k;
@@ -48,10 +45,19 @@ public class GPUCoreMemory
     private GPUKernel create_point_k;
     private GPUKernel create_texture_uv_k;
     private GPUKernel create_vertex_reference_k;
-
-    private GPUKernel read_position;
-    private GPUKernel update_accel;
-    private GPUKernel set_bone_channel_table;
+    private GPUKernel read_position_k;
+    private GPUKernel update_accel_k;
+    private GPUKernel set_bone_channel_table_k;
+    private GPUKernel locate_out_of_bounds_k;
+    private GPUKernel scan_deletes_single_block_out_k;
+    private GPUKernel scan_deletes_multi_block_out_k;
+    private GPUKernel complete_deletes_multi_block_out_k;
+    private GPUKernel compact_armatures_k;
+    private GPUKernel compact_hulls_k;
+    private GPUKernel compact_edges_k;
+    private GPUKernel compact_points_k;
+    private GPUKernel compact_bones_k;
+    private GPUKernel compact_armature_bones_k;
 
     public GPUCoreMemory()
     {
@@ -61,6 +67,7 @@ public class GPUCoreMemory
     private void init()
     {
         gpu_crud.init();
+        scan_deletes.init();
 
         long create_point_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_point);
         create_point_k = new CreatePoint_k(GPU.command_queue_ptr, create_point_k_ptr)
@@ -146,18 +153,106 @@ public class GPUCoreMemory
         create_animation_timings_k = new CreateAnimationTimings_k(GPU.command_queue_ptr, create_animation_timings_k_ptr)
             .mem_arg(CreateAnimationTimings_k.Args.animation_timings, GPU.Buffer.animation_timings.memory);
 
-
-        long ptr1 = gpu_crud.kernel_ptr(GPU.Kernel.read_position);
-        read_position = new ReadPosition_k(GPU.command_queue_ptr, ptr1)
+        long read_position_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.read_position);
+        read_position_k = new ReadPosition_k(GPU.command_queue_ptr, read_position_k_ptr)
             .mem_arg(ReadPosition_k.Args.armatures, GPU.Buffer.armatures.memory);
 
-        long ptr2 = gpu_crud.kernel_ptr(GPU.Kernel.update_accel);
-        update_accel = new UpdateAccel_k(GPU.command_queue_ptr, ptr2)
+        long update_accel_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.update_accel);
+        update_accel_k = new UpdateAccel_k(GPU.command_queue_ptr, update_accel_k_ptr)
             .mem_arg(UpdateAccel_k.Args.armature_accel, GPU.Buffer.armature_accel.memory);
 
-        long ptr3 = gpu_crud.kernel_ptr(GPU.Kernel.set_bone_channel_table);
-        set_bone_channel_table = new SetBoneChannelTable_k(GPU.command_queue_ptr, ptr3)
+        long set_bone_channel_table_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.set_bone_channel_table);
+        set_bone_channel_table_k = new SetBoneChannelTable_k(GPU.command_queue_ptr, set_bone_channel_table_k_ptr)
             .mem_arg(SetBoneChannelTable_k.Args.bone_channel_tables, GPU.Buffer.bone_channel_tables.memory);
+
+        long locate_out_of_bounds_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.locate_out_of_bounds);
+        locate_out_of_bounds_k = new LocateOutOfBounds_k(GPU.command_queue_ptr, locate_out_of_bounds_k_ptr)
+            .mem_arg(LocateOutOfBounds_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
+            .mem_arg(LocateOutOfBounds_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
+            .mem_arg(LocateOutOfBounds_k.Args.armature_flags, GPU.Buffer.armature_flags.memory);
+
+        long scan_deletes_single_block_out_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.scan_deletes_single_block_out);
+        scan_deletes_single_block_out_k = new ScanDeletesSingleBlockOut_k(GPU.command_queue_ptr, scan_deletes_single_block_out_k_ptr)
+            .mem_arg(ScanDeletesSingleBlockOut_k.Args.armature_flags, GPU.Buffer.armature_flags.memory)
+            .mem_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
+            .mem_arg(ScanDeletesSingleBlockOut_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
+            .mem_arg(ScanDeletesSingleBlockOut_k.Args.hull_flags, GPU.Buffer.hull_flags.memory);
+
+        long scan_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.scan_deletes_multi_block_out);
+        scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(GPU.command_queue_ptr, scan_deletes_multi_block_out_k_ptr)
+            .mem_arg(ScanDeletesMultiBlockOut_k.Args.armature_flags, GPU.Buffer.armature_flags.memory)
+            .mem_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
+            .mem_arg(ScanDeletesMultiBlockOut_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
+            .mem_arg(ScanDeletesMultiBlockOut_k.Args.hull_flags, GPU.Buffer.hull_flags.memory);
+
+        long complete_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.complete_deletes_multi_block_out);
+        complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(GPU.command_queue_ptr, complete_deletes_multi_block_out_k_ptr)
+            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.armature_flags, GPU.Buffer.armature_flags.memory)
+            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
+            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
+            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_flags, GPU.Buffer.hull_flags.memory);
+
+        // post-delete buffer compaction
+
+        long compact_armatures_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_armatures);
+        compact_armatures_k = new CompactArmatures_k(GPU.command_queue_ptr, compact_armatures_k_ptr)
+            .mem_arg(CompactArmatures_k.Args.armatures, GPU.Buffer.armatures.memory)
+            .mem_arg(CompactArmatures_k.Args.armature_accel, GPU.Buffer.armature_accel.memory)
+            .mem_arg(CompactArmatures_k.Args.armature_flags, GPU.Buffer.armature_flags.memory)
+            .mem_arg(CompactArmatures_k.Args.armature_animation_indices, GPU.Buffer.armature_animation_indices.memory)
+            .mem_arg(CompactArmatures_k.Args.armature_animation_elapsed, GPU.Buffer.armature_animation_elapsed.memory)
+            .mem_arg(CompactArmatures_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
+            .mem_arg(CompactArmatures_k.Args.hulls, GPU.Buffer.hulls.memory)
+            .mem_arg(CompactArmatures_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
+            .mem_arg(CompactArmatures_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
+            .mem_arg(CompactArmatures_k.Args.points, GPU.Buffer.points.memory)
+            .mem_arg(CompactArmatures_k.Args.vertex_tables, GPU.Buffer.point_vertex_tables.memory)
+            .mem_arg(CompactArmatures_k.Args.bone_tables, GPU.Buffer.point_bone_tables.memory)
+            .mem_arg(CompactArmatures_k.Args.bone_bind_tables, GPU.Buffer.bone_bind_tables.memory)
+            .mem_arg(CompactArmatures_k.Args.bone_index_tables, GPU.Buffer.bone_index_tables.memory)
+            .mem_arg(CompactArmatures_k.Args.edges, GPU.Buffer.edges.memory)
+            .mem_arg(CompactArmatures_k.Args.bone_shift, GPU.Buffer.bone_shift.memory)
+            .mem_arg(CompactArmatures_k.Args.point_shift, GPU.Buffer.point_shift.memory)
+            .mem_arg(CompactArmatures_k.Args.edge_shift, GPU.Buffer.edge_shift.memory)
+            .mem_arg(CompactArmatures_k.Args.hull_shift, GPU.Buffer.hull_shift.memory)
+            .mem_arg(CompactArmatures_k.Args.bone_bind_shift, GPU.Buffer.bone_bind_shift.memory);
+
+        long compact_hulls_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_hulls);
+        compact_hulls_k = new CompactHulls_k(GPU.command_queue_ptr, compact_hulls_k_ptr)
+            .mem_arg(CompactHulls_k.Args.hull_shift, GPU.Buffer.hull_shift.memory)
+            .mem_arg(CompactHulls_k.Args.hulls, GPU.Buffer.hulls.memory)
+            .mem_arg(CompactHulls_k.Args.hull_mesh_ids, GPU.Buffer.hull_mesh_ids.memory)
+            .mem_arg(CompactHulls_k.Args.hull_rotations, GPU.Buffer.hull_rotation.memory)
+            .mem_arg(CompactHulls_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
+            .mem_arg(CompactHulls_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
+            .mem_arg(CompactHulls_k.Args.bounds, GPU.Buffer.aabb.memory)
+            .mem_arg(CompactHulls_k.Args.bounds_index_data, GPU.Buffer.aabb_index.memory)
+            .mem_arg(CompactHulls_k.Args.bounds_bank_data, GPU.Buffer.aabb_key_table.memory);
+
+        long compact_edges_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_edges);
+        compact_edges_k = new CompactEdges_k(GPU.command_queue_ptr, compact_edges_k_ptr)
+            .mem_arg(CompactEdges_k.Args.edge_shift, GPU.Buffer.edge_shift.memory)
+            .mem_arg(CompactEdges_k.Args.edges, GPU.Buffer.edges.memory);
+
+        long compact_points_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_points);
+        compact_points_k = new CompactPoints_k(GPU.command_queue_ptr, compact_points_k_ptr)
+            .mem_arg(CompactPoints_k.Args.point_shift, GPU.Buffer.point_shift.memory)
+            .mem_arg(CompactPoints_k.Args.points, GPU.Buffer.points.memory)
+            .mem_arg(CompactPoints_k.Args.anti_gravity, GPU.Buffer.point_anti_gravity.memory)
+            .mem_arg(CompactPoints_k.Args.vertex_tables, GPU.Buffer.point_vertex_tables.memory)
+            .mem_arg(CompactPoints_k.Args.bone_tables, GPU.Buffer.point_bone_tables.memory);
+
+        long compact_bones_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_bones);
+        compact_bones_k = new CompactBones_k(GPU.command_queue_ptr, compact_bones_k_ptr)
+            .mem_arg(CompactBones_k.Args.bone_shift, GPU.Buffer.bone_shift.memory)
+            .mem_arg(CompactBones_k.Args.bone_instances, GPU.Buffer.bone_instances.memory)
+            .mem_arg(CompactBones_k.Args.bone_index_tables, GPU.Buffer.bone_index_tables.memory);
+
+        long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_armature_bones);
+        compact_armature_bones_k = new CompactArmatureBones_k(GPU.command_queue_ptr, compact_armature_bones_k_ptr)
+            .mem_arg(CompactArmatureBones_k.Args.armature_bone_shift, GPU.Buffer.bone_bind_shift.memory)
+            .mem_arg(CompactArmatureBones_k.Args.armature_bones, GPU.Buffer.armatures_bones.memory)
+            .mem_arg(CompactArmatureBones_k.Args.armature_bone_tables, GPU.Buffer.bone_bind_tables.memory);
     }
 
     // index methods
@@ -383,7 +478,7 @@ public class GPUCoreMemory
 
     public void set_bone_channel_table(int bone_channel_index, int[] channel_table)
     {
-        set_bone_channel_table
+        set_bone_channel_table_k
             .set_arg(SetBoneChannelTable_k.Args.target, bone_channel_index)
             .set_arg(SetBoneChannelTable_k.Args.new_bone_channel_table, channel_table)
             .call(GPU.global_single_size);
@@ -391,7 +486,7 @@ public class GPUCoreMemory
 
     public void update_accel(int armature_index, float acc_x, float acc_y)
     {
-        update_accel
+        update_accel_k
             .set_arg(UpdateAccel_k.Args.target, armature_index)
             .set_arg(UpdateAccel_k.Args.new_value, arg_float2(acc_x, acc_y))
             .call(GPU.global_single_size);
@@ -402,7 +497,7 @@ public class GPUCoreMemory
         var result_data = GPU.cl_new_pinned_buffer(CLSize.cl_float2);
         GPU.cl_zero_buffer(result_data, CLSize.cl_float2);
 
-        read_position
+        read_position_k
             .ptr_arg(ReadPosition_k.Args.output, result_data)
             .set_arg(ReadPosition_k.Args.target, armature_index)
             .call(GPU.global_single_size);
@@ -412,16 +507,175 @@ public class GPUCoreMemory
         return result;
     }
 
+    public void locate_out_of_bounds()
+    {
+        int armature_count = next_armature();
 
+        int[] counter = new int[]{ 0 };
+        var counter_ptr = GPU.cl_new_int_arg_buffer(counter);
 
+        locate_out_of_bounds_k
+            .ptr_arg(LocateOutOfBounds_k.Args.counter, counter_ptr)
+            .call(arg_long(armature_count));
 
+        GPU.release_buffer(counter_ptr);
+    }
 
-    public void compact_buffers(int edge_shift,
-                                       int bone_shift,
-                                       int point_shift,
-                                       int hull_shift,
-                                       int armature_shift,
-                                       int armature_bone_shift)
+    public void delete_and_compact()
+    {
+        int armature_count = GPU.core_memory.next_armature();
+        long output_buf_size = (long) CLSize.cl_int2 * armature_count;
+        long output_buf_size2 = (long) CLSize.cl_int4 * armature_count;
+
+        var output_buf_data = GPU.cl_new_buffer(output_buf_size);
+        var output_buf_data2 = GPU.cl_new_buffer(output_buf_size2);
+
+        var del_buffer_1 = new GPUMemory(output_buf_data);
+        var del_buffer_2 = new GPUMemory(output_buf_data2);
+
+        int[] shift_counts = scan_deletes(del_buffer_1.pointer(), del_buffer_2.pointer(), armature_count);
+
+        if (shift_counts[4] == 0)
+        {
+            del_buffer_1.release();
+            del_buffer_2.release();
+            return;
+        }
+
+        // shift buffers are cleared before compacting to clean out any data from the last tick
+        GPU.Buffer.hull_shift.clear();
+        GPU.Buffer.edge_shift.clear();
+        GPU.Buffer.point_shift.clear();
+        GPU.Buffer.bone_shift.clear();
+        GPU.Buffer.bone_bind_shift.clear();
+
+        // as armatures are compacted, the shift buffers for the other components are updated
+        compact_armatures_k
+            .ptr_arg(CompactArmatures_k.Args.buffer_in, del_buffer_1.pointer())
+            .ptr_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.pointer());
+
+        linearize_kernel(compact_armatures_k, armature_count);
+        linearize_kernel(compact_bones_k, next_bone());
+        linearize_kernel(compact_points_k, next_point());
+        linearize_kernel(compact_edges_k, next_edge());
+        linearize_kernel(compact_hulls_k, next_hull());
+        linearize_kernel(compact_armature_bones_k, next_armature_bone());
+
+        compact_buffers(shift_counts[0], shift_counts[1], shift_counts[2],
+            shift_counts[3], shift_counts[4], shift_counts[5]);
+
+        del_buffer_1.release();
+        del_buffer_2.release();
+    }
+
+    public static void linearize_kernel(GPUKernel kernel, int object_count)
+    {
+        int offset = 0;
+        for (long remaining = object_count; remaining > 0; remaining -= GPU.max_work_group_size)
+        {
+            int count = (int) Math.min(GPU.max_work_group_size, remaining);
+            var sz = count == GPU.max_work_group_size
+                ? GPU.local_work_default
+                : arg_long(count);
+            kernel.call(sz, sz, arg_long(offset));
+            offset += count;
+        }
+    }
+
+    public int[] scan_deletes(long o1_data_ptr, long o2_data_ptr, int n)
+    {
+        int k = GPU.work_group_count(n);
+        if (k == 1)
+        {
+            return scan_single_block_deletes_out(o1_data_ptr, o2_data_ptr, n);
+        }
+        else
+        {
+            return scan_multi_block_deletes_out(o1_data_ptr, o2_data_ptr, n, k);
+        }
+    }
+
+    private int[] scan_single_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n)
+    {
+        long local_buffer_size = CLSize.cl_int2 * GPU.max_scan_block_size;
+        long local_buffer_size2 = CLSize.cl_int4 * GPU.max_scan_block_size;
+
+        var size_data = GPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
+        GPU.cl_zero_buffer(size_data, CLSize.cl_int * 6);
+
+        scan_deletes_single_block_out_k
+            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
+            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output2, o2_data_ptr)
+            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, size_data)
+            .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer2, local_buffer_size2)
+            .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
+            .call(GPU.local_work_default, GPU.local_work_default);
+
+        int[] sz = GPU.cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
+        GPU.release_buffer(size_data);
+
+        return sz;
+    }
+
+    private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
+    {
+        long local_buffer_size = CLSize.cl_int2 * GPU.max_scan_block_size;
+        long local_buffer_size2 = CLSize.cl_int4 * GPU.max_scan_block_size;
+
+        long gx = k * GPU.max_scan_block_size;
+        long[] global_work_size = arg_long(gx);
+        int part_size = k * 2;
+
+        long part_buf_size = ((long) CLSize.cl_int2 * ((long) part_size));
+        long part_buf_size2 = ((long) CLSize.cl_int4 * ((long) part_size));
+
+        var p_data = GPU.cl_new_buffer(part_buf_size);
+        var p_data2 = GPU.cl_new_buffer(part_buf_size2);
+
+        scan_deletes_multi_block_out_k
+            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
+            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output2, o2_data_ptr)
+            .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
+            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.part, p_data)
+            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.part2, p_data2)
+            .set_arg(ScanDeletesMultiBlockOut_k.Args.n, n)
+            .call(global_work_size, GPU.local_work_default);
+
+        // note the partial buffers are scanned and updated in-place
+        GPU.scan_int2(p_data, part_size);
+        GPU.scan_int4(p_data2, part_size);
+
+        var size_data = GPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
+        GPU.cl_zero_buffer(size_data, CLSize.cl_int * 6);
+
+        complete_deletes_multi_block_out_k
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output2, o2_data_ptr)
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.sz, size_data)
+            .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.part, p_data)
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.part2, p_data2)
+            .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
+            .call(global_work_size, GPU.local_work_default);
+
+        GPU.release_buffer(p_data);
+        GPU.release_buffer(p_data2);
+
+        int[] sz = GPU.cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
+        GPU.release_buffer(size_data);
+
+        return sz;
+    }
+
+    private void compact_buffers(int edge_shift,
+                                 int bone_shift,
+                                 int point_shift,
+                                 int hull_shift,
+                                 int armature_shift,
+                                 int armature_bone_shift)
     {
         edge_index          -= (edge_shift);
         bone_index          -= (bone_shift);

@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class CompactArmatures_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.scan_deletes;
-    private static final GPU.Kernel kernel = GPU.Kernel.compact_armatures;
-
     public enum Args
     {
         buffer_in,
@@ -34,8 +30,8 @@ public class CompactArmatures_k extends GPUKernel
         bone_bind_shift;
     }
 
-    public CompactArmatures_k(long command_queue_ptr)
+    public CompactArmatures_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

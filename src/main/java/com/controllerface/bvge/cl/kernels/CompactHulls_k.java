@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class CompactHulls_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.scan_deletes;
-    private static final GPU.Kernel kernel = GPU.Kernel.compact_hulls;
-
     public enum Args
     {
         hull_shift,
@@ -21,8 +17,8 @@ public class CompactHulls_k extends GPUKernel
         bounds_bank_data;
     }
 
-    public CompactHulls_k(long command_queue_ptr)
+    public CompactHulls_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }
