@@ -11,7 +11,6 @@ import org.joml.Vector2f;
 import java.util.*;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
-import static org.lwjgl.opencl.CL10.clReleaseMemObject;
 
 public class PhysicsSimulation extends GameSystem
 {
@@ -50,6 +49,8 @@ public class PhysicsSimulation extends GameSystem
     private final GPUProgram scan_key_candidates = new ScanKeyCandidates();
     private final GPUProgram aabb_collide = new AabbCollide();
     private final GPUProgram sat_collide = new SatCollide();
+    private final GPUProgram animate_hulls = new AnimateHulls();
+    private final GPUProgram resolve_constraints = new ResolveConstraints();
 
     private GPUKernel integrate_k;
     private GPUKernel scan_bounds_single_block_k;
@@ -59,19 +60,19 @@ public class PhysicsSimulation extends GameSystem
     private GPUKernel build_key_map_k;
     private GPUKernel locate_in_bounds_k;
     private GPUKernel count_candidates_k;
-
     private GPUKernel scan_candidates_single_block_out_k;
     private GPUKernel scan_candidates_multi_block_out_k;
     private GPUKernel complete_candidates_multi_block_out_k;
-
     private GPUKernel aabb_collide_k;
     private GPUKernel finalize_candidates_k;
-
     private GPUKernel sat_collide_k;
     private GPUKernel sort_reactions_k;
     private GPUKernel apply_reactions_k;
     private GPUKernel move_armatures_k;
-
+    private GPUKernel animate_armatures_k;
+    private GPUKernel animate_bones_k;
+    private GPUKernel animate_points_k;
+    private GPUKernel resolve_constraints_k;
 
     public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
     {
@@ -90,6 +91,8 @@ public class PhysicsSimulation extends GameSystem
         scan_key_candidates.init();
         aabb_collide.init();
         sat_collide.init();
+        animate_hulls.init();
+        resolve_constraints.init();
 
         long integrate_k_ptr = integrate.kernel_ptr(GPU.Kernel.integrate);
         integrate_k = new Integrate_k(GPU.command_queue_ptr, integrate_k_ptr)
@@ -183,6 +186,51 @@ public class PhysicsSimulation extends GameSystem
             .mem_arg(MoveArmatures_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
             .mem_arg(MoveArmatures_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
             .mem_arg(MoveArmatures_k.Args.points, GPU.Buffer.points.memory);
+
+        long animate_armatures_k_ptr = animate_hulls.kernel_ptr(GPU.Kernel.animate_armatures);
+        animate_armatures_k = new AnimateArmatures_k(GPU.command_queue_ptr, animate_armatures_k_ptr)
+            .mem_arg(AnimateArmatures_k.Args.armature_bones, GPU.Buffer.armatures_bones.memory)
+            .mem_arg(AnimateArmatures_k.Args.bone_bind_poses, GPU.Buffer.bone_bind_poses.memory)
+            .mem_arg(AnimateArmatures_k.Args.model_transforms, GPU.Buffer.model_transforms.memory)
+            .mem_arg(AnimateArmatures_k.Args.bone_bind_tables, GPU.Buffer.bone_bind_tables.memory)
+            .mem_arg(AnimateArmatures_k.Args.bone_channel_tables, GPU.Buffer.bone_channel_tables.memory)
+            .mem_arg(AnimateArmatures_k.Args.bone_pos_channel_tables, GPU.Buffer.bone_pos_channel_tables.memory)
+            .mem_arg(AnimateArmatures_k.Args.bone_rot_channel_tables, GPU.Buffer.bone_rot_channel_tables.memory)
+            .mem_arg(AnimateArmatures_k.Args.bone_scl_channel_tables, GPU.Buffer.bone_scl_channel_tables.memory)
+            .mem_arg(AnimateArmatures_k.Args.armature_flags, GPU.Buffer.armature_flags.memory)
+            .mem_arg(AnimateArmatures_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
+            .mem_arg(AnimateArmatures_k.Args.key_frames, GPU.Buffer.key_frames.memory)
+            .mem_arg(AnimateArmatures_k.Args.frame_times, GPU.Buffer.frame_times.memory)
+            .mem_arg(AnimateArmatures_k.Args.animation_timing_indices, GPU.Buffer.animation_timing_indices.memory)
+            .mem_arg(AnimateArmatures_k.Args.animation_timings, GPU.Buffer.animation_timings.memory)
+            .mem_arg(AnimateArmatures_k.Args.armature_animation_indices, GPU.Buffer.armature_animation_indices.memory)
+            .mem_arg(AnimateArmatures_k.Args.armature_animation_elapsed, GPU.Buffer.armature_animation_elapsed.memory);
+
+        long animate_bones_k_ptr = animate_hulls.kernel_ptr(GPU.Kernel.animate_bones);
+        animate_bones_k = new AnimateBones_k(GPU.command_queue_ptr, animate_bones_k_ptr)
+            .mem_arg(AnimateBones_k.Args.bones, GPU.Buffer.bone_instances.memory)
+            .mem_arg(AnimateBones_k.Args.bone_references, GPU.Buffer.bone_references.memory)
+            .mem_arg(AnimateBones_k.Args.armature_bones, GPU.Buffer.armatures_bones.memory)
+            .mem_arg(AnimateBones_k.Args.bone_index_tables, GPU.Buffer.bone_index_tables.memory);
+
+        long animate_points_k_ptr = animate_hulls.kernel_ptr(GPU.Kernel.animate_points);
+        animate_points_k = new AnimatePoints_k(GPU.command_queue_ptr, animate_points_k_ptr)
+            .mem_arg(AnimatePoints_k.Args.points, GPU.Buffer.points.memory)
+            .mem_arg(AnimatePoints_k.Args.hulls, GPU.Buffer.hulls.memory)
+            .mem_arg(AnimatePoints_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
+            .mem_arg(AnimatePoints_k.Args.vertex_tables, GPU.Buffer.point_vertex_tables.memory)
+            .mem_arg(AnimatePoints_k.Args.bone_tables, GPU.Buffer.point_bone_tables.memory)
+            .mem_arg(AnimatePoints_k.Args.vertex_weights, GPU.Buffer.vertex_weights.memory)
+            .mem_arg(AnimatePoints_k.Args.armatures, GPU.Buffer.armatures.memory)
+            .mem_arg(AnimatePoints_k.Args.vertex_references, GPU.Buffer.vertex_references.memory)
+            .mem_arg(AnimatePoints_k.Args.bones, GPU.Buffer.bone_instances.memory);
+
+        long resolve_constraints_k_ptr = resolve_constraints.kernel_ptr(GPU.Kernel.resolve_constraints);
+        resolve_constraints_k = new ResolveConstraints_k(GPU.command_queue_ptr, resolve_constraints_k_ptr)
+            .mem_arg(ResolveConstraints_k.Args.element_table, GPU.Buffer.hull_element_tables.memory)
+            .mem_arg(ResolveConstraints_k.Args.bounds_bank_dat, GPU.Buffer.aabb_key_table.memory)
+            .mem_arg(ResolveConstraints_k.Args.point, GPU.Buffer.points.memory)
+            .mem_arg(ResolveConstraints_k.Args.edges, GPU.Buffer.edges.memory);
     }
 
     private void integrate(float delta_time)
@@ -482,10 +530,6 @@ public class PhysicsSimulation extends GameSystem
         GPU.release_buffer(counter_ptr);
     }
 
-
-
-
-
     private void sat_collide()
     {
         int candidates_size = (int) physics_buffer.get_final_size() / CLSize.cl_int;
@@ -561,7 +605,38 @@ public class PhysicsSimulation extends GameSystem
     }
 
 
+    private void animate_armatures(float dt)
+    {
+        animate_armatures_k
+            .set_arg(AnimateArmatures_k.Args.delta_time, dt)
+            .call(arg_long(GPU.core_memory.next_armature()));
+    }
 
+    private void animate_bones()
+    {
+        animate_bones_k.call(arg_long(GPU.core_memory.next_bone()));
+    }
+
+    private void animate_points()
+    {
+        animate_points_k.call(arg_long(GPU.core_memory.next_point()));
+    }
+
+    private void resolve_constraints(int edge_steps)
+    {
+        boolean last_step;
+        for (int i = 0; i < edge_steps; i++)
+        {
+            last_step = i == edge_steps - 1;
+            int n = last_step
+                ? 1
+                : 0;
+
+            resolve_constraints_k
+                .set_arg(ResolveConstraints_k.Args.process_all, n)
+                .call(arg_long(GPU.core_memory.next_hull()));
+        }
+    }
 
     private void updateControllableBodies(float dt)
     {
@@ -613,7 +688,6 @@ public class PhysicsSimulation extends GameSystem
 //            }
         }
     }
-
 
     /**
      * This is the core of the physics simulation. Upon return from this method, the simulation is
@@ -780,13 +854,13 @@ public class PhysicsSimulation extends GameSystem
         }
 
         // Bones are animated once per time tick
-        GPU.animate_armatures(dt);
-        GPU.animate_bones();
+        animate_armatures(dt);
+        animate_bones();
 
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
         // convex shape. Animations may move points into positions where the geometry is slightly concave,
         // so this call acts as a small hedge against this happening before collision checks can be performed.
-        GPU.resolve_constraints(EDGE_STEPS);
+        resolve_constraints(EDGE_STEPS);
 
         this.accumulator += dt;
         int sub_ticks = 0;
@@ -813,14 +887,14 @@ public class PhysicsSimulation extends GameSystem
                     // rendered meshes are what is actually moved, and the result of the hull movement is used to position
                     // the original mesh for rendering. This separation is necessary as model geometry is too complex to
                     // use as a collision boundary.
-                    GPU.animate_points();
+                    animate_points();
 
                     // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain
                     // their defined shapes. Without this step, the individual points of the tracked physics hulls will
                     // deform on impact, and may fly off in random directions, typically causing simulation failure. The
                     // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
                     // within the simulation.
-                    GPU.resolve_constraints(EDGE_STEPS);
+                    resolve_constraints(EDGE_STEPS);
 
                     physics_buffer.finishTick();
                 }
@@ -844,7 +918,7 @@ public class PhysicsSimulation extends GameSystem
         // After all simulation is done for this pass, do one last animate pass so that vertices are all in
         // the expected location for rendering. The interplay between animation and edge constraints may leave
         // the points in slightly incorrect positions. This makes sure everything is good for the render step.
-        GPU.animate_points();
+        animate_points();
     }
 
     @Override
@@ -856,7 +930,6 @@ public class PhysicsSimulation extends GameSystem
             physics_buffer.set_gravity_x(GRAVITY_X);
             physics_buffer.set_gravity_y(GRAVITY_Y);
             physics_buffer.set_damping(MOTION_DAMPING);
-            GPU.set_physics_buffer(physics_buffer);
             GPU.set_uniform_grid_constants(uniform_grid);
 
             generate_keys_k
@@ -884,5 +957,20 @@ public class PhysicsSimulation extends GameSystem
         }
 
         simulate(dt);
+    }
+
+    @Override
+    public void shutdown()
+    {
+        integrate.destroy();
+        scan_key_bank.destroy();
+        generate_keys.destroy();
+        build_key_map.destroy();
+        locate_in_bounds.destroy();
+        scan_key_candidates.destroy();
+        aabb_collide.destroy();
+        sat_collide.destroy();
+        animate_hulls.destroy();
+        resolve_constraints.destroy();
     }
 }

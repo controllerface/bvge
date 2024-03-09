@@ -3,7 +3,6 @@ package com.controllerface.bvge.cl;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.gpu.GPUCoreMemory;
-import com.controllerface.bvge.physics.PhysicsBuffer;
 import com.controllerface.bvge.physics.UniformGrid;
 import org.lwjgl.BufferUtils;
 
@@ -16,30 +15,7 @@ import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.lwjgl.opencl.CL10.CL_DEVICE_LOCAL_MEM_SIZE;
-import static org.lwjgl.opencl.CL12.CL_CONTEXT_PLATFORM;
-import static org.lwjgl.opencl.CL12.CL_DEVICE_MAX_WORK_GROUP_SIZE;
-import static org.lwjgl.opencl.CL12.CL_DEVICE_NAME;
-import static org.lwjgl.opencl.CL12.CL_DEVICE_TYPE_GPU;
-import static org.lwjgl.opencl.CL12.CL_DEVICE_VENDOR;
-import static org.lwjgl.opencl.CL12.CL_DRIVER_VERSION;
-import static org.lwjgl.opencl.CL12.CL_MAP_READ;
-import static org.lwjgl.opencl.CL12.CL_MEM_ALLOC_HOST_PTR;
-import static org.lwjgl.opencl.CL12.CL_MEM_COPY_HOST_PTR;
-import static org.lwjgl.opencl.CL12.CL_MEM_HOST_READ_ONLY;
-import static org.lwjgl.opencl.CL12.CL_MEM_READ_ONLY;
-import static org.lwjgl.opencl.CL12.CL_MEM_READ_WRITE;
-import static org.lwjgl.opencl.CL12.clCreateBuffer;
-import static org.lwjgl.opencl.CL12.clCreateCommandQueue;
-import static org.lwjgl.opencl.CL12.clCreateContext;
-import static org.lwjgl.opencl.CL12.clEnqueueFillBuffer;
-import static org.lwjgl.opencl.CL12.clEnqueueMapBuffer;
-import static org.lwjgl.opencl.CL12.clEnqueueReadBuffer;
-import static org.lwjgl.opencl.CL12.clEnqueueUnmapMemObject;
-import static org.lwjgl.opencl.CL12.clGetDeviceIDs;
-import static org.lwjgl.opencl.CL12.clGetPlatformIDs;
-import static org.lwjgl.opencl.CL12.clReleaseCommandQueue;
-import static org.lwjgl.opencl.CL12.clReleaseContext;
-import static org.lwjgl.opencl.CL12.clReleaseMemObject;
+import static org.lwjgl.opencl.CL12.*;
 import static org.lwjgl.opencl.CL12GL.clCreateFromGLBuffer;
 import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
 import static org.lwjgl.opencl.KHRGLSharing.CL_WGL_HDC_KHR;
@@ -81,15 +57,6 @@ public class GPU
     /*
       These values are re-calculated at startup to match the user's hardware.
      */
-
-    /**
-     * The maximum size of a local buffer that can be used as a __local prefixed, GPU allocated
-     * buffer within a kernel. Note that in practice, local memory buffers should be _less_ than
-     * this value. Even though it is given a maximum, tests have shown that trying to allocate
-     * exactly this amount can fail, likely due to some small amount of the local buffer being
-     * used by the hardware either for individual arguments, or some other internal data.
-     */
-    private static long max_local_buffer_size = 0;
 
     /**
      * The largest group of calculations that can be done in a single "warp" or "wave" of GPU processing.
@@ -134,13 +101,6 @@ public class GPU
     private static long device_id_ptr;
 
     /**
-     * Assists in managing data buffers and other variables used for physics calculations.
-     * These properties and buffers are co-located within this single structure to make it
-     * easier to reason about the logic and add or remove objects as needed for new features.
-     */
-    private static PhysicsBuffer physics_buffer;
-
-    /**
      * There are several kernels that use an atomic counter, so rather than re-allocate a new
      * buffer for every call, this buffer is reused in all kernels that need a counter.
      */
@@ -159,14 +119,6 @@ public class GPU
      */
     public static long counts_buf_size;
 
-    /**
-     * These key properties of the uniform grid never change, so they are cached here for easy
-     * use in kernels and buffer operations.
-     */
-    private static int key_directory_length;
-    private static int x_subdivisions;
-    private static int y_subdivisions;
-
     public static long reaction_buf_size = 10500000L;
     public static long index_buf_size = 5250000L;
 
@@ -174,19 +126,19 @@ public class GPU
     public static GPUMemory reactions_out = new GPUMemory();
     public static GPUMemory reaction_index = new GPUMemory();
 
+    public static GPUCoreMemory core_memory;
+
     //#endregion
 
     //#region Program Objects
 
     public enum Program
     {
-        animate_hulls(new AnimateHulls()),
         prepare_bones(new PrepareBones()),
         prepare_bounds(new PrepareBounds()),
         prepare_edges(new PrepareEdges()),
         prepare_points(new PreparePoints()),
         prepare_transforms(new PrepareTransforms()),
-        resolve_constraints(new ResolveConstraints()),
         root_hull_filter(new RootHullFilter()),
         scan_int2_array(new ScanInt2Array()),
         scan_int4_array(new ScanInt4Array()),
@@ -731,13 +683,6 @@ public class GPU
 
     //#endregion
 
-    //#region Main Memory Access
-
-
-    public static GPUCoreMemory core_memory;
-
-    //#endregion
-
     //#region Init Methods
 
     private static long init_device()
@@ -1004,14 +949,6 @@ public class GPU
         Kernel.scan_int_multi_block_out.set_kernel(new ScanIntMultiBlockOut_k(command_queue_ptr));
         Kernel.complete_int_multi_block_out.set_kernel(new CompleteIntMultiBlockOut_k(command_queue_ptr));
 
-        // constraint solver
-
-        Kernel.resolve_constraints.set_kernel(new ResolveConstraints_k(command_queue_ptr))
-            .mem_arg(ResolveConstraints_k.Args.element_table, Buffer.hull_element_tables.memory)
-            .mem_arg(ResolveConstraints_k.Args.bounds_bank_dat, Buffer.aabb_key_table.memory)
-            .mem_arg(ResolveConstraints_k.Args.point, Buffer.points.memory)
-            .mem_arg(ResolveConstraints_k.Args.edges, Buffer.edges.memory);
-
         // Open GL interop
 
         Kernel.prepare_bounds.set_kernel(new PrepareBounds_k(command_queue_ptr))
@@ -1041,43 +978,6 @@ public class GPU
             .mem_arg(PrepareBones_k.Args.hulls, Buffer.hulls.memory)
             .mem_arg(PrepareBones_k.Args.armatures, Buffer.armatures.memory)
             .mem_arg(PrepareBones_k.Args.hull_flags, Buffer.hull_flags.memory);
-
-        // movement
-
-        Kernel.animate_armatures.set_kernel(new AnimateArmatures_k(command_queue_ptr))
-            .mem_arg(AnimateArmatures_k.Args.armature_bones, Buffer.armatures_bones.memory)
-            .mem_arg(AnimateArmatures_k.Args.bone_bind_poses, Buffer.bone_bind_poses.memory)
-            .mem_arg(AnimateArmatures_k.Args.model_transforms, Buffer.model_transforms.memory)
-            .mem_arg(AnimateArmatures_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory)
-            .mem_arg(AnimateArmatures_k.Args.bone_channel_tables, Buffer.bone_channel_tables.memory)
-            .mem_arg(AnimateArmatures_k.Args.bone_pos_channel_tables, Buffer.bone_pos_channel_tables.memory)
-            .mem_arg(AnimateArmatures_k.Args.bone_rot_channel_tables, Buffer.bone_rot_channel_tables.memory)
-            .mem_arg(AnimateArmatures_k.Args.bone_scl_channel_tables, Buffer.bone_scl_channel_tables.memory)
-            .mem_arg(AnimateArmatures_k.Args.armature_flags, Buffer.armature_flags.memory)
-            .mem_arg(AnimateArmatures_k.Args.hull_tables, Buffer.armature_hull_table.memory)
-            .mem_arg(AnimateArmatures_k.Args.key_frames, Buffer.key_frames.memory)
-            .mem_arg(AnimateArmatures_k.Args.frame_times, Buffer.frame_times.memory)
-            .mem_arg(AnimateArmatures_k.Args.animation_timing_indices, Buffer.animation_timing_indices.memory)
-            .mem_arg(AnimateArmatures_k.Args.animation_timings, Buffer.animation_timings.memory)
-            .mem_arg(AnimateArmatures_k.Args.armature_animation_indices, Buffer.armature_animation_indices.memory)
-            .mem_arg(AnimateArmatures_k.Args.armature_animation_elapsed, Buffer.armature_animation_elapsed.memory);
-
-        Kernel.animate_bones.set_kernel(new AnimateBones_k(command_queue_ptr))
-            .mem_arg(AnimateBones_k.Args.bones, Buffer.bone_instances.memory)
-            .mem_arg(AnimateBones_k.Args.bone_references, Buffer.bone_references.memory)
-            .mem_arg(AnimateBones_k.Args.armature_bones, Buffer.armatures_bones.memory)
-            .mem_arg(AnimateBones_k.Args.bone_index_tables, Buffer.bone_index_tables.memory);
-
-        Kernel.animate_points.set_kernel(new AnimatePoints_k(command_queue_ptr))
-            .mem_arg(AnimatePoints_k.Args.points, Buffer.points.memory)
-            .mem_arg(AnimatePoints_k.Args.hulls, Buffer.hulls.memory)
-            .mem_arg(AnimatePoints_k.Args.hull_flags, Buffer.hull_flags.memory)
-            .mem_arg(AnimatePoints_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
-            .mem_arg(AnimatePoints_k.Args.bone_tables, Buffer.point_bone_tables.memory)
-            .mem_arg(AnimatePoints_k.Args.vertex_weights, Buffer.vertex_weights.memory)
-            .mem_arg(AnimatePoints_k.Args.armatures, Buffer.armatures.memory)
-            .mem_arg(AnimatePoints_k.Args.vertex_references, Buffer.vertex_references.memory)
-            .mem_arg(AnimatePoints_k.Args.bones, Buffer.bone_instances.memory);
     }
 
     //#endregion
@@ -1387,117 +1287,6 @@ public class GPU
 
     //#endregion
 
-    //#region Physics Simulation
-
-    public static void animate_armatures(float dt)
-    {
-        Kernel.animate_armatures.kernel
-            .set_arg(AnimateArmatures_k.Args.delta_time, dt)
-            .call(arg_long(GPU.core_memory.next_armature()));
-    }
-
-    public static void animate_bones()
-    {
-        Kernel.animate_bones.kernel.call(arg_long(GPU.core_memory.next_bone()));
-    }
-
-    public static void animate_points()
-    {
-        Kernel.animate_points.kernel.call(arg_long(GPU.core_memory.next_point()));
-    }
-
-    public static void sat_collide()
-    {
-        int candidates_size = (int) physics_buffer.get_final_size() / CLSize.cl_int;
-
-        // candidates are pairs of integer indices, so the global size is half the count
-        long[] global_work_size = new long[]{candidates_size / 2};
-
-        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
-
-        long max_point_count = physics_buffer.get_final_size()
-            * 2  // there are two bodies per collision pair
-            * 2; // assume worst case is 2 points per body
-
-        // sizes for the reaction buffers
-        long reaction_buf_size = (long) CLSize.cl_float2 * max_point_count;
-        long index_buf_size = (long) CLSize.cl_int * max_point_count;
-
-        if (reaction_buf_size > GPU.reaction_buf_size
-            || index_buf_size > GPU.index_buf_size)
-        {
-            GPU.reactions_in.release();
-            GPU.reactions_out.release();
-            GPU.reaction_index.release();
-
-            GPU.reaction_buf_size = reaction_buf_size;
-            GPU.index_buf_size = index_buf_size;
-
-            var reaction_data = cl_new_buffer(reaction_buf_size);
-            var reaction_data_out = cl_new_buffer(reaction_buf_size);
-            var index_data = cl_new_buffer(index_buf_size);
-
-            GPU.reactions_in = new GPUMemory(reaction_data);
-            GPU.reactions_out = new GPUMemory(reaction_data_out);
-            GPU.reaction_index = new GPUMemory(index_data);
-        }
-
-        Kernel.sat_collide.kernel
-            .ptr_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.pointer())
-            .ptr_arg(SatCollide_k.Args.reactions, GPU.reactions_in.pointer())
-            .ptr_arg(SatCollide_k.Args.reaction_index, GPU.reaction_index.pointer())
-            .call(global_work_size);
-
-        int size = cl_read_pinned_int(atomic_counter_ptr);
-        physics_buffer.set_reaction_count(size);
-    }
-
-    public static void scan_reactions()
-    {
-        scan_int_out(Buffer.point_reactions.memory.pointer(), Buffer.point_offsets.memory.pointer(), GPU.core_memory.next_point());
-        // it is important to zero out the reactions buffer after the scan. It will be reused during sorting
-        Buffer.point_reactions.clear();
-    }
-
-    public static void sort_reactions()
-    {
-        Kernel.sort_reactions.kernel
-            .ptr_arg(SortReactions_k.Args.reactions_in, GPU.reactions_in.pointer())
-            .ptr_arg(SortReactions_k.Args.reactions_out, GPU.reactions_out.pointer())
-            .ptr_arg(SortReactions_k.Args.reaction_index, GPU.reaction_index.pointer())
-            .call(arg_long(physics_buffer.get_reaction_count()));
-    }
-
-    public static void apply_reactions()
-    {
-        Kernel.apply_reactions.kernel
-            .ptr_arg(ApplyReactions_k.Args.reactions, GPU.reactions_out.pointer())
-            .call(arg_long(GPU.core_memory.next_point()));
-    }
-
-    public static void move_armatures()
-    {
-        Kernel.move_armatures.kernel.call(arg_long(GPU.core_memory.next_armature()));
-    }
-
-    public static void resolve_constraints(int edge_steps)
-    {
-        boolean last_step;
-        for (int i = 0; i < edge_steps; i++)
-        {
-            last_step = i == edge_steps - 1;
-            int n = last_step
-                ? 1
-                : 0;
-
-            Kernel.resolve_constraints.kernel
-                .set_arg(ResolveConstraints_k.Args.process_all, n)
-                .call(arg_long(GPU.core_memory.next_hull()));
-        }
-    }
-
-    //#endregion
-
     //#region Exclusive scan variants
 
     public static void scan_int(long data_ptr, int n)
@@ -1551,7 +1340,6 @@ public class GPU
             scan_multi_block_int_out(data_ptr, o_data_ptr, n, k);
         }
     }
-
 
     private static void scan_single_block_int(long data_ptr, int n)
     {
@@ -1746,11 +1534,6 @@ public class GPU
         clReleaseMemObject(mem_ptr);
     }
 
-    public static void set_physics_buffer(PhysicsBuffer physics_buffer)
-    {
-        GPU.physics_buffer = physics_buffer;
-    }
-
     public static void set_uniform_grid_constants(UniformGrid uniform_grid)
     {
         // static data describing the uniform grid and some reusable buffers are set
@@ -1758,10 +1541,11 @@ public class GPU
         // if these values were set for every physics tick. This does break up the logic
         // somewhat, but the complexity is worth it for the efficiency improvement.
 
-        x_subdivisions = uniform_grid.x_subdivisions;
-        y_subdivisions = uniform_grid.y_subdivisions;
-        key_directory_length = uniform_grid.directory_length;
-        counts_buf_size = (long) CLSize.cl_int * key_directory_length;
+        /**
+         * These key properties of the uniform grid never change, so they are cached here for easy
+         * use in kernels and buffer operations.
+         */
+        counts_buf_size = (long) CLSize.cl_int * uniform_grid.directory_length;
         counts_data_ptr = cl_new_buffer(counts_buf_size);
         offsets_data_ptr = cl_new_buffer(counts_buf_size);
     }
@@ -1770,12 +1554,10 @@ public class GPU
     {
         device_id_ptr = init_device();
 
-        var device = device_id_ptr;
-
         System.out.println("-------- OPEN CL DEVICE -----------");
-        System.out.println(getString(device, CL_DEVICE_VENDOR));
-        System.out.println(getString(device, CL_DEVICE_NAME));
-        System.out.println(getString(device, CL_DRIVER_VERSION));
+        System.out.println(getString(device_id_ptr, CL_DEVICE_VENDOR));
+        System.out.println(getString(device_id_ptr, CL_DEVICE_NAME));
+        System.out.println(getString(device_id_ptr, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
         // At runtime, local buffers are used to perform prefix scan operations.
@@ -1784,8 +1566,15 @@ public class GPU
         // the following logic halves the effective max workgroup size, if needed
         // to ensure that at runtime, the amount of local buffer storage requested
         // does not meet or exceed the local memory size.
-        max_local_buffer_size = getSize(device, CL_DEVICE_LOCAL_MEM_SIZE);
-        long current_max_group_size = getSize(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        /**
+         * The maximum size of a local buffer that can be used as a __local prefixed, GPU allocated
+         * buffer within a kernel. Note that in practice, local memory buffers should be _less_ than
+         * this value. Even though it is given a maximum, tests have shown that trying to allocate
+         * exactly this amount can fail, likely due to some small amount of the local buffer being
+         * used by the hardware either for individual arguments, or some other internal data.
+         */
+        long max_local_buffer_size = getSize(device_id_ptr, CL_DEVICE_LOCAL_MEM_SIZE);
+        long current_max_group_size = getSize(device_id_ptr, CL_DEVICE_MAX_WORK_GROUP_SIZE);
         long current_max_block_size = current_max_group_size * 2;
 
         long int2_max = CLSize.cl_int2 * current_max_block_size;
