@@ -187,7 +187,6 @@ public class GPU
         gpu_crud(new GpuCrud()),
         integrate(new Integrate()),
         locate_in_bounds(new LocateInBounds()),
-        mesh_query(new MeshQuery()),
         prepare_bones(new PrepareBones()),
         prepare_bounds(new PrepareBounds()),
         prepare_edges(new PrepareEdges()),
@@ -1370,37 +1369,6 @@ public class GPU
             .mem_arg(AABBCollide_k.Args.hull_flags, Buffer.hull_flags.memory);
 
         Kernel.finalize_candidates.set_kernel(new FinalizeCandidates_k(command_queue_ptr));
-
-        // mesh query
-
-        long ptr_1 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.transfer_detail_data);
-        Kernel.transfer_detail_data.set_kernel(new TransferDetailData_k(command_queue_ptr, ptr_1));
-
-        long ptr_2 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.calculate_batch_offsets);
-        Kernel.calculate_batch_offsets.set_kernel(new CalculateBatchOffsets_k(command_queue_ptr, ptr_2));
-
-        long ptr_3 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.count_mesh_batches);
-        Kernel.count_mesh_batches.set_kernel(new CountMeshBatches_k(command_queue_ptr, ptr_3));
-
-        long ptr_4 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.count_mesh_instances);
-        Kernel.count_mesh_instances.set_kernel(new CountMeshInstances_k(command_queue_ptr, ptr_4))
-            .mem_arg(CountMeshInstances_k.Args.hull_mesh_ids, Buffer.hull_mesh_ids.memory);
-
-        long ptr_5 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.write_mesh_details);
-        Kernel.write_mesh_details.set_kernel(new WriteMeshDetails_k(command_queue_ptr, ptr_5))
-            .mem_arg(WriteMeshDetails_k.Args.hull_mesh_ids, Buffer.hull_mesh_ids.memory)
-            .mem_arg(WriteMeshDetails_k.Args.mesh_references, Buffer.mesh_references.memory);
-
-        long ptr_6 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.transfer_render_data);
-        Kernel.transfer_render_data.set_kernel(new TransferRenderData_k(command_queue_ptr, ptr_6))
-            .mem_arg(TransferRenderData_k.Args.hull_element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(TransferRenderData_k.Args.hull_mesh_ids, Buffer.hull_mesh_ids.memory)
-            .mem_arg(TransferRenderData_k.Args.mesh_references, Buffer.mesh_references.memory)
-            .mem_arg(TransferRenderData_k.Args.mesh_faces, Buffer.mesh_faces.memory)
-            .mem_arg(TransferRenderData_k.Args.points, Buffer.points.memory)
-            .mem_arg(TransferRenderData_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
-            .mem_arg(TransferRenderData_k.Args.uv_tables, Buffer.uv_tables.memory)
-            .mem_arg(TransferRenderData_k.Args.texture_uvs, Buffer.texture_uvs.memory);
     }
 
     //#endregion
@@ -1571,8 +1539,12 @@ public class GPU
     public static void share_memory(int vboID)
     {
         var vbo_mem = clCreateFromGLBuffer(context_ptr, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
-        //var vbo_mem = clCreateFromGLBuffer(context, FLAGS_WRITE_GPU, vboID, null);
         shared_mem.put(vboID, vbo_mem);
+    }
+
+    public static long share_memory_ex(int vboID)
+    {
+        return clCreateFromGLBuffer(context_ptr, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
     }
 
     /**
@@ -1729,95 +1701,6 @@ public class GPU
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_transforms)
             .set_arg(PrepareTransforms_k.Args.offset, offset)
             .call(arg_long(batch_size));
-    }
-
-    public static void GL_count_mesh_instances(long query_ptr, long counters_ptr, long total_ptr, int count)
-    {
-        Kernel.count_mesh_instances.kernel
-            .ptr_arg(CountMeshInstances_k.Args.counters, counters_ptr)
-            .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
-            .ptr_arg(CountMeshInstances_k.Args.total, total_ptr)
-            .set_arg(CountMeshInstances_k.Args.count, count)
-            .call(arg_long(GPU.Memory.next_hull()));
-    }
-
-    public static void GL_scan_mesh_offsets(long counts_ptr, long offsets_ptr, int count)
-    {
-        scan_int_out(counts_ptr, offsets_ptr, count);
-    }
-
-    public static void GL_write_mesh_details(long query_ptr,
-                                             long counters_ptr,
-                                             long offsets_ptr,
-                                             long mesh_details_ptr,
-                                             int count)
-    {
-        Kernel.write_mesh_details.kernel
-            .ptr_arg(WriteMeshDetails_k.Args.counters, counters_ptr)
-            .ptr_arg(WriteMeshDetails_k.Args.query, query_ptr)
-            .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets_ptr)
-            .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
-            .set_arg(WriteMeshDetails_k.Args.count, count)
-            .call(arg_long(GPU.Memory.next_hull()));
-    }
-
-    public static void GL_count_mesh_batches(long mesh_details_ptr, long total_ptr, int count, int max_per_batch)
-    {
-        Kernel.count_mesh_batches.kernel
-            .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
-            .ptr_arg(CountMeshBatches_k.Args.total, total_ptr)
-            .set_arg(CountMeshBatches_k.Args.max_per_batch, max_per_batch)
-            .set_arg(CountMeshBatches_k.Args.count, count)
-            .call(global_single_size);
-    }
-
-    public static void GL_calculate_batch_offsets(long mesh_offsets_ptr, long mesh_details_ptr, int count)
-    {
-        Kernel.calculate_batch_offsets.kernel
-            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offsets_ptr)
-            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
-            .set_arg(CalculateBatchOffsets_k.Args.count, count)
-            .call(global_single_size);
-    }
-
-    public static void GL_transfer_detail_data(long mesh_details_ptr, long mesh_transfer_ptr, int count, int offset)
-    {
-        Kernel.transfer_detail_data.kernel
-            .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details_ptr)
-            .ptr_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_ptr)
-            .set_arg(TransferDetailData_k.Args.offset, offset)
-            .call(arg_long(count));
-
-        scan_int2(mesh_transfer_ptr, count);
-    }
-
-    public static void GL_transfer_render_data(int ebo,
-                                               int vbo,
-                                               int cbo,
-                                               int uvo,
-                                               long mesh_details_ptr,
-                                               long mesh_transfer_ptr,
-                                               int count,
-                                               int offset)
-    {
-        var ebo_mem = shared_mem.get(ebo);
-        var vbo_mem = shared_mem.get(vbo);
-        var cbo_mem = shared_mem.get(cbo);
-        var uvo_mem = shared_mem.get(uvo);
-
-        Kernel.transfer_render_data.kernel
-            .share_mem(ebo_mem)
-            .share_mem(vbo_mem)
-            .share_mem(cbo_mem)
-            .share_mem(uvo_mem)
-            .ptr_arg(TransferRenderData_k.Args.command_buffer, cbo_mem)
-            .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vbo_mem)
-            .ptr_arg(TransferRenderData_k.Args.uv_buffer, uvo_mem)
-            .ptr_arg(TransferRenderData_k.Args.element_buffer, ebo_mem)
-            .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
-            .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
-            .set_arg(TransferRenderData_k.Args.offset, offset)
-            .call(arg_long(count));
     }
 
     //#endregion
@@ -2392,7 +2275,7 @@ public class GPU
         }
     }
 
-    private static void scan_int2(long data_ptr, int n)
+    public static void scan_int2(long data_ptr, int n)
     {
         int k = work_group_count(n);
         if (k == 1)
@@ -2418,7 +2301,7 @@ public class GPU
         }
     }
 
-    private static void scan_int_out(long data_ptr, long o_data_ptr, int n)
+    public static void scan_int_out(long data_ptr, long o_data_ptr, int n)
     {
         int k = work_group_count(n);
         if (k == 1)

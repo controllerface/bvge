@@ -4,10 +4,7 @@ import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 import com.controllerface.bvge.cl.GPUProgram;
-import com.controllerface.bvge.cl.kernels.CalculateBatchOffsets_k;
-import com.controllerface.bvge.cl.kernels.CountMeshBatches_k;
-import com.controllerface.bvge.cl.kernels.CountMeshInstances_k;
-import com.controllerface.bvge.cl.kernels.WriteMeshDetails_k;
+import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.MeshQuery;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
@@ -21,10 +18,6 @@ import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
-import static org.lwjgl.opengl.GL15C.*;
-import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL40C.GL_DRAW_INDIRECT_BUFFER;
-import static org.lwjgl.opengl.GL43C.glMultiDrawElementsIndirect;
 import static org.lwjgl.opengl.GL45C.*;
 
 public class HumanoidRenderer extends GameSystem
@@ -32,93 +25,87 @@ public class HumanoidRenderer extends GameSystem
     private static final int ELEMENT_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * Integer.BYTES;
     private static final int VERTEX_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
     private static final int COMMAND_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * Integer.BYTES * 5;
-
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int UV_COORD_ATTRIBUTE = 1;
 
-    private Texture texture;
+    private final Texture texture;
     private final AbstractShader shader;
     private final int[] texture_slots = {0};
+    private final int[] raw_query;
+    private final int mesh_count;
+    private final long mesh_size;
 
     private int vao_id;
-    private int vertex_b;
-    private int texture_uv_b;
-    private int element_b;
-    private int command_b;
 
-    private int mesh_count;
-    private long mesh_size;
+    private long element_b;
+    private long vertex_b;
+    private long command_b;
+    private long texture_uv_b;
 
-    // todo: these memory buffers are set as arguments into the relevant kernels on each call, but
-    //  they could be set once and kept as-is, if the kernel being used was local to this class. At
-    //  the moment, this isn't possible due to how the memory objects, programs, and kernels are
-    //  are tied directly to the GPU class, but in the future it will probably be a good idea to
-    //  consider allowing individual classes to have private kernels. It will increase efficiency,
-    //  especially if multiple classes end up needing the same kernel calls a lot.
     private long query_ptr;
     private long counters_ptr;
     private long total_ptr;
     private long offsets_ptr;
-    private long mesh_transfer;
+    private long mesh_transfer_ptr;
 
     private GPUProgram mesh_query;
     private GPUKernel count_mesh_instances;
     private GPUKernel write_mesh_details;
     private GPUKernel count_mesh_batches;
     private GPUKernel calculate_batch_offsets;
-
+    private GPUKernel transfer_detail_data;
+    private GPUKernel transfer_render_data;
 
     public HumanoidRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.load_shader("poly_model.glsl");
-        init();
-        init_kernels();
-    }
-
-    private void init()
-    {
         var model = Models.get_model_by_index(Models.TEST_MODEL_INDEX);
+        this.shader = Assets.load_shader("poly_model.glsl");
         this.texture = model.textures().get(0);
-
-        mesh_count = model.meshes().length;
-        mesh_size = (long)mesh_count * CLSize.cl_int;
-        int[] raw_query = new int[mesh_count];
+        this.mesh_count = model.meshes().length;
+        this.mesh_size = (long)mesh_count * CLSize.cl_int;
+        this.raw_query = new int[mesh_count];
         for (int i = 0; i < model.meshes().length; i++)
         {
             var m = model.meshes()[i];
             raw_query[i] = m.mesh_id();
         }
 
-        total_ptr = GPU.cl_new_pinned_int();
-        query_ptr = GPU.new_mutable_buffer(raw_query);
-        counters_ptr = GPU.new_empty_buffer(mesh_size);
-        offsets_ptr = GPU.new_empty_buffer(mesh_size);
-        mesh_transfer = GPU.new_empty_buffer(ELEMENT_BUFFER_SIZE * 2);
+        init_GL();
+        init_CL();
+    }
 
-        vao_id = glCreateVertexArrays();
+    private void init_GL()
+    {
+        this.vao_id = glCreateVertexArrays();
 
-        element_b = glCreateBuffers();
+        int element_b = glCreateBuffers();
         glNamedBufferData(element_b, ELEMENT_BUFFER_SIZE, GL_STATIC_DRAW);
         glVertexArrayElementBuffer(vao_id, element_b);
 
-        vertex_b = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
-        texture_uv_b = GLUtils.new_buffer_vec2(vao_id, UV_COORD_ATTRIBUTE, VERTEX_BUFFER_SIZE);
+        int vertex_b = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
+        int texture_uv_b = GLUtils.new_buffer_vec2(vao_id, UV_COORD_ATTRIBUTE, VERTEX_BUFFER_SIZE);
 
         glBindVertexArray(vao_id);
-        command_b = glCreateBuffers();
+        int command_b = glCreateBuffers();
         glNamedBufferData(command_b, COMMAND_BUFFER_SIZE, GL_STATIC_DRAW);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, command_b);
         glBindVertexArray(0);
 
-        GPU.share_memory(element_b);
-        GPU.share_memory(vertex_b);
-        GPU.share_memory(command_b);
-        GPU.share_memory(texture_uv_b);
+        this.element_b = GPU.share_memory_ex(element_b);
+        this.vertex_b = GPU.share_memory_ex(vertex_b);
+        this.command_b = GPU.share_memory_ex(command_b);
+        this.texture_uv_b = GPU.share_memory_ex(texture_uv_b);
     }
 
-    private void init_kernels()
+    private void init_CL()
     {
+        total_ptr = GPU.cl_new_pinned_int();
+        query_ptr = GPU.new_mutable_buffer(raw_query);
+        counters_ptr = GPU.new_empty_buffer(mesh_size);
+        offsets_ptr = GPU.new_empty_buffer(mesh_size);
+        mesh_transfer_ptr = GPU.new_empty_buffer(ELEMENT_BUFFER_SIZE * 2);
+
         mesh_query = new MeshQuery();
         mesh_query.init();
 
@@ -146,6 +133,22 @@ public class HumanoidRenderer extends GameSystem
 
         long calc_batch_k_ptr = mesh_query.kernel_ptr(GPU.Kernel.calculate_batch_offsets);
         calculate_batch_offsets = new CalculateBatchOffsets_k(GPU.command_queue_ptr, calc_batch_k_ptr);
+
+        long transfer_detail_k_ptr = mesh_query.kernel_ptr(GPU.Kernel.transfer_detail_data);
+        transfer_detail_data = new TransferDetailData_k(GPU.command_queue_ptr, transfer_detail_k_ptr)
+            .ptr_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_ptr);
+
+        long transfer_render_k_ptr = mesh_query.kernel_ptr(GPU.Kernel.transfer_render_data);
+        transfer_render_data = new TransferRenderData_k(GPU.command_queue_ptr, transfer_render_k_ptr)
+            .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
+            .mem_arg(TransferRenderData_k.Args.hull_element_tables, GPU.Buffer.hull_element_tables.memory)
+            .mem_arg(TransferRenderData_k.Args.hull_mesh_ids, GPU.Buffer.hull_mesh_ids.memory)
+            .mem_arg(TransferRenderData_k.Args.mesh_references, GPU.Buffer.mesh_references.memory)
+            .mem_arg(TransferRenderData_k.Args.mesh_faces, GPU.Buffer.mesh_faces.memory)
+            .mem_arg(TransferRenderData_k.Args.points, GPU.Buffer.points.memory)
+            .mem_arg(TransferRenderData_k.Args.vertex_tables, GPU.Buffer.point_vertex_tables.memory)
+            .mem_arg(TransferRenderData_k.Args.uv_tables, GPU.Buffer.uv_tables.memory)
+            .mem_arg(TransferRenderData_k.Args.texture_uvs, GPU.Buffer.texture_uvs.memory);
     }
 
     @Override
@@ -154,45 +157,45 @@ public class HumanoidRenderer extends GameSystem
         GPU.clear_buffer(counters_ptr, mesh_size);
         GPU.clear_buffer(offsets_ptr, mesh_size);
         GPU.clear_buffer(total_ptr, CLSize.cl_int);
-        GPU.clear_buffer(mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
+        GPU.clear_buffer(mesh_transfer_ptr, ELEMENT_BUFFER_SIZE * 2);
 
         long[] hull_count = arg_long(GPU.Memory.next_hull());
 
         count_mesh_instances.call(hull_count);
 
-        GPU.GL_scan_mesh_offsets(counters_ptr, offsets_ptr, mesh_count);
+        GPU.scan_int_out(counters_ptr, offsets_ptr, mesh_count);
 
         int total_instances = GPU.cl_read_pinned_int(total_ptr);
-        if (total_instances == 0) // highly unlikely, but just in case
+        if (total_instances == 0)
         {
             return;
         }
 
         long data_size = (long)total_instances * CLSize.cl_int4;
-        var details_b = GPU.new_empty_buffer(data_size);
+        var mesh_details_ptr = GPU.new_empty_buffer(data_size);
 
         write_mesh_details
-            .ptr_arg(WriteMeshDetails_k.Args.mesh_details, details_b)
+            .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
             .call(hull_count);
 
         count_mesh_batches
-            .ptr_arg(CountMeshBatches_k.Args.mesh_details, details_b)
+            .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CountMeshBatches_k.Args.count, total_instances)
             .call(GPU.global_single_size);
 
         int total_batches = GPU.cl_read_pinned_int(total_ptr);
         long batch_index_size = (long) total_batches * CLSize.cl_int;
 
-        var batch_offset_b = GPU.new_empty_buffer(batch_index_size);
+        var mesh_offset_ptr = GPU.new_empty_buffer(batch_index_size);
 
         calculate_batch_offsets
-            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, batch_offset_b)
-            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, details_b)
+            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offset_ptr)
+            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CalculateBatchOffsets_k.Args.count, total_instances)
             .call(GPU.global_single_size);
 
         int[] raw_offsets = new int[total_batches];
-        GPU.cl_read_buffer(batch_offset_b, raw_offsets);
+        GPU.cl_read_buffer(mesh_offset_ptr, raw_offsets);
 
         glBindVertexArray(vao_id);
 
@@ -208,13 +211,31 @@ public class HumanoidRenderer extends GameSystem
         for (int current_batch = 0; current_batch < raw_offsets.length; current_batch++)
         {
             int next_batch = current_batch + 1;
-            int start = raw_offsets[current_batch];
+            int offset = raw_offsets[current_batch];
             int count = next_batch == raw_offsets.length
-                ? total_instances - start
-                : raw_offsets[next_batch] - start;
+                ? total_instances - offset
+                : raw_offsets[next_batch] - offset;
 
-            GPU.GL_transfer_detail_data(details_b, mesh_transfer, count, start);
-            GPU.GL_transfer_render_data(element_b, vertex_b, command_b, texture_uv_b, details_b, mesh_transfer, count, start);
+            transfer_detail_data
+                .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details_ptr)
+                .set_arg(TransferDetailData_k.Args.offset, offset)
+                .call(arg_long(count));
+
+            GPU.scan_int2(mesh_transfer_ptr, count);
+
+            transfer_render_data
+                .share_mem(command_b)
+                .share_mem(vertex_b)
+                .share_mem(texture_uv_b)
+                .share_mem(element_b)
+                .ptr_arg(TransferRenderData_k.Args.command_buffer, command_b)
+                .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vertex_b)
+                .ptr_arg(TransferRenderData_k.Args.uv_buffer, texture_uv_b)
+                .ptr_arg(TransferRenderData_k.Args.element_buffer, element_b)
+                .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
+                .set_arg(TransferRenderData_k.Args.offset, offset)
+                .call(arg_long(count));
+
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
         }
 
@@ -225,17 +246,18 @@ public class HumanoidRenderer extends GameSystem
 
         shader.detach();
 
-        GPU.release_buffer(details_b);
-        GPU.release_buffer(batch_offset_b);
+        GPU.release_buffer(mesh_details_ptr);
+        GPU.release_buffer(mesh_offset_ptr);
     }
 
     @Override
     public void shutdown()
     {
+        mesh_query.destroy();
         GPU.release_buffer(total_ptr);
         GPU.release_buffer(query_ptr);
         GPU.release_buffer(counters_ptr);
         GPU.release_buffer(offsets_ptr);
-        GPU.release_buffer(mesh_transfer);
+        GPU.release_buffer(mesh_transfer_ptr);
     }
 }
