@@ -15,8 +15,8 @@ public class CreateModelTransform_k extends GPUKernel
         new_model_transform;
     }
 
-    public CreateModelTransform_k(long command_queue_ptr)
+    public CreateModelTransform_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

@@ -61,7 +61,7 @@ public class BoundingBoxRenderer extends GameSystem
         glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
 
         int offset = 0;
-        for (int remaining = GPU.Memory.next_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPU.ref_memory.next_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             try (var mem_stack = MemoryStack.stackPush())

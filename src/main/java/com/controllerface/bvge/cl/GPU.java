@@ -743,51 +743,8 @@ public class GPU
 
     //#region Main Memory Access
 
-    /**
-     * The "Main Memory" interface
-     * -
-     * Calling code uses this object as a single access point to the core memory that
-     * is involved in the game engine's operation. The memory being used is resident
-     * on the GPU, so this class is essentially a direct interface into GPU memory.
-     * This class keeps track of the number of "top-level" memory objects, which are
-     * generally defined as any "logical object" that is composed of various primitive
-     * values.
-     * Typically, a method is exposed, that accepts as parameters, the various
-     * components that describe an object. These methods in turn delegate the memory
-     * access calls to the GPU APIs. In practice, this means that the actual buffers
-     * that store the components of created objects may reside in separate memory
-     * regions depending on the layout and type of the data being stored.
-     * For example, consider an object that has two float components and one integer
-     * component, a method to create this object may have a signature like this:
-     * -
-     *    foo(float x, float y, int i)
-     * -
-     * The GPU implementation may store all three of these values in one continuous
-     * block of memory, or it may store the x and y components together, and the int
-     * value in a separate memory segment, or even store all three in completely
-     * different sections of memory. As such, this class cannot make too many
-     * assumptions about the memory layout of all the various components. However,
-     * each top-level object does have one known "memory width" that is used to keep
-     * track of the number of objects of that type that are currently stored in
-     * memory.
-     * For these base objects, they will always be laid out in a continuous manner.
-     * Just note that this width generally applies to one or a small number of "base"
-     * properties of the object, and any extra properties or meta-data related to the
-     * object will use separate, but index-aligned, memory space. The best existing
-     * example of this concept are the HULL object type. The "main" value tracked for
-     * these objects is represented on the GPU as a float4, with the first two values
-     * (x,y) designating the world-space position of the hull center, and the second
-     * two values (z,w) defining the width and height scaling of the hull. This base
-     * set of values has a width of 4, so the hull index increments by 4 when each new
-     * hull is created. Hulls however also have other data, for example an indexing
-     * table that defines the start/end indices in the point and edge buffers of the
-     * points and edges that are part of the hull. These values are stored in buffers
-     * that align with the hull buffer, so that an index into one buffer can be used
-     * interchangeably with the buffers that store all the other components of the
-     * object, making access to a single "object" possible by indexing into all the
-     * aligned arrays with the same index.
-     */
-    public static GPUReferenceMemory Memory = new GPUReferenceMemory();
+
+    public static GPUReferenceMemory ref_memory;
 
     //#endregion
 
@@ -911,6 +868,8 @@ public class GPU
         Buffer.edge_shift.init(max_points);
         Buffer.hull_shift.init(max_hulls);
         Buffer.bone_bind_shift.init(max_hulls);
+
+        ref_memory = new GPUReferenceMemory();
 
         int total = Buffer.hulls.length
             + Buffer.hull_mesh_ids.length
@@ -1137,74 +1096,6 @@ public class GPU
             .mem_arg(MoveArmatures_k.Args.points, Buffer.points.memory);
 
         // crud
-
-        Kernel.create_point.set_kernel(new CreatePoint_k(command_queue_ptr))
-            .mem_arg(CreatePoint_k.Args.points, Buffer.points.memory)
-            .mem_arg(CreatePoint_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
-            .mem_arg(CreatePoint_k.Args.bone_tables, Buffer.point_bone_tables.memory);
-
-        Kernel.create_texture_uv.set_kernel(new CreateTextureUV_k(command_queue_ptr))
-            .mem_arg(CreateTextureUV_k.Args.texture_uvs, Buffer.texture_uvs.memory);
-
-        Kernel.create_edge.set_kernel(new CreateEdge_k(command_queue_ptr))
-            .mem_arg(CreateEdge_k.Args.edges, Buffer.edges.memory);
-
-        Kernel.create_keyframe.set_kernel(new CreateKeyFrame_k(command_queue_ptr))
-            .mem_arg(CreateKeyFrame_k.Args.key_frames, Buffer.key_frames.memory)
-            .mem_arg(CreateKeyFrame_k.Args.frame_times, Buffer.frame_times.memory);
-
-        Kernel.create_vertex_reference.set_kernel(new CreateVertexRef_k(command_queue_ptr))
-            .mem_arg(CreateVertexRef_k.Args.vertex_references, Buffer.vertex_references.memory)
-            .mem_arg(CreateVertexRef_k.Args.vertex_weights, Buffer.vertex_weights.memory)
-            .mem_arg(CreateVertexRef_k.Args.uv_tables, Buffer.uv_tables.memory);
-
-        Kernel.create_bone_bind_pose.set_kernel(new CreateBoneBindPose_k(command_queue_ptr))
-            .mem_arg(CreateBoneBindPose_k.Args.bone_bind_poses, Buffer.bone_bind_poses.memory)
-            .mem_arg(CreateBoneBindPose_k.Args.bone_bind_parents, Buffer.bone_bind_parents.memory);
-
-        Kernel.create_bone_reference.set_kernel(new CreateBoneRef_k(command_queue_ptr))
-            .mem_arg(CreateBoneRef_k.Args.bone_references, Buffer.bone_references.memory);
-
-        Kernel.create_bone_channel.set_kernel(new CreateBoneChannel_k(command_queue_ptr))
-            .mem_arg(CreateBoneChannel_k.Args.animation_timing_indices, Buffer.animation_timing_indices.memory)
-            .mem_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, Buffer.bone_pos_channel_tables.memory)
-            .mem_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, Buffer.bone_rot_channel_tables.memory)
-            .mem_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, Buffer.bone_scl_channel_tables.memory);
-
-        Kernel.create_armature.set_kernel(new CreateArmature_k(command_queue_ptr))
-            .mem_arg(CreateArmature_k.Args.armatures, Buffer.armatures.memory)
-            .mem_arg(CreateArmature_k.Args.armature_flags, Buffer.armature_flags.memory)
-            .mem_arg(CreateArmature_k.Args.hull_tables, Buffer.armature_hull_table.memory)
-            .mem_arg(CreateArmature_k.Args.armature_masses, Buffer.armature_mass.memory)
-            .mem_arg(CreateArmature_k.Args.armature_animation_indices, Buffer.armature_animation_indices.memory)
-            .mem_arg(CreateArmature_k.Args.armature_animation_elapsed, Buffer.armature_animation_elapsed.memory);
-
-        Kernel.create_bone.set_kernel(new CreateBone_k(command_queue_ptr))
-            .mem_arg(CreateBone_k.Args.bones, Buffer.bone_instances.memory)
-            .mem_arg(CreateBone_k.Args.bone_index_tables, Buffer.bone_index_tables.memory);
-
-        Kernel.create_armature_bone.set_kernel(new CreateArmatureBone_k(command_queue_ptr))
-            .mem_arg(CreateArmatureBone_k.Args.armature_bones, Buffer.armatures_bones.memory)
-            .mem_arg(CreateArmatureBone_k.Args.bone_bind_tables, Buffer.bone_bind_tables.memory);
-
-        Kernel.create_model_transform.set_kernel(new CreateModelTransform_k(command_queue_ptr))
-            .mem_arg(CreateModelTransform_k.Args.model_transforms, Buffer.model_transforms.memory);
-
-        Kernel.create_hull.set_kernel(new CreateHull_k(command_queue_ptr))
-            .mem_arg(CreateHull_k.Args.hulls, Buffer.hulls.memory)
-            .mem_arg(CreateHull_k.Args.hull_rotations, Buffer.hull_rotation.memory)
-            .mem_arg(CreateHull_k.Args.element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(CreateHull_k.Args.hull_flags, Buffer.hull_flags.memory)
-            .mem_arg(CreateHull_k.Args.hull_mesh_ids, Buffer.hull_mesh_ids.memory);
-
-        Kernel.create_mesh_reference.set_kernel(new CreateMeshReference_k(command_queue_ptr))
-            .mem_arg(CreateMeshReference_k.Args.mesh_ref_tables, Buffer.mesh_references.memory);
-
-        Kernel.create_mesh_face.set_kernel(new CreateMeshFace_k(command_queue_ptr))
-            .mem_arg(CreateMeshFace_k.Args.mesh_faces, Buffer.mesh_faces.memory);
-
-        Kernel.create_animation_timings.set_kernel(new CreateAnimationTimings_k(command_queue_ptr))
-            .mem_arg(CreateAnimationTimings_k.Args.animation_timings, Buffer.animation_timings.memory);
 
         Kernel.read_position.set_kernel(new ReadPosition_k(command_queue_ptr))
             .mem_arg(ReadPosition_k.Args.armatures, Buffer.armatures.memory);
@@ -1633,7 +1524,7 @@ public class GPU
         Kernel.root_hull_count.kernel
             .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .call(arg_long(GPU.Memory.next_armature()));
+            .call(arg_long(GPU.ref_memory.next_armature()));
 
         int final_count = cl_read_pinned_int(atomic_counter_ptr);
 
@@ -1652,7 +1543,7 @@ public class GPU
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, hulls_counter_data_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .call(arg_long(GPU.Memory.next_armature()));
+            .call(arg_long(GPU.ref_memory.next_armature()));
 
         clReleaseMemObject(hulls_counter_data_ptr);
 
@@ -1707,170 +1598,11 @@ public class GPU
 
     //#region CPU Create/Read/Update/Delete Functions
 
-    public static void create_point(int point_index, float[] position, int[] vertex_table, int[] bone_indices)
-    {
-        Kernel.create_point.kernel
-            .set_arg(CreatePoint_k.Args.target, point_index)
-            .set_arg(CreatePoint_k.Args.new_point, position)
-            .set_arg(CreatePoint_k.Args.new_vertex_table, vertex_table)
-            .set_arg(CreatePoint_k.Args.new_bone_table, bone_indices)
-            .call(global_single_size);
-    }
-
-    public static void create_texture_uv(int uv_index, float u, float v)
-    {
-        Kernel.create_texture_uv.kernel
-            .set_arg(CreateTextureUV_k.Args.target, uv_index)
-            .set_arg(CreateTextureUV_k.Args.new_texture_uv, arg_float2(u, v))
-            .call(global_single_size);
-    }
-
-    public static void create_keyframe(int frame_index, float[] frame_data, double frame_time)
-    {
-        Kernel.create_keyframe.kernel
-            .set_arg(CreateKeyFrame_k.Args.target, frame_index)
-            .set_arg(CreateKeyFrame_k.Args.new_keyframe, frame_data)
-            .set_arg(CreateKeyFrame_k.Args.new_frame_time, frame_time)
-            .call(global_single_size);
-    }
-
-    public static void create_edge(int edge_index, float p1, float p2, float l, int flags)
-    {
-        Kernel.create_edge.kernel
-            .set_arg(CreateEdge_k.Args.target, edge_index)
-            .set_arg(CreateEdge_k.Args.new_edge, arg_float4(p1, p2, l, flags))
-            .call(global_single_size);
-    }
-
-    public static void create_armature(int armature_index,
-                                       float x,
-                                       float y,
-                                       int[] table,
-                                       int[] flags,
-                                       float mass,
-                                       int anim_index,
-                                       double anim_time)
-    {
-        Kernel.create_armature.kernel
-            .set_arg(CreateArmature_k.Args.target, armature_index)
-            .set_arg(CreateArmature_k.Args.new_armature, arg_float4(x, y, x, y))
-            .set_arg(CreateArmature_k.Args.new_armature_flags, flags)
-            .set_arg(CreateArmature_k.Args.new_hull_table, table)
-            .set_arg(CreateArmature_k.Args.new_armature_mass, mass)
-            .set_arg(CreateArmature_k.Args.new_armature_animation_index, anim_index)
-            .set_arg(CreateArmature_k.Args.new_armature_animation_time, anim_time)
-            .call(global_single_size);
-    }
-
-    public static void create_vertex_reference(int vert_ref_index, float x, float y, float[] weights, int[] uv_table)
-    {
-        Kernel.create_vertex_reference.kernel
-            .set_arg(CreateVertexRef_k.Args.target,vert_ref_index)
-            .set_arg(CreateVertexRef_k.Args.new_vertex_reference, arg_float2(x, y))
-            .set_arg(CreateVertexRef_k.Args.new_vertex_weights, weights)
-            .set_arg(CreateVertexRef_k.Args.new_uv_table, uv_table)
-            .call(global_single_size);
-    }
-
-    public static void create_bone_bind_pose(int bone_bind_index, int bone_bond_parent, float[] matrix)
-    {
-        Kernel.create_bone_bind_pose.kernel
-            .set_arg(CreateBoneBindPose_k.Args.target,bone_bind_index)
-            .set_arg(CreateBoneBindPose_k.Args.new_bone_bind_pose, matrix)
-            .set_arg(CreateBoneBindPose_k.Args.bone_bind_parent, bone_bond_parent)
-            .call(global_single_size);
-    }
-
-    public static void create_bone_reference(int bone_ref_index, float[] matrix)
-    {
-        Kernel.create_bone_reference.kernel
-            .set_arg(CreateBoneRef_k.Args.target, bone_ref_index)
-            .set_arg(CreateBoneRef_k.Args.new_bone_reference, matrix)
-            .call(global_single_size);
-    }
-
-    public static void create_bone_channel(int bone_channel_index,
-                                           int timing_index,
-                                           int[] pos_table,
-                                           int[] rot_table,
-                                           int[] scl_table)
-    {
-        Kernel.create_bone_channel.kernel
-            .set_arg(CreateBoneChannel_k.Args.target, bone_channel_index)
-            .set_arg(CreateBoneChannel_k.Args.new_animation_timing_index, timing_index)
-            .set_arg(CreateBoneChannel_k.Args.new_bone_pos_channel_table, pos_table)
-            .set_arg(CreateBoneChannel_k.Args.new_bone_rot_channel_table, rot_table)
-            .set_arg(CreateBoneChannel_k.Args.new_bone_scl_channel_table, scl_table)
-            .call(global_single_size);
-    }
-
     public static void set_bone_channel_table(int bone_channel_index, int[] channel_table)
     {
         Kernel.set_bone_channel_table.kernel
             .set_arg(SetBoneChannelTable_k.Args.target, bone_channel_index)
             .set_arg(SetBoneChannelTable_k.Args.new_bone_channel_table, channel_table)
-            .call(global_single_size);
-    }
-
-    public static void create_bone(int bone_index, int[] bone_index_table, float[] matrix)
-    {
-        Kernel.create_bone.kernel
-            .set_arg(CreateBone_k.Args.target, bone_index)
-            .set_arg(CreateBone_k.Args.new_bone, matrix)
-            .set_arg(CreateBone_k.Args.new_bone_table, bone_index_table)
-            .call(global_single_size);
-    }
-
-    public static void create_armature_bone(int armature_bone_index, int[] bone_bind_table, float[] matrix)
-    {
-        Kernel.create_armature_bone.kernel
-            .set_arg(CreateArmatureBone_k.Args.target, armature_bone_index)
-            .set_arg(CreateArmatureBone_k.Args.new_armature_bone, matrix)
-            .set_arg(CreateArmatureBone_k.Args.new_bone_bind_table, bone_bind_table)
-            .call(global_single_size);
-    }
-
-    public static void create_model_transform(int model_transform_index, float[] matrix)
-    {
-        Kernel.create_model_transform.kernel
-            .set_arg(CreateModelTransform_k.Args.target, model_transform_index)
-            .set_arg(CreateModelTransform_k.Args.new_model_transform, matrix)
-            .call(global_single_size);
-    }
-
-    public static void create_hull(int hull_index, int mesh_index, float[] hull, float[] rotation, int[] table, int[] flags)
-    {
-        Kernel.create_hull.kernel
-            .set_arg(CreateHull_k.Args.target, hull_index)
-            .set_arg(CreateHull_k.Args.new_hull, hull)
-            .set_arg(CreateHull_k.Args.new_rotation, rotation)
-            .set_arg(CreateHull_k.Args.new_table, table)
-            .set_arg(CreateHull_k.Args.new_flags, flags)
-            .set_arg(CreateHull_k.Args.new_hull_mesh_id, mesh_index)
-            .call(global_single_size);
-    }
-
-    public static void create_mesh_reference(int mesh_index, int[] mesh_ref_table)
-    {
-        Kernel.create_mesh_reference.kernel
-            .set_arg(CreateMeshReference_k.Args.target, mesh_index)
-            .set_arg(CreateMeshReference_k.Args.new_mesh_ref_table, mesh_ref_table)
-            .call(global_single_size);
-    }
-
-    public static void create_mesh_face(int face_index, int[] face)
-    {
-        Kernel.create_mesh_face.kernel
-            .set_arg(CreateMeshFace_k.Args.target, face_index)
-            .set_arg(CreateMeshFace_k.Args.new_mesh_face, face)
-            .call(global_single_size);
-    }
-
-    public static void create_animation_timings(int animation_index, double[] timings)
-    {
-        Kernel.create_animation_timings.kernel
-            .set_arg(CreateAnimationTimings_k.Args.target, animation_index)
-            .set_arg(CreateAnimationTimings_k.Args.new_animation_timing, timings)
             .call(global_single_size);
     }
 
@@ -1920,17 +1652,17 @@ public class GPU
     {
         Kernel.animate_armatures.kernel
             .set_arg(AnimateArmatures_k.Args.delta_time, dt)
-            .call(arg_long(GPU.Memory.next_armature()));
+            .call(arg_long(GPU.ref_memory.next_armature()));
     }
 
     public static void animate_bones()
     {
-        Kernel.animate_bones.kernel.call(arg_long(GPU.Memory.next_bone()));
+        Kernel.animate_bones.kernel.call(arg_long(GPU.ref_memory.next_bone()));
     }
 
     public static void animate_points()
     {
-        Kernel.animate_points.kernel.call(arg_long(GPU.Memory.next_point()));
+        Kernel.animate_points.kernel.call(arg_long(GPU.ref_memory.next_point()));
     }
 
     public static void integrate(float delta_time, UniformGrid uniform_grid)
@@ -1955,14 +1687,14 @@ public class GPU
 
         Kernel.integrate.kernel
             .ptr_arg(Integrate_k.Args.args, arg_mem_ptr)
-            .call(arg_long(GPU.Memory.next_hull()));
+            .call(arg_long(GPU.ref_memory.next_hull()));
 
         clReleaseMemObject(arg_mem_ptr);
     }
 
     public static void calculate_bank_offsets(UniformGrid uniform_grid)
     {
-        int bank_size = scan_key_bounds(Buffer.aabb_key_table.memory.pointer(), GPU.Memory.next_hull());
+        int bank_size = scan_key_bounds(Buffer.aabb_key_table.memory.pointer(), GPU.ref_memory.next_hull());
         uniform_grid.resizeBank(bank_size);
     }
 
@@ -1984,7 +1716,7 @@ public class GPU
         Kernel.generate_keys.kernel
             .ptr_arg(GenerateKeys_k.Args.key_bank, physics_buffer.key_bank.pointer())
             .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
-            .call(arg_long(GPU.Memory.next_hull()));
+            .call(arg_long(GPU.ref_memory.next_hull()));
     }
 
     public static void calculate_map_offsets()
@@ -2005,12 +1737,12 @@ public class GPU
 
         Kernel.build_key_map.kernel
             .ptr_arg(BuildKeyMap_k.Args.key_map, map_data)
-            .call(arg_long(GPU.Memory.next_hull()));
+            .call(arg_long(GPU.ref_memory.next_hull()));
     }
 
     public static void locate_in_bounds()
     {
-        int hull_count = GPU.Memory.next_hull();
+        int hull_count = GPU.ref_memory.next_hull();
 
         long inbound_buf_size = (long) CLSize.cl_int * hull_count;
         var inbound_data = cl_new_buffer(inbound_buf_size);
@@ -2031,7 +1763,7 @@ public class GPU
 
     public static void locate_out_of_bounds()
     {
-        int armature_count = GPU.Memory.next_armature();
+        int armature_count = GPU.ref_memory.next_armature();
 
         int[] counter = new int[]{ 0 };
         var counter_ptr = cl_new_int_arg_buffer(counter);
@@ -2068,7 +1800,7 @@ public class GPU
 
     public static void delete_and_compact()
     {
-        int armature_count = GPU.Memory.next_armature();
+        int armature_count = GPU.ref_memory.next_armature();
         long output_buf_size = (long) CLSize.cl_int2 * armature_count;
         long output_buf_size2 = (long) CLSize.cl_int4 * armature_count;
 
@@ -2100,13 +1832,13 @@ public class GPU
             .ptr_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.pointer());
 
         linearize_kernel(Kernel.compact_armatures, armature_count);
-        linearize_kernel(Kernel.compact_bones, GPU.Memory.next_bone());
-        linearize_kernel(Kernel.compact_points, GPU.Memory.next_point());
-        linearize_kernel(Kernel.compact_edges, GPU.Memory.next_edge());
-        linearize_kernel(Kernel.compact_hulls, GPU.Memory.next_hull());
-        linearize_kernel(Kernel.compact_armature_bones, GPU.Memory.next_armature_bone());
+        linearize_kernel(Kernel.compact_bones, GPU.ref_memory.next_bone());
+        linearize_kernel(Kernel.compact_points, GPU.ref_memory.next_point());
+        linearize_kernel(Kernel.compact_edges, GPU.ref_memory.next_edge());
+        linearize_kernel(Kernel.compact_hulls, GPU.ref_memory.next_hull());
+        linearize_kernel(Kernel.compact_armature_bones, GPU.ref_memory.next_armature_bone());
 
-        GPU.Memory.compact_buffers(shift_counts[0], shift_counts[1], shift_counts[2],
+        GPU.ref_memory.compact_buffers(shift_counts[0], shift_counts[1], shift_counts[2],
             shift_counts[3], shift_counts[4], shift_counts[5]);
 
         del_buffer_1.release();
@@ -2216,7 +1948,7 @@ public class GPU
 
     public static void scan_reactions()
     {
-        scan_int_out(Buffer.point_reactions.memory.pointer(), Buffer.point_offsets.memory.pointer(), GPU.Memory.next_point());
+        scan_int_out(Buffer.point_reactions.memory.pointer(), Buffer.point_offsets.memory.pointer(), GPU.ref_memory.next_point());
         // it is important to zero out the reactions buffer after the scan. It will be reused during sorting
         Buffer.point_reactions.clear();
     }
@@ -2234,12 +1966,12 @@ public class GPU
     {
         Kernel.apply_reactions.kernel
             .ptr_arg(ApplyReactions_k.Args.reactions, GPU.reactions_out.pointer())
-            .call(arg_long(GPU.Memory.next_point()));
+            .call(arg_long(GPU.ref_memory.next_point()));
     }
 
     public static void move_armatures()
     {
-        Kernel.move_armatures.kernel.call(arg_long(GPU.Memory.next_armature()));
+        Kernel.move_armatures.kernel.call(arg_long(GPU.ref_memory.next_armature()));
     }
 
     public static void resolve_constraints(int edge_steps)
@@ -2254,7 +1986,7 @@ public class GPU
 
             Kernel.resolve_constraints.kernel
                 .set_arg(ResolveConstraints_k.Args.process_all, n)
-                .call(arg_long(GPU.Memory.next_hull()));
+                .call(arg_long(GPU.ref_memory.next_hull()));
         }
     }
 

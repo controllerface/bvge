@@ -23,8 +23,8 @@ public class CreateHull_k extends GPUKernel
         new_hull_mesh_id;
     }
 
-    public CreateHull_k(long command_queue_ptr)
+    public CreateHull_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

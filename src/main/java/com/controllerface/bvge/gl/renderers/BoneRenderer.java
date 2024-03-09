@@ -72,7 +72,7 @@ public class BoneRenderer extends GameSystem {
         glEnableVertexAttribArray(0);
 
         int offset = 0;
-        for (int remaining = GPU.Memory.next_bone(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPU.ref_memory.next_bone(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             GPU.GL_bones(vbo_id, offset, count);

@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class CreateKeyFrame_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.gpu_crud;
-    private static final GPU.Kernel kernel = GPU.Kernel.create_keyframe;
-
     public enum Args
     {
         key_frames,
@@ -17,8 +13,8 @@ public class CreateKeyFrame_k extends GPUKernel
         new_frame_time;
     }
 
-    public CreateKeyFrame_k(long command_queue_ptr)
+    public CreateKeyFrame_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

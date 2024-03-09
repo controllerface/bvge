@@ -11,7 +11,6 @@ import com.controllerface.bvge.util.MathEX;
 import org.joml.*;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.*;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
@@ -115,7 +114,7 @@ public class Models
             int transform_index = -1;
             if (model_transform.get() != null)
             {
-                transform_index = GPU.Memory.new_model_transform(MathEX.raw_matrix(model_transform.get()));
+                transform_index = GPU.ref_memory.new_model_transform(MathEX.raw_matrix(model_transform.get()));
             }
             var model = new Model(meshes, bone_transforms, bind_name_map, bind_pose_map, textures, root_index, transform_index);
             loaded_models.put(next_model_id, model);
@@ -171,7 +170,7 @@ public class Models
         if (raw_bone.mNumWeights() > 0)
         {
             var bone_node = node_map.get(bone_name);
-            int bone_ref_id = GPU.Memory.new_bone_reference(raw_matrix);
+            int bone_ref_id = GPU.ref_memory.new_bone_reference(raw_matrix);
             bone_offset = new BoneOffset(bone_ref_id, bone_name, offset, bone_node);
         }
         else
@@ -222,7 +221,7 @@ public class Models
             raw_face[1] = indices.get(1);
             raw_face[2] = indices.get(2);
             raw_face[3] = mesh_id;
-            int face_id = GPU.Memory.new_mesh_face(raw_face);
+            int face_id = GPU.ref_memory.new_mesh_face(raw_face);
             mesh_faces[face_index++] = new Face(face_id, indices.get(0), indices.get(1), indices.get(2));
         }
         return mesh_faces;
@@ -281,7 +280,7 @@ public class Models
             uv_table[0] = -1;
             uvData.forEach(uv ->
             {
-                var uv_ref = GPU.Memory.new_texture_uv(uv.x, uv.y);
+                var uv_ref = GPU.ref_memory.new_texture_uv(uv.x, uv.y);
                 if (uv_table[0] == -1)
                 {
                     uv_table[0] = uv_ref;
@@ -290,7 +289,7 @@ public class Models
             });
 
 
-            var vert_ref_id = GPU.Memory.new_vertex_reference(aiVertex.x(), aiVertex.y(), weights, uv_table);
+            var vert_ref_id = GPU.ref_memory.new_vertex_reference(aiVertex.x(), aiVertex.y(), weights, uv_table);
 
             mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), uvData, names, weights);
             count.getAndIncrement();
@@ -312,7 +311,7 @@ public class Models
                 + " ensure node and geometry names match in blender");
         }
 
-        int next_mesh = GPU.Memory.next_mesh();
+        int next_mesh = GPU.ref_memory.next_mesh();
         var bone_name_map = new HashMap<Integer, String[]>();
         var bone_weight_map = new HashMap<Integer, float[]>();
         var mesh_bones = load_mesh_bones(raw_mesh, node_map, bone_name_map, bone_weight_map);
@@ -325,7 +324,7 @@ public class Models
         table[1] = mesh_vertices[mesh_vertices.length - 1].vert_ref_id();
         table[2] = mesh_faces[0].index();
         table[3] = mesh_faces[mesh_faces.length - 1].index();
-        var mesh_id = GPU.Memory.new_mesh_reference(table);
+        var mesh_id = GPU.ref_memory.new_mesh_reference(table);
 
         assert mesh_id == next_mesh : "Mesh alignment error";
 
@@ -475,7 +474,7 @@ public class Models
 
             // store the timings so bone channels can use them
             double[] timings = new double[]{ raw_animation.mDuration(), raw_animation.mTicksPerSecond() };
-            int anim_timing_id = GPU.Memory.new_animation_timings(timings);
+            int anim_timing_id = GPU.ref_memory.new_animation_timings(timings);
 
             for (int channel_index = 0; channel_index < channel_count; channel_index++)
             {
@@ -509,7 +508,7 @@ public class Models
                     var raw_pos_key = pos_buffer.get(current_pos_key);
                     var pos_vector = raw_pos_key.mValue();
                     float[] frame_data = new float[]{ pos_vector.x(), pos_vector.y(), pos_vector.z(), 1.0f };
-                    int next_pos_key = GPU.Memory.new_keyframe(frame_data, raw_pos_key.mTime());
+                    int next_pos_key = GPU.ref_memory.new_keyframe(frame_data, raw_pos_key.mTime());
                     if (p_start == -1) p_start = next_pos_key;
                     p_end = next_pos_key;
                 }
@@ -519,7 +518,7 @@ public class Models
                     var raw_rot_key = rot_buffer.get(current_rot_key);
                     var rot_quaternion = raw_rot_key.mValue();
                     float[] frame_data = new float[]{ rot_quaternion.x(), rot_quaternion.y(), rot_quaternion.z(), rot_quaternion.w() };
-                    int next_rot_key = GPU.Memory.new_keyframe(frame_data, raw_rot_key.mTime());
+                    int next_rot_key = GPU.ref_memory.new_keyframe(frame_data, raw_rot_key.mTime());
                     if (r_start == -1) r_start = next_rot_key;
                     r_end = next_rot_key;
                 }
@@ -529,7 +528,7 @@ public class Models
                     var raw_scl_key = scl_buffer.get(current_scl_key);
                     var scale_vector = raw_scl_key.mValue();
                     float[] frame_data = new float[]{ scale_vector.x(), scale_vector.y(), scale_vector.z(), 1.0f };
-                    int next_scl_key = GPU.Memory.new_keyframe(frame_data, raw_scl_key.mTime());
+                    int next_scl_key = GPU.ref_memory.new_keyframe(frame_data, raw_scl_key.mTime());
                     if (s_start == -1) s_start = next_scl_key;
                     s_end = next_scl_key;
                 }
@@ -550,7 +549,7 @@ public class Models
                 int[] rot_table = new int[]{ channel.rot_start(), channel.rot_end() };
                 int[] scl_table = new int[]{ channel.scl_start(), channel.scl_end() };
 
-                int next_channel = GPU.Memory.new_bone_channel(channel.anim_timing_id(), pos_table, rot_table, scl_table);
+                int next_channel = GPU.ref_memory.new_bone_channel(channel.anim_timing_id(), pos_table, rot_table, scl_table);
                 if (c_start == -1) c_start = next_channel;
                 c_end = next_channel;
             }
@@ -637,7 +636,7 @@ public class Models
             init_matrix.compareAndSet(null, parent_transform);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
-            int bind_pose_id = GPU.Memory.new_bone_bind_pose(parent, raw_matrix);
+            int bind_pose_id = GPU.ref_memory.new_bone_bind_pose(parent, raw_matrix);
             bind_name_map.put(name, bind_pose_id);
             bind_pose_map.put(bind_pose_id, bind_pose);
             transforms.put(name, global_transform);

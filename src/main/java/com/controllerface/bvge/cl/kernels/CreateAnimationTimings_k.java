@@ -15,8 +15,8 @@ public class CreateAnimationTimings_k extends GPUKernel
         new_animation_timing;
     }
 
-    public CreateAnimationTimings_k(long command_queue_ptr)
+    public CreateAnimationTimings_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

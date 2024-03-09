@@ -18,6 +18,7 @@ import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
+import static org.lwjgl.opencl.CL10.clReleaseMemObject;
 import static org.lwjgl.opengl.GL45C.*;
 
 public class HumanoidRenderer extends GameSystem
@@ -48,13 +49,13 @@ public class HumanoidRenderer extends GameSystem
     private long offsets_ptr;
     private long mesh_transfer_ptr;
 
-    private GPUProgram mesh_query;
-    private GPUKernel count_mesh_instances;
-    private GPUKernel write_mesh_details;
-    private GPUKernel count_mesh_batches;
-    private GPUKernel calculate_batch_offsets;
-    private GPUKernel transfer_detail_data;
-    private GPUKernel transfer_render_data;
+    private final GPUProgram mesh_query_p = new MeshQuery();
+    private GPUKernel count_instances_k;
+    private GPUKernel write_details_k;
+    private GPUKernel count_batches_k;
+    private GPUKernel calc_offsets_k;
+    private GPUKernel transfer_detail_k;
+    private GPUKernel transfer_render_k;
 
     public HumanoidRenderer(ECS ecs)
     {
@@ -106,19 +107,18 @@ public class HumanoidRenderer extends GameSystem
         offsets_ptr = GPU.new_empty_buffer(mesh_size);
         mesh_transfer_ptr = GPU.new_empty_buffer(ELEMENT_BUFFER_SIZE * 2);
 
-        mesh_query = new MeshQuery();
-        mesh_query.init();
+        mesh_query_p.init();
 
-        long count_mesh_k_ptr = mesh_query.kernel_ptr(GPU.Kernel.count_mesh_instances);
-        count_mesh_instances = new CountMeshInstances_k(GPU.command_queue_ptr, count_mesh_k_ptr)
+        long count_instances_k_ptr = mesh_query_p.kernel_ptr(GPU.Kernel.count_mesh_instances);
+        count_instances_k = new CountMeshInstances_k(GPU.command_queue_ptr, count_instances_k_ptr)
             .ptr_arg(CountMeshInstances_k.Args.counters, counters_ptr)
             .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
             .ptr_arg(CountMeshInstances_k.Args.total, total_ptr)
             .set_arg(CountMeshInstances_k.Args.count, mesh_count)
             .mem_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPU.Buffer.hull_mesh_ids.memory);
 
-        long write_mesh_k_ptr = mesh_query.kernel_ptr(GPU.Kernel.write_mesh_details);
-        write_mesh_details = new WriteMeshDetails_k(GPU.command_queue_ptr, write_mesh_k_ptr)
+        long write_details_k_ptr = mesh_query_p.kernel_ptr(GPU.Kernel.write_mesh_details);
+        write_details_k = new WriteMeshDetails_k(GPU.command_queue_ptr, write_details_k_ptr)
             .ptr_arg(WriteMeshDetails_k.Args.counters, counters_ptr)
             .ptr_arg(WriteMeshDetails_k.Args.query, query_ptr)
             .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets_ptr)
@@ -126,20 +126,20 @@ public class HumanoidRenderer extends GameSystem
             .mem_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPU.Buffer.hull_mesh_ids.memory)
             .mem_arg(WriteMeshDetails_k.Args.mesh_references, GPU.Buffer.mesh_references.memory);
 
-        long mesh_batch_k_ptr = mesh_query.kernel_ptr(GPU.Kernel.count_mesh_batches);
-        count_mesh_batches = new CountMeshBatches_k(GPU.command_queue_ptr, mesh_batch_k_ptr)
+        long count_batches_k_ptr = mesh_query_p.kernel_ptr(GPU.Kernel.count_mesh_batches);
+        count_batches_k = new CountMeshBatches_k(GPU.command_queue_ptr, count_batches_k_ptr)
             .ptr_arg(CountMeshBatches_k.Args.total, total_ptr)
             .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
 
-        long calc_batch_k_ptr = mesh_query.kernel_ptr(GPU.Kernel.calculate_batch_offsets);
-        calculate_batch_offsets = new CalculateBatchOffsets_k(GPU.command_queue_ptr, calc_batch_k_ptr);
+        long calc_offsets_k_ptr = mesh_query_p.kernel_ptr(GPU.Kernel.calculate_batch_offsets);
+        calc_offsets_k = new CalculateBatchOffsets_k(GPU.command_queue_ptr, calc_offsets_k_ptr);
 
-        long transfer_detail_k_ptr = mesh_query.kernel_ptr(GPU.Kernel.transfer_detail_data);
-        transfer_detail_data = new TransferDetailData_k(GPU.command_queue_ptr, transfer_detail_k_ptr)
+        long transfer_detail_k_ptr = mesh_query_p.kernel_ptr(GPU.Kernel.transfer_detail_data);
+        transfer_detail_k = new TransferDetailData_k(GPU.command_queue_ptr, transfer_detail_k_ptr)
             .ptr_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_ptr);
 
-        long transfer_render_k_ptr = mesh_query.kernel_ptr(GPU.Kernel.transfer_render_data);
-        transfer_render_data = new TransferRenderData_k(GPU.command_queue_ptr, transfer_render_k_ptr)
+        long transfer_render_k_ptr = mesh_query_p.kernel_ptr(GPU.Kernel.transfer_render_data);
+        transfer_render_k = new TransferRenderData_k(GPU.command_queue_ptr, transfer_render_k_ptr)
             .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
             .mem_arg(TransferRenderData_k.Args.hull_element_tables, GPU.Buffer.hull_element_tables.memory)
             .mem_arg(TransferRenderData_k.Args.hull_mesh_ids, GPU.Buffer.hull_mesh_ids.memory)
@@ -159,9 +159,9 @@ public class HumanoidRenderer extends GameSystem
         GPU.clear_buffer(total_ptr, CLSize.cl_int);
         GPU.clear_buffer(mesh_transfer_ptr, ELEMENT_BUFFER_SIZE * 2);
 
-        long[] hull_count = arg_long(GPU.Memory.next_hull());
+        long[] hull_count = arg_long(GPU.ref_memory.next_hull());
 
-        count_mesh_instances.call(hull_count);
+        count_instances_k.call(hull_count);
 
         GPU.scan_int_out(counters_ptr, offsets_ptr, mesh_count);
 
@@ -174,11 +174,11 @@ public class HumanoidRenderer extends GameSystem
         long data_size = (long)total_instances * CLSize.cl_int4;
         var mesh_details_ptr = GPU.new_empty_buffer(data_size);
 
-        write_mesh_details
+        write_details_k
             .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
             .call(hull_count);
 
-        count_mesh_batches
+        count_batches_k
             .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CountMeshBatches_k.Args.count, total_instances)
             .call(GPU.global_single_size);
@@ -188,7 +188,7 @@ public class HumanoidRenderer extends GameSystem
 
         var mesh_offset_ptr = GPU.new_empty_buffer(batch_index_size);
 
-        calculate_batch_offsets
+        calc_offsets_k
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offset_ptr)
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CalculateBatchOffsets_k.Args.count, total_instances)
@@ -216,14 +216,14 @@ public class HumanoidRenderer extends GameSystem
                 ? total_instances - offset
                 : raw_offsets[next_batch] - offset;
 
-            transfer_detail_data
+            transfer_detail_k
                 .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details_ptr)
                 .set_arg(TransferDetailData_k.Args.offset, offset)
                 .call(arg_long(count));
 
             GPU.scan_int2(mesh_transfer_ptr, count);
 
-            transfer_render_data
+            transfer_render_k
                 .share_mem(command_b)
                 .share_mem(vertex_b)
                 .share_mem(texture_uv_b)
@@ -253,7 +253,11 @@ public class HumanoidRenderer extends GameSystem
     @Override
     public void shutdown()
     {
-        mesh_query.destroy();
+        mesh_query_p.destroy();
+        GPU.release_buffer(this.element_b);
+        GPU.release_buffer(this.vertex_b);
+        GPU.release_buffer(this.command_b);
+        GPU.release_buffer(this.texture_uv_b);
         GPU.release_buffer(total_ptr);
         GPU.release_buffer(query_ptr);
         GPU.release_buffer(counters_ptr);

@@ -17,8 +17,8 @@ public class CreateBoneBindPose_k extends GPUKernel
         bone_bind_parent;
     }
 
-    public CreateBoneBindPose_k(long command_queue_ptr)
+    public CreateBoneBindPose_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

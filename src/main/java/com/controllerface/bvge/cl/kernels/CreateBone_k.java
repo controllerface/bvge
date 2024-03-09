@@ -17,8 +17,8 @@ public class CreateBone_k extends GPUKernel
         new_bone_table;
     }
 
-    public CreateBone_k(long command_queue_ptr)
+    public CreateBone_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }
