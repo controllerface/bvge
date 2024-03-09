@@ -167,12 +167,12 @@ public class GPU
     private static int x_subdivisions;
     private static int y_subdivisions;
 
-    private static long reaction_buf_size = 10500000L;
-    private static long index_buf_size = 5250000L;
+    public static long reaction_buf_size = 10500000L;
+    public static long index_buf_size = 5250000L;
 
-    private static GPUMemory reactions_in = new GPUMemory();
-    private static GPUMemory reactions_out = new GPUMemory();
-    private static GPUMemory reaction_index = new GPUMemory();
+    public static GPUMemory reactions_in = new GPUMemory();
+    public static GPUMemory reactions_out = new GPUMemory();
+    public static GPUMemory reaction_index = new GPUMemory();
 
     //#endregion
 
@@ -181,7 +181,6 @@ public class GPU
     public enum Program
     {
         animate_hulls(new AnimateHulls()),
-        locate_in_bounds(new LocateInBounds()),
         prepare_bones(new PrepareBones()),
         prepare_bounds(new PrepareBounds()),
         prepare_edges(new PrepareEdges()),
@@ -189,7 +188,6 @@ public class GPU
         prepare_transforms(new PrepareTransforms()),
         resolve_constraints(new ResolveConstraints()),
         root_hull_filter(new RootHullFilter()),
-        sat_collide(new SatCollide()),
         scan_int2_array(new ScanInt2Array()),
         scan_int4_array(new ScanInt4Array()),
         scan_int_array(new ScanIntArray()),
@@ -1044,37 +1042,6 @@ public class GPU
             .mem_arg(PrepareBones_k.Args.armatures, Buffer.armatures.memory)
             .mem_arg(PrepareBones_k.Args.hull_flags, Buffer.hull_flags.memory);
 
-        // narrow collision
-
-        Kernel.sat_collide.set_kernel(new SatCollide_k(command_queue_ptr))
-            .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
-            .mem_arg(SatCollide_k.Args.hulls, Buffer.hulls.memory)
-            .mem_arg(SatCollide_k.Args.element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(SatCollide_k.Args.hull_flags, Buffer.hull_flags.memory)
-            .mem_arg(SatCollide_k.Args.vertex_tables, Buffer.point_vertex_tables.memory)
-            .mem_arg(SatCollide_k.Args.points, Buffer.points.memory)
-            .mem_arg(SatCollide_k.Args.edges, Buffer.edges.memory)
-            .mem_arg(SatCollide_k.Args.point_reactions, Buffer.point_reactions.memory)
-            .mem_arg(SatCollide_k.Args.masses, Buffer.armature_mass.memory);
-
-        Kernel.sort_reactions.set_kernel(new SortReactions_k(command_queue_ptr))
-            .mem_arg(SortReactions_k.Args.point_reactions, Buffer.point_reactions.memory)
-            .mem_arg(SortReactions_k.Args.point_offsets, Buffer.point_offsets.memory);
-
-        Kernel.apply_reactions.set_kernel(new ApplyReactions_k(command_queue_ptr))
-            .mem_arg(ApplyReactions_k.Args.points, Buffer.points.memory)
-            .mem_arg(ApplyReactions_k.Args.anti_gravity, Buffer.point_anti_gravity.memory)
-            .mem_arg(ApplyReactions_k.Args.point_reactions, Buffer.point_reactions.memory)
-            .mem_arg(ApplyReactions_k.Args.point_offsets, Buffer.point_offsets.memory);
-
-        Kernel.move_armatures.set_kernel(new MoveArmatures_k(command_queue_ptr))
-            .mem_arg(MoveArmatures_k.Args.hulls, Buffer.hulls.memory)
-            .mem_arg(MoveArmatures_k.Args.armatures, Buffer.armatures.memory)
-            .mem_arg(MoveArmatures_k.Args.hull_tables, Buffer.armature_hull_table.memory)
-            .mem_arg(MoveArmatures_k.Args.element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(MoveArmatures_k.Args.hull_flags, Buffer.hull_flags.memory)
-            .mem_arg(MoveArmatures_k.Args.points, Buffer.points.memory);
-
         // movement
 
         Kernel.animate_armatures.set_kernel(new AnimateArmatures_k(command_queue_ptr))
@@ -1111,10 +1078,6 @@ public class GPU
             .mem_arg(AnimatePoints_k.Args.armatures, Buffer.armatures.memory)
             .mem_arg(AnimatePoints_k.Args.vertex_references, Buffer.vertex_references.memory)
             .mem_arg(AnimatePoints_k.Args.bones, Buffer.bone_instances.memory);
-
-        // broad collision
-
-        Kernel.finalize_candidates.set_kernel(new FinalizeCandidates_k(command_queue_ptr));
     }
 
     //#endregion
@@ -1441,36 +1404,6 @@ public class GPU
     public static void animate_points()
     {
         Kernel.animate_points.kernel.call(arg_long(GPU.core_memory.next_point()));
-    }
-
-    public static void finalize_candidates()
-    {
-        if (physics_buffer.get_candidate_count() <= 0)
-        {
-            return;
-        }
-
-        // create an empty buffer that the kernel will use to store finalized candidates
-        long final_buf_size = (long) CLSize.cl_int2 * physics_buffer.get_candidate_count();
-        var finals_data = cl_new_buffer(final_buf_size);
-
-        // the kernel will use this value as an internal atomic counter, always initialize to zero
-        int[] counter = new int[]{ 0 };
-        var counter_ptr = cl_new_int_arg_buffer(counter);
-
-        physics_buffer.set_final_size(final_buf_size);
-        physics_buffer.candidates = new GPUMemory(finals_data);
-
-        Kernel.finalize_candidates.kernel
-            .ptr_arg(FinalizeCandidates_k.Args.input_candidates, physics_buffer.candidate_counts.pointer())
-            .ptr_arg(FinalizeCandidates_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
-            .ptr_arg(FinalizeCandidates_k.Args.matches, physics_buffer.matches.pointer())
-            .ptr_arg(FinalizeCandidates_k.Args.used, physics_buffer.matches_used.pointer())
-            .ptr_arg(FinalizeCandidates_k.Args.counter, counter_ptr)
-            .ptr_arg(FinalizeCandidates_k.Args.final_candidates, physics_buffer.candidates.pointer())
-            .call(arg_long(physics_buffer.get_candidate_buffer_count()));
-
-        clReleaseMemObject(counter_ptr);
     }
 
     public static void sat_collide()

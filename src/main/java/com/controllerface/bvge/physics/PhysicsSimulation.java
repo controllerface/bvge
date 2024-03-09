@@ -11,6 +11,7 @@ import org.joml.Vector2f;
 import java.util.*;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
+import static org.lwjgl.opencl.CL10.clReleaseMemObject;
 
 public class PhysicsSimulation extends GameSystem
 {
@@ -48,7 +49,7 @@ public class PhysicsSimulation extends GameSystem
     private final GPUProgram locate_in_bounds = new LocateInBounds();
     private final GPUProgram scan_key_candidates = new ScanKeyCandidates();
     private final GPUProgram aabb_collide = new AabbCollide();
-
+    private final GPUProgram sat_collide = new SatCollide();
 
     private GPUKernel integrate_k;
     private GPUKernel scan_bounds_single_block_k;
@@ -64,6 +65,13 @@ public class PhysicsSimulation extends GameSystem
     private GPUKernel complete_candidates_multi_block_out_k;
 
     private GPUKernel aabb_collide_k;
+    private GPUKernel finalize_candidates_k;
+
+    private GPUKernel sat_collide_k;
+    private GPUKernel sort_reactions_k;
+    private GPUKernel apply_reactions_k;
+    private GPUKernel move_armatures_k;
+
 
     public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
     {
@@ -81,6 +89,7 @@ public class PhysicsSimulation extends GameSystem
         locate_in_bounds.init();
         scan_key_candidates.init();
         aabb_collide.init();
+        sat_collide.init();
 
         long integrate_k_ptr = integrate.kernel_ptr(GPU.Kernel.integrate);
         integrate_k = new Integrate_k(GPU.command_queue_ptr, integrate_k_ptr)
@@ -133,11 +142,47 @@ public class PhysicsSimulation extends GameSystem
         long complete_candidates_multi_block_out_k_ptr = scan_key_candidates.kernel_ptr(GPU.Kernel.complete_candidates_multi_block_out);
         complete_candidates_multi_block_out_k = new CompleteCandidatesMultiBlockOut_k(GPU.command_queue_ptr, complete_candidates_multi_block_out_k_ptr);
 
-        long ptr = aabb_collide.kernel_ptr(GPU.Kernel.aabb_collide);
-        aabb_collide_k = new AABBCollide_k(GPU.command_queue_ptr, ptr)
+        long aabb_collide_k_ptr = aabb_collide.kernel_ptr(GPU.Kernel.aabb_collide);
+        aabb_collide_k = new AABBCollide_k(GPU.command_queue_ptr, aabb_collide_k_ptr)
             .mem_arg(AABBCollide_k.Args.bounds, GPU.Buffer.aabb.memory)
             .mem_arg(AABBCollide_k.Args.bounds_bank_data, GPU.Buffer.aabb_key_table.memory)
             .mem_arg(AABBCollide_k.Args.hull_flags, GPU.Buffer.hull_flags.memory);
+
+        long finalize_candidates_k_ptr = locate_in_bounds.kernel_ptr(GPU.Kernel.finalize_candidates);
+        finalize_candidates_k = new FinalizeCandidates_k(GPU.command_queue_ptr, finalize_candidates_k_ptr);
+
+        long sat_collide_k_ptr = sat_collide.kernel_ptr(GPU.Kernel.sat_collide);
+        sat_collide_k = new SatCollide_k(GPU.command_queue_ptr, sat_collide_k_ptr)
+            .ptr_arg(SatCollide_k.Args.counter, GPU.atomic_counter_ptr)
+            .mem_arg(SatCollide_k.Args.hulls, GPU.Buffer.hulls.memory)
+            .mem_arg(SatCollide_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
+            .mem_arg(SatCollide_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
+            .mem_arg(SatCollide_k.Args.vertex_tables, GPU.Buffer.point_vertex_tables.memory)
+            .mem_arg(SatCollide_k.Args.points, GPU.Buffer.points.memory)
+            .mem_arg(SatCollide_k.Args.edges, GPU.Buffer.edges.memory)
+            .mem_arg(SatCollide_k.Args.point_reactions, GPU.Buffer.point_reactions.memory)
+            .mem_arg(SatCollide_k.Args.masses, GPU.Buffer.armature_mass.memory);
+
+        long sort_reactions_k_ptr = sat_collide.kernel_ptr(GPU.Kernel.sort_reactions);
+        sort_reactions_k = new SortReactions_k(GPU.command_queue_ptr, sort_reactions_k_ptr)
+            .mem_arg(SortReactions_k.Args.point_reactions, GPU.Buffer.point_reactions.memory)
+            .mem_arg(SortReactions_k.Args.point_offsets, GPU.Buffer.point_offsets.memory);
+
+        long apply_reactions_k_ptr = sat_collide.kernel_ptr(GPU.Kernel.apply_reactions);
+        apply_reactions_k = new ApplyReactions_k(GPU.command_queue_ptr, apply_reactions_k_ptr)
+            .mem_arg(ApplyReactions_k.Args.points, GPU.Buffer.points.memory)
+            .mem_arg(ApplyReactions_k.Args.anti_gravity, GPU.Buffer.point_anti_gravity.memory)
+            .mem_arg(ApplyReactions_k.Args.point_reactions, GPU.Buffer.point_reactions.memory)
+            .mem_arg(ApplyReactions_k.Args.point_offsets, GPU.Buffer.point_offsets.memory);
+
+        long move_armatures_k_ptr = sat_collide.kernel_ptr(GPU.Kernel.move_armatures);
+        move_armatures_k = new MoveArmatures_k(GPU.command_queue_ptr, move_armatures_k_ptr)
+            .mem_arg(MoveArmatures_k.Args.hulls, GPU.Buffer.hulls.memory)
+            .mem_arg(MoveArmatures_k.Args.armatures, GPU.Buffer.armatures.memory)
+            .mem_arg(MoveArmatures_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
+            .mem_arg(MoveArmatures_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
+            .mem_arg(MoveArmatures_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
+            .mem_arg(MoveArmatures_k.Args.points, GPU.Buffer.points.memory);
     }
 
     private void integrate(float delta_time)
@@ -382,7 +427,6 @@ public class PhysicsSimulation extends GameSystem
         physics_buffer.set_candidate_match_count(match_count);
     }
 
-
     private void aabb_collide()
     {
         long matches_buf_size = (long) CLSize.cl_int * physics_buffer.get_candidate_match_count();
@@ -406,6 +450,114 @@ public class PhysicsSimulation extends GameSystem
 
         int count = GPU.cl_read_pinned_int(GPU.atomic_counter_ptr);
         physics_buffer.set_candidate_count(count);
+    }
+
+    private void finalize_candidates()
+    {
+        if (physics_buffer.get_candidate_count() <= 0)
+        {
+            return;
+        }
+
+        // create an empty buffer that the kernel will use to store finalized candidates
+        long final_buf_size = (long) CLSize.cl_int2 * physics_buffer.get_candidate_count();
+        var finals_data = GPU.cl_new_buffer(final_buf_size);
+
+        // the kernel will use this value as an internal atomic counter, always initialize to zero
+        int[] counter = new int[]{ 0 };
+        var counter_ptr = GPU.cl_new_int_arg_buffer(counter);
+
+        physics_buffer.set_final_size(final_buf_size);
+        physics_buffer.candidates = new GPUMemory(finals_data);
+
+        finalize_candidates_k
+            .ptr_arg(FinalizeCandidates_k.Args.input_candidates, physics_buffer.candidate_counts.pointer())
+            .ptr_arg(FinalizeCandidates_k.Args.match_offsets, physics_buffer.candidate_offsets.pointer())
+            .ptr_arg(FinalizeCandidates_k.Args.matches, physics_buffer.matches.pointer())
+            .ptr_arg(FinalizeCandidates_k.Args.used, physics_buffer.matches_used.pointer())
+            .ptr_arg(FinalizeCandidates_k.Args.counter, counter_ptr)
+            .ptr_arg(FinalizeCandidates_k.Args.final_candidates, physics_buffer.candidates.pointer())
+            .call(arg_long(physics_buffer.get_candidate_buffer_count()));
+
+        GPU.release_buffer(counter_ptr);
+    }
+
+
+
+
+
+    private void sat_collide()
+    {
+        int candidates_size = (int) physics_buffer.get_final_size() / CLSize.cl_int;
+
+        // candidates are pairs of integer indices, so the global size is half the count
+        long[] global_work_size = new long[]{candidates_size / 2};
+
+        GPU.cl_zero_buffer(GPU.atomic_counter_ptr, CLSize.cl_int);
+
+        long max_point_count = physics_buffer.get_final_size()
+            * 2  // there are two bodies per collision pair
+            * 2; // assume worst case is 2 points per body
+
+        // sizes for the reaction buffers
+        long reaction_buf_size = (long) CLSize.cl_float2 * max_point_count;
+        long index_buf_size = (long) CLSize.cl_int * max_point_count;
+
+        if (reaction_buf_size > GPU.reaction_buf_size
+            || index_buf_size > GPU.index_buf_size)
+        {
+            GPU.reactions_in.release();
+            GPU.reactions_out.release();
+            GPU.reaction_index.release();
+
+            GPU.reaction_buf_size = reaction_buf_size;
+            GPU.index_buf_size = index_buf_size;
+
+            var reaction_data = GPU.cl_new_buffer(reaction_buf_size);
+            var reaction_data_out = GPU.cl_new_buffer(reaction_buf_size);
+            var index_data = GPU.cl_new_buffer(index_buf_size);
+
+            GPU.reactions_in = new GPUMemory(reaction_data);
+            GPU.reactions_out = new GPUMemory(reaction_data_out);
+            GPU.reaction_index = new GPUMemory(index_data);
+        }
+
+        sat_collide_k
+            .ptr_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.pointer())
+            .ptr_arg(SatCollide_k.Args.reactions, GPU.reactions_in.pointer())
+            .ptr_arg(SatCollide_k.Args.reaction_index, GPU.reaction_index.pointer())
+            .call(global_work_size);
+
+        int size = GPU.cl_read_pinned_int(GPU.atomic_counter_ptr);
+        physics_buffer.set_reaction_count(size);
+    }
+
+    private void scan_reactions()
+    {
+        GPU.scan_int_out(GPU.Buffer.point_reactions.memory.pointer(), GPU.Buffer.point_offsets.memory.pointer(), GPU.core_memory.next_point());
+        // it is important to zero out the reactions buffer after the scan. It will be reused during sorting
+        GPU.Buffer.point_reactions.clear();
+    }
+
+    private void sort_reactions()
+    {
+        sort_reactions_k
+            .ptr_arg(SortReactions_k.Args.reactions_in, GPU.reactions_in.pointer())
+            .ptr_arg(SortReactions_k.Args.reactions_out, GPU.reactions_out.pointer())
+            .ptr_arg(SortReactions_k.Args.reaction_index, GPU.reaction_index.pointer())
+            .call(arg_long(physics_buffer.get_reaction_count()));
+    }
+
+    private void apply_reactions()
+    {
+        apply_reactions_k
+            .ptr_arg(ApplyReactions_k.Args.reactions, GPU.reactions_out.pointer())
+            .call(arg_long(GPU.core_memory.next_point()));
+    }
+
+    private void move_armatures()
+    {
+        move_armatures_k.call(arg_long(GPU.core_memory.next_armature()));
     }
 
 
@@ -565,7 +717,7 @@ public class PhysicsSimulation extends GameSystem
 
         // This last step cleans up the match table, retaining only the used sections of the buffer.
         // After this step, the matches are ready for the narrow phase check.
-        GPU.finalize_candidates();
+        finalize_candidates();
 
         // If there were no candidate collisions, there's nothing left to do
         if (physics_buffer.candidates == null)
@@ -592,7 +744,7 @@ public class PhysicsSimulation extends GameSystem
 
         // Using the candidates generated by the AABB checks, we now do a full collision check. For any objects
         // that are found to be colliding, appropriate reaction vectors are generated and stored.
-        GPU.sat_collide();
+        sat_collide();
 
         // It is possible that after the check, no objects are found to be colliding. If that happens, exit.
         if (physics_buffer.get_reaction_count() == 0)
@@ -602,19 +754,19 @@ public class PhysicsSimulation extends GameSystem
 
         // Since we did have some reactions, we need to figure out what points were affected. This is needed
         // so that reactions can be accumulated in series and applied to the point they affect.
-        GPU.scan_reactions();
+        scan_reactions();
 
         // After the initial scan, the reaction buffers are sorted to match the layout computed in the scan
         // step. After this call, the buffers are in ascending order by point index.
-        GPU.sort_reactions();
+        sort_reactions();
 
         // Now all points with reactions are able to sum all their reactions and apply them, as well as
         // enforcing constraints on the velocities of the affected points.
-        GPU.apply_reactions();
+        apply_reactions();
 
         // Once all points have been relocated, all hulls are in their required positions for this frame.
         // Movements applied to hulls are now accumulated and applied to their parent armatures.
-        GPU.move_armatures();
+        move_armatures();
     }
 
     private void simulate(float dt)
