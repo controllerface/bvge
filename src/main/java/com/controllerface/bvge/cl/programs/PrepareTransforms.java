@@ -8,7 +8,7 @@ import static com.controllerface.bvge.cl.GPU.Kernel;
 public class PrepareTransforms extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(read_src("programs/prepare_transforms.cl"));
 

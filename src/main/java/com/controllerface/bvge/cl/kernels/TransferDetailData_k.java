@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class TransferDetailData_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.mesh_query;
-    private static final GPU.Kernel kernel = GPU.Kernel.transfer_detail_data;
-
     public enum Args
     {
         mesh_details,
@@ -15,8 +11,8 @@ public class TransferDetailData_k extends GPUKernel
         offset;
     }
 
-    public TransferDetailData_k(long command_queue_ptr)
+    public TransferDetailData_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

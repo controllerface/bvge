@@ -8,7 +8,7 @@ import static com.controllerface.bvge.cl.GPU.Kernel;
 public class ScanKeyCandidates extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(func_exclusive_scan);
         src.add(read_src("programs/scan_key_candidates.cl"));

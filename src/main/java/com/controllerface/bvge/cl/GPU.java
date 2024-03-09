@@ -111,7 +111,7 @@ public class GPU
      * startup. Kernels of this size should be used sparingly, favor making bulk calls. However, there are
      * specific use cases where it makes sense to perform a singular operation on GPU memory.
      */
-    private static final long[] global_single_size = arg_long(1);
+    public static final long[] global_single_size = arg_long(1);
 
     //#endregion
 
@@ -120,7 +120,7 @@ public class GPU
     /**
      * The Open CL command queue that this class uses to issue GPU commands.
      */
-    private static long command_queue_ptr;
+    public static long command_queue_ptr;
 
     /**
      * The Open CL context associated with this class.
@@ -312,7 +312,7 @@ public class GPU
 
     //#region Buffer Objects
 
-    private enum Buffer
+    public enum Buffer
     {
         /*
         Reference objects:
@@ -717,7 +717,7 @@ public class GPU
 
         ;
 
-        GPUMemory memory;
+        public GPUMemory memory;
         final int size;
         int length;
 
@@ -1373,18 +1373,26 @@ public class GPU
 
         // mesh query
 
-        Kernel.transfer_detail_data.set_kernel(new TransferDetailData_k(command_queue_ptr));
-        Kernel.calculate_batch_offsets.set_kernel(new CalculateBatchOffsets_k(command_queue_ptr));
-        Kernel.count_mesh_batches.set_kernel(new CountMeshBatches_k(command_queue_ptr));
+        long ptr_1 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.transfer_detail_data);
+        Kernel.transfer_detail_data.set_kernel(new TransferDetailData_k(command_queue_ptr, ptr_1));
 
-        Kernel.count_mesh_instances.set_kernel(new CountMeshInstances_k(command_queue_ptr))
+        long ptr_2 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.calculate_batch_offsets);
+        Kernel.calculate_batch_offsets.set_kernel(new CalculateBatchOffsets_k(command_queue_ptr, ptr_2));
+
+        long ptr_3 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.count_mesh_batches);
+        Kernel.count_mesh_batches.set_kernel(new CountMeshBatches_k(command_queue_ptr, ptr_3));
+
+        long ptr_4 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.count_mesh_instances);
+        Kernel.count_mesh_instances.set_kernel(new CountMeshInstances_k(command_queue_ptr, ptr_4))
             .mem_arg(CountMeshInstances_k.Args.hull_mesh_ids, Buffer.hull_mesh_ids.memory);
 
-        Kernel.write_mesh_details.set_kernel(new WriteMeshDetails_k(command_queue_ptr))
+        long ptr_5 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.write_mesh_details);
+        Kernel.write_mesh_details.set_kernel(new WriteMeshDetails_k(command_queue_ptr, ptr_5))
             .mem_arg(WriteMeshDetails_k.Args.hull_mesh_ids, Buffer.hull_mesh_ids.memory)
             .mem_arg(WriteMeshDetails_k.Args.mesh_references, Buffer.mesh_references.memory);
 
-        Kernel.transfer_render_data.set_kernel(new TransferRenderData_k(command_queue_ptr))
+        long ptr_6 = Program.mesh_query.gpu.kernel_ptr(GPU.Kernel.transfer_render_data);
+        Kernel.transfer_render_data.set_kernel(new TransferRenderData_k(command_queue_ptr, ptr_6))
             .mem_arg(TransferRenderData_k.Args.hull_element_tables, Buffer.hull_element_tables.memory)
             .mem_arg(TransferRenderData_k.Args.hull_mesh_ids, Buffer.hull_mesh_ids.memory)
             .mem_arg(TransferRenderData_k.Args.mesh_references, Buffer.mesh_references.memory)

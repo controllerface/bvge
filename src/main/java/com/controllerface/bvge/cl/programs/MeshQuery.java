@@ -8,7 +8,7 @@ import static com.controllerface.bvge.cl.CLUtils.read_src;
 public class MeshQuery extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(read_src("programs/mesh_query.cl"));
 

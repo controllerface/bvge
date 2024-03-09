@@ -189,8 +189,6 @@ public abstract class GPUKernel
     }
 
 
-
-
     /**
      * Call this kernel, executing it on the GPU. This variant lets the GPu decide the best size for the local work
      * group. This is useful for cases where the work does not depend on properly sized local groups.

@@ -8,7 +8,7 @@ import static com.controllerface.bvge.cl.GPU.Kernel;
 public class ScanDeletes extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(const_hull_flags);
         src.add(func_exclusive_scan);

@@ -8,7 +8,7 @@ import static com.controllerface.bvge.cl.GPU.Kernel;
 public class LocateInBounds extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(prag_int32_base_atomics);
         src.add(func_do_bounds_intersect);

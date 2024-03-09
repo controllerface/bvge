@@ -8,7 +8,7 @@ import static com.controllerface.bvge.cl.GPU.Kernel;
 public class PreparePoints extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(const_hull_flags);
         src.add(read_src("programs/prepare_points.cl"));

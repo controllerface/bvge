@@ -8,7 +8,7 @@ import static com.controllerface.bvge.cl.CLUtils.read_src;
 public class AnimateHulls extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(const_hull_flags);
         src.add(const_identity_matrix);

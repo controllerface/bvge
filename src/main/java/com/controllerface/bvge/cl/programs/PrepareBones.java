@@ -8,7 +8,7 @@ import static com.controllerface.bvge.cl.GPU.Kernel;
 public class PrepareBones extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(func_matrix_transform);
         src.add(read_src("programs/prepare_bones.cl"));

@@ -2,6 +2,8 @@ package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.programs.MeshQuery;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.geometry.Models;
@@ -53,11 +55,14 @@ public class HumanoidRenderer extends GameSystem
     private long offsets;
     private long mesh_transfer;
 
+    private GPUProgram mesh_query;
+
     public HumanoidRenderer(ECS ecs)
     {
         super(ecs);
         this.shader = Assets.load_shader("poly_model.glsl");
         init();
+        init_kernels();
     }
 
     private void init()
@@ -99,6 +104,12 @@ public class HumanoidRenderer extends GameSystem
         GPU.share_memory(vertex_b);
         GPU.share_memory(command_b);
         GPU.share_memory(texture_uv_b);
+    }
+
+    private void init_kernels()
+    {
+        mesh_query = new MeshQuery();
+        mesh_query.init();
     }
 
     @Override

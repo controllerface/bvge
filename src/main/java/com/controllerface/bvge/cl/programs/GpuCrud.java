@@ -8,7 +8,7 @@ import static com.controllerface.bvge.cl.GPU.Kernel;
 public class GpuCrud extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(func_rotate_point);
         src.add(read_src("programs/gpu_crud.cl"));
