@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class CompleteBoundsMultiBlock_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.scan_key_bank;
-    private static final GPU.Kernel kernel = GPU.Kernel.complete_bounds_multi_block;
-
     public enum Args
     {
         bounds_bank_data,
@@ -17,8 +13,8 @@ public class CompleteBoundsMultiBlock_k extends GPUKernel
         n;
     }
 
-    public CompleteBoundsMultiBlock_k(long command_queue_ptr)
+    public CompleteBoundsMultiBlock_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.gpu.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

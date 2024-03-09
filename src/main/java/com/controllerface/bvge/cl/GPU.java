@@ -144,20 +144,20 @@ public class GPU
      * There are several kernels that use an atomic counter, so rather than re-allocate a new
      * buffer for every call, this buffer is reused in all kernels that need a counter.
      */
-    private static long atomic_counter_ptr;
+    public static long atomic_counter_ptr;
 
     /**
      * Kernels that interact with the uniform grid key bank can reuse these buffers every tick
      * rather than creating and destroying them, saving some driver overhead.
      */
-    private static long counts_data_ptr;
-    private static long offsets_data_ptr;
+    public static long counts_data_ptr;
+    public static long offsets_data_ptr;
 
     /**
      * The key count buffer needs to be cleared at certain points each tick, so keeping track
      * of the buffer size makes that process simple.
      */
-    private static long counts_buf_size;
+    public static long counts_buf_size;
 
     /**
      * These key properties of the uniform grid never change, so they are cached here for easy
@@ -183,8 +183,6 @@ public class GPU
         aabb_collide(new AabbCollide()),
         animate_hulls(new AnimateHulls()),
         build_key_map(new BuildKeyMap()),
-        generate_keys(new GenerateKeys()),
-        integrate(new Integrate()),
         locate_in_bounds(new LocateInBounds()),
         prepare_bones(new PrepareBones()),
         prepare_bounds(new PrepareBounds()),
@@ -194,12 +192,10 @@ public class GPU
         resolve_constraints(new ResolveConstraints()),
         root_hull_filter(new RootHullFilter()),
         sat_collide(new SatCollide()),
-        scan_deletes(new ScanDeletes()),
         scan_int2_array(new ScanInt2Array()),
         scan_int4_array(new ScanInt4Array()),
         scan_int_array(new ScanIntArray()),
         scan_int_array_out(new ScanIntArrayOut()),
-        scan_key_bank(new ScanKeyBank()),
         scan_key_candidates(new ScanKeyCandidates()),
 
         ;
@@ -1019,12 +1015,6 @@ public class GPU
         Kernel.scan_candidates_multi_block_out.set_kernel(new ScanCandidatesMultiBlockOut_k(command_queue_ptr));
         Kernel.complete_candidates_multi_block_out.set_kernel(new CompleteCandidatesMultiBlockOut_k(command_queue_ptr));
 
-        // in-place uniform grid key bounds scan
-
-        Kernel.scan_bounds_single_block.set_kernel(new ScanBoundsSingleBlock_k(command_queue_ptr));
-        Kernel.scan_bounds_multi_block.set_kernel(new ScanBoundsMultiBlock_k(command_queue_ptr));
-        Kernel.complete_bounds_multi_block.set_kernel(new CompleteBoundsMultiBlock_k(command_queue_ptr));
-
         // constraint solver
 
         Kernel.resolve_constraints.set_kernel(new ResolveConstraints_k(command_queue_ptr))
@@ -1131,25 +1121,7 @@ public class GPU
             .mem_arg(AnimatePoints_k.Args.vertex_references, Buffer.vertex_references.memory)
             .mem_arg(AnimatePoints_k.Args.bones, Buffer.bone_instances.memory);
 
-        Kernel.integrate.set_kernel(new Integrate_k(command_queue_ptr))
-            .mem_arg(Integrate_k.Args.hulls, Buffer.hulls.memory)
-            .mem_arg(Integrate_k.Args.armatures, Buffer.armatures.memory)
-            .mem_arg(Integrate_k.Args.armature_flags, Buffer.armature_flags.memory)
-            .mem_arg(Integrate_k.Args.element_tables, Buffer.hull_element_tables.memory)
-            .mem_arg(Integrate_k.Args.armature_accel, Buffer.armature_accel.memory)
-            .mem_arg(Integrate_k.Args.hull_rotations, Buffer.hull_rotation.memory)
-            .mem_arg(Integrate_k.Args.points, Buffer.points.memory)
-            .mem_arg(Integrate_k.Args.bounds, Buffer.aabb.memory)
-            .mem_arg(Integrate_k.Args.bounds_index_data, Buffer.aabb_index.memory)
-            .mem_arg(Integrate_k.Args.bounds_bank_data, Buffer.aabb_key_table.memory)
-            .mem_arg(Integrate_k.Args.hull_flags, Buffer.hull_flags.memory)
-            .mem_arg(Integrate_k.Args.anti_gravity, Buffer.point_anti_gravity.memory);
-
         // broad collision
-
-        Kernel.generate_keys.set_kernel(new GenerateKeys_k(command_queue_ptr))
-            .mem_arg(GenerateKeys_k.Args.bounds_index_data, Buffer.aabb_index.memory)
-            .mem_arg(GenerateKeys_k.Args.bounds_bank_data, Buffer.aabb_key_table.memory);
 
         Kernel.build_key_map.set_kernel(new BuildKeyMap_k(command_queue_ptr))
             .mem_arg(BuildKeyMap_k.Args.bounds_index_data, Buffer.aabb_index.memory)
@@ -1194,7 +1166,7 @@ public class GPU
         return clCreateBuffer(context_ptr, FLAGS_WRITE_CPU_COPY, src, null);
     }
 
-    private static long cl_new_cpu_copy_buffer(float[] src)
+    public static long cl_new_cpu_copy_buffer(float[] src)
     {
         return clCreateBuffer(context_ptr, FLAGS_READ_CPU_COPY, src, null);
     }
@@ -1503,25 +1475,6 @@ public class GPU
 
     //#endregion
 
-    //#region CPU Create/Read/Update/Delete Functions
-
-    // todo: implement armature rotations and update this
-    public static void rotate_hull(int hull_index, float angle)
-    {
-//        var pnt_index = Pointer.to(arg_int(hull_index));
-//        var pnt_angle = Pointer.to(arg_float(angle));
-//
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 0, CLSize.cl_mem, Memory.hulls.gpu.pointer());
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 1, CLSize.cl_mem, Memory.hull_element_table.gpu.pointer());
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 2, CLSize.cl_mem, Memory.points.gpu.pointer());
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 3, CLSize.cl_int, pnt_index);
-//        clSetKernelArg(_k.get(Kernel.rotate_hull), 4, CLSize.cl_float, pnt_angle);
-//
-//        k_call(command_queue, _k.get(Kernel.rotate_hull), global_single_size);
-    }
-
-    //#endregion
-
     //#region Physics Simulation
 
     public static void animate_armatures(float dt)
@@ -1539,60 +1492,6 @@ public class GPU
     public static void animate_points()
     {
         Kernel.animate_points.kernel.call(arg_long(GPU.core_memory.next_point()));
-    }
-
-    public static void integrate(float delta_time, UniformGrid uniform_grid)
-    {
-        float[] args =
-            {
-                delta_time,
-                uniform_grid.x_spacing,
-                uniform_grid.y_spacing,
-                uniform_grid.getX_origin(),
-                uniform_grid.getY_origin(),
-                uniform_grid.width,
-                uniform_grid.height,
-                (float) x_subdivisions,
-                (float) y_subdivisions,
-                physics_buffer.get_gravity_x(),
-                physics_buffer.get_gravity_y(),
-                physics_buffer.get_damping()
-            };
-
-        var arg_mem_ptr = cl_new_cpu_copy_buffer(args);
-
-        Kernel.integrate.kernel
-            .ptr_arg(Integrate_k.Args.args, arg_mem_ptr)
-            .call(arg_long(GPU.core_memory.next_hull()));
-
-        clReleaseMemObject(arg_mem_ptr);
-    }
-
-    public static void calculate_bank_offsets(UniformGrid uniform_grid)
-    {
-        int bank_size = scan_key_bounds(Buffer.aabb_key_table.memory.pointer(), GPU.core_memory.next_hull());
-        uniform_grid.resizeBank(bank_size);
-    }
-
-    public static void generate_keys(UniformGrid uniform_grid)
-    {
-        if (uniform_grid.get_key_bank_size() < 1)
-        {
-            return;
-        }
-
-        long bank_buf_size = (long) CLSize.cl_int * uniform_grid.get_key_bank_size();
-        long bank_data_ptr = cl_new_buffer(bank_buf_size);
-
-        // set the counts buffer to all zeroes
-        cl_zero_buffer(counts_data_ptr, counts_buf_size);
-
-        physics_buffer.key_bank = new GPUMemory(bank_data_ptr);
-
-        Kernel.generate_keys.kernel
-            .ptr_arg(GenerateKeys_k.Args.key_bank, physics_buffer.key_bank.pointer())
-            .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
-            .call(arg_long(GPU.core_memory.next_hull()));
     }
 
     public static void calculate_map_offsets()
@@ -1810,7 +1709,7 @@ public class GPU
 
     //#region Exclusive scan variants
 
-    private static void scan_int(long data_ptr, int n)
+    public static void scan_int(long data_ptr, int n)
     {
         int k = work_group_count(n);
         if (k == 1)
@@ -1862,18 +1761,6 @@ public class GPU
         }
     }
 
-    private static int scan_key_bounds(long data_ptr, int n)
-    {
-        int k = work_group_count(n);
-        if (k == 1)
-        {
-            return scan_bounds_single_block(data_ptr, n);
-        }
-        else
-        {
-            return scan_bounds_multi_block(data_ptr, n, k);
-        }
-    }
 
     private static int scan_key_candidates(long data_ptr, long o_data_ptr, int n)
     {
@@ -2102,54 +1989,6 @@ public class GPU
         return cl_read_pinned_int(atomic_counter_ptr);
     }
 
-    private static int scan_bounds_single_block(long data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-
-        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
-
-        Kernel.scan_bounds_single_block.kernel
-            .ptr_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, data_ptr)
-            .ptr_arg(ScanBoundsSingleBlock_k.Args.sz, atomic_counter_ptr)
-            .loc_arg(ScanBoundsSingleBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanBoundsSingleBlock_k.Args.n, n)
-            .call(local_work_default, local_work_default);
-
-        return cl_read_pinned_int(atomic_counter_ptr);
-    }
-
-    private static int scan_bounds_multi_block(long data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-        long gx = k * max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
-        var p_data = cl_new_buffer(part_buf_size);
-
-        Kernel.scan_bounds_multi_block.kernel
-            .ptr_arg(ScanBoundsMultiBlock_k.Args.bounds_bank_data, data_ptr)
-            .loc_arg(ScanBoundsMultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanBoundsMultiBlock_k.Args.part, p_data)
-            .set_arg(ScanBoundsMultiBlock_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        scan_int(p_data, part_size);
-
-        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
-
-        Kernel.complete_bounds_multi_block.kernel
-            .ptr_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, data_ptr)
-            .ptr_arg(CompleteBoundsMultiBlock_k.Args.sz, atomic_counter_ptr)
-            .loc_arg(CompleteBoundsMultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteBoundsMultiBlock_k.Args.part, p_data)
-            .set_arg(CompleteBoundsMultiBlock_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        clReleaseMemObject(p_data);
-
-        return cl_read_pinned_int(atomic_counter_ptr);
-    }
 
     //#endregion
 
@@ -2201,11 +2040,6 @@ public class GPU
         counts_buf_size = (long) CLSize.cl_int * key_directory_length;
         counts_data_ptr = cl_new_buffer(counts_buf_size);
         offsets_data_ptr = cl_new_buffer(counts_buf_size);
-
-        Kernel.generate_keys.kernel
-            .ptr_arg(GenerateKeys_k.Args.key_counts, counts_data_ptr)
-            .set_arg(GenerateKeys_k.Args.x_subdivisions, x_subdivisions)
-            .set_arg(GenerateKeys_k.Args.key_count_length, key_directory_length);
 
         Kernel.build_key_map.kernel
             .ptr_arg(BuildKeyMap_k.Args.key_offsets, offsets_data_ptr)

@@ -670,4 +670,19 @@ public class GPUCoreMemory
         armature_index      -= (shift_counts[4]);
         armature_bone_index -= (shift_counts[5]);
     }
+
+    // todo: implement armature rotations and update this
+    public static void rotate_hull(int hull_index, float angle)
+    {
+//        var pnt_index = Pointer.to(arg_int(hull_index));
+//        var pnt_angle = Pointer.to(arg_float(angle));
+//
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 0, CLSize.cl_mem, Memory.hulls.gpu.pointer());
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 1, CLSize.cl_mem, Memory.hull_element_table.gpu.pointer());
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 2, CLSize.cl_mem, Memory.points.gpu.pointer());
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 3, CLSize.cl_int, pnt_index);
+//        clSetKernelArg(_k.get(Kernel.rotate_hull), 4, CLSize.cl_float, pnt_angle);
+//
+//        k_call(command_queue, _k.get(Kernel.rotate_hull), global_single_size);
+    }
 }
