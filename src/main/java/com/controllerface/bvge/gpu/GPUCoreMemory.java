@@ -1,61 +1,17 @@
 package com.controllerface.bvge.gpu;
 
+import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 import com.controllerface.bvge.cl.GPUProgram;
 import com.controllerface.bvge.cl.kernels.*;
-import com.controllerface.bvge.cl.programs.GpuCrud;
+import com.controllerface.bvge.cl.programs.GPUCrud;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_float2;
 import static com.controllerface.bvge.cl.CLUtils.arg_float4;
+import static org.lwjgl.opencl.CL10.clReleaseMemObject;
 
-/**
- * The "Reference Memory" interface
- * -
- * Calling code uses this object as a single access point to the core memory that
- * is involved in the game engine's operation, specifically for data that is to be
- * considered "reference data" for example, the vertices and faces that make up a
- * model, the bone information for animations, etc. The memory being used is resident
- * on the GPU, so this class is essentially a direct interface into GPU memory.
- * This class keeps track of the number of "top-level" memory objects, which are
- * generally defined as any "logical object" that is composed of various primitive
- * values.
- * Typically, a method is exposed, that accepts as parameters, the various
- * components that describe an object. These methods in turn delegate the memory
- * access calls to the GPU APIs. In practice, this means that the actual buffers
- * that store the components of created objects may reside in separate memory
- * regions depending on the layout and type of the data being stored.
- * For example, consider an object that has two float components and one integer
- * component, a method to create this object may have a signature like this:
- * -
- *    foo(float x, float y, int i)
- * -
- * The GPU implementation may store all three of these values in one continuous
- * block of memory, or it may store the x and y components together, and the int
- * value in a separate memory segment, or even store all three in completely
- * different sections of memory. As such, this class cannot make too many
- * assumptions about the memory layout of all the various components. However,
- * each top-level object does have one known "memory width" that is used to keep
- * track of the number of objects of that type that are currently stored in
- * memory.
- * For these base objects, they will always be laid out in a continuous manner.
- * Just note that this width generally applies to one or a small number of "base"
- * properties of the object, and any extra properties or meta-data related to the
- * object will use separate, but index-aligned, memory space. The best existing
- * example of this concept are the HULL object type. The "main" value tracked for
- * these objects is represented on the GPU as a float4, with the first two values
- * (x,y) designating the world-space position of the hull center, and the second
- * two values (z,w) defining the width and height scaling of the hull. This base
- * set of values has a width of 4, so the hull index increments by 4 when each new
- * hull is created. Hulls however also have other data, for example an indexing
- * table that defines the start/end indices in the point and edge buffers of the
- * points and edges that are part of the hull. These values are stored in buffers
- * that align with the hull buffer, so that an index into one buffer can be used
- * interchangeably with the buffers that store all the other components of the
- * object, making access to a single "object" possible by indexing into all the
- * aligned arrays with the same index.
- */
-public class GPUReferenceMemory
+public class GPUCoreMemory
 {
     private int hull_index            = 0;
     private int point_index           = 0;
@@ -74,7 +30,7 @@ public class GPUReferenceMemory
     private int bone_channel_index    = 0;
     private int animation_index       = 0;
 
-    private final GPUProgram gpu_crud = new GpuCrud();
+    private final GPUProgram gpu_crud = new GPUCrud();
 
     private GPUKernel create_animation_timings_k;
     private GPUKernel create_armature_k;
@@ -93,7 +49,11 @@ public class GPUReferenceMemory
     private GPUKernel create_texture_uv_k;
     private GPUKernel create_vertex_reference_k;
 
-    public GPUReferenceMemory()
+    private GPUKernel read_position;
+    private GPUKernel update_accel;
+    private GPUKernel set_bone_channel_table;
+
+    public GPUCoreMemory()
     {
         init();
     }
@@ -185,6 +145,19 @@ public class GPUReferenceMemory
         long create_animation_timings_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_animation_timings);
         create_animation_timings_k = new CreateAnimationTimings_k(GPU.command_queue_ptr, create_animation_timings_k_ptr)
             .mem_arg(CreateAnimationTimings_k.Args.animation_timings, GPU.Buffer.animation_timings.memory);
+
+
+        long ptr1 = gpu_crud.kernel_ptr(GPU.Kernel.read_position);
+        read_position = new ReadPosition_k(GPU.command_queue_ptr, ptr1)
+            .mem_arg(ReadPosition_k.Args.armatures, GPU.Buffer.armatures.memory);
+
+        long ptr2 = gpu_crud.kernel_ptr(GPU.Kernel.update_accel);
+        update_accel = new UpdateAccel_k(GPU.command_queue_ptr, ptr2)
+            .mem_arg(UpdateAccel_k.Args.armature_accel, GPU.Buffer.armature_accel.memory);
+
+        long ptr3 = gpu_crud.kernel_ptr(GPU.Kernel.set_bone_channel_table);
+        set_bone_channel_table = new SetBoneChannelTable_k(GPU.command_queue_ptr, ptr3)
+            .mem_arg(SetBoneChannelTable_k.Args.bone_channel_tables, GPU.Buffer.bone_channel_tables.memory);
     }
 
     // index methods
@@ -407,6 +380,41 @@ public class GPUReferenceMemory
 
         return model_transform_index++;
     }
+
+    public void set_bone_channel_table(int bone_channel_index, int[] channel_table)
+    {
+        set_bone_channel_table
+            .set_arg(SetBoneChannelTable_k.Args.target, bone_channel_index)
+            .set_arg(SetBoneChannelTable_k.Args.new_bone_channel_table, channel_table)
+            .call(GPU.global_single_size);
+    }
+
+    public void update_accel(int armature_index, float acc_x, float acc_y)
+    {
+        update_accel
+            .set_arg(UpdateAccel_k.Args.target, armature_index)
+            .set_arg(UpdateAccel_k.Args.new_value, arg_float2(acc_x, acc_y))
+            .call(GPU.global_single_size);
+    }
+
+    public float[] read_position(int armature_index)
+    {
+        var result_data = GPU.cl_new_pinned_buffer(CLSize.cl_float2);
+        GPU.cl_zero_buffer(result_data, CLSize.cl_float2);
+
+        read_position
+            .ptr_arg(ReadPosition_k.Args.output, result_data)
+            .set_arg(ReadPosition_k.Args.target, armature_index)
+            .call(GPU.global_single_size);
+
+        float[] result = GPU.cl_read_pinned_float_buffer(result_data, CLSize.cl_float2, 2);
+        GPU.release_buffer(result_data);
+        return result;
+    }
+
+
+
+
 
     public void compact_buffers(int edge_shift,
                                        int bone_shift,

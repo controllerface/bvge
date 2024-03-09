@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class CreateBoneChannel_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.gpu_crud;
-    private static final GPU.Kernel kernel = GPU.Kernel.create_bone_channel;
-
     public enum Args
     {
         animation_timing_indices,

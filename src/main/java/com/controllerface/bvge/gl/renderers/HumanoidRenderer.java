@@ -18,7 +18,6 @@ import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
-import static org.lwjgl.opencl.CL10.clReleaseMemObject;
 import static org.lwjgl.opengl.GL45C.*;
 
 public class HumanoidRenderer extends GameSystem
@@ -159,7 +158,7 @@ public class HumanoidRenderer extends GameSystem
         GPU.clear_buffer(total_ptr, CLSize.cl_int);
         GPU.clear_buffer(mesh_transfer_ptr, ELEMENT_BUFFER_SIZE * 2);
 
-        long[] hull_count = arg_long(GPU.ref_memory.next_hull());
+        long[] hull_count = arg_long(GPU.core_memory.next_hull());
 
         count_instances_k.call(hull_count);
 

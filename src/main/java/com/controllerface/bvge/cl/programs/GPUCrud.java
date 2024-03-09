@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.GPUProgram;
 import static com.controllerface.bvge.cl.CLUtils.read_src;
 import static com.controllerface.bvge.cl.GPU.Kernel;
 
-public class GpuCrud extends GPUProgram
+public class GPUCrud extends GPUProgram
 {
     @Override
     public void init()

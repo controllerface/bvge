@@ -86,7 +86,7 @@ public class PhysicsSimulation extends GameSystem
 
             if (vectorBuffer.x != 0f || vectorBuffer.y != 0)
             {
-                GPU.update_accel(armature.index(), vectorBuffer.x, vectorBuffer.y);
+                GPU.core_memory.update_accel(armature.index(), vectorBuffer.x, vectorBuffer.y);
             }
 
             // todo: implement this for armatures

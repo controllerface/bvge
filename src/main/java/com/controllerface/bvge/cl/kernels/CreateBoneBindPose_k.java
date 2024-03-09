@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class CreateBoneBindPose_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.gpu_crud;
-    private static final GPU.Kernel kernel = GPU.Kernel.create_bone_bind_pose;
-
     public enum Args
     {
         bone_bind_poses,

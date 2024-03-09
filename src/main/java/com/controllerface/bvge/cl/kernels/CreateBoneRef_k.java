@@ -1,12 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class CreateBoneRef_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.gpu_crud;
-    private static final GPU.Kernel kernel = GPU.Kernel.create_bone_reference;
 
     public enum Args
     {
