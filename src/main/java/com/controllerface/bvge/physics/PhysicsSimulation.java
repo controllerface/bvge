@@ -863,7 +863,6 @@ public class PhysicsSimulation extends GameSystem
 
         this.accumulator += dt;
         int sub_ticks = 0;
-        float skipped = 0f;
         while (this.accumulator >= TICK_RATE)
         {
             for (int i = 0; i < TARGET_SUB_STEPS; i++)
@@ -899,15 +898,10 @@ public class PhysicsSimulation extends GameSystem
                 }
                 else
                 {
-                    skipped = this.accumulator;
+                    if (accumulator > 0.000000f) System.out.printf("skipped: %f\n", accumulator);
                     this.accumulator = 0;
                 }
             }
-        }
-
-        if (skipped > 0f)
-        {
-            System.out.println("skipped: " + skipped);
         }
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
