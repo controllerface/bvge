@@ -1,17 +1,16 @@
 package com.controllerface.bvge.cl.programs;
 
+import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 
-import static com.controllerface.bvge.cl.CLUtils.read_src;
-import static com.controllerface.bvge.cl.GPU.Kernel;
-
-public class GpuCrud extends GPUProgram
+public class GPUCrud extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(func_rotate_point);
-        src.add(read_src("programs/gpu_crud.cl"));
+        src.add(CLUtils.read_src("programs/gpu_crud.cl"));
 
         make_program();
 

@@ -1,10 +1,7 @@
 package com.controllerface.bvge.gl;
 
 import org.joml.*;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
-
-import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL20.*;
 

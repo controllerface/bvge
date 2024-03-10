@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.controllerface.bvge.cl.CLUtils.read_src;
-import static com.controllerface.bvge.cl.GPU.Kernel;
-import static com.controllerface.bvge.cl.GPU.gpu_p;
-import static org.lwjgl.opencl.CL12.clReleaseKernel;
 import static org.lwjgl.opencl.CL12.clReleaseProgram;
 
 /**
@@ -89,14 +86,14 @@ public abstract class GPUProgram
     /**
      * Signals the program implementation to compile itself, and load any kernels into the kernel map.
      */
-    protected abstract void init();
+    public abstract void init();
 
     /**
      * Compiles this program, making the kernels it provides ready for use in an Open CL context.
      */
     protected void make_program()
     {
-        this.program_ptr = gpu_p(this.src);
+        this.program_ptr = GPU.build_gpu_program(this.src);
     }
 
     /**
@@ -120,7 +117,12 @@ public abstract class GPUProgram
         clReleaseProgram(program_ptr);
         for (long kernel_ptr : kernels.values())
         {
-            clReleaseKernel(kernel_ptr);
+            GPU.cl_release_buffer(kernel_ptr);
         }
+    }
+
+    public long kernel_ptr(Kernel kernel)
+    {
+        return kernels.get(kernel);
     }
 }

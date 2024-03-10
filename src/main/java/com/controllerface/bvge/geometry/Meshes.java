@@ -3,7 +3,10 @@ package com.controllerface.bvge.geometry;
 import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.cl.GPU;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Meshes
@@ -25,7 +28,7 @@ public class Meshes
 
     private static Mesh generate_circle_mesh()
     {
-        var vert_ref_id = GPU.Memory.new_vertex_reference(0,0, new float[4], new int[2]);
+        var vert_ref_id = GPU.core_memory.new_vertex_reference(0,0, new float[4], new int[2]);
         var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList(), new String[0], new float[0]) };
         var faces = new Face[]{ new Face(-1,0, 0, 0) };
         var hull = new int[]{ 0 };
@@ -44,13 +47,13 @@ public class Meshes
 
         float x1 = -halfSize;
         float y1 = 0;
-        int v1 = GPU.Memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
+        int v1 = GPU.core_memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
         float x2 = halfSize;
         float y2 = 0;
-        int v2 = GPU.Memory.new_vertex_reference(x2, y2, new float[4], new int[2]);
+        int v2 = GPU.core_memory.new_vertex_reference(x2, y2, new float[4], new int[2]);
         float x3 = 0f;
         float y3 = 0.866f;
-        int v3 = GPU.Memory.new_vertex_reference(x3, y3, new float[4], new int[2]);
+        int v3 = GPU.core_memory.new_vertex_reference(x3, y3, new float[4], new int[2]);
 
         vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList(), new String[0], new float[0]);
         vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList(), new String[0], new float[0]);
@@ -75,16 +78,16 @@ public class Meshes
 
         float x1 = -halfSize;
         float y1 = -halfSize;
-        int v1 = GPU.Memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
+        int v1 = GPU.core_memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
         float x2 = halfSize;
         float y2 = -halfSize;
-        int v2 = GPU.Memory.new_vertex_reference(x2, y2, new float[4], new int[2]);
+        int v2 = GPU.core_memory.new_vertex_reference(x2, y2, new float[4], new int[2]);
         float x3 = halfSize;
         float y3 = halfSize;
-        int v3 = GPU.Memory.new_vertex_reference(x3, y3, new float[4], new int[2]);
+        int v3 = GPU.core_memory.new_vertex_reference(x3, y3, new float[4], new int[2]);
         float x4 = -halfSize;
         float y4 = halfSize;
-        int v4 = GPU.Memory.new_vertex_reference(x4, y4, new float[4], new int[2]);
+        int v4 = GPU.core_memory.new_vertex_reference(x4, y4, new float[4], new int[2]);
 
         vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList(), new String[0], new float[0]);
         vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList(), new String[0], new float[0]);
@@ -111,19 +114,19 @@ public class Meshes
 
         float x1 = -halfSize;
         float y1 = -halfSize;
-        int v1 = GPU.Memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
+        int v1 = GPU.core_memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
         float x2 = halfSize;
         float y2 = -halfSize;
-        int v2 = GPU.Memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
+        int v2 = GPU.core_memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
         float x3 = halfSize;
         float y3 = halfSize;
-        int v3 = GPU.Memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
+        int v3 = GPU.core_memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
         float x4 = 0;
         float y4 = halfSize * 2;
-        int v4 = GPU.Memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
+        int v4 = GPU.core_memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
         float x5 = -halfSize;
         float y5 = halfSize;
-        int v5 = GPU.Memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
+        int v5 = GPU.core_memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
 
         vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList(), new String[0], new float[0]);
         vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList(), new String[0], new float[0]);

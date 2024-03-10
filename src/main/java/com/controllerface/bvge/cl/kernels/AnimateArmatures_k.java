@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class AnimateArmatures_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.animate_hulls;
-    private static final GPU.Kernel kernel = GPU.Kernel.animate_armatures;
-
     public enum Args
     {
         armature_bones,
@@ -29,8 +25,8 @@ public class AnimateArmatures_k extends GPUKernel
         delta_time;
     }
 
-    public AnimateArmatures_k(long command_queue_ptr)
+    public AnimateArmatures_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

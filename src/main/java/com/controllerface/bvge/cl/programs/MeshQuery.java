@@ -1,24 +1,23 @@
 package com.controllerface.bvge.cl.programs;
 
-import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPUProgram;
-
-import static com.controllerface.bvge.cl.CLUtils.read_src;
+import com.controllerface.bvge.cl.Kernel;
 
 public class MeshQuery extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
-        src.add(read_src("programs/mesh_query.cl"));
+        src.add(CLUtils.read_src("programs/mesh_query.cl"));
 
         make_program();
 
-        load_kernel(GPU.Kernel.count_mesh_batches);
-        load_kernel(GPU.Kernel.count_mesh_instances);
-        load_kernel(GPU.Kernel.write_mesh_details);
-        load_kernel(GPU.Kernel.calculate_batch_offsets);
-        load_kernel(GPU.Kernel.transfer_detail_data);
-        load_kernel(GPU.Kernel.transfer_render_data);
+        load_kernel(Kernel.count_mesh_batches);
+        load_kernel(Kernel.count_mesh_instances);
+        load_kernel(Kernel.write_mesh_details);
+        load_kernel(Kernel.calculate_batch_offsets);
+        load_kernel(Kernel.transfer_detail_data);
+        load_kernel(Kernel.transfer_render_data);
     }
 }

@@ -1,18 +1,17 @@
 package com.controllerface.bvge.cl.programs;
 
+import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPUProgram;
-
-import static com.controllerface.bvge.cl.CLUtils.read_src;
-import static com.controllerface.bvge.cl.GPU.Kernel;
+import com.controllerface.bvge.cl.Kernel;
 
 public class ScanDeletes extends GPUProgram
 {
     @Override
-    protected void init()
+    public void init()
     {
         src.add(const_hull_flags);
         src.add(func_exclusive_scan);
-        src.add(read_src("programs/scan_deletes.cl"));
+        src.add(CLUtils.read_src("programs/scan_deletes.cl"));
 
         make_program();
 

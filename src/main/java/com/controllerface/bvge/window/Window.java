@@ -6,17 +6,20 @@ import com.controllerface.bvge.ecs.systems.KBMInput;
 import com.controllerface.bvge.game.GameMode;
 import com.controllerface.bvge.game.TestGame;
 import org.joml.Vector2f;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.opengl.GL;
-import java.io.InputStream;
-import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWImage;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
+import org.lwjgl.opengl.GL;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -51,10 +54,6 @@ public class Window
         this.g = 0.5f;
         this.b = 0.5f;
 
-//        this.r = 0.0f;
-//        this.g = 0.0f;
-//        this.b = 0.0f;
-
         this.a = 1;
     }
 
@@ -79,7 +78,10 @@ public class Window
         glfwDestroyWindow(glfwWindow);
 
         glfwTerminate();
-        glfwSetErrorCallback(null).free();
+        try (var error_cb = glfwSetErrorCallback(null))
+        {
+            assert error_cb != null;
+        }
     }
 
     private void windowUpkeep()
@@ -130,11 +132,16 @@ public class Window
             throw new IllegalStateException("could not create window");
         }
 
-        glfwSetWindowSizeCallback(glfwWindow, (win, newWidth, newHeight) ->
+        GLFWWindowSizeCallbackI size_callback = (win, newWidth, newHeight) ->
         {
             get().width = newWidth;
             get().height = newHeight;
-        });
+        };
+
+        try (var window_cb = glfwSetWindowSizeCallback(glfwWindow, size_callback))
+        {
+            assert window_cb != null;
+        }
 
         glfwMakeContextCurrent(glfwWindow);
         glfwSwapInterval(1); // v-sync
@@ -149,10 +156,14 @@ public class Window
 
         // mouse cursor
         InputStream stream = Window.class.getResourceAsStream("/img/reticule.png");
-        BufferedImage image = null;
-        try {
+        BufferedImage image;
+        try
+        {
+            Objects.requireNonNull(stream);
             image = ImageIO.read(stream);
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             assert false: "Couldn't load mouse icon";
             throw new RuntimeException(e);
         }
@@ -171,7 +182,6 @@ public class Window
             for (int x = 0; x < width; x++)
             {
                 int pixel = pixels[y * width + x];
-
                 buffer.put((byte) ((pixel >> 16) & 0xFF));  // red
                 buffer.put((byte) ((pixel >> 8) & 0xFF));   // green
                 buffer.put((byte) (pixel & 0xFF));          // blue
@@ -181,15 +191,15 @@ public class Window
         buffer.flip(); // this will flip the cursor image vertically
 
         // create a GLFWImage
-        GLFWImage cursorImg= GLFWImage.create();
+        GLFWImage cursorImg = GLFWImage.create();
         cursorImg.width(width);     // set up image width
         cursorImg.height(height);   // set up image height
         cursorImg.pixels(buffer);   // pass image data
 
         // the hotspot indicates the displacement of the sprite to the
         // position where mouse clicks are registered (see image below)
-        int hotspotX = width/2;
-        int hotspotY = height/2;
+        int hotspotX = width / 2;
+        int hotspotY = height / 2;
 
         // create custom cursor and store its ID
         long cursorID = org.lwjgl.glfw.GLFW.glfwCreateCursor(cursorImg, hotspotX , hotspotY);
@@ -208,10 +218,16 @@ public class Window
 
     private void initInput(KBMInput inputSystem)
     {
-        glfwSetCursorPosCallback(glfwWindow, inputSystem::mousePosCallback);
-        glfwSetMouseButtonCallback(glfwWindow, inputSystem::mouseButtonCallback);
-        glfwSetScrollCallback(glfwWindow, inputSystem::mouseScrollCallback);
-        glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback);
+        try (var cursor_cb = glfwSetCursorPosCallback(glfwWindow, inputSystem::mousePosCallback);
+             var button_cb = glfwSetMouseButtonCallback(glfwWindow, inputSystem::mouseButtonCallback);
+             var scroll_cb = glfwSetScrollCallback(glfwWindow, inputSystem::mouseScrollCallback);
+             var key_cb = glfwSetKeyCallback(glfwWindow, inputSystem::keyCallback))
+        {
+            assert cursor_cb != null;
+            assert button_cb != null;
+            assert scroll_cb != null;
+            assert key_cb != null;
+        }
     }
 
     /**

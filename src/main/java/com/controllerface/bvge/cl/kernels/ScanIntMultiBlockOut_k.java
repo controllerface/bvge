@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class ScanIntMultiBlockOut_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.scan_int_array_out;
-    private static final GPU.Kernel kernel = GPU.Kernel.scan_int_multi_block_out;
-
     public enum Args
     {
         input,
@@ -17,8 +13,8 @@ public class ScanIntMultiBlockOut_k extends GPUKernel
         n;
     }
 
-    public ScanIntMultiBlockOut_k(long command_queue_ptr)
+    public ScanIntMultiBlockOut_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

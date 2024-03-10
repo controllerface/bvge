@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class FinalizeCandidates_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.locate_in_bounds;
-    private static final GPU.Kernel kernel = GPU.Kernel.finalize_candidates;
-
     public enum Args
     {
         input_candidates,
@@ -18,8 +14,8 @@ public class FinalizeCandidates_k extends GPUKernel
         final_candidates;
     }
 
-    public FinalizeCandidates_k(long command_queue_ptr)
+    public FinalizeCandidates_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

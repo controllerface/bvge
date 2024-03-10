@@ -1,8 +1,8 @@
 package com.controllerface.bvge.util;
 
 import com.controllerface.bvge.gl.AbstractShader;
-import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.CircleShader;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
 import org.lwjgl.assimp.AITexture;
 

@@ -1,13 +1,9 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 
 public class BuildKeyMap_k extends GPUKernel
 {
-    private static final GPU.Program program = GPU.Program.build_key_map;
-    private static final GPU.Kernel kernel = GPU.Kernel.build_key_map;
-
     public enum Args
     {
         bounds_index_data,
@@ -19,8 +15,8 @@ public class BuildKeyMap_k extends GPUKernel
         key_count_length;
     }
 
-    public BuildKeyMap_k(long command_queue_ptr)
+    public BuildKeyMap_k(long command_queue_ptr, long kernel_ptr)
     {
-        super(command_queue_ptr, program.kernel_ptr(kernel));
+        super(command_queue_ptr, kernel_ptr);
     }
 }

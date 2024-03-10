@@ -17,60 +17,63 @@ import static org.lwjgl.opengl.GL45C.*;
 public class UniformGridRenderer extends GameSystem
 {
     private static final int BUFFER_SIZE = 4 * VECTOR_FLOAT_2D_SIZE;
-
     private static final int POSITION_ATTRIBUTE = 0;
 
-    private final UniformGrid uniformGrid;
-    private final float x_offset;
-    private final float y_offset;
-
-    private int vao_id;
-    private int point_vbo;
-
     private final AbstractShader shader;
+    private final UniformGrid uniformGrid;
+
+    private int vao;
+    private int point_vbo;
 
     public UniformGridRenderer(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
         this.shader = Assets.load_shader("bounding_outline.glsl");
         this.uniformGrid = uniformGrid;
-        this.x_offset = uniformGrid.width / 2;
-        this.y_offset = uniformGrid.height / 2;
         init();
     }
 
     private void init()
     {
-        vao_id = glCreateVertexArrays();
-        point_vbo = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BUFFER_SIZE);
+        vao = glCreateVertexArrays();
+        point_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BUFFER_SIZE);
+        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
+    }
+
+    private float[] load_grid_data()
+    {
+        float[] data = new float[8];
+        data[0] = uniformGrid.getX_origin();                        // lower left X
+        data[1] = uniformGrid.getY_origin();                        // lower left Y
+        data[2] = uniformGrid.getX_origin() + uniformGrid.width;    // lower right X
+        data[3] = uniformGrid.getY_origin();                        // lower right Y
+        data[4] = uniformGrid.getX_origin() + uniformGrid.width;    // upper right X
+        data[5] = uniformGrid.getY_origin() + uniformGrid.height;   // upper right Y
+        data[6] = uniformGrid.getX_origin();                        // upper left X
+        data[7] = uniformGrid.getY_origin() + uniformGrid.height;   // upper left Y
+        return data;
     }
 
     @Override
     public void tick(float dt)
     {
-        float[] data = new float[8];
-        data[0] = uniformGrid.getX_origin();
-        data[1] = uniformGrid.getY_origin();
+        float[] data = load_grid_data();
 
-        data[2] = uniformGrid.getX_origin() + uniformGrid.width;
-        data[3] = uniformGrid.getY_origin();
-
-        data[4] = uniformGrid.getX_origin() + uniformGrid.width;
-        data[5] = uniformGrid.getY_origin() + uniformGrid.height;
-
-        data[6] = uniformGrid.getX_origin();
-        data[7] = uniformGrid.getY_origin() + uniformGrid.height;
-
-        glBindVertexArray(vao_id);
+        glBindVertexArray(vao);
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
         glNamedBufferData(point_vbo, data, GL_DYNAMIC_DRAW);
         glDrawArrays(GL_LINE_LOOP, 0, 4);
-        glDisableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
         glBindVertexArray(0);
         shader.detach();
+    }
+
+    @Override
+    public void shutdown()
+    {
+        glDeleteVertexArrays(vao);
+        glDeleteBuffers(point_vbo);
     }
 }
