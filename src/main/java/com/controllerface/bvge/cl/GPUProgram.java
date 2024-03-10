@@ -7,7 +7,6 @@ import java.util.Map;
 
 import static com.controllerface.bvge.cl.CLUtils.read_src;
 import static com.controllerface.bvge.cl.GPU.Kernel;
-import static com.controllerface.bvge.cl.GPU.gpu_p;
 import static org.lwjgl.opencl.CL12.clReleaseKernel;
 import static org.lwjgl.opencl.CL12.clReleaseProgram;
 
@@ -96,7 +95,7 @@ public abstract class GPUProgram
      */
     protected void make_program()
     {
-        this.program_ptr = gpu_p(this.src);
+        this.program_ptr = GPU.build_gpu_program(this.src);
     }
 
     /**
@@ -120,7 +119,7 @@ public abstract class GPUProgram
         clReleaseProgram(program_ptr);
         for (long kernel_ptr : kernels.values())
         {
-            clReleaseKernel(kernel_ptr);
+            GPU.cl_release_buffer(kernel_ptr);
         }
     }
 

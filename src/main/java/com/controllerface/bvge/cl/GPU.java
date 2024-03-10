@@ -891,35 +891,49 @@ public class GPU
     {
         // integer exclusive scan in-place
 
-        Kernel.scan_int_single_block.set_kernel(new ScanIntSingleBlock_k(command_queue_ptr));
-        Kernel.scan_int_multi_block.set_kernel(new ScanIntMultiBlock_k(command_queue_ptr));
-        Kernel.complete_int_multi_block.set_kernel(new CompleteIntMultiBlock_k(command_queue_ptr));
+        long scan_int_array_single_ptr = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_single_block);
+        long scan_int_array_multi_ptr = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_multi_block);
+        long scan_int_array_comp_ptr = Program.scan_int_array.gpu.kernel_ptr(Kernel.complete_int_multi_block);
+        Kernel.scan_int_single_block.set_kernel(new ScanIntSingleBlock_k(command_queue_ptr, scan_int_array_single_ptr));
+        Kernel.scan_int_multi_block.set_kernel(new ScanIntMultiBlock_k(command_queue_ptr, scan_int_array_multi_ptr));
+        Kernel.complete_int_multi_block.set_kernel(new CompleteIntMultiBlock_k(command_queue_ptr, scan_int_array_comp_ptr));
 
         // 2D vector integer exclusive scan in-place
 
-        Kernel.scan_int2_single_block.set_kernel(new ScanInt2SingleBlock_k(command_queue_ptr));
-        Kernel.scan_int2_multi_block.set_kernel(new ScanInt2MultiBlock_k(command_queue_ptr));
-        Kernel.complete_int2_multi_block.set_kernel(new CompleteInt2MultiBlock_k(command_queue_ptr));
+        long scan_int2_array_single_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_single_block);
+        long scan_int2_array_multi_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_multi_block);
+        long scan_int2_array_comp_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.complete_int2_multi_block);
+        Kernel.scan_int2_single_block.set_kernel(new ScanInt2SingleBlock_k(command_queue_ptr, scan_int2_array_single_ptr));
+        Kernel.scan_int2_multi_block.set_kernel(new ScanInt2MultiBlock_k(command_queue_ptr, scan_int2_array_multi_ptr));
+        Kernel.complete_int2_multi_block.set_kernel(new CompleteInt2MultiBlock_k(command_queue_ptr, scan_int2_array_comp_ptr));
 
         // 4D vector integer exclusive scan in-place
 
-        Kernel.scan_int4_single_block.set_kernel(new ScanInt4SingleBlock_k(command_queue_ptr));
-        Kernel.scan_int4_multi_block.set_kernel(new ScanInt4MultiBlock_k(command_queue_ptr));
-        Kernel.complete_int4_multi_block.set_kernel(new CompleteInt4MultiBlock_k(command_queue_ptr));
+        long scan_int4_array_single_ptr = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_single_block);
+        long scan_int4_array_multi_ptr = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_multi_block);
+        long scan_int4_array_comp_ptr = Program.scan_int4_array.gpu.kernel_ptr(Kernel.complete_int4_multi_block);
+        Kernel.scan_int4_single_block.set_kernel(new ScanInt4SingleBlock_k(command_queue_ptr, scan_int4_array_single_ptr));
+        Kernel.scan_int4_multi_block.set_kernel(new ScanInt4MultiBlock_k(command_queue_ptr, scan_int4_array_multi_ptr));
+        Kernel.complete_int4_multi_block.set_kernel(new CompleteInt4MultiBlock_k(command_queue_ptr, scan_int4_array_comp_ptr));
 
         // integer exclusive scan to output buffer
 
-        Kernel.scan_int_single_block_out.set_kernel(new ScanIntSingleBlockOut_k(command_queue_ptr));
-        Kernel.scan_int_multi_block_out.set_kernel(new ScanIntMultiBlockOut_k(command_queue_ptr));
-        Kernel.complete_int_multi_block_out.set_kernel(new CompleteIntMultiBlockOut_k(command_queue_ptr));
+        long scan_int_array_out_single_ptr = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_single_block_out);
+        long scan_int_array_out_multi_ptr = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_multi_block_out);
+        long scan_int_array_out_comp_ptr = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.complete_int_multi_block_out);
+        Kernel.scan_int_single_block_out.set_kernel(new ScanIntSingleBlockOut_k(command_queue_ptr, scan_int_array_out_single_ptr));
+        Kernel.scan_int_multi_block_out.set_kernel(new ScanIntMultiBlockOut_k(command_queue_ptr, scan_int_array_out_multi_ptr));
+        Kernel.complete_int_multi_block_out.set_kernel(new CompleteIntMultiBlockOut_k(command_queue_ptr, scan_int_array_out_comp_ptr));
 
         // Open GL interop
 
-        Kernel.root_hull_count.set_kernel(new RootHullCount_k(command_queue_ptr))
-            .mem_arg(RootHullCount_k.Args.armature_flags, Buffer.armature_flags.memory);
-
-        Kernel.root_hull_filter.set_kernel(new RootHullFilter_k(command_queue_ptr))
+        long root_hull_filter_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_filter);
+        Kernel.root_hull_filter.set_kernel(new RootHullFilter_k(command_queue_ptr, root_hull_filter_ptr))
             .mem_arg(RootHullFilter_k.Args.armature_flags, Buffer.armature_flags.memory);
+
+        long root_hull_count_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_count);
+        Kernel.root_hull_count.set_kernel(new RootHullCount_k(command_queue_ptr, root_hull_count_ptr))
+            .mem_arg(RootHullCount_k.Args.armature_flags, Buffer.armature_flags.memory);
     }
 
     //#endregion
@@ -1315,7 +1329,7 @@ public class GPU
 
     //#region Misc. Public API
 
-    public static long gpu_p(List<String> src_strings)
+    public static long build_gpu_program(List<String> src_strings)
     {
         String[] src = src_strings.toArray(new String[]{});
         return CLUtils.cl_p(context_ptr, device_id_ptr, src);
