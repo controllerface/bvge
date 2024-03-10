@@ -1,9 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
+import com.controllerface.bvge.cl.CLUtils;
+import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
-
-import static com.controllerface.bvge.cl.CLUtils.read_src;
-import static com.controllerface.bvge.cl.GPU.Kernel;
 
 public class SatCollide extends GPUProgram
 {
@@ -21,13 +20,13 @@ public class SatCollide extends GPUProgram
         src.add(func_circle_collision);
         src.add(func_polygon_collision);
         src.add(func_polygon_circle_collision);
-        src.add(read_src("programs/sat_collide.cl"));
+        src.add(CLUtils.read_src("programs/sat_collide.cl"));
 
         make_program();
 
-        load_kernel(Kernel.sat_collide);
-        load_kernel(Kernel.sort_reactions);
-        load_kernel(Kernel.apply_reactions);
-        load_kernel(Kernel.move_armatures);
+        load_kernel(GPU.Kernel.sat_collide);
+        load_kernel(GPU.Kernel.sort_reactions);
+        load_kernel(GPU.Kernel.apply_reactions);
+        load_kernel(GPU.Kernel.move_armatures);
     }
 }

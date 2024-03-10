@@ -33,13 +33,15 @@ public class TestGame extends GameMode
         POINTS,  // model vertices
     }
 
-//    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-//        EnumSet.of(
-//            RenderType.MODELS,
-//            RenderType.HULLS);
-
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-        EnumSet.allOf(RenderType.class);
+        EnumSet.of(
+            RenderType.MODELS,
+            RenderType.HULLS);
+
+//    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
+//        EnumSet.allOf(RenderType.class);
+
+    private final UniformGrid uniformGrid = new UniformGrid();
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {
@@ -50,8 +52,6 @@ public class TestGame extends GameMode
 
         this.screenBlankSystem = screenBlankSystem;
     }
-
-    private final UniformGrid uniformGrid = new UniformGrid();
 
     private void genSquares(int box_size, float spacing, float size, float start_x, float start_y)
     {
@@ -248,68 +248,13 @@ public class TestGame extends GameMode
     @Override
     public void load()
     {
-        //genPlayer();
+        // player character
         genTestFigure(1f, 300, 0);
+
         genTestFigureNPC(1f, 200, 0);
         genTestFigureNPC(1f, 200, 100);
         genTestFigureNPC(1f, 200, 250);
         genTestFigureNPC(1f, 100, 50);
-
-        //genTestTriangle(20f, 190, 250);
-
-//        genTestTriangle(10f, 190, 250);
-//        genTestTriangle(10f, 190, 200);
-//        genTestTriangle(10f, 190, 150);
-//        genTestTriangle(10f, 190, 100);
-//        genTestTriangle(10f, 190, 50);
-
-//        genTestCrate(10f, 190, 250);
-//        genTestCrate(10f, 190, 200);
-//        genTestCrate(10f, 190, 150);
-//        genTestCrate(10f, 190, 100);
-//        genTestCrate(10f, 190, 50);
-//
-//        genTestCrate(10f, 200, 250);
-//        genTestCrate(10f, 200, 200);
-//        genTestCrate(10f, 200, 150);
-//        genTestCrate(10f, 200, 100);
-//        genTestCrate(10f, 200, 50);
-//
-//        genTestCrate(10f, 210, 250);
-//        genTestCrate(10f, 210, 200);
-//        genTestCrate(10f, 210, 150);
-//        genTestCrate(10f, 210, 100);
-//        genTestCrate(10f, 210, 50);
-//
-//        genBoxModelNPC(0.05f, 200, 150);
-//        genBoxModelNPC(0.05f, 200, 125);
-//        genBoxModelNPC(0.05f, 200, 100);
-//        genBoxModelNPC(0.05f, 200, 75);
-//        genBoxModelNPC(0.05f, 200, 50);
-        //genTestFigureNPC(1, 200, 50);
-        //genTestCircle(20,0, 50);
-
-        //genTestCircle(100,100, 100);
-        //genTestCircle(20,0, 100);
-        //genTestCircle(30,20, 55);
-
-
-
-        //genCircles(100, 80f, 100f, 2100, 2100);
-
-//        genNPCs(100, 10f, 10f, 2100, 2100);
-//        genNPCs(100, 10f, 10f, 1000, -1000);
-//        genNPCs(100, 10f, 10f, -1500, -1500);
-       // genNPCs(100, 9f, 10f, 40, 500);
-
-        //genNPCs(100, 7f, 10f, -1000, 0);
-        //genNPCs(100, 7f, 10f, 0, -1000);
-        //genNPCs(100, 7f, 10f, 0, 1000);
-
-        //genNPCs(1, 41f, 40f, 100, 300);
-
-
-
 
         genCircles(20, 7f, 5f, 0, 100);
         genSquares(20,  9f, 5f, -120, 100);
@@ -319,24 +264,6 @@ public class TestGame extends GameMode
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);
         genWall(5, 150f, 150f, 1130, -100);
-
-
-//        genTriangles(50, 5f, 5f, 100, 1000);
-//        genTriangles(50, 5f, 5f, 200, 1100);
-//        genTriangles(50, 5f, 5f, 300, 1200);
-//        genTriangles(50, 5f, 5f, 400, 1300);
-//        genTriangles(50, 5f, 5f, 500, 1400);
-//        genTriangles(50, 5f, 5f, 600, 1500);
-//        genTriangles(50, 5f, 5f, 700, 1600);
-//        genTriangles(50, 5f, 5f, 800, 1700);
-//        genTriangles(50, 5f, 5f, 900, 1800);
-//        genTriangles(50, 5f, 5f, 0, 1900);
-
-
-
-
-        //genFloor(50, 25f, 25f, -500, 150);
-        //genFloor(50, 25f, 25f, -500, 1000);
 
         loadSystems();
     }

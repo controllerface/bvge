@@ -1,9 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
+import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
-
-import static com.controllerface.bvge.cl.CLUtils.read_src;
 
 public class AnimateHulls extends GPUProgram
 {
@@ -20,7 +19,7 @@ public class AnimateHulls extends GPUProgram
         src.add(func_rot_quaternion_to_matrix);
         src.add(func_vector_lerp);
         src.add(func_quaternion_lerp);
-        src.add(read_src("programs/animate_hulls.cl"));
+        src.add(CLUtils.read_src("programs/animate_hulls.cl"));
 
         make_program();
 

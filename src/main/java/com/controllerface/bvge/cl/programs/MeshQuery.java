@@ -1,16 +1,15 @@
 package com.controllerface.bvge.cl.programs;
 
+import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
-
-import static com.controllerface.bvge.cl.CLUtils.read_src;
 
 public class MeshQuery extends GPUProgram
 {
     @Override
     public void init()
     {
-        src.add(read_src("programs/mesh_query.cl"));
+        src.add(CLUtils.read_src("programs/mesh_query.cl"));
 
         make_program();
 
