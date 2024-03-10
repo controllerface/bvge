@@ -55,7 +55,7 @@ public class CircleRenderer extends GameSystem
     {
         vao = glCreateVertexArrays();
         vbo = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
-        vbo_ptr = GPU.share_memory_ex(vbo);
+        vbo_ptr = GPU.share_memory(vbo);
         glEnableVertexArrayAttrib(vao, TRANSFORM_ATTRIBUTE);
     }
 

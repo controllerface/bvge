@@ -97,10 +97,10 @@ public class HumanoidRenderer extends GameSystem
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
         glBindVertexArray(0);
 
-        this.command_buffer_ptr = GPU.share_memory_ex(cbo);
-        this.element_buffer_ptr = GPU.share_memory_ex(ebo);
-        this.vertex_buffer_ptr = GPU.share_memory_ex(vbo);
-        this.uv_buffer_ptr = GPU.share_memory_ex(uvo);
+        this.command_buffer_ptr = GPU.share_memory(cbo);
+        this.element_buffer_ptr = GPU.share_memory(ebo);
+        this.vertex_buffer_ptr = GPU.share_memory(vbo);
+        this.uv_buffer_ptr = GPU.share_memory(uvo);
 
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_COORD_ATTRIBUTE);

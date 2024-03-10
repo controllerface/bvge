@@ -58,7 +58,7 @@ public class BoundingBoxRenderer extends GameSystem
     {
         vao = glCreateVertexArrays();
         vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        vbo_ptr = GPU.share_memory_ex(vbo);
+        vbo_ptr = GPU.share_memory(vbo);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
     }
 

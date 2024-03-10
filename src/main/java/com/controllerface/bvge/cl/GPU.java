@@ -9,8 +9,6 @@ import org.lwjgl.BufferUtils;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
@@ -46,10 +44,6 @@ public class GPU
     private static final ByteBuffer ZERO_PATTERN_BUFFER = BufferUtils.createByteBuffer(1)
         .put(0, (byte) 0);
 
-    /**
-     * Memory that is shared between Open CL and Open GL contexts.
-     */
-    private static final HashMap<Integer, Long> shared_mem = new LinkedHashMap<>();
     //#endregion
 
     //#region Workgroup Variables
@@ -1079,12 +1073,11 @@ public class GPU
         return (int) Math.ceil((float) n / (float) max_scan_block_size);
     }
 
-
     //#endregion
 
     //#region GL Interop
 
-    public static long share_memory_ex(int vboID)
+    public static long share_memory(int vboID)
     {
         return clCreateFromGLBuffer(context_ptr, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
     }
@@ -1465,11 +1458,6 @@ public class GPU
         for (Program program : Program.values())
         {
             if (program.gpu != null) program.gpu.destroy();
-        }
-
-        for (long mem_ptr : shared_mem.values())
-        {
-            clReleaseMemObject(mem_ptr);
         }
 
         clReleaseCommandQueue(command_queue_ptr);

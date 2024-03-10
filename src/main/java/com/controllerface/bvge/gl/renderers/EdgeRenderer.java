@@ -57,8 +57,8 @@ public class EdgeRenderer extends GameSystem
         vao = glCreateVertexArrays();
         edge_vbo = GLUtils.new_buffer_vec2(vao, EDGE_ATTRIBUTE, BATCH_BUFFER_SIZE);
         flag_vbo = GLUtils.new_buffer_float(vao, FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
-        vertex_vbo_ptr = GPU.share_memory_ex(edge_vbo);
-        flag_vbo_ptr = GPU.share_memory_ex(flag_vbo);
+        vertex_vbo_ptr = GPU.share_memory(edge_vbo);
+        flag_vbo_ptr = GPU.share_memory(flag_vbo);
         glEnableVertexArrayAttrib(vao, EDGE_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, FLAG_ATTRIBUTE);
     }

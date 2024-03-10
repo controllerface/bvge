@@ -73,7 +73,7 @@ public class CrateRenderer extends GameSystem
         vbo = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, TRANSFORM_BUFFER_SIZE);
         glVertexArrayBindingDivisor(vao, TRANSFORM_ATTRIBUTE, 1);
 
-        vbo_ptr = GPU.share_memory_ex(vbo);
+        vbo_ptr = GPU.share_memory(vbo);
 
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_COORD_ATTRIBUTE);

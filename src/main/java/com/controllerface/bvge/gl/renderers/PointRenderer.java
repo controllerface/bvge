@@ -49,7 +49,7 @@ public class PointRenderer extends GameSystem
     {
         vao = glCreateVertexArrays();
         vertex_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        vertex_vbo_ptr = GPU.share_memory_ex(vertex_vbo);
+        vertex_vbo_ptr = GPU.share_memory(vertex_vbo);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
     }
 
