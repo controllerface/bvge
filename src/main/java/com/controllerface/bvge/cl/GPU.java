@@ -134,8 +134,6 @@ public class GPU
 
     public enum Program
     {
-        prepare_bones(new PrepareBones()),
-        prepare_transforms(new PrepareTransforms()),
         root_hull_filter(new RootHullFilter()),
         scan_int2_array(new ScanInt2Array()),
         scan_int4_array(new ScanInt4Array()),
@@ -948,23 +946,11 @@ public class GPU
 
         // Open GL interop
 
-        Kernel.prepare_transforms.set_kernel(new PrepareTransforms_k(command_queue_ptr))
-            .mem_arg(PrepareTransforms_k.Args.transforms, Buffer.hulls.memory)
-            .mem_arg(PrepareTransforms_k.Args.hull_rotations, Buffer.hull_rotation.memory);
-
         Kernel.root_hull_count.set_kernel(new RootHullCount_k(command_queue_ptr))
             .mem_arg(RootHullCount_k.Args.armature_flags, Buffer.armature_flags.memory);
 
         Kernel.root_hull_filter.set_kernel(new RootHullFilter_k(command_queue_ptr))
             .mem_arg(RootHullFilter_k.Args.armature_flags, Buffer.armature_flags.memory);
-
-        Kernel.prepare_bones.set_kernel(new PrepareBones_k(command_queue_ptr))
-            .mem_arg(PrepareBones_k.Args.bones, Buffer.bone_instances.memory)
-            .mem_arg(PrepareBones_k.Args.bone_references, Buffer.bone_references.memory)
-            .mem_arg(PrepareBones_k.Args.bone_index, Buffer.bone_index_tables.memory)
-            .mem_arg(PrepareBones_k.Args.hulls, Buffer.hulls.memory)
-            .mem_arg(PrepareBones_k.Args.armatures, Buffer.armatures.memory)
-            .mem_arg(PrepareBones_k.Args.hull_flags, Buffer.hull_flags.memory);
     }
 
     //#endregion
@@ -1098,41 +1084,9 @@ public class GPU
 
     //#region GL Interop
 
-    /**
-     * Called from Gl code to share a buffer object with CL. This allows kernels to process
-     * buffer data for shaders. The size of the shared data is determined automatically by the
-     * vboID and is set in the GL context.
-     *
-     * @param vboID GL buffer ID of the data to share.
-     */
-    public static void share_memory(int vboID)
-    {
-        var vbo_mem = clCreateFromGLBuffer(context_ptr, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
-        shared_mem.put(vboID, vbo_mem);
-    }
-
     public static long share_memory_ex(int vboID)
     {
         return clCreateFromGLBuffer(context_ptr, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
-    }
-
-    /**
-     * Transfers a subset of all bones from CL memory into GL memory, converting the bones
-     * into a vertex structure that can be rendered as a point decal.
-     *
-     * @param vbo_id      id of the shared GL buffer object
-     * @param bone_offset offset into the bones array to start the transfer
-     * @param batch_size  number of bone objects to transfer in this batch
-     */
-    public static void GL_bones(int vbo_id, int bone_offset, int batch_size)
-    {
-        var vbo_mem = shared_mem.get(vbo_id);
-
-        Kernel.prepare_bones.kernel
-            .share_mem(vbo_mem)
-            .ptr_arg(PrepareBones_k.Args.vbo, vbo_mem)
-            .set_arg(PrepareBones_k.Args.offset, bone_offset)
-            .call(arg_long(batch_size));
     }
 
     /**
@@ -1173,50 +1127,6 @@ public class GPU
         clReleaseMemObject(hulls_counter_data_ptr);
 
         return new HullIndexData(hulls_out, final_count);
-    }
-
-    /**
-     * Transfers a subset of all hull transforms from CL memory into GL memory. Hulls
-     * are generally not rendered directly using this data, but it is used to transform
-     * model reference data from memory into the position of the mesh that the hull
-     * represents within the simulation.
-     *
-     * @param vbo_id        id of the shared GL buffer object
-     * @param hulls_out_ptr     array of hulls filtered to be circles only
-     * @param offset        where we are starting in the indices array
-     * @param batch_size    number of hull objects to transfer in this batch
-     */
-    public static void GL_circles(int vbo_id, long hulls_out_ptr, int offset, int batch_size)
-    {
-        var vbo_mem = shared_mem.get(vbo_id);
-        Kernel.prepare_transforms.kernel
-            .share_mem(vbo_mem)
-            .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out_ptr)
-            .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_mem)
-            .set_arg(PrepareTransforms_k.Args.offset, offset)
-            .call(arg_long(batch_size));
-    }
-
-    /**
-     * Transfers a subset of all hull transforms from CL memory into GL memory. Hulls
-     * are generally not rendered directly using this data, but it is used to transform
-     * model reference data from memory into the position of the mesh that the hull
-     * represents within the simulation.
-     *
-     * @param transforms_id   id of the shared GL buffer object
-     * @param hulls_out_ptr id of the shared GL buffer object
-     * @param batch_size      number of hull objects to transfer in this batch
-     */
-    public static void GL_transforms(int transforms_id, long hulls_out_ptr, int batch_size, int offset)
-    {
-        var vbo_transforms = shared_mem.get(transforms_id);
-
-        Kernel.prepare_transforms.kernel
-            .share_mem(vbo_transforms)
-            .ptr_arg(PrepareTransforms_k.Args.indices, hulls_out_ptr)
-            .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_transforms)
-            .set_arg(PrepareTransforms_k.Args.offset, offset)
-            .call(arg_long(batch_size));
     }
 
     //#endregion
