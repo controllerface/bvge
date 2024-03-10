@@ -17,7 +17,7 @@ public class PhysicsSimulation extends GameSystem
     private static final float TARGET_FPS = 60.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
     private static final int TARGET_SUB_STEPS = 8;
-    private static final float SUB_STEP = TICK_RATE / TARGET_SUB_STEPS;
+    private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
     private static final int EDGE_STEPS = 8;
     private static final float GRAVITY_MAGNITUDE = -9.8f * 4;
 
@@ -237,11 +237,11 @@ public class PhysicsSimulation extends GameSystem
             .mem_arg(ResolveConstraints_k.Args.edges, GPU.Buffer.edges.memory);
     }
 
-    private void integrate(float delta_time)
+    private void integrate()
     {
         float[] args =
             {
-                delta_time,
+                FIXED_TIME_STEP,
                 uniform_grid.x_spacing,
                 uniform_grid.y_spacing,
                 uniform_grid.getX_origin(),
@@ -627,12 +627,12 @@ public class PhysicsSimulation extends GameSystem
         animate_points_k.call(arg_long(GPU.core_memory.next_point()));
     }
 
-    private void resolve_constraints(int edge_steps)
+    private void resolve_constraints()
     {
         boolean last_step;
-        for (int i = 0; i < edge_steps; i++)
+        for (int i = 0; i < EDGE_STEPS; i++)
         {
-            last_step = i == edge_steps - 1;
+            last_step = i == EDGE_STEPS - 1;
             int n = last_step
                 ? 1
                 : 0;
@@ -643,7 +643,7 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
-    private void updateControllableBodies(float dt)
+    private void updateControllableBodies()
     {
         var components = ecs.getComponents(Component.ControlPoints);
         for (Map.Entry<String, GameComponent> entry : components.entrySet())
@@ -685,12 +685,7 @@ public class PhysicsSimulation extends GameSystem
                 GPU.core_memory.update_accel(armature.index(), vectorBuffer.x, vectorBuffer.y);
             }
 
-            // todo: implement this for armatures
-//            if (controlPoints.is_rotating_right() ^ controlPoints.is_rotating_left())
-//            {
-//                float angle = controlPoints.is_rotating_right() ? -200f : 200f;
-//                OpenCL.rotate_hull(hull.index(), angle * dt * dt);
-//            }
+            // todo: implement rotation here
         }
     }
 
@@ -698,10 +693,8 @@ public class PhysicsSimulation extends GameSystem
      * This is the core of the physics simulation. Upon return from this method, the simulation is
      * advanced one tick. Note that this class uses a fixed time step, so the time delta should always
      * be the same. Most work done within this method is delegated to the GPU for performance.
-     *
-     * @param dt amount of time that is simulated during the physics tick.
      */
-    private void tickSimulation(float dt)
+    private void tickSimulation()
     {
         /*
         * CPU Side - Setup
@@ -709,7 +702,7 @@ public class PhysicsSimulation extends GameSystem
 
         // Before the GPU begins the simulation cycle, player input is handled and the memory structures
         // in the GPU are updated with the proper values.
-        updateControllableBodies(dt);
+        updateControllableBodies();
 
         /*
         * GPU Side - Physics
@@ -719,7 +712,7 @@ public class PhysicsSimulation extends GameSystem
         // individual points of each hull currently are. When this call returns, all tracked physics objects
         // will be in their new locations, and points will have their current and previous location values
         // updated for this tick cycle.
-        integrate(dt);
+        integrate();
 
         /*
         - Broad Phase Collision -
@@ -865,7 +858,7 @@ public class PhysicsSimulation extends GameSystem
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
         // convex shape. Animations may move points into positions where the geometry is slightly concave,
         // so this call acts as a small hedge against this happening before collision checks can be performed.
-        resolve_constraints(EDGE_STEPS);
+        resolve_constraints();
 
         this.accumulator += dt;
         int sub_ticks = 0;
@@ -882,8 +875,8 @@ public class PhysicsSimulation extends GameSystem
                 // todo: test a few different values on some lower-end hardware and try to find a sweet spot.
                 if (sub_ticks <= TARGET_SUB_STEPS)
                 {
-                    this.accumulator -= SUB_STEP;
-                    this.tickSimulation(SUB_STEP);
+                    this.accumulator -= FIXED_TIME_STEP;
+                    this.tickSimulation();
 
                     // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
                     // objects that have animation will have their hulls moved into position for the current tick. It
@@ -899,7 +892,7 @@ public class PhysicsSimulation extends GameSystem
                     // deform on impact, and may fly off in random directions, typically causing simulation failure. The
                     // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
                     // within the simulation.
-                    resolve_constraints(EDGE_STEPS);
+                    resolve_constraints();
 
                     physics_buffer.finishTick();
                 }
