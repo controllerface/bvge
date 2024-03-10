@@ -51,16 +51,18 @@ public class CircleRenderer extends GameSystem
     {
         vao = glCreateVertexArrays();
         vbo = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
-        vbo_ptr = GPU.share_memory(vbo);
         glEnableVertexArrayAttrib(vao, TRANSFORM_ATTRIBUTE);
     }
 
     private void init_CL()
     {
+        vbo_ptr = GPU.share_memory(vbo);
+
         prepare_transforms.init();
 
         long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
         prepare_transforms_k = (new PrepareTransforms_k(GPU.command_queue_ptr, ptr))
+            .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_ptr)
             .mem_arg(PrepareTransforms_k.Args.transforms, GPU.Buffer.hulls.memory)
             .mem_arg(PrepareTransforms_k.Args.hull_rotations, GPU.Buffer.hull_rotation.memory);
     }
@@ -89,7 +91,6 @@ public class CircleRenderer extends GameSystem
             prepare_transforms_k
                 .share_mem(vbo_ptr)
                 .ptr_arg(PrepareTransforms_k.Args.indices, circle_hulls.indices())
-                .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_ptr)
                 .set_arg(PrepareTransforms_k.Args.offset, offset)
                 .call(arg_long(count));
 

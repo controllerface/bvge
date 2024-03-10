@@ -1339,6 +1339,8 @@ public class GPU
 
     public static void destroy()
     {
+        core_memory.destroy();
+
         for (Buffer buffer : Buffer.values())
         {
             if (buffer.memory != null) buffer.memory.release();

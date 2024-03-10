@@ -33,8 +33,10 @@ public class CrateRenderer extends GameSystem
     private final GPUProgram prepare_transforms = new PrepareTransforms();
 
     private int vao;
-    private int vbo;
     private int ebo;
+    private int transform_vbo;
+    private int position_vbo;
+    private int uv_vbo;
 
     private long vbo_ptr;
 
@@ -55,22 +57,15 @@ public class CrateRenderer extends GameSystem
         var model = Models.get_model_by_index(Models.TEST_SQUARE_INDEX);
         this.texture = model.textures().get(0);
         var base_mesh = model.meshes()[0];
-        var raw = base_mesh.raw_copy();
+        var raw_mesh = base_mesh.raw_copy();
 
         vao = glCreateVertexArrays();
+        ebo = GLUtils.static_element_buffer(vao, raw_mesh.r_faces());
+        position_vbo = GLUtils.fill_buffer_vec2(vao, POSITION_ATTRIBUTE, raw_mesh.r_vertices());
+        uv_vbo = GLUtils.fill_buffer_vec2(vao, UV_COORD_ATTRIBUTE, raw_mesh.r_uv_coords());
+        transform_vbo = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, TRANSFORM_BUFFER_SIZE);
 
-        ebo = glCreateBuffers();
-        glNamedBufferData(ebo, raw.r_faces(), GL_STATIC_DRAW);
-        glVertexArrayElementBuffer(vao, ebo);
-
-        GLUtils.fill_buffer_vec2(vao, POSITION_ATTRIBUTE, raw.r_vertices());
-        GLUtils.fill_buffer_vec2(vao, UV_COORD_ATTRIBUTE, raw.r_uv_coords());
-
-        vbo = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, TRANSFORM_BUFFER_SIZE);
         glVertexArrayBindingDivisor(vao, TRANSFORM_ATTRIBUTE, 1);
-
-        vbo_ptr = GPU.share_memory(vbo);
-
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_COORD_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, TRANSFORM_ATTRIBUTE);
@@ -78,10 +73,13 @@ public class CrateRenderer extends GameSystem
 
     private void init_CL()
     {
+        vbo_ptr = GPU.share_memory(transform_vbo);
+
         prepare_transforms.init();
 
         long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
         prepare_transforms_k = (new PrepareTransforms_k(GPU.command_queue_ptr, ptr))
+            .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_ptr)
             .mem_arg(PrepareTransforms_k.Args.transforms, GPU.Buffer.hulls.memory)
             .mem_arg(PrepareTransforms_k.Args.hull_rotations, GPU.Buffer.hull_rotation.memory);
     }
@@ -116,7 +114,6 @@ public class CrateRenderer extends GameSystem
             prepare_transforms_k
                 .share_mem(vbo_ptr)
                 .ptr_arg(PrepareTransforms_k.Args.indices, crate_hulls.indices())
-                .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_ptr)
                 .set_arg(PrepareTransforms_k.Args.offset, offset)
                 .call(arg_long(count));
 
@@ -134,7 +131,9 @@ public class CrateRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(ebo);
-        glDeleteBuffers(vbo);
+        glDeleteBuffers(transform_vbo);
+        glDeleteBuffers(position_vbo);
+        glDeleteBuffers(uv_vbo);
         prepare_transforms.destroy();
         GPU.cl_release_buffer(vbo_ptr);
     }

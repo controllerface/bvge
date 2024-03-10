@@ -36,6 +36,32 @@ public class GLUtils
         return dynamic_float_buffer(vao, bind_index, buffer_size, VECTOR_4D_LENGTH, VECTOR_FLOAT_4D_SIZE);
     }
 
+    public static int static_element_buffer(int vao, int[] faces)
+    {
+        int ebo = glCreateBuffers();
+        glNamedBufferData(ebo, faces, GL_STATIC_DRAW);
+        glVertexArrayElementBuffer(vao, ebo);
+        return ebo;
+    }
+
+    public static int dynamic_element_buffer(int vao, int buffer_size)
+    {
+        int ebo = glCreateBuffers();
+        glNamedBufferData(ebo, buffer_size, GL_DYNAMIC_DRAW);
+        glVertexArrayElementBuffer(vao, ebo);
+        return ebo;
+    }
+
+    public static int dynamic_command_buffer(int vao, int buffer_size)
+    {
+        int cbo = glCreateBuffers();
+        glNamedBufferData(cbo, buffer_size, GL_DYNAMIC_DRAW);
+        glBindVertexArray(vao);
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
+        glBindVertexArray(0);
+        return cbo;
+    }
+
     private static int dynamic_float_buffer(int vao,
                                             int bind_index,
                                             int buffer_size,

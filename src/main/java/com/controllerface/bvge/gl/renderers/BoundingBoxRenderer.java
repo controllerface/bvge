@@ -59,16 +59,18 @@ public class BoundingBoxRenderer extends GameSystem
     {
         vao = glCreateVertexArrays();
         vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        vbo_ptr = GPU.share_memory(vbo);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
     }
 
     private void init_CL()
     {
+        vbo_ptr = GPU.share_memory(vbo);
+
         prepare_bounds.init();
 
         long ptr = prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
         prepare_bounds_k = new PrepareBounds_k(GPU.command_queue_ptr, ptr)
+            .ptr_arg(PrepareBounds_k.Args.vbo, vbo_ptr)
             .mem_arg(PrepareBounds_k.Args.bounds, GPU.Buffer.aabb.memory);
     }
 
@@ -89,7 +91,6 @@ public class BoundingBoxRenderer extends GameSystem
 
             prepare_bounds_k
                 .share_mem(vbo_ptr)
-                .ptr_arg(PrepareBounds_k.Args.vbo, vbo_ptr)
                 .set_arg(PrepareBounds_k.Args.offset, offset)
                 .call(arg_long(count));
 

@@ -50,16 +50,18 @@ public class PointRenderer extends GameSystem
     {
         vao = glCreateVertexArrays();
         vertex_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        vertex_vbo_ptr = GPU.share_memory(vertex_vbo);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
     }
 
     private void init_CL()
     {
+        vertex_vbo_ptr = GPU.share_memory(vertex_vbo);
+
         prepare_points.init();
 
         long ptr = prepare_points.kernel_ptr(Kernel.prepare_points);
         prepare_points_k = new PreparePoints_k(GPU.command_queue_ptr, ptr)
+            .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
             .mem_arg(PreparePoints_k.Args.points, GPU.Buffer.points.memory);
     }
 
@@ -78,7 +80,6 @@ public class PointRenderer extends GameSystem
 
             prepare_points_k
                 .share_mem(vertex_vbo_ptr)
-                .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
                 .set_arg(PreparePoints_k.Args.offset, offset)
                 .call(arg_long(count));
 

@@ -59,18 +59,21 @@ public class EdgeRenderer extends GameSystem
         vao = glCreateVertexArrays();
         edge_vbo = GLUtils.new_buffer_vec2(vao, EDGE_ATTRIBUTE, BATCH_BUFFER_SIZE);
         flag_vbo = GLUtils.new_buffer_float(vao, FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
-        vertex_vbo_ptr = GPU.share_memory(edge_vbo);
-        flag_vbo_ptr = GPU.share_memory(flag_vbo);
         glEnableVertexArrayAttrib(vao, EDGE_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, FLAG_ATTRIBUTE);
     }
 
     private void inti_CL()
     {
+        vertex_vbo_ptr = GPU.share_memory(edge_vbo);
+        flag_vbo_ptr = GPU.share_memory(flag_vbo);
+
         prepare_edges.init();
 
         long ptr = prepare_edges.kernel_ptr(Kernel.prepare_edges);
         prepare_edges_k = new PrepareEdges_k(GPU.command_queue_ptr, ptr)
+            .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vertex_vbo_ptr)
+            .ptr_arg(PrepareEdges_k.Args.flag_vbo, flag_vbo_ptr)
             .mem_arg(PrepareEdges_k.Args.points, GPU.Buffer.points.memory)
             .mem_arg(PrepareEdges_k.Args.edges, GPU.Buffer.edges.memory);
     }
@@ -91,8 +94,6 @@ public class EdgeRenderer extends GameSystem
             prepare_edges_k
                 .share_mem(vertex_vbo_ptr)
                 .share_mem(flag_vbo_ptr)
-                .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vertex_vbo_ptr)
-                .ptr_arg(PrepareEdges_k.Args.flag_vbo, flag_vbo_ptr)
                 .set_arg(PrepareEdges_k.Args.offset, offset)
                 .call(arg_long(count));
 

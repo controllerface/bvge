@@ -699,4 +699,10 @@ public class GPUCoreMemory
 //
 //        k_call(command_queue, _k.get(Kernel.rotate_hull), global_single_size);
     }
+
+    public void destroy()
+    {
+        gpu_crud.destroy();
+        scan_deletes.destroy();
+    }
 }
