@@ -3,6 +3,7 @@ package com.controllerface.bvge.gl.renderers;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 import com.controllerface.bvge.cl.kernels.PrepareEdges_k;
 import com.controllerface.bvge.cl.programs.PrepareEdges;
 import com.controllerface.bvge.ecs.ECS;
@@ -14,7 +15,8 @@ import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
-import static com.controllerface.bvge.util.Constants.Rendering.*;
+import static com.controllerface.bvge.util.Constants.Rendering.SCALAR_LENGTH;
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static org.lwjgl.opengl.GL15C.GL_LINES;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
@@ -67,7 +69,7 @@ public class EdgeRenderer extends GameSystem
     {
         prepare_edges.init();
 
-        long ptr = prepare_edges.kernel_ptr(GPU.Kernel.prepare_edges);
+        long ptr = prepare_edges.kernel_ptr(Kernel.prepare_edges);
         prepare_edges_k = new PrepareEdges_k(GPU.command_queue_ptr, ptr)
             .mem_arg(PrepareEdges_k.Args.points, GPU.Buffer.points.memory)
             .mem_arg(PrepareEdges_k.Args.edges, GPU.Buffer.edges.memory);

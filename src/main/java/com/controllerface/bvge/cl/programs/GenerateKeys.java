@@ -1,8 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 
 public class GenerateKeys extends GPUProgram
 {
@@ -15,6 +15,6 @@ public class GenerateKeys extends GPUProgram
 
         make_program();
 
-        load_kernel(GPU.Kernel.generate_keys);
+        load_kernel(Kernel.generate_keys);
     }
 }

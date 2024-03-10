@@ -1,8 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 
 public class AnimateHulls extends GPUProgram
 {
@@ -23,8 +23,8 @@ public class AnimateHulls extends GPUProgram
 
         make_program();
 
-        load_kernel(GPU.Kernel.animate_armatures);
-        load_kernel(GPU.Kernel.animate_bones);
-        load_kernel(GPU.Kernel.animate_points);
+        load_kernel(Kernel.animate_armatures);
+        load_kernel(Kernel.animate_bones);
+        load_kernel(Kernel.animate_points);
     }
 }

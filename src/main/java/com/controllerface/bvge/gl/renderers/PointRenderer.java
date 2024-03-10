@@ -3,6 +3,7 @@ package com.controllerface.bvge.gl.renderers;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 import com.controllerface.bvge.cl.kernels.PreparePoints_k;
 import com.controllerface.bvge.cl.programs.PreparePoints;
 import com.controllerface.bvge.ecs.ECS;
@@ -57,7 +58,7 @@ public class PointRenderer extends GameSystem
     {
         prepare_points.init();
 
-        long ptr = prepare_points.kernel_ptr(GPU.Kernel.prepare_points);
+        long ptr = prepare_points.kernel_ptr(Kernel.prepare_points);
         prepare_points_k = new PreparePoints_k(GPU.command_queue_ptr, ptr)
             .mem_arg(PreparePoints_k.Args.points, GPU.Buffer.points.memory);
     }

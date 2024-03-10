@@ -3,7 +3,10 @@ package com.controllerface.bvge.geometry;
 import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.cl.GPU;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Meshes

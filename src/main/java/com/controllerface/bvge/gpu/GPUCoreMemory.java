@@ -71,48 +71,48 @@ public class GPUCoreMemory
 
         // create methods
 
-        long create_point_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_point);
+        long create_point_k_ptr = gpu_crud.kernel_ptr(Kernel.create_point);
         create_point_k = new CreatePoint_k(GPU.command_queue_ptr, create_point_k_ptr)
             .mem_arg(CreatePoint_k.Args.points, GPU.Buffer.points.memory)
             .mem_arg(CreatePoint_k.Args.vertex_tables, GPU.Buffer.point_vertex_tables.memory)
             .mem_arg(CreatePoint_k.Args.bone_tables, GPU.Buffer.point_bone_tables.memory);
 
-        long create_texture_uv_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_texture_uv);
+        long create_texture_uv_ptr = gpu_crud.kernel_ptr(Kernel.create_texture_uv);
         create_texture_uv_k = new CreateTextureUV_k(GPU.command_queue_ptr, create_texture_uv_ptr)
             .mem_arg(CreateTextureUV_k.Args.texture_uvs, GPU.Buffer.texture_uvs.memory);
 
-        long create_edge_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_edge);
+        long create_edge_k_ptr = gpu_crud.kernel_ptr(Kernel.create_edge);
         create_edge_k = new CreateEdge_k(GPU.command_queue_ptr, create_edge_k_ptr)
             .mem_arg(CreateEdge_k.Args.edges, GPU.Buffer.edges.memory);
 
-        long create_keyframe_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_keyframe);
+        long create_keyframe_k_ptr = gpu_crud.kernel_ptr(Kernel.create_keyframe);
         create_keyframe_k = new CreateKeyFrame_k(GPU.command_queue_ptr, create_keyframe_k_ptr)
             .mem_arg(CreateKeyFrame_k.Args.key_frames, GPU.Buffer.key_frames.memory)
             .mem_arg(CreateKeyFrame_k.Args.frame_times, GPU.Buffer.frame_times.memory);
 
-        long create_vertex_reference_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_vertex_reference);
+        long create_vertex_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_vertex_reference);
         create_vertex_reference_k = new CreateVertexRef_k(GPU.command_queue_ptr, create_vertex_reference_k_ptr)
             .mem_arg(CreateVertexRef_k.Args.vertex_references, GPU.Buffer.vertex_references.memory)
             .mem_arg(CreateVertexRef_k.Args.vertex_weights, GPU.Buffer.vertex_weights.memory)
             .mem_arg(CreateVertexRef_k.Args.uv_tables, GPU.Buffer.uv_tables.memory);
 
-        long create_bone_bind_pose_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_bone_bind_pose);
+        long create_bone_bind_pose_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_bind_pose);
         create_bone_bind_pose_k = new CreateBoneBindPose_k(GPU.command_queue_ptr, create_bone_bind_pose_k_ptr)
             .mem_arg(CreateBoneBindPose_k.Args.bone_bind_poses, GPU.Buffer.bone_bind_poses.memory)
             .mem_arg(CreateBoneBindPose_k.Args.bone_bind_parents, GPU.Buffer.bone_bind_parents.memory);
 
-        long create_bone_reference_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_bone_reference);
+        long create_bone_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_reference);
         create_bone_reference_k = new CreateBoneRef_k(GPU.command_queue_ptr, create_bone_reference_k_ptr)
             .mem_arg(CreateBoneRef_k.Args.bone_references, GPU.Buffer.bone_references.memory);
 
-        long create_bone_channel_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_bone_channel);
+        long create_bone_channel_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_channel);
         create_bone_channel_k = new CreateBoneChannel_k(GPU.command_queue_ptr, create_bone_channel_k_ptr)
             .mem_arg(CreateBoneChannel_k.Args.animation_timing_indices, GPU.Buffer.animation_timing_indices.memory)
             .mem_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, GPU.Buffer.bone_pos_channel_tables.memory)
             .mem_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, GPU.Buffer.bone_rot_channel_tables.memory)
             .mem_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, GPU.Buffer.bone_scl_channel_tables.memory);
 
-        long create_armature_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_armature);
+        long create_armature_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature);
         create_armature_k = new CreateArmature_k(GPU.command_queue_ptr, create_armature_k_ptr)
             .mem_arg(CreateArmature_k.Args.armatures, GPU.Buffer.armatures.memory)
             .mem_arg(CreateArmature_k.Args.armature_flags, GPU.Buffer.armature_flags.memory)
@@ -121,21 +121,21 @@ public class GPUCoreMemory
             .mem_arg(CreateArmature_k.Args.armature_animation_indices, GPU.Buffer.armature_animation_indices.memory)
             .mem_arg(CreateArmature_k.Args.armature_animation_elapsed, GPU.Buffer.armature_animation_elapsed.memory);
 
-        long create_bone_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_bone);
+        long create_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone);
         create_bone_k = new CreateBone_k(GPU.command_queue_ptr, create_bone_k_ptr)
             .mem_arg(CreateBone_k.Args.bones, GPU.Buffer.bone_instances.memory)
             .mem_arg(CreateBone_k.Args.bone_index_tables, GPU.Buffer.bone_index_tables.memory);
 
-        long create_armature_bone_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_armature_bone);
+        long create_armature_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature_bone);
         create_armature_bone_k = new CreateArmatureBone_k(GPU.command_queue_ptr, create_armature_bone_k_ptr)
             .mem_arg(CreateArmatureBone_k.Args.armature_bones, GPU.Buffer.armatures_bones.memory)
             .mem_arg(CreateArmatureBone_k.Args.bone_bind_tables, GPU.Buffer.bone_bind_tables.memory);
 
-        long create_model_transform_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_model_transform);
+        long create_model_transform_k_ptr = gpu_crud.kernel_ptr(Kernel.create_model_transform);
         create_model_transform_k = new CreateModelTransform_k(GPU.command_queue_ptr, create_model_transform_k_ptr)
             .mem_arg(CreateModelTransform_k.Args.model_transforms, GPU.Buffer.model_transforms.memory);
 
-        long create_hull_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_hull);
+        long create_hull_k_ptr = gpu_crud.kernel_ptr(Kernel.create_hull);
         create_hull_k = new CreateHull_k(GPU.command_queue_ptr, create_hull_k_ptr)
             .mem_arg(CreateHull_k.Args.hulls, GPU.Buffer.hulls.memory)
             .mem_arg(CreateHull_k.Args.hull_rotations, GPU.Buffer.hull_rotation.memory)
@@ -143,64 +143,64 @@ public class GPUCoreMemory
             .mem_arg(CreateHull_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
             .mem_arg(CreateHull_k.Args.hull_mesh_ids, GPU.Buffer.hull_mesh_ids.memory);
 
-        long create_mesh_reference_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_mesh_reference);
+        long create_mesh_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_reference);
         create_mesh_reference_k = new CreateMeshReference_k(GPU.command_queue_ptr, create_mesh_reference_k_ptr)
             .mem_arg(CreateMeshReference_k.Args.mesh_ref_tables, GPU.Buffer.mesh_references.memory);
 
-        long create_mesh_face_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_mesh_face);
+        long create_mesh_face_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_face);
         create_mesh_face_k = new CreateMeshFace_k(GPU.command_queue_ptr, create_mesh_face_k_ptr)
             .mem_arg(CreateMeshFace_k.Args.mesh_faces, GPU.Buffer.mesh_faces.memory);
 
-        long create_animation_timings_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.create_animation_timings);
+        long create_animation_timings_k_ptr = gpu_crud.kernel_ptr(Kernel.create_animation_timings);
         create_animation_timings_k = new CreateAnimationTimings_k(GPU.command_queue_ptr, create_animation_timings_k_ptr)
             .mem_arg(CreateAnimationTimings_k.Args.animation_timings, GPU.Buffer.animation_timings.memory);
 
         // read methods
 
-        long read_position_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.read_position);
+        long read_position_k_ptr = gpu_crud.kernel_ptr(Kernel.read_position);
         read_position_k = new ReadPosition_k(GPU.command_queue_ptr, read_position_k_ptr)
             .mem_arg(ReadPosition_k.Args.armatures, GPU.Buffer.armatures.memory);
 
         // update methods
 
-        long update_accel_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.update_accel);
+        long update_accel_k_ptr = gpu_crud.kernel_ptr(Kernel.update_accel);
         update_accel_k = new UpdateAccel_k(GPU.command_queue_ptr, update_accel_k_ptr)
             .mem_arg(UpdateAccel_k.Args.armature_accel, GPU.Buffer.armature_accel.memory);
 
-        long set_bone_channel_table_k_ptr = gpu_crud.kernel_ptr(GPU.Kernel.set_bone_channel_table);
+        long set_bone_channel_table_k_ptr = gpu_crud.kernel_ptr(Kernel.set_bone_channel_table);
         set_bone_channel_table_k = new SetBoneChannelTable_k(GPU.command_queue_ptr, set_bone_channel_table_k_ptr)
             .mem_arg(SetBoneChannelTable_k.Args.bone_channel_tables, GPU.Buffer.bone_channel_tables.memory);
 
         // delete methods
 
-        long locate_out_of_bounds_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.locate_out_of_bounds);
+        long locate_out_of_bounds_k_ptr = scan_deletes.kernel_ptr(Kernel.locate_out_of_bounds);
         locate_out_of_bounds_k = new LocateOutOfBounds_k(GPU.command_queue_ptr, locate_out_of_bounds_k_ptr)
             .mem_arg(LocateOutOfBounds_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
             .mem_arg(LocateOutOfBounds_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
             .mem_arg(LocateOutOfBounds_k.Args.armature_flags, GPU.Buffer.armature_flags.memory);
 
-        long scan_deletes_single_block_out_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.scan_deletes_single_block_out);
+        long scan_deletes_single_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_single_block_out);
         scan_deletes_single_block_out_k = new ScanDeletesSingleBlockOut_k(GPU.command_queue_ptr, scan_deletes_single_block_out_k_ptr)
             .mem_arg(ScanDeletesSingleBlockOut_k.Args.armature_flags, GPU.Buffer.armature_flags.memory)
             .mem_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
             .mem_arg(ScanDeletesSingleBlockOut_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
             .mem_arg(ScanDeletesSingleBlockOut_k.Args.hull_flags, GPU.Buffer.hull_flags.memory);
 
-        long scan_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.scan_deletes_multi_block_out);
+        long scan_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_multi_block_out);
         scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(GPU.command_queue_ptr, scan_deletes_multi_block_out_k_ptr)
             .mem_arg(ScanDeletesMultiBlockOut_k.Args.armature_flags, GPU.Buffer.armature_flags.memory)
             .mem_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
             .mem_arg(ScanDeletesMultiBlockOut_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
             .mem_arg(ScanDeletesMultiBlockOut_k.Args.hull_flags, GPU.Buffer.hull_flags.memory);
 
-        long complete_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.complete_deletes_multi_block_out);
+        long complete_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.complete_deletes_multi_block_out);
         complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(GPU.command_queue_ptr, complete_deletes_multi_block_out_k_ptr)
             .mem_arg(CompleteDeletesMultiBlockOut_k.Args.armature_flags, GPU.Buffer.armature_flags.memory)
             .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, GPU.Buffer.armature_hull_table.memory)
             .mem_arg(CompleteDeletesMultiBlockOut_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
             .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_flags, GPU.Buffer.hull_flags.memory);
 
-        long compact_armatures_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_armatures);
+        long compact_armatures_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armatures);
         compact_armatures_k = new CompactArmatures_k(GPU.command_queue_ptr, compact_armatures_k_ptr)
             .mem_arg(CompactArmatures_k.Args.armatures, GPU.Buffer.armatures.memory)
             .mem_arg(CompactArmatures_k.Args.armature_accel, GPU.Buffer.armature_accel.memory)
@@ -223,7 +223,7 @@ public class GPUCoreMemory
             .mem_arg(CompactArmatures_k.Args.hull_shift, GPU.Buffer.hull_shift.memory)
             .mem_arg(CompactArmatures_k.Args.bone_bind_shift, GPU.Buffer.bone_bind_shift.memory);
 
-        long compact_hulls_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_hulls);
+        long compact_hulls_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_hulls);
         compact_hulls_k = new CompactHulls_k(GPU.command_queue_ptr, compact_hulls_k_ptr)
             .mem_arg(CompactHulls_k.Args.hull_shift, GPU.Buffer.hull_shift.memory)
             .mem_arg(CompactHulls_k.Args.hulls, GPU.Buffer.hulls.memory)
@@ -235,12 +235,12 @@ public class GPUCoreMemory
             .mem_arg(CompactHulls_k.Args.bounds_index_data, GPU.Buffer.aabb_index.memory)
             .mem_arg(CompactHulls_k.Args.bounds_bank_data, GPU.Buffer.aabb_key_table.memory);
 
-        long compact_edges_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_edges);
+        long compact_edges_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_edges);
         compact_edges_k = new CompactEdges_k(GPU.command_queue_ptr, compact_edges_k_ptr)
             .mem_arg(CompactEdges_k.Args.edge_shift, GPU.Buffer.edge_shift.memory)
             .mem_arg(CompactEdges_k.Args.edges, GPU.Buffer.edges.memory);
 
-        long compact_points_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_points);
+        long compact_points_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_points);
         compact_points_k = new CompactPoints_k(GPU.command_queue_ptr, compact_points_k_ptr)
             .mem_arg(CompactPoints_k.Args.point_shift, GPU.Buffer.point_shift.memory)
             .mem_arg(CompactPoints_k.Args.points, GPU.Buffer.points.memory)
@@ -248,13 +248,13 @@ public class GPUCoreMemory
             .mem_arg(CompactPoints_k.Args.vertex_tables, GPU.Buffer.point_vertex_tables.memory)
             .mem_arg(CompactPoints_k.Args.bone_tables, GPU.Buffer.point_bone_tables.memory);
 
-        long compact_bones_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_bones);
+        long compact_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_bones);
         compact_bones_k = new CompactBones_k(GPU.command_queue_ptr, compact_bones_k_ptr)
             .mem_arg(CompactBones_k.Args.bone_shift, GPU.Buffer.bone_shift.memory)
             .mem_arg(CompactBones_k.Args.bone_instances, GPU.Buffer.bone_instances.memory)
             .mem_arg(CompactBones_k.Args.bone_index_tables, GPU.Buffer.bone_index_tables.memory);
 
-        long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(GPU.Kernel.compact_armature_bones);
+        long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armature_bones);
         compact_armature_bones_k = new CompactArmatureBones_k(GPU.command_queue_ptr, compact_armature_bones_k_ptr)
             .mem_arg(CompactArmatureBones_k.Args.armature_bone_shift, GPU.Buffer.bone_bind_shift.memory)
             .mem_arg(CompactArmatureBones_k.Args.armature_bones, GPU.Buffer.armatures_bones.memory)

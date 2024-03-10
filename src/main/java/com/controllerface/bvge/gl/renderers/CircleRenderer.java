@@ -1,9 +1,6 @@
 package com.controllerface.bvge.gl.renderers;
 
-import com.controllerface.bvge.cl.GPU;
-import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import com.controllerface.bvge.cl.HullIndexData;
+import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.PrepareTransforms_k;
 import com.controllerface.bvge.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.ecs.ECS;
@@ -17,7 +14,6 @@ import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
-import static org.lwjgl.opencl.CL12.clReleaseMemObject;
 import static org.lwjgl.opengl.ARBDirectStateAccess.glCreateVertexArrays;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
@@ -63,7 +59,7 @@ public class CircleRenderer extends GameSystem
     {
         prepare_transforms.init();
 
-        long ptr = prepare_transforms.kernel_ptr(GPU.Kernel.prepare_transforms);
+        long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
         prepare_transforms_k = (new PrepareTransforms_k(GPU.command_queue_ptr, ptr))
             .mem_arg(PrepareTransforms_k.Args.transforms, GPU.Buffer.hulls.memory)
             .mem_arg(PrepareTransforms_k.Args.hull_rotations, GPU.Buffer.hull_rotation.memory);

@@ -1,15 +1,14 @@
 package com.controllerface.bvge.ecs.systems;
 
+import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
-import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.window.Window;
 
 import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
 public class KBMInput extends GameSystem
 {

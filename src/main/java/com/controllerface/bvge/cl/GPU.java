@@ -11,7 +11,6 @@ import java.nio.IntBuffer;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
-import static org.lwjgl.opencl.CL10.CL_DEVICE_LOCAL_MEM_SIZE;
 import static org.lwjgl.opencl.CL12.*;
 import static org.lwjgl.opencl.CL12GL.clCreateFromGLBuffer;
 import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
@@ -105,7 +104,7 @@ public class GPU
 
     //#region Program Objects
 
-    public enum Program
+    private enum Program
     {
         root_hull_filter(new RootHullFilter()),
         scan_int2_array(new ScanInt2Array()),
@@ -127,95 +126,20 @@ public class GPU
 
     //#region Kernel Objects
 
-    public enum Kernel
-    {
-        aabb_collide,
-        animate_armatures,
-        animate_bones,
-        animate_points,
-        apply_reactions,
-        build_key_map,
-        calculate_batch_offsets,
-        compact_armature_bones,
-        compact_armatures,
-        compact_bones,
-        compact_edges,
-        compact_hulls,
-        compact_points,
-        complete_bounds_multi_block,
-        complete_candidates_multi_block_out,
-        complete_deletes_multi_block_out,
-        complete_int2_multi_block,
-        complete_int4_multi_block,
-        complete_int_multi_block,
-        complete_int_multi_block_out,
-        count_candidates,
-        count_mesh_batches,
-        count_mesh_instances,
-        create_animation_timings,
-        create_armature,
-        create_armature_bone,
-        create_bone,
-        create_bone_bind_pose,
-        create_bone_channel,
-        create_bone_reference,
-        create_edge,
-        create_hull,
-        create_keyframe,
-        create_mesh_face,
-        create_mesh_reference,
-        create_model_transform,
-        create_point,
-        create_texture_uv,
-        create_vertex_reference,
-        finalize_candidates,
-        generate_keys,
-        integrate,
-        locate_in_bounds,
-        locate_out_of_bounds,
-        move_armatures,
-        prepare_bones,
-        prepare_bounds,
-        prepare_edges,
-        prepare_points,
-        prepare_transforms,
-        read_position,
-        resolve_constraints,
-        root_hull_count,
-        root_hull_filter,
-        rotate_hull,
-        sat_collide,
-        scan_bounds_multi_block,
-        scan_bounds_single_block,
-        scan_candidates_multi_block_out,
-        scan_candidates_single_block_out,
-        scan_deletes_multi_block_out,
-        scan_deletes_single_block_out,
-        scan_int2_multi_block,
-        scan_int2_single_block,
-        scan_int4_multi_block,
-        scan_int4_single_block,
-        scan_int_multi_block,
-        scan_int_multi_block_out,
-        scan_int_single_block,
-        scan_int_single_block_out,
-        set_bone_channel_table,
-        sort_reactions,
-        transfer_detail_data,
-        transfer_render_data,
-        update_accel,
-        write_mesh_details,
-
-        ;
-
-        GPUKernel kernel;
-
-        public GPUKernel set_kernel(GPUKernel gpu_kernel)
-        {
-            this.kernel = gpu_kernel;
-            return this.kernel;
-        }
-    }
+    private static GPUKernel scan_int_single_block_k;
+    private static GPUKernel scan_int_multi_block_k;
+    private static GPUKernel complete_int_multi_block_k;
+    private static GPUKernel scan_int2_single_block_k;
+    private static GPUKernel scan_int2_multi_block_k;
+    private static GPUKernel complete_int2_multi_block_k;
+    private static GPUKernel scan_int4_single_block_k;
+    private static GPUKernel scan_int4_multi_block_k;
+    private static GPUKernel complete_int4_multi_block_k;
+    private static GPUKernel scan_int_single_block_out_k;
+    private static GPUKernel scan_int_multi_block_out_k;
+    private static GPUKernel complete_int_multi_block_out_k;
+    private static GPUKernel root_hull_count_k;
+    private static GPUKernel root_hull_filter_k;
 
     //#endregion
 
@@ -894,45 +818,45 @@ public class GPU
         long scan_int_array_single_ptr = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_single_block);
         long scan_int_array_multi_ptr = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_multi_block);
         long scan_int_array_comp_ptr = Program.scan_int_array.gpu.kernel_ptr(Kernel.complete_int_multi_block);
-        Kernel.scan_int_single_block.set_kernel(new ScanIntSingleBlock_k(command_queue_ptr, scan_int_array_single_ptr));
-        Kernel.scan_int_multi_block.set_kernel(new ScanIntMultiBlock_k(command_queue_ptr, scan_int_array_multi_ptr));
-        Kernel.complete_int_multi_block.set_kernel(new CompleteIntMultiBlock_k(command_queue_ptr, scan_int_array_comp_ptr));
+        scan_int_single_block_k = new ScanIntSingleBlock_k(command_queue_ptr, scan_int_array_single_ptr);
+        scan_int_multi_block_k = new ScanIntMultiBlock_k(command_queue_ptr, scan_int_array_multi_ptr);
+        complete_int_multi_block_k = new CompleteIntMultiBlock_k(command_queue_ptr, scan_int_array_comp_ptr);
 
         // 2D vector integer exclusive scan in-place
 
         long scan_int2_array_single_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_single_block);
         long scan_int2_array_multi_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_multi_block);
         long scan_int2_array_comp_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.complete_int2_multi_block);
-        Kernel.scan_int2_single_block.set_kernel(new ScanInt2SingleBlock_k(command_queue_ptr, scan_int2_array_single_ptr));
-        Kernel.scan_int2_multi_block.set_kernel(new ScanInt2MultiBlock_k(command_queue_ptr, scan_int2_array_multi_ptr));
-        Kernel.complete_int2_multi_block.set_kernel(new CompleteInt2MultiBlock_k(command_queue_ptr, scan_int2_array_comp_ptr));
+        scan_int2_single_block_k = new ScanInt2SingleBlock_k(command_queue_ptr, scan_int2_array_single_ptr);
+        scan_int2_multi_block_k = new ScanInt2MultiBlock_k(command_queue_ptr, scan_int2_array_multi_ptr);
+        complete_int2_multi_block_k = new CompleteInt2MultiBlock_k(command_queue_ptr, scan_int2_array_comp_ptr);
 
         // 4D vector integer exclusive scan in-place
 
         long scan_int4_array_single_ptr = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_single_block);
         long scan_int4_array_multi_ptr = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_multi_block);
         long scan_int4_array_comp_ptr = Program.scan_int4_array.gpu.kernel_ptr(Kernel.complete_int4_multi_block);
-        Kernel.scan_int4_single_block.set_kernel(new ScanInt4SingleBlock_k(command_queue_ptr, scan_int4_array_single_ptr));
-        Kernel.scan_int4_multi_block.set_kernel(new ScanInt4MultiBlock_k(command_queue_ptr, scan_int4_array_multi_ptr));
-        Kernel.complete_int4_multi_block.set_kernel(new CompleteInt4MultiBlock_k(command_queue_ptr, scan_int4_array_comp_ptr));
+        scan_int4_single_block_k = new ScanInt4SingleBlock_k(command_queue_ptr, scan_int4_array_single_ptr);
+        scan_int4_multi_block_k = new ScanInt4MultiBlock_k(command_queue_ptr, scan_int4_array_multi_ptr);
+        complete_int4_multi_block_k = new CompleteInt4MultiBlock_k(command_queue_ptr, scan_int4_array_comp_ptr);
 
         // integer exclusive scan to output buffer
 
         long scan_int_array_out_single_ptr = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_single_block_out);
         long scan_int_array_out_multi_ptr = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_multi_block_out);
         long scan_int_array_out_comp_ptr = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.complete_int_multi_block_out);
-        Kernel.scan_int_single_block_out.set_kernel(new ScanIntSingleBlockOut_k(command_queue_ptr, scan_int_array_out_single_ptr));
-        Kernel.scan_int_multi_block_out.set_kernel(new ScanIntMultiBlockOut_k(command_queue_ptr, scan_int_array_out_multi_ptr));
-        Kernel.complete_int_multi_block_out.set_kernel(new CompleteIntMultiBlockOut_k(command_queue_ptr, scan_int_array_out_comp_ptr));
+        scan_int_single_block_out_k = new ScanIntSingleBlockOut_k(command_queue_ptr, scan_int_array_out_single_ptr);
+        scan_int_multi_block_out_k = new ScanIntMultiBlockOut_k(command_queue_ptr, scan_int_array_out_multi_ptr);
+        complete_int_multi_block_out_k = new CompleteIntMultiBlockOut_k(command_queue_ptr, scan_int_array_out_comp_ptr);
 
         // Open GL interop
 
         long root_hull_filter_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_filter);
-        Kernel.root_hull_filter.set_kernel(new RootHullFilter_k(command_queue_ptr, root_hull_filter_ptr))
+        root_hull_filter_k = new RootHullFilter_k(command_queue_ptr, root_hull_filter_ptr)
             .mem_arg(RootHullFilter_k.Args.armature_flags, Buffer.armature_flags.memory);
 
         long root_hull_count_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_count);
-        Kernel.root_hull_count.set_kernel(new RootHullCount_k(command_queue_ptr, root_hull_count_ptr))
+        root_hull_count_k = new RootHullCount_k(command_queue_ptr, root_hull_count_ptr)
             .mem_arg(RootHullCount_k.Args.armature_flags, Buffer.armature_flags.memory);
     }
 
@@ -1082,7 +1006,7 @@ public class GPU
     {
         cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        Kernel.root_hull_count.kernel
+        root_hull_count_k
             .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .call(arg_long(GPU.core_memory.next_armature()));
@@ -1099,7 +1023,7 @@ public class GPU
 
         cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        Kernel.root_hull_filter.kernel
+        root_hull_filter_k
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
@@ -1168,7 +1092,7 @@ public class GPU
     {
         long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
-        Kernel.scan_int_single_block.kernel
+        scan_int_single_block_k
             .ptr_arg(ScanIntSingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanIntSingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanIntSingleBlock_k.Args.n, n)
@@ -1185,7 +1109,7 @@ public class GPU
 
         var part_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_int_multi_block.kernel
+        scan_int_multi_block_k
             .ptr_arg(ScanIntMultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanIntMultiBlock_k.Args.part, part_data)
@@ -1194,7 +1118,7 @@ public class GPU
 
         scan_int(part_data, part_size);
 
-        Kernel.complete_int_multi_block.kernel
+        complete_int_multi_block_k
             .ptr_arg(CompleteIntMultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteIntMultiBlock_k.Args.part, part_data)
@@ -1208,7 +1132,7 @@ public class GPU
     {
         long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
 
-        Kernel.scan_int2_single_block.kernel
+       scan_int2_single_block_k
             .ptr_arg(ScanInt2SingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt2SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt2SingleBlock_k.Args.n, n)
@@ -1225,7 +1149,7 @@ public class GPU
 
         var part_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_int2_multi_block.kernel
+        scan_int2_multi_block_k
             .ptr_arg(ScanInt2MultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanInt2MultiBlock_k.Args.part, part_data)
@@ -1234,7 +1158,7 @@ public class GPU
 
         scan_int2(part_data, part_size);
 
-        Kernel.complete_int2_multi_block.kernel
+        complete_int2_multi_block_k
             .ptr_arg(CompleteInt2MultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteInt2MultiBlock_k.Args.part, part_data)
@@ -1248,7 +1172,7 @@ public class GPU
     {
         long local_buffer_size = CLSize.cl_int4 * max_scan_block_size;
 
-        Kernel.scan_int4_single_block.kernel
+        scan_int4_single_block_k
             .ptr_arg(ScanInt4SingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt4SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt4SingleBlock_k.Args.n, n)
@@ -1265,7 +1189,7 @@ public class GPU
 
         var part_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_int4_multi_block.kernel
+        scan_int4_multi_block_k
             .ptr_arg(ScanInt4MultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt4MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanInt4MultiBlock_k.Args.part, part_data)
@@ -1274,7 +1198,7 @@ public class GPU
 
         scan_int4(part_data, part_size);
 
-        Kernel.complete_int4_multi_block.kernel
+        complete_int4_multi_block_k
             .ptr_arg(CompleteInt4MultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteInt4MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteInt4MultiBlock_k.Args.part, part_data)
@@ -1288,7 +1212,7 @@ public class GPU
     {
         long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
-        Kernel.scan_int_single_block_out.kernel
+        scan_int_single_block_out_k
             .ptr_arg(ScanIntSingleBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanIntSingleBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(ScanIntSingleBlockOut_k.Args.buffer, local_buffer_size)
@@ -1305,7 +1229,7 @@ public class GPU
         long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
         var part_data = cl_new_buffer(part_buf_size);
 
-        Kernel.scan_int_multi_block_out.kernel
+        scan_int_multi_block_out_k
             .ptr_arg(ScanIntMultiBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanIntMultiBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(ScanIntMultiBlockOut_k.Args.buffer, local_buffer_size)
@@ -1315,7 +1239,7 @@ public class GPU
 
         scan_int(part_data, part_size);
 
-        Kernel.complete_int_multi_block_out.kernel
+        complete_int_multi_block_out_k
             .ptr_arg(CompleteIntMultiBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(CompleteIntMultiBlockOut_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteIntMultiBlockOut_k.Args.part, part_data)

@@ -1,8 +1,8 @@
 package com.controllerface.bvge.physics;
 
+import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPU;
-import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;

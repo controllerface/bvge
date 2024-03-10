@@ -1,24 +1,20 @@
 package com.controllerface.bvge.game;
 
-import com.controllerface.bvge.ecs.components.ArmatureIndex;
-import com.controllerface.bvge.ecs.components.LinearForce;
-import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.CameraFocus;
-import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.components.ControlPoints;
+import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.physics.UniformGrid;
-import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.geometry.Meshes;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.gl.renderers.*;
+import com.controllerface.bvge.physics.PhysicsObjects;
+import com.controllerface.bvge.physics.PhysicsSimulation;
+import com.controllerface.bvge.physics.UniformGrid;
 
 import java.util.EnumSet;
 
-import static com.controllerface.bvge.physics.PhysicsObjects.*;
 import static com.controllerface.bvge.geometry.Models.*;
+import static com.controllerface.bvge.physics.PhysicsObjects.*;
 
 
 public class TestGame extends GameMode

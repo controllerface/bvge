@@ -8,7 +8,8 @@ import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import org.joml.Vector2f;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 
@@ -98,7 +99,7 @@ public class PhysicsSimulation extends GameSystem
         animate_hulls.init();
         resolve_constraints.init();
 
-        long integrate_k_ptr = integrate.kernel_ptr(GPU.Kernel.integrate);
+        long integrate_k_ptr = integrate.kernel_ptr(Kernel.integrate);
         integrate_k = new Integrate_k(GPU.command_queue_ptr, integrate_k_ptr)
             .mem_arg(Integrate_k.Args.hulls, GPU.Buffer.hulls.memory)
             .mem_arg(Integrate_k.Args.armatures, GPU.Buffer.armatures.memory)
@@ -113,52 +114,52 @@ public class PhysicsSimulation extends GameSystem
             .mem_arg(Integrate_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
             .mem_arg(Integrate_k.Args.anti_gravity, GPU.Buffer.point_anti_gravity.memory);
 
-        long scan_bounds_single_block_k_ptr = scan_key_bank.kernel_ptr(GPU.Kernel.scan_bounds_single_block);
+        long scan_bounds_single_block_k_ptr = scan_key_bank.kernel_ptr(Kernel.scan_bounds_single_block);
         scan_bounds_single_block_k = new ScanBoundsSingleBlock_k(GPU.command_queue_ptr, scan_bounds_single_block_k_ptr);
 
-        long scan_bounds_multi_block_k_ptr = scan_key_bank.kernel_ptr(GPU.Kernel.scan_bounds_multi_block);
+        long scan_bounds_multi_block_k_ptr = scan_key_bank.kernel_ptr(Kernel.scan_bounds_multi_block);
         scan_bounds_multi_block_k = new ScanBoundsMultiBlock_k(GPU.command_queue_ptr, scan_bounds_multi_block_k_ptr);
 
-        long complete_bounds_multi_block_k_ptr = scan_key_bank.kernel_ptr(GPU.Kernel.complete_bounds_multi_block);
+        long complete_bounds_multi_block_k_ptr = scan_key_bank.kernel_ptr(Kernel.complete_bounds_multi_block);
         complete_bounds_multi_block_k = new CompleteBoundsMultiBlock_k(GPU.command_queue_ptr, complete_bounds_multi_block_k_ptr);
 
-        long generate_keys_k_ptr = generate_keys.kernel_ptr(GPU.Kernel.generate_keys);
+        long generate_keys_k_ptr = generate_keys.kernel_ptr(Kernel.generate_keys);
         generate_keys_k = new GenerateKeys_k(GPU.command_queue_ptr, generate_keys_k_ptr)
             .mem_arg(GenerateKeys_k.Args.bounds_index_data, GPU.Buffer.aabb_index.memory)
             .mem_arg(GenerateKeys_k.Args.bounds_bank_data, GPU.Buffer.aabb_key_table.memory);
 
-        long build_key_map_k_ptr = build_key_map.kernel_ptr(GPU.Kernel.build_key_map);
+        long build_key_map_k_ptr = build_key_map.kernel_ptr(Kernel.build_key_map);
         build_key_map_k = new BuildKeyMap_k(GPU.command_queue_ptr, build_key_map_k_ptr)
             .mem_arg(BuildKeyMap_k.Args.bounds_index_data, GPU.Buffer.aabb_index.memory)
             .mem_arg(BuildKeyMap_k.Args.bounds_bank_data, GPU.Buffer.aabb_key_table.memory);
 
-        long locate_in_bounds_k_ptr = locate_in_bounds.kernel_ptr(GPU.Kernel.locate_in_bounds);
+        long locate_in_bounds_k_ptr = locate_in_bounds.kernel_ptr(Kernel.locate_in_bounds);
         locate_in_bounds_k = (new LocateInBounds_k(GPU.command_queue_ptr, locate_in_bounds_k_ptr))
             .mem_arg(LocateInBounds_k.Args.bounds_bank_data, GPU.Buffer.aabb_key_table.memory);
 
-        long count_candidates_k_ptr = locate_in_bounds.kernel_ptr(GPU.Kernel.count_candidates);
+        long count_candidates_k_ptr = locate_in_bounds.kernel_ptr(Kernel.count_candidates);
         count_candidates_k = new CountCandidates_k(GPU.command_queue_ptr, count_candidates_k_ptr)
             .mem_arg(CountCandidates_k.Args.bounds_bank_data, GPU.Buffer.aabb_key_table.memory);
 
-        long scan_candidates_single_block_out_k_ptr = scan_key_candidates.kernel_ptr(GPU.Kernel.scan_candidates_single_block_out);
+        long scan_candidates_single_block_out_k_ptr = scan_key_candidates.kernel_ptr(Kernel.scan_candidates_single_block_out);
         scan_candidates_single_block_out_k = new ScanCandidatesSingleBlockOut_k(GPU.command_queue_ptr, scan_candidates_single_block_out_k_ptr);
 
-        long scan_candidates_multi_block_out_k_ptr = scan_key_candidates.kernel_ptr(GPU.Kernel.scan_candidates_multi_block_out);
+        long scan_candidates_multi_block_out_k_ptr = scan_key_candidates.kernel_ptr(Kernel.scan_candidates_multi_block_out);
         scan_candidates_multi_block_out_k = new ScanCandidatesMultiBlockOut_k(GPU.command_queue_ptr, scan_candidates_multi_block_out_k_ptr);
 
-        long complete_candidates_multi_block_out_k_ptr = scan_key_candidates.kernel_ptr(GPU.Kernel.complete_candidates_multi_block_out);
+        long complete_candidates_multi_block_out_k_ptr = scan_key_candidates.kernel_ptr(Kernel.complete_candidates_multi_block_out);
         complete_candidates_multi_block_out_k = new CompleteCandidatesMultiBlockOut_k(GPU.command_queue_ptr, complete_candidates_multi_block_out_k_ptr);
 
-        long aabb_collide_k_ptr = aabb_collide.kernel_ptr(GPU.Kernel.aabb_collide);
+        long aabb_collide_k_ptr = aabb_collide.kernel_ptr(Kernel.aabb_collide);
         aabb_collide_k = new AABBCollide_k(GPU.command_queue_ptr, aabb_collide_k_ptr)
             .mem_arg(AABBCollide_k.Args.bounds, GPU.Buffer.aabb.memory)
             .mem_arg(AABBCollide_k.Args.bounds_bank_data, GPU.Buffer.aabb_key_table.memory)
             .mem_arg(AABBCollide_k.Args.hull_flags, GPU.Buffer.hull_flags.memory);
 
-        long finalize_candidates_k_ptr = locate_in_bounds.kernel_ptr(GPU.Kernel.finalize_candidates);
+        long finalize_candidates_k_ptr = locate_in_bounds.kernel_ptr(Kernel.finalize_candidates);
         finalize_candidates_k = new FinalizeCandidates_k(GPU.command_queue_ptr, finalize_candidates_k_ptr);
 
-        long sat_collide_k_ptr = sat_collide.kernel_ptr(GPU.Kernel.sat_collide);
+        long sat_collide_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide);
         sat_collide_k = new SatCollide_k(GPU.command_queue_ptr, sat_collide_k_ptr)
             .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
             .mem_arg(SatCollide_k.Args.hulls, GPU.Buffer.hulls.memory)
@@ -170,19 +171,19 @@ public class PhysicsSimulation extends GameSystem
             .mem_arg(SatCollide_k.Args.point_reactions, GPU.Buffer.point_reactions.memory)
             .mem_arg(SatCollide_k.Args.masses, GPU.Buffer.armature_mass.memory);
 
-        long sort_reactions_k_ptr = sat_collide.kernel_ptr(GPU.Kernel.sort_reactions);
+        long sort_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.sort_reactions);
         sort_reactions_k = new SortReactions_k(GPU.command_queue_ptr, sort_reactions_k_ptr)
             .mem_arg(SortReactions_k.Args.point_reactions, GPU.Buffer.point_reactions.memory)
             .mem_arg(SortReactions_k.Args.point_offsets, GPU.Buffer.point_offsets.memory);
 
-        long apply_reactions_k_ptr = sat_collide.kernel_ptr(GPU.Kernel.apply_reactions);
+        long apply_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.apply_reactions);
         apply_reactions_k = new ApplyReactions_k(GPU.command_queue_ptr, apply_reactions_k_ptr)
             .mem_arg(ApplyReactions_k.Args.points, GPU.Buffer.points.memory)
             .mem_arg(ApplyReactions_k.Args.anti_gravity, GPU.Buffer.point_anti_gravity.memory)
             .mem_arg(ApplyReactions_k.Args.point_reactions, GPU.Buffer.point_reactions.memory)
             .mem_arg(ApplyReactions_k.Args.point_offsets, GPU.Buffer.point_offsets.memory);
 
-        long move_armatures_k_ptr = sat_collide.kernel_ptr(GPU.Kernel.move_armatures);
+        long move_armatures_k_ptr = sat_collide.kernel_ptr(Kernel.move_armatures);
         move_armatures_k = new MoveArmatures_k(GPU.command_queue_ptr, move_armatures_k_ptr)
             .mem_arg(MoveArmatures_k.Args.hulls, GPU.Buffer.hulls.memory)
             .mem_arg(MoveArmatures_k.Args.armatures, GPU.Buffer.armatures.memory)
@@ -191,7 +192,7 @@ public class PhysicsSimulation extends GameSystem
             .mem_arg(MoveArmatures_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
             .mem_arg(MoveArmatures_k.Args.points, GPU.Buffer.points.memory);
 
-        long animate_armatures_k_ptr = animate_hulls.kernel_ptr(GPU.Kernel.animate_armatures);
+        long animate_armatures_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_armatures);
         animate_armatures_k = new AnimateArmatures_k(GPU.command_queue_ptr, animate_armatures_k_ptr)
             .mem_arg(AnimateArmatures_k.Args.armature_bones, GPU.Buffer.armatures_bones.memory)
             .mem_arg(AnimateArmatures_k.Args.bone_bind_poses, GPU.Buffer.bone_bind_poses.memory)
@@ -210,14 +211,14 @@ public class PhysicsSimulation extends GameSystem
             .mem_arg(AnimateArmatures_k.Args.armature_animation_indices, GPU.Buffer.armature_animation_indices.memory)
             .mem_arg(AnimateArmatures_k.Args.armature_animation_elapsed, GPU.Buffer.armature_animation_elapsed.memory);
 
-        long animate_bones_k_ptr = animate_hulls.kernel_ptr(GPU.Kernel.animate_bones);
+        long animate_bones_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_bones);
         animate_bones_k = new AnimateBones_k(GPU.command_queue_ptr, animate_bones_k_ptr)
             .mem_arg(AnimateBones_k.Args.bones, GPU.Buffer.bone_instances.memory)
             .mem_arg(AnimateBones_k.Args.bone_references, GPU.Buffer.bone_references.memory)
             .mem_arg(AnimateBones_k.Args.armature_bones, GPU.Buffer.armatures_bones.memory)
             .mem_arg(AnimateBones_k.Args.bone_index_tables, GPU.Buffer.bone_index_tables.memory);
 
-        long animate_points_k_ptr = animate_hulls.kernel_ptr(GPU.Kernel.animate_points);
+        long animate_points_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_points);
         animate_points_k = new AnimatePoints_k(GPU.command_queue_ptr, animate_points_k_ptr)
             .mem_arg(AnimatePoints_k.Args.points, GPU.Buffer.points.memory)
             .mem_arg(AnimatePoints_k.Args.hulls, GPU.Buffer.hulls.memory)
@@ -229,7 +230,7 @@ public class PhysicsSimulation extends GameSystem
             .mem_arg(AnimatePoints_k.Args.vertex_references, GPU.Buffer.vertex_references.memory)
             .mem_arg(AnimatePoints_k.Args.bones, GPU.Buffer.bone_instances.memory);
 
-        long resolve_constraints_k_ptr = resolve_constraints.kernel_ptr(GPU.Kernel.resolve_constraints);
+        long resolve_constraints_k_ptr = resolve_constraints.kernel_ptr(Kernel.resolve_constraints);
         resolve_constraints_k = new ResolveConstraints_k(GPU.command_queue_ptr, resolve_constraints_k_ptr)
             .mem_arg(ResolveConstraints_k.Args.element_table, GPU.Buffer.hull_element_tables.memory)
             .mem_arg(ResolveConstraints_k.Args.bounds_bank_dat, GPU.Buffer.aabb_key_table.memory)

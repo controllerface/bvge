@@ -1,8 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 
 public class BuildKeyMap extends GPUProgram
 {
@@ -15,6 +15,6 @@ public class BuildKeyMap extends GPUProgram
 
         make_program();
 
-        load_kernel(GPU.Kernel.build_key_map);
+        load_kernel(Kernel.build_key_map);
     }
 }

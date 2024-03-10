@@ -3,6 +3,7 @@ package com.controllerface.bvge.gl.renderers;
 import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUKernel;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 import com.controllerface.bvge.cl.kernels.PrepareBounds_k;
 import com.controllerface.bvge.cl.programs.PrepareBounds;
 import com.controllerface.bvge.ecs.ECS;
@@ -17,9 +18,9 @@ import org.lwjgl.system.MemoryUtil;
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static org.lwjgl.opengl.GL11C.GL_LINE_LOOP;
-import static org.lwjgl.opengl.GL15C.*;
+import static org.lwjgl.opengl.GL15C.glDeleteBuffers;
+import static org.lwjgl.opengl.GL15C.glMultiDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
 import static org.lwjgl.opengl.GL45C.*;
 
 public class BoundingBoxRenderer extends GameSystem
@@ -66,7 +67,7 @@ public class BoundingBoxRenderer extends GameSystem
     {
         prepare_bounds.init();
 
-        long ptr = prepare_bounds.kernel_ptr(GPU.Kernel.prepare_bounds);
+        long ptr = prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
         prepare_bounds_k = new PrepareBounds_k(GPU.command_queue_ptr, ptr)
             .mem_arg(PrepareBounds_k.Args.bounds, GPU.Buffer.aabb.memory);
     }

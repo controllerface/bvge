@@ -6,17 +6,20 @@ import com.controllerface.bvge.ecs.systems.KBMInput;
 import com.controllerface.bvge.game.GameMode;
 import com.controllerface.bvge.game.TestGame;
 import org.joml.Vector2f;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
-import org.lwjgl.glfw.*;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWImage;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 import org.lwjgl.opengl.GL;
-import java.io.InputStream;
-import java.awt.image.BufferedImage;
+
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
-
-import org.lwjgl.BufferUtils;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;

@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.controllerface.bvge.cl.CLUtils.read_src;
-import static com.controllerface.bvge.cl.GPU.Kernel;
-import static org.lwjgl.opencl.CL12.clReleaseKernel;
 import static org.lwjgl.opencl.CL12.clReleaseProgram;
 
 /**

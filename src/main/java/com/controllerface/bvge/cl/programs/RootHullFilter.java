@@ -1,8 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 
 public class RootHullFilter extends GPUProgram
 {
@@ -13,7 +13,7 @@ public class RootHullFilter extends GPUProgram
 
         make_program();
 
-        load_kernel(GPU.Kernel.root_hull_count);
-        load_kernel(GPU.Kernel.root_hull_filter);
+        load_kernel(Kernel.root_hull_count);
+        load_kernel(Kernel.root_hull_filter);
     }
 }

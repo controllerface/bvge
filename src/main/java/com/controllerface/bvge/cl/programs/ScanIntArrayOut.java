@@ -1,8 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 
 public class ScanIntArrayOut extends GPUProgram
 {
@@ -14,8 +14,8 @@ public class ScanIntArrayOut extends GPUProgram
 
         make_program();
 
-        load_kernel(GPU.Kernel.scan_int_single_block_out);
-        load_kernel(GPU.Kernel.scan_int_multi_block_out);
-        load_kernel(GPU.Kernel.complete_int_multi_block_out);
+        load_kernel(Kernel.scan_int_single_block_out);
+        load_kernel(Kernel.scan_int_multi_block_out);
+        load_kernel(Kernel.complete_int_multi_block_out);
     }
 }

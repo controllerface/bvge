@@ -1,8 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.GPU;
 import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.Kernel;
 
 public class ResolveConstraints extends GPUProgram
 {
@@ -13,6 +13,6 @@ public class ResolveConstraints extends GPUProgram
 
         make_program();
 
-        load_kernel(GPU.Kernel.resolve_constraints);
+        load_kernel(Kernel.resolve_constraints);
     }
 }
