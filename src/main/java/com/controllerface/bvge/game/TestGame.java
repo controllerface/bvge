@@ -33,13 +33,13 @@ public class TestGame extends GameMode
         POINTS,  // model vertices
     }
 
-    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-        EnumSet.of(
-            RenderType.MODELS,
-            RenderType.HULLS);
-
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-//        EnumSet.allOf(RenderType.class);
+//        EnumSet.of(
+//            RenderType.MODELS,
+//            RenderType.HULLS);
+
+    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
+        EnumSet.allOf(RenderType.class);
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {

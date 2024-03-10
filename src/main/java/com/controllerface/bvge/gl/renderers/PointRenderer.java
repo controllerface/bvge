@@ -1,6 +1,10 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.GPUKernel;
+import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.kernels.PreparePoints_k;
+import com.controllerface.bvge.cl.programs.PreparePoints;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.AbstractShader;
@@ -9,6 +13,7 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
+import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
@@ -21,32 +26,46 @@ import static org.lwjgl.opengl.GL45C.*;
 public class PointRenderer extends GameSystem
 {
     private static final int BATCH_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
-
     private static final int POSITION_ATTRIBUTE = 0;
 
     private final AbstractShader shader;
-    private int vao_id;
-    private int point_vbo;
+    private final GPUProgram prepare_points = new PreparePoints();
+
+    private int vao;
+    private int vertex_vbo;
+    private long vertex_vbo_ptr;
+
+    private GPUKernel prepare_points_k;
 
     public PointRenderer(ECS ecs)
     {
         super(ecs);
         this.shader = Assets.load_shader("point_shader.glsl");
-        init();
+        init_GL();
+        init_CL();
     }
 
-    public void init()
+    private void init_GL()
     {
-        vao_id = glCreateVertexArrays();
-        point_vbo = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        GPU.share_memory(point_vbo);
-        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
+        vao = glCreateVertexArrays();
+        vertex_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        vertex_vbo_ptr = GPU.share_memory_ex(vertex_vbo);
+        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
+    }
+
+    private void init_CL()
+    {
+        prepare_points.init();
+
+        long ptr = prepare_points.kernel_ptr(GPU.Kernel.prepare_points);
+        prepare_points_k = new PreparePoints_k(GPU.command_queue_ptr, ptr)
+            .mem_arg(PreparePoints_k.Args.points, GPU.Buffer.points.memory);
     }
 
     @Override
     public void tick(float dt)
     {
-        glBindVertexArray(vao_id);
+        glBindVertexArray(vao);
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
@@ -55,7 +74,13 @@ public class PointRenderer extends GameSystem
         for (int remaining = GPU.core_memory.next_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            GPU.GL_points(point_vbo, offset, count);
+
+            prepare_points_k
+                .share_mem(vertex_vbo_ptr)
+                .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
+                .set_arg(PreparePoints_k.Args.offset, offset)
+                .call(arg_long(count));
+
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;
         }
@@ -63,5 +88,14 @@ public class PointRenderer extends GameSystem
         glBindVertexArray(0);
 
         shader.detach();
+    }
+
+    @Override
+    public void shutdown()
+    {
+        glDeleteVertexArrays(vao);
+        glDeleteBuffers(vertex_vbo);
+        prepare_points.destroy();
+        GPU.release_buffer(vertex_vbo_ptr);
     }
 }

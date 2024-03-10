@@ -17,15 +17,13 @@ import static org.lwjgl.opengl.GL45C.*;
 public class UniformGridRenderer extends GameSystem
 {
     private static final int BUFFER_SIZE = 4 * VECTOR_FLOAT_2D_SIZE;
-
     private static final int POSITION_ATTRIBUTE = 0;
 
+    private final AbstractShader shader;
     private final UniformGrid uniformGrid;
 
-    private int vao_id;
+    private int vao;
     private int point_vbo;
-
-    private final AbstractShader shader;
 
     public UniformGridRenderer(ECS ecs, UniformGrid uniformGrid)
     {
@@ -37,28 +35,31 @@ public class UniformGridRenderer extends GameSystem
 
     private void init()
     {
-        vao_id = glCreateVertexArrays();
-        point_vbo = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BUFFER_SIZE);
-        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
+        vao = glCreateVertexArrays();
+        point_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BUFFER_SIZE);
+        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
+    }
+
+    private float[] load_grid_data()
+    {
+        float[] data = new float[8];
+        data[0] = uniformGrid.getX_origin();                        // lower left X
+        data[1] = uniformGrid.getY_origin();                        // lower left Y
+        data[2] = uniformGrid.getX_origin() + uniformGrid.width;    // lower right X
+        data[3] = uniformGrid.getY_origin();                        // lower right Y
+        data[4] = uniformGrid.getX_origin() + uniformGrid.width;    // upper right X
+        data[5] = uniformGrid.getY_origin() + uniformGrid.height;   // upper right Y
+        data[6] = uniformGrid.getX_origin();                        // upper left X
+        data[7] = uniformGrid.getY_origin() + uniformGrid.height;   // upper left Y
+        return data;
     }
 
     @Override
     public void tick(float dt)
     {
-        float[] data = new float[8];
-        data[0] = uniformGrid.getX_origin();
-        data[1] = uniformGrid.getY_origin();
+        float[] data = load_grid_data();
 
-        data[2] = uniformGrid.getX_origin() + uniformGrid.width;
-        data[3] = uniformGrid.getY_origin();
-
-        data[4] = uniformGrid.getX_origin() + uniformGrid.width;
-        data[5] = uniformGrid.getY_origin() + uniformGrid.height;
-
-        data[6] = uniformGrid.getX_origin();
-        data[7] = uniformGrid.getY_origin() + uniformGrid.height;
-
-        glBindVertexArray(vao_id);
+        glBindVertexArray(vao);
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
@@ -67,5 +68,12 @@ public class UniformGridRenderer extends GameSystem
         glDrawArrays(GL_LINE_LOOP, 0, 4);
         glBindVertexArray(0);
         shader.detach();
+    }
+
+    @Override
+    public void shutdown()
+    {
+        glDeleteVertexArrays(vao);
+        glDeleteBuffers(point_vbo);
     }
 }

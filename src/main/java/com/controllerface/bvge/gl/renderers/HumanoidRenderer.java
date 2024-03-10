@@ -28,27 +28,31 @@ public class HumanoidRenderer extends GameSystem
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int UV_COORD_ATTRIBUTE = 1;
 
-    private final Texture texture;
-    private final AbstractShader shader;
     private final int[] texture_slots = {0};
     private final int[] raw_query;
     private final int mesh_count;
     private final long mesh_size;
 
-    private int vao_id;
+    private final Texture texture;
+    private final AbstractShader shader;
+    private final GPUProgram mesh_query_p = new MeshQuery();
 
-    private long element_b;
-    private long vertex_b;
-    private long command_b;
-    private long texture_uv_b;
+    private int vao;
+    private int cbo;
+    private int ebo;
+    private int vbo;
+    private int uvo;
 
+    private long command_buffer_ptr;
+    private long element_buffer_ptr;
+    private long vertex_buffer_ptr;
+    private long uv_buffer_ptr;
     private long query_ptr;
     private long counters_ptr;
     private long total_ptr;
     private long offsets_ptr;
     private long mesh_transfer_ptr;
 
-    private final GPUProgram mesh_query_p = new MeshQuery();
     private GPUKernel count_instances_k;
     private GPUKernel write_details_k;
     private GPUKernel count_batches_k;
@@ -77,28 +81,29 @@ public class HumanoidRenderer extends GameSystem
 
     private void init_GL()
     {
-        this.vao_id = glCreateVertexArrays();
+        this.vao = glCreateVertexArrays();
 
-        int element_b = glCreateBuffers();
-        glNamedBufferData(element_b, ELEMENT_BUFFER_SIZE, GL_STATIC_DRAW);
-        glVertexArrayElementBuffer(vao_id, element_b);
+        ebo = glCreateBuffers();
+        glNamedBufferData(ebo, ELEMENT_BUFFER_SIZE, GL_DYNAMIC_DRAW);
+        glVertexArrayElementBuffer(vao, ebo);
 
-        int vertex_b = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
-        int texture_uv_b = GLUtils.new_buffer_vec2(vao_id, UV_COORD_ATTRIBUTE, VERTEX_BUFFER_SIZE);
+        vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
+        uvo = GLUtils.new_buffer_vec2(vao, UV_COORD_ATTRIBUTE, VERTEX_BUFFER_SIZE);
 
-        glBindVertexArray(vao_id);
-        int command_b = glCreateBuffers();
-        glNamedBufferData(command_b, COMMAND_BUFFER_SIZE, GL_STATIC_DRAW);
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, command_b);
+        cbo = glCreateBuffers();
+        glNamedBufferData(cbo, COMMAND_BUFFER_SIZE, GL_DYNAMIC_DRAW);
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
         glBindVertexArray(0);
 
-        this.element_b = GPU.share_memory_ex(element_b);
-        this.vertex_b = GPU.share_memory_ex(vertex_b);
-        this.command_b = GPU.share_memory_ex(command_b);
-        this.texture_uv_b = GPU.share_memory_ex(texture_uv_b);
+        this.command_buffer_ptr = GPU.share_memory_ex(cbo);
+        this.element_buffer_ptr = GPU.share_memory_ex(ebo);
+        this.vertex_buffer_ptr = GPU.share_memory_ex(vbo);
+        this.uv_buffer_ptr = GPU.share_memory_ex(uvo);
 
-        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao_id, UV_COORD_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao, UV_COORD_ATTRIBUTE);
     }
 
     private void init_CL()
@@ -199,7 +204,7 @@ public class HumanoidRenderer extends GameSystem
         int[] raw_offsets = new int[total_batches];
         GPU.cl_read_buffer(mesh_offset_ptr, raw_offsets);
 
-        glBindVertexArray(vao_id);
+        glBindVertexArray(vao);
 
         shader.use();
         texture.bind(0);
@@ -223,14 +228,14 @@ public class HumanoidRenderer extends GameSystem
             GPU.scan_int2(mesh_transfer_ptr, count);
 
             transfer_render_k
-                .share_mem(command_b)
-                .share_mem(vertex_b)
-                .share_mem(texture_uv_b)
-                .share_mem(element_b)
-                .ptr_arg(TransferRenderData_k.Args.command_buffer, command_b)
-                .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vertex_b)
-                .ptr_arg(TransferRenderData_k.Args.uv_buffer, texture_uv_b)
-                .ptr_arg(TransferRenderData_k.Args.element_buffer, element_b)
+                .share_mem(command_buffer_ptr)
+                .share_mem(element_buffer_ptr)
+                .share_mem(vertex_buffer_ptr)
+                .share_mem(uv_buffer_ptr)
+                .ptr_arg(TransferRenderData_k.Args.command_buffer, command_buffer_ptr)
+                .ptr_arg(TransferRenderData_k.Args.element_buffer, element_buffer_ptr)
+                .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buffer_ptr)
+                .ptr_arg(TransferRenderData_k.Args.uv_buffer, uv_buffer_ptr)
                 .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
                 .set_arg(TransferRenderData_k.Args.offset, offset)
                 .call(arg_long(count));
@@ -249,11 +254,16 @@ public class HumanoidRenderer extends GameSystem
     @Override
     public void shutdown()
     {
+        glDeleteVertexArrays(vao);
+        glDeleteBuffers(cbo);
+        glDeleteBuffers(ebo);
+        glDeleteBuffers(vbo);
+        glDeleteBuffers(uvo);
         mesh_query_p.destroy();
-        GPU.release_buffer(this.element_b);
-        GPU.release_buffer(this.vertex_b);
-        GPU.release_buffer(this.command_b);
-        GPU.release_buffer(this.texture_uv_b);
+        GPU.release_buffer(element_buffer_ptr);
+        GPU.release_buffer(vertex_buffer_ptr);
+        GPU.release_buffer(command_buffer_ptr);
+        GPU.release_buffer(uv_buffer_ptr);
         GPU.release_buffer(total_ptr);
         GPU.release_buffer(query_ptr);
         GPU.release_buffer(counters_ptr);

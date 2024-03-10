@@ -135,9 +135,6 @@ public class GPU
     public enum Program
     {
         prepare_bones(new PrepareBones()),
-        prepare_bounds(new PrepareBounds()),
-        prepare_edges(new PrepareEdges()),
-        prepare_points(new PreparePoints()),
         prepare_transforms(new PrepareTransforms()),
         root_hull_filter(new RootHullFilter()),
         scan_int2_array(new ScanInt2Array()),
@@ -951,9 +948,6 @@ public class GPU
 
         // Open GL interop
 
-        Kernel.prepare_bounds.set_kernel(new PrepareBounds_k(command_queue_ptr))
-            .mem_arg(PrepareBounds_k.Args.bounds, Buffer.aabb.memory);
-
         Kernel.prepare_transforms.set_kernel(new PrepareTransforms_k(command_queue_ptr))
             .mem_arg(PrepareTransforms_k.Args.transforms, Buffer.hulls.memory)
             .mem_arg(PrepareTransforms_k.Args.hull_rotations, Buffer.hull_rotation.memory);
@@ -963,13 +957,6 @@ public class GPU
 
         Kernel.root_hull_filter.set_kernel(new RootHullFilter_k(command_queue_ptr))
             .mem_arg(RootHullFilter_k.Args.armature_flags, Buffer.armature_flags.memory);
-
-        Kernel.prepare_points.set_kernel(new PreparePoints_k(command_queue_ptr))
-            .mem_arg(PreparePoints_k.Args.points, Buffer.points.memory);
-
-        Kernel.prepare_edges.set_kernel(new PrepareEdges_k(command_queue_ptr))
-            .mem_arg(PrepareEdges_k.Args.points, Buffer.points.memory)
-            .mem_arg(PrepareEdges_k.Args.edges, Buffer.edges.memory);
 
         Kernel.prepare_bones.set_kernel(new PrepareBones_k(command_queue_ptr))
             .mem_arg(PrepareBones_k.Args.bones, Buffer.bone_instances.memory)
@@ -1130,25 +1117,6 @@ public class GPU
     }
 
     /**
-     * Transfers a subset of all bounding boxes from CL memory into GL memory, converting the bounds
-     * into a vertex structure that can be rendered as a line loop.
-     *
-     * @param vbo_id        id of the shared GL buffer object
-     * @param bounds_offset offset into the bounds array to start the transfer
-     * @param batch_size    number of bounds objects to transfer in this batch
-     */
-    public static void GL_bounds(int vbo_id, int bounds_offset, int batch_size)
-    {
-        var vbo_mem = shared_mem.get(vbo_id);
-
-        Kernel.prepare_bounds.kernel
-            .share_mem(vbo_mem)
-            .ptr_arg(PrepareBounds_k.Args.vbo, vbo_mem)
-            .set_arg(PrepareBounds_k.Args.offset, bounds_offset)
-            .call(arg_long(batch_size));
-    }
-
-    /**
      * Transfers a subset of all bones from CL memory into GL memory, converting the bones
      * into a vertex structure that can be rendered as a point decal.
      *
@@ -1164,40 +1132,6 @@ public class GPU
             .share_mem(vbo_mem)
             .ptr_arg(PrepareBones_k.Args.vbo, vbo_mem)
             .set_arg(PrepareBones_k.Args.offset, bone_offset)
-            .call(arg_long(batch_size));
-    }
-
-    /**
-     * Transfers a subset of all edges from CL memory into GL memory, converting the edges
-     * into a vertex structure that can be rendered as a line.
-     *
-     * @param vbo_id      id of the shared GL buffer object
-     * @param vbo_id2     id of the shared GL buffer object
-     * @param edge_offset offset into the edges array to start the transfer
-     * @param batch_size  number of edge objects to transfer in this batch
-     */
-    public static void GL_edges(int vbo_id, int vbo_id2, int edge_offset, int batch_size)
-    {
-        var vbo_mem1 = shared_mem.get(vbo_id);
-        var vbo_mem2 = shared_mem.get(vbo_id2);
-
-        Kernel.prepare_edges.kernel
-            .share_mem(vbo_mem1)
-            .share_mem(vbo_mem2)
-            .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vbo_mem1)
-            .ptr_arg(PrepareEdges_k.Args.flag_vbo, vbo_mem2)
-            .set_arg(PrepareEdges_k.Args.offset, edge_offset)
-            .call(arg_long(batch_size));
-    }
-
-    public static void GL_points(int vbo_id, int point_offset, int batch_size)
-    {
-        var vbo_mem = shared_mem.get(vbo_id);
-
-        Kernel.prepare_points.kernel
-            .share_mem(vbo_mem)
-            .ptr_arg(PreparePoints_k.Args.vertex_vbo, vbo_mem)
-            .set_arg(PreparePoints_k.Args.offset, point_offset)
             .call(arg_long(batch_size));
     }
 

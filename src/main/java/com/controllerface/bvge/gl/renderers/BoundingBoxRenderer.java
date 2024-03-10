@@ -1,6 +1,10 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.GPUKernel;
+import com.controllerface.bvge.cl.GPUProgram;
+import com.controllerface.bvge.cl.kernels.PrepareBounds_k;
+import com.controllerface.bvge.cl.programs.PrepareBounds;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.AbstractShader;
@@ -10,6 +14,7 @@ import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 import org.lwjgl.system.MemoryStack;
 
+import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static org.lwjgl.opengl.GL11C.GL_LINE_LOOP;
 import static org.lwjgl.opengl.GL15C.*;
@@ -22,14 +27,18 @@ public class BoundingBoxRenderer extends GameSystem
     private static final int DATA_POINTS_PER_BOX = 4;
     private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * DATA_POINTS_PER_BOX * VECTOR_2D_LENGTH;
     private static final int BATCH_BUFFER_SIZE = BATCH_VERTEX_COUNT * Float.BYTES;
-
     private static final int POSITION_ATTRIBUTE = 0;
 
-    private final AbstractShader shader;
-    private int vao_id;
-    private int bounding_box_vbo;
     private final int[] offsets = new int[Constants.Rendering.MAX_BATCH_SIZE];
     private final int[] counts = new int[Constants.Rendering.MAX_BATCH_SIZE];
+
+    private final AbstractShader shader;
+    private final GPUProgram prepare_bounds = new PrepareBounds();
+
+    private long vbo;
+    private int vao;
+
+    private GPUKernel prepare_bounds_k;
 
     public BoundingBoxRenderer(ECS ecs)
     {
@@ -40,21 +49,31 @@ public class BoundingBoxRenderer extends GameSystem
             offsets[i] = i * 4;
             counts[i] = 4;
         }
-        init();
+        init_GL();
+        init_CL();
     }
 
-    public void init()
+    private void init_GL()
     {
-        vao_id = glCreateVertexArrays();
-        bounding_box_vbo = GLUtils.new_buffer_vec2(vao_id, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        GPU.share_memory(bounding_box_vbo);
-        glEnableVertexArrayAttrib(vao_id, POSITION_ATTRIBUTE);
+        vao = glCreateVertexArrays();
+        int bounding_box_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        vbo = GPU.share_memory_ex(bounding_box_vbo);
+        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
+    }
+
+    private void init_CL()
+    {
+        prepare_bounds.init();
+
+        long ptr = prepare_bounds.kernel_ptr(GPU.Kernel.prepare_bounds);
+        prepare_bounds_k = new PrepareBounds_k(GPU.command_queue_ptr, ptr)
+            .mem_arg(PrepareBounds_k.Args.bounds, GPU.Buffer.aabb.memory);
     }
 
     @Override
     public void tick(float dt)
     {
-        glBindVertexArray(vao_id);
+        glBindVertexArray(vao);
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
@@ -67,7 +86,13 @@ public class BoundingBoxRenderer extends GameSystem
             {
                 var offsets = mem_stack.mallocInt(count).put(this.offsets, 0, count).flip();
                 var counts = mem_stack.mallocInt(count).put(this.counts, 0, count).flip();
-                GPU.GL_bounds(bounding_box_vbo, offset, count);
+
+                prepare_bounds_k
+                    .share_mem(vbo)
+                    .ptr_arg(PrepareBounds_k.Args.vbo, vbo)
+                    .set_arg(PrepareBounds_k.Args.offset, offset)
+                    .call(arg_long(count));
+
                 glMultiDrawArrays(GL_LINE_LOOP, offsets, counts);
             }
             offset += count;
@@ -76,5 +101,12 @@ public class BoundingBoxRenderer extends GameSystem
         glBindVertexArray(0);
 
         shader.detach();
+    }
+
+    @Override
+    public void shutdown()
+    {
+        prepare_bounds.destroy();
+        GPU.release_buffer(vbo);
     }
 }

@@ -604,7 +604,6 @@ public class PhysicsSimulation extends GameSystem
         move_armatures_k.call(arg_long(GPU.core_memory.next_armature()));
     }
 
-
     private void animate_armatures(float dt)
     {
         animate_armatures_k
