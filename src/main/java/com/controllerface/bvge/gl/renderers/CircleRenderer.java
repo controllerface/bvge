@@ -74,7 +74,7 @@ public class CircleRenderer extends GameSystem
     {
         if (circle_hulls != null && circle_hulls.indices() != -1)
         {
-            clReleaseMemObject(circle_hulls.indices());
+            GPU.cl_release_buffer(circle_hulls.indices());
         }
         circle_hulls = GPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
 
@@ -100,8 +100,6 @@ public class CircleRenderer extends GameSystem
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;
         }
-
-        GPU.cl_release_buffer(circle_hulls.indices());
 
         glBindVertexArray(0);
         shader.detach();

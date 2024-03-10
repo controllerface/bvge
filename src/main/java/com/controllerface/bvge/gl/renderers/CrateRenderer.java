@@ -95,7 +95,7 @@ public class CrateRenderer extends GameSystem
     {
         if (crate_hulls != null && crate_hulls.indices() != -1)
         {
-            clReleaseMemObject(crate_hulls.indices());
+            GPU.cl_release_buffer(crate_hulls.indices());
         }
         crate_hulls = GPU.GL_hull_filter(Models.TEST_SQUARE_INDEX);
 
@@ -127,8 +127,6 @@ public class CrateRenderer extends GameSystem
             glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, count);
             offset += count;
         }
-
-        GPU.cl_release_buffer(crate_hulls.indices());
 
         glBindVertexArray(0);
 
