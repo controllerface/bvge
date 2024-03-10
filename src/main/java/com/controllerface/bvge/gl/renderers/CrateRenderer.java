@@ -128,6 +128,8 @@ public class CrateRenderer extends GameSystem
             offset += count;
         }
 
+        GPU.cl_release_buffer(crate_hulls.indices());
+
         glBindVertexArray(0);
 
         shader.detach();
@@ -140,6 +142,6 @@ public class CrateRenderer extends GameSystem
         glDeleteBuffers(ebo);
         glDeleteBuffers(vbo);
         prepare_transforms.destroy();
-        GPU.release_buffer(vbo_ptr);
+        GPU.cl_release_buffer(vbo_ptr);
     }
 }

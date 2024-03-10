@@ -74,6 +74,8 @@ public class PhysicsSimulation extends GameSystem
     private GPUKernel animate_points_k;
     private GPUKernel resolve_constraints_k;
 
+    private long atomic_counter_ptr;
+
     public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
     {
         super(ecs);
@@ -83,6 +85,8 @@ public class PhysicsSimulation extends GameSystem
 
     private void init_kernels()
     {
+        atomic_counter_ptr = GPU.cl_new_pinned_int();
+
         integrate.init();
         scan_key_bank.init();
         generate_keys.init();
@@ -156,7 +160,7 @@ public class PhysicsSimulation extends GameSystem
 
         long sat_collide_k_ptr = sat_collide.kernel_ptr(GPU.Kernel.sat_collide);
         sat_collide_k = new SatCollide_k(GPU.command_queue_ptr, sat_collide_k_ptr)
-            .ptr_arg(SatCollide_k.Args.counter, GPU.atomic_counter_ptr)
+            .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
             .mem_arg(SatCollide_k.Args.hulls, GPU.Buffer.hulls.memory)
             .mem_arg(SatCollide_k.Args.element_tables, GPU.Buffer.hull_element_tables.memory)
             .mem_arg(SatCollide_k.Args.hull_flags, GPU.Buffer.hull_flags.memory)
@@ -257,23 +261,23 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(Integrate_k.Args.args, arg_mem_ptr)
             .call(arg_long(GPU.core_memory.next_hull()));
 
-        GPU.release_buffer(arg_mem_ptr);
+        GPU.cl_release_buffer(arg_mem_ptr);
     }
 
     private int scan_bounds_single_block(long data_ptr, int n)
     {
         long local_buffer_size = CLSize.cl_int * GPU.max_scan_block_size;
 
-        GPU.cl_zero_buffer(GPU.atomic_counter_ptr, CLSize.cl_int);
+        GPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         scan_bounds_single_block_k
             .ptr_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, data_ptr)
-            .ptr_arg(ScanBoundsSingleBlock_k.Args.sz, GPU.atomic_counter_ptr)
+            .ptr_arg(ScanBoundsSingleBlock_k.Args.sz, atomic_counter_ptr)
             .loc_arg(ScanBoundsSingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanBoundsSingleBlock_k.Args.n, n)
             .call(GPU.local_work_default, GPU.local_work_default);
 
-        return GPU.cl_read_pinned_int(GPU.atomic_counter_ptr);
+        return GPU.cl_read_pinned_int(atomic_counter_ptr);
     }
 
     private int scan_bounds_multi_block(long data_ptr, int n, int k)
@@ -294,19 +298,19 @@ public class PhysicsSimulation extends GameSystem
 
         GPU.scan_int(p_data, part_size);
 
-        GPU.cl_zero_buffer(GPU.atomic_counter_ptr, CLSize.cl_int);
+        GPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         complete_bounds_multi_block_k
             .ptr_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, data_ptr)
-            .ptr_arg(CompleteBoundsMultiBlock_k.Args.sz, GPU.atomic_counter_ptr)
+            .ptr_arg(CompleteBoundsMultiBlock_k.Args.sz, atomic_counter_ptr)
             .loc_arg(CompleteBoundsMultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteBoundsMultiBlock_k.Args.part, p_data)
             .set_arg(CompleteBoundsMultiBlock_k.Args.n, n)
             .call(global_work_size, GPU.local_work_default);
 
-        GPU.release_buffer(p_data);
+        GPU.cl_release_buffer(p_data);
 
-        return GPU.cl_read_pinned_int(GPU.atomic_counter_ptr);
+        return GPU.cl_read_pinned_int(atomic_counter_ptr);
     }
 
     private int scan_key_bounds(long data_ptr, int n)
@@ -339,7 +343,7 @@ public class PhysicsSimulation extends GameSystem
         long bank_data_ptr = GPU.cl_new_buffer(bank_buf_size);
 
         // set the counts buffer to all zeroes
-        GPU.cl_zero_buffer(GPU.counts_data_ptr, GPU.counts_buf_size);
+        GPU.cl_zero_buffer(counts_data_ptr, counts_buf_size);
 
         physics_buffer.key_bank = new GPUMemory(bank_data_ptr);
 
@@ -356,7 +360,7 @@ public class PhysicsSimulation extends GameSystem
         var map_data = GPU.cl_new_buffer(map_buf_size);
 
         // reset the counts buffer to all zeroes
-        GPU.cl_zero_buffer(GPU.counts_data_ptr, GPU.counts_buf_size);
+        GPU.cl_zero_buffer(counts_data_ptr, counts_buf_size);
 
         physics_buffer.key_map = new GPUMemory(map_data);
 
@@ -374,14 +378,14 @@ public class PhysicsSimulation extends GameSystem
 
         physics_buffer.in_bounds = new GPUMemory(inbound_data);
 
-        GPU.cl_zero_buffer(GPU.atomic_counter_ptr, CLSize.cl_int);
+        GPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         locate_in_bounds_k
             .ptr_arg(LocateInBounds_k.Args.in_bounds, physics_buffer.in_bounds.pointer())
-            .ptr_arg(LocateInBounds_k.Args.counter, GPU.atomic_counter_ptr)
+            .ptr_arg(LocateInBounds_k.Args.counter, atomic_counter_ptr)
             .call(arg_long(hull_count));
 
-        int size = GPU.cl_read_pinned_int(GPU.atomic_counter_ptr);
+        int size = GPU.cl_read_pinned_int(atomic_counter_ptr);
 
         physics_buffer.set_candidate_buffer_count(size);
     }
@@ -403,17 +407,17 @@ public class PhysicsSimulation extends GameSystem
     {
         long local_buffer_size = CLSize.cl_int * GPU.max_scan_block_size;
 
-        GPU.cl_zero_buffer(GPU.atomic_counter_ptr, CLSize.cl_int);
+        GPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         scan_candidates_single_block_out_k
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.output, o_data_ptr)
-            .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.sz, GPU.atomic_counter_ptr)
+            .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.sz, atomic_counter_ptr)
             .loc_arg(ScanCandidatesSingleBlockOut_k.Args.buffer, local_buffer_size)
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.n, n)
             .call(GPU.local_work_default, GPU.local_work_default);
 
-        return GPU.cl_read_pinned_int(GPU.atomic_counter_ptr);
+        return GPU.cl_read_pinned_int(atomic_counter_ptr);
     }
 
     private int scan_multi_block_candidates_out(long data_ptr, long o_data_ptr, int n, int k)
@@ -436,20 +440,20 @@ public class PhysicsSimulation extends GameSystem
 
         GPU.scan_int(p_data, part_size);
 
-        GPU.cl_zero_buffer(GPU.atomic_counter_ptr, CLSize.cl_int);
+        GPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         complete_candidates_multi_block_out_k
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.input, data_ptr)
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.output, o_data_ptr)
-            .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.sz, GPU.atomic_counter_ptr)
+            .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.sz, atomic_counter_ptr)
             .loc_arg(CompleteCandidatesMultiBlockOut_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.part, p_data)
             .set_arg(CompleteCandidatesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPU.local_work_default);
 
-        GPU.release_buffer(p_data);
+        GPU.cl_release_buffer(p_data);
 
-        return GPU.cl_read_pinned_int(GPU.atomic_counter_ptr);
+        return GPU.cl_read_pinned_int(atomic_counter_ptr);
     }
 
     private int scan_key_candidates(long data_ptr, long o_data_ptr, int n)
@@ -485,7 +489,7 @@ public class PhysicsSimulation extends GameSystem
         var used_data = GPU.cl_new_buffer(used_buf_size);
         physics_buffer.matches_used = new GPUMemory(used_data);
 
-        GPU.cl_zero_buffer(GPU.atomic_counter_ptr, CLSize.cl_int);
+        GPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         aabb_collide_k
             .ptr_arg(AABBCollide_k.Args.candidates, physics_buffer.candidate_counts.pointer())
@@ -496,7 +500,7 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(AABBCollide_k.Args.used, physics_buffer.matches_used.pointer())
             .call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
-        int count = GPU.cl_read_pinned_int(GPU.atomic_counter_ptr);
+        int count = GPU.cl_read_pinned_int(atomic_counter_ptr);
         physics_buffer.set_candidate_count(count);
     }
 
@@ -527,7 +531,7 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(FinalizeCandidates_k.Args.final_candidates, physics_buffer.candidates.pointer())
             .call(arg_long(physics_buffer.get_candidate_buffer_count()));
 
-        GPU.release_buffer(counter_ptr);
+        GPU.cl_release_buffer(counter_ptr);
     }
 
     private void sat_collide()
@@ -537,48 +541,50 @@ public class PhysicsSimulation extends GameSystem
         // candidates are pairs of integer indices, so the global size is half the count
         long[] global_work_size = new long[]{candidates_size / 2};
 
-        GPU.cl_zero_buffer(GPU.atomic_counter_ptr, CLSize.cl_int);
+        GPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         long max_point_count = physics_buffer.get_final_size()
             * 2  // there are two bodies per collision pair
             * 2; // assume worst case is 2 points per body
 
         // sizes for the reaction buffers
-        long reaction_buf_size = (long) CLSize.cl_float2 * max_point_count;
-        long index_buf_size = (long) CLSize.cl_int * max_point_count;
+        long required_reaction_buf_size = (long) CLSize.cl_float2 * max_point_count;
+        long required_index_buf_size = (long) CLSize.cl_int * max_point_count;
 
-        if (reaction_buf_size > GPU.reaction_buf_size
-            || index_buf_size > GPU.index_buf_size)
+        if (required_reaction_buf_size > this.reaction_buf_size
+            || required_index_buf_size > this.index_buf_size)
         {
-            GPU.reactions_in.release();
-            GPU.reactions_out.release();
-            GPU.reaction_index.release();
+            reactions_in.release();
+            reactions_out.release();
+            reaction_index.release();
 
-            GPU.reaction_buf_size = reaction_buf_size;
-            GPU.index_buf_size = index_buf_size;
+            this.reaction_buf_size = required_reaction_buf_size;
+            this.index_buf_size = required_index_buf_size;
 
-            var reaction_data = GPU.cl_new_buffer(reaction_buf_size);
-            var reaction_data_out = GPU.cl_new_buffer(reaction_buf_size);
-            var index_data = GPU.cl_new_buffer(index_buf_size);
+            var reaction_data = GPU.cl_new_buffer(required_reaction_buf_size);
+            var reaction_data_out = GPU.cl_new_buffer(required_reaction_buf_size);
+            var index_data = GPU.cl_new_buffer(required_index_buf_size);
 
-            GPU.reactions_in = new GPUMemory(reaction_data);
-            GPU.reactions_out = new GPUMemory(reaction_data_out);
-            GPU.reaction_index = new GPUMemory(index_data);
+            reactions_in = new GPUMemory(reaction_data);
+            reactions_out = new GPUMemory(reaction_data_out);
+            reaction_index = new GPUMemory(index_data);
         }
 
         sat_collide_k
             .ptr_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.pointer())
-            .ptr_arg(SatCollide_k.Args.reactions, GPU.reactions_in.pointer())
-            .ptr_arg(SatCollide_k.Args.reaction_index, GPU.reaction_index.pointer())
+            .ptr_arg(SatCollide_k.Args.reactions, reactions_in.pointer())
+            .ptr_arg(SatCollide_k.Args.reaction_index, reaction_index.pointer())
             .call(global_work_size);
 
-        int size = GPU.cl_read_pinned_int(GPU.atomic_counter_ptr);
+        int size = GPU.cl_read_pinned_int(atomic_counter_ptr);
         physics_buffer.set_reaction_count(size);
     }
 
     private void scan_reactions()
     {
-        GPU.scan_int_out(GPU.Buffer.point_reactions.memory.pointer(), GPU.Buffer.point_offsets.memory.pointer(), GPU.core_memory.next_point());
+        GPU.scan_int_out(GPU.Buffer.point_reactions.memory.pointer(),
+            GPU.Buffer.point_offsets.memory.pointer(),
+            GPU.core_memory.next_point());
         // it is important to zero out the reactions buffer after the scan. It will be reused during sorting
         GPU.Buffer.point_reactions.clear();
     }
@@ -586,16 +592,16 @@ public class PhysicsSimulation extends GameSystem
     private void sort_reactions()
     {
         sort_reactions_k
-            .ptr_arg(SortReactions_k.Args.reactions_in, GPU.reactions_in.pointer())
-            .ptr_arg(SortReactions_k.Args.reactions_out, GPU.reactions_out.pointer())
-            .ptr_arg(SortReactions_k.Args.reaction_index, GPU.reaction_index.pointer())
+            .ptr_arg(SortReactions_k.Args.reactions_in, reactions_in.pointer())
+            .ptr_arg(SortReactions_k.Args.reactions_out, reactions_out.pointer())
+            .ptr_arg(SortReactions_k.Args.reaction_index, reaction_index.pointer())
             .call(arg_long(physics_buffer.get_reaction_count()));
     }
 
     private void apply_reactions()
     {
         apply_reactions_k
-            .ptr_arg(ApplyReactions_k.Args.reactions, GPU.reactions_out.pointer())
+            .ptr_arg(ApplyReactions_k.Args.reactions, reactions_out.pointer())
             .call(arg_long(GPU.core_memory.next_point()));
     }
 
@@ -763,7 +769,7 @@ public class PhysicsSimulation extends GameSystem
 
         // After keys are generated, the next step is to calculate the space needed for the key map. This is
         // a similar process to calculating the bank offsets.
-        GPU.scan_int_out(GPU.counts_data_ptr, GPU.offsets_data_ptr, uniform_grid.directory_length);
+        GPU.scan_int_out(counts_data_ptr, offsets_data_ptr, uniform_grid.directory_length);
 
         // Now, the keymap itself is built. This is the structure that provides the ability to query
         // objects within the uniform grid structure.
@@ -920,37 +926,55 @@ public class PhysicsSimulation extends GameSystem
         animate_points();
     }
 
+    private static long counts_data_ptr;
+    private static long offsets_data_ptr;
+    private static long counts_buf_size;
+
+    public long reaction_buf_size = 10500000L;
+    public long index_buf_size = 5250000L;
+
+    public GPUMemory reactions_in = new GPUMemory();
+    public GPUMemory reactions_out = new GPUMemory();
+    public GPUMemory reaction_index = new GPUMemory();
+
     @Override
     public void tick(float dt)
     {
         if (physics_buffer == null)
         {
+            reactions_in = new GPUMemory(GPU.cl_new_buffer(reaction_buf_size));
+            reactions_out = new GPUMemory(GPU.cl_new_buffer(reaction_buf_size));
+            reaction_index = new GPUMemory(GPU.cl_new_buffer(index_buf_size));
+
             physics_buffer = new PhysicsBuffer();
             physics_buffer.set_gravity_x(GRAVITY_X);
             physics_buffer.set_gravity_y(GRAVITY_Y);
             physics_buffer.set_damping(MOTION_DAMPING);
-            GPU.set_uniform_grid_constants(uniform_grid);
+
+            counts_buf_size = (long) CLSize.cl_int * uniform_grid.directory_length;
+            counts_data_ptr = GPU.cl_new_buffer(counts_buf_size);
+            offsets_data_ptr = GPU.cl_new_buffer(counts_buf_size);
 
             generate_keys_k
-                .ptr_arg(GenerateKeys_k.Args.key_counts, GPU.counts_data_ptr)
+                .ptr_arg(GenerateKeys_k.Args.key_counts, counts_data_ptr)
                 .set_arg(GenerateKeys_k.Args.x_subdivisions, uniform_grid.x_subdivisions)
                 .set_arg(GenerateKeys_k.Args.key_count_length, uniform_grid.directory_length);
 
             build_key_map_k
-                .ptr_arg(BuildKeyMap_k.Args.key_offsets, GPU.offsets_data_ptr)
-                .ptr_arg(BuildKeyMap_k.Args.key_counts, GPU.counts_data_ptr)
+                .ptr_arg(BuildKeyMap_k.Args.key_offsets, offsets_data_ptr)
+                .ptr_arg(BuildKeyMap_k.Args.key_counts, counts_data_ptr)
                 .set_arg(BuildKeyMap_k.Args.x_subdivisions, uniform_grid.x_subdivisions)
                 .set_arg(BuildKeyMap_k.Args.key_count_length, uniform_grid.directory_length);
 
             count_candidates_k
-                .ptr_arg(CountCandidates_k.Args.key_counts, GPU.counts_data_ptr)
+                .ptr_arg(CountCandidates_k.Args.key_counts, counts_data_ptr)
                 .set_arg(CountCandidates_k.Args.x_subdivisions, uniform_grid.x_subdivisions)
                 .set_arg(CountCandidates_k.Args.key_count_length, uniform_grid.directory_length);
 
             aabb_collide_k
-                .ptr_arg(AABBCollide_k.Args.key_counts, GPU.counts_data_ptr)
-                .ptr_arg(AABBCollide_k.Args.key_offsets, GPU.offsets_data_ptr)
-                .ptr_arg(AABBCollide_k.Args.counter, GPU.atomic_counter_ptr)
+                .ptr_arg(AABBCollide_k.Args.key_counts, counts_data_ptr)
+                .ptr_arg(AABBCollide_k.Args.key_offsets, offsets_data_ptr)
+                .ptr_arg(AABBCollide_k.Args.counter, atomic_counter_ptr)
                 .set_arg(AABBCollide_k.Args.x_subdivisions, uniform_grid.x_subdivisions)
                 .set_arg(AABBCollide_k.Args.key_count_length, uniform_grid.directory_length);
         }
@@ -971,5 +995,11 @@ public class PhysicsSimulation extends GameSystem
         sat_collide.destroy();
         animate_hulls.destroy();
         resolve_constraints.destroy();
+        reactions_in.release();
+        reactions_out.release();
+        reaction_index.release();
+        GPU.cl_release_buffer(atomic_counter_ptr);
+        GPU.cl_release_buffer(counts_data_ptr);
+        GPU.cl_release_buffer(offsets_data_ptr);
     }
 }

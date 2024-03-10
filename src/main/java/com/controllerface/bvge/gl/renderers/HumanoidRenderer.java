@@ -161,10 +161,10 @@ public class HumanoidRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        GPU.clear_buffer(counters_ptr, mesh_size);
-        GPU.clear_buffer(offsets_ptr, mesh_size);
-        GPU.clear_buffer(total_ptr, CLSize.cl_int);
-        GPU.clear_buffer(mesh_transfer_ptr, ELEMENT_BUFFER_SIZE * 2);
+        GPU.cl_zero_buffer(counters_ptr, mesh_size);
+        GPU.cl_zero_buffer(offsets_ptr, mesh_size);
+        GPU.cl_zero_buffer(total_ptr, CLSize.cl_int);
+        GPU.cl_zero_buffer(mesh_transfer_ptr, ELEMENT_BUFFER_SIZE * 2);
 
         long[] hull_count = arg_long(GPU.core_memory.next_hull());
 
@@ -247,8 +247,8 @@ public class HumanoidRenderer extends GameSystem
 
         shader.detach();
 
-        GPU.release_buffer(mesh_details_ptr);
-        GPU.release_buffer(mesh_offset_ptr);
+        GPU.cl_release_buffer(mesh_details_ptr);
+        GPU.cl_release_buffer(mesh_offset_ptr);
     }
 
     @Override
@@ -260,14 +260,14 @@ public class HumanoidRenderer extends GameSystem
         glDeleteBuffers(vbo);
         glDeleteBuffers(uvo);
         mesh_query_p.destroy();
-        GPU.release_buffer(element_buffer_ptr);
-        GPU.release_buffer(vertex_buffer_ptr);
-        GPU.release_buffer(command_buffer_ptr);
-        GPU.release_buffer(uv_buffer_ptr);
-        GPU.release_buffer(total_ptr);
-        GPU.release_buffer(query_ptr);
-        GPU.release_buffer(counters_ptr);
-        GPU.release_buffer(offsets_ptr);
-        GPU.release_buffer(mesh_transfer_ptr);
+        GPU.cl_release_buffer(element_buffer_ptr);
+        GPU.cl_release_buffer(vertex_buffer_ptr);
+        GPU.cl_release_buffer(command_buffer_ptr);
+        GPU.cl_release_buffer(uv_buffer_ptr);
+        GPU.cl_release_buffer(total_ptr);
+        GPU.cl_release_buffer(query_ptr);
+        GPU.cl_release_buffer(counters_ptr);
+        GPU.cl_release_buffer(offsets_ptr);
+        GPU.cl_release_buffer(mesh_transfer_ptr);
     }
 }

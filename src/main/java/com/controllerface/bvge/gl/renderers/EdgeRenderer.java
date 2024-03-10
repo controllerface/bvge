@@ -110,7 +110,7 @@ public class EdgeRenderer extends GameSystem
         glDeleteBuffers(edge_vbo);
         glDeleteBuffers(flag_vbo);
         prepare_edges.destroy();
-        GPU.release_buffer(vertex_vbo_ptr);
-        GPU.release_buffer(flag_vbo_ptr);
+        GPU.cl_release_buffer(vertex_vbo_ptr);
+        GPU.cl_release_buffer(flag_vbo_ptr);
     }
 }

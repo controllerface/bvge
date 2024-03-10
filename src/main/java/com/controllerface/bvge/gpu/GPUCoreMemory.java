@@ -501,7 +501,7 @@ public class GPUCoreMemory
             .call(GPU.global_single_size);
 
         float[] result = GPU.cl_read_pinned_float_buffer(result_data, CLSize.cl_float2, 2);
-        GPU.release_buffer(result_data);
+        GPU.cl_release_buffer(result_data);
         return result;
     }
 
@@ -514,7 +514,7 @@ public class GPUCoreMemory
             .ptr_arg(LocateOutOfBounds_k.Args.counter, counter_ptr)
             .call(arg_long(armature_index));
 
-        GPU.release_buffer(counter_ptr);
+        GPU.cl_release_buffer(counter_ptr);
 
         long output_buf_size = (long) CLSize.cl_int2 * armature_index;
         long output_buf_size2 = (long) CLSize.cl_int4 * armature_index;
@@ -618,7 +618,7 @@ public class GPUCoreMemory
             .call(GPU.local_work_default, GPU.local_work_default);
 
         int[] sz = GPU.cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
-        GPU.release_buffer(size_data);
+        GPU.cl_release_buffer(size_data);
 
         return sz;
     }
@@ -666,11 +666,11 @@ public class GPUCoreMemory
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPU.local_work_default);
 
-        GPU.release_buffer(p_data);
-        GPU.release_buffer(p_data2);
+        GPU.cl_release_buffer(p_data);
+        GPU.cl_release_buffer(p_data2);
 
         int[] sz = GPU.cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
-        GPU.release_buffer(size_data);
+        GPU.cl_release_buffer(size_data);
 
         return sz;
     }

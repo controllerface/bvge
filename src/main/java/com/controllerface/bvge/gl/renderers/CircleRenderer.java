@@ -101,6 +101,8 @@ public class CircleRenderer extends GameSystem
             offset += count;
         }
 
+        GPU.cl_release_buffer(circle_hulls.indices());
+
         glBindVertexArray(0);
         shader.detach();
     }
@@ -111,6 +113,6 @@ public class CircleRenderer extends GameSystem
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo);
         prepare_transforms.destroy();
-        GPU.release_buffer(vbo_ptr);
+        GPU.cl_release_buffer(vbo_ptr);
     }
 }

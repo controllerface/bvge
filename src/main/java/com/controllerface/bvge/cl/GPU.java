@@ -3,7 +3,6 @@ package com.controllerface.bvge.cl;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.gpu.GPUCoreMemory;
-import com.controllerface.bvge.physics.UniformGrid;
 import org.lwjgl.BufferUtils;
 
 import java.nio.ByteBuffer;
@@ -98,27 +97,7 @@ public class GPU
      * There are several kernels that use an atomic counter, so rather than re-allocate a new
      * buffer for every call, this buffer is reused in all kernels that need a counter.
      */
-    public static long atomic_counter_ptr;
-
-    /**
-     * Kernels that interact with the uniform grid key bank can reuse these buffers every tick
-     * rather than creating and destroying them, saving some driver overhead.
-     */
-    public static long counts_data_ptr;
-    public static long offsets_data_ptr;
-
-    /**
-     * The key count buffer needs to be cleared at certain points each tick, so keeping track
-     * of the buffer size makes that process simple.
-     */
-    public static long counts_buf_size;
-
-    public static long reaction_buf_size = 10500000L;
-    public static long index_buf_size = 5250000L;
-
-    public static GPUMemory reactions_in = new GPUMemory();
-    public static GPUMemory reactions_out = new GPUMemory();
-    public static GPUMemory reaction_index = new GPUMemory();
+    private static long atomic_counter_ptr;
 
     public static GPUCoreMemory core_memory;
 
@@ -735,10 +714,6 @@ public class GPU
 
     private static void init_memory(int max_hulls, int max_points)
     {
-        reactions_in = new GPUMemory(cl_new_buffer(reaction_buf_size));
-        reactions_out = new GPUMemory(cl_new_buffer(reaction_buf_size));
-        reaction_index = new GPUMemory(cl_new_buffer(index_buf_size));
-
         atomic_counter_ptr = cl_new_pinned_int();
         // todo: there should be more granularity than just max hulls and points. There should be
         //  limits on armatures and other data types.
@@ -1108,16 +1083,13 @@ public class GPU
         long final_buffer_size = (long) CLSize.cl_int * final_count;
         var hulls_out = cl_new_buffer(final_buffer_size);
 
-        int[] counter_value = new int[]{ 0 };
-        var hulls_counter_data_ptr = cl_new_int_arg_buffer(counter_value);
+        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         Kernel.root_hull_filter.kernel
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
-            .ptr_arg(RootHullFilter_k.Args.counter, hulls_counter_data_ptr)
+            .ptr_arg(RootHullFilter_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .call(arg_long(GPU.core_memory.next_armature()));
-
-        clReleaseMemObject(hulls_counter_data_ptr);
 
         return new HullIndexData(hulls_out, final_count);
     }
@@ -1215,7 +1187,7 @@ public class GPU
             .set_arg(CompleteIntMultiBlock_k.Args.n, n)
             .call(global_work_size, local_work_default);
 
-        clReleaseMemObject(part_data);
+        cl_release_buffer(part_data);
     }
 
     private static void scan_single_block_int2(long data_ptr, int n)
@@ -1255,7 +1227,7 @@ public class GPU
             .set_arg(CompleteInt2MultiBlock_k.Args.n, n)
             .call(global_work_size, local_work_default);
 
-        clReleaseMemObject(part_data);
+        cl_release_buffer(part_data);
     }
 
     private static void scan_single_block_int4(long data_ptr, int n)
@@ -1295,7 +1267,7 @@ public class GPU
             .set_arg(CompleteInt4MultiBlock_k.Args.n, n)
             .call(global_work_size, local_work_default);
 
-        clReleaseMemObject(part_data);
+        cl_release_buffer(part_data);
     }
 
     private static void scan_single_block_int_out(long data_ptr, long o_data_ptr, int n)
@@ -1336,7 +1308,7 @@ public class GPU
             .set_arg(CompleteIntMultiBlockOut_k.Args.n, n)
             .call(global_work_size, local_work_default);
 
-        clReleaseMemObject(part_data);
+        cl_release_buffer(part_data);
     }
 
     //#endregion
@@ -1361,30 +1333,9 @@ public class GPU
         return new_buffer_ptr;
     }
 
-    public static void clear_buffer(long mem_ptr, long size)
-    {
-        cl_zero_buffer(mem_ptr, size);
-    }
-
-    public static void release_buffer(long mem_ptr)
+    public static void cl_release_buffer(long mem_ptr)
     {
         clReleaseMemObject(mem_ptr);
-    }
-
-    public static void set_uniform_grid_constants(UniformGrid uniform_grid)
-    {
-        // static data describing the uniform grid and some reusable buffers are set
-        // here as an optimization, avoiding some driver overhead that would be incurred
-        // if these values were set for every physics tick. This does break up the logic
-        // somewhat, but the complexity is worth it for the efficiency improvement.
-
-        /**
-         * These key properties of the uniform grid never change, so they are cached here for easy
-         * use in kernels and buffer operations.
-         */
-        counts_buf_size = (long) CLSize.cl_int * uniform_grid.directory_length;
-        counts_data_ptr = cl_new_buffer(counts_buf_size);
-        offsets_data_ptr = cl_new_buffer(counts_buf_size);
     }
 
     public static void init(int max_hulls, int max_points)
@@ -1403,7 +1354,7 @@ public class GPU
         // the following logic halves the effective max workgroup size, if needed
         // to ensure that at runtime, the amount of local buffer storage requested
         // does not meet or exceed the local memory size.
-        /**
+        /*
          * The maximum size of a local buffer that can be used as a __local prefixed, GPU allocated
          * buffer within a kernel. Note that in practice, local memory buffers should be _less_ than
          * this value. Even though it is given a maximum, tests have shown that trying to allocate
