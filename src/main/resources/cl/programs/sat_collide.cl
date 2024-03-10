@@ -117,7 +117,7 @@ __kernel void sort_reactions(__global float2 *reactions_in,
 }
 
 /**
-Applies reactions to points by summing all the reactions serially, and then apoplying the composite 
+Applies reactions to points by summing all the reactions serially, and then applying the composite 
 reaction to the point. 
  */
 __kernel void apply_reactions(__global float2 *reactions,
@@ -161,11 +161,12 @@ __kernel void apply_reactions(__global float2 *reactions,
     // velocity.
     float2 adjusted_offset = point.xy - initial_tail;
     float new_len = length(adjusted_offset);
-    if (new_len != 0.0)
-    {
-        adjusted_offset /= new_len;
-        point.zw = point.xy - initial_dist * adjusted_offset;
-    }
+
+    adjusted_offset = new_len == 0.0 
+        ? adjusted_offset 
+        : adjusted_offset / new_len;
+
+    point.zw = point.xy - initial_dist * adjusted_offset;
 
     // in addition to velocity preservation, to aid in stabiliy, a non-real force of anti-gravity
     // is modeled to assist in keeping objects from colliding in the direction of gravity. This
