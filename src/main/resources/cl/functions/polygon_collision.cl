@@ -6,7 +6,7 @@ inline void polygon_collision(int b1_id, int b2_id,
                              __global int4 *vertex_tables,
                              __global float4 *points,
                              __global float4 *edges,
-                             __global float2 *reactions,
+                             __global float4 *reactions,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global float *masses,
@@ -178,6 +178,14 @@ inline void polygon_collision(int b1_id, int b2_id,
     int4 vo_f = hull_flags[(int)vertex_object_id];
     int4 eo_f = hull_flags[(int)edge_object_id];
 
+    float2 vo_dir = vertex_object_id == b1_id 
+        ? hull_2.xy - hull_1.xy 
+        : hull_1.xy - hull_2.xy;
+
+    float2 eo_dir = edge_object_id == b1_id 
+        ? hull_2.xy - hull_1.xy 
+        : hull_1.xy - hull_2.xy;
+
     float vo_mass = masses[vo_f.y];
     float eo_mass = masses[eo_f.y];
 
@@ -193,17 +201,7 @@ inline void polygon_collision(int b1_id, int b2_id,
     // the above changes will need to be made to the other collision kernels as well
 
     float2 collision_vector = normal * min_distance;
-    
 
-    // todo: magnitude should be proportional to mass
-    // hulls will need to reference the mass of the parent armature to modify the reaction magnitude. Currently, 
-    // objects behave as if everything has a mass of 1, splitting reaction magnitudes 50/50. Instead, the mass of 
-    // the colliding objects should proportinally scale reactions to be more or less based on the difference between 
-    // the masses of the two objects. When two objects with equal mass collide, it should work as it does now, with
-    // an even split.
-    //
-    // the above changes will need to be made to the other collision kernels as well
-    
     float vertex_magnitude = eo_mass / total_mass;
     float edge_magnitude = vo_mass / total_mass;
 
@@ -250,7 +248,10 @@ inline void polygon_collision(int b1_id, int b2_id,
     if (!vs)
     {
         int i = atomic_inc(&counter[0]);
-        reactions[i] = v_reaction;
+        float4 v_reaction_4d;
+        v_reaction_4d.xy = v_reaction;
+        v_reaction_4d.zw = vo_dir;
+        reactions[i] = v_reaction_4d;
         reaction_index[i] = vert_index;
         atomic_inc(&point_reactions[vert_index]);
     }
@@ -258,8 +259,14 @@ inline void polygon_collision(int b1_id, int b2_id,
     {
         int j = atomic_inc(&counter[0]);
         int k = atomic_inc(&counter[0]);
-        reactions[j] = e1_reaction;
-        reactions[k] = e2_reaction;
+        float4 e1_reaction_4d;
+        float4 e2_reaction_4d;
+        e1_reaction_4d.xy = e1_reaction;
+        e1_reaction_4d.zw = eo_dir;
+        e2_reaction_4d.xy = e2_reaction;
+        e2_reaction_4d.zw = eo_dir;
+        reactions[j] = e1_reaction_4d;
+        reactions[k] = e2_reaction_4d;
         reaction_index[j] = edge_index_a;
         reaction_index[k] = edge_index_b;
         atomic_inc(&point_reactions[edge_index_a]);
