@@ -150,15 +150,10 @@ __kernel void apply_reactions(__global float4 *reactions,
 
     // calculate the cumulative reaction on this point
     float4 reaction = (float4)(0.0, 0.0, 0.0, 0.0);
-    float ag_r = 0.0f;
     for (int i = 0; i < reaction_count; i++)
     {
         int idx = i + reaction_offset;
         float4 reaction_i = reactions[idx];
-        // float2 o_dir = reaction_i.zw;
-        // float ag_i = calculate_anti_gravity(g, o_dir);
-        // ag_i = ag_i <= 0.0f ? 0.0f : 1.0f;
-        // ag_r += ag_i;
         reaction += reaction_i;
     }
 
@@ -185,8 +180,8 @@ __kernel void apply_reactions(__global float4 *reactions,
     float ag = calculate_anti_gravity(g, heading);
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
-    // than it is against it, so we clamp to 0. Otherwise boost to 1 for the best stability enchancement.
-    ag = ag <= 0.0f ? 0.0f : 1.0f;
+    // than it is against it, so we clamp to 0.
+    ag = ag <= 0.0f ? 0.0f : ag;
 
     anti_gravity[gid] = ag;
     points[gid] = point;
