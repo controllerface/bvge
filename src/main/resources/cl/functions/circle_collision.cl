@@ -3,7 +3,7 @@ inline void circle_collision(int b1_id, int b2_id,
                              __global int4 *hull_flags,
                              __global int4 *element_tables,
                              __global float4 *points,
-                             __global float2 *reactions,
+                             __global float4 *reactions,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global float *masses,
@@ -23,8 +23,10 @@ inline void circle_collision(int b1_id, int b2_id,
         return;
     }
 
-    float2 sub = hull_2.xy - hull_1.xy;
-    normal = normalize(sub);
+    float2 h1_dir = hull_2.xy - hull_1.xy;
+    float2 h2_dir = hull_1.xy - hull_2.xy;
+
+    normal = normalize(h1_dir);
     depth = radii - _distance;
     
     int4 vo_f = hull_flags[b1_id];
@@ -42,11 +44,19 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 offset1 = -mag1 * reaction;
     float2 offset2 = mag2 * reaction;
 
+    float4 offset1_4d;
+    offset1_4d.xy = offset1;
+    offset1_4d.zw = h1_dir;
+
+    float4 offset2_4d;
+    offset2_4d.xy = offset2;
+    offset2_4d.zw = h2_dir;
+
     int i = atomic_inc(&counter[0]);
     int j = atomic_inc(&counter[0]);
 
-    reactions[i] = offset1;
-    reactions[j] = offset2;
+    reactions[i] = offset1_4d;
+    reactions[j] = offset2_4d;
 
     reaction_index[i] = hull_1_table.x;
     reaction_index[j] = hull_2_table.x;

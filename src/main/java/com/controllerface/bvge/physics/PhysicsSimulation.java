@@ -17,9 +17,9 @@ public class PhysicsSimulation extends GameSystem
 {
     private static final float TARGET_FPS = 60.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
-    private static final int TARGET_SUB_STEPS = 8;
+    private static final int TARGET_SUB_STEPS = 12;
     private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
-    private static final int EDGE_STEPS = 8;
+    private static final int EDGE_STEPS = 1;
     private static final float GRAVITY_MAGNITUDE = -9.8f * 4;
 
     private float accumulator = 0.0f;
@@ -549,7 +549,7 @@ public class PhysicsSimulation extends GameSystem
             * 2; // assume worst case is 2 points per body
 
         // sizes for the reaction buffers
-        long required_reaction_buf_size = (long) CLSize.cl_float2 * max_point_count;
+        long required_reaction_buf_size = (long) CLSize.cl_float4 * max_point_count;
         long required_index_buf_size = (long) CLSize.cl_int * max_point_count;
 
         if (required_reaction_buf_size > this.reaction_buf_size
@@ -898,7 +898,7 @@ public class PhysicsSimulation extends GameSystem
                 }
                 else
                 {
-                    if (accumulator > 0.000000f) System.out.printf("skipped: %f\n", accumulator);
+                    if (accumulator > 0.000000f) System.err.printf("time slip: %f\n", accumulator);
                     this.accumulator = 0;
                 }
             }
@@ -918,8 +918,8 @@ public class PhysicsSimulation extends GameSystem
     private static long offsets_data_ptr;
     private static long counts_buf_size;
 
-    public long reaction_buf_size = 10500000L;
-    public long index_buf_size = 5250000L;
+    public long reaction_buf_size = 10_500_000L; // about 10 MB
+    public long index_buf_size = 5_250_000L;     // about 5 MB
 
     public GPUMemory reactions_in = new GPUMemory();
     public GPUMemory reactions_out = new GPUMemory();

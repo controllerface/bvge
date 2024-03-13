@@ -21,7 +21,7 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global int4 *vertex_tables,
                           __global float4 *points,
                           __global float4 *edges,
-                          __global float2 *reactions,
+                          __global float4 *reactions,
                           __global int *reaction_index,
                           __global int *point_reactions,
                           __global float *masses,
@@ -101,14 +101,14 @@ has an implicit assumption that the values in point_reactions have been zeroed o
 called. These values will have been consumed in a prior call to scan the points for applicable
 reactions.
  */
-__kernel void sort_reactions(__global float2 *reactions_in,
-                             __global float2 *reactions_out,
+__kernel void sort_reactions(__global float4 *reactions_in,
+                             __global float4 *reactions_out,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global int *point_offsets)
 {
     int gid = get_global_id(0);
-    float2 reaction = reactions_in[gid];
+    float4 reaction = reactions_in[gid];
     int index = reaction_index[gid];
     int reaction_offset = point_offsets[index];
     int local_offset = atomic_inc(&point_reactions[index]);
@@ -120,12 +120,16 @@ __kernel void sort_reactions(__global float2 *reactions_in,
 Applies reactions to points by summing all the reactions serially, and then applying the composite 
 reaction to the point. 
  */
-__kernel void apply_reactions(__global float2 *reactions,
+__kernel void apply_reactions(__global float4 *reactions,
                               __global float4 *points,
                               __global float *anti_gravity,
                               __global int *point_reactions,
                               __global int *point_offsets)
 {
+    // todo: actual gravity vector should be provided, when it can change this should also be changable
+    //  right now it is a static direction. note that magnitude of gravity is not important, only direction
+    float2 g = (float2)(0.0, -1.0);
+
     int gid = get_global_id(0);
     int reaction_count = point_reactions[gid];
 
@@ -145,16 +149,21 @@ __kernel void apply_reactions(__global float2 *reactions,
     float initial_dist = distance(point.xy, initial_tail);
 
     // calculate the cumulative reaction on this point
-    float2 reaction = (float2)(0.0, 0.0);
+    float4 reaction = (float4)(0.0, 0.0, 0.0, 0.0);
+    float ag_r = 0.0f;
     for (int i = 0; i < reaction_count; i++)
     {
         int idx = i + reaction_offset;
-        float2 reaction_i = reactions[idx];
+        float4 reaction_i = reactions[idx];
+        // float2 o_dir = reaction_i.zw;
+        // float ag_i = calculate_anti_gravity(g, o_dir);
+        // ag_i = ag_i <= 0.0f ? 0.0f : 1.0f;
+        // ag_r += ag_i;
         reaction += reaction_i;
     }
 
     // apply the cumulative reaction
-    point.xy += reaction;
+    point.xy += reaction.xy;
 
     // using the initial data, compared to the new position, calculate the updated previous
     // position to ensure it is equivalent to the initial position delta. This preserves 
@@ -172,10 +181,7 @@ __kernel void apply_reactions(__global float2 *reactions,
     // is modeled to assist in keeping objects from colliding in the direction of gravity. This
     // adjustment is subtle and does not overcome all rigid-body simulation errors, but helps
     // maintain stability with small numbers of stacked objects. 
-    // todo: actual gravity vector should be provided, when it can change this should also be changable
-    //  right now it is a static direction. note that magnitude of gravity is not important, only direction
-    float2 g = (float2)(0.0, -1.0);
-    float2 heading = point.xy - point.zw;
+    float2 heading = reaction.zw;
     float ag = calculate_anti_gravity(g, heading);
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
