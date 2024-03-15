@@ -264,7 +264,7 @@ public class GPU
          * x: vector x / quaternion x
          * y: vector y / quaternion y
          * z: vector z / quaternion z
-         * w: vector unused / quaternion w
+         * w: vector w / quaternion w
          */
         key_frames(CLSize.cl_float4),
 
