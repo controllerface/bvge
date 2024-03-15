@@ -17,7 +17,7 @@ public class PhysicsSimulation extends GameSystem
 {
     private static final float TARGET_FPS = 60.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
-    private static final int TARGET_SUB_STEPS = 12;
+    private static final int TARGET_SUB_STEPS = 10;
     private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
     private static final int EDGE_STEPS = 1;
     private static final float GRAVITY_MAGNITUDE = -9.8f * 4;
