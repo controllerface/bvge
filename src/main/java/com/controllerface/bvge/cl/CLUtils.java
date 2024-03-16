@@ -20,7 +20,7 @@ public class CLUtils
 {
     public static String read_src(String file)
     {
-        try (var stream = GPU.class.getResourceAsStream("/cl/" + file))
+        try (var stream = GPGPU.class.getResourceAsStream("/cl/" + file))
         {
             byte [] bytes = Objects.requireNonNull(stream).readAllBytes();
             return new String(bytes, StandardCharsets.UTF_8);

@@ -1,6 +1,6 @@
 package com.controllerface.bvge;
 
-import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.window.Window;
 
 
@@ -17,12 +17,12 @@ public class Main
 
         // todo: the maximum number of certain objects should be collapsed into a single "limits"
         //  object and passed in, this will make it cleaner to add more limits, which is needed
-        GPU.init(MAX_HULLS, MAX_POINTS);
+        GPGPU.init(MAX_HULLS, MAX_POINTS);
 
         window.initGameMode();
         window.run();
 
-        GPU.destroy();
+        GPGPU.destroy();
     }
 }
 

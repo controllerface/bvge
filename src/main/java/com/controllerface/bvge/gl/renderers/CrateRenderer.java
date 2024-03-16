@@ -73,15 +73,15 @@ public class CrateRenderer extends GameSystem
 
     private void init_CL()
     {
-        vbo_ptr = GPU.share_memory(transform_vbo);
+        vbo_ptr = GPGPU.share_memory(transform_vbo);
 
         prepare_transforms.init();
 
         long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
-        prepare_transforms_k = (new PrepareTransforms_k(GPU.command_queue_ptr, ptr))
+        prepare_transforms_k = (new PrepareTransforms_k(GPGPU.command_queue_ptr, ptr))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_ptr)
-            .mem_arg(PrepareTransforms_k.Args.transforms, GPU.Buffer.hulls.memory)
-            .mem_arg(PrepareTransforms_k.Args.hull_rotations, GPU.Buffer.hull_rotation.memory);
+            .mem_arg(PrepareTransforms_k.Args.transforms, GPGPU.Buffer.hulls.memory)
+            .mem_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.Buffer.hull_rotation.memory);
     }
 
     @Override
@@ -89,9 +89,9 @@ public class CrateRenderer extends GameSystem
     {
         if (crate_hulls != null && crate_hulls.indices() != -1)
         {
-            GPU.cl_release_buffer(crate_hulls.indices());
+            GPGPU.cl_release_buffer(crate_hulls.indices());
         }
-        crate_hulls = GPU.GL_hull_filter(Models.TEST_SQUARE_INDEX);
+        crate_hulls = GPGPU.GL_hull_filter(Models.TEST_SQUARE_INDEX);
 
         if (crate_hulls.count() == 0)
         {
@@ -135,6 +135,6 @@ public class CrateRenderer extends GameSystem
         glDeleteBuffers(position_vbo);
         glDeleteBuffers(uv_vbo);
         prepare_transforms.destroy();
-        GPU.cl_release_buffer(vbo_ptr);
+        GPGPU.cl_release_buffer(vbo_ptr);
     }
 }

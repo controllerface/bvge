@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems;
 
-import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.ArmatureIndex;
 import com.controllerface.bvge.ecs.components.Component;
@@ -35,7 +35,7 @@ public class CameraTracking extends GameSystem
         ArmatureIndex armature = Component.Armature.forEntity(ecs, focusTarget.getKey());
         if (armature == null) return;
 
-        float[] pos = GPU.core_memory.read_position(armature.index());
+        float[] pos = GPGPU.core_memory.read_position(armature.index());
         float pos_x = pos[0];
         float pos_y = pos[1];
         var camera = Window.get().camera();

@@ -19,16 +19,9 @@ import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
 /**
- * Core class used for executing GPU programs.
- * -
- * This class provides core functionality used by the engine to execute parallelized workloads,
- * primarily for physics calculations and pre-processing for rendering operations. This class has
- * two main organizational themes, one internal and one external. Internally, the core components
- * are the GPU programs, GPU kernels, and memory buffers used with them. Externally, this class
- * mainly provides a series of functions that are used to execute predefined GPU programs. This
- * class uses the OpenCL and OpenGL APIs to provide all features.
+ * Core class used for executing General Purpose GPU (GPGPU) functions
  */
-public class GPU
+public class GPGPU
 {
     //#region Constants
 
@@ -323,12 +316,12 @@ public class GPU
         /**
          * value: reaction count
          */
-        point_reactions(CLSize.cl_int),
+        point_reactions(CLSize.cl_int), // todo: isolate to physics simulation
 
         /**
          * value: reaction buffer offset
          */
-        point_offsets(CLSize.cl_int),
+        point_offsets(CLSize.cl_int), // todo: isolate to physics simulation
 
         /**
          * value: antigravity magnitude
@@ -542,11 +535,11 @@ public class GPU
          * that will be shifted. I.e. every bone in the bone buffer has a corresponding entry in the
          * bone shift buffer. Points, edges, and hulls work the same way.
          */
-        bone_shift(CLSize.cl_int),
-        point_shift(CLSize.cl_int),
-        edge_shift(CLSize.cl_int),
-        hull_shift(CLSize.cl_int),
-        bone_bind_shift(CLSize.cl_int),
+        bone_shift(CLSize.cl_int), // todo: isolate to core memory class
+        point_shift(CLSize.cl_int), // todo: isolate to core memory class
+        edge_shift(CLSize.cl_int), // todo: isolate to core memory class
+        hull_shift(CLSize.cl_int), // todo: isolate to core memory class
+        bone_bind_shift(CLSize.cl_int), // todo: isolate to core memory class
 
         ;
 
@@ -1009,7 +1002,7 @@ public class GPU
         root_hull_count_k
             .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .call(arg_long(GPU.core_memory.next_armature()));
+            .call(arg_long(GPGPU.core_memory.next_armature()));
 
         int final_count = cl_read_pinned_int(atomic_counter_ptr);
 
@@ -1027,7 +1020,7 @@ public class GPU
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .call(arg_long(GPU.core_memory.next_armature()));
+            .call(arg_long(GPGPU.core_memory.next_armature()));
 
         return new HullIndexData(hulls_out, final_count);
     }

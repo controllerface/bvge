@@ -38,111 +38,76 @@ public abstract class GPUKernel
 
     public GPUKernel loc_arg(Enum<?> pos, long size)
     {
-        return loc_arg(pos.ordinal(), size);
+        clSetKernelArg(this.kernel_ptr, pos.ordinal(), size);
+        return this;
     }
 
     public GPUKernel set_arg(Enum<?> pos, double[] value)
     {
-        return set_arg(pos.ordinal(), value);
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var doubleBuffer = mem_stack.doubles(value);
+            clSetKernelArg(this.kernel_ptr, pos.ordinal(), doubleBuffer);
+        }
+        return this;
     }
 
     public GPUKernel set_arg(Enum<?> pos, double value)
     {
-        return set_arg(pos.ordinal(), value);
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var doubleBuffer = mem_stack.doubles(value);
+            clSetKernelArg(this.kernel_ptr, pos.ordinal(), doubleBuffer);
+        }
+        return this;
     }
 
     public GPUKernel set_arg(Enum<?> pos, float[] value)
     {
-        return set_arg(pos.ordinal(), value);
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var floatBuffer = mem_stack.floats(value);
+            clSetKernelArg(this.kernel_ptr, pos.ordinal(), floatBuffer);
+        }
+        return this;
     }
 
     public GPUKernel set_arg(Enum<?> pos, float value)
     {
-        return set_arg(pos.ordinal(), value);
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var floatBuffer = mem_stack.floats(value);
+            clSetKernelArg(this.kernel_ptr, pos.ordinal(), floatBuffer);
+        }
+        return this;
     }
 
     public GPUKernel set_arg(Enum<?> pos, int[] value)
     {
-        return set_arg(pos.ordinal(), value);
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var intBuffer = mem_stack.ints(value);
+            clSetKernelArg(this.kernel_ptr, pos.ordinal(), intBuffer);
+        }
+        return this;
     }
 
     public GPUKernel set_arg(Enum<?> pos, int value)
     {
-        return set_arg(pos.ordinal(), value);
-    }
-
-    public GPUKernel loc_arg(int pos, long size)
-    {
-        clSetKernelArg(this.kernel_ptr, pos, size);
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var intBuffer = mem_stack.ints(value);
+            clSetKernelArg(this.kernel_ptr, pos.ordinal(), intBuffer);
+        }
         return this;
     }
 
-    public GPUKernel ptr_arg(int pos, long pointer)
+    private GPUKernel ptr_arg(int pos, long pointer)
     {
         try (var mem_stack = MemoryStack.stackPush())
         {
             var pointerBuffer = mem_stack.callocPointer(1).put(0, pointer);
             clSetKernelArg(this.kernel_ptr, pos, pointerBuffer);
-        }
-        return this;
-    }
-
-    public GPUKernel set_arg(int pos, double[] value)
-    {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var doubleBuffer = mem_stack.doubles(value);
-            clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
-        }
-        return this;
-    }
-
-    public GPUKernel set_arg(int pos, double value)
-    {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var doubleBuffer = mem_stack.doubles(value);
-            clSetKernelArg(this.kernel_ptr, pos, doubleBuffer);
-        }
-        return this;
-    }
-
-    public GPUKernel set_arg(int pos, float[] value)
-    {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var floatBuffer = mem_stack.floats(value);
-            clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
-        }
-        return this;
-    }
-
-    public GPUKernel set_arg(int pos, float value)
-    {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var floatBuffer = mem_stack.floats(value);
-            clSetKernelArg(this.kernel_ptr, pos, floatBuffer);
-        }
-        return this;
-    }
-
-    public GPUKernel set_arg(int pos, int[] value)
-    {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var intBuffer = mem_stack.ints(value);
-            clSetKernelArg(this.kernel_ptr, pos, intBuffer);
-        }
-        return this;
-    }
-
-    public GPUKernel set_arg(int pos, int value)
-    {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var intBuffer = mem_stack.ints(value);
-            clSetKernelArg(this.kernel_ptr, pos, intBuffer);
         }
         return this;
     }

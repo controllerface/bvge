@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gl.renderers;
 
-import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUKernel;
 import com.controllerface.bvge.cl.GPUProgram;
 import com.controllerface.bvge.cl.Kernel;
@@ -55,14 +55,14 @@ public class PointRenderer extends GameSystem
 
     private void init_CL()
     {
-        vertex_vbo_ptr = GPU.share_memory(vertex_vbo);
+        vertex_vbo_ptr = GPGPU.share_memory(vertex_vbo);
 
         prepare_points.init();
 
         long ptr = prepare_points.kernel_ptr(Kernel.prepare_points);
-        prepare_points_k = new PreparePoints_k(GPU.command_queue_ptr, ptr)
+        prepare_points_k = new PreparePoints_k(GPGPU.command_queue_ptr, ptr)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
-            .mem_arg(PreparePoints_k.Args.points, GPU.Buffer.points.memory);
+            .mem_arg(PreparePoints_k.Args.points, GPGPU.Buffer.points.memory);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class PointRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         int offset = 0;
-        for (int remaining = GPU.core_memory.next_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPGPU.core_memory.next_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
 
@@ -98,6 +98,6 @@ public class PointRenderer extends GameSystem
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vertex_vbo);
         prepare_points.destroy();
-        GPU.cl_release_buffer(vertex_vbo_ptr);
+        GPGPU.cl_release_buffer(vertex_vbo_ptr);
     }
 }

@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gl.renderers;
 
-import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUKernel;
 import com.controllerface.bvge.cl.GPUProgram;
 import com.controllerface.bvge.cl.Kernel;
@@ -64,14 +64,14 @@ public class BoundingBoxRenderer extends GameSystem
 
     private void init_CL()
     {
-        vbo_ptr = GPU.share_memory(vbo);
+        vbo_ptr = GPGPU.share_memory(vbo);
 
         prepare_bounds.init();
 
         long ptr = prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
-        prepare_bounds_k = new PrepareBounds_k(GPU.command_queue_ptr, ptr)
+        prepare_bounds_k = new PrepareBounds_k(GPGPU.command_queue_ptr, ptr)
             .ptr_arg(PrepareBounds_k.Args.vbo, vbo_ptr)
-            .mem_arg(PrepareBounds_k.Args.bounds, GPU.Buffer.aabb.memory);
+            .mem_arg(PrepareBounds_k.Args.bounds, GPGPU.Buffer.aabb.memory);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class BoundingBoxRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         int offset = 0;
-        for (int remaining = GPU.core_memory.next_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPGPU.core_memory.next_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             var offsets = MemoryUtil.memAllocInt(count).put(this.offsets, 0, count).flip();
@@ -113,6 +113,6 @@ public class BoundingBoxRenderer extends GameSystem
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo);
         prepare_bounds.destroy();
-        GPU.cl_release_buffer(vbo_ptr);
+        GPGPU.cl_release_buffer(vbo_ptr);
     }
 }

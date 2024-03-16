@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gl.renderers;
 
-import com.controllerface.bvge.cl.GPU;
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUKernel;
 import com.controllerface.bvge.cl.GPUProgram;
 import com.controllerface.bvge.cl.Kernel;
@@ -65,17 +65,17 @@ public class EdgeRenderer extends GameSystem
 
     private void inti_CL()
     {
-        vertex_vbo_ptr = GPU.share_memory(edge_vbo);
-        flag_vbo_ptr = GPU.share_memory(flag_vbo);
+        vertex_vbo_ptr = GPGPU.share_memory(edge_vbo);
+        flag_vbo_ptr = GPGPU.share_memory(flag_vbo);
 
         prepare_edges.init();
 
         long ptr = prepare_edges.kernel_ptr(Kernel.prepare_edges);
-        prepare_edges_k = new PrepareEdges_k(GPU.command_queue_ptr, ptr)
+        prepare_edges_k = new PrepareEdges_k(GPGPU.command_queue_ptr, ptr)
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vertex_vbo_ptr)
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, flag_vbo_ptr)
-            .mem_arg(PrepareEdges_k.Args.points, GPU.Buffer.points.memory)
-            .mem_arg(PrepareEdges_k.Args.edges, GPU.Buffer.edges.memory);
+            .mem_arg(PrepareEdges_k.Args.points, GPGPU.Buffer.points.memory)
+            .mem_arg(PrepareEdges_k.Args.edges, GPGPU.Buffer.edges.memory);
     }
 
     @Override
@@ -87,7 +87,7 @@ public class EdgeRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         int offset = 0;
-        for (int remaining = GPU.core_memory.next_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPGPU.core_memory.next_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
 
@@ -113,7 +113,7 @@ public class EdgeRenderer extends GameSystem
         glDeleteBuffers(edge_vbo);
         glDeleteBuffers(flag_vbo);
         prepare_edges.destroy();
-        GPU.cl_release_buffer(vertex_vbo_ptr);
-        GPU.cl_release_buffer(flag_vbo_ptr);
+        GPGPU.cl_release_buffer(vertex_vbo_ptr);
+        GPGPU.cl_release_buffer(flag_vbo_ptr);
     }
 }
