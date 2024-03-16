@@ -29,7 +29,7 @@ public class PhysicsSimulation extends GameSystem
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
     //  or make damping interact with the gravity vector in some way.
-    private static final  float MOTION_DAMPING = .990f;
+    private static final float MOTION_DAMPING = .990f;
 
     private final UniformGrid uniform_grid;
 
@@ -87,7 +87,7 @@ public class PhysicsSimulation extends GameSystem
 
     private long candidate_count = 0;
     private long reaction_count = 0;
-    private long final_size = 0;
+    private long candidate_buffer_size = 0;
     private long match_buffer_count = 0;
     private long candidate_buffer_count = 0;
 
@@ -100,17 +100,17 @@ public class PhysicsSimulation extends GameSystem
         counts_buf_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
         atomic_counter_ptr = GPGPU.cl_new_pinned_int();
 
-        reactions_in = new TransientBuffer();
-        reactions_out = new TransientBuffer();
-        reaction_index = new TransientBuffer();
-        key_map = new TransientBuffer();
-        key_bank = new TransientBuffer();
-        in_bounds = new TransientBuffer();
-        candidates = new TransientBuffer();
-        candidate_counts = new TransientBuffer();
-        candidate_offsets = new TransientBuffer();
-        matches = new TransientBuffer();
-        matches_used = new TransientBuffer();
+        reactions_in = new TransientBuffer(CLSize.cl_float4);
+        reactions_out = new TransientBuffer(CLSize.cl_float4);
+        reaction_index = new TransientBuffer(CLSize.cl_int);
+        key_map = new TransientBuffer(CLSize.cl_int);
+        key_bank = new TransientBuffer(CLSize.cl_int);
+        in_bounds = new TransientBuffer(CLSize.cl_int);
+        candidates = new TransientBuffer(CLSize.cl_int2);
+        candidate_counts = new TransientBuffer(CLSize.cl_int2);
+        candidate_offsets = new TransientBuffer(CLSize.cl_int);
+        matches = new TransientBuffer(CLSize.cl_int);
+        matches_used = new TransientBuffer(CLSize.cl_int);
 
         counts_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
         offsets_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
@@ -406,8 +406,7 @@ public class PhysicsSimulation extends GameSystem
             return;
         }
 
-        long bank_buf_size = (long) CLSize.cl_int * uniform_grid.get_key_bank_size();
-        key_bank.ensure_capacity(bank_buf_size);
+        key_bank.ensure_capacity(uniform_grid.get_key_bank_size());
         GPGPU.cl_zero_buffer(counts_data_ptr, counts_buf_size);
         generate_keys_k
             .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
@@ -416,8 +415,7 @@ public class PhysicsSimulation extends GameSystem
 
     private void build_key_map(UniformGrid uniform_grid)
     {
-        long map_buf_size = (long) CLSize.cl_int * uniform_grid.getKey_map_size();
-        key_map.ensure_capacity(map_buf_size);
+        key_map.ensure_capacity(uniform_grid.getKey_map_size());
         GPGPU.cl_zero_buffer(counts_data_ptr, counts_buf_size);
         build_key_map_k.call(arg_long(GPGPU.core_memory.next_hull()));
     }
@@ -425,8 +423,7 @@ public class PhysicsSimulation extends GameSystem
     private void locate_in_bounds()
     {
         int hull_count = GPGPU.core_memory.next_hull();
-        long inbound_buf_size = (long) CLSize.cl_int * hull_count;
-        in_bounds.ensure_capacity(inbound_buf_size);
+        in_bounds.ensure_capacity(hull_count);
         GPGPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         locate_in_bounds_k
@@ -438,8 +435,7 @@ public class PhysicsSimulation extends GameSystem
 
     private void calculate_match_candidates()
     {
-        long candidate_buf_size = (long) CLSize.cl_int2 * candidate_buffer_count;
-        candidate_counts.ensure_capacity(candidate_buf_size);
+        candidate_counts.ensure_capacity(candidate_buffer_count);
         count_candidates_k.call(arg_long(candidate_buffer_count));
     }
 
@@ -511,17 +507,14 @@ public class PhysicsSimulation extends GameSystem
 
     private void calculate_match_offsets()
     {
-        long offset_buf_size = (long) CLSize.cl_int * candidate_buffer_count;
-        candidate_offsets.ensure_capacity(offset_buf_size);
+        candidate_offsets.ensure_capacity(candidate_buffer_count);
         match_buffer_count = scan_key_candidates(candidate_counts.pointer(), candidate_offsets.pointer(), (int) candidate_buffer_count);
     }
 
     private void aabb_collide()
     {
-        long matches_buf_size = (long) CLSize.cl_int * match_buffer_count;
-        matches.ensure_capacity(matches_buf_size);
-        long used_buf_size = (long) CLSize.cl_int * candidate_buffer_count;
-        matches_used.ensure_capacity(used_buf_size);
+        matches.ensure_capacity(match_buffer_count);
+        matches_used.ensure_capacity(candidate_buffer_count);
         GPGPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
         aabb_collide_k.call(arg_long(candidate_buffer_count));
         candidate_count = GPGPU.cl_read_pinned_int(atomic_counter_ptr);
@@ -534,16 +527,14 @@ public class PhysicsSimulation extends GameSystem
             return;
         }
 
-        // create an empty buffer that the kernel will use to store finalized candidates
-        long final_buf_size = (long) CLSize.cl_int2 * candidate_count;
+        long buffer_size = (long) CLSize.cl_int2 * candidate_count;
 
-        candidates.ensure_capacity(final_buf_size);
+        candidates.ensure_capacity(candidate_count);
 
-        // the kernel will use this value as an internal atomic counter, always initialize to zero
         int[] counter = new int[]{ 0 };
         var counter_ptr = GPGPU.cl_new_int_arg_buffer(counter);
 
-        final_size = final_buf_size;
+        candidate_buffer_size = buffer_size;
 
         finalize_candidates_k
             .ptr_arg(FinalizeCandidates_k.Args.counter, counter_ptr)
@@ -554,24 +545,18 @@ public class PhysicsSimulation extends GameSystem
 
     private void sat_collide()
     {
-        int candidates_size = (int) final_size / CLSize.cl_int;
-
-        // candidates are pairs of integer indices, so the global size is half the count
-        long[] global_work_size = new long[]{candidates_size / 2};
+        int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
+        long[] global_work_size = new long[]{candidate_pair_size};
 
         GPGPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
-        long max_point_count = final_size
+        long max_point_count = candidate_buffer_size
             * 2  // there are two bodies per collision pair
             * 2; // assume worst case is 2 points per body
 
-        // sizes for the reaction buffers
-        long required_reaction_buf_size = (long) CLSize.cl_float4 * max_point_count;
-        long required_index_buf_size = (long) CLSize.cl_int * max_point_count;
-
-        reactions_in.ensure_capacity(required_reaction_buf_size);
-        reactions_out.ensure_capacity(required_reaction_buf_size);
-        reaction_index.ensure_capacity(required_index_buf_size);
+        reactions_in.ensure_capacity(max_point_count);
+        reactions_out.ensure_capacity(max_point_count);
+        reaction_index.ensure_capacity(max_point_count);
 
         sat_collide_k.call(global_work_size);
 

@@ -5,7 +5,9 @@ import java.util.List;
 
 public class TransientBuffer implements ResizableBuffer
 {
-    private static final long DEFAULT_CAPACITY = 1024L; // 1 KB
+    private static final long DEFAULT_CAPACITY = 256L;
+
+    private final int item_size;
 
     private long capacity;
     private long pointer;
@@ -14,9 +16,10 @@ public class TransientBuffer implements ResizableBuffer
 
     private record RegisteredKernel(GPUKernel kernel, Enum<?> arg) { }
 
-    public TransientBuffer()
+    public TransientBuffer(int item_size)
     {
-        this.capacity = DEFAULT_CAPACITY;
+        this.item_size = item_size;
+        this.capacity = this.item_size * DEFAULT_CAPACITY;
         this.pointer = GPGPU.cl_new_buffer(this.capacity);
     }
 
@@ -26,14 +29,19 @@ public class TransientBuffer implements ResizableBuffer
             .forEach(k->k.kernel.ptr_arg(k.arg, this.pointer));
     }
 
+    private void ensure_size(long size_bytes)
+    {
+        if (size_bytes <= this.capacity) return;
+        release();
+        this.capacity = size_bytes;
+        this.pointer = GPGPU.cl_new_buffer(this.capacity);
+        reset_kernels();
+    }
+
     @Override
     public void ensure_capacity(long capacity)
     {
-        if (capacity <= this.capacity) return;
-        release();
-        this.capacity = capacity;
-        this.pointer = GPGPU.cl_new_buffer(this.capacity);
-        reset_kernels();
+        ensure_size(item_size * capacity);
     }
 
     @Override
@@ -43,14 +51,21 @@ public class TransientBuffer implements ResizableBuffer
     }
 
     @Override
-    public void release()
-    {
-        GPGPU.cl_release_buffer(this.pointer);
-    }
-
-    @Override
     public void register(GPUKernel kernel, Enum<?> arg)
     {
         registered_kernels.add(new RegisteredKernel(kernel, arg));
+    }
+
+
+    @Override
+    public void clear()
+    {
+        GPGPU.cl_zero_buffer(this.pointer, this.capacity);
+    }
+
+    @Override
+    public void release()
+    {
+        GPGPU.cl_release_buffer(this.pointer);
     }
 }

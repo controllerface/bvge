@@ -8,5 +8,7 @@ public interface ResizableBuffer
 
     void register(GPUKernel kernel, Enum<?> arg);
 
+    void clear();
+
     void release();
 }
