@@ -26,7 +26,7 @@ public class TransientBuffer implements ResizableBuffer
     private void reset_kernels()
     {
         registered_kernels
-            .forEach(k->k.kernel.ptr_arg(k.arg, this.pointer));
+            .forEach(registered -> registered.kernel.ptr_arg(registered.arg, this.pointer));
     }
 
     private void ensure_size(long size_bytes)

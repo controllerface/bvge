@@ -525,7 +525,6 @@ public class GPGPU
          * bone shift buffer. Points, edges, and hulls work the same way.
          */
         bone_shift(CLSize.cl_int), // todo: isolate to core memory class
-        point_shift(CLSize.cl_int), // todo: isolate to core memory class
         bone_bind_shift(CLSize.cl_int), // todo: isolate to core memory class
 
         ;
@@ -665,7 +664,6 @@ public class GPGPU
         Buffer.animation_timings.init(max_points);
         Buffer.animation_timing_indices.init(max_points);
         Buffer.bone_shift.init(max_points);
-        Buffer.point_shift.init(max_points);
         Buffer.bone_bind_shift.init(max_hulls);
 
         core_memory = new GPUCoreMemory();
@@ -713,7 +711,6 @@ public class GPGPU
             + Buffer.animation_timings.length
             + Buffer.animation_timing_indices.length
             + Buffer.bone_shift.length
-            + Buffer.point_shift.length
             + Buffer.bone_bind_shift.length;
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
@@ -760,7 +757,6 @@ public class GPGPU
         System.out.println("animation timings    : " + Buffer.animation_timings.length);
         System.out.println("animation indices    : " + Buffer.animation_timing_indices.length);
         System.out.println("bone shift           : " + Buffer.bone_shift.length);
-        System.out.println("point shift          : " + Buffer.point_shift.length);
         System.out.println("bone bind shift      : " + Buffer.bone_bind_shift.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)       : " + total);
