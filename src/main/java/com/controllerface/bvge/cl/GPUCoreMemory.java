@@ -60,10 +60,12 @@ public class GPUCoreMemory
     private final GPUKernel compact_armature_bones_k;
 
     private final ResizableBuffer hull_shift;
+    private final ResizableBuffer edge_shift;
 
     public GPUCoreMemory()
     {
         hull_shift = new TransientBuffer(CLSize.cl_int);
+        edge_shift = new TransientBuffer(CLSize.cl_int);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -218,7 +220,7 @@ public class GPUCoreMemory
             .mem_arg(CompactArmatures_k.Args.edges, GPGPU.Buffer.edges.memory)
             .mem_arg(CompactArmatures_k.Args.bone_shift, GPGPU.Buffer.bone_shift.memory)
             .mem_arg(CompactArmatures_k.Args.point_shift, GPGPU.Buffer.point_shift.memory)
-            .mem_arg(CompactArmatures_k.Args.edge_shift, GPGPU.Buffer.edge_shift.memory)
+            .buf_arg(CompactArmatures_k.Args.edge_shift, edge_shift)
             .buf_arg(CompactArmatures_k.Args.hull_shift, hull_shift)
             .mem_arg(CompactArmatures_k.Args.bone_bind_shift, GPGPU.Buffer.bone_bind_shift.memory);
 
@@ -236,7 +238,7 @@ public class GPUCoreMemory
 
         long compact_edges_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_edges);
         compact_edges_k = new CompactEdges_k(GPGPU.command_queue_ptr, compact_edges_k_ptr)
-            .mem_arg(CompactEdges_k.Args.edge_shift, GPGPU.Buffer.edge_shift.memory)
+            .buf_arg(CompactEdges_k.Args.edge_shift, edge_shift)
             .mem_arg(CompactEdges_k.Args.edges, GPGPU.Buffer.edges.memory);
 
         long compact_points_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_points);
@@ -534,11 +536,12 @@ public class GPUCoreMemory
         }
 
         hull_shift.ensure_capacity(hull_index);
+        edge_shift.ensure_capacity(edge_index);
 
         // shift buffers are cleared before compacting to clean out any data from the last tick
         hull_shift.clear();
+        edge_shift.clear();
 
-        GPGPU.Buffer.edge_shift.clear();
         GPGPU.Buffer.point_shift.clear();
         GPGPU.Buffer.bone_shift.clear();
         GPGPU.Buffer.bone_bind_shift.clear();
