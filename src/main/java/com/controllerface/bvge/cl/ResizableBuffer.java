@@ -6,7 +6,7 @@ public interface ResizableBuffer
 
     long pointer();
 
-    void release();
-
     void register(GPUKernel kernel, Enum<?> arg);
+
+    void release();
 }

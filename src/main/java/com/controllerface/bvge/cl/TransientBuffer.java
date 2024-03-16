@@ -5,6 +5,8 @@ import java.util.List;
 
 public class TransientBuffer implements ResizableBuffer
 {
+    private static final long DEFAULT_CAPACITY = 1024L; // 1 KB
+
     private long capacity;
     private long pointer;
 
@@ -12,10 +14,10 @@ public class TransientBuffer implements ResizableBuffer
 
     private record RegisteredKernel(GPUKernel kernel, Enum<?> arg) { }
 
-    public TransientBuffer(long capacity)
+    public TransientBuffer()
     {
-        this.capacity = capacity;
-        this.pointer = GPGPU.cl_new_buffer(capacity);
+        this.capacity = DEFAULT_CAPACITY;
+        this.pointer = GPGPU.cl_new_buffer(this.capacity);
     }
 
     private void reset_kernels()
