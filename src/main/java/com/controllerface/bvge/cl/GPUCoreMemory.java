@@ -29,42 +29,37 @@ public class GPUCoreMemory
     private final GPUProgram gpu_crud = new GPUCrud();
     private final GPUProgram scan_deletes = new ScanDeletes();
 
-    private GPUKernel create_animation_timings_k;
-    private GPUKernel create_armature_k;
-    private GPUKernel create_armature_bone_k;
-    private GPUKernel create_bone_k;
-    private GPUKernel create_bone_bind_pose_k;
-    private GPUKernel create_bone_channel_k;
-    private GPUKernel create_bone_reference_k;
-    private GPUKernel create_edge_k;
-    private GPUKernel create_hull_k;
-    private GPUKernel create_keyframe_k;
-    private GPUKernel create_mesh_face_k;
-    private GPUKernel create_mesh_reference_k;
-    private GPUKernel create_model_transform_k;
-    private GPUKernel create_point_k;
-    private GPUKernel create_texture_uv_k;
-    private GPUKernel create_vertex_reference_k;
-    private GPUKernel read_position_k;
-    private GPUKernel update_accel_k;
-    private GPUKernel set_bone_channel_table_k;
-    private GPUKernel locate_out_of_bounds_k;
-    private GPUKernel scan_deletes_single_block_out_k;
-    private GPUKernel scan_deletes_multi_block_out_k;
-    private GPUKernel complete_deletes_multi_block_out_k;
-    private GPUKernel compact_armatures_k;
-    private GPUKernel compact_hulls_k;
-    private GPUKernel compact_edges_k;
-    private GPUKernel compact_points_k;
-    private GPUKernel compact_bones_k;
-    private GPUKernel compact_armature_bones_k;
+    private final GPUKernel create_animation_timings_k;
+    private final GPUKernel create_armature_k;
+    private final GPUKernel create_armature_bone_k;
+    private final GPUKernel create_bone_k;
+    private final GPUKernel create_bone_bind_pose_k;
+    private final GPUKernel create_bone_channel_k;
+    private final GPUKernel create_bone_reference_k;
+    private final GPUKernel create_edge_k;
+    private final GPUKernel create_hull_k;
+    private final GPUKernel create_keyframe_k;
+    private final GPUKernel create_mesh_face_k;
+    private final GPUKernel create_mesh_reference_k;
+    private final GPUKernel create_model_transform_k;
+    private final GPUKernel create_point_k;
+    private final GPUKernel create_texture_uv_k;
+    private final GPUKernel create_vertex_reference_k;
+    private final GPUKernel read_position_k;
+    private final GPUKernel update_accel_k;
+    private final GPUKernel set_bone_channel_table_k;
+    private final GPUKernel locate_out_of_bounds_k;
+    private final GPUKernel scan_deletes_single_block_out_k;
+    private final GPUKernel scan_deletes_multi_block_out_k;
+    private final GPUKernel complete_deletes_multi_block_out_k;
+    private final GPUKernel compact_armatures_k;
+    private final GPUKernel compact_hulls_k;
+    private final GPUKernel compact_edges_k;
+    private final GPUKernel compact_points_k;
+    private final GPUKernel compact_bones_k;
+    private final GPUKernel compact_armature_bones_k;
 
     public GPUCoreMemory()
-    {
-        init();
-    }
-
-    private void init()
     {
         gpu_crud.init();
         scan_deletes.init();
