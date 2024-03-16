@@ -59,8 +59,12 @@ public class GPUCoreMemory
     private final GPUKernel compact_bones_k;
     private final GPUKernel compact_armature_bones_k;
 
+    private final ResizableBuffer hull_shift;
+
     public GPUCoreMemory()
     {
+        hull_shift = new TransientBuffer(CLSize.cl_int);
+
         gpu_crud.init();
         scan_deletes.init();
 
@@ -215,12 +219,12 @@ public class GPUCoreMemory
             .mem_arg(CompactArmatures_k.Args.bone_shift, GPGPU.Buffer.bone_shift.memory)
             .mem_arg(CompactArmatures_k.Args.point_shift, GPGPU.Buffer.point_shift.memory)
             .mem_arg(CompactArmatures_k.Args.edge_shift, GPGPU.Buffer.edge_shift.memory)
-            .mem_arg(CompactArmatures_k.Args.hull_shift, GPGPU.Buffer.hull_shift.memory)
+            .buf_arg(CompactArmatures_k.Args.hull_shift, hull_shift)
             .mem_arg(CompactArmatures_k.Args.bone_bind_shift, GPGPU.Buffer.bone_bind_shift.memory);
 
         long compact_hulls_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_hulls);
         compact_hulls_k = new CompactHulls_k(GPGPU.command_queue_ptr, compact_hulls_k_ptr)
-            .mem_arg(CompactHulls_k.Args.hull_shift, GPGPU.Buffer.hull_shift.memory)
+            .buf_arg(CompactHulls_k.Args.hull_shift, hull_shift)
             .mem_arg(CompactHulls_k.Args.hulls, GPGPU.Buffer.hulls.memory)
             .mem_arg(CompactHulls_k.Args.hull_mesh_ids, GPGPU.Buffer.hull_mesh_ids.memory)
             .mem_arg(CompactHulls_k.Args.hull_rotations, GPGPU.Buffer.hull_rotation.memory)
@@ -529,8 +533,11 @@ public class GPUCoreMemory
             return;
         }
 
+        hull_shift.ensure_capacity(hull_index);
+
         // shift buffers are cleared before compacting to clean out any data from the last tick
-        GPGPU.Buffer.hull_shift.clear();
+        hull_shift.clear();
+
         GPGPU.Buffer.edge_shift.clear();
         GPGPU.Buffer.point_shift.clear();
         GPGPU.Buffer.bone_shift.clear();

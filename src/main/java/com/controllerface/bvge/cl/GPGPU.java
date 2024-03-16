@@ -527,7 +527,6 @@ public class GPGPU
         bone_shift(CLSize.cl_int), // todo: isolate to core memory class
         point_shift(CLSize.cl_int), // todo: isolate to core memory class
         edge_shift(CLSize.cl_int), // todo: isolate to core memory class
-        hull_shift(CLSize.cl_int), // todo: isolate to core memory class
         bone_bind_shift(CLSize.cl_int), // todo: isolate to core memory class
 
         ;
@@ -669,7 +668,6 @@ public class GPGPU
         Buffer.bone_shift.init(max_points);
         Buffer.point_shift.init(max_points);
         Buffer.edge_shift.init(max_points);
-        Buffer.hull_shift.init(max_hulls);
         Buffer.bone_bind_shift.init(max_hulls);
 
         core_memory = new GPUCoreMemory();
@@ -719,7 +717,6 @@ public class GPGPU
             + Buffer.bone_shift.length
             + Buffer.point_shift.length
             + Buffer.edge_shift.length
-            + Buffer.hull_shift.length
             + Buffer.bone_bind_shift.length;
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
@@ -768,7 +765,6 @@ public class GPGPU
         System.out.println("bone shift           : " + Buffer.bone_shift.length);
         System.out.println("point shift          : " + Buffer.point_shift.length);
         System.out.println("edge shift           : " + Buffer.edge_shift.length);
-        System.out.println("hull shift           : " + Buffer.hull_shift.length);
         System.out.println("bone bind shift      : " + Buffer.bone_bind_shift.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)       : " + total);
