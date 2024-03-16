@@ -313,16 +313,6 @@ public class GPGPU
         points(CLSize.cl_float4),
 
         /**
-         * value: reaction count
-         */
-        point_reactions(CLSize.cl_int), // todo: isolate to physics simulation
-
-        /**
-         * value: reaction buffer offset
-         */
-        point_offsets(CLSize.cl_int), // todo: isolate to physics simulation
-
-        /**
          * value: antigravity magnitude
          */
         point_anti_gravity(CLSize.cl_float),
@@ -649,8 +639,6 @@ public class GPGPU
         Buffer.mesh_faces.init(max_hulls);
         Buffer.aabb.init(max_hulls);
         Buffer.points.init(max_points);
-        Buffer.point_reactions.init(max_points);
-        Buffer.point_offsets.init(max_points);
         Buffer.point_anti_gravity.init(max_points);
         Buffer.edges.init(max_points);
         Buffer.point_vertex_tables.init(max_points);
@@ -701,8 +689,6 @@ public class GPGPU
             + Buffer.aabb_index.length
             + Buffer.aabb_key_table.length
             + Buffer.points.length
-            + Buffer.point_reactions.length
-            + Buffer.point_offsets.length
             + Buffer.point_anti_gravity.length
             + Buffer.edges.length
             + Buffer.point_vertex_tables.length
@@ -750,8 +736,6 @@ public class GPGPU
         System.out.println("hull flags           : " + Buffer.hull_flags.length);
         System.out.println("mesh references      : " + Buffer.mesh_references.length);
         System.out.println("mesh faces           : " + Buffer.mesh_faces.length);
-        System.out.println("point reactions      : " + Buffer.point_reactions.length);
-        System.out.println("point offsets        : " + Buffer.point_offsets.length);
         System.out.println("point anti-grav      : " + Buffer.point_anti_gravity.length);
         System.out.println("bounding box         : " + Buffer.aabb.length);
         System.out.println("spatial index        : " + Buffer.aabb_index.length);

@@ -73,6 +73,8 @@ public class PhysicsSimulation extends GameSystem
     private final long offsets_data_ptr;
     private final long counts_buf_size;
 
+    public final ResizableBuffer point_reaction_counts;
+    public final ResizableBuffer point_reaction_offsets;
     public final ResizableBuffer reactions_in;
     public final ResizableBuffer reactions_out;
     public final ResizableBuffer reaction_index;
@@ -99,6 +101,9 @@ public class PhysicsSimulation extends GameSystem
         this.uniform_grid = uniform_grid;
         counts_buf_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
         atomic_counter_ptr = GPGPU.cl_new_pinned_int();
+
+        point_reaction_counts = new TransientBuffer(CLSize.cl_int);
+        point_reaction_offsets = new TransientBuffer(CLSize.cl_int);
 
         reactions_in = new TransientBuffer(CLSize.cl_float4);
         reactions_out = new TransientBuffer(CLSize.cl_float4);
@@ -230,7 +235,7 @@ public class PhysicsSimulation extends GameSystem
             .mem_arg(SatCollide_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.memory)
             .mem_arg(SatCollide_k.Args.points, GPGPU.Buffer.points.memory)
             .mem_arg(SatCollide_k.Args.edges, GPGPU.Buffer.edges.memory)
-            .mem_arg(SatCollide_k.Args.point_reactions, GPGPU.Buffer.point_reactions.memory)
+            .buf_arg(SatCollide_k.Args.point_reactions, point_reaction_counts)
             .mem_arg(SatCollide_k.Args.masses, GPGPU.Buffer.armature_mass.memory);
 
         long sort_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.sort_reactions);
@@ -238,16 +243,16 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SortReactions_k.Args.reactions_in, reactions_in)
             .buf_arg(SortReactions_k.Args.reactions_out, reactions_out)
             .buf_arg(SortReactions_k.Args.reaction_index, reaction_index)
-            .mem_arg(SortReactions_k.Args.point_reactions, GPGPU.Buffer.point_reactions.memory)
-            .mem_arg(SortReactions_k.Args.point_offsets, GPGPU.Buffer.point_offsets.memory);
+            .buf_arg(SortReactions_k.Args.point_reactions, point_reaction_counts)
+            .buf_arg(SortReactions_k.Args.point_offsets, point_reaction_offsets);
 
         long apply_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.apply_reactions);
         apply_reactions_k = new ApplyReactions_k(GPGPU.command_queue_ptr, apply_reactions_k_ptr)
             .buf_arg(ApplyReactions_k.Args.reactions, reactions_out)
             .mem_arg(ApplyReactions_k.Args.points, GPGPU.Buffer.points.memory)
             .mem_arg(ApplyReactions_k.Args.anti_gravity, GPGPU.Buffer.point_anti_gravity.memory)
-            .mem_arg(ApplyReactions_k.Args.point_reactions, GPGPU.Buffer.point_reactions.memory)
-            .mem_arg(ApplyReactions_k.Args.point_offsets, GPGPU.Buffer.point_offsets.memory);
+            .buf_arg(ApplyReactions_k.Args.point_reactions, point_reaction_counts)
+            .buf_arg(ApplyReactions_k.Args.point_offsets, point_reaction_offsets);
 
         long move_armatures_k_ptr = sat_collide.kernel_ptr(Kernel.move_armatures);
         move_armatures_k = new MoveArmatures_k(GPGPU.command_queue_ptr, move_armatures_k_ptr)
@@ -546,7 +551,7 @@ public class PhysicsSimulation extends GameSystem
     private void sat_collide()
     {
         int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
-        long[] global_work_size = new long[]{candidate_pair_size};
+        long[] global_work_size = new long[]{ candidate_pair_size };
 
         GPGPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
@@ -557,20 +562,19 @@ public class PhysicsSimulation extends GameSystem
         reactions_in.ensure_capacity(max_point_count);
         reactions_out.ensure_capacity(max_point_count);
         reaction_index.ensure_capacity(max_point_count);
+        point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
+        point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
 
         sat_collide_k.call(global_work_size);
-
         reaction_count = GPGPU.cl_read_pinned_int(atomic_counter_ptr);
     }
 
     private void scan_reactions()
     {
-        GPGPU.scan_int_out(GPGPU.Buffer.point_reactions.memory.pointer(),
-            GPGPU.Buffer.point_offsets.memory.pointer(),
-            GPGPU.core_memory.next_point());
+        GPGPU.scan_int_out(point_reaction_counts.pointer(), point_reaction_offsets.pointer(), GPGPU.core_memory.next_point());
 
         // it is important to zero out the reactions buffer after the scan. It will be reused during sorting
-        GPGPU.Buffer.point_reactions.clear();
+        point_reaction_counts.clear();
     }
 
     private void sort_reactions()

@@ -130,17 +130,17 @@ __kernel void apply_reactions(__global float4 *reactions,
     //  right now it is a static direction. note that magnitude of gravity is not important, only direction
     float2 g = (float2)(0.0, -1.0);
 
-    int gid = get_global_id(0);
-    int reaction_count = point_reactions[gid];
+    int current_point = get_global_id(0);
+    int reaction_count = point_reactions[current_point];
 
     // exit on non-reactive points
     if (reaction_count == 0) return;
 
     // get the point to be adjusted
-    float4 point = points[gid];
+    float4 point = points[current_point];
     
     // get the offset into the reaction buffer corresponding to this point
-    int reaction_offset = point_offsets[gid];
+    int reaction_offset = point_offsets[current_point];
     
     // store the initial distance and previous position. These are used after
     // adjustment is made to re-adjust the previous position of the point. This
@@ -183,13 +183,13 @@ __kernel void apply_reactions(__global float4 *reactions,
     // than it is against it, so we clamp to 0.
     ag = ag <= 0.0f ? 0.0f : ag;
 
-    anti_gravity[gid] = ag;
-    points[gid] = point;
+    anti_gravity[current_point] = ag;
+    points[current_point] = point;
 
     // It is important to reset the counts and offsets to 0 after reactions are handled.
     // These reactions are only valid once, for the current frame.
-    point_reactions[gid] = 0;
-    point_offsets[gid] = 0;
+    point_reactions[current_point] = 0;
+    point_offsets[current_point] = 0;
 }
 
 __kernel void move_armatures(__global float4 *hulls,
