@@ -81,12 +81,11 @@ public class PhysicsSimulation extends GameSystem
     private static long offsets_data_ptr;
     private static long counts_buf_size;
 
-    public long reaction_buf_size = 10_500_000L; // about 10 MB
-    public long index_buf_size = 5_250_000L;     // about 5 MB
+    private static final long DEFAULT_REACTION_BUFFER_SIZE = 250_000L;
 
-    public GPUMemory reactions_in = new GPUMemory();
-    public GPUMemory reactions_out = new GPUMemory();
-    public GPUMemory reaction_index = new GPUMemory();
+    public ResizableBuffer reactions_in;
+    public ResizableBuffer reactions_out;
+    public ResizableBuffer reaction_index;
 
     public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
     {
@@ -97,6 +96,10 @@ public class PhysicsSimulation extends GameSystem
 
     private void init_kernels()
     {
+        reactions_in = new TransientBuffer(DEFAULT_REACTION_BUFFER_SIZE);
+        reactions_out = new TransientBuffer(DEFAULT_REACTION_BUFFER_SIZE);
+        reaction_index = new TransientBuffer(DEFAULT_REACTION_BUFFER_SIZE);
+
         atomic_counter_ptr = GPGPU.cl_new_pinned_int();
 
         integrate.init();
@@ -172,6 +175,8 @@ public class PhysicsSimulation extends GameSystem
 
         long sat_collide_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide);
         sat_collide_k = new SatCollide_k(GPGPU.command_queue_ptr, sat_collide_k_ptr)
+            .buf_arg(SatCollide_k.Args.reactions, reactions_in)
+            .buf_arg(SatCollide_k.Args.reaction_index, reaction_index)
             .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
             .mem_arg(SatCollide_k.Args.hulls, GPGPU.Buffer.hulls.memory)
             .mem_arg(SatCollide_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.memory)
@@ -184,11 +189,15 @@ public class PhysicsSimulation extends GameSystem
 
         long sort_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.sort_reactions);
         sort_reactions_k = new SortReactions_k(GPGPU.command_queue_ptr, sort_reactions_k_ptr)
+            .buf_arg(SortReactions_k.Args.reactions_in, reactions_in)
+            .buf_arg(SortReactions_k.Args.reactions_out, reactions_out)
+            .buf_arg(SortReactions_k.Args.reaction_index, reaction_index)
             .mem_arg(SortReactions_k.Args.point_reactions, GPGPU.Buffer.point_reactions.memory)
             .mem_arg(SortReactions_k.Args.point_offsets, GPGPU.Buffer.point_offsets.memory);
 
         long apply_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.apply_reactions);
         apply_reactions_k = new ApplyReactions_k(GPGPU.command_queue_ptr, apply_reactions_k_ptr)
+            .buf_arg(ApplyReactions_k.Args.reactions, reactions_out)
             .mem_arg(ApplyReactions_k.Args.points, GPGPU.Buffer.points.memory)
             .mem_arg(ApplyReactions_k.Args.anti_gravity, GPGPU.Buffer.point_anti_gravity.memory)
             .mem_arg(ApplyReactions_k.Args.point_reactions, GPGPU.Buffer.point_reactions.memory)
@@ -563,29 +572,12 @@ public class PhysicsSimulation extends GameSystem
         long required_reaction_buf_size = (long) CLSize.cl_float4 * max_point_count;
         long required_index_buf_size = (long) CLSize.cl_int * max_point_count;
 
-        if (required_reaction_buf_size > this.reaction_buf_size
-            || required_index_buf_size > this.index_buf_size)
-        {
-            reactions_in.release();
-            reactions_out.release();
-            reaction_index.release();
-
-            this.reaction_buf_size = required_reaction_buf_size;
-            this.index_buf_size = required_index_buf_size;
-
-            var reaction_data = GPGPU.cl_new_buffer(required_reaction_buf_size);
-            var reaction_data_out = GPGPU.cl_new_buffer(required_reaction_buf_size);
-            var index_data = GPGPU.cl_new_buffer(required_index_buf_size);
-
-            reactions_in = new GPUMemory(reaction_data);
-            reactions_out = new GPUMemory(reaction_data_out);
-            reaction_index = new GPUMemory(index_data);
-        }
+        reactions_in.ensure_capacity(required_reaction_buf_size);
+        reactions_out.ensure_capacity(required_reaction_buf_size);
+        reaction_index.ensure_capacity(required_index_buf_size);
 
         sat_collide_k
             .ptr_arg(SatCollide_k.Args.candidates, physics_buffer.candidates.pointer())
-            .ptr_arg(SatCollide_k.Args.reactions, reactions_in.pointer())
-            .ptr_arg(SatCollide_k.Args.reaction_index, reaction_index.pointer())
             .call(global_work_size);
 
         int size = GPGPU.cl_read_pinned_int(atomic_counter_ptr);
@@ -597,24 +589,19 @@ public class PhysicsSimulation extends GameSystem
         GPGPU.scan_int_out(GPGPU.Buffer.point_reactions.memory.pointer(),
             GPGPU.Buffer.point_offsets.memory.pointer(),
             GPGPU.core_memory.next_point());
+
         // it is important to zero out the reactions buffer after the scan. It will be reused during sorting
         GPGPU.Buffer.point_reactions.clear();
     }
 
     private void sort_reactions()
     {
-        sort_reactions_k
-            .ptr_arg(SortReactions_k.Args.reactions_in, reactions_in.pointer())
-            .ptr_arg(SortReactions_k.Args.reactions_out, reactions_out.pointer())
-            .ptr_arg(SortReactions_k.Args.reaction_index, reaction_index.pointer())
-            .call(arg_long(physics_buffer.get_reaction_count()));
+        sort_reactions_k.call(arg_long(physics_buffer.get_reaction_count()));
     }
 
     private void apply_reactions()
     {
-        apply_reactions_k
-            .ptr_arg(ApplyReactions_k.Args.reactions, reactions_out.pointer())
-            .call(arg_long(GPGPU.core_memory.next_point()));
+        apply_reactions_k.call(arg_long(GPGPU.core_memory.next_point()));
     }
 
     private void move_armatures()
@@ -930,10 +917,6 @@ public class PhysicsSimulation extends GameSystem
     {
         if (physics_buffer == null)
         {
-            reactions_in = new GPUMemory(GPGPU.cl_new_buffer(reaction_buf_size));
-            reactions_out = new GPUMemory(GPGPU.cl_new_buffer(reaction_buf_size));
-            reaction_index = new GPUMemory(GPGPU.cl_new_buffer(index_buf_size));
-
             physics_buffer = new PhysicsBuffer();
             physics_buffer.set_gravity_x(GRAVITY_X);
             physics_buffer.set_gravity_y(GRAVITY_Y);

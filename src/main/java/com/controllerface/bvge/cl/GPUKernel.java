@@ -26,6 +26,12 @@ public abstract class GPUKernel
         return this;
     }
 
+    public GPUKernel buf_arg(Enum<?> val, ResizableBuffer buffer)
+    {
+        buffer.register(this, val);
+        return ptr_arg(val.ordinal(), buffer.pointer());
+    }
+
     public GPUKernel mem_arg(Enum<?> val, GPUMemory gpu_memory)
     {
         return ptr_arg(val.ordinal(), gpu_memory.pointer());

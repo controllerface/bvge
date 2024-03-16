@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu;
+package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.*;

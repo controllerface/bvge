@@ -2,7 +2,6 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
-import com.controllerface.bvge.gpu.GPUCoreMemory;
 import org.lwjgl.BufferUtils;
 
 import java.nio.ByteBuffer;
