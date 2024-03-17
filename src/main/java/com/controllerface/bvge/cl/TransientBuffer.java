@@ -1,8 +1,5 @@
 package com.controllerface.bvge.cl;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class TransientBuffer implements ResizableBuffer
 {
     private static final long DEFAULT_CAPACITY = 256L;
@@ -12,7 +9,7 @@ public class TransientBuffer implements ResizableBuffer
     private long capacity;
     private long pointer;
 
-    private final List<RegisteredKernel> registered_kernels = new ArrayList<>();
+    private RegisteredKernel[] registered_kernels = new RegisteredKernel[0];
 
     private record RegisteredKernel(GPUKernel kernel, Enum<?> arg) { }
 
@@ -23,11 +20,11 @@ public class TransientBuffer implements ResizableBuffer
         this.pointer = GPGPU.cl_new_buffer(this.capacity);
     }
 
-    private void reset_kernels()
+    private void update_registered_kernels()
     {
-        for (var reg : registered_kernels)
+        for (var registered : registered_kernels)
         {
-            reg.kernel.ptr_arg(reg.arg, this.pointer);
+            registered.kernel.ptr_arg(registered.arg, this.pointer);
         }
     }
 
@@ -37,7 +34,7 @@ public class TransientBuffer implements ResizableBuffer
         release();
         this.capacity = size_bytes;
         this.pointer = GPGPU.cl_new_buffer(this.capacity);
-        reset_kernels();
+        update_registered_kernels();
     }
 
     @Override
@@ -55,7 +52,10 @@ public class TransientBuffer implements ResizableBuffer
     @Override
     public void register(GPUKernel kernel, Enum<?> arg)
     {
-        registered_kernels.add(new RegisteredKernel(kernel, arg));
+        var new_copy = new RegisteredKernel[registered_kernels.length + 1];
+        System.arraycopy(registered_kernels, 0, new_copy, 0, registered_kernels.length);
+        new_copy[new_copy.length - 1] = new RegisteredKernel(kernel, arg);
+        registered_kernels = new_copy;
     }
 
 
