@@ -32,11 +32,6 @@ public abstract class GPUKernel
         return ptr_arg(arg, buffer.pointer());
     }
 
-    public GPUKernel mem_arg(Enum<?> arg, GPUMemory gpu_memory)
-    {
-        return ptr_arg(arg, gpu_memory.pointer());
-    }
-
     public GPUKernel ptr_arg(Enum<?> arg, long pointer)
     {
         try (var mem_stack = MemoryStack.stackPush())

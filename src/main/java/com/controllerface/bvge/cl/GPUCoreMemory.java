@@ -83,150 +83,150 @@ public class GPUCoreMemory
 
         long create_point_k_ptr = gpu_crud.kernel_ptr(Kernel.create_point);
         create_point_k = new CreatePoint_k(GPGPU.command_queue_ptr, create_point_k_ptr)
-            .mem_arg(CreatePoint_k.Args.points, GPGPU.Buffer.points.memory)
-            .mem_arg(CreatePoint_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.memory)
-            .mem_arg(CreatePoint_k.Args.bone_tables, GPGPU.Buffer.point_bone_tables.memory);
+            .ptr_arg(CreatePoint_k.Args.points, GPGPU.Buffer.points.pointer)
+            .ptr_arg(CreatePoint_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.pointer)
+            .ptr_arg(CreatePoint_k.Args.bone_tables, GPGPU.Buffer.point_bone_tables.pointer);
 
         long create_texture_uv_ptr = gpu_crud.kernel_ptr(Kernel.create_texture_uv);
         create_texture_uv_k = new CreateTextureUV_k(GPGPU.command_queue_ptr, create_texture_uv_ptr)
-            .mem_arg(CreateTextureUV_k.Args.texture_uvs, GPGPU.Buffer.texture_uvs.memory);
+            .ptr_arg(CreateTextureUV_k.Args.texture_uvs, GPGPU.Buffer.texture_uvs.pointer);
 
         long create_edge_k_ptr = gpu_crud.kernel_ptr(Kernel.create_edge);
         create_edge_k = new CreateEdge_k(GPGPU.command_queue_ptr, create_edge_k_ptr)
-            .mem_arg(CreateEdge_k.Args.edges, GPGPU.Buffer.edges.memory);
+            .ptr_arg(CreateEdge_k.Args.edges, GPGPU.Buffer.edges.pointer);
 
         long create_keyframe_k_ptr = gpu_crud.kernel_ptr(Kernel.create_keyframe);
         create_keyframe_k = new CreateKeyFrame_k(GPGPU.command_queue_ptr, create_keyframe_k_ptr)
-            .mem_arg(CreateKeyFrame_k.Args.key_frames, GPGPU.Buffer.key_frames.memory)
-            .mem_arg(CreateKeyFrame_k.Args.frame_times, GPGPU.Buffer.frame_times.memory);
+            .ptr_arg(CreateKeyFrame_k.Args.key_frames, GPGPU.Buffer.key_frames.pointer)
+            .ptr_arg(CreateKeyFrame_k.Args.frame_times, GPGPU.Buffer.frame_times.pointer);
 
         long create_vertex_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_vertex_reference);
         create_vertex_reference_k = new CreateVertexRef_k(GPGPU.command_queue_ptr, create_vertex_reference_k_ptr)
-            .mem_arg(CreateVertexRef_k.Args.vertex_references, GPGPU.Buffer.vertex_references.memory)
-            .mem_arg(CreateVertexRef_k.Args.vertex_weights, GPGPU.Buffer.vertex_weights.memory)
-            .mem_arg(CreateVertexRef_k.Args.uv_tables, GPGPU.Buffer.uv_tables.memory);
+            .ptr_arg(CreateVertexRef_k.Args.vertex_references, GPGPU.Buffer.vertex_references.pointer)
+            .ptr_arg(CreateVertexRef_k.Args.vertex_weights, GPGPU.Buffer.vertex_weights.pointer)
+            .ptr_arg(CreateVertexRef_k.Args.uv_tables, GPGPU.Buffer.uv_tables.pointer);
 
         long create_bone_bind_pose_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_bind_pose);
         create_bone_bind_pose_k = new CreateBoneBindPose_k(GPGPU.command_queue_ptr, create_bone_bind_pose_k_ptr)
-            .mem_arg(CreateBoneBindPose_k.Args.bone_bind_poses, GPGPU.Buffer.bone_bind_poses.memory)
-            .mem_arg(CreateBoneBindPose_k.Args.bone_bind_parents, GPGPU.Buffer.bone_bind_parents.memory);
+            .ptr_arg(CreateBoneBindPose_k.Args.bone_bind_poses, GPGPU.Buffer.bone_bind_poses.pointer)
+            .ptr_arg(CreateBoneBindPose_k.Args.bone_bind_parents, GPGPU.Buffer.bone_bind_parents.pointer);
 
         long create_bone_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_reference);
         create_bone_reference_k = new CreateBoneRef_k(GPGPU.command_queue_ptr, create_bone_reference_k_ptr)
-            .mem_arg(CreateBoneRef_k.Args.bone_references, GPGPU.Buffer.bone_references.memory);
+            .ptr_arg(CreateBoneRef_k.Args.bone_references, GPGPU.Buffer.bone_references.pointer);
 
         long create_bone_channel_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_channel);
         create_bone_channel_k = new CreateBoneChannel_k(GPGPU.command_queue_ptr, create_bone_channel_k_ptr)
-            .mem_arg(CreateBoneChannel_k.Args.animation_timing_indices, GPGPU.Buffer.animation_timing_indices.memory)
-            .mem_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, GPGPU.Buffer.bone_pos_channel_tables.memory)
-            .mem_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, GPGPU.Buffer.bone_rot_channel_tables.memory)
-            .mem_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, GPGPU.Buffer.bone_scl_channel_tables.memory);
+            .ptr_arg(CreateBoneChannel_k.Args.animation_timing_indices, GPGPU.Buffer.animation_timing_indices.pointer)
+            .ptr_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, GPGPU.Buffer.bone_pos_channel_tables.pointer)
+            .ptr_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, GPGPU.Buffer.bone_rot_channel_tables.pointer)
+            .ptr_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, GPGPU.Buffer.bone_scl_channel_tables.pointer);
 
         long create_armature_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature);
         create_armature_k = new CreateArmature_k(GPGPU.command_queue_ptr, create_armature_k_ptr)
-            .mem_arg(CreateArmature_k.Args.armatures, GPGPU.Buffer.armatures.memory)
-            .mem_arg(CreateArmature_k.Args.armature_flags, GPGPU.Buffer.armature_flags.memory)
-            .mem_arg(CreateArmature_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.memory)
-            .mem_arg(CreateArmature_k.Args.armature_masses, GPGPU.Buffer.armature_mass.memory)
-            .mem_arg(CreateArmature_k.Args.armature_animation_indices, GPGPU.Buffer.armature_animation_indices.memory)
-            .mem_arg(CreateArmature_k.Args.armature_animation_elapsed, GPGPU.Buffer.armature_animation_elapsed.memory);
+            .ptr_arg(CreateArmature_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
+            .ptr_arg(CreateArmature_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
+            .ptr_arg(CreateArmature_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
+            .ptr_arg(CreateArmature_k.Args.armature_masses, GPGPU.Buffer.armature_mass.pointer)
+            .ptr_arg(CreateArmature_k.Args.armature_animation_indices, GPGPU.Buffer.armature_animation_indices.pointer)
+            .ptr_arg(CreateArmature_k.Args.armature_animation_elapsed, GPGPU.Buffer.armature_animation_elapsed.pointer);
 
         long create_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone);
         create_bone_k = new CreateBone_k(GPGPU.command_queue_ptr, create_bone_k_ptr)
-            .mem_arg(CreateBone_k.Args.bones, GPGPU.Buffer.bone_instances.memory)
-            .mem_arg(CreateBone_k.Args.bone_index_tables, GPGPU.Buffer.bone_index_tables.memory);
+            .ptr_arg(CreateBone_k.Args.bones, GPGPU.Buffer.bone_instances.pointer)
+            .ptr_arg(CreateBone_k.Args.bone_index_tables, GPGPU.Buffer.bone_index_tables.pointer);
 
         long create_armature_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature_bone);
         create_armature_bone_k = new CreateArmatureBone_k(GPGPU.command_queue_ptr, create_armature_bone_k_ptr)
-            .mem_arg(CreateArmatureBone_k.Args.armature_bones, GPGPU.Buffer.armatures_bones.memory)
-            .mem_arg(CreateArmatureBone_k.Args.bone_bind_tables, GPGPU.Buffer.bone_bind_tables.memory);
+            .ptr_arg(CreateArmatureBone_k.Args.armature_bones, GPGPU.Buffer.armatures_bones.pointer)
+            .ptr_arg(CreateArmatureBone_k.Args.bone_bind_tables, GPGPU.Buffer.bone_bind_tables.pointer);
 
         long create_model_transform_k_ptr = gpu_crud.kernel_ptr(Kernel.create_model_transform);
         create_model_transform_k = new CreateModelTransform_k(GPGPU.command_queue_ptr, create_model_transform_k_ptr)
-            .mem_arg(CreateModelTransform_k.Args.model_transforms, GPGPU.Buffer.model_transforms.memory);
+            .ptr_arg(CreateModelTransform_k.Args.model_transforms, GPGPU.Buffer.model_transforms.pointer);
 
         long create_hull_k_ptr = gpu_crud.kernel_ptr(Kernel.create_hull);
         create_hull_k = new CreateHull_k(GPGPU.command_queue_ptr, create_hull_k_ptr)
-            .mem_arg(CreateHull_k.Args.hulls, GPGPU.Buffer.hulls.memory)
-            .mem_arg(CreateHull_k.Args.hull_rotations, GPGPU.Buffer.hull_rotation.memory)
-            .mem_arg(CreateHull_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.memory)
-            .mem_arg(CreateHull_k.Args.hull_flags, GPGPU.Buffer.hull_flags.memory)
-            .mem_arg(CreateHull_k.Args.hull_mesh_ids, GPGPU.Buffer.hull_mesh_ids.memory);
+            .ptr_arg(CreateHull_k.Args.hulls, GPGPU.Buffer.hulls.pointer)
+            .ptr_arg(CreateHull_k.Args.hull_rotations, GPGPU.Buffer.hull_rotation.pointer)
+            .ptr_arg(CreateHull_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .ptr_arg(CreateHull_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
+            .ptr_arg(CreateHull_k.Args.hull_mesh_ids, GPGPU.Buffer.hull_mesh_ids.pointer);
 
         long create_mesh_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_reference);
         create_mesh_reference_k = new CreateMeshReference_k(GPGPU.command_queue_ptr, create_mesh_reference_k_ptr)
-            .mem_arg(CreateMeshReference_k.Args.mesh_ref_tables, GPGPU.Buffer.mesh_references.memory);
+            .ptr_arg(CreateMeshReference_k.Args.mesh_ref_tables, GPGPU.Buffer.mesh_references.pointer);
 
         long create_mesh_face_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_face);
         create_mesh_face_k = new CreateMeshFace_k(GPGPU.command_queue_ptr, create_mesh_face_k_ptr)
-            .mem_arg(CreateMeshFace_k.Args.mesh_faces, GPGPU.Buffer.mesh_faces.memory);
+            .ptr_arg(CreateMeshFace_k.Args.mesh_faces, GPGPU.Buffer.mesh_faces.pointer);
 
         long create_animation_timings_k_ptr = gpu_crud.kernel_ptr(Kernel.create_animation_timings);
         create_animation_timings_k = new CreateAnimationTimings_k(GPGPU.command_queue_ptr, create_animation_timings_k_ptr)
-            .mem_arg(CreateAnimationTimings_k.Args.animation_timings, GPGPU.Buffer.animation_timings.memory);
+            .ptr_arg(CreateAnimationTimings_k.Args.animation_timings, GPGPU.Buffer.animation_timings.pointer);
 
         // read methods
 
         long read_position_k_ptr = gpu_crud.kernel_ptr(Kernel.read_position);
         read_position_k = new ReadPosition_k(GPGPU.command_queue_ptr, read_position_k_ptr)
-            .mem_arg(ReadPosition_k.Args.armatures, GPGPU.Buffer.armatures.memory);
+            .ptr_arg(ReadPosition_k.Args.armatures, GPGPU.Buffer.armatures.pointer);
 
         // update methods
 
         long update_accel_k_ptr = gpu_crud.kernel_ptr(Kernel.update_accel);
         update_accel_k = new UpdateAccel_k(GPGPU.command_queue_ptr, update_accel_k_ptr)
-            .mem_arg(UpdateAccel_k.Args.armature_accel, GPGPU.Buffer.armature_accel.memory);
+            .ptr_arg(UpdateAccel_k.Args.armature_accel, GPGPU.Buffer.armature_accel.pointer);
 
         long set_bone_channel_table_k_ptr = gpu_crud.kernel_ptr(Kernel.set_bone_channel_table);
         set_bone_channel_table_k = new SetBoneChannelTable_k(GPGPU.command_queue_ptr, set_bone_channel_table_k_ptr)
-            .mem_arg(SetBoneChannelTable_k.Args.bone_channel_tables, GPGPU.Buffer.bone_channel_tables.memory);
+            .ptr_arg(SetBoneChannelTable_k.Args.bone_channel_tables, GPGPU.Buffer.bone_channel_tables.pointer);
 
         // delete methods
 
         long locate_out_of_bounds_k_ptr = scan_deletes.kernel_ptr(Kernel.locate_out_of_bounds);
         locate_out_of_bounds_k = new LocateOutOfBounds_k(GPGPU.command_queue_ptr, locate_out_of_bounds_k_ptr)
-            .mem_arg(LocateOutOfBounds_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.memory)
-            .mem_arg(LocateOutOfBounds_k.Args.hull_flags, GPGPU.Buffer.hull_flags.memory)
-            .mem_arg(LocateOutOfBounds_k.Args.armature_flags, GPGPU.Buffer.armature_flags.memory);
+            .ptr_arg(LocateOutOfBounds_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
+            .ptr_arg(LocateOutOfBounds_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
+            .ptr_arg(LocateOutOfBounds_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer);
 
         long scan_deletes_single_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_single_block_out);
         scan_deletes_single_block_out_k = new ScanDeletesSingleBlockOut_k(GPGPU.command_queue_ptr, scan_deletes_single_block_out_k_ptr)
-            .mem_arg(ScanDeletesSingleBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.memory)
-            .mem_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.memory)
-            .mem_arg(ScanDeletesSingleBlockOut_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.memory)
-            .mem_arg(ScanDeletesSingleBlockOut_k.Args.hull_flags, GPGPU.Buffer.hull_flags.memory);
+            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
+            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
+            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer);
 
         long scan_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_multi_block_out);
         scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(GPGPU.command_queue_ptr, scan_deletes_multi_block_out_k_ptr)
-            .mem_arg(ScanDeletesMultiBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.memory)
-            .mem_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.memory)
-            .mem_arg(ScanDeletesMultiBlockOut_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.memory)
-            .mem_arg(ScanDeletesMultiBlockOut_k.Args.hull_flags, GPGPU.Buffer.hull_flags.memory);
+            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
+            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
+            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer);
 
         long complete_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.complete_deletes_multi_block_out);
         complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(GPGPU.command_queue_ptr, complete_deletes_multi_block_out_k_ptr)
-            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.memory)
-            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.memory)
-            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.memory)
-            .mem_arg(CompleteDeletesMultiBlockOut_k.Args.hull_flags, GPGPU.Buffer.hull_flags.memory);
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer);
 
         long compact_armatures_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armatures);
         compact_armatures_k = new CompactArmatures_k(GPGPU.command_queue_ptr, compact_armatures_k_ptr)
-            .mem_arg(CompactArmatures_k.Args.armatures, GPGPU.Buffer.armatures.memory)
-            .mem_arg(CompactArmatures_k.Args.armature_accel, GPGPU.Buffer.armature_accel.memory)
-            .mem_arg(CompactArmatures_k.Args.armature_flags, GPGPU.Buffer.armature_flags.memory)
-            .mem_arg(CompactArmatures_k.Args.armature_animation_indices, GPGPU.Buffer.armature_animation_indices.memory)
-            .mem_arg(CompactArmatures_k.Args.armature_animation_elapsed, GPGPU.Buffer.armature_animation_elapsed.memory)
-            .mem_arg(CompactArmatures_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.memory)
-            .mem_arg(CompactArmatures_k.Args.hulls, GPGPU.Buffer.hulls.memory)
-            .mem_arg(CompactArmatures_k.Args.hull_flags, GPGPU.Buffer.hull_flags.memory)
-            .mem_arg(CompactArmatures_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.points, GPGPU.Buffer.points.memory)
-            .mem_arg(CompactArmatures_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.bone_tables, GPGPU.Buffer.point_bone_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.bone_bind_tables, GPGPU.Buffer.bone_bind_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.bone_index_tables, GPGPU.Buffer.bone_index_tables.memory)
-            .mem_arg(CompactArmatures_k.Args.edges, GPGPU.Buffer.edges.memory)
+            .ptr_arg(CompactArmatures_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
+            .ptr_arg(CompactArmatures_k.Args.armature_accel, GPGPU.Buffer.armature_accel.pointer)
+            .ptr_arg(CompactArmatures_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
+            .ptr_arg(CompactArmatures_k.Args.armature_animation_indices, GPGPU.Buffer.armature_animation_indices.pointer)
+            .ptr_arg(CompactArmatures_k.Args.armature_animation_elapsed, GPGPU.Buffer.armature_animation_elapsed.pointer)
+            .ptr_arg(CompactArmatures_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
+            .ptr_arg(CompactArmatures_k.Args.hulls, GPGPU.Buffer.hulls.pointer)
+            .ptr_arg(CompactArmatures_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
+            .ptr_arg(CompactArmatures_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .ptr_arg(CompactArmatures_k.Args.points, GPGPU.Buffer.points.pointer)
+            .ptr_arg(CompactArmatures_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.pointer)
+            .ptr_arg(CompactArmatures_k.Args.bone_tables, GPGPU.Buffer.point_bone_tables.pointer)
+            .ptr_arg(CompactArmatures_k.Args.bone_bind_tables, GPGPU.Buffer.bone_bind_tables.pointer)
+            .ptr_arg(CompactArmatures_k.Args.bone_index_tables, GPGPU.Buffer.bone_index_tables.pointer)
+            .ptr_arg(CompactArmatures_k.Args.edges, GPGPU.Buffer.edges.pointer)
             .buf_arg(CompactArmatures_k.Args.bone_shift, bone_shift)
             .buf_arg(CompactArmatures_k.Args.point_shift, point_shift)
             .buf_arg(CompactArmatures_k.Args.edge_shift, edge_shift)
@@ -236,39 +236,39 @@ public class GPUCoreMemory
         long compact_hulls_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_hulls);
         compact_hulls_k = new CompactHulls_k(GPGPU.command_queue_ptr, compact_hulls_k_ptr)
             .buf_arg(CompactHulls_k.Args.hull_shift, hull_shift)
-            .mem_arg(CompactHulls_k.Args.hulls, GPGPU.Buffer.hulls.memory)
-            .mem_arg(CompactHulls_k.Args.hull_mesh_ids, GPGPU.Buffer.hull_mesh_ids.memory)
-            .mem_arg(CompactHulls_k.Args.hull_rotations, GPGPU.Buffer.hull_rotation.memory)
-            .mem_arg(CompactHulls_k.Args.hull_flags, GPGPU.Buffer.hull_flags.memory)
-            .mem_arg(CompactHulls_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.memory)
-            .mem_arg(CompactHulls_k.Args.bounds, GPGPU.Buffer.aabb.memory)
-            .mem_arg(CompactHulls_k.Args.bounds_index_data, GPGPU.Buffer.aabb_index.memory)
-            .mem_arg(CompactHulls_k.Args.bounds_bank_data, GPGPU.Buffer.aabb_key_table.memory);
+            .ptr_arg(CompactHulls_k.Args.hulls, GPGPU.Buffer.hulls.pointer)
+            .ptr_arg(CompactHulls_k.Args.hull_mesh_ids, GPGPU.Buffer.hull_mesh_ids.pointer)
+            .ptr_arg(CompactHulls_k.Args.hull_rotations, GPGPU.Buffer.hull_rotation.pointer)
+            .ptr_arg(CompactHulls_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
+            .ptr_arg(CompactHulls_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .ptr_arg(CompactHulls_k.Args.bounds, GPGPU.Buffer.aabb.pointer)
+            .ptr_arg(CompactHulls_k.Args.bounds_index_data, GPGPU.Buffer.aabb_index.pointer)
+            .ptr_arg(CompactHulls_k.Args.bounds_bank_data, GPGPU.Buffer.aabb_key_table.pointer);
 
         long compact_edges_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_edges);
         compact_edges_k = new CompactEdges_k(GPGPU.command_queue_ptr, compact_edges_k_ptr)
             .buf_arg(CompactEdges_k.Args.edge_shift, edge_shift)
-            .mem_arg(CompactEdges_k.Args.edges, GPGPU.Buffer.edges.memory);
+            .ptr_arg(CompactEdges_k.Args.edges, GPGPU.Buffer.edges.pointer);
 
         long compact_points_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_points);
         compact_points_k = new CompactPoints_k(GPGPU.command_queue_ptr, compact_points_k_ptr)
             .buf_arg(CompactPoints_k.Args.point_shift, point_shift)
-            .mem_arg(CompactPoints_k.Args.points, GPGPU.Buffer.points.memory)
-            .mem_arg(CompactPoints_k.Args.anti_gravity, GPGPU.Buffer.point_anti_gravity.memory)
-            .mem_arg(CompactPoints_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.memory)
-            .mem_arg(CompactPoints_k.Args.bone_tables, GPGPU.Buffer.point_bone_tables.memory);
+            .ptr_arg(CompactPoints_k.Args.points, GPGPU.Buffer.points.pointer)
+            .ptr_arg(CompactPoints_k.Args.anti_gravity, GPGPU.Buffer.point_anti_gravity.pointer)
+            .ptr_arg(CompactPoints_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.pointer)
+            .ptr_arg(CompactPoints_k.Args.bone_tables, GPGPU.Buffer.point_bone_tables.pointer);
 
         long compact_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_bones);
         compact_bones_k = new CompactBones_k(GPGPU.command_queue_ptr, compact_bones_k_ptr)
             .buf_arg(CompactBones_k.Args.bone_shift, bone_shift)
-            .mem_arg(CompactBones_k.Args.bone_instances, GPGPU.Buffer.bone_instances.memory)
-            .mem_arg(CompactBones_k.Args.bone_index_tables, GPGPU.Buffer.bone_index_tables.memory);
+            .ptr_arg(CompactBones_k.Args.bone_instances, GPGPU.Buffer.bone_instances.pointer)
+            .ptr_arg(CompactBones_k.Args.bone_index_tables, GPGPU.Buffer.bone_index_tables.pointer);
 
         long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armature_bones);
         compact_armature_bones_k = new CompactArmatureBones_k(GPGPU.command_queue_ptr, compact_armature_bones_k_ptr)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_shift, bone_bind_shift)
-            .mem_arg(CompactArmatureBones_k.Args.armature_bones, GPGPU.Buffer.armatures_bones.memory)
-            .mem_arg(CompactArmatureBones_k.Args.armature_bone_tables, GPGPU.Buffer.bone_bind_tables.memory);
+            .ptr_arg(CompactArmatureBones_k.Args.armature_bones, GPGPU.Buffer.armatures_bones.pointer)
+            .ptr_arg(CompactArmatureBones_k.Args.armature_bone_tables, GPGPU.Buffer.bone_bind_tables.pointer);
     }
 
     // index methods

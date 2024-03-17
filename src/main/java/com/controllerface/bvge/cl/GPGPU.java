@@ -515,7 +515,7 @@ public class GPGPU
         
         ;
 
-        public GPUMemory memory;
+        public long pointer;
         final int size;
         int length;
 
@@ -527,14 +527,13 @@ public class GPGPU
         public void init(int buffer_length)
         {
             this.length = buffer_length * size;
-            var mem = cl_new_buffer(this.length);
-            this.memory = new GPUMemory(mem);
+            this.pointer = cl_new_buffer(this.length);
             clear();
         }
 
         public void clear()
         {
-            cl_zero_buffer(this.memory.pointer(), this.length);
+            cl_zero_buffer(this.pointer, this.length);
         }
     }
 
@@ -797,11 +796,11 @@ public class GPGPU
 
         long root_hull_filter_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_filter);
         root_hull_filter_k = new RootHullFilter_k(command_queue_ptr, root_hull_filter_ptr)
-            .mem_arg(RootHullFilter_k.Args.armature_flags, Buffer.armature_flags.memory);
+            .ptr_arg(RootHullFilter_k.Args.armature_flags, Buffer.armature_flags.pointer);
 
         long root_hull_count_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_count);
         root_hull_count_k = new RootHullCount_k(command_queue_ptr, root_hull_count_ptr)
-            .mem_arg(RootHullCount_k.Args.armature_flags, Buffer.armature_flags.memory);
+            .ptr_arg(RootHullCount_k.Args.armature_flags, Buffer.armature_flags.pointer);
     }
 
     //#endregion
@@ -1287,7 +1286,7 @@ public class GPGPU
 
         for (Buffer buffer : Buffer.values())
         {
-            if (buffer.memory != null) buffer.memory.release();
+            if (buffer.pointer != 0) cl_release_buffer(buffer.pointer);
         }
 
         for (Program program : Program.values())
