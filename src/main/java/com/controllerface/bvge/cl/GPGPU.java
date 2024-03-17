@@ -512,21 +512,7 @@ public class GPGPU
          * w: end bone anim index
          */
         armature_hull_table(CLSize.cl_int4),
-
-        /*
-        Buffer Compaction
-         */
-
-        /**
-         * During the armature deletion process, these buffers are written to, and store the number of
-         * positions that the corresponding values must shift left within their own buffers when the
-         * buffer compaction step is reached. Each index is aligned with the corresponding data type
-         * that will be shifted. I.e. every bone in the bone buffer has a corresponding entry in the
-         * bone shift buffer. Points, edges, and hulls work the same way.
-         */
-        bone_shift(CLSize.cl_int), // todo: isolate to core memory class
-        bone_bind_shift(CLSize.cl_int), // todo: isolate to core memory class
-
+        
         ;
 
         public GPUMemory memory;
@@ -663,8 +649,6 @@ public class GPGPU
         Buffer.bone_channel_tables.init(max_points);
         Buffer.animation_timings.init(max_points);
         Buffer.animation_timing_indices.init(max_points);
-        Buffer.bone_shift.init(max_points);
-        Buffer.bone_bind_shift.init(max_hulls);
 
         core_memory = new GPUCoreMemory();
 
@@ -709,9 +693,7 @@ public class GPGPU
             + Buffer.bone_scl_channel_tables.length
             + Buffer.bone_channel_tables.length
             + Buffer.animation_timings.length
-            + Buffer.animation_timing_indices.length
-            + Buffer.bone_shift.length
-            + Buffer.bone_bind_shift.length;
+            + Buffer.animation_timing_indices.length;
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
         System.out.println("points               : " + Buffer.points.length);
@@ -756,8 +738,6 @@ public class GPGPU
         System.out.println("bone channels        : " + Buffer.bone_channel_tables.length);
         System.out.println("animation timings    : " + Buffer.animation_timings.length);
         System.out.println("animation indices    : " + Buffer.animation_timing_indices.length);
-        System.out.println("bone shift           : " + Buffer.bone_shift.length);
-        System.out.println("bone bind shift      : " + Buffer.bone_bind_shift.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)       : " + total);
         System.out.println("                  KB : " + ((float) total / 1024f));

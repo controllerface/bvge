@@ -63,6 +63,8 @@ public class GPUCoreMemory
     private final ResizableBuffer edge_shift;
     private final ResizableBuffer point_shift;
     private final ResizableBuffer bone_shift;
+    private final ResizableBuffer bone_bind_shift;
+
 
 
 
@@ -72,6 +74,7 @@ public class GPUCoreMemory
         edge_shift = new TransientBuffer(CLSize.cl_int);
         point_shift = new TransientBuffer(CLSize.cl_int);
         bone_shift = new TransientBuffer(CLSize.cl_int);
+        bone_bind_shift = new TransientBuffer(CLSize.cl_int);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -228,7 +231,7 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.point_shift, point_shift)
             .buf_arg(CompactArmatures_k.Args.edge_shift, edge_shift)
             .buf_arg(CompactArmatures_k.Args.hull_shift, hull_shift)
-            .mem_arg(CompactArmatures_k.Args.bone_bind_shift, GPGPU.Buffer.bone_bind_shift.memory);
+            .buf_arg(CompactArmatures_k.Args.bone_bind_shift, bone_bind_shift);
 
         long compact_hulls_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_hulls);
         compact_hulls_k = new CompactHulls_k(GPGPU.command_queue_ptr, compact_hulls_k_ptr)
@@ -263,7 +266,7 @@ public class GPUCoreMemory
 
         long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armature_bones);
         compact_armature_bones_k = new CompactArmatureBones_k(GPGPU.command_queue_ptr, compact_armature_bones_k_ptr)
-            .mem_arg(CompactArmatureBones_k.Args.armature_bone_shift, GPGPU.Buffer.bone_bind_shift.memory)
+            .buf_arg(CompactArmatureBones_k.Args.armature_bone_shift, bone_bind_shift)
             .mem_arg(CompactArmatureBones_k.Args.armature_bones, GPGPU.Buffer.armatures_bones.memory)
             .mem_arg(CompactArmatureBones_k.Args.armature_bone_tables, GPGPU.Buffer.bone_bind_tables.memory);
     }
@@ -545,14 +548,14 @@ public class GPUCoreMemory
         edge_shift.ensure_capacity(edge_index);
         point_shift.ensure_capacity(point_index);
         bone_shift.ensure_capacity(bone_index);
+        bone_bind_shift.ensure_capacity(armature_bone_index);
 
         // shift buffers are cleared before compacting to clean out any data from the last tick
         hull_shift.clear();
         edge_shift.clear();
         point_shift.clear();
         bone_shift.clear();
-
-        GPGPU.Buffer.bone_bind_shift.clear();
+        bone_bind_shift.clear();
 
         // as armatures are compacted, the shift buffers for the other components are updated
         compact_armatures_k

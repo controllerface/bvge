@@ -880,7 +880,7 @@ public class PhysicsSimulation extends GameSystem
                 {
                     if (time_accumulator > Float.MIN_VALUE)
                     {
-                        System.err.printf("time slip: %f\n", time_accumulator);
+                        //System.err.printf("time slip: %f\n", time_accumulator);
                     }
                     this.time_accumulator = 0;
                 }
