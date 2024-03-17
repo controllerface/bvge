@@ -65,9 +65,20 @@ public class GPUCoreMemory
     private final ResizableBuffer bone_bind_shift;
     private final ResizableBuffer delete_buffer_1;
     private final ResizableBuffer delete_buffer_2;
+    private final ResizableBuffer delete_partial_buffer_1;
+    private final ResizableBuffer delete_partial_buffer_2;
+
+    private final long delete_counter_ptr;
+    private final long position_buffer_ptr;
+    private final long delete_sizes_ptr;
+
 
     public GPUCoreMemory()
     {
+        delete_counter_ptr = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
+        position_buffer_ptr = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
+        delete_sizes_ptr = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
+
         hull_shift = new TransientBuffer(CLSize.cl_int);
         edge_shift = new TransientBuffer(CLSize.cl_int);
         point_shift = new TransientBuffer(CLSize.cl_int);
@@ -75,6 +86,8 @@ public class GPUCoreMemory
         bone_bind_shift = new TransientBuffer(CLSize.cl_int);
         delete_buffer_1 = new TransientBuffer(CLSize.cl_int2);
         delete_buffer_2 = new TransientBuffer(CLSize.cl_int4);
+        delete_partial_buffer_1 = new TransientBuffer(CLSize.cl_int2);
+        delete_partial_buffer_2 = new TransientBuffer(CLSize.cl_int4);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -191,6 +204,7 @@ public class GPUCoreMemory
 
         long scan_deletes_single_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_single_block_out);
         scan_deletes_single_block_out_k = new ScanDeletesSingleBlockOut_k(GPGPU.command_queue_ptr, scan_deletes_single_block_out_k_ptr)
+            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, delete_sizes_ptr)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
@@ -198,6 +212,8 @@ public class GPUCoreMemory
 
         long scan_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_multi_block_out);
         scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(GPGPU.command_queue_ptr, scan_deletes_multi_block_out_k_ptr)
+            .buf_arg(ScanDeletesMultiBlockOut_k.Args.part1, delete_partial_buffer_1)
+            .buf_arg(ScanDeletesMultiBlockOut_k.Args.part2, delete_partial_buffer_2)
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
@@ -205,6 +221,9 @@ public class GPUCoreMemory
 
         long complete_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.complete_deletes_multi_block_out);
         complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(GPGPU.command_queue_ptr, complete_deletes_multi_block_out_k_ptr)
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.sz, delete_sizes_ptr)
+            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part1, delete_partial_buffer_1)
+            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part2, delete_partial_buffer_2)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
@@ -502,29 +521,23 @@ public class GPUCoreMemory
 
     public float[] read_position(int armature_index)
     {
-        var result_data = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
-        GPGPU.cl_zero_buffer(result_data, CLSize.cl_float2);
+        GPGPU.cl_zero_buffer(position_buffer_ptr, CLSize.cl_float2);
 
         read_position_k
-            .ptr_arg(ReadPosition_k.Args.output, result_data)
+            .ptr_arg(ReadPosition_k.Args.output, position_buffer_ptr)
             .set_arg(ReadPosition_k.Args.target, armature_index)
             .call(GPGPU.global_single_size);
 
-        float[] result = GPGPU.cl_read_pinned_float_buffer(result_data, CLSize.cl_float2, 2);
-        GPGPU.cl_release_buffer(result_data);
-        return result;
+        return GPGPU.cl_read_pinned_float_buffer(position_buffer_ptr, CLSize.cl_float2, 2);
     }
 
     public void delete_and_compact()
     {
-        int[] counter = new int[]{ 0 };
-        var counter_ptr = GPGPU.cl_new_int_arg_buffer(counter);
+        GPGPU.cl_zero_buffer(delete_counter_ptr, CLSize.cl_int);
 
         locate_out_of_bounds_k
-            .ptr_arg(LocateOutOfBounds_k.Args.counter, counter_ptr)
+            .ptr_arg(LocateOutOfBounds_k.Args.counter, delete_counter_ptr)
             .call(arg_long(armature_index));
-
-        GPGPU.cl_release_buffer(counter_ptr);
 
         delete_buffer_1.ensure_capacity(armature_index);
         delete_buffer_2.ensure_capacity(armature_index);
@@ -542,14 +555,12 @@ public class GPUCoreMemory
         bone_shift.ensure_capacity(bone_index);
         bone_bind_shift.ensure_capacity(armature_bone_index);
 
-        // shift buffers are cleared before compacting to clean out any data from the last tick
         hull_shift.clear();
         edge_shift.clear();
         point_shift.clear();
         bone_shift.clear();
         bone_bind_shift.clear();
 
-        // as armatures are compacted, the shift buffers for the other components are updated
         compact_armatures_k
             .ptr_arg(CompactArmatures_k.Args.buffer_in_1, delete_buffer_1.pointer())
             .ptr_arg(CompactArmatures_k.Args.buffer_in_2, delete_buffer_2.pointer());
@@ -610,22 +621,17 @@ public class GPUCoreMemory
         long local_buffer_size = CLSize.cl_int2 * GPGPU.max_scan_block_size;
         long local_buffer_size2 = CLSize.cl_int4 * GPGPU.max_scan_block_size;
 
-        var size_data = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
-        GPGPU.cl_zero_buffer(size_data, CLSize.cl_int * 6);
+        GPGPU.cl_zero_buffer(delete_sizes_ptr, CLSize.cl_int * 6);
 
         scan_deletes_single_block_out_k
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output2, o2_data_ptr)
-            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, size_data)
             .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer, local_buffer_size)
             .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer2, local_buffer_size2)
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        int[] sz = GPGPU.cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
-        GPGPU.cl_release_buffer(size_data);
-
-        return sz;
+        return GPGPU.cl_read_pinned_int_buffer(delete_sizes_ptr, CLSize.cl_int * 6, 6);
     }
 
     private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
@@ -637,47 +643,32 @@ public class GPUCoreMemory
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
 
-        long part_buf_size = ((long) CLSize.cl_int2 * ((long) part_size));
-        long part_buf_size2 = ((long) CLSize.cl_int4 * ((long) part_size));
-
-        var p_data = GPGPU.cl_new_buffer(part_buf_size);
-        var p_data2 = GPGPU.cl_new_buffer(part_buf_size2);
+        delete_partial_buffer_1.ensure_capacity(part_size);
+        delete_partial_buffer_2.ensure_capacity(part_size);
 
         scan_deletes_multi_block_out_k
-            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
+            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output1, o1_data_ptr)
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output2, o2_data_ptr)
-            .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer1, local_buffer_size)
             .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
-            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.part, p_data)
-            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.part2, p_data2)
             .set_arg(ScanDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPGPU.local_work_default);
 
         // note the partial buffers are scanned and updated in-place
-        GPGPU.scan_int2(p_data, part_size);
-        GPGPU.scan_int4(p_data2, part_size);
+        GPGPU.scan_int2(delete_partial_buffer_1.pointer(), part_size);
+        GPGPU.scan_int4(delete_partial_buffer_2.pointer(), part_size);
 
-        var size_data = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
-        GPGPU.cl_zero_buffer(size_data, CLSize.cl_int * 6);
+        GPGPU.cl_zero_buffer(delete_sizes_ptr, CLSize.cl_int * 6);
 
         complete_deletes_multi_block_out_k
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output, o1_data_ptr)
+            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output1, o1_data_ptr)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output2, o2_data_ptr)
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.sz, size_data)
-            .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer, local_buffer_size)
+            .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer1, local_buffer_size)
             .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.part, p_data)
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.part2, p_data2)
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPGPU.local_work_default);
 
-        GPGPU.cl_release_buffer(p_data);
-        GPGPU.cl_release_buffer(p_data2);
-
-        int[] sz = GPGPU.cl_read_pinned_int_buffer(size_data, CLSize.cl_int * 6, 6);
-        GPGPU.cl_release_buffer(size_data);
-
-        return sz;
+        return GPGPU.cl_read_pinned_int_buffer(delete_sizes_ptr, CLSize.cl_int * 6, 6);
     }
 
     private void compact_buffers(int[] shift_counts)
@@ -716,5 +707,10 @@ public class GPUCoreMemory
         bone_bind_shift.release();
         delete_buffer_1.release();
         delete_buffer_2.release();
+        delete_partial_buffer_1.release();
+        delete_partial_buffer_2.release();
+        GPGPU.cl_release_buffer(delete_counter_ptr);
+        GPGPU.cl_release_buffer(position_buffer_ptr);
+        GPGPU.cl_release_buffer(delete_sizes_ptr);
     }
 }
