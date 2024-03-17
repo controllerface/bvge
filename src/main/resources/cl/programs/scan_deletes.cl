@@ -87,10 +87,10 @@ __kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
                                             __global int4 *hull_tables,
                                             __global int4 *element_tables,
                                             __global int4 *hull_flags,
-                                            __global int2 *output,
+                                            __global int2 *output1,
                                             __global int4 *output2,
                                             __global int *sz,
-                                            __local int2 *buffer,
+                                            __local int2 *buffer1,
                                             __local int4 *buffer2, 
                                             int n) 
 {
@@ -106,8 +106,8 @@ __kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
 
     if (a_index < n)
     {
-         buffer[a_index].x = a_counts.edge_count;
-         buffer[a_index].y = a_counts.bone_bind_count;
+         buffer1[a_index].x = a_counts.edge_count;
+         buffer1[a_index].y = a_counts.bone_bind_count;
          buffer2[a_index].x = a_counts.bone_count;
          buffer2[a_index].y = a_counts.point_count;
          buffer2[a_index].z = a_counts.hull_count;
@@ -115,8 +115,8 @@ __kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
     }
     else 
     {
-        buffer[a_index].x = 0;
-        buffer[a_index].y = 0;
+        buffer1[a_index].x = 0;
+        buffer1[a_index].y = 0;
         buffer2[a_index].x = 0;
         buffer2[a_index].y = 0;
         buffer2[a_index].z = 0;
@@ -125,8 +125,8 @@ __kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
 
     if (b_index < n)
     {
-         buffer[b_index].x = b_counts.edge_count;
-         buffer[b_index].y = b_counts.bone_bind_count;
+         buffer1[b_index].x = b_counts.edge_count;
+         buffer1[b_index].y = b_counts.bone_bind_count;
          buffer2[b_index].x = b_counts.bone_count;
          buffer2[b_index].y = b_counts.point_count;
          buffer2[b_index].z = b_counts.hull_count;
@@ -134,55 +134,55 @@ __kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
     }
     else 
     {
-        buffer[b_index].x = 0;
-        buffer[b_index].y = 0;
+        buffer1[b_index].x = 0;
+        buffer1[b_index].y = 0;
         buffer2[b_index].x = 0;
         buffer2[b_index].y = 0;
         buffer2[b_index].z = 0;
         buffer2[b_index].w = 0;
     }
 
-    upsweep_ex(buffer, buffer2, m);
+    upsweep_ex(buffer1, buffer2, m);
 
     if (b_index == (m - 1)) 
     {
-        buffer[b_index].x = 0;
-        buffer[b_index].y = 0;
+        buffer1[b_index].x = 0;
+        buffer1[b_index].y = 0;
         buffer2[b_index].x = 0;
         buffer2[b_index].y = 0;
         buffer2[b_index].z = 0;
         buffer2[b_index].w = 0;
     }
 
-    downsweep_ex(buffer, buffer2, m);
+    downsweep_ex(buffer1, buffer2, m);
 
     if (a_index < n) 
     {
-        output[a_index] = buffer[a_index];
+        output1[a_index] = buffer1[a_index];
         output2[a_index] = buffer2[a_index];
         if (a_index == n - 1)
         {
-            sz[0] = (output[a_index].x + a_counts.edge_count);
+            sz[0] = (output1[a_index].x + a_counts.edge_count);
             sz[1] = (output2[a_index].x + a_counts.bone_count);
             sz[2] = (output2[a_index].y + a_counts.point_count);
             sz[3] = (output2[a_index].z + a_counts.hull_count);
             sz[4] = (output2[a_index].w + a_counts.armature_count);
-            sz[5] = (output[a_index].y + a_counts.bone_bind_count);
+            sz[5] = (output1[a_index].y + a_counts.bone_bind_count);
         }
     }
 
     if (b_index < n) 
     {
-        output[b_index] = buffer[b_index];
+        output1[b_index] = buffer1[b_index];
         output2[b_index] = buffer2[b_index];
         if (b_index == n - 1)
         {
-            sz[0] = (output[b_index].x + b_counts.edge_count);
+            sz[0] = (output1[b_index].x + b_counts.edge_count);
             sz[1] = (output2[b_index].x + b_counts.bone_count);
             sz[2] = (output2[b_index].y + b_counts.point_count);
             sz[3] = (output2[b_index].z + b_counts.hull_count);
             sz[4] = (output2[b_index].w + b_counts.armature_count);
-            sz[5] = (output[b_index].y + b_counts.bone_bind_count);
+            sz[5] = (output1[b_index].y + b_counts.bone_bind_count);
         }
     }
 }
@@ -191,11 +191,11 @@ __kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
                                            __global int4 *hull_tables,
                                            __global int4 *element_tables,
                                            __global int4 *hull_flags,
-                                           __global int2 *output,
+                                           __global int2 *output1,
                                            __global int4 *output2,
-                                           __local int2 *buffer, 
+                                           __local int2 *buffer1, 
                                            __local int4 *buffer2, 
-                                           __global int2 *part, 
+                                           __global int2 *part1, 
                                            __global int4 *part2, 
                                            int n)
 {
@@ -218,8 +218,8 @@ __kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
 
     if (a_index < n)
     {
-         buffer[local_a_index].x = a_counts.edge_count;
-         buffer[local_a_index].y = a_counts.bone_bind_count;
+         buffer1[local_a_index].x = a_counts.edge_count;
+         buffer1[local_a_index].y = a_counts.bone_bind_count;
          buffer2[local_a_index].x = a_counts.bone_count;
          buffer2[local_a_index].y = a_counts.point_count;
          buffer2[local_a_index].z = a_counts.hull_count;
@@ -227,8 +227,8 @@ __kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
     }
     else 
     {
-        buffer[local_a_index].x = 0;
-        buffer[local_a_index].y = 0;
+        buffer1[local_a_index].x = 0;
+        buffer1[local_a_index].y = 0;
         buffer2[local_a_index].x = 0;
         buffer2[local_a_index].y = 0;
         buffer2[local_a_index].z = 0;
@@ -237,8 +237,8 @@ __kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
 
     if (b_index < n)
     {
-         buffer[local_b_index].x = b_counts.edge_count;
-         buffer[local_b_index].y = b_counts.bone_bind_count;
+         buffer1[local_b_index].x = b_counts.edge_count;
+         buffer1[local_b_index].y = b_counts.bone_bind_count;
          buffer2[local_b_index].x = b_counts.bone_count;
          buffer2[local_b_index].y = b_counts.point_count;
          buffer2[local_b_index].z = b_counts.hull_count;
@@ -246,34 +246,34 @@ __kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
     }
     else 
     {
-        buffer[local_b_index].x = 0;
-        buffer[local_b_index].y = 0;
+        buffer1[local_b_index].x = 0;
+        buffer1[local_b_index].y = 0;
         buffer2[local_b_index].x = 0;
         buffer2[local_b_index].y = 0;
         buffer2[local_b_index].z = 0;
         buffer2[local_b_index].w = 0;
     }
 
-    upsweep_ex(buffer, buffer2, m);
+    upsweep_ex(buffer1, buffer2, m);
 
     if (local_id == (wx - 1)) 
     {
-        part[grpid] = buffer[local_b_index];
+        part1[grpid] = buffer1[local_b_index];
         part2[grpid] = buffer2[local_b_index];
-        buffer[local_b_index] = (int2)(0, 0);
+        buffer1[local_b_index] = (int2)(0, 0);
         buffer2[local_b_index] = (int4)(0, 0, 0, 0);
     }
 
-    downsweep_ex(buffer, buffer2, m);
+    downsweep_ex(buffer1, buffer2, m);
 
     if (a_index < n) 
     {
-        output[a_index] = buffer[local_a_index];
+        output1[a_index] = buffer1[local_a_index];
         output2[a_index] = buffer2[local_a_index];
     }
     if (b_index < n) 
     {
-        output[b_index] = buffer[local_b_index];
+        output1[b_index] = buffer1[local_b_index];
         output2[b_index] = buffer2[local_b_index];
     }
 }
@@ -282,12 +282,12 @@ __kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
                                                __global int4 *hull_tables,
                                                __global int4 *element_tables,
                                                __global int4 *hull_flags,
-                                               __global int2 *output,
+                                               __global int2 *output1,
                                                __global int4 *output2,
                                                __global int *sz,
-                                               __local int2 *buffer, 
+                                               __local int2 *buffer1, 
                                                __local int4 *buffer2,
-                                               __global int2 *part, 
+                                               __global int2 *part1, 
                                                __global int4 *part2,
                                                int n)
 {
@@ -302,66 +302,66 @@ __kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
 
     if (a_index < n)
     {
-        buffer[local_a_index] = output[a_index];
+        buffer1[local_a_index] = output1[a_index];
         buffer2[local_a_index] = output2[a_index];
     }
     else
     {
-        buffer[local_a_index] = (int2)(0, 0);
+        buffer1[local_a_index] = (int2)(0, 0);
         buffer2[local_a_index] = (int4)(0, 0, 0, 0);
     }
 
     if (b_index < n)
     {
-        buffer[local_b_index] = output[b_index];
+        buffer1[local_b_index] = output1[b_index];
         buffer2[local_b_index] = output2[b_index];
     }
     else
     {
-        buffer[local_b_index] = (int2)(0, 0);
+        buffer1[local_b_index] = (int2)(0, 0);
         buffer2[local_b_index] = (int4)(0, 0, 0, 0);
     }
 
 
-    buffer[local_a_index] += part[grpid];
-    buffer[local_b_index] += part[grpid];
+    buffer1[local_a_index] += part1[grpid];
+    buffer1[local_b_index] += part1[grpid];
     buffer2[local_a_index] += part2[grpid];
     buffer2[local_b_index] += part2[grpid];
 
 
     if (a_index < n) 
     {
-        output[a_index] = buffer[local_a_index];
+        output1[a_index] = buffer1[local_a_index];
         output2[a_index] = buffer2[local_a_index];
         if (a_index == n - 1)
         {
             DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables, hull_flags);
-            sz[0] = (output[a_index].x + a_counts.edge_count);
+            sz[0] = (output1[a_index].x + a_counts.edge_count);
             sz[1] = (output2[a_index].x + a_counts.bone_count);
             sz[2] = (output2[a_index].y + a_counts.point_count);
             sz[3] = (output2[a_index].z + a_counts.hull_count);
             sz[4] = (output2[a_index].w + a_counts.armature_count);
-            sz[5] = (output[a_index].y + a_counts.bone_bind_count);
+            sz[5] = (output1[a_index].y + a_counts.bone_bind_count);
         }
     }
     if (b_index < n) 
     {
-        output[b_index] = buffer[local_b_index];
+        output1[b_index] = buffer1[local_b_index];
         output2[b_index] = buffer2[local_b_index];
         if (b_index == n - 1)
         {
             DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables, hull_flags);
-            sz[0] = (output[b_index].x + b_counts.edge_count);
+            sz[0] = (output1[b_index].x + b_counts.edge_count);
             sz[1] = (output2[b_index].x + b_counts.bone_count);
             sz[2] = (output2[b_index].y + b_counts.point_count);
             sz[3] = (output2[b_index].z + b_counts.hull_count);
             sz[4] = (output2[b_index].w + b_counts.armature_count);
-            sz[5] = (output[b_index].y + b_counts.bone_bind_count);
+            sz[5] = (output1[b_index].y + b_counts.bone_bind_count);
         }
     }
 }
 
-__kernel void compact_armatures(__global int2 *buffer_in,
+__kernel void compact_armatures(__global int2 *buffer_in_1,
                                 __global int4 *buffer_in_2,
                                 __global float4 *armatures,
                                 __global float2 *armature_accel,
@@ -386,7 +386,7 @@ __kernel void compact_armatures(__global int2 *buffer_in,
 {
     // get drop counts for this armature
     int gid = get_global_id(0);
-    int2 buffer_1 = buffer_in[gid];
+    int2 buffer_1 = buffer_in_1[gid];
     int4 buffer_2 = buffer_in_2[gid];
     DropCounts drop;
     drop.edge_count = buffer_1.x;

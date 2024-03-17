@@ -866,14 +866,14 @@ public class GPGPU
             null);
 
         assert out != null;
-        int[] xa = new int[count];
-        var ib = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+        int[] result = new int[count];
+        var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
         for (int i = 0; i < count; i++)
         {
-            xa[i] = ib.get(i);
+            result[i] = int_buffer.get(i);
         }
         clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
-        return xa;
+        return result;
     }
 
     public static float[] cl_read_pinned_float_buffer(long pinned_ptr, long size, int count)
@@ -890,14 +890,14 @@ public class GPGPU
             null);
 
         assert out != null;
-        float[] xa = new float[count];
-        var ib = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+        float[] result = new float[count];
+        var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
         for (int i = 0; i < count; i++)
         {
-            xa[i] = ib.get(i);
+            result[i] = float_buffer.get(i);
         }
         clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
-        return xa;
+        return result;
     }
 
     public static long cl_new_pinned_int()

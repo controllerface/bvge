@@ -1,6 +1,5 @@
 package com.controllerface.bvge.cl;
 
-import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.ScanDeletes;
@@ -64,9 +63,8 @@ public class GPUCoreMemory
     private final ResizableBuffer point_shift;
     private final ResizableBuffer bone_shift;
     private final ResizableBuffer bone_bind_shift;
-
-
-
+    private final ResizableBuffer delete_buffer_1;
+    private final ResizableBuffer delete_buffer_2;
 
     public GPUCoreMemory()
     {
@@ -75,6 +73,8 @@ public class GPUCoreMemory
         point_shift = new TransientBuffer(CLSize.cl_int);
         bone_shift = new TransientBuffer(CLSize.cl_int);
         bone_bind_shift = new TransientBuffer(CLSize.cl_int);
+        delete_buffer_1 = new TransientBuffer(CLSize.cl_int2);
+        delete_buffer_2 = new TransientBuffer(CLSize.cl_int4);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -526,21 +526,13 @@ public class GPUCoreMemory
 
         GPGPU.cl_release_buffer(counter_ptr);
 
-        long output_buf_size = (long) CLSize.cl_int2 * armature_index;
-        long output_buf_size2 = (long) CLSize.cl_int4 * armature_index;
+        delete_buffer_1.ensure_capacity(armature_index);
+        delete_buffer_2.ensure_capacity(armature_index);
 
-        var output_buf_data = GPGPU.cl_new_buffer(output_buf_size);
-        var output_buf_data2 = GPGPU.cl_new_buffer(output_buf_size2);
-
-        var del_buffer_1 = new GPUMemory(output_buf_data);
-        var del_buffer_2 = new GPUMemory(output_buf_data2);
-
-        int[] shift_counts = scan_deletes(del_buffer_1.pointer(), del_buffer_2.pointer(), armature_index);
+        int[] shift_counts = scan_deletes(delete_buffer_1.pointer(), delete_buffer_2.pointer(), armature_index);
 
         if (shift_counts[4] == 0)
         {
-            del_buffer_1.release();
-            del_buffer_2.release();
             return;
         }
 
@@ -559,8 +551,8 @@ public class GPUCoreMemory
 
         // as armatures are compacted, the shift buffers for the other components are updated
         compact_armatures_k
-            .ptr_arg(CompactArmatures_k.Args.buffer_in, del_buffer_1.pointer())
-            .ptr_arg(CompactArmatures_k.Args.buffer_in_2, del_buffer_2.pointer());
+            .ptr_arg(CompactArmatures_k.Args.buffer_in_1, delete_buffer_1.pointer())
+            .ptr_arg(CompactArmatures_k.Args.buffer_in_2, delete_buffer_2.pointer());
 
         linearize_kernel(compact_armatures_k, armature_index);
         linearize_kernel(compact_bones_k, bone_index);
@@ -570,9 +562,6 @@ public class GPUCoreMemory
         linearize_kernel(compact_armature_bones_k, armature_bone_index);
 
         compact_buffers(shift_counts);
-
-        del_buffer_1.release();
-        del_buffer_2.release();
     }
 
     /**
@@ -720,5 +709,12 @@ public class GPUCoreMemory
     {
         gpu_crud.destroy();
         scan_deletes.destroy();
+        hull_shift.release();
+        edge_shift.release();
+        point_shift.release();
+        bone_shift.release();
+        bone_bind_shift.release();
+        delete_buffer_1.release();
+        delete_buffer_2.release();
     }
 }
