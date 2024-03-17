@@ -29,7 +29,7 @@ public class PhysicsSimulation extends GameSystem
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
     //  or make damping interact with the gravity vector in some way.
-    private static final float MOTION_DAMPING = .990f;
+    private static final float MOTION_DAMPING = .995f;
 
     private final UniformGrid uniform_grid;
 
