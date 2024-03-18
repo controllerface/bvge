@@ -926,7 +926,12 @@ public class GPGPU
 
     public static void cl_transfer_buffer(long src_ptr, long dst_ptr, long size)
     {
-        clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, null);
+        int r = clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, null);
+        if (r != CL_SUCCESS)
+        {
+            System.out.println("Error on buffer copy: " + r);
+            System.exit(1);
+        }
     }
 
     public static int work_group_count(int n)

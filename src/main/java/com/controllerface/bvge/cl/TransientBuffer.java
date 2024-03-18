@@ -7,10 +7,14 @@ public class TransientBuffer extends ResizableBuffer
         super(item_size);
     }
 
-    @Override
-    long resize(long previous_capacity)
+    public void ensure_total_capacity(long total_item_capacity)
     {
+        var required_capacity = item_size * total_item_capacity;
+        if (required_capacity <= this.byte_capacity) return;
+
+        this.byte_capacity = required_capacity;
         release();
-        return GPGPU.cl_new_buffer(this.byte_capacity);
+        this.pointer = GPGPU.cl_new_buffer(this.byte_capacity);
+        update_registered_kernels();
     }
 }

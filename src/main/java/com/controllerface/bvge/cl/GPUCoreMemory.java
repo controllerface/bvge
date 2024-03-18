@@ -68,6 +68,9 @@ public class GPUCoreMemory
     private final ResizableBuffer delete_partial_buffer_1;
     private final ResizableBuffer delete_partial_buffer_2;
 
+    //private final ResizableBuffer edge_buffer;
+
+
     private final long delete_counter_ptr;
     private final long position_buffer_ptr;
     private final long delete_sizes_ptr;
@@ -87,6 +90,9 @@ public class GPUCoreMemory
         delete_buffer_2 = new TransientBuffer(CLSize.cl_int4);
         delete_partial_buffer_1 = new TransientBuffer(CLSize.cl_int2);
         delete_partial_buffer_2 = new TransientBuffer(CLSize.cl_int4);
+
+        //edge_buffer = new PersistentBuffer(CLSize.cl_float4, 64_418);//1_000_000L);
+        //edge_buffer = new PersistentBuffer(CLSize.cl_float4);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -288,6 +294,14 @@ public class GPUCoreMemory
             .ptr_arg(CompactArmatureBones_k.Args.armature_bones, GPGPU.Buffer.armature_bones.pointer)
             .ptr_arg(CompactArmatureBones_k.Args.armature_bone_tables, GPGPU.Buffer.armature_bone_tables.pointer);
     }
+
+//    public ResizableBuffer get_buffer(BufferType bufferType)
+//    {
+//        return switch (bufferType)
+//        {
+//            case EDGE -> edge_buffer;
+//        };
+//    }
 
     // index methods
 

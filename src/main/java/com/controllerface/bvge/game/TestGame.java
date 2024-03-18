@@ -1,5 +1,6 @@
 package com.controllerface.bvge.game;
 
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
@@ -247,6 +248,11 @@ public class TestGame extends GameMode
         // player character
         genTestFigure(1f, 300, 350);
 
+        genTestFigureNPC(1f, 200, 0);
+        genTestFigureNPC(1f, 200, 100);
+        genTestFigureNPC(1f, 200, 250);
+        genTestFigureNPC(1f, 100, 50);
+
         //genCircles(317, 5f, 5f, -300, 100);
         genSquares(100,  5f, 5f, -120, 200);
         //genCrates2(50, 5f, 0.025f, 100, 100);
@@ -255,6 +261,8 @@ public class TestGame extends GameMode
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);
         genWall(5, 150f, 150f, 1130, -100);
+
+        System.out.println("edges: " + GPGPU.core_memory.next_edge());
 
         loadSystems();
     }

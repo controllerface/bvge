@@ -1,9 +1,6 @@
 package com.controllerface.bvge.gl.renderers;
 
-import com.controllerface.bvge.cl.GPGPU;
-import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import com.controllerface.bvge.cl.Kernel;
+import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.PrepareEdges_k;
 import com.controllerface.bvge.cl.programs.PrepareEdges;
 import com.controllerface.bvge.ecs.ECS;
