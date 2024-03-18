@@ -344,8 +344,10 @@ public class GPGPU
          * w: edge flags (bit-field)
          * note: x, y, and w values are cast to int during use
          */
-        edges(CLSize.cl_float4),
+        edges(CLSize.cl_int2),
+
         edge_lengths(CLSize.cl_float),
+
         edge_flags(CLSize.cl_int),
 
         /*
