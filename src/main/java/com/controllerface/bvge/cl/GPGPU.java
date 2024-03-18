@@ -163,13 +163,13 @@ public class GPGPU
          * x: u coordinate
          * y: v coordinate
          */
-        texture_uvs(CLSize.cl_float2),
+        vertex_texture_uvs(CLSize.cl_float2),
 
         /**
          * x: start UV index
          * y: end UV index
          */
-        uv_tables(CLSize.cl_int2),
+        vertex_uv_tables(CLSize.cl_int2),
 
         /**
          * s0: (m00) transformation matrix column 1 row 1
@@ -258,36 +258,36 @@ public class GPGPU
          * z: vector z / quaternion z
          * w: vector w / quaternion w
          */
-        key_frames(CLSize.cl_float4),
+        animation_key_frames(CLSize.cl_float4),
 
         /**
          * value: key frame timestamp
          */
-        frame_times(CLSize.cl_double),
+        animation_frame_times(CLSize.cl_double),
 
         /**
          * x: position channel start index
          * y: position channel end index
          */
-        bone_pos_channel_tables(CLSize.cl_int2),
+        animation_bone_pos_channel_tables(CLSize.cl_int2),
 
         /**
          * x: rotation channel start index
          * y: rotation channel end index
          */
-        bone_rot_channel_tables(CLSize.cl_int2),
+        animation_bone_rot_channel_tables(CLSize.cl_int2),
 
         /**
          * x: scaling channel start index
          * y: scaling channel end index
          */
-        bone_scl_channel_tables(CLSize.cl_int2),
+        animation_bone_scl_channel_tables(CLSize.cl_int2),
 
         /**
          * x: bone channel start index
          * y: bone channel end index
          */
-        bone_channel_tables(CLSize.cl_int2),
+        animation_bone_channel_tables(CLSize.cl_int2),
 
         /**
          * x: animation duration
@@ -391,7 +391,7 @@ public class GPGPU
          * z: width
          * w: height
          */
-        aabb(CLSize.cl_float4),
+        hull_aabb(CLSize.cl_float4),
 
         /**
          * x: minimum x key index
@@ -399,7 +399,7 @@ public class GPGPU
          * z: minimum y key index
          * w: maximum y key index
          */
-        aabb_index(CLSize.cl_int4),
+        hull_aabb_index(CLSize.cl_int4),
 
         /**
          * x: key bank offset
@@ -429,13 +429,13 @@ public class GPGPU
          * sE: (m32) transformation matrix column 4 row 3
          * sF: (m33) transformation matrix column 4 row 4
          */
-        bone_instances(CLSize.cl_float16),
+        hull_bones(CLSize.cl_float16),
 
         /**
          * x: bone inverse bind pose index (mesh-space)
          * y: bone bind pose index (model space)
          */
-        bone_index_tables(CLSize.cl_int2),
+        hull_bone_tables(CLSize.cl_int2),
 
 
         /**
@@ -456,13 +456,13 @@ public class GPGPU
          * sE: (m32) transformation matrix column 4 row 3
          * sF: (m33) transformation matrix column 4 row 4
          */
-        armatures_bones(CLSize.cl_float16),
+        armature_bones(CLSize.cl_float16),
 
         /**
          * x: bind pose reference id
          * y: armature bone parent id
          */
-        bone_bind_tables(CLSize.cl_int2),
+        armature_bone_tables(CLSize.cl_int2),
 
         /*
         Armatures
@@ -613,13 +613,13 @@ public class GPGPU
         Buffer.hull_rotation.init(max_hulls);
         Buffer.hull_element_tables.init(max_hulls);
         Buffer.hull_flags.init(max_hulls);
-        Buffer.aabb_index.init(max_hulls);
+        Buffer.hull_aabb_index.init(max_hulls);
         Buffer.aabb_key_table.init(max_hulls);
         Buffer.hulls.init(max_hulls);
         Buffer.hull_mesh_ids.init(max_hulls);
         Buffer.mesh_references.init(max_hulls);
         Buffer.mesh_faces.init(max_hulls);
-        Buffer.aabb.init(max_hulls);
+        Buffer.hull_aabb.init(max_hulls);
         Buffer.points.init(max_points);
         Buffer.point_anti_gravity.init(max_points);
         Buffer.edges.init(max_points);
@@ -627,25 +627,25 @@ public class GPGPU
         Buffer.point_bone_tables.init(max_points);
         Buffer.vertex_references.init(max_points);
         Buffer.vertex_weights.init(max_points);
-        Buffer.texture_uvs.init(max_points);
-        Buffer.uv_tables.init(max_points);
+        Buffer.vertex_texture_uvs.init(max_points);
+        Buffer.vertex_uv_tables.init(max_points);
         Buffer.bone_bind_poses.init(max_hulls);
         Buffer.bone_bind_parents.init(max_hulls);
         Buffer.bone_references.init(max_points);
-        Buffer.bone_instances.init(max_points);
-        Buffer.bone_index_tables.init(max_points);
-        Buffer.bone_bind_tables.init(max_points);
+        Buffer.hull_bones.init(max_points);
+        Buffer.hull_bone_tables.init(max_points);
+        Buffer.armature_bone_tables.init(max_points);
         Buffer.model_transforms.init(max_points);
         Buffer.armatures.init(max_points);
         Buffer.armature_flags.init(max_points);
-        Buffer.armatures_bones.init(max_points);
+        Buffer.armature_bones.init(max_points);
         Buffer.armature_hull_table.init(max_hulls);
-        Buffer.key_frames.init(max_points);
-        Buffer.frame_times.init(max_points);
-        Buffer.bone_pos_channel_tables.init(max_points);
-        Buffer.bone_rot_channel_tables.init(max_points);
-        Buffer.bone_scl_channel_tables.init(max_points);
-        Buffer.bone_channel_tables.init(max_points);
+        Buffer.animation_key_frames.init(max_points);
+        Buffer.animation_frame_times.init(max_points);
+        Buffer.animation_bone_pos_channel_tables.init(max_points);
+        Buffer.animation_bone_rot_channel_tables.init(max_points);
+        Buffer.animation_bone_scl_channel_tables.init(max_points);
+        Buffer.animation_bone_channel_tables.init(max_points);
         Buffer.animation_timings.init(max_points);
         Buffer.animation_timing_indices.init(max_points);
 
@@ -662,8 +662,8 @@ public class GPGPU
             + Buffer.hull_flags.length
             + Buffer.mesh_references.length
             + Buffer.mesh_faces.length
-            + Buffer.aabb.length
-            + Buffer.aabb_index.length
+            + Buffer.hull_aabb.length
+            + Buffer.hull_aabb_index.length
             + Buffer.aabb_key_table.length
             + Buffer.points.length
             + Buffer.point_anti_gravity.length
@@ -672,25 +672,25 @@ public class GPGPU
             + Buffer.point_bone_tables.length
             + Buffer.vertex_references.length
             + Buffer.vertex_weights.length
-            + Buffer.texture_uvs.length
-            + Buffer.uv_tables.length
+            + Buffer.vertex_texture_uvs.length
+            + Buffer.vertex_uv_tables.length
             + Buffer.bone_bind_poses.length
             + Buffer.bone_bind_parents.length
             + Buffer.bone_references.length
-            + Buffer.bone_instances.length
-            + Buffer.bone_index_tables.length
-            + Buffer.bone_bind_tables.length
+            + Buffer.hull_bones.length
+            + Buffer.hull_bone_tables.length
+            + Buffer.armature_bone_tables.length
             + Buffer.model_transforms.length
             + Buffer.armatures.length
             + Buffer.armature_flags.length
-            + Buffer.armatures_bones.length
+            + Buffer.armature_bones.length
             + Buffer.armature_hull_table.length
-            + Buffer.key_frames.length
-            + Buffer.frame_times.length
-            + Buffer.bone_pos_channel_tables.length
-            + Buffer.bone_rot_channel_tables.length
-            + Buffer.bone_scl_channel_tables.length
-            + Buffer.bone_channel_tables.length
+            + Buffer.animation_key_frames.length
+            + Buffer.animation_frame_times.length
+            + Buffer.animation_bone_pos_channel_tables.length
+            + Buffer.animation_bone_rot_channel_tables.length
+            + Buffer.animation_bone_scl_channel_tables.length
+            + Buffer.animation_bone_channel_tables.length
             + Buffer.animation_timings.length
             + Buffer.animation_timing_indices.length;
 
@@ -709,32 +709,32 @@ public class GPGPU
         System.out.println("mesh references      : " + Buffer.mesh_references.length);
         System.out.println("mesh faces           : " + Buffer.mesh_faces.length);
         System.out.println("point anti-grav      : " + Buffer.point_anti_gravity.length);
-        System.out.println("bounding box         : " + Buffer.aabb.length);
-        System.out.println("spatial index        : " + Buffer.aabb_index.length);
+        System.out.println("bounding box         : " + Buffer.hull_aabb.length);
+        System.out.println("spatial index        : " + Buffer.hull_aabb_index.length);
         System.out.println("spatial key bank     : " + Buffer.aabb_key_table.length);
         System.out.println("point vertex tables  : " + Buffer.point_vertex_tables.length);
         System.out.println("point bone tables    : " + Buffer.point_bone_tables.length);
         System.out.println("vertex references    : " + Buffer.vertex_references.length);
         System.out.println("vertex weights       : " + Buffer.vertex_weights.length);
-        System.out.println("texture uvs          : " + Buffer.texture_uvs.length);
-        System.out.println("uv maps              : " + Buffer.uv_tables.length);
+        System.out.println("texture uvs          : " + Buffer.vertex_texture_uvs.length);
+        System.out.println("uv maps              : " + Buffer.vertex_uv_tables.length);
         System.out.println("bone bind poses      : " + Buffer.bone_bind_poses.length);
         System.out.println("bone bind parents    : " + Buffer.bone_bind_parents.length);
         System.out.println("bone references      : " + Buffer.bone_references.length);
-        System.out.println("bone instances       : " + Buffer.bone_instances.length);
-        System.out.println("bone index           : " + Buffer.bone_index_tables.length);
-        System.out.println("bone bind indices    : " + Buffer.bone_bind_tables.length);
+        System.out.println("bone instances       : " + Buffer.hull_bones.length);
+        System.out.println("bone index           : " + Buffer.hull_bone_tables.length);
+        System.out.println("bone bind indices    : " + Buffer.armature_bone_tables.length);
         System.out.println("model transforms     : " + Buffer.model_transforms.length);
         System.out.println("armatures            : " + Buffer.armatures.length);
         System.out.println("armature flags       : " + Buffer.armature_flags.length);
-        System.out.println("armature bones       : " + Buffer.armatures_bones.length);
+        System.out.println("armature bones       : " + Buffer.armature_bones.length);
         System.out.println("hull tables          : " + Buffer.armature_hull_table.length);
-        System.out.println("keyframes            : " + Buffer.key_frames.length);
-        System.out.println("frame times          : " + Buffer.frame_times.length);
-        System.out.println("position channels    : " + Buffer.bone_pos_channel_tables.length);
-        System.out.println("rotation channels    : " + Buffer.bone_rot_channel_tables.length);
-        System.out.println("scaling channels     : " + Buffer.bone_scl_channel_tables.length);
-        System.out.println("bone channels        : " + Buffer.bone_channel_tables.length);
+        System.out.println("keyframes            : " + Buffer.animation_key_frames.length);
+        System.out.println("frame times          : " + Buffer.animation_frame_times.length);
+        System.out.println("position channels    : " + Buffer.animation_bone_pos_channel_tables.length);
+        System.out.println("rotation channels    : " + Buffer.animation_bone_rot_channel_tables.length);
+        System.out.println("scaling channels     : " + Buffer.animation_bone_scl_channel_tables.length);
+        System.out.println("bone channels        : " + Buffer.animation_bone_channel_tables.length);
         System.out.println("animation timings    : " + Buffer.animation_timings.length);
         System.out.println("animation indices    : " + Buffer.animation_timing_indices.length);
         System.out.println("=====================================");
