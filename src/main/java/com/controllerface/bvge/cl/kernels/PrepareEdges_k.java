@@ -8,6 +8,7 @@ public class PrepareEdges_k extends GPUKernel
     {
         points,
         edges,
+        edge_flags,
         vertex_vbo,
         flag_vbo,
         offset;

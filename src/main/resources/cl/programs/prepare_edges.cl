@@ -3,7 +3,8 @@ Prepares a vbo for rendering of edges as lines. The vbo will contain only a subs
 the vertices that make up an edge, the star of the subset is defined by the offset value.
  */
 __kernel void prepare_edges(__global float4 *points, 
-                            __global float4 *edges,
+                            __global int2 *edges,
+                            __global int *edge_flags,
                             __global float4 *vertex_vbo,
                             __global float2 *flag_vbo,
                             int offset)
@@ -11,10 +12,10 @@ __kernel void prepare_edges(__global float4 *points,
     int gid = get_global_id(0);
     int edge_id = gid + offset;
     
-    float4 edge = edges[edge_id];
-    int p1_index = (int)edge.s0;
-    int p2_index = (int)edge.s1;
-    int flags = (int)edge.s3;
+    int2 edge = edges[edge_id];
+    int p1_index = edge.x;
+    int p2_index = edge.y;
+    int flags = edge_flags[edge_id];
     bool isInterior = (flags & IS_STATIC) !=0;
     float alpha = isInterior ? .3 : 1;
     float2 alpha_vec = (float2)(alpha, alpha);

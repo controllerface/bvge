@@ -45,22 +45,28 @@ public class CLUtils
 
     public static long[] arg_long(long arg)
     {
-        return new long[]{arg};
+        return new long[]{ arg };
     }
 
     public static int[] arg_int4(int x, int y, int z, int w)
     {
-        return new int[]{x, y, z, w};
+        return new int[]{ x, y, z, w };
     }
+
+    public static int[] arg_int2(int x, int y)
+    {
+        return new int[]{ x, y };
+    }
+
 
     public static float[] arg_float2(float x, float y)
     {
-        return new float[]{x, y};
+        return new float[]{ x, y };
     }
 
     public static float[] arg_float4(float x, float y, float z, float w)
     {
-        return new float[]{x, y, z, w};
+        return new float[]{ x, y, z, w };
     }
 
     public static float[] arg_float16(float s0, float s1, float s2, float s3,

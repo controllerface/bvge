@@ -377,7 +377,7 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
                                 __global int4 *bone_tables,
                                 __global int2 *bone_bind_tables,
                                 __global int2 *bone_index_tables,
-                                __global float4 *edges,
+                                __global int2 *edges,
                                 __global int *bone_shift,
                                 __global int *point_shift,
                                 __global int *edge_shift,
@@ -477,7 +477,7 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
         for (int j = 0; j < edge_count; j++)
         {
             int current_edge = element_table.z + j;
-            float4 edge = edges[current_edge];
+            int2 edge = edges[current_edge];
             edge.x -= drop.point_count;
             edge.y -= drop.point_count;
             edges[current_edge] = edge;
@@ -551,16 +551,22 @@ __kernel void compact_hulls(__global int *hull_shift,
 }
 
 __kernel void compact_edges(__global int *edge_shift,
-                            __global float4 *edges)
+                            __global int2 *edges,
+                            __global float *edge_lengths,
+                            __global int *edge_flags)
 {
     int current_edge = get_global_id(0);
     int shift = edge_shift[current_edge];
-    float4 edge = edges[current_edge];
+    int2 edge = edges[current_edge];
+    float edge_length = edge_lengths[current_edge];
+    int edge_flag = edge_flags[current_edge];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_edge_index = current_edge - shift;
         edges[new_edge_index] = edge;
+        edge_lengths[new_edge_index] = edge_length;
+        edge_flags[new_edge_index] = edge_flag;
     }
 }
 

@@ -111,7 +111,9 @@ public class GPUCoreMemory
 
         long create_edge_k_ptr = gpu_crud.kernel_ptr(Kernel.create_edge);
         create_edge_k = new CreateEdge_k(GPGPU.command_queue_ptr, create_edge_k_ptr)
-            .ptr_arg(CreateEdge_k.Args.edges, GPGPU.Buffer.edges.pointer);
+            .ptr_arg(CreateEdge_k.Args.edges, GPGPU.Buffer.edges.pointer)
+            .ptr_arg(CreateEdge_k.Args.edge_lengths, GPGPU.Buffer.edge_lengths.pointer)
+            .ptr_arg(CreateEdge_k.Args.edge_flags, GPGPU.Buffer.edge_flags.pointer);
 
         long create_keyframe_k_ptr = gpu_crud.kernel_ptr(Kernel.create_keyframe);
         create_keyframe_k = new CreateKeyFrame_k(GPGPU.command_queue_ptr, create_keyframe_k_ptr)
@@ -272,7 +274,9 @@ public class GPUCoreMemory
         long compact_edges_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_edges);
         compact_edges_k = new CompactEdges_k(GPGPU.command_queue_ptr, compact_edges_k_ptr)
             .buf_arg(CompactEdges_k.Args.edge_shift, edge_shift)
-            .ptr_arg(CompactEdges_k.Args.edges, GPGPU.Buffer.edges.pointer);
+            .ptr_arg(CompactEdges_k.Args.edges, GPGPU.Buffer.edges.pointer)
+            .ptr_arg(CompactEdges_k.Args.edge_lengths, GPGPU.Buffer.edge_lengths.pointer)
+            .ptr_arg(CompactEdges_k.Args.edge_flags, GPGPU.Buffer.edge_flags.pointer);
 
         long compact_points_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_points);
         compact_points_k = new CompactPoints_k(GPGPU.command_queue_ptr, compact_points_k_ptr)
@@ -383,7 +387,9 @@ public class GPUCoreMemory
     {
         create_edge_k
             .set_arg(CreateEdge_k.Args.target, edge_index)
-            .set_arg(CreateEdge_k.Args.new_edge, arg_float4(p1, p2, l, flags))
+            .set_arg(CreateEdge_k.Args.new_edge, arg_int2(p1, p2))
+            .set_arg(CreateEdge_k.Args.new_edge_length, l)
+            .set_arg(CreateEdge_k.Args.new_edge_flag, flags)
             .call(GPGPU.global_single_size);
 
         return edge_index++;

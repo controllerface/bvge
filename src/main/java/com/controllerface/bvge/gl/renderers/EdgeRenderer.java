@@ -72,7 +72,8 @@ public class EdgeRenderer extends GameSystem
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vertex_vbo_ptr)
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, flag_vbo_ptr)
             .ptr_arg(PrepareEdges_k.Args.points, GPGPU.Buffer.points.pointer)
-            .ptr_arg(PrepareEdges_k.Args.edges, GPGPU.Buffer.edges.pointer);
+            .ptr_arg(PrepareEdges_k.Args.edges, GPGPU.Buffer.edges.pointer)
+            .ptr_arg(PrepareEdges_k.Args.edge_flags, GPGPU.Buffer.edge_flags.pointer);
     }
 
     @Override

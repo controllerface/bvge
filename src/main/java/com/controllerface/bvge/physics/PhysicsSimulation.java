@@ -235,6 +235,7 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(SatCollide_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.pointer)
             .ptr_arg(SatCollide_k.Args.points, GPGPU.Buffer.points.pointer)
             .ptr_arg(SatCollide_k.Args.edges, GPGPU.Buffer.edges.pointer)
+            .ptr_arg(SatCollide_k.Args.edge_flags, GPGPU.Buffer.edge_flags.pointer)
             .buf_arg(SatCollide_k.Args.point_reactions, point_reaction_counts)
             .ptr_arg(SatCollide_k.Args.masses, GPGPU.Buffer.armature_mass.pointer);
 
@@ -306,7 +307,8 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(ResolveConstraints_k.Args.element_table, GPGPU.Buffer.hull_element_tables.pointer)
             .ptr_arg(ResolveConstraints_k.Args.bounds_bank_dat, GPGPU.Buffer.aabb_key_table.pointer)
             .ptr_arg(ResolveConstraints_k.Args.point, GPGPU.Buffer.points.pointer)
-            .ptr_arg(ResolveConstraints_k.Args.edges, GPGPU.Buffer.edges.pointer);
+            .ptr_arg(ResolveConstraints_k.Args.edges, GPGPU.Buffer.edges.pointer)
+            .ptr_arg(ResolveConstraints_k.Args.edge_lengths, GPGPU.Buffer.edge_lengths.pointer);
     }
 
     private void integrate()

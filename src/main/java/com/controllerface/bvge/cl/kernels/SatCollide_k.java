@@ -13,6 +13,7 @@ public class SatCollide_k extends GPUKernel
         vertex_tables,
         points,
         edges,
+        edge_flags,
         reactions,
         reaction_index,
         point_reactions,

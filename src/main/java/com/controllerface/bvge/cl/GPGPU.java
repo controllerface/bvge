@@ -345,6 +345,8 @@ public class GPGPU
          * note: x, y, and w values are cast to int during use
          */
         edges(CLSize.cl_float4),
+        edge_lengths(CLSize.cl_float),
+        edge_flags(CLSize.cl_int),
 
         /*
         Hulls
@@ -622,7 +624,11 @@ public class GPGPU
         Buffer.hull_aabb.init(max_hulls);
         Buffer.points.init(max_points);
         Buffer.point_anti_gravity.init(max_points);
+
         Buffer.edges.init(max_points);
+        Buffer.edge_lengths.init(max_points);
+        Buffer.edge_flags.init(max_points);
+
         Buffer.point_vertex_tables.init(max_points);
         Buffer.point_bone_tables.init(max_points);
         Buffer.vertex_references.init(max_points);
@@ -667,7 +673,11 @@ public class GPGPU
             + Buffer.aabb_key_table.length
             + Buffer.points.length
             + Buffer.point_anti_gravity.length
+
             + Buffer.edges.length
+            + Buffer.edge_lengths.length
+            + Buffer.edge_flags.length
+
             + Buffer.point_vertex_tables.length
             + Buffer.point_bone_tables.length
             + Buffer.vertex_references.length
@@ -696,7 +706,11 @@ public class GPGPU
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
         System.out.println("points               : " + Buffer.points.length);
+
         System.out.println("edges                : " + Buffer.edges.length);
+        System.out.println("edge lengths         : " + Buffer.edge_lengths.length);
+        System.out.println("edge flags           : " + Buffer.edge_flags.length);
+
         System.out.println("hulls                : " + Buffer.hulls.length);
         System.out.println("hull mesh ids        : " + Buffer.hull_mesh_ids.length);
         System.out.println("acceleration         : " + Buffer.armature_accel.length);

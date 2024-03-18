@@ -10,6 +10,7 @@ public class ResolveConstraints_k extends GPUKernel
         bounds_bank_dat,
         point,
         edges,
+        edge_lengths,
         process_all;
     }
 

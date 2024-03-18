@@ -4,7 +4,8 @@ Resolves edge constraints used for Verlet integration.
 __kernel void resolve_constraints(__global int4 *element_tables,
                                   __global int2 *bounds_bank_data,
                                   __global float4 *points,
-                                  __global float4 *edges, 
+                                  __global int2 *edges,
+                                  __global float *edge_lengths,
                                   int process_all)
 {
     int gid = get_global_id(0);
@@ -31,12 +32,12 @@ __kernel void resolve_constraints(__global int4 *element_tables,
         for (int current_edge = start_edge; current_edge <= end_edge; current_edge++)
         {
             // get this edge
-            float4 edge = edges[current_edge];
+            int2 edge = edges[current_edge];
             
             // grab the point indices from the edge object
-            int p1_index = (int)edge.s0;
-            int p2_index = (int)edge.s1;
-            float constraint = edge.s2;
+            int p1_index = edge.x;
+            int p2_index = edge.y;
+            float constraint = edge_lengths[current_edge];
             
             // get the points for this edge
             float4 p1 = points[p1_index];

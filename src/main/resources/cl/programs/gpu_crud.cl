@@ -19,11 +19,17 @@ __kernel void create_point(__global float4 *points,
     bone_tables[target] = new_bone_table; 
 }
 
-__kernel void create_edge(__global float4 *edges,
-                           int target,
-                           float4 new_edge)
+__kernel void create_edge(__global int2 *edges,
+                          __global float *edge_lengths,
+                          __global int *edge_flags,
+                          int target,
+                          int2 new_edge,
+                          float new_edge_length,
+                          int new_edge_flag)
 {
     edges[target] = new_edge; 
+    edge_lengths[target] = new_edge_length; 
+    edge_flags[target] = new_edge_flag; 
 }
 
 __kernel void create_bone_channel(__global int *animation_timing_indices,
