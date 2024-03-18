@@ -539,8 +539,8 @@ public class GPUCoreMemory
             .ptr_arg(LocateOutOfBounds_k.Args.counter, delete_counter_ptr)
             .call(arg_long(armature_index));
 
-        delete_buffer_1.ensure_capacity(armature_index);
-        delete_buffer_2.ensure_capacity(armature_index);
+        delete_buffer_1.ensure_total_capacity(armature_index);
+        delete_buffer_2.ensure_total_capacity(armature_index);
 
         int[] shift_counts = scan_deletes(delete_buffer_1.pointer(), delete_buffer_2.pointer(), armature_index);
 
@@ -549,11 +549,11 @@ public class GPUCoreMemory
             return;
         }
 
-        hull_shift.ensure_capacity(hull_index);
-        edge_shift.ensure_capacity(edge_index);
-        point_shift.ensure_capacity(point_index);
-        bone_shift.ensure_capacity(bone_index);
-        bone_bind_shift.ensure_capacity(armature_bone_index);
+        hull_shift.ensure_total_capacity(hull_index);
+        edge_shift.ensure_total_capacity(edge_index);
+        point_shift.ensure_total_capacity(point_index);
+        bone_shift.ensure_total_capacity(bone_index);
+        bone_bind_shift.ensure_total_capacity(armature_bone_index);
 
         hull_shift.clear();
         edge_shift.clear();
@@ -643,8 +643,8 @@ public class GPUCoreMemory
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
 
-        delete_partial_buffer_1.ensure_capacity(part_size);
-        delete_partial_buffer_2.ensure_capacity(part_size);
+        delete_partial_buffer_1.ensure_total_capacity(part_size);
+        delete_partial_buffer_2.ensure_total_capacity(part_size);
 
         scan_deletes_multi_block_out_k
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output1, o1_data_ptr)

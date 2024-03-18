@@ -924,6 +924,11 @@ public class GPGPU
         return result;
     }
 
+    public static void cl_transfer_buffer(long src_ptr, long dst_ptr, long size)
+    {
+        clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, null);
+    }
+
     public static int work_group_count(int n)
     {
         return (int) Math.ceil((float) n / (float) max_scan_block_size);

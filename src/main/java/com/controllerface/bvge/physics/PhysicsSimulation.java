@@ -411,7 +411,7 @@ public class PhysicsSimulation extends GameSystem
             return;
         }
 
-        key_bank.ensure_capacity(uniform_grid.get_key_bank_size());
+        key_bank.ensure_total_capacity(uniform_grid.get_key_bank_size());
         GPGPU.cl_zero_buffer(counts_data_ptr, counts_buf_size);
         generate_keys_k
             .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
@@ -420,7 +420,7 @@ public class PhysicsSimulation extends GameSystem
 
     private void build_key_map(UniformGrid uniform_grid)
     {
-        key_map.ensure_capacity(uniform_grid.getKey_map_size());
+        key_map.ensure_total_capacity(uniform_grid.getKey_map_size());
         GPGPU.cl_zero_buffer(counts_data_ptr, counts_buf_size);
         build_key_map_k.call(arg_long(GPGPU.core_memory.next_hull()));
     }
@@ -428,7 +428,7 @@ public class PhysicsSimulation extends GameSystem
     private void locate_in_bounds()
     {
         int hull_count = GPGPU.core_memory.next_hull();
-        in_bounds.ensure_capacity(hull_count);
+        in_bounds.ensure_total_capacity(hull_count);
         GPGPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
         locate_in_bounds_k
@@ -440,7 +440,7 @@ public class PhysicsSimulation extends GameSystem
 
     private void calculate_match_candidates()
     {
-        candidate_counts.ensure_capacity(candidate_buffer_count);
+        candidate_counts.ensure_total_capacity(candidate_buffer_count);
         count_candidates_k.call(arg_long(candidate_buffer_count));
     }
 
@@ -512,14 +512,14 @@ public class PhysicsSimulation extends GameSystem
 
     private void calculate_match_offsets()
     {
-        candidate_offsets.ensure_capacity(candidate_buffer_count);
+        candidate_offsets.ensure_total_capacity(candidate_buffer_count);
         match_buffer_count = scan_key_candidates(candidate_counts.pointer(), candidate_offsets.pointer(), (int) candidate_buffer_count);
     }
 
     private void aabb_collide()
     {
-        matches.ensure_capacity(match_buffer_count);
-        matches_used.ensure_capacity(candidate_buffer_count);
+        matches.ensure_total_capacity(match_buffer_count);
+        matches_used.ensure_total_capacity(candidate_buffer_count);
         GPGPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
         aabb_collide_k.call(arg_long(candidate_buffer_count));
         candidate_count = GPGPU.cl_read_pinned_int(atomic_counter_ptr);
@@ -534,7 +534,7 @@ public class PhysicsSimulation extends GameSystem
 
         long buffer_size = (long) CLSize.cl_int2 * candidate_count;
 
-        candidates.ensure_capacity(candidate_count);
+        candidates.ensure_total_capacity(candidate_count);
 
         int[] counter = new int[]{ 0 };
         var counter_ptr = GPGPU.cl_new_int_arg_buffer(counter);
@@ -559,11 +559,11 @@ public class PhysicsSimulation extends GameSystem
             * 2  // there are two bodies per collision pair
             * 2; // assume worst case is 2 points per body
 
-        reactions_in.ensure_capacity(max_point_count);
-        reactions_out.ensure_capacity(max_point_count);
-        reaction_index.ensure_capacity(max_point_count);
-        point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
-        point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
+        reactions_in.ensure_total_capacity(max_point_count);
+        reactions_out.ensure_total_capacity(max_point_count);
+        reaction_index.ensure_total_capacity(max_point_count);
+        point_reaction_counts.ensure_total_capacity(GPGPU.core_memory.next_point());
+        point_reaction_offsets.ensure_total_capacity(GPGPU.core_memory.next_point());
 
         sat_collide_k.call(global_work_size);
         reaction_count = GPGPU.cl_read_pinned_int(atomic_counter_ptr);
