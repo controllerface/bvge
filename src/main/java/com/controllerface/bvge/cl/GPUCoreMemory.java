@@ -72,7 +72,6 @@ public class GPUCoreMemory
     private final long position_buffer_ptr;
     private final long delete_sizes_ptr;
 
-
     public GPUCoreMemory()
     {
         delete_counter_ptr = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
