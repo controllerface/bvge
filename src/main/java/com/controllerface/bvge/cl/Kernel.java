@@ -7,8 +7,6 @@ public enum Kernel
     animate_bones,
     animate_points,
     apply_reactions,
-    buffer_transfer,
-    verify_buffer_transfer,
     build_key_map,
     calculate_batch_offsets,
     compact_armature_bones,

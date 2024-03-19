@@ -255,14 +255,21 @@ public class TestGame extends GameMode
 
         //genCircles(317, 5f, 5f, -300, 100);
         genSquares(100,  5f, 5f, -120, 200);
-        //genCrates2(50, 5f, 0.025f, 100, 100);
-        //genTriangles(100,  5f, 5f, 120, 100);
+        //genCrates2(75, 5f, 0.025f, 100, 100);
+        //genTriangles(75,  5f, 5f, 120, 100);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);
         genWall(5, 150f, 150f, 1130, -100);
 
-        System.out.println("edges: " + GPGPU.core_memory.next_edge());
+        try
+        {
+            Thread.sleep(5000);
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
 
         loadSystems();
     }

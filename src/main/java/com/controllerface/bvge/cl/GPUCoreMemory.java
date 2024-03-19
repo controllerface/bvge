@@ -68,7 +68,7 @@ public class GPUCoreMemory
     private final ResizableBuffer delete_partial_buffer_1;
     private final ResizableBuffer delete_partial_buffer_2;
 
-    //private final ResizableBuffer edge_buffer;
+    private final ResizableBuffer edge_buffer;
 
 
     private final long delete_counter_ptr;
@@ -91,8 +91,8 @@ public class GPUCoreMemory
         delete_partial_buffer_1 = new TransientBuffer(CLSize.cl_int2);
         delete_partial_buffer_2 = new TransientBuffer(CLSize.cl_int4);
 
-        //edge_buffer = new PersistentBuffer(CLSize.cl_float4, 64_418);//1_000_000L);
-        //edge_buffer = new PersistentBuffer(CLSize.cl_float4);
+        //edge_buffer = new PersistentBuffer(CLSize.cl_int2, 34_400);
+        edge_buffer = new PersistentBuffer(CLSize.cl_int2);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -111,7 +111,7 @@ public class GPUCoreMemory
 
         long create_edge_k_ptr = gpu_crud.kernel_ptr(Kernel.create_edge);
         create_edge_k = new CreateEdge_k(GPGPU.command_queue_ptr, create_edge_k_ptr)
-            .ptr_arg(CreateEdge_k.Args.edges, GPGPU.Buffer.edges.pointer)
+            .buf_arg(CreateEdge_k.Args.edges, edge_buffer)
             .ptr_arg(CreateEdge_k.Args.edge_lengths, GPGPU.Buffer.edge_lengths.pointer)
             .ptr_arg(CreateEdge_k.Args.edge_flags, GPGPU.Buffer.edge_flags.pointer);
 
@@ -252,7 +252,7 @@ public class GPUCoreMemory
             .ptr_arg(CompactArmatures_k.Args.bone_tables, GPGPU.Buffer.point_bone_tables.pointer)
             .ptr_arg(CompactArmatures_k.Args.bone_bind_tables, GPGPU.Buffer.armature_bone_tables.pointer)
             .ptr_arg(CompactArmatures_k.Args.bone_index_tables, GPGPU.Buffer.hull_bone_tables.pointer)
-            .ptr_arg(CompactArmatures_k.Args.edges, GPGPU.Buffer.edges.pointer)
+            .buf_arg(CompactArmatures_k.Args.edges, edge_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_shift, bone_shift)
             .buf_arg(CompactArmatures_k.Args.point_shift, point_shift)
             .buf_arg(CompactArmatures_k.Args.edge_shift, edge_shift)
@@ -274,7 +274,7 @@ public class GPUCoreMemory
         long compact_edges_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_edges);
         compact_edges_k = new CompactEdges_k(GPGPU.command_queue_ptr, compact_edges_k_ptr)
             .buf_arg(CompactEdges_k.Args.edge_shift, edge_shift)
-            .ptr_arg(CompactEdges_k.Args.edges, GPGPU.Buffer.edges.pointer)
+            .buf_arg(CompactEdges_k.Args.edges, edge_buffer)
             .ptr_arg(CompactEdges_k.Args.edge_lengths, GPGPU.Buffer.edge_lengths.pointer)
             .ptr_arg(CompactEdges_k.Args.edge_flags, GPGPU.Buffer.edge_flags.pointer);
 
@@ -299,13 +299,13 @@ public class GPUCoreMemory
             .ptr_arg(CompactArmatureBones_k.Args.armature_bone_tables, GPGPU.Buffer.armature_bone_tables.pointer);
     }
 
-//    public ResizableBuffer get_buffer(BufferType bufferType)
-//    {
-//        return switch (bufferType)
-//        {
-//            case EDGE -> edge_buffer;
-//        };
-//    }
+    public ResizableBuffer get_buffer(BufferType bufferType)
+    {
+        return switch (bufferType)
+        {
+            case EDGE -> edge_buffer;
+        };
+    }
 
     // index methods
 
@@ -385,6 +385,13 @@ public class GPUCoreMemory
 
     public int new_edge(int p1, int p2, float l, int flags)
     {
+        edge_buffer.ensure_total_capacity(edge_index + 1);
+
+//        if ((edge_index > 34415 && edge_index < 34420) || edge_index == 0)
+//        {
+//            System.out.printf("new edge ---- [%d] p1: %d p2: %d l: %f f: %d \n", edge_index, p1, p2, l, flags);
+//        }
+
         create_edge_k
             .set_arg(CreateEdge_k.Args.target, edge_index)
             .set_arg(CreateEdge_k.Args.new_edge, arg_int2(p1, p2))
