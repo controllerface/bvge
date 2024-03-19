@@ -136,85 +136,6 @@ public class GPGPU
 
     //#endregion
 
-    //#region Buffer Objects
-
-    public enum Buffer
-    {
-        /*
-        Armatures
-         */
-
-        /**
-         * x: current x position
-         * y: current y position
-         * z: previous x position
-         * w: previous y position
-         */
-        armatures(CLSize.cl_float4),
-
-        /**
-         * x: root hull index
-         * y: model id
-         * z: armature flags (bit-field)
-         * w: model transform index
-         */
-        armature_flags(CLSize.cl_int4),
-
-        /**
-         * x: current x acceleration
-         * y: current y acceleration
-         */
-        armature_accel(CLSize.cl_float2),
-
-        /**
-         * value: mass of the armature
-         */
-        armature_mass(CLSize.cl_float),
-
-        /**
-         * value: the currently selected animation index
-         */
-        armature_animation_indices(CLSize.cl_int),
-
-        /**
-         * value: the last rendered timestamp
-         */
-        armature_animation_elapsed(CLSize.cl_double),
-
-        /**
-         * x: start hull index
-         * y: end hull index
-         * z: start bone anim index
-         * w: end bone anim index
-         */
-        armature_hull_table(CLSize.cl_int4),
-        
-        ;
-
-        public long pointer;
-        final int size;
-        int length;
-
-        Buffer(int valueSize)
-        {
-            size = valueSize;
-        }
-
-        public void init(int buffer_length)
-        {
-            this.length = buffer_length * size;
-            this.pointer = cl_new_buffer(this.length);
-            clear();
-        }
-
-        public void clear()
-        {
-            cl_zero_buffer(this.pointer, this.length);
-        }
-    }
-
-    //#endregion
-
     //#region Init Methods
 
     private static long init_device()
@@ -282,32 +203,12 @@ public class GPGPU
         // todo: there should be more granularity than just max hulls and points. There should be
         //  limits on armatures and other data types.
 
-        Buffer.armature_accel.init(max_hulls);
-        Buffer.armature_mass.init(max_hulls);
-        Buffer.armature_animation_indices.init(max_hulls);
-        Buffer.armature_animation_elapsed.init(max_hulls);
-        Buffer.armatures.init(max_points);
-        Buffer.armature_flags.init(max_points);
-        Buffer.armature_hull_table.init(max_hulls);
 
         core_memory = new GPUCoreMemory();
 
-        int total = Buffer.armature_accel.length
-            + Buffer.armature_mass.length
-            + Buffer.armature_animation_indices.length
-            + Buffer.armature_animation_elapsed.length
-            + Buffer.armatures.length
-            + Buffer.armature_flags.length
-            + Buffer.armature_hull_table.length;
+        int total = 0;
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
-        System.out.println("acceleration         : " + Buffer.armature_accel.length);
-        System.out.println("mass                 : " + Buffer.armature_mass.length);
-        System.out.println("armature anim index  : " + Buffer.armature_animation_indices.length);
-        System.out.println("armature anim times  : " + Buffer.armature_animation_elapsed.length);
-        System.out.println("armatures            : " + Buffer.armatures.length);
-        System.out.println("armature flags       : " + Buffer.armature_flags.length);
-        System.out.println("hull tables          : " + Buffer.armature_hull_table.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)       : " + total);
         System.out.println("                  KB : " + ((float) total / 1024f));
@@ -367,11 +268,11 @@ public class GPGPU
 
         long root_hull_filter_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_filter);
         root_hull_filter_k = new RootHullFilter_k(command_queue_ptr, root_hull_filter_ptr)
-            .ptr_arg(RootHullFilter_k.Args.armature_flags, Buffer.armature_flags.pointer);
+            .buf_arg(RootHullFilter_k.Args.armature_flags, core_memory.buffer(BufferType.ARMATURE_FLAG));
 
         long root_hull_count_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_count);
         root_hull_count_k = new RootHullCount_k(command_queue_ptr, root_hull_count_ptr)
-            .ptr_arg(RootHullCount_k.Args.armature_flags, Buffer.armature_flags.pointer);
+            .buf_arg(RootHullCount_k.Args.armature_flags, core_memory.buffer(BufferType.ARMATURE_FLAG));
     }
 
     //#endregion
@@ -874,10 +775,6 @@ public class GPGPU
     {
         core_memory.destroy();
 
-        for (Buffer buffer : Buffer.values())
-        {
-            if (buffer.pointer != 0) cl_release_buffer(buffer.pointer);
-        }
 
         for (Program program : Program.values())
         {
