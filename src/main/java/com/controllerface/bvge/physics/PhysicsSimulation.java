@@ -29,7 +29,7 @@ public class PhysicsSimulation extends GameSystem
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
     //  or make damping interact with the gravity vector in some way.
-    private static final float MOTION_DAMPING = .995f;
+    private static final float MOTION_DAMPING = .990f;
 
     private final UniformGrid uniform_grid;
 
@@ -133,7 +133,7 @@ public class PhysicsSimulation extends GameSystem
 
         long integrate_k_ptr = integrate.kernel_ptr(Kernel.integrate);
         integrate_k = new Integrate_k(GPGPU.command_queue_ptr, integrate_k_ptr)
-            .ptr_arg(Integrate_k.Args.hulls, GPGPU.Buffer.hulls.pointer)
+            .buf_arg(Integrate_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
             .ptr_arg(Integrate_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
             .ptr_arg(Integrate_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
             .ptr_arg(Integrate_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
@@ -229,7 +229,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.reactions, reactions_in)
             .buf_arg(SatCollide_k.Args.reaction_index, reaction_index)
             .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
-            .ptr_arg(SatCollide_k.Args.hulls, GPGPU.Buffer.hulls.pointer)
+            .buf_arg(SatCollide_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
             .ptr_arg(SatCollide_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
             .ptr_arg(SatCollide_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
             .ptr_arg(SatCollide_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.pointer)
@@ -257,7 +257,7 @@ public class PhysicsSimulation extends GameSystem
 
         long move_armatures_k_ptr = sat_collide.kernel_ptr(Kernel.move_armatures);
         move_armatures_k = new MoveArmatures_k(GPGPU.command_queue_ptr, move_armatures_k_ptr)
-            .ptr_arg(MoveArmatures_k.Args.hulls, GPGPU.Buffer.hulls.pointer)
+            .buf_arg(MoveArmatures_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
             .ptr_arg(MoveArmatures_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
             .ptr_arg(MoveArmatures_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
             .ptr_arg(MoveArmatures_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
@@ -293,7 +293,7 @@ public class PhysicsSimulation extends GameSystem
         long animate_points_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_points);
         animate_points_k = new AnimatePoints_k(GPGPU.command_queue_ptr, animate_points_k_ptr)
             .ptr_arg(AnimatePoints_k.Args.points, GPGPU.Buffer.points.pointer)
-            .ptr_arg(AnimatePoints_k.Args.hulls, GPGPU.Buffer.hulls.pointer)
+            .buf_arg(AnimatePoints_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
             .ptr_arg(AnimatePoints_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
             .ptr_arg(AnimatePoints_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.pointer)
             .ptr_arg(AnimatePoints_k.Args.bone_tables, GPGPU.Buffer.point_bone_tables.pointer)

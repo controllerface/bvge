@@ -109,7 +109,7 @@ public class HumanoidRenderer extends GameSystem
             .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
             .ptr_arg(CountMeshInstances_k.Args.total, total_ptr)
             .set_arg(CountMeshInstances_k.Args.count, mesh_count)
-            .ptr_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.Buffer.hull_mesh_ids.pointer);
+            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.HULL_MESH_ID));
 
         long write_details_k_ptr = mesh_query_p.kernel_ptr(Kernel.write_mesh_details);
         write_details_k = new WriteMeshDetails_k(GPGPU.command_queue_ptr, write_details_k_ptr)
@@ -117,7 +117,7 @@ public class HumanoidRenderer extends GameSystem
             .ptr_arg(WriteMeshDetails_k.Args.query, query_ptr)
             .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets_ptr)
             .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
-            .ptr_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.Buffer.hull_mesh_ids.pointer)
+            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.HULL_MESH_ID))
             .ptr_arg(WriteMeshDetails_k.Args.mesh_references, GPGPU.Buffer.mesh_references.pointer);
 
         long count_batches_k_ptr = mesh_query_p.kernel_ptr(Kernel.count_mesh_batches);
@@ -140,7 +140,7 @@ public class HumanoidRenderer extends GameSystem
             .ptr_arg(TransferRenderData_k.Args.uv_buffer, uv_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
             .ptr_arg(TransferRenderData_k.Args.hull_element_tables, GPGPU.Buffer.hull_element_tables.pointer)
-            .ptr_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.Buffer.hull_mesh_ids.pointer)
+            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.HULL_MESH_ID))
             .ptr_arg(TransferRenderData_k.Args.mesh_references, GPGPU.Buffer.mesh_references.pointer)
             .ptr_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.Buffer.mesh_faces.pointer)
             .ptr_arg(TransferRenderData_k.Args.points, GPGPU.Buffer.points.pointer)

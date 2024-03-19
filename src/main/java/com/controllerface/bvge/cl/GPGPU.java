@@ -343,12 +343,12 @@ public class GPGPU
          * z: scale x
          * w: scale y
          */
-        hulls(CLSize.cl_float4),
+        //hulls(CLSize.cl_float4),
 
         /**
          * value: reference mesh id
          */
-        hull_mesh_ids(CLSize.cl_int),
+        //hull_mesh_ids(CLSize.cl_int),
 
         /**
          * x: initial reference angle
@@ -602,8 +602,8 @@ public class GPGPU
         Buffer.hull_flags.init(max_hulls);
         Buffer.hull_aabb_index.init(max_hulls);
         Buffer.aabb_key_table.init(max_hulls);
-        Buffer.hulls.init(max_hulls);
-        Buffer.hull_mesh_ids.init(max_hulls);
+//        Buffer.hulls.init(max_hulls);
+//        Buffer.hull_mesh_ids.init(max_hulls);
         Buffer.mesh_references.init(max_hulls);
         Buffer.mesh_faces.init(max_hulls);
         Buffer.hull_aabb.init(max_hulls);
@@ -637,8 +637,8 @@ public class GPGPU
 
         core_memory = new GPUCoreMemory();
 
-        int total = Buffer.hulls.length
-            + Buffer.hull_mesh_ids.length
+        int total = //Buffer.hulls.length
+//            + Buffer.hull_mesh_ids.length
             + Buffer.armature_accel.length
             + Buffer.armature_mass.length
             + Buffer.armature_animation_indices.length
@@ -681,8 +681,8 @@ public class GPGPU
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
         System.out.println("points               : " + Buffer.points.length);
-        System.out.println("hulls                : " + Buffer.hulls.length);
-        System.out.println("hull mesh ids        : " + Buffer.hull_mesh_ids.length);
+//        System.out.println("hulls                : " + Buffer.hulls.length);
+//        System.out.println("hull mesh ids        : " + Buffer.hull_mesh_ids.length);
         System.out.println("acceleration         : " + Buffer.armature_accel.length);
         System.out.println("mass                 : " + Buffer.armature_mass.length);
         System.out.println("armature anim index  : " + Buffer.armature_animation_indices.length);
