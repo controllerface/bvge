@@ -266,10 +266,10 @@ public class PhysicsSimulation extends GameSystem
 
         long animate_armatures_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_armatures);
         animate_armatures_k = new AnimateArmatures_k(GPGPU.command_queue_ptr, animate_armatures_k_ptr)
-            .ptr_arg(AnimateArmatures_k.Args.armature_bones, GPGPU.Buffer.armature_bones.pointer)
+            .buf_arg(AnimateArmatures_k.Args.armature_bones, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE))
             .buf_arg(AnimateArmatures_k.Args.bone_bind_poses, GPGPU.core_memory.buffer(BufferType.BONE_BIND_POSE))
             .buf_arg(AnimateArmatures_k.Args.model_transforms, GPGPU.core_memory.buffer(BufferType.MODEL_TRANSFORM))
-            .ptr_arg(AnimateArmatures_k.Args.bone_bind_tables, GPGPU.Buffer.armature_bone_tables.pointer)
+            .buf_arg(AnimateArmatures_k.Args.bone_bind_tables, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE_TABLE))
             .buf_arg(AnimateArmatures_k.Args.bone_channel_tables, GPGPU.core_memory.buffer(BufferType.BONE_ANIM_TABLE))
             .buf_arg(AnimateArmatures_k.Args.bone_pos_channel_tables, GPGPU.core_memory.buffer(BufferType.ANIM_POS_CHANNEL))
             .buf_arg(AnimateArmatures_k.Args.bone_rot_channel_tables, GPGPU.core_memory.buffer(BufferType.ANIM_ROT_CHANNEL))
@@ -287,7 +287,7 @@ public class PhysicsSimulation extends GameSystem
         animate_bones_k = new AnimateBones_k(GPGPU.command_queue_ptr, animate_bones_k_ptr)
             .buf_arg(AnimateBones_k.Args.bones, GPGPU.core_memory.buffer(BufferType.HULL_BONE))
             .buf_arg(AnimateBones_k.Args.bone_references, GPGPU.core_memory.buffer(BufferType.BONE_REFERENCE))
-            .ptr_arg(AnimateBones_k.Args.armature_bones, GPGPU.Buffer.armature_bones.pointer)
+            .buf_arg(AnimateBones_k.Args.armature_bones, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE))
             .buf_arg(AnimateBones_k.Args.bone_index_tables, GPGPU.core_memory.buffer(BufferType.HULL_BONE_TABLE));
 
         long animate_points_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_points);

@@ -141,90 +141,6 @@ public class GPGPU
     public enum Buffer
     {
         /*
-        Reference objects:
-        - Objects in memory at runtime may reference these objects
-        - Data stored in references should be considered immutable once written
-         */
-
-        /**
-         * x: vector x / quaternion x
-         * y: vector y / quaternion y
-         * z: vector z / quaternion z
-         * w: vector w / quaternion w
-         */
-        //animation_key_frames(CLSize.cl_float4),
-
-        /**
-         * value: key frame timestamp
-         */
-        //animation_frame_times(CLSize.cl_double),
-
-        /**
-         * x: position channel start index
-         * y: position channel end index
-         */
-        //animation_bone_pos_channel_tables(CLSize.cl_int2),
-
-        /**
-         * x: rotation channel start index
-         * y: rotation channel end index
-         */
-        //animation_bone_rot_channel_tables(CLSize.cl_int2),
-
-        /**
-         * x: scaling channel start index
-         * y: scaling channel end index
-         */
-        //animation_bone_scl_channel_tables(CLSize.cl_int2),
-
-        /**
-         * x: bone channel start index
-         * y: bone channel end index
-         */
-        //animation_bone_channel_tables(CLSize.cl_int2),
-
-        /**
-         * x: animation duration
-         * y: ticks per second (FPS)
-         */
-        //animation_timings(CLSize.cl_double2),
-
-        /**
-         * value: animation timing index
-         */
-        //animation_timing_indices(CLSize.cl_int),
-
-        /*
-        Bones
-         */
-
-        /**
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         */
-        armature_bones(CLSize.cl_float16),
-
-        /**
-         * x: bind pose reference id
-         * y: armature bone parent id
-         */
-        armature_bone_tables(CLSize.cl_int2),
-
-        /*
         Armatures
          */
 
@@ -370,10 +286,8 @@ public class GPGPU
         Buffer.armature_mass.init(max_hulls);
         Buffer.armature_animation_indices.init(max_hulls);
         Buffer.armature_animation_elapsed.init(max_hulls);
-        Buffer.armature_bone_tables.init(max_points);
         Buffer.armatures.init(max_points);
         Buffer.armature_flags.init(max_points);
-        Buffer.armature_bones.init(max_points);
         Buffer.armature_hull_table.init(max_hulls);
 
         core_memory = new GPUCoreMemory();
@@ -382,10 +296,8 @@ public class GPGPU
             + Buffer.armature_mass.length
             + Buffer.armature_animation_indices.length
             + Buffer.armature_animation_elapsed.length
-            + Buffer.armature_bone_tables.length
             + Buffer.armatures.length
             + Buffer.armature_flags.length
-            + Buffer.armature_bones.length
             + Buffer.armature_hull_table.length;
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
@@ -393,10 +305,8 @@ public class GPGPU
         System.out.println("mass                 : " + Buffer.armature_mass.length);
         System.out.println("armature anim index  : " + Buffer.armature_animation_indices.length);
         System.out.println("armature anim times  : " + Buffer.armature_animation_elapsed.length);
-        System.out.println("bone bind indices    : " + Buffer.armature_bone_tables.length);
         System.out.println("armatures            : " + Buffer.armatures.length);
         System.out.println("armature flags       : " + Buffer.armature_flags.length);
-        System.out.println("armature bones       : " + Buffer.armature_bones.length);
         System.out.println("hull tables          : " + Buffer.armature_hull_table.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)       : " + total);

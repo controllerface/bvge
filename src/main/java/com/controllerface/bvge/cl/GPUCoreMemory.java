@@ -8,23 +8,6 @@ import static com.controllerface.bvge.cl.CLUtils.*;
 
 public class GPUCoreMemory
 {
-    private int hull_index            = 0;
-    private int point_index           = 0;
-    private int edge_index            = 0;
-    private int vertex_ref_index      = 0;
-    private int bone_bind_index       = 0;
-    private int bone_ref_index        = 0;
-    private int bone_index            = 0;
-    private int model_transform_index = 0;
-    private int armature_bone_index   = 0;
-    private int armature_index        = 0;
-    private int mesh_index            = 0;
-    private int face_index            = 0;
-    private int uv_index              = 0;
-    private int keyframe_index        = 0;
-    private int bone_channel_index    = 0;
-    private int animation_index       = 0;
-
     private final GPUProgram gpu_crud = new GPUCrud();
     private final GPUProgram scan_deletes = new ScanDeletes();
 
@@ -58,7 +41,7 @@ public class GPUCoreMemory
     private final GPUKernel compact_bones_k;
     private final GPUKernel compact_armature_bones_k;
 
-    // internally used buffers
+    // internal buffers
     private final ResizableBuffer hull_shift;
     private final ResizableBuffer edge_shift;
     private final ResizableBuffer point_shift;
@@ -70,7 +53,7 @@ public class GPUCoreMemory
     private final ResizableBuffer delete_partial_buffer_2;
     private final ResizableBuffer bone_bind_parent_buffer; // todo: may not be needed, consider removing
 
-    // externally used buffers
+    // external buffers
     private final ResizableBuffer edge_buffer;
     private final ResizableBuffer edge_length_buffer;
     private final ResizableBuffer edge_flag_buffer;
@@ -95,9 +78,9 @@ public class GPUCoreMemory
     private final ResizableBuffer model_transform_buffer;
     private final ResizableBuffer bone_reference_buffer;
     private final ResizableBuffer bone_bind_pose_buffer;
+    private final ResizableBuffer bone_anim_channel_table_buffer;
     private final ResizableBuffer mesh_reference_buffer;
     private final ResizableBuffer mesh_face_buffer;
-
     private final ResizableBuffer anim_key_frame_buffer;
     private final ResizableBuffer anim_frame_time_buffer;
     private final ResizableBuffer anim_bone_pos_channel_buffer;
@@ -106,66 +89,87 @@ public class GPUCoreMemory
     private final ResizableBuffer anim_timing_buffer;
     private final ResizableBuffer anim_timing_index_buffer;
 
-    private final ResizableBuffer bone_anim_channel_table_buffer;
+    private final ResizableBuffer armature_bone_buffer;
+    private final ResizableBuffer armature_bone_table_buffer;
+
+
 
     private final long delete_counter_ptr;
     private final long position_buffer_ptr;
     private final long delete_sizes_ptr;
 
+    private int hull_index            = 0;
+    private int point_index           = 0;
+    private int edge_index            = 0;
+    private int vertex_ref_index      = 0;
+    private int bone_bind_index       = 0;
+    private int bone_ref_index        = 0;
+    private int bone_index            = 0;
+    private int model_transform_index = 0;
+    private int armature_bone_index   = 0;
+    private int armature_index        = 0;
+    private int mesh_index            = 0;
+    private int face_index            = 0;
+    private int uv_index              = 0;
+    private int keyframe_index        = 0;
+    private int bone_channel_index    = 0;
+    private int animation_index       = 0;
+
     public GPUCoreMemory()
     {
-        delete_counter_ptr = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
-        position_buffer_ptr = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
-        delete_sizes_ptr = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
+        delete_counter_ptr      = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
+        position_buffer_ptr     = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
+        delete_sizes_ptr        = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
 
-        hull_shift = new TransientBuffer(CLSize.cl_int);
-        edge_shift = new TransientBuffer(CLSize.cl_int);
-        point_shift = new TransientBuffer(CLSize.cl_int);
-        bone_shift = new TransientBuffer(CLSize.cl_int);
-        bone_bind_shift = new TransientBuffer(CLSize.cl_int);
-        delete_buffer_1 = new TransientBuffer(CLSize.cl_int2);
-        delete_buffer_2 = new TransientBuffer(CLSize.cl_int4);
-        delete_partial_buffer_1 = new TransientBuffer(CLSize.cl_int2);
-        delete_partial_buffer_2 = new TransientBuffer(CLSize.cl_int4);
-        edge_buffer = new PersistentBuffer(CLSize.cl_int2);
-        edge_length_buffer = new PersistentBuffer(CLSize.cl_float);
-        edge_flag_buffer = new PersistentBuffer(CLSize.cl_int);
-        hull_buffer = new PersistentBuffer(CLSize.cl_float4);
-        hull_mesh_id_buffer = new PersistentBuffer(CLSize.cl_int);
-        hull_rotation_buffer = new PersistentBuffer(CLSize.cl_float2);
-        hull_element_table_buffer = new PersistentBuffer(CLSize.cl_int4);
-        hull_flag_buffer = new PersistentBuffer(CLSize.cl_int4);
-        hull_aabb_buffer = new PersistentBuffer(CLSize.cl_float4);
-        hull_aabb_index_buffer = new PersistentBuffer(CLSize.cl_int4);
-        hull_aabb_key_buffer = new PersistentBuffer(CLSize.cl_int2);
-        hull_bone_buffer = new PersistentBuffer(CLSize.cl_float16);
-        hull_bone_table_buffer = new PersistentBuffer(CLSize.cl_int2);
-        point_buffer = new PersistentBuffer(CLSize.cl_float4, 50_000L);
-        point_anti_gravity_buffer = new PersistentBuffer(CLSize.cl_float, 50_000L);
-        point_vertex_table_buffer = new PersistentBuffer(CLSize.cl_int4, 50_000L);
-        point_bone_table_buffer = new PersistentBuffer(CLSize.cl_int4, 50_000L);
-        vertex_reference_buffer = new PersistentBuffer(CLSize.cl_float2);
-        vertex_weight_buffer = new PersistentBuffer(CLSize.cl_float4);
-        vertex_texture_uv_buffer = new PersistentBuffer(CLSize.cl_float2);
-        vertex_uv_table_buffer = new PersistentBuffer(CLSize.cl_int2);
-        model_transform_buffer = new PersistentBuffer(CLSize.cl_float16);
-        bone_reference_buffer = new PersistentBuffer(CLSize.cl_float16);
-        bone_bind_pose_buffer = new PersistentBuffer(CLSize.cl_float16);
-        bone_bind_parent_buffer = new PersistentBuffer(CLSize.cl_int);
-        mesh_reference_buffer = new PersistentBuffer(CLSize.cl_int4);
-        mesh_face_buffer = new PersistentBuffer(CLSize.cl_int4);
+        hull_shift                      = new TransientBuffer(CLSize.cl_int);
+        edge_shift                      = new TransientBuffer(CLSize.cl_int);
+        point_shift                     = new TransientBuffer(CLSize.cl_int);
+        bone_shift                      = new TransientBuffer(CLSize.cl_int);
+        bone_bind_shift                 = new TransientBuffer(CLSize.cl_int);
+        delete_buffer_1                 = new TransientBuffer(CLSize.cl_int2);
+        delete_buffer_2                 = new TransientBuffer(CLSize.cl_int4);
+        delete_partial_buffer_1         = new TransientBuffer(CLSize.cl_int2);
+        delete_partial_buffer_2         = new TransientBuffer(CLSize.cl_int4);
 
-        anim_key_frame_buffer = new PersistentBuffer(CLSize.cl_float4);
-        anim_frame_time_buffer = new PersistentBuffer(CLSize.cl_double);
+        bone_bind_parent_buffer         = new PersistentBuffer(CLSize.cl_int);
 
-        anim_bone_pos_channel_buffer = new PersistentBuffer(CLSize.cl_int2);
-        anim_bone_rot_channel_buffer = new PersistentBuffer(CLSize.cl_int2);
-        anim_bone_scl_channel_buffer = new PersistentBuffer(CLSize.cl_int2);
-        anim_timing_buffer = new PersistentBuffer(CLSize.cl_double2);
-        anim_timing_index_buffer = new PersistentBuffer(CLSize.cl_int);
+        edge_buffer                     = new PersistentBuffer(CLSize.cl_int2);
+        edge_length_buffer              = new PersistentBuffer(CLSize.cl_float);
+        edge_flag_buffer                = new PersistentBuffer(CLSize.cl_int);
+        hull_buffer                     = new PersistentBuffer(CLSize.cl_float4);
+        hull_mesh_id_buffer             = new PersistentBuffer(CLSize.cl_int);
+        hull_rotation_buffer            = new PersistentBuffer(CLSize.cl_float2);
+        hull_element_table_buffer       = new PersistentBuffer(CLSize.cl_int4);
+        hull_flag_buffer                = new PersistentBuffer(CLSize.cl_int4);
+        hull_aabb_buffer                = new PersistentBuffer(CLSize.cl_float4);
+        hull_aabb_index_buffer          = new PersistentBuffer(CLSize.cl_int4);
+        hull_aabb_key_buffer            = new PersistentBuffer(CLSize.cl_int2);
+        hull_bone_buffer                = new PersistentBuffer(CLSize.cl_float16);
+        hull_bone_table_buffer          = new PersistentBuffer(CLSize.cl_int2);
+        point_buffer                    = new PersistentBuffer(CLSize.cl_float4, 50_000L);
+        point_anti_gravity_buffer       = new PersistentBuffer(CLSize.cl_float, 50_000L);
+        point_vertex_table_buffer       = new PersistentBuffer(CLSize.cl_int4, 50_000L);
+        point_bone_table_buffer         = new PersistentBuffer(CLSize.cl_int4, 50_000L);
+        vertex_reference_buffer         = new PersistentBuffer(CLSize.cl_float2);
+        vertex_weight_buffer            = new PersistentBuffer(CLSize.cl_float4);
+        vertex_texture_uv_buffer        = new PersistentBuffer(CLSize.cl_float2);
+        vertex_uv_table_buffer          = new PersistentBuffer(CLSize.cl_int2);
+        model_transform_buffer          = new PersistentBuffer(CLSize.cl_float16);
+        bone_reference_buffer           = new PersistentBuffer(CLSize.cl_float16);
+        bone_bind_pose_buffer           = new PersistentBuffer(CLSize.cl_float16);
+        bone_anim_channel_table_buffer  = new PersistentBuffer(CLSize.cl_int2);
+        mesh_reference_buffer           = new PersistentBuffer(CLSize.cl_int4);
+        mesh_face_buffer                = new PersistentBuffer(CLSize.cl_int4);
+        anim_key_frame_buffer           = new PersistentBuffer(CLSize.cl_float4);
+        anim_frame_time_buffer          = new PersistentBuffer(CLSize.cl_double);
+        anim_bone_pos_channel_buffer    = new PersistentBuffer(CLSize.cl_int2);
+        anim_bone_rot_channel_buffer    = new PersistentBuffer(CLSize.cl_int2);
+        anim_bone_scl_channel_buffer    = new PersistentBuffer(CLSize.cl_int2);
+        anim_timing_buffer              = new PersistentBuffer(CLSize.cl_double2);
+        anim_timing_index_buffer        = new PersistentBuffer(CLSize.cl_int);
 
-
-        bone_anim_channel_table_buffer = new PersistentBuffer(CLSize.cl_int2);
+        armature_bone_buffer            = new PersistentBuffer(CLSize.cl_float16);
+        armature_bone_table_buffer      = new PersistentBuffer(CLSize.cl_int2);
 
 
         gpu_crud.init();
@@ -232,8 +236,8 @@ public class GPUCoreMemory
 
         long create_armature_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature_bone);
         create_armature_bone_k = new CreateArmatureBone_k(GPGPU.command_queue_ptr, create_armature_bone_k_ptr)
-            .ptr_arg(CreateArmatureBone_k.Args.armature_bones, GPGPU.Buffer.armature_bones.pointer)
-            .ptr_arg(CreateArmatureBone_k.Args.bone_bind_tables, GPGPU.Buffer.armature_bone_tables.pointer);
+            .buf_arg(CreateArmatureBone_k.Args.armature_bones, armature_bone_buffer)
+            .buf_arg(CreateArmatureBone_k.Args.bone_bind_tables, armature_bone_table_buffer);
 
         long create_model_transform_k_ptr = gpu_crud.kernel_ptr(Kernel.create_model_transform);
         create_model_transform_k = new CreateModelTransform_k(GPGPU.command_queue_ptr, create_model_transform_k_ptr)
@@ -324,7 +328,7 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.points, point_buffer)
             .buf_arg(CompactArmatures_k.Args.vertex_tables, point_vertex_table_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_tables, point_bone_table_buffer)
-            .ptr_arg(CompactArmatures_k.Args.bone_bind_tables, GPGPU.Buffer.armature_bone_tables.pointer)
+            .buf_arg(CompactArmatures_k.Args.bone_bind_tables, armature_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_index_tables, hull_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.edges, edge_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_shift, bone_shift)
@@ -369,8 +373,8 @@ public class GPUCoreMemory
         long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armature_bones);
         compact_armature_bones_k = new CompactArmatureBones_k(GPGPU.command_queue_ptr, compact_armature_bones_k_ptr)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_shift, bone_bind_shift)
-            .ptr_arg(CompactArmatureBones_k.Args.armature_bones, GPGPU.Buffer.armature_bones.pointer)
-            .ptr_arg(CompactArmatureBones_k.Args.armature_bone_tables, GPGPU.Buffer.armature_bone_tables.pointer);
+            .buf_arg(CompactArmatureBones_k.Args.armature_bones, armature_bone_buffer)
+            .buf_arg(CompactArmatureBones_k.Args.armature_bone_tables, armature_bone_table_buffer);
     }
 
     public ResizableBuffer buffer(BufferType bufferType)
@@ -411,6 +415,8 @@ public class GPUCoreMemory
             case BONE_ANIM_TABLE -> bone_anim_channel_table_buffer;
             case ANIM_TIMING -> anim_timing_buffer;
             case ANIM_TIMING_INDEX -> anim_timing_index_buffer;
+            case ARMATURE_BONE -> armature_bone_buffer;
+            case ARMATURE_BONE_TABLE -> armature_bone_table_buffer;
         };
     }
 
@@ -670,6 +676,10 @@ public class GPUCoreMemory
 
     public int new_armature_bone(int[] bone_bind_table, float[] bone_data)
     {
+        int capacity = armature_bone_index + 1;
+        armature_bone_buffer.ensure_capacity(capacity);
+        armature_bone_table_buffer.ensure_capacity(capacity);
+
         create_armature_bone_k
             .set_arg(CreateArmatureBone_k.Args.target, armature_bone_index)
             .set_arg(CreateArmatureBone_k.Args.new_armature_bone, bone_data)
@@ -931,9 +941,9 @@ public class GPUCoreMemory
         model_transform_buffer.release();
         bone_reference_buffer.release();
         bone_bind_pose_buffer.release();
+        bone_anim_channel_table_buffer.release();
         mesh_reference_buffer.release();
         mesh_face_buffer.release();
-
         anim_key_frame_buffer.release();
         anim_frame_time_buffer.release();
         anim_bone_pos_channel_buffer.release();
@@ -941,7 +951,6 @@ public class GPUCoreMemory
         anim_bone_scl_channel_buffer.release();
         anim_timing_buffer.release();
         anim_timing_index_buffer.release();
-        bone_anim_channel_table_buffer.release();
 
         debug();
 
@@ -986,6 +995,7 @@ public class GPUCoreMemory
         total += model_transform_buffer.debug_data();
         total += bone_reference_buffer.debug_data();
         total += bone_bind_pose_buffer.debug_data();
+        total += bone_anim_channel_table_buffer.debug_data();
         total += mesh_reference_buffer.debug_data();
         total += mesh_face_buffer.debug_data();
         total += anim_key_frame_buffer.debug_data();
@@ -995,7 +1005,6 @@ public class GPUCoreMemory
         total += anim_bone_scl_channel_buffer.debug_data();
         total += anim_timing_buffer.debug_data();
         total += anim_timing_index_buffer.debug_data();
-        total += bone_anim_channel_table_buffer.debug_data();
         System.out.println("---------------------------");
         System.out.println("Total: MB " + ((float) total / 1024f / 1024f));
     }

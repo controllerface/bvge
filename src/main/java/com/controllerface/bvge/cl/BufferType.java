@@ -36,4 +36,6 @@ public enum BufferType
     ANIM_SCL_CHANNEL,
     ANIM_TIMING,
     ANIM_TIMING_INDEX,
+    ARMATURE_BONE,
+    ARMATURE_BONE_TABLE,
 }
