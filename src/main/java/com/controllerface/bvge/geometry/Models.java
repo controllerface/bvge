@@ -637,7 +637,7 @@ public class Models
             init_matrix.compareAndSet(null, parent_transform);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
-            int bind_pose_id = GPGPU.core_memory.new_bone_bind_pose(parent, raw_matrix);
+            int bind_pose_id = GPGPU.core_memory.new_bone_bind_pose(raw_matrix);
             bind_name_map.put(name, bind_pose_id);
             bind_pose_map.put(bind_pose_id, bind_pose);
             transforms.put(name, global_transform);

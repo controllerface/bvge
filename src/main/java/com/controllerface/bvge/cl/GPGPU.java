@@ -99,7 +99,7 @@ public class GPGPU
 
     private enum Program
     {
-        root_hull_filter(new RootHullFilter()),
+        root_hull_filter(new RootHullFilter()), // todo: move this out, renderers should have their own local copy
         scan_int2_array(new ScanInt2Array()),
         scan_int4_array(new ScanInt4Array()),
         scan_int_array(new ScanIntArray()),
@@ -197,24 +197,10 @@ public class GPGPU
         return device;
     }
 
-    private static void init_memory(int max_hulls, int max_points)
+    private static void init_memory()
     {
         atomic_counter_ptr = cl_new_pinned_int();
-        // todo: there should be more granularity than just max hulls and points. There should be
-        //  limits on armatures and other data types.
-
-
         core_memory = new GPUCoreMemory();
-
-        int total = 0;
-
-        System.out.println("---------------------------- BUFFERS ----------------------------");
-        System.out.println("=====================================");
-        System.out.println(" Total (Bytes)       : " + total);
-        System.out.println("                  KB : " + ((float) total / 1024f));
-        System.out.println("                  MB : " + ((float) total / 1024f / 1024f));
-        System.out.println("                  GB : " + ((float) total / 1024f / 1024f / 1024f));
-        System.out.println("---------------------------------------------------------------\n");
     }
 
     /**
@@ -710,7 +696,7 @@ public class GPGPU
         clReleaseMemObject(mem_ptr);
     }
 
-    public static void init(int max_hulls, int max_points)
+    public static void init()
     {
         device_id_ptr = init_device();
 
@@ -765,7 +751,7 @@ public class GPGPU
         //OpenCLUtils.debugDeviceDetails(device_ids);
 
         // create memory buffers
-        init_memory(max_hulls, max_points);
+        init_memory();
 
         // Create re-usable kernel objects
         init_kernels();
@@ -773,13 +759,12 @@ public class GPGPU
 
     public static void destroy()
     {
-        core_memory.destroy();
-
-
         for (Program program : Program.values())
         {
             if (program.gpu != null) program.gpu.destroy();
         }
+
+        core_memory.destroy();
 
         clReleaseCommandQueue(command_queue_ptr);
         clReleaseContext(context_ptr);

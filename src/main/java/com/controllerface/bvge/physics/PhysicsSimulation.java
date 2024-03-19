@@ -19,7 +19,7 @@ public class PhysicsSimulation extends GameSystem
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
     private static final int TARGET_SUB_STEPS = 10;
     private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
-    private static final int EDGE_STEPS = 1;
+    private static final int EDGE_STEPS = 8;
 
     // todo: gravity should not be a constant but calculated based on proximity next to planets and other large bodies
     private static final float GRAVITY_MAGNITUDE = -9.8f * 4;
@@ -68,10 +68,10 @@ public class PhysicsSimulation extends GameSystem
     private final GPUKernel animate_points_k;
     private final GPUKernel resolve_constraints_k;
 
+    private final long counts_buf_size;
     private final long atomic_counter_ptr;
     private final long counts_data_ptr;
     private final long offsets_data_ptr;
-    private final long counts_buf_size;
 
     public final ResizableBuffer point_reaction_counts;
     public final ResizableBuffer point_reaction_offsets;
@@ -99,26 +99,26 @@ public class PhysicsSimulation extends GameSystem
     {
         super(ecs);
         this.uniform_grid = uniform_grid;
+
         counts_buf_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
-        atomic_counter_ptr = GPGPU.cl_new_pinned_int();
 
-        point_reaction_counts = new TransientBuffer(CLSize.cl_int);
-        point_reaction_offsets = new TransientBuffer(CLSize.cl_int);
+        atomic_counter_ptr  = GPGPU.cl_new_pinned_int();
+        counts_data_ptr     = GPGPU.cl_new_buffer(counts_buf_size);
+        offsets_data_ptr    = GPGPU.cl_new_buffer(counts_buf_size);
 
-        reactions_in = new TransientBuffer(CLSize.cl_float4);
-        reactions_out = new TransientBuffer(CLSize.cl_float4);
-        reaction_index = new TransientBuffer(CLSize.cl_int);
-        key_map = new TransientBuffer(CLSize.cl_int);
-        key_bank = new TransientBuffer(CLSize.cl_int);
-        in_bounds = new TransientBuffer(CLSize.cl_int);
-        candidates = new TransientBuffer(CLSize.cl_int2);
-        candidate_counts = new TransientBuffer(CLSize.cl_int2);
-        candidate_offsets = new TransientBuffer(CLSize.cl_int);
-        matches = new TransientBuffer(CLSize.cl_int);
-        matches_used = new TransientBuffer(CLSize.cl_int);
-
-        counts_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
-        offsets_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
+        point_reaction_counts   = new TransientBuffer(CLSize.cl_int);
+        point_reaction_offsets  = new TransientBuffer(CLSize.cl_int);
+        reactions_in            = new TransientBuffer(CLSize.cl_float4);
+        reactions_out           = new TransientBuffer(CLSize.cl_float4);
+        reaction_index          = new TransientBuffer(CLSize.cl_int);
+        key_map                 = new TransientBuffer(CLSize.cl_int);
+        key_bank                = new TransientBuffer(CLSize.cl_int);
+        in_bounds               = new TransientBuffer(CLSize.cl_int);
+        candidates              = new TransientBuffer(CLSize.cl_int2);
+        candidate_counts        = new TransientBuffer(CLSize.cl_int2);
+        candidate_offsets       = new TransientBuffer(CLSize.cl_int);
+        matches                 = new TransientBuffer(CLSize.cl_int);
+        matches_used            = new TransientBuffer(CLSize.cl_int);
 
         integrate.init();
         scan_key_bank.init();
@@ -574,8 +574,6 @@ public class PhysicsSimulation extends GameSystem
     private void scan_reactions()
     {
         GPGPU.scan_int_out(point_reaction_counts.pointer(), point_reaction_offsets.pointer(), GPGPU.core_memory.next_point());
-
-        // it is important to zero out the reactions buffer after the scan. It will be reused during sorting
         point_reaction_counts.clear();
     }
 
@@ -843,7 +841,8 @@ public class PhysicsSimulation extends GameSystem
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
         // convex shape. Animations may move points into positions where the geometry is slightly concave,
         // so this call acts as a small hedge against this happening before collision checks can be performed.
-        resolve_constraints(TARGET_SUB_STEPS);
+        // Because animations may move hulls drastically, this call is given multiple iterations.
+        resolve_constraints(EDGE_STEPS);
 
         this.time_accumulator += dt;
         int sub_ticks = 0;
@@ -876,14 +875,11 @@ public class PhysicsSimulation extends GameSystem
                     // deform on impact, and may fly off in random directions, typically causing simulation failure. The
                     // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
                     // within the simulation.
-                    resolve_constraints(EDGE_STEPS);
+                    resolve_constraints(1);
                 }
                 else
                 {
-                    if (time_accumulator > Float.MIN_VALUE)
-                    {
-                        //System.err.printf("time slip: %f\n", time_accumulator);
-                    }
+                    // todo: when debug logging is added, log the amount of dropped simulation time
                     this.time_accumulator = 0;
                 }
             }
@@ -913,6 +909,8 @@ public class PhysicsSimulation extends GameSystem
         animate_hulls.destroy();
         resolve_constraints.destroy();
 
+        point_reaction_counts.release();
+        point_reaction_offsets.release();
         reactions_in.release();
         reactions_out.release();
         reaction_index.release();

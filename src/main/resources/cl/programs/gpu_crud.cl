@@ -27,21 +27,6 @@ __kernel void create_edge(__global int2 *edges,
                           float new_edge_length,
                           int new_edge_flag)
 {
-    // if ((target > 34415 && target < 34420) || target == 0)
-    // {
-    //     printf("create edge - [%d] p1: %d p2: %d l: %f f: %d \n", target, new_edge.x, new_edge.y, new_edge_length, new_edge_flag);
-    // }
-    // if (target == 34417)
-    // {
-    //     int2 bk1 = edges[0];
-    //     int2 bk2 = edges[34416];
-    //     float bkl1 = edge_lengths[0];
-    //     float bkl2 = edge_lengths[34416];
-    //     int bkf1 = edge_flags[0];
-    //     int bkf2 = edge_flags[34416];
-    //     printf("backup1 edge  [0] p1: %d p2: %d l: %f f: %d \n", bk1.x, bk1.y, bkl1, bkf1);
-    //     printf("backup2 edge  [34416] p1: %d p2: %d l: %f f: %d \n", bk2.x, bk2.y, bkl2, bkf2);
-    // }
     edges[target] = new_edge; 
     edge_lengths[target] = new_edge_length; 
     edge_flags[target] = new_edge_flag; 
@@ -137,13 +122,10 @@ __kernel void create_model_transform(__global float16 *model_transforms,
 }
 
 __kernel void create_bone_bind_pose(__global float16 *bone_bind_poses,
-                                    __global int *bone_bind_parents,
                                     int target,
-                                    float16 new_bone_bind_pose,
-                                    int bone_bind_parent)
+                                    float16 new_bone_bind_pose)
 {
     bone_bind_poses[target] = new_bone_bind_pose; 
-    bone_bind_parents[target] = bone_bind_parent; 
 }
 
 __kernel void create_bone_reference(__global float16 *bone_references,
