@@ -139,7 +139,7 @@ public class HumanoidRenderer extends GameSystem
             .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.uv_buffer, uv_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
-            .ptr_arg(TransferRenderData_k.Args.hull_element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .buf_arg(TransferRenderData_k.Args.hull_element_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
             .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.HULL_MESH_ID))
             .ptr_arg(TransferRenderData_k.Args.mesh_references, GPGPU.Buffer.mesh_references.pointer)
             .ptr_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.Buffer.mesh_faces.pointer)

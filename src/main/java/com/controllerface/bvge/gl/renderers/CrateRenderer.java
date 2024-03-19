@@ -81,7 +81,7 @@ public class CrateRenderer extends GameSystem
         prepare_transforms_k = (new PrepareTransforms_k(GPGPU.command_queue_ptr, ptr))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_ptr)
             .buf_arg(PrepareTransforms_k.Args.transforms, GPGPU.core_memory.get_buffer(BufferType.HULL))
-            .ptr_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.Buffer.hull_rotation.pointer);
+            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(BufferType.HULL_ROTATION));
     }
 
     @Override

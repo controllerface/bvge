@@ -354,7 +354,7 @@ public class GPGPU
          * x: initial reference angle
          * y: current rotation
          */
-        hull_rotation(CLSize.cl_float2),
+//        hull_rotation(CLSize.cl_float2),
 
         /**
          * x: start point index
@@ -362,7 +362,7 @@ public class GPGPU
          * z: start edge index
          * w: end edge index
          */
-        hull_element_tables(CLSize.cl_int4),
+//        hull_element_tables(CLSize.cl_int4),
 
         /**
          * x: hull flags (bit-field)
@@ -597,8 +597,8 @@ public class GPGPU
         Buffer.armature_mass.init(max_hulls);
         Buffer.armature_animation_indices.init(max_hulls);
         Buffer.armature_animation_elapsed.init(max_hulls);
-        Buffer.hull_rotation.init(max_hulls);
-        Buffer.hull_element_tables.init(max_hulls);
+//        Buffer.hull_rotation.init(max_hulls);
+//        Buffer.hull_element_tables.init(max_hulls);
         Buffer.hull_flags.init(max_hulls);
         Buffer.hull_aabb_index.init(max_hulls);
         Buffer.aabb_key_table.init(max_hulls);
@@ -643,8 +643,8 @@ public class GPGPU
             + Buffer.armature_mass.length
             + Buffer.armature_animation_indices.length
             + Buffer.armature_animation_elapsed.length
-            + Buffer.hull_rotation.length
-            + Buffer.hull_element_tables.length
+//            + Buffer.hull_rotation.length
+//            + Buffer.hull_element_tables.length
             + Buffer.hull_flags.length
             + Buffer.mesh_references.length
             + Buffer.mesh_faces.length
@@ -687,8 +687,8 @@ public class GPGPU
         System.out.println("mass                 : " + Buffer.armature_mass.length);
         System.out.println("armature anim index  : " + Buffer.armature_animation_indices.length);
         System.out.println("armature anim times  : " + Buffer.armature_animation_elapsed.length);
-        System.out.println("rotation             : " + Buffer.hull_rotation.length);
-        System.out.println("element table        : " + Buffer.hull_element_tables.length);
+//        System.out.println("rotation             : " + Buffer.hull_rotation.length);
+//        System.out.println("element table        : " + Buffer.hull_element_tables.length);
         System.out.println("hull flags           : " + Buffer.hull_flags.length);
         System.out.println("mesh references      : " + Buffer.mesh_references.length);
         System.out.println("mesh faces           : " + Buffer.mesh_faces.length);

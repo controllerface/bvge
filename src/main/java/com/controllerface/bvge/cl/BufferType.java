@@ -7,4 +7,6 @@ public enum BufferType
     EDGE_LENGTH,
     HULL,
     HULL_MESH_ID,
+    HULL_ROTATION,
+    HULL_ELEMENT_TABLE,
 }

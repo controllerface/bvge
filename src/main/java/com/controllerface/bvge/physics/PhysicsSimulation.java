@@ -136,9 +136,9 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(Integrate_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
             .ptr_arg(Integrate_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
             .ptr_arg(Integrate_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
-            .ptr_arg(Integrate_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .buf_arg(Integrate_k.Args.element_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
             .ptr_arg(Integrate_k.Args.armature_accel, GPGPU.Buffer.armature_accel.pointer)
-            .ptr_arg(Integrate_k.Args.hull_rotations, GPGPU.Buffer.hull_rotation.pointer)
+            .buf_arg(Integrate_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(BufferType.HULL_ROTATION))
             .ptr_arg(Integrate_k.Args.points, GPGPU.Buffer.points.pointer)
             .ptr_arg(Integrate_k.Args.bounds, GPGPU.Buffer.hull_aabb.pointer)
             .ptr_arg(Integrate_k.Args.bounds_index_data, GPGPU.Buffer.hull_aabb_index.pointer)
@@ -230,7 +230,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.reaction_index, reaction_index)
             .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
             .buf_arg(SatCollide_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
-            .ptr_arg(SatCollide_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .buf_arg(SatCollide_k.Args.element_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
             .ptr_arg(SatCollide_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
             .ptr_arg(SatCollide_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.pointer)
             .ptr_arg(SatCollide_k.Args.points, GPGPU.Buffer.points.pointer)
@@ -260,7 +260,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(MoveArmatures_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
             .ptr_arg(MoveArmatures_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
             .ptr_arg(MoveArmatures_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
-            .ptr_arg(MoveArmatures_k.Args.element_tables, GPGPU.Buffer.hull_element_tables.pointer)
+            .buf_arg(MoveArmatures_k.Args.element_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
             .ptr_arg(MoveArmatures_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
             .ptr_arg(MoveArmatures_k.Args.points, GPGPU.Buffer.points.pointer);
 
@@ -304,7 +304,7 @@ public class PhysicsSimulation extends GameSystem
 
         long resolve_constraints_k_ptr = resolve_constraints.kernel_ptr(Kernel.resolve_constraints);
         resolve_constraints_k = new ResolveConstraints_k(GPGPU.command_queue_ptr, resolve_constraints_k_ptr)
-            .ptr_arg(ResolveConstraints_k.Args.element_table, GPGPU.Buffer.hull_element_tables.pointer)
+            .buf_arg(ResolveConstraints_k.Args.element_table, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
             .ptr_arg(ResolveConstraints_k.Args.bounds_bank_dat, GPGPU.Buffer.aabb_key_table.pointer)
             .ptr_arg(ResolveConstraints_k.Args.point, GPGPU.Buffer.points.pointer)
             .buf_arg(ResolveConstraints_k.Args.edges, GPGPU.core_memory.get_buffer(BufferType.EDGE))
