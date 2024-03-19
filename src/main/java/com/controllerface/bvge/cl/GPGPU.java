@@ -334,67 +334,6 @@ public class GPGPU
         point_bone_tables(CLSize.cl_int4),
 
         /*
-        Hulls
-         */
-
-        /**
-         * x: current x position
-         * y: current y position
-         * z: scale x
-         * w: scale y
-         */
-        //hulls(CLSize.cl_float4),
-
-        /**
-         * value: reference mesh id
-         */
-        //hull_mesh_ids(CLSize.cl_int),
-
-        /**
-         * x: initial reference angle
-         * y: current rotation
-         */
-//        hull_rotation(CLSize.cl_float2),
-
-        /**
-         * x: start point index
-         * y: end point index
-         * z: start edge index
-         * w: end edge index
-         */
-//        hull_element_tables(CLSize.cl_int4),
-
-        /**
-         * x: hull flags (bit-field)
-         * y: armature id
-         * z: start bone
-         * w: end bone
-         */
-        hull_flags(CLSize.cl_int4),
-
-        /**
-         * x: corner x position
-         * y: corner y position
-         * z: width
-         * w: height
-         */
-        hull_aabb(CLSize.cl_float4),
-
-        /**
-         * x: minimum x key index
-         * y: maximum x key index
-         * z: minimum y key index
-         * w: maximum y key index
-         */
-        hull_aabb_index(CLSize.cl_int4),
-
-        /**
-         * x: key bank offset
-         * y: key bank size
-         */
-        aabb_key_table(CLSize.cl_int2),
-
-        /*
         Bones
          */
 
@@ -597,16 +536,8 @@ public class GPGPU
         Buffer.armature_mass.init(max_hulls);
         Buffer.armature_animation_indices.init(max_hulls);
         Buffer.armature_animation_elapsed.init(max_hulls);
-//        Buffer.hull_rotation.init(max_hulls);
-//        Buffer.hull_element_tables.init(max_hulls);
-        Buffer.hull_flags.init(max_hulls);
-        Buffer.hull_aabb_index.init(max_hulls);
-        Buffer.aabb_key_table.init(max_hulls);
-//        Buffer.hulls.init(max_hulls);
-//        Buffer.hull_mesh_ids.init(max_hulls);
         Buffer.mesh_references.init(max_hulls);
         Buffer.mesh_faces.init(max_hulls);
-        Buffer.hull_aabb.init(max_hulls);
         Buffer.points.init(max_points);
         Buffer.point_anti_gravity.init(max_points);
         Buffer.point_vertex_tables.init(max_points);
@@ -637,20 +568,12 @@ public class GPGPU
 
         core_memory = new GPUCoreMemory();
 
-        int total = //Buffer.hulls.length
-//            + Buffer.hull_mesh_ids.length
-            + Buffer.armature_accel.length
+        int total = Buffer.armature_accel.length
             + Buffer.armature_mass.length
             + Buffer.armature_animation_indices.length
             + Buffer.armature_animation_elapsed.length
-//            + Buffer.hull_rotation.length
-//            + Buffer.hull_element_tables.length
-            + Buffer.hull_flags.length
             + Buffer.mesh_references.length
             + Buffer.mesh_faces.length
-            + Buffer.hull_aabb.length
-            + Buffer.hull_aabb_index.length
-            + Buffer.aabb_key_table.length
             + Buffer.points.length
             + Buffer.point_anti_gravity.length
             + Buffer.point_vertex_tables.length
@@ -681,21 +604,13 @@ public class GPGPU
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
         System.out.println("points               : " + Buffer.points.length);
-//        System.out.println("hulls                : " + Buffer.hulls.length);
-//        System.out.println("hull mesh ids        : " + Buffer.hull_mesh_ids.length);
         System.out.println("acceleration         : " + Buffer.armature_accel.length);
         System.out.println("mass                 : " + Buffer.armature_mass.length);
         System.out.println("armature anim index  : " + Buffer.armature_animation_indices.length);
         System.out.println("armature anim times  : " + Buffer.armature_animation_elapsed.length);
-//        System.out.println("rotation             : " + Buffer.hull_rotation.length);
-//        System.out.println("element table        : " + Buffer.hull_element_tables.length);
-        System.out.println("hull flags           : " + Buffer.hull_flags.length);
         System.out.println("mesh references      : " + Buffer.mesh_references.length);
         System.out.println("mesh faces           : " + Buffer.mesh_faces.length);
         System.out.println("point anti-grav      : " + Buffer.point_anti_gravity.length);
-        System.out.println("bounding box         : " + Buffer.hull_aabb.length);
-        System.out.println("spatial index        : " + Buffer.hull_aabb_index.length);
-        System.out.println("spatial key bank     : " + Buffer.aabb_key_table.length);
         System.out.println("point vertex tables  : " + Buffer.point_vertex_tables.length);
         System.out.println("point bone tables    : " + Buffer.point_bone_tables.length);
         System.out.println("vertex references    : " + Buffer.vertex_references.length);

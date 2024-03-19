@@ -77,10 +77,10 @@ public class GPUCoreMemory
     private final ResizableBuffer hull_mesh_id_buffer;
     private final ResizableBuffer hull_rotation_buffer;
     private final ResizableBuffer hull_element_table_buffer;
-//    private final ResizableBuffer hull_flag_buffer;
-//    private final ResizableBuffer hull_aabb_buffer;
-//    private final ResizableBuffer hull_aabb_index_buffer;
-//    private final ResizableBuffer hull_key_table_buffer;
+    private final ResizableBuffer hull_flag_buffer;
+    private final ResizableBuffer hull_aabb_buffer;
+    private final ResizableBuffer hull_aabb_index_buffer;
+    private final ResizableBuffer hull_aabb_key_buffer;
 
     private final long delete_counter_ptr;
     private final long position_buffer_ptr;
@@ -109,10 +109,10 @@ public class GPUCoreMemory
         hull_mesh_id_buffer = new PersistentBuffer(CLSize.cl_int);
         hull_rotation_buffer = new PersistentBuffer(CLSize.cl_float2);
         hull_element_table_buffer = new PersistentBuffer(CLSize.cl_int4);
-//        hull_flag_buffer = new PersistentBuffer(CLSize.cl_int4);
-//        hull_aabb_buffer = new PersistentBuffer(CLSize.cl_float4);
-//        hull_aabb_index_buffer = new PersistentBuffer(CLSize.cl_int4);
-//        hull_key_table_buffer = new PersistentBuffer(CLSize.cl_int2);
+        hull_flag_buffer = new PersistentBuffer(CLSize.cl_int4);
+        hull_aabb_buffer = new PersistentBuffer(CLSize.cl_float4);
+        hull_aabb_index_buffer = new PersistentBuffer(CLSize.cl_int4);
+        hull_aabb_key_buffer = new PersistentBuffer(CLSize.cl_int2);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -190,7 +190,7 @@ public class GPUCoreMemory
             .buf_arg(CreateHull_k.Args.hulls, hull_buffer)
             .buf_arg(CreateHull_k.Args.hull_rotations, hull_rotation_buffer)
             .buf_arg(CreateHull_k.Args.element_tables, hull_element_table_buffer)
-            .ptr_arg(CreateHull_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
+            .buf_arg(CreateHull_k.Args.hull_flags, hull_flag_buffer)
             .buf_arg(CreateHull_k.Args.hull_mesh_ids, hull_mesh_id_buffer);
 
         long create_mesh_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_reference);
@@ -226,7 +226,7 @@ public class GPUCoreMemory
         long locate_out_of_bounds_k_ptr = scan_deletes.kernel_ptr(Kernel.locate_out_of_bounds);
         locate_out_of_bounds_k = new LocateOutOfBounds_k(GPGPU.command_queue_ptr, locate_out_of_bounds_k_ptr)
             .ptr_arg(LocateOutOfBounds_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
-            .ptr_arg(LocateOutOfBounds_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
+            .buf_arg(LocateOutOfBounds_k.Args.hull_flags, hull_flag_buffer)
             .ptr_arg(LocateOutOfBounds_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer);
 
         long scan_deletes_single_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_single_block_out);
@@ -235,7 +235,7 @@ public class GPUCoreMemory
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.element_tables, hull_element_table_buffer)
-            .ptr_arg(ScanDeletesSingleBlockOut_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer);
+            .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_flags, hull_flag_buffer);
 
         long scan_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_multi_block_out);
         scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(GPGPU.command_queue_ptr, scan_deletes_multi_block_out_k_ptr)
@@ -244,7 +244,7 @@ public class GPUCoreMemory
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.element_tables, hull_element_table_buffer)
-            .ptr_arg(ScanDeletesMultiBlockOut_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer);
+            .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_flags, hull_flag_buffer);
 
         long complete_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.complete_deletes_multi_block_out);
         complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(GPGPU.command_queue_ptr, complete_deletes_multi_block_out_k_ptr)
@@ -254,7 +254,7 @@ public class GPUCoreMemory
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.element_tables, hull_element_table_buffer)
-            .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer);
+            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_flags, hull_flag_buffer);
 
         long compact_armatures_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armatures);
         compact_armatures_k = new CompactArmatures_k(GPGPU.command_queue_ptr, compact_armatures_k_ptr)
@@ -265,7 +265,7 @@ public class GPUCoreMemory
             .ptr_arg(CompactArmatures_k.Args.armature_animation_elapsed, GPGPU.Buffer.armature_animation_elapsed.pointer)
             .ptr_arg(CompactArmatures_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
             .buf_arg(CompactArmatures_k.Args.hulls, hull_buffer)
-            .ptr_arg(CompactArmatures_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
+            .buf_arg(CompactArmatures_k.Args.hull_flags, hull_flag_buffer)
             .buf_arg(CompactArmatures_k.Args.element_tables, hull_element_table_buffer)
             .ptr_arg(CompactArmatures_k.Args.points, GPGPU.Buffer.points.pointer)
             .ptr_arg(CompactArmatures_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.pointer)
@@ -285,11 +285,11 @@ public class GPUCoreMemory
             .buf_arg(CompactHulls_k.Args.hulls, hull_buffer)
             .buf_arg(CompactHulls_k.Args.hull_mesh_ids, hull_mesh_id_buffer)
             .buf_arg(CompactHulls_k.Args.hull_rotations, hull_rotation_buffer)
-            .ptr_arg(CompactHulls_k.Args.hull_flags, GPGPU.Buffer.hull_flags.pointer)
+            .buf_arg(CompactHulls_k.Args.hull_flags, hull_flag_buffer)
             .buf_arg(CompactHulls_k.Args.element_tables, hull_element_table_buffer)
-            .ptr_arg(CompactHulls_k.Args.bounds, GPGPU.Buffer.hull_aabb.pointer)
-            .ptr_arg(CompactHulls_k.Args.bounds_index_data, GPGPU.Buffer.hull_aabb_index.pointer)
-            .ptr_arg(CompactHulls_k.Args.bounds_bank_data, GPGPU.Buffer.aabb_key_table.pointer);
+            .buf_arg(CompactHulls_k.Args.bounds, hull_aabb_buffer)
+            .buf_arg(CompactHulls_k.Args.bounds_index_data, hull_aabb_index_buffer)
+            .buf_arg(CompactHulls_k.Args.bounds_bank_data, hull_aabb_key_buffer);
 
         long compact_edges_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_edges);
         compact_edges_k = new CompactEdges_k(GPGPU.command_queue_ptr, compact_edges_k_ptr)
@@ -330,6 +330,10 @@ public class GPUCoreMemory
             case HULL_MESH_ID -> hull_mesh_id_buffer;
             case HULL_ROTATION -> hull_rotation_buffer;
             case HULL_ELEMENT_TABLE -> hull_element_table_buffer;
+            case HULL_FLAG -> hull_flag_buffer;
+            case HULL_AABB -> hull_aabb_buffer;
+            case HULL_AABB_INDEX -> hull_aabb_index_buffer;
+            case HULL_AABB_KEY_TABLE -> hull_aabb_key_buffer;
         };
     }
 
@@ -446,10 +450,10 @@ public class GPUCoreMemory
         hull_mesh_id_buffer.ensure_total_capacity(capacity);
         hull_rotation_buffer.ensure_total_capacity(capacity);
         hull_element_table_buffer.ensure_total_capacity(capacity);
-//        hull_flag_buffer.ensure_total_capacity(capacity);
-//        hull_aabb_buffer.ensure_total_capacity(capacity);
-//        hull_aabb_index_buffer.ensure_total_capacity(capacity);
-//        hull_key_table_buffer.ensure_total_capacity(capacity);
+        hull_flag_buffer.ensure_total_capacity(capacity);
+        hull_aabb_buffer.ensure_total_capacity(capacity);
+        hull_aabb_index_buffer.ensure_total_capacity(capacity);
+        hull_aabb_key_buffer.ensure_total_capacity(capacity);
 
         create_hull_k
             .set_arg(CreateHull_k.Args.target, hull_index)

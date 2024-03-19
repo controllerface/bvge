@@ -1,9 +1,6 @@
 package com.controllerface.bvge.gl.renderers;
 
-import com.controllerface.bvge.cl.GPGPU;
-import com.controllerface.bvge.cl.GPUKernel;
-import com.controllerface.bvge.cl.GPUProgram;
-import com.controllerface.bvge.cl.Kernel;
+import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.PrepareBounds_k;
 import com.controllerface.bvge.cl.programs.PrepareBounds;
 import com.controllerface.bvge.ecs.ECS;
@@ -71,7 +68,7 @@ public class BoundingBoxRenderer extends GameSystem
         long ptr = prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
         prepare_bounds_k = new PrepareBounds_k(GPGPU.command_queue_ptr, ptr)
             .ptr_arg(PrepareBounds_k.Args.vbo, vbo_ptr)
-            .ptr_arg(PrepareBounds_k.Args.bounds, GPGPU.Buffer.hull_aabb.pointer);
+            .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB));
     }
 
     @Override
