@@ -58,6 +58,7 @@ public class GPUCoreMemory
     private final GPUKernel compact_bones_k;
     private final GPUKernel compact_armature_bones_k;
 
+    // internally used buffers
     private final ResizableBuffer hull_shift;
     private final ResizableBuffer edge_shift;
     private final ResizableBuffer point_shift;
@@ -68,8 +69,18 @@ public class GPUCoreMemory
     private final ResizableBuffer delete_partial_buffer_1;
     private final ResizableBuffer delete_partial_buffer_2;
 
+    // externally used buffers
     private final ResizableBuffer edge_buffer;
-
+    private final ResizableBuffer edge_length_buffer;
+    private final ResizableBuffer edge_flag_buffer;
+//    private final ResizableBuffer hull_buffer;
+//    private final ResizableBuffer hull_mesh_id_buffer;
+//    private final ResizableBuffer hull_rotation_buffer;
+//    private final ResizableBuffer hull_element_table_buffer;
+//    private final ResizableBuffer hull_flag_buffer;
+//    private final ResizableBuffer hull_aabb_buffer;
+//    private final ResizableBuffer hull_aabb_index_buffer;
+//    private final ResizableBuffer hull_key_table_buffer;
 
     private final long delete_counter_ptr;
     private final long position_buffer_ptr;
@@ -91,8 +102,17 @@ public class GPUCoreMemory
         delete_partial_buffer_1 = new TransientBuffer(CLSize.cl_int2);
         delete_partial_buffer_2 = new TransientBuffer(CLSize.cl_int4);
 
-        //edge_buffer = new PersistentBuffer(CLSize.cl_int2, 34_400);
         edge_buffer = new PersistentBuffer(CLSize.cl_int2);
+        edge_length_buffer = new PersistentBuffer(CLSize.cl_float);
+        edge_flag_buffer = new PersistentBuffer(CLSize.cl_int);
+//        hull_buffer = new PersistentBuffer(CLSize.cl_float4);
+//        hull_mesh_id_buffer = new PersistentBuffer(CLSize.cl_int);
+//        hull_rotation_buffer = new PersistentBuffer(CLSize.cl_float2);
+//        hull_element_table_buffer = new PersistentBuffer(CLSize.cl_int4);
+//        hull_flag_buffer = new PersistentBuffer(CLSize.cl_int4);
+//        hull_aabb_buffer = new PersistentBuffer(CLSize.cl_float4);
+//        hull_aabb_index_buffer = new PersistentBuffer(CLSize.cl_int4);
+//        hull_key_table_buffer = new PersistentBuffer(CLSize.cl_int2);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -112,8 +132,8 @@ public class GPUCoreMemory
         long create_edge_k_ptr = gpu_crud.kernel_ptr(Kernel.create_edge);
         create_edge_k = new CreateEdge_k(GPGPU.command_queue_ptr, create_edge_k_ptr)
             .buf_arg(CreateEdge_k.Args.edges, edge_buffer)
-            .ptr_arg(CreateEdge_k.Args.edge_lengths, GPGPU.Buffer.edge_lengths.pointer)
-            .ptr_arg(CreateEdge_k.Args.edge_flags, GPGPU.Buffer.edge_flags.pointer);
+            .buf_arg(CreateEdge_k.Args.edge_lengths, edge_length_buffer)
+            .buf_arg(CreateEdge_k.Args.edge_flags, edge_flag_buffer);
 
         long create_keyframe_k_ptr = gpu_crud.kernel_ptr(Kernel.create_keyframe);
         create_keyframe_k = new CreateKeyFrame_k(GPGPU.command_queue_ptr, create_keyframe_k_ptr)
@@ -275,8 +295,8 @@ public class GPUCoreMemory
         compact_edges_k = new CompactEdges_k(GPGPU.command_queue_ptr, compact_edges_k_ptr)
             .buf_arg(CompactEdges_k.Args.edge_shift, edge_shift)
             .buf_arg(CompactEdges_k.Args.edges, edge_buffer)
-            .ptr_arg(CompactEdges_k.Args.edge_lengths, GPGPU.Buffer.edge_lengths.pointer)
-            .ptr_arg(CompactEdges_k.Args.edge_flags, GPGPU.Buffer.edge_flags.pointer);
+            .buf_arg(CompactEdges_k.Args.edge_lengths, edge_length_buffer)
+            .buf_arg(CompactEdges_k.Args.edge_flags, edge_flag_buffer);
 
         long compact_points_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_points);
         compact_points_k = new CompactPoints_k(GPGPU.command_queue_ptr, compact_points_k_ptr)
@@ -304,6 +324,10 @@ public class GPUCoreMemory
         return switch (bufferType)
         {
             case EDGE -> edge_buffer;
+            case EDGE_FLAG -> edge_flag_buffer;
+            case EDGE_LENGTH -> edge_length_buffer;
+//            case HULL -> hull_buffer;
+//            case HULL_MESH_ID -> hull_mesh_id_buffer;
         };
     }
 
@@ -385,12 +409,10 @@ public class GPUCoreMemory
 
     public int new_edge(int p1, int p2, float l, int flags)
     {
-        edge_buffer.ensure_total_capacity(edge_index + 1);
-
-//        if ((edge_index > 34415 && edge_index < 34420) || edge_index == 0)
-//        {
-//            System.out.printf("new edge ---- [%d] p1: %d p2: %d l: %f f: %d \n", edge_index, p1, p2, l, flags);
-//        }
+        int required_capacity = edge_index + 1;
+        edge_buffer.ensure_total_capacity(required_capacity);
+        edge_length_buffer.ensure_total_capacity(required_capacity);
+        edge_flag_buffer.ensure_total_capacity(required_capacity);
 
         create_edge_k
             .set_arg(CreateEdge_k.Args.target, edge_index)
@@ -417,6 +439,16 @@ public class GPUCoreMemory
 
     public int new_hull(int mesh_id, float[] transform, float[] rotation, int[] table, int[] flags)
     {
+//        int capacity = hull_index + 1;
+//        hull_buffer.ensure_total_capacity(capacity);
+//        hull_mesh_id_buffer.ensure_total_capacity(capacity);
+//        hull_rotation_buffer.ensure_total_capacity(capacity);
+//        hull_element_table_buffer.ensure_total_capacity(capacity);
+//        hull_flag_buffer.ensure_total_capacity(capacity);
+//        hull_aabb_buffer.ensure_total_capacity(capacity);
+//        hull_aabb_index_buffer.ensure_total_capacity(capacity);
+//        hull_key_table_buffer.ensure_total_capacity(capacity);
+
         create_hull_k
             .set_arg(CreateHull_k.Args.target, hull_index)
             .set_arg(CreateHull_k.Args.new_hull, transform)
