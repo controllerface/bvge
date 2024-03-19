@@ -1,5 +1,6 @@
 package com.controllerface.bvge.game;
 
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
@@ -105,7 +106,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.particle(x, y, size, 1f);
+                var armature_index = PhysicsObjects.particle(x, y, size, .1f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -245,21 +246,30 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 300, 0);
+        genTestFigure(1f, 300, 350);
 
-//        genTestFigureNPC(1f, 200, 0);
-//        genTestFigureNPC(1f, 200, 100);
-//        genTestFigureNPC(1f, 200, 250);
-//        genTestFigureNPC(1f, 100, 50);
+        genTestFigureNPC(1f, 200, 0);
+        genTestFigureNPC(1f, 200, 100);
+        genTestFigureNPC(1f, 200, 250);
+        genTestFigureNPC(1f, 100, 50);
 
-        //genCircles(100, 5f, 5f, 0, 100);
+        //genCircles(200, 5f, 5f, -300, 100);
         genSquares(100,  5f, 5f, -120, 200);
         //genCrates2(100, 5f, 0.025f, 100, 100);
-        //genTriangles(100,  5f, 5f, 120, 100);
+        //genTriangles(150,  5f, 5f, -120, 100);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);
         genWall(5, 150f, 150f, 1130, -100);
+
+        try
+        {
+            Thread.sleep(5000);
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
 
         loadSystems();
     }

@@ -10,12 +10,12 @@ public class CompleteDeletesMultiBlockOut_k extends GPUKernel
         hull_tables,
         element_tables,
         hull_flags,
-        output,
+        output1,
         output2,
         sz,
-        buffer,
+        buffer1,
         buffer2,
-        part,
+        part1,
         part2,
         n;
     }

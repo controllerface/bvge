@@ -2,8 +2,8 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
-import com.controllerface.bvge.gpu.GPUCoreMemory;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -19,16 +19,9 @@ import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
 /**
- * Core class used for executing GPU programs.
- * -
- * This class provides core functionality used by the engine to execute parallelized workloads,
- * primarily for physics calculations and pre-processing for rendering operations. This class has
- * two main organizational themes, one internal and one external. Internally, the core components
- * are the GPU programs, GPU kernels, and memory buffers used with them. Externally, this class
- * mainly provides a series of functions that are used to execute predefined GPU programs. This
- * class uses the OpenCL and OpenGL APIs to provide all features.
+ * Core class used for executing General Purpose GPU (GPGPU) functions
  */
-public class GPU
+public class GPGPU
 {
     //#region Constants
 
@@ -106,7 +99,7 @@ public class GPU
 
     private enum Program
     {
-        root_hull_filter(new RootHullFilter()),
+        root_hull_filter(new RootHullFilter()), // todo: move this out, renderers should have their own local copy
         scan_int2_array(new ScanInt2Array()),
         scan_int4_array(new ScanInt4Array()),
         scan_int_array(new ScanIntArray()),
@@ -140,438 +133,6 @@ public class GPU
     private static GPUKernel complete_int_multi_block_out_k;
     private static GPUKernel root_hull_count_k;
     private static GPUKernel root_hull_filter_k;
-
-    //#endregion
-
-    //#region Buffer Objects
-
-    public enum Buffer
-    {
-        /*
-        Reference objects:
-        - Objects in memory at runtime may reference these objects
-        - Data stored in references should be considered immutable once written
-         */
-
-        /**
-         * x: x position
-         * y: y position
-         */
-        vertex_references(CLSize.cl_float2),
-
-        /**
-         * x: bone 1 weight
-         * y: bone 2 weight
-         * z: bone 3 weight
-         * w: bone 4 weight
-         */
-        vertex_weights(CLSize.cl_float4),
-
-        /**
-         * x: u coordinate
-         * y: v coordinate
-         */
-        texture_uvs(CLSize.cl_float2),
-
-        /**
-         * x: start UV index
-         * y: end UV index
-         */
-        uv_tables(CLSize.cl_int2),
-
-        /**
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         */
-        model_transforms(CLSize.cl_float16),
-
-        /**
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         */
-        bone_references(CLSize.cl_float16),
-
-        /**
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         */
-        bone_bind_poses(CLSize.cl_float16),
-
-        /**
-         * value: reference index of the parent bone bind pose
-         */
-        bone_bind_parents(CLSize.cl_int),
-
-        /**
-         * x: start vertex index
-         * y: end vertex index
-         * z: start face index
-         * w: end face index
-         */
-        mesh_references(CLSize.cl_int4),
-
-        /**
-         * x: vertex 1 index
-         * y: vertex 2 index
-         * z: vertex 3 index
-         * w: parent reference mesh ID
-         */
-        mesh_faces(CLSize.cl_int4),
-
-        /**
-         * x: vector x / quaternion x
-         * y: vector y / quaternion y
-         * z: vector z / quaternion z
-         * w: vector w / quaternion w
-         */
-        key_frames(CLSize.cl_float4),
-
-        /**
-         * value: key frame timestamp
-         */
-        frame_times(CLSize.cl_double),
-
-        /**
-         * x: position channel start index
-         * y: position channel end index
-         */
-        bone_pos_channel_tables(CLSize.cl_int2),
-
-        /**
-         * x: rotation channel start index
-         * y: rotation channel end index
-         */
-        bone_rot_channel_tables(CLSize.cl_int2),
-
-        /**
-         * x: scaling channel start index
-         * y: scaling channel end index
-         */
-        bone_scl_channel_tables(CLSize.cl_int2),
-
-        /**
-         * x: bone channel start index
-         * y: bone channel end index
-         */
-        bone_channel_tables(CLSize.cl_int2),
-
-        /**
-         * x: animation duration
-         * y: ticks per second (FPS)
-         */
-        animation_timings(CLSize.cl_double2),
-
-        /**
-         * value: animation timing index
-         */
-        animation_timing_indices(CLSize.cl_int),
-
-        /*
-        Points
-         */
-
-        /**
-         * x: current x position
-         * y: current y position
-         * z: previous x position
-         * w: previous y position
-         */
-        points(CLSize.cl_float4),
-
-        /**
-         * value: reaction count
-         */
-        point_reactions(CLSize.cl_int),
-
-        /**
-         * value: reaction buffer offset
-         */
-        point_offsets(CLSize.cl_int),
-
-        /**
-         * value: antigravity magnitude
-         */
-        point_anti_gravity(CLSize.cl_float),
-
-        /**
-         * x: reference vertex index
-         * y: hull index
-         * z: vertex flags (bit field)
-         * w: (unused)
-         */
-        point_vertex_tables(CLSize.cl_int4),
-
-        /**
-         * x: bone 1 instance id
-         * y: bone 2 instance id
-         * z: bone 3 instance id
-         * w: bone 4 instance id
-         */
-        point_bone_tables(CLSize.cl_int4),
-
-        /*
-        Edges
-         */
-
-        /**
-         * x: point 1 index
-         * y: point 2 index
-         * z: distance constraint
-         * w: edge flags (bit-field)
-         * note: x, y, and w values are cast to int during use
-         */
-        edges(CLSize.cl_float4),
-
-        /*
-        Hulls
-         */
-
-        /**
-         * x: current x position
-         * y: current y position
-         * z: scale x
-         * w: scale y
-         */
-        hulls(CLSize.cl_float4),
-
-        /**
-         * value: reference mesh id
-         */
-        hull_mesh_ids(CLSize.cl_int),
-
-        /**
-         * x: initial reference angle
-         * y: current rotation
-         */
-        hull_rotation(CLSize.cl_float2),
-
-        /**
-         * x: start point index
-         * y: end point index
-         * z: start edge index
-         * w: end edge index
-         */
-        hull_element_tables(CLSize.cl_int4),
-
-        /**
-         * x: hull flags (bit-field)
-         * y: armature id
-         * z: start bone
-         * w: end bone
-         */
-        hull_flags(CLSize.cl_int4),
-
-        /**
-         * x: corner x position
-         * y: corner y position
-         * z: width
-         * w: height
-         */
-        aabb(CLSize.cl_float4),
-
-        /**
-         * x: minimum x key index
-         * y: maximum x key index
-         * z: minimum y key index
-         * w: maximum y key index
-         */
-        aabb_index(CLSize.cl_int4),
-
-        /**
-         * x: key bank offset
-         * y: key bank size
-         */
-        aabb_key_table(CLSize.cl_int2),
-
-        /*
-        Bones
-         */
-
-        /**
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         */
-        bone_instances(CLSize.cl_float16),
-
-        /**
-         * x: bone inverse bind pose index (mesh-space)
-         * y: bone bind pose index (model space)
-         */
-        bone_index_tables(CLSize.cl_int2),
-
-
-        /**
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         */
-        armatures_bones(CLSize.cl_float16),
-
-        /**
-         * x: bind pose reference id
-         * y: armature bone parent id
-         */
-        bone_bind_tables(CLSize.cl_int2),
-
-        /*
-        Armatures
-         */
-
-        /**
-         * x: current x position
-         * y: current y position
-         * z: previous x position
-         * w: previous y position
-         */
-        armatures(CLSize.cl_float4),
-
-        /**
-         * x: root hull index
-         * y: model id
-         * z: armature flags (bit-field)
-         * w: model transform index
-         */
-        armature_flags(CLSize.cl_int4),
-
-        /**
-         * x: current x acceleration
-         * y: current y acceleration
-         */
-        armature_accel(CLSize.cl_float2),
-
-        /**
-         * value: mass of the armature
-         */
-        armature_mass(CLSize.cl_float),
-
-        /**
-         * value: the currently selected animation index
-         */
-        armature_animation_indices(CLSize.cl_int),
-
-        /**
-         * value: the last rendered timestamp
-         */
-        armature_animation_elapsed(CLSize.cl_double),
-
-        /**
-         * x: start hull index
-         * y: end hull index
-         * z: start bone anim index
-         * w: end bone anim index
-         */
-        armature_hull_table(CLSize.cl_int4),
-
-        /*
-        Buffer Compaction
-         */
-
-        /**
-         * During the armature deletion process, these buffers are written to, and store the number of
-         * positions that the corresponding values must shift left within their own buffers when the
-         * buffer compaction step is reached. Each index is aligned with the corresponding data type
-         * that will be shifted. I.e. every bone in the bone buffer has a corresponding entry in the
-         * bone shift buffer. Points, edges, and hulls work the same way.
-         */
-        bone_shift(CLSize.cl_int),
-        point_shift(CLSize.cl_int),
-        edge_shift(CLSize.cl_int),
-        hull_shift(CLSize.cl_int),
-        bone_bind_shift(CLSize.cl_int),
-
-        ;
-
-        public GPUMemory memory;
-        final int size;
-        int length;
-
-        Buffer(int valueSize)
-        {
-            size = valueSize;
-        }
-
-        public void init(int buffer_length)
-        {
-            this.length = buffer_length * size;
-            var mem = cl_new_buffer(this.length);
-            this.memory = new GPUMemory(mem);
-            clear();
-        }
-
-        public void clear()
-        {
-            cl_zero_buffer(this.memory.pointer(), this.length);
-        }
-    }
 
     //#endregion
 
@@ -636,170 +197,10 @@ public class GPU
         return device;
     }
 
-    private static void init_memory(int max_hulls, int max_points)
+    private static void init_memory()
     {
         atomic_counter_ptr = cl_new_pinned_int();
-        // todo: there should be more granularity than just max hulls and points. There should be
-        //  limits on armatures and other data types.
-
-        Buffer.armature_accel.init(max_hulls);
-        Buffer.armature_mass.init(max_hulls);
-        Buffer.armature_animation_indices.init(max_hulls);
-        Buffer.armature_animation_elapsed.init(max_hulls);
-        Buffer.hull_rotation.init(max_hulls);
-        Buffer.hull_element_tables.init(max_hulls);
-        Buffer.hull_flags.init(max_hulls);
-        Buffer.aabb_index.init(max_hulls);
-        Buffer.aabb_key_table.init(max_hulls);
-        Buffer.hulls.init(max_hulls);
-        Buffer.hull_mesh_ids.init(max_hulls);
-        Buffer.mesh_references.init(max_hulls);
-        Buffer.mesh_faces.init(max_hulls);
-        Buffer.aabb.init(max_hulls);
-        Buffer.points.init(max_points);
-        Buffer.point_reactions.init(max_points);
-        Buffer.point_offsets.init(max_points);
-        Buffer.point_anti_gravity.init(max_points);
-        Buffer.edges.init(max_points);
-        Buffer.point_vertex_tables.init(max_points);
-        Buffer.point_bone_tables.init(max_points);
-        Buffer.vertex_references.init(max_points);
-        Buffer.vertex_weights.init(max_points);
-        Buffer.texture_uvs.init(max_points);
-        Buffer.uv_tables.init(max_points);
-        Buffer.bone_bind_poses.init(max_hulls);
-        Buffer.bone_bind_parents.init(max_hulls);
-        Buffer.bone_references.init(max_points);
-        Buffer.bone_instances.init(max_points);
-        Buffer.bone_index_tables.init(max_points);
-        Buffer.bone_bind_tables.init(max_points);
-        Buffer.model_transforms.init(max_points);
-        Buffer.armatures.init(max_points);
-        Buffer.armature_flags.init(max_points);
-        Buffer.armatures_bones.init(max_points);
-        Buffer.armature_hull_table.init(max_hulls);
-        Buffer.key_frames.init(max_points);
-        Buffer.frame_times.init(max_points);
-        Buffer.bone_pos_channel_tables.init(max_points);
-        Buffer.bone_rot_channel_tables.init(max_points);
-        Buffer.bone_scl_channel_tables.init(max_points);
-        Buffer.bone_channel_tables.init(max_points);
-        Buffer.animation_timings.init(max_points);
-        Buffer.animation_timing_indices.init(max_points);
-        Buffer.bone_shift.init(max_points);
-        Buffer.point_shift.init(max_points);
-        Buffer.edge_shift.init(max_points);
-        Buffer.hull_shift.init(max_hulls);
-        Buffer.bone_bind_shift.init(max_hulls);
-
         core_memory = new GPUCoreMemory();
-
-        int total = Buffer.hulls.length
-            + Buffer.hull_mesh_ids.length
-            + Buffer.armature_accel.length
-            + Buffer.armature_mass.length
-            + Buffer.armature_animation_indices.length
-            + Buffer.armature_animation_elapsed.length
-            + Buffer.hull_rotation.length
-            + Buffer.hull_element_tables.length
-            + Buffer.hull_flags.length
-            + Buffer.mesh_references.length
-            + Buffer.mesh_faces.length
-            + Buffer.aabb.length
-            + Buffer.aabb_index.length
-            + Buffer.aabb_key_table.length
-            + Buffer.points.length
-            + Buffer.point_reactions.length
-            + Buffer.point_offsets.length
-            + Buffer.point_anti_gravity.length
-            + Buffer.edges.length
-            + Buffer.point_vertex_tables.length
-            + Buffer.point_bone_tables.length
-            + Buffer.vertex_references.length
-            + Buffer.vertex_weights.length
-            + Buffer.texture_uvs.length
-            + Buffer.uv_tables.length
-            + Buffer.bone_bind_poses.length
-            + Buffer.bone_bind_parents.length
-            + Buffer.bone_references.length
-            + Buffer.bone_instances.length
-            + Buffer.bone_index_tables.length
-            + Buffer.bone_bind_tables.length
-            + Buffer.model_transforms.length
-            + Buffer.armatures.length
-            + Buffer.armature_flags.length
-            + Buffer.armatures_bones.length
-            + Buffer.armature_hull_table.length
-            + Buffer.key_frames.length
-            + Buffer.frame_times.length
-            + Buffer.bone_pos_channel_tables.length
-            + Buffer.bone_rot_channel_tables.length
-            + Buffer.bone_scl_channel_tables.length
-            + Buffer.bone_channel_tables.length
-            + Buffer.animation_timings.length
-            + Buffer.animation_timing_indices.length
-            + Buffer.bone_shift.length
-            + Buffer.point_shift.length
-            + Buffer.edge_shift.length
-            + Buffer.hull_shift.length
-            + Buffer.bone_bind_shift.length;
-
-        System.out.println("---------------------------- BUFFERS ----------------------------");
-        System.out.println("points               : " + Buffer.points.length);
-        System.out.println("edges                : " + Buffer.edges.length);
-        System.out.println("hulls                : " + Buffer.hulls.length);
-        System.out.println("hull mesh ids        : " + Buffer.hull_mesh_ids.length);
-        System.out.println("acceleration         : " + Buffer.armature_accel.length);
-        System.out.println("mass                 : " + Buffer.armature_mass.length);
-        System.out.println("armature anim index  : " + Buffer.armature_animation_indices.length);
-        System.out.println("armature anim times  : " + Buffer.armature_animation_elapsed.length);
-        System.out.println("rotation             : " + Buffer.hull_rotation.length);
-        System.out.println("element table        : " + Buffer.hull_element_tables.length);
-        System.out.println("hull flags           : " + Buffer.hull_flags.length);
-        System.out.println("mesh references      : " + Buffer.mesh_references.length);
-        System.out.println("mesh faces           : " + Buffer.mesh_faces.length);
-        System.out.println("point reactions      : " + Buffer.point_reactions.length);
-        System.out.println("point offsets        : " + Buffer.point_offsets.length);
-        System.out.println("point anti-grav      : " + Buffer.point_anti_gravity.length);
-        System.out.println("bounding box         : " + Buffer.aabb.length);
-        System.out.println("spatial index        : " + Buffer.aabb_index.length);
-        System.out.println("spatial key bank     : " + Buffer.aabb_key_table.length);
-        System.out.println("point vertex tables  : " + Buffer.point_vertex_tables.length);
-        System.out.println("point bone tables    : " + Buffer.point_bone_tables.length);
-        System.out.println("vertex references    : " + Buffer.vertex_references.length);
-        System.out.println("vertex weights       : " + Buffer.vertex_weights.length);
-        System.out.println("texture uvs          : " + Buffer.texture_uvs.length);
-        System.out.println("uv maps              : " + Buffer.uv_tables.length);
-        System.out.println("bone bind poses      : " + Buffer.bone_bind_poses.length);
-        System.out.println("bone bind parents    : " + Buffer.bone_bind_parents.length);
-        System.out.println("bone references      : " + Buffer.bone_references.length);
-        System.out.println("bone instances       : " + Buffer.bone_instances.length);
-        System.out.println("bone index           : " + Buffer.bone_index_tables.length);
-        System.out.println("bone bind indices    : " + Buffer.bone_bind_tables.length);
-        System.out.println("model transforms     : " + Buffer.model_transforms.length);
-        System.out.println("armatures            : " + Buffer.armatures.length);
-        System.out.println("armature flags       : " + Buffer.armature_flags.length);
-        System.out.println("armature bones       : " + Buffer.armatures_bones.length);
-        System.out.println("hull tables          : " + Buffer.armature_hull_table.length);
-        System.out.println("keyframes            : " + Buffer.key_frames.length);
-        System.out.println("frame times          : " + Buffer.frame_times.length);
-        System.out.println("position channels    : " + Buffer.bone_pos_channel_tables.length);
-        System.out.println("rotation channels    : " + Buffer.bone_rot_channel_tables.length);
-        System.out.println("scaling channels     : " + Buffer.bone_scl_channel_tables.length);
-        System.out.println("bone channels        : " + Buffer.bone_channel_tables.length);
-        System.out.println("animation timings    : " + Buffer.animation_timings.length);
-        System.out.println("animation indices    : " + Buffer.animation_timing_indices.length);
-        System.out.println("bone shift           : " + Buffer.bone_shift.length);
-        System.out.println("point shift          : " + Buffer.point_shift.length);
-        System.out.println("edge shift           : " + Buffer.edge_shift.length);
-        System.out.println("hull shift           : " + Buffer.hull_shift.length);
-        System.out.println("bone bind shift      : " + Buffer.bone_bind_shift.length);
-        System.out.println("=====================================");
-        System.out.println(" Total (Bytes)       : " + total);
-        System.out.println("                  KB : " + ((float) total / 1024f));
-        System.out.println("                  MB : " + ((float) total / 1024f / 1024f));
-        System.out.println("                  GB : " + ((float) total / 1024f / 1024f / 1024f));
-        System.out.println("---------------------------------------------------------------\n");
     }
 
     /**
@@ -853,11 +254,11 @@ public class GPU
 
         long root_hull_filter_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_filter);
         root_hull_filter_k = new RootHullFilter_k(command_queue_ptr, root_hull_filter_ptr)
-            .mem_arg(RootHullFilter_k.Args.armature_flags, Buffer.armature_flags.memory);
+            .buf_arg(RootHullFilter_k.Args.armature_flags, core_memory.buffer(BufferType.ARMATURE_FLAG));
 
         long root_hull_count_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_count);
         root_hull_count_k = new RootHullCount_k(command_queue_ptr, root_hull_count_ptr)
-            .mem_arg(RootHullCount_k.Args.armature_flags, Buffer.armature_flags.memory);
+            .buf_arg(RootHullCount_k.Args.armature_flags, core_memory.buffer(BufferType.ARMATURE_FLAG));
     }
 
     //#endregion
@@ -892,14 +293,18 @@ public class GPU
 
     public static void cl_zero_buffer(long buffer_ptr, long buffer_size)
     {
-        clEnqueueFillBuffer(command_queue_ptr,
-            buffer_ptr,
-            ZERO_PATTERN_BUFFER,
-            0,
-            buffer_size,
-            null,
-            null
-            );
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var event = mem_stack.callocPointer(1);
+            clEnqueueFillBuffer(command_queue_ptr,
+                buffer_ptr,
+                ZERO_PATTERN_BUFFER,
+                0,
+                buffer_size,
+                null,
+                event);
+            clWaitForEvents(event);
+        }
     }
 
     public static long cl_new_pinned_buffer(long size)
@@ -922,14 +327,14 @@ public class GPU
             null);
 
         assert out != null;
-        int[] xa = new int[count];
-        var ib = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+        int[] result = new int[count];
+        var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
         for (int i = 0; i < count; i++)
         {
-            xa[i] = ib.get(i);
+            result[i] = int_buffer.get(i);
         }
         clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
-        return xa;
+        return result;
     }
 
     public static float[] cl_read_pinned_float_buffer(long pinned_ptr, long size, int count)
@@ -946,14 +351,14 @@ public class GPU
             null);
 
         assert out != null;
-        float[] xa = new float[count];
-        var ib = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+        float[] result = new float[count];
+        var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
         for (int i = 0; i < count; i++)
         {
-            xa[i] = ib.get(i);
+            result[i] = float_buffer.get(i);
         }
         clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
-        return xa;
+        return result;
     }
 
     public static long cl_new_pinned_int()
@@ -979,6 +384,21 @@ public class GPU
         int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
         clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
         return result;
+    }
+
+    public static void cl_transfer_buffer(long src_ptr, long dst_ptr, long size)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var event = mem_stack.callocPointer(1);
+            int r = clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, event);
+            clWaitForEvents(event);
+            if (r != CL_SUCCESS)
+            {
+                System.out.println("Error on buffer copy: " + r);
+                System.exit(1);
+            }
+        }
     }
 
     public static int work_group_count(int n)
@@ -1009,7 +429,7 @@ public class GPU
         root_hull_count_k
             .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .call(arg_long(GPU.core_memory.next_armature()));
+            .call(arg_long(GPGPU.core_memory.next_armature()));
 
         int final_count = cl_read_pinned_int(atomic_counter_ptr);
 
@@ -1027,7 +447,7 @@ public class GPU
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .call(arg_long(GPU.core_memory.next_armature()));
+            .call(arg_long(GPGPU.core_memory.next_armature()));
 
         return new HullIndexData(hulls_out, final_count);
     }
@@ -1276,7 +696,7 @@ public class GPU
         clReleaseMemObject(mem_ptr);
     }
 
-    public static void init(int max_hulls, int max_points)
+    public static void init()
     {
         device_id_ptr = init_device();
 
@@ -1331,7 +751,7 @@ public class GPU
         //OpenCLUtils.debugDeviceDetails(device_ids);
 
         // create memory buffers
-        init_memory(max_hulls, max_points);
+        init_memory();
 
         // Create re-usable kernel objects
         init_kernels();
@@ -1339,17 +759,12 @@ public class GPU
 
     public static void destroy()
     {
-        core_memory.destroy();
-
-        for (Buffer buffer : Buffer.values())
-        {
-            if (buffer.memory != null) buffer.memory.release();
-        }
-
         for (Program program : Program.values())
         {
             if (program.gpu != null) program.gpu.destroy();
         }
+
+        core_memory.destroy();
 
         clReleaseCommandQueue(command_queue_ptr);
         clReleaseContext(context_ptr);

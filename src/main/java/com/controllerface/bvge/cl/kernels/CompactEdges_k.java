@@ -7,7 +7,9 @@ public class CompactEdges_k extends GPUKernel
     public enum Args
     {
         edge_shift,
-        edges;
+        edges,
+        edge_lengths,
+        edge_flags;
     }
 
     public CompactEdges_k(long command_queue_ptr, long kernel_ptr)

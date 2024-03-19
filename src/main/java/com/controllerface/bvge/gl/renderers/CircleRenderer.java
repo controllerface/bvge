@@ -56,15 +56,15 @@ public class CircleRenderer extends GameSystem
 
     private void init_CL()
     {
-        vbo_ptr = GPU.share_memory(vbo);
+        vbo_ptr = GPGPU.share_memory(vbo);
 
         prepare_transforms.init();
 
         long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
-        prepare_transforms_k = (new PrepareTransforms_k(GPU.command_queue_ptr, ptr))
+        prepare_transforms_k = (new PrepareTransforms_k(GPGPU.command_queue_ptr, ptr))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_ptr)
-            .mem_arg(PrepareTransforms_k.Args.transforms, GPU.Buffer.hulls.memory)
-            .mem_arg(PrepareTransforms_k.Args.hull_rotations, GPU.Buffer.hull_rotation.memory);
+            .buf_arg(PrepareTransforms_k.Args.transforms, GPGPU.core_memory.buffer(BufferType.HULL))
+            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.buffer(BufferType.HULL_ROTATION));
     }
 
     @Override
@@ -72,9 +72,9 @@ public class CircleRenderer extends GameSystem
     {
         if (circle_hulls != null && circle_hulls.indices() != -1)
         {
-            GPU.cl_release_buffer(circle_hulls.indices());
+            GPGPU.cl_release_buffer(circle_hulls.indices());
         }
-        circle_hulls = GPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
+        circle_hulls = GPGPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
 
         if (circle_hulls.count() == 0) return;
 
@@ -108,6 +108,6 @@ public class CircleRenderer extends GameSystem
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo);
         prepare_transforms.destroy();
-        GPU.cl_release_buffer(vbo_ptr);
+        GPGPU.cl_release_buffer(vbo_ptr);
     }
 }

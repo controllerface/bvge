@@ -5,7 +5,8 @@ inline void polygon_collision(int b1_id, int b2_id,
                              __global int4 *element_tables,
                              __global int4 *vertex_tables,
                              __global float4 *points,
-                             __global float4 *edges,
+                             __global int2 *edges,
+                             __global int *edge_flags,
                              __global float4 *reactions,
                              __global int *reaction_index,
                              __global int *point_reactions,
@@ -49,10 +50,11 @@ inline void polygon_collision(int b1_id, int b2_id,
     for (int i = 0; i < b1_edge_count; i++)
     {
         int edge_index = edge_start_1 + i;
-        float4 edge = edges[edge_index];
+        int2 edge = edges[edge_index];
+        int edge_flag = edge_flags[edge_index];
         
         // do not test interior edges
-        if (edge.w == 1) continue;
+        if (edge_flag == 1) continue;
 
         int a_index = edge.x;
         int b_index = edge.y;
@@ -97,10 +99,11 @@ inline void polygon_collision(int b1_id, int b2_id,
     for (int i = 0; i < b2_edge_count; i++)
     {
         int edge_index = edge_start_2 + i;
-        float4 edge = edges[edge_index];
-        
+        int2 edge = edges[edge_index];
+        int edge_flag = edge_flags[edge_index];
+
         // do not test interior edges
-        if (edge.w == 1) continue;
+        if (edge_flag == 1) continue;
 
         int a_index = edge.x;
         int b_index = edge.y;

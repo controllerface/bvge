@@ -93,7 +93,7 @@ public abstract class GPUProgram
      */
     protected void make_program()
     {
-        this.program_ptr = GPU.build_gpu_program(this.src);
+        this.program_ptr = GPGPU.build_gpu_program(this.src);
     }
 
     /**
@@ -117,7 +117,7 @@ public abstract class GPUProgram
         clReleaseProgram(program_ptr);
         for (long kernel_ptr : kernels.values())
         {
-            GPU.cl_release_buffer(kernel_ptr);
+            GPGPU.cl_release_buffer(kernel_ptr);
         }
     }
 

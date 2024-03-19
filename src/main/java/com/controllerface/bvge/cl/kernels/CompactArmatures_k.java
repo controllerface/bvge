@@ -6,7 +6,7 @@ public class CompactArmatures_k extends GPUKernel
 {
     public enum Args
     {
-        buffer_in,
+        buffer_in_1,
         buffer_in_2,
         armatures,
         armature_accel,
