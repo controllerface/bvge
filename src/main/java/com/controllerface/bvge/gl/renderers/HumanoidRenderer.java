@@ -109,7 +109,7 @@ public class HumanoidRenderer extends GameSystem
             .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
             .ptr_arg(CountMeshInstances_k.Args.total, total_ptr)
             .set_arg(CountMeshInstances_k.Args.count, mesh_count)
-            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.HULL_MESH_ID));
+            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID));
 
         long write_details_k_ptr = mesh_query_p.kernel_ptr(Kernel.write_mesh_details);
         write_details_k = new WriteMeshDetails_k(GPGPU.command_queue_ptr, write_details_k_ptr)
@@ -117,7 +117,7 @@ public class HumanoidRenderer extends GameSystem
             .ptr_arg(WriteMeshDetails_k.Args.query, query_ptr)
             .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets_ptr)
             .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
-            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.HULL_MESH_ID))
+            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID))
             .ptr_arg(WriteMeshDetails_k.Args.mesh_references, GPGPU.Buffer.mesh_references.pointer);
 
         long count_batches_k_ptr = mesh_query_p.kernel_ptr(Kernel.count_mesh_batches);
@@ -139,14 +139,14 @@ public class HumanoidRenderer extends GameSystem
             .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.uv_buffer, uv_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
-            .buf_arg(TransferRenderData_k.Args.hull_element_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
-            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.HULL_MESH_ID))
+            .buf_arg(TransferRenderData_k.Args.hull_element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
+            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID))
             .ptr_arg(TransferRenderData_k.Args.mesh_references, GPGPU.Buffer.mesh_references.pointer)
             .ptr_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.Buffer.mesh_faces.pointer)
-            .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.get_buffer(BufferType.POINT))
-            .buf_arg(TransferRenderData_k.Args.vertex_tables, GPGPU.core_memory.get_buffer(BufferType.POINT_VERTEX_TABLE))
-            .ptr_arg(TransferRenderData_k.Args.uv_tables, GPGPU.Buffer.vertex_uv_tables.pointer)
-            .ptr_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.Buffer.vertex_texture_uvs.pointer);
+            .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(TransferRenderData_k.Args.vertex_tables, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_TABLE))
+            .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.buffer(BufferType.VERTEX_UV_TABLE))
+            .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.buffer(BufferType.VERTEX_TEXTURE_UV));
     }
 
     @Override

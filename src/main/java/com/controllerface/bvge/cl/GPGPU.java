@@ -147,32 +147,6 @@ public class GPGPU
          */
 
         /**
-         * x: x position
-         * y: y position
-         */
-        vertex_references(CLSize.cl_float2),
-
-        /**
-         * x: bone 1 weight
-         * y: bone 2 weight
-         * z: bone 3 weight
-         * w: bone 4 weight
-         */
-        vertex_weights(CLSize.cl_float4),
-
-        /**
-         * x: u coordinate
-         * y: v coordinate
-         */
-        vertex_texture_uvs(CLSize.cl_float2),
-
-        /**
-         * x: start UV index
-         * y: end UV index
-         */
-        vertex_uv_tables(CLSize.cl_int2),
-
-        /**
          * s0: (m00) transformation matrix column 1 row 1
          * s1: (m01) transformation matrix column 1 row 2
          * s2: (m02) transformation matrix column 1 row 3
@@ -302,68 +276,8 @@ public class GPGPU
         animation_timing_indices(CLSize.cl_int),
 
         /*
-        Points
-         */
-
-        /**
-         * x: current x position
-         * y: current y position
-         * z: previous x position
-         * w: previous y position
-         */
-//        points(CLSize.cl_float4),
-
-        /**
-         * value: antigravity magnitude
-         */
-//        point_anti_gravity(CLSize.cl_float),
-
-        /**
-         * x: reference vertex index
-         * y: hull index
-         * z: vertex flags (bit field)
-         * w: (unused)
-         */
-//        point_vertex_tables(CLSize.cl_int4),
-
-        /**
-         * x: bone 1 instance id
-         * y: bone 2 instance id
-         * z: bone 3 instance id
-         * w: bone 4 instance id
-         */
-//        point_bone_tables(CLSize.cl_int4),
-
-        /*
         Bones
          */
-
-        /**
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         */
-//        hull_bones(CLSize.cl_float16),
-
-        /**
-         * x: bone inverse bind pose index (mesh-space)
-         * y: bone bind pose index (model space)
-         */
-//        hull_bone_tables(CLSize.cl_int2),
-
 
         /**
          * s0: (m00) transformation matrix column 1 row 1
@@ -539,10 +453,6 @@ public class GPGPU
         Buffer.armature_animation_elapsed.init(max_hulls);
         Buffer.mesh_references.init(max_hulls);
         Buffer.mesh_faces.init(max_hulls);
-        Buffer.vertex_references.init(max_points);
-        Buffer.vertex_weights.init(max_points);
-        Buffer.vertex_texture_uvs.init(max_points);
-        Buffer.vertex_uv_tables.init(max_points);
         Buffer.bone_bind_poses.init(max_hulls);
         Buffer.bone_bind_parents.init(max_hulls);
         Buffer.bone_references.init(max_points);
@@ -569,10 +479,6 @@ public class GPGPU
             + Buffer.armature_animation_elapsed.length
             + Buffer.mesh_references.length
             + Buffer.mesh_faces.length
-            + Buffer.vertex_references.length
-            + Buffer.vertex_weights.length
-            + Buffer.vertex_texture_uvs.length
-            + Buffer.vertex_uv_tables.length
             + Buffer.bone_bind_poses.length
             + Buffer.bone_bind_parents.length
             + Buffer.bone_references.length
@@ -598,10 +504,6 @@ public class GPGPU
         System.out.println("armature anim times  : " + Buffer.armature_animation_elapsed.length);
         System.out.println("mesh references      : " + Buffer.mesh_references.length);
         System.out.println("mesh faces           : " + Buffer.mesh_faces.length);
-        System.out.println("vertex references    : " + Buffer.vertex_references.length);
-        System.out.println("vertex weights       : " + Buffer.vertex_weights.length);
-        System.out.println("texture uvs          : " + Buffer.vertex_texture_uvs.length);
-        System.out.println("uv maps              : " + Buffer.vertex_uv_tables.length);
         System.out.println("bone bind poses      : " + Buffer.bone_bind_poses.length);
         System.out.println("bone bind parents    : " + Buffer.bone_bind_parents.length);
         System.out.println("bone references      : " + Buffer.bone_references.length);

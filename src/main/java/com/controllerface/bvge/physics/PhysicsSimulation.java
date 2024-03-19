@@ -133,18 +133,18 @@ public class PhysicsSimulation extends GameSystem
 
         long integrate_k_ptr = integrate.kernel_ptr(Kernel.integrate);
         integrate_k = new Integrate_k(GPGPU.command_queue_ptr, integrate_k_ptr)
-            .buf_arg(Integrate_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
+            .buf_arg(Integrate_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
             .ptr_arg(Integrate_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
             .ptr_arg(Integrate_k.Args.armature_flags, GPGPU.Buffer.armature_flags.pointer)
-            .buf_arg(Integrate_k.Args.element_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
+            .buf_arg(Integrate_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
             .ptr_arg(Integrate_k.Args.armature_accel, GPGPU.Buffer.armature_accel.pointer)
-            .buf_arg(Integrate_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(BufferType.HULL_ROTATION))
-            .buf_arg(Integrate_k.Args.points, GPGPU.core_memory.get_buffer(BufferType.POINT))
-            .buf_arg(Integrate_k.Args.bounds, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB))
-            .buf_arg(Integrate_k.Args.bounds_index_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_INDEX))
-            .buf_arg(Integrate_k.Args.bounds_bank_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(Integrate_k.Args.hull_flags, GPGPU.core_memory.get_buffer(BufferType.HULL_FLAG))
-            .buf_arg(Integrate_k.Args.anti_gravity, GPGPU.core_memory.get_buffer(BufferType.POINT_ANTI_GRAV));
+            .buf_arg(Integrate_k.Args.hull_rotations, GPGPU.core_memory.buffer(BufferType.HULL_ROTATION))
+            .buf_arg(Integrate_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(Integrate_k.Args.bounds, GPGPU.core_memory.buffer(BufferType.HULL_AABB))
+            .buf_arg(Integrate_k.Args.bounds_index_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_INDEX))
+            .buf_arg(Integrate_k.Args.bounds_bank_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE))
+            .buf_arg(Integrate_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(Integrate_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV));
 
         long scan_bounds_single_block_k_ptr = scan_key_bank.kernel_ptr(Kernel.scan_bounds_single_block);
         scan_bounds_single_block_k = new ScanBoundsSingleBlock_k(GPGPU.command_queue_ptr, scan_bounds_single_block_k_ptr);
@@ -158,8 +158,8 @@ public class PhysicsSimulation extends GameSystem
         long generate_keys_k_ptr = generate_keys.kernel_ptr(Kernel.generate_keys);
         generate_keys_k = new GenerateKeys_k(GPGPU.command_queue_ptr, generate_keys_k_ptr)
             .buf_arg(GenerateKeys_k.Args.key_bank, key_bank)
-            .buf_arg(GenerateKeys_k.Args.bounds_index_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_INDEX))
-            .buf_arg(GenerateKeys_k.Args.bounds_bank_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_KEY_TABLE))
+            .buf_arg(GenerateKeys_k.Args.bounds_index_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_INDEX))
+            .buf_arg(GenerateKeys_k.Args.bounds_bank_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE))
             .ptr_arg(GenerateKeys_k.Args.key_counts, counts_data_ptr)
             .set_arg(GenerateKeys_k.Args.x_subdivisions, uniform_grid.x_subdivisions)
             .set_arg(GenerateKeys_k.Args.key_count_length, uniform_grid.directory_length);
@@ -167,8 +167,8 @@ public class PhysicsSimulation extends GameSystem
         long build_key_map_k_ptr = build_key_map.kernel_ptr(Kernel.build_key_map);
         build_key_map_k = new BuildKeyMap_k(GPGPU.command_queue_ptr, build_key_map_k_ptr)
             .buf_arg(BuildKeyMap_k.Args.key_map, key_map)
-            .buf_arg(BuildKeyMap_k.Args.bounds_index_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_INDEX))
-            .buf_arg(BuildKeyMap_k.Args.bounds_bank_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_KEY_TABLE))
+            .buf_arg(BuildKeyMap_k.Args.bounds_index_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_INDEX))
+            .buf_arg(BuildKeyMap_k.Args.bounds_bank_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE))
             .ptr_arg(BuildKeyMap_k.Args.key_offsets, offsets_data_ptr)
             .ptr_arg(BuildKeyMap_k.Args.key_counts, counts_data_ptr)
             .set_arg(BuildKeyMap_k.Args.x_subdivisions, uniform_grid.x_subdivisions)
@@ -177,14 +177,14 @@ public class PhysicsSimulation extends GameSystem
         long locate_in_bounds_k_ptr = locate_in_bounds.kernel_ptr(Kernel.locate_in_bounds);
         locate_in_bounds_k = (new LocateInBounds_k(GPGPU.command_queue_ptr, locate_in_bounds_k_ptr))
             .buf_arg(LocateInBounds_k.Args.in_bounds, in_bounds)
-            .buf_arg(LocateInBounds_k.Args.bounds_bank_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_KEY_TABLE));
+            .buf_arg(LocateInBounds_k.Args.bounds_bank_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE));
 
         long count_candidates_k_ptr = locate_in_bounds.kernel_ptr(Kernel.count_candidates);
         count_candidates_k = new CountCandidates_k(GPGPU.command_queue_ptr, count_candidates_k_ptr)
             .buf_arg(CountCandidates_k.Args.candidates, candidate_counts)
             .buf_arg(CountCandidates_k.Args.key_bank, key_bank)
             .buf_arg(CountCandidates_k.Args.in_bounds, in_bounds)
-            .buf_arg(CountCandidates_k.Args.bounds_bank_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_KEY_TABLE))
+            .buf_arg(CountCandidates_k.Args.bounds_bank_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE))
             .ptr_arg(CountCandidates_k.Args.key_counts, counts_data_ptr)
             .set_arg(CountCandidates_k.Args.x_subdivisions, uniform_grid.x_subdivisions)
             .set_arg(CountCandidates_k.Args.key_count_length, uniform_grid.directory_length);
@@ -206,9 +206,9 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AABBCollide_k.Args.candidates, candidate_counts)
             .buf_arg(AABBCollide_k.Args.key_map, key_map)
             .buf_arg(AABBCollide_k.Args.key_bank, key_bank)
-            .buf_arg(AABBCollide_k.Args.bounds, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB))
-            .buf_arg(AABBCollide_k.Args.bounds_bank_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(AABBCollide_k.Args.hull_flags, GPGPU.core_memory.get_buffer(BufferType.HULL_FLAG))
+            .buf_arg(AABBCollide_k.Args.bounds, GPGPU.core_memory.buffer(BufferType.HULL_AABB))
+            .buf_arg(AABBCollide_k.Args.bounds_bank_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE))
+            .buf_arg(AABBCollide_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
             .ptr_arg(AABBCollide_k.Args.key_counts, counts_data_ptr)
             .ptr_arg(AABBCollide_k.Args.key_offsets, offsets_data_ptr)
             .ptr_arg(AABBCollide_k.Args.counter, atomic_counter_ptr)
@@ -229,13 +229,13 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.reactions, reactions_in)
             .buf_arg(SatCollide_k.Args.reaction_index, reaction_index)
             .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
-            .buf_arg(SatCollide_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
-            .buf_arg(SatCollide_k.Args.element_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
-            .buf_arg(SatCollide_k.Args.hull_flags, GPGPU.core_memory.get_buffer(BufferType.HULL_FLAG))
-            .buf_arg(SatCollide_k.Args.vertex_tables, GPGPU.core_memory.get_buffer(BufferType.POINT_VERTEX_TABLE))
-            .buf_arg(SatCollide_k.Args.points, GPGPU.core_memory.get_buffer(BufferType.POINT))
-            .buf_arg(SatCollide_k.Args.edges, GPGPU.core_memory.get_buffer(BufferType.EDGE))
-            .buf_arg(SatCollide_k.Args.edge_flags, GPGPU.core_memory.get_buffer(BufferType.EDGE_FLAG))
+            .buf_arg(SatCollide_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
+            .buf_arg(SatCollide_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
+            .buf_arg(SatCollide_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(SatCollide_k.Args.vertex_tables, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_TABLE))
+            .buf_arg(SatCollide_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(SatCollide_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
+            .buf_arg(SatCollide_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
             .buf_arg(SatCollide_k.Args.point_reactions, point_reaction_counts)
             .ptr_arg(SatCollide_k.Args.masses, GPGPU.Buffer.armature_mass.pointer);
 
@@ -250,19 +250,19 @@ public class PhysicsSimulation extends GameSystem
         long apply_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.apply_reactions);
         apply_reactions_k = new ApplyReactions_k(GPGPU.command_queue_ptr, apply_reactions_k_ptr)
             .buf_arg(ApplyReactions_k.Args.reactions, reactions_out)
-            .buf_arg(ApplyReactions_k.Args.points, GPGPU.core_memory.get_buffer(BufferType.POINT))
-            .buf_arg(ApplyReactions_k.Args.anti_gravity, GPGPU.core_memory.get_buffer(BufferType.POINT_ANTI_GRAV))
+            .buf_arg(ApplyReactions_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(ApplyReactions_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV))
             .buf_arg(ApplyReactions_k.Args.point_reactions, point_reaction_counts)
             .buf_arg(ApplyReactions_k.Args.point_offsets, point_reaction_offsets);
 
         long move_armatures_k_ptr = sat_collide.kernel_ptr(Kernel.move_armatures);
         move_armatures_k = new MoveArmatures_k(GPGPU.command_queue_ptr, move_armatures_k_ptr)
-            .buf_arg(MoveArmatures_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
+            .buf_arg(MoveArmatures_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
             .ptr_arg(MoveArmatures_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
             .ptr_arg(MoveArmatures_k.Args.hull_tables, GPGPU.Buffer.armature_hull_table.pointer)
-            .buf_arg(MoveArmatures_k.Args.element_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
-            .buf_arg(MoveArmatures_k.Args.hull_flags, GPGPU.core_memory.get_buffer(BufferType.HULL_FLAG))
-            .buf_arg(MoveArmatures_k.Args.points, GPGPU.core_memory.get_buffer(BufferType.POINT));
+            .buf_arg(MoveArmatures_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
+            .buf_arg(MoveArmatures_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(MoveArmatures_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT));
 
         long animate_armatures_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_armatures);
         animate_armatures_k = new AnimateArmatures_k(GPGPU.command_queue_ptr, animate_armatures_k_ptr)
@@ -285,30 +285,30 @@ public class PhysicsSimulation extends GameSystem
 
         long animate_bones_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_bones);
         animate_bones_k = new AnimateBones_k(GPGPU.command_queue_ptr, animate_bones_k_ptr)
-            .buf_arg(AnimateBones_k.Args.bones, GPGPU.core_memory.get_buffer(BufferType.HULL_BONE))
+            .buf_arg(AnimateBones_k.Args.bones, GPGPU.core_memory.buffer(BufferType.HULL_BONE))
             .ptr_arg(AnimateBones_k.Args.bone_references, GPGPU.Buffer.bone_references.pointer)
             .ptr_arg(AnimateBones_k.Args.armature_bones, GPGPU.Buffer.armature_bones.pointer)
-            .buf_arg(AnimateBones_k.Args.bone_index_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_BONE_TABLE));
+            .buf_arg(AnimateBones_k.Args.bone_index_tables, GPGPU.core_memory.buffer(BufferType.HULL_BONE_TABLE));
 
         long animate_points_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_points);
         animate_points_k = new AnimatePoints_k(GPGPU.command_queue_ptr, animate_points_k_ptr)
-            .buf_arg(AnimatePoints_k.Args.points, GPGPU.core_memory.get_buffer(BufferType.POINT))
-            .buf_arg(AnimatePoints_k.Args.hulls, GPGPU.core_memory.get_buffer(BufferType.HULL))
-            .buf_arg(AnimatePoints_k.Args.hull_flags, GPGPU.core_memory.get_buffer(BufferType.HULL_FLAG))
-            .buf_arg(AnimatePoints_k.Args.vertex_tables, GPGPU.core_memory.get_buffer(BufferType.POINT_VERTEX_TABLE))
-            .buf_arg(AnimatePoints_k.Args.bone_tables, GPGPU.core_memory.get_buffer(BufferType.POINT_BONE_TABLE))
-            .ptr_arg(AnimatePoints_k.Args.vertex_weights, GPGPU.Buffer.vertex_weights.pointer)
+            .buf_arg(AnimatePoints_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(AnimatePoints_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
+            .buf_arg(AnimatePoints_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(AnimatePoints_k.Args.vertex_tables, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_TABLE))
+            .buf_arg(AnimatePoints_k.Args.bone_tables, GPGPU.core_memory.buffer(BufferType.POINT_BONE_TABLE))
+            .buf_arg(AnimatePoints_k.Args.vertex_weights, GPGPU.core_memory.buffer(BufferType.VERTEX_WEIGHT))
             .ptr_arg(AnimatePoints_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
-            .ptr_arg(AnimatePoints_k.Args.vertex_references, GPGPU.Buffer.vertex_references.pointer)
-            .buf_arg(AnimatePoints_k.Args.bones, GPGPU.core_memory.get_buffer(BufferType.HULL_BONE));
+            .buf_arg(AnimatePoints_k.Args.vertex_references, GPGPU.core_memory.buffer(BufferType.VERTEX_REFERENCE))
+            .buf_arg(AnimatePoints_k.Args.bones, GPGPU.core_memory.buffer(BufferType.HULL_BONE));
 
         long resolve_constraints_k_ptr = resolve_constraints.kernel_ptr(Kernel.resolve_constraints);
         resolve_constraints_k = new ResolveConstraints_k(GPGPU.command_queue_ptr, resolve_constraints_k_ptr)
-            .buf_arg(ResolveConstraints_k.Args.element_table, GPGPU.core_memory.get_buffer(BufferType.HULL_ELEMENT_TABLE))
-            .buf_arg(ResolveConstraints_k.Args.bounds_bank_data, GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(ResolveConstraints_k.Args.point, GPGPU.core_memory.get_buffer(BufferType.POINT))
-            .buf_arg(ResolveConstraints_k.Args.edges, GPGPU.core_memory.get_buffer(BufferType.EDGE))
-            .buf_arg(ResolveConstraints_k.Args.edge_lengths, GPGPU.core_memory.get_buffer(BufferType.EDGE_LENGTH));
+            .buf_arg(ResolveConstraints_k.Args.element_table, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
+            .buf_arg(ResolveConstraints_k.Args.bounds_bank_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE))
+            .buf_arg(ResolveConstraints_k.Args.point, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(ResolveConstraints_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
+            .buf_arg(ResolveConstraints_k.Args.edge_lengths, GPGPU.core_memory.buffer(BufferType.EDGE_LENGTH));
     }
 
     private void integrate()
@@ -402,7 +402,7 @@ public class PhysicsSimulation extends GameSystem
 
     private void calculate_bank_offsets()
     {
-        int bank_size = scan_key_bounds(GPGPU.core_memory.get_buffer(BufferType.HULL_AABB_KEY_TABLE).pointer(), GPGPU.core_memory.next_hull());
+        int bank_size = scan_key_bounds(GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE).pointer(), GPGPU.core_memory.next_hull());
         uniform_grid.resizeBank(bank_size);
     }
 
