@@ -68,6 +68,7 @@ public class GPUCoreMemory
     private final ResizableBuffer delete_buffer_2;
     private final ResizableBuffer delete_partial_buffer_1;
     private final ResizableBuffer delete_partial_buffer_2;
+    private final ResizableBuffer bone_bind_parent_buffer; // todo: may not be needed, consider removing
 
     // externally used buffers
     private final ResizableBuffer edge_buffer;
@@ -92,11 +93,11 @@ public class GPUCoreMemory
     private final ResizableBuffer vertex_texture_uv_buffer;
     private final ResizableBuffer vertex_uv_table_buffer;
     private final ResizableBuffer model_transform_buffer;
-
     private final ResizableBuffer bone_reference_buffer;
     private final ResizableBuffer bone_bind_pose_buffer;
-    private final ResizableBuffer bone_bind_parent_buffer; // todo: may not be needed, consider removing
 
+    private final ResizableBuffer mesh_reference_buffer;
+    private final ResizableBuffer mesh_face_buffer;
 
 
     private final long delete_counter_ptr;
@@ -140,11 +141,12 @@ public class GPUCoreMemory
         vertex_texture_uv_buffer = new PersistentBuffer(CLSize.cl_float2);
         vertex_uv_table_buffer = new PersistentBuffer(CLSize.cl_int2);
         model_transform_buffer = new PersistentBuffer(CLSize.cl_float16);
-
         bone_reference_buffer = new PersistentBuffer(CLSize.cl_float16);
         bone_bind_pose_buffer = new PersistentBuffer(CLSize.cl_float16);
         bone_bind_parent_buffer = new PersistentBuffer(CLSize.cl_int);
 
+        mesh_reference_buffer = new PersistentBuffer(CLSize.cl_int4);
+        mesh_face_buffer = new PersistentBuffer(CLSize.cl_int4);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -227,11 +229,11 @@ public class GPUCoreMemory
 
         long create_mesh_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_reference);
         create_mesh_reference_k = new CreateMeshReference_k(GPGPU.command_queue_ptr, create_mesh_reference_k_ptr)
-            .ptr_arg(CreateMeshReference_k.Args.mesh_ref_tables, GPGPU.Buffer.mesh_references.pointer);
+            .buf_arg(CreateMeshReference_k.Args.mesh_ref_tables, mesh_reference_buffer);
 
         long create_mesh_face_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_face);
         create_mesh_face_k = new CreateMeshFace_k(GPGPU.command_queue_ptr, create_mesh_face_k_ptr)
-            .ptr_arg(CreateMeshFace_k.Args.mesh_faces, GPGPU.Buffer.mesh_faces.pointer);
+            .buf_arg(CreateMeshFace_k.Args.mesh_faces, mesh_face_buffer);
 
         long create_animation_timings_k_ptr = gpu_crud.kernel_ptr(Kernel.create_animation_timings);
         create_animation_timings_k = new CreateAnimationTimings_k(GPGPU.command_queue_ptr, create_animation_timings_k_ptr)
@@ -379,7 +381,8 @@ public class GPUCoreMemory
             case MODEL_TRANSFORM -> model_transform_buffer;
             case BONE_REFERENCE -> bone_reference_buffer;
             case BONE_BIND_POSE -> bone_bind_pose_buffer;
-            case BONE_BIND_PARENT -> bone_bind_parent_buffer;
+            case MESH_REFERENCE -> mesh_reference_buffer;
+            case MESH_FACE -> mesh_face_buffer;
         };
     }
 
@@ -452,7 +455,7 @@ public class GPUCoreMemory
     public int new_texture_uv(float u, float v)
     {
         int capacity = uv_index + 1;
-        vertex_texture_uv_buffer.ensure_total_capacity(capacity);
+        vertex_texture_uv_buffer.ensure_capacity(capacity);
 
         create_texture_uv_k
             .set_arg(CreateTextureUV_k.Args.target, uv_index)
@@ -465,9 +468,9 @@ public class GPUCoreMemory
     public int new_edge(int p1, int p2, float l, int flags)
     {
         int required_capacity = edge_index + 1;
-        edge_buffer.ensure_total_capacity(required_capacity);
-        edge_length_buffer.ensure_total_capacity(required_capacity);
-        edge_flag_buffer.ensure_total_capacity(required_capacity);
+        edge_buffer.ensure_capacity(required_capacity);
+        edge_length_buffer.ensure_capacity(required_capacity);
+        edge_flag_buffer.ensure_capacity(required_capacity);
 
         create_edge_k
             .set_arg(CreateEdge_k.Args.target, edge_index)
@@ -482,10 +485,10 @@ public class GPUCoreMemory
     public int new_point(float[] position, int[] vertex_table, int[] bone_ids)
     {
         int capacity = point_index + 1;
-        point_buffer.ensure_total_capacity(capacity);
-        point_anti_gravity_buffer.ensure_total_capacity(capacity);
-        point_vertex_table_buffer.ensure_total_capacity(capacity);
-        point_bone_table_buffer.ensure_total_capacity(capacity);
+        point_buffer.ensure_capacity(capacity);
+        point_anti_gravity_buffer.ensure_capacity(capacity);
+        point_vertex_table_buffer.ensure_capacity(capacity);
+        point_bone_table_buffer.ensure_capacity(capacity);
 
         var new_point = new float[]{position[0], position[1], position[0], position[1]};
         create_point_k
@@ -501,14 +504,14 @@ public class GPUCoreMemory
     public int new_hull(int mesh_id, float[] transform, float[] rotation, int[] table, int[] flags)
     {
         int capacity = hull_index + 1;
-        hull_buffer.ensure_total_capacity(capacity);
-        hull_mesh_id_buffer.ensure_total_capacity(capacity);
-        hull_rotation_buffer.ensure_total_capacity(capacity);
-        hull_element_table_buffer.ensure_total_capacity(capacity);
-        hull_flag_buffer.ensure_total_capacity(capacity);
-        hull_aabb_buffer.ensure_total_capacity(capacity);
-        hull_aabb_index_buffer.ensure_total_capacity(capacity);
-        hull_aabb_key_buffer.ensure_total_capacity(capacity);
+        hull_buffer.ensure_capacity(capacity);
+        hull_mesh_id_buffer.ensure_capacity(capacity);
+        hull_rotation_buffer.ensure_capacity(capacity);
+        hull_element_table_buffer.ensure_capacity(capacity);
+        hull_flag_buffer.ensure_capacity(capacity);
+        hull_aabb_buffer.ensure_capacity(capacity);
+        hull_aabb_index_buffer.ensure_capacity(capacity);
+        hull_aabb_key_buffer.ensure_capacity(capacity);
 
         create_hull_k
             .set_arg(CreateHull_k.Args.target, hull_index)
@@ -524,6 +527,9 @@ public class GPUCoreMemory
 
     public int new_mesh_reference(int[] mesh_ref_table)
     {
+        int capacity = mesh_index + 1;
+        mesh_reference_buffer.ensure_capacity(capacity);
+
         create_mesh_reference_k
             .set_arg(CreateMeshReference_k.Args.target, mesh_index)
             .set_arg(CreateMeshReference_k.Args.new_mesh_ref_table, mesh_ref_table)
@@ -534,6 +540,9 @@ public class GPUCoreMemory
 
     public int new_mesh_face(int[] face)
     {
+        int capacity = face_index + 1;
+        mesh_face_buffer.ensure_capacity(capacity);
+
         create_mesh_face_k
             .set_arg(CreateMeshFace_k.Args.target, face_index)
             .set_arg(CreateMeshFace_k.Args.new_mesh_face, face)
@@ -560,9 +569,9 @@ public class GPUCoreMemory
     public int new_vertex_reference(float x, float y, float[] weights, int[] uv_table)
     {
         int capacity = vertex_ref_index + 1;
-        vertex_reference_buffer.ensure_total_capacity(capacity);
-        vertex_weight_buffer.ensure_total_capacity(capacity);
-        vertex_uv_table_buffer.ensure_total_capacity(capacity);
+        vertex_reference_buffer.ensure_capacity(capacity);
+        vertex_weight_buffer.ensure_capacity(capacity);
+        vertex_uv_table_buffer.ensure_capacity(capacity);
 
         create_vertex_reference_k
             .set_arg(CreateVertexRef_k.Args.target, vertex_ref_index)
@@ -577,8 +586,8 @@ public class GPUCoreMemory
     public int new_bone_bind_pose(int bind_parent, float[] bone_data)
     {
         int capacity = bone_bind_index + 1;
-        bone_bind_pose_buffer.ensure_total_capacity(capacity);
-        bone_bind_parent_buffer.ensure_total_capacity(capacity);
+        bone_bind_pose_buffer.ensure_capacity(capacity);
+        bone_bind_parent_buffer.ensure_capacity(capacity);
 
         create_bone_bind_pose_k
             .set_arg(CreateBoneBindPose_k.Args.target,bone_bind_index)
@@ -592,7 +601,7 @@ public class GPUCoreMemory
     public int new_bone_reference(float[] bone_data)
     {
         int capacity = bone_ref_index + 1;
-        bone_reference_buffer.ensure_total_capacity(capacity);
+        bone_reference_buffer.ensure_capacity(capacity);
 
         create_bone_reference_k
             .set_arg(CreateBoneRef_k.Args.target, bone_ref_index)
@@ -605,8 +614,8 @@ public class GPUCoreMemory
     public int new_bone(int[] bone_table, float[] bone_data)
     {
         int capacity = bone_index + 1;
-        hull_bone_buffer.ensure_total_capacity(capacity);
-        hull_bone_table_buffer.ensure_total_capacity(capacity);
+        hull_bone_buffer.ensure_capacity(capacity);
+        hull_bone_table_buffer.ensure_capacity(capacity);
 
         create_bone_k
             .set_arg(CreateBone_k.Args.target, bone_index)
@@ -631,7 +640,7 @@ public class GPUCoreMemory
     public int new_model_transform(float[] transform_data)
     {
         int capacity = model_transform_index + 1;
-        model_transform_buffer.ensure_total_capacity(capacity);
+        model_transform_buffer.ensure_capacity(capacity);
 
         create_model_transform_k
             .set_arg(CreateModelTransform_k.Args.target, model_transform_index)
@@ -677,8 +686,8 @@ public class GPUCoreMemory
             .ptr_arg(LocateOutOfBounds_k.Args.counter, delete_counter_ptr)
             .call(arg_long(armature_index));
 
-        delete_buffer_1.ensure_total_capacity(armature_index);
-        delete_buffer_2.ensure_total_capacity(armature_index);
+        delete_buffer_1.ensure_capacity(armature_index);
+        delete_buffer_2.ensure_capacity(armature_index);
 
         int[] shift_counts = scan_deletes(delete_buffer_1.pointer(), delete_buffer_2.pointer(), armature_index);
 
@@ -687,11 +696,11 @@ public class GPUCoreMemory
             return;
         }
 
-        hull_shift.ensure_total_capacity(hull_index);
-        edge_shift.ensure_total_capacity(edge_index);
-        point_shift.ensure_total_capacity(point_index);
-        bone_shift.ensure_total_capacity(bone_index);
-        bone_bind_shift.ensure_total_capacity(armature_bone_index);
+        hull_shift.ensure_capacity(hull_index);
+        edge_shift.ensure_capacity(edge_index);
+        point_shift.ensure_capacity(point_index);
+        bone_shift.ensure_capacity(bone_index);
+        bone_bind_shift.ensure_capacity(armature_bone_index);
 
         hull_shift.clear();
         edge_shift.clear();
@@ -781,8 +790,8 @@ public class GPUCoreMemory
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
 
-        delete_partial_buffer_1.ensure_total_capacity(part_size);
-        delete_partial_buffer_2.ensure_total_capacity(part_size);
+        delete_partial_buffer_1.ensure_capacity(part_size);
+        delete_partial_buffer_2.ensure_capacity(part_size);
 
         scan_deletes_multi_block_out_k
             .ptr_arg(ScanDeletesMultiBlockOut_k.Args.output1, o1_data_ptr)

@@ -7,7 +7,7 @@ public class TransientBuffer extends ResizableBuffer
         super(item_size);
     }
 
-    public void ensure_total_capacity(long total_item_capacity)
+    public void ensure_capacity(long total_item_capacity)
     {
         var required_capacity = item_size * total_item_capacity;
         if (required_capacity <= this.byte_capacity) return;

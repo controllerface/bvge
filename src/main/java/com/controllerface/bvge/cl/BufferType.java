@@ -26,5 +26,6 @@ public enum BufferType
     MODEL_TRANSFORM,
     BONE_REFERENCE,
     BONE_BIND_POSE,
-    BONE_BIND_PARENT,
+    MESH_REFERENCE,
+    MESH_FACE,
 }

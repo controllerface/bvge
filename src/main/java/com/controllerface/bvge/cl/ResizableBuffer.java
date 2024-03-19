@@ -27,7 +27,7 @@ public abstract class ResizableBuffer
         this.pointer = GPGPU.cl_new_buffer(this.byte_capacity);
     }
 
-    abstract public void ensure_total_capacity(long total_item_capacity);
+    abstract public void ensure_capacity(long total_item_capacity);
 
     protected void update_registered_kernels()
     {
