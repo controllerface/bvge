@@ -267,8 +267,8 @@ public class PhysicsSimulation extends GameSystem
         long animate_armatures_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_armatures);
         animate_armatures_k = new AnimateArmatures_k(GPGPU.command_queue_ptr, animate_armatures_k_ptr)
             .ptr_arg(AnimateArmatures_k.Args.armature_bones, GPGPU.Buffer.armature_bones.pointer)
-            .ptr_arg(AnimateArmatures_k.Args.bone_bind_poses, GPGPU.Buffer.bone_bind_poses.pointer)
-            .ptr_arg(AnimateArmatures_k.Args.model_transforms, GPGPU.Buffer.model_transforms.pointer)
+            .buf_arg(AnimateArmatures_k.Args.bone_bind_poses, GPGPU.core_memory.buffer(BufferType.BONE_BIND_POSE))
+            .buf_arg(AnimateArmatures_k.Args.model_transforms, GPGPU.core_memory.buffer(BufferType.MODEL_TRANSFORM))
             .ptr_arg(AnimateArmatures_k.Args.bone_bind_tables, GPGPU.Buffer.armature_bone_tables.pointer)
             .ptr_arg(AnimateArmatures_k.Args.bone_channel_tables, GPGPU.Buffer.animation_bone_channel_tables.pointer)
             .ptr_arg(AnimateArmatures_k.Args.bone_pos_channel_tables, GPGPU.Buffer.animation_bone_pos_channel_tables.pointer)
@@ -286,7 +286,7 @@ public class PhysicsSimulation extends GameSystem
         long animate_bones_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_bones);
         animate_bones_k = new AnimateBones_k(GPGPU.command_queue_ptr, animate_bones_k_ptr)
             .buf_arg(AnimateBones_k.Args.bones, GPGPU.core_memory.buffer(BufferType.HULL_BONE))
-            .ptr_arg(AnimateBones_k.Args.bone_references, GPGPU.Buffer.bone_references.pointer)
+            .buf_arg(AnimateBones_k.Args.bone_references, GPGPU.core_memory.buffer(BufferType.BONE_REFERENCE))
             .ptr_arg(AnimateBones_k.Args.armature_bones, GPGPU.Buffer.armature_bones.pointer)
             .buf_arg(AnimateBones_k.Args.bone_index_tables, GPGPU.core_memory.buffer(BufferType.HULL_BONE_TABLE));
 

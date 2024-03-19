@@ -164,52 +164,12 @@ public class GPGPU
          * sE: (m32) transformation matrix column 4 row 3
          * sF: (m33) transformation matrix column 4 row 4
          */
-        model_transforms(CLSize.cl_float16),
-
-        /**
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         */
-        bone_references(CLSize.cl_float16),
-
-        /**
-         * s0: (m00) transformation matrix column 1 row 1
-         * s1: (m01) transformation matrix column 1 row 2
-         * s2: (m02) transformation matrix column 1 row 3
-         * s3: (m03) transformation matrix column 1 row 4
-         * s4: (m10) transformation matrix column 2 row 1
-         * s5: (m11) transformation matrix column 2 row 2
-         * s6: (m12) transformation matrix column 2 row 3
-         * s7: (m13) transformation matrix column 2 row 4
-         * s8: (m20) transformation matrix column 3 row 1
-         * s9: (m21) transformation matrix column 3 row 2
-         * sA: (m22) transformation matrix column 3 row 3
-         * sB: (m23) transformation matrix column 3 row 4
-         * sC: (m30) transformation matrix column 4 row 1
-         * sD: (m31) transformation matrix column 4 row 2
-         * sE: (m32) transformation matrix column 4 row 3
-         * sF: (m33) transformation matrix column 4 row 4
-         */
-        bone_bind_poses(CLSize.cl_float16),
+        //bone_bind_poses(CLSize.cl_float16),
 
         /**
          * value: reference index of the parent bone bind pose
          */
-        bone_bind_parents(CLSize.cl_int),
+        //bone_bind_parents(CLSize.cl_int),
 
         /**
          * x: start vertex index
@@ -453,11 +413,7 @@ public class GPGPU
         Buffer.armature_animation_elapsed.init(max_hulls);
         Buffer.mesh_references.init(max_hulls);
         Buffer.mesh_faces.init(max_hulls);
-        Buffer.bone_bind_poses.init(max_hulls);
-        Buffer.bone_bind_parents.init(max_hulls);
-        Buffer.bone_references.init(max_points);
         Buffer.armature_bone_tables.init(max_points);
-        Buffer.model_transforms.init(max_points);
         Buffer.armatures.init(max_points);
         Buffer.armature_flags.init(max_points);
         Buffer.armature_bones.init(max_points);
@@ -479,11 +435,7 @@ public class GPGPU
             + Buffer.armature_animation_elapsed.length
             + Buffer.mesh_references.length
             + Buffer.mesh_faces.length
-            + Buffer.bone_bind_poses.length
-            + Buffer.bone_bind_parents.length
-            + Buffer.bone_references.length
             + Buffer.armature_bone_tables.length
-            + Buffer.model_transforms.length
             + Buffer.armatures.length
             + Buffer.armature_flags.length
             + Buffer.armature_bones.length
@@ -504,11 +456,7 @@ public class GPGPU
         System.out.println("armature anim times  : " + Buffer.armature_animation_elapsed.length);
         System.out.println("mesh references      : " + Buffer.mesh_references.length);
         System.out.println("mesh faces           : " + Buffer.mesh_faces.length);
-        System.out.println("bone bind poses      : " + Buffer.bone_bind_poses.length);
-        System.out.println("bone bind parents    : " + Buffer.bone_bind_parents.length);
-        System.out.println("bone references      : " + Buffer.bone_references.length);
         System.out.println("bone bind indices    : " + Buffer.armature_bone_tables.length);
-        System.out.println("model transforms     : " + Buffer.model_transforms.length);
         System.out.println("armatures            : " + Buffer.armatures.length);
         System.out.println("armature flags       : " + Buffer.armature_flags.length);
         System.out.println("armature bones       : " + Buffer.armature_bones.length);

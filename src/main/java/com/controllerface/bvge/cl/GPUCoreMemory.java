@@ -87,13 +87,15 @@ public class GPUCoreMemory
     private final ResizableBuffer point_anti_gravity_buffer;
     private final ResizableBuffer point_vertex_table_buffer;
     private final ResizableBuffer point_bone_table_buffer;
-
     private final ResizableBuffer vertex_reference_buffer;
     private final ResizableBuffer vertex_weight_buffer;
     private final ResizableBuffer vertex_texture_uv_buffer;
     private final ResizableBuffer vertex_uv_table_buffer;
+    private final ResizableBuffer model_transform_buffer;
 
-
+    private final ResizableBuffer bone_reference_buffer;
+    private final ResizableBuffer bone_bind_pose_buffer;
+    private final ResizableBuffer bone_bind_parent_buffer; // todo: may not be needed, consider removing
 
 
 
@@ -137,8 +139,11 @@ public class GPUCoreMemory
         vertex_weight_buffer = new PersistentBuffer(CLSize.cl_float4);
         vertex_texture_uv_buffer = new PersistentBuffer(CLSize.cl_float2);
         vertex_uv_table_buffer = new PersistentBuffer(CLSize.cl_int2);
+        model_transform_buffer = new PersistentBuffer(CLSize.cl_float16);
 
-
+        bone_reference_buffer = new PersistentBuffer(CLSize.cl_float16);
+        bone_bind_pose_buffer = new PersistentBuffer(CLSize.cl_float16);
+        bone_bind_parent_buffer = new PersistentBuffer(CLSize.cl_int);
 
 
         gpu_crud.init();
@@ -175,12 +180,12 @@ public class GPUCoreMemory
 
         long create_bone_bind_pose_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_bind_pose);
         create_bone_bind_pose_k = new CreateBoneBindPose_k(GPGPU.command_queue_ptr, create_bone_bind_pose_k_ptr)
-            .ptr_arg(CreateBoneBindPose_k.Args.bone_bind_poses, GPGPU.Buffer.bone_bind_poses.pointer)
-            .ptr_arg(CreateBoneBindPose_k.Args.bone_bind_parents, GPGPU.Buffer.bone_bind_parents.pointer);
+            .buf_arg(CreateBoneBindPose_k.Args.bone_bind_poses, bone_bind_pose_buffer)
+            .buf_arg(CreateBoneBindPose_k.Args.bone_bind_parents, bone_bind_parent_buffer);
 
         long create_bone_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_reference);
         create_bone_reference_k = new CreateBoneRef_k(GPGPU.command_queue_ptr, create_bone_reference_k_ptr)
-            .ptr_arg(CreateBoneRef_k.Args.bone_references, GPGPU.Buffer.bone_references.pointer);
+            .buf_arg(CreateBoneRef_k.Args.bone_references, bone_reference_buffer);
 
         long create_bone_channel_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_channel);
         create_bone_channel_k = new CreateBoneChannel_k(GPGPU.command_queue_ptr, create_bone_channel_k_ptr)
@@ -210,7 +215,7 @@ public class GPUCoreMemory
 
         long create_model_transform_k_ptr = gpu_crud.kernel_ptr(Kernel.create_model_transform);
         create_model_transform_k = new CreateModelTransform_k(GPGPU.command_queue_ptr, create_model_transform_k_ptr)
-            .ptr_arg(CreateModelTransform_k.Args.model_transforms, GPGPU.Buffer.model_transforms.pointer);
+            .buf_arg(CreateModelTransform_k.Args.model_transforms, model_transform_buffer);
 
         long create_hull_k_ptr = gpu_crud.kernel_ptr(Kernel.create_hull);
         create_hull_k = new CreateHull_k(GPGPU.command_queue_ptr, create_hull_k_ptr)
@@ -371,6 +376,10 @@ public class GPUCoreMemory
             case VERTEX_WEIGHT -> vertex_weight_buffer;
             case VERTEX_TEXTURE_UV -> vertex_texture_uv_buffer;
             case VERTEX_UV_TABLE -> vertex_uv_table_buffer;
+            case MODEL_TRANSFORM -> model_transform_buffer;
+            case BONE_REFERENCE -> bone_reference_buffer;
+            case BONE_BIND_POSE -> bone_bind_pose_buffer;
+            case BONE_BIND_PARENT -> bone_bind_parent_buffer;
         };
     }
 
@@ -567,6 +576,10 @@ public class GPUCoreMemory
 
     public int new_bone_bind_pose(int bind_parent, float[] bone_data)
     {
+        int capacity = bone_bind_index + 1;
+        bone_bind_pose_buffer.ensure_total_capacity(capacity);
+        bone_bind_parent_buffer.ensure_total_capacity(capacity);
+
         create_bone_bind_pose_k
             .set_arg(CreateBoneBindPose_k.Args.target,bone_bind_index)
             .set_arg(CreateBoneBindPose_k.Args.new_bone_bind_pose, bone_data)
@@ -578,6 +591,9 @@ public class GPUCoreMemory
 
     public int new_bone_reference(float[] bone_data)
     {
+        int capacity = bone_ref_index + 1;
+        bone_reference_buffer.ensure_total_capacity(capacity);
+
         create_bone_reference_k
             .set_arg(CreateBoneRef_k.Args.target, bone_ref_index)
             .set_arg(CreateBoneRef_k.Args.new_bone_reference, bone_data)
@@ -614,6 +630,9 @@ public class GPUCoreMemory
 
     public int new_model_transform(float[] transform_data)
     {
+        int capacity = model_transform_index + 1;
+        model_transform_buffer.ensure_total_capacity(capacity);
+
         create_model_transform_k
             .set_arg(CreateModelTransform_k.Args.target, model_transform_index)
             .set_arg(CreateModelTransform_k.Args.new_model_transform, transform_data)
