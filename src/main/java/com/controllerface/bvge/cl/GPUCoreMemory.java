@@ -81,6 +81,9 @@ public class GPUCoreMemory
     private final ResizableBuffer hull_aabb_buffer;
     private final ResizableBuffer hull_aabb_index_buffer;
     private final ResizableBuffer hull_aabb_key_buffer;
+    private final ResizableBuffer hull_bone_buffer;
+    private final ResizableBuffer hull_bone_table_buffer;
+
 
     private final long delete_counter_ptr;
     private final long position_buffer_ptr;
@@ -113,6 +116,10 @@ public class GPUCoreMemory
         hull_aabb_buffer = new PersistentBuffer(CLSize.cl_float4);
         hull_aabb_index_buffer = new PersistentBuffer(CLSize.cl_int4);
         hull_aabb_key_buffer = new PersistentBuffer(CLSize.cl_int2);
+
+        hull_bone_buffer = new PersistentBuffer(CLSize.cl_float16);
+        hull_bone_table_buffer = new PersistentBuffer(CLSize.cl_int2);
+
 
         gpu_crud.init();
         scan_deletes.init();
@@ -173,8 +180,8 @@ public class GPUCoreMemory
 
         long create_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone);
         create_bone_k = new CreateBone_k(GPGPU.command_queue_ptr, create_bone_k_ptr)
-            .ptr_arg(CreateBone_k.Args.bones, GPGPU.Buffer.hull_bones.pointer)
-            .ptr_arg(CreateBone_k.Args.bone_index_tables, GPGPU.Buffer.hull_bone_tables.pointer);
+            .buf_arg(CreateBone_k.Args.bones, hull_bone_buffer)
+            .buf_arg(CreateBone_k.Args.bone_index_tables, hull_bone_table_buffer);
 
         long create_armature_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature_bone);
         create_armature_bone_k = new CreateArmatureBone_k(GPGPU.command_queue_ptr, create_armature_bone_k_ptr)
@@ -271,7 +278,7 @@ public class GPUCoreMemory
             .ptr_arg(CompactArmatures_k.Args.vertex_tables, GPGPU.Buffer.point_vertex_tables.pointer)
             .ptr_arg(CompactArmatures_k.Args.bone_tables, GPGPU.Buffer.point_bone_tables.pointer)
             .ptr_arg(CompactArmatures_k.Args.bone_bind_tables, GPGPU.Buffer.armature_bone_tables.pointer)
-            .ptr_arg(CompactArmatures_k.Args.bone_index_tables, GPGPU.Buffer.hull_bone_tables.pointer)
+            .buf_arg(CompactArmatures_k.Args.bone_index_tables, hull_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.edges, edge_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_shift, bone_shift)
             .buf_arg(CompactArmatures_k.Args.point_shift, point_shift)
@@ -309,8 +316,8 @@ public class GPUCoreMemory
         long compact_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_bones);
         compact_bones_k = new CompactBones_k(GPGPU.command_queue_ptr, compact_bones_k_ptr)
             .buf_arg(CompactBones_k.Args.bone_shift, bone_shift)
-            .ptr_arg(CompactBones_k.Args.bone_instances, GPGPU.Buffer.hull_bones.pointer)
-            .ptr_arg(CompactBones_k.Args.bone_index_tables, GPGPU.Buffer.hull_bone_tables.pointer);
+            .buf_arg(CompactBones_k.Args.bone_instances, hull_bone_buffer)
+            .buf_arg(CompactBones_k.Args.bone_index_tables, hull_bone_table_buffer);
 
         long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armature_bones);
         compact_armature_bones_k = new CompactArmatureBones_k(GPGPU.command_queue_ptr, compact_armature_bones_k_ptr)
@@ -334,6 +341,8 @@ public class GPUCoreMemory
             case HULL_AABB -> hull_aabb_buffer;
             case HULL_AABB_INDEX -> hull_aabb_index_buffer;
             case HULL_AABB_KEY_TABLE -> hull_aabb_key_buffer;
+            case HULL_BONE -> hull_bone_buffer;
+            case HULL_BONE_TABLE -> hull_bone_table_buffer;
         };
     }
 
@@ -537,6 +546,10 @@ public class GPUCoreMemory
 
     public int new_bone(int[] bone_table, float[] bone_data)
     {
+        int capacity = bone_index + 1;
+        hull_bone_buffer.ensure_total_capacity(capacity);
+        hull_bone_table_buffer.ensure_total_capacity(capacity);
+
         create_bone_k
             .set_arg(CreateBone_k.Args.target, bone_index)
             .set_arg(CreateBone_k.Args.new_bone, bone_data)

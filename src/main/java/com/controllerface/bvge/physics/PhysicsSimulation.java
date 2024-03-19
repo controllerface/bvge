@@ -285,10 +285,10 @@ public class PhysicsSimulation extends GameSystem
 
         long animate_bones_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_bones);
         animate_bones_k = new AnimateBones_k(GPGPU.command_queue_ptr, animate_bones_k_ptr)
-            .ptr_arg(AnimateBones_k.Args.bones, GPGPU.Buffer.hull_bones.pointer)
+            .buf_arg(AnimateBones_k.Args.bones, GPGPU.core_memory.get_buffer(BufferType.HULL_BONE))
             .ptr_arg(AnimateBones_k.Args.bone_references, GPGPU.Buffer.bone_references.pointer)
             .ptr_arg(AnimateBones_k.Args.armature_bones, GPGPU.Buffer.armature_bones.pointer)
-            .ptr_arg(AnimateBones_k.Args.bone_index_tables, GPGPU.Buffer.hull_bone_tables.pointer);
+            .buf_arg(AnimateBones_k.Args.bone_index_tables, GPGPU.core_memory.get_buffer(BufferType.HULL_BONE_TABLE));
 
         long animate_points_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_points);
         animate_points_k = new AnimatePoints_k(GPGPU.command_queue_ptr, animate_points_k_ptr)
@@ -300,7 +300,7 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(AnimatePoints_k.Args.vertex_weights, GPGPU.Buffer.vertex_weights.pointer)
             .ptr_arg(AnimatePoints_k.Args.armatures, GPGPU.Buffer.armatures.pointer)
             .ptr_arg(AnimatePoints_k.Args.vertex_references, GPGPU.Buffer.vertex_references.pointer)
-            .ptr_arg(AnimatePoints_k.Args.bones, GPGPU.Buffer.hull_bones.pointer);
+            .buf_arg(AnimatePoints_k.Args.bones, GPGPU.core_memory.get_buffer(BufferType.HULL_BONE));
 
         long resolve_constraints_k_ptr = resolve_constraints.kernel_ptr(Kernel.resolve_constraints);
         resolve_constraints_k = new ResolveConstraints_k(GPGPU.command_queue_ptr, resolve_constraints_k_ptr)

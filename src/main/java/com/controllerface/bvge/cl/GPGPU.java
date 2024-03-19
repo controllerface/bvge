@@ -355,13 +355,13 @@ public class GPGPU
          * sE: (m32) transformation matrix column 4 row 3
          * sF: (m33) transformation matrix column 4 row 4
          */
-        hull_bones(CLSize.cl_float16),
+//        hull_bones(CLSize.cl_float16),
 
         /**
          * x: bone inverse bind pose index (mesh-space)
          * y: bone bind pose index (model space)
          */
-        hull_bone_tables(CLSize.cl_int2),
+//        hull_bone_tables(CLSize.cl_int2),
 
 
         /**
@@ -549,8 +549,6 @@ public class GPGPU
         Buffer.bone_bind_poses.init(max_hulls);
         Buffer.bone_bind_parents.init(max_hulls);
         Buffer.bone_references.init(max_points);
-        Buffer.hull_bones.init(max_points);
-        Buffer.hull_bone_tables.init(max_points);
         Buffer.armature_bone_tables.init(max_points);
         Buffer.model_transforms.init(max_points);
         Buffer.armatures.init(max_points);
@@ -585,8 +583,6 @@ public class GPGPU
             + Buffer.bone_bind_poses.length
             + Buffer.bone_bind_parents.length
             + Buffer.bone_references.length
-            + Buffer.hull_bones.length
-            + Buffer.hull_bone_tables.length
             + Buffer.armature_bone_tables.length
             + Buffer.model_transforms.length
             + Buffer.armatures.length
@@ -620,8 +616,6 @@ public class GPGPU
         System.out.println("bone bind poses      : " + Buffer.bone_bind_poses.length);
         System.out.println("bone bind parents    : " + Buffer.bone_bind_parents.length);
         System.out.println("bone references      : " + Buffer.bone_references.length);
-        System.out.println("bone instances       : " + Buffer.hull_bones.length);
-        System.out.println("bone index           : " + Buffer.hull_bone_tables.length);
         System.out.println("bone bind indices    : " + Buffer.armature_bone_tables.length);
         System.out.println("model transforms     : " + Buffer.model_transforms.length);
         System.out.println("armatures            : " + Buffer.armatures.length);

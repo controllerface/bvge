@@ -16,7 +16,9 @@ public class PersistentBuffer extends ResizableBuffer
         long previous_capacity = this.byte_capacity;
         while (this.byte_capacity < required_capacity)
         {
-            this.byte_capacity += (long)this.item_size * 32768L;
+            // todo: define different expansion strategies for different buffer types
+            if (this.item_size == CLSize.cl_float16) this.byte_capacity += (long)this.item_size * 8192L;
+            else this.byte_capacity += (long)this.item_size * 32768L;
         }
 
         long new_pointer = GPGPU.cl_new_buffer(this.byte_capacity);
