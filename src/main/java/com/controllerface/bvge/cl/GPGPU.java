@@ -152,47 +152,47 @@ public class GPGPU
          * z: vector z / quaternion z
          * w: vector w / quaternion w
          */
-        animation_key_frames(CLSize.cl_float4),
+        //animation_key_frames(CLSize.cl_float4),
 
         /**
          * value: key frame timestamp
          */
-        animation_frame_times(CLSize.cl_double),
+        //animation_frame_times(CLSize.cl_double),
 
         /**
          * x: position channel start index
          * y: position channel end index
          */
-        animation_bone_pos_channel_tables(CLSize.cl_int2),
+        //animation_bone_pos_channel_tables(CLSize.cl_int2),
 
         /**
          * x: rotation channel start index
          * y: rotation channel end index
          */
-        animation_bone_rot_channel_tables(CLSize.cl_int2),
+        //animation_bone_rot_channel_tables(CLSize.cl_int2),
 
         /**
          * x: scaling channel start index
          * y: scaling channel end index
          */
-        animation_bone_scl_channel_tables(CLSize.cl_int2),
+        //animation_bone_scl_channel_tables(CLSize.cl_int2),
 
         /**
          * x: bone channel start index
          * y: bone channel end index
          */
-        animation_bone_channel_tables(CLSize.cl_int2),
+        //animation_bone_channel_tables(CLSize.cl_int2),
 
         /**
          * x: animation duration
          * y: ticks per second (FPS)
          */
-        animation_timings(CLSize.cl_double2),
+        //animation_timings(CLSize.cl_double2),
 
         /**
          * value: animation timing index
          */
-        animation_timing_indices(CLSize.cl_int),
+        //animation_timing_indices(CLSize.cl_int),
 
         /*
         Bones
@@ -375,14 +375,6 @@ public class GPGPU
         Buffer.armature_flags.init(max_points);
         Buffer.armature_bones.init(max_points);
         Buffer.armature_hull_table.init(max_hulls);
-        Buffer.animation_key_frames.init(max_points);
-        Buffer.animation_frame_times.init(max_points);
-        Buffer.animation_bone_pos_channel_tables.init(max_points);
-        Buffer.animation_bone_rot_channel_tables.init(max_points);
-        Buffer.animation_bone_scl_channel_tables.init(max_points);
-        Buffer.animation_bone_channel_tables.init(max_points);
-        Buffer.animation_timings.init(max_points);
-        Buffer.animation_timing_indices.init(max_points);
 
         core_memory = new GPUCoreMemory();
 
@@ -394,15 +386,7 @@ public class GPGPU
             + Buffer.armatures.length
             + Buffer.armature_flags.length
             + Buffer.armature_bones.length
-            + Buffer.armature_hull_table.length
-            + Buffer.animation_key_frames.length
-            + Buffer.animation_frame_times.length
-            + Buffer.animation_bone_pos_channel_tables.length
-            + Buffer.animation_bone_rot_channel_tables.length
-            + Buffer.animation_bone_scl_channel_tables.length
-            + Buffer.animation_bone_channel_tables.length
-            + Buffer.animation_timings.length
-            + Buffer.animation_timing_indices.length;
+            + Buffer.armature_hull_table.length;
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
         System.out.println("acceleration         : " + Buffer.armature_accel.length);
@@ -414,14 +398,6 @@ public class GPGPU
         System.out.println("armature flags       : " + Buffer.armature_flags.length);
         System.out.println("armature bones       : " + Buffer.armature_bones.length);
         System.out.println("hull tables          : " + Buffer.armature_hull_table.length);
-        System.out.println("keyframes            : " + Buffer.animation_key_frames.length);
-        System.out.println("frame times          : " + Buffer.animation_frame_times.length);
-        System.out.println("position channels    : " + Buffer.animation_bone_pos_channel_tables.length);
-        System.out.println("rotation channels    : " + Buffer.animation_bone_rot_channel_tables.length);
-        System.out.println("scaling channels     : " + Buffer.animation_bone_scl_channel_tables.length);
-        System.out.println("bone channels        : " + Buffer.animation_bone_channel_tables.length);
-        System.out.println("animation timings    : " + Buffer.animation_timings.length);
-        System.out.println("animation indices    : " + Buffer.animation_timing_indices.length);
         System.out.println("=====================================");
         System.out.println(" Total (Bytes)       : " + total);
         System.out.println("                  KB : " + ((float) total / 1024f));
