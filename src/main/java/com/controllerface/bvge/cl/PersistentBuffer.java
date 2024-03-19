@@ -2,6 +2,12 @@ package com.controllerface.bvge.cl;
 
 public class PersistentBuffer extends ResizableBuffer
 {
+    public PersistentBuffer(int item_size, long initial_capacity)
+    {
+        super(item_size, initial_capacity);
+        clear();
+    }
+
     public PersistentBuffer(int item_size)
     {
         super(item_size);

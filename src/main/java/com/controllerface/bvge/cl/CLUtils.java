@@ -132,7 +132,8 @@ public class CLUtils
                 global_offset_ptr,
                 global_work_ptr,
                 local_work_ptr,
-                null,null);
+                null,
+                null);
 
             if (r != CL_SUCCESS)
             {

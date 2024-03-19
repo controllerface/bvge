@@ -3,6 +3,7 @@ package com.controllerface.bvge.cl;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -310,12 +311,12 @@ public class GPGPU
          * z: previous x position
          * w: previous y position
          */
-        points(CLSize.cl_float4),
+//        points(CLSize.cl_float4),
 
         /**
          * value: antigravity magnitude
          */
-        point_anti_gravity(CLSize.cl_float),
+//        point_anti_gravity(CLSize.cl_float),
 
         /**
          * x: reference vertex index
@@ -323,7 +324,7 @@ public class GPGPU
          * z: vertex flags (bit field)
          * w: (unused)
          */
-        point_vertex_tables(CLSize.cl_int4),
+//        point_vertex_tables(CLSize.cl_int4),
 
         /**
          * x: bone 1 instance id
@@ -331,7 +332,7 @@ public class GPGPU
          * z: bone 3 instance id
          * w: bone 4 instance id
          */
-        point_bone_tables(CLSize.cl_int4),
+//        point_bone_tables(CLSize.cl_int4),
 
         /*
         Bones
@@ -538,10 +539,6 @@ public class GPGPU
         Buffer.armature_animation_elapsed.init(max_hulls);
         Buffer.mesh_references.init(max_hulls);
         Buffer.mesh_faces.init(max_hulls);
-        Buffer.points.init(max_points);
-        Buffer.point_anti_gravity.init(max_points);
-        Buffer.point_vertex_tables.init(max_points);
-        Buffer.point_bone_tables.init(max_points);
         Buffer.vertex_references.init(max_points);
         Buffer.vertex_weights.init(max_points);
         Buffer.vertex_texture_uvs.init(max_points);
@@ -572,10 +569,6 @@ public class GPGPU
             + Buffer.armature_animation_elapsed.length
             + Buffer.mesh_references.length
             + Buffer.mesh_faces.length
-            + Buffer.points.length
-            + Buffer.point_anti_gravity.length
-            + Buffer.point_vertex_tables.length
-            + Buffer.point_bone_tables.length
             + Buffer.vertex_references.length
             + Buffer.vertex_weights.length
             + Buffer.vertex_texture_uvs.length
@@ -599,16 +592,12 @@ public class GPGPU
             + Buffer.animation_timing_indices.length;
 
         System.out.println("---------------------------- BUFFERS ----------------------------");
-        System.out.println("points               : " + Buffer.points.length);
         System.out.println("acceleration         : " + Buffer.armature_accel.length);
         System.out.println("mass                 : " + Buffer.armature_mass.length);
         System.out.println("armature anim index  : " + Buffer.armature_animation_indices.length);
         System.out.println("armature anim times  : " + Buffer.armature_animation_elapsed.length);
         System.out.println("mesh references      : " + Buffer.mesh_references.length);
         System.out.println("mesh faces           : " + Buffer.mesh_faces.length);
-        System.out.println("point anti-grav      : " + Buffer.point_anti_gravity.length);
-        System.out.println("point vertex tables  : " + Buffer.point_vertex_tables.length);
-        System.out.println("point bone tables    : " + Buffer.point_bone_tables.length);
         System.out.println("vertex references    : " + Buffer.vertex_references.length);
         System.out.println("vertex weights       : " + Buffer.vertex_weights.length);
         System.out.println("texture uvs          : " + Buffer.vertex_texture_uvs.length);
@@ -728,14 +717,18 @@ public class GPGPU
 
     public static void cl_zero_buffer(long buffer_ptr, long buffer_size)
     {
-        clEnqueueFillBuffer(command_queue_ptr,
-            buffer_ptr,
-            ZERO_PATTERN_BUFFER,
-            0,
-            buffer_size,
-            null,
-            null
-            );
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var event = mem_stack.callocPointer(1);
+            clEnqueueFillBuffer(command_queue_ptr,
+                buffer_ptr,
+                ZERO_PATTERN_BUFFER,
+                0,
+                buffer_size,
+                null,
+                event);
+            clWaitForEvents(event);
+        }
     }
 
     public static long cl_new_pinned_buffer(long size)
@@ -819,11 +812,16 @@ public class GPGPU
 
     public static void cl_transfer_buffer(long src_ptr, long dst_ptr, long size)
     {
-        int r = clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, null);
-        if (r != CL_SUCCESS)
+        try (var mem_stack = MemoryStack.stackPush())
         {
-            System.out.println("Error on buffer copy: " + r);
-            System.exit(1);
+            var event = mem_stack.callocPointer(1);
+            int r = clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, event);
+            clWaitForEvents(event);
+            if (r != CL_SUCCESS)
+            {
+                System.out.println("Error on buffer copy: " + r);
+                System.exit(1);
+            }
         }
     }
 

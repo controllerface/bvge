@@ -58,5 +58,6 @@ public abstract class ResizableBuffer
     public void release()
     {
         GPGPU.cl_release_buffer(this.pointer);
+        System.out.println("buffer total: KB " + this.byte_capacity / 1024f);
     }
 }

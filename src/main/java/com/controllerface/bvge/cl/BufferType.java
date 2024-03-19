@@ -15,4 +15,8 @@ public enum BufferType
     HULL_AABB_KEY_TABLE,
     HULL_BONE,
     HULL_BONE_TABLE,
+    POINT,
+    POINT_ANTI_GRAV,
+    POINT_VERTEX_TABLE,
+    POINT_BONE_TABLE,
 }
