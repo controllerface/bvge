@@ -240,9 +240,10 @@ inline void polygon_collision(int b1_id, int b2_id,
 
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
+    float inverse_contact = 1 - contact;
 
-    float edge_scale = 1.0f / (contact * contact + (1 - contact) * (1 - contact));
-    float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale) * -1;
+    float edge_scale = 1.0f / (contact * contact + inverse_contact * inverse_contact);
+    float2 e1_reaction = collision_vector * (inverse_contact * edge_magnitude * edge_scale) * -1;
     float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
 
     // vertex reaction
