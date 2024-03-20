@@ -31,7 +31,7 @@ public class UniformGridRenderer extends GameSystem
     public UniformGridRenderer(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
-        this.shader = Assets.load_shader("bounding_outline.glsl");
+        this.shader = Assets.load_shader("uniform_grid.glsl");
         this.uniformGrid = uniformGrid;
         int draw_count = this.uniformGrid.x_subdivisions * this.uniformGrid.y_subdivisions + 1;
         this.first = new int[draw_count];
