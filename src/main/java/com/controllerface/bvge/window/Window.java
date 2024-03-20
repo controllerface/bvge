@@ -10,15 +10,12 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
-import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 import org.lwjgl.opengl.GL;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
@@ -119,11 +116,11 @@ public class Window
 //        this.width = w[0];
 //        this.height = h[0];
 
-        GLFWVidMode mode = glfwGetVideoMode(primary_monitor);
-        if (mode != null)
+        var video_mode = glfwGetVideoMode(primary_monitor);
+        if (video_mode != null)
         {
-            this.width = mode.width();
-            this.height = mode.height();
+            this.width = video_mode.width();
+            this.height = video_mode.height();
         }
 
         glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
@@ -155,12 +152,12 @@ public class Window
         glViewport(0,0,this.width, this.height);
 
         // mouse cursor
-        InputStream stream = Window.class.getResourceAsStream("/img/reticule.png");
+        var cursor_stream = Window.class.getResourceAsStream("/img/reticule.png");
         BufferedImage image;
         try
         {
-            Objects.requireNonNull(stream);
-            image = ImageIO.read(stream);
+            Objects.requireNonNull(cursor_stream);
+            image = ImageIO.read(cursor_stream);
         }
         catch (IOException e)
         {
@@ -175,37 +172,37 @@ public class Window
         image.getRGB(0, 0, width, height, pixels, 0, width);
 
         // convert image to RGBA format
-        ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * 4);
+        var cursor_buffer = BufferUtils.createByteBuffer(width * height * 4);
 
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
                 int pixel = pixels[y * width + x];
-                buffer.put((byte) ((pixel >> 16) & 0xFF));  // red
-                buffer.put((byte) ((pixel >> 8) & 0xFF));   // green
-                buffer.put((byte) (pixel & 0xFF));          // blue
-                buffer.put((byte) ((pixel >> 24) & 0xFF));  // alpha
+                cursor_buffer.put((byte) ((pixel >> 16) & 0xFF));  // red
+                cursor_buffer.put((byte) ((pixel >> 8) & 0xFF));   // green
+                cursor_buffer.put((byte) (pixel & 0xFF));          // blue
+                cursor_buffer.put((byte) ((pixel >> 24) & 0xFF));  // alpha
             }
         }
-        buffer.flip(); // this will flip the cursor image vertically
+        cursor_buffer.flip();
 
         // create a GLFWImage
-        GLFWImage cursorImg = GLFWImage.create();
-        cursorImg.width(width);     // set up image width
-        cursorImg.height(height);   // set up image height
-        cursorImg.pixels(buffer);   // pass image data
+        var cursor_image = GLFWImage.create();
+        cursor_image.width(width);     // set up image width
+        cursor_image.height(height);   // set up image height
+        cursor_image.pixels(cursor_buffer);   // pass image data
 
         // the hotspot indicates the displacement of the sprite to the
         // position where mouse clicks are registered (see image below)
-        int hotspotX = width / 2;
-        int hotspotY = height / 2;
+        int hotspot_x = width / 2;
+        int hotspot_y = height / 2;
 
         // create custom cursor and store its ID
-        long cursorID = org.lwjgl.glfw.GLFW.glfwCreateCursor(cursorImg, hotspotX , hotspotY);
+        long cursor_id = org.lwjgl.glfw.GLFW.glfwCreateCursor(cursor_image, hotspot_x , hotspot_y);
 
         // set current cursor
-        glfwSetCursor(glfwWindow, cursorID);
+        glfwSetCursor(glfwWindow, cursor_id);
 
         System.out.println("LWJGL version: " + Version.getVersion());
 
