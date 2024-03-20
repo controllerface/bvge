@@ -106,19 +106,19 @@ public class PhysicsSimulation extends GameSystem
         counts_data_ptr     = GPGPU.cl_new_buffer(counts_buf_size);
         offsets_data_ptr    = GPGPU.cl_new_buffer(counts_buf_size);
 
-        point_reaction_counts   = new TransientBuffer(CLSize.cl_int);
-        point_reaction_offsets  = new TransientBuffer(CLSize.cl_int);
-        reactions_in            = new TransientBuffer(CLSize.cl_float4);
-        reactions_out           = new TransientBuffer(CLSize.cl_float4);
-        reaction_index          = new TransientBuffer(CLSize.cl_int);
-        key_map                 = new TransientBuffer(CLSize.cl_int);
-        key_bank                = new TransientBuffer(CLSize.cl_int);
-        in_bounds               = new TransientBuffer(CLSize.cl_int);
-        candidates              = new TransientBuffer(CLSize.cl_int2);
-        candidate_counts        = new TransientBuffer(CLSize.cl_int2);
-        candidate_offsets       = new TransientBuffer(CLSize.cl_int);
-        matches                 = new TransientBuffer(CLSize.cl_int);
-        matches_used            = new TransientBuffer(CLSize.cl_int);
+        point_reaction_counts   = new TransientBuffer(CLSize.cl_int, 500_000L);
+        point_reaction_offsets  = new TransientBuffer(CLSize.cl_int, 500_000L);
+        reactions_in            = new TransientBuffer(CLSize.cl_float4, 500_000L);
+        reactions_out           = new TransientBuffer(CLSize.cl_float4, 500_000L);
+        reaction_index          = new TransientBuffer(CLSize.cl_int, 500_000L);
+        key_map                 = new TransientBuffer(CLSize.cl_int, 500_000L);
+        key_bank                = new TransientBuffer(CLSize.cl_int, 500_000L);
+        in_bounds               = new TransientBuffer(CLSize.cl_int, 500_000L);
+        candidates              = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        candidate_counts        = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        candidate_offsets       = new TransientBuffer(CLSize.cl_int, 500_000L);
+        matches                 = new TransientBuffer(CLSize.cl_int, 500_000L);
+        matches_used            = new TransientBuffer(CLSize.cl_int, 500_000L);
 
         integrate.init();
         scan_key_bank.init();
