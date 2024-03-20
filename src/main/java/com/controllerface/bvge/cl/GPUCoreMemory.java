@@ -124,15 +124,15 @@ public class GPUCoreMemory
         position_buffer_ptr     = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
         delete_sizes_ptr        = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
 
-        hull_shift                      = new TransientBuffer(CLSize.cl_int);
-        edge_shift                      = new TransientBuffer(CLSize.cl_int);
-        point_shift                     = new TransientBuffer(CLSize.cl_int);
-        bone_shift                      = new TransientBuffer(CLSize.cl_int);
-        bone_bind_shift                 = new TransientBuffer(CLSize.cl_int);
-        delete_buffer_1                 = new TransientBuffer(CLSize.cl_int2);
-        delete_buffer_2                 = new TransientBuffer(CLSize.cl_int4);
-        delete_partial_buffer_1         = new TransientBuffer(CLSize.cl_int2);
-        delete_partial_buffer_2         = new TransientBuffer(CLSize.cl_int4);
+        hull_shift                      = new TransientBuffer(CLSize.cl_int, 10_000L);
+        edge_shift                      = new TransientBuffer(CLSize.cl_int, 24_000L);
+        point_shift                     = new TransientBuffer(CLSize.cl_int, 50_000L);
+        bone_shift                      = new TransientBuffer(CLSize.cl_int, 10_000L);
+        bone_bind_shift                 = new TransientBuffer(CLSize.cl_int, 24_000L);
+        delete_buffer_1                 = new TransientBuffer(CLSize.cl_int2, 10_000L);
+        delete_buffer_2                 = new TransientBuffer(CLSize.cl_int4, 20_000L);
+        delete_partial_buffer_1         = new TransientBuffer(CLSize.cl_int2, 10_000L);
+        delete_partial_buffer_2         = new TransientBuffer(CLSize.cl_int4, 20_000L);
 
         anim_bone_pos_channel_buffer    = new PersistentBuffer(CLSize.cl_int2);
         anim_bone_rot_channel_buffer    = new PersistentBuffer(CLSize.cl_int2);
@@ -159,8 +159,8 @@ public class GPUCoreMemory
         hull_aabb_buffer                = new PersistentBuffer(CLSize.cl_float4, 10_000L);
         hull_aabb_index_buffer          = new PersistentBuffer(CLSize.cl_int4, 10_000L);
         hull_aabb_key_buffer            = new PersistentBuffer(CLSize.cl_int2, 10_000L);
-        hull_bone_buffer                = new PersistentBuffer(CLSize.cl_float16);
-        hull_bone_table_buffer          = new PersistentBuffer(CLSize.cl_int2);
+        hull_bone_buffer                = new PersistentBuffer(CLSize.cl_float16, 10_000L);
+        hull_bone_table_buffer          = new PersistentBuffer(CLSize.cl_int2, 10_000L);
         hull_buffer                     = new PersistentBuffer(CLSize.cl_float4, 10_000L);
         hull_element_table_buffer       = new PersistentBuffer(CLSize.cl_int4, 10_000L);
         hull_flag_buffer                = new PersistentBuffer(CLSize.cl_int4, 10_000L);

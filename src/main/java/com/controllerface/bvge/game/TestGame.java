@@ -239,7 +239,7 @@ public class TestGame extends GameMode
             ecs.registerSystem(new PointRenderer(ecs));
         }
 
-        ecs.registerSystem(new UniformGridRenderer(ecs, uniformGrid));
+        //ecs.registerSystem(new UniformGridRenderer(ecs, uniformGrid));
     }
 
     @Override
@@ -253,7 +253,7 @@ public class TestGame extends GameMode
         genTestFigureNPC(1f, 200, 250);
         genTestFigureNPC(1f, 100, 50);
 
-        //genCircles(200, 5f, 5f, -300, 100);
+        //genCircles(100, 5f, 5f, -300, 100);
         genSquares(100,  5f, 5f, -120, 200);
         //genCrates2(100, 5f, 0.025f, 100, 100);
         //genTriangles(150,  5f, 5f, -120, 100);
