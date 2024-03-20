@@ -178,8 +178,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
 
     // vertex and edge object flags
-    int4 vo_f = hull_flags[(int)vertex_object_id];
-    int4 eo_f = hull_flags[(int)edge_object_id];
+    int4 vo_f = hull_flags[vertex_object_id];
+    int4 eo_f = hull_flags[edge_object_id];
 
     float2 vo_dir = vertex_object_id == b1_id 
         ? hull_2.xy - hull_1.xy 

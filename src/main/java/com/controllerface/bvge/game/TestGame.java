@@ -24,10 +24,11 @@ public class TestGame extends GameMode
 
     private enum RenderType
     {
-        MODELS, // normal objects
+        MODELS,  // normal objects
         HULLS,   // physics hulls
         BOUNDS,  // bounding boxes
         POINTS,  // model vertices
+        GRID,    // uniform grid
     }
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -189,7 +190,6 @@ public class TestGame extends GameMode
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
-
     private void genPlayer()
     {
         // player entity
@@ -239,7 +239,10 @@ public class TestGame extends GameMode
             ecs.registerSystem(new PointRenderer(ecs));
         }
 
-        ecs.registerSystem(new UniformGridRenderer(ecs, uniformGrid));
+        if (ACTIVE_RENDERERS.contains(RenderType.GRID))
+        {
+            ecs.registerSystem(new UniformGridRenderer(ecs, uniformGrid));
+        }
     }
 
     @Override

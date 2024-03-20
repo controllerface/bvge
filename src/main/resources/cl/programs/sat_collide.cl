@@ -131,7 +131,7 @@ __kernel void apply_reactions(__global float4 *reactions,
 {
     // todo: actual gravity vector should be provided, when it can change this should also be changable
     //  right now it is a static direction. note that magnitude of gravity is not important, only direction
-    float2 g = (float2)(0.0, -1.0);
+    float2 g = (float2)(0.0f, -1.0f);
 
     int current_point = get_global_id(0);
     int reaction_count = point_reactions[current_point];
@@ -152,7 +152,7 @@ __kernel void apply_reactions(__global float4 *reactions,
     float initial_dist = distance(point.xy, initial_tail);
 
     // calculate the cumulative reaction on this point
-    float4 reaction = (float4)(0.0, 0.0, 0.0, 0.0);
+    float4 reaction = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
     for (int i = 0; i < reaction_count; i++)
     {
         int idx = i + reaction_offset;
@@ -169,7 +169,7 @@ __kernel void apply_reactions(__global float4 *reactions,
     float2 adjusted_offset = point.xy - initial_tail;
     float new_len = length(adjusted_offset);
 
-    adjusted_offset = new_len == 0.0 
+    adjusted_offset = new_len == 0.0f 
         ? adjusted_offset 
         : adjusted_offset / new_len;
 
@@ -209,7 +209,7 @@ __kernel void move_armatures(__global float4 *hulls,
     int end = hull_table.y;
     int hull_count = end - start + 1;
 
-    float4 diff = (float4)(0.0, 0.0, 0.0, 0.0);
+    float4 diff = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
