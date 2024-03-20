@@ -267,18 +267,13 @@ public class GPGPU
 
     public static void cl_read_buffer(long src_ptr, int[] dst)
     {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var event = mem_stack.callocPointer(1);
-            clEnqueueReadBuffer(command_queue_ptr,
-                src_ptr,
-                true,
-                0,
-                dst,
-                null,
-                event);
-            clWaitForEvents(event);
-        }
+        clEnqueueReadBuffer(command_queue_ptr,
+            src_ptr,
+            true,
+            0,
+            dst,
+            null,
+            null);
     }
 
     public static long cl_new_buffer(long size)
@@ -320,64 +315,52 @@ public class GPGPU
 
     public static int[] cl_read_pinned_int_buffer(long pinned_ptr, long size, int count)
     {
-        try (var mem_stack = MemoryStack.stackPush())
+        var out = clEnqueueMapBuffer(command_queue_ptr,
+            pinned_ptr,
+            true,
+            CL_MAP_READ,
+            0,
+            size,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
+        assert out != null;
+
+        int[] result = new int[count];
+        var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+        for (int i = 0; i < count; i++)
         {
-            var map_event = mem_stack.callocPointer(1);
-            var out = clEnqueueMapBuffer(command_queue_ptr,
-                pinned_ptr,
-                true,
-                CL_MAP_READ,
-                0,
-                size,
-                null,
-                map_event,
-                (IntBuffer) null,
-                null);
-
-            assert out != null;
-            var unmap_event = mem_stack.callocPointer(1);
-
-            int[] result = new int[count];
-            var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
-            for (int i = 0; i < count; i++)
-            {
-                result[i] = int_buffer.get(i);
-            }
-            clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, map_event, unmap_event);
-            clWaitForEvents(unmap_event);
-            return result;
+            result[i] = int_buffer.get(i);
         }
+        clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
+        return result;
     }
 
     public static float[] cl_read_pinned_float_buffer(long pinned_ptr, long size, int count)
     {
-        try (var mem_stack = MemoryStack.stackPush())
+        var out = clEnqueueMapBuffer(command_queue_ptr,
+            pinned_ptr,
+            true,
+            CL_MAP_READ,
+            0,
+            size,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
+        assert out != null;
+
+        float[] result = new float[count];
+        var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+        for (int i = 0; i < count; i++)
         {
-            var map_event = mem_stack.callocPointer(1);
-            var out = clEnqueueMapBuffer(command_queue_ptr,
-                pinned_ptr,
-                true,
-                CL_MAP_READ,
-                0,
-                size,
-                null,
-                map_event,
-                (IntBuffer) null,
-                null);
-
-            assert out != null;
-            var unmap_event = mem_stack.callocPointer(1);
-
-            float[] result = new float[count];
-            var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
-            for (int i = 0; i < count; i++)
-            {
-                result[i] = float_buffer.get(i);
-            }
-            clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, map_event, unmap_event);
-            clWaitForEvents(unmap_event);
-            return result;
+            result[i] = float_buffer.get(i);
         }
+        clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
+        return result;
     }
 
     public static long cl_new_pinned_int()
@@ -388,28 +371,22 @@ public class GPGPU
 
     public static int cl_read_pinned_int(long pinned_ptr)
     {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var map_event = mem_stack.callocPointer(1);
-            var out = clEnqueueMapBuffer(command_queue_ptr,
-                pinned_ptr,
-                true,
-                CL_MAP_READ,
-                0,
-                CLSize.cl_int,
-                null,
-                map_event,
-                (IntBuffer) null,
-                null);
+        var out = clEnqueueMapBuffer(command_queue_ptr,
+            pinned_ptr,
+            true,
+            CL_MAP_READ,
+            0,
+            CLSize.cl_int,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
 
-            assert out != null;
-            var unmap_event = mem_stack.callocPointer(1);
+        assert out != null;
 
-            int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-            clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, map_event, unmap_event);
-            clWaitForEvents(unmap_event);
-            return result;
-        }
+        int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+        clEnqueueUnmapMemObject(command_queue_ptr, pinned_ptr, out, null, null);
+        return result;
     }
 
     public static void cl_transfer_buffer(long src_ptr, long dst_ptr, long size)
@@ -417,11 +394,11 @@ public class GPGPU
         try (var mem_stack = MemoryStack.stackPush())
         {
             var event = mem_stack.callocPointer(1);
-            int r = clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, event);
+            int result = clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, event);
             clWaitForEvents(event);
-            if (r != CL_SUCCESS)
+            if (result != CL_SUCCESS)
             {
-                System.out.println("Error on buffer copy: " + r);
+                System.out.println("Error on buffer copy: " + result);
                 System.exit(1);
             }
         }
