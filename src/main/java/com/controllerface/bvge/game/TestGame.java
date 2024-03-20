@@ -262,15 +262,6 @@ public class TestGame extends GameMode
         genWall(5, 150f, 150f, -220, -100);
         genWall(5, 150f, 150f, 1130, -100);
 
-        try
-        {
-            Thread.sleep(5000);
-        }
-        catch (InterruptedException e)
-        {
-            throw new RuntimeException(e);
-        }
-
         loadSystems();
     }
 

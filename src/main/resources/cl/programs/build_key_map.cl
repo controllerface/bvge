@@ -10,9 +10,9 @@ __kernel void build_key_map(__global int4 *bounds_index_data,
                             int x_subdivisions,
                             int key_count_length)
 {
-    int gid = get_global_id(0);
-    int4 bounds_index = bounds_index_data[gid];
-    int2 bounds_bank = bounds_bank_data[gid];
+    int current_hull = get_global_id(0);
+    int4 bounds_index = bounds_index_data[current_hull];
+    int2 bounds_bank = bounds_bank_data[current_hull];
 
     int min_x = bounds_bank.y == 0 ? INT_MAX : bounds_index.x;
     int max_x = bounds_index.y;
@@ -30,7 +30,7 @@ __kernel void build_key_map(__global int4 *bounds_index_data,
             }
             int offset = key_offsets[key_index];
             int i = atomic_inc(&key_counts[key_index]);
-            key_map[offset + i] = gid;
+            key_map[offset + i] = current_hull;
         }
     }
 }

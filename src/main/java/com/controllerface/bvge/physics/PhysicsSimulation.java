@@ -753,7 +753,6 @@ public class PhysicsSimulation extends GameSystem
         // Hulls are now filtered to ensure that only objects that are within the uniform grid boundary
         // are considered for collisions. In this step, the maximum size of the match table is calculated
         // as well, which is needed in subsequent steps.
-
         locate_in_bounds();
 
         // In the first pass, the number of total possible candidates is calculated for each hull. This is

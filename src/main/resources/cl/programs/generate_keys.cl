@@ -10,13 +10,13 @@ __kernel void generate_keys(__global int4 *bounds_index_data,
                             int key_bank_length,
                             int key_count_length)
 {
-    int gid = get_global_id(0);
-    int4 bounds_index = bounds_index_data[gid];
-    int2 bounds_bank = bounds_bank_data[gid];
+    int current_hull = get_global_id(0);
+    int4 bounds_index = bounds_index_data[current_hull];
+    int2 bounds_bank = bounds_bank_data[current_hull];
 
     int offset = bounds_bank.x * 2;
 
-    int min_x = bounds_bank.y == 0 ? INT_MAX : bounds_index.x;
+    int min_x = bounds_bank.y == 0 ? INT_MAX : bounds_index.x; // ensure out of bounds hulls never enter the loop
     int max_x = bounds_index.y;
     int min_y = bounds_index.z;
     int max_y = bounds_index.w;
