@@ -26,7 +26,7 @@ __kernel void integrate(__global float4 *hulls,
                         __global float *anti_gravity,
                         __global float *args)
 {
-    int gid = get_global_id(0);
+    int current_hull = get_global_id(0);
 
     float dt = args[0];
     float x_spacing = args[1];
@@ -43,16 +43,16 @@ __kernel void integrate(__global float4 *hulls,
     float damping = args[11];
     
     // get hull from array
-    float4 hull = hulls[gid];
-    int4 element_table = element_tables[gid];
-    int4 hull_1_flags = hull_flags[gid];
+    float4 hull = hulls[current_hull];
+    int4 element_table = element_tables[current_hull];
+    int4 hull_1_flags = hull_flags[current_hull];
     float4 armature = armatures[hull_1_flags.y];
     int4 armature_flag = armature_flags[hull_1_flags.y];
     float2 acceleration = armature_accel[hull_1_flags.y];
-    float2 rotation = hull_rotations[gid];
-    float4 bounding_box = bounds[gid];
-    int4 bounds_index = bounds_index_data[gid];
-    int2 bounds_bank = bounds_bank_data[gid];
+    float2 rotation = hull_rotations[current_hull];
+    float4 bounding_box = bounds[current_hull];
+    int4 bounds_index = bounds_index_data[current_hull];
+    int2 bounds_bank = bounds_bank_data[current_hull];
 
     // get start/end vertex indices
     int start = element_table.x;
@@ -64,7 +64,7 @@ __kernel void integrate(__global float4 *hulls,
 
     int x = hull_1_flags.x;
     x = x & (~OUT_OF_BOUNDS);
-    hull_flags[gid].x = x;
+    hull_flags[current_hull].x = x;
 
    	// get acc value and multiply by the timestep do get the displacement vector
    	float2 acc;
@@ -172,7 +172,7 @@ __kernel void integrate(__global float4 *hulls,
     }
 
     // only update the armature during the update of the root hull, otherwise movement would be magnified 
-    if (armature_flag.x == gid)
+    if (armature_flag.x == current_hull)
     {
         float2 pos = armature.xy;
         float2 prv = armature.zw;
@@ -294,16 +294,16 @@ __kernel void integrate(__global float4 *hulls,
     {
         int x = hull_1_flags.x;
         x = (x | OUT_OF_BOUNDS);
-        hull_flags[gid].x = x;
+        hull_flags[current_hull].x = x;
         acceleration.x = 0;
         acceleration.y = 0;
         bounds_bank.y = 0;
     }
 
-    bounds[gid] = bounding_box;
-    hulls[gid] = hull;
-    armature_accel[gid] = acceleration;
-    hull_rotations[gid] = rotation;
-    bounds_index_data[gid] = bounds_index;
-    bounds_bank_data[gid] = bounds_bank;
+    bounds[current_hull] = bounding_box;
+    hulls[current_hull] = hull;
+    armature_accel[current_hull] = acceleration;
+    hull_rotations[current_hull] = rotation;
+    bounds_index_data[current_hull] = bounds_index;
+    bounds_bank_data[current_hull] = bounds_bank;
 }

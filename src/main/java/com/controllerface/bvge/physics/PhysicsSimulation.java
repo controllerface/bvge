@@ -18,6 +18,7 @@ public class PhysicsSimulation extends GameSystem
     private static final float TARGET_FPS = 60.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
     private static final int TARGET_SUB_STEPS = 10;
+    private static final int MAX_SUB_STEPS = TARGET_SUB_STEPS * 2;
     private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
     private static final int EDGE_STEPS = 8;
 
@@ -863,7 +864,7 @@ public class PhysicsSimulation extends GameSystem
                 // for this frame. This forces slower hardware to slow down a bit, which is less than ideal, but
                 // is better than the alternative, which is system lockup.
                 // todo: test a few different values on some lower-end hardware and try to find a sweet spot.
-                if (sub_ticks <= TARGET_SUB_STEPS)
+                if (sub_ticks <= MAX_SUB_STEPS)
                 {
                     this.time_accumulator -= FIXED_TIME_STEP;
                     this.tick_simulation();
