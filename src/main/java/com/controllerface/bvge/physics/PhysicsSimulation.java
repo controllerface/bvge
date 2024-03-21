@@ -73,7 +73,14 @@ public class PhysicsSimulation extends GameSystem
     private final long counts_data_ptr;
     private final long offsets_data_ptr;
 
+    /** int
+     * x: count of collision reactions for each point in the current frame
+     */
     public final ResizableBuffer point_reaction_counts;
+
+    /** int
+     * x: offset into reaction buffer for each point in the current frame
+     */
     public final ResizableBuffer point_reaction_offsets;
     public final ResizableBuffer reactions_in;
     public final ResizableBuffer reactions_out;
