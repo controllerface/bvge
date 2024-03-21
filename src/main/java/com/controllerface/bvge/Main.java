@@ -8,6 +8,8 @@ public class Main
 {
     public static void main(String[] args)
     {
+        System.out.println("Java Version: " + System.getProperty("java.version"));
+
         //Configuration.DISABLE_CHECKS.set(true);
         Window window = Window.get();
         window.init();

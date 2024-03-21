@@ -230,14 +230,6 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1 = edge_point_1.xy;
     float2 e2 = edge_point_2.xy;
 
-    float2 v0_p = vert_point.zw;
-    float2 e1_p = edge_point_1.zw;
-    float2 e2_p = edge_point_2.zw;
-
-    float v0_dist = distance(v0, v0_p);
-    float e1_dist = distance(e1, e1_p);
-    float e2_dist = distance(e2, e2_p);
-
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
     float inverse_contact = 1 - contact;
