@@ -250,7 +250,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 300, 350);
+        genTestFigure(1f, 300, 600);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genTestFigureNPC(1f, 200, 100);
@@ -260,7 +260,10 @@ public class TestGame extends GameMode
         //genCircles(200, 5f, 5f, -300, 100);
         //genSquares(100,  6f, 5f, -120, 200);
         //genCrates2(100, 5f, 0.025f, 100, 100);
-        genTriangles(150,  7f, 5f, -120, 100);
+        //genTriangles(50,  5f, 5f, -120, 100);
+        //genTriangles(50,  5f, 5f, 130, 100);
+
+        PhysicsObjects.static_tri(0,-25, 150, 1);
 
         genFloor(8, 150f, 150f, -70, -100);
         genWall(5, 150f, 150f, -220, -100);

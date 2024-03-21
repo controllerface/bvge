@@ -11,7 +11,8 @@ inline void polygon_collision(int b1_id, int b2_id,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global float *masses,
-                             __global int *counter)
+                             __global int *counter,
+                             float dt)
 {
 
     float4 hull_1 = hulls[b1_id];
@@ -230,6 +231,44 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1 = edge_point_1.xy;
     float2 e2 = edge_point_2.xy;
 
+    float2 v0_p = vert_point.zw;
+    float2 e1_p = edge_point_1.zw;
+    float2 e2_p = edge_point_2.zw;
+
+    float d_acc = (dt * dt);
+
+    // todo: consdier pulling this from the armature instead
+    //  may even be able to pre-compute it for all armatures 
+    //  to make it more efficient. Both removing the need for 
+    //  calculating it here as well as reducing the edge calcutations 
+    //  to just one instead of one for each point on the edge. 
+    float2 v0_v = (v0 - v0_p) / d_acc;
+    float2 e1_v = (e1 - e1_p) / d_acc;
+    float2 e2_v = (e2 - e2_p) / d_acc;
+
+    float2 v0_rel = v0_v - collision_vector;
+    float2 e1_rel = e1_v - collision_vector;
+    float2 e2_rel = e2_v - collision_vector;
+
+    float v_mu = es ? 0.01 : 0.02;
+    float e_mu = vs ? 0.01 : 0.02;
+
+    float2 v_tan = v0_rel - dot(v0_rel, normal) * normal;
+    float2 e1_tan = e1_rel - dot(e1_rel, normal) * normal;
+    float2 e2_tan = e2_rel - dot(e2_rel, normal) * normal;
+
+    v_tan = normalize(v_tan);
+    e1_tan = normalize(e1_tan);
+    e2_tan = normalize(e2_tan);
+
+    float2 v_fric = (-v_mu * v_tan) * vertex_magnitude;
+    float2 e1_fric = (-e_mu * e1_tan) * edge_magnitude;
+    float2 e2_fric = (-e_mu * e2_tan) * edge_magnitude;
+
+    float v0_dist = distance(v0, v0_p);
+    float e1_dist = distance(e1, e1_p);
+    float e2_dist = distance(e2, e2_p);
+
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
     float inverse_contact = 1 - contact;
@@ -245,7 +284,7 @@ inline void polygon_collision(int b1_id, int b2_id,
     {
         int i = atomic_inc(&counter[0]);
         float4 v_reaction_4d;
-        v_reaction_4d.xy = v_reaction;
+        v_reaction_4d.xy = v_reaction + v_fric;
         v_reaction_4d.zw = vo_dir;
         reactions[i] = v_reaction_4d;
         reaction_index[i] = vert_index;
@@ -257,9 +296,9 @@ inline void polygon_collision(int b1_id, int b2_id,
         int k = atomic_inc(&counter[0]);
         float4 e1_reaction_4d;
         float4 e2_reaction_4d;
-        e1_reaction_4d.xy = e1_reaction;
+        e1_reaction_4d.xy = e1_reaction + e1_fric;
         e1_reaction_4d.zw = eo_dir;
-        e2_reaction_4d.xy = e2_reaction;
+        e2_reaction_4d.xy = e2_reaction + e2_fric;
         e2_reaction_4d.zw = eo_dir;
         reactions[j] = e1_reaction_4d;
         reactions[k] = e2_reaction_4d;

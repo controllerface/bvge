@@ -34,7 +34,11 @@ public class CLUtils
     public static long cl_p(long context_ptr, long device_id_ptr, String ... src)
     {
         long program = clCreateProgramWithSource(context_ptr, src, null);
-        clBuildProgram(program, device_id_ptr, "", null, 0);
+        int r = clBuildProgram(program, device_id_ptr, "", null, 0);
+        if (r != CL_SUCCESS)
+        {
+            System.out.println("Error building program: " + r);
+        }
         return program;
     }
 

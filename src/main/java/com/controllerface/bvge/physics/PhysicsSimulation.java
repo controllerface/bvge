@@ -232,6 +232,7 @@ public class PhysicsSimulation extends GameSystem
 
         long sat_collide_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide);
         sat_collide_k = new SatCollide_k(GPGPU.command_queue_ptr, sat_collide_k_ptr)
+            .set_arg(SatCollide_k.Args.dt, FIXED_TIME_STEP)
             .buf_arg(SatCollide_k.Args.candidates, candidates)
             .buf_arg(SatCollide_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
             .buf_arg(SatCollide_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))

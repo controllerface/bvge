@@ -194,6 +194,11 @@ public class PhysicsObjects
         return box(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass);
     }
 
+    public static int static_tri(float x, float y, float size, float mass)
+    {
+        return tri(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass);
+    }
+
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will
     //  probably break/crash.
     public static int wrap_model(int model_index, float x, float y, float size, int flags, float mass)

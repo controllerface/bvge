@@ -26,7 +26,8 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global int *reaction_index,
                           __global int *point_reactions,
                           __global float *masses,
-                          __global int *counter)
+                          __global int *counter,
+                          float dt)
 {
     int gid = get_global_id(0);
     
@@ -63,7 +64,8 @@ __kernel void sat_collide(__global int2 *candidates,
             reaction_index,
             point_reactions,
             masses,
-            counter); 
+            counter,
+            dt);
     }
     else if (b1_is_circle && b2_is_circle) 
     {
@@ -144,12 +146,6 @@ __kernel void apply_reactions(__global float4 *reactions,
     
     // get the offset into the reaction buffer corresponding to this point
     int reaction_offset = point_offsets[current_point];
-    
-    // store the initial distance and previous position. These are used after
-    // adjustment is made to re-adjust the previous position of the point. This
-    // is done as a best effort to conserve momentum. 
-    float2 initial_tail = point.zw;
-    float initial_dist = distance(point.xy, initial_tail);
 
     // calculate the cumulative reaction on this point
     float4 reaction = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
@@ -159,6 +155,12 @@ __kernel void apply_reactions(__global float4 *reactions,
         float4 reaction_i = reactions[idx];
         reaction += reaction_i;
     }
+    
+    // store the initial distance and previous position. These are used after
+    // adjustment is made to re-adjust the previous position of the point. This
+    // is done as a best effort to conserve momentum. 
+    float2 initial_tail = point.zw;
+    float initial_dist = distance(point.xy, initial_tail);
 
     // apply the cumulative reaction
     point.xy += reaction.xy;

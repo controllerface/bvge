@@ -18,7 +18,8 @@ public class SatCollide_k extends GPUKernel
         reaction_index,
         point_reactions,
         masses,
-        counter;
+        counter,
+        dt,
     }
 
     public SatCollide_k(long command_queue_ptr, long kernel_ptr)
