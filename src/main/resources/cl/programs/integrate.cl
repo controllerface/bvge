@@ -171,7 +171,7 @@ __kernel void integrate(__global float4 *hulls,
         points[i] = point;
     }
 
-    // only update the aramture during the update of the root hull, otherwise movement would be magnified 
+    // only update the armature during the update of the root hull, otherwise movement would be magnified 
     if (armature_flag.x == gid)
     {
         float2 pos = armature.xy;

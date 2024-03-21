@@ -34,6 +34,7 @@ public class TestGame extends GameMode
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
             RenderType.MODELS,
+            RenderType.GRID,
             RenderType.HULLS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -257,7 +258,7 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(100, 5f, 5f, -300, 100);
-        genSquares(20,  5f, 5f, -120, 200);
+        genSquares(100,  5f, 5f, -120, 200);
         //genCrates2(100, 5f, 0.025f, 100, 100);
         //genTriangles(150,  5f, 5f, -120, 100);
 
