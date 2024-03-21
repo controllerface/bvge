@@ -1,6 +1,5 @@
 package com.controllerface.bvge.game;
 
-import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
@@ -33,9 +32,11 @@ public class TestGame extends GameMode
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
-            RenderType.MODELS,
+            RenderType.HULLS,
+            //RenderType.POINTS,
+            //RenderType.BOUNDS,
             RenderType.GRID,
-            RenderType.HULLS);
+            RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
 //        EnumSet.allOf(RenderType.class);
@@ -258,7 +259,7 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(200, 5f, 5f, -300, 100);
-        //genSquares(100,  6f, 5f, -120, 200);
+        genSquares(100,  6f, 5f, -120, 200);
         //genCrates2(100, 5f, 0.025f, 100, 100);
         //genTriangles(50,  5f, 5f, -120, 100);
         //genTriangles(50,  5f, 5f, 130, 100);

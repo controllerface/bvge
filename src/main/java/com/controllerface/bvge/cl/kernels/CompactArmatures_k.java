@@ -9,7 +9,6 @@ public class CompactArmatures_k extends GPUKernel
         buffer_in_1,
         buffer_in_2,
         armatures,
-        armature_accel,
         armature_flags,
         armature_animation_indices,
         armature_animation_elapsed,

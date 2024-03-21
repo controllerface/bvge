@@ -364,7 +364,6 @@ __kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
 __kernel void compact_armatures(__global int2 *buffer_in_1,
                                 __global int4 *buffer_in_2,
                                 __global float4 *armatures,
-                                __global float2 *armature_accel,
                                 __global int4 *armature_flags,
                                 __global int *armature_animation_indices,
                                 __global double *armature_animation_elapsed,
@@ -398,7 +397,6 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
 
     // armature
     float4 armature = armatures[gid];
-    float2 accel = armature_accel[gid];
     int4 armature_flag = armature_flags[gid];
     int4 hull_table = hull_tables[gid];
     int anim_index = armature_animation_indices[gid];
@@ -427,7 +425,6 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
 
     // store updated data at the new index
     armatures[new_armature_index] = armature;
-    armature_accel[new_armature_index] = accel;
     armature_flags[new_armature_index] = new_armature_flag;
     hull_tables[new_armature_index] = new_hull_table;
     armature_animation_indices[new_armature_index] = anim_index;

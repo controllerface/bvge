@@ -567,7 +567,6 @@ public class GPUCoreMemory
         long compact_armatures_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armatures);
         compact_armatures_k = new CompactArmatures_k(GPGPU.command_queue_ptr, compact_armatures_k_ptr)
             .buf_arg(CompactArmatures_k.Args.armatures, armature_buffer)
-            .buf_arg(CompactArmatures_k.Args.armature_accel, armature_accel_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_flags, armature_flag_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_indices, armature_anim_index_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_elapsed, armature_anim_elapsed_buffer)

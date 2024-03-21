@@ -235,16 +235,14 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_p = edge_point_1.zw;
     float2 e2_p = edge_point_2.zw;
 
-    float d_acc = (dt * dt);
-
     // todo: consdier pulling this from the armature instead
     //  may even be able to pre-compute it for all armatures 
     //  to make it more efficient. Both removing the need for 
     //  calculating it here as well as reducing the edge calcutations 
     //  to just one instead of one for each point on the edge. 
-    float2 v0_v = (v0 - v0_p) / d_acc;
-    float2 e1_v = (e1 - e1_p) / d_acc;
-    float2 e2_v = (e2 - e2_p) / d_acc;
+    float2 v0_v = (v0 - v0_p) / dt;
+    float2 e1_v = (e1 - e1_p) / dt;
+    float2 e2_v = (e2 - e2_p) / dt;
 
     float2 v0_rel = v0_v - collision_vector;
     float2 e1_rel = e1_v - collision_vector;
