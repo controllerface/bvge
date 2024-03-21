@@ -42,59 +42,304 @@ public class GPUCoreMemory
     private final GPUKernel update_accel_k;
 
     // internal buffers
+    /**
+     * During the armature compaction process, these buffers are written to, and store the number of
+     * positions that the corresponding values must shift left within their own buffers when the
+     * buffer compaction occurs. Each index is aligned with the corresponding data type
+     * that will be shifted. I.e. every bone in the bone buffer has a corresponding entry in the
+     * bone shift buffer. Points, edges, and hulls work the same way.
+     */
     private final ResizableBuffer bone_bind_shift;
     private final ResizableBuffer bone_shift;
-    private final ResizableBuffer delete_buffer_1;
-    private final ResizableBuffer delete_buffer_2;
-    private final ResizableBuffer delete_partial_buffer_1;
-    private final ResizableBuffer delete_partial_buffer_2;
     private final ResizableBuffer edge_shift;
     private final ResizableBuffer hull_shift;
     private final ResizableBuffer point_shift;
 
+    /**
+     * During the deletion process, these buffers are used during the parallel scan of the relevant data
+     * buffers. The partial buffers are utilized when the parallel scan occurs over multiple scan blocks,
+     * and allows the output of each block to then itself be scanned, until all values have been summed.
+     */
+
+    private final ResizableBuffer delete_buffer_1;
+    private final ResizableBuffer delete_buffer_2;
+    private final ResizableBuffer delete_partial_buffer_1;
+    private final ResizableBuffer delete_partial_buffer_2;
+
     // external buffers
+
+    /** int2
+     * x: position channel start index
+     * y: position channel end index
+     */
     private final ResizableBuffer anim_bone_pos_channel_buffer;
+
+    /** int2
+     * x: rotation channel start index
+     * y: rotation channel end index
+     */
     private final ResizableBuffer anim_bone_rot_channel_buffer;
+
+    /** int2
+     * x: scaling channel start index
+     * y: scaling channel end index
+     */
     private final ResizableBuffer anim_bone_scl_channel_buffer;
+
+    /** double
+     * x: key frame timestamp
+     */
     private final ResizableBuffer anim_frame_time_buffer;
+
+    /** float4
+     * x: vector/quaternion x
+     * y: vector/quaternion y
+     * z: vector/quaternion z
+     * w: vector/quaternion w
+     */
     private final ResizableBuffer anim_key_frame_buffer;
+
+    /** double2
+     * x: animation duration
+     * y: ticks per second (FPS)
+     */
     private final ResizableBuffer anim_timing_buffer;
+
+    /** int
+     * x: animation timing index
+     */
     private final ResizableBuffer anim_timing_index_buffer;
+
+    /** float2
+     * x: current x acceleration
+     * y: current y acceleration
+     */
     private final ResizableBuffer armature_accel_buffer;
+
+    /** double
+     * x: the last rendered timestamp
+     */
     private final ResizableBuffer armature_anim_elapsed_buffer;
+
+    /** int
+     * x: the currently running animation index
+     */
     private final ResizableBuffer armature_anim_index_buffer;
+
+    /** float16
+     * s0-sF: Column-major, 4x4 transformation matrix, armature bone instance
+     */
     private final ResizableBuffer armature_bone_buffer;
+
+    /** int2
+     * x: bind pose reference id
+     * y: armature bone parent id
+     */
     private final ResizableBuffer armature_bone_table_buffer;
+
+    /** float4
+     * x: current x position
+     * y: current y position
+     * z: previous x position
+     * w: previous y position
+     */
     private final ResizableBuffer armature_buffer;
+
+    /** int4
+     * x: root hull index
+     * y: model id
+     * z: armature flags (bit-field)
+     * w: model transform index
+     */
     private final ResizableBuffer armature_flag_buffer;
+
+    /** int4
+     * x: start hull index
+     * y: end hull index
+     * z: start bone anim index
+     * w: end bone anim index
+     */
     private final ResizableBuffer armature_hull_table_buffer;
+
+    /** float
+     * x: mass of the armature
+     */
     private final ResizableBuffer armature_mass_buffer;
+
+    /** int2
+     * x: bone channel start index
+     * y: bone channel end index
+     */
     private final ResizableBuffer bone_anim_channel_table_buffer;
+
+    /** float16
+     * s0-sF: Column-major, 4x4 transformation matrix, mesh-space bone reference (inverse bind pose)
+     */
     private final ResizableBuffer bone_bind_pose_buffer;
+
+    /** float16
+     * s0-sF: Column-major, 4x4 transformation matrix, model-space bone reference (bind pose)
+     */
     private final ResizableBuffer bone_reference_buffer;
+
+    /** int2
+     * x: point 1 index
+     * y: point 2 index
+     */
     private final ResizableBuffer edge_buffer;
+
+    /** int
+     * x: edge flags (bit-field)
+     */
     private final ResizableBuffer edge_flag_buffer;
+
+    /** float
+     * x: edge constraint length
+     */
     private final ResizableBuffer edge_length_buffer;
+
+    /** float4
+     * x: corner x position
+     * y: corner y position
+     * z: width
+     * w: height
+     */
     private final ResizableBuffer hull_aabb_buffer;
+
+    /** int4
+     * x: minimum x key index
+     * y: maximum x key index
+     * z: minimum y key index
+     * w: maximum y key index
+     */
     private final ResizableBuffer hull_aabb_index_buffer;
+
+    /** int2
+     * x: key bank offset
+     * y: key bank size
+     */
     private final ResizableBuffer hull_aabb_key_buffer;
+
+    /** float16
+     * s0-sF: Column-major, 4x4 transformation matrix, hull bone instance
+     */
     private final ResizableBuffer hull_bone_buffer;
+
+    /** int2
+     * x: bone inverse bind pose index (mesh-space)
+     * y: bone bind pose index (model space)
+     */
     private final ResizableBuffer hull_bone_table_buffer;
+
+    /** float4
+     * x: current x position
+     * y: current y position
+     * z: scale x
+     * w: scale y
+     */
     private final ResizableBuffer hull_buffer;
+
+    /** int4
+     * x: start point index
+     * y: end point index
+     * z: start edge index
+     * w: end edge index
+     */
     private final ResizableBuffer hull_element_table_buffer;
+
+    /** in4
+     * x: hull flags (bit-field)
+     * y: armature id
+     * z: start bone
+     * w: end bone
+     */
     private final ResizableBuffer hull_flag_buffer;
+
+    /** int
+     * x: reference mesh id
+     */
     private final ResizableBuffer hull_mesh_id_buffer;
+
+    /** float2
+     * x: initial reference angle
+     * y: current rotation
+     */
     private final ResizableBuffer hull_rotation_buffer;
+
+    /** int4
+     * x: vertex 1 index
+     * y: vertex 2 index
+     * z: vertex 3 index
+     * w: parent reference mesh ID
+     */
     private final ResizableBuffer mesh_face_buffer;
+
+    /** int4
+     * x: start vertex index
+     * y: end vertex index
+     * z: start face index
+     * w: end face index
+     */
     private final ResizableBuffer mesh_reference_buffer;
+
+    /** float16
+     * s0-sF: Column-major, 4x4 transformation matrix
+     */
     private final ResizableBuffer model_transform_buffer;
+
+    /** float
+     * x: anti-gravity magnitude for each point
+     */
     private final ResizableBuffer point_anti_gravity_buffer;
+
+    /** int4
+     * x: bone 1 instance id
+     * y: bone 2 instance id
+     * z: bone 3 instance id
+     * w: bone 4 instance id
+     */
     private final ResizableBuffer point_bone_table_buffer;
+
+    /** float4
+     * x: current x position
+     * y: current y position
+     * z: previous x position
+     * w: previous y position
+     */
     private final ResizableBuffer point_buffer;
+
+    /** int4
+     * x: reference vertex index
+     * y: hull index
+     * z: vertex flags (bit field)
+     * w: (unused)
+     */
     private final ResizableBuffer point_vertex_table_buffer;
+
+    /** float2
+     * x: x position
+     * y: y position
+     */
     private final ResizableBuffer vertex_reference_buffer;
+
+    /** float2
+     * x: u coordinate
+     * y: v coordinate
+     */
     private final ResizableBuffer vertex_texture_uv_buffer;
+
+    /** int2
+     * x: start UV index
+     * y: end UV index
+     */
     private final ResizableBuffer vertex_uv_table_buffer;
+
+    /** float4
+     * x: bone 1 weight
+     * y: bone 2 weight
+     * z: bone 3 weight
+     * w: bone 4 weight
+     */
     private final ResizableBuffer vertex_weight_buffer;
 
     private final long delete_counter_ptr;
