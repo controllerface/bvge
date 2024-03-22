@@ -175,7 +175,7 @@ inline void polygon_collision(int b1_id, int b2_id,
 
     float3 final_proj = project_polygon(points, vertex_tables, vertex_table, normalBuffer);
     vert_index = final_proj.z;
-    min_distance = min_distance / fast_length(normalBuffer);
+    min_distance = native_divide(min_distance, fast_length(normalBuffer));
 
 
     // vertex and edge object flags
@@ -206,8 +206,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
     float2 collision_vector = normal * min_distance;
 
-    float vertex_magnitude = eo_mass / total_mass;
-    float edge_magnitude = vo_mass / total_mass;
+    float vertex_magnitude = native_divide(eo_mass, total_mass);
+    float edge_magnitude = native_divide(vo_mass, total_mass);
 
     bool vs = (vo_f.x & IS_STATIC) !=0;
     bool es = (eo_f.x & IS_STATIC) !=0;
@@ -240,9 +240,9 @@ inline void polygon_collision(int b1_id, int b2_id,
     //  to make it more efficient. Both removing the need for 
     //  calculating it here as well as reducing the edge calcutations 
     //  to just one instead of one for each point on the edge. 
-    float2 v0_v = (v0 - v0_p) / dt;
-    float2 e1_v = (e1 - e1_p) / dt;
-    float2 e2_v = (e2 - e2_p) / dt;
+    float2 v0_v = native_divide((v0 - v0_p), dt);
+    float2 e1_v = native_divide((e1 - e1_p), dt);
+    float2 e2_v = native_divide((e2 - e2_p), dt);
 
     float2 v0_rel = v0_v - collision_vector;
     float2 e1_rel = e1_v - collision_vector;
@@ -271,7 +271,7 @@ inline void polygon_collision(int b1_id, int b2_id,
     float contact = edge_contact(e1, e2, v0, collision_vector);
     float inverse_contact = 1 - contact;
 
-    float edge_scale = 1.0f / (contact * contact + inverse_contact * inverse_contact);
+    float edge_scale = native_divide(1.0f, (contact * contact + inverse_contact * inverse_contact));
     float2 e1_reaction = collision_vector * (inverse_contact * edge_magnitude * edge_scale) * -1;
     float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
 

@@ -37,8 +37,8 @@ inline void circle_collision(int b1_id, int b2_id,
 
     float total_mass = mass1 + mass2;
 
-    float mag1 = mass2 / total_mass;
-    float mag2 = mass1 / total_mass;
+    float mag1 = native_divide(mass2, total_mass);
+    float mag2 = native_divide(mass1, total_mass);
 
     float2 reaction = depth * normal;
     float2 offset1 = -mag1 * reaction;

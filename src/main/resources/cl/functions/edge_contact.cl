@@ -7,13 +7,13 @@ inline float edge_contact(float2 e1, float2 e2, float2 collision_vertex, float2 
     {
         float x_offset = (collision_vertex.x - collision_vector.x - e1.x);
         float x_diff = (e2.x - e1.x);
-        contact = x_offset / x_diff;
+        contact = native_divide(x_offset, x_diff);
     }
     else
     {
         float y_offset = (collision_vertex.y - collision_vector.y - e1.y);
         float y_diff = (e2.y - e1.y);
-        contact = y_offset / y_diff;
+        contact = native_divide(y_offset, y_diff);
     }
     return contact;
 }

@@ -2,7 +2,7 @@ inline float calculate_anti_gravity(float2 gravity, float2 heading)
 {
     float dot_p = dot(gravity, heading);
     float mag_p = fast_length(gravity) * fast_length(heading);
-    return dot_p / mag_p;
+    return native_divide(dot_p, mag_p);
 }
 
 /**
@@ -173,7 +173,7 @@ __kernel void apply_reactions(__global float4 *reactions,
 
     adjusted_offset = new_len == 0.0f 
         ? adjusted_offset 
-        : adjusted_offset / new_len;
+        : native_divide(adjusted_offset, new_len);
 
     point.zw = point.xy - initial_dist * adjusted_offset;
 

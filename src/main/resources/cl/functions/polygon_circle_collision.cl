@@ -96,7 +96,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     float2 axis = fast_normalize(edge);
     float3 proj_p = project_polygon(points, vertex_tables, polygon_table, axis);
     float3 proj_c = project_circle(circle, axis);
-    float _distance = polygon_distance(proj_c, proj_p) / (circle.z / 2);
+    float _distance = native_divide(polygon_distance(proj_c, proj_p), (native_divide( circle.z, 2)));
     if (_distance > 0)
     {
         return;
@@ -136,7 +136,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     }
 
     vert_index = circle_table.x;
-    min_distance = min_distance / fast_length(normalBuffer);
+    min_distance = native_divide(min_distance, fast_length(normalBuffer));
 
     // vertex and edge object flags
     int4 vo_f = hull_flags[vertex_object_id];
@@ -154,8 +154,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
 
     float2 collision_vector = normal * min_distance;
     
-    float vertex_magnitude = eo_mass / total_mass;
-    float edge_magnitude = vo_mass / total_mass;
+    float vertex_magnitude = native_divide(eo_mass, total_mass);
+    float edge_magnitude = native_divide(vo_mass, total_mass);
 
     bool vs = (vo_f.x & IS_STATIC) !=0;
     bool es = (eo_f.x & IS_STATIC) !=0;
@@ -193,7 +193,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
 
-    float edge_scale = 1.0f / (contact * contact + (1 - contact) * (1 - contact));
+    float edge_scale = native_divide(1.0f, (contact * contact + (1 - contact) * (1 - contact)));
     float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale) * -1.0f;
     float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale) * -1.0f;
 

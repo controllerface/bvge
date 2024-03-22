@@ -210,8 +210,8 @@ __kernel void integrate(__global float4 *hulls,
     }
 
     // calculate centroid
-    hull.x = x_sum / point_count;
-    hull.y = y_sum / point_count;
+    hull.x = native_divide(x_sum, point_count);
+    hull.y = native_divide(y_sum, point_count);
 
     // handle bounding boxes for circles
     if (is_circle)
