@@ -263,9 +263,9 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_fric = (-e_mu * e1_tan) * edge_magnitude;
     float2 e2_fric = (-e_mu * e2_tan) * edge_magnitude;
 
-    float v0_dist = distance(v0, v0_p);
-    float e1_dist = distance(e1, e1_p);
-    float e2_dist = distance(e2, e2_p);
+    float v0_dist = fast_distance(v0, v0_p);
+    float e1_dist = fast_distance(e1, e1_p);
+    float e2_dist = fast_distance(e2, e2_p);
 
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);

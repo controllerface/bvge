@@ -160,7 +160,7 @@ __kernel void apply_reactions(__global float4 *reactions,
     // adjustment is made to re-adjust the previous position of the point. This
     // is done as a best effort to conserve momentum. 
     float2 initial_tail = point.zw;
-    float initial_dist = distance(point.xy, initial_tail);
+    float initial_dist = fast_distance(point.xy, initial_tail);
 
     // apply the cumulative reaction
     point.xy += reaction.xy;

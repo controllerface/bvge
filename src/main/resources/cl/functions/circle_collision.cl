@@ -16,7 +16,7 @@ inline void circle_collision(int b1_id, int b2_id,
 
     float2 normal;
     float depth = 0;
-    float _distance = distance(hull_1.xy, hull_2.xy);
+    float _distance = fast_distance(hull_1.xy, hull_2.xy);
     float radii = hull_1.w + hull_2.w;
     if(_distance >= radii)
     {
