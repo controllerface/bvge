@@ -175,7 +175,7 @@ inline void polygon_collision(int b1_id, int b2_id,
 
     float3 final_proj = project_polygon(points, vertex_tables, vertex_table, normalBuffer);
     vert_index = final_proj.z;
-    min_distance = min_distance / length(normalBuffer);
+    min_distance = min_distance / fast_length(normalBuffer);
 
 
     // vertex and edge object flags

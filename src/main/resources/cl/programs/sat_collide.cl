@@ -1,7 +1,7 @@
 inline float calculate_anti_gravity(float2 gravity, float2 heading)
 {
     float dot_p = dot(gravity, heading);
-    float mag_p = length(gravity) * length(heading);
+    float mag_p = fast_length(gravity) * fast_length(heading);
     return dot_p / mag_p;
 }
 
@@ -169,7 +169,7 @@ __kernel void apply_reactions(__global float4 *reactions,
     // position to ensure it is equivalent to the initial position delta. This preserves 
     // velocity.
     float2 adjusted_offset = point.xy - initial_tail;
-    float new_len = length(adjusted_offset);
+    float new_len = fast_length(adjusted_offset);
 
     adjusted_offset = new_len == 0.0f 
         ? adjusted_offset 

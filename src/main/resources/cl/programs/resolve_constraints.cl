@@ -58,11 +58,11 @@ __kernel void resolve_constraints(__global int4 *element_tables,
 
             // calculate the normalized direction of separation
             float2 sub = p2_v - p1_v;
-            float len = length(sub);
+            float len = fast_length(sub);
             float diff = len - constraint;
 
             float2 sub_p = p2_p - p1_p;
-            float len_p = length(sub_p);
+            float len_p = fast_length(sub_p);
             float diff_p = len_p - constraint;
             
             float2 direction = fast_normalize(sub);

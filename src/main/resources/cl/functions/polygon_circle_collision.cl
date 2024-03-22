@@ -136,7 +136,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     }
 
     vert_index = circle_table.x;
-    min_distance = min_distance / length(normalBuffer);
+    min_distance = min_distance / fast_length(normalBuffer);
 
     // vertex and edge object flags
     int4 vo_f = hull_flags[vertex_object_id];
