@@ -8,8 +8,8 @@ inline float4 rotate_point(float4 target, float2 origin, float angle)
 
     float rad = radians(angle);
 
-    float cosine = cos(rad);
-    float sine = sin(rad);
+    float cosine = native_cos(rad);
+    float sine = native_sin(rad);
 
     float x_pos = target.x - origin.x;
     float y_pos = target.y - origin.y;

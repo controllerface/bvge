@@ -34,7 +34,7 @@ public class CLUtils
     public static long cl_p(long context_ptr, long device_id_ptr, String ... src)
     {
         long program = clCreateProgramWithSource(context_ptr, src, null);
-        int r = clBuildProgram(program, device_id_ptr,  "-cl-denorms-are-zero", null, 0);
+        int r = clBuildProgram(program, device_id_ptr,  "-cl-denorms-are-zero -cl-mad-enable -cl-fast-relaxed-math", null, 0);
         if (r != CL_SUCCESS)
         {
             System.out.println("Error building program: " + r);

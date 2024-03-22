@@ -248,8 +248,8 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_rel = e1_v - collision_vector;
     float2 e2_rel = e2_v - collision_vector;
 
-    float v_mu = es ? 0.01 : 0.02;
-    float e_mu = vs ? 0.01 : 0.02;
+    float v_mu = es ? 0.01 : 0.00;
+    float e_mu = vs ? 0.01 : 0.00;
 
     float2 v_tan = v0_rel - dot(v0_rel, normal) * normal;
     float2 e1_tan = e1_rel - dot(e1_rel, normal) * normal;
@@ -269,9 +269,8 @@ inline void polygon_collision(int b1_id, int b2_id,
 
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
-    float inverse_contact = 1 - contact;
-
-    float edge_scale = native_divide(1.0f, (contact * contact + inverse_contact * inverse_contact));
+    float inverse_contact = 1.0f - contact;
+    float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
     float2 e1_reaction = collision_vector * (inverse_contact * edge_magnitude * edge_scale) * -1;
     float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
 

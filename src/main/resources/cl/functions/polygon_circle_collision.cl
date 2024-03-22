@@ -192,8 +192,8 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
 
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
-
-    float edge_scale = native_divide(1.0f, (contact * contact + (1 - contact) * (1 - contact)));
+    float inverse_contact = 1.0f - contact;
+    float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
     float2 e1_reaction = collision_vector * ((1 - contact) * edge_magnitude * edge_scale) * -1.0f;
     float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale) * -1.0f;
 

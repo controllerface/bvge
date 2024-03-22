@@ -25,21 +25,21 @@ inline float16 matrix_mul_affine(float16 matrixA, float16 matrixB)
     float b31 = matrixB.sD;
     float b32 = matrixB.sE;
 
-    result.s0 = fma(a00, b00, fma(a10, b01, a20 * b02));
-    result.s1 = fma(a01, b00, fma(a11, b01, a21 * b02)); 
-    result.s2 = fma(a02, b00, fma(a12, b01, a22 * b02)); 
+    result.s0 = mad(a00, b00, mad(a10, b01, a20 * b02));
+    result.s1 = mad(a01, b00, mad(a11, b01, a21 * b02)); 
+    result.s2 = mad(a02, b00, mad(a12, b01, a22 * b02)); 
     result.s3 = matrixA.s3; 
-    result.s4 = fma(a00, b10, fma(a10, b11, a20 * b12)); 
-    result.s5 = fma(a01, b10, fma(a11, b11, a21 * b12)); 
-    result.s6 = fma(a02, b10, fma(a12, b11, a22 * b12)); 
+    result.s4 = mad(a00, b10, mad(a10, b11, a20 * b12)); 
+    result.s5 = mad(a01, b10, mad(a11, b11, a21 * b12)); 
+    result.s6 = mad(a02, b10, mad(a12, b11, a22 * b12)); 
     result.s7 = matrixA.s7; 
-    result.s8 = fma(a00, b20, fma(a10, b21, a20 * b22)); 
-    result.s9 = fma(a01, b20, fma(a11, b21, a21 * b22)); 
-    result.sA = fma(a02, b20, fma(a12, b21, a22 * b22)); 
+    result.s8 = mad(a00, b20, mad(a10, b21, a20 * b22)); 
+    result.s9 = mad(a01, b20, mad(a11, b21, a21 * b22)); 
+    result.sA = mad(a02, b20, mad(a12, b21, a22 * b22)); 
     result.sB = matrixA.sB; 
-    result.sC = fma(a00, b30, fma(a10, b31, fma(a20, b32, matrixA.sC))); 
-    result.sD = fma(a01, b30, fma(a11, b31, fma(a21, b32, matrixA.sD))); 
-    result.sE = fma(a02, b30, fma(a12, b31, fma(a22, b32, matrixA.sE))); 
+    result.sC = mad(a00, b30, mad(a10, b31, mad(a20, b32, matrixA.sC))); 
+    result.sD = mad(a01, b30, mad(a11, b31, mad(a21, b32, matrixA.sD))); 
+    result.sE = mad(a02, b30, mad(a12, b31, mad(a22, b32, matrixA.sE))); 
     result.sF = matrixA.sF; 
 
     return result;
