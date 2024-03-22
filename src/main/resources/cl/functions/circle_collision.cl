@@ -26,7 +26,7 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 h1_dir = hull_2.xy - hull_1.xy;
     float2 h2_dir = hull_1.xy - hull_2.xy;
 
-    normal = normalize(h1_dir);
+    normal = fast_normalize(h1_dir);
     depth = radii - _distance;
     
     int4 vo_f = hull_flags[b1_id];

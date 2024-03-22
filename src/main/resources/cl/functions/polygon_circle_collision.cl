@@ -110,7 +110,7 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
         min_distance = abs_distance;
     }
 
-    normalBuffer = normalize(normalBuffer);
+    normalBuffer = fast_normalize(normalBuffer);
 
     int a_idx = circle_id;
     int b_idx = polygon_id;

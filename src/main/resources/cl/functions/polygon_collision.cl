@@ -143,7 +143,7 @@ inline void polygon_collision(int b1_id, int b2_id,
         }
     }
 
-    normalBuffer = normalize(normalBuffer);
+    normalBuffer = fast_normalize(normalBuffer);
 
     int a_idx = (invert)
         ? b2_id
@@ -255,9 +255,9 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_tan = e1_rel - dot(e1_rel, normal) * normal;
     float2 e2_tan = e2_rel - dot(e2_rel, normal) * normal;
 
-    v_tan = normalize(v_tan);
-    e1_tan = normalize(e1_tan);
-    e2_tan = normalize(e2_tan);
+    v_tan = fast_normalize(v_tan);
+    e1_tan = fast_normalize(e1_tan);
+    e2_tan = fast_normalize(e2_tan);
 
     float2 v_fric = (-v_mu * v_tan) * vertex_magnitude;
     float2 e1_fric = (-e_mu * e1_tan) * edge_magnitude;
