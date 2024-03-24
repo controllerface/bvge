@@ -267,11 +267,6 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_fric = (-e_mu * e1_tan) * edge_magnitude;
     float2 e2_fric = (-e_mu * e2_tan) * edge_magnitude;
 
-
-    // v0_fric = v0_dot > 0 ? (float2)(0.0f, 0.0f) : v0_fric;
-    // e1_fric = e1_dot > 0 ? (float2)(0.0f, 0.0f) : e1_fric;
-    // e2_fric = e2_dot > 0 ? (float2)(0.0f, 0.0f) : e2_fric;
-
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
     float inverse_contact = 1.0f - contact;

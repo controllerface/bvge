@@ -173,11 +173,11 @@ __kernel void apply_reactions(__global float4 *reactions,
     float2 initial_tail = point.zw;
     float initial_dist = fast_distance(point.xy, initial_tail);
 
-
     // apply the cumulative reaction
     point.xy += reaction.xy;
 
-
+    // apply friction and adjust if necessary 
+    // todo: needs cleanup
     float2 test = point.xy + reaction2.xy;
     float2 dir_a = test - point.zw;
     float2 dir_b = point.xy - point.zw;
@@ -190,8 +190,6 @@ __kernel void apply_reactions(__global float4 *reactions,
 
     if (sign_a != sign_b)
     {
-        //float f_abs = fabs(dot_a + dot_b);
-        //printf("diff: %f", dot_a);
         float2 norm = fast_normalize(reaction2.xy);
         float mag = fast_length(reaction2.xy);
         mag *= 0.55; // todo: find the actual minimum adjustment that coudl be made
@@ -202,8 +200,6 @@ __kernel void apply_reactions(__global float4 *reactions,
     {
         point.xy += reaction2.xy;
     }
-
-
 
     // using the initial data, compared to the new position, calculate the updated previous
     // position to ensure it is equivalent to the initial position delta. This preserves 
