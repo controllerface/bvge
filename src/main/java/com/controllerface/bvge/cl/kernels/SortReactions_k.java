@@ -7,7 +7,9 @@ public class SortReactions_k extends GPUKernel
     public enum Args
     {
         reactions_in,
+        reactions_in2,
         reactions_out,
+        reactions_out2,
         reaction_index,
         point_reactions,
         point_offsets;

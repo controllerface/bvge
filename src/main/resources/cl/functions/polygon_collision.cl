@@ -8,6 +8,7 @@ inline void polygon_collision(int b1_id, int b2_id,
                              __global int2 *edges,
                              __global int *edge_flags,
                              __global float4 *reactions,
+                             __global float4 *reactions2,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global float *masses,
@@ -235,37 +236,41 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_p = edge_point_1.zw;
     float2 e2_p = edge_point_2.zw;
 
-    // todo: consdier pulling this from the armature instead
-    //  may even be able to pre-compute it for all armatures 
-    //  to make it more efficient. Both removing the need for 
-    //  calculating it here as well as reducing the edge calcutations 
-    //  to just one instead of one for each point on the edge. 
-    float2 v0_v = native_divide((v0 - v0_p), dt);
-    float2 e1_v = native_divide((e1 - e1_p), dt);
-    float2 e2_v = native_divide((e2 - e2_p), dt);
+    float2 v0_dir = v0 - v0_p;
+    float2 e1_dir = e1 - e1_p;
+    float2 e2_dir = e2 - e2_p;
+
+    float dt_2 = pown(dt, 2);
+
+    float2 v0_v = native_divide(v0_dir, dt_2);
+    float2 e1_v = native_divide(e1_dir, dt_2);
+    float2 e2_v = native_divide(e2_dir, dt_2);
 
     float2 v0_rel = v0_v - collision_vector;
     float2 e1_rel = e1_v - collision_vector;
     float2 e2_rel = e2_v - collision_vector;
 
-    float v_mu = es ? 0.01 : 0.00;
-    float e_mu = vs ? 0.01 : 0.00;
+    float DIV = 10.0f;
 
-    float2 v_tan = v0_rel - dot(v0_rel, normal) * normal;
+    float v_mu = 0.2f / DIV; //es ? 0.01 : 0.2;
+    float e_mu = 0.2f / DIV; //vs ? 0.01 : 0.2;
+
+    float2 v0_tan = v0_rel - dot(v0_rel, normal) * normal;
     float2 e1_tan = e1_rel - dot(e1_rel, normal) * normal;
     float2 e2_tan = e2_rel - dot(e2_rel, normal) * normal;
 
-    v_tan = fast_normalize(v_tan);
+    v0_tan = fast_normalize(v0_tan);
     e1_tan = fast_normalize(e1_tan);
     e2_tan = fast_normalize(e2_tan);
 
-    float2 v_fric = (-v_mu * v_tan) * vertex_magnitude;
+    float2 v0_fric = (-v_mu * v0_tan) * vertex_magnitude;
     float2 e1_fric = (-e_mu * e1_tan) * edge_magnitude;
     float2 e2_fric = (-e_mu * e2_tan) * edge_magnitude;
 
-    float v0_dist = fast_distance(v0, v0_p);
-    float e1_dist = fast_distance(e1, e1_p);
-    float e2_dist = fast_distance(e2, e2_p);
+
+    // v0_fric = v0_dot > 0 ? (float2)(0.0f, 0.0f) : v0_fric;
+    // e1_fric = e1_dot > 0 ? (float2)(0.0f, 0.0f) : e1_fric;
+    // e2_fric = e2_dot > 0 ? (float2)(0.0f, 0.0f) : e2_fric;
 
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
@@ -275,15 +280,18 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
 
     // vertex reaction
-    float2 v_reaction = collision_vector * vertex_magnitude;
+    float2 v0_reaction = collision_vector * vertex_magnitude;
 
     if (!vs)
     {
         int i = atomic_inc(&counter[0]);
-        float4 v_reaction_4d;
-        v_reaction_4d.xy = v_reaction + v_fric;
-        v_reaction_4d.zw = vo_dir;
-        reactions[i] = v_reaction_4d;
+        float4 v0_reaction_4d;
+        float4 v0_reaction_4d2;
+        v0_reaction_4d.xy = v0_reaction;
+        v0_reaction_4d.zw = vo_dir;
+        v0_reaction_4d2.xy = v0_fric;
+        reactions[i] = v0_reaction_4d;
+        reactions2[i] = v0_reaction_4d2;
         reaction_index[i] = vert_index;
         atomic_inc(&point_reactions[vert_index]);
     }
@@ -293,12 +301,20 @@ inline void polygon_collision(int b1_id, int b2_id,
         int k = atomic_inc(&counter[0]);
         float4 e1_reaction_4d;
         float4 e2_reaction_4d;
-        e1_reaction_4d.xy = e1_reaction + e1_fric;
+        float4 e1_reaction_4d2;
+        float4 e2_reaction_4d2;
+        e1_reaction_4d.xy = e1_reaction;
         e1_reaction_4d.zw = eo_dir;
-        e2_reaction_4d.xy = e2_reaction + e2_fric;
+        e2_reaction_4d.xy = e2_reaction;
         e2_reaction_4d.zw = eo_dir;
+
+        e1_reaction_4d2.xy = e1_fric;
+        e2_reaction_4d2.xy = e2_fric;
+
         reactions[j] = e1_reaction_4d;
         reactions[k] = e2_reaction_4d;
+        reactions2[j] = e1_reaction_4d2;
+        reactions2[k] = e2_reaction_4d2;
         reaction_index[j] = edge_index_a;
         reaction_index[k] = edge_index_b;
         atomic_inc(&point_reactions[edge_index_a]);

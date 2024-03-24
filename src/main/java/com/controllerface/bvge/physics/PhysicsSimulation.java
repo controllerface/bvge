@@ -17,7 +17,7 @@ public class PhysicsSimulation extends GameSystem
 {
     private static final float TARGET_FPS = 60.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
-    private static final int TARGET_SUB_STEPS = 10;
+    private static final int TARGET_SUB_STEPS = 8;
     private static final int MAX_SUB_STEPS = TARGET_SUB_STEPS * 2;
     private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
     private static final int EDGE_STEPS = 8;
@@ -85,6 +85,8 @@ public class PhysicsSimulation extends GameSystem
     public final ResizableBuffer point_reaction_offsets;
     public final ResizableBuffer reactions_in;
     public final ResizableBuffer reactions_out;
+    public final ResizableBuffer reactions_in2;
+    public final ResizableBuffer reactions_out2;
     public final ResizableBuffer reaction_index;
     public final ResizableBuffer key_map;
     public final ResizableBuffer key_bank;
@@ -118,6 +120,8 @@ public class PhysicsSimulation extends GameSystem
         point_reaction_offsets  = new TransientBuffer(CLSize.cl_int, 500_000L);
         reactions_in            = new TransientBuffer(CLSize.cl_float4, 500_000L);
         reactions_out           = new TransientBuffer(CLSize.cl_float4, 500_000L);
+        reactions_in2           = new TransientBuffer(CLSize.cl_float4, 500_000L);
+        reactions_out2          = new TransientBuffer(CLSize.cl_float4, 500_000L);
         reaction_index          = new TransientBuffer(CLSize.cl_int, 500_000L);
         key_map                 = new TransientBuffer(CLSize.cl_int, 500_000L);
         key_bank                = new TransientBuffer(CLSize.cl_int, 500_000L);
@@ -243,6 +247,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
             .buf_arg(SatCollide_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
             .buf_arg(SatCollide_k.Args.reactions, reactions_in)
+            .buf_arg(SatCollide_k.Args.reactions2, reactions_in2)
             .buf_arg(SatCollide_k.Args.reaction_index, reaction_index)
             .buf_arg(SatCollide_k.Args.point_reactions, point_reaction_counts)
             .buf_arg(SatCollide_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
@@ -252,6 +257,8 @@ public class PhysicsSimulation extends GameSystem
         sort_reactions_k = new SortReactions_k(GPGPU.command_queue_ptr, sort_reactions_k_ptr)
             .buf_arg(SortReactions_k.Args.reactions_in, reactions_in)
             .buf_arg(SortReactions_k.Args.reactions_out, reactions_out)
+            .buf_arg(SortReactions_k.Args.reactions_in2, reactions_in2)
+            .buf_arg(SortReactions_k.Args.reactions_out2, reactions_out2)
             .buf_arg(SortReactions_k.Args.reaction_index, reaction_index)
             .buf_arg(SortReactions_k.Args.point_reactions, point_reaction_counts)
             .buf_arg(SortReactions_k.Args.point_offsets, point_reaction_offsets);
@@ -259,6 +266,7 @@ public class PhysicsSimulation extends GameSystem
         long apply_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.apply_reactions);
         apply_reactions_k = new ApplyReactions_k(GPGPU.command_queue_ptr, apply_reactions_k_ptr)
             .buf_arg(ApplyReactions_k.Args.reactions, reactions_out)
+            .buf_arg(ApplyReactions_k.Args.reactions2, reactions_out2)
             .buf_arg(ApplyReactions_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
             .buf_arg(ApplyReactions_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV))
             .buf_arg(ApplyReactions_k.Args.point_reactions, point_reaction_counts)
@@ -572,6 +580,8 @@ public class PhysicsSimulation extends GameSystem
 
         reactions_in.ensure_capacity(max_point_count);
         reactions_out.ensure_capacity(max_point_count);
+        reactions_in2.ensure_capacity(max_point_count);
+        reactions_out2.ensure_capacity(max_point_count);
         reaction_index.ensure_capacity(max_point_count);
         point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
         point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
@@ -687,18 +697,6 @@ public class PhysicsSimulation extends GameSystem
      */
     private void tick_simulation()
     {
-        /*
-        * CPU Side - Setup
-        * */
-
-        // Before the GPU begins the simulation cycle, player input is handled and the memory structures
-        // in the GPU are updated with the proper values.
-        update_controllable_entities();
-
-        /*
-        * GPU Side - Physics
-        * */
-
         // The first order of business is to perform the mathematical steps required to calculate where the
         // individual points of each hull currently are. When this call returns, all tracked physics objects
         // will be in their new locations, and points will have their current and previous location values
@@ -852,6 +850,10 @@ public class PhysicsSimulation extends GameSystem
         // Because animations may move hulls drastically, this call is given multiple iterations.
         resolve_constraints(EDGE_STEPS);
 
+        // Before the GPU begins the simulation cycle, player input is handled and the memory structures
+        // in the GPU are updated with the proper values.
+        update_controllable_entities();
+
         this.time_accumulator += dt;
         int sub_ticks = 0;
         while (this.time_accumulator >= TICK_RATE)
@@ -867,6 +869,8 @@ public class PhysicsSimulation extends GameSystem
                 if (sub_ticks <= MAX_SUB_STEPS)
                 {
                     this.time_accumulator -= FIXED_TIME_STEP;
+
+                    // perform one tick of the simulation
                     this.tick_simulation();
 
                     // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
@@ -884,6 +888,7 @@ public class PhysicsSimulation extends GameSystem
                     // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
                     // within the simulation.
                     resolve_constraints(1);
+
                 }
                 else
                 {
@@ -892,6 +897,9 @@ public class PhysicsSimulation extends GameSystem
                 }
             }
         }
+
+        // zero out the acceleration buffer, so it is empty for the next frame
+        GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL).clear();
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
         // to ensure buffer compaction happens as infrequently as possible.
@@ -921,6 +929,8 @@ public class PhysicsSimulation extends GameSystem
         point_reaction_offsets.release();
         reactions_in.release();
         reactions_out.release();
+        reactions_in2.release();
+        reactions_out2.release();
         reaction_index.release();
         key_map.release();
         key_bank.release();

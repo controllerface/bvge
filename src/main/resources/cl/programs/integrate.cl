@@ -96,7 +96,6 @@ __kernel void integrate(__global float4 *hulls,
 	float min_y = FLT_MAX;
 	float max_y = FLT_MIN;
 
-
     float anti_grav_scale = 0;
     for (int i = start; i <= end; i++)
     {
@@ -117,10 +116,16 @@ __kernel void integrate(__global float4 *hulls,
         float2 pos = point.xy;
         float2 prv = point.zw;
 
+        float2 vel = pos - prv;
+        float len = fast_length(vel);
+
+        bool slow = len < .005f;
+
         if (!is_static)
         {
             // subtract prv from pos to get the difference this frame
-            float2 diff = pos - prv;
+            float2 other = slow ? pos : prv;
+            float2 diff = pos - other;
             diff = acc + i_acc + diff;
 
             // add damping component
@@ -177,6 +182,11 @@ __kernel void integrate(__global float4 *hulls,
         float2 pos = armature.xy;
         float2 prv = armature.zw;
 
+        float2 vel = pos - prv;
+        float len = fast_length(vel);
+
+        bool slow = len < .005f;
+
         if (no_bones)
         {
             armature = hull;
@@ -185,8 +195,9 @@ __kernel void integrate(__global float4 *hulls,
         if (!is_static && !no_bones)
         {
             // subtract prv from pos to get the difference this frame
-            float2 diff = pos - prv;
-            diff = acc + i_acc + diff;
+            float2 other = slow ? pos : prv;
+            float2 diff = pos - other;
+            diff = acc + diff;
 
             // add damping component
             diff.x *= damping;
@@ -286,23 +297,16 @@ __kernel void integrate(__global float4 *hulls,
     // rotation.y is the reference angle taken at object creation when rotation is zero
     rotation.x = rotation.y - r_x;
 
-    // reset acceleration to zero for the next frame
-    acceleration.x = 0;
-    acceleration.y = 0;
-
     if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
         int x = hull_1_flags.x;
         x = (x | OUT_OF_BOUNDS);
         hull_flags[current_hull].x = x;
-        acceleration.x = 0;
-        acceleration.y = 0;
         bounds_bank.y = 0;
     }
 
     bounds[current_hull] = bounding_box;
     hulls[current_hull] = hull;
-    armature_accel[current_hull] = acceleration;
     hull_rotations[current_hull] = rotation;
     bounds_index_data[current_hull] = bounds_index;
     bounds_bank_data[current_hull] = bounds_bank;

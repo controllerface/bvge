@@ -23,6 +23,7 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global int2 *edges,
                           __global int *edge_flags,
                           __global float4 *reactions,
+                          __global float4 *reactions2,
                           __global int *reaction_index,
                           __global int *point_reactions,
                           __global float *masses,
@@ -61,6 +62,7 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             edge_flags,
             reactions,
+            reactions2,
             reaction_index,
             point_reactions,
             masses,
@@ -107,18 +109,22 @@ called. These values will have been consumed in a prior call to scan the points 
 reactions.
  */
 __kernel void sort_reactions(__global float4 *reactions_in,
+                             __global float4 *reactions_in2,
                              __global float4 *reactions_out,
+                             __global float4 *reactions_out2,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global int *point_offsets)
 {
     int gid = get_global_id(0);
     float4 reaction = reactions_in[gid];
+    float4 reaction2 = reactions_in2[gid];
     int index = reaction_index[gid];
     int reaction_offset = point_offsets[index];
     int local_offset = atomic_inc(&point_reactions[index]);
     int next = reaction_offset + local_offset;
     reactions_out[next] = reaction;
+    reactions_out2[next] = reaction2;
 }
 
 /**
@@ -126,6 +132,7 @@ Applies reactions to points by summing all the reactions serially, and then appl
 reaction to the point. 
  */
 __kernel void apply_reactions(__global float4 *reactions,
+                              __global float4 *reactions2,
                               __global float4 *points,
                               __global float *anti_gravity,
                               __global int *point_reactions,
@@ -149,11 +156,15 @@ __kernel void apply_reactions(__global float4 *reactions,
 
     // calculate the cumulative reaction on this point
     float4 reaction = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+    float4 reaction2 = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
     for (int i = 0; i < reaction_count; i++)
+    
     {
         int idx = i + reaction_offset;
         float4 reaction_i = reactions[idx];
+        float4 reaction_i2 = reactions2[idx];
         reaction += reaction_i;
+        reaction2 += reaction_i2;
     }
     
     // store the initial distance and previous position. These are used after
@@ -162,8 +173,37 @@ __kernel void apply_reactions(__global float4 *reactions,
     float2 initial_tail = point.zw;
     float initial_dist = fast_distance(point.xy, initial_tail);
 
+
     // apply the cumulative reaction
     point.xy += reaction.xy;
+
+
+    float2 test = point.xy + reaction2.xy;
+    float2 dir_a = test - point.zw;
+    float2 dir_b = point.xy - point.zw;
+
+    float dot_a = dot(dir_a, reaction2.xy);
+    float dot_b = dot(dir_b, reaction2.xy);
+
+    bool sign_a = (dot_a > 0.0f);
+    bool sign_b = (dot_b > 0.0f);
+
+    if (sign_a != sign_b)
+    {
+        //float f_abs = fabs(dot_a + dot_b);
+        //printf("diff: %f", dot_a);
+        float2 norm = fast_normalize(reaction2.xy);
+        float mag = fast_length(reaction2.xy);
+        mag *= 0.55; // todo: find the actual minimum adjustment that coudl be made
+        float2 adjusted = norm * mag;
+        point.xy += adjusted;
+    }    
+    else
+    {
+        point.xy += reaction2.xy;
+    }
+
+
 
     // using the initial data, compared to the new position, calculate the updated previous
     // position to ensure it is equivalent to the initial position delta. This preserves 
@@ -186,7 +226,7 @@ __kernel void apply_reactions(__global float4 *reactions,
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
-    ag = ag <= 0.0f ? 0.0f : ag;
+    ag = ag <= 0.0f ? 0.0f : 1.0f;
 
     anti_gravity[current_point] = ag;
     points[current_point] = point;
