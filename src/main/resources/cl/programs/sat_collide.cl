@@ -177,28 +177,28 @@ __kernel void apply_reactions(__global float4 *reactions,
     point.xy += reaction.xy;
 
     // apply friction and adjust if necessary 
-    // todo: needs cleanup
-    float2 test = point.xy + reaction2.xy;
-    float2 dir_a = test - point.zw;
-    float2 dir_b = point.xy - point.zw;
+    float2 friction_test = point.xy + reaction2.xy;
+    float2 test_velocity = friction_test - point.zw;
+    float2 base_velocity = point.xy - point.zw;
+    float dot_a = dot(test_velocity, reaction2.xy);
+    float dot_b = dot(base_velocity, reaction2.xy);
+    bool sign_a = (dot_a >= 0.0f);
+    bool sign_b = (dot_b >= 0.0f);
 
-    float dot_a = dot(dir_a, reaction2.xy);
-    float dot_b = dot(dir_b, reaction2.xy);
-
-    bool sign_a = (dot_a > 0.0f);
-    bool sign_b = (dot_b > 0.0f);
-
-    if (sign_a != sign_b)
+    // if direction is not reversed by applying friction, it is applied directly. Otherwise it
+    // is scaled to ensure it applies only enough force to stop motion completely.
+    if (sign_a == sign_b)
     {
-        float2 norm = fast_normalize(reaction2.xy);
-        float mag = fast_length(reaction2.xy);
-        mag *= 0.55; // todo: find the actual minimum adjustment that coudl be made
-        float2 adjusted = norm * mag;
-        point.xy += adjusted;
+        point.xy += reaction2.xy;
     }    
     else
     {
-        point.xy += reaction2.xy;
+        float2 norm = fast_normalize(reaction2.xy);
+        float mag = fast_length(reaction2.xy);
+        float2 adjusted_reaction;
+        float scale = 1 - native_divide(dot_a, (dot_a + fabs(dot_b)));
+        adjusted_reaction = norm * mag * scale;
+        point.xy += adjusted_reaction;
     }
 
     // using the initial data, compared to the new position, calculate the updated previous
