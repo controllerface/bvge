@@ -178,7 +178,6 @@ inline void polygon_collision(int b1_id, int b2_id,
     vert_index = final_proj.z;
     min_distance = native_divide(min_distance, fast_length(normalBuffer));
 
-
     // vertex and edge object flags
     int4 vo_f = hull_flags[vertex_object_id];
     int4 eo_f = hull_flags[edge_object_id];
@@ -197,14 +196,6 @@ inline void polygon_collision(int b1_id, int b2_id,
     float total_mass = vo_mass + eo_mass;
 
     float2 normal = normalBuffer;
-
-    // todo: calculate tangent as well to add friction support
-    //  the goal is to find the normalized tangent to the colliding edge, and apply a reaction
-    //  that is opposite to the tangent, equal to the component portion of the effective velocity
-    //  that is the same direction as the tangent. Note, static objects apply friction to non-statics.
-    //  non-statics resolve to largest object, in case of tie, split the difference?
-    // the above changes will need to be made to the other collision kernels as well
-
     float2 collision_vector = normal * min_distance;
 
     float vertex_magnitude = native_divide(eo_mass, total_mass);
@@ -215,7 +206,6 @@ inline void polygon_collision(int b1_id, int b2_id,
     
     bool any_s = (vs || es);
 
-    // ugly ternaries are for warp efficiency 
     vertex_magnitude = any_s 
         ? vs ? 0.0f : 1.0f
         : vertex_magnitude;
@@ -240,11 +230,9 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_dir = e1 - e1_p;
     float2 e2_dir = e2 - e2_p;
 
-    float dt_2 = pown(dt, 2);
-
-    float2 v0_v = native_divide(v0_dir, dt_2);
-    float2 e1_v = native_divide(e1_dir, dt_2);
-    float2 e2_v = native_divide(e2_dir, dt_2);
+    float2 v0_v = native_divide(v0_dir, dt);
+    float2 e1_v = native_divide(e1_dir, dt);
+    float2 e2_v = native_divide(e2_dir, dt);
 
     float2 v0_rel = v0_v - collision_vector;
     float2 e1_rel = e1_v - collision_vector;
@@ -301,10 +289,8 @@ inline void polygon_collision(int b1_id, int b2_id,
         e1_reaction_4d.zw = eo_dir;
         e2_reaction_4d.xy = e2_reaction;
         e2_reaction_4d.zw = eo_dir;
-
         e1_reaction_4d2.xy = e1_fric;
         e2_reaction_4d2.xy = e2_fric;
-
         reactions[j] = e1_reaction_4d;
         reactions[k] = e2_reaction_4d;
         reactions2[j] = e1_reaction_4d2;

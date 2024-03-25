@@ -4,10 +4,12 @@ inline void circle_collision(int b1_id, int b2_id,
                              __global int4 *element_tables,
                              __global float4 *points,
                              __global float4 *reactions,
+                             __global float4 *reactions2,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global float *masses,
-                             __global int *counter)
+                             __global int *counter,
+                             float dt)
 {
     float4 hull_1 = hulls[b1_id];
     float4 hull_2 = hulls[b2_id];

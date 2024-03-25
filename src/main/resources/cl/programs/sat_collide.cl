@@ -77,10 +77,12 @@ __kernel void sat_collide(__global int2 *candidates,
             element_tables, 
             points, 
             reactions,
+            reactions2,
             reaction_index,
             point_reactions,
             masses,
-            counter); 
+            counter,
+            dt); 
     }
     else 
     {
@@ -93,10 +95,12 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             edge_flags,
             reactions,
+            reactions2,
             reaction_index,
             point_reactions,
             masses,
-            counter); 
+            counter,
+            dt); 
     }
 }
 

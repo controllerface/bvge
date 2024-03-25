@@ -258,8 +258,8 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 200, 250);
 //        genTestFigureNPC(1f, 100, 50);
 
-        //genCircles(100, 5f, 5f, -300, 100);
-        genSquares(100,  6f, 5f, -120, 200);
+        genCircles(20, 5f, 5f, 0, 100);
+        //genSquares(100,  6f, 5f, -120, 200);
         //genCrates2(100, 5f, 0.025f, 100, 100);
         //genTriangles(130,  5f, 5f, -120, 200);
         //genTriangles(100,  5f, 5f, 130, 100);

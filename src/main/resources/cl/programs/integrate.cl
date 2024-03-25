@@ -119,13 +119,10 @@ __kernel void integrate(__global float4 *hulls,
         float2 vel = pos - prv;
         float len = fast_length(vel);
 
-        bool slow = len < .005f;
-
         if (!is_static)
         {
             // subtract prv from pos to get the difference this frame
-            float2 other = slow ? pos : prv;
-            float2 diff = pos - other;
+            float2 diff = pos - prv;
             diff = acc + i_acc + diff;
 
             // add damping component
