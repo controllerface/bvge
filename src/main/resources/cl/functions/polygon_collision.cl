@@ -250,8 +250,9 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_rel = e1_v - collision_vector;
     float2 e2_rel = e2_v - collision_vector;
 
-    float v_mu = 0.02f; //es ? 0.01 : 0.2;
-    float e_mu = 0.02f; //vs ? 0.01 : 0.2;
+    // todo: friction factor should be derived from colliding hulls
+    float v_mu = 0.02f;
+    float e_mu = 0.02f;
 
     float2 v0_tan = v0_rel - dot(v0_rel, normal) * normal;
     float2 e1_tan = e1_rel - dot(e1_rel, normal) * normal;
