@@ -12,8 +12,8 @@ inline float3 project_circle(float4 circle, float2 normal)
     result.y = (float)0; // max
     result.z = (float)0; // index (unused)
 
-    float2 unit = normalize(normal);
-    float2 dirRad = unit * (circle.z / 2);
+    float2 unit = fast_normalize(normal);
+    float2 dirRad = unit * native_divide(circle.z, 2);
     float2 p1 = circle.xy + dirRad;
     float2 p2 = circle.xy - dirRad;
 

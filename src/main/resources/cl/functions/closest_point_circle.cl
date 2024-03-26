@@ -21,7 +21,7 @@ inline int closest_point_circle(float2 circle_center,
         if (x) continue;
 
         float2 v = points[n].xy;
-        float _distance = distance(v, circle_center);
+        float _distance = fast_distance(v, circle_center);
         if(_distance < minDistance)
         {
             minDistance = _distance;

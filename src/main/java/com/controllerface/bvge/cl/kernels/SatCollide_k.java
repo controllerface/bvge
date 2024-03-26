@@ -8,6 +8,7 @@ public class SatCollide_k extends GPUKernel
     {
         candidates,
         hulls,
+        hull_frictions,
         element_tables,
         hull_flags,
         vertex_tables,
@@ -15,10 +16,12 @@ public class SatCollide_k extends GPUKernel
         edges,
         edge_flags,
         reactions,
+        reactions2,
         reaction_index,
         point_reactions,
         masses,
-        counter;
+        counter,
+        dt,
     }
 
     public SatCollide_k(long command_queue_ptr, long kernel_ptr)

@@ -22,7 +22,7 @@ inline KeyFramePair find_keyframe_pair(__global float4 *key_frames,
             
             double time_a = frame_times[pos_index_a];
             float delta = (float)time_b - (float)time_a;
-            result.lerp_factor = ((float)anim_time_ticks - (float)time_a) / delta;
+            result.lerp_factor =  native_divide( ((float)anim_time_ticks - (float)time_a), delta);
             break;
         }
     }

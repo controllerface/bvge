@@ -30,7 +30,7 @@ __kernel void scan_bounds_single_block(__global int2 *bounds_bank_data,
 
     if (a_index < n) 
     {
-        bounds_bank_data[a_index].x = (float)buffer[a_index] / 2;
+        bounds_bank_data[a_index].x = native_divide((float)buffer[a_index], 2);
         if (a_index == n - 1)
         {
             sz[0] = (bounds_bank_data[a_index].x + bounds_bank_data[a_index].y) * 2;
@@ -39,7 +39,7 @@ __kernel void scan_bounds_single_block(__global int2 *bounds_bank_data,
 
     if (b_index < n) 
     {
-        bounds_bank_data[b_index].x = (float)buffer[b_index] / 2;
+        bounds_bank_data[b_index].x = native_divide((float)buffer[b_index], 2);
         if (b_index == n - 1)
         {
             sz[0] = (bounds_bank_data[b_index].x + bounds_bank_data[b_index].y) * 2;
@@ -126,7 +126,7 @@ __kernel void complete_bounds_multi_block(__global int2 *bounds_bank_data,
     // copy back to global data
     if (a_index < n) 
     {
-        bounds_bank_data[a_index].x = (float)buffer[local_a_index] / 2;
+        bounds_bank_data[a_index].x = native_divide((float)buffer[local_a_index], 2);
         if (a_index == n - 1)
         {
             sz[0] = (bounds_bank_data[a_index].x + bounds_bank_data[a_index].y) * 2;
@@ -134,7 +134,7 @@ __kernel void complete_bounds_multi_block(__global int2 *bounds_bank_data,
     }
     if (b_index < n) 
     {
-        bounds_bank_data[b_index].x = (float)buffer[local_b_index] / 2;
+        bounds_bank_data[b_index].x = native_divide((float)buffer[local_b_index], 2);
         if (b_index == n - 1)
         {
             sz[0] = (bounds_bank_data[b_index].x + bounds_bank_data[b_index].y) * 2;

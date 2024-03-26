@@ -1,8 +1,8 @@
 inline float calculate_anti_gravity(float2 gravity, float2 heading)
 {
     float dot_p = dot(gravity, heading);
-    float mag_p = length(gravity) * length(heading);
-    return dot_p / mag_p;
+    float mag_p = fast_length(gravity) * fast_length(heading);
+    return native_divide(dot_p, mag_p);
 }
 
 /**
@@ -16,6 +16,7 @@ Circle/circle collisions use a simple distance/radius check.
  */
 __kernel void sat_collide(__global int2 *candidates,
                           __global float4 *hulls,
+                          __global float2 *hull_frictions,
                           __global int4 *element_tables,
                           __global int4 *hull_flags,
                           __global int4 *vertex_tables,
@@ -23,10 +24,12 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global int2 *edges,
                           __global int *edge_flags,
                           __global float4 *reactions,
+                          __global float4 *reactions2,
                           __global int *reaction_index,
                           __global int *point_reactions,
                           __global float *masses,
-                          __global int *counter)
+                          __global int *counter,
+                          float dt)
 {
     int gid = get_global_id(0);
     
@@ -53,6 +56,7 @@ __kernel void sat_collide(__global int2 *candidates,
     {
         polygon_collision(b1_id, b2_id, 
             hulls, 
+            hull_frictions,
             hull_flags, 
             element_tables, 
             vertex_tables,
@@ -60,28 +64,34 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             edge_flags,
             reactions,
+            reactions2,
             reaction_index,
             point_reactions,
             masses,
-            counter); 
+            counter,
+            dt);
     }
     else if (b1_is_circle && b2_is_circle) 
     {
         circle_collision(b1_id, b2_id, 
             hulls, 
+            hull_frictions,
             hull_flags,
             element_tables, 
             points, 
             reactions,
+            reactions2,
             reaction_index,
             point_reactions,
             masses,
-            counter); 
+            counter,
+            dt); 
     }
     else 
     {
         polygon_circle_collision(p_id, c_id, 
             hulls, 
+            hull_frictions,
             hull_flags, 
             element_tables, 
             vertex_tables,
@@ -89,10 +99,12 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             edge_flags,
             reactions,
+            reactions2,
             reaction_index,
             point_reactions,
             masses,
-            counter); 
+            counter,
+            dt); 
     }
 }
 
@@ -105,18 +117,22 @@ called. These values will have been consumed in a prior call to scan the points 
 reactions.
  */
 __kernel void sort_reactions(__global float4 *reactions_in,
+                             __global float4 *reactions_in2,
                              __global float4 *reactions_out,
+                             __global float4 *reactions_out2,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global int *point_offsets)
 {
     int gid = get_global_id(0);
     float4 reaction = reactions_in[gid];
+    float4 reaction2 = reactions_in2[gid];
     int index = reaction_index[gid];
     int reaction_offset = point_offsets[index];
     int local_offset = atomic_inc(&point_reactions[index]);
     int next = reaction_offset + local_offset;
     reactions_out[next] = reaction;
+    reactions_out2[next] = reaction2;
 }
 
 /**
@@ -124,6 +140,7 @@ Applies reactions to points by summing all the reactions serially, and then appl
 reaction to the point. 
  */
 __kernel void apply_reactions(__global float4 *reactions,
+                              __global float4 *reactions2,
                               __global float4 *points,
                               __global float *anti_gravity,
                               __global int *point_reactions,
@@ -144,34 +161,63 @@ __kernel void apply_reactions(__global float4 *reactions,
     
     // get the offset into the reaction buffer corresponding to this point
     int reaction_offset = point_offsets[current_point];
+
+    // calculate the cumulative reaction on this point
+    float4 reaction = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+    float4 reaction2 = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+    for (int i = 0; i < reaction_count; i++)
+    
+    {
+        int idx = i + reaction_offset;
+        float4 reaction_i = reactions[idx];
+        float4 reaction_i2 = reactions2[idx];
+        reaction += reaction_i;
+        reaction2 += reaction_i2;
+    }
     
     // store the initial distance and previous position. These are used after
     // adjustment is made to re-adjust the previous position of the point. This
     // is done as a best effort to conserve momentum. 
     float2 initial_tail = point.zw;
-    float initial_dist = distance(point.xy, initial_tail);
-
-    // calculate the cumulative reaction on this point
-    float4 reaction = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
-    for (int i = 0; i < reaction_count; i++)
-    {
-        int idx = i + reaction_offset;
-        float4 reaction_i = reactions[idx];
-        reaction += reaction_i;
-    }
+    float initial_dist = fast_distance(point.xy, initial_tail);
 
     // apply the cumulative reaction
     point.xy += reaction.xy;
+
+    // apply friction and adjust if necessary 
+    float2 friction_test = point.xy + reaction2.xy;
+    float2 test_velocity = friction_test - point.zw;
+    float2 base_velocity = point.xy - point.zw;
+    float dot_a = dot(test_velocity, reaction2.xy);
+    float dot_b = dot(base_velocity, reaction2.xy);
+    bool sign_a = (dot_a >= 0.0f);
+    bool sign_b = (dot_b >= 0.0f);
+
+    // if direction is not reversed by applying friction, it is applied directly. Otherwise it
+    // is scaled to ensure it applies only enough force to stop motion completely.
+    if (sign_a == sign_b)
+    {
+        point.xy += reaction2.xy;
+    }    
+    else
+    {
+        float2 norm = fast_normalize(reaction2.xy);
+        float mag = fast_length(reaction2.xy);
+        float2 adjusted_reaction;
+        float scale = 1 - native_divide(dot_a, (dot_a + fabs(dot_b)));
+        adjusted_reaction = norm * mag * scale;
+        point.xy += adjusted_reaction;
+    }
 
     // using the initial data, compared to the new position, calculate the updated previous
     // position to ensure it is equivalent to the initial position delta. This preserves 
     // velocity.
     float2 adjusted_offset = point.xy - initial_tail;
-    float new_len = length(adjusted_offset);
+    float new_len = fast_length(adjusted_offset);
 
     adjusted_offset = new_len == 0.0f 
         ? adjusted_offset 
-        : adjusted_offset / new_len;
+        : native_divide(adjusted_offset, new_len);
 
     point.zw = point.xy - initial_dist * adjusted_offset;
 
@@ -184,7 +230,7 @@ __kernel void apply_reactions(__global float4 *reactions,
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
-    ag = ag <= 0.0f ? 0.0f : ag;
+    ag = ag <= 0.0f ? 0.0f : 1.0f;
 
     anti_gravity[current_point] = ag;
     points[current_point] = point;

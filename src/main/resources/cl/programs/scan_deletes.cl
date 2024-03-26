@@ -364,7 +364,6 @@ __kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
 __kernel void compact_armatures(__global int2 *buffer_in_1,
                                 __global int4 *buffer_in_2,
                                 __global float4 *armatures,
-                                __global float2 *armature_accel,
                                 __global int4 *armature_flags,
                                 __global int *armature_animation_indices,
                                 __global double *armature_animation_elapsed,
@@ -398,7 +397,6 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
 
     // armature
     float4 armature = armatures[gid];
-    float2 accel = armature_accel[gid];
     int4 armature_flag = armature_flags[gid];
     int4 hull_table = hull_tables[gid];
     int anim_index = armature_animation_indices[gid];
@@ -427,7 +425,6 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
 
     // store updated data at the new index
     armatures[new_armature_index] = armature;
-    armature_accel[new_armature_index] = accel;
     armature_flags[new_armature_index] = new_armature_flag;
     hull_tables[new_armature_index] = new_hull_table;
     armature_animation_indices[new_armature_index] = anim_index;
@@ -518,6 +515,7 @@ __kernel void compact_hulls(__global int *hull_shift,
                             __global float4 *hulls,
                             __global int *hull_mesh_ids,
                             __global float2 *hull_rotations,
+                            __global float2 *hull_frictions,
                             __global int4 *hull_flags,
                             __global int4 *element_tables,
                             __global float4 *bounds,
@@ -528,6 +526,7 @@ __kernel void compact_hulls(__global int *hull_shift,
     int shift = hull_shift[current_hull];
     float4 hull = hulls[current_hull];
     float2 rotation = hull_rotations[current_hull];
+    float2 friction = hull_frictions[current_hull];
     int4 hull_flag = hull_flags[current_hull];
     int4 element_table = element_tables[current_hull];
     float4 bound = bounds[current_hull];
@@ -541,6 +540,7 @@ __kernel void compact_hulls(__global int *hull_shift,
 
         hulls[new_hull_index] = hull;
         hull_rotations[new_hull_index] = rotation;
+        hull_frictions[new_hull_index] = friction;
         hull_flags[new_hull_index] = hull_flag;
         element_tables[new_hull_index] = element_table;
         bounds[new_hull_index] = bound;
