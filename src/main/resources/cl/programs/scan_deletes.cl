@@ -515,6 +515,7 @@ __kernel void compact_hulls(__global int *hull_shift,
                             __global float4 *hulls,
                             __global int *hull_mesh_ids,
                             __global float2 *hull_rotations,
+                            __global float2 *hull_frictions,
                             __global int4 *hull_flags,
                             __global int4 *element_tables,
                             __global float4 *bounds,
@@ -525,6 +526,7 @@ __kernel void compact_hulls(__global int *hull_shift,
     int shift = hull_shift[current_hull];
     float4 hull = hulls[current_hull];
     float2 rotation = hull_rotations[current_hull];
+    float2 friction = hull_frictions[current_hull];
     int4 hull_flag = hull_flags[current_hull];
     int4 element_table = element_tables[current_hull];
     float4 bound = bounds[current_hull];
@@ -538,6 +540,7 @@ __kernel void compact_hulls(__global int *hull_shift,
 
         hulls[new_hull_index] = hull;
         hull_rotations[new_hull_index] = rotation;
+        hull_frictions[new_hull_index] = friction;
         hull_flags[new_hull_index] = hull_flag;
         element_tables[new_hull_index] = element_table;
         bounds[new_hull_index] = bound;

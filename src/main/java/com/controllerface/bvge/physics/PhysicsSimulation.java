@@ -70,6 +70,7 @@ public class PhysicsSimulation extends GameSystem
     private final GPUKernel resolve_constraints_k;
 
     private final long counts_buf_size;
+
     private final long atomic_counter_ptr;
     private final long counts_data_ptr;
     private final long offsets_data_ptr;
@@ -83,11 +84,44 @@ public class PhysicsSimulation extends GameSystem
      * x: offset into reaction buffer for each point in the current frame
      */
     public final ResizableBuffer point_reaction_offsets;
+
+    /** float4
+     * x: collision reaction x
+     * y: collision reaction y
+     * z: opposing vector x
+     * w: opposing vector y
+     */
     public final ResizableBuffer reactions_in;
+
+    /** float4
+     * x: collision reaction x
+     * y: collision reaction y
+     * z: opposing vector x
+     * w: opposing vector y
+     */
     public final ResizableBuffer reactions_out;
+
+    /** float4
+     * x: friction reaction x
+     * y: friction reaction y
+     * z: (reserved for restitution)
+     * w: (reserved for restitution)
+     */
     public final ResizableBuffer reactions_in2;
+
+    /** float4
+     * x: friction reaction x
+     * y: friction reaction y
+     * z: (reserved for restitution)
+     * w: (reserved for restitution)
+     */
     public final ResizableBuffer reactions_out2;
+
+    /** int
+     * x: index of the point that reactions apply to
+     */
     public final ResizableBuffer reaction_index;
+
     public final ResizableBuffer key_map;
     public final ResizableBuffer key_bank;
     public final ResizableBuffer in_bounds;
@@ -240,6 +274,7 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(SatCollide_k.Args.dt, FIXED_TIME_STEP)
             .buf_arg(SatCollide_k.Args.candidates, candidates)
             .buf_arg(SatCollide_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
+            .buf_arg(SatCollide_k.Args.hull_frictions, GPGPU.core_memory.buffer(BufferType.HULL_FRICTION))
             .buf_arg(SatCollide_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
             .buf_arg(SatCollide_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
             .buf_arg(SatCollide_k.Args.vertex_tables, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_TABLE))

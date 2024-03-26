@@ -38,7 +38,7 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int particle(float x, float y, float size, float mass)
+    public static int particle(float x, float y, float size, float mass, float friction)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
@@ -64,16 +64,17 @@ public class PhysicsObjects
         var table = CLUtils.arg_int4(p1_index, p1_index, 0, -1);
         var transform = CLUtils.arg_float4(x, y, size, size / 2.0f);
         var rotation = CLUtils.arg_float2(0, angle);
+        var hull_friction = CLUtils.arg_float2(friction, 0);
 
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id, 0, -1);
-        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
+        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, hull_friction, table, _flag);
         int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0,-1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, CIRCLE_PARTICLE, 0, 0);
         return GPGPU.core_memory.new_armature(x, y, hull_table, armature_flags, mass, -1, -1d);
     }
 
-    public static int tri(float x, float y, float size, int flags, float mass)
+    public static int tri(float x, float y, float size, int flags, float mass, float friction)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
@@ -113,17 +114,18 @@ public class PhysicsObjects
         var table = CLUtils.arg_int4(p1_index, p3_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = CLUtils.arg_float2(0, angle);
+        var hull_friction = CLUtils.arg_float2(friction, 0);
 
 
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON | FLAG_NO_BONES, next_armature_id, 0, -1);
-        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
+        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, hull_friction, table, _flag);
         int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, TRIANGLE_PARTICLE, 0, 0);
         return GPGPU.core_memory.new_armature(x, y, hull_table, armature_flags, mass, -1, -1d);
     }
 
-    public static int box(float x, float y, float size, int flags, float mass)
+    public static int box(float x, float y, float size, int flags, float mass, float friction)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
@@ -174,34 +176,36 @@ public class PhysicsObjects
         var table = CLUtils.arg_int4(p1_index, p4_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = CLUtils.arg_float2(0, angle);
+        var hull_friction = CLUtils.arg_float2(friction, 0);
+
 
 
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(flags | FLAG_POLYGON, next_armature_id, 0, -1);
-        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, table, _flag);
+        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, hull_friction, table, _flag);
         int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
         int[] armature_flags = CLUtils.arg_int4(hull_id, SQUARE_PARTICLE, 0, 0);
         return GPGPU.core_memory.new_armature(x, y, hull_table, armature_flags, mass, -1, -1d);
     }
 
-    public static int dynamic_Box(float x, float y, float size, float mass)
+    public static int dynamic_Box(float x, float y, float size, float mass, float friction)
     {
-        return box(x, y, size, FLAG_NONE | FLAG_NO_BONES, mass);
+        return box(x, y, size, FLAG_NONE | FLAG_NO_BONES, mass, friction);
     }
 
-    public static int static_box(float x, float y, float size, float mass)
+    public static int static_box(float x, float y, float size, float mass, float friction)
     {
-        return box(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass);
+        return box(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass, friction);
     }
 
-    public static int static_tri(float x, float y, float size, float mass)
+    public static int static_tri(float x, float y, float size, float mass, float friction)
     {
-        return tri(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass);
+        return tri(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass, friction);
     }
 
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will
     //  probably break/crash.
-    public static int wrap_model(int model_index, float x, float y, float size, int flags, float mass)
+    public static int wrap_model(int model_index, float x, float y, float size, int flags, float mass, float friction)
     {
         // we need to know the next armature ID before we create it so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
@@ -407,9 +411,10 @@ public class PhysicsObjects
             var table = CLUtils.arg_int4(start_point, end_point, edge_start, edge_end);
             var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
             var rotation = CLUtils.arg_float2(0, angle);
+            var hull_friction = CLUtils.arg_float2(friction, 0);
 
             int[] hull_flags = CLUtils.arg_int4(flags, next_armature_id, start_hull_bone, end_hull_bone);
-            int hull_id = GPGPU.core_memory.new_hull(hull_mesh.mesh_id(), transform, rotation, table, hull_flags);
+            int hull_id = GPGPU.core_memory.new_hull(hull_mesh.mesh_id(), transform, rotation, hull_friction, table, hull_flags);
 
             if (first_hull == -1)
             {

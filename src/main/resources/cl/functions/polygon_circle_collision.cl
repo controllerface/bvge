@@ -2,6 +2,7 @@
 
 inline void polygon_circle_collision(int polygon_id, int circle_id,
                                      __global float4 *hulls,
+                                     __global float2 *hull_frictions,
                                      __global int4 *hull_flags,
                                      __global int4 *element_tables,
                                      __global int4 *vertex_tables,
@@ -144,6 +145,9 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     int4 vo_f = hull_flags[vertex_object_id];
     int4 eo_f = hull_flags[edge_object_id];
 
+    float2 vo_phys = hull_frictions[vertex_object_id];
+    float2 eo_phys = hull_frictions[edge_object_id];
+
     float2 vo_dir = b.xy - a.xy;
     float2 eo_dir = a.xy - b.xy;
 
@@ -196,9 +200,9 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     float2 e1_rel = e1_v - collision_vector;
     float2 e2_rel = e2_v - collision_vector;
 
-    // todo: friction factor should be derived from colliding hulls
-    float v_mu = 0.08f;
-    float e_mu = 0.02f;
+    float mu = any_s 
+        ? vs ? vo_phys.x : eo_phys.x
+        : max(vo_phys.x, eo_phys.x);
 
     float2 v0_tan = v0_rel - dot(v0_rel, normal) * normal;
     float2 e1_tan = e1_rel - dot(e1_rel, normal) * normal;
@@ -208,9 +212,9 @@ inline void polygon_circle_collision(int polygon_id, int circle_id,
     e1_tan = fast_normalize(e1_tan);
     e2_tan = fast_normalize(e2_tan);
 
-    float2 v0_fric = (-v_mu * v0_tan) * vertex_magnitude;
-    float2 e1_fric = (-e_mu * e1_tan) * edge_magnitude;
-    float2 e2_fric = (-e_mu * e2_tan) * edge_magnitude;
+    float2 v0_fric = (-mu * v0_tan) * vertex_magnitude;
+    float2 e1_fric = (-mu * e1_tan) * edge_magnitude;
+    float2 e2_fric = (-mu * e2_tan) * edge_magnitude;
 
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);

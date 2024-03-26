@@ -1,5 +1,6 @@
 inline void circle_collision(int b1_id, int b2_id,
                              __global float4 *hulls,
+                             __global float2 *hull_frictions,
                              __global int4 *hull_flags,
                              __global int4 *element_tables,
                              __global float4 *points,
@@ -34,6 +35,9 @@ inline void circle_collision(int b1_id, int b2_id,
     int4 vo_f = hull_flags[b1_id];
     int4 eo_f = hull_flags[b2_id];
 
+    float2 vo_phys = hull_frictions[b1_id];
+    float2 eo_phys = hull_frictions[b2_id];
+
     float mass1 = masses[vo_f.y];
     float mass2 = masses[eo_f.y];
 
@@ -42,9 +46,7 @@ inline void circle_collision(int b1_id, int b2_id,
     float mag1 = native_divide(mass2, total_mass);
     float mag2 = native_divide(mass1, total_mass);
 
-
     float2 collision_vector = normal * depth;
-
 
     float2 e1_dir = h1_dir;
     float2 e2_dir = h2_dir;
@@ -55,8 +57,7 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 e1_rel = e1_v - collision_vector;
     float2 e2_rel = e2_v - collision_vector;
 
-    // todo: friction factor should be derived from colliding hulls
-    float e_mu = 0.08f;
+    float mu = max(vo_phys.x, eo_phys.x);
 
     float2 e1_tan = e1_rel - dot(e1_rel, normal) * normal;
     float2 e2_tan = e2_rel - dot(e2_rel, normal) * normal;
@@ -64,13 +65,8 @@ inline void circle_collision(int b1_id, int b2_id,
     e1_tan = fast_normalize(e1_tan);
     e2_tan = fast_normalize(e2_tan);
 
-    float2 e1_fric = (-e_mu * e1_tan) * mag1;
-    float2 e2_fric = (-e_mu * e2_tan) * mag2;
-
-
-
-
-
+    float2 e1_fric = (-mu * e1_tan) * mag1;
+    float2 e2_fric = (-mu * e2_tan) * mag2;
 
     float2 reaction = depth * normal;
     float2 offset1 = -mag1 * reaction;
