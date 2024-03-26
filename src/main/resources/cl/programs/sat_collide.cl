@@ -268,12 +268,10 @@ __kernel void move_armatures(__global float4 *hulls,
         {
             float2 center_a = calculate_centroid(points, element_table);
             float2 diffa = center_a - hull.xy;
-            diff.x += diffa.x;
-            diff.y += diffa.y;
+            diff += diffa;
         }
     }
 
-    armature.x += diff.x;
-    armature.y += diff.y;
+    armature.xy += diff;
     armatures[gid] = armature;
 }
