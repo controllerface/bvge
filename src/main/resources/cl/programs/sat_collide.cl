@@ -255,7 +255,7 @@ __kernel void move_armatures(__global float4 *hulls,
     int end = hull_table.y;
     int hull_count = end - start + 1;
 
-    float4 diff = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+    float2 diff = (float2)(0.0f, 0.0f);
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
@@ -270,8 +270,6 @@ __kernel void move_armatures(__global float4 *hulls,
             float2 diffa = center_a - hull.xy;
             diff.x += diffa.x;
             diff.y += diffa.y;
-            diff.z -= diffa.x;
-            diff.w -= diffa.y;
         }
     }
 
