@@ -21,7 +21,7 @@ import static org.lwjgl.opengl.GL45C.*;
 /**
  * Renders physics edge constraints. All defined edges are rendered as lines.
  */
-public class PointRenderer extends GameSystem
+public class ArmatureRenderer extends GameSystem
 {
     private static final int BATCH_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
     private static final int POSITION_ATTRIBUTE = 0;
@@ -35,10 +35,10 @@ public class PointRenderer extends GameSystem
 
     private GPUKernel prepare_points_k;
 
-    public PointRenderer(ECS ecs)
+    public ArmatureRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.load_shader("point_shader.glsl");
+        this.shader = Assets.load_shader("armature_shader.glsl");
         init_GL();
         init_CL();
     }
@@ -59,7 +59,7 @@ public class PointRenderer extends GameSystem
         long ptr = prepare_points.kernel_ptr(Kernel.prepare_points);
         prepare_points_k = new PreparePoints_k(GPGPU.command_queue_ptr, ptr)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
-            .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT));
+            .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.buffer(BufferType.ARMATURE));
     }
 
     @Override
@@ -70,11 +70,10 @@ public class PointRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glPointSize(2);
-
+        glPointSize(4);
 
         int offset = 0;
-        for (int remaining = GPGPU.core_memory.next_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPGPU.core_memory.next_armature(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
 

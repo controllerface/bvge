@@ -442,7 +442,8 @@ public class PhysicsObjects
 
         int[] hull_table = CLUtils.arg_int4(first_hull, last_hull, first_armature_bone, last_armature_bone);
         int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, model.transform_index());
-        return GPGPU.core_memory.new_armature(root_x, root_y, hull_table, armature_flags, mass, 0, 0.0d);
+        System.out.printf("root: x=%f y=%f\n", root_x, root_y);
+        return GPGPU.core_memory.new_armature(x, y, hull_table, armature_flags, mass, 0, 0.0d);
     }
 
 

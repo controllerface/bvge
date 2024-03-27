@@ -1,7 +1,3 @@
-/**
-Prepares a vbo for rendering of bounding boxes as lines. The vbo will contain only a subset of 
-the vertices that make up all bounding boxes, the start of the subset is defined by the offset value.
- */
 __kernel void prepare_bounds(__global float4 *bounds, 
                              __global float2 *vbo,
                              int offset)

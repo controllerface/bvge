@@ -459,8 +459,6 @@ public class Models
 
         var anim_map = new HashMap<Integer, BoneChannel[]>();
 
-        System.out.println("animation count: " + animation_count);
-
         var anim_buffer = aiScene.mAnimations();
         for (int animation_index = 0; animation_index < animation_count; animation_index++)
         {
@@ -625,15 +623,23 @@ public class Models
                                             int parent_index)
     {
         var name = current_node.name;
+        System.out.println("name: " + name);
         boolean is_bone = name.toLowerCase().contains("bone")
             && !name.toLowerCase().contains("_end");
+        boolean is_armature = name.equalsIgnoreCase("Armature");
         var node_transform = current_node.transform;
         var global_transform = parent_transform.mul(node_transform, new Matrix4f());
 
         var parent = parent_index;
 
-        if (is_bone)
+        if (is_bone || is_armature)
         {
+            if (init_matrix.get() == null)
+            {
+                System.out.println(parent_transform);
+                System.out.println("----");
+                System.out.println(node_transform);
+            }
             init_matrix.compareAndSet(null, parent_transform);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
