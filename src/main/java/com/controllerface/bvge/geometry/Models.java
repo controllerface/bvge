@@ -87,6 +87,8 @@ public class Models
 
         var bind_name_map = new HashMap<String, Integer>();
         var model_transform = new AtomicReference<Matrix4f>();
+        var armature_transform = new AtomicReference<Matrix4f>();
+
 
         // read scene data
         try (AIScene ai_scene = loadModelResource(model_path))
@@ -101,7 +103,7 @@ public class Models
             load_materials(ai_scene);
 
             // generate the bind pose transforms, setting the initial state of the armature
-            generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, model_transform, -1);
+            generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, model_transform, armature_transform,-1);
 
             load_animations(ai_scene, bind_name_map);
             load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map);
@@ -112,12 +114,19 @@ public class Models
 
             // register the model
             var next_model_id = next_model_index.getAndIncrement();
-            int transform_index = -1;
+            int root_transform_index = -1;
             if (model_transform.get() != null)
             {
-                transform_index = GPGPU.core_memory.new_model_transform(MathEX.raw_matrix(model_transform.get()));
+                root_transform_index = GPGPU.core_memory.new_model_transform(MathEX.raw_matrix(model_transform.get()));
             }
-            var model = new Model(meshes, bone_transforms, bind_name_map, bind_pose_map, textures, root_index, transform_index);
+            var model = new Model(meshes,
+                armature_transform.get(),
+                bone_transforms,
+                bind_name_map,
+                bind_pose_map,
+                textures,
+                root_index,
+                root_transform_index);
             loaded_models.put(next_model_id, model);
             return next_model_id;
         }
@@ -619,7 +628,8 @@ public class Models
                                             Matrix4f parent_transform,
                                             Map<String, Integer> bind_name_map,
                                             Map<Integer, BoneBindPose> bind_pose_map,
-                                            AtomicReference<Matrix4f> init_matrix,
+                                            AtomicReference<Matrix4f> model_matrix,
+                                            AtomicReference<Matrix4f> armature_matrix,
                                             int parent_index)
     {
         var name = current_node.name;
@@ -632,15 +642,16 @@ public class Models
 
         var parent = parent_index;
 
+        if (is_armature)
+        {
+            boolean model_ok = model_matrix.compareAndSet(null, parent_transform);
+            assert model_ok : "model transform already set";
+            boolean armature_ok = armature_matrix.compareAndSet(null, node_transform);
+            assert armature_ok : "armature transform already set";
+        }
+
         if (is_bone || is_armature)
         {
-            if (init_matrix.get() == null)
-            {
-                System.out.println(parent_transform);
-                System.out.println("----");
-                System.out.println(node_transform);
-            }
-            init_matrix.compareAndSet(null, parent_transform);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
             int bind_pose_id = GPGPU.core_memory.new_bone_bind_pose(raw_matrix);
@@ -651,7 +662,7 @@ public class Models
         }
         for (SceneNode child : current_node.children)
         {
-            generate_transforms(child, transforms, global_transform, bind_name_map, bind_pose_map, init_matrix, parent);
+            generate_transforms(child, transforms, global_transform, bind_name_map, bind_pose_map, model_matrix, armature_matrix, parent);
         }
     }
 
