@@ -34,6 +34,9 @@ __kernel void aabb_collide(__global float4 *bounds,
     int slots_used = 0;
 
     bool is_static = (flags.x & IS_STATIC) !=0;
+    bool non_colliding = (flags.x & NON_COLLIDING) !=0;
+
+    if (non_colliding) return;
 
     // loop through all the keys for this hull
     for (int bank_index = spatial_index; bank_index < end; bank_index++)

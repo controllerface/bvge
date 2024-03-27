@@ -23,17 +23,19 @@ public class TestGame extends GameMode
 
     private enum RenderType
     {
-        MODELS,  // normal objects
-        HULLS,   // physics hulls
-        BOUNDS,  // bounding boxes
-        POINTS,  // model vertices
-        GRID,    // uniform grid
+        MODELS,     // normal objects
+        HULLS,      // physics hulls
+        BOUNDS,     // bounding boxes
+        POINTS,     // model vertices
+        ARMATURES,  // armature roots
+        GRID,       // uniform grid
     }
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
             RenderType.HULLS,
-            RenderType.POINTS,
+            //RenderType.POINTS,
+            RenderType.ARMATURES,
             //RenderType.BOUNDS,
             RenderType.GRID,
             RenderType.MODELS);
@@ -246,7 +248,10 @@ public class TestGame extends GameMode
             ecs.registerSystem(new UniformGridRenderer(ecs, uniformGrid));
         }
 
-        ecs.registerSystem(new ArmatureRenderer(ecs));
+        if (ACTIVE_RENDERERS.contains(RenderType.ARMATURES))
+        {
+            ecs.registerSystem(new ArmatureRenderer(ecs));
+        }
     }
 
     @Override

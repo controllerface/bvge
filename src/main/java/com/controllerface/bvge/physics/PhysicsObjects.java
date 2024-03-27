@@ -56,7 +56,6 @@ public class PhysicsObjects
         // store the single point for the circle
         var p1_index = GPGPU.core_memory.new_point(p1, t1, new int[4]);
 
-        //var edge_index = GPU.Memory.new_edge(p1_index, p1_index, edgeDistance(p1, p1), FLAG_NONE);
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
@@ -248,6 +247,12 @@ public class PhysicsObjects
             armature_bone_map.put(bind_pose.bone_name(), next_armature_bone);
             armature_bone_parent_map.put(bind_pose_ref_id, next_armature_bone);
         }
+
+
+
+        // todo: add non-colliding root mesh here as a circle
+
+
 
         for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)
         {
