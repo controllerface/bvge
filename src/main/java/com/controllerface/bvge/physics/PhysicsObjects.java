@@ -24,6 +24,10 @@ import static com.controllerface.bvge.geometry.Models.*;
 public class PhysicsObjects
 {
     private static final Vector2f vector_buffer = new Vector2f();
+    private static final Matrix4f matrix_buffer = new Matrix4f();
+    private static final List<float[]> convex_buffer = new ArrayList<>();
+    private static final Stack<Vertex> hull_vertex_buffer = new Stack<>();
+
 
     public static int FLAG_NONE          = Constants.HullFlags.EMPTY.bits;
     public static int FLAG_STATIC_OBJECT = Constants.HullFlags.IS_STATIC.bits;
@@ -252,6 +256,11 @@ public class PhysicsObjects
 
         // todo: add non-colliding root mesh here as a circle
 
+        // 1. get next hull id
+        // 2. get circle "mesh" (it's just a single point)
+        // 3. transform using the armature matrix
+        // 4.
+
 
 
         for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)
@@ -275,7 +284,7 @@ public class PhysicsObjects
             {
                 var bone_offset = hull_mesh.bone_offsets().get(bone_index);
                 var bone_bind_pose = model.bone_transforms().get(bone_offset.name());
-                var bone_transform = bone_bind_pose.mul(bone_offset.transform(), new Matrix4f());
+                var bone_transform = bone_bind_pose.mul(bone_offset.transform(), matrix_buffer);
                 var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
                 var bind_pose_id = armature_bone_map.get(bone_offset.name());
                 int[] bone_table = new int[]{bone_offset.offset_ref_id(), bind_pose_id};
@@ -294,7 +303,7 @@ public class PhysicsObjects
             int end_point = -1;
 
             int[] convex_table = new int[new_hull.length];
-            List<float[]> convex_buffer = new ArrayList<>();
+            convex_buffer.clear();
 
             // create convex hull points first, in hull order (not mesh order)
             for (int point_index = 0; point_index < new_hull.length; point_index++)
@@ -571,7 +580,7 @@ public class PhysicsObjects
         Vertex q;
 
         // during hull creation, this holds the vertices that are currently designated as the hull
-        Stack<Vertex> hull_vertices = new Stack<>();
+        hull_vertex_buffer.clear();
 
         // because the input array is not intended to be changed, we make a copy of the input values
         // and operate on the copy. This is needed because of the swap() calls, which will re-order
@@ -588,13 +597,13 @@ public class PhysicsObjects
         int index = 0;
         p = points[0];
         q = points[1];
-        hull_vertices.push(p);
+        hull_vertex_buffer.push(p);
 
         // loop until the calculated hull makes a loop around the mesh
         while (!points[0].equals(q))
         {
             // push the next vertex into the buffer, since it has been calculated
-            hull_vertices.push(q);
+            hull_vertex_buffer.push(q);
 
             // now iterate through the points and find the next candidate
             double minorPolarAngle = 180D;
@@ -616,7 +625,7 @@ public class PhysicsObjects
             q = points[index];
         }
 
-        return hull_vertices.toArray(Vertex[]::new);
+        return hull_vertex_buffer.toArray(Vertex[]::new);
     }
 
     /**

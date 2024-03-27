@@ -70,7 +70,7 @@ public class ArmatureRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glPointSize(5);
+        glPointSize(3);
 
         int offset = 0;
         for (int remaining = GPGPU.core_memory.next_armature(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)

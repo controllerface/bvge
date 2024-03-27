@@ -35,7 +35,7 @@ public class TestGame extends GameMode
         EnumSet.of(
             RenderType.HULLS,
             //RenderType.POINTS,
-            RenderType.ARMATURES,
+            //RenderType.ARMATURES,
             //RenderType.BOUNDS,
             RenderType.GRID,
             RenderType.MODELS);
@@ -266,13 +266,13 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(100, 5f, 5f, 0, 100);
-        //genSquares(50,  6f, 5f, -120, 200);
-        //genCrates2(1, 5f, 0.025f, 100, 100);
+        genSquares(50,  6f, 5f, -120, 200);
+        //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  5f, 5f, -120, 200);
         //genTriangles(100,  5f, 5f, 130, 100);
 
-        PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
-        PhysicsObjects.static_box(0,0,10,10, 0f);
+        //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
+        //PhysicsObjects.static_box(0,0,10,10, 0f);
 
         genFloor(8, 150f, 150f, -70, -100, 0.02f);
         genWall(5, 150f, 150f, -220, -100);

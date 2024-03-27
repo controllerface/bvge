@@ -34,10 +34,11 @@ public class CLUtils
     public static long cl_p(long context_ptr, long device_id_ptr, String ... src)
     {
         long program = clCreateProgramWithSource(context_ptr, src, null);
-        int r = clBuildProgram(program, device_id_ptr,  "-cl-denorms-are-zero -cl-mad-enable -cl-fast-relaxed-math", null, 0);
-        if (r != CL_SUCCESS)
+        int result = clBuildProgram(program, device_id_ptr,  "-cl-denorms-are-zero -cl-mad-enable -cl-fast-relaxed-math", null, 0);
+        if (result != CL_SUCCESS)
         {
-            System.out.println("Error building program: " + r);
+            System.err.println("program build error: " + result);
+            log_build_error(program, device_id_ptr);
         }
         return program;
     }
@@ -228,5 +229,24 @@ public class CLUtils
         return CLSize.size_t == 4
             ? buffer.getInt(0)
             : buffer.getLong(0);
+    }
+
+    private static void log_build_error(long program, long device_id_ptr)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var size_buffer = mem_stack.callocPointer(1);
+            clGetProgramBuildInfo(program, device_id_ptr, CL_PROGRAM_BUILD_LOG, (int[]) null, size_buffer);
+            int size = (int)size_buffer.get(0);
+            var message_buffer = mem_stack.calloc(size);
+            clGetProgramBuildInfo(program, device_id_ptr, CL_PROGRAM_BUILD_LOG, message_buffer, null);
+            byte[] bytes = new byte[size];
+            for (int i =0; i < size; i ++)
+            {
+                bytes[i] = message_buffer.get();
+            }
+            var message = new String(bytes);
+            System.err.println(message);
+        }
     }
 }

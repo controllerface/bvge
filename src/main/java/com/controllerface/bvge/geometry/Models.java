@@ -489,7 +489,6 @@ public class Models
                 var raw_channel = AINodeAnim.create(channel_buffer.get(channel_index));
                 var bone_name = raw_channel.mNodeName().dataString();
 
-                // armature frames aren't saved, only bones
                 if (bind_name_map.get(bone_name) == null) continue;
 
                 int bind_pose_id = bind_name_map.get(bone_name);
@@ -644,14 +643,15 @@ public class Models
 
         if (is_armature)
         {
-            boolean model_ok = model_matrix.compareAndSet(null, parent_transform);
-            assert model_ok : "model transform already set";
+            //boolean model_ok = model_matrix.compareAndSet(null, parent_transform);
+            //assert model_ok : "model transform already set";
             boolean armature_ok = armature_matrix.compareAndSet(null, node_transform);
             assert armature_ok : "armature transform already set";
         }
 
-        if (is_bone || is_armature)
+        if (is_bone)// || is_armature)
         {
+            boolean model_ok = model_matrix.compareAndSet(null, parent_transform);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
             int bind_pose_id = GPGPU.core_memory.new_bone_bind_pose(raw_matrix);
