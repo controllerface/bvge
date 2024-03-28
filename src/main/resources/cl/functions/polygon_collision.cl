@@ -258,15 +258,24 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_fric = (-mu * e1_tan) * edge_magnitude;
     float2 e2_fric = (-mu * e2_tan) * edge_magnitude;
 
+    float v_mag_d = vertex_magnitude  * 0.5f;
+    float e_mag_d = edge_magnitude  * 0.5f;
+
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
     float inverse_contact = 1.0f - contact;
     float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
     float2 e1_reaction = collision_vector * (inverse_contact * edge_magnitude * edge_scale) * -1;
     float2 e2_reaction = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
+    float2 e1_reaction_d = collision_vector * (inverse_contact * e_mag_d * edge_scale) * -1;
+    float2 e2_reaction_d = collision_vector * (contact * e_mag_d * edge_scale) * -1;
+
+
 
     // vertex reaction
     float2 v0_reaction = collision_vector * vertex_magnitude;
+    float2 v0_reaction_d = collision_vector * v_mag_d;
+
 
     if (!vs)
     {
@@ -276,6 +285,7 @@ inline void polygon_collision(int b1_id, int b2_id,
         v0_reaction_4d.xy = v0_reaction;
         v0_reaction_4d.zw = vo_dir;
         v0_reaction_4d2.xy = v0_fric;
+        v0_reaction_4d2.zw = v0_reaction_d;
         reactions[i] = v0_reaction_4d;
         reactions2[i] = v0_reaction_4d2;
         reaction_index[i] = vert_index;
@@ -295,6 +305,8 @@ inline void polygon_collision(int b1_id, int b2_id,
         e2_reaction_4d.zw = eo_dir;
         e1_reaction_4d2.xy = e1_fric;
         e2_reaction_4d2.xy = e2_fric;
+        e1_reaction_4d2.zw = e1_reaction_d;
+        e2_reaction_4d2.zw = e2_reaction_d;
         reactions[j] = e1_reaction_4d;
         reactions[k] = e2_reaction_4d;
         reactions2[j] = e1_reaction_4d2;

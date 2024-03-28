@@ -221,6 +221,47 @@ __kernel void apply_reactions(__global float4 *reactions,
 
     point.zw = point.xy - initial_dist * adjusted_offset;
 
+
+
+
+
+
+
+
+
+    // float2 restitution_test = point.zw + reaction2.zw;
+    // float2 test_restitution = point.xy - restitution_test;
+    // float2 base_restitution = point.xy - point.zw;
+    // float r_dot_a = dot(test_restitution, reaction2.zw);
+    // float r_dot_b = dot(base_restitution, reaction2.zw);
+    // bool r_sign_a = (r_dot_a >= 0.0f);
+    // bool r_sign_b = (r_dot_b >= 0.0f);
+
+    // if (r_sign_a == r_sign_b)
+    // {
+    //    point.zw += reaction2.zw;
+    // }    
+    // else
+    // {
+    //     //printf("debug: dot a: %f dot b: %f\n", r_dot_a, r_dot_b);
+    //     float2 norm = fast_normalize(reaction2.zw);
+    //     float mag = fast_length(reaction2.zw);
+    //     float2 adjusted_reaction;
+    //     float scale = 1 - native_divide(fabs(r_dot_a), (fabs(r_dot_a) + fabs(r_dot_b)));
+    //     adjusted_reaction = norm * mag * scale;
+    //     point.zw -= adjusted_reaction;
+    // }
+
+
+
+
+
+
+
+
+
+
+
     // in addition to velocity preservation, to aid in stabiliy, a non-real force of anti-gravity
     // is modeled to assist in keeping objects from colliding in the direction of gravity. This
     // adjustment is subtle and does not overcome all rigid-body simulation errors, but helps
