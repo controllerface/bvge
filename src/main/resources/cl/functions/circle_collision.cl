@@ -29,7 +29,7 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 h1_dir = hull_2.xy - hull_1.xy;
     float2 h2_dir = hull_1.xy - hull_2.xy;
 
-    normal = fast_normalize(h1_dir);
+    normal = fast_normalize(h2_dir);
     depth = radii - _distance;
     
     int4 vo_f = hull_flags[b1_id];
@@ -65,12 +65,12 @@ inline void circle_collision(int b1_id, int b2_id,
     e1_tan = fast_normalize(e1_tan);
     e2_tan = fast_normalize(e2_tan);
 
-    float2 e1_fric = (-mu * e1_tan) * -mag1;
-    float2 e2_fric = (-mu * e2_tan) * mag2;
+    float2 e1_fric = (-mu * e1_tan) * mag1;
+    float2 e2_fric = (-mu * e2_tan) * -mag2;
 
     float2 reaction = depth * normal;
-    float2 offset1 = -mag1 * reaction;
-    float2 offset2 = mag2 * reaction;
+    float2 offset1 = mag1 * reaction;
+    float2 offset2 = -mag2 * reaction;
 
     float4 offset1_4d;
     float4 offset1_4d2;
