@@ -269,6 +269,7 @@ inline void polygon_collision(int b1_id, int b2_id,
     // vertex reaction
     float2 v0_reaction = collision_vector * vertex_magnitude;
 
+    // restitution
     float2 v0_n = v0 + v0_reaction;
     float2 e1_n = e1 + e1_reaction;
     float2 e2_n = e2 + e2_reaction;
@@ -281,8 +282,9 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_vn = native_divide(e1_dir_n, dt);
     float2 e2_vn = native_divide(e2_dir_n, dt);
 
-    // todo: set this on objects alongside friction value
-    float ru = 0.3f * dt;
+    float ru = any_s 
+        ? vs ? vo_phys.y : eo_phys.y
+        : max(vo_phys.y, eo_phys.y);
 
     float2 normal_inv = normal * -1;
 
