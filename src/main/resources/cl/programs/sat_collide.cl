@@ -166,7 +166,6 @@ __kernel void apply_reactions(__global float4 *reactions,
     float4 reaction = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
     float4 reaction2 = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
     for (int i = 0; i < reaction_count; i++)
-    
     {
         int idx = i + reaction_offset;
         float4 reaction_i = reactions[idx];
@@ -179,7 +178,7 @@ __kernel void apply_reactions(__global float4 *reactions,
     // adjustment is made to re-adjust the previous position of the point. This
     // is done as a best effort to conserve momentum. 
     float2 initial_tail = point.zw;
-    float initial_dist = fast_distance(point.xy, initial_tail);
+    float initial_dist = fast_distance(point.xy, point.zw);
 
     // apply the cumulative reaction
     point.xy += reaction.xy;
@@ -229,28 +228,30 @@ __kernel void apply_reactions(__global float4 *reactions,
 
 
 
-    // float2 restitution_test = point.zw + reaction2.zw;
-    // float2 test_restitution = point.xy - restitution_test;
-    // float2 base_restitution = point.xy - point.zw;
-    // float r_dot_a = dot(test_restitution, reaction2.zw);
-    // float r_dot_b = dot(base_restitution, reaction2.zw);
-    // bool r_sign_a = (r_dot_a >= 0.0f);
-    // bool r_sign_b = (r_dot_b >= 0.0f);
 
-    // if (r_sign_a == r_sign_b)
-    // {
-    //    point.zw += reaction2.zw;
-    // }    
-    // else
-    // {
-    //     //printf("debug: dot a: %f dot b: %f\n", r_dot_a, r_dot_b);
-    //     float2 norm = fast_normalize(reaction2.zw);
-    //     float mag = fast_length(reaction2.zw);
-    //     float2 adjusted_reaction;
-    //     float scale = 1 - native_divide(fabs(r_dot_a), (fabs(r_dot_a) + fabs(r_dot_b)));
-    //     adjusted_reaction = norm * mag * scale;
-    //     point.zw -= adjusted_reaction;
-    // }
+    float2 restitution_test = point.zw + reaction2.zw;
+    test_velocity = restitution_test - point.xy; // reversed from usual
+    base_velocity = point.zw - point.xy;         // reversed from usual
+    dot_a = dot(test_velocity, reaction2.zw);
+    dot_b = dot(base_velocity, reaction2.zw);
+    sign_a = (dot_a >= 0.0f);
+    sign_b = (dot_b >= 0.0f);
+
+    if (sign_a == sign_b)
+    {
+        point.zw += reaction2.zw;
+    }    
+    else
+    {
+        //printf("debug: dot_a: %f dot_b %f", dot_a, dot_b);
+        float2 norm = fast_normalize(reaction2.zw);
+        float mag = fast_length(reaction2.zw);
+        float2 adjusted_reaction;
+        float scale = 1 - native_divide(dot_a, (dot_a + fabs(dot_b)));
+        adjusted_reaction = norm * mag * scale;
+        point.zw += adjusted_reaction;
+    }
+
 
 
 

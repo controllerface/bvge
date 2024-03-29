@@ -266,9 +266,9 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(100, 5f, 5f, 0, 100);
-        genSquares(20,  6f, 5f, -120, 200);
+        genSquares(30,  6f, 5f, -120, 200);
         //genCrates2(20, 5f, 0.025f, 100, 100);
-        //genTriangles(130,  5f, 5f, -120, 200);
+        //genTriangles(130,  6f, 5f, -120, 200);
         //genTriangles(100,  5f, 5f, 130, 100);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);

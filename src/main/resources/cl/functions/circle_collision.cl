@@ -77,12 +77,14 @@ inline void circle_collision(int b1_id, int b2_id,
     offset1_4d.xy = offset1;
     offset1_4d.zw = h1_dir;
     offset1_4d2.xy = e1_fric;
+    offset1_4d2.zw = (float2)(0.0f, 0.0f);
 
     float4 offset2_4d;
     float4 offset2_4d2;
     offset2_4d.xy = offset2;
     offset2_4d.zw = h2_dir;
     offset2_4d2.xy = e2_fric;
+    offset2_4d2.zw = (float2)(0.0f, 0.0f);
 
     int i = atomic_inc(&counter[0]);
     int j = atomic_inc(&counter[0]);
