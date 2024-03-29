@@ -223,15 +223,10 @@ __kernel void apply_reactions(__global float4 *reactions,
 
 
 
-
-
-
-
-
-
+     // apply restitution and adjust if necessary 
     float2 restitution_test = point.zw + reaction2.zw;
-    test_velocity = restitution_test - point.xy; // reversed from usual
-    base_velocity = point.zw - point.xy;         // reversed from usual
+    test_velocity = restitution_test - point.xy;
+    base_velocity = point.zw - point.xy;
     dot_a = dot(test_velocity, reaction2.zw);
     dot_b = dot(base_velocity, reaction2.zw);
     sign_a = (dot_a >= 0.0f);
@@ -243,7 +238,6 @@ __kernel void apply_reactions(__global float4 *reactions,
     }    
     else
     {
-        //printf("debug: dot_a: %f dot_b %f", dot_a, dot_b);
         float2 norm = fast_normalize(reaction2.zw);
         float mag = fast_length(reaction2.zw);
         float2 adjusted_reaction;

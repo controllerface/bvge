@@ -259,10 +259,6 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e2_fric = (-mu * e2_tan) * edge_magnitude;
 
 
-
-    float v_mag_d = vertex_magnitude  * 0.5f;
-    float e_mag_d = edge_magnitude  * 0.5f;
-
     // edge reactions
     float contact = edge_contact(e1, e2, v0, collision_vector);
     float inverse_contact = 1.0f - contact;
@@ -272,15 +268,6 @@ inline void polygon_collision(int b1_id, int b2_id,
 
     // vertex reaction
     float2 v0_reaction = collision_vector * vertex_magnitude;
-
-
-
-    // 1. calculate what the new volocity would be when reaction is applied
-    // 2. calcualte dot() of new velocity and colliion normal
-    // 3. multiply restitution value (negative for dampening) by the dot, multiply than by the nomal again
-    //    C = R * dot(V_c, N) * N
-    // C is the correction vector to apply to the previous position
-
 
     float2 v0_n = v0 + v0_reaction;
     float2 e1_n = e1 + e1_reaction;
@@ -294,8 +281,8 @@ inline void polygon_collision(int b1_id, int b2_id,
     float2 e1_vn = native_divide(e1_dir_n, dt);
     float2 e2_vn = native_divide(e2_dir_n, dt);
 
-
-    float ru = 0.0004f;
+    // todo: set this on objects alongside friction value
+    float ru = 0.3f * dt;
 
     float2 normal_inv = normal * -1;
 
