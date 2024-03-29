@@ -48,8 +48,8 @@ inline void circle_collision(int b1_id, int b2_id,
 
     float2 collision_vector = normal * depth;
 
-    float2 e1_dir = h1_dir;
-    float2 e2_dir = h2_dir;
+    float2 e1_dir = hull_1.xy - hull_1.zw;
+    float2 e2_dir = hull_2.xy - hull_2.zw;;
 
     float2 e1_v = native_divide(e1_dir, dt);
     float2 e2_v = native_divide(e2_dir, dt);
@@ -65,7 +65,7 @@ inline void circle_collision(int b1_id, int b2_id,
     e1_tan = fast_normalize(e1_tan);
     e2_tan = fast_normalize(e2_tan);
 
-    float2 e1_fric = (-mu * e1_tan) * mag1;
+    float2 e1_fric = (-mu * e1_tan) * -mag1;
     float2 e2_fric = (-mu * e2_tan) * mag2;
 
     float2 reaction = depth * normal;

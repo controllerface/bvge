@@ -65,7 +65,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.dynamic_Box(x, y, size, 50f, 0.02f);
+                var armature_index = PhysicsObjects.dynamic_Box(x, y, size, 50f, 0.02f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -111,7 +111,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.particle(x, y, size, .1f, .1f);
+                var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.02f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -125,7 +125,7 @@ public class TestGame extends GameMode
             float x = start_x + i * spacing;
             float y = start_y;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
@@ -138,7 +138,7 @@ public class TestGame extends GameMode
             float x = start_x;
             float y = start_y + i * spacing;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.02f);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.02f, 0.0003f);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
@@ -153,7 +153,7 @@ public class TestGame extends GameMode
     private void genTestCrate(float size, float x, float y)
     {
         //var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.dynamic_Box(x, y, size, .1f, 0.02f);
+        var armature_index = PhysicsObjects.dynamic_Box(x, y, size, .1f, 0.02f, 0.0001f);
         //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -265,8 +265,8 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 200, 250);
 //        genTestFigureNPC(1f, 100, 50);
 
-        genCircles(50, 5f, 5f, 0, 100);
-        //genSquares(20,  5f, 5f, -120, 200);
+        genCircles(10, 7f, 5f, 0, 100);
+        //genSquares(5,  6f, 5f, -120, 200);
         //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  6f, 5f, -120, 200);
         //genTriangles(100,  5f, 5f, 130, 100);

@@ -316,10 +316,10 @@ inline void polygon_collision(int b1_id, int b2_id,
         float4 e2_reaction_4d2;
         e1_reaction_4d.xy = e1_reaction;
         e1_reaction_4d.zw = eo_dir;
-        e2_reaction_4d.xy = e2_reaction;
-        e2_reaction_4d.zw = eo_dir;
         e1_reaction_4d2.xy = e1_fric;
         e1_reaction_4d2.zw = e1_rest;
+        e2_reaction_4d.xy = e2_reaction;
+        e2_reaction_4d.zw = eo_dir;
         e2_reaction_4d2.xy = e2_fric;
         e2_reaction_4d2.zw = e2_rest;
         reactions[j] = e1_reaction_4d;
