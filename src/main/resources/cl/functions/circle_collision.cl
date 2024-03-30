@@ -1,90 +1,86 @@
-inline void circle_collision(int b1_id, int b2_id,
+inline void circle_collision(int hull_1_id, 
+                             int hull_2_id,
                              __global float4 *hulls,
                              __global float2 *hull_frictions,
                              __global int4 *hull_flags,
                              __global int4 *element_tables,
                              __global float4 *points,
-                             __global float4 *reactions,
-                             __global float4 *reactions2,
+                             __global float4 *reactions_A,
+                             __global float4 *reactions_B,
                              __global int *reaction_index,
-                             __global int *point_reactions,
+                             __global int *reaction_counts,
                              __global float *masses,
                              __global int *counter,
                              float dt)
 {
-    float4 hull_1 = hulls[b1_id];
-    float4 hull_2 = hulls[b2_id];
-    float _distance = fast_distance(hull_1.xy, hull_2.xy);
-    float radii = hull_1.w + hull_2.w;
+    float4 hull_1 = hulls[hull_1_id];
+    float4 hull_2 = hulls[hull_2_id];
+    float center_distance = fast_distance(hull_1.xy, hull_2.xy);
+    float radii_sum = hull_1.w + hull_2.w;
 
-    if(_distance >= radii)
-    {
-        return;
-    }
-
-    int4 hull_1_table = element_tables[b1_id];
-    int4 hull_2_table = element_tables[b2_id];
-    float2 h1_dir = hull_2.xy - hull_1.xy;
-    float2 h2_dir = hull_1.xy - hull_2.xy;
-    float4 p1 = points[hull_1_table.x];
-    float4 p2 = points[hull_2_table.x];
-    float2 normal = fast_normalize(h2_dir);
-    float depth = radii - _distance;
-    int4 vo_f = hull_flags[b1_id];
-    int4 eo_f = hull_flags[b2_id];
-    float2 vo_phys = hull_frictions[b1_id];
-    float2 eo_phys = hull_frictions[b2_id];
-
-    float mass1 = masses[vo_f.y];
-    float mass2 = masses[eo_f.y];
-    float total_mass = mass1 + mass2;
-    float mag1 = native_divide(mass2, total_mass);
-    float mag2 = native_divide(mass1, total_mass);
-
-    float2 collision_vector = normal * depth;
-    float2 e1_dir = p1.xy - p1.zw;
-    float2 e2_dir = p2.xy - p2.zw;;
-    float2 e1_v = native_divide(e1_dir, dt);
-    float2 e2_v = native_divide(e2_dir, dt);
-    float2 e1_rel = e1_v - collision_vector;
-    float2 e2_rel = e2_v - collision_vector;
-    float mu = max(vo_phys.x, eo_phys.x);
-    float2 e1_tan = e1_rel - dot(e1_rel, normal) * normal;
-    float2 e2_tan = e2_rel - dot(e2_rel, normal) * normal;
-    e1_tan = fast_normalize(e1_tan);
-    e2_tan = fast_normalize(e2_tan);
-    float2 e1_fric = (-mu * e1_tan) * mag1;
-    float2 e2_fric = (-mu * e2_tan) * -mag2;
-
-    float2 reaction = depth * normal;
-    float2 offset1 = mag1 * reaction;
-    float2 offset2 = -mag2 * reaction;
-    float2 e1_n = p1.xy + offset1;
-    float2 e2_n = p2.xy + offset2;
-    float2 e1_dir_n = e1_n - p1.zw;
-    float2 e2_dir_n = e2_n - p2.zw;
-    float2 e1_vn = native_divide(e1_dir_n, dt);
-    float2 e2_vn = native_divide(e2_dir_n, dt);
-    float ru = max(vo_phys.y, eo_phys.y);
-    float2 normal_inv = normal * -1;
-    float2 e1_rest = ru * dot(e1_vn, normal) * normal;
-    float2 e2_rest = ru * dot(e2_vn, normal_inv) * normal_inv;
+    if(center_distance >= radii_sum) return;
     
-    float4 offset1_4d = (float4)(offset1.xy, h1_dir.xy);
-    float4 offset1_4d2 = (float4)(e1_fric.xy, e1_rest.xy);
-    float4 offset2_4d = (float4)(offset2.xy, h2_dir.xy);
-    float4 offset2_4d2 = (float4)(e2_fric.xy, e2_rest.xy);
+    float collision_depth = radii_sum - center_distance;
 
-    int i = atomic_inc(&counter[0]);
-    int j = atomic_inc(&counter[0]);
+    int4 hull_1_table = element_tables[hull_1_id];
+    int4 hull_2_table = element_tables[hull_2_id];
+    float4 hull_1_center = points[hull_1_table.x];
+    float4 hull_2_center = points[hull_2_table.x];
+    int4 hull_1_flags = hull_flags[hull_1_id];
+    int4 hull_2_flags = hull_flags[hull_2_id];
+    float2 hull_1_phys = hull_frictions[hull_1_id];
+    float2 hull_2_phys = hull_frictions[hull_2_id];
+    float hull_1_mass = masses[hull_1_flags.y];
+    float hull_2_mass = masses[hull_2_flags.y];
 
-    reactions[i] = offset1_4d;
-    reactions[j] = offset2_4d;
-    reactions2[i] = offset1_4d2;
-    reactions2[j] = offset2_4d2;
-    reaction_index[i] = hull_1_table.x;
-    reaction_index[j] = hull_2_table.x;
+    float2 hull_1_ooposing = hull_2.xy - hull_1.xy;
+    float2 hull_2_opposing = hull_1.xy - hull_2.xy;
+    float2 collision_normal = fast_normalize(hull_2_opposing);
+    float total_mass = hull_1_mass + hull_2_mass;
+    float hull_1_magnitude = native_divide(hull_2_mass, total_mass);
+    float hull_2_magnitude = native_divide(hull_1_mass, total_mass);
+    float2 collision_reaction = collision_depth * collision_normal;
+    float2 hull_1_collision = hull_1_magnitude * collision_reaction;
+    float2 hull_2_collision = -hull_2_magnitude * collision_reaction;
 
-    atomic_inc(&point_reactions[hull_1_table.x]);
-    atomic_inc(&point_reactions[hull_2_table.x]);
+    float2 collision_vector = collision_normal * collision_depth;
+    float2 hull_1_diff = hull_1_center.xy - hull_1_center.zw;
+    float2 hull_2_diff = hull_2_center.xy - hull_2_center.zw;;
+    float2 hull_1_velocity = native_divide(hull_1_diff, dt);
+    float2 hull_2_velocity = native_divide(hull_2_diff, dt);
+    float2 hull_1_rel_vel = hull_1_velocity - collision_vector;
+    float2 hull_2_rel_vel = hull_2_velocity - collision_vector;
+    float friction_coefficient = max(hull_1_phys.x, hull_2_phys.x);
+    float2 hull_1_tangent = hull_1_rel_vel - dot(hull_1_rel_vel, collision_normal) * collision_normal;
+    float2 hull_2_tangent = hull_2_rel_vel - dot(hull_2_rel_vel, collision_normal) * collision_normal;
+    hull_1_tangent = fast_normalize(hull_1_tangent);
+    hull_2_tangent = fast_normalize(hull_2_tangent);
+    float2 hull_1_friction = (-friction_coefficient * hull_1_tangent) * hull_1_magnitude;
+    float2 hull_2_friction = (-friction_coefficient * hull_2_tangent) * -hull_2_magnitude;
+
+    float2 hull_1_applied = hull_1_center.xy + hull_1_collision;
+    float2 hull_2_applied = hull_2_center.xy + hull_2_collision;
+    float2 hull_1_applied_diff = hull_1_applied - hull_1_center.zw;
+    float2 hull_2_applied_diff = hull_2_applied - hull_2_center.zw;
+    float2 hull_1_applied_vel = native_divide(hull_1_applied_diff, dt);
+    float2 hull_2_applied_vel = native_divide(hull_2_applied_diff, dt);
+    float restituion_coefficient = max(hull_1_phys.y, hull_2_phys.y);
+    float2 collision_invert = collision_normal * -1;
+    float2 hull_1_restitution = restituion_coefficient * dot(hull_1_applied_vel, collision_normal) * collision_normal;
+    float2 hull_2_restitution = restituion_coefficient * dot(hull_2_applied_vel, collision_invert) * collision_invert;
+    
+    float4 hull_1_reactions_A = (float4)(hull_1_collision.xy, hull_1_ooposing.xy);
+    float4 hull_1_reactions_B = (float4)(hull_1_friction.xy, hull_1_restitution.xy);
+    float4 hull_2_reactions_A = (float4)(hull_2_collision.xy, hull_2_opposing.xy);
+    float4 hull_2_reactions_B = (float4)(hull_2_friction.xy, hull_2_restitution.xy);
+    int hull_1_index = atomic_inc(&counter[0]);
+    int hull_2_index = atomic_inc(&counter[0]);
+    reactions_A[hull_1_index] = hull_1_reactions_A;
+    reactions_B[hull_1_index] = hull_1_reactions_B;
+    reactions_A[hull_2_index] = hull_2_reactions_A;
+    reactions_B[hull_2_index] = hull_2_reactions_B;
+    reaction_index[hull_1_index] = hull_1_table.x;
+    reaction_index[hull_2_index] = hull_2_table.x;
+    atomic_inc(&reaction_counts[hull_1_table.x]);
+    atomic_inc(&reaction_counts[hull_2_table.x]);
 }
