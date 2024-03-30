@@ -42,7 +42,7 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int particle(float x, float y, float size, float mass, float friction)
+    public static int particle(float x, float y, float size, float mass, float friction, float restitution)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
@@ -67,7 +67,7 @@ public class PhysicsObjects
         var table = CLUtils.arg_int4(p1_index, p1_index, 0, -1);
         var transform = CLUtils.arg_float4(x, y, size, size / 2.0f);
         var rotation = CLUtils.arg_float2(0, angle);
-        var hull_friction = CLUtils.arg_float2(friction, 0.0f);
+        var hull_friction = CLUtils.arg_float2(friction, restitution);
 
         // there is only one hull, so it is the main hull ID by default
         int[] _flag = CLUtils.arg_int4(FLAG_CIRCLE | FLAG_NO_BONES, next_armature_id, 0, -1);

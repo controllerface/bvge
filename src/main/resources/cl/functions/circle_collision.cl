@@ -29,6 +29,9 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 h1_dir = hull_2.xy - hull_1.xy;
     float2 h2_dir = hull_1.xy - hull_2.xy;
 
+    float4 p1 = points[hull_1_table.x];
+    float4 p2 = points[hull_2_table.x];
+
     normal = fast_normalize(h2_dir);
     depth = radii - _distance;
     
@@ -48,8 +51,8 @@ inline void circle_collision(int b1_id, int b2_id,
 
     float2 collision_vector = normal * depth;
 
-    float2 e1_dir = hull_1.xy - hull_1.zw;
-    float2 e2_dir = hull_2.xy - hull_2.zw;;
+    float2 e1_dir = p1.xy - p1.zw;
+    float2 e2_dir = p2.xy - p2.zw;;
 
     float2 e1_v = native_divide(e1_dir, dt);
     float2 e2_v = native_divide(e2_dir, dt);
@@ -58,6 +61,8 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 e2_rel = e2_v - collision_vector;
 
     float mu = max(vo_phys.x, eo_phys.x);
+
+
 
     float2 e1_tan = e1_rel - dot(e1_rel, normal) * normal;
     float2 e2_tan = e2_rel - dot(e2_rel, normal) * normal;
@@ -72,19 +77,38 @@ inline void circle_collision(int b1_id, int b2_id,
     float2 offset1 = mag1 * reaction;
     float2 offset2 = -mag2 * reaction;
 
+
+
+    float2 e1_n = p1.xy + offset1;
+    float2 e2_n = p2.xy + offset2;
+
+    float2 e1_dir_n = e1_n - p1.zw;
+    float2 e2_dir_n = e2_n - p2.zw;
+
+    float2 e1_vn = native_divide(e1_dir_n, dt);
+    float2 e2_vn = native_divide(e2_dir_n, dt);
+
+    float ru = max(vo_phys.y, eo_phys.y);
+
+    float2 normal_inv = normal * -1;
+
+    float2 e1_rest = ru * dot(e1_vn, normal) * normal;
+    float2 e2_rest = ru * dot(e2_vn, normal_inv) * normal_inv;
+
+
     float4 offset1_4d;
     float4 offset1_4d2;
     offset1_4d.xy = offset1;
     offset1_4d.zw = h1_dir;
     offset1_4d2.xy = e1_fric;
-    offset1_4d2.zw = (float2)(0.0f, 0.0f);
+    offset1_4d2.zw = e1_rest;
 
     float4 offset2_4d;
     float4 offset2_4d2;
     offset2_4d.xy = offset2;
     offset2_4d.zw = h2_dir;
     offset2_4d2.xy = e2_fric;
-    offset2_4d2.zw = (float2)(0.0f, 0.0f);
+    offset2_4d2.zw = e2_rest;
 
     int i = atomic_inc(&counter[0]);
     int j = atomic_inc(&counter[0]);
