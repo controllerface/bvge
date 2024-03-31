@@ -146,9 +146,6 @@ __kernel void apply_reactions(__global float8 *reactions,
 
     // exit on non-reactive points
     if (reaction_count == 0) return;
-
-    // get the point to be adjusted
-    float4 point = points[current_point];
     
     // get the offset into the reaction buffer corresponding to this point
     int reaction_offset = point_offsets[current_point];
@@ -158,10 +155,12 @@ __kernel void apply_reactions(__global float8 *reactions,
     for (int i = 0; i < reaction_count; i++)
     {
         int idx = i + reaction_offset;
-        float8 reaction_i = reactions[idx];
-        reaction += reaction_i;
+        reaction += reactions[idx];
     }
     
+    // get the point to be adjusted
+    float4 point = points[current_point];
+
     // store the initial distance and previous position. These are used after
     // adjustment is made to re-adjust the previous position of the point. This
     // is done as a best effort to conserve momentum. 
