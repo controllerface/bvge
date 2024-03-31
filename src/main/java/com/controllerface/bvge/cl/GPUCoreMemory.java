@@ -418,7 +418,6 @@ public class GPUCoreMemory
         hull_friction_buffer            = new PersistentBuffer(CLSize.cl_float2, 10_000L);
         hull_mesh_id_buffer             = new PersistentBuffer(CLSize.cl_int, 10_000L);
         hull_rotation_buffer            = new PersistentBuffer(CLSize.cl_float2, 10_000L);
-
         mesh_face_buffer                = new PersistentBuffer(CLSize.cl_int4);
         mesh_reference_buffer           = new PersistentBuffer(CLSize.cl_int4);
         model_transform_buffer          = new PersistentBuffer(CLSize.cl_float16);

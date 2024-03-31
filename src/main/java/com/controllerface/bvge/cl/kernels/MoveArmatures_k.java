@@ -11,7 +11,7 @@ public class MoveArmatures_k extends GPUKernel
         hull_tables,
         element_tables,
         hull_flags,
-        points;
+        points
     }
 
     public MoveArmatures_k(long command_queue_ptr, long kernel_ptr)

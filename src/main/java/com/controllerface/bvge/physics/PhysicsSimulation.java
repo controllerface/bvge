@@ -85,37 +85,29 @@ public class PhysicsSimulation extends GameSystem
      */
     public final ResizableBuffer point_reaction_offsets;
 
-    /** float4
-     * x: collision reaction x
-     * y: collision reaction y
-     * z: opposing vector x
-     * w: opposing vector y
+    /** float8
+     * s0: collision reaction x
+     * s1: collision reaction y
+     * s2: opposing vector x
+     * s3: opposing vector y
+     * s4: friction reaction x
+     * s5: friction reaction y
+     * s6: restitution reaction x
+     * s7: restitution reaction y
      */
     public final ResizableBuffer reactions_in;
 
-    /** float4
-     * x: collision reaction x
-     * y: collision reaction y
-     * z: opposing vector x
-     * w: opposing vector y
+    /** float8
+     * s0: collision reaction x
+     * s1: collision reaction y
+     * s2: opposing vector x
+     * s3: opposing vector y
+     * s4: friction reaction x
+     * s5: friction reaction y
+     * s6: restitution reaction x
+     * s7: restitution reaction y
      */
     public final ResizableBuffer reactions_out;
-
-    /** float4
-     * x: friction reaction x
-     * y: friction reaction y
-     * z: (reserved for restitution)
-     * w: (reserved for restitution)
-     */
-    public final ResizableBuffer reactions_in2;
-
-    /** float4
-     * x: friction reaction x
-     * y: friction reaction y
-     * z: (reserved for restitution)
-     * w: (reserved for restitution)
-     */
-    public final ResizableBuffer reactions_out2;
 
     /** int
      * x: index of the point that reactions apply to
@@ -152,10 +144,8 @@ public class PhysicsSimulation extends GameSystem
 
         point_reaction_counts   = new TransientBuffer(CLSize.cl_int, 500_000L);
         point_reaction_offsets  = new TransientBuffer(CLSize.cl_int, 500_000L);
-        reactions_in            = new TransientBuffer(CLSize.cl_float4, 500_000L);
-        reactions_out           = new TransientBuffer(CLSize.cl_float4, 500_000L);
-        reactions_in2           = new TransientBuffer(CLSize.cl_float4, 500_000L);
-        reactions_out2          = new TransientBuffer(CLSize.cl_float4, 500_000L);
+        reactions_in            = new TransientBuffer(CLSize.cl_float8, 500_000L);
+        reactions_out           = new TransientBuffer(CLSize.cl_float8, 500_000L);
         reaction_index          = new TransientBuffer(CLSize.cl_int, 500_000L);
         key_map                 = new TransientBuffer(CLSize.cl_int, 500_000L);
         key_bank                = new TransientBuffer(CLSize.cl_int, 500_000L);
@@ -282,7 +272,6 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
             .buf_arg(SatCollide_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
             .buf_arg(SatCollide_k.Args.reactions, reactions_in)
-            .buf_arg(SatCollide_k.Args.reactions2, reactions_in2)
             .buf_arg(SatCollide_k.Args.reaction_index, reaction_index)
             .buf_arg(SatCollide_k.Args.point_reactions, point_reaction_counts)
             .buf_arg(SatCollide_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
@@ -292,8 +281,6 @@ public class PhysicsSimulation extends GameSystem
         sort_reactions_k = new SortReactions_k(GPGPU.command_queue_ptr, sort_reactions_k_ptr)
             .buf_arg(SortReactions_k.Args.reactions_in, reactions_in)
             .buf_arg(SortReactions_k.Args.reactions_out, reactions_out)
-            .buf_arg(SortReactions_k.Args.reactions_in2, reactions_in2)
-            .buf_arg(SortReactions_k.Args.reactions_out2, reactions_out2)
             .buf_arg(SortReactions_k.Args.reaction_index, reaction_index)
             .buf_arg(SortReactions_k.Args.point_reactions, point_reaction_counts)
             .buf_arg(SortReactions_k.Args.point_offsets, point_reaction_offsets);
@@ -301,7 +288,6 @@ public class PhysicsSimulation extends GameSystem
         long apply_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.apply_reactions);
         apply_reactions_k = new ApplyReactions_k(GPGPU.command_queue_ptr, apply_reactions_k_ptr)
             .buf_arg(ApplyReactions_k.Args.reactions, reactions_out)
-            .buf_arg(ApplyReactions_k.Args.reactions2, reactions_out2)
             .buf_arg(ApplyReactions_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
             .buf_arg(ApplyReactions_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV))
             .buf_arg(ApplyReactions_k.Args.point_reactions, point_reaction_counts)
@@ -615,8 +601,6 @@ public class PhysicsSimulation extends GameSystem
 
         reactions_in.ensure_capacity(max_point_count);
         reactions_out.ensure_capacity(max_point_count);
-        reactions_in2.ensure_capacity(max_point_count);
-        reactions_out2.ensure_capacity(max_point_count);
         reaction_index.ensure_capacity(max_point_count);
         point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
         point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
@@ -964,8 +948,6 @@ public class PhysicsSimulation extends GameSystem
         point_reaction_offsets.release();
         reactions_in.release();
         reactions_out.release();
-        reactions_in2.release();
-        reactions_out2.release();
         reaction_index.release();
         key_map.release();
         key_bank.release();

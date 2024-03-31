@@ -7,7 +7,6 @@ public class ApplyReactions_k extends GPUKernel
     public enum Args
     {
         reactions,
-        reactions2,
         points,
         anti_gravity,
         point_reactions,

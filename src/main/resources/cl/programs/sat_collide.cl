@@ -23,8 +23,7 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global float4 *points,
                           __global int2 *edges,
                           __global int *edge_flags,
-                          __global float4 *reactions,
-                          __global float4 *reactions2,
+                          __global float8 *reactions,
                           __global int *reaction_index,
                           __global int *point_reactions,
                           __global float *masses,
@@ -64,7 +63,6 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             edge_flags,
             reactions,
-            reactions2,
             reaction_index,
             point_reactions,
             masses,
@@ -80,7 +78,6 @@ __kernel void sat_collide(__global int2 *candidates,
             element_tables, 
             points, 
             reactions,
-            reactions2,
             reaction_index,
             point_reactions,
             masses,
@@ -99,7 +96,6 @@ __kernel void sat_collide(__global int2 *candidates,
             edges, 
             edge_flags,
             reactions,
-            reactions2,
             reaction_index,
             point_reactions,
             masses,
@@ -116,31 +112,26 @@ has an implicit assumption that the values in point_reactions have been zeroed o
 called. These values will have been consumed in a prior call to scan the points for applicable
 reactions.
  */
-__kernel void sort_reactions(__global float4 *reactions_in,
-                             __global float4 *reactions_in2,
-                             __global float4 *reactions_out,
-                             __global float4 *reactions_out2,
+__kernel void sort_reactions(__global float8 *reactions_in,
+                             __global float8 *reactions_out,
                              __global int *reaction_index,
                              __global int *point_reactions,
                              __global int *point_offsets)
 {
     int gid = get_global_id(0);
-    float4 reaction = reactions_in[gid];
-    float4 reaction2 = reactions_in2[gid];
+    float8 reaction = reactions_in[gid];
     int index = reaction_index[gid];
     int reaction_offset = point_offsets[index];
     int local_offset = atomic_inc(&point_reactions[index]);
     int next = reaction_offset + local_offset;
     reactions_out[next] = reaction;
-    reactions_out2[next] = reaction2;
 }
 
 /**
 Applies reactions to points by summing all the reactions serially, and then applying the composite 
 reaction to the point. 
  */
-__kernel void apply_reactions(__global float4 *reactions,
-                              __global float4 *reactions2,
+__kernel void apply_reactions(__global float8 *reactions,
                               __global float4 *points,
                               __global float *anti_gravity,
                               __global int *point_reactions,
@@ -154,42 +145,40 @@ __kernel void apply_reactions(__global float4 *reactions,
     int reaction_count = point_reactions[current_point];
 
     // exit on non-reactive points
-    if (reaction_count == 0) return;
-
-    // get the point to be adjusted
-    float4 point = points[current_point];
+    if (reaction_count == 0) 
+    {
+        return;
+    }
     
     // get the offset into the reaction buffer corresponding to this point
     int reaction_offset = point_offsets[current_point];
 
     // calculate the cumulative reaction on this point
-    float4 reaction = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
-    float4 reaction2 = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
+    float8 reaction = (float8)(0.0f);
     for (int i = 0; i < reaction_count; i++)
-    
     {
         int idx = i + reaction_offset;
-        float4 reaction_i = reactions[idx];
-        float4 reaction_i2 = reactions2[idx];
-        reaction += reaction_i;
-        reaction2 += reaction_i2;
+        reaction += reactions[idx];
     }
     
+    // get the point to be adjusted
+    float4 point = points[current_point];
+
     // store the initial distance and previous position. These are used after
     // adjustment is made to re-adjust the previous position of the point. This
     // is done as a best effort to conserve momentum. 
     float2 initial_tail = point.zw;
-    float initial_dist = fast_distance(point.xy, initial_tail);
+    float initial_dist = fast_distance(point.xy, point.zw);
 
     // apply the cumulative reaction
-    point.xy += reaction.xy;
+    point.xy += reaction.s01;
 
     // apply friction and adjust if necessary 
-    float2 friction_test = point.xy + reaction2.xy;
+    float2 friction_test = point.xy + reaction.s45;
     float2 test_velocity = friction_test - point.zw;
     float2 base_velocity = point.xy - point.zw;
-    float dot_a = dot(test_velocity, reaction2.xy);
-    float dot_b = dot(base_velocity, reaction2.xy);
+    float dot_a = dot(test_velocity, reaction.s45);
+    float dot_b = dot(base_velocity, reaction.s45);
     bool sign_a = (dot_a >= 0.0f);
     bool sign_b = (dot_b >= 0.0f);
 
@@ -197,12 +186,12 @@ __kernel void apply_reactions(__global float4 *reactions,
     // is scaled to ensure it applies only enough force to stop motion completely.
     if (sign_a == sign_b)
     {
-        point.xy += reaction2.xy;
+        point.xy += reaction.s45;
     }    
     else
     {
-        float2 norm = fast_normalize(reaction2.xy);
-        float mag = fast_length(reaction2.xy);
+        float2 norm = fast_normalize(reaction.s45);
+        float mag = fast_length(reaction.s45);
         float2 adjusted_reaction;
         float scale = 1 - native_divide(dot_a, (dot_a + fabs(dot_b)));
         adjusted_reaction = norm * mag * scale;
@@ -221,57 +210,39 @@ __kernel void apply_reactions(__global float4 *reactions,
 
     point.zw = point.xy - initial_dist * adjusted_offset;
 
+     // apply restitution and adjust if necessary 
+    float2 restitution_test = point.zw + reaction.s67;
+    test_velocity = restitution_test - point.xy;
+    base_velocity = point.zw - point.xy;
+    dot_a = dot(test_velocity, reaction.s67);
+    dot_b = dot(base_velocity, reaction.s67);
+    sign_a = (dot_a >= 0.0f);
+    sign_b = (dot_b >= 0.0f);
 
-
-
-
-
-
-
-
-    // float2 restitution_test = point.zw + reaction2.zw;
-    // float2 test_restitution = point.xy - restitution_test;
-    // float2 base_restitution = point.xy - point.zw;
-    // float r_dot_a = dot(test_restitution, reaction2.zw);
-    // float r_dot_b = dot(base_restitution, reaction2.zw);
-    // bool r_sign_a = (r_dot_a >= 0.0f);
-    // bool r_sign_b = (r_dot_b >= 0.0f);
-
-    // if (r_sign_a == r_sign_b)
-    // {
-    //    point.zw += reaction2.zw;
-    // }    
-    // else
-    // {
-    //     //printf("debug: dot a: %f dot b: %f\n", r_dot_a, r_dot_b);
-    //     float2 norm = fast_normalize(reaction2.zw);
-    //     float mag = fast_length(reaction2.zw);
-    //     float2 adjusted_reaction;
-    //     float scale = 1 - native_divide(fabs(r_dot_a), (fabs(r_dot_a) + fabs(r_dot_b)));
-    //     adjusted_reaction = norm * mag * scale;
-    //     point.zw -= adjusted_reaction;
-    // }
-
-
-
-
-
-
-
-
-
-
+    if (sign_a == sign_b)
+    {
+        point.zw += reaction.s67;
+    }    
+    else
+    {
+        float2 norm = fast_normalize(reaction.s67);
+        float mag = fast_length(reaction.s67);
+        float2 adjusted_reaction;
+        float scale = 1 - native_divide(dot_a, (dot_a + fabs(dot_b)));
+        adjusted_reaction = norm * mag * scale;
+        point.zw += adjusted_reaction;
+    }
 
     // in addition to velocity preservation, to aid in stabiliy, a non-real force of anti-gravity
     // is modeled to assist in keeping objects from colliding in the direction of gravity. This
     // adjustment is subtle and does not overcome all rigid-body simulation errors, but helps
     // maintain stability with small numbers of stacked objects. 
-    float2 heading = reaction.zw;
+    float2 heading = reaction.s23;
     float ag = calculate_anti_gravity(g, heading);
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
-    ag = ag <= 0.0f ? 0.0f : ag;
+    ag = ag <= 0.0f ? 0.0f : 1.0f;
 
     anti_gravity[current_point] = ag;
     points[current_point] = point;
@@ -296,7 +267,7 @@ __kernel void move_armatures(__global float4 *hulls,
     int end = hull_table.y;
     int hull_count = end - start + 1;
 
-    float2 diff = (float2)(0.0f, 0.0f);
+    float2 diff = (float2)(0.0f);
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
@@ -314,5 +285,20 @@ __kernel void move_armatures(__global float4 *hulls,
     }
 
     armature.xy += diff;
+
+    // float2 initial_tail = armature.zw;
+    // float initial_dist = fast_distance(armature.xy, armature.zw);
+
+    // //armature.xy += cumulaive_reactions.xy;
+
+    // float2 adjusted_offset = armature.xy - initial_tail;
+    // float new_len = fast_length(adjusted_offset);
+
+    // adjusted_offset = new_len == 0.0f 
+    //     ? adjusted_offset 
+    //     : native_divide(adjusted_offset, new_len);
+
+    // armature.zw = armature.xy - initial_dist * adjusted_offset;
+
     armatures[gid] = armature;
 }
