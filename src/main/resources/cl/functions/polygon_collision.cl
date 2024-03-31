@@ -172,18 +172,11 @@ inline void polygon_collision(int hull_1_id,
         ? hull_2.xy - hull_1.xy 
         : hull_1.xy - hull_2.xy;
 
-
-
     float total_mass = vert_hull_mass + edge_hull_mass;
-
-    float2 collision_vector = collision_normal * min_distance;
-
     float vert_magnitude = native_divide(edge_hull_mass, total_mass);
     float edge_magnitude = native_divide(vert_hull_mass, total_mass);
-
     bool static_vert = (vert_hull_flags.x & IS_STATIC) !=0;
     bool static_edge = (edge_hull_flags.x & IS_STATIC) !=0;
-    
     bool any_static = (static_vert || static_edge);
 
     vert_magnitude = any_static 
@@ -197,10 +190,7 @@ inline void polygon_collision(int hull_1_id,
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];
     float4 edge_point_2 = points[edge_index_b];
-
-
-
-
+    float2 collision_vector = collision_normal * min_distance;
     float contact = edge_contact(edge_point_1.xy, edge_point_2.xy, vertex_point.xy, collision_vector);
     float inverse_contact = 1.0f - contact;
     float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
