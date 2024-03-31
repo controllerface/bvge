@@ -145,7 +145,10 @@ __kernel void apply_reactions(__global float8 *reactions,
     int reaction_count = point_reactions[current_point];
 
     // exit on non-reactive points
-    if (reaction_count == 0) return;
+    if (reaction_count == 0) 
+    {
+        return;
+    }
     
     // get the offset into the reaction buffer corresponding to this point
     int reaction_offset = point_offsets[current_point];
@@ -264,7 +267,7 @@ __kernel void move_armatures(__global float4 *hulls,
     int end = hull_table.y;
     int hull_count = end - start + 1;
 
-    float2 diff = (float2)(0.0f, 0.0f);
+    float2 diff = (float2)(0.0f);
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
@@ -282,5 +285,20 @@ __kernel void move_armatures(__global float4 *hulls,
     }
 
     armature.xy += diff;
+
+    // float2 initial_tail = armature.zw;
+    // float initial_dist = fast_distance(armature.xy, armature.zw);
+
+    // //armature.xy += cumulaive_reactions.xy;
+
+    // float2 adjusted_offset = armature.xy - initial_tail;
+    // float new_len = fast_length(adjusted_offset);
+
+    // adjusted_offset = new_len == 0.0f 
+    //     ? adjusted_offset 
+    //     : native_divide(adjusted_offset, new_len);
+
+    // armature.zw = armature.xy - initial_dist * adjusted_offset;
+
     armatures[gid] = armature;
 }

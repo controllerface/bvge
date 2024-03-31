@@ -258,14 +258,14 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 300, -20);
+        genTestFigure(1f, 300, 500);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genTestFigureNPC(1f, 200, 100);
 //        genTestFigureNPC(1f, 200, 250);
 //        genTestFigureNPC(1f, 100, 50);
 
-        genCircles(100, 6f, 5f, 0, 100);
+        //genCircles(100, 6f, 5f, 0, 100);
         //genSquares(50,  5f, 5f, 420, 200);
         //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  6f, 5f, -120, 200);
