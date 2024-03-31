@@ -1,5 +1,6 @@
-
-
+/**
+Handles collision between one polygonal hull and one circular hull
+ */
 inline void polygon_circle_collision(int polygon_id, 
                                      int circle_id,
                                      __global float4 *hulls,
@@ -28,18 +29,15 @@ inline void polygon_circle_collision(int polygon_id,
 
     float min_distance = FLT_MAX;
 
-    int vert_hull_id = -1;
-    int edge_hull_id = -1;
+    int vert_hull_id = circle_id;
+    int edge_hull_id = polygon_id;
     int edge_index_a = -1;
     int edge_index_b = -1;
     int vert_index   = -1;
-    
-    bool invert = false;
-    
+        
     float2 collision_normal;
-    int4 vertex_table;
+    int4 vertex_table = circle_table;
 
-    
     // polygon
     for (int point_index = 0; point_index < polygon_edge_count; point_index++)
     {
@@ -77,12 +75,7 @@ inline void polygon_circle_collision(int polygon_id,
 
         if (abs_distance < min_distance)
         {
-            invert = true;
-            vertex_table = circle_table;
-            collision_normal.x = normal_buffer.x;
-            collision_normal.y = normal_buffer.y;
-            vert_hull_id = circle_id;
-            edge_hull_id   = polygon_id;
+            collision_normal = normal_buffer;
             min_distance = abs_distance;
             edge_index_a = a_index;
             edge_index_b = b_index;
@@ -126,17 +119,16 @@ inline void polygon_circle_collision(int polygon_id,
     vert_index = circle_table.x;
     min_distance = native_divide(min_distance, fast_length(collision_normal));
 
+    // collision reaction and opposing direction calculation
+    float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
+    float2 edge_hull_opposing = hull_a.xy - hull_b.xy;
+    
     int4 vert_hull_flags = hull_flags[vert_hull_id];
     int4 edge_hull_flags = hull_flags[edge_hull_id];
     float vert_hull_mass = masses[vert_hull_flags.y];
     float edge_hull_mass = masses[edge_hull_flags.y];
     float2 vert_hull_phys = hull_frictions[vert_hull_id];
     float2 edge_hull_phys = hull_frictions[edge_hull_id];
-
-    // collision reaction and opposing direction calculation
-    float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
-    float2 edge_hull_opposing = hull_a.xy - hull_b.xy;
-    
     float total_mass = vert_hull_mass + edge_hull_mass;
     float vert_magnitude = native_divide(edge_hull_mass, total_mass);
     float edge_magnitude = native_divide(vert_hull_mass, total_mass);

@@ -1,3 +1,6 @@
+/**
+Handles collision between two polygonal hulls
+ */
 inline void polygon_collision(int hull_1_id, 
                               int hull_2_id,
                               __global float4 *hulls,
@@ -35,7 +38,7 @@ inline void polygon_collision(int hull_1_id,
     int edge_index_b = -1;
     int vert_index   = -1;
     
-    bool invert = false;
+    bool invert_hull_order = false;
     
     float2 collision_normal;
     int4 vertex_table;
@@ -77,7 +80,7 @@ inline void polygon_collision(int hull_1_id,
 
         if (abs_distance < min_distance)
         {
-            invert = true;
+            invert_hull_order = true;
             vertex_table = hull_2_table;
             collision_normal = normal_buffer;
             vert_hull_id = hull_2_id;
@@ -123,7 +126,7 @@ inline void polygon_collision(int hull_1_id,
         float abs_distance = fabs(distance);
         if (abs_distance < min_distance)
         {
-            invert = false;
+            invert_hull_order = false;
             vertex_table = hull_1_table;
             collision_normal = normal_buffer;
             vert_hull_id = hull_1_id;
@@ -136,11 +139,11 @@ inline void polygon_collision(int hull_1_id,
 
     collision_normal = fast_normalize(collision_normal);
 
-    int hull_a_index = invert
+    int hull_a_index = invert_hull_order
         ? hull_2_id
         : hull_1_id;
 
-    int hull_b_index = invert
+    int hull_b_index = invert_hull_order
         ? hull_1_id
         : hull_2_id;
 
@@ -156,13 +159,6 @@ inline void polygon_collision(int hull_1_id,
     vert_index = final_proj.z;
     min_distance = native_divide(min_distance, fast_length(collision_normal));
 
-    int4 vert_hull_flags = hull_flags[vert_hull_id];
-    int4 edge_hull_flags = hull_flags[edge_hull_id];
-    float vert_hull_mass = masses[vert_hull_flags.y];
-    float edge_hull_mass = masses[edge_hull_flags.y];
-    float2 vert_hull_phys = hull_frictions[vert_hull_id];
-    float2 edge_hull_phys = hull_frictions[edge_hull_id];
-
     // collision reaction and opposing direction calculation
     float2 vert_hull_opposing = vert_hull_id == hull_1_id 
         ? hull_2.xy - hull_1.xy 
@@ -172,6 +168,12 @@ inline void polygon_collision(int hull_1_id,
         ? hull_2.xy - hull_1.xy 
         : hull_1.xy - hull_2.xy;
 
+    int4 vert_hull_flags = hull_flags[vert_hull_id];
+    int4 edge_hull_flags = hull_flags[edge_hull_id];
+    float vert_hull_mass = masses[vert_hull_flags.y];
+    float edge_hull_mass = masses[edge_hull_flags.y];
+    float2 vert_hull_phys = hull_frictions[vert_hull_id];
+    float2 edge_hull_phys = hull_frictions[edge_hull_id];
     float total_mass = vert_hull_mass + edge_hull_mass;
     float vert_magnitude = native_divide(edge_hull_mass, total_mass);
     float edge_magnitude = native_divide(vert_hull_mass, total_mass);
