@@ -8,8 +8,7 @@ inline void circle_collision(int hull_1_id,
                              __global int4 *hull_flags,
                              __global int4 *element_tables,
                              __global float4 *points,
-                             __global float4 *reactions_A,
-                             __global float4 *reactions_B,
+                             __global float8 *reactions,
                              __global int *reaction_index,
                              __global int *reaction_counts,
                              __global float *masses,
@@ -36,7 +35,7 @@ inline void circle_collision(int hull_1_id,
     float hull_2_mass = masses[hull_2_flags.y];
 
     // collision reaction and opposing direction calculation
-    float2 hull_1_ooposing = hull_2.xy - hull_1.xy;
+    float2 hull_1_opposing = hull_2.xy - hull_1.xy;
     float2 hull_2_opposing = hull_1.xy - hull_2.xy;
     float2 collision_normal = fast_normalize(hull_2_opposing);
     float collision_depth = radii_sum - center_distance;
@@ -76,16 +75,12 @@ inline void circle_collision(int hull_1_id,
     float2 hull_2_restitution = restituion_coefficient * dot(hull_2_applied_vel, collision_invert) * collision_invert;
     
     // store results
-    float4 hull_1_reactions_A = (float4)(hull_1_collision.xy, hull_1_ooposing.xy);
-    float4 hull_1_reactions_B = (float4)(hull_1_friction.xy, hull_1_restitution.xy);
-    float4 hull_2_reactions_A = (float4)(hull_2_collision.xy, hull_2_opposing.xy);
-    float4 hull_2_reactions_B = (float4)(hull_2_friction.xy, hull_2_restitution.xy);
+    float8 hull_1_reactions = (float8)(hull_1_collision, hull_1_opposing, hull_1_friction, hull_1_restitution);
+    float8 hull_2_reactions = (float8)(hull_2_collision, hull_2_opposing, hull_2_friction, hull_2_restitution);
     int hull_1_reaction_index = atomic_inc(&counter[0]);
     int hull_2_reaction_index = atomic_inc(&counter[0]);
-    reactions_A[hull_1_reaction_index] = hull_1_reactions_A;
-    reactions_B[hull_1_reaction_index] = hull_1_reactions_B;
-    reactions_A[hull_2_reaction_index] = hull_2_reactions_A;
-    reactions_B[hull_2_reaction_index] = hull_2_reactions_B;
+    reactions[hull_1_reaction_index] = hull_1_reactions;
+    reactions[hull_2_reaction_index] = hull_2_reactions;
     reaction_index[hull_1_reaction_index] = hull_1_table.x;
     reaction_index[hull_2_reaction_index] = hull_2_table.x;
     atomic_inc(&reaction_counts[hull_1_table.x]);

@@ -11,8 +11,7 @@ inline void polygon_collision(int hull_1_id,
                               __global float4 *points,
                               __global int2 *edges,
                               __global int *edge_flags,
-                              __global float4 *reactions_A,
-                              __global float4 *reactions_B,
+                              __global float8 *reactions,
                               __global int *reaction_index,
                               __global int *reaction_counts,
                               __global float *masses,
@@ -252,10 +251,8 @@ inline void polygon_collision(int hull_1_id,
     if (!static_vert)
     {
         int point_index = atomic_inc(&counter[0]);
-        float4 vertex_reaction_A = (float4)(vertex_collision, vert_hull_opposing);
-        float4 vertex_reaction_B = (float4)(vertex_friction, vertex_restitution);
-        reactions_A[point_index] = vertex_reaction_A;
-        reactions_B[point_index] = vertex_reaction_B;
+        float8 vertex_reactions = (float8)(vertex_collision, vert_hull_opposing, vertex_friction, vertex_restitution);
+        reactions[point_index] = vertex_reactions;
         reaction_index[point_index] = vert_index;
         atomic_inc(&reaction_counts[vert_index]);
     }
@@ -263,14 +260,10 @@ inline void polygon_collision(int hull_1_id,
     {
         int edge_1_reaction_index = atomic_inc(&counter[0]);
         int edge_2_reaction_index = atomic_inc(&counter[0]);
-        float4 edge_1_reaction_A = (float4)(edge_1_collision, edge_hull_opposing);
-        float4 edge_1_reaction_B = (float4)(edge_1_friction, edge_1_restitution);
-        float4 edge_2_reaction_A = (float4)(edge_2_collision, edge_hull_opposing);
-        float4 edge_2_reaction_B = (float4)(edge_2_friction, edge_2_restitution);
-        reactions_A[edge_1_reaction_index] = edge_1_reaction_A;
-        reactions_A[edge_2_reaction_index] = edge_2_reaction_A;
-        reactions_B[edge_1_reaction_index] = edge_1_reaction_B;
-        reactions_B[edge_2_reaction_index] = edge_2_reaction_B;
+        float8 edge_1_reactions = (float8)(edge_1_collision, edge_hull_opposing, edge_1_friction, edge_1_restitution);
+        float8 edge_2_reactions = (float8)(edge_2_collision, edge_hull_opposing, edge_2_friction, edge_2_restitution);
+        reactions[edge_1_reaction_index] = edge_1_reactions;
+        reactions[edge_2_reaction_index] = edge_2_reactions;
         reaction_index[edge_1_reaction_index] = edge_index_a;
         reaction_index[edge_2_reaction_index] = edge_index_b;
         atomic_inc(&reaction_counts[edge_index_a]);
