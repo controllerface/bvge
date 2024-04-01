@@ -28,7 +28,6 @@ public class PhysicsObjects
     private static final List<float[]> convex_buffer = new ArrayList<>();
     private static final Stack<Vertex> hull_vertex_buffer = new Stack<>();
 
-
     public static int FLAG_NONE          = Constants.HullFlags.EMPTY.bits;
     public static int FLAG_STATIC_OBJECT = Constants.HullFlags.IS_STATIC.bits;
     public static int FLAG_CIRCLE        = Constants.HullFlags.IS_CIRCLE.bits;

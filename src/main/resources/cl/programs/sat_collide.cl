@@ -285,20 +285,5 @@ __kernel void move_armatures(__global float4 *hulls,
     }
 
     armature.xy += diff;
-
-    // float2 initial_tail = armature.zw;
-    // float initial_dist = fast_distance(armature.xy, armature.zw);
-
-    // //armature.xy += cumulaive_reactions.xy;
-
-    // float2 adjusted_offset = armature.xy - initial_tail;
-    // float new_len = fast_length(adjusted_offset);
-
-    // adjusted_offset = new_len == 0.0f 
-    //     ? adjusted_offset 
-    //     : native_divide(adjusted_offset, new_len);
-
-    // armature.zw = armature.xy - initial_dist * adjusted_offset;
-
     armatures[gid] = armature;
 }
