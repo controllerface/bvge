@@ -95,7 +95,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f);
+                var armature_index = PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -111,7 +111,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, 0.0003f);
+                var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, -0.000009f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -160,7 +160,7 @@ public class TestGame extends GameMode
     private void genTestTriangle(float size, float x, float y)
     {
        // var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f);
+        var armature_index = PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f, 0.0003f);
         //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -258,19 +258,19 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 300, 300);
+        genTestFigure(1f, 300, 100);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genTestFigureNPC(1f, 200, 100);
 //        genTestFigureNPC(1f, 200, 250);
 //        genTestFigureNPC(1f, 100, 50);
 
-        //genCircles(100, 6f, 5f, 0, 100);
+        genCircles(150, 6f, 5f, 0, 100);
         //genSquares(100,  6f, 5f, 0, 200);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);
-        genTriangles(130,  6f, 5f, -120, 200);
+        //genTriangles(130,  6f, 5f, -120, 200);
         //genTriangles(100,  5f, 5f, 130, 100);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);

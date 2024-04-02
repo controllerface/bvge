@@ -76,7 +76,7 @@ public class PhysicsObjects
         return GPGPU.core_memory.new_armature(x, y, hull_table, armature_flags, mass, -1, -1d);
     }
 
-    public static int tri(float x, float y, float size, int flags, float mass, float friction)
+    public static int tri(float x, float y, float size, int flags, float mass, float friction, float restitution)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
@@ -116,7 +116,7 @@ public class PhysicsObjects
         var table = CLUtils.arg_int4(p1_index, p3_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = CLUtils.arg_float2(0, angle);
-        var hull_friction = CLUtils.arg_float2(friction, 0);
+        var hull_friction = CLUtils.arg_float2(friction, restitution);
 
 
         // there is only one hull, so it is the main hull ID by default
@@ -200,9 +200,9 @@ public class PhysicsObjects
         return box(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass, friction, restitution);
     }
 
-    public static int static_tri(float x, float y, float size, float mass, float friction)
+    public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return tri(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass, friction);
+        return tri(x, y, size, FLAG_STATIC_OBJECT | FLAG_NO_BONES, mass, friction, restitution);
     }
 
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will

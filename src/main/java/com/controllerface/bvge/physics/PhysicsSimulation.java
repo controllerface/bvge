@@ -697,7 +697,7 @@ public class PhysicsSimulation extends GameSystem
             }
             if (controlPoints.is_space_bar_down())
             {
-                vector_buffer.y -= GRAVITY_Y;
+                vector_buffer.y -= GRAVITY_Y * 6;
             }
 
             if (vector_buffer.x != 0f || vector_buffer.y != 0)
