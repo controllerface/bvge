@@ -543,7 +543,6 @@ public class Models
 
                 var new_channel = new BoneChannel(anim_timing_id, p_start, p_end, r_start, r_end, s_start, s_end);
                 var channels = anim_map.computeIfAbsent(bind_pose_id, (_k) -> new BoneChannel[animation_count]);
-                System.out.printf("adding: id: %d pose: %d chan: %s\n", animation_index, bind_pose_id, new_channel.toString());
                 channels[animation_index] = new_channel;
             }
         }
@@ -552,12 +551,9 @@ public class Models
         {
             int c_start = -1;
             int c_end = -1;
-            int counter = 0;
             for (BoneChannel channel : bone_channels)
             {
                 if (channel == null) continue;
-
-                System.out.println("getting: " + counter++);
                 try
                 {
                     int[] pos_table = new int[]{ channel.pos_start(), channel.pos_end() };
@@ -573,9 +569,7 @@ public class Models
                     e.printStackTrace();
                     throw new RuntimeException("Could not load animation data");
                 }
-
             }
-
             GPGPU.core_memory.set_bone_channel_table(bind_pose_id, new int[]{ c_start, c_end });
         });
     }
@@ -615,7 +609,6 @@ public class Models
     private static SceneNode process_node_hierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)
     {
         var nodeName = aiNode.mName().dataString();
-        System.out.println("Loading node: " + nodeName);
         var mTransform = aiNode.mTransformation();
         var transform = new Matrix4f();
         transform.set(mTransform.a1(), mTransform.b1(), mTransform.c1(), mTransform.d1(),
@@ -650,7 +643,6 @@ public class Models
                                             int parent_index)
     {
         var name = current_node.name;
-        System.out.println("name: " + name);
         boolean is_bone = name.toLowerCase().contains("bone")
             && !name.toLowerCase().contains("_end");
         boolean is_armature = name.equalsIgnoreCase("Armature");
