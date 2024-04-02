@@ -726,6 +726,10 @@ public class GPGPU
         long current_max_group_size = getSize(device_id_ptr, CL_DEVICE_MAX_WORK_GROUP_SIZE);
         long current_max_block_size = current_max_group_size * 2;
 
+        long max_mem = getSize(device_id_ptr, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
+
+        System.out.println("max mem: " + max_mem);
+
         long int2_max = CLSize.cl_int2 * current_max_block_size;
         long int4_max = CLSize.cl_int4 * current_max_block_size;
         long size_cap = int2_max + int4_max;

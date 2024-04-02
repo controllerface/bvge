@@ -17,9 +17,18 @@ public class Main
         GPGPU.init();
 
         window.initGameMode();
-        window.run();
-
-        GPGPU.destroy();
+        try
+        {
+            window.run();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            GPGPU.destroy();
+        }
     }
 }
 

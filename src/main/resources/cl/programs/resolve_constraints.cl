@@ -47,33 +47,15 @@ __kernel void resolve_constraints(__global int4 *element_tables,
             float2 p1_v = p1.xy;
             float2 p2_v = p2.xy;
 
-            float2 p1_p = p1.zw;
-            float2 p2_p = p2.zw;
-
-            float2 p1_diff = p1_v - p1_p;
-            float2 p2_diff = p2_v - p2_p;
-            
-            float p1_dist = fast_distance(p1_v, p1_p);
-            float p2_dist = fast_distance(p2_v, p2_p);
-
             // calculate the normalized direction of separation
             float2 sub = p2_v - p1_v;
             float len = fast_length(sub);
             float diff = len - constraint;
-
-            float2 sub_p = p2_p - p1_p;
-            float len_p = fast_length(sub_p);
-            float diff_p = len_p - constraint;
-            
             float2 direction = fast_normalize(sub);
-            float2 direction_p = fast_normalize(sub_p);
         
             // the difference is halved and the direction is set to that magnitude
             direction.x *= diff * 0.5;
             direction.y *= diff * 0.5;
-        
-            direction_p.x *= diff_p * 0.5;
-            direction_p.y *= diff_p * 0.5;
         
             // move the first vertex in the positive direction, move the second negative
             p1_v = p1_v + direction;
