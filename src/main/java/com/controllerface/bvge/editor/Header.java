@@ -1,0 +1,10 @@
+package com.controllerface.bvge.editor;
+
+public record Header(String name, String value)
+{
+    @Override
+    public String toString()
+    {
+        return "[" + name + " : " + value + "]";
+    }
+}
