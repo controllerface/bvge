@@ -1,6 +1,7 @@
 package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.GPGPU;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.window.Window;
 
 
@@ -15,6 +16,7 @@ public class Main
         window.init();
 
         GPGPU.init();
+        Editor.init();
 
         window.initGameMode();
         try
@@ -27,6 +29,7 @@ public class Main
         }
         finally
         {
+            Editor.destroy();
             GPGPU.destroy();
         }
     }

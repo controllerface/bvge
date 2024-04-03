@@ -1158,13 +1158,13 @@ public class GPUCoreMemory
 
     public void destroy()
     {
-        System.out.println("--- shutting down --- ");
-
-        System.out.println("hulls      : " + hull_index);
-        System.out.println("points     : " + point_index);
-        System.out.println("edges      : " + edge_index);
-        System.out.println("bones      : " + bone_index);
-        System.out.println("armatures  : " + armature_index);
+//        System.out.println("--- shutting down --- ");
+//
+//        System.out.println("hulls      : " + hull_index);
+//        System.out.println("points     : " + point_index);
+//        System.out.println("edges      : " + edge_index);
+//        System.out.println("bones      : " + bone_index);
+//        System.out.println("armatures  : " + armature_index);
 
         gpu_crud.destroy();
         scan_deletes.destroy();
