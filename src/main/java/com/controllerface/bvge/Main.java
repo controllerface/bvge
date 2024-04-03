@@ -4,7 +4,6 @@ import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.window.Window;
 
-
 public class Main
 {
     public static void main(String[] args)

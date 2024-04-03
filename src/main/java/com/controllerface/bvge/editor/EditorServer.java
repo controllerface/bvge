@@ -3,16 +3,16 @@ package com.controllerface.bvge.editor;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class EditorServer
 {
     private final int port = 9000;
     private ServerSocket serverSocket;
     private Thread acceptor;
+    private final int[] EOM_BYTES = new int[]{ '\r', '\n', '\r', '\n' };
 
     private static final String CANNED_TEST = "HTTP/1.1 200 OK\r\n" +
             "Content-Length:6\r\n" +
@@ -48,21 +48,23 @@ public class EditorServer
             var buffer = new BufferedInputStream(clientConnection.getInputStream());
             int next;
             var input_buffer = new ByteArrayOutputStream();
-            int last = 0;
-            boolean CRLF_HIT = false;
-            while ((next = buffer.read()) != -1 && !CRLF_HIT)
+            int[] ring_buffer =  new int[4];
+            boolean EOM = false;
+            while (!EOM && ((next = buffer.read()) != -1))
             {
                 input_buffer.write(next);
-                if (next == 10 && last == 13)
-                {
-                    CRLF_HIT = true;
-                }
-                else last = next;
+                ring_buffer[0] = ring_buffer[1];
+                ring_buffer[1] = ring_buffer[2];
+                ring_buffer[2] = ring_buffer[3];
+                ring_buffer[3] = next;
+                EOM = Arrays.compare(EOM_BYTES, ring_buffer) == 0;
             }
-            System.out.println("debug: " + input_buffer.toString(StandardCharsets.UTF_8));
+            System.out.println("debug: \n" + input_buffer.toString(StandardCharsets.UTF_8));
             clientConnection.getOutputStream().write(CANNED_TEST.getBytes(StandardCharsets.UTF_8));
             clientConnection.getOutputStream().flush();
             clientConnection.close();
+            System.out.println("Client connection closed: "
+                    + ((InetSocketAddress) clientConnection.getRemoteSocketAddress()).getPort());
         }
         catch (IOException e)
         {
