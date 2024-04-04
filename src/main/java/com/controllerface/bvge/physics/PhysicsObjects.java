@@ -209,7 +209,7 @@ public class PhysicsObjects
     //  probably break/crash.
     public static int wrap_model(int model_index, float x, float y, float size, int flags, float mass, float friction)
     {
-        // we need to know the next armature ID before we create it so it can be used for hulls
+        // we need to know the next armature ID before we create it, so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
         int next_armature_id = GPGPU.core_memory.next_armature();
 
@@ -437,7 +437,7 @@ public class PhysicsObjects
 
             if (next_hull != hull_id)
             {
-                throw new RuntimeException("hull/bone alignment error: h=" + hull_id + " b=" + next_hull);
+                throw new RuntimeException(STR."hull/bone alignment error: h=\{hull_id} b=\{next_hull}");
             }
             if (mesh_index == model.root_index())
             {
@@ -516,12 +516,11 @@ public class PhysicsObjects
         return index;
     }
 
-    public static Vertex[] swap(Vertex[] points, int index0, int index1)
+    public static void swap(Vertex[] points, int index0, int index1)
     {
         Vertex temp = points[index0];
         points[index0] = points[index1];
         points[index1] = temp;
-        return points;
     }
 
     public static Vertex[] generate_convex_hull(Mesh mesh, Vertex[] source)
