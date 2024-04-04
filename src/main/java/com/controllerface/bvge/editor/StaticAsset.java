@@ -91,7 +91,8 @@ public class StaticAsset
 
     private static void writeResourceResponse(Socket client_connection, StaticAsset staticAsset)
     {
-        try (var buffer = new ByteArrayOutputStream();
+        try (client_connection;
+             var buffer = new ByteArrayOutputStream();
              var data = StaticAsset.class.getResourceAsStream(staticAsset.location);
              var response_stream = client_connection.getOutputStream())
         {

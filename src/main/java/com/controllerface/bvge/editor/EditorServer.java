@@ -23,11 +23,12 @@ public class EditorServer
     private static final byte[] EOL_BYTES = new byte[]{'\r', '\n'};
     private static final byte[] EOM_BYTES = new byte[]{'\r', '\n', '\r', '\n'};
 
-    private static final byte[] _404 = ("HTTP/1.1 404 Not Found\r\n" +
-        "Content-Length:9\r\n" +
-        "Connection: close\r\n" +
-        "\r\n" +
-        "Not Found").getBytes(StandardCharsets.UTF_8);
+    private static final byte[] _404 = ("""
+        HTTP/1.1 404 Not Found\r
+        Content-Length:9\r
+        Connection: close\r
+        \r
+        Not Found""").getBytes(StandardCharsets.UTF_8);
 
     @FunctionalInterface
     private interface EndpointHandler
@@ -52,7 +53,7 @@ public class EditorServer
         @Override
         public String toString()
         {
-            return "{" + method + " " + uri + " " + version + "}";
+            return STR."{\{method} \{uri} \{version}}";
         }
     }
 
@@ -61,7 +62,7 @@ public class EditorServer
         @Override
         public String toString()
         {
-            return "[" + name + " : " + value + "]";
+            return STR."[\{name} : \{value}]";
         }
     }
 
@@ -88,11 +89,12 @@ public class EditorServer
         }
     }
 
-    private static void byte_response(byte[] data, Socket client_connection)
+    private static void not_found(Socket client_connection)
     {
-        try (var response_stream = client_connection.getOutputStream())
+        try (client_connection;
+             var response_stream = client_connection.getOutputStream())
         {
-            response_stream.write(data);
+            response_stream.write(EditorServer._404);
             response_stream.flush();
         }
         catch (IOException ioException)
@@ -105,7 +107,7 @@ public class EditorServer
     {
         NOT_FOUND(EndpointMethod.ANY,
             (_) -> false,
-            (_, conn) -> byte_response(_404, conn)),
+            (_, conn) -> not_found(conn)),
 
         STATIC_ASSET(EndpointMethod.GET,
             staticAssets::containsKey,
@@ -165,8 +167,9 @@ public class EditorServer
 
     private void process(Socket clientConnection)
     {
-        try (var request_stream = new BufferedInputStream(clientConnection.getInputStream()))
+        try
         {
+            var request_stream = new BufferedInputStream(clientConnection.getInputStream());
             int next;
             var input_buffer = new ByteArrayOutputStream();
             byte[] eom_buffer = new byte[4];
@@ -216,12 +219,17 @@ public class EditorServer
             else
             {
                 var request = new Request(line, headers);
+                System.out.println(request);
                 EndPoint.handleRequest(request, clientConnection);
             }
         }
         catch (IOException e)
         {
-            System.err.println("Client connection closed: " + clientConnection.getRemoteSocketAddress().toString());
+            try
+            {
+                clientConnection.close();
+            }
+            catch (IOException _) { /* NOP for closing broken connection */}
         }
     }
 
@@ -234,7 +242,7 @@ public class EditorServer
         }
         catch (IOException e)
         {
-            throw new RuntimeException("Error starting editor server. port: " + port, e);
+            throw new RuntimeException(STR."Error starting editor server. port: \{port}", e);
         }
     }
 
@@ -247,7 +255,7 @@ public class EditorServer
         }
         catch (IOException e)
         {
-            throw new RuntimeException("Error stopping editor server. port: " + port, e);
+            throw new RuntimeException(STR."Error stopping editor server. port: \{port}", e);
         }
     }
 }
