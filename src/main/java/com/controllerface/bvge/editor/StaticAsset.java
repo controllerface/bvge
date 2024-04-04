@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class StaticAsset
 {
@@ -54,12 +55,12 @@ public class StaticAsset
         var mimeType = mimeTypes.get(extension);
         if (mimeType == null)
         {
-            throw new RuntimeException("Unknown extension: " + extension);
+            throw new RuntimeException(STR."Unknown extension: \{extension}");
         }
         return mimeType;
     }
 
-    private static byte[] toUTF8Bytes(int number)
+    private static byte[] int_bytes(int number)
     {
         if (number < 0x80)
         {
@@ -67,15 +68,24 @@ public class StaticAsset
         }
         else if (number < 0x800)
         {
-            return new byte[]{(byte) (0xC0 | (number >> 6)), (byte) (0x80 | (number & 0x3F))};
+            byte byte_0 = (byte) (0xC0 | (number >> 6));
+            byte byte_1 = (byte) (0x80 | (number & 0x3F));
+            return new byte[]{ byte_0, byte_1 };
         }
         else if (number < 0x10000)
         {
-            return new byte[]{(byte) (0xE0 | (number >> 12)), (byte) (0x80 | ((number >> 6) & 0x3F)), (byte) (0x80 | (number & 0x3F))};
+            byte byte_0 = (byte) (0xE0 | (number >> 12));
+            byte byte_1 = (byte) (0x80 | ((number >> 6) & 0x3F));
+            byte byte_2 = (byte) (0x80 | (number & 0x3F));
+            return new byte[]{ byte_0, byte_1, byte_2 };
         }
         else
         {
-            return new byte[]{(byte) (0xF0 | (number >> 18)), (byte) (0x80 | ((number >> 12) & 0x3F)), (byte) (0x80 | ((number >> 6) & 0x3F)), (byte) (0x80 | (number & 0x3F))};
+            byte byte_0 = (byte) (0xF0 | (number >> 18));
+            byte byte_1 = (byte) (0x80 | ((number >> 12) & 0x3F));
+            byte byte_2 = (byte) (0x80 | ((number >> 6) & 0x3F));
+            byte byte_3 = (byte) (0x80 | (number & 0x3F));
+            return new byte[]{ byte_0, byte_1, byte_2, byte_3 };
         }
     }
 
@@ -85,7 +95,7 @@ public class StaticAsset
              var data = StaticAsset.class.getResourceAsStream(staticAsset.location);
              var response_stream = client_connection.getOutputStream())
         {
-            var data_bytes = data.readAllBytes();
+            var data_bytes = Objects.requireNonNull(data).readAllBytes();
             buffer.writeBytes(LINE_200_OK);
             buffer.writeBytes(EOL_BYTES);
             buffer.writeBytes(CONTENT_TYPE);
@@ -93,14 +103,14 @@ public class StaticAsset
             buffer.writeBytes(CHARSET_UTF_8);
             buffer.writeBytes(EOL_BYTES);
             buffer.writeBytes(CONTENT_LENGTH);
-            buffer.writeBytes(toUTF8Bytes(data_bytes.length));
+            buffer.writeBytes(int_bytes(data_bytes.length));
             buffer.writeBytes(EOL_BYTES);
             buffer.writeBytes(EOL_BYTES);
             buffer.writeBytes(data_bytes);
             response_stream.write(buffer.toByteArray());
             response_stream.flush();
         }
-        catch (IOException e)
+        catch (IOException | NullPointerException e)
         {
             System.err.println("Error writing response stream");
         }
@@ -112,6 +122,7 @@ public class StaticAsset
 
         assetMap.put("/",           StaticAsset.make("/ui/html/editor.html"));
         assetMap.put("/editor.js",  StaticAsset.make("/ui/js/editor.js"));
+        assetMap.put("/editor.css", StaticAsset.make("/ui/css/editor.css"));
 
         return assetMap;
     }

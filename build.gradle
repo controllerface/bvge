@@ -12,6 +12,10 @@ ext {
 group 'com.controllerface'
 version '1.0-SNAPSHOT'
 
+compileJava {
+    options.compilerArgs << '--enable-preview'
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(22)
