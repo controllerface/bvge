@@ -3,41 +3,39 @@ package com.controllerface.bvge.editor;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static com.controllerface.bvge.editor.StaticAsset.staticAssets;
+
 public class EditorServer
 {
     private final int port = 9000;
     private ServerSocket serverSocket;
     private Thread acceptor;
-    private final int[] EOL_BYTES = new int[]{ '\r', '\n' };
-    private final int[] EOM_BYTES = new int[]{ '\r', '\n', '\r', '\n' };
 
-    private static final String CANNED_TEST = "HTTP/1.1 200 OK\r\n" +
-        "Content-Length:6\r\n" +
-        "Connection: close\r\n" +
-        "\r\n" +
-        "Hello!";
+    private static final byte[] EOL_BYTES = new byte[]{'\r', '\n'};
+    private static final byte[] EOM_BYTES = new byte[]{'\r', '\n', '\r', '\n'};
 
-    private static final String _404 = "HTTP/1.1 404 Not Found\r\n" +
+    private static final byte[] _404 = ("HTTP/1.1 404 Not Found\r\n" +
         "Content-Length:9\r\n" +
         "Connection: close\r\n" +
         "\r\n" +
-        "Not Found";
+        "Not Found").getBytes(StandardCharsets.UTF_8);
 
     @FunctionalInterface
     private interface EndpointHandler
     {
-        void respond(Request request, OutputStream response);
+        void respond(Request request, Socket clientConnection);
     }
 
-    private enum EndpointType
+    private enum EndpointMethod
     {
         GET,
         POST,
@@ -47,12 +45,10 @@ public class EditorServer
         {
             return method.equalsIgnoreCase(this.name());
         }
-
     }
 
     private record RequestLine(String method, String uri, String version)
     {
-
         @Override
         public String toString()
         {
@@ -67,7 +63,6 @@ public class EditorServer
         {
             return "[" + name + " : " + value + "]";
         }
-
     }
 
     private record Request(RequestLine requestLine, List<Header> headers)
@@ -93,66 +88,56 @@ public class EditorServer
         }
     }
 
+    private static void byte_response(byte[] data, Socket client_connection)
+    {
+        try (var response_stream = client_connection.getOutputStream())
+        {
+            response_stream.write(data);
+            response_stream.flush();
+        }
+        catch (IOException ioException)
+        {
+            System.out.println("Error writing to response stream");
+        }
+    }
+
     private enum EndPoint
     {
-        /**
-         * Default endpoint handler called when nothing matches.
-         */
-        NOT_FOUND(EndpointType.ANY, (_uri) -> false, (_req, res) ->
-        {
-            try (res)
-            {
-                res.write(_404.getBytes(StandardCharsets.UTF_8));
-                res.flush();
-            }
-            catch (IOException ioe)
-            {
-                System.err.println("Error writing response");
-            }
-        }),
+        NOT_FOUND(EndpointMethod.ANY,
+            (_) -> false,
+            (_, conn) -> byte_response(_404, conn)),
 
-        HELLO(EndpointType.GET, "/", (req, res) ->
-        {
-            try (res)
-            {
-                res.write(CANNED_TEST.getBytes(StandardCharsets.UTF_8));
-                res.flush();
-            }
-            catch (IOException ioe)
-            {
-                System.err.println("Error writing response");
-            }
-        });
+        STATIC_ASSET(EndpointMethod.GET,
+            staticAssets::containsKey,
+            (req, conn) -> staticAssets.get(req.uri()).writeTo(conn));
 
-        private final EndpointType type;
+        private final EndpointMethod method;
         private final Predicate<String> uri_filter;
         private final EndpointHandler handler;
 
-        EndPoint(EndpointType type,
-                 String uri,
-                 EndpointHandler handler)
-        {
-            this(type, (requestUri) -> requestUri.equals(uri), handler);
-        }
-
-        EndPoint(EndpointType type,
+        EndPoint(EndpointMethod method,
                  Predicate<String> uri_filter,
                  EndpointHandler handler)
         {
-            this.type = type;
+            this.method = method;
             this.uri_filter = uri_filter;
             this.handler = handler;
         }
 
-        public void handle(Request request, OutputStream response)
+        public void handle(Request request, Socket client_connection)
         {
-            this.handler.respond(request, response);
+            this.handler.respond(request, client_connection);
+        }
+
+        public static void handleRequest(Request request, Socket client_connection)
+        {
+            EndPoint.forRequest(request).handle(request, client_connection);
         }
 
         public static EndPoint forRequest(Request request)
         {
             return Arrays.stream(EndPoint.values())
-                .filter(endPoint -> endPoint.type.matches(request.method()))
+                .filter(endPoint -> endPoint.method.matches(request.method()))
                 .filter(endpoint -> endpoint.uri_filter.test(request.uri()))
                 .findFirst().orElse(NOT_FOUND);
         }
@@ -184,7 +169,7 @@ public class EditorServer
         {
             int next;
             var input_buffer = new ByteArrayOutputStream();
-            int[] eom_buffer =  new int[4];
+            byte[] eom_buffer = new byte[4];
             boolean EOM = false;
             boolean error = false;
             var line = (RequestLine) null;
@@ -195,7 +180,7 @@ public class EditorServer
                 eom_buffer[0] = eom_buffer[1];
                 eom_buffer[1] = eom_buffer[2];
                 eom_buffer[2] = eom_buffer[3];
-                eom_buffer[3] = next;
+                eom_buffer[3] = (byte) next;
                 EOM = Arrays.compare(EOM_BYTES, eom_buffer) == 0;
                 var EOL = Arrays.compare(EOL_BYTES, 0, EOL_BYTES.length, eom_buffer, 2, eom_buffer.length) == 0;
                 if (!EOM && EOL)
@@ -231,8 +216,7 @@ public class EditorServer
             else
             {
                 var request = new Request(line, headers);
-                EndPoint.forRequest(request)
-                    .handle(request, clientConnection.getOutputStream());
+                EndPoint.handleRequest(request, clientConnection);
             }
         }
         catch (IOException e)
