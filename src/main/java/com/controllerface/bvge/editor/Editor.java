@@ -2,16 +2,17 @@ package com.controllerface.bvge.editor;
 
 public class Editor
 {
+    private static final int DEFAULT_PORT = 9000;
+    private static EditorServer server;
+
     public static final boolean ACTIVE = true;
-    private static EditorServer editorServer;
 
     public static void init()
     {
         if (ACTIVE)
         {
-            // start editor server
-            editorServer = new EditorServer();
-            editorServer.start();
+            server = new EditorServer(DEFAULT_PORT);
+            server.start();
         }
     }
 
@@ -19,8 +20,15 @@ public class Editor
     {
         if (ACTIVE)
         {
-            // stop editor server
-            editorServer.stop();
+            server.stop();
+        }
+    }
+
+    public static void queue_event(String name, String data)
+    {
+        if (ACTIVE)
+        {
+            server.queue_stat_event(name, data);
         }
     }
 }

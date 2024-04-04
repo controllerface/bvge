@@ -1286,6 +1286,6 @@ public class GPUCoreMemory
         total += armature_hull_table_buffer.debug_data();
 
         //System.out.println("---------------------------");
-        System.out.println("Buffer Usage: MB " + ((float) total / 1024f / 1024f));
+        System.out.println("Core Memory Usage: MB " + ((float) total / 1024f / 1024f));
     }
 }

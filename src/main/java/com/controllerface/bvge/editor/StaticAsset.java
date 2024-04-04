@@ -1,5 +1,7 @@
 package com.controllerface.bvge.editor;
 
+import com.controllerface.bvge.editor.http.Request;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -34,9 +36,9 @@ public class StaticAsset
         this.mimetype = mimetype;
     }
 
-    private static StaticAsset make(String location, String mimetype)
+    private static StaticAsset make(String location, String mime_type)
     {
-        return new StaticAsset(location, mimetype);
+        return new StaticAsset(location, mime_type);
     }
 
     private static StaticAsset make(String location)
@@ -89,18 +91,18 @@ public class StaticAsset
         }
     }
 
-    private static void writeResourceResponse(Socket client_connection, StaticAsset staticAsset)
+    private static void writeResourceResponse(Socket client_connection, StaticAsset static_asset)
     {
         try (client_connection;
              var buffer = new ByteArrayOutputStream();
-             var data = StaticAsset.class.getResourceAsStream(staticAsset.location);
+             var data = StaticAsset.class.getResourceAsStream(static_asset.location);
              var response_stream = client_connection.getOutputStream())
         {
             var data_bytes = Objects.requireNonNull(data).readAllBytes();
             buffer.writeBytes(LINE_200_OK);
             buffer.writeBytes(EOL_BYTES);
             buffer.writeBytes(CONTENT_TYPE);
-            buffer.writeBytes(staticAsset.mimetype.getBytes(StandardCharsets.UTF_8));
+            buffer.writeBytes(static_asset.mimetype.getBytes(StandardCharsets.UTF_8));
             buffer.writeBytes(CHARSET_UTF_8);
             buffer.writeBytes(EOL_BYTES);
             buffer.writeBytes(CONTENT_LENGTH);
@@ -117,7 +119,7 @@ public class StaticAsset
         }
     }
 
-    private static Map<String, StaticAsset> makeStaticAssets()
+    private static Map<String, StaticAsset> make_static_assets()
     {
         var assetMap = new HashMap<String, StaticAsset>();
 
@@ -133,5 +135,16 @@ public class StaticAsset
         writeResourceResponse(client_connection, this);
     }
 
-    public static final Map<String, StaticAsset> staticAssets = makeStaticAssets();
+    public static boolean is_asset(String uri_key)
+    {
+        return static_assets.containsKey(uri_key);
+    }
+
+    public static void serve_asset(Request request, Socket client_connection, EditorServer server)
+    {
+        // todo: inform server of failure to serve, if any
+        static_assets.get(request.uri()).writeTo(client_connection);
+    }
+
+    public static final Map<String, StaticAsset> static_assets = make_static_assets();
 }

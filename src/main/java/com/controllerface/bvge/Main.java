@@ -17,7 +17,7 @@ public class Main
         GPGPU.init();
         Editor.init();
 
-        window.initGameMode();
+        window.init_game_mode();
         try
         {
             window.run();
