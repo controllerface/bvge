@@ -3,10 +3,13 @@ package com.controllerface.bvge.editor;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
 
 public class EditorServer
 {
@@ -17,10 +20,143 @@ public class EditorServer
     private final int[] EOM_BYTES = new int[]{ '\r', '\n', '\r', '\n' };
 
     private static final String CANNED_TEST = "HTTP/1.1 200 OK\r\n" +
-            "Content-Length:6\r\n" +
-            "Connection: close\r\n" +
-            "\r\n" +
-            "Hello!";
+        "Content-Length:6\r\n" +
+        "Connection: close\r\n" +
+        "\r\n" +
+        "Hello!";
+
+    private static final String _404 = "HTTP/1.1 404 Not Found\r\n" +
+        "Content-Length:9\r\n" +
+        "Connection: close\r\n" +
+        "\r\n" +
+        "Not Found";
+
+    @FunctionalInterface
+    private interface EndpointHandler
+    {
+        void respond(Request request, OutputStream response);
+    }
+
+    private enum EndpointType
+    {
+        GET,
+        POST,
+        ANY;
+
+        boolean matches(String method)
+        {
+            return method.equalsIgnoreCase(this.name());
+        }
+
+    }
+
+    private record RequestLine(String method, String uri, String version)
+    {
+
+        @Override
+        public String toString()
+        {
+            return "{" + method + " " + uri + " " + version + "}";
+        }
+    }
+
+    private record Header(String name, String value)
+    {
+        @Override
+        public String toString()
+        {
+            return "[" + name + " : " + value + "]";
+        }
+
+    }
+
+    private record Request(RequestLine requestLine, List<Header> headers)
+    {
+        @Override
+        public String toString()
+        {
+            var buffer = new StringBuilder();
+            buffer.append("\n").append(requestLine.toString()).append("\n");
+            headers.forEach(header -> buffer.append(header).append("\n"));
+            buffer.append("\n");
+            return buffer.toString();
+        }
+
+        public String method()
+        {
+            return requestLine().method();
+        }
+
+        public String uri()
+        {
+            return requestLine().uri();
+        }
+    }
+
+    private enum EndPoint
+    {
+        /**
+         * Default endpoint handler called when nothing matches.
+         */
+        NOT_FOUND(EndpointType.ANY, (_uri) -> false, (_req, res) ->
+        {
+            try (res)
+            {
+                res.write(_404.getBytes(StandardCharsets.UTF_8));
+                res.flush();
+            }
+            catch (IOException ioe)
+            {
+                System.err.println("Error writing response");
+            }
+        }),
+
+        HELLO(EndpointType.GET, "/", (req, res) ->
+        {
+            try (res)
+            {
+                res.write(CANNED_TEST.getBytes(StandardCharsets.UTF_8));
+                res.flush();
+            }
+            catch (IOException ioe)
+            {
+                System.err.println("Error writing response");
+            }
+        });
+
+        private final EndpointType type;
+        private final Predicate<String> uri_filter;
+        private final EndpointHandler handler;
+
+        EndPoint(EndpointType type,
+                 String uri,
+                 EndpointHandler handler)
+        {
+            this(type, (requestUri) -> requestUri.equals(uri), handler);
+        }
+
+        EndPoint(EndpointType type,
+                 Predicate<String> uri_filter,
+                 EndpointHandler handler)
+        {
+            this.type = type;
+            this.uri_filter = uri_filter;
+            this.handler = handler;
+        }
+
+        public void handle(Request request, OutputStream response)
+        {
+            this.handler.respond(request, response);
+        }
+
+        public static EndPoint forRequest(Request request)
+        {
+            return Arrays.stream(EndPoint.values())
+                .filter(endPoint -> endPoint.type.matches(request.method()))
+                .filter(endpoint -> endpoint.uri_filter.test(request.uri()))
+                .findFirst().orElse(NOT_FOUND);
+        }
+    }
 
     private void accept()
     {
@@ -29,7 +165,6 @@ public class EditorServer
             while (!Thread.currentThread().isInterrupted())
             {
                 var client = serverSocket.accept();
-                System.out.println("new client connection");
                 Thread.ofVirtual().start(() -> process(client));
             }
         }
@@ -45,12 +180,10 @@ public class EditorServer
 
     private void process(Socket clientConnection)
     {
-        try (var request_stream = new BufferedInputStream(clientConnection.getInputStream());
-             var response_stream = clientConnection.getOutputStream())
+        try (var request_stream = new BufferedInputStream(clientConnection.getInputStream()))
         {
             int next;
             var input_buffer = new ByteArrayOutputStream();
-            int[] eol_buffer =  new int[2];
             int[] eom_buffer =  new int[4];
             boolean EOM = false;
             boolean error = false;
@@ -63,10 +196,9 @@ public class EditorServer
                 eom_buffer[1] = eom_buffer[2];
                 eom_buffer[2] = eom_buffer[3];
                 eom_buffer[3] = next;
-                eol_buffer[0] = eol_buffer[1];
-                eol_buffer[1] = next;
                 EOM = Arrays.compare(EOM_BYTES, eom_buffer) == 0;
-                if (!EOM && Arrays.compare(EOL_BYTES, eol_buffer) == 0)
+                var EOL = Arrays.compare(EOL_BYTES, 0, EOL_BYTES.length, eom_buffer, 2, eom_buffer.length) == 0;
+                if (!EOM && EOL)
                 {
                     var raw_header = input_buffer.toString(StandardCharsets.UTF_8);
                     input_buffer.reset();
@@ -98,12 +230,9 @@ public class EditorServer
             }
             else
             {
-                System.out.println("\n");
-                System.out.println(line);
-                headers.forEach(System.out::println);
-                System.out.println("\n");
-                response_stream.write(CANNED_TEST.getBytes(StandardCharsets.UTF_8));
-                response_stream.flush();
+                var request = new Request(line, headers);
+                EndPoint.forRequest(request)
+                    .handle(request, clientConnection.getOutputStream());
             }
         }
         catch (IOException e)
@@ -116,10 +245,8 @@ public class EditorServer
     {
         try
         {
-            System.out.println("Editor server starting up...");
             serverSocket = new ServerSocket(port);
             acceptor = Thread.ofVirtual().start(this::accept);
-            System.out.println("Editor server running");
         }
         catch (IOException e)
         {
@@ -131,10 +258,8 @@ public class EditorServer
     {
         try
         {
-            System.out.println("Editor server shutting down...");
             acceptor.interrupt();
             serverSocket.close();
-            System.out.println("Editor server stopped");
         }
         catch (IOException e)
         {
