@@ -30,6 +30,11 @@ public class EditorServer
         \r
         Not Found""").getBytes(StandardCharsets.UTF_8);
 
+    private static final byte[] _200_SSE = ("""
+        HTTP/1.1 200 OK\r
+        Content-Type: text/event-stream\r
+        \r""").getBytes(StandardCharsets.UTF_8);
+
     @FunctionalInterface
     private interface EndpointHandler
     {
@@ -89,7 +94,7 @@ public class EditorServer
         }
     }
 
-    private static void not_found(Socket client_connection)
+    private static void handle_404(Request request, Socket client_connection)
     {
         try (client_connection;
              var response_stream = client_connection.getOutputStream())
@@ -103,19 +108,78 @@ public class EditorServer
         }
     }
 
+    private static void handle_sse(Request request, Socket client_connection)
+    {
+        boolean isSSE = request.headers.stream()
+            .filter(header -> "Accept".equalsIgnoreCase(header.name()))
+            .anyMatch(header -> "text/event-stream".equals(header.value()));
+
+        if (isSSE)
+        {
+            try
+            {
+                var response_stream = client_connection.getOutputStream();
+                response_stream.write(EditorServer._200_SSE);
+                response_stream.flush();
+                Thread.ofVirtual().start(()->
+                {
+                   while (!Thread.currentThread().isInterrupted())
+                   {
+                       try
+                       {
+                           Thread.sleep(2000);
+                           client_connection.getOutputStream().write("event: test_event\r\n".getBytes(StandardCharsets.UTF_8));
+                           client_connection.getOutputStream().write((STR."data: test_data = \{System.currentTimeMillis()}\r\n").getBytes(StandardCharsets.UTF_8));
+                           client_connection.getOutputStream().write("\r\n".getBytes(StandardCharsets.UTF_8));
+                       }
+                       catch (Exception _)
+                       {
+                           System.out.println("broken connection");
+                           Thread.currentThread().interrupt();
+                       }
+                   }
+                });
+            }
+            catch (Exception _)
+            {
+                EndPoint.NOT_FOUND.handle(request, client_connection);
+            }
+        }
+        else
+        {
+            EndPoint.NOT_FOUND.handle(request, client_connection);
+        }
+    }
+
+    private static void handle_static_asset(Request request, Socket clientConnection)
+    {
+        staticAssets.get(request.uri()).writeTo(clientConnection);
+    }
+
     private enum EndPoint
     {
         NOT_FOUND(EndpointMethod.ANY,
             (_) -> false,
-            (_, conn) -> not_found(conn)),
+            EditorServer::handle_404),
+
+        EVENT_SOURCE(EndpointMethod.GET,
+        "/events",
+            EditorServer::handle_sse),
 
         STATIC_ASSET(EndpointMethod.GET,
             staticAssets::containsKey,
-            (req, conn) -> staticAssets.get(req.uri()).writeTo(conn));
+            EditorServer::handle_static_asset);
 
         private final EndpointMethod method;
         private final Predicate<String> uri_filter;
         private final EndpointHandler handler;
+
+        EndPoint(EndpointMethod method,
+                 String uri,
+                 EndpointHandler handler)
+        {
+            this(method, (test_uri) -> test_uri.equals(uri), handler);
+        }
 
         EndPoint(EndpointMethod method,
                  Predicate<String> uri_filter,
