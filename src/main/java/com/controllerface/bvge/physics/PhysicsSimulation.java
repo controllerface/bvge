@@ -6,6 +6,7 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.util.Constants;
 import org.joml.Vector2f;
 
 import java.util.Map;
@@ -710,6 +711,8 @@ public class PhysicsSimulation extends GameSystem
 
     private void update_controllable_entities()
     {
+        // todo: index and magnitudes only need to be set once, but may need some
+        //  checks or logic to ensure characters don't get deleted
         var components = ecs.getComponents(Component.ControlPoints);
 
         control_point_flags.ensure_capacity(components.size());
@@ -718,10 +721,7 @@ public class PhysicsSimulation extends GameSystem
         control_point_linear_mag.ensure_capacity(components.size());
         control_point_jump_mag.ensure_capacity(components.size());
 
-        // todo: ensure buffer size for kernel
-
-        // todo: instead of sending computed force from CPU, send just control points and calculate in GPU kernel
-
+        int target_count = 0;
         for (Map.Entry<String, GameComponent> entry : components.entrySet())
         {
             String entity = entry.getKey();
@@ -734,35 +734,47 @@ public class PhysicsSimulation extends GameSystem
             Objects.requireNonNull(armature);
             Objects.requireNonNull(force);
 
-            vector_buffer.zero();
+            int ticks = -1;
+
+            int flags = 0;
             if (controlPoints.is_moving_left())
             {
-                vector_buffer.x -= force.magnitude();
+                flags = flags | Constants.ControlFlags.LEFT.bits;
             }
             if (controlPoints.is_moving_right())
             {
-                vector_buffer.x += force.magnitude();
+                flags = flags | Constants.ControlFlags.RIGHT.bits;
             }
             if (controlPoints.is_moving_up())
             {
-                vector_buffer.y += force.magnitude();
+                flags = flags | Constants.ControlFlags.UP.bits;
             }
             if (controlPoints.is_moving_down())
             {
-                vector_buffer.y -= force.magnitude();
+                flags = flags | Constants.ControlFlags.DOWN.bits;
             }
             if (controlPoints.is_space_bar_down())
             {
-                vector_buffer.y -= GRAVITY_Y * 6;
+                flags = flags | Constants.ControlFlags.JUMP.bits;
             }
-
-            if (vector_buffer.x != 0f || vector_buffer.y != 0)
+            if (controlPoints.is_rotating_left())
             {
-                GPGPU.core_memory.update_accel(armature.index(), vector_buffer.x, vector_buffer.y);
+                // todo: remove this and implement ground touch logic
+                ticks = 5;
             }
 
-            // todo: re-implement rotation here if needed
+            set_control_points_k
+                    .set_arg(SetControlPoints_k.Args.target, target_count)
+                    .set_arg(SetControlPoints_k.Args.new_flags, flags)
+                    .set_arg(SetControlPoints_k.Args.new_index, armature.index())
+                    .set_arg(SetControlPoints_k.Args.new_tick_budget, ticks)
+                    .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 100)
+                    .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
+                    .call(GPGPU.global_single_size);
+            target_count++;
         }
+
+        handle_movement_k.call(arg_long(target_count));
     }
 
     /**

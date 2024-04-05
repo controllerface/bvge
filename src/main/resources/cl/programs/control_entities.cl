@@ -36,8 +36,10 @@ __kernel void handle_movement(__global float2 *armature_accel,
 {
     int current_control_set = get_global_id(0);
     int current_flags = flags[current_control_set];
-    int current_linear_mag = linear_mag[current_control_set];
-    int current_jump_mag = jump_mag[current_control_set];
+    int current_budget = tick_budgets[current_control_set];
+    float current_linear_mag = linear_mag[current_control_set];
+    float current_jump_mag = jump_mag[current_control_set];
+
     int current_index = indices[current_control_set];
     float2 accel = armature_accel[current_index];
 
@@ -54,17 +56,38 @@ __kernel void handle_movement(__global float2 *armature_accel,
         ? accel.x + current_linear_mag
         : accel.x;
 
-    accel.y = is_mv_u 
-        ? accel.y + current_linear_mag
-        : accel.y;
+    // accel.y = is_mv_u 
+    //     ? accel.y + current_linear_mag
+    //     : accel.y;
 
-    accel.y = is_mv_d 
-        ? accel.y - current_linear_mag
-        : accel.y;
+    // accel.y = is_mv_d 
+    //     ? accel.y - current_linear_mag
+    //     : accel.y;
 
     bool mv_jump = (current_flags & JUMP) !=0;
 
+    int tick_slice = current_budget > 0 
+        ? 1 
+        : 0;
+
+    // todo: logic should work so that if jump is released but ground hasn't been touched,
+    //  the budget is set to 0. The idea is to make it so a short hop still results in
+    //  the whole budget being taken even though it wasn't all used. then it is reset
+    //  when a ground touch occurs. Otherwise, two small jumps from mid-air would be possible
+    //  which should be avoided.
+
+    current_budget = mv_jump 
+        ? current_budget - tick_slice 
+        : current_budget;
+
+    float jump_amount = mv_jump && tick_slice == 1
+        ? current_jump_mag * current_budget
+        : 0;
+
     accel.y = mv_jump 
-        ? accel.y + current_jump_mag
+        ? accel.y + jump_amount
         : accel.y;
+
+    tick_budgets[current_control_set] = current_budget;
+    armature_accel[current_index] = accel;
 }
