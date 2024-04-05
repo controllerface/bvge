@@ -48,6 +48,7 @@ public class PhysicsSimulation extends GameSystem
     private final GPUProgram resolve_constraints = new ResolveConstraints();
 
     private final GPUKernel integrate_k;
+    private final GPUKernel integrate_armatures_k;
     private final GPUKernel scan_bounds_single_block_k;
     private final GPUKernel scan_bounds_multi_block_k;
     private final GPUKernel complete_bounds_multi_block_k;
@@ -181,6 +182,13 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(Integrate_k.Args.bounds_bank_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE))
             .buf_arg(Integrate_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
             .buf_arg(Integrate_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV));
+
+        long integrate_armatures_k_ptr = integrate.kernel_ptr(Kernel.integrate_armatures);
+        integrate_armatures_k = new IntegrateArmatures_k(GPGPU.command_queue_ptr, integrate_armatures_k_ptr)
+            .buf_arg(IntegrateArmatures_k.Args.armatures, GPGPU.core_memory.buffer(BufferType.ARMATURE))
+            .buf_arg(IntegrateArmatures_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
+            .buf_arg(IntegrateArmatures_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
+            .buf_arg(IntegrateArmatures_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG));
 
         long scan_bounds_single_block_k_ptr = scan_key_bank.kernel_ptr(Kernel.scan_bounds_single_block);
         scan_bounds_single_block_k = new ScanBoundsSingleBlock_k(GPGPU.command_queue_ptr, scan_bounds_single_block_k_ptr);
@@ -372,6 +380,10 @@ public class PhysicsSimulation extends GameSystem
         integrate_k
             .ptr_arg(Integrate_k.Args.args, arg_mem_ptr)
             .call(arg_long(GPGPU.core_memory.next_hull()));
+
+        integrate_armatures_k
+            .ptr_arg(IntegrateArmatures_k.Args.args, arg_mem_ptr)
+            .call(arg_long(GPGPU.core_memory.next_armature()));
 
         GPGPU.cl_release_buffer(arg_mem_ptr);
     }

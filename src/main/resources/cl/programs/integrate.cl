@@ -37,9 +37,7 @@ __kernel void integrate(__global float4 *hulls,
     float height = args[6];
     int x_subdivisions = (int) args[7];
     int y_subdivisions = (int) args[8];
-    float2 gravity;
-    gravity.x = args[9];
-    gravity.y = args[10];
+    float2 gravity = (float2)(args[9], args[10]);
     float damping = args[11];
     
     // get hull from array
@@ -48,7 +46,7 @@ __kernel void integrate(__global float4 *hulls,
     int4 hull_1_flags = hull_flags[current_hull];
     float4 armature = armatures[hull_1_flags.y];
     int4 armature_flag = armature_flags[hull_1_flags.y];
-    float2 acceleration = armature_accel[hull_1_flags.y];
+    float2 acc = armature_accel[hull_1_flags.y];
     float2 rotation = hull_rotations[current_hull];
     float4 bounding_box = bounds[current_hull];
     int4 bounds_index = bounds_index_data[current_hull];
@@ -67,17 +65,10 @@ __kernel void integrate(__global float4 *hulls,
     hull_flags[current_hull].x = x;
 
    	// get acc value and multiply by the timestep do get the displacement vector
-   	float2 acc;
-    acc.x = acceleration.x;
-    acc.y = acceleration.y;
-
-    if (!is_static)
-    {
-        acc.x += gravity.x;
-        acc.y += gravity.y;
-    }
+    acc = is_static 
+        ? acc
+        : acc + gravity;
    	acc *= (dt * dt);
-
 
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;
@@ -115,9 +106,6 @@ __kernel void integrate(__global float4 *hulls,
         // get pos/prv vectors
         float2 pos = point.xy;
         float2 prv = point.zw;
-
-        float2 vel = pos - prv;
-        float len = fast_length(vel);
 
         if (!is_static)
         {
@@ -171,50 +159,6 @@ __kernel void integrate(__global float4 *hulls,
 
         // store updated point in result buffer
         points[i] = point;
-    }
-
-    // only update the armature during the update of the root hull, otherwise movement would be magnified 
-    if (armature_flag.x == current_hull)
-    {
-        float2 pos = armature.xy;
-        float2 prv = armature.zw;
-
-        float2 vel = pos - prv;
-        float len = fast_length(vel);
-
-        bool slow = len < .005f;
-
-        if (no_bones)
-        {
-            armature = hull;
-        }
-
-        if (!is_static && !no_bones)
-        {
-            // subtract prv from pos to get the difference this frame
-            float2 other = slow ? pos : prv;
-            float2 diff = pos - other;
-            diff = acc + diff;
-
-            // add damping component
-            diff.x *= damping;
-            diff.y *= damping;
-            
-            // set the prv to current pos
-            prv.x = pos.x;
-            prv.y = pos.y;
-
-            // update pos
-            pos = pos + diff;
-
-            // finally, update the pos and prv in the object
-            armature.x = pos.x;
-            armature.y = pos.y;
-            armature.z = prv.x;
-            armature.w = prv.y;
-        }
-
-        armatures[hull_1_flags.y] = armature;
     }
 
     // calculate centroid
@@ -307,4 +251,65 @@ __kernel void integrate(__global float4 *hulls,
     hull_rotations[current_hull] = rotation;
     bounds_index_data[current_hull] = bounds_index;
     bounds_bank_data[current_hull] = bounds_bank;
+}
+
+__kernel void integrate_armatures(__global float4 *armatures,
+                                  __global int4 *armature_flags,
+                                  __global float2 *armature_accel,
+                                  __global int4 *hull_flags,
+                                  __global float *args)
+{
+    int current_armature = get_global_id(0);
+
+    float dt = args[0];
+    float2 gravity = (float2)(args[9], args[10]);
+    float damping = args[11];
+
+    float4 armature = armatures[current_armature];
+    int4 armature_flag = armature_flags[current_armature];
+    float2 acc = armature_accel[current_armature];
+    int4 root_hull_flags = hull_flags[armature_flag.x];
+
+    bool is_static = (root_hull_flags.x & IS_STATIC) !=0;
+    bool no_bones = (root_hull_flags.x & NO_BONES) !=0;
+
+    acc = is_static 
+        ? acc
+        : acc + gravity;
+   	acc *= (dt * dt);
+
+    float2 pos = armature.xy;
+    float2 prv = armature.zw;
+
+    float2 vel = pos - prv;
+    float len = fast_length(vel);
+
+    bool slow = len < .005f;
+
+    if (!is_static && !no_bones)
+    {
+        // subtract prv from pos to get the difference this frame
+        float2 other = slow ? pos : prv;
+        float2 diff = pos - other;
+        diff = acc + diff;
+
+        // add damping component
+        diff.x *= damping;
+        diff.y *= damping;
+        
+        // set the prv to current pos
+        prv.x = pos.x;
+        prv.y = pos.y;
+
+        // update pos
+        pos = pos + diff;
+
+        // finally, update the pos and prv in the object
+        armature.x = pos.x;
+        armature.y = pos.y;
+        armature.z = prv.x;
+        armature.w = prv.y;
+    }
+
+    armatures[current_armature] = armature;
 }

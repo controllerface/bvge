@@ -20,5 +20,6 @@ public class Integrate extends GPUProgram
         make_program();
 
         load_kernel(Kernel.integrate);
+        load_kernel(Kernel.integrate_armatures);
     }
 }

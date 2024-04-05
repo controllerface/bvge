@@ -6,13 +6,15 @@ import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.window.Window;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 
 public class KBMInput extends GameSystem
 {
-    private final boolean[] keyDown = new boolean[350];
+    private final boolean[] key_down = new boolean[350];
+
     double scrollX, scrollY;
     public KBMInput(ECS ecs)
     {
@@ -25,48 +27,47 @@ public class KBMInput extends GameSystem
         var controllables = ecs.getComponents(Component.ControlPoints);
         for (Map.Entry<String, GameComponent> entry : controllables.entrySet())
         {
-            String entity = entry.getKey();
             GameComponent component = entry.getValue();
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
             assert controlPoints != null : "Component was null";
             if (controlPoints.is_disabled()) continue;
 
-            controlPoints.set_moving_up(keyDown[GLFW_KEY_W]);
-            controlPoints.set_moving_Left(keyDown[GLFW_KEY_A]);
-            controlPoints.set_moving_down(keyDown[GLFW_KEY_S]);
-            controlPoints.set_moving_right(keyDown[GLFW_KEY_D]);
-            controlPoints.set_rot_right(keyDown[GLFW_KEY_E]);
-            controlPoints.set_rotating_Left(keyDown[GLFW_KEY_Q]);
-            controlPoints.set_space_bar(keyDown[GLFW_KEY_SPACE]);
+            controlPoints.set_moving_up(key_down[GLFW_KEY_W]);
+            controlPoints.set_moving_Left(key_down[GLFW_KEY_A]);
+            controlPoints.set_moving_down(key_down[GLFW_KEY_S]);
+            controlPoints.set_moving_right(key_down[GLFW_KEY_D]);
+            controlPoints.set_rot_right(key_down[GLFW_KEY_E]);
+            controlPoints.set_rotating_Left(key_down[GLFW_KEY_Q]);
+            controlPoints.set_space_bar(key_down[GLFW_KEY_SPACE]);
         }
 
         // test camera moving code
-        if (keyDown[GLFW_KEY_LEFT])
+        if (key_down[GLFW_KEY_LEFT])
         {
             Window.get().camera().position.x -= 5;
         }
 
-        if (keyDown[GLFW_KEY_RIGHT])
+        if (key_down[GLFW_KEY_RIGHT])
         {
             Window.get().camera().position.x += 5;
         }
 
-        if (keyDown[GLFW_KEY_UP])
+        if (key_down[GLFW_KEY_UP])
         {
             Window.get().camera().position.y += 5;
         }
 
-        if (keyDown[GLFW_KEY_DOWN])
+        if (key_down[GLFW_KEY_DOWN])
         {
             Window.get().camera().position.y -= 5;
         }
 
-        if (keyDown[GLFW_KEY_COMMA])
+        if (key_down[GLFW_KEY_COMMA])
         {
             Window.get().camera().add_zoom(.5f);
         }
 
-        if (keyDown[GLFW_KEY_PERIOD])
+        if (key_down[GLFW_KEY_PERIOD])
         {
             Window.get().camera().add_zoom(-.5f);
         }
@@ -82,11 +83,11 @@ public class KBMInput extends GameSystem
 
         if (action == GLFW_PRESS)
         {
-            keyDown[key] = true;
+            key_down[key] = true;
         }
-        else if (action == GLFW_RELEASE)
+        else if(action == GLFW_RELEASE)
         {
-            keyDown[key] = false;
+            key_down[key] = false;
         }
     }
 

@@ -44,6 +44,7 @@ public enum Kernel
     finalize_candidates,
     generate_keys,
     integrate,
+    integrate_armatures,
     locate_in_bounds,
     locate_out_of_bounds,
     move_armatures,

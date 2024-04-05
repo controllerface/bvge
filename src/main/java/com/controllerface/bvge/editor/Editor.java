@@ -5,7 +5,7 @@ public class Editor
     private static final int DEFAULT_PORT = 9000;
     private static EditorServer server;
 
-    public static final boolean ACTIVE = true;
+    public static final boolean ACTIVE = false;
 
     public static void init()
     {
