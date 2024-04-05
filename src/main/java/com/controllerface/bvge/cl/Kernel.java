@@ -79,4 +79,7 @@ public enum Kernel
     transfer_render_data,
     update_accel,
     write_mesh_details,
+
+    set_control_points,
+    handle_movement,
 }

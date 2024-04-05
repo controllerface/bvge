@@ -23,9 +23,9 @@ public class PhysicsSimulation extends GameSystem
     private static final int EDGE_STEPS = 8;
 
     // todo: gravity should not be a constant but calculated based on proximity next to planets and other large bodies
-    private static final float GRAVITY_MAGNITUDE = -9.8f * 4;
+    private static final float GRAVITY_MAGNITUDE = 9.8f * 4;
     private static final float GRAVITY_X = 0;
-    private static final float GRAVITY_Y = GRAVITY_MAGNITUDE * TARGET_FPS;
+    private static final float GRAVITY_Y = -GRAVITY_MAGNITUDE * TARGET_FPS;
 
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
@@ -36,6 +36,7 @@ public class PhysicsSimulation extends GameSystem
 
     private final Vector2f vector_buffer = new Vector2f();
 
+    private final GPUProgram control_entities = new ControlEntities();
     private final GPUProgram integrate = new Integrate();
     private final GPUProgram scan_key_bank = new ScanKeyBank();
     private final GPUProgram generate_keys = new GenerateKeys();
@@ -46,6 +47,9 @@ public class PhysicsSimulation extends GameSystem
     private final GPUProgram sat_collide = new SatCollide();
     private final GPUProgram animate_hulls = new AnimateHulls();
     private final GPUProgram resolve_constraints = new ResolveConstraints();
+
+    private final GPUKernel set_control_points_k;
+    private final GPUKernel handle_movement_k;
 
     private final GPUKernel integrate_k;
     private final GPUKernel integrate_armatures_k;
@@ -124,6 +128,13 @@ public class PhysicsSimulation extends GameSystem
     public final ResizableBuffer matches;
     public final ResizableBuffer matches_used;
 
+    public final ResizableBuffer control_point_flags;
+    public final ResizableBuffer control_point_indices;
+    public final ResizableBuffer control_point_tick_budgets;
+    public final ResizableBuffer control_point_linear_mag;
+    public final ResizableBuffer control_point_jump_mag;
+
+
     private long candidate_count = 0;
     private long reaction_count = 0;
     private long candidate_buffer_size = 0;
@@ -157,6 +168,13 @@ public class PhysicsSimulation extends GameSystem
         matches                 = new TransientBuffer(CLSize.cl_int, 500_000L);
         matches_used            = new TransientBuffer(CLSize.cl_int, 500_000L);
 
+        control_point_flags         = new PersistentBuffer(CLSize.cl_int, 1);
+        control_point_indices       = new PersistentBuffer(CLSize.cl_int, 1);
+        control_point_tick_budgets  = new PersistentBuffer(CLSize.cl_int, 1);
+        control_point_linear_mag    = new PersistentBuffer(CLSize.cl_float, 1);
+        control_point_jump_mag      = new PersistentBuffer(CLSize.cl_float, 1);
+
+        control_entities.init();
         integrate.init();
         scan_key_bank.init();
         generate_keys.init();
@@ -167,6 +185,23 @@ public class PhysicsSimulation extends GameSystem
         sat_collide.init();
         animate_hulls.init();
         resolve_constraints.init();
+
+        long set_control_points_k_ptr = control_entities.kernel_ptr(Kernel.set_control_points);
+        set_control_points_k = new SetControlPoints_k(GPGPU.command_queue_ptr, set_control_points_k_ptr)
+            .buf_arg(SetControlPoints_k.Args.flags, control_point_flags)
+            .buf_arg(SetControlPoints_k.Args.indices, control_point_indices)
+            .buf_arg(SetControlPoints_k.Args.tick_budgets, control_point_tick_budgets)
+            .buf_arg(SetControlPoints_k.Args.linear_mag, control_point_linear_mag)
+            .buf_arg(SetControlPoints_k.Args.jump_mag, control_point_jump_mag);
+
+        long handle_movements_k_ptr = control_entities.kernel_ptr(Kernel.handle_movement);
+        handle_movement_k = new HandleMovement_k(GPGPU.command_queue_ptr, handle_movements_k_ptr)
+            .buf_arg(HandleMovement_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
+            .buf_arg(HandleMovement_k.Args.flags, control_point_flags)
+            .buf_arg(HandleMovement_k.Args.indices, control_point_indices)
+            .buf_arg(HandleMovement_k.Args.tick_budgets, control_point_tick_budgets)
+            .buf_arg(HandleMovement_k.Args.linear_mag, control_point_linear_mag)
+            .buf_arg(HandleMovement_k.Args.jump_mag, control_point_jump_mag);
 
         long integrate_k_ptr = integrate.kernel_ptr(Kernel.integrate);
         integrate_k = new Integrate_k(GPGPU.command_queue_ptr, integrate_k_ptr)
@@ -676,6 +711,17 @@ public class PhysicsSimulation extends GameSystem
     private void update_controllable_entities()
     {
         var components = ecs.getComponents(Component.ControlPoints);
+
+        control_point_flags.ensure_capacity(components.size());
+        control_point_indices.ensure_capacity(components.size());
+        control_point_tick_budgets.ensure_capacity(components.size());
+        control_point_linear_mag.ensure_capacity(components.size());
+        control_point_jump_mag.ensure_capacity(components.size());
+
+        // todo: ensure buffer size for kernel
+
+        // todo: instead of sending computed force from CPU, send just control points and calculate in GPU kernel
+
         for (Map.Entry<String, GameComponent> entry : components.entrySet())
         {
             String entity = entry.getKey();
@@ -715,7 +761,7 @@ public class PhysicsSimulation extends GameSystem
                 GPGPU.core_memory.update_accel(armature.index(), vector_buffer.x, vector_buffer.y);
             }
 
-            // todo: implement rotation here
+            // todo: re-implement rotation here if needed
         }
     }
 
