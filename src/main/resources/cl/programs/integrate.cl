@@ -13,8 +13,6 @@ Some meta-data about the hulls that are updated is stored within
 them before this kernel completes. 
  */
 __kernel void integrate(__global float4 *hulls,
-                        __global float4 *armatures,
-                        __global int4 *armature_flags,
                         __global int4 *element_tables,
                         __global float2 *armature_accel,
                         __global float2 *hull_rotations,
@@ -44,8 +42,6 @@ __kernel void integrate(__global float4 *hulls,
     float4 hull = hulls[current_hull];
     int4 element_table = element_tables[current_hull];
     int4 hull_1_flags = hull_flags[current_hull];
-    float4 armature = armatures[hull_1_flags.y];
-    int4 armature_flag = armature_flags[hull_1_flags.y];
     float2 acc = armature_accel[hull_1_flags.y];
     float2 rotation = hull_rotations[current_hull];
     float4 bounding_box = bounds[current_hull];
@@ -114,21 +110,17 @@ __kernel void integrate(__global float4 *hulls,
             diff = acc + i_acc + diff;
 
             // add damping component
-            diff.x *= damping;
-            diff.y *= damping;
+            diff *= damping;
             
             // set the prv to current pos
-            prv.x = pos.x;
-            prv.y = pos.y;
+            prv = pos;
 
             // update pos
             pos = pos + diff;
 
             // finally, update the pos and prv in the object
-            point.x = pos.x;
-            point.y = pos.y;
-            point.z = prv.x;
-            point.w = prv.y;
+            point.xy = pos;
+            point.zw = prv;
         }
 
         // update center sum
@@ -283,32 +275,18 @@ __kernel void integrate_armatures(__global float4 *armatures,
 
     float2 vel = pos - prv;
     float len = fast_length(vel);
-
     bool slow = len < .005f;
 
     if (!is_static && !no_bones)
     {
-        // subtract prv from pos to get the difference this frame
         float2 other = slow ? pos : prv;
         float2 diff = pos - other;
         diff = acc + diff;
-
-        // add damping component
-        diff.x *= damping;
-        diff.y *= damping;
-        
-        // set the prv to current pos
-        prv.x = pos.x;
-        prv.y = pos.y;
-
-        // update pos
+        diff *= damping;
+        prv = pos;
         pos = pos + diff;
-
-        // finally, update the pos and prv in the object
-        armature.x = pos.x;
-        armature.y = pos.y;
-        armature.z = prv.x;
-        armature.w = prv.y;
+        armature.xy = pos;
+        armature.zw = prv;
     }
 
     armatures[current_armature] = armature;

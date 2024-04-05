@@ -7,8 +7,6 @@ public class Integrate_k extends GPUKernel
     public enum Args
     {
         hulls,
-        armatures,
-        armature_flags,
         element_tables,
         armature_accel,
         hull_rotations,
