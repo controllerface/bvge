@@ -1,8 +1,8 @@
 package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.GPGPU;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.window.Window;
-
 
 public class Main
 {
@@ -15,8 +15,9 @@ public class Main
         window.init();
 
         GPGPU.init();
+        Editor.init();
 
-        window.initGameMode();
+        window.init_game_mode();
         try
         {
             window.run();
@@ -27,6 +28,7 @@ public class Main
         }
         finally
         {
+            Editor.destroy();
             GPGPU.destroy();
         }
     }

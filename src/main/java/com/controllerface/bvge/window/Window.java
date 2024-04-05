@@ -3,6 +3,7 @@ package com.controllerface.bvge.window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.KBMInput;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.GameMode;
 import com.controllerface.bvge.game.TestGame;
 import org.joml.Vector2f;
@@ -59,7 +60,6 @@ public class Window
         if (Window.INSTANCE == null)
         {
             Window.INSTANCE = new Window();
-            //Window.INSTANCE.init();
         }
         return Window.INSTANCE;
     }
@@ -81,7 +81,7 @@ public class Window
         }
     }
 
-    private void windowUpkeep()
+    private void window_upkeep()
     {
         glClearColor(r, g, b, a);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -149,7 +149,7 @@ public class Window
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-        glViewport(0,0,this.width, this.height);
+        glViewport(0, 0, this.width, this.height);
 
         // mouse cursor
         var cursor_stream = Window.class.getResourceAsStream("/img/reticule.png");
@@ -161,7 +161,7 @@ public class Window
         }
         catch (IOException e)
         {
-            assert false: "Couldn't load mouse icon";
+            assert false : "Couldn't load mouse icon";
             throw new RuntimeException(e);
         }
 
@@ -199,7 +199,7 @@ public class Window
         int hotspot_y = height / 2;
 
         // create custom cursor and store its ID
-        long cursor_id = org.lwjgl.glfw.GLFW.glfwCreateCursor(cursor_image, hotspot_x , hotspot_y);
+        long cursor_id = org.lwjgl.glfw.GLFW.glfwCreateCursor(cursor_image, hotspot_x, hotspot_y);
 
         // set current cursor
         glfwSetCursor(glfwWindow, cursor_id);
@@ -213,7 +213,7 @@ public class Window
         System.out.println("-----------------------------------\n");
     }
 
-    private void initInput(KBMInput inputSystem)
+    private void init_input(KBMInput inputSystem)
     {
         try (var cursor_cb = glfwSetCursorPosCallback(glfwWindow, inputSystem::mousePosCallback);
              var button_cb = glfwSetMouseButtonCallback(glfwWindow, inputSystem::mouseButtonCallback);
@@ -234,17 +234,19 @@ public class Window
      */
     private class BlankSystem extends GameSystem
     {
-        public BlankSystem(ECS ecs) {
+        public BlankSystem(ECS ecs)
+        {
             super(ecs);
         }
 
         @Override
-        public void tick(float dt) {
-            windowUpkeep();
+        public void tick(float dt)
+        {
+            window_upkeep();
         }
     }
 
-    public void initGameMode()
+    public void init_game_mode()
     {
         var blanking_system = new BlankSystem(null);
         currentGameMode = new TestGame(ecs, blanking_system);
@@ -258,7 +260,7 @@ public class Window
         var inputSystem = new KBMInput(ecs);
         ecs.registerSystem(inputSystem);
 
-        initInput(inputSystem);
+        init_input(inputSystem);
     }
 
     public Camera camera()
@@ -284,17 +286,24 @@ public class Window
                 glfwSwapBuffers(glfwWindow);
             }
 
+            if (Editor.ACTIVE)
+            {
+                Editor.queue_event("dt", String.valueOf(dt));
+            }
+
             currentTime = (float) glfwGetTime();
             dt = currentTime - lastTime;
             lastTime = currentTime;
         }
     }
 
-    public int getWidth() {
+    public int width()
+    {
         return width;
     }
 
-    public int getHeight() {
+    public int height()
+    {
         return height;
     }
 }

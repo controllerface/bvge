@@ -62,7 +62,7 @@ public abstract class ResizableBuffer
 
     public long debug_data()
     {
-        System.out.println("buffer total: KB " + this.byte_capacity / 1024f);
+        //System.out.println("buffer total: KB " + this.byte_capacity / 1024f);
         return this.byte_capacity;
     }
 }

@@ -7,25 +7,26 @@ ext {
     lwjglVersion = '3.3.3'
     jomlVersion = "1.10.5"
     lwjglNatives = "natives-windows"
-    //imguiVersion = '1.86.10'
 }
 
 group 'com.controllerface'
 version '1.0-SNAPSHOT'
 
-sourceCompatibility = 1.17
+compileJava {
+    options.compilerArgs << '--enable-preview'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(22)
+    }
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'com.google.code.gson:gson:2.10.1'
-
-    //implementation "io.github.spair:imgui-java-lwjgl3:$imguiVersion"
-    //implementation "io.github.spair:imgui-java-binding:$imguiVersion"
-    //implementation "io.github.spair:imgui-java-natives-windows-ft:$imguiVersion"
-
     implementation "org.lwjgl:lwjgl"
     implementation "org.lwjgl:lwjgl-assimp"
     implementation "org.lwjgl:lwjgl-glfw"

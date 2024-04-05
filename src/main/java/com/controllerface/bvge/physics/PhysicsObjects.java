@@ -209,7 +209,7 @@ public class PhysicsObjects
     //  probably break/crash.
     public static int wrap_model(int model_index, float x, float y, float size, int flags, float mass, float friction)
     {
-        // we need to know the next armature ID before we create it so it can be used for hulls
+        // we need to know the next armature ID before we create it, so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
         int next_armature_id = GPGPU.core_memory.next_armature();
 
@@ -437,7 +437,7 @@ public class PhysicsObjects
 
             if (next_hull != hull_id)
             {
-                throw new RuntimeException("hull/bone alignment error: h=" + hull_id + " b=" + next_hull);
+                throw new RuntimeException(STR."hull/bone alignment error: h=\{hull_id} b=\{next_hull}");
             }
             if (mesh_index == model.root_index())
             {
@@ -455,7 +455,6 @@ public class PhysicsObjects
 
         int[] hull_table = CLUtils.arg_int4(first_hull, last_hull, first_armature_bone, last_armature_bone);
         int[] armature_flags = CLUtils.arg_int4(root_hull_id, model_index, 0, model.root_transform_index());
-        System.out.printf("root: x=%f y=%f\n", root_x, root_y);
         return GPGPU.core_memory.new_armature(x, y, hull_table, armature_flags, mass, 0, 0.0d);
     }
 
@@ -517,12 +516,11 @@ public class PhysicsObjects
         return index;
     }
 
-    public static Vertex[] swap(Vertex[] points, int index0, int index1)
+    public static void swap(Vertex[] points, int index0, int index1)
     {
         Vertex temp = points[index0];
         points[index0] = points[index1];
         points[index1] = temp;
-        return points;
     }
 
     public static Vertex[] generate_convex_hull(Mesh mesh, Vertex[] source)

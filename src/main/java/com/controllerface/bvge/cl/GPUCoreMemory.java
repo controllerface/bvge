@@ -1158,13 +1158,13 @@ public class GPUCoreMemory
 
     public void destroy()
     {
-        System.out.println("--- shutting down --- ");
-
-        System.out.println("hulls      : " + hull_index);
-        System.out.println("points     : " + point_index);
-        System.out.println("edges      : " + edge_index);
-        System.out.println("bones      : " + bone_index);
-        System.out.println("armatures  : " + armature_index);
+//        System.out.println("--- shutting down --- ");
+//
+//        System.out.println("hulls      : " + hull_index);
+//        System.out.println("points     : " + point_index);
+//        System.out.println("edges      : " + edge_index);
+//        System.out.println("bones      : " + bone_index);
+//        System.out.println("armatures  : " + armature_index);
 
         gpu_crud.destroy();
         scan_deletes.destroy();
@@ -1285,7 +1285,7 @@ public class GPUCoreMemory
         total += armature_anim_elapsed_buffer.debug_data();
         total += armature_hull_table_buffer.debug_data();
 
-        System.out.println("---------------------------");
-        System.out.println("Total: MB " + ((float) total / 1024f / 1024f));
+        //System.out.println("---------------------------");
+        System.out.println("Core Memory Usage: MB " + ((float) total / 1024f / 1024f));
     }
 }

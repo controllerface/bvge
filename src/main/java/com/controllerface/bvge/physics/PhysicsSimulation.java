@@ -962,8 +962,31 @@ public class PhysicsSimulation extends GameSystem
         matches.release();
         matches_used.release();
 
+        debug();
+
         GPGPU.cl_release_buffer(atomic_counter_ptr);
         GPGPU.cl_release_buffer(counts_data_ptr);
         GPGPU.cl_release_buffer(offsets_data_ptr);
+    }
+
+    private void debug()
+    {
+        long total = 0;
+        total += point_reaction_counts.debug_data();
+        total += point_reaction_offsets.debug_data();
+        total += reactions_in.debug_data();
+        total += reactions_out.debug_data();
+        total += reaction_index.debug_data();
+        total += key_map.debug_data();
+        total += key_bank.debug_data();
+        total += in_bounds.debug_data();
+        total += candidates.debug_data();
+        total += candidate_counts.debug_data();
+        total += candidate_offsets.debug_data();
+        total += matches.debug_data();
+        total += matches_used.debug_data();
+
+        //System.out.println("---------------------------");
+        System.out.println("Physics Memory Usage: MB " + ((float) total / 1024f / 1024f));
     }
 }
