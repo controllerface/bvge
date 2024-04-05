@@ -42,9 +42,8 @@ public class EditorStream
                 while (!Thread.currentThread().isInterrupted())
                 {
                     var next_event = event_queue.take();
-                    response_stream.write((STR."event: \{next_event.name}\r\n").getBytes(StandardCharsets.UTF_8));
-                    response_stream.write((STR."data: \{next_event.value}\r\n").getBytes(StandardCharsets.UTF_8));
-                    response_stream.write("\r\n".getBytes(StandardCharsets.UTF_8));
+                    var message = STR."event: \{ next_event.name }\r\ndata: \{ next_event.value }\r\n\r\n";
+                    response_stream.write(message.getBytes(StandardCharsets.UTF_8));
                 }
             }
             catch (Exception _)
