@@ -282,7 +282,7 @@ __kernel void integrate_armatures(__global float4 *armatures,
         float2 other = slow ? pos : prv;
         float2 diff = pos - other;
         diff = acc + diff;
-        diff *= damping;
+        diff.x *= damping;
         prv = pos;
         pos = pos + diff;
         armature.xy = pos;

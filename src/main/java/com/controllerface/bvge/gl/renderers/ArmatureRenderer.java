@@ -80,7 +80,7 @@ public class ArmatureRenderer extends GameSystem
 
             prepare_armatures_k
                 .share_mem(vertex_vbo_ptr)
-                .set_arg(PreparePoints_k.Args.offset, offset)
+                .set_arg(PrepareArmatures_k.Args.offset, offset)
                 .call(arg_long(count));
 
             glDrawArrays(GL_POINTS, 0, count);

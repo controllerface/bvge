@@ -288,6 +288,8 @@ __kernel void move_armatures(__global float4 *hulls,
 
     float2 diff = (float2)(0.0f);
     bool ag = false;
+    float2 last_center = (float2)(0.0f);
+    float had_bones = false;
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
@@ -296,17 +298,18 @@ __kernel void move_armatures(__global float4 *hulls,
         int4 element_table = element_tables[n];
         bool no_bones = (hull_flag.x & NO_BONES) !=0;
 
-        if (!no_bones)
-        {
-            float2 center_a = calculate_centroid(points, element_table);
-            float2 diffa = center_a - hull.xy;
-            diff += diffa;
-            bool has_ag = any_ag(anti_gravity, element_table);
-            ag = has_ag ? true : ag;
-        }
+        if (!no_bones) had_bones = true;
+        
+        float2 center_a = calculate_centroid(points, element_table);
+        last_center = center_a;
+        float2 diffa = center_a - hull.xy;
+        diff += diffa;
+        bool has_ag = any_ag(anti_gravity, element_table);
+        ag = has_ag ? true : ag;
     }
 
-    armature.xy += diff;
+    if (had_bones) armature.xy += diff;
+    else armature.xy = last_center;
     armature.w = ag ? armature.y : armature.w;
     armatures[gid] = armature;
 }

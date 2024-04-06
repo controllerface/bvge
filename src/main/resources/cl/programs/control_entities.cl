@@ -85,7 +85,7 @@ __kernel void handle_movement(__global float2 *armature_accel,
         : 0;
 
     accel.y = mv_jump 
-        ? accel.y + jump_amount
+        ? jump_amount
         : accel.y;
 
     tick_budgets[current_control_set] = current_budget;

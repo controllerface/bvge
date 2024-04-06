@@ -9,7 +9,6 @@ public class PrepareArmatures extends GPUProgram
     @Override
     public void init()
     {
-        src.add(const_hull_flags);
         src.add(CLUtils.read_src("programs/prepare_armatures.cl"));
 
         make_program();

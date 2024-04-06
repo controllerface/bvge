@@ -761,7 +761,7 @@ public class PhysicsSimulation extends GameSystem
             if (controlPoints.is_rotating_left())
             {
                 // todo: remove this and implement ground touch logic
-                ticks = 5;
+                ticks = 25;
             }
 
             set_control_points_k
@@ -769,7 +769,7 @@ public class PhysicsSimulation extends GameSystem
                     .set_arg(SetControlPoints_k.Args.new_flags, flags)
                     .set_arg(SetControlPoints_k.Args.new_index, armature.index())
                     .set_arg(SetControlPoints_k.Args.new_tick_budget, ticks)
-                    .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 100)
+                    .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 500)
                     .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
                     .call(GPGPU.global_single_size);
             target_count++;
@@ -916,9 +916,9 @@ public class PhysicsSimulation extends GameSystem
         // enforcing constraints on the velocities of the affected points.
         apply_reactions();
 
-        // Once all points have been relocated, all hulls are in their required positions for this frame.
-        // Movements applied to hulls are now accumulated and applied to their parent armatures.
-        move_armatures();
+//        // Once all points have been relocated, all hulls are in their required positions for this frame.
+//        // Movements applied to hulls are now accumulated and applied to their parent armatures.
+//        move_armatures();
     }
 
     @Override
@@ -967,6 +967,10 @@ public class PhysicsSimulation extends GameSystem
                     // perform one tick of the simulation
                     this.tick_simulation();
 
+                    // Once all points have been relocated, all hulls are in their required positions for this frame.
+                    // Movements applied to hulls are now accumulated and applied to their parent armatures.
+                    move_armatures();
+
                     // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
                     // objects that have animation will have their hulls moved into position for the current tick. It
                     // may seem odd to process animations as part of physics and not rendering, however this is required
@@ -982,6 +986,8 @@ public class PhysicsSimulation extends GameSystem
                     // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
                     // within the simulation.
                     resolve_constraints(1);
+
+
 
                 }
                 else
