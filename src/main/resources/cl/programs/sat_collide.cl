@@ -253,11 +253,30 @@ __kernel void apply_reactions(__global float8 *reactions,
     point_offsets[current_point] = 0;
 }
 
+inline bool any_ag(__global float *anti_gravity,
+                   int4 hull_table)
+{
+    bool result = false;
+
+    int start = hull_table.x;
+    int end   = hull_table.y;
+	int vert_count = end - start + 1;
+
+    for (int i = 0; i < vert_count; i++)
+    {
+        int n = start + i;
+        float v = anti_gravity[n];
+        result = v > 0.0f ? true : result;
+    }
+
+    return result;
+}
 __kernel void move_armatures(__global float4 *hulls,
                              __global float4 *armatures,
                              __global int4 *hull_tables,
                              __global int4 *element_tables,
                              __global int4 *hull_flags,
+                             __global float *anti_gravity,
                              __global float4 *points)
 {
     int gid = get_global_id(0);
@@ -268,6 +287,7 @@ __kernel void move_armatures(__global float4 *hulls,
     int hull_count = end - start + 1;
 
     float2 diff = (float2)(0.0f);
+    bool ag = false;
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
@@ -281,9 +301,12 @@ __kernel void move_armatures(__global float4 *hulls,
             float2 center_a = calculate_centroid(points, element_table);
             float2 diffa = center_a - hull.xy;
             diff += diffa;
+            bool has_ag = any_ag(anti_gravity, element_table);
+            ag = has_ag ? true : ag;
         }
     }
 
     armature.xy += diff;
+    armature.w = ag ? armature.y : armature.w;
     armatures[gid] = armature;
 }

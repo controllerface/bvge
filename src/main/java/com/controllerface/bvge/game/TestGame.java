@@ -34,11 +34,11 @@ public class TestGame extends GameMode
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
             RenderType.HULLS,
-            RenderType.POINTS,
+            //RenderType.POINTS,
             //RenderType.ARMATURES,
             //RenderType.BOUNDS,
-            RenderType.GRID);//,
-            //RenderType.MODELS);
+            RenderType.GRID,
+            RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
 //        EnumSet.allOf(RenderType.class);
@@ -258,7 +258,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 300, 100);
+        genTestFigure(1f, 300, 300);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genTestFigureNPC(1f, 200, 100);
@@ -266,7 +266,7 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(150, 6f, 5f, 0, 100);
-        //genSquares(20,  6f, 5f, 0, 200);
+        genSquares(20,  6f, 5f, 0, 200);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);

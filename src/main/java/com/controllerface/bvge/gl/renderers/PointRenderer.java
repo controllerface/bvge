@@ -68,6 +68,7 @@ public class PointRenderer extends GameSystem
         prepare_points_k = new PreparePoints_k(GPGPU.command_queue_ptr, ptr)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
             .ptr_arg(PreparePoints_k.Args.color_vbo, color_vbo_ptr)
+            .buf_arg(PreparePoints_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV))
             .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT));
     }
 
@@ -79,7 +80,7 @@ public class PointRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glPointSize(2);
+        glPointSize(5);
 
 
         int offset = 0;

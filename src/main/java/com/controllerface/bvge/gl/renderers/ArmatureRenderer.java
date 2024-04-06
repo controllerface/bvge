@@ -1,8 +1,9 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
+import com.controllerface.bvge.cl.kernels.PrepareArmatures_k;
 import com.controllerface.bvge.cl.kernels.PreparePoints_k;
-import com.controllerface.bvge.cl.programs.PreparePoints;
+import com.controllerface.bvge.cl.programs.PrepareArmatures;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.AbstractShader;
@@ -27,13 +28,13 @@ public class ArmatureRenderer extends GameSystem
     private static final int POSITION_ATTRIBUTE = 0;
 
     private final AbstractShader shader;
-    private final GPUProgram prepare_points = new PreparePoints();
+    private final GPUProgram prepare_armatures = new PrepareArmatures();
 
     private int vao;
     private int vertex_vbo;
     private long vertex_vbo_ptr;
 
-    private GPUKernel prepare_points_k;
+    private GPUKernel prepare_armatures_k;
 
     public ArmatureRenderer(ECS ecs)
     {
@@ -54,12 +55,12 @@ public class ArmatureRenderer extends GameSystem
     {
         vertex_vbo_ptr = GPGPU.share_memory(vertex_vbo);
 
-        prepare_points.init();
+        prepare_armatures.init();
 
-        long ptr = prepare_points.kernel_ptr(Kernel.prepare_points);
-        prepare_points_k = new PreparePoints_k(GPGPU.command_queue_ptr, ptr)
-            .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
-            .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.buffer(BufferType.ARMATURE));
+        long ptr = prepare_armatures.kernel_ptr(Kernel.prepare_armatures);
+        prepare_armatures_k = new PrepareArmatures_k(GPGPU.command_queue_ptr, ptr)
+            .ptr_arg(PrepareArmatures_k.Args.vertex_vbo, vertex_vbo_ptr)
+            .buf_arg(PrepareArmatures_k.Args.points, GPGPU.core_memory.buffer(BufferType.ARMATURE));
     }
 
     @Override
@@ -77,7 +78,7 @@ public class ArmatureRenderer extends GameSystem
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
 
-            prepare_points_k
+            prepare_armatures_k
                 .share_mem(vertex_vbo_ptr)
                 .set_arg(PreparePoints_k.Args.offset, offset)
                 .call(arg_long(count));
@@ -96,7 +97,7 @@ public class ArmatureRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vertex_vbo);
-        prepare_points.destroy();
+        prepare_armatures.destroy();
         GPGPU.cl_release_buffer(vertex_vbo_ptr);
     }
 }

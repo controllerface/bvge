@@ -31,7 +31,7 @@ public class PhysicsSimulation extends GameSystem
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
     //  or make damping interact with the gravity vector in some way.
-    private static final float MOTION_DAMPING = .995f;
+    private static final float MOTION_DAMPING = .990f;
 
     private final UniformGrid uniform_grid;
 
@@ -342,6 +342,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(MoveArmatures_k.Args.hull_tables, GPGPU.core_memory.buffer(BufferType.ARMATURE_HULL_TABLE))
             .buf_arg(MoveArmatures_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
             .buf_arg(MoveArmatures_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(MoveArmatures_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV))
             .buf_arg(MoveArmatures_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT));
 
         long animate_armatures_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_armatures);
@@ -760,7 +761,7 @@ public class PhysicsSimulation extends GameSystem
             if (controlPoints.is_rotating_left())
             {
                 // todo: remove this and implement ground touch logic
-                ticks = 30;
+                ticks = 5;
             }
 
             set_control_points_k
@@ -943,7 +944,7 @@ public class PhysicsSimulation extends GameSystem
 
         // Before the GPU begins the simulation cycle, player input is handled and the memory structures
         // in the GPU are updated with the proper values.
-        update_controllable_entities();
+        //update_controllable_entities();
 
         this.time_accumulator += dt;
         int sub_ticks = 0;
