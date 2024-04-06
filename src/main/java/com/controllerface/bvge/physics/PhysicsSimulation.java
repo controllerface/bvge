@@ -961,6 +961,8 @@ public class PhysicsSimulation extends GameSystem
                 {
                     this.time_accumulator -= FIXED_TIME_STEP;
 
+                    update_controllable_entities();
+
                     // perform one tick of the simulation
                     this.tick_simulation();
 
