@@ -8,6 +8,7 @@ public class PreparePoints_k extends GPUKernel
     {
         points,
         vertex_vbo,
+        color_vbo,
         offset;
     }
 

@@ -13,6 +13,7 @@ import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
@@ -23,15 +24,19 @@ import static org.lwjgl.opengl.GL45C.*;
  */
 public class PointRenderer extends GameSystem
 {
-    private static final int BATCH_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
+    private static final int POSITION_BATCH_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
+    private static final int COLOR_BATCH_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
     private static final int POSITION_ATTRIBUTE = 0;
+    private static final int COLOR_ATTRIBUTE = 1;
 
     private final AbstractShader shader;
     private final GPUProgram prepare_points = new PreparePoints();
 
     private int vao;
     private int vertex_vbo;
+    private int color_vbo;
     private long vertex_vbo_ptr;
+    private long color_vbo_ptr;
 
     private GPUKernel prepare_points_k;
 
@@ -46,19 +51,23 @@ public class PointRenderer extends GameSystem
     private void init_GL()
     {
         vao = glCreateVertexArrays();
-        vertex_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        vertex_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, POSITION_BATCH_SIZE);
+        color_vbo = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BATCH_SIZE);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao, COLOR_ATTRIBUTE);
     }
 
     private void init_CL()
     {
         vertex_vbo_ptr = GPGPU.share_memory(vertex_vbo);
+        color_vbo_ptr = GPGPU.share_memory(color_vbo);
 
         prepare_points.init();
 
         long ptr = prepare_points.kernel_ptr(Kernel.prepare_points);
         prepare_points_k = new PreparePoints_k(GPGPU.command_queue_ptr, ptr)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
+            .ptr_arg(PreparePoints_k.Args.color_vbo, color_vbo_ptr)
             .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT));
     }
 
@@ -80,6 +89,7 @@ public class PointRenderer extends GameSystem
 
             prepare_points_k
                 .share_mem(vertex_vbo_ptr)
+                .share_mem(color_vbo_ptr)
                 .set_arg(PreparePoints_k.Args.offset, offset)
                 .call(arg_long(count));
 
