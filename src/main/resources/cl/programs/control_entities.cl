@@ -81,7 +81,7 @@ __kernel void handle_movement(__global float2 *armature_accel,
         : current_budget;
 
     float jump_amount = mv_jump && tick_slice == 1
-        ? current_jump_mag * current_budget
+        ? current_jump_mag
         : 0;
 
     accel.y = mv_jump 

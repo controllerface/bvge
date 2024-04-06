@@ -760,7 +760,7 @@ public class PhysicsSimulation extends GameSystem
             if (controlPoints.is_rotating_left())
             {
                 // todo: remove this and implement ground touch logic
-                ticks = 5;
+                ticks = 30;
             }
 
             set_control_points_k
