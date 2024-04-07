@@ -20,21 +20,53 @@ public class Constants
         public static final int VECTOR_INT_4D_SIZE = VECTOR_4D_LENGTH * Integer.BYTES;
     }
 
+    public static int EMPTY_FLAGS = 0;
+
     public enum HullFlags
     {
-        EMPTY         (0b0000_0000_0000_0000_0000_0000_0000_0000),
         IS_STATIC     (0b0000_0000_0000_0000_0000_0000_0000_0001),
         IS_CIRCLE     (0b0000_0000_0000_0000_0000_0000_0000_0010),
         IS_POLYGON    (0b0000_0000_0000_0000_0000_0000_0000_0100),
         NO_BONES      (0b0000_0000_0000_0000_0000_0000_0000_1000),
         OUT_OF_BOUNDS (0b0000_0000_0000_0000_0000_0000_0001_0000),
         NON_COLLIDING (0b0000_0000_0000_0000_0000_0000_0010_0000),
+        IS_FOOT       (0b0000_0000_0000_0000_0000_0000_0100_0000),
 
         ;
 
         public final int bits;
 
         HullFlags(int bits)
+        {
+            this.bits = bits;
+        }
+    }
+
+    public enum EdgeFlags
+    {
+        IS_INTERIOR     (0b0000_0000_0000_0000_0000_0000_0000_0001),
+
+        ;
+
+        public final int bits;
+
+        EdgeFlags(int bits)
+        {
+            this.bits = bits;
+        }
+    }
+
+    public enum PointFlags
+    {
+        IS_INTERIOR     (0b0000_0000_0000_0000_0000_0000_0000_0001),
+        HIT_FLOOR       (0b0000_0000_0000_0000_0000_0000_0000_0010),
+        HIT_WALL        (0b0000_0000_0000_0000_0000_0000_0000_0100),
+
+        ;
+
+        public final int bits;
+
+        PointFlags(int bits)
         {
             this.bits = bits;
         }

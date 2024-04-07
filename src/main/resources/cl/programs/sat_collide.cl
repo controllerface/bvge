@@ -242,7 +242,7 @@ __kernel void apply_reactions(__global float8 *reactions,
     float2 heading = reaction.s23;
     float ag = calculate_anti_gravity(g, heading);
 
-    flags = ag > .75 
+    flags = ag > 0.0f 
         ? flags | HIT_FLOOR
         : flags;
 
@@ -287,15 +287,17 @@ inline int consume_point_flags(__global int *point_flags,
 }
 __kernel void move_armatures(__global float4 *hulls,
                              __global float4 *armatures,
+                             __global int4 *armature_flags,
                              __global int4 *hull_tables,
                              __global int4 *element_tables,
                              __global int4 *hull_flags,
                              __global int *point_flags,
                              __global float4 *points)
 {
-    int gid = get_global_id(0);
-    float4 armature = armatures[gid];
-    int4 hull_table = hull_tables[gid];
+    int current_armature = get_global_id(0);
+    float4 armature = armatures[current_armature];
+    int4 flags = hull_tables[current_armature];
+    int4 hull_table = hull_tables[current_armature];
     int start = hull_table.x;
     int end = hull_table.y;
     int hull_count = end - start + 1;
@@ -311,14 +313,16 @@ __kernel void move_armatures(__global float4 *hulls,
         int4 hull_flag = hull_flags[n];
         int4 element_table = element_tables[n];
         bool no_bones = (hull_flag.x & NO_BONES) !=0;
+        bool is_foot = (hull_flag.x & IS_FOOT) !=0;
 
         if (!no_bones) had_bones = true;
 
-        float2 center_a = calculate_centroid(points, element_table);
-        last_center = center_a;
-        float2 diffa = center_a - hull.xy;
+        last_center = calculate_centroid(points, element_table);
+        float2 diffa = last_center - hull.xy;
         diff += diffa;
-        all_flags |= consume_point_flags(point_flags, element_table);
+        all_flags = is_foot 
+            ? all_flags | consume_point_flags(point_flags, element_table)
+            : all_flags;
     }
 
     bool hit_floor = (all_flags & HIT_FLOOR) !=0;
@@ -331,5 +335,8 @@ __kernel void move_armatures(__global float4 *hulls,
         ? armature.y 
         : armature.w;
 
-    armatures[gid] = armature;
+    // flags.z = hit_floor 
+    //     ? flags.z | 
+
+    armatures[current_armature] = armature;
 }

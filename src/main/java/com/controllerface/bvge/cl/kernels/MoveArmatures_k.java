@@ -8,6 +8,7 @@ public class MoveArmatures_k extends GPUKernel
     {
         hulls,
         armatures,
+        armature_flags,
         hull_tables,
         element_tables,
         hull_flags,

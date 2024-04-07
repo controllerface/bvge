@@ -24,7 +24,7 @@ inline DropCounts calculate_drop_counts(int armature_id,
     drop_counts.bone_bind_count = 0;
 
     int4 armature_flag = armature_flags[armature_id];
-    bool deleted = (armature_flag.z & OUT_OF_BOUNDS) !=0;
+    bool deleted = (armature_flag.z & DELETED) !=0;
             
     if (deleted)
     {
@@ -78,7 +78,7 @@ __kernel void locate_out_of_bounds(__global int4 *hull_tables,
     {
         int4 armature_flag = armature_flags[gid];
         int z = armature_flag.z;
-        z = (z | OUT_OF_BOUNDS);
+        z = (z | DELETED);
         armature_flags[gid].z = z;
     }
 }
@@ -405,7 +405,7 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
     barrier(CLK_GLOBAL_MEM_FENCE);
 
     // any armature that is being deleted can be ignored
-    bool is_out = (armature_flag.z & OUT_OF_BOUNDS) !=0;
+    bool is_out = (armature_flag.z & DELETED) !=0;
     if (is_out || drop.armature_count == 0) 
     {
         return;

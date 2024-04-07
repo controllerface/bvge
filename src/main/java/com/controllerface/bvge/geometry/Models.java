@@ -339,7 +339,7 @@ public class Models
 
         assert mesh_id == next_mesh : "Mesh alignment error";
 
-        var new_mesh = new Mesh(mesh_id, mesh_vertices, mesh_faces, mesh_bones, mesh_node, hull_table);
+        var new_mesh = new Mesh(mesh_name, mesh_id, mesh_vertices, mesh_faces, mesh_bones, mesh_node, hull_table);
 
         //System.out.println("Debug mat index:" + raw_mesh.mMaterialIndex() + " for: " + mesh_name);
 

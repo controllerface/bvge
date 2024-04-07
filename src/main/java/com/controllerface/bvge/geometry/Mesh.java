@@ -4,7 +4,8 @@ import com.controllerface.bvge.animation.BoneOffset;
 
 import java.util.List;
 
-public record Mesh(int mesh_id,
+public record Mesh(String name,
+                   int mesh_id,
                    Vertex[] vertices,
                    Face[] faces,
                    List<BoneOffset> bone_offsets,

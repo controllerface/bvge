@@ -32,7 +32,7 @@ public class Meshes
         var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList(), new String[0], new float[0]) };
         var faces = new Face[]{ new Face(-1,0, 0, 0) };
         var hull = new int[]{ 0 };
-        return new Mesh(-1, vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
+        return new Mesh("int_particle",-1, vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -63,7 +63,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2 };
 
-        return new Mesh(-1, vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
+        return new Mesh("int_triangle",-1, vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -99,7 +99,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2, 3 };
 
-        return new Mesh(-1, vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
+        return new Mesh("int_square",-1, vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
     }
 
     /**
@@ -140,7 +140,7 @@ public class Meshes
 
         var hull = new int[]{ 0, 1, 2, 3, 4 };
 
-        return new Mesh(-1, vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
+        return new Mesh("int_polygon",-1, vertices, faces, List.of(BoneOffset.identity()), Models.SceneNode.empty(), hull);
 
     }
 

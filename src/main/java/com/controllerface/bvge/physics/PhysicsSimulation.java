@@ -340,6 +340,7 @@ public class PhysicsSimulation extends GameSystem
         move_armatures_k = new MoveArmatures_k(GPGPU.command_queue_ptr, move_armatures_k_ptr)
             .buf_arg(MoveArmatures_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
             .buf_arg(MoveArmatures_k.Args.armatures, GPGPU.core_memory.buffer(BufferType.ARMATURE))
+            .buf_arg(MoveArmatures_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
             .buf_arg(MoveArmatures_k.Args.hull_tables, GPGPU.core_memory.buffer(BufferType.ARMATURE_HULL_TABLE))
             .buf_arg(MoveArmatures_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
             .buf_arg(MoveArmatures_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
