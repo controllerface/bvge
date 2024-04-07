@@ -243,6 +243,8 @@ __kernel void apply_reactions(__global float8 *reactions,
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
     ag = ag <= 0.0f ? 0.0f : 1.0f;
+    //ag = ag >= 0.75f ? 1.0f : 0.0f;
+
 
     anti_gravity[current_point] = ag;
     points[current_point] = point;
@@ -299,7 +301,7 @@ __kernel void move_armatures(__global float4 *hulls,
         bool no_bones = (hull_flag.x & NO_BONES) !=0;
 
         if (!no_bones) had_bones = true;
-        
+
         float2 center_a = calculate_centroid(points, element_table);
         last_center = center_a;
         float2 diffa = center_a - hull.xy;

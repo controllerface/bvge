@@ -251,17 +251,6 @@ public class PhysicsObjects
             armature_bone_parent_map.put(bind_pose_ref_id, next_armature_bone);
         }
 
-
-
-        // todo: add non-colliding root mesh here as a circle
-
-        // 1. get next hull id
-        // 2. get circle "mesh" (it's just a single point)
-        // 3. transform using the armature matrix
-        // 4.
-
-
-
         for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)
         {
             int next_hull = GPGPU.core_memory.next_hull();

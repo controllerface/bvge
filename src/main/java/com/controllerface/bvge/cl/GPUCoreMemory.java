@@ -256,8 +256,8 @@ public class GPUCoreMemory
     private final ResizableBuffer hull_flag_buffer;
 
     /** float2
-     * x: initial reference angle
-     * y: current rotation
+     * x: friction coefficient
+     * y: restitution coefficient
      */
     private final ResizableBuffer hull_friction_buffer;
 
@@ -321,6 +321,7 @@ public class GPUCoreMemory
      * w: (unused)
      */
     private final ResizableBuffer point_vertex_table_buffer;
+    // todo: break into separate buffers
 
     /** float2
      * x: x position
