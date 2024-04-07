@@ -198,6 +198,7 @@ public class PhysicsSimulation extends GameSystem
         long handle_movements_k_ptr = control_entities.kernel_ptr(Kernel.handle_movement);
         handle_movement_k = new HandleMovement_k(GPGPU.command_queue_ptr, handle_movements_k_ptr)
             .buf_arg(HandleMovement_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
+            .buf_arg(HandleMovement_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
             .buf_arg(HandleMovement_k.Args.flags, control_point_flags)
             .buf_arg(HandleMovement_k.Args.indices, control_point_indices)
             .buf_arg(HandleMovement_k.Args.tick_budgets, control_point_tick_budgets)

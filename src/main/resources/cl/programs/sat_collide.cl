@@ -296,7 +296,7 @@ __kernel void move_armatures(__global float4 *hulls,
 {
     int current_armature = get_global_id(0);
     float4 armature = armatures[current_armature];
-    int4 flags = hull_tables[current_armature];
+    int4 flags = armature_flags[current_armature];
     int4 hull_table = hull_tables[current_armature];
     int start = hull_table.x;
     int end = hull_table.y;
@@ -335,8 +335,11 @@ __kernel void move_armatures(__global float4 *hulls,
         ? armature.y 
         : armature.w;
 
-    // flags.z = hit_floor 
-    //     ? flags.z | 
+    flags.z = hit_floor 
+        ? flags.z | CAN_JUMP
+        : flags.z;
 
     armatures[current_armature] = armature;
+    armature_flags[current_armature] = flags;
+
 }

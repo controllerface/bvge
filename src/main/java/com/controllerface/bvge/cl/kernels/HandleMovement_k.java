@@ -7,6 +7,7 @@ public class HandleMovement_k extends GPUKernel
     public enum Args
     {
         armature_accel,
+        armature_flags,
         flags,
         indices,
         tick_budgets,
