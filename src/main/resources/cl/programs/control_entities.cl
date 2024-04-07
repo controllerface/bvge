@@ -21,10 +21,10 @@ __kernel void set_control_points(__global int *control_flags,
     linear_mag[target] = new_linear_mag;
     jump_mag[target] = new_jump_mag;
 
-    int old_tick_budget = tick_budgets[target];
-    tick_budgets[target] = new_tick_budget == -1 
-        ? old_tick_budget 
-        : new_tick_budget;
+    // int old_tick_budget = tick_budgets[target];
+    // tick_budgets[target] = new_tick_budget == -1 
+    //     ? old_tick_budget 
+    //     : new_tick_budget;
 }
 
 __kernel void handle_movement(__global float2 *armature_accel,
@@ -44,6 +44,13 @@ __kernel void handle_movement(__global float2 *armature_accel,
     int current_index = indices[current_control_set];
     float2 accel = armature_accel[current_index];
     int4 arm_flag = armature_flags[current_index];
+
+    bool can_jump = (arm_flag.z & CAN_JUMP) !=0;
+    current_budget = can_jump 
+        ? 25
+        : current_budget;
+
+    arm_flag.z &= ~CAN_JUMP;
 
     bool is_mv_l = (current_flags & LEFT) !=0;
     bool is_mv_r = (current_flags & RIGHT) !=0;
@@ -96,4 +103,6 @@ __kernel void handle_movement(__global float2 *armature_accel,
 
     tick_budgets[current_control_set] = current_budget;
     armature_accel[current_index] = accel;
+    armature_flags[current_index] = arm_flag;
+
 }
