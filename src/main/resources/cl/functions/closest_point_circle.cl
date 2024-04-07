@@ -17,8 +17,8 @@ inline int closest_point_circle(float2 circle_center,
         int n = start + i;
         int point_flag = point_flags[n];
         
-        bool x = (point_flag & 0x01) !=0;
-        if (x) continue;
+        bool is_interior = (point_flag & IS_INTERIOR) !=0;
+        if (is_interior) continue;
 
         float2 v = points[n].xy;
         float _distance = fast_distance(v, circle_center);

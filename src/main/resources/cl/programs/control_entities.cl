@@ -4,7 +4,7 @@
 #define DOWN   0b0000000000001000
 #define JUMP   0b0000000000010000
 
-__kernel void set_control_points(__global int *flags,
+__kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
                                  __global int *tick_budgets,
                                  __global float *linear_mag,
@@ -16,7 +16,7 @@ __kernel void set_control_points(__global int *flags,
                                  float new_linear_mag, 
                                  float new_jump_mag)
 {
-    flags[target] = new_flags;
+    control_flags[target] = new_flags;
     indices[target] = new_index;
     linear_mag[target] = new_linear_mag;
     jump_mag[target] = new_jump_mag;
@@ -28,14 +28,14 @@ __kernel void set_control_points(__global int *flags,
 }
 
 __kernel void handle_movement(__global float2 *armature_accel,
-                              __global int *flags,
+                              __global int *control_flags,
                               __global int *indices,
                               __global int *tick_budgets,
                               __global float *linear_mag,
                               __global float *jump_mag)
 {
     int current_control_set = get_global_id(0);
-    int current_flags = flags[current_control_set];
+    int current_flags = control_flags[current_control_set];
     int current_budget = tick_budgets[current_control_set];
     float current_linear_mag = linear_mag[current_control_set];
     float current_jump_mag = jump_mag[current_control_set];
@@ -55,6 +55,10 @@ __kernel void handle_movement(__global float2 *armature_accel,
     accel.x = is_mv_r 
         ? accel.x + current_linear_mag
         : accel.x;
+
+    // todo: upward and downward movement is disabled so jumping can work correctly,
+    //  but may be worth doing some checks later to re-enbale this depending on circulmstances
+    //  for example swimming, or zero-G, etc.
 
     // accel.y = is_mv_u 
     //     ? accel.y + current_linear_mag

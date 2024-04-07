@@ -332,6 +332,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(ApplyReactions_k.Args.reactions, reactions_out)
             .buf_arg(ApplyReactions_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
             .buf_arg(ApplyReactions_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV))
+            .buf_arg(ApplyReactions_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
             .buf_arg(ApplyReactions_k.Args.point_reactions, point_reaction_counts)
             .buf_arg(ApplyReactions_k.Args.point_offsets, point_reaction_offsets);
 
@@ -342,7 +343,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(MoveArmatures_k.Args.hull_tables, GPGPU.core_memory.buffer(BufferType.ARMATURE_HULL_TABLE))
             .buf_arg(MoveArmatures_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
             .buf_arg(MoveArmatures_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .buf_arg(MoveArmatures_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV))
+            .buf_arg(MoveArmatures_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
             .buf_arg(MoveArmatures_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT));
 
         long animate_armatures_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_armatures);

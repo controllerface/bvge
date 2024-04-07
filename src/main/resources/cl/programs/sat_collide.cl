@@ -134,6 +134,7 @@ reaction to the point.
 __kernel void apply_reactions(__global float8 *reactions,
                               __global float4 *points,
                               __global float *anti_gravity,
+                              __global int *point_flags,
                               __global int *point_reactions,
                               __global int *point_offsets)
 {
@@ -143,6 +144,7 @@ __kernel void apply_reactions(__global float8 *reactions,
 
     int current_point = get_global_id(0);
     int reaction_count = point_reactions[current_point];
+    int flags = point_flags[current_point];
 
     // exit on non-reactive points
     if (reaction_count == 0) 
@@ -240,6 +242,10 @@ __kernel void apply_reactions(__global float8 *reactions,
     float2 heading = reaction.s23;
     float ag = calculate_anti_gravity(g, heading);
 
+    flags = ag > .75 
+        ? flags | HIT_FLOOR
+        : flags;
+
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
     ag = ag <= 0.0f ? 0.0f : 1.0f;
@@ -248,6 +254,7 @@ __kernel void apply_reactions(__global float8 *reactions,
 
     anti_gravity[current_point] = ag;
     points[current_point] = point;
+    point_flags[current_point] = flags;
 
     // It is important to reset the counts and offsets to 0 after reactions are handled.
     // These reactions are only valid once, for the current frame.
@@ -255,10 +262,10 @@ __kernel void apply_reactions(__global float8 *reactions,
     point_offsets[current_point] = 0;
 }
 
-inline bool any_ag(__global float *anti_gravity,
-                   int4 hull_table)
+inline int consume_point_flags(__global int *point_flags,
+                           int4 hull_table)
 {
-    bool result = false;
+    int result = 0;
 
     int start = hull_table.x;
     int end   = hull_table.y;
@@ -267,8 +274,13 @@ inline bool any_ag(__global float *anti_gravity,
     for (int i = 0; i < vert_count; i++)
     {
         int n = start + i;
-        float v = anti_gravity[n];
-        result = v > 0.0f ? true : result;
+        int flags = point_flags[n];
+        result |= flags;
+
+        // the floor flag must be "consumed" so it doesn't persist to the next tick
+        flags &= ~HIT_FLOOR;
+        
+        point_flags[n] = flags;
     }
 
     return result;
@@ -278,7 +290,7 @@ __kernel void move_armatures(__global float4 *hulls,
                              __global int4 *hull_tables,
                              __global int4 *element_tables,
                              __global int4 *hull_flags,
-                             __global float *anti_gravity,
+                             __global int *point_flags,
                              __global float4 *points)
 {
     int gid = get_global_id(0);
@@ -289,9 +301,9 @@ __kernel void move_armatures(__global float4 *hulls,
     int hull_count = end - start + 1;
 
     float2 diff = (float2)(0.0f);
-    bool ag = false;
+    int all_flags = 0;
     float2 last_center = (float2)(0.0f);
-    float had_bones = false;
+    bool had_bones = false;
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
@@ -306,12 +318,18 @@ __kernel void move_armatures(__global float4 *hulls,
         last_center = center_a;
         float2 diffa = center_a - hull.xy;
         diff += diffa;
-        bool has_ag = any_ag(anti_gravity, element_table);
-        ag = has_ag ? true : ag;
+        all_flags |= consume_point_flags(point_flags, element_table);
     }
 
-    if (had_bones) armature.xy += diff;
-    else armature.xy = last_center;
-    armature.w = ag ? armature.y : armature.w;
+    bool hit_floor = (all_flags & HIT_FLOOR) !=0;
+
+    armature.xy = had_bones 
+        ? armature.xy + diff
+        : last_center;
+
+    armature.w = hit_floor 
+        ? armature.y 
+        : armature.w;
+
     armatures[gid] = armature;
 }
