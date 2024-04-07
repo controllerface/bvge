@@ -7,7 +7,7 @@ inline void polygon_collision(int hull_1_id,
                               __global float2 *hull_frictions,
                               __global int4 *hull_flags,
                               __global int4 *element_tables,
-                              __global int4 *vertex_tables,
+                              __global int *point_flags,
                               __global float4 *points,
                               __global int2 *edges,
                               __global int *edge_flags,
@@ -66,8 +66,8 @@ inline void polygon_collision(int hull_1_id,
 
         normal_buffer = fast_normalize(normal_buffer);
 
-        float3 proj_a = project_polygon(points, vertex_tables, hull_1_table, normal_buffer);
-        float3 proj_b = project_polygon(points, vertex_tables, hull_2_table, normal_buffer);
+        float3 proj_a = project_polygon(points, point_flags, hull_1_table, normal_buffer);
+        float3 proj_b = project_polygon(points, point_flags, hull_2_table, normal_buffer);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -113,8 +113,8 @@ inline void polygon_collision(int hull_1_id,
 
         normal_buffer = fast_normalize(normal_buffer);
 
-        float3 proj_a = project_polygon(points, vertex_tables, hull_1_table, normal_buffer);
-        float3 proj_b = project_polygon(points, vertex_tables, hull_2_table, normal_buffer);
+        float3 proj_a = project_polygon(points, point_flags, hull_1_table, normal_buffer);
+        float3 proj_b = project_polygon(points, point_flags, hull_2_table, normal_buffer);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -154,7 +154,7 @@ inline void polygon_collision(int hull_1_id,
         ? collision_normal * -1
         : collision_normal;
 
-    float3 final_proj = project_polygon(points, vertex_tables, vertex_table, collision_normal);
+    float3 final_proj = project_polygon(points, point_flags, vertex_table, collision_normal);
     vert_index = final_proj.z;
     min_distance = native_divide(min_distance, fast_length(collision_normal));
 

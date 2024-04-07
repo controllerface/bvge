@@ -372,7 +372,7 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
                                 __global int4 *hull_flags,
                                 __global int4 *element_tables,
                                 __global float4 *points,
-                                __global int4 *vertex_tables,
+                                __global int *point_hull_indices,
                                 __global int4 *bone_tables,
                                 __global int2 *bone_bind_tables,
                                 __global int2 *bone_index_tables,
@@ -486,14 +486,14 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
         for (int k = 0; k < point_count; k++)
         {
             int current_point = element_table.x + k;
-            int4 vertex_table = vertex_tables[current_point];
+            int point_hull_index = point_hull_indices[current_point];
             int4 bone_table = bone_tables[current_point];
-            vertex_table.y -= drop.hull_count;
+            point_hull_index -= drop.hull_count;
             bone_table.x -= bone_table.x > -1 ? drop.bone_count : 0; 
             bone_table.y -= bone_table.y > -1 ? drop.bone_count : 0; 
             bone_table.z -= bone_table.z > -1 ? drop.bone_count : 0; 
             bone_table.w -= bone_table.w > -1 ? drop.bone_count : 0; 
-            vertex_tables[current_point] = vertex_table;
+            point_hull_indices[current_point] = point_hull_index;
             bone_tables[current_point] = bone_table;
             point_shift[current_point] = drop.point_count;
         }
@@ -573,14 +573,20 @@ __kernel void compact_edges(__global int *edge_shift,
 __kernel void compact_points(__global int *point_shift,
                              __global float4 *points,
                              __global float *anti_gravity,
-                             __global int4 *vertex_tables,
+                             __global int *point_vertex_references,
+                             __global int *point_hull_indices,
+                             __global int *point_flags,
                              __global int4 *bone_tables)
 {
     int current_point = get_global_id(0);
     int shift = point_shift[current_point];
     float4 point = points[current_point];
     float anti_grav = anti_gravity[current_point];
-    int4 vertex_table = vertex_tables[current_point];
+
+    int point_vertex_reference = point_vertex_references[current_point];
+    int point_hull_index = point_hull_indices[current_point];
+    int point_flag = point_flags[current_point];
+
     int4 bone_table = bone_tables[current_point];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
@@ -588,7 +594,9 @@ __kernel void compact_points(__global int *point_shift,
         int new_point_index = current_point - shift;
         points[new_point_index] = point;
         anti_gravity[new_point_index] = anti_grav;
-        vertex_tables[new_point_index] = vertex_table;
+        point_vertex_references[new_point_index] = point_vertex_reference; 
+        point_hull_indices[new_point_index] = point_hull_index; 
+        point_flags[new_point_index] = point_flag; 
         bone_tables[new_point_index] = bone_table;
     }
 }

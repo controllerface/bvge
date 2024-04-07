@@ -7,11 +7,15 @@ public class CreatePoint_k extends GPUKernel
     public enum Args
     {
         points,
-        vertex_tables,
+        point_vertex_references,
+        point_hull_indices,
+        point_flags,
         bone_tables,
         target,
         new_point,
-        new_vertex_table,
+        new_point_vertex_reference,
+        new_point_hull_index,
+        new_point_flags,
         new_bone_table;
     }
 
