@@ -4,7 +4,7 @@ Returns the index of the closest point on the polygon to the center of the circl
 inline int closest_point_circle(float2 circle_center, 
                                 int4 polygon_table, 
                                 __global const float4 *points,
-                                __global int4 *vertex_tables)
+                                __global int *point_flags)
 {
     int result = -1;
     float minDistance = FLT_MAX;
@@ -15,10 +15,10 @@ inline int closest_point_circle(float2 circle_center,
     for (int i = 0; i < vert_count; i++)
     {
         int n = start + i;
-        int4 vertex_table = vertex_tables[n];
+        int point_flag = point_flags[n];
         
-        bool x = (vertex_table.z & 0x01) !=0;
-        if (x) continue;
+        bool is_interior = (point_flag & IS_INTERIOR) !=0;
+        if (is_interior) continue;
 
         float2 v = points[n].xy;
         float _distance = fast_distance(v, circle_center);

@@ -256,8 +256,8 @@ public class GPUCoreMemory
     private final ResizableBuffer hull_flag_buffer;
 
     /** float2
-     * x: initial reference angle
-     * y: current rotation
+     * x: friction coefficient
+     * y: restitution coefficient
      */
     private final ResizableBuffer hull_friction_buffer;
 
@@ -314,13 +314,20 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer point_buffer;
 
-    /** int4
+    /** int
      * x: reference vertex index
-     * y: hull index
-     * z: vertex flags (bit field)
-     * w: (unused)
      */
-    private final ResizableBuffer point_vertex_table_buffer;
+    private final ResizableBuffer point_vertex_reference_buffer;
+
+    /** int
+     * x: hull index
+     */
+    private final ResizableBuffer point_hull_index_buffer;
+
+    /** int
+     * x: vertex flags (bit field)
+     */
+    private final ResizableBuffer point_flag_buffer;
 
     /** float2
      * x: x position
@@ -424,7 +431,9 @@ public class GPUCoreMemory
         point_anti_gravity_buffer       = new PersistentBuffer(CLSize.cl_float, 50_000L);
         point_bone_table_buffer         = new PersistentBuffer(CLSize.cl_int4, 50_000L);
         point_buffer                    = new PersistentBuffer(CLSize.cl_float4, 50_000L);
-        point_vertex_table_buffer       = new PersistentBuffer(CLSize.cl_int4, 50_000L);
+        point_vertex_reference_buffer   = new PersistentBuffer(CLSize.cl_int, 50_000L);
+        point_hull_index_buffer         = new PersistentBuffer(CLSize.cl_int, 50_000L);
+        point_flag_buffer               = new PersistentBuffer(CLSize.cl_int, 50_000L);
         vertex_reference_buffer         = new PersistentBuffer(CLSize.cl_float2);
         vertex_texture_uv_buffer        = new PersistentBuffer(CLSize.cl_float2);
         vertex_uv_table_buffer          = new PersistentBuffer(CLSize.cl_int2);
@@ -438,7 +447,9 @@ public class GPUCoreMemory
         long create_point_k_ptr = gpu_crud.kernel_ptr(Kernel.create_point);
         create_point_k = new CreatePoint_k(GPGPU.command_queue_ptr, create_point_k_ptr)
             .buf_arg(CreatePoint_k.Args.points, point_buffer)
-            .buf_arg(CreatePoint_k.Args.vertex_tables, point_vertex_table_buffer)
+            .buf_arg(CreatePoint_k.Args.point_vertex_references, point_vertex_reference_buffer)
+            .buf_arg(CreatePoint_k.Args.point_hull_indices, point_hull_index_buffer)
+            .buf_arg(CreatePoint_k.Args.point_flags, point_flag_buffer)
             .buf_arg(CreatePoint_k.Args.bone_tables, point_bone_table_buffer);
 
         long create_texture_uv_ptr = gpu_crud.kernel_ptr(Kernel.create_texture_uv);
@@ -583,7 +594,7 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.hull_flags, hull_flag_buffer)
             .buf_arg(CompactArmatures_k.Args.element_tables, hull_element_table_buffer)
             .buf_arg(CompactArmatures_k.Args.points, point_buffer)
-            .buf_arg(CompactArmatures_k.Args.vertex_tables, point_vertex_table_buffer)
+            .buf_arg(CompactArmatures_k.Args.point_hull_indices, point_hull_index_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_tables, point_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_bind_tables, armature_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_index_tables, hull_bone_table_buffer)
@@ -619,7 +630,9 @@ public class GPUCoreMemory
             .buf_arg(CompactPoints_k.Args.point_shift, point_shift)
             .buf_arg(CompactPoints_k.Args.points, point_buffer)
             .buf_arg(CompactPoints_k.Args.anti_gravity, point_anti_gravity_buffer)
-            .buf_arg(CompactPoints_k.Args.vertex_tables, point_vertex_table_buffer)
+            .buf_arg(CompactPoints_k.Args.point_vertex_references, point_vertex_reference_buffer)
+            .buf_arg(CompactPoints_k.Args.point_hull_indices, point_hull_index_buffer)
+            .buf_arg(CompactPoints_k.Args.point_flags, point_flag_buffer)
             .buf_arg(CompactPoints_k.Args.bone_tables, point_bone_table_buffer);
 
         long compact_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_bones);
@@ -678,7 +691,9 @@ public class GPUCoreMemory
             case POINT                  -> point_buffer;
             case POINT_ANTI_GRAV        -> point_anti_gravity_buffer;
             case POINT_BONE_TABLE       -> point_bone_table_buffer;
-            case POINT_VERTEX_TABLE     -> point_vertex_table_buffer;
+            case POINT_VERTEX_REFERENCE -> point_vertex_reference_buffer;
+            case POINT_HULL_INDEX       -> point_hull_index_buffer;
+            case POINT_FLAG             -> point_flag_buffer;
             case VERTEX_REFERENCE       -> vertex_reference_buffer;
             case VERTEX_TEXTURE_UV      -> vertex_texture_uv_buffer;
             case VERTEX_UV_TABLE        -> vertex_uv_table_buffer;
@@ -795,19 +810,24 @@ public class GPUCoreMemory
         return edge_index++;
     }
 
-    public int new_point(float[] position, int[] vertex_table, int[] bone_ids)
+    public int new_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int flags)
     {
         int capacity = point_index + 1;
         point_buffer.ensure_capacity(capacity);
         point_anti_gravity_buffer.ensure_capacity(capacity);
-        point_vertex_table_buffer.ensure_capacity(capacity);
+        point_vertex_reference_buffer.ensure_capacity(capacity);
+        point_hull_index_buffer.ensure_capacity(capacity);
+        point_flag_buffer.ensure_capacity(capacity);
+
         point_bone_table_buffer.ensure_capacity(capacity);
 
         var new_point = new float[]{position[0], position[1], position[0], position[1]};
         create_point_k
             .set_arg(CreatePoint_k.Args.target, point_index)
             .set_arg(CreatePoint_k.Args.new_point, new_point)
-            .set_arg(CreatePoint_k.Args.new_vertex_table, vertex_table)
+            .set_arg(CreatePoint_k.Args.new_point_vertex_reference, vertex_index)
+            .set_arg(CreatePoint_k.Args.new_point_hull_index, hull_index)
+            .set_arg(CreatePoint_k.Args.new_point_flags, flags)
             .set_arg(CreatePoint_k.Args.new_bone_table, bone_ids)
             .call(GPGPU.global_single_size);
 
@@ -1193,7 +1213,9 @@ public class GPUCoreMemory
         hull_bone_table_buffer.release();
         point_buffer.release();
         point_anti_gravity_buffer.release();
-        point_vertex_table_buffer.release();
+        point_vertex_reference_buffer.release();
+        point_hull_index_buffer.release();
+        point_flag_buffer.release();
         point_bone_table_buffer.release();
         vertex_reference_buffer.release();
         vertex_weight_buffer.release();
@@ -1256,7 +1278,9 @@ public class GPUCoreMemory
         total += hull_bone_table_buffer.debug_data();
         total += point_buffer.debug_data();
         total += point_anti_gravity_buffer.debug_data();
-        total += point_vertex_table_buffer.debug_data();
+        total += point_vertex_reference_buffer.debug_data();
+        total += point_hull_index_buffer.debug_data();
+        total += point_flag_buffer.debug_data();
         total += point_bone_table_buffer.debug_data();
         total += vertex_reference_buffer.debug_data();
         total += vertex_weight_buffer.debug_data();

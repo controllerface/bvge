@@ -6,12 +6,14 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.util.Constants;
 import org.joml.Vector2f;
 
 import java.util.Map;
 import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
+import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 
 public class PhysicsSimulation extends GameSystem
 {
@@ -23,19 +25,18 @@ public class PhysicsSimulation extends GameSystem
     private static final int EDGE_STEPS = 8;
 
     // todo: gravity should not be a constant but calculated based on proximity next to planets and other large bodies
-    private static final float GRAVITY_MAGNITUDE = -9.8f * 4;
+    private static final float GRAVITY_MAGNITUDE = 9.8f * 4;
     private static final float GRAVITY_X = 0;
-    private static final float GRAVITY_Y = GRAVITY_MAGNITUDE * TARGET_FPS;
+    private static final float GRAVITY_Y = -GRAVITY_MAGNITUDE * TARGET_FPS;
 
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
     //  or make damping interact with the gravity vector in some way.
-    private static final float MOTION_DAMPING = .995f;
+    private static final float MOTION_DAMPING = .990f;
 
     private final UniformGrid uniform_grid;
 
-    private final Vector2f vector_buffer = new Vector2f();
-
+    private final GPUProgram control_entities = new ControlEntities();
     private final GPUProgram integrate = new Integrate();
     private final GPUProgram scan_key_bank = new ScanKeyBank();
     private final GPUProgram generate_keys = new GenerateKeys();
@@ -46,6 +47,9 @@ public class PhysicsSimulation extends GameSystem
     private final GPUProgram sat_collide = new SatCollide();
     private final GPUProgram animate_hulls = new AnimateHulls();
     private final GPUProgram resolve_constraints = new ResolveConstraints();
+
+    private final GPUKernel set_control_points_k;
+    private final GPUKernel handle_movement_k;
 
     private final GPUKernel integrate_k;
     private final GPUKernel integrate_armatures_k;
@@ -124,6 +128,13 @@ public class PhysicsSimulation extends GameSystem
     public final ResizableBuffer matches;
     public final ResizableBuffer matches_used;
 
+    public final ResizableBuffer control_point_flags;
+    public final ResizableBuffer control_point_indices;
+    public final ResizableBuffer control_point_tick_budgets;
+    public final ResizableBuffer control_point_linear_mag;
+    public final ResizableBuffer control_point_jump_mag;
+
+
     private long candidate_count = 0;
     private long reaction_count = 0;
     private long candidate_buffer_size = 0;
@@ -157,6 +168,13 @@ public class PhysicsSimulation extends GameSystem
         matches                 = new TransientBuffer(CLSize.cl_int, 500_000L);
         matches_used            = new TransientBuffer(CLSize.cl_int, 500_000L);
 
+        control_point_flags         = new PersistentBuffer(CLSize.cl_int, 1);
+        control_point_indices       = new PersistentBuffer(CLSize.cl_int, 1);
+        control_point_tick_budgets  = new PersistentBuffer(CLSize.cl_int, 1);
+        control_point_linear_mag    = new PersistentBuffer(CLSize.cl_float, 1);
+        control_point_jump_mag      = new PersistentBuffer(CLSize.cl_float, 1);
+
+        control_entities.init();
         integrate.init();
         scan_key_bank.init();
         generate_keys.init();
@@ -167,6 +185,23 @@ public class PhysicsSimulation extends GameSystem
         sat_collide.init();
         animate_hulls.init();
         resolve_constraints.init();
+
+        long set_control_points_k_ptr = control_entities.kernel_ptr(Kernel.set_control_points);
+        set_control_points_k = new SetControlPoints_k(GPGPU.command_queue_ptr, set_control_points_k_ptr)
+            .buf_arg(SetControlPoints_k.Args.flags, control_point_flags)
+            .buf_arg(SetControlPoints_k.Args.indices, control_point_indices)
+            .buf_arg(SetControlPoints_k.Args.linear_mag, control_point_linear_mag)
+            .buf_arg(SetControlPoints_k.Args.jump_mag, control_point_jump_mag);
+
+        long handle_movements_k_ptr = control_entities.kernel_ptr(Kernel.handle_movement);
+        handle_movement_k = new HandleMovement_k(GPGPU.command_queue_ptr, handle_movements_k_ptr)
+            .buf_arg(HandleMovement_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
+            .buf_arg(HandleMovement_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
+            .buf_arg(HandleMovement_k.Args.flags, control_point_flags)
+            .buf_arg(HandleMovement_k.Args.indices, control_point_indices)
+            .buf_arg(HandleMovement_k.Args.tick_budgets, control_point_tick_budgets)
+            .buf_arg(HandleMovement_k.Args.linear_mag, control_point_linear_mag)
+            .buf_arg(HandleMovement_k.Args.jump_mag, control_point_jump_mag);
 
         long integrate_k_ptr = integrate.kernel_ptr(Kernel.integrate);
         integrate_k = new Integrate_k(GPGPU.command_queue_ptr, integrate_k_ptr)
@@ -273,7 +308,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.hull_frictions, GPGPU.core_memory.buffer(BufferType.HULL_FRICTION))
             .buf_arg(SatCollide_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
             .buf_arg(SatCollide_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .buf_arg(SatCollide_k.Args.vertex_tables, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_TABLE))
+            .buf_arg(SatCollide_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
             .buf_arg(SatCollide_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
             .buf_arg(SatCollide_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
             .buf_arg(SatCollide_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
@@ -296,6 +331,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(ApplyReactions_k.Args.reactions, reactions_out)
             .buf_arg(ApplyReactions_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
             .buf_arg(ApplyReactions_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV))
+            .buf_arg(ApplyReactions_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
             .buf_arg(ApplyReactions_k.Args.point_reactions, point_reaction_counts)
             .buf_arg(ApplyReactions_k.Args.point_offsets, point_reaction_offsets);
 
@@ -303,9 +339,11 @@ public class PhysicsSimulation extends GameSystem
         move_armatures_k = new MoveArmatures_k(GPGPU.command_queue_ptr, move_armatures_k_ptr)
             .buf_arg(MoveArmatures_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
             .buf_arg(MoveArmatures_k.Args.armatures, GPGPU.core_memory.buffer(BufferType.ARMATURE))
+            .buf_arg(MoveArmatures_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
             .buf_arg(MoveArmatures_k.Args.hull_tables, GPGPU.core_memory.buffer(BufferType.ARMATURE_HULL_TABLE))
             .buf_arg(MoveArmatures_k.Args.element_tables, GPGPU.core_memory.buffer(BufferType.HULL_ELEMENT_TABLE))
             .buf_arg(MoveArmatures_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(MoveArmatures_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
             .buf_arg(MoveArmatures_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT));
 
         long animate_armatures_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_armatures);
@@ -339,7 +377,8 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimatePoints_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
             .buf_arg(AnimatePoints_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
             .buf_arg(AnimatePoints_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .buf_arg(AnimatePoints_k.Args.vertex_tables, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_TABLE))
+            .buf_arg(AnimatePoints_k.Args.point_vertex_references, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_REFERENCE))
+            .buf_arg(AnimatePoints_k.Args.point_hull_indices, GPGPU.core_memory.buffer(BufferType.POINT_HULL_INDEX))
             .buf_arg(AnimatePoints_k.Args.bone_tables, GPGPU.core_memory.buffer(BufferType.POINT_BONE_TABLE))
             .buf_arg(AnimatePoints_k.Args.vertex_weights, GPGPU.core_memory.buffer(BufferType.VERTEX_WEIGHT))
             .buf_arg(AnimatePoints_k.Args.armatures, GPGPU.core_memory.buffer(BufferType.ARMATURE))
@@ -675,7 +714,19 @@ public class PhysicsSimulation extends GameSystem
 
     private void update_controllable_entities()
     {
+        glfwPollEvents();
+
+        // todo: index and magnitudes only need to be set once, but may need some
+        //  checks or logic to ensure characters don't get deleted
         var components = ecs.getComponents(Component.ControlPoints);
+
+        control_point_flags.ensure_capacity(components.size());
+        control_point_indices.ensure_capacity(components.size());
+        control_point_tick_budgets.ensure_capacity(components.size());
+        control_point_linear_mag.ensure_capacity(components.size());
+        control_point_jump_mag.ensure_capacity(components.size());
+
+        int target_count = 0;
         for (Map.Entry<String, GameComponent> entry : components.entrySet())
         {
             String entity = entry.getKey();
@@ -688,35 +739,39 @@ public class PhysicsSimulation extends GameSystem
             Objects.requireNonNull(armature);
             Objects.requireNonNull(force);
 
-            vector_buffer.zero();
+            int flags = 0;
             if (controlPoints.is_moving_left())
             {
-                vector_buffer.x -= force.magnitude();
+                flags = flags | Constants.ControlFlags.LEFT.bits;
             }
             if (controlPoints.is_moving_right())
             {
-                vector_buffer.x += force.magnitude();
+                flags = flags | Constants.ControlFlags.RIGHT.bits;
             }
             if (controlPoints.is_moving_up())
             {
-                vector_buffer.y += force.magnitude();
+                flags = flags | Constants.ControlFlags.UP.bits;
             }
             if (controlPoints.is_moving_down())
             {
-                vector_buffer.y -= force.magnitude();
+                flags = flags | Constants.ControlFlags.DOWN.bits;
             }
             if (controlPoints.is_space_bar_down())
             {
-                vector_buffer.y -= GRAVITY_Y * 6;
+                flags = flags | Constants.ControlFlags.JUMP.bits;
             }
 
-            if (vector_buffer.x != 0f || vector_buffer.y != 0)
-            {
-                GPGPU.core_memory.update_accel(armature.index(), vector_buffer.x, vector_buffer.y);
-            }
-
-            // todo: implement rotation here
+            set_control_points_k
+                    .set_arg(SetControlPoints_k.Args.target, target_count)
+                    .set_arg(SetControlPoints_k.Args.new_flags, flags)
+                    .set_arg(SetControlPoints_k.Args.new_index, armature.index())
+                    .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 500)
+                    .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
+                    .call(GPGPU.global_single_size);
+            target_count++;
         }
+
+        handle_movement_k.call(arg_long(target_count));
     }
 
     /**
@@ -857,9 +912,9 @@ public class PhysicsSimulation extends GameSystem
         // enforcing constraints on the velocities of the affected points.
         apply_reactions();
 
-        // Once all points have been relocated, all hulls are in their required positions for this frame.
-        // Movements applied to hulls are now accumulated and applied to their parent armatures.
-        move_armatures();
+//        // Once all points have been relocated, all hulls are in their required positions for this frame.
+//        // Movements applied to hulls are now accumulated and applied to their parent armatures.
+//        move_armatures();
     }
 
     @Override
@@ -885,7 +940,7 @@ public class PhysicsSimulation extends GameSystem
 
         // Before the GPU begins the simulation cycle, player input is handled and the memory structures
         // in the GPU are updated with the proper values.
-        update_controllable_entities();
+        //update_controllable_entities();
 
         this.time_accumulator += dt;
         int sub_ticks = 0;
@@ -903,8 +958,14 @@ public class PhysicsSimulation extends GameSystem
                 {
                     this.time_accumulator -= FIXED_TIME_STEP;
 
+                    update_controllable_entities();
+
                     // perform one tick of the simulation
                     this.tick_simulation();
+
+                    // Once all points have been relocated, all hulls are in their required positions for this frame.
+                    // Movements applied to hulls are now accumulated and applied to their parent armatures.
+                    move_armatures();
 
                     // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
                     // objects that have animation will have their hulls moved into position for the current tick. It
@@ -921,6 +982,8 @@ public class PhysicsSimulation extends GameSystem
                     // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
                     // within the simulation.
                     resolve_constraints(1);
+
+
 
                 }
                 else
@@ -971,6 +1034,11 @@ public class PhysicsSimulation extends GameSystem
         candidate_offsets.release();
         matches.release();
         matches_used.release();
+        control_point_flags.release();
+        control_point_indices.release();
+        control_point_tick_budgets.release();
+        control_point_linear_mag.release();
+        control_point_jump_mag.release();
 
         debug();
 
@@ -995,6 +1063,11 @@ public class PhysicsSimulation extends GameSystem
         total += candidate_offsets.debug_data();
         total += matches.debug_data();
         total += matches_used.debug_data();
+        total += control_point_flags.debug_data();
+        total += control_point_indices.debug_data();
+        total += control_point_tick_budgets.debug_data();
+        total += control_point_linear_mag.debug_data();
+        total += control_point_jump_mag.debug_data();
 
         //System.out.println("---------------------------");
         System.out.println("Physics Memory Usage: MB " + ((float) total / 1024f / 1024f));

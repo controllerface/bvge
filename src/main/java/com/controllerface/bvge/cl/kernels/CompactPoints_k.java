@@ -9,7 +9,9 @@ public class CompactPoints_k extends GPUKernel
         point_shift,
         points,
         anti_gravity,
-        vertex_tables,
+        point_vertex_references,
+        point_hull_indices,
+        point_flags,
         bone_tables;
     }
 

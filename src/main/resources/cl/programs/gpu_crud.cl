@@ -7,15 +7,21 @@ are designed to operate on a single target object.
 // create functions
 
 __kernel void create_point(__global float4 *points,
-                           __global int4 *vertex_tables,
+                           __global int *point_vertex_references,
+                           __global int *point_hull_indices,
+                           __global int *point_flags,
                            __global int4 *bone_tables,
                            int target,
                            float4 new_point,
-                           int4 new_vertex_table,
+                           int new_point_vertex_reference,
+                           int new_point_hull_index,
+                           int new_point_flags,
                            int4 new_bone_table)
 {
     points[target] = new_point; 
-    vertex_tables[target] = new_vertex_table; 
+    point_vertex_references[target] = new_point_vertex_reference; 
+    point_hull_indices[target] = new_point_hull_index; 
+    point_flags[target] = new_point_flags; 
     bone_tables[target] = new_bone_table; 
 }
 

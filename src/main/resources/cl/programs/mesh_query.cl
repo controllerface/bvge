@@ -101,7 +101,7 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
                                    __global int4 *mesh_references,
                                    __global int4 *mesh_faces,
                                    __global float4 *points,
-                                   __global int4 *vertex_tables,
+                                   __global int *point_vertex_references,
                                    __global int2 *uv_tables,
                                    __global float2 *texture_uvs,
                                    __global int *command_buffer,
@@ -133,11 +133,11 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
     for (int point_id = start_point; point_id <= end_point; point_id++)
     {
         float4 point = points[point_id];
-        int4 vertex_table = vertex_tables[point_id];
-        int2 uv_table = uv_tables[vertex_table.x];
+        int point_vertex_reference = point_vertex_references[point_id];
+        int2 uv_table = uv_tables[point_vertex_reference];
         float2 uv = texture_uvs[uv_table.x]; // todo: select from available uvs based on hull data
         float2 pos = point.xy;
-        int ref_offset = vertex_table.x - mesh_reference.x + transfer.x;
+        int ref_offset = point_vertex_reference - mesh_reference.x + transfer.x;
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
     }

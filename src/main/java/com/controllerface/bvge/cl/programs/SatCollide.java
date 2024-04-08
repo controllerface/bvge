@@ -9,7 +9,9 @@ public class SatCollide extends GPUProgram
     @Override
     public void init()
     {
+        src.add(const_armature_flags);
         src.add(const_hull_flags);
+        src.add(const_point_flags);
         src.add(func_angle_between);
         src.add(func_calculate_centroid);
         src.add(func_closest_point_circle);

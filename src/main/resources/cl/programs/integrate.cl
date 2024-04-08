@@ -57,7 +57,7 @@ __kernel void integrate(__global float4 *hulls,
     bool no_bones = (hull_1_flags.x & NO_BONES) !=0;
 
     int x = hull_1_flags.x;
-    x = x & (~OUT_OF_BOUNDS);
+    x &= ~OUT_OF_BOUNDS;
     hull_flags[current_hull].x = x;
 
    	// get acc value and multiply by the timestep do get the displacement vector
@@ -282,7 +282,7 @@ __kernel void integrate_armatures(__global float4 *armatures,
         float2 other = slow ? pos : prv;
         float2 diff = pos - other;
         diff = acc + diff;
-        diff *= damping;
+        diff.x *= damping;
         prv = pos;
         pos = pos + diff;
         armature.xy = pos;

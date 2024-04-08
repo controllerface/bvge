@@ -48,6 +48,7 @@ public enum Kernel
     locate_in_bounds,
     locate_out_of_bounds,
     move_armatures,
+    prepare_armatures,
     prepare_bones,
     prepare_bounds,
     prepare_edges,
@@ -79,4 +80,7 @@ public enum Kernel
     transfer_render_data,
     update_accel,
     write_mesh_details,
+
+    set_control_points,
+    handle_movement,
 }

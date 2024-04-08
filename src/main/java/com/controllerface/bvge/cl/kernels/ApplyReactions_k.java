@@ -9,6 +9,7 @@ public class ApplyReactions_k extends GPUKernel
         reactions,
         points,
         anti_gravity,
+        point_flags,
         point_reactions,
         point_offsets;
     }

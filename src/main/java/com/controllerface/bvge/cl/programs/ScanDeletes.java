@@ -9,6 +9,7 @@ public class ScanDeletes extends GPUProgram
     @Override
     public void init()
     {
+        src.add(const_armature_flags);
         src.add(const_hull_flags);
         src.add(func_exclusive_scan);
         src.add(CLUtils.read_src("programs/scan_deletes.cl"));

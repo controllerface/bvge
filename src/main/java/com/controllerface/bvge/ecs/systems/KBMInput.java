@@ -104,7 +104,8 @@ public class KBMInput extends GameSystem
     {
         scrollX = xOffset;
         scrollY = yOffset;
-        Window.get().camera().add_zoom(-(float) yOffset / 2);
+        float x = yOffset < 0 ? 0.05f : -0.05f;
+        Window.get().camera().add_zoom(x);
     }
 
     public void mouseButtonCallback(long window, int button, int action, int mods)
