@@ -4,6 +4,7 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -152,9 +153,10 @@ public class GPGPU
         int numPlatforms = numPlatformsArray[0];
 
         // Obtain a platform ID
-        var platform_buffer = BufferUtils.createPointerBuffer(numPlatforms);
+        var platform_buffer = MemoryUtil.memAllocPointer(numPlatforms);
         clGetPlatformIDs(platform_buffer, (IntBuffer) null);
         var platform = platform_buffer.get();
+        MemoryUtil.memFree(platform_buffer);
 
         // Obtain the number of devices for the platform
         int[] numDevicesArray = new int[1];
@@ -162,10 +164,10 @@ public class GPGPU
         int numDevices = numDevicesArray[0];
 
         // Obtain a device ID
-        var device_buffer = BufferUtils.createPointerBuffer(numDevices);
+        var device_buffer = MemoryUtil.memAllocPointer(numDevices);
         clGetDeviceIDs(platform, deviceType, device_buffer, (IntBuffer) null);
-
         long device = device_buffer.get();
+        MemoryUtil.memFree(device_buffer);
 
         var dc = wglGetCurrentDC();
         var ctx = wglGetCurrentContext();
@@ -177,8 +179,8 @@ public class GPGPU
         // contextProperties.addProperty(CL_GLX_DISPLAY_KHR, dc);
 
         // Create a context for the selected device
-        var ctxProps = BufferUtils.createPointerBuffer(7);
-        ctxProps.put(CL_CONTEXT_PLATFORM)
+        var ctx_props_buffer = MemoryUtil.memAllocPointer(7);
+        ctx_props_buffer.put(CL_CONTEXT_PLATFORM)
             .put(platform)
             .put(CL_GL_CONTEXT_KHR)
             .put(ctx)
@@ -187,12 +189,15 @@ public class GPGPU
             .put(0L)
             .flip();
 
-        context_ptr = clCreateContext(ctxProps,
+        context_ptr = clCreateContext(ctx_props_buffer,
             device, null, 0L, null);
 
         // Create a command-queue for the selected device
         command_queue_ptr = clCreateCommandQueue(context_ptr,
             device, 0, (IntBuffer) null);
+
+        MemoryUtil.memFree(ctx_props_buffer);
+
 
         return device;
     }
@@ -704,9 +709,9 @@ public class GPGPU
         device_id_ptr = init_device();
 
         System.out.println("-------- OPEN CL DEVICE -----------");
-        System.out.println(getString(device_id_ptr, CL_DEVICE_VENDOR));
-        System.out.println(getString(device_id_ptr, CL_DEVICE_NAME));
-        System.out.println(getString(device_id_ptr, CL_DRIVER_VERSION));
+        System.out.println(get_device_string(device_id_ptr, CL_DEVICE_VENDOR));
+        System.out.println(get_device_string(device_id_ptr, CL_DEVICE_NAME));
+        System.out.println(get_device_string(device_id_ptr, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
         // At runtime, local buffers are used to perform prefix scan operations.
@@ -722,13 +727,13 @@ public class GPGPU
          * exactly this amount can fail, likely due to some small amount of the local buffer being
          * used by the hardware either for individual arguments, or some other internal data.
          */
-        long max_local_buffer_size = getSize(device_id_ptr, CL_DEVICE_LOCAL_MEM_SIZE);
-        long current_max_group_size = getSize(device_id_ptr, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        long max_local_buffer_size = get_device_long(device_id_ptr, CL_DEVICE_LOCAL_MEM_SIZE);
+        long current_max_group_size = get_device_long(device_id_ptr, CL_DEVICE_MAX_WORK_GROUP_SIZE);
         long current_max_block_size = current_max_group_size * 2;
 
-        long max_mem = getSize(device_id_ptr, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
+        long max_mem = get_device_long(device_id_ptr, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
 
-        long sz_flt = getSize(device_id_ptr, CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT);
+        long sz_flt = get_device_long(device_id_ptr, CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT);
 
         System.out.println("max mem: " + max_mem);
         System.out.println("preferred float: " + sz_flt);

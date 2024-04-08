@@ -1,12 +1,11 @@
 package com.controllerface.bvge.cl;
 
 import org.joml.Matrix4f;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
-import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -189,46 +188,46 @@ public class CLUtils
     }
 
     /**
-     * Returns the value of the device info parameter with the given name
-     *
-     * @param device_id_ptr The device
-     * @param paramName The parameter name
-     * @return The value
-     */
-    public static String getString(long device_id_ptr, int paramName)
-    {
-        // Obtain the length of the string that will be queried
-        var lp = BufferUtils.createPointerBuffer(1);
-        clGetDeviceInfo(device_id_ptr, paramName, (long[]) null, lp);
-        long sz = lp.get();
-
-        // Create a buffer of the appropriate size and fill it with the info
-        var buffer = BufferUtils.createByteBuffer((int)sz);
-        byte[] bytes = new byte[(int)sz];
-        clGetDeviceInfo(device_id_ptr, paramName, buffer, null);
-        buffer.get(bytes);
-
-        // Create a string with the buffer (excluding the trailing \0 byte)
-        return new String(bytes, 0, bytes.length - 1);
-    }
-
-    /**
-     * Returns the value of the device info parameter with the given name
+     * Returns the String value of the device info parameter with the given name
      *
      * @param device_ptr The device
      * @param param_code The parameter name
      * @return The value
      */
-    public static long getSize(long device_ptr, int param_code)
+    public static String get_device_string(long device_ptr, int param_code)
     {
-        var buffer = BufferUtils.createByteBuffer(CLSize.size_t)
-            .order(ByteOrder.nativeOrder());
+        var size_buffer = MemoryUtil.memAllocPointer(1);
+        clGetDeviceInfo(device_ptr, param_code, (long[]) null, size_buffer);
+        long size = size_buffer.get();
+        var value_buffer = MemoryUtil.memAlloc((int)size);
+        byte[] bytes = new byte[(int)size];
+        clGetDeviceInfo(device_ptr, param_code, value_buffer, null);
+        value_buffer.get(bytes);
+        MemoryUtil.memFree(size_buffer);
+        MemoryUtil.memFree(value_buffer);
+        return new String(bytes, 0, bytes.length - 1);
+    }
 
-        clGetDeviceInfo(device_ptr, param_code, buffer, null);
-
-        return CLSize.size_t == 4
-            ? buffer.getInt(0)
-            : buffer.getLong(0);
+    /**
+     * Returns the long value of the device info parameter with the given name
+     *
+     * @param device_ptr The device
+     * @param param_code The parameter name
+     * @return The value
+     */
+    public static long get_device_long(long device_ptr, int param_code)
+    {
+        var size_buffer = MemoryUtil.memAllocPointer(1);
+        clGetDeviceInfo(device_ptr, param_code, (long[]) null, size_buffer);
+        long size = size_buffer.get();
+        var value_buffer = MemoryUtil.memAlloc((int)size);
+        clGetDeviceInfo(device_ptr, param_code, value_buffer, null);
+        var result = size == 4
+            ? value_buffer.getInt(0)
+            : value_buffer.getLong(0);
+        MemoryUtil.memFree(size_buffer);
+        MemoryUtil.memFree(value_buffer);
+        return result;
     }
 
     private static void log_build_error(long program, long device_id_ptr)

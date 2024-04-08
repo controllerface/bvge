@@ -7,12 +7,12 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.GameMode;
 import com.controllerface.bvge.game.TestGame;
 import org.joml.Vector2f;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryUtil;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -172,7 +172,7 @@ public class Window
         image.getRGB(0, 0, width, height, pixels, 0, width);
 
         // convert image to RGBA format
-        var cursor_buffer = BufferUtils.createByteBuffer(width * height * 4);
+        var cursor_buffer = MemoryUtil.memAlloc(width * height * 4);
 
         for (int y = 0; y < height; y++)
         {
@@ -192,6 +192,8 @@ public class Window
         cursor_image.width(width);     // set up image width
         cursor_image.height(height);   // set up image height
         cursor_image.pixels(cursor_buffer);   // pass image data
+
+        MemoryUtil.memFree(cursor_buffer);
 
         // the hotspot indicates the displacement of the sprite to the
         // position where mouse clicks are registered (see image below)
