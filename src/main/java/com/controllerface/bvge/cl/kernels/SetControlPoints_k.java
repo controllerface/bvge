@@ -8,13 +8,11 @@ public class SetControlPoints_k extends GPUKernel
     {
         flags,
         indices,
-        tick_budgets,
         linear_mag,
         jump_mag,
         target,
         new_flags,
         new_index,
-        new_tick_budget,
         new_linear_mag,
         new_jump_mag,
     }

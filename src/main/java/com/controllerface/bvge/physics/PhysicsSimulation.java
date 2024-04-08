@@ -191,7 +191,6 @@ public class PhysicsSimulation extends GameSystem
         set_control_points_k = new SetControlPoints_k(GPGPU.command_queue_ptr, set_control_points_k_ptr)
             .buf_arg(SetControlPoints_k.Args.flags, control_point_flags)
             .buf_arg(SetControlPoints_k.Args.indices, control_point_indices)
-            .buf_arg(SetControlPoints_k.Args.tick_budgets, control_point_tick_budgets)
             .buf_arg(SetControlPoints_k.Args.linear_mag, control_point_linear_mag)
             .buf_arg(SetControlPoints_k.Args.jump_mag, control_point_jump_mag);
 
@@ -762,17 +761,11 @@ public class PhysicsSimulation extends GameSystem
             {
                 flags = flags | Constants.ControlFlags.JUMP.bits;
             }
-            if (controlPoints.is_rotating_left())
-            {
-                // todo: remove this and implement ground touch logic
-                ticks = 25;
-            }
 
             set_control_points_k
                     .set_arg(SetControlPoints_k.Args.target, target_count)
                     .set_arg(SetControlPoints_k.Args.new_flags, flags)
                     .set_arg(SetControlPoints_k.Args.new_index, armature.index())
-                    .set_arg(SetControlPoints_k.Args.new_tick_budget, ticks)
                     .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 500)
                     .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
                     .call(GPGPU.global_single_size);

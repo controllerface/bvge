@@ -6,13 +6,11 @@
 
 __kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
-                                 __global int *tick_budgets,
                                  __global float *linear_mag,
                                  __global float *jump_mag,
                                  int target,
                                  int new_flags, 
                                  int new_index, 
-                                 int new_tick_budget, 
                                  float new_linear_mag, 
                                  float new_jump_mag)
 {
@@ -20,11 +18,6 @@ __kernel void set_control_points(__global int *control_flags,
     indices[target] = new_index;
     linear_mag[target] = new_linear_mag;
     jump_mag[target] = new_jump_mag;
-
-    // int old_tick_budget = tick_budgets[target];
-    // tick_budgets[target] = new_tick_budget == -1 
-    //     ? old_tick_budget 
-    //     : new_tick_budget;
 }
 
 __kernel void handle_movement(__global float2 *armature_accel,
@@ -45,24 +38,18 @@ __kernel void handle_movement(__global float2 *armature_accel,
     float2 accel = armature_accel[current_index];
     int4 arm_flag = armature_flags[current_index];
 
-    bool can_jump = (arm_flag.z & CAN_JUMP) !=0;
-    current_budget = can_jump 
-        ? 25
-        : current_budget;
-
-    arm_flag.z &= ~CAN_JUMP;
-
     bool is_mv_l = (current_flags & LEFT) !=0;
     bool is_mv_r = (current_flags & RIGHT) !=0;
     bool is_mv_u = (current_flags & UP) !=0;
     bool is_mv_d = (current_flags & DOWN) !=0;
-    
-    accel.x = is_mv_l 
-        ? accel.x - current_linear_mag
+    bool mv_jump = (current_flags & JUMP) !=0;
+
+    accel.x = is_mv_l && !is_mv_r
+        ? -current_linear_mag
         : accel.x;
 
-    accel.x = is_mv_r 
-        ? accel.x + current_linear_mag
+    accel.x = is_mv_r && !is_mv_l
+        ? current_linear_mag
         : accel.x;
 
     // todo: upward and downward movement is disabled so jumping can work correctly,
@@ -70,14 +57,22 @@ __kernel void handle_movement(__global float2 *armature_accel,
     //  for example swimming, or zero-G, etc.
 
     // accel.y = is_mv_u 
-    //     ? accel.y + current_linear_mag
+    //     ? current_linear_mag
     //     : accel.y;
 
     // accel.y = is_mv_d 
-    //     ? accel.y - current_linear_mag
+    //     ? -current_linear_mag
     //     : accel.y;
 
-    bool mv_jump = (current_flags & JUMP) !=0;
+
+    bool can_jump = (arm_flag.z & CAN_JUMP) !=0;
+    current_budget = can_jump 
+        ? 25
+        : mv_jump 
+            ? current_budget 
+            : 0;
+
+    arm_flag.z &= ~CAN_JUMP;
 
     int tick_slice = current_budget > 0 
         ? 1 
