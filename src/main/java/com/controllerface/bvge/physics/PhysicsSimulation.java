@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
+import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 
 public class PhysicsSimulation extends GameSystem
 {
@@ -34,8 +35,6 @@ public class PhysicsSimulation extends GameSystem
     private static final float MOTION_DAMPING = .990f;
 
     private final UniformGrid uniform_grid;
-
-    private final Vector2f vector_buffer = new Vector2f();
 
     private final GPUProgram control_entities = new ControlEntities();
     private final GPUProgram integrate = new Integrate();
@@ -715,6 +714,8 @@ public class PhysicsSimulation extends GameSystem
 
     private void update_controllable_entities()
     {
+        glfwPollEvents();
+
         // todo: index and magnitudes only need to be set once, but may need some
         //  checks or logic to ensure characters don't get deleted
         var components = ecs.getComponents(Component.ControlPoints);
@@ -737,8 +738,6 @@ public class PhysicsSimulation extends GameSystem
             Objects.requireNonNull(controlPoints);
             Objects.requireNonNull(armature);
             Objects.requireNonNull(force);
-
-            int ticks = -1;
 
             int flags = 0;
             if (controlPoints.is_moving_left())
