@@ -714,8 +714,6 @@ public class PhysicsSimulation extends GameSystem
 
     private void update_controllable_entities()
     {
-        glfwPollEvents();
-
         // todo: index and magnitudes only need to be set once, but may need some
         //  checks or logic to ensure characters don't get deleted
         var components = ecs.getComponents(Component.ControlPoints);
