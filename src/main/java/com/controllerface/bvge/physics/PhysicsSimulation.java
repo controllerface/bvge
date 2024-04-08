@@ -1034,6 +1034,11 @@ public class PhysicsSimulation extends GameSystem
         candidate_offsets.release();
         matches.release();
         matches_used.release();
+        control_point_flags.release();
+        control_point_indices.release();
+        control_point_tick_budgets.release();
+        control_point_linear_mag.release();
+        control_point_jump_mag.release();
 
         debug();
 
@@ -1058,6 +1063,11 @@ public class PhysicsSimulation extends GameSystem
         total += candidate_offsets.debug_data();
         total += matches.debug_data();
         total += matches_used.debug_data();
+        total += control_point_flags.debug_data();
+        total += control_point_indices.debug_data();
+        total += control_point_tick_budgets.debug_data();
+        total += control_point_linear_mag.debug_data();
+        total += control_point_jump_mag.debug_data();
 
         //System.out.println("---------------------------");
         System.out.println("Physics Memory Usage: MB " + ((float) total / 1024f / 1024f));

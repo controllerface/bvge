@@ -1,9 +1,3 @@
-#define LEFT   0b0000000000000001
-#define RIGHT  0b0000000000000010
-#define UP     0b0000000000000100
-#define DOWN   0b0000000000001000
-#define JUMP   0b0000000000010000
-
 __kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
                                  __global float *linear_mag,
@@ -77,12 +71,6 @@ __kernel void handle_movement(__global float2 *armature_accel,
     int tick_slice = current_budget > 0 
         ? 1 
         : 0;
-
-    // todo: logic should work so that if jump is released but ground hasn't been touched,
-    //  the budget is set to 0. The idea is to make it so a short hop still results in
-    //  the whole budget being taken even though it wasn't all used. then it is reset
-    //  when a ground touch occurs. Otherwise, two small jumps from mid-air would be possible
-    //  which should be avoided.
 
     current_budget = mv_jump 
         ? current_budget - tick_slice 

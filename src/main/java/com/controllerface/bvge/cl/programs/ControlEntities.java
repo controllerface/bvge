@@ -9,6 +9,7 @@ public class ControlEntities extends GPUProgram
     @Override
     public void init()
     {
+        src.add(const_control_flags);
         src.add(const_armature_flags);
         src.add(CLUtils.read_src("programs/control_entities.cl"));
 
