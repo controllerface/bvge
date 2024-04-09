@@ -23,7 +23,7 @@ public class CompactArmatures_k extends GPUKernel
         point_hull_indices,
         bone_tables,
         bone_bind_tables,
-        bone_index_tables,
+        hull_bind_pose_indicies,
         edges,
         bone_shift,
         point_shift,

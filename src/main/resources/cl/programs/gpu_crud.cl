@@ -150,14 +150,17 @@ __kernel void create_bone_reference(__global float16 *bone_references,
     bone_references[target] = new_bone_reference; 
 }
 
-__kernel void create_bone(__global float16 *bones,
-                          __global int2 *bone_index_tables,
-                          int target,
-                          float16 new_bone,
-                          int2 new_bone_table)
+__kernel void create_hull_bone(__global float16 *hull_bones,
+                               __global int *hull_bind_pose_indicies,
+                               __global int *hull_inv_bind_pose_indicies,
+                               int target,
+                               float16 new_hull_bone,
+                               int new_hull_bind_pose_id,
+                               int new_hull_inv_bind_pose_id)
 {
-    bones[target] = new_bone; 
-    bone_index_tables[target] = new_bone_table; 
+    hull_bones[target] = new_hull_bone; 
+    hull_bind_pose_indicies[target] = new_hull_bind_pose_id; 
+    hull_inv_bind_pose_indicies[target] = new_hull_inv_bind_pose_id; 
 }
 
 __kernel void create_armature_bone(__global float16 *armature_bones,

@@ -237,11 +237,15 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer hull_bone_buffer;
 
-    /** int2
-     * x: bone inverse bind pose index (mesh-space)
-     * y: bone bind pose index (model space)
+    /** int
+     * x: bone bind pose index (model space)
      */
-    private final ResizableBuffer hull_bone_table_buffer;
+    private final ResizableBuffer hull_bind_pose_id_buffer;
+
+    /** int
+     * x: bone inverse bind pose index (mesh-space)
+     */
+    private final ResizableBuffer hull_inv_bind_pose_id_buffer;
 
     /** float4
      * x: current x position
@@ -259,7 +263,7 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer hull_element_table_buffer;
 
-    /** in4
+    /** int4
      * x: hull flags (bit-field)
      * y: armature id
      * z: start bone
@@ -435,7 +439,8 @@ public class GPUCoreMemory
         hull_aabb_index_buffer          = new PersistentBuffer(CLSize.cl_int4, 10_000L);
         hull_aabb_key_buffer            = new PersistentBuffer(CLSize.cl_int2, 10_000L);
         hull_bone_buffer                = new PersistentBuffer(CLSize.cl_float16, 10_000L);
-        hull_bone_table_buffer          = new PersistentBuffer(CLSize.cl_int2, 10_000L);
+        hull_bind_pose_id_buffer        = new PersistentBuffer(CLSize.cl_int, 10_000L);
+        hull_inv_bind_pose_id_buffer    = new PersistentBuffer(CLSize.cl_int, 10_000L);
         hull_buffer                     = new PersistentBuffer(CLSize.cl_float4, 10_000L);
         hull_element_table_buffer       = new PersistentBuffer(CLSize.cl_int4, 10_000L);
         hull_flag_buffer                = new PersistentBuffer(CLSize.cl_int4, 10_000L);
@@ -517,10 +522,11 @@ public class GPUCoreMemory
             .buf_arg(CreateArmature_k.Args.armature_animation_indices, armature_anim_index_buffer)
             .buf_arg(CreateArmature_k.Args.armature_animation_elapsed, armature_anim_elapsed_buffer);
 
-        long create_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone);
-        create_bone_k = new CreateBone_k(GPGPU.command_queue_ptr, create_bone_k_ptr)
-            .buf_arg(CreateBone_k.Args.bones, hull_bone_buffer)
-            .buf_arg(CreateBone_k.Args.bone_index_tables, hull_bone_table_buffer);
+        long create_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_hull_bone);
+        create_bone_k = new CreateHullBone_k(GPGPU.command_queue_ptr, create_bone_k_ptr)
+            .buf_arg(CreateHullBone_k.Args.bones, hull_bone_buffer)
+            .buf_arg(CreateHullBone_k.Args.hull_bind_pose_indicies, hull_bind_pose_id_buffer)
+            .buf_arg(CreateHullBone_k.Args.hull_inv_bind_pose_indicies, hull_inv_bind_pose_id_buffer);
 
         long create_armature_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature_bone);
         create_armature_bone_k = new CreateArmatureBone_k(GPGPU.command_queue_ptr, create_armature_bone_k_ptr)
@@ -620,7 +626,7 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.point_hull_indices, point_hull_index_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_tables, point_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_bind_tables, armature_bone_table_buffer)
-            .buf_arg(CompactArmatures_k.Args.bone_index_tables, hull_bone_table_buffer)
+            .buf_arg(CompactArmatures_k.Args.hull_bind_pose_indicies, hull_bind_pose_id_buffer)
             .buf_arg(CompactArmatures_k.Args.edges, edge_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_shift, bone_shift)
             .buf_arg(CompactArmatures_k.Args.point_shift, point_shift)
@@ -662,7 +668,8 @@ public class GPUCoreMemory
         compact_bones_k = new CompactBones_k(GPGPU.command_queue_ptr, compact_bones_k_ptr)
             .buf_arg(CompactBones_k.Args.bone_shift, bone_shift)
             .buf_arg(CompactBones_k.Args.bone_instances, hull_bone_buffer)
-            .buf_arg(CompactBones_k.Args.bone_index_tables, hull_bone_table_buffer);
+            .buf_arg(CompactBones_k.Args.hull_bind_pose_indicies, hull_bind_pose_id_buffer)
+            .buf_arg(CompactBones_k.Args.hull_inv_bind_pose_indicies, hull_inv_bind_pose_id_buffer);
 
         long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armature_bones);
         compact_armature_bones_k = new CompactArmatureBones_k(GPGPU.command_queue_ptr, compact_armature_bones_k_ptr)
@@ -675,55 +682,56 @@ public class GPUCoreMemory
     {
         return switch (bufferType)
         {
-            case ANIM_FRAME_TIME        -> anim_frame_time_buffer;
-            case ANIM_KEY_FRAME         -> anim_key_frame_buffer;
-            case ANIM_POS_CHANNEL       -> anim_bone_pos_channel_buffer;
-            case ANIM_ROT_CHANNEL       -> anim_bone_rot_channel_buffer;
-            case ANIM_SCL_CHANNEL       -> anim_bone_scl_channel_buffer;
-            case ANIM_TIMING            -> anim_timing_buffer;
-            case ANIM_TIMING_INDEX      -> anim_timing_index_buffer;
-            case ARMATURE               -> armature_buffer;
-            case ARMATURE_ACCEL         -> armature_accel_buffer;
-            case ARMATURE_ANIM_ELAPSED  -> armature_anim_elapsed_buffer;
-            case ARMATURE_ANIM_INDEX    -> armature_anim_index_buffer;
-            case ARMATURE_BONE          -> armature_bone_buffer;
-            case ARMATURE_BONE_TABLE    -> armature_bone_table_buffer;
-            case ARMATURE_FLAG          -> armature_flag_buffer;
-            case ARMATURE_HULL_TABLE    -> armature_hull_table_buffer;
-            case ARMATURE_MASS          -> armature_mass_buffer;
-            case ARMATURE_MODEL_ID -> armature_model_id_buffer;
-            case ARMATURE_ROOT_HULL -> armature_root_hull_buffer;
-            case ARMATURE_TRANSFORM_ID -> armature_model_transform_buffer;
-            case BONE_ANIM_TABLE        -> bone_anim_channel_table_buffer;
-            case BONE_BIND_POSE         -> bone_bind_pose_buffer;
-            case BONE_REFERENCE         -> bone_reference_buffer;
-            case EDGE                   -> edge_buffer;
-            case EDGE_FLAG              -> edge_flag_buffer;
-            case EDGE_LENGTH            -> edge_length_buffer;
-            case HULL                   -> hull_buffer;
-            case HULL_AABB              -> hull_aabb_buffer;
-            case HULL_AABB_INDEX        -> hull_aabb_index_buffer;
-            case HULL_AABB_KEY_TABLE    -> hull_aabb_key_buffer;
-            case HULL_BONE              -> hull_bone_buffer;
-            case HULL_BONE_TABLE        -> hull_bone_table_buffer;
-            case HULL_ELEMENT_TABLE     -> hull_element_table_buffer;
-            case HULL_FLAG              -> hull_flag_buffer;
-            case HULL_FRICTION          -> hull_friction_buffer;
-            case HULL_MESH_ID           -> hull_mesh_id_buffer;
-            case HULL_ROTATION          -> hull_rotation_buffer;
-            case MESH_FACE              -> mesh_face_buffer;
-            case MESH_REFERENCE         -> mesh_reference_buffer;
-            case MODEL_TRANSFORM        -> model_transform_buffer;
-            case POINT                  -> point_buffer;
-            case POINT_ANTI_GRAV        -> point_anti_gravity_buffer;
-            case POINT_BONE_TABLE       -> point_bone_table_buffer;
-            case POINT_VERTEX_REFERENCE -> point_vertex_reference_buffer;
-            case POINT_HULL_INDEX       -> point_hull_index_buffer;
-            case POINT_FLAG             -> point_flag_buffer;
-            case VERTEX_REFERENCE       -> vertex_reference_buffer;
-            case VERTEX_TEXTURE_UV      -> vertex_texture_uv_buffer;
-            case VERTEX_UV_TABLE        -> vertex_uv_table_buffer;
-            case VERTEX_WEIGHT          -> vertex_weight_buffer;
+            case ANIM_FRAME_TIME         -> anim_frame_time_buffer;
+            case ANIM_KEY_FRAME          -> anim_key_frame_buffer;
+            case ANIM_POS_CHANNEL        -> anim_bone_pos_channel_buffer;
+            case ANIM_ROT_CHANNEL        -> anim_bone_rot_channel_buffer;
+            case ANIM_SCL_CHANNEL        -> anim_bone_scl_channel_buffer;
+            case ANIM_TIMING             -> anim_timing_buffer;
+            case ANIM_TIMING_INDEX       -> anim_timing_index_buffer;
+            case ARMATURE                -> armature_buffer;
+            case ARMATURE_ACCEL          -> armature_accel_buffer;
+            case ARMATURE_ANIM_ELAPSED   -> armature_anim_elapsed_buffer;
+            case ARMATURE_ANIM_INDEX     -> armature_anim_index_buffer;
+            case ARMATURE_BONE           -> armature_bone_buffer;
+            case ARMATURE_BONE_TABLE     -> armature_bone_table_buffer;
+            case ARMATURE_FLAG           -> armature_flag_buffer;
+            case ARMATURE_HULL_TABLE     -> armature_hull_table_buffer;
+            case ARMATURE_MASS           -> armature_mass_buffer;
+            case ARMATURE_MODEL_ID       -> armature_model_id_buffer;
+            case ARMATURE_ROOT_HULL      -> armature_root_hull_buffer;
+            case ARMATURE_TRANSFORM_ID   -> armature_model_transform_buffer;
+            case BONE_ANIM_TABLE         -> bone_anim_channel_table_buffer;
+            case BONE_BIND_POSE          -> bone_bind_pose_buffer;
+            case BONE_REFERENCE          -> bone_reference_buffer;
+            case EDGE                    -> edge_buffer;
+            case EDGE_FLAG               -> edge_flag_buffer;
+            case EDGE_LENGTH             -> edge_length_buffer;
+            case HULL                    -> hull_buffer;
+            case HULL_AABB               -> hull_aabb_buffer;
+            case HULL_AABB_INDEX         -> hull_aabb_index_buffer;
+            case HULL_AABB_KEY_TABLE     -> hull_aabb_key_buffer;
+            case HULL_BONE               -> hull_bone_buffer;
+            case HULL_BONE_BIND_POSE     -> hull_bind_pose_id_buffer;
+            case HULL_BONE_INV_BIND_POSE -> hull_inv_bind_pose_id_buffer;
+            case HULL_ELEMENT_TABLE      -> hull_element_table_buffer;
+            case HULL_FLAG               -> hull_flag_buffer;
+            case HULL_FRICTION           -> hull_friction_buffer;
+            case HULL_MESH_ID            -> hull_mesh_id_buffer;
+            case HULL_ROTATION           -> hull_rotation_buffer;
+            case MESH_FACE               -> mesh_face_buffer;
+            case MESH_REFERENCE          -> mesh_reference_buffer;
+            case MODEL_TRANSFORM         -> model_transform_buffer;
+            case POINT                   -> point_buffer;
+            case POINT_ANTI_GRAV         -> point_anti_gravity_buffer;
+            case POINT_BONE_TABLE        -> point_bone_table_buffer;
+            case POINT_VERTEX_REFERENCE  -> point_vertex_reference_buffer;
+            case POINT_HULL_INDEX        -> point_hull_index_buffer;
+            case POINT_FLAG              -> point_flag_buffer;
+            case VERTEX_REFERENCE        -> vertex_reference_buffer;
+            case VERTEX_TEXTURE_UV       -> vertex_texture_uv_buffer;
+            case VERTEX_UV_TABLE         -> vertex_uv_table_buffer;
+            case VERTEX_WEIGHT           -> vertex_weight_buffer;
         };
     }
 
@@ -987,16 +995,18 @@ public class GPUCoreMemory
         return bone_ref_index++;
     }
 
-    public int new_bone(int[] bone_table, float[] bone_data)
+    public int new_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id)
     {
         int capacity = bone_index + 1;
         hull_bone_buffer.ensure_capacity(capacity);
-        hull_bone_table_buffer.ensure_capacity(capacity);
+        hull_bind_pose_id_buffer.ensure_capacity(capacity);
+        hull_inv_bind_pose_id_buffer.ensure_capacity(capacity);
 
         create_bone_k
-            .set_arg(CreateBone_k.Args.target, bone_index)
-            .set_arg(CreateBone_k.Args.new_bone, bone_data)
-            .set_arg(CreateBone_k.Args.new_bone_table, bone_table)
+            .set_arg(CreateHullBone_k.Args.target, bone_index)
+            .set_arg(CreateHullBone_k.Args.new_bone, bone_data)
+            .set_arg(CreateHullBone_k.Args.new_hull_bind_pose_id, bind_pose_id)
+            .set_arg(CreateHullBone_k.Args.new_hull_inv_bind_pose_id, inv_bind_pose_id)
             .call(GPGPU.global_single_size);
 
         return bone_index++;
@@ -1243,7 +1253,8 @@ public class GPUCoreMemory
         hull_aabb_index_buffer.release();
         hull_aabb_key_buffer.release();
         hull_bone_buffer.release();
-        hull_bone_table_buffer.release();
+        hull_bind_pose_id_buffer.release();
+        hull_inv_bind_pose_id_buffer.release();
         point_buffer.release();
         point_anti_gravity_buffer.release();
         point_vertex_reference_buffer.release();
@@ -1314,7 +1325,8 @@ public class GPUCoreMemory
         total += hull_aabb_index_buffer.debug_data();
         total += hull_aabb_key_buffer.debug_data();
         total += hull_bone_buffer.debug_data();
-        total += hull_bone_table_buffer.debug_data();
+        total += hull_bind_pose_id_buffer.debug_data();
+        total += hull_inv_bind_pose_id_buffer.debug_data();
         total += point_buffer.debug_data();
         total += point_anti_gravity_buffer.debug_data();
         total += point_vertex_reference_buffer.debug_data();

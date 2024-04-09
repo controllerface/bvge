@@ -128,12 +128,14 @@ __kernel void animate_armatures(__global float16 *armature_bones,
 __kernel void animate_bones(__global float16 *bones,
                             __global float16 *bone_references,
                             __global float16 *armature_bones,
-                            __global int2 *bone_index_tables)
+                            __global int *hull_bind_pose_indicies,
+                            __global int *hull_inv_bind_pose_indicies)
 {
     int current_bone = get_global_id(0);
-    int2 index_table = bone_index_tables[current_bone];
-    float16 bone_reference = bone_references[index_table.x];
-    float16 armature_bone = armature_bones[index_table.y];
+    int bind_pose_id = hull_bind_pose_indicies[current_bone];
+    int inv_bind_pose_id = hull_inv_bind_pose_indicies[current_bone];
+    float16 bone_reference = bone_references[inv_bind_pose_id];
+    float16 armature_bone = armature_bones[bind_pose_id];
     float16 next_position = matrix_mul_affine(armature_bone, bone_reference);
     bones[current_bone] = next_position;
 }

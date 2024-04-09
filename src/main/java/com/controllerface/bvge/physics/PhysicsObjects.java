@@ -6,7 +6,6 @@ import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.Models;
 import com.controllerface.bvge.geometry.Vertex;
-import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -264,8 +263,7 @@ public class PhysicsObjects
                 var bone_transform = bone_bind_pose.mul(bone_offset.transform(), matrix_buffer);
                 var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
                 var bind_pose_id = armature_bone_map.get(bone_offset.name());
-                int[] bone_table = new int[]{bone_offset.offset_ref_id(), bind_pose_id};
-                int next_bone = GPGPU.core_memory.new_bone(bone_table, raw_matrix);
+                int next_bone = GPGPU.core_memory.new_hull_bone(raw_matrix, bind_pose_id, bone_offset.offset_ref_id());
                 bone_map.put(bone_offset.name(), next_bone);
 
                 if (start_hull_bone == -1)

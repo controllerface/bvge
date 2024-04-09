@@ -28,7 +28,7 @@ public enum Kernel
     create_animation_timings,
     create_armature,
     create_armature_bone,
-    create_bone,
+    create_hull_bone,
     create_bone_bind_pose,
     create_bone_channel,
     create_bone_reference,

@@ -8,7 +8,8 @@ public class CompactBones_k extends GPUKernel
     {
         bone_shift,
         bone_instances,
-        bone_index_tables;
+        hull_bind_pose_indicies,
+        hull_inv_bind_pose_indicies,
     }
 
     public CompactBones_k(long command_queue_ptr, long kernel_ptr)
