@@ -61,7 +61,7 @@ __kernel void handle_movement(__global float2 *armature_accel,
 
     bool can_jump = (arm_flag.z & CAN_JUMP) !=0;
     current_budget = can_jump && !mv_jump
-        ? 25
+        ? 20
         : mv_jump 
             ? current_budget 
             : 0;

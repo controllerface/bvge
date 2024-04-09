@@ -33,8 +33,7 @@ public class GPGPU
     /**
      * A convenience object, used when clearing out buffers to fill them with zeroes
      */
-    private static final ByteBuffer ZERO_PATTERN_BUFFER = BufferUtils.createByteBuffer(1)
-        .put(0, (byte) 0);
+    private static final ByteBuffer ZERO_PATTERN_BUFFER = MemoryUtil.memCalloc(1);
 
     //#endregion
 
@@ -783,6 +782,7 @@ public class GPGPU
 
         clReleaseCommandQueue(command_queue_ptr);
         clReleaseContext(context_ptr);
+        MemoryUtil.memFree(ZERO_PATTERN_BUFFER);
     }
 
     //#endregion

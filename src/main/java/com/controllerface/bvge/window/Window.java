@@ -193,8 +193,6 @@ public class Window
         cursor_image.height(height);   // set up image height
         cursor_image.pixels(cursor_buffer);   // pass image data
 
-        MemoryUtil.memFree(cursor_buffer);
-
         // the hotspot indicates the displacement of the sprite to the
         // position where mouse clicks are registered (see image below)
         int hotspot_x = width / 2;
@@ -202,6 +200,8 @@ public class Window
 
         // create custom cursor and store its ID
         long cursor_id = org.lwjgl.glfw.GLFW.glfwCreateCursor(cursor_image, hotspot_x, hotspot_y);
+
+        MemoryUtil.memFree(cursor_buffer);
 
         // set current cursor
         glfwSetCursor(glfwWindow, cursor_id);
