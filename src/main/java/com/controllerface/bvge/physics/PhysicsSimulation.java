@@ -134,7 +134,6 @@ public class PhysicsSimulation extends GameSystem
     public final ResizableBuffer control_point_linear_mag;
     public final ResizableBuffer control_point_jump_mag;
 
-
     private long candidate_count = 0;
     private long reaction_count = 0;
     private long candidate_buffer_size = 0;

@@ -89,7 +89,7 @@ public class GPUCoreMemory
     /** double
      * x: key frame timestamp
      */
-    private final ResizableBuffer anim_frame_time_buffer;
+    private final ResizableBuffer anim_frame_time_buffer; // todo: convert to float
 
     /** float4
      * x: vector/quaternion x
@@ -103,7 +103,7 @@ public class GPUCoreMemory
      * x: animation duration
      * y: ticks per second (FPS)
      */
-    private final ResizableBuffer anim_timing_buffer;
+    private final ResizableBuffer anim_timing_buffer; // todo: split into separate buffers and convert to float
 
     /** int
      * x: animation timing index
@@ -135,7 +135,7 @@ public class GPUCoreMemory
      * x: bind pose reference id
      * y: armature bone parent id
      */
-    private final ResizableBuffer armature_bone_table_buffer;
+    private final ResizableBuffer armature_bone_table_buffer; // todo: split into separate buffers
 
     /** float4
      * x: current x position
@@ -171,7 +171,7 @@ public class GPUCoreMemory
      * z: start bone anim index
      * w: end bone anim index
      */
-    private final ResizableBuffer armature_hull_table_buffer;
+    private final ResizableBuffer armature_hull_table_buffer; // todo: split into separate buffers
 
     /** float
      * x: mass of the armature
@@ -253,7 +253,7 @@ public class GPUCoreMemory
      * z: scale x
      * w: scale y
      */
-    private final ResizableBuffer hull_buffer;
+    private final ResizableBuffer hull_buffer; // todo: split into separate buffers
 
     /** int4
      * x: start point index
@@ -261,7 +261,7 @@ public class GPUCoreMemory
      * z: start edge index
      * w: end edge index
      */
-    private final ResizableBuffer hull_element_table_buffer;
+    private final ResizableBuffer hull_element_table_buffer; // todo: split into separate buffers
 
     /** int
      * x: hull flags (bit-field)
@@ -283,7 +283,7 @@ public class GPUCoreMemory
      * x: friction coefficient
      * y: restitution coefficient
      */
-    private final ResizableBuffer hull_friction_buffer;
+    private final ResizableBuffer hull_friction_buffer; // todo: split into separate buffers
 
     /** int
      * x: reference mesh id
@@ -310,7 +310,7 @@ public class GPUCoreMemory
      * z: start face index
      * w: end face index
      */
-    private final ResizableBuffer mesh_reference_buffer;
+    private final ResizableBuffer mesh_reference_buffer; // todo: split into separate buffers
 
     /** float16
      * s0-sF: Column-major, 4x4 transformation matrix
