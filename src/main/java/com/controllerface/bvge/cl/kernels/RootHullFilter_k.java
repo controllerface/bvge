@@ -6,7 +6,8 @@ public class RootHullFilter_k extends GPUKernel
 {
     public enum Args
     {
-        armature_flags,
+        armature_root_hulls,
+        armature_model_indices,
         hulls_out,
         counter,
         model_id;

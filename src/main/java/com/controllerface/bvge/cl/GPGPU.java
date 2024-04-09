@@ -2,7 +2,6 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -258,11 +257,12 @@ public class GPGPU
 
         long root_hull_filter_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_filter);
         root_hull_filter_k = new RootHullFilter_k(command_queue_ptr, root_hull_filter_ptr)
-            .buf_arg(RootHullFilter_k.Args.armature_flags, core_memory.buffer(BufferType.ARMATURE_FLAG));
+            .buf_arg(RootHullFilter_k.Args.armature_root_hulls, core_memory.buffer(BufferType.ARMATURE_ROOT_HULL))
+            .buf_arg(RootHullFilter_k.Args.armature_model_indices, core_memory.buffer(BufferType.ARMATURE_MODEL_ID));
 
         long root_hull_count_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_count);
         root_hull_count_k = new RootHullCount_k(command_queue_ptr, root_hull_count_ptr)
-            .buf_arg(RootHullCount_k.Args.armature_flags, core_memory.buffer(BufferType.ARMATURE_FLAG));
+            .buf_arg(RootHullCount_k.Args.armature_model_indices, core_memory.buffer(BufferType.ARMATURE_MODEL_ID));
     }
 
     //#endregion

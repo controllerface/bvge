@@ -15,7 +15,7 @@ __kernel void set_control_points(__global int *control_flags,
 }
 
 __kernel void handle_movement(__global float2 *armature_accel,
-                              __global int4 *armature_flags,
+                              __global int *armature_flags,
                               __global int *control_flags,
                               __global int *indices,
                               __global int *tick_budgets,
@@ -30,7 +30,7 @@ __kernel void handle_movement(__global float2 *armature_accel,
 
     int current_index = indices[current_control_set];
     float2 accel = armature_accel[current_index];
-    int4 arm_flag = armature_flags[current_index];
+    int arm_flag = armature_flags[current_index];
 
     bool is_mv_l = (current_flags & LEFT) !=0;
     bool is_mv_r = (current_flags & RIGHT) !=0;
@@ -59,14 +59,14 @@ __kernel void handle_movement(__global float2 *armature_accel,
     //     : accel.y;
 
 
-    bool can_jump = (arm_flag.z & CAN_JUMP) !=0;
+    bool can_jump = (arm_flag & CAN_JUMP) !=0;
     current_budget = can_jump && !mv_jump
         ? 20
         : mv_jump 
             ? current_budget 
             : 0;
 
-    arm_flag.z &= ~CAN_JUMP;
+    arm_flag &= ~CAN_JUMP;
 
     int tick_slice = current_budget > 0 
         ? 1 

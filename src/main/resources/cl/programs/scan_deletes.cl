@@ -9,7 +9,7 @@ typedef struct
 } DropCounts;
 
 inline DropCounts calculate_drop_counts(int armature_id,
-                                        __global int4 *armature_flags,
+                                        __global int *armature_flags,
                                         __global int4 *hull_tables,
                                         __global int4 *element_tables,
                                         __global int4 *hull_flags)
@@ -23,8 +23,8 @@ inline DropCounts calculate_drop_counts(int armature_id,
     drop_counts.armature_count = 0;
     drop_counts.bone_bind_count = 0;
 
-    int4 armature_flag = armature_flags[armature_id];
-    bool deleted = (armature_flag.z & DELETED) !=0;
+    int flags = armature_flags[armature_id];
+    bool deleted = (flags & DELETED) !=0;
             
     if (deleted)
     {
@@ -55,7 +55,7 @@ inline DropCounts calculate_drop_counts(int armature_id,
 
 __kernel void locate_out_of_bounds(__global int4 *hull_tables,
                                    __global int4 *hull_flags,
-                                   __global int4 *armature_flags,
+                                   __global int *armature_flags,
                                    __global int *counter)
 {
     int gid = get_global_id(0);
@@ -76,14 +76,13 @@ __kernel void locate_out_of_bounds(__global int4 *hull_tables,
 
     if (out_count == hull_count)
     {
-        int4 armature_flag = armature_flags[gid];
-        int z = armature_flag.z;
-        z = (z | DELETED);
-        armature_flags[gid].z = z;
+        int flags = armature_flags[gid];
+        flags = (flags | DELETED);
+        armature_flags[gid] = flags;
     }
 }
 
-__kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
+__kernel void scan_deletes_single_block_out(__global int *armature_flags,
                                             __global int4 *hull_tables,
                                             __global int4 *element_tables,
                                             __global int4 *hull_flags,
@@ -187,7 +186,7 @@ __kernel void scan_deletes_single_block_out(__global int4 *armature_flags,
     }
 }
 
-__kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
+__kernel void scan_deletes_multi_block_out(__global int *armature_flags,
                                            __global int4 *hull_tables,
                                            __global int4 *element_tables,
                                            __global int4 *hull_flags,
@@ -278,7 +277,7 @@ __kernel void scan_deletes_multi_block_out(__global int4 *armature_flags,
     }
 }
 
-__kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
+__kernel void complete_deletes_multi_block_out(__global int *armature_flags,
                                                __global int4 *hull_tables,
                                                __global int4 *element_tables,
                                                __global int4 *hull_flags,
@@ -364,7 +363,10 @@ __kernel void complete_deletes_multi_block_out(__global int4 *armature_flags,
 __kernel void compact_armatures(__global int2 *buffer_in_1,
                                 __global int4 *buffer_in_2,
                                 __global float4 *armatures,
-                                __global int4 *armature_flags,
+                                __global int *armature_root_hulls,
+                                __global int *armature_model_indices,
+                                __global int *armature_model_transforms,
+                                __global int *armature_flags,
                                 __global int *armature_animation_indices,
                                 __global double *armature_animation_elapsed,
                                 __global int4 *hull_tables,
@@ -396,16 +398,19 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
     drop.armature_count = buffer_2.w;
 
     // armature
-    float4 armature = armatures[gid];
-    int4 armature_flag = armature_flags[gid];
-    int4 hull_table = hull_tables[gid];
-    int anim_index = armature_animation_indices[gid];
-    double anim_time = armature_animation_elapsed[gid];
+    float4 armature                 = armatures[gid];
+    int armature_root_hull          = armature_root_hulls[gid];
+    int armature_model_id           = armature_model_indices[gid];
+    int armature_model_transform_id = armature_model_transforms[gid];
+    int armature_flag               = armature_flags[gid];
+    int4 hull_table                 = hull_tables[gid];
+    int anim_index                  = armature_animation_indices[gid];
+    double anim_time                = armature_animation_elapsed[gid];
     
     barrier(CLK_GLOBAL_MEM_FENCE);
 
     // any armature that is being deleted can be ignored
-    bool is_out = (armature_flag.z & DELETED) !=0;
+    bool is_out = (armature_flag & DELETED) !=0;
     if (is_out || drop.armature_count == 0) 
     {
         return;
@@ -414,8 +419,8 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
     // update with drop counts
     int new_armature_index = gid - drop.armature_count;
 
-    int4 new_armature_flag = armature_flag;
-    new_armature_flag.x -= drop.hull_count;
+    int new_armature_root_hull = armature_root_hull;
+    new_armature_root_hull -= drop.hull_count;
 
     int4 new_hull_table = hull_table;
     new_hull_table.x -= drop.hull_count;
@@ -424,9 +429,12 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
     new_hull_table.w -= drop.bone_bind_count;
 
     // store updated data at the new index
-    armatures[new_armature_index] = armature;
-    armature_flags[new_armature_index] = new_armature_flag;
-    hull_tables[new_armature_index] = new_hull_table;
+    armatures[new_armature_index]                  = armature;
+    armature_root_hulls[new_armature_index]        = new_armature_root_hull;
+    armature_model_indices[new_armature_index]     = armature_model_id;
+    armature_model_transforms[new_armature_index]  = armature_model_transform_id;
+    armature_flags[new_armature_index]             = armature_flag;
+    hull_tables[new_armature_index]                = new_hull_table;
     armature_animation_indices[new_armature_index] = anim_index;
     armature_animation_elapsed[new_armature_index] = anim_time;
 

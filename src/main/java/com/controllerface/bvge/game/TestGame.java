@@ -259,18 +259,18 @@ public class TestGame extends GameMode
         // player character
         genTestFigure(1f, 400, 600);
 
-//        genTestFigureNPC(1f, 200, 0);
-//        genTestFigureNPC(1f, 200, 100);
-//        genTestFigureNPC(1f, 200, 250);
-//        genTestFigureNPC(1f, 100, 50);
+        genTestFigureNPC(1f, 200, 0);
+        genTestFigureNPC(1f, 200, 100);
+        genTestFigureNPC(1f, 200, 250);
+        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(150, 6f, 5f, 0, 100);
-        genSquares(25,  5f, 5f, 0, 300);
+        //genSquares(25,  5f, 5f, 0, 300);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  6f, 5f, -120, 200);
-        genTriangles(25,  5f, 5f, 0, 100);
+        //genTriangles(25,  5f, 5f, 0, 100);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);

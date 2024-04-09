@@ -246,7 +246,7 @@ __kernel void integrate(__global float4 *hulls,
 }
 
 __kernel void integrate_armatures(__global float4 *armatures,
-                                  __global int4 *armature_flags,
+                                  __global int *armature_root_hulls,
                                   __global float2 *armature_accel,
                                   __global int4 *hull_flags,
                                   __global float *args)
@@ -258,9 +258,9 @@ __kernel void integrate_armatures(__global float4 *armatures,
     float damping = args[11];
 
     float4 armature = armatures[current_armature];
-    int4 armature_flag = armature_flags[current_armature];
+    int root_hull = armature_root_hulls[current_armature];
     float2 acc = armature_accel[current_armature];
-    int4 root_hull_flags = hull_flags[armature_flag.x];
+    int4 root_hull_flags = hull_flags[root_hull];
 
     bool is_static = (root_hull_flags.x & IS_STATIC) !=0;
     bool no_bones = (root_hull_flags.x & NO_BONES) !=0;

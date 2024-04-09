@@ -6,7 +6,7 @@ public class RootHullCount_k extends GPUKernel
 {
     public enum Args
     {
-        armature_flags,
+        armature_model_indices,
         counter,
         model_id;
     }

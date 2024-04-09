@@ -78,7 +78,7 @@ __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global int2 *bone_pos_channel_tables,
                                 __global int2 *bone_rot_channel_tables,
                                 __global int2 *bone_scl_channel_tables,
-                                __global int4 *armature_flags,
+                                __global int *armature_model_transforms,
                                 __global int4 *hull_tables,
                                 __global float4 *key_frames,
                                 __global double *frame_times,
@@ -90,8 +90,8 @@ __kernel void animate_armatures(__global float16 *armature_bones,
 {
     int current_armature = get_global_id(0);
     int4 hull_table = hull_tables[current_armature];
-    int4 armature_flag = armature_flags[current_armature];
-    float16 model_transform = model_transforms[armature_flag.w];
+    int armature_transform_id = armature_model_transforms[current_armature];
+    float16 model_transform = model_transforms[armature_transform_id];
     int current_animation = armature_animation_indices[current_armature]; 
     double current_frame_time = armature_animation_elapsed[current_armature] += (double)delta_time;
 

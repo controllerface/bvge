@@ -7,6 +7,9 @@ public class CreateArmature_k extends GPUKernel
     public enum Args
     {
         armatures,
+        armature_root_hulls,
+        armature_model_indices,
+        armature_model_transforms,
         armature_flags,
         hull_tables,
         armature_masses,
@@ -14,6 +17,9 @@ public class CreateArmature_k extends GPUKernel
         armature_animation_elapsed,
         target,
         new_armature,
+        new_armature_root_hull,
+        new_armature_model_id,
+        new_armature_model_transform,
         new_armature_flags,
         new_hull_table,
         new_armature_mass,

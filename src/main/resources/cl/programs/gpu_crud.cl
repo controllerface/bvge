@@ -86,20 +86,29 @@ __kernel void create_texture_uv(__global float2 *texture_uvs,
 }
 
 __kernel void create_armature(__global float4 *armatures,
-                              __global int4 *armature_flags,
+                              __global int *armature_root_hulls,
+                              __global int *armature_model_indices,
+                              __global int *armature_model_transforms,
+                              __global int *armature_flags,
                               __global int4 *hull_tables,
                               __global float *armature_masses,
                               __global int *armature_animation_indices,
                               __global double *armature_animation_elapsed,
                               int target,
                               float4 new_armature,
-                              int4 new_armature_flags,
+                              int new_armature_root_hull,
+                              int new_armature_model_id,
+                              int new_armature_model_transform,
+                              int new_armature_flags,
                               int4 new_hull_table,
                               float new_armature_mass,
                               int new_armature_animation_index,
                               double new_armature_animation_time)
 {
     armatures[target] = new_armature; 
+    armature_root_hulls[target] = new_armature_root_hull; 
+    armature_model_indices[target] = new_armature_model_id; 
+    armature_model_transforms[target] = new_armature_model_transform; 
     armature_flags[target] = new_armature_flags; 
     hull_tables[target] = new_hull_table; 
     armature_masses[target] = new_armature_mass;

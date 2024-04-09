@@ -219,7 +219,7 @@ public class PhysicsSimulation extends GameSystem
         long integrate_armatures_k_ptr = integrate.kernel_ptr(Kernel.integrate_armatures);
         integrate_armatures_k = new IntegrateArmatures_k(GPGPU.command_queue_ptr, integrate_armatures_k_ptr)
             .buf_arg(IntegrateArmatures_k.Args.armatures, GPGPU.core_memory.buffer(BufferType.ARMATURE))
-            .buf_arg(IntegrateArmatures_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
+            .buf_arg(IntegrateArmatures_k.Args.armature_root_hulls, GPGPU.core_memory.buffer(BufferType.ARMATURE_ROOT_HULL))
             .buf_arg(IntegrateArmatures_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
             .buf_arg(IntegrateArmatures_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG));
 
@@ -356,7 +356,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimateArmatures_k.Args.bone_pos_channel_tables, GPGPU.core_memory.buffer(BufferType.ANIM_POS_CHANNEL))
             .buf_arg(AnimateArmatures_k.Args.bone_rot_channel_tables, GPGPU.core_memory.buffer(BufferType.ANIM_ROT_CHANNEL))
             .buf_arg(AnimateArmatures_k.Args.bone_scl_channel_tables, GPGPU.core_memory.buffer(BufferType.ANIM_SCL_CHANNEL))
-            .buf_arg(AnimateArmatures_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
+            .buf_arg(AnimateArmatures_k.Args.armature_model_transforms, GPGPU.core_memory.buffer(BufferType.ARMATURE_TRANSFORM_ID))
             .buf_arg(AnimateArmatures_k.Args.hull_tables, GPGPU.core_memory.buffer(BufferType.ARMATURE_HULL_TABLE))
             .buf_arg(AnimateArmatures_k.Args.key_frames, GPGPU.core_memory.buffer(BufferType.ANIM_KEY_FRAME))
             .buf_arg(AnimateArmatures_k.Args.frame_times, GPGPU.core_memory.buffer(BufferType.ANIM_FRAME_TIME))
