@@ -61,18 +61,21 @@ __kernel void set_bone_channel_table(__global int2 *bone_channel_tables,
     bone_channel_tables[target] = new_bone_channel_table;
 }
 
-__kernel void create_animation_timings(__global double2 *animation_timings,
+__kernel void create_animation_timings(__global float *animation_durations,
+                                       __global float *animation_tick_rates,
                                        int target,
-                                       double2 new_animation_timing)
+                                       float new_animation_duration,
+                                       float new_animation_tick_rate)
 {
-    animation_timings[target] = new_animation_timing;
+    animation_durations[target] = new_animation_duration;
+    animation_tick_rates[target] = new_animation_tick_rate;
 }
 
 __kernel void create_keyframe(__global float4 *key_frames,
-                              __global double *frame_times,
+                              __global float *frame_times,
                               int target,
                               float4 new_keyframe,
-                              double new_frame_time)
+                              float new_frame_time)
 {
     key_frames[target] = new_keyframe;
     frame_times[target] = new_frame_time;
@@ -93,7 +96,7 @@ __kernel void create_armature(__global float4 *armatures,
                               __global int4 *hull_tables,
                               __global float *armature_masses,
                               __global int *armature_animation_indices,
-                              __global double *armature_animation_elapsed,
+                              __global float *armature_animation_elapsed,
                               int target,
                               float4 new_armature,
                               int new_armature_root_hull,
@@ -103,7 +106,7 @@ __kernel void create_armature(__global float4 *armatures,
                               int4 new_hull_table,
                               float new_armature_mass,
                               int new_armature_animation_index,
-                              double new_armature_animation_time)
+                              float new_armature_animation_time)
 {
     armatures[target] = new_armature; 
     armature_root_hulls[target] = new_armature_root_hull; 

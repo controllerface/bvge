@@ -6,23 +6,23 @@ typedef struct
 } KeyFramePair;
 
 inline KeyFramePair find_keyframe_pair(__global float4 *key_frames, 
-                                       __global double *frame_times,
-                                       double anim_time_ticks,
+                                       __global float *frame_times,
+                                       float anim_time_ticks,
                                        int2 channel_table)
 {
     KeyFramePair result;
     for (int pos_index_b = channel_table.x; pos_index_b <= channel_table.y; pos_index_b++)
     {
-        double time_b = frame_times[pos_index_b];
+        float time_b = frame_times[pos_index_b];
         if (time_b > anim_time_ticks)
         {
             int pos_index_a = pos_index_b - 1;
             result.frame_a = key_frames[pos_index_a];
             result.frame_b = key_frames[pos_index_b];
             
-            double time_a = frame_times[pos_index_a];
-            float delta = (float)time_b - (float)time_a;
-            result.lerp_factor =  native_divide( ((float)anim_time_ticks - (float)time_a), delta);
+            float time_a = frame_times[pos_index_a];
+            float delta = time_b - time_a;
+            result.lerp_factor =  native_divide( (anim_time_ticks - time_a), delta);
             break;
         }
     }
@@ -35,10 +35,11 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                            __global int2 *bone_rot_channel_tables,
                            __global int2 *bone_scl_channel_tables,
                            __global int *animation_timing_indices,
-                           __global double2 *animation_timings,
+                           __global float *animation_durations,
+                           __global float *animation_tick_rates,
                            __global float4 *key_frames,
-                           __global double *frame_times,
-                           double current_time,
+                           __global float *frame_times,
+                           float current_time,
                            int animation_index,
                            int bone_id)
 {
@@ -50,10 +51,11 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     int2 pos_channel_table = bone_pos_channel_tables[channel_index];
     int2 rot_channel_table = bone_rot_channel_tables[channel_index];
     int2 scl_channel_table = bone_scl_channel_tables[channel_index];
-    double2 timings = animation_timings[timing_index];
+    float duration = animation_durations[timing_index];
+    float tick_rate = animation_tick_rates[timing_index];
 
-    double time_in_ticks = current_time * timings.y;
-    double anim_time_ticks = fmod(time_in_ticks, timings.x);
+    float time_in_ticks = current_time * tick_rate;
+    float anim_time_ticks = fmod(time_in_ticks, duration);
 
     KeyFramePair pos_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, pos_channel_table);
     KeyFramePair rot_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, rot_channel_table);
@@ -81,11 +83,12 @@ __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global int *armature_model_transforms,
                                 __global int4 *hull_tables,
                                 __global float4 *key_frames,
-                                __global double *frame_times,
+                                __global float *frame_times,
                                 __global int *animation_timing_indices,
-                                __global double2 *animation_timings,
+                                __global float *animation_durations,
+                                __global float *animation_tick_rates,
                                 __global int *armature_animation_indices,
-                                __global double *armature_animation_elapsed,
+                                __global float *armature_animation_elapsed,
                                 float delta_time)
 {
     int current_armature = get_global_id(0);
@@ -93,7 +96,7 @@ __kernel void animate_armatures(__global float16 *armature_bones,
     int armature_transform_id = armature_model_transforms[current_armature];
     float16 model_transform = model_transforms[armature_transform_id];
     int current_animation = armature_animation_indices[current_armature]; 
-    double current_frame_time = armature_animation_elapsed[current_armature] += (double)delta_time;
+    float current_frame_time = armature_animation_elapsed[current_armature] += delta_time;
 
     // note that armatures with no bones simply do nothing as the bone count will be zero
     int armature_bone_count = hull_table.w - hull_table.z + 1;
@@ -112,7 +115,8 @@ __kernel void animate_armatures(__global float16 *armature_bones,
                                                     bone_rot_channel_tables,
                                                     bone_scl_channel_tables,
                                                     animation_timing_indices,
-                                                    animation_timings,
+                                                    animation_durations,
+                                                    animation_tick_rates,
                                                     key_frames,
                                                     frame_times,
                                                     current_frame_time,

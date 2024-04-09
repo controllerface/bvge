@@ -19,7 +19,8 @@ public class AnimateArmatures_k extends GPUKernel
         key_frames,
         frame_times,
         animation_timing_indices,
-        animation_timings,
+        animation_durations,
+        animation_tick_rates,
         armature_animation_indices,
         armature_animation_elapsed,
         delta_time;

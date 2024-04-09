@@ -368,7 +368,7 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
                                 __global int *armature_model_transforms,
                                 __global int *armature_flags,
                                 __global int *armature_animation_indices,
-                                __global double *armature_animation_elapsed,
+                                __global float *armature_animation_elapsed,
                                 __global int4 *hull_tables,
                                 __global float4 *hulls,
                                 __global int2 *hull_bone_tables,
@@ -406,7 +406,7 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
     int armature_flag               = armature_flags[gid];
     int4 hull_table                 = hull_tables[gid];
     int anim_index                  = armature_animation_indices[gid];
-    double anim_time                = armature_animation_elapsed[gid];
+    float anim_time                 = armature_animation_elapsed[gid];
     
     barrier(CLK_GLOBAL_MEM_FENCE);
 

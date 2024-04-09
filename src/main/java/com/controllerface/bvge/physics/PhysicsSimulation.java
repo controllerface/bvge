@@ -363,7 +363,8 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimateArmatures_k.Args.key_frames, GPGPU.core_memory.buffer(BufferType.ANIM_KEY_FRAME))
             .buf_arg(AnimateArmatures_k.Args.frame_times, GPGPU.core_memory.buffer(BufferType.ANIM_FRAME_TIME))
             .buf_arg(AnimateArmatures_k.Args.animation_timing_indices, GPGPU.core_memory.buffer(BufferType.ANIM_TIMING_INDEX))
-            .buf_arg(AnimateArmatures_k.Args.animation_timings, GPGPU.core_memory.buffer(BufferType.ANIM_TIMING))
+            .buf_arg(AnimateArmatures_k.Args.animation_durations, GPGPU.core_memory.buffer(BufferType.ANIM_DURATION))
+            .buf_arg(AnimateArmatures_k.Args.animation_tick_rates, GPGPU.core_memory.buffer(BufferType.ANIM_TICK_RATE))
             .buf_arg(AnimateArmatures_k.Args.armature_animation_indices, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_INDEX))
             .buf_arg(AnimateArmatures_k.Args.armature_animation_elapsed, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_ELAPSED));
 

@@ -6,9 +6,11 @@ public class CreateAnimationTimings_k extends GPUKernel
 {
     public enum Args
     {
-        animation_timings,
+        animation_durations,
+        animation_tick_rates,
         target,
-        new_animation_timing;
+        new_animation_duration,
+        new_animation_tick_rate,
     }
 
     public CreateAnimationTimings_k(long command_queue_ptr, long kernel_ptr)

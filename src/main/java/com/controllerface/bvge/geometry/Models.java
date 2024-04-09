@@ -482,8 +482,7 @@ public class Models
             var channel_buffer = raw_animation.mChannels();
 
             // store the timings so bone channels can use them
-            double[] timings = new double[]{ raw_animation.mDuration(), raw_animation.mTicksPerSecond() };
-            int anim_timing_id = GPGPU.core_memory.new_animation_timings(timings);
+            int anim_timing_id = GPGPU.core_memory.new_animation_timings((float)raw_animation.mDuration(), (float)raw_animation.mTicksPerSecond());
 
             for (int channel_index = 0; channel_index < channel_count; channel_index++)
             {
@@ -516,7 +515,7 @@ public class Models
                     var raw_pos_key = pos_buffer.get(current_pos_key);
                     var pos_vector = raw_pos_key.mValue();
                     float[] frame_data = new float[]{ pos_vector.x(), pos_vector.y(), pos_vector.z(), 1.0f };
-                    int next_pos_key = GPGPU.core_memory.new_keyframe(frame_data, raw_pos_key.mTime());
+                    int next_pos_key = GPGPU.core_memory.new_keyframe(frame_data, (float)raw_pos_key.mTime());
                     if (p_start == -1) p_start = next_pos_key;
                     p_end = next_pos_key;
                 }
@@ -526,7 +525,7 @@ public class Models
                     var raw_rot_key = rot_buffer.get(current_rot_key);
                     var rot_quaternion = raw_rot_key.mValue();
                     float[] frame_data = new float[]{ rot_quaternion.x(), rot_quaternion.y(), rot_quaternion.z(), rot_quaternion.w() };
-                    int next_rot_key = GPGPU.core_memory.new_keyframe(frame_data, raw_rot_key.mTime());
+                    int next_rot_key = GPGPU.core_memory.new_keyframe(frame_data, (float)raw_rot_key.mTime());
                     if (r_start == -1) r_start = next_rot_key;
                     r_end = next_rot_key;
                 }
@@ -536,7 +535,7 @@ public class Models
                     var raw_scl_key = scl_buffer.get(current_scl_key);
                     var scale_vector = raw_scl_key.mValue();
                     float[] frame_data = new float[]{ scale_vector.x(), scale_vector.y(), scale_vector.z(), 1.0f };
-                    int next_scl_key = GPGPU.core_memory.new_keyframe(frame_data, raw_scl_key.mTime());
+                    int next_scl_key = GPGPU.core_memory.new_keyframe(frame_data, (float)raw_scl_key.mTime());
                     if (s_start == -1) s_start = next_scl_key;
                     s_end = next_scl_key;
                 }
