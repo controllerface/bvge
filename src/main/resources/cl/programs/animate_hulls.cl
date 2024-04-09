@@ -82,7 +82,7 @@ __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global int2 *bone_rot_channel_tables,
                                 __global int2 *bone_scl_channel_tables,
                                 __global int *armature_model_transforms,
-                                __global int4 *hull_tables,
+                                __global int2 *bone_tables,
                                 __global float4 *key_frames,
                                 __global float *frame_times,
                                 __global int *animation_timing_indices,
@@ -93,17 +93,17 @@ __kernel void animate_armatures(__global float16 *armature_bones,
                                 float delta_time)
 {
     int current_armature = get_global_id(0);
-    int4 hull_table = hull_tables[current_armature];
+    int2 bone_table = bone_tables[current_armature];
     int armature_transform_id = armature_model_transforms[current_armature];
     float16 model_transform = model_transforms[armature_transform_id];
     int current_animation = armature_animation_indices[current_armature]; 
     float current_frame_time = armature_animation_elapsed[current_armature] += delta_time;
 
     // note that armatures with no bones simply do nothing as the bone count will be zero
-    int armature_bone_count = hull_table.w - hull_table.z + 1;
+    int armature_bone_count = bone_table.y - bone_table.x + 1;
     for (int i = 0; i < armature_bone_count; i++)
     {
-        int current_bone_bind = hull_table.z + i;
+        int current_bone_bind = bone_table.x + i;
         int bone_reference_id = armature_bone_reference_ids[current_bone_bind];
         int bone_parent_id = armature_bone_parent_ids[current_bone_bind];
 

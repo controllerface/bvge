@@ -8,6 +8,7 @@ public class CompleteDeletesMultiBlockOut_k extends GPUKernel
     {
         armature_flags,
         hull_tables,
+        bone_tables,
         element_tables,
         hull_bone_tables,
         output1,

@@ -93,7 +93,8 @@ __kernel void create_armature(__global float4 *armatures,
                               __global int *armature_model_indices,
                               __global int *armature_model_transforms,
                               __global int *armature_flags,
-                              __global int4 *hull_tables,
+                              __global int2 *armature_hull_tables,
+                              __global int2 *armature_bone_tables,
                               __global float *armature_masses,
                               __global int *armature_animation_indices,
                               __global float *armature_animation_elapsed,
@@ -103,7 +104,8 @@ __kernel void create_armature(__global float4 *armatures,
                               int new_armature_model_id,
                               int new_armature_model_transform,
                               int new_armature_flags,
-                              int4 new_hull_table,
+                              int2 new_hull_table,
+                              int2 new_bone_table,
                               float new_armature_mass,
                               int new_armature_animation_index,
                               float new_armature_animation_time)
@@ -113,7 +115,8 @@ __kernel void create_armature(__global float4 *armatures,
     armature_model_indices[target] = new_armature_model_id; 
     armature_model_transforms[target] = new_armature_model_transform; 
     armature_flags[target] = new_armature_flags; 
-    hull_tables[target] = new_hull_table; 
+    armature_hull_tables[target] = new_hull_table;
+    armature_bone_tables[target] = new_bone_table; 
     armature_masses[target] = new_armature_mass;
     armature_animation_indices[target] = new_armature_animation_index; 
     armature_animation_elapsed[target] = new_armature_animation_time;

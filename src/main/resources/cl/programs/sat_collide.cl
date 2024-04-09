@@ -291,7 +291,7 @@ inline int consume_point_flags(__global int *point_flags,
 __kernel void move_armatures(__global float4 *hulls,
                              __global float4 *armatures,
                              __global int *armature_flags,
-                             __global int4 *hull_tables,
+                             __global int2 *hull_tables,
                              __global int4 *element_tables,
                              __global int *hull_flags,
                              __global int *point_flags,
@@ -300,7 +300,7 @@ __kernel void move_armatures(__global float4 *hulls,
     int current_armature = get_global_id(0);
     float4 armature = armatures[current_armature];
     int flags = armature_flags[current_armature];
-    int4 hull_table = hull_tables[current_armature];
+    int2 hull_table = hull_tables[current_armature];
     int start = hull_table.x;
     int end = hull_table.y;
     int hull_count = end - start + 1;

@@ -54,7 +54,6 @@ public class PhysicsObjects
         // store the single point for the circle
         var p1_index = GPGPU.core_memory.new_point(p1, new int[4], vert.vert_ref_id(), next_hull_index, 0);
 
-
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angle_between_lines(l1, l2);
@@ -67,8 +66,18 @@ public class PhysicsObjects
         int[] bone_table = CLUtils.arg_int2(0, -1);
         int hull_flags = HullFlags.IS_CIRCLE.bits | HullFlags.NO_BONES.bits;
         int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, hull_friction, table, bone_table, next_armature_id, hull_flags);
-        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0,-1);
-        return GPGPU.core_memory.new_armature(x, y, hull_table, mass, -1, -1f, hull_id, CIRCLE_PARTICLE, 0, 0);
+        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+
+        return GPGPU.core_memory.new_armature(x, y,
+                hull_table,
+                bone_table,
+                mass,
+                -1,
+                -1f,
+                hull_id,
+                CIRCLE_PARTICLE,
+                0,
+                0);
     }
 
     public static int tri(float x, float y, float size, int flags, float mass, float friction, float restitution)
@@ -109,13 +118,21 @@ public class PhysicsObjects
         var rotation = CLUtils.arg_float2(0, angle);
         var hull_friction = CLUtils.arg_float2(friction, restitution);
 
-
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
         int hull_flags = flags | HullFlags.IS_POLYGON.bits | HullFlags.NO_BONES.bits;
         int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, hull_friction, table, bone_table, next_armature_id, hull_flags);
-        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
-        return GPGPU.core_memory.new_armature(x, y, hull_table, mass, -1, -1f, hull_id, TRIANGLE_PARTICLE, 0, 0);
+        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        return GPGPU.core_memory.new_armature(x, y,
+                hull_table,
+                bone_table,
+                mass,
+                -1,
+                -1f,
+                hull_id,
+                TRIANGLE_PARTICLE,
+                0,
+                0);
     }
 
     public static int box(float x, float y, float size, int flags, float mass, float friction, float restitution)
@@ -170,8 +187,17 @@ public class PhysicsObjects
         int[] bone_table = CLUtils.arg_int2(0, -1);
         int hull_flags = flags | HullFlags.IS_POLYGON.bits;
         int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, hull_friction, table, bone_table, next_armature_id, hull_flags);
-        int[] hull_table = CLUtils.arg_int4(hull_id, hull_id, 0, -1);
-        return GPGPU.core_memory.new_armature(x, y, hull_table, mass, -1, -1f, hull_id, SQUARE_PARTICLE, 0, 0);
+        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        return GPGPU.core_memory.new_armature(x, y,
+                hull_table,
+                bone_table,
+                mass,
+                -1,
+                -1f,
+                hull_id,
+                SQUARE_PARTICLE,
+                0,
+                0);
     }
 
     public static int dynamic_Box(float x, float y, float size, float mass, float friction, float restitution)
@@ -427,8 +453,19 @@ public class PhysicsObjects
                 + "Check model data to ensure it is correct");
         }
 
-        int[] hull_table = CLUtils.arg_int4(first_hull, last_hull, first_armature_bone, last_armature_bone);
-        return GPGPU.core_memory.new_armature(x, y, hull_table, mass, 0, 0.0f, root_hull_id, model_index, model.root_transform_index(), 0);
+        int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
+        int[] bone_table = CLUtils.arg_int2(first_armature_bone, last_armature_bone);
+
+        return GPGPU.core_memory.new_armature(x, y,
+                hull_table,
+                bone_table,
+                mass,
+                0,
+                0.0f,
+                root_hull_id,
+                model_index,
+                model.root_transform_index(),
+                0);
     }
 
 

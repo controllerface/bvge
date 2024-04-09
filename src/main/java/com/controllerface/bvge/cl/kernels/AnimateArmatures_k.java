@@ -16,7 +16,7 @@ public class AnimateArmatures_k extends GPUKernel
         bone_rot_channel_tables,
         bone_scl_channel_tables,
         armature_model_transforms,
-        hull_tables,
+        bone_tables,
         key_frames,
         frame_times,
         animation_timing_indices,

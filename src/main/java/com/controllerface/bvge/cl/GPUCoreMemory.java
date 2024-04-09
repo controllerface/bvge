@@ -173,13 +173,18 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer armature_model_transform_buffer;
 
-    /** int4
+    /** int2
      * x: start hull index
      * y: end hull index
-     * z: start bone anim index
-     * w: end bone anim index
      */
-    private final ResizableBuffer armature_hull_table_buffer; // todo: split into separate buffers
+    private final ResizableBuffer armature_hull_table_buffer;
+
+    /** int2
+     * x: start bone anim index
+     * y: end bone anim index
+     */
+    private final ResizableBuffer armature_bone_table_buffer;
+
 
     /** float
      * x: mass of the armature
@@ -443,7 +448,10 @@ public class GPUCoreMemory
         armature_root_hull_buffer       = new PersistentBuffer(CLSize.cl_int, 10_000L);
         armature_model_id_buffer        = new PersistentBuffer(CLSize.cl_int, 10_000L);
         armature_model_transform_buffer = new PersistentBuffer(CLSize.cl_int, 10_000L);
-        armature_hull_table_buffer      = new PersistentBuffer(CLSize.cl_int4, 10_000L);
+
+        armature_hull_table_buffer      = new PersistentBuffer(CLSize.cl_int2, 10_000L);
+        armature_bone_table_buffer      = new PersistentBuffer(CLSize.cl_int2, 10_000L);
+
         armature_mass_buffer            = new PersistentBuffer(CLSize.cl_float, 10_000L);
         bone_anim_channel_table_buffer  = new PersistentBuffer(CLSize.cl_int2);
         bone_bind_pose_buffer           = new PersistentBuffer(CLSize.cl_float16);
@@ -535,7 +543,8 @@ public class GPUCoreMemory
             .buf_arg(CreateArmature_k.Args.armature_model_indices, armature_model_id_buffer)
             .buf_arg(CreateArmature_k.Args.armature_model_transforms, armature_model_transform_buffer)
             .buf_arg(CreateArmature_k.Args.armature_flags, armature_flag_buffer)
-            .buf_arg(CreateArmature_k.Args.hull_tables, armature_hull_table_buffer)
+            .buf_arg(CreateArmature_k.Args.armature_hull_tables, armature_hull_table_buffer)
+            .buf_arg(CreateArmature_k.Args.armature_bone_tables, armature_bone_table_buffer)
             .buf_arg(CreateArmature_k.Args.armature_masses, armature_mass_buffer)
             .buf_arg(CreateArmature_k.Args.armature_animation_indices, armature_anim_index_buffer)
             .buf_arg(CreateArmature_k.Args.armature_animation_elapsed, armature_anim_elapsed_buffer);
@@ -609,6 +618,7 @@ public class GPUCoreMemory
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, delete_sizes_ptr)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.armature_flags, armature_flag_buffer)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, armature_hull_table_buffer)
+            .buf_arg(ScanDeletesSingleBlockOut_k.Args.bone_tables, armature_bone_table_buffer)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.element_tables, hull_element_table_buffer)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_bone_tables, hull_bone_table_buffer);
 
@@ -618,6 +628,7 @@ public class GPUCoreMemory
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.part2, delete_partial_buffer_2)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.armature_flags, armature_flag_buffer)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, armature_hull_table_buffer)
+            .buf_arg(ScanDeletesMultiBlockOut_k.Args.bone_tables, armature_bone_table_buffer)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.element_tables, hull_element_table_buffer)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_bone_tables, hull_bone_table_buffer);
 
@@ -628,6 +639,7 @@ public class GPUCoreMemory
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part2, delete_partial_buffer_2)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.armature_flags, armature_flag_buffer)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, armature_hull_table_buffer)
+            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.bone_tables, armature_bone_table_buffer)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.element_tables, hull_element_table_buffer)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_bone_tables, hull_bone_table_buffer);
 
@@ -640,7 +652,8 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.armature_flags, armature_flag_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_indices, armature_anim_index_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_elapsed, armature_anim_elapsed_buffer)
-            .buf_arg(CompactArmatures_k.Args.hull_tables, armature_hull_table_buffer)
+            .buf_arg(CompactArmatures_k.Args.armature_hull_tables, armature_hull_table_buffer)
+            .buf_arg(CompactArmatures_k.Args.armature_bone_tables, armature_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.hulls, hull_buffer)
             .buf_arg(CompactArmatures_k.Args.hull_bone_tables, hull_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.hull_armature_ids, hull_armature_id_buffer)
@@ -724,6 +737,7 @@ public class GPUCoreMemory
             case ARMATURE_BONE_REFERENCE_ID -> armature_bone_reference_id_buffer;
             case ARMATURE_BONE_PARENT_ID -> armature_bone_parent_id_buffer;
             case ARMATURE_FLAG           -> armature_flag_buffer;
+            case ARMATURE_BONE_TABLE     -> armature_bone_table_buffer;
             case ARMATURE_HULL_TABLE     -> armature_hull_table_buffer;
             case ARMATURE_MASS           -> armature_mass_buffer;
             case ARMATURE_MODEL_ID       -> armature_model_id_buffer;
@@ -957,8 +971,16 @@ public class GPUCoreMemory
         return face_index++;
     }
 
-    public int new_armature(float x, float y, int[] table, float mass, int anim_index, float anim_time,
-                            int root_hull, int model_id, int model_transform_id, int flags)
+    public int new_armature(float x, float y,
+                            int[] hull_table,
+                            int[] bone_table,
+                            float mass,
+                            int anim_index,
+                            float anim_time,
+                            int root_hull,
+                            int model_id,
+                            int model_transform_id,
+                            int flags)
     {
         int capacity = armature_index + 1;
         armature_buffer.ensure_capacity(capacity);
@@ -971,6 +993,7 @@ public class GPUCoreMemory
         armature_anim_index_buffer.ensure_capacity(capacity);
         armature_anim_elapsed_buffer.ensure_capacity(capacity);
         armature_hull_table_buffer.ensure_capacity(capacity);
+        armature_bone_table_buffer.ensure_capacity(capacity);
 
         create_armature_k
             .set_arg(CreateArmature_k.Args.target, armature_index)
@@ -979,7 +1002,8 @@ public class GPUCoreMemory
             .set_arg(CreateArmature_k.Args.new_armature_model_id, model_id)
             .set_arg(CreateArmature_k.Args.new_armature_model_transform, model_transform_id)
             .set_arg(CreateArmature_k.Args.new_armature_flags, flags)
-            .set_arg(CreateArmature_k.Args.new_hull_table, table)
+            .set_arg(CreateArmature_k.Args.new_armature_hull_table, hull_table)
+            .set_arg(CreateArmature_k.Args.new_armature_bone_table, bone_table)
             .set_arg(CreateArmature_k.Args.new_armature_mass, mass)
             .set_arg(CreateArmature_k.Args.new_armature_animation_index, anim_index)
             .set_arg(CreateArmature_k.Args.new_armature_animation_time, anim_time)
@@ -1333,6 +1357,7 @@ public class GPUCoreMemory
         armature_anim_index_buffer.release();
         armature_anim_elapsed_buffer.release();
         armature_hull_table_buffer.release();
+        armature_bone_table_buffer.release();
 
         debug();
 
@@ -1406,6 +1431,7 @@ public class GPUCoreMemory
         total += armature_anim_index_buffer.debug_data();
         total += armature_anim_elapsed_buffer.debug_data();
         total += armature_hull_table_buffer.debug_data();
+        total += armature_bone_table_buffer.debug_data();
 
         //System.out.println("---------------------------");
         System.out.println("Core Memory Usage: MB " + ((float) total / 1024f / 1024f));
