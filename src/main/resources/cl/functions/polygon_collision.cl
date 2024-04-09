@@ -4,7 +4,8 @@ Handles collision between two polygonal hulls
 inline void polygon_collision(int hull_1_id, 
                               int hull_2_id,
                               __global float4 *hulls,
-                              __global float2 *hull_frictions,
+                              __global float *hull_frictions,
+                              __global float *hull_restitutions,
                               __global int *hull_armature_ids,
                               __global int *hull_flags,
                               __global int4 *element_tables,
@@ -174,8 +175,10 @@ inline void polygon_collision(int hull_1_id,
     int edge_armature_id = hull_armature_ids[edge_hull_id];
     float vert_hull_mass = masses[vert_armature_id];
     float edge_hull_mass = masses[edge_armature_id];
-    float2 vert_hull_phys = hull_frictions[vert_hull_id];
-    float2 edge_hull_phys = hull_frictions[edge_hull_id];
+    float vert_hull_friction = hull_frictions[vert_hull_id];
+    float edge_hull_friction = hull_frictions[edge_hull_id];
+    float vert_hull_restitution = hull_restitutions[vert_hull_id];
+    float edge_hull_restitution = hull_restitutions[edge_hull_id];
     float total_mass = vert_hull_mass + edge_hull_mass;
     float vert_magnitude = native_divide(edge_hull_mass, total_mass);
     float edge_magnitude = native_divide(vert_hull_mass, total_mass);
@@ -215,9 +218,9 @@ inline void polygon_collision(int hull_1_id,
 
     float friction_coefficient = any_static 
         ? static_vert 
-            ? vert_hull_phys.x 
-            : edge_hull_phys.x
-        : max(vert_hull_phys.x, edge_hull_phys.x);
+            ? vert_hull_friction 
+            : edge_hull_friction
+        : max(vert_hull_friction, edge_hull_friction);
 
     float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
     float2 edge_1_tangent = edge_1_rel_vel - dot(edge_1_rel_vel, collision_normal) * collision_normal;
@@ -242,9 +245,9 @@ inline void polygon_collision(int hull_1_id,
 
     float restituion_coefficient = any_static 
         ? static_vert 
-            ? vert_hull_phys.y 
-            : edge_hull_phys.y
-        : max(vert_hull_phys.y, edge_hull_phys.y);
+            ? vert_hull_restitution 
+            : edge_hull_friction
+        : max(vert_hull_restitution, edge_hull_restitution);
 
     float2 collision_invert = collision_normal * -1;
     float2 vertex_restitution = restituion_coefficient * dot(vertex_applied_vel, collision_normal) * collision_normal;

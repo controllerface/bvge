@@ -42,6 +42,7 @@ public enum BufferType
     HULL_ELEMENT_TABLE,
     HULL_FLAG,
     HULL_FRICTION,
+    HULL_RESTITUTION,
     HULL_MESH_ID,
     HULL_ROTATION,
     MESH_FACE,

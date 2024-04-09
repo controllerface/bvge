@@ -60,12 +60,13 @@ public class PhysicsObjects
         var table = CLUtils.arg_int4(p1_index, p1_index, 0, -1);
         var transform = CLUtils.arg_float4(x, y, size, size / 2.0f);
         var rotation = CLUtils.arg_float2(0, angle);
-        var hull_friction = CLUtils.arg_float2(friction, restitution);
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
         int hull_flags = HullFlags.IS_CIRCLE.bits | HullFlags.NO_BONES.bits;
-        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, hull_friction, table, bone_table, next_armature_id, hull_flags);
+        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation,
+                table, bone_table, friction, restitution,
+                next_armature_id, hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
 
         return GPGPU.core_memory.new_armature(x, y,
@@ -116,12 +117,13 @@ public class PhysicsObjects
         var table = CLUtils.arg_int4(p1_index, p3_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = CLUtils.arg_float2(0, angle);
-        var hull_friction = CLUtils.arg_float2(friction, restitution);
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
         int hull_flags = flags | HullFlags.IS_POLYGON.bits | HullFlags.NO_BONES.bits;
-        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, hull_friction, table, bone_table, next_armature_id, hull_flags);
+        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation,
+                table, bone_table, friction, restitution,
+                next_armature_id, hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         return GPGPU.core_memory.new_armature(x, y,
                 hull_table,
@@ -181,12 +183,13 @@ public class PhysicsObjects
         var table = CLUtils.arg_int4(p1_index, p4_index, start_edge, end_edge);
         var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
         var rotation = CLUtils.arg_float2(0, angle);
-        var hull_friction = CLUtils.arg_float2(friction, restitution);
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
         int hull_flags = flags | HullFlags.IS_POLYGON.bits;
-        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation, hull_friction, table, bone_table, next_armature_id, hull_flags);
+        int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(), transform, rotation,
+                table, bone_table, friction, restitution,
+                next_armature_id, hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         return GPGPU.core_memory.new_armature(x, y,
                 hull_table,
@@ -423,11 +426,12 @@ public class PhysicsObjects
             var table = CLUtils.arg_int4(start_point, end_point, edge_start, edge_end);
             var transform = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, size, size);
             var rotation = CLUtils.arg_float2(0, angle);
-            var hull_friction = CLUtils.arg_float2(friction, 0);
 
             int flag_bits = global_hull_flags | local_hull_flags;
             int[] bone_table = CLUtils.arg_int2(start_hull_bone, end_hull_bone);
-            int hull_id = GPGPU.core_memory.new_hull(hull_mesh.mesh_id(), transform, rotation, hull_friction, table, bone_table, next_armature_id, flag_bits);
+            int hull_id = GPGPU.core_memory.new_hull(hull_mesh.mesh_id(), transform, rotation,
+                    table, bone_table, friction, 0,
+                    next_armature_id, flag_bits);
 
             if (first_hull == -1)
             {
