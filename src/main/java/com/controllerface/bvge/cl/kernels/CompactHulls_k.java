@@ -11,6 +11,8 @@ public class CompactHulls_k extends GPUKernel
         hull_mesh_ids,
         hull_rotations,
         hull_frictions,
+        bone_tables,
+        armature_ids,
         hull_flags,
         element_tables,
         bounds,

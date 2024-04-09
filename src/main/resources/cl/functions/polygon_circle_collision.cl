@@ -5,7 +5,8 @@ inline void polygon_circle_collision(int polygon_id,
                                      int circle_id,
                                      __global float4 *hulls,
                                      __global float2 *hull_frictions,
-                                     __global int4 *hull_flags,
+                                     __global int *hull_armature_ids,
+                                     __global int *hull_flags,
                                      __global int4 *element_tables,
                                      __global int *point_flags,
                                      __global float4 *points,
@@ -122,17 +123,19 @@ inline void polygon_circle_collision(int polygon_id,
     float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
     float2 edge_hull_opposing = hull_a.xy - hull_b.xy;
     
-    int4 vert_hull_flags = hull_flags[vert_hull_id];
-    int4 edge_hull_flags = hull_flags[edge_hull_id];
-    float vert_hull_mass = masses[vert_hull_flags.y];
-    float edge_hull_mass = masses[edge_hull_flags.y];
+    int vert_hull_flags = hull_flags[vert_hull_id];
+    int edge_hull_flags = hull_flags[edge_hull_id];
+    int vert_armature_id = hull_armature_ids[vert_hull_id];
+    int edge_armature_id = hull_armature_ids[edge_hull_id];
+    float vert_hull_mass = masses[vert_armature_id];
+    float edge_hull_mass = masses[edge_armature_id];
     float2 vert_hull_phys = hull_frictions[vert_hull_id];
     float2 edge_hull_phys = hull_frictions[edge_hull_id];
     float total_mass = vert_hull_mass + edge_hull_mass;
     float vert_magnitude = native_divide(edge_hull_mass, total_mass);
     float edge_magnitude = native_divide(vert_hull_mass, total_mass);
-    bool static_vert = (vert_hull_flags.x & IS_STATIC) !=0;
-    bool static_edge = (edge_hull_flags.x & IS_STATIC) !=0;
+    bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
+    bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
     bool any_static = (static_vert || static_edge);
 
     vert_magnitude = any_static 

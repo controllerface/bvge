@@ -142,7 +142,8 @@ __kernel void animate_bones(__global float16 *bones,
 
 __kernel void animate_points(__global float4 *points,
                              __global float4 *hulls,
-                             __global int4 *hull_flags,
+                             __global int *hull_armature_ids,
+                             __global int *hull_flags,
                              __global int *point_vertex_references,
                              __global int *point_hull_indices,
                              __global int4 *bone_tables,
@@ -158,8 +159,9 @@ __kernel void animate_points(__global float4 *points,
     int point_vertex_reference = point_vertex_references[gid];
     int point_hull_index = point_hull_indices[gid];
     
-    int4 hull_flag = hull_flags[point_hull_index];
-    bool no_bones = (hull_flag.x & NO_BONES) !=0;
+    int hull_flag = hull_flags[point_hull_index];
+    int hull_armature_id = hull_armature_ids[point_hull_index];
+    bool no_bones = (hull_flag & NO_BONES) !=0;
     if (no_bones) return;
 
     int4 bone_table = bone_tables[gid];
@@ -178,7 +180,7 @@ __kernel void animate_points(__global float4 *points,
     test_bone += bone4 * reference_weights.w;
     
     float4 hull = hulls[point_hull_index];
-    float4 armature = armatures[hull_flag.y]; 
+    float4 armature = armatures[hull_armature_id]; 
 
     float4 padded = (float4)(reference_vertex.x, reference_vertex.y, 0.0f, 1.0f);
     float4 after_bone = matrix_transform(test_bone, padded);

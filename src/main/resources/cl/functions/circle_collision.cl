@@ -5,7 +5,7 @@ inline void circle_collision(int hull_1_id,
                              int hull_2_id,
                              __global float4 *hulls,
                              __global float2 *hull_frictions,
-                             __global int4 *hull_flags,
+                             __global int *hull_armature_ids,
                              __global int4 *element_tables,
                              __global float4 *points,
                              __global float8 *reactions,
@@ -27,12 +27,12 @@ inline void circle_collision(int hull_1_id,
     int4 hull_2_table = element_tables[hull_2_id];
     float4 hull_1_center = points[hull_1_table.x];
     float4 hull_2_center = points[hull_2_table.x];
-    int4 hull_1_flags = hull_flags[hull_1_id];
-    int4 hull_2_flags = hull_flags[hull_2_id];
+    int hull_1_armature_id = hull_armature_ids[hull_1_id];
+    int hull_2_armature_id = hull_armature_ids[hull_2_id];
     float2 hull_1_phys = hull_frictions[hull_1_id];
     float2 hull_2_phys = hull_frictions[hull_2_id];
-    float hull_1_mass = masses[hull_1_flags.y];
-    float hull_2_mass = masses[hull_2_flags.y];
+    float hull_1_mass = masses[hull_1_armature_id];
+    float hull_2_mass = masses[hull_2_armature_id];
 
     // collision reaction and opposing direction calculation
     float2 hull_1_opposing = hull_2.xy - hull_1.xy;

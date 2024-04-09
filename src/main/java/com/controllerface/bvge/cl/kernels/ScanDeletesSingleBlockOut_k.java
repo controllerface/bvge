@@ -9,7 +9,7 @@ public class ScanDeletesSingleBlockOut_k extends GPUKernel
         armature_flags,
         hull_tables,
         element_tables,
-        hull_flags,
+        hull_bone_tables,
         output,
         output2,
         sz,

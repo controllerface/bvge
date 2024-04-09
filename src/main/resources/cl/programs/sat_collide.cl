@@ -18,7 +18,8 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global float4 *hulls,
                           __global float2 *hull_frictions,
                           __global int4 *element_tables,
-                          __global int4 *hull_flags,
+                          __global int *hull_armature_ids,
+                          __global int *hull_flags,
                           __global int *point_flags,
                           __global float4 *points,
                           __global int2 *edges,
@@ -35,16 +36,16 @@ __kernel void sat_collide(__global int2 *candidates,
     int2 current_pair = candidates[gid];
     int b1_id = current_pair.x;
     int b2_id = current_pair.y;
-    int4 hull_1_flags = hull_flags[b1_id];
-    int4 hull_2_flags = hull_flags[b2_id];
-    bool b1s = (hull_1_flags.x & IS_STATIC) !=0;
-    bool b2s = (hull_2_flags.x & IS_STATIC) !=0;
+    int hull_1_flags = hull_flags[b1_id];
+    int hull_2_flags = hull_flags[b2_id];
+    bool b1s = (hull_1_flags & IS_STATIC) !=0;
+    bool b2s = (hull_2_flags & IS_STATIC) !=0;
     
-    bool b1_is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
-    bool b2_is_circle = (hull_2_flags.x & IS_CIRCLE) !=0;
+    bool b1_is_circle = (hull_1_flags & IS_CIRCLE) !=0;
+    bool b2_is_circle = (hull_2_flags & IS_CIRCLE) !=0;
 
-    bool b1_is_polygon = (hull_1_flags.x & IS_POLYGON) !=0;
-    bool b2_is_polygon = (hull_2_flags.x & IS_POLYGON) !=0;
+    bool b1_is_polygon = (hull_1_flags & IS_POLYGON) !=0;
+    bool b2_is_polygon = (hull_2_flags & IS_POLYGON) !=0;
 
     int c_id = b1_is_circle ? b1_id : b2_id;
     int p_id = b1_is_circle ? b2_id : b1_id;
@@ -56,6 +57,7 @@ __kernel void sat_collide(__global int2 *candidates,
         polygon_collision(b1_id, b2_id, 
             hulls, 
             hull_frictions,
+            hull_armature_ids,
             hull_flags, 
             element_tables, 
             point_flags,
@@ -74,7 +76,7 @@ __kernel void sat_collide(__global int2 *candidates,
         circle_collision(b1_id, b2_id, 
             hulls, 
             hull_frictions,
-            hull_flags,
+            hull_armature_ids,
             element_tables, 
             points, 
             reactions,
@@ -89,6 +91,7 @@ __kernel void sat_collide(__global int2 *candidates,
         polygon_circle_collision(p_id, c_id, 
             hulls, 
             hull_frictions,
+            hull_armature_ids,
             hull_flags, 
             element_tables, 
             point_flags,
@@ -290,7 +293,7 @@ __kernel void move_armatures(__global float4 *hulls,
                              __global int *armature_flags,
                              __global int4 *hull_tables,
                              __global int4 *element_tables,
-                             __global int4 *hull_flags,
+                             __global int *hull_flags,
                              __global int *point_flags,
                              __global float4 *points)
 {
@@ -310,10 +313,10 @@ __kernel void move_armatures(__global float4 *hulls,
     {
         int n = start + i;
         float4 hull = hulls[n];
-        int4 hull_flag = hull_flags[n];
+        int hull_flag = hull_flags[n];
         int4 element_table = element_tables[n];
-        bool no_bones = (hull_flag.x & NO_BONES) !=0;
-        bool is_foot = (hull_flag.x & IS_FOOT) !=0;
+        bool no_bones = (hull_flag & NO_BONES) !=0;
+        bool is_foot = (hull_flag & IS_FOOT) !=0;
 
         if (!no_bones) had_bones = true;
 

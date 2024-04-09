@@ -20,7 +20,8 @@ __kernel void integrate(__global float4 *hulls,
                         __global float4 *bounds,
                         __global int4 *bounds_index_data,
                         __global int2 *bounds_bank_data,
-                        __global int4 *hull_flags,
+                        __global int *hull_flags,
+                        __global int *hull_armature_ids,
                         __global float *anti_gravity,
                         __global float *args)
 {
@@ -41,8 +42,9 @@ __kernel void integrate(__global float4 *hulls,
     // get hull from array
     float4 hull = hulls[current_hull];
     int4 element_table = element_tables[current_hull];
-    int4 hull_1_flags = hull_flags[current_hull];
-    float2 acc = armature_accel[hull_1_flags.y];
+    int hull_1_flags = hull_flags[current_hull];
+    int hull_armature_id = hull_armature_ids[current_hull];
+    float2 acc = armature_accel[hull_armature_id];
     float2 rotation = hull_rotations[current_hull];
     float4 bounding_box = bounds[current_hull];
     int4 bounds_index = bounds_index_data[current_hull];
@@ -52,13 +54,13 @@ __kernel void integrate(__global float4 *hulls,
     int start = element_table.x;
     int end   = element_table.y;
 
-    bool is_static = (hull_1_flags.x & IS_STATIC) !=0;
-    bool is_circle = (hull_1_flags.x & IS_CIRCLE) !=0;
-    bool no_bones = (hull_1_flags.x & NO_BONES) !=0;
+    bool is_static = (hull_1_flags & IS_STATIC) !=0;
+    bool is_circle = (hull_1_flags & IS_CIRCLE) !=0;
+    bool no_bones = (hull_1_flags & NO_BONES) !=0;
 
-    int x = hull_1_flags.x;
+    int x = hull_1_flags;
     x &= ~OUT_OF_BOUNDS;
-    hull_flags[current_hull].x = x;
+    hull_flags[current_hull] = x;
 
    	// get acc value and multiply by the timestep do get the displacement vector
     acc = is_static 
@@ -232,9 +234,9 @@ __kernel void integrate(__global float4 *hulls,
 
     if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
-        int x = hull_1_flags.x;
+        int x = hull_1_flags;
         x = (x | OUT_OF_BOUNDS);
-        hull_flags[current_hull].x = x;
+        hull_flags[current_hull] = x;
         bounds_bank.y = 0;
     }
 
@@ -248,7 +250,7 @@ __kernel void integrate(__global float4 *hulls,
 __kernel void integrate_armatures(__global float4 *armatures,
                                   __global int *armature_root_hulls,
                                   __global float2 *armature_accel,
-                                  __global int4 *hull_flags,
+                                  __global int *hull_flags,
                                   __global float *args)
 {
     int current_armature = get_global_id(0);
@@ -260,10 +262,10 @@ __kernel void integrate_armatures(__global float4 *armatures,
     float4 armature = armatures[current_armature];
     int root_hull = armature_root_hulls[current_armature];
     float2 acc = armature_accel[current_armature];
-    int4 root_hull_flags = hull_flags[root_hull];
+    int root_hull_flags = hull_flags[root_hull];
 
-    bool is_static = (root_hull_flags.x & IS_STATIC) !=0;
-    bool no_bones = (root_hull_flags.x & NO_BONES) !=0;
+    bool is_static = (root_hull_flags & IS_STATIC) !=0;
+    bool no_bones = (root_hull_flags & NO_BONES) !=0;
 
     acc = is_static 
         ? acc

@@ -12,7 +12,7 @@ inline DropCounts calculate_drop_counts(int armature_id,
                                         __global int *armature_flags,
                                         __global int4 *hull_tables,
                                         __global int4 *element_tables,
-                                        __global int4 *hull_flags)
+                                        __global int2 *hull_bone_tables)
 {
     // todo: add armature bone counts
     DropCounts drop_counts;
@@ -39,8 +39,8 @@ inline DropCounts calculate_drop_counts(int armature_id,
         {
             int current_hull = hull_table.x + i;
             int4 element_table = element_tables[current_hull];
-            int4 hull_flag = hull_flags[current_hull];
-            int bone_count = hull_flag.w - hull_flag.z + 1;
+            int2 bone_table = hull_bone_tables[current_hull];
+            int bone_count = bone_table.y - bone_table.x + 1;
             int point_count = element_table.y - element_table.x + 1;
             int edge_count = element_table.w >= 0 
                 ? element_table.w - element_table.z + 1 
@@ -54,7 +54,7 @@ inline DropCounts calculate_drop_counts(int armature_id,
 }
 
 __kernel void locate_out_of_bounds(__global int4 *hull_tables,
-                                   __global int4 *hull_flags,
+                                   __global int *hull_flags,
                                    __global int *armature_flags,
                                    __global int *counter)
 {
@@ -66,8 +66,8 @@ __kernel void locate_out_of_bounds(__global int4 *hull_tables,
     for (int i = 0; i < hull_count; i++)
     {
         int current_hull = hull_table.x + i;
-        int4 hull_flag = hull_flags[current_hull];
-        bool is_out = (hull_flag.x & OUT_OF_BOUNDS) !=0;
+        int hull_flag = hull_flags[current_hull];
+        bool is_out = (hull_flag & OUT_OF_BOUNDS) !=0;
         if (is_out)
         {
             out_count++;
@@ -85,7 +85,7 @@ __kernel void locate_out_of_bounds(__global int4 *hull_tables,
 __kernel void scan_deletes_single_block_out(__global int *armature_flags,
                                             __global int4 *hull_tables,
                                             __global int4 *element_tables,
-                                            __global int4 *hull_flags,
+                                            __global int2 *hull_bone_tables,
                                             __global int2 *output1,
                                             __global int4 *output2,
                                             __global int *sz,
@@ -98,8 +98,8 @@ __kernel void scan_deletes_single_block_out(__global int *armature_flags,
     int a_index = (global_id * 2);
     int b_index = (global_id * 2) + 1;
 
-    DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables, hull_flags);
-    DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables, hull_flags);
+    DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables, hull_bone_tables);
+    DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables, hull_bone_tables);
 
     int m = 2 * get_local_size(0);
 
@@ -189,7 +189,7 @@ __kernel void scan_deletes_single_block_out(__global int *armature_flags,
 __kernel void scan_deletes_multi_block_out(__global int *armature_flags,
                                            __global int4 *hull_tables,
                                            __global int4 *element_tables,
-                                           __global int4 *hull_flags,
+                                           __global int2 *hull_bone_tables,
                                            __global int2 *output1,
                                            __global int4 *output2,
                                            __local int2 *buffer1, 
@@ -204,8 +204,8 @@ __kernel void scan_deletes_multi_block_out(__global int *armature_flags,
     int a_index = (2 * global_id);
     int b_index = (2 * global_id) + 1;
 
-    DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables, hull_flags);
-    DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables, hull_flags);
+    DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables, hull_bone_tables);
+    DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables, hull_bone_tables);
 
     int local_id = get_local_id(0);
     int local_a_index = (2 * local_id);
@@ -280,7 +280,7 @@ __kernel void scan_deletes_multi_block_out(__global int *armature_flags,
 __kernel void complete_deletes_multi_block_out(__global int *armature_flags,
                                                __global int4 *hull_tables,
                                                __global int4 *element_tables,
-                                               __global int4 *hull_flags,
+                                               __global int2 *hull_bone_tables,
                                                __global int2 *output1,
                                                __global int4 *output2,
                                                __global int *sz,
@@ -334,7 +334,7 @@ __kernel void complete_deletes_multi_block_out(__global int *armature_flags,
         output2[a_index] = buffer2[local_a_index];
         if (a_index == n - 1)
         {
-            DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables, hull_flags);
+            DropCounts a_counts = calculate_drop_counts(a_index, armature_flags, hull_tables, element_tables, hull_bone_tables);
             sz[0] = (output1[a_index].x + a_counts.edge_count);
             sz[1] = (output2[a_index].x + a_counts.bone_count);
             sz[2] = (output2[a_index].y + a_counts.point_count);
@@ -349,7 +349,7 @@ __kernel void complete_deletes_multi_block_out(__global int *armature_flags,
         output2[b_index] = buffer2[local_b_index];
         if (b_index == n - 1)
         {
-            DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables, hull_flags);
+            DropCounts b_counts = calculate_drop_counts(b_index, armature_flags, hull_tables, element_tables, hull_bone_tables);
             sz[0] = (output1[b_index].x + b_counts.edge_count);
             sz[1] = (output2[b_index].x + b_counts.bone_count);
             sz[2] = (output2[b_index].y + b_counts.point_count);
@@ -371,7 +371,8 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
                                 __global double *armature_animation_elapsed,
                                 __global int4 *hull_tables,
                                 __global float4 *hulls,
-                                __global int4 *hull_flags,
+                                __global int2 *hull_bone_tables,
+                                __global int *hull_armature_ids,
                                 __global int4 *element_tables,
                                 __global float4 *points,
                                 __global int *point_hull_indices,
@@ -460,20 +461,24 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
     for (int i = 0; i < hull_count; i++)
     {
         int current_hull = hull_table.x + i;
-        int4 hull_flag = hull_flags[current_hull];
+
         int4 element_table = element_tables[current_hull];
+        int2 hull_bone_table = hull_bone_tables[current_hull];
+        int hull_armature_id = hull_armature_ids[current_hull];
 
         int4 new_element_table = element_table;
-        int4 new_hull_flag = hull_flag;
+        int2 new_hull_bone_table = hull_bone_table;
+        int new_hull_armature_id = hull_armature_id;
 
-        new_hull_flag.y = hull_flag.y - drop.armature_count;
-        new_hull_flag.z -= drop.bone_count;
-        new_hull_flag.w -= drop.bone_count;
+        new_hull_armature_id = hull_armature_id - drop.armature_count;
+        new_hull_bone_table.x -= drop.bone_count;
+        new_hull_bone_table.y -= drop.bone_count;
         new_element_table.x -= drop.point_count;
         new_element_table.y -= drop.point_count;
         new_element_table.z -= drop.edge_count;
         new_element_table.w -= drop.edge_count;
-        hull_flags[current_hull] = new_hull_flag;
+        hull_bone_tables[current_hull] = new_hull_bone_table;
+        hull_armature_ids[current_hull] = new_hull_armature_id;
         element_tables[current_hull] = new_element_table;
         hull_shift[current_hull] = drop.hull_count;
         
@@ -507,10 +512,10 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
         }
 
         // bones
-        int bone_count = hull_flag.w - hull_flag.z + 1;
+        int bone_count = hull_bone_table.y - hull_bone_table.x + 1;
         for (int l = 0; l < bone_count; l++)
         {
-            int current_bone = hull_flag.z + l;
+            int current_bone = hull_bone_table.x + l;
             int hull_bind_pose_index = hull_bind_pose_indicies[current_bone];
             hull_bind_pose_index -= drop.bone_bind_count;
             hull_bind_pose_indicies[current_bone] = hull_bind_pose_index;
@@ -524,7 +529,9 @@ __kernel void compact_hulls(__global int *hull_shift,
                             __global int *hull_mesh_ids,
                             __global float2 *hull_rotations,
                             __global float2 *hull_frictions,
-                            __global int4 *hull_flags,
+                            __global int2 *bone_tables,
+                            __global int *armature_ids,
+                            __global int *hull_flags,
                             __global int4 *element_tables,
                             __global float4 *bounds,
                             __global int4 *bounds_index_data,
@@ -535,7 +542,9 @@ __kernel void compact_hulls(__global int *hull_shift,
     float4 hull = hulls[current_hull];
     float2 rotation = hull_rotations[current_hull];
     float2 friction = hull_frictions[current_hull];
-    int4 hull_flag = hull_flags[current_hull];
+    int2 bone_table = bone_tables[current_hull];
+    int armature_id = armature_ids[current_hull];
+    int hull_flag = hull_flags[current_hull];
     int4 element_table = element_tables[current_hull];
     float4 bound = bounds[current_hull];
     int4 bounds_index = bounds_index_data[current_hull];
@@ -549,6 +558,8 @@ __kernel void compact_hulls(__global int *hull_shift,
         hulls[new_hull_index] = hull;
         hull_rotations[new_hull_index] = rotation;
         hull_frictions[new_hull_index] = friction;
+        bone_tables[new_hull_index] = bone_table;
+        armature_ids[new_hull_index] = armature_id;
         hull_flags[new_hull_index] = hull_flag;
         element_tables[new_hull_index] = element_table;
         bounds[new_hull_index] = bound;

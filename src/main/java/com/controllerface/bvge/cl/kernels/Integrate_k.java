@@ -15,6 +15,7 @@ public class Integrate_k extends GPUKernel
         bounds_index_data,
         bounds_bank_data,
         hull_flags,
+        hull_armature_ids,
         anti_gravity,
         args;
     }

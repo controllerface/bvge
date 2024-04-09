@@ -8,6 +8,7 @@ public class AnimatePoints_k extends GPUKernel
     {
         points,
         hulls,
+        hull_armature_ids,
         hull_flags,
         point_vertex_references,
         point_hull_indices,

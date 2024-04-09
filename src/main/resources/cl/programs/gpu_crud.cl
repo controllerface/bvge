@@ -191,20 +191,26 @@ __kernel void create_hull(__global float4 *hulls,
                           __global float2 *hull_rotations,
                           __global float2 *hull_frictions,
                           __global int4 *element_tables,
-                          __global int4 *hull_flags,
+                          __global int2 *bone_tables,
+                          __global int *armature_ids,
+                          __global int *hull_flags,
                           __global int *hull_mesh_ids,
                           int target,
                           float4 new_hull,
                           float2 new_rotation,
                           float2 new_friction,
                           int4 new_table,
-                          int4 new_flags,
+                          int2 new_bone_table,
+                          int new_armature_id,
+                          int new_flags,
                           int new_hull_mesh_id)
 {
     hulls[target] = new_hull; 
     hull_rotations[target] = new_rotation; 
     hull_frictions[target] = new_friction; 
     element_tables[target] = new_table; 
+    bone_tables[target] = new_bone_table; 
+    armature_ids[target] = new_armature_id; 
     hull_flags[target] = new_flags; 
     hull_mesh_ids[target] = new_hull_mesh_id;
 }

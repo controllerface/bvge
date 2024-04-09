@@ -3,7 +3,8 @@ Performs axis-aligned bounding box collision detection as part of a broad phase 
  */
 __kernel void aabb_collide(__global float4 *bounds,
                            __global int2 *bounds_bank_data,
-                           __global int4 *hull_flags,
+                           __global int *hull_armature_ids,
+                           __global int *hull_flags,
                            __global int2 *candidates,
                            __global int *match_offsets,
                            __global int *key_map,
@@ -23,7 +24,8 @@ __kernel void aabb_collide(__global float4 *bounds,
 
     float4 bound = bounds[index];
     int2 bounds_bank = bounds_bank_data[index];
-    int4 flags = hull_flags[index];
+    int flags = hull_flags[index];
+    int armature_id = hull_armature_ids[index];
 
     int spatial_index = bounds_bank.x * 2;
     int spatial_length = bounds_bank.y;
@@ -33,8 +35,8 @@ __kernel void aabb_collide(__global float4 *bounds,
     int current_offset = match_offset;
     int slots_used = 0;
 
-    bool is_static = (flags.x & IS_STATIC) !=0;
-    bool non_colliding = (flags.x & NON_COLLIDING) !=0;
+    bool is_static = (flags & IS_STATIC) !=0;
+    bool non_colliding = (flags & NON_COLLIDING) !=0;
 
     if (non_colliding) return;
 
@@ -72,13 +74,14 @@ __kernel void aabb_collide(__global float4 *bounds,
             }
 
             // no collisions between hulls that are part of the same amrature
-            int4 candiate_flags = hull_flags[next];
-            if (candiate_flags.y == flags.y)
+            int candiate_flags = hull_flags[next];
+            int candiate_armature_id = hull_armature_ids[next];
+            if (candiate_armature_id == armature_id)
             {
                 continue;
             }
 
-            bool is_static_c = (candiate_flags.x & IS_STATIC) !=0;
+            bool is_static_c = (candiate_flags & IS_STATIC) !=0;
 
             // no static/static collision permitted
             if (is_static && is_static_c)
