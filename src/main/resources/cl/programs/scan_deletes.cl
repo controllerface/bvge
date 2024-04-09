@@ -377,7 +377,7 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
                                 __global float4 *points,
                                 __global int *point_hull_indices,
                                 __global int4 *bone_tables,
-                                __global int2 *bone_bind_tables,
+                                __global int *armature_bone_parent_ids,
                                 __global int *hull_bind_pose_indicies,
                                 __global int2 *edges,
                                 __global int *bone_shift,
@@ -448,11 +448,11 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
     for (int i = 0; i < armature_bone_count; i++)
     {
         int current_bone_bind = hull_table.z + i;
-        int2 bone_bind_table = bone_bind_tables[current_bone_bind];
-        bone_bind_table.y = bone_bind_table.y == -1
+        int bone_parent_id = armature_bone_parent_ids[current_bone_bind];
+        bone_parent_id = bone_parent_id == -1
             ? -1
-            : bone_bind_table.y - drop.bone_bind_count;
-        bone_bind_tables[current_bone_bind] = bone_bind_table;
+            : bone_parent_id - drop.bone_bind_count;
+        armature_bone_parent_ids[current_bone_bind] = bone_parent_id;
         bone_bind_shift[current_bone_bind] = drop.bone_bind_count;
     }
 
@@ -635,24 +635,28 @@ __kernel void compact_bones(__global int *bone_shift,
     {
         int new_bone_index = current_bone - shift;
         bone_instances[new_bone_index] = instance;
-        hull_bind_pose_indicies[current_bone] = bind_pose_id;
-        hull_inv_bind_pose_indicies[current_bone] = inv_bind_pose_id;
+        hull_bind_pose_indicies[new_bone_index] = bind_pose_id;
+        hull_inv_bind_pose_indicies[new_bone_index] = inv_bind_pose_id;
     }
 }
 
 __kernel void compact_armature_bones(__global int *bone_bind_shift,
                                      __global float16 *armatures_bones,
-                                     __global int2 *bind_tables)
+                                     __global int *armature_bone_reference_ids,
+                                     __global int *armature_bone_parent_ids)
 {
     int current_armature_bone = get_global_id(0);
     int shift = bone_bind_shift[current_armature_bone];
-    float16 armature_bone = armatures_bones[current_armature_bone];
-    int2 bind_table = bind_tables[current_armature_bone];
+    float16 armature_bone = armatures_bones[current_armature_bone];    
+    int bone_reference = armature_bone_reference_ids[current_armature_bone];
+    int bone_parent_id = armature_bone_parent_ids[current_armature_bone];
+
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_bone_index = current_armature_bone - shift;
         armatures_bones[new_bone_index] = armature_bone;
-        bind_tables[new_bone_index] = bind_table;
+        armature_bone_reference_ids[new_bone_index] = bone_reference;
+        armature_bone_parent_ids[new_bone_index] = bone_parent_id;
     }
 }

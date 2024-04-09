@@ -135,11 +135,15 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer armature_bone_buffer;
 
-    /** int2
+    /** int
      * x: bind pose reference id
-     * y: armature bone parent id
      */
-    private final ResizableBuffer armature_bone_table_buffer; // todo: split into separate buffers
+    private final ResizableBuffer armature_bone_reference_id_buffer;
+
+    /** int
+     * x: armature bone parent id
+     */
+    private final ResizableBuffer armature_bone_parent_id_buffer;
 
     /** float4
      * x: current x position
@@ -432,7 +436,8 @@ public class GPUCoreMemory
         armature_anim_elapsed_buffer    = new PersistentBuffer(CLSize.cl_float, 10_000L);
         armature_anim_index_buffer      = new PersistentBuffer(CLSize.cl_int, 10_000L);
         armature_bone_buffer            = new PersistentBuffer(CLSize.cl_float16);
-        armature_bone_table_buffer      = new PersistentBuffer(CLSize.cl_int2);
+        armature_bone_reference_id_buffer = new PersistentBuffer(CLSize.cl_int);
+        armature_bone_parent_id_buffer  = new PersistentBuffer(CLSize.cl_int);
         armature_buffer                 = new PersistentBuffer(CLSize.cl_float4, 10_000L);
         armature_flag_buffer            = new PersistentBuffer(CLSize.cl_int, 10_000L);
         armature_root_hull_buffer       = new PersistentBuffer(CLSize.cl_int, 10_000L);
@@ -544,7 +549,8 @@ public class GPUCoreMemory
         long create_armature_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature_bone);
         create_armature_bone_k = new CreateArmatureBone_k(GPGPU.command_queue_ptr, create_armature_bone_k_ptr)
             .buf_arg(CreateArmatureBone_k.Args.armature_bones, armature_bone_buffer)
-            .buf_arg(CreateArmatureBone_k.Args.bone_bind_tables, armature_bone_table_buffer);
+            .buf_arg(CreateArmatureBone_k.Args.armature_bone_reference_ids, armature_bone_reference_id_buffer)
+            .buf_arg(CreateArmatureBone_k.Args.armature_bone_parent_ids, armature_bone_parent_id_buffer);
 
         long create_model_transform_k_ptr = gpu_crud.kernel_ptr(Kernel.create_model_transform);
         create_model_transform_k = new CreateModelTransform_k(GPGPU.command_queue_ptr, create_model_transform_k_ptr)
@@ -642,7 +648,7 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.points, point_buffer)
             .buf_arg(CompactArmatures_k.Args.point_hull_indices, point_hull_index_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_tables, point_bone_table_buffer)
-            .buf_arg(CompactArmatures_k.Args.bone_bind_tables, armature_bone_table_buffer)
+            .buf_arg(CompactArmatures_k.Args.armature_bone_parent_ids, armature_bone_parent_id_buffer)
             .buf_arg(CompactArmatures_k.Args.hull_bind_pose_indicies, hull_bind_pose_id_buffer)
             .buf_arg(CompactArmatures_k.Args.edges, edge_buffer)
             .buf_arg(CompactArmatures_k.Args.bone_shift, bone_shift)
@@ -694,7 +700,8 @@ public class GPUCoreMemory
         compact_armature_bones_k = new CompactArmatureBones_k(GPGPU.command_queue_ptr, compact_armature_bones_k_ptr)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_shift, bone_bind_shift)
             .buf_arg(CompactArmatureBones_k.Args.armature_bones, armature_bone_buffer)
-            .buf_arg(CompactArmatureBones_k.Args.armature_bone_tables, armature_bone_table_buffer);
+            .buf_arg(CompactArmatureBones_k.Args.armature_bone_reference_ids, armature_bone_reference_id_buffer)
+            .buf_arg(CompactArmatureBones_k.Args.armature_bone_parent_ids, armature_bone_parent_id_buffer);
     }
 
     public ResizableBuffer buffer(BufferType bufferType)
@@ -714,7 +721,8 @@ public class GPUCoreMemory
             case ARMATURE_ANIM_ELAPSED   -> armature_anim_elapsed_buffer;
             case ARMATURE_ANIM_INDEX     -> armature_anim_index_buffer;
             case ARMATURE_BONE           -> armature_bone_buffer;
-            case ARMATURE_BONE_TABLE     -> armature_bone_table_buffer;
+            case ARMATURE_BONE_REFERENCE_ID -> armature_bone_reference_id_buffer;
+            case ARMATURE_BONE_PARENT_ID -> armature_bone_parent_id_buffer;
             case ARMATURE_FLAG           -> armature_flag_buffer;
             case ARMATURE_HULL_TABLE     -> armature_hull_table_buffer;
             case ARMATURE_MASS           -> armature_mass_buffer;
@@ -1041,16 +1049,18 @@ public class GPUCoreMemory
         return bone_index++;
     }
 
-    public int new_armature_bone(int[] bone_bind_table, float[] bone_data)
+    public int new_armature_bone(int bone_reference, int bone_parent_id, float[] bone_data)
     {
         int capacity = armature_bone_index + 1;
         armature_bone_buffer.ensure_capacity(capacity);
-        armature_bone_table_buffer.ensure_capacity(capacity);
+        armature_bone_reference_id_buffer.ensure_capacity(capacity);
+        armature_bone_parent_id_buffer.ensure_capacity(capacity);
 
         create_armature_bone_k
             .set_arg(CreateArmatureBone_k.Args.target, armature_bone_index)
             .set_arg(CreateArmatureBone_k.Args.new_armature_bone, bone_data)
-            .set_arg(CreateArmatureBone_k.Args.new_bone_bind_table, bone_bind_table)
+            .set_arg(CreateArmatureBone_k.Args.new_armature_bone_reference, bone_reference)
+            .set_arg(CreateArmatureBone_k.Args.new_armature_bone_parent_id, bone_parent_id)
             .call(GPGPU.global_single_size);
 
         return armature_bone_index++;
@@ -1311,7 +1321,8 @@ public class GPUCoreMemory
         anim_tick_rate_buffer.release();
         anim_timing_index_buffer.release();
         armature_bone_buffer.release();
-        armature_bone_table_buffer.release();
+        armature_bone_reference_id_buffer.release();
+        armature_bone_parent_id_buffer.release();
         armature_buffer.release();
         armature_flag_buffer.release();
         armature_root_hull_buffer.release();
@@ -1383,7 +1394,8 @@ public class GPUCoreMemory
         total += anim_tick_rate_buffer.debug_data();
         total += anim_timing_index_buffer.debug_data();
         total += armature_bone_buffer.debug_data();
-        total += armature_bone_table_buffer.debug_data();
+        total += armature_bone_reference_id_buffer.debug_data();
+        total += armature_bone_parent_id_buffer.debug_data();
         total += armature_buffer.debug_data();
         total += armature_flag_buffer.debug_data();
         total += armature_root_hull_buffer.debug_data();

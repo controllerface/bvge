@@ -167,13 +167,16 @@ __kernel void create_hull_bone(__global float16 *hull_bones,
 }
 
 __kernel void create_armature_bone(__global float16 *armature_bones,
-                                   __global int2 *bone_bind_tables,
+                                   __global int *armature_bone_reference_ids,
+                                   __global int *armature_bone_parent_ids,
                                    int target,
                                    float16 new_armature_bone,
-                                   int2 new_bone_bind_table)
+                                   int new_armature_bone_reference,
+                                   int new_armature_bone_parent_id)
 {
     armature_bones[target] = new_armature_bone; 
-    bone_bind_tables[target] = new_bone_bind_table; 
+    armature_bone_reference_ids[target] = new_armature_bone_reference;
+    armature_bone_parent_ids[target] = new_armature_bone_parent_id;
 }
 
 __kernel void create_mesh_reference(__global int4 *mesh_ref_tables,

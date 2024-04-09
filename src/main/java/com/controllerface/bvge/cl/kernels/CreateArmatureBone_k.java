@@ -7,10 +7,12 @@ public class CreateArmatureBone_k extends GPUKernel
     public enum Args
     {
         armature_bones,
-        bone_bind_tables,
+        armature_bone_reference_ids,
+        armature_bone_parent_ids,
         target,
         new_armature_bone,
-        new_bone_bind_table;
+        new_armature_bone_reference,
+        new_armature_bone_parent_id,
     }
 
     public CreateArmatureBone_k(long command_queue_ptr, long kernel_ptr)

@@ -75,7 +75,8 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
 __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global float16 *bone_bind_poses,
                                 __global float16 *model_transforms,
-                                __global int2 *bone_bind_tables,
+                                __global int *armature_bone_reference_ids,
+                                __global int *armature_bone_parent_ids,
                                 __global int2 *bone_channel_tables,
                                 __global int2 *bone_pos_channel_tables,
                                 __global int2 *bone_rot_channel_tables,
@@ -103,11 +104,12 @@ __kernel void animate_armatures(__global float16 *armature_bones,
     for (int i = 0; i < armature_bone_count; i++)
     {
         int current_bone_bind = hull_table.z + i;
-        int2 bone_bind_table = bone_bind_tables[current_bone_bind];
+        int bone_reference_id = armature_bone_reference_ids[current_bone_bind];
+        int bone_parent_id = armature_bone_parent_ids[current_bone_bind];
 
-        float16 parent_transform = bone_bind_table.y == -1 
+        float16 parent_transform = bone_parent_id == -1 
             ? model_transform 
-            : armature_bones[bone_bind_table.y];
+            : armature_bones[bone_parent_id];
 
         float16 node_transform = get_node_transform(bone_bind_poses,
                                                     bone_channel_tables,
@@ -121,7 +123,7 @@ __kernel void animate_armatures(__global float16 *armature_bones,
                                                     frame_times,
                                                     current_frame_time,
                                                     current_animation,
-                                                    bone_bind_table.x);
+                                                    bone_reference_id);
 
         float16 global_transform = matrix_mul_affine(parent_transform, node_transform);
         armature_bones[current_bone_bind] = global_transform;

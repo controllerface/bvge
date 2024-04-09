@@ -218,13 +218,11 @@ public class PhysicsObjects
             var bind_pose_ref_id = entry.getKey();
             var bind_pose = entry.getValue();
             var raw_matrix = CLUtils.arg_float16_matrix(bind_pose.transform());
-            int[] bind_table = new int[2];
-            bind_table[0] = bind_pose_ref_id;
-            bind_table[1] = bind_pose.parent() == -1
+            int bind_parent = bind_pose.parent() == -1
                 ? -1
                 : armature_bone_parent_map.get(bind_pose.parent());
 
-            int next_armature_bone = GPGPU.core_memory.new_armature_bone(bind_table, raw_matrix);
+            int next_armature_bone = GPGPU.core_memory.new_armature_bone(bind_pose_ref_id, bind_parent, raw_matrix);
             if (first_armature_bone == -1)
             {
                 first_armature_bone = next_armature_bone;

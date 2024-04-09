@@ -7,13 +7,11 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.util.Constants;
-import org.joml.Vector2f;
 
 import java.util.Map;
 import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
-import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 
 public class PhysicsSimulation extends GameSystem
 {
@@ -353,7 +351,8 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimateArmatures_k.Args.armature_bones, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE))
             .buf_arg(AnimateArmatures_k.Args.bone_bind_poses, GPGPU.core_memory.buffer(BufferType.BONE_BIND_POSE))
             .buf_arg(AnimateArmatures_k.Args.model_transforms, GPGPU.core_memory.buffer(BufferType.MODEL_TRANSFORM))
-            .buf_arg(AnimateArmatures_k.Args.bone_bind_tables, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE_TABLE))
+            .buf_arg(AnimateArmatures_k.Args.armature_bone_reference_ids, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE_REFERENCE_ID))
+            .buf_arg(AnimateArmatures_k.Args.armature_bone_parent_ids, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE_PARENT_ID))
             .buf_arg(AnimateArmatures_k.Args.bone_channel_tables, GPGPU.core_memory.buffer(BufferType.BONE_ANIM_TABLE))
             .buf_arg(AnimateArmatures_k.Args.bone_pos_channel_tables, GPGPU.core_memory.buffer(BufferType.ANIM_POS_CHANNEL))
             .buf_arg(AnimateArmatures_k.Args.bone_rot_channel_tables, GPGPU.core_memory.buffer(BufferType.ANIM_ROT_CHANNEL))
