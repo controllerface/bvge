@@ -182,11 +182,14 @@ __kernel void create_armature_bone(__global float16 *armature_bones,
     armature_bone_parent_ids[target] = new_armature_bone_parent_id;
 }
 
-__kernel void create_mesh_reference(__global int4 *mesh_ref_tables,
+__kernel void create_mesh_reference(__global int2 *mesh_vertex_tables,
+                                    __global int2 *mesh_face_tables,
                                     int target,
-                                    int4 new_mesh_ref_table)
+                                    int2 new_mesh_vertex_table,
+                                    int2 new_mesh_face_table)
 {
-    mesh_ref_tables[target] = new_mesh_ref_table;
+    mesh_vertex_tables[target] = new_mesh_vertex_table;
+    mesh_face_tables[target] = new_mesh_face_table;
 }
 
 __kernel void create_mesh_face(__global int4 *mesh_faces,

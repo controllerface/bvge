@@ -18,7 +18,8 @@ __kernel void count_mesh_instances(__global int *hull_mesh_ids,
 }
 
 __kernel void write_mesh_details(__global int *hull_mesh_ids,
-                                 __global int4 *mesh_references,
+                                 __global int2 *mesh_vertex_tables,
+                                 __global int2 *mesh_face_tables,
                                  __global int *counters, 
                                  __global int *query, 
                                  __global int *offsets,
@@ -32,12 +33,13 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
         int nx = query[i];
         if (mesh_id == nx)
         {
-            int4 ref_mesh = mesh_references[mesh_id];
+            int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
+            int2 mesh_face_table = mesh_face_tables[mesh_id];
             int offset = offsets[i];
             int bank = atomic_dec(&counters[i]) - 1;
             int4 out;
-            out.x = ref_mesh.y - ref_mesh.x + 1;
-            out.y = (ref_mesh.w - ref_mesh.z + 1) * 3;
+            out.x = mesh_vertex_table.y - mesh_vertex_table.x + 1;
+            out.y = (mesh_face_table.y - mesh_face_table.x + 1) * 3;
             out.z = hull_id;
             int id = offset + bank;
             mesh_details[id] = out;
@@ -98,7 +100,8 @@ __kernel void transfer_detail_data(__global int4 *mesh_details,
 
 __kernel void transfer_render_data(__global int4 *hull_element_tables,
                                    __global int *hull_mesh_ids,
-                                   __global int4 *mesh_references,
+                                   __global int2 *mesh_vertex_tables,
+                                   __global int2 *mesh_face_tables,
                                    __global int4 *mesh_faces,
                                    __global float4 *points,
                                    __global int *point_vertex_references,
@@ -127,7 +130,9 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
     int hull_id = details.z;
     int mesh_id = hull_mesh_ids[hull_id];
     int4 element_table = hull_element_tables[hull_id];
-    int4 mesh_reference = mesh_references[mesh_id];
+    int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
+    int2 mesh_face_table = mesh_face_tables[mesh_id];
+
     int start_point = element_table.x;
     int end_point = element_table.y;
     for (int point_id = start_point; point_id <= end_point; point_id++)
@@ -137,13 +142,13 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
         int2 uv_table = uv_tables[point_vertex_reference];
         float2 uv = texture_uvs[uv_table.x]; // todo: select from available uvs based on hull data
         float2 pos = point.xy;
-        int ref_offset = point_vertex_reference - mesh_reference.x + transfer.x;
+        int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
     }
 
-    int start_face = mesh_reference.z;
-    int end_face = mesh_reference.w;
+    int start_face = mesh_face_table.x;
+    int end_face = mesh_face_table.y;
     for (int face_id = start_face; face_id <= end_face; face_id++)
     {
         int4 face = mesh_faces[face_id];

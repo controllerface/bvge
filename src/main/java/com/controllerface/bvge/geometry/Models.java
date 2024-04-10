@@ -329,13 +329,13 @@ public class Models
         var mesh_vertices = load_vertices(raw_mesh, bone_name_map, bone_weight_map);
         var mesh_faces = load_faces(raw_mesh, next_mesh);
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
-        int[] table = new int[4];
-        //
-        table[0] = mesh_vertices[0].vert_ref_id();
-        table[1] = mesh_vertices[mesh_vertices.length - 1].vert_ref_id();
-        table[2] = mesh_faces[0].index();
-        table[3] = mesh_faces[mesh_faces.length - 1].index();
-        var mesh_id = GPGPU.core_memory.new_mesh_reference(table);
+        int[] vertex_table = new int[2];
+        int[] face_table = new int[2];
+        vertex_table[0] = mesh_vertices[0].vert_ref_id();
+        vertex_table[1] = mesh_vertices[mesh_vertices.length - 1].vert_ref_id();
+        face_table[0] = mesh_faces[0].index();
+        face_table[1] = mesh_faces[mesh_faces.length - 1].index();
+        var mesh_id = GPGPU.core_memory.new_mesh_reference(vertex_table, face_table);
 
         assert mesh_id == next_mesh : "Mesh alignment error";
 

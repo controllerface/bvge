@@ -7,7 +7,8 @@ public class WriteMeshDetails_k extends GPUKernel
     public enum Args
     {
         hull_mesh_ids,
-        mesh_references,
+        mesh_vertex_tables,
+        mesh_face_tables,
         counters,
         query,
         offsets,

@@ -321,13 +321,17 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer mesh_face_buffer;
 
-    /** int4
+    /** int2
      * x: start vertex index
      * y: end vertex index
+     */
+    private final ResizableBuffer mesh_vertex_table_buffer;
+
+    /** int2
      * z: start face index
      * w: end face index
      */
-    private final ResizableBuffer mesh_reference_buffer; // todo: split into separate buffers
+    private final ResizableBuffer mesh_face_table_buffer;
 
     /** float16
      * s0-sF: Column-major, 4x4 transformation matrix
@@ -479,7 +483,8 @@ public class GPUCoreMemory
         hull_mesh_id_buffer             = new PersistentBuffer(CLSize.cl_int, 10_000L);
         hull_rotation_buffer            = new PersistentBuffer(CLSize.cl_float2, 10_000L);
         mesh_face_buffer                = new PersistentBuffer(CLSize.cl_int4);
-        mesh_reference_buffer           = new PersistentBuffer(CLSize.cl_int4);
+        mesh_vertex_table_buffer        = new PersistentBuffer(CLSize.cl_int2);
+        mesh_face_table_buffer          = new PersistentBuffer(CLSize.cl_int2);
         model_transform_buffer          = new PersistentBuffer(CLSize.cl_float16);
         point_anti_gravity_buffer       = new PersistentBuffer(CLSize.cl_float, 50_000L);
         point_bone_table_buffer         = new PersistentBuffer(CLSize.cl_int4, 50_000L);
@@ -584,7 +589,8 @@ public class GPUCoreMemory
 
         long create_mesh_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_reference);
         create_mesh_reference_k = new CreateMeshReference_k(GPGPU.command_queue_ptr, create_mesh_reference_k_ptr)
-            .buf_arg(CreateMeshReference_k.Args.mesh_ref_tables, mesh_reference_buffer);
+            .buf_arg(CreateMeshReference_k.Args.mesh_vertex_tables, mesh_vertex_table_buffer)
+            .buf_arg(CreateMeshReference_k.Args.mesh_face_tables, mesh_face_table_buffer);
 
         long create_mesh_face_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_face);
         create_mesh_face_k = new CreateMeshFace_k(GPGPU.command_queue_ptr, create_mesh_face_k_ptr)
@@ -772,7 +778,8 @@ public class GPUCoreMemory
             case HULL_MESH_ID            -> hull_mesh_id_buffer;
             case HULL_ROTATION           -> hull_rotation_buffer;
             case MESH_FACE               -> mesh_face_buffer;
-            case MESH_REFERENCE          -> mesh_reference_buffer;
+            case MESH_VERTEX_TABLE       -> mesh_vertex_table_buffer;
+            case MESH_FACE_TABLE         -> mesh_face_table_buffer;
             case MODEL_TRANSFORM         -> model_transform_buffer;
             case POINT                   -> point_buffer;
             case POINT_ANTI_GRAV         -> point_anti_gravity_buffer;
@@ -963,14 +970,17 @@ public class GPUCoreMemory
         return hull_index++;
     }
 
-    public int new_mesh_reference(int[] mesh_ref_table)
+    public int new_mesh_reference(int[] vertex_table, int[] face_table)
     {
         int capacity = mesh_index + 1;
-        mesh_reference_buffer.ensure_capacity(capacity);
+
+        mesh_vertex_table_buffer.ensure_capacity(capacity);
+        mesh_face_table_buffer.ensure_capacity(capacity);
 
         create_mesh_reference_k
             .set_arg(CreateMeshReference_k.Args.target, mesh_index)
-            .set_arg(CreateMeshReference_k.Args.new_mesh_ref_table, mesh_ref_table)
+            .set_arg(CreateMeshReference_k.Args.new_mesh_vertex_table, vertex_table)
+            .set_arg(CreateMeshReference_k.Args.new_mesh_face_table, face_table)
             .call(GPGPU.global_single_size);
 
         return mesh_index++;
@@ -1354,7 +1364,8 @@ public class GPUCoreMemory
         bone_reference_buffer.release();
         bone_bind_pose_buffer.release();
         bone_anim_channel_table_buffer.release();
-        mesh_reference_buffer.release();
+        mesh_vertex_table_buffer.release();
+        mesh_face_table_buffer.release();
         mesh_face_buffer.release();
         anim_key_frame_buffer.release();
         anim_frame_time_buffer.release();
@@ -1430,7 +1441,8 @@ public class GPUCoreMemory
         total += bone_reference_buffer.debug_data();
         total += bone_bind_pose_buffer.debug_data();
         total += bone_anim_channel_table_buffer.debug_data();
-        total += mesh_reference_buffer.debug_data();
+        total += mesh_vertex_table_buffer.debug_data();
+        total += mesh_face_table_buffer.debug_data();
         total += mesh_face_buffer.debug_data();
         total += anim_key_frame_buffer.debug_data();
         total += anim_frame_time_buffer.debug_data();
