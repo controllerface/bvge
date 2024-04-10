@@ -12,7 +12,8 @@ in a process that updates all the tracked vertices each frame.
 Some meta-data about the hulls that are updated is stored within
 them before this kernel completes. 
  */
-__kernel void integrate(__global float4 *hulls,
+__kernel void integrate(__global float2 *hulls,
+                        __global float2 *hull_scales,
                         __global int4 *element_tables,
                         __global float2 *armature_accel,
                         __global float2 *hull_rotations,
@@ -40,7 +41,8 @@ __kernel void integrate(__global float4 *hulls,
     float damping = args[11];
     
     // get hull from array
-    float4 hull = hulls[current_hull];
+    float2 hull = hulls[current_hull];
+    float2 hull_scale = hull_scales[current_hull];
     int4 element_table = element_tables[current_hull];
     int hull_1_flags = hull_flags[current_hull];
     int hull_armature_id = hull_armature_ids[current_hull];
@@ -162,10 +164,10 @@ __kernel void integrate(__global float4 *hulls,
     // handle bounding boxes for circles
     if (is_circle)
     {
-        min_x = hull.x - hull.w;
-        max_x = hull.x + hull.w;
-        min_y = hull.y - hull.w;
-        max_y = hull.y + hull.w;
+        min_x = hull.x - hull_scale.y;
+        max_x = hull.x + hull_scale.y;
+        min_y = hull.y - hull_scale.y;
+        max_y = hull.y + hull_scale.y;
     }
 
     // calculate bounding box

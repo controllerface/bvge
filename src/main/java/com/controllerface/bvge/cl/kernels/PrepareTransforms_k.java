@@ -6,7 +6,8 @@ public class PrepareTransforms_k extends GPUKernel
 {
     public enum Args
     {
-        transforms,
+        hull_positions,
+        hull_scales,
         hull_rotations,
         indices,
         transforms_out,

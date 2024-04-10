@@ -15,7 +15,8 @@ collisions, as there is only a single point, circles are always the vertex objec
 Circle/circle collisions use a simple distance/radius check.
  */
 __kernel void sat_collide(__global int2 *candidates,
-                          __global float4 *hulls,
+                          __global float2 *hulls,
+                          __global float2 *hull_scales,
                           __global float *hull_frictions,
                           __global float *hull_restitutions,
                           __global int4 *element_tables,
@@ -77,6 +78,7 @@ __kernel void sat_collide(__global int2 *candidates,
     {
         circle_collision(b1_id, b2_id, 
             hulls, 
+            hull_scales,
             hull_frictions,
             hull_restitutions,
             hull_armature_ids,
@@ -93,6 +95,7 @@ __kernel void sat_collide(__global int2 *candidates,
     {
         polygon_circle_collision(p_id, c_id, 
             hulls, 
+            hull_scales,
             hull_frictions,
             hull_restitutions,
             hull_armature_ids,
@@ -292,7 +295,7 @@ inline int consume_point_flags(__global int *point_flags,
 
     return result;
 }
-__kernel void move_armatures(__global float4 *hulls,
+__kernel void move_armatures(__global float2 *hulls,
                              __global float4 *armatures,
                              __global int *armature_flags,
                              __global int2 *hull_tables,
@@ -316,7 +319,7 @@ __kernel void move_armatures(__global float4 *hulls,
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
-        float4 hull = hulls[n];
+        float2 hull = hulls[n];
         int hull_flag = hull_flags[n];
         int4 element_table = element_tables[n];
         bool no_bones = (hull_flag & NO_BONES) !=0;

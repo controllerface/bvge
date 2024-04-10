@@ -147,7 +147,7 @@ __kernel void animate_bones(__global float16 *bones,
 }
 
 __kernel void animate_points(__global float4 *points,
-                             __global float4 *hulls,
+                             __global float2 *hull_scales,
                              __global int *hull_armature_ids,
                              __global int *hull_flags,
                              __global int *point_vertex_references,
@@ -185,7 +185,7 @@ __kernel void animate_points(__global float4 *points,
     test_bone += bone3 * reference_weights.z;
     test_bone += bone4 * reference_weights.w;
     
-    float4 hull = hulls[point_hull_index];
+    float2 hull_scale = hull_scales[point_hull_index];
     float4 armature = armatures[hull_armature_id]; 
 
     float4 padded = (float4)(reference_vertex.x, reference_vertex.y, 0.0f, 1.0f);
@@ -193,8 +193,8 @@ __kernel void animate_points(__global float4 *points,
     float2 un_padded = after_bone.xy;
     
     // this is effectively a model transform with just scale and position
-    un_padded.x *= hull.z;
-    un_padded.y *= hull.w;
+    un_padded.x *= hull_scale.x;
+    un_padded.y *= hull_scale.y;
     un_padded += armature.xy;
     point.x = un_padded.x;
     point.y = un_padded.y;

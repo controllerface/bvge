@@ -1,4 +1,5 @@
-__kernel void prepare_transforms(__global float4 *transforms, 
+__kernel void prepare_transforms(__global float2 *hull_positions, 
+                                 __global float2 *hull_scales, 
                                  __global float2 *hull_rotations,
                                  __global int *indices,
                                  __global float4 *transforms_out,
@@ -8,16 +9,15 @@ __kernel void prepare_transforms(__global float4 *transforms,
     int offset_gid = gid + offset;
     int index = indices[offset_gid];
     
-    float4 transform = transforms[index];
+    float2 position = hull_positions[index];
+    float2 scale    = hull_scales[index];
     float2 rotation = hull_rotations[index];
 
     float4 transform_out;
-    transform_out.x = transform.x; 
-    transform_out.y = transform.y; 
+    transform_out.x = position.x; 
+    transform_out.y = position.y; 
     transform_out.z = rotation.x;
-    transform_out.w = transform.z; // just use x scale for now
-
-    // todo: will need to expand this structure out for non-uniform scales and circles
+    transform_out.w = scale.x; // note: uniform scale only
 
     transforms_out[gid] = transform_out;
 }

@@ -17,7 +17,6 @@ public class CompactArmatures_k extends GPUKernel
         armature_animation_elapsed,
         armature_hull_tables,
         armature_bone_tables,
-        hulls,
         hull_bone_tables,
         hull_armature_ids,
         element_tables,

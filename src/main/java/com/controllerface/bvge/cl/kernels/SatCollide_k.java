@@ -8,6 +8,7 @@ public class SatCollide_k extends GPUKernel
     {
         candidates,
         hulls,
+        hull_scales,
         hull_frictions,
         hull_restitutions,
         element_tables,

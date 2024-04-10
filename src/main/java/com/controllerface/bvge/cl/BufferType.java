@@ -31,6 +31,7 @@ public enum BufferType
     EDGE_FLAG,
     EDGE_LENGTH,
     HULL,
+    HULL_SCALE,
     HULL_AABB,
     HULL_AABB_INDEX,
     HULL_AABB_KEY_TABLE,

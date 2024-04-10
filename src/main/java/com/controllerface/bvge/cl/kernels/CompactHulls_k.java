@@ -8,6 +8,7 @@ public class CompactHulls_k extends GPUKernel
     {
         hull_shift,
         hulls,
+        hull_scales,
         hull_mesh_ids,
         hull_rotations,
         hull_frictions,

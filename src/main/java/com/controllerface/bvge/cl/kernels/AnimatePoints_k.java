@@ -7,7 +7,7 @@ public class AnimatePoints_k extends GPUKernel
     public enum Args
     {
         points,
-        hulls,
+        hull_scales,
         hull_armature_ids,
         hull_flags,
         point_vertex_references,

@@ -185,7 +185,6 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer armature_bone_table_buffer;
 
-
     /** float
      * x: mass of the armature
      */
@@ -260,13 +259,17 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer hull_inv_bind_pose_id_buffer;
 
-    /** float4
+    /** float2
      * x: current x position
      * y: current y position
-     * z: scale x
-     * w: scale y
      */
-    private final ResizableBuffer hull_buffer; // todo: split into separate buffers
+    private final ResizableBuffer hull_buffer;
+
+    /** float2
+     * x: scale x
+     * y: scale y
+     */
+    private final ResizableBuffer hull_scale_buffer;
 
     /** int4
      * x: start point index
@@ -473,7 +476,8 @@ public class GPUCoreMemory
         hull_bone_buffer                = new PersistentBuffer(CLSize.cl_float16, 10_000L);
         hull_bind_pose_id_buffer        = new PersistentBuffer(CLSize.cl_int, 10_000L);
         hull_inv_bind_pose_id_buffer    = new PersistentBuffer(CLSize.cl_int, 10_000L);
-        hull_buffer                     = new PersistentBuffer(CLSize.cl_float4, 10_000L);
+        hull_buffer                     = new PersistentBuffer(CLSize.cl_float2, 10_000L);
+        hull_scale_buffer               = new PersistentBuffer(CLSize.cl_float2, 10_000L);
         hull_element_table_buffer       = new PersistentBuffer(CLSize.cl_int4, 10_000L);
         hull_flag_buffer                = new PersistentBuffer(CLSize.cl_int, 10_000L);
         hull_bone_table_buffer          = new PersistentBuffer(CLSize.cl_int2, 10_000L);
@@ -578,6 +582,7 @@ public class GPUCoreMemory
         long create_hull_k_ptr = gpu_crud.kernel_ptr(Kernel.create_hull);
         create_hull_k = new CreateHull_k(GPGPU.command_queue_ptr, create_hull_k_ptr)
             .buf_arg(CreateHull_k.Args.hulls, hull_buffer)
+            .buf_arg(CreateHull_k.Args.hull_scales, hull_scale_buffer)
             .buf_arg(CreateHull_k.Args.hull_rotations, hull_rotation_buffer)
             .buf_arg(CreateHull_k.Args.hull_frictions, hull_friction_buffer)
             .buf_arg(CreateHull_k.Args.hull_restitutions, hull_restitution_buffer)
@@ -666,7 +671,6 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.armature_animation_elapsed, armature_anim_elapsed_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_hull_tables, armature_hull_table_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_bone_tables, armature_bone_table_buffer)
-            .buf_arg(CompactArmatures_k.Args.hulls, hull_buffer)
             .buf_arg(CompactArmatures_k.Args.hull_bone_tables, hull_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.hull_armature_ids, hull_armature_id_buffer)
             .buf_arg(CompactArmatures_k.Args.element_tables, hull_element_table_buffer)
@@ -686,6 +690,7 @@ public class GPUCoreMemory
         compact_hulls_k = new CompactHulls_k(GPGPU.command_queue_ptr, compact_hulls_k_ptr)
             .buf_arg(CompactHulls_k.Args.hull_shift, hull_shift)
             .buf_arg(CompactHulls_k.Args.hulls, hull_buffer)
+            .buf_arg(CompactHulls_k.Args.hull_scales, hull_scale_buffer)
             .buf_arg(CompactHulls_k.Args.hull_mesh_ids, hull_mesh_id_buffer)
             .buf_arg(CompactHulls_k.Args.hull_rotations, hull_rotation_buffer)
             .buf_arg(CompactHulls_k.Args.hull_frictions, hull_friction_buffer)
@@ -763,6 +768,7 @@ public class GPUCoreMemory
             case EDGE_FLAG               -> edge_flag_buffer;
             case EDGE_LENGTH             -> edge_length_buffer;
             case HULL                    -> hull_buffer;
+            case HULL_SCALE              -> hull_scale_buffer;
             case HULL_AABB               -> hull_aabb_buffer;
             case HULL_AABB_INDEX         -> hull_aabb_index_buffer;
             case HULL_AABB_KEY_TABLE     -> hull_aabb_key_buffer;
@@ -931,7 +937,8 @@ public class GPUCoreMemory
     }
 
     public int new_hull(int mesh_id,
-                        float[] transform,
+                        float[] position,
+                        float[] scale,
                         float[] rotation,
                         int[] table,
                         int[] bone_table,
@@ -942,6 +949,7 @@ public class GPUCoreMemory
     {
         int capacity = hull_index + 1;
         hull_buffer.ensure_capacity(capacity);
+        hull_scale_buffer.ensure_capacity(capacity);
         hull_mesh_id_buffer.ensure_capacity(capacity);
         hull_rotation_buffer.ensure_capacity(capacity);
         hull_element_table_buffer.ensure_capacity(capacity);
@@ -956,7 +964,8 @@ public class GPUCoreMemory
 
         create_hull_k
             .set_arg(CreateHull_k.Args.target, hull_index)
-            .set_arg(CreateHull_k.Args.new_hull, transform)
+            .set_arg(CreateHull_k.Args.new_hull, position)
+            .set_arg(CreateHull_k.Args.new_hull_scale, scale)
             .set_arg(CreateHull_k.Args.new_rotation, rotation)
             .set_arg(CreateHull_k.Args.new_friction, friction)
             .set_arg(CreateHull_k.Args.new_restitution, restitution)
@@ -1336,6 +1345,7 @@ public class GPUCoreMemory
         edge_length_buffer.release();
         edge_flag_buffer.release();
         hull_buffer.release();
+        hull_scale_buffer.release();
         hull_mesh_id_buffer.release();
         hull_rotation_buffer.release();
         hull_element_table_buffer.release();
@@ -1413,6 +1423,7 @@ public class GPUCoreMemory
         total += edge_length_buffer.debug_data();
         total += edge_flag_buffer.debug_data();
         total += hull_buffer.debug_data();
+        total += hull_scale_buffer.debug_data();
         total += hull_mesh_id_buffer.debug_data();
         total += hull_rotation_buffer.debug_data();
         total += hull_element_table_buffer.debug_data();

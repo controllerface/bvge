@@ -7,6 +7,7 @@ public class CreateHull_k extends GPUKernel
     public enum Args
     {
         hulls,
+        hull_scales,
         hull_rotations,
         hull_frictions,
         hull_restitutions,
@@ -17,6 +18,7 @@ public class CreateHull_k extends GPUKernel
         hull_mesh_ids,
         target,
         new_hull,
+        new_hull_scale,
         new_rotation,
         new_friction,
         new_restitution,
