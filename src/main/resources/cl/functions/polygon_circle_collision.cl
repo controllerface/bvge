@@ -201,7 +201,7 @@ inline void polygon_circle_collision(int polygon_id,
     float restituion_coefficient = any_static 
         ? static_vert 
             ? vert_hull_restitution 
-            : edge_hull_friction
+            : edge_hull_restitution
         : max(vert_hull_restitution, edge_hull_restitution);
 
     float2 collision_invert = collision_normal * -1;
