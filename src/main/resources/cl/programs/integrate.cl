@@ -14,7 +14,7 @@ them before this kernel completes.
  */
 __kernel void integrate(__global float2 *hulls,
                         __global float2 *hull_scales,
-                        __global int4 *element_tables,
+                        __global int2 *hull_point_tables,
                         __global float2 *armature_accel,
                         __global float2 *hull_rotations,
                         __global float4 *points,
@@ -43,7 +43,7 @@ __kernel void integrate(__global float2 *hulls,
     // get hull from array
     float2 hull = hulls[current_hull];
     float2 hull_scale = hull_scales[current_hull];
-    int4 element_table = element_tables[current_hull];
+    int2 point_table = hull_point_tables[current_hull];
     int hull_1_flags = hull_flags[current_hull];
     int hull_armature_id = hull_armature_ids[current_hull];
     float2 acc = armature_accel[hull_armature_id];
@@ -53,8 +53,8 @@ __kernel void integrate(__global float2 *hulls,
     int2 bounds_bank = bounds_bank_data[current_hull];
 
     // get start/end vertex indices
-    int start = element_table.x;
-    int end   = element_table.y;
+    int start = point_table.x;
+    int end   = point_table.y;
 
     bool is_static = (hull_1_flags & IS_STATIC) !=0;
     bool is_circle = (hull_1_flags & IS_CIRCLE) !=0;

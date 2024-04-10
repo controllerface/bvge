@@ -8,7 +8,7 @@ public class Integrate_k extends GPUKernel
     {
         hulls,
         hull_scales,
-        element_tables,
+        hull_point_tables,
         armature_accel,
         hull_rotations,
         points,

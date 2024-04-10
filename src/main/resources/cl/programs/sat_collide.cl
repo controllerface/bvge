@@ -19,7 +19,8 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global float2 *hull_scales,
                           __global float *hull_frictions,
                           __global float *hull_restitutions,
-                          __global int4 *element_tables,
+                          __global int2 *hull_point_tables,
+                          __global int2 *hull_edge_tables,
                           __global int *hull_armature_ids,
                           __global int *hull_flags,
                           __global int *point_flags,
@@ -57,15 +58,16 @@ __kernel void sat_collide(__global int2 *candidates,
     if (b1_is_polygon && b2_is_polygon) 
     {
         polygon_collision(b1_id, b2_id, 
-            hulls, 
+            hulls,
             hull_frictions,
             hull_restitutions,
             hull_armature_ids,
-            hull_flags, 
-            element_tables, 
+            hull_flags,
+            hull_point_tables,
+            hull_edge_tables,
             point_flags,
-            points, 
-            edges, 
+            points,
+            edges,
             edge_flags,
             reactions,
             reaction_index,
@@ -77,13 +79,13 @@ __kernel void sat_collide(__global int2 *candidates,
     else if (b1_is_circle && b2_is_circle) 
     {
         circle_collision(b1_id, b2_id, 
-            hulls, 
+            hulls,
             hull_scales,
             hull_frictions,
             hull_restitutions,
             hull_armature_ids,
-            element_tables, 
-            points, 
+            hull_point_tables,
+            points,
             reactions,
             reaction_index,
             point_reactions,
@@ -94,16 +96,17 @@ __kernel void sat_collide(__global int2 *candidates,
     else 
     {
         polygon_circle_collision(p_id, c_id, 
-            hulls, 
+            hulls,
             hull_scales,
             hull_frictions,
             hull_restitutions,
             hull_armature_ids,
-            hull_flags, 
-            element_tables, 
+            hull_flags,
+            hull_point_tables,
+            hull_edge_tables,
             point_flags,
-            points, 
-            edges, 
+            points,
+            edges,
             edge_flags,
             reactions,
             reaction_index,
@@ -273,12 +276,12 @@ __kernel void apply_reactions(__global float8 *reactions,
 }
 
 inline int consume_point_flags(__global int *point_flags,
-                           int4 hull_table)
+                           int2 point_table)
 {
     int result = 0;
 
-    int start = hull_table.x;
-    int end   = hull_table.y;
+    int start = point_table.x;
+    int end   = point_table.y;
 	int vert_count = end - start + 1;
 
     for (int i = 0; i < vert_count; i++)
@@ -299,7 +302,7 @@ __kernel void move_armatures(__global float2 *hulls,
                              __global float4 *armatures,
                              __global int *armature_flags,
                              __global int2 *hull_tables,
-                             __global int4 *element_tables,
+                             __global int2 *hull_point_tables,
                              __global int *hull_flags,
                              __global int *point_flags,
                              __global float4 *points)
@@ -321,17 +324,17 @@ __kernel void move_armatures(__global float2 *hulls,
         int n = start + i;
         float2 hull = hulls[n];
         int hull_flag = hull_flags[n];
-        int4 element_table = element_tables[n];
+        int2 point_table = hull_point_tables[n];
         bool no_bones = (hull_flag & NO_BONES) !=0;
         bool is_foot = (hull_flag & IS_FOOT) !=0;
 
         if (!no_bones) had_bones = true;
 
-        last_center = calculate_centroid(points, element_table);
+        last_center = calculate_centroid(points, point_table);
         float2 diffa = last_center - hull.xy;
         diff += diffa;
         all_flags = is_foot 
-            ? all_flags | consume_point_flags(point_flags, element_table)
+            ? all_flags | consume_point_flags(point_flags, point_table)
             : all_flags;
     }
 

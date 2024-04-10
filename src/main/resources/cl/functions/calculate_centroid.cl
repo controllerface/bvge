@@ -1,9 +1,9 @@
-inline float2 calculate_centroid(__global const float4 *points, int4 hull_table)
+inline float2 calculate_centroid(__global const float4 *points, int2 point_table)
 {
     float2 result;
 
-    int start = hull_table.x;
-    int end   = hull_table.y;
+    int start = point_table.x;
+    int end   = point_table.y;
 	int vert_count = end - start + 1;
 
     float x_sum = 0;

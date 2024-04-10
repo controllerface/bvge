@@ -16,7 +16,8 @@ public class CompactHulls_k extends GPUKernel
         bone_tables,
         armature_ids,
         hull_flags,
-        element_tables,
+        hull_point_tables,
+        hull_edge_tables,
         bounds,
         bounds_index_data,
         bounds_bank_data;

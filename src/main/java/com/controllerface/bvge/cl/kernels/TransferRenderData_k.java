@@ -6,7 +6,7 @@ public class TransferRenderData_k extends GPUKernel
 {
     public enum Args
     {
-        hull_element_tables,
+        hull_point_tables,
         hull_mesh_ids,
         mesh_vertex_tables,
         mesh_face_tables,

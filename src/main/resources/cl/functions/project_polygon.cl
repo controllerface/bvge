@@ -5,11 +5,11 @@ the point that have the mininum value.
  */
 inline float3 project_polygon(__global const float4 *points, 
                               __global int *point_flags, 
-                              int4 hull, 
+                              int2 hull_point_table, 
                               float2 normal)
 {
-    int start = hull.x;
-    int end   = hull.y;
+    int start = hull_point_table.x;
+    int end   = hull_point_table.y;
 	int vert_count = end - start + 1;
 
     float3 result;

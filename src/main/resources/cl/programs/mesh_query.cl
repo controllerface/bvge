@@ -98,7 +98,7 @@ __kernel void transfer_detail_data(__global int4 *mesh_details,
     mesh_transfer[t_index] = details;
 }
 
-__kernel void transfer_render_data(__global int4 *hull_element_tables,
+__kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int *hull_mesh_ids,
                                    __global int2 *mesh_vertex_tables,
                                    __global int2 *mesh_face_tables,
@@ -129,12 +129,12 @@ __kernel void transfer_render_data(__global int4 *hull_element_tables,
 
     int hull_id = details.z;
     int mesh_id = hull_mesh_ids[hull_id];
-    int4 element_table = hull_element_tables[hull_id];
+    int2 point_table = hull_point_tables[hull_id];
     int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
     int2 mesh_face_table = mesh_face_tables[mesh_id];
 
-    int start_point = element_table.x;
-    int end_point = element_table.y;
+    int start_point = point_table.x;
+    int end_point = point_table.y;
     for (int point_id = start_point; point_id <= end_point; point_id++)
     {
         float4 point = points[point_id];

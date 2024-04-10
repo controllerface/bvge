@@ -8,7 +8,7 @@ inline void circle_collision(int hull_1_id,
                              __global float *hull_frictions,
                              __global float *hull_restitutions,
                              __global int *hull_armature_ids,
-                             __global int4 *element_tables,
+                             __global int2 *hull_point_tables,
                              __global float4 *points,
                              __global float8 *reactions,
                              __global int *reaction_index,
@@ -27,8 +27,8 @@ inline void circle_collision(int hull_1_id,
     float radii_sum = hull_1_radius + hull_2_radius;
     if (center_distance >= radii_sum) return;
     
-    int4 hull_1_table = element_tables[hull_1_id];
-    int4 hull_2_table = element_tables[hull_2_id];
+    int2 hull_1_table = hull_point_tables[hull_1_id];
+    int2 hull_2_table = hull_point_tables[hull_2_id];
     float4 hull_1_center = points[hull_1_table.x];
     float4 hull_2_center = points[hull_2_table.x];
     int hull_1_armature_id = hull_armature_ids[hull_1_id];

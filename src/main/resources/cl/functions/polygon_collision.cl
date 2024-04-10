@@ -8,7 +8,8 @@ inline void polygon_collision(int hull_1_id,
                               __global float *hull_restitutions,
                               __global int *hull_armature_ids,
                               __global int *hull_flags,
-                              __global int4 *element_tables,
+                              __global int2 *hull_point_tables,
+                              __global int2 *hull_edge_tables,
                               __global int *point_flags,
                               __global float4 *points,
                               __global int2 *edges,
@@ -23,13 +24,16 @@ inline void polygon_collision(int hull_1_id,
 
     float2 hull_1 = hulls[hull_1_id];
     float2 hull_2 = hulls[hull_2_id];
-    int4 hull_1_table = element_tables[hull_1_id];
-    int4 hull_2_table = element_tables[hull_2_id];
 
-	int hull_1_point_count = hull_1_table.y - hull_1_table.x + 1;
-	int hull_1_edge_count  = hull_1_table.w - hull_1_table.z + 1;
-	int hull_2_point_count = hull_2_table.y - hull_2_table.x + 1;
-	int hull_2_edge_count  = hull_2_table.w - hull_2_table.z + 1;
+    int2 hull_1_point_table = hull_point_tables[hull_1_id];
+    int2 hull_1_edge_table = hull_edge_tables[hull_1_id];
+    int2 hull_2_point_table = hull_point_tables[hull_2_id];
+    int2 hull_2_edge_table = hull_edge_tables[hull_2_id];
+
+	int hull_1_point_count = hull_1_point_table.y - hull_1_point_table.x + 1;
+	int hull_1_edge_count  = hull_1_edge_table.y - hull_1_edge_table.x + 1;
+	int hull_2_point_count = hull_2_point_table.y - hull_2_point_table.x + 1;
+	int hull_2_edge_count  = hull_2_edge_table.y - hull_2_edge_table.x + 1;
 
     float min_distance = FLT_MAX;
 
@@ -42,12 +46,12 @@ inline void polygon_collision(int hull_1_id,
     bool invert_hull_order = false;
     
     float2 collision_normal;
-    int4 vertex_table;
+    int2 vertex_table;
 
     // hull 1
     for (int point_index = 0; point_index < hull_1_edge_count; point_index++)
     {
-        int edge_index = hull_1_table.z + point_index;
+        int edge_index = hull_1_edge_table.x + point_index;
         int2 edge = edges[edge_index];
         int edge_flag = edge_flags[edge_index];
         
@@ -68,8 +72,8 @@ inline void polygon_collision(int hull_1_id,
 
         normal_buffer = fast_normalize(normal_buffer);
 
-        float3 proj_a = project_polygon(points, point_flags, hull_1_table, normal_buffer);
-        float3 proj_b = project_polygon(points, point_flags, hull_2_table, normal_buffer);
+        float3 proj_a = project_polygon(points, point_flags, hull_1_point_table, normal_buffer);
+        float3 proj_b = project_polygon(points, point_flags, hull_2_point_table, normal_buffer);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -82,7 +86,7 @@ inline void polygon_collision(int hull_1_id,
         if (abs_distance < min_distance)
         {
             invert_hull_order = true;
-            vertex_table = hull_2_table;
+            vertex_table = hull_2_point_table;
             collision_normal = normal_buffer;
             vert_hull_id = hull_2_id;
             edge_hull_id = hull_1_id;
@@ -95,7 +99,7 @@ inline void polygon_collision(int hull_1_id,
     // hull 2
     for (int point_index = 0; point_index < hull_2_edge_count; point_index++)
     {
-        int edge_index = hull_2_table.z + point_index;
+        int edge_index = hull_2_edge_table.x + point_index;
         int2 edge = edges[edge_index];
         int edge_flag = edge_flags[edge_index];
 
@@ -115,8 +119,8 @@ inline void polygon_collision(int hull_1_id,
 
         normal_buffer = fast_normalize(normal_buffer);
 
-        float3 proj_a = project_polygon(points, point_flags, hull_1_table, normal_buffer);
-        float3 proj_b = project_polygon(points, point_flags, hull_2_table, normal_buffer);
+        float3 proj_a = project_polygon(points, point_flags, hull_1_point_table, normal_buffer);
+        float3 proj_b = project_polygon(points, point_flags, hull_2_point_table, normal_buffer);
         float distance = polygon_distance(proj_a, proj_b);
 
         if (distance > 0)
@@ -128,7 +132,7 @@ inline void polygon_collision(int hull_1_id,
         if (abs_distance < min_distance)
         {
             invert_hull_order = false;
-            vertex_table = hull_1_table;
+            vertex_table = hull_1_point_table;
             collision_normal = normal_buffer;
             vert_hull_id = hull_1_id;
             edge_hull_id = hull_2_id;

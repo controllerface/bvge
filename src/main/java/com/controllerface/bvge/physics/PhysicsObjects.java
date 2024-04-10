@@ -57,7 +57,8 @@ public class PhysicsObjects
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angle_between_lines(l1, l2);
-        var table = CLUtils.arg_int4(p1_index, p1_index, 0, -1);
+        var point_table = CLUtils.arg_int2(p1_index, p1_index);
+        var edge_table = CLUtils.arg_int2(0, -1);
         var position = CLUtils.arg_float2(x, y);
         var scale = CLUtils.arg_float2(size, size / 2.0f);
         var rotation = CLUtils.arg_float2(0, angle);
@@ -69,7 +70,8 @@ public class PhysicsObjects
             position,
             scale,
             rotation,
-            table,
+            point_table,
+            edge_table,
             bone_table,
             friction,
             restitution,
@@ -122,7 +124,8 @@ public class PhysicsObjects
         GPGPU.core_memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), EMPTY_FLAGS);
         var end_edge = GPGPU.core_memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1), EMPTY_FLAGS);
 
-        var table = CLUtils.arg_int4(p1_index, p3_index, start_edge, end_edge);
+        var point_table = CLUtils.arg_int2(p1_index, p3_index);
+        var edge_table = CLUtils.arg_int2(start_edge, end_edge);
         var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
         var scale = CLUtils.arg_float2(size, size);
         var rotation = CLUtils.arg_float2(0, angle);
@@ -134,7 +137,8 @@ public class PhysicsObjects
             position,
             scale,
             rotation,
-            table,
+            point_table,
+            edge_table,
             bone_table,
             friction,
             restitution,
@@ -196,7 +200,8 @@ public class PhysicsObjects
         GPGPU.core_memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), EdgeFlags.IS_INTERIOR.bits);
         var end_edge = GPGPU.core_memory.new_edge(p2_index, p4_index, edgeDistance(p4, p2), EdgeFlags.IS_INTERIOR.bits);
 
-        var table = CLUtils.arg_int4(p1_index, p4_index, start_edge, end_edge);
+        var point_table = CLUtils.arg_int2(p1_index, p4_index);
+        var edge_table = CLUtils.arg_int2(start_edge, end_edge);
         var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
         var scale = CLUtils.arg_float2(size, size);
         var rotation = CLUtils.arg_float2(0, angle);
@@ -208,7 +213,8 @@ public class PhysicsObjects
             position,
             scale,
             rotation,
-            table,
+            point_table,
+            edge_table,
             bone_table,
             friction,
             restitution,
@@ -447,7 +453,8 @@ public class PhysicsObjects
             var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, new_hull[0].x(), new_hull[0].y());
             var angle = MathEX.angle_between_lines(l1, l2);
 
-            var table = CLUtils.arg_int4(start_point, end_point, edge_start, edge_end);
+            var point_table = CLUtils.arg_int2(start_point, end_point);
+            var edge_table = CLUtils.arg_int2(edge_start, edge_end);
             var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
             var scale = CLUtils.arg_float2(size, size);
             var rotation = CLUtils.arg_float2(0, angle);
@@ -458,7 +465,8 @@ public class PhysicsObjects
                 position,
                 scale,
                 rotation,
-                table,
+                point_table,
+                edge_table,
                 bone_table,
                 friction,
                 0,

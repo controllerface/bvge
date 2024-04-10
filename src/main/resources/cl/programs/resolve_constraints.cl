@@ -1,7 +1,7 @@
 /**
 Resolves edge constraints used for Verlet integration.
  */
-__kernel void resolve_constraints(__global int4 *element_tables,
+__kernel void resolve_constraints(__global int2 *hull_edge_tables,
                                   __global int2 *bounds_bank_data,
                                   __global float4 *points,
                                   __global int2 *edges,
@@ -12,7 +12,7 @@ __kernel void resolve_constraints(__global int4 *element_tables,
     
     // the element table contains the relevant pointers into the edge buffer, and
     // the bounding box is used to check if the edges should be processed.
-    int4 element_table = element_tables[gid];
+    int2 edge_table = hull_edge_tables[gid];
     int2 bounds_bank = bounds_bank_data[gid];
 
     // extract the bank size from the boundary. Hulls with empty banks are out of bounds
@@ -23,8 +23,8 @@ __kernel void resolve_constraints(__global int4 *element_tables,
     if (bank_size > 0 || process_all == 1)
     {
         // get the starting and ending edges for this hull
-        int start_edge = element_table.z;
-        int end_edge = element_table.w;
+        int start_edge = edge_table.x;
+        int end_edge = edge_table.y;
 
         // for each edge, we need to calculate the current distance between points,
         // and then move the vertices apart so they meet the length requirement.

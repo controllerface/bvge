@@ -10,7 +10,7 @@ public class MoveArmatures_k extends GPUKernel
         armatures,
         armature_flags,
         hull_tables,
-        element_tables,
+        hull_point_tables,
         hull_flags,
         point_flags,
         points

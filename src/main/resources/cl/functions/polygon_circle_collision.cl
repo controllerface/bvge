@@ -9,7 +9,8 @@ inline void polygon_circle_collision(int polygon_id,
                                      __global float *hull_restitutions,
                                      __global int *hull_armature_ids,
                                      __global int *hull_flags,
-                                     __global int4 *element_tables,
+                                     __global int2 *hull_point_tables,
+                                     __global int2 *hull_edge_tables,
                                      __global int *point_flags,
                                      __global float4 *points,
                                      __global int2 *edges,
@@ -24,11 +25,12 @@ inline void polygon_circle_collision(int polygon_id,
     float2 polygon = hulls[polygon_id];
     float2 circle = hulls[circle_id];
     float2 circle_scale = hull_scales[circle_id];
-    int4 polygon_table = element_tables[polygon_id];
-    int4 circle_table = element_tables[circle_id];
+    int2 polygon_point_table = hull_point_tables[polygon_id];
+    int2 polygon_edge_table = hull_edge_tables[polygon_id];
+    int2 circle_table = hull_point_tables[circle_id];
 
-	int polygon_vert_count = polygon_table.y - polygon_table.x + 1;
-	int polygon_edge_count = polygon_table.w - polygon_table.z + 1;
+	int polygon_vert_count = polygon_point_table.y - polygon_point_table.x + 1;
+	int polygon_edge_count = polygon_edge_table.y - polygon_edge_table.x + 1;
 
     float min_distance = FLT_MAX;
 
@@ -39,12 +41,12 @@ inline void polygon_circle_collision(int polygon_id,
     int vert_index   = -1;
         
     float2 collision_normal;
-    int4 vertex_table = circle_table;
+    int2 vertex_table = circle_table;
 
     // polygon
     for (int point_index = 0; point_index < polygon_edge_count; point_index++)
     {
-        int edge_index = polygon_table.z + point_index;
+        int edge_index = polygon_edge_table.x + point_index;
         int2 edge = edges[edge_index];
         int edge_flag = edge_flags[edge_index];
         
@@ -65,7 +67,7 @@ inline void polygon_circle_collision(int polygon_id,
 
         normal_buffer = fast_normalize(normal_buffer);
 
-        float3 proj_a = project_polygon(points, point_flags, polygon_table, normal_buffer);
+        float3 proj_a = project_polygon(points, point_flags, polygon_point_table, normal_buffer);
         float3 proj_b = project_circle(circle, circle_scale.x, normal_buffer);
         float distance = polygon_distance(proj_a, proj_b);
 
@@ -86,11 +88,11 @@ inline void polygon_circle_collision(int polygon_id,
     }
 
     // circle check
-    int cp_index = closest_point_circle(circle.xy, polygon_table, points, point_flags);
+    int cp_index = closest_point_circle(circle.xy, polygon_point_table, points, point_flags);
     float2 collision_point = points[cp_index].xy;
     float2 edge = collision_point - points[circle_table.x].xy;
     float2 axis = fast_normalize(edge);
-    float3 proj_p = project_polygon(points, point_flags, polygon_table, axis);
+    float3 proj_p = project_polygon(points, point_flags, polygon_point_table, axis);
     float3 proj_c = project_circle(circle, circle_scale.x, axis);
     float _distance = native_divide(polygon_distance(proj_c, proj_p), (native_divide( circle_scale.x, 2)));
     if (_distance > 0)
