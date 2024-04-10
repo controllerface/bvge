@@ -36,7 +36,7 @@ public class TestGame extends GameMode
             //RenderType.POINTS,
             //RenderType.ARMATURES,
             //RenderType.BOUNDS,
-            //RenderType.GRID,
+            RenderType.GRID,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -257,7 +257,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 400, 600);
+        genTestFigure(1f, 400, 1100);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genSquares(1,  25f, 25f, 420, 200);
@@ -268,12 +268,12 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(150, 6f, 5f, 0, 100);
-        genSquares(25,  5f, 5f, 0, 300);
+        genSquares(200,  5f, 5f, -100, 300);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  6f, 5f, -120, 200);
-        genTriangles(25,  5f, 5f, 0, 100);
+        //genTriangles(25,  5f, 5f, 0, 100);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);
