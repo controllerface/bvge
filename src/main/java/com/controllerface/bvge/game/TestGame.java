@@ -222,6 +222,7 @@ public class TestGame extends GameMode
         {
             ecs.registerSystem(new CrateRenderer(ecs));
             ecs.registerSystem(new HumanoidRenderer(ecs));
+            //ecs.registerSystem(new BlockRenderer(ecs));
         }
 
         // these are debug-level renderers for visualizing the modeled physics boundaries

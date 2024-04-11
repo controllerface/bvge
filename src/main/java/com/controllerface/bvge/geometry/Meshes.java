@@ -2,6 +2,7 @@ package com.controllerface.bvge.geometry;
 
 import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.cl.GPGPU;
+import org.joml.Vector2f;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,6 +77,10 @@ public class Meshes
 
         float halfSize = 1f / 2f;
 
+        var dummy_uv = new Vector2f(0.0f, 0.0f);
+
+        // todo: need actual UV tables
+
         float x1 = -halfSize;
         float y1 = -halfSize;
         int v1 = GPGPU.core_memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
@@ -89,10 +94,10 @@ public class Meshes
         float y4 = halfSize;
         int v4 = GPGPU.core_memory.new_vertex_reference(x4, y4, new float[4], new int[2]);
 
-        vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList(), new String[0], new float[0]);
-        vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList(), new String[0], new float[0]);
-        vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList(), new String[0], new float[0]);
-        vertices[3] = new Vertex(v4, x4, y4, Collections.emptyList(), new String[0], new float[0]);
+        vertices[0] = new Vertex(v1, x1, y1, Collections.singletonList(dummy_uv), new String[0], new float[0]);
+        vertices[1] = new Vertex(v2, x2, y2, Collections.singletonList(dummy_uv), new String[0], new float[0]);
+        vertices[2] = new Vertex(v3, x3, y3, Collections.singletonList(dummy_uv), new String[0], new float[0]);
+        vertices[3] = new Vertex(v4, x4, y4, Collections.singletonList(dummy_uv), new String[0], new float[0]);
 
         faces[0] = new Face(-1,0, 1, 2);
         faces[1] = new Face(-1,0, 2, 3);

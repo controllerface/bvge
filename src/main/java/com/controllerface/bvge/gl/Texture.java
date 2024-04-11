@@ -3,7 +3,9 @@ package com.controllerface.bvge.gl;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Objects;
@@ -122,8 +124,21 @@ public class Texture
         IntBuffer channels = BufferUtils.createIntBuffer(1);
         stbi_set_flip_vertically_on_load(true);
 
+
+        ByteBuffer buf;
+        var stream = Texture.class.getResourceAsStream(resource_path);
+        try {
+            var bytes = stream.readAllBytes();
+            buf = MemoryUtil.memAlloc(bytes.length);
+            buf.put(bytes);
+            buf.flip();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         // todo: load from resource instead of disk
-        ByteBuffer image = stbi_load(resource_path, width, height, channels, 0);
+        //ByteBuffer image = stbi_load(resource_path, width, height, channels, 0);
+        ByteBuffer image = stbi_load_from_memory(buf, width, height, channels, 0);
+
 
         if (image != null)
         {
