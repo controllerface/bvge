@@ -17,7 +17,7 @@ import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static org.lwjgl.opengl.GL45C.*;
 
-public class HumanoidRenderer extends GameSystem
+public class ModelRenderer extends GameSystem
 {
     private static final int ELEMENT_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * Integer.BYTES;
     private static final int VERTEX_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
@@ -59,17 +59,22 @@ public class HumanoidRenderer extends GameSystem
     private GPUKernel transfer_detail_data_k;
     private GPUKernel transfer_render_data_k;
 
-    public HumanoidRenderer(ECS ecs)
+    private final int model_id;
+    private final String shader_file;
+
+    public ModelRenderer(ECS ecs, String shader_file, int model_id)
     {
         super(ecs);
+        this.shader_file = shader_file;
+        this.model_id = model_id;
         init_GL();
         init_CL();
     }
 
     private void init_GL()
     {
-        var model = Models.get_model_by_index(Models.TEST_MODEL_INDEX);
-        shader = Assets.load_shader("poly_model.glsl");
+        var model = Models.get_model_by_index(model_id);
+        shader = Assets.load_shader(shader_file);
         texture = model.textures().getFirst();
         mesh_count = model.meshes().length;
         mesh_size = (long)mesh_count * CLSize.cl_int;

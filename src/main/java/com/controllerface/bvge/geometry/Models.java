@@ -261,6 +261,30 @@ public class Models
             }
         }
 
+        int color_sets = 0;
+        for (int i = 0; i < AI_MAX_NUMBER_OF_COLOR_SETS; i++)
+        {
+            var color_set = aiMesh.mColors(i);
+
+            if (color_set != null)
+            {
+                color_sets++;
+                int colors_in_set = 0;
+                while (color_set.remaining() > 0)
+                {
+                    var n = color_set.get();
+                    System.out.println(STR."color: r:\{n.r()} g:\{n.g()} b:\{n.b()} a:\{n.a()}");
+                    colors_in_set++;
+                }
+                System.out.println(STR."colors in set: \{+colors_in_set}");
+
+                var color_s = AIColor4D.create(color_set.address());
+                System.out.println(color_s);
+            }
+
+        }
+        System.out.println(STR."color sets: \{aiMesh.mName().dataString()} - \{+color_sets}");
+
         AtomicInteger count = new AtomicInteger();
         while (buffer.remaining() > 0)
         {

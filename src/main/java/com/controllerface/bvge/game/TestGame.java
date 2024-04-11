@@ -221,8 +221,10 @@ public class TestGame extends GameMode
         if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
         {
             ecs.registerSystem(new CrateRenderer(ecs));
-            ecs.registerSystem(new HumanoidRenderer(ecs));
-            ecs.registerSystem(new BlockRenderer(ecs));
+            ecs.registerSystem(new ModelRenderer(ecs, "poly_model.glsl", TEST_MODEL_INDEX));
+            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_BLOCK_INDEX));
+
+           // ecs.registerSystem(new BlockRenderer(ecs));
         }
 
         // these are debug-level renderers for visualizing the modeled physics boundaries
