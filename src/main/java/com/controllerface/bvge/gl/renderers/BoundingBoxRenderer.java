@@ -109,6 +109,7 @@ public class BoundingBoxRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo);
+        shader.destroy();
         prepare_bounds.destroy();
         GPGPU.cl_release_buffer(vbo_ptr);
     }

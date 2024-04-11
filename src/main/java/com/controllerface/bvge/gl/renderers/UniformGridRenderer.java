@@ -109,6 +109,7 @@ public class UniformGridRenderer extends GameSystem
     @Override
     public void shutdown()
     {
+        shader.destroy();
         glDeleteVertexArrays(vao);
         glDeleteBuffers(point_vbo);
     }

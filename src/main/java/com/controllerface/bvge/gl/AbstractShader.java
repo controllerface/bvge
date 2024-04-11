@@ -94,4 +94,9 @@ public abstract class AbstractShader
         use();
         glUniform1iv(varLocation, array);
     }
+
+    public void destroy()
+    {
+        glDeleteShader(shader_program_id);
+    }
 }

@@ -135,6 +135,7 @@ public class CrateRenderer extends GameSystem
         glDeleteBuffers(transform_vbo);
         glDeleteBuffers(position_vbo);
         glDeleteBuffers(uv_vbo);
+        shader.destroy();
         prepare_transforms.destroy();
         GPGPU.cl_release_buffer(vbo_ptr);
     }

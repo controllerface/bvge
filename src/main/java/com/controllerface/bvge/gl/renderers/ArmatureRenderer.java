@@ -97,6 +97,7 @@ public class ArmatureRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vertex_vbo);
+        shader.destroy();
         prepare_armatures.destroy();
         GPGPU.cl_release_buffer(vertex_vbo_ptr);
     }

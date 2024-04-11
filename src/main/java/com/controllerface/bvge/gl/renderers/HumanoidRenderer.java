@@ -248,6 +248,7 @@ public class HumanoidRenderer extends GameSystem
         glDeleteBuffers(ebo);
         glDeleteBuffers(vbo);
         glDeleteBuffers(uvo);
+        shader.destroy();
         mesh_query_p.destroy();
         GPGPU.cl_release_buffer(element_buffer_ptr);
         GPGPU.cl_release_buffer(vertex_buffer_ptr);

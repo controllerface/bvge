@@ -108,6 +108,7 @@ public class PointRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vertex_vbo);
+        shader.destroy();
         prepare_points.destroy();
         GPGPU.cl_release_buffer(vertex_vbo_ptr);
     }

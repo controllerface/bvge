@@ -110,6 +110,7 @@ public class EdgeRenderer extends GameSystem
         glDeleteVertexArrays(vao);
         glDeleteBuffers(edge_vbo);
         glDeleteBuffers(flag_vbo);
+        shader.destroy();
         prepare_edges.destroy();
         GPGPU.cl_release_buffer(vertex_vbo_ptr);
         GPGPU.cl_release_buffer(flag_vbo_ptr);
