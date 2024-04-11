@@ -140,7 +140,11 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float4 point = points[point_id];
         int point_vertex_reference = point_vertex_references[point_id];
         int2 uv_table = uv_tables[point_vertex_reference];
-        float2 uv = texture_uvs[uv_table.x]; // todo: select from available uvs based on hull data
+        int uv_count = uv_table.y - uv_table.x + 1;
+        int uv_index = uv_count == 1 
+            ? uv_table.x 
+            : uv_table.x + 3;
+        float2 uv = texture_uvs[uv_index]; // todo: select from available uvs based on hull data
         float2 pos = point.xy;
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
         vertex_buffer[ref_offset] = pos;

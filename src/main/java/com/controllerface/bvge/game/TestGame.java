@@ -36,7 +36,7 @@ public class TestGame extends GameMode
             //RenderType.POINTS,
             //RenderType.ARMATURES,
             //RenderType.BOUNDS,
-            //RenderType.GRID,
+            RenderType.GRID,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -222,7 +222,7 @@ public class TestGame extends GameMode
         {
             ecs.registerSystem(new CrateRenderer(ecs));
             ecs.registerSystem(new HumanoidRenderer(ecs));
-            //ecs.registerSystem(new BlockRenderer(ecs));
+            ecs.registerSystem(new BlockRenderer(ecs));
         }
 
         // these are debug-level renderers for visualizing the modeled physics boundaries

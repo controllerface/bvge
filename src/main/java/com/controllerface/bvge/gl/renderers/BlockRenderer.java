@@ -3,7 +3,6 @@ package com.controllerface.bvge.gl.renderers;
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.MeshQuery;
-import com.controllerface.bvge.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.geometry.Models;
@@ -13,15 +12,10 @@ import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
-import org.lwjgl.opengl.GL30C;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
-import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_4D_LENGTH;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
 import static org.lwjgl.opengl.GL45C.*;
-import static org.lwjgl.opengl.GL45C.glEnableVertexArrayAttrib;
 
 public class BlockRenderer extends GameSystem
 {
@@ -74,13 +68,9 @@ public class BlockRenderer extends GameSystem
 
     private void init_GL()
     {
-        var model = Models.get_model_by_index(Models.SQUARE_PARTICLE);
-
-        texture = new Texture();
-        texture.init("/img/stone_types.png");
-
-
-        shader = Assets.load_shader("poly_model.glsl");
+        var model = Models.get_model_by_index(Models.TEST_BLOCK_INDEX);
+        shader = Assets.load_shader("block_model.glsl");
+        texture = model.textures().getFirst();
         mesh_count = model.meshes().length;
         mesh_size = (long)mesh_count * CLSize.cl_int;
         raw_query = new int[mesh_count];
@@ -94,7 +84,7 @@ public class BlockRenderer extends GameSystem
         ebo = GLUtils.dynamic_element_buffer(vao, ELEMENT_BUFFER_SIZE);
         vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
         uvo = GLUtils.new_buffer_vec2(vao, UV_COORD_ATTRIBUTE, VERTEX_BUFFER_SIZE);
-        cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE) ;
+        cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
 
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_COORD_ATTRIBUTE);
@@ -117,50 +107,50 @@ public class BlockRenderer extends GameSystem
 
         long count_instances_k_ptr = mesh_query_p.kernel_ptr(Kernel.count_mesh_instances);
         count_mesh_instances_k = new CountMeshInstances_k(GPGPU.command_queue_ptr, count_instances_k_ptr)
-                .ptr_arg(CountMeshInstances_k.Args.counters, counters_ptr)
-                .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
-                .ptr_arg(CountMeshInstances_k.Args.total, total_ptr)
-                .set_arg(CountMeshInstances_k.Args.count, mesh_count)
-                .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID));
+            .ptr_arg(CountMeshInstances_k.Args.counters, counters_ptr)
+            .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
+            .ptr_arg(CountMeshInstances_k.Args.total, total_ptr)
+            .set_arg(CountMeshInstances_k.Args.count, mesh_count)
+            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID));
 
         long write_details_k_ptr = mesh_query_p.kernel_ptr(Kernel.write_mesh_details);
         write_mesh_details_k = new WriteMeshDetails_k(GPGPU.command_queue_ptr, write_details_k_ptr)
-                .ptr_arg(WriteMeshDetails_k.Args.counters, counters_ptr)
-                .ptr_arg(WriteMeshDetails_k.Args.query, query_ptr)
-                .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets_ptr)
-                .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
-                .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID))
-                .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.buffer(BufferType.MESH_VERTEX_TABLE))
-                .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.buffer(BufferType.MESH_FACE_TABLE));
+            .ptr_arg(WriteMeshDetails_k.Args.counters, counters_ptr)
+            .ptr_arg(WriteMeshDetails_k.Args.query, query_ptr)
+            .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets_ptr)
+            .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
+            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID))
+            .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.buffer(BufferType.MESH_VERTEX_TABLE))
+            .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.buffer(BufferType.MESH_FACE_TABLE));
 
         long count_batches_k_ptr = mesh_query_p.kernel_ptr(Kernel.count_mesh_batches);
         count_mesh_batches_k = new CountMeshBatches_k(GPGPU.command_queue_ptr, count_batches_k_ptr)
-                .ptr_arg(CountMeshBatches_k.Args.total, total_ptr)
-                .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
+            .ptr_arg(CountMeshBatches_k.Args.total, total_ptr)
+            .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
 
         long calc_offsets_k_ptr = mesh_query_p.kernel_ptr(Kernel.calculate_batch_offsets);
         calculate_batch_offsets_k = new CalculateBatchOffsets_k(GPGPU.command_queue_ptr, calc_offsets_k_ptr);
 
         long transfer_detail_k_ptr = mesh_query_p.kernel_ptr(Kernel.transfer_detail_data);
         transfer_detail_data_k = new TransferDetailData_k(GPGPU.command_queue_ptr, transfer_detail_k_ptr)
-                .ptr_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_ptr);
+            .ptr_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_ptr);
 
         long transfer_render_k_ptr = mesh_query_p.kernel_ptr(Kernel.transfer_render_data);
         transfer_render_data_k = new TransferRenderData_k(GPGPU.command_queue_ptr, transfer_render_k_ptr)
-                .ptr_arg(TransferRenderData_k.Args.command_buffer, command_buffer_ptr)
-                .ptr_arg(TransferRenderData_k.Args.element_buffer, element_buffer_ptr)
-                .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buffer_ptr)
-                .ptr_arg(TransferRenderData_k.Args.uv_buffer, uv_buffer_ptr)
-                .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
-                .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
-                .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID))
-                .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPGPU.core_memory.buffer(BufferType.MESH_VERTEX_TABLE))
-                .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.buffer(BufferType.MESH_FACE_TABLE))
-                .buf_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.core_memory.buffer(BufferType.MESH_FACE))
-                .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
-                .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_REFERENCE))
-                .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.buffer(BufferType.VERTEX_UV_TABLE))
-                .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.buffer(BufferType.VERTEX_TEXTURE_UV));
+            .ptr_arg(TransferRenderData_k.Args.command_buffer, command_buffer_ptr)
+            .ptr_arg(TransferRenderData_k.Args.element_buffer, element_buffer_ptr)
+            .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buffer_ptr)
+            .ptr_arg(TransferRenderData_k.Args.uv_buffer, uv_buffer_ptr)
+            .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
+            .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
+            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID))
+            .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPGPU.core_memory.buffer(BufferType.MESH_VERTEX_TABLE))
+            .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.buffer(BufferType.MESH_FACE_TABLE))
+            .buf_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.core_memory.buffer(BufferType.MESH_FACE))
+            .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_REFERENCE))
+            .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.buffer(BufferType.VERTEX_UV_TABLE))
+            .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.buffer(BufferType.VERTEX_TEXTURE_UV));
     }
 
     @Override
@@ -187,13 +177,13 @@ public class BlockRenderer extends GameSystem
         var mesh_details_ptr = GPGPU.new_empty_buffer(data_size);
 
         write_mesh_details_k
-                .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
-                .call(hull_count);
+            .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
+            .call(hull_count);
 
         count_mesh_batches_k
-                .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
-                .set_arg(CountMeshBatches_k.Args.count, total_instances)
-                .call(GPGPU.global_single_size);
+            .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
+            .set_arg(CountMeshBatches_k.Args.count, total_instances)
+            .call(GPGPU.global_single_size);
 
         int total_batches = GPGPU.cl_read_pinned_int(total_ptr);
         long batch_index_size = (long) total_batches * CLSize.cl_int;
@@ -201,15 +191,17 @@ public class BlockRenderer extends GameSystem
         var mesh_offset_ptr = GPGPU.new_empty_buffer(batch_index_size);
 
         calculate_batch_offsets_k
-                .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offset_ptr)
-                .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
-                .set_arg(CalculateBatchOffsets_k.Args.count, total_instances)
-                .call(GPGPU.global_single_size);
+            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offset_ptr)
+            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
+            .set_arg(CalculateBatchOffsets_k.Args.count, total_instances)
+            .call(GPGPU.global_single_size);
 
         int[] raw_offsets = new int[total_batches];
         GPGPU.cl_read_buffer(mesh_offset_ptr, raw_offsets);
 
-        GL30C.glBindVertexArray(vao);
+        glBindVertexArray(vao);
+
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
 
         shader.use();
         texture.bind(0);
@@ -222,29 +214,29 @@ public class BlockRenderer extends GameSystem
             int next_batch = current_batch + 1;
             int offset = raw_offsets[current_batch];
             int count = next_batch == raw_offsets.length
-                    ? total_instances - offset
-                    : raw_offsets[next_batch] - offset;
+                ? total_instances - offset
+                : raw_offsets[next_batch] - offset;
 
             transfer_detail_data_k
-                    .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details_ptr)
-                    .set_arg(TransferDetailData_k.Args.offset, offset)
-                    .call(arg_long(count));
+                .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details_ptr)
+                .set_arg(TransferDetailData_k.Args.offset, offset)
+                .call(arg_long(count));
 
             GPGPU.scan_int2(mesh_transfer_ptr, count);
 
             transfer_render_data_k
-                    .share_mem(command_buffer_ptr)
-                    .share_mem(element_buffer_ptr)
-                    .share_mem(vertex_buffer_ptr)
-                    .share_mem(uv_buffer_ptr)
-                    .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
-                    .set_arg(TransferRenderData_k.Args.offset, offset)
-                    .call(arg_long(count));
+                .share_mem(command_buffer_ptr)
+                .share_mem(element_buffer_ptr)
+                .share_mem(vertex_buffer_ptr)
+                .share_mem(uv_buffer_ptr)
+                .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
+                .set_arg(TransferRenderData_k.Args.offset, offset)
+                .call(arg_long(count));
 
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
         }
 
-        GL30C.glBindVertexArray(0);
+        glBindVertexArray(0);
 
         shader.detach();
 

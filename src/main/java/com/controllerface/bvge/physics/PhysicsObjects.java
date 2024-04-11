@@ -157,13 +157,13 @@ public class PhysicsObjects
             0);
     }
 
-    public static int box(float x, float y, float size, int flags, float mass, float friction, float restitution)
+    public static int box(float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
         // get the box mesh
-        var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
+        var mesh = Models.get_model_by_index(model_id).meshes()[0];
 
         var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
@@ -228,19 +228,19 @@ public class PhysicsObjects
             -1,
             -1f,
             hull_id,
-            SQUARE_PARTICLE,
+            model_id,
             0,
             0);
     }
 
     public static int dynamic_Box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size, HullFlags.NO_BONES.bits, mass, friction, restitution);
+        return box(x, y, size * 5, HullFlags.NO_BONES.bits, mass, friction, restitution, TEST_BLOCK_INDEX);
     }
 
     public static int static_box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution);
+        return box(x, y, size, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, SQUARE_PARTICLE);
     }
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)

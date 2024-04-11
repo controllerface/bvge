@@ -201,6 +201,8 @@ public class HumanoidRenderer extends GameSystem
 
         glBindVertexArray(vao);
 
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
+
         shader.use();
         texture.bind(0);
 

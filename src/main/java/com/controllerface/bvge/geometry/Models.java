@@ -29,12 +29,12 @@ public class Models
 
     public static final int CIRCLE_PARTICLE = next_model_index.getAndIncrement();
     public static final int TRIANGLE_PARTICLE = next_model_index.getAndIncrement();
-    public static final int SQUARE_PARTICLE = next_model_index.getAndIncrement();
+    public static int SQUARE_PARTICLE = next_model_index.getAndIncrement();
     public static final int POLYGON1_MODEL = next_model_index.getAndIncrement();
 
     public static int TEST_MODEL_INDEX = -1;
     public static int TEST_SQUARE_INDEX = -1;
-    //public static int TEST_MODEL2_INDEX = -1;
+    public static int TEST_BLOCK_INDEX = -1;
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
 
@@ -89,7 +89,6 @@ public class Models
         var bind_name_map = new HashMap<String, Integer>();
         var model_transform = new AtomicReference<Matrix4f>();
         var armature_transform = new AtomicReference<Matrix4f>();
-
 
         // read scene data
         try (AIScene ai_scene = loadModelResource(model_path))
@@ -598,10 +597,12 @@ public class Models
         loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
+        //SQUARE_PARTICLE = load_model("/models/block_test.fbx", "Block_Test");
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
-        //TEST_MODEL2_INDEX = load_model("/models/stickfigure.fbx", "Humanoid2");
+        TEST_BLOCK_INDEX = load_model("/models/block_test.fbx", "Block_Test");
+
 
     }
 
