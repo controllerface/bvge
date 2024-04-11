@@ -7,16 +7,16 @@ import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL32.GL_GEOMETRY_SHADER;
 
-public class CircleShader extends AbstractShader
+public class ThreeStageShader extends Shader
 {
     private String vertex_source;
     private String fragment_source;
     private String geometry_source;
     private boolean being_used = false;
 
-    public CircleShader(String filePath)
+    public ThreeStageShader(String filePath)
     {
-        try (var resource = CircleShader.class.getResourceAsStream("/gl/shaders/" + filePath))
+        try (var resource = ThreeStageShader.class.getResourceAsStream("/gl/shaders/" + filePath))
         {
             var glsl_source = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
 

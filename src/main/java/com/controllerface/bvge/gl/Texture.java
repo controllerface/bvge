@@ -169,6 +169,11 @@ public class Texture
         return texId;
     }
 
+    public void destroy()
+    {
+        glDeleteTextures(texId);
+    }
+
     @Override
     public boolean equals(Object o)
     {

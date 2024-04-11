@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.geometry.Models;
-import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
@@ -29,7 +29,6 @@ public class CrateRenderer extends GameSystem
 
     private final int[] texture_slots = {0};
 
-    private final AbstractShader shader;
     private final GPUProgram prepare_transforms = new PrepareTransforms();
 
     private int vao;
@@ -42,12 +41,12 @@ public class CrateRenderer extends GameSystem
 
     private Texture texture;
     private HullIndexData crate_hulls;
+    private Shader shader;
     private GPUKernel prepare_transforms_k;
 
     public CrateRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.load_shader("box_model.glsl");
         init_GL();
         init_CL();
     }
@@ -55,10 +54,11 @@ public class CrateRenderer extends GameSystem
     private void init_GL()
     {
         var model = Models.get_model_by_index(Models.TEST_SQUARE_INDEX);
-        this.texture = model.textures().get(0);
         var base_mesh = model.meshes()[0];
         var raw_mesh = base_mesh.raw_copy();
 
+        texture = model.textures().getFirst();
+        shader = Assets.load_shader("box_model.glsl");
         vao = glCreateVertexArrays();
         ebo = GLUtils.static_element_buffer(vao, raw_mesh.r_faces());
         position_vbo = GLUtils.fill_buffer_vec2(vao, POSITION_ATTRIBUTE, raw_mesh.r_vertices());
@@ -136,6 +136,7 @@ public class CrateRenderer extends GameSystem
         glDeleteBuffers(position_vbo);
         glDeleteBuffers(uv_vbo);
         shader.destroy();
+        texture.destroy();
         prepare_transforms.destroy();
         GPGPU.cl_release_buffer(vbo_ptr);
     }

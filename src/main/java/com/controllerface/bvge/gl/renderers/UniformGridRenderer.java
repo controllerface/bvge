@@ -2,7 +2,7 @@ package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
@@ -18,25 +18,30 @@ public class UniformGridRenderer extends GameSystem
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int VERTICES_PER_BOX = 4;
 
-    private final AbstractShader shader;
     private final UniformGrid uniformGrid;
 
-    private final int[] first;
-    private final int[] count;
-    private final int buffer_size;
+    private int[] first;
+    private int[] count;
+    private int buffer_size;
 
     private int vao;
     private int point_vbo;
 
+    private Shader shader;
+
     public UniformGridRenderer(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
-        this.shader = Assets.load_shader("uniform_grid.glsl");
         this.uniformGrid = uniformGrid;
-        int draw_count = this.uniformGrid.x_subdivisions * this.uniformGrid.y_subdivisions + 1;
-        this.first = new int[draw_count];
-        this.count = new int[draw_count];
-        this.buffer_size = draw_count * VERTICES_PER_BOX * VECTOR_FLOAT_2D_SIZE;
+        init_GL();
+    }
+
+    private void init_GL()
+    {
+        int draw_count = uniformGrid.x_subdivisions * uniformGrid.y_subdivisions + 1;
+        first = new int[draw_count];
+        count = new int[draw_count];
+        buffer_size = draw_count * VERTICES_PER_BOX * VECTOR_FLOAT_2D_SIZE;
         int next = 0;
         for (int i = 0; i < draw_count; i++)
         {
@@ -44,11 +49,7 @@ public class UniformGridRenderer extends GameSystem
             count[i] = VERTICES_PER_BOX;
             next += VERTICES_PER_BOX;
         }
-        init();
-    }
-
-    private void init()
-    {
+        shader = Assets.load_shader("uniform_grid.glsl");
         vao = glCreateVertexArrays();
         point_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, buffer_size);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);

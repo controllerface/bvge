@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.programs.MeshQuery;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.geometry.Models;
-import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
@@ -26,12 +26,7 @@ public class HumanoidRenderer extends GameSystem
     private static final int UV_COORD_ATTRIBUTE = 1;
 
     private final int[] texture_slots = { 0 };
-    private final int[] raw_query;
-    private final int mesh_count;
-    private final long mesh_size;
 
-    private final Texture texture;
-    private final AbstractShader shader;
     private final GPUProgram mesh_query_p = new MeshQuery();
 
     private int vao;
@@ -50,6 +45,13 @@ public class HumanoidRenderer extends GameSystem
     private long offsets_ptr;
     private long mesh_transfer_ptr;
 
+    private int[] raw_query;
+    private int mesh_count;
+    private long mesh_size;
+
+    private Texture texture;
+    private Shader shader;
+
     private GPUKernel count_mesh_instances_k;
     private GPUKernel write_mesh_details_k;
     private GPUKernel count_mesh_batches_k;
@@ -60,24 +62,24 @@ public class HumanoidRenderer extends GameSystem
     public HumanoidRenderer(ECS ecs)
     {
         super(ecs);
-        var model = Models.get_model_by_index(Models.TEST_MODEL_INDEX);
-        this.shader = Assets.load_shader("poly_model.glsl");
-        this.texture = model.textures().get(0);
-        this.mesh_count = model.meshes().length;
-        this.mesh_size = (long)mesh_count * CLSize.cl_int;
-        this.raw_query = new int[mesh_count];
-        for (int i = 0; i < model.meshes().length; i++)
-        {
-            var m = model.meshes()[i];
-            raw_query[i] = m.mesh_id();
-        }
-
         init_GL();
         init_CL();
     }
 
     private void init_GL()
     {
+        var model = Models.get_model_by_index(Models.TEST_MODEL_INDEX);
+        shader = Assets.load_shader("poly_model.glsl");
+        texture = model.textures().getFirst();
+        mesh_count = model.meshes().length;
+        mesh_size = (long)mesh_count * CLSize.cl_int;
+        raw_query = new int[mesh_count];
+        for (int i = 0; i < model.meshes().length; i++)
+        {
+            var m = model.meshes()[i];
+            raw_query[i] = m.mesh_id();
+        }
+
         vao = glCreateVertexArrays();
         ebo = GLUtils.dynamic_element_buffer(vao, ELEMENT_BUFFER_SIZE);
         vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
@@ -249,6 +251,7 @@ public class HumanoidRenderer extends GameSystem
         glDeleteBuffers(vbo);
         glDeleteBuffers(uvo);
         shader.destroy();
+        texture.destroy();
         mesh_query_p.destroy();
         GPGPU.cl_release_buffer(element_buffer_ptr);
         GPGPU.cl_release_buffer(vertex_buffer_ptr);

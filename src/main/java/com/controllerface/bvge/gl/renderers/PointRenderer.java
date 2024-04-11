@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.kernels.PreparePoints_k;
 import com.controllerface.bvge.cl.programs.PreparePoints;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
@@ -29,7 +29,6 @@ public class PointRenderer extends GameSystem
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int COLOR_ATTRIBUTE = 1;
 
-    private final AbstractShader shader;
     private final GPUProgram prepare_points = new PreparePoints();
 
     private int vao;
@@ -38,18 +37,19 @@ public class PointRenderer extends GameSystem
     private long vertex_vbo_ptr;
     private long color_vbo_ptr;
 
+    private Shader shader;
     private GPUKernel prepare_points_k;
 
     public PointRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.load_shader("point_shader.glsl");
         init_GL();
         init_CL();
     }
 
     private void init_GL()
     {
+        shader = Assets.load_shader("point_shader.glsl");
         vao = glCreateVertexArrays();
         vertex_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, POSITION_BATCH_SIZE);
         color_vbo = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BATCH_SIZE);
