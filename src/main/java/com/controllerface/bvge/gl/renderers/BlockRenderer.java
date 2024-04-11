@@ -68,7 +68,7 @@ public class BlockRenderer extends GameSystem
 
     private void init_GL()
     {
-        var model = Models.get_model_by_index(Models.TEST_BLOCK_INDEX);
+        var model = Models.get_model_by_index(Models.BASE_BLOCK_INDEX);
         shader = Assets.load_shader("block_model.glsl");
         texture = model.textures().getFirst();
         mesh_count = model.meshes().length;

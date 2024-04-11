@@ -50,13 +50,13 @@ __kernel void handle_movement(__global float2 *armature_accel,
     //  but may be worth doing some checks later to re-enbale this depending on circulmstances
     //  for example swimming, or zero-G, etc.
 
-    // accel.y = is_mv_u 
-    //     ? current_linear_mag
-    //     : accel.y;
+    accel.y = is_mv_u 
+        ? current_linear_mag
+        : accel.y;
 
-    // accel.y = is_mv_d 
-    //     ? -current_linear_mag
-    //     : accel.y;
+    accel.y = is_mv_d 
+        ? -current_linear_mag
+        : accel.y;
 
 
     bool can_jump = (arm_flag & CAN_JUMP) !=0;

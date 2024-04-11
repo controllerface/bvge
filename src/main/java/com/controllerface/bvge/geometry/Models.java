@@ -34,7 +34,7 @@ public class Models
 
     public static int TEST_MODEL_INDEX = -1;
     public static int TEST_SQUARE_INDEX = -1;
-    public static int TEST_BLOCK_INDEX = -1;
+    public static int BASE_BLOCK_INDEX = -1;
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
 
@@ -597,13 +597,10 @@ public class Models
         loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
-        //SQUARE_PARTICLE = load_model("/models/block_test.fbx", "Block_Test");
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
-        TEST_BLOCK_INDEX = load_model("/models/block_test.fbx", "Block_Test");
-
-
+        BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block");
     }
 
     private static SceneNode process_node_hierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)

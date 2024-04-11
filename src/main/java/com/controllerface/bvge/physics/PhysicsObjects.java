@@ -235,12 +235,12 @@ public class PhysicsObjects
 
     public static int dynamic_Box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size * 5, HullFlags.NO_BONES.bits, mass, friction, restitution, TEST_BLOCK_INDEX);
+        return box(x, y, size * 5, HullFlags.NO_BONES.bits, mass, friction, restitution, BASE_BLOCK_INDEX);
     }
 
     public static int static_box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, SQUARE_PARTICLE);
+        return box(x, y, size * 5, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, BASE_BLOCK_INDEX);
     }
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)
