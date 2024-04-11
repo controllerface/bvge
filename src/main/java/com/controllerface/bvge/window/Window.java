@@ -21,7 +21,11 @@ import java.util.Objects;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL20C.GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+import static org.lwjgl.opengl.GL20C.GL_MAX_TEXTURE_IMAGE_UNITS;
+import static org.lwjgl.opengl.GL20C.GL_MAX_VERTEX_ATTRIBS;
+import static org.lwjgl.opengl.GL30C.GL_MAX_ARRAY_TEXTURE_LAYERS;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
@@ -205,6 +209,43 @@ public class Window
 
         // set current cursor
         glfwSetCursor(glfwWindow, cursor_id);
+
+
+        var int_buffer = MemoryUtil.memAllocInt(1);
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, int_buffer);
+        int r = int_buffer.get(0);
+        System.out.println(STR."max texture size: \{r}");
+
+        int_buffer.clear();
+        glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, int_buffer);
+        r = int_buffer.get(0);
+        System.out.println(STR."max texture layers: \{r}");
+
+        int_buffer.clear();
+        glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, int_buffer);
+        r = int_buffer.get(0);
+        System.out.println(STR."max vertex attributes: \{r}");
+
+        int_buffer.clear();
+        glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, int_buffer);
+        r = int_buffer.get(0);
+        System.out.println(STR."max vertex shader texture units: \{r}");
+
+        int_buffer.clear();
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, int_buffer);
+        r = int_buffer.get(0);
+        System.out.println(STR."max fragment shader texture units: \{r}");
+
+        var int_buffer2 = MemoryUtil.memAllocInt(2);
+        glGetIntegerv(GL_POINT_SIZE_RANGE, int_buffer2);
+        int a = int_buffer2.get(0);
+        int b = int_buffer2.get(1);
+        System.out.println(STR."point size range: \{a} - \{b}");
+
+
+        MemoryUtil.memFree(int_buffer);
+        MemoryUtil.memFree(int_buffer2);
+
 
         System.out.println("LWJGL version: " + Version.getVersion());
 
