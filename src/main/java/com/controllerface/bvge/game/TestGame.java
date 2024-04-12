@@ -32,11 +32,11 @@ public class TestGame extends GameMode
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
-            RenderType.HULLS,
-            RenderType.POINTS,
-            RenderType.ARMATURES,
-            RenderType.BOUNDS,
-            RenderType.GRID,
+            //RenderType.HULLS,
+            //RenderType.POINTS,
+            //RenderType.ARMATURES,
+            //RenderType.BOUNDS,
+            //RenderType.GRID,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =

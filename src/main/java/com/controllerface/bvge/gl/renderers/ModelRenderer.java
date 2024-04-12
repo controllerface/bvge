@@ -15,15 +15,18 @@ import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
 import static org.lwjgl.opengl.GL45C.*;
 
 public class ModelRenderer extends GameSystem
 {
     private static final int ELEMENT_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * Integer.BYTES;
     private static final int VERTEX_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
+    private static final int COLOR_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
     private static final int COMMAND_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * Integer.BYTES * 5;
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int UV_COORD_ATTRIBUTE = 1;
+    private static final int COLOR_ATTRIBUTE = 2;
 
     private final int[] texture_slots = { 0 };
 
@@ -34,11 +37,13 @@ public class ModelRenderer extends GameSystem
     private int ebo;
     private int vbo;
     private int uvo;
+    private int vcb;
 
     private long command_buffer_ptr;
     private long element_buffer_ptr;
     private long vertex_buffer_ptr;
     private long uv_buffer_ptr;
+    private long color_buffer_ptr;
     private long query_ptr;
     private long counters_ptr;
     private long total_ptr;
@@ -89,10 +94,12 @@ public class ModelRenderer extends GameSystem
         ebo = GLUtils.dynamic_element_buffer(vao, ELEMENT_BUFFER_SIZE);
         vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
         uvo = GLUtils.new_buffer_vec2(vao, UV_COORD_ATTRIBUTE, VERTEX_BUFFER_SIZE);
+        vcb = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BUFFER_SIZE);
         cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE) ;
 
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_COORD_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao, COLOR_ATTRIBUTE);
     }
 
     private void init_CL()
@@ -101,6 +108,7 @@ public class ModelRenderer extends GameSystem
         element_buffer_ptr = GPGPU.share_memory(ebo);
         vertex_buffer_ptr = GPGPU.share_memory(vbo);
         uv_buffer_ptr = GPGPU.share_memory(uvo);
+        color_buffer_ptr = GPGPU.share_memory(vcb);
 
         total_ptr = GPGPU.cl_new_pinned_int();
         query_ptr = GPGPU.new_mutable_buffer(raw_query);
@@ -146,6 +154,7 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(TransferRenderData_k.Args.element_buffer, element_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.uv_buffer, uv_buffer_ptr)
+            .ptr_arg(TransferRenderData_k.Args.color_buffer, color_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
             .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
             .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.HULL_MESH_ID))
@@ -153,6 +162,7 @@ public class ModelRenderer extends GameSystem
             .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.buffer(BufferType.MESH_FACE_TABLE))
             .buf_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.core_memory.buffer(BufferType.MESH_FACE))
             .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(TransferRenderData_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
             .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.buffer(BufferType.POINT_VERTEX_REFERENCE))
             .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.buffer(BufferType.VERTEX_UV_TABLE))
             .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.buffer(BufferType.VERTEX_TEXTURE_UV));
@@ -234,6 +244,7 @@ public class ModelRenderer extends GameSystem
                 .share_mem(element_buffer_ptr)
                 .share_mem(vertex_buffer_ptr)
                 .share_mem(uv_buffer_ptr)
+                .share_mem(color_buffer_ptr)
                 .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
                 .set_arg(TransferRenderData_k.Args.offset, offset)
                 .call(arg_long(count));

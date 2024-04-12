@@ -9,6 +9,7 @@ public class MeshQuery extends GPUProgram
     @Override
     public void init()
     {
+        src.add(const_point_flags);
         src.add(CLUtils.read_src("programs/mesh_query.cl"));
 
         make_program();

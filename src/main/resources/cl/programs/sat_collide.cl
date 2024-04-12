@@ -159,12 +159,20 @@ __kernel void apply_reactions(__global float8 *reactions,
     int reaction_count = point_reactions[current_point];
     int flags = point_flags[current_point];
 
+    flags &= ~ONE_TOUCH;
+    flags &= ~MANY_TOUCH;
+
     // exit on non-reactive points
     if (reaction_count == 0) 
     {
+        point_flags[current_point] = flags;
         return;
     }
     
+    flags = reaction_count > 1
+        ? flags | MANY_TOUCH
+        : flags | ONE_TOUCH;
+
     // get the offset into the reaction buffer corresponding to this point
     int reaction_offset = point_offsets[current_point];
 
