@@ -269,7 +269,7 @@ __kernel void apply_reactions(__global float8 *reactions,
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
-    ag = ag <= 0.0f ? 0.0f : 1.0f;
+    ag = ag <= 0.0f ? 0.0f :ag;
     //ag = ag >= 0.75f ? 1.0f : 0.0f;
 
 

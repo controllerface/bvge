@@ -29,5 +29,6 @@ uniform sampler2D uTextures[1];
 void main()
 {
     vec4 texColor = texture(uTextures[0], f_tex_coords);
-    color = texColor * f_color;
+    vec3 scaledRGB = texColor.rgb * f_color.rgb;
+    color = vec4(scaledRGB, texColor.a);
 }

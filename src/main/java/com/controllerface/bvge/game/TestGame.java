@@ -12,6 +12,7 @@ import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
 
 import java.util.EnumSet;
+import java.util.Random;
 
 import static com.controllerface.bvge.geometry.Models.*;
 import static com.controllerface.bvge.util.Constants.HullFlags;
@@ -35,7 +36,7 @@ public class TestGame extends GameMode
             //RenderType.HULLS,
             //RenderType.POINTS,
             //RenderType.ARMATURES,
-            //RenderType.BOUNDS,
+            //RenderType.BOUNDS);//,
             //RenderType.GRID,
             RenderType.MODELS);
 
@@ -52,6 +53,50 @@ public class TestGame extends GameMode
         Models.init();
 
         this.screenBlankSystem = screenBlankSystem;
+    }
+
+
+    public static float rando(float baseNumber, float percentage)
+    {
+//        int baseNumber = 10;
+//        double percentage = 0.5; // 50% or 0.5
+
+        // Calculate the upper bound of the range
+        float upperBound = baseNumber * percentage;
+
+        // Create an instance of Random class
+        Random random = new Random();
+
+        float randomNumber = baseNumber + random.nextFloat() * (upperBound - baseNumber);
+
+        //System.out.println(x);
+
+        // Generate a random number between baseNumber and upperBound (inclusive)
+
+        // Print the randomly generated number
+        System.out.println("Random number between " + baseNumber + " and " + upperBound + ": " + randomNumber);
+
+
+        return randomNumber;
+
+    }
+
+
+    private void genSquaresRando(int box_size, float spacing, float size, float start_x, float start_y)
+    {
+        System.out.println("generating: " + box_size * box_size + " Crates..");
+        for (int i = 0; i < box_size; i++)
+        {
+            for (int j = 0; j < box_size; j++)
+            {
+                float x = start_x + i * spacing;
+                float y = start_y + j * spacing;
+                //var npc = ecs.registerEntity(null);
+
+                var armature_index = PhysicsObjects.dynamic_Box(x, y, rando(size, .75f), 50f, 0.02f, 0.0003f);
+                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+            }
+        }
     }
 
     private void genSquares(int box_size, float spacing, float size, float start_x, float start_y)
@@ -271,7 +316,9 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(150, 6f, 5f, 0, 100);
-        genSquares(50,  5f, 5f, -100, 300);
+        //genSquares(50,  5f, 5f, -100, 400);
+
+        genSquaresRando(25,  10f, 10f, -100, 100);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);

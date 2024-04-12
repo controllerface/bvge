@@ -80,7 +80,7 @@ public class PointRenderer extends GameSystem
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
-        glPointSize(3);
+        glPointSize(5);
 
 
         int offset = 0;

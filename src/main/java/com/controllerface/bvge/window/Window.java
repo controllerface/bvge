@@ -150,8 +150,8 @@ public class Window
         // note: this must be called or nothing will work
         GL.createCapabilities();
 
-        glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_BLEND);
 
         glViewport(0, 0, this.width, this.height);
 

@@ -146,9 +146,9 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         bool many_touch = (flags & MANY_TOUCH) !=0;
 
         float col = one_touch 
-            ? 0.9f 
+            ? 0.7f 
             : many_touch 
-                ? 0.5f 
+                ? 0.3f 
                 : 1.0f;
 
         int point_vertex_reference = point_vertex_references[point_id];

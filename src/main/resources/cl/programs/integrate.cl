@@ -107,6 +107,17 @@ __kernel void integrate(__global float2 *hulls,
         float2 pos = point.xy;
         float2 prv = point.zw;
 
+        float threshold = 1.0f;
+        float2 vel = (pos - prv) / dt;
+        bool s_x = fabs(vel.x) < threshold;
+        bool s_y = fabs(vel.y) < threshold;
+        prv.x = s_x ? pos.x : prv.x;
+        prv.y = s_y ? pos.y : prv.y;
+        // if (hull_armature_id == 0)
+        // {
+        //     printf("debug: x-%f y-%f", vel.x, vel.y);
+        // }
+
         if (!is_static)
         {
             // subtract prv from pos to get the difference this frame
@@ -277,14 +288,20 @@ __kernel void integrate_armatures(__global float4 *armatures,
     float2 pos = armature.xy;
     float2 prv = armature.zw;
 
-    float2 vel = pos - prv;
-    float len = fast_length(vel);
-    bool slow = len < .005f;
+    float threshold = 3.0f;
+    float2 vel = (pos - prv) / dt;
+    bool s_x = fabs(vel.x) < threshold;
+    bool s_y = fabs(vel.y) < threshold;
+    prv.x = s_x ? pos.x : prv.x;
+    prv.y = s_y ? pos.y : prv.y;
+    // if (current_armature == 0)
+    // {
+    //     printf("debug: x-%f y-%f", vel.x, vel.y);
+    // }
 
     if (!is_static && !no_bones)
     {
-        float2 other = slow ? pos : prv;
-        float2 diff = pos - other;
+        float2 diff = pos - prv;
         diff = acc + diff;
         diff.x *= damping;
         prv = pos;
