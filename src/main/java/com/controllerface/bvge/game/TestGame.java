@@ -155,7 +155,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, -0.0000175f);
+                var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, -0.00001f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -316,6 +316,8 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(150, 6f, 5f, 0, 100);
+
+        //genCircles(100, 6f, 5f, 400, 800);
         genSquares(50,  5f, 5f, -100, 400);
 
         //genSquaresRando(50,  10f, 10f, -100, 100);
