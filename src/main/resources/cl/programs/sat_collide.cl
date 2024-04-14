@@ -167,14 +167,14 @@ __kernel void apply_reactions(__global float8 *reactions,
         hit_count = hit_count == 0 
             ? 0
             : hit_count <= HIT_LOW_THRESHOLD 
-                ? hit_count - 1 
-                : hit_count <= HIT_LOW_MID_THRESHOLD
-                    ? hit_count - 2
-                    : hit_count <= HIT_MID_THRESHOLD 
-                        ? hit_count - 3 
-                        : hit_count <= HIT_HIGH_MID_THRESHOLD 
-                            ? hit_count - 4 
-                            : hit_count - 5;
+            ? hit_count - 1 
+            : hit_count <= HIT_LOW_MID_THRESHOLD
+            ? hit_count - 2
+            : hit_count <= HIT_MID_THRESHOLD 
+            ? hit_count - 3 
+            : hit_count <= HIT_HIGH_MID_THRESHOLD 
+            ? hit_count - 4 
+            : hit_count - 5;
 
         point_hit_counts[current_point] = hit_count;
         point_flags[current_point] = flags;
@@ -283,22 +283,21 @@ __kernel void apply_reactions(__global float8 *reactions,
         ? flags | HIT_FLOOR
         : flags;
 
-    float ag_min = hit_count == 0 
-            ? 0
-            : hit_count <= HIT_LOW_THRESHOLD 
-                ? .6f 
-                : hit_count <= HIT_LOW_MID_THRESHOLD
-                    ? .7f
-                    : hit_count <= HIT_MID_THRESHOLD 
-                        ? .8f
-                        : hit_count <= HIT_HIGH_MID_THRESHOLD 
-                            ? .9f
-                            : 1.0f;
+    float ag_min = hit_count <= HIT_LOW_THRESHOLD 
+        ? 0.5f
+        : hit_count <= HIT_LOW_MID_THRESHOLD
+        ? 0.7f
+        : hit_count <= HIT_MID_THRESHOLD 
+        ? 0.8f
+        : hit_count <= HIT_HIGH_MID_THRESHOLD 
+        ? 0.9f
+        : 1.0f;
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
-    ag = ag <= 0.0f ? 0.0f : max(ag, ag_min);
-    //ag = ag >= 0.75f ? 1.0f : 0.0f;
+    ag = ag <= 0.0f 
+        ? 0.0f 
+        : max(ag, ag_min);
 
 
     anti_gravity[current_point] = ag;
