@@ -381,6 +381,11 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer point_flag_buffer;
 
+    /** ushort
+     * x: recent collision hit counter
+     */
+    private final ResizableBuffer point_hit_count_buffer;
+
     /** float2
      * x: x position
      * y: y position
@@ -501,6 +506,9 @@ public class GPUCoreMemory
         point_vertex_reference_buffer   = new PersistentBuffer(CLSize.cl_int, 50_000L);
         point_hull_index_buffer         = new PersistentBuffer(CLSize.cl_int, 50_000L);
         point_flag_buffer               = new PersistentBuffer(CLSize.cl_int, 50_000L);
+
+        point_hit_count_buffer          = new PersistentBuffer(CLSize.cl_ushort, 50_000L);
+
         vertex_reference_buffer         = new PersistentBuffer(CLSize.cl_float2);
         vertex_texture_uv_buffer        = new PersistentBuffer(CLSize.cl_float2);
         vertex_uv_table_buffer          = new PersistentBuffer(CLSize.cl_int2);
@@ -729,6 +737,7 @@ public class GPUCoreMemory
             .buf_arg(CompactPoints_k.Args.point_vertex_references, point_vertex_reference_buffer)
             .buf_arg(CompactPoints_k.Args.point_hull_indices, point_hull_index_buffer)
             .buf_arg(CompactPoints_k.Args.point_flags, point_flag_buffer)
+            .buf_arg(CompactPoints_k.Args.point_hit_counts, point_hit_count_buffer)
             .buf_arg(CompactPoints_k.Args.bone_tables, point_bone_table_buffer);
 
         long compact_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_bones);
@@ -805,6 +814,7 @@ public class GPUCoreMemory
             case POINT_VERTEX_REFERENCE  -> point_vertex_reference_buffer;
             case POINT_HULL_INDEX        -> point_hull_index_buffer;
             case POINT_FLAG              -> point_flag_buffer;
+            case POINT_HIT_COUNT         -> point_hit_count_buffer;
             case VERTEX_REFERENCE        -> vertex_reference_buffer;
             case VERTEX_TEXTURE_UV       -> vertex_texture_uv_buffer;
             case VERTEX_UV_TABLE         -> vertex_uv_table_buffer;
@@ -932,6 +942,8 @@ public class GPUCoreMemory
         point_vertex_reference_buffer.ensure_capacity(capacity);
         point_hull_index_buffer.ensure_capacity(capacity);
         point_flag_buffer.ensure_capacity(capacity);
+
+        point_hit_count_buffer.ensure_capacity(capacity);
 
         point_bone_table_buffer.ensure_capacity(capacity);
 
@@ -1381,6 +1393,9 @@ public class GPUCoreMemory
         point_vertex_reference_buffer.release();
         point_hull_index_buffer.release();
         point_flag_buffer.release();
+
+        point_hit_count_buffer.release();
+
         point_bone_table_buffer.release();
         vertex_reference_buffer.release();
         vertex_weight_buffer.release();
@@ -1460,6 +1475,9 @@ public class GPUCoreMemory
         total += point_vertex_reference_buffer.debug_data();
         total += point_hull_index_buffer.debug_data();
         total += point_flag_buffer.debug_data();
+
+        total += point_hit_count_buffer.debug_data();
+
         total += point_bone_table_buffer.debug_data();
         total += vertex_reference_buffer.debug_data();
         total += vertex_weight_buffer.debug_data();

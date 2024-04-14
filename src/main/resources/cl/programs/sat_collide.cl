@@ -148,6 +148,7 @@ __kernel void apply_reactions(__global float8 *reactions,
                               __global float4 *points,
                               __global float *anti_gravity,
                               __global int *point_flags,
+                              __global ushort *point_hit_counts,
                               __global int *point_reactions,
                               __global int *point_offsets)
 {
@@ -158,20 +159,35 @@ __kernel void apply_reactions(__global float8 *reactions,
     int current_point = get_global_id(0);
     int reaction_count = point_reactions[current_point];
     int flags = point_flags[current_point];
-
-    flags &= ~ONE_TOUCH;
-    flags &= ~MANY_TOUCH;
-
+    ushort hit_count = point_hit_counts[current_point];
+    
     // exit on non-reactive points
     if (reaction_count == 0) 
     {
+        hit_count = hit_count == 0 
+            ? 0
+            : hit_count <= HIT_LOW_THRESHOLD 
+                ? hit_count - 1 
+                : hit_count <= HIT_LOW_MID_THRESHOLD
+                    ? hit_count - 2
+                    : hit_count <= HIT_MID_THRESHOLD 
+                        ? hit_count - 3 
+                        : hit_count <= HIT_HIGH_MID_THRESHOLD 
+                            ? hit_count - 4 
+                            : hit_count - 5;
+
+        point_hit_counts[current_point] = hit_count;
         point_flags[current_point] = flags;
         return;
     }
     
-    flags = reaction_count > 1
-        ? flags | MANY_TOUCH
-        : flags | ONE_TOUCH;
+    hit_count = hit_count >= HIT_TOP_THRESHOLD 
+        ? HIT_TOP_THRESHOLD 
+        : hit_count + reaction_count;
+
+    hit_count = hit_count > HIT_MID_THRESHOLD && reaction_count == 1
+        ? hit_count - 2
+        : hit_count;
 
     // get the offset into the reaction buffer corresponding to this point
     int reaction_offset = point_offsets[current_point];
@@ -269,13 +285,14 @@ __kernel void apply_reactions(__global float8 *reactions,
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
-    ag = ag <= 0.0f ? 0.0f :ag;
+    ag = ag <= 0.0f ? 0.0f : 1.0f;
     //ag = ag >= 0.75f ? 1.0f : 0.0f;
 
 
     anti_gravity[current_point] = ag;
     points[current_point] = point;
     point_flags[current_point] = flags;
+    point_hit_counts[current_point] = hit_count;
 
     // It is important to reset the counts and offsets to 0 after reactions are handled.
     // These reactions are only valid once, for the current frame.

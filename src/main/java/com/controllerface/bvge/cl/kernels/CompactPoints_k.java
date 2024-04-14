@@ -12,6 +12,7 @@ public class CompactPoints_k extends GPUKernel
         point_vertex_references,
         point_hull_indices,
         point_flags,
+        point_hit_counts,
         bone_tables;
     }
 

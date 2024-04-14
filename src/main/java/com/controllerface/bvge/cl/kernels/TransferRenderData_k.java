@@ -12,7 +12,7 @@ public class TransferRenderData_k extends GPUKernel
         mesh_face_tables,
         mesh_faces,
         points,
-        point_flags,
+        point_hit_counts,
         point_vertex_references,
         uv_tables,
         texture_uvs,

@@ -107,17 +107,6 @@ __kernel void integrate(__global float2 *hulls,
         float2 pos = point.xy;
         float2 prv = point.zw;
 
-        float threshold = 1.0f;
-        float2 vel = (pos - prv) / dt;
-        bool s_x = fabs(vel.x) < threshold;
-        bool s_y = fabs(vel.y) < threshold;
-        prv.x = s_x ? pos.x : prv.x;
-        prv.y = s_y ? pos.y : prv.y;
-        // if (hull_armature_id == 0)
-        // {
-        //     printf("debug: x-%f y-%f", vel.x, vel.y);
-        // }
-
         if (!is_static)
         {
             // subtract prv from pos to get the difference this frame

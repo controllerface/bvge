@@ -104,7 +104,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int2 *mesh_face_tables,
                                    __global int4 *mesh_faces,
                                    __global float4 *points,
-                                   __global int *point_flags,
+                                   __global ushort *point_hit_counts,
                                    __global int *point_vertex_references,
                                    __global int2 *uv_tables,
                                    __global float2 *texture_uvs,
@@ -140,23 +140,24 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     for (int point_id = start_point; point_id <= end_point; point_id++)
     {
         float4 point = points[point_id];
-        int flags = point_flags[point_id];
+        int hit_counts = point_hit_counts[point_id];
 
-        bool one_touch = (flags & ONE_TOUCH) !=0;
-        bool many_touch = (flags & MANY_TOUCH) !=0;
-
-        float col = one_touch 
-            ? 0.7f 
-            : many_touch 
-                ? 0.3f 
-                : 1.0f;
+        float col = hit_counts <= HIT_LOW_THRESHOLD 
+            ? 1.0f 
+            : hit_counts <= HIT_LOW_MID_THRESHOLD 
+                ? 0.9f 
+                : hit_counts <= HIT_MID_THRESHOLD
+                    ? 0.85f
+                    : hit_counts <= HIT_HIGH_MID_THRESHOLD 
+                        ? 0.8
+                        : 0.7;
 
         int point_vertex_reference = point_vertex_references[point_id];
         int2 uv_table = uv_tables[point_vertex_reference];
         int uv_count = uv_table.y - uv_table.x + 1;
         int uv_index = uv_count == 1 
             ? uv_table.x 
-            : uv_table.x + 1;
+            : uv_table.x + 2;
         float2 uv = texture_uvs[uv_index]; // todo: select from available uvs based on hull data
         float2 pos = point.xy;
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;

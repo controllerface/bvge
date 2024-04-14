@@ -36,7 +36,7 @@ public class TestGame extends GameMode
             //RenderType.HULLS,
             //RenderType.POINTS,
             //RenderType.ARMATURES,
-            //RenderType.BOUNDS);//,
+            //RenderType.BOUNDS,
             //RenderType.GRID,
             RenderType.MODELS);
 
@@ -93,7 +93,7 @@ public class TestGame extends GameMode
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
 
-                var armature_index = PhysicsObjects.dynamic_Box(x, y, rando(size, .75f), 50f, 0.02f, 0.0003f);
+                var armature_index = PhysicsObjects.dynamic_Box(x, y, rando(size, 0.5f), 50f, 0.02f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -305,7 +305,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 400, 1100);
+        genTestFigure(1f, 400, 1000);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genSquares(1,  25f, 25f, 420, 200);
@@ -316,9 +316,9 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(150, 6f, 5f, 0, 100);
-        //genSquares(50,  5f, 5f, -100, 400);
+        genSquares(50,  5f, 5f, -100, 400);
 
-        genSquaresRando(25,  10f, 10f, -100, 100);
+        //genSquaresRando(50,  10f, 10f, -100, 100);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);
