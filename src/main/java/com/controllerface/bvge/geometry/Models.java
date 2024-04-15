@@ -237,6 +237,8 @@ public class Models
         return mesh_faces;
     }
 
+    // todo: add mechanism for passing in pre-computed UV channels
+    // todo: add mechanism for passing in pre-computed color sets
     private static Vertex[] load_vertices(AIMesh aiMesh,
                                           Map<Integer, String[]> bone_name_map,
                                           Map<Integer, float[]> bone_weight_map)
@@ -245,22 +247,23 @@ public class Models
         var mesh_vertices = new Vertex[aiMesh.mNumVertices()];
         var buffer = aiMesh.mVertices();
 
-        List<List<AIVector3D>> uvChannels = new ArrayList<>();
+        List<List<Vector2f>> uvChannels = new ArrayList<>();
         for (int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++)
         {
             var uvBuffer = aiMesh.mTextureCoords(i);
             if (uvBuffer != null)
             {
-                List<AIVector3D> currentChannel = new ArrayList<>();
+                List<Vector2f> currentChannel = new ArrayList<>();
                 while (uvBuffer.remaining() > 0)
                 {
                     var aiVector = uvBuffer.get();
-                    currentChannel.add(aiVector);
+                    currentChannel.add(new Vector2f(aiVector.x(), aiVector.y()));
                 }
                 uvChannels.add(currentChannel);
             }
         }
 
+        // todo: define color sets for vertex objects and set them using the backed in sets, or passed in ones
         int color_sets = 0;
         for (int i = 0; i < AI_MAX_NUMBER_OF_COLOR_SETS; i++)
         {
@@ -281,7 +284,6 @@ public class Models
                 var color_s = AIColor4D.create(color_set.address());
                 System.out.println(color_s);
             }
-
         }
         System.out.println(STR."color sets: \{aiMesh.mName().dataString()} - \{+color_sets}");
 
@@ -321,7 +323,6 @@ public class Models
                 }
                 uv_table[1] = uv_ref;
             });
-
 
             var vert_ref_id = GPGPU.core_memory.new_vertex_reference(aiVertex.x(), aiVertex.y(), weights, uv_table);
 
