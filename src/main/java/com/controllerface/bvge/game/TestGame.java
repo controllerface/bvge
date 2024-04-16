@@ -82,7 +82,7 @@ public class TestGame extends GameMode
     }
 
 
-    private void genSquaresRando(int box_size, float spacing, float size, float start_x, float start_y)
+    private void genSquaresRando(int box_size, float spacing, float size, float percentage, float start_x, float start_y)
     {
         System.out.println("generating: " + box_size * box_size + " Crates..");
         for (int i = 0; i < box_size; i++)
@@ -93,7 +93,7 @@ public class TestGame extends GameMode
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
 
-                var armature_index = PhysicsObjects.dynamic_Box(x, y, rando(size, 0.5f), 50f, 0.02f, 0.0003f);
+                var armature_index = PhysicsObjects.dynamic_Box(x, y, rando(size, percentage), 50f, 0.02f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -305,7 +305,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 400, 1000);
+        genTestFigure(2f, 400, 1000);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genSquares(1,  25f, 25f, 420, 200);
@@ -318,9 +318,9 @@ public class TestGame extends GameMode
         //genCircles(150, 6f, 5f, 0, 100);
 
         //genCircles(100, 6f, 5f, 400, 800);
-        genSquares(100,  5f, 5f, -100, 400);
+        genSquares(50,  10f, 10f, -100, 400);
 
-        //genSquaresRando(50,  10f, 10f, -100, 100);
+        //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);

@@ -38,6 +38,8 @@ public class Models
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
 
+    private static final BlockAlmanac BLOCK_ALMANAC = new BlockAlmanac();
+
     private static final int DEFAULT_MODEL_LOAD_FLAGS =
         aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
 
@@ -58,6 +60,11 @@ public class Models
     }
 
     private static int load_model(String model_path, String model_name)
+    {
+        return load_model(model_path, model_name, Collections.emptyList());
+    }
+
+    private static int load_model(String model_path, String model_name, List<List<Vector2f>> baked_uvs)
     {
         // the number of meshes associated with the loaded model
         int mesh_count;
@@ -106,7 +113,7 @@ public class Models
             generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, model_transform, armature_transform,-1);
 
             load_animations(ai_scene, bind_name_map);
-            load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map);
+            load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map, baked_uvs);
 
             // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
             // the root bone is determined by checking if the current bone's parent is a direct descendant of the scene
@@ -241,26 +248,34 @@ public class Models
     // todo: add mechanism for passing in pre-computed color sets
     private static Vertex[] load_vertices(AIMesh aiMesh,
                                           Map<Integer, String[]> bone_name_map,
-                                          Map<Integer, float[]> bone_weight_map)
+                                          Map<Integer, float[]> bone_weight_map,
+                                          List<List<Vector2f>> baked_uvs)
     {
         int vert_index = 0;
         var mesh_vertices = new Vertex[aiMesh.mNumVertices()];
         var buffer = aiMesh.mVertices();
 
         List<List<Vector2f>> uvChannels = new ArrayList<>();
-        for (int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++)
+        if (baked_uvs.isEmpty())
         {
-            var uvBuffer = aiMesh.mTextureCoords(i);
-            if (uvBuffer != null)
+            for (int i = 0; i < AI_MAX_NUMBER_OF_TEXTURECOORDS; i++)
             {
-                List<Vector2f> currentChannel = new ArrayList<>();
-                while (uvBuffer.remaining() > 0)
+                var uvBuffer = aiMesh.mTextureCoords(i);
+                if (uvBuffer != null)
                 {
-                    var aiVector = uvBuffer.get();
-                    currentChannel.add(new Vector2f(aiVector.x(), aiVector.y()));
+                    List<Vector2f> currentChannel = new ArrayList<>();
+                    while (uvBuffer.remaining() > 0)
+                    {
+                        var aiVector = uvBuffer.get();
+                        currentChannel.add(new Vector2f(aiVector.x(), aiVector.y()));
+                    }
+                    uvChannels.add(currentChannel);
                 }
-                uvChannels.add(currentChannel);
             }
+        }
+        else
+        {
+            uvChannels.addAll(baked_uvs);
         }
 
         // todo: define color sets for vertex objects and set them using the backed in sets, or passed in ones
@@ -287,12 +302,13 @@ public class Models
         }
         System.out.println(STR."color sets: \{aiMesh.mName().dataString()} - \{+color_sets}");
 
-        AtomicInteger count = new AtomicInteger();
+        AtomicInteger current_vertex_index = new AtomicInteger();
         while (buffer.remaining() > 0)
         {
+            int this_index = current_vertex_index.getAndIncrement();
             int this_vert = vert_index++;
-            var aiVertex = buffer.get();
-            List<Vector2f> uvData = new ArrayList<>();
+            var raw_vertex = buffer.get();
+            List<Vector2f> vertex_uvs = new ArrayList<>();
             String[] names = bone_name_map.get(this_vert);
             float[] weights = bone_weight_map.get(this_vert);
 
@@ -306,15 +322,11 @@ public class Models
             weights[2] /= sum;
             weights[3] /= sum;
 
-            uvChannels.forEach(channel ->
-            {
-                var next = channel.get(count.get());
-                uvData.add(new Vector2f(next.x(), next.y()));
-            });
+            uvChannels.forEach(channel -> vertex_uvs.add(channel.get(this_index)));
 
             int[] uv_table =  new int[2];
             uv_table[0] = -1;
-            uvData.forEach(uv ->
+            vertex_uvs.forEach(uv ->
             {
                 var uv_ref = GPGPU.core_memory.new_texture_uv(uv.x, uv.y);
                 if (uv_table[0] == -1)
@@ -324,10 +336,8 @@ public class Models
                 uv_table[1] = uv_ref;
             });
 
-            var vert_ref_id = GPGPU.core_memory.new_vertex_reference(aiVertex.x(), aiVertex.y(), weights, uv_table);
-
-            mesh_vertices[this_vert] = new Vertex(vert_ref_id, aiVertex.x(), aiVertex.y(), uvData, names, weights);
-            count.getAndIncrement();
+            var vert_ref_id = GPGPU.core_memory.new_vertex_reference(raw_vertex.x(), raw_vertex.y(), weights, uv_table);
+            mesh_vertices[this_vert] = new Vertex(vert_ref_id, raw_vertex.x(), raw_vertex.y(), vertex_uvs, names, weights);
         }
         return mesh_vertices;
     }
@@ -336,7 +346,8 @@ public class Models
                                   String model_name,
                                   AIMesh raw_mesh,
                                   Mesh[] meshes,
-                                  Map<String, SceneNode> node_map)
+                                  Map<String, SceneNode> node_map,
+                                  List<List<Vector2f>> baked_uvs)
     {
         var mesh_name = raw_mesh.mName().dataString();
         var mesh_node = node_map.get(mesh_name);
@@ -350,7 +361,7 @@ public class Models
         var bone_name_map = new HashMap<Integer, String[]>();
         var bone_weight_map = new HashMap<Integer, float[]>();
         var mesh_bones = load_mesh_bones(raw_mesh, node_map, bone_name_map, bone_weight_map);
-        var mesh_vertices = load_vertices(raw_mesh, bone_name_map, bone_weight_map);
+        var mesh_vertices = load_vertices(raw_mesh, bone_name_map, bone_weight_map, baked_uvs);
         var mesh_faces = load_faces(raw_mesh, next_mesh);
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
         int[] vertex_table = new int[2];
@@ -375,13 +386,14 @@ public class Models
                                         String model_name,
                                         Mesh[] meshes,
                                         PointerBuffer mesh_buffer,
-                                        Map<String, SceneNode> node_map)
+                                        Map<String, SceneNode> node_map,
+                                        List<List<Vector2f>> baked_uvs)
     {
         // load raw mesh data for all meshes
         for (int i = 0; i < numMeshes; i++)
         {
             var raw_mesh = AIMesh.create(mesh_buffer.get(i));
-            load_mesh(i, model_name, raw_mesh, meshes, node_map);
+            load_mesh(i, model_name, raw_mesh, meshes, node_map, baked_uvs);
         }
     }
 
@@ -625,7 +637,7 @@ public class Models
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
         TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
-        BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block");
+        BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block", BLOCK_ALMANAC.uv_channels());
     }
 
     private static SceneNode process_node_hierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)

@@ -165,6 +165,8 @@ public class Texture
             assert false : "Error: couldn't load image: " + resource_path;
         }
 
+        glGenerateMipmap(texId);
+
         // do this or it will leak memory
         stbi_image_free(image);
     }
