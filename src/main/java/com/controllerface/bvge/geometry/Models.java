@@ -246,7 +246,6 @@ public class Models
         return mesh_faces;
     }
 
-    // todo: add mechanism for passing in pre-computed UV channels
     // todo: add mechanism for passing in pre-computed color sets
     private static Vertex[] load_vertices(AIMesh aiMesh,
                                           Map<Integer, String[]> bone_name_map,
@@ -518,7 +517,7 @@ public class Models
 
             // todo: at some point, the name of the animation may need to have significance for determining
             //  common animations, like walk/run/idle, etc.
-            //System.out.println("name: " + raw_animation.mName().dataString());
+            System.out.println("name: " + raw_animation.mName().dataString());
 
             int channel_count = raw_animation.mNumChannels();
             var channel_buffer = raw_animation.mChannels();
@@ -673,9 +672,6 @@ public class Models
         return currentNode;
     }
 
-    // todo: this method or a variant needs to be callable in the game loop, this will be required
-    //  to add animations. The method will need to derive the current transform matrix by doing a
-    //  lerp between the most recent and next keyframes.
     private static void generate_transforms(SceneNode current_node,
                                             Map<String, Matrix4f> transforms,
                                             Matrix4f parent_transform,
