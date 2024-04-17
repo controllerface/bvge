@@ -37,7 +37,7 @@ public class TestGame extends GameMode
             //RenderType.POINTS,
             //RenderType.ARMATURES,
             //RenderType.BOUNDS,
-            //RenderType.GRID,
+            //RenderType.GRID);//,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -224,6 +224,13 @@ public class TestGame extends GameMode
         ecs.attachComponent(figure, Component.LinearForce, new LinearForce(2000));
     }
 
+    private void genTestFigureNPC_2(float size, float x, float y)
+    {
+        //var figure = ecs.registerEntity(null);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON.bits, 50, 0.02f);
+        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
+    }
+
     private void genTestFigureNPC(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
@@ -305,7 +312,9 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(2f, 400, 1000);
+        genTestFigure(1f, 400, 1000);
+
+        //genTestFigureNPC_2(1f, 100, 500);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genSquares(1,  25f, 25f, 420, 200);

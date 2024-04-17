@@ -165,7 +165,7 @@ public class PhysicsObjects
         // get the box mesh
         var mesh = Models.get_model_by_index(model_id).meshes()[0];
 
-        var hull = calculate_convex_hull(mesh.vertices());
+        var hull = calculate_convex_hull_ex(mesh.vertices());
         hull = scale_hull(hull, size);
         hull = translate_hull(hull, x, y);
 
@@ -614,6 +614,82 @@ public class PhysicsObjects
         return out;
     }
 
+
+
+
+    public static int orientation(Vertex p, Vertex q, Vertex r)
+    {
+        float val = (q.y() - p.y()) * (r.x() - q.x()) -
+            (q.x() - p.x()) * (r.y() - q.y());
+
+        if (val == 0) return 0;  // collinear
+        return (val > 0)? 1: 2; // clock or counterclock wise
+    }
+
+
+
+
+    public static Vertex[] calculate_convex_hull_ex(Vertex[] in_points)
+    {
+        Vertex[] points = new Vertex[in_points.length];
+        System.arraycopy(in_points, 0, points, 0, in_points.length);
+        int n = in_points.length;
+
+        // There must be at least 3 points
+        if (n < 3) return points;
+
+        // during hull creation, this holds the vertices that are currently designated as the hull
+        hull_vertex_buffer.clear();
+
+        // Find the leftmost point
+        int l = 0;
+        for (int i = 1; i < n; i++)
+            if (points[i].x() < points[l].x())
+                l = i;
+
+        // Start from leftmost point, keep moving
+        // counterclockwise until reach the start point
+        // again. This loop runs O(h) times where h is
+        // number of points in result or output.
+        int p = l, q;
+        do
+        {
+            // Add current point to result
+            hull_vertex_buffer.push(points[p]);
+
+            // Search for a point 'q' such that
+            // orientation(p, q, x) is counterclockwise
+            // for all points 'x'. The idea is to keep
+            // track of last visited most counterclock-
+            // wise point in q. If any point 'i' is more
+            // counterclock-wise than q, then update q.
+            q = (p + 1) % n;
+
+            for (int i = 0; i < n; i++)
+            {
+                // If i is more counterclockwise than
+                // current q, then update q
+                if (orientation(points[p], points[i], points[q])
+                    == 2)
+                    q = i;
+            }
+
+            // Now q is the most counterclockwise with
+            // respect to p. Set p as q for next iteration,
+            // so that q is added to result 'hull'
+            p = q;
+
+        } while (p != l);  // While we don't come to first
+        // point
+
+        return hull_vertex_buffer.toArray(Vertex[]::new);
+    }
+
+
+
+
+
+
     /**
      * Calculate a convex hull for the provided vertices. The returned vertex array will be a subset
      * of the input array, and may contain all points within the input array, depending on the geometry
@@ -692,7 +768,7 @@ public class PhysicsObjects
      */
     public static int[] calculate_convex_hull_table(Vertex[] in_points)
     {
-        var hull = calculate_convex_hull(in_points);
+        var hull = calculate_convex_hull_ex(in_points);
         var vertex_table = new int[hull.length];
         for (int hull_index = 0; hull_index < hull.length; hull_index++)
         {

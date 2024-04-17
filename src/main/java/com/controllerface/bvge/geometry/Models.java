@@ -32,6 +32,8 @@ public class Models
     public static int SQUARE_PARTICLE = next_model_index.getAndIncrement();
     public static final int POLYGON1_MODEL = next_model_index.getAndIncrement();
 
+    public static int TEST_MODEL_INDEX_2 = -1;
+
     public static int TEST_MODEL_INDEX = -1;
     public static int TEST_SQUARE_INDEX = -1;
     public static int BASE_BLOCK_INDEX = -1;
@@ -357,6 +359,8 @@ public class Models
                 + " ensure node and geometry names match in blender");
         }
 
+        System.out.println(STR."Loading: model:\{model_name} mesh:\{mesh_name}");
+
         int next_mesh = GPGPU.core_memory.next_mesh();
         var bone_name_map = new HashMap<Integer, String[]>();
         var bone_weight_map = new HashMap<Integer, float[]>();
@@ -380,6 +384,8 @@ public class Models
 
         Meshes.register_mesh(model_name, mesh_name, new_mesh);
         meshes[mesh_index] = new_mesh;
+
+        System.out.println(STR."Loading done: model:\{model_name} mesh:\{mesh_name}");
     }
 
     private static void load_raw_meshes(int numMeshes,
@@ -635,7 +641,10 @@ public class Models
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
         loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
-        TEST_MODEL_INDEX = load_model("/models/test_humanoid.fbx", "Humanoid");
+
+        TEST_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
+
+        TEST_MODEL_INDEX_2 = load_model("/models/test_humanoid_2.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
         BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block", BLOCK_ALMANAC.uv_channels());
     }
@@ -687,7 +696,7 @@ public class Models
 
         if (is_armature)
         {
-            //boolean model_ok = model_matrix.compareAndSet(null, parent_transform);
+            boolean model_ok = model_matrix.compareAndSet(null, node_transform);
             //assert model_ok : "model transform already set";
             boolean armature_ok = armature_matrix.compareAndSet(null, node_transform);
             assert armature_ok : "armature transform already set";
@@ -695,7 +704,7 @@ public class Models
 
         if (is_bone)// || is_armature)
         {
-            boolean model_ok = model_matrix.compareAndSet(null, parent_transform);
+            //boolean model_ok = model_matrix.compareAndSet(null, parent_transform);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
             int bind_pose_id = GPGPU.core_memory.new_bone_bind_pose(raw_matrix);
