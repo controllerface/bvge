@@ -10,7 +10,7 @@ public class BlockAlmanac
 {
     private static final int ATLAS_SIZE = 32;
     private static final float UV_OFFSET = 0.03125f;
-    private static final float UV_EPSILON = 0.0f;//0.0001f;
+    private static final float UV_EPSILON = 0.0009765625f;//0.0001f;
 
     private final List<List<Vector2f>> uv_channels;
 

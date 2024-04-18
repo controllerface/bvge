@@ -34,7 +34,7 @@ public class Camera
             0.0f,
             projectionSize.y * zoom,
             0.0f,
-            100.0f);
+            0.1f);
 
         projectionMatrix.mul(getViewMatrix(), uVP);
     }

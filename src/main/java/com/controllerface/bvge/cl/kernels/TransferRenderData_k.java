@@ -8,6 +8,7 @@ public class TransferRenderData_k extends GPUKernel
     {
         hull_point_tables,
         hull_mesh_ids,
+        hull_flags,
         mesh_vertex_tables,
         mesh_face_tables,
         mesh_faces,
@@ -20,6 +21,7 @@ public class TransferRenderData_k extends GPUKernel
         vertex_buffer,
         uv_buffer,
         color_buffer,
+        side_buffer,
         element_buffer,
         mesh_details,
         mesh_transfer,

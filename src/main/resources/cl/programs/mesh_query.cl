@@ -100,6 +100,7 @@ __kernel void transfer_detail_data(__global int4 *mesh_details,
 
 __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int *hull_mesh_ids,
+                                   __global int *hull_flags,
                                    __global int2 *mesh_vertex_tables,
                                    __global int2 *mesh_face_tables,
                                    __global int4 *mesh_faces,
@@ -112,6 +113,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global float2 *vertex_buffer,
                                    __global float2 *uv_buffer,
                                    __global float4 *color_buffer,
+                                   __global float *side_buffer,
                                    __global int *element_buffer,
                                    __global int4 *mesh_details,
                                    __global int2 *mesh_transfer,
@@ -130,10 +132,20 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     command_buffer[c_index + 4] = t_index;
 
     int hull_id = details.z;
+    int flags = hull_flags[hull_id];
     int mesh_id = hull_mesh_ids[hull_id];
     int2 point_table = hull_point_tables[hull_id];
     int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
     int2 mesh_face_table = mesh_face_tables[mesh_id];
+
+    bool side_r = (flags & SIDE_R) !=0;
+    bool side_l = (flags & SIDE_L) !=0;
+
+    float side_z = side_r 
+        ? 0.0f 
+        : side_l 
+            ? 1.0f 
+            : 0.5f; 
 
     int start_point = point_table.x;
     int end_point = point_table.y;
@@ -157,10 +169,12 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         int uv_count = uv_table.y - uv_table.x + 1;
         int uv_index = uv_count == 1 
             ? uv_table.x 
-            : uv_table.x + 1;
+            : uv_table.x + 3;
         float2 uv = texture_uvs[uv_index]; // todo: select from available uvs based on hull data
         float2 pos = point.xy;
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
+
+        side_buffer[ref_offset] = side_z;
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
         color_buffer[ref_offset] = (float4)(col, col, col, 1.0f);

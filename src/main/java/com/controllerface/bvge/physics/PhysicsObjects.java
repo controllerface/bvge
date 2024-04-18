@@ -165,7 +165,7 @@ public class PhysicsObjects
         // get the box mesh
         var mesh = Models.get_model_by_index(model_id).meshes()[0];
 
-        var hull = calculate_convex_hull_ex(mesh.vertices());
+        var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
         hull = translate_hull(hull, x, y);
 
@@ -300,6 +300,18 @@ public class PhysicsObjects
             if (hull_mesh.name().toLowerCase().contains("foot"))
             {
                 local_hull_flags = local_hull_flags | HullFlags.IS_FOOT.bits;
+            }
+
+            if (hull_mesh.name().toLowerCase().contains(".r"))
+            {
+                System.out.println(STR."R: \{hull_mesh.name()}");
+                local_hull_flags = local_hull_flags | HullFlags.SIDE_R.bits;
+            }
+
+            if (hull_mesh.name().toLowerCase().contains(".l"))
+            {
+                System.out.println(STR."L: \{hull_mesh.name()}");
+                local_hull_flags = local_hull_flags | HullFlags.SIDE_L.bits;
             }
 
             // The hull is generated based on the mesh, so it's initial position and rotation
@@ -768,7 +780,7 @@ public class PhysicsObjects
      */
     public static int[] calculate_convex_hull_table(Vertex[] in_points)
     {
-        var hull = calculate_convex_hull_ex(in_points);
+        var hull = calculate_convex_hull(in_points);
         var vertex_table = new int[hull.length];
         for (int hull_index = 0; hull_index < hull.length; hull_index++)
         {
