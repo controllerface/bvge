@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.MeshQuery;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.geometry.Models;
+import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Texture;
@@ -79,7 +79,7 @@ public class ModelRenderer extends GameSystem
 
     private void init_GL()
     {
-        var model = Models.get_model_by_index(model_id);
+        var model = ModelRegistry.get_model_by_index(model_id);
         shader = Assets.load_shader(shader_file);
         texture = model.textures().getFirst();
         mesh_count = model.meshes().length;

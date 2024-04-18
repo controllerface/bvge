@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.kernels.PrepareTransforms_k;
 import com.controllerface.bvge.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.geometry.Models;
+import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.util.Assets;
@@ -75,7 +75,7 @@ public class CircleRenderer extends GameSystem
         {
             GPGPU.cl_release_buffer(circle_hulls.indices());
         }
-        circle_hulls = GPGPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
+        circle_hulls = GPGPU.GL_hull_filter(ModelRegistry.CIRCLE_PARTICLE);
 
         if (circle_hulls.count() == 0) return;
 

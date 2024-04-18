@@ -4,7 +4,7 @@ import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.geometry.Mesh;
-import com.controllerface.bvge.geometry.Models;
+import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
@@ -14,7 +14,7 @@ import org.joml.Vector4f;
 import java.util.*;
 import java.util.stream.IntStream;
 
-import static com.controllerface.bvge.geometry.Models.*;
+import static com.controllerface.bvge.geometry.ModelRegistry.*;
 
 import static com.controllerface.bvge.util.Constants.*;
 
@@ -42,7 +42,7 @@ public class PhysicsObjects
         int next_hull_index = GPGPU.core_memory.next_hull();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
-        var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
+        var mesh = ModelRegistry.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
 
         var vert = mesh.vertices()[0];
 
@@ -96,7 +96,7 @@ public class PhysicsObjects
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
-        var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
+        var mesh = ModelRegistry.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
 
         var hull = mesh.vertices();
         hull = scale_hull(hull, size);
@@ -120,9 +120,9 @@ public class PhysicsObjects
 
         var angle = MathEX.angle_between_lines(l1, l2);
 
-        var start_edge = GPGPU.core_memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), EMPTY_FLAGS);
-        GPGPU.core_memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), EMPTY_FLAGS);
-        var end_edge = GPGPU.core_memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1), EMPTY_FLAGS);
+        var start_edge = GPGPU.core_memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), 0);
+        GPGPU.core_memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), 0);
+        var end_edge = GPGPU.core_memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1), 0);
 
         var point_table = CLUtils.arg_int2(p1_index, p3_index);
         var edge_table = CLUtils.arg_int2(start_edge, end_edge);
@@ -163,7 +163,7 @@ public class PhysicsObjects
         int next_hull_index = GPGPU.core_memory.next_hull();
 
         // get the box mesh
-        var mesh = Models.get_model_by_index(model_id).meshes()[0];
+        var mesh = ModelRegistry.get_model_by_index(model_id).meshes()[0];
 
         var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
@@ -191,10 +191,10 @@ public class PhysicsObjects
         var angle = MathEX.angle_between_lines(l1, l2);
 
         // box sides
-        var start_edge = GPGPU.core_memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), EMPTY_FLAGS);
-        GPGPU.core_memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), EMPTY_FLAGS);
-        GPGPU.core_memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3), EMPTY_FLAGS);
-        GPGPU.core_memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4), EMPTY_FLAGS);
+        var start_edge = GPGPU.core_memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), 0);
+        GPGPU.core_memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), 0);
+        GPGPU.core_memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3), 0);
+        GPGPU.core_memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4), 0);
 
         // corner braces
         GPGPU.core_memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), EdgeFlags.IS_INTERIOR.bits);
@@ -257,7 +257,7 @@ public class PhysicsObjects
         int next_armature_id = GPGPU.core_memory.next_armature();
 
         // get the model from the registry
-        var model = Models.get_model_by_index(model_index);
+        var model = ModelRegistry.get_model_by_index(model_index);
 
         // we need to track which hull is the root hull for this model
         int root_hull_id = -1;
@@ -402,7 +402,7 @@ public class PhysicsObjects
                 var point_1 = convex_buffer.get(point_1_index);
                 var point_2 = convex_buffer.get(point_2_index);
                 var distance = edgeDistance(point_2, point_1);
-                var next_edge = GPGPU.core_memory.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance, EMPTY_FLAGS);
+                var next_edge = GPGPU.core_memory.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance, 0);
                 if (edge_start == -1)
                 {
                     edge_start = next_edge;

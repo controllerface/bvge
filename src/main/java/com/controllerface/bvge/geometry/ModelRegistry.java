@@ -23,17 +23,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.lwjgl.assimp.Assimp.*;
 
-public class Models
+public class ModelRegistry
 {
     private static final AtomicInteger next_model_index = new AtomicInteger(0);
 
     public static final int CIRCLE_PARTICLE = next_model_index.getAndIncrement();
     public static final int TRIANGLE_PARTICLE = next_model_index.getAndIncrement();
     public static int SQUARE_PARTICLE = next_model_index.getAndIncrement();
-    public static final int POLYGON1_MODEL = next_model_index.getAndIncrement();
 
     public static int TEST_MODEL_INDEX_2 = -1;
-
     public static int TEST_MODEL_INDEX = -1;
     public static int TEST_SQUARE_INDEX = -1;
     public static int BASE_BLOCK_INDEX = -1;
@@ -48,7 +46,7 @@ public class Models
     private static AIScene loadModelResource(String name) throws IOException
     {
         ByteBuffer model_buffer = null;
-        try (var model_stream = Models.class.getResourceAsStream(name))
+        try (var model_stream = ModelRegistry.class.getResourceAsStream(name))
         {
             assert model_stream != null : "Model data is null: " + name;
             byte[] model_data = model_stream.readAllBytes();
@@ -379,9 +377,7 @@ public class Models
 
         var new_mesh = new Mesh(mesh_name, mesh_id, mesh_vertices, mesh_faces, mesh_bones, mesh_node, hull_table);
 
-        //System.out.println("Debug mat index:" + raw_mesh.mMaterialIndex() + " for: " + mesh_name);
-
-        Meshes.register_mesh(model_name, mesh_name, new_mesh);
+        MeshRegistry.register_mesh(model_name, mesh_name, new_mesh);
         meshes[mesh_index] = new_mesh;
 
         System.out.println(STR."Loading done: model:\{model_name} mesh:\{mesh_name}");
@@ -629,25 +625,6 @@ public class Models
         }
     }
 
-    public static Model get_model_by_index(int index)
-    {
-        return loaded_models.get(index);
-    }
-
-    public static void init()
-    {
-        loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.CIRCLE_MESH)));
-        loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.TRIANGLE_MESH)));
-        loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.BOX_MESH)));
-        loaded_models.put(POLYGON1_MODEL, Model.fromBasicMesh(Meshes.get_mesh_by_index(Meshes.POLYGON1_MESH)));
-
-        TEST_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
-
-        TEST_MODEL_INDEX_2 = load_model("/models/test_humanoid_2.fbx", "Humanoid");
-        TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
-        BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block", BLOCK_ALMANAC.uv_channels());
-    }
-
     private static SceneNode process_node_hierarchy(AINode aiNode, SceneNode parentNode, Map<String, SceneNode> nodeMap)
     {
         var nodeName = aiNode.mName().dataString();
@@ -693,14 +670,13 @@ public class Models
         if (is_armature)
         {
             boolean model_ok = model_matrix.compareAndSet(null, node_transform);
-            //assert model_ok : "model transform already set";
+            assert model_ok : "model transform already set";
             boolean armature_ok = armature_matrix.compareAndSet(null, node_transform);
             assert armature_ok : "armature transform already set";
         }
 
-        if (is_bone)// || is_armature)
+        if (is_bone)
         {
-            //boolean model_ok = model_matrix.compareAndSet(null, parent_transform);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
             int bind_pose_id = GPGPU.core_memory.new_bone_bind_pose(raw_matrix);
@@ -715,35 +691,20 @@ public class Models
         }
     }
 
-    /**
-     * A container class used for storing a tree of nodes, as is present in a model with an armature.
-     * Typically, a model is defined with some starting mesh, and child nodes beneath that mesh that
-     * contain more meshes. Bones are defined in a similar way, in fact the bone structure will generally
-     * be used to define the actual structure of the model when loaded into memory, hierarchy of the
-     * meshes themselves in the data is largely irrelevant.
-     */
-    public static class SceneNode
+    public static Model get_model_by_index(int index)
     {
-        public final String name;
-        public final SceneNode parent;
-        public final Matrix4f transform;
-        public final List<SceneNode> children = new ArrayList<>();
+        return loaded_models.get(index);
+    }
 
-        public SceneNode(String name, SceneNode parent, Matrix4f transform)
-        {
-            this.name = name;
-            this.parent = parent;
-            this.transform = transform;
-        }
+    public static void init()
+    {
+        loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
+        loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.TRIANGLE_MESH)));
+        loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BOX_MESH)));
 
-        public void addChild(SceneNode child)
-        {
-            children.add(child);
-        }
-
-        public static SceneNode empty()
-        {
-            return new SceneNode("", null, new Matrix4f());
-        }
+        TEST_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
+        TEST_MODEL_INDEX_2 = load_model("/models/test_humanoid_2.fbx", "Humanoid");
+        TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
+        BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block", BLOCK_ALMANAC.uv_channels());
     }
 }

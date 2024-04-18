@@ -4,8 +4,8 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.geometry.Meshes;
-import com.controllerface.bvge.geometry.Models;
+import com.controllerface.bvge.geometry.MeshRegistry;
+import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.renderers.*;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
@@ -14,7 +14,7 @@ import com.controllerface.bvge.physics.UniformGrid;
 import java.util.EnumSet;
 import java.util.Random;
 
-import static com.controllerface.bvge.geometry.Models.*;
+import static com.controllerface.bvge.geometry.ModelRegistry.*;
 import static com.controllerface.bvge.util.Constants.HullFlags;
 
 public class TestGame extends GameMode
@@ -49,8 +49,8 @@ public class TestGame extends GameMode
     {
         super(ecs);
 
-        Meshes.init();
-        Models.init();
+        MeshRegistry.init();
+        ModelRegistry.init();
 
         this.screenBlankSystem = screenBlankSystem;
     }
@@ -243,17 +243,6 @@ public class TestGame extends GameMode
         //var figure = ecs.registerEntity(null);
         var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON.bits, .1f, 0.02f);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
-    }
-
-    private void genPlayer()
-    {
-        // player entity
-        var player = ecs.registerEntity("player");
-        var armature_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, HullFlags.IS_POLYGON.bits | HullFlags.NO_BONES.bits, 1, 0.02f);
-        ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
-        ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
-        ecs.attachComponent(player, Component.Armature, new ArmatureIndex(armature_index));
-        ecs.attachComponent(player, Component.LinearForce, new LinearForce(1500));
     }
 
     // note: order of adding systems is important
