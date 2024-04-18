@@ -356,8 +356,6 @@ public class ModelRegistry
                 + " ensure node and geometry names match in blender");
         }
 
-        System.out.println(STR."Loading: model:\{model_name} mesh:\{mesh_name}");
-
         int next_mesh = GPGPU.core_memory.next_mesh();
         var bone_name_map = new HashMap<Integer, String[]>();
         var bone_weight_map = new HashMap<Integer, float[]>();
@@ -379,8 +377,6 @@ public class ModelRegistry
 
         MeshRegistry.register_mesh(model_name, mesh_name, new_mesh);
         meshes[mesh_index] = new_mesh;
-
-        System.out.println(STR."Loading done: model:\{model_name} mesh:\{mesh_name}");
     }
 
     private static void load_raw_meshes(int numMeshes,
