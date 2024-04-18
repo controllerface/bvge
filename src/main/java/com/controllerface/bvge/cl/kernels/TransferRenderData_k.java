@@ -21,7 +21,6 @@ public class TransferRenderData_k extends GPUKernel
         vertex_buffer,
         uv_buffer,
         color_buffer,
-        side_buffer,
         element_buffer,
         mesh_details,
         mesh_transfer,

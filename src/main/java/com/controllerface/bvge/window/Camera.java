@@ -17,24 +17,32 @@ public class Camera
 
     private float zoom = 1f;
 
-    public Camera(Vector2f position)
+    int width, height;
+
+    public Camera(Vector2f position, int height, int width)
     {
+        this.height = height;
+        this.width = width;
         this.position = position;
         this.projectionMatrix = new Matrix4f();
         this.viewMatrix = new Matrix4f();
         this.uVP = new Matrix4f();
-        adjustProjection();
+        adjustProjection(this.height, this.width);
     }
 
-    public void adjustProjection()
+    public void adjustProjection(int height, int width)
     {
+        this.height = height;
+        this.width =  width;
+
         projectionMatrix.identity();
+
         projectionMatrix.ortho(0.0f,
             projectionSize.x * zoom,
             0.0f,
             projectionSize.y * zoom,
-            0.0f,
-            0.1f);
+            -5.0f,
+            5.0f);
 
         projectionMatrix.mul(getViewMatrix(), uVP);
     }

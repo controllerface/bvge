@@ -44,13 +44,15 @@ public class Window
 
     private static GameMode currentGameMode;
     private final ECS ecs = new ECS();
-    private final Camera camera = new Camera(new Vector2f(0, 0));
+    private final Camera camera;
 
     private Window()
     {
         this.width = 1920;
         this.height = 1080;
         this.title = "BVGE Test";
+
+        camera = new Camera(new Vector2f(0, 0), height, width);
 
         this.r = 0.05f;
         this.g = 0.05f;
@@ -89,7 +91,7 @@ public class Window
     {
         glClearColor(r, g, b, a);
         //glClear(GL_COLOR_BUFFER_BIT);
-        camera.adjustProjection();
+        camera.adjustProjection(this.height, this.width);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
