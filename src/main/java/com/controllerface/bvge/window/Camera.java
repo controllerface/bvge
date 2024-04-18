@@ -13,7 +13,7 @@ public class Camera
     public Vector2f projectionSize = new Vector2f(1, 1);
 
     private static final float MAX_ZOOM = 2f;
-    private static final float MIN_ZOOM = 0.2f;
+    private static final float MIN_ZOOM = 0.5f;
 
     private float zoom = 1f;
 
