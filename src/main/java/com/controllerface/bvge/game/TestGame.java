@@ -339,9 +339,9 @@ public class TestGame extends GameMode
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);
 
-        genFloor(8, 150f, 150f, -70, -100, 0.02f);
-        genWall(5, 150f, 150f, -220, -100);
-        genWall(5, 150f, 150f, 1130, -100);
+        genFloor(8, 149.5f, 150f, -70, -100, 0.02f);
+        genWall(5, 149.5f, 150f, -220, -100);
+        genWall(5, 149.5f, 150f, 1130, -100);
 
         loadSystems();
     }

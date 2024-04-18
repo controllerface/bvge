@@ -158,7 +158,7 @@ public class Window
         glDepthMask(true);
         glDepthFunc(GL_LESS);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        glDepthRange(0.0, 1.0);
+        //glDepthRange(0.0, 1.0);
 
 
         // Create and bind the default framebuffer (typically 0)
