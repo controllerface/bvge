@@ -221,7 +221,7 @@ public class TestGame extends GameMode
         //  and there is not a mechanism to keep ECS entities updated to compensate. Instead, some unique
         //  monotonically increasing value could be used, which doesn't change during entity life time
         ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
-        ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1500));
+        ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1600));
     }
 
     private void genTestFigureNPC_2(float size, float x, float y)
