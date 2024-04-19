@@ -29,8 +29,6 @@ public class PhysicsObjects
     private static final List<float[]> convex_buffer = new ArrayList<>();
     private static final Stack<Vertex> hull_vertex_buffer = new Stack<>();
 
-    public static int FLAG_INTERIOR = 0x01;
-
     public static float edgeDistance(float[] a, float[] b)
     {
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
@@ -240,7 +238,7 @@ public class PhysicsObjects
 
     public static int static_box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size * 5, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, BASE_BLOCK_INDEX);
+        return box(x, y, size, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, SQUARE_PARTICLE);
     }
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)
