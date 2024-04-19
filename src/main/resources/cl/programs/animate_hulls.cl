@@ -46,7 +46,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     if (animation_index < 0) return bone_bind_poses[bone_id];
 
     int2 channel_table = bone_channel_tables[bone_id];
-    int channel_index = channel_table.x - animation_index;
+    int channel_index = channel_table.x + animation_index;
     int timing_index = animation_timing_indices[channel_index];
     int2 pos_channel_table = bone_pos_channel_tables[channel_index];
     int2 rot_channel_table = bone_rot_channel_tables[channel_index];

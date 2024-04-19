@@ -3,6 +3,7 @@ package com.controllerface.bvge.physics;
 import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
+import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.geometry.Vertex;
@@ -297,19 +298,17 @@ public class PhysicsObjects
             var hull_mesh = meshes[mesh_index];
             if (hull_mesh.name().toLowerCase().contains("foot"))
             {
-                local_hull_flags = local_hull_flags | HullFlags.IS_FOOT.bits;
+                local_hull_flags |= HullFlags.IS_FOOT.bits;
             }
 
             if (hull_mesh.name().toLowerCase().contains(".r"))
             {
-                System.out.println(STR."R: \{hull_mesh.name()}");
-                local_hull_flags = local_hull_flags | HullFlags.SIDE_R.bits;
+                local_hull_flags |= HullFlags.SIDE_R.bits;
             }
 
             if (hull_mesh.name().toLowerCase().contains(".l"))
             {
-                System.out.println(STR."L: \{hull_mesh.name()}");
-                local_hull_flags = local_hull_flags | HullFlags.SIDE_L.bits;
+                local_hull_flags |= HullFlags.SIDE_L.bits;
             }
 
             // The hull is generated based on the mesh, so it's initial position and rotation
@@ -510,11 +509,14 @@ public class PhysicsObjects
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         int[] bone_table = CLUtils.arg_int2(first_armature_bone, last_armature_bone);
 
+        int idle_animation_id = Optional.ofNullable(model.anim_map().get(AnimationState.IDLE))
+            .orElse(-1);
+
         return GPGPU.core_memory.new_armature(x, y,
             hull_table,
             bone_table,
             mass,
-            0,
+            idle_animation_id,
             0.0f,
             root_hull_id,
             model_index,
@@ -625,28 +627,32 @@ public class PhysicsObjects
     }
 
 
-
-
     public static int orientation(Vertex p, Vertex q, Vertex r)
     {
         float val = (q.y() - p.y()) * (r.x() - q.x()) -
             (q.x() - p.x()) * (r.y() - q.y());
 
-        if (val == 0) return 0;  // collinear
-        return (val > 0)? 1: 2; // clock or counterclock wise
+        if (val == 0)
+        {
+            return 0;  // collinear
+        }
+        return (val > 0)
+            ? 1
+            : 2; // clockwise or counter-clockwise
     }
 
 
-
-
-    public static Vertex[] calculate_convex_hull_ex(Vertex[] in_points)
+    public static Vertex[] calculate_convex_hull(Vertex[] in_points)
     {
         Vertex[] points = new Vertex[in_points.length];
         System.arraycopy(in_points, 0, points, 0, in_points.length);
         int n = in_points.length;
 
         // There must be at least 3 points
-        if (n < 3) return points;
+        if (n < 3)
+        {
+            return points;
+        }
 
         // during hull creation, this holds the vertices that are currently designated as the hull
         hull_vertex_buffer.clear();
@@ -654,13 +660,14 @@ public class PhysicsObjects
         // Find the leftmost point
         int l = 0;
         for (int i = 1; i < n; i++)
+        {
             if (points[i].x() < points[l].x())
+            {
                 l = i;
+            }
+        }
 
-        // Start from leftmost point, keep moving
-        // counterclockwise until reach the start point
-        // again. This loop runs O(h) times where h is
-        // number of points in result or output.
+        // from leftmost point, move counterclockwise until the start point is reached again.
         int p = l, q;
         do
         {
@@ -681,7 +688,9 @@ public class PhysicsObjects
                 // current q, then update q
                 if (orientation(points[p], points[i], points[q])
                     == 2)
+                {
                     q = i;
+                }
             }
 
             // Now q is the most counterclockwise with
@@ -691,76 +700,6 @@ public class PhysicsObjects
 
         } while (p != l);  // While we don't come to first
         // point
-
-        return hull_vertex_buffer.toArray(Vertex[]::new);
-    }
-
-
-
-
-
-
-    /**
-     * Calculate a convex hull for the provided vertices. The returned vertex array will be a subset
-     * of the input array, and may contain all points within the input array, depending on the geometry
-     * it describes.
-     *
-     * @param in_points the points to wrap with in a convex hull
-     * @return vertex array that describes the convex hull
-     */
-    public static Vertex[] calculate_convex_hull(Vertex[] in_points)
-    {
-        // working objects for the loop.
-        // p is the current vertex of the calculated hull
-        // q is the next vertex of the calculated hull
-        Vertex p;
-        Vertex q;
-
-        // during hull creation, this holds the vertices that are currently designated as the hull
-        hull_vertex_buffer.clear();
-
-        // because the input array is not intended to be changed, we make a copy of the input values
-        // and operate on the copy. This is needed because of the swap() calls, which will re-order
-        // the vertices in-place to aid with hull calculation.
-        Vertex[] points = new Vertex[in_points.length];
-        System.arraycopy(in_points, 0, points, 0, in_points.length);
-
-        // do the initial swap to set up the points array for processing,
-        // this is essentially one iteration of the loop
-        swap(points, 0, lowestPoint(points));
-        swap(points, 1, lowestPolarAngle(points, points[0]));
-
-        // init the working data for the loop, pushing the first vertex into the result buffer
-        int index = 0;
-        p = points[0];
-        q = points[1];
-        hull_vertex_buffer.push(p);
-
-        // loop until the calculated hull makes a loop around the mesh
-        while (!points[0].equals(q))
-        {
-            // push the next vertex into the buffer, since it has been calculated
-            hull_vertex_buffer.push(q);
-
-            // now iterate through the points and find the next candidate
-            double minorPolarAngle = 180D;
-            for (int i = points.length - 1; i >= 0; i--)
-            {
-                if (!points[i].equals(q))
-                {
-                    double angle = 180D - q.angle_between(p, points[i]);
-                    if (angle < minorPolarAngle)
-                    {
-                        minorPolarAngle = angle;
-                        index = i;
-                    }
-                }
-            }
-
-            // once a candidate has been found, swap out old current and swap in new next
-            p = q;
-            q = points[index];
-        }
 
         return hull_vertex_buffer.toArray(Vertex[]::new);
     }
@@ -789,21 +728,5 @@ public class PhysicsObjects
             vertex_table[hull_index] = next_index;
         }
         return vertex_table;
-    }
-
-    private static int lowestPolarAngle(Vertex[] points, Vertex lowestPoint)
-    {
-        int index = 0;
-        double minorPolarAngle = 180D;
-        for (int i = 1; i < points.length; i++)
-        {
-            double angle = lowestPoint.angle_between(points[i]);
-            if (angle < minorPolarAngle)
-            {
-                minorPolarAngle = angle;
-                index = i;
-            }
-        }
-        return index;
     }
 }

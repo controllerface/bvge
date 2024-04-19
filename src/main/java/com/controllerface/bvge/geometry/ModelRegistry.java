@@ -4,6 +4,7 @@ import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.animation.BoneChannel;
 import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.cl.GPGPU;
+import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Assets;
@@ -97,6 +98,8 @@ public class ModelRegistry
         var model_transform = new AtomicReference<Matrix4f>();
         var armature_transform = new AtomicReference<Matrix4f>();
 
+        var animation_map = new EnumMap<AnimationState, Integer>(AnimationState.class);
+
         // read scene data
         try (AIScene ai_scene = loadModelResource(model_path))
         {
@@ -112,7 +115,7 @@ public class ModelRegistry
             // generate the bind pose transforms, setting the initial state of the armature
             generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, model_transform, armature_transform,-1);
 
-            load_animations(ai_scene, bind_name_map);
+            load_animations(ai_scene, bind_name_map, animation_map);
             load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map, baked_uvs);
 
             // we need to calculate the root node for the body, which is the mesh that is tracking the root bone.
@@ -131,6 +134,7 @@ public class ModelRegistry
                 bone_transforms,
                 bind_name_map,
                 bind_pose_map,
+                animation_map,
                 textures,
                 root_index,
                 root_transform_index);
@@ -290,16 +294,16 @@ public class ModelRegistry
                 while (color_set.remaining() > 0)
                 {
                     var n = color_set.get();
-                    System.out.println(STR."color: r:\{n.r()} g:\{n.g()} b:\{n.b()} a:\{n.a()}");
+                    //System.out.println(STR."color: r:\{n.r()} g:\{n.g()} b:\{n.b()} a:\{n.a()}");
                     colors_in_set++;
                 }
-                System.out.println(STR."colors in set: \{+colors_in_set}");
+                //System.out.println(STR."colors in set: \{+colors_in_set}");
 
                 var color_s = AIColor4D.create(color_set.address());
-                System.out.println(color_s);
+                //System.out.println(color_s);
             }
         }
-        System.out.println(STR."color sets: \{aiMesh.mName().dataString()} - \{+color_sets}");
+        //System.out.println(STR."color sets: \{aiMesh.mName().dataString()} - \{+color_sets}");
 
         AtomicInteger current_vertex_index = new AtomicInteger();
         while (buffer.remaining() > 0)
@@ -495,7 +499,9 @@ public class ModelRegistry
         }
     }
 
-    private static void load_animations(AIScene aiScene, Map<String, Integer> bind_name_map)
+    private static void load_animations(AIScene aiScene,
+                                        Map<String, Integer> bind_name_map,
+                                        Map<AnimationState, Integer> animation_map)
     {
         var animation_count = aiScene.mNumAnimations();
         if (animation_count < 1) return;
@@ -503,19 +509,33 @@ public class ModelRegistry
         var anim_map = new HashMap<Integer, BoneChannel[]>();
 
         var anim_buffer = aiScene.mAnimations();
+        int current_index = 0;
         for (int animation_index = 0; animation_index < animation_count; animation_index++)
         {
             var raw_animation = AIAnimation.create(anim_buffer.get(animation_index));
+            var animation_name = raw_animation.mName().dataString().toLowerCase();
+
+            var animation_state = AnimationState.UNKNOWN;
 
             // todo: at some point, the name of the animation may need to have significance for determining
             //  common animations, like walk/run/idle, etc.
-            System.out.println("name: " + raw_animation.mName().dataString());
+            if (animation_name.contains("idle"))// || animation_name.contains("wavehands"))
+            {
+                animation_state = AnimationState.IDLE;
+            }
+            else if (animation_name.contains("walk"))
+            {
+                animation_state = AnimationState.WALKING;
+            }
 
             int channel_count = raw_animation.mNumChannels();
             var channel_buffer = raw_animation.mChannels();
 
             // store the timings so bone channels can use them
             int anim_timing_id = GPGPU.core_memory.new_animation_timings((float)raw_animation.mDuration(), (float)raw_animation.mTicksPerSecond());
+            animation_map.put(animation_state, current_index++);
+
+            System.out.println(STR."anim\{raw_animation.mName().dataString()} state:\{animation_state} id:\{anim_timing_id} duration:\{raw_animation.mDuration()}");
 
             for (int channel_index = 0; channel_index < channel_count; channel_index++)
             {

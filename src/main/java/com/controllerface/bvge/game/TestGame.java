@@ -29,11 +29,11 @@ public class TestGame extends GameMode
         POINTS,     // model vertices
         ARMATURES,  // armature roots
         GRID,       // uniform grid
-    }
 
+    }
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
-            //RenderType.HULLS,
+            RenderType.HULLS,
             //RenderType.POINTS,
             //RenderType.ARMATURES,
             //RenderType.BOUNDS,
@@ -44,6 +44,8 @@ public class TestGame extends GameMode
 //        EnumSet.allOf(RenderType.class);
 
     private final UniformGrid uniformGrid = new UniformGrid();
+
+    private final Random random = new Random();
 
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {
@@ -56,31 +58,13 @@ public class TestGame extends GameMode
     }
 
 
-    public static float rando(float baseNumber, float percentage)
+    public float rando(float baseNumber, float percentage)
     {
-//        int baseNumber = 10;
-//        double percentage = 0.5; // 50% or 0.5
 
-        // Calculate the upper bound of the range
         float upperBound = baseNumber * percentage;
-
-        // Create an instance of Random class
-        Random random = new Random();
-
-        float randomNumber = baseNumber + random.nextFloat() * (upperBound - baseNumber);
-
-        //System.out.println(x);
-
-        // Generate a random number between baseNumber and upperBound (inclusive)
-
-        // Print the randomly generated number
-        System.out.println("Random number between " + baseNumber + " and " + upperBound + ": " + randomNumber);
-
-
-        return randomNumber;
+        return baseNumber + random.nextFloat() * (upperBound - baseNumber);
 
     }
-
 
     private void genSquaresRando(int box_size, float spacing, float size, float percentage, float start_x, float start_y)
     {
@@ -264,8 +248,6 @@ public class TestGame extends GameMode
             ecs.registerSystem(new CrateRenderer(ecs));
             ecs.registerSystem(new ModelRenderer(ecs, "poly_model.glsl", TEST_MODEL_INDEX));
             ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_BLOCK_INDEX));
-
-           // ecs.registerSystem(new BlockRenderer(ecs));
         }
 
         // these are debug-level renderers for visualizing the modeled physics boundaries
@@ -303,7 +285,7 @@ public class TestGame extends GameMode
         // player character
         genTestFigure(1f, 0, 1000);
 
-        //genTestFigureNPC_2(1f, 100, 500);
+        genTestFigureNPC_2(1f, 100, 500);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genSquares(1,  25f, 25f, 420, 200);
@@ -316,7 +298,7 @@ public class TestGame extends GameMode
         //genCircles(150, 6f, 5f, 0, 100);
 
         //genCircles(100, 6f, 5f, 400, 800);
-        genSquares(50,  10f, 10f, -100, 400);
+        //genSquares(50,  10f, 10f, -100, 400);
 
         //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);
         //genSquares(1,  25f, 25f, 420, 200);
