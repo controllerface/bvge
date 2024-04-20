@@ -98,6 +98,7 @@ __kernel void create_armature(__global float4 *armatures,
                               __global float *armature_masses,
                               __global int *armature_animation_indices,
                               __global float *armature_animation_elapsed,
+                              __global short2 *armature_animation_states,
                               int target,
                               float4 new_armature,
                               int new_armature_root_hull,
@@ -108,7 +109,8 @@ __kernel void create_armature(__global float4 *armatures,
                               int2 new_bone_table,
                               float new_armature_mass,
                               int new_armature_animation_index,
-                              float new_armature_animation_time)
+                              float new_armature_animation_time,
+                              short2 new_armature_animation_state)
 {
     armatures[target] = new_armature; 
     armature_root_hulls[target] = new_armature_root_hull; 
@@ -120,6 +122,7 @@ __kernel void create_armature(__global float4 *armatures,
     armature_masses[target] = new_armature_mass;
     armature_animation_indices[target] = new_armature_animation_index; 
     armature_animation_elapsed[target] = new_armature_animation_time;
+    armature_animation_states[target] = new_armature_animation_state;
 }
 
 __kernel void create_vertex_reference(__global float2 *vertex_references,

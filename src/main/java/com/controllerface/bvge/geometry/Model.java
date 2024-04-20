@@ -2,7 +2,6 @@ package com.controllerface.bvge.geometry;
 
 import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.animation.BoneOffset;
-import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.gl.Texture;
 import org.joml.Matrix4f;
 
@@ -15,7 +14,6 @@ public record Model(Mesh[] meshes,
                     Map<String, Matrix4f> bone_transforms,
                     Map<String, Integer> bone_indices,
                     Map<Integer, BoneBindPose> bind_poses,
-                    Map<AnimationState, Integer> anim_map,
                     List<Texture> textures,
                     int root_index,
                     int root_transform_index)
@@ -25,7 +23,6 @@ public record Model(Mesh[] meshes,
         return new Model(new Mesh[]{ mesh },
             new Matrix4f(),
             Map.of(BoneOffset.IDENTITY_BONE_NAME, new Matrix4f()),
-            Collections.emptyMap(),
             Collections.emptyMap(),
             Collections.emptyMap(),
             Collections.emptyList(),

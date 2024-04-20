@@ -134,7 +134,6 @@ public class ModelRegistry
                 bone_transforms,
                 bind_name_map,
                 bind_pose_map,
-                animation_map,
                 textures,
                 root_index,
                 root_transform_index);
@@ -503,53 +502,32 @@ public class ModelRegistry
                                         Map<String, Integer> bind_name_map,
                                         Map<AnimationState, Integer> animation_map)
     {
-        var animation_count = aiScene.mNumAnimations();
-        if (animation_count < 1) return;
+        var raw_animation_count = aiScene.mNumAnimations();
+        if (raw_animation_count < 1) return;
 
         var anim_map = new HashMap<Integer, BoneChannel[]>();
 
         var anim_buffer = aiScene.mAnimations();
         int current_index = 0;
-        for (int animation_index = 0; animation_index < animation_count; animation_index++)
+
+        var anim_buf = new EnumMap<AnimationState, AIAnimation>(AnimationState.class);
+
+        for (int animation_index = 0; animation_index < raw_animation_count; animation_index++)
         {
             var raw_animation = AIAnimation.create(anim_buffer.get(animation_index));
             var animation_name = raw_animation.mName().dataString().toLowerCase();
 
-            var animation_state = AnimationState.UNKNOWN;
+            var animation_state = getAnimation_state(animation_name);
+            anim_buf.put(animation_state, raw_animation);
+        }
 
-            // todo: at some point, the name of the animation may need to have significance for determining
-            //  common animations, like walk/run/idle, etc.
-            if (animation_name.contains("idle"))// || animation_name.contains("wavehands"))
-            {
-                animation_state = AnimationState.IDLE;
-            }
-            else if (animation_name.contains("walk"))
-            {
-                animation_state = AnimationState.WALKING;
-            }
-            else if (animation_name.contains("run"))
-            {
-                animation_state = AnimationState.RUNNING;
-            }
-            else if (animation_name.contains("jump"))
-            {
-                animation_state = AnimationState.JUMPING;
-            }
-            else if (animation_name.contains("inair"))
-            {
-                animation_state = AnimationState.IN_AIR;
-            }
-            else if (animation_name.contains("fall"))
-            {
-                animation_state = AnimationState.FALLING;
-            }
-            else if (animation_name.contains("land"))
-            {
-                animation_state = AnimationState.LANDING;
-            }
+        int animation_count = anim_buf.size();
 
-            int channel_count = raw_animation.mNumChannels();
-            var channel_buffer = raw_animation.mChannels();
+        int animation_index = 0;
+        for (Map.Entry<AnimationState, AIAnimation> entry : anim_buf.entrySet())
+        {
+            var animation_state = entry.getKey();
+            var raw_animation = entry.getValue();
 
             // store the timings so bone channels can use them
             int anim_timing_id = GPGPU.core_memory.new_animation_timings((float)raw_animation.mDuration(), (float)raw_animation.mTicksPerSecond());
@@ -557,6 +535,9 @@ public class ModelRegistry
 
             System.out.println(STR."anim\{raw_animation.mName().dataString()} state:\{animation_state} id:\{anim_timing_id} duration:\{raw_animation.mDuration()}");
 
+
+            int channel_count = raw_animation.mNumChannels();
+            var channel_buffer = raw_animation.mChannels();
             for (int channel_index = 0; channel_index < channel_count; channel_index++)
             {
                 var raw_channel = AINodeAnim.create(channel_buffer.get(channel_index));
@@ -617,6 +598,7 @@ public class ModelRegistry
                 var channels = anim_map.computeIfAbsent(bind_pose_id, (_k) -> new BoneChannel[animation_count]);
                 channels[animation_index] = new_channel;
             }
+            animation_index++;
         }
 
         anim_map.forEach((bind_pose_id, bone_channels) ->
@@ -644,6 +626,39 @@ public class ModelRegistry
             }
             GPGPU.core_memory.set_bone_channel_table(bind_pose_id, new int[]{ c_start, c_end });
         });
+    }
+
+    private static AnimationState getAnimation_state(String animation_name)
+    {
+        if (animation_name.contains("idle"))
+        {
+            return AnimationState.IDLE;
+        }
+        else if (animation_name.contains("walk"))
+        {
+            return AnimationState.WALKING;
+        }
+        else if (animation_name.contains("run"))
+        {
+            return AnimationState.RUNNING;
+        }
+        else if (animation_name.contains("jump"))
+        {
+            return AnimationState.JUMPING;
+        }
+        else if (animation_name.contains("inair"))
+        {
+            return AnimationState.IN_AIR;
+        }
+        else if (animation_name.contains("fall"))
+        {
+            return AnimationState.FALLING;
+        }
+        else if (animation_name.contains("land"))
+        {
+            return AnimationState.LANDING;
+        }
+        else return AnimationState.UNKNOWN;
     }
 
     private static void load_textures(AIScene aiScene, List<Texture> textures)

@@ -239,7 +239,7 @@ public class PhysicsObjects
 
     public static int static_box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, SQUARE_PARTICLE);
+        return box(x, y, size * 5, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, BASE_BLOCK_INDEX);
     }
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)
@@ -509,8 +509,7 @@ public class PhysicsObjects
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         int[] bone_table = CLUtils.arg_int2(first_armature_bone, last_armature_bone);
 
-        int idle_animation_id = Optional.ofNullable(model.anim_map().get(AnimationState.IDLE))
-            .orElse(-1);
+        int idle_animation_id = AnimationState.IDLE.ordinal();
 
         return GPGPU.core_memory.new_armature(x, y,
             hull_table,

@@ -192,8 +192,11 @@ public class PhysicsSimulation extends GameSystem
 
         long handle_movements_k_ptr = control_entities.kernel_ptr(Kernel.handle_movement);
         handle_movement_k = new HandleMovement_k(GPGPU.command_queue_ptr, handle_movements_k_ptr)
+            .buf_arg(HandleMovement_k.Args.armatures, GPGPU.core_memory.buffer(BufferType.ARMATURE))
             .buf_arg(HandleMovement_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
             .buf_arg(HandleMovement_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
+            .buf_arg(HandleMovement_k.Args.armature_animation_indices, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_INDEX))
+            .buf_arg(HandleMovement_k.Args.armature_animation_elapsed, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_ELAPSED))
             .buf_arg(HandleMovement_k.Args.flags, control_point_flags)
             .buf_arg(HandleMovement_k.Args.indices, control_point_indices)
             .buf_arg(HandleMovement_k.Args.tick_budgets, control_point_tick_budgets)
@@ -778,7 +781,8 @@ public class PhysicsSimulation extends GameSystem
             target_count++;
         }
 
-        handle_movement_k.call(arg_long(target_count));
+        handle_movement_k.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)
+            .call(arg_long(target_count));
     }
 
     /**
@@ -793,6 +797,8 @@ public class PhysicsSimulation extends GameSystem
         // will be in their new locations, and points will have their current and previous location values
         // updated for this tick cycle.
         integrate();
+
+        update_controllable_entities();
 
         /*
         - Broad Phase Collision -
@@ -964,8 +970,6 @@ public class PhysicsSimulation extends GameSystem
                 if (sub_ticks <= MAX_SUB_STEPS)
                 {
                     this.time_accumulator -= FIXED_TIME_STEP;
-
-                    update_controllable_entities();
 
                     // perform one tick of the simulation
                     this.tick_simulation();

@@ -63,6 +63,11 @@ public class CLUtils
     }
 
 
+    public static short[] arg_short2(short x, short y)
+    {
+        return new short[]{ x, y };
+    }
+
     public static float[] arg_float2(float x, float y)
     {
         return new float[]{ x, y };

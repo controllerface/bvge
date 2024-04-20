@@ -16,6 +16,7 @@ public class CreateArmature_k extends GPUKernel
         armature_masses,
         armature_animation_indices,
         armature_animation_elapsed,
+        armature_animation_states,
         target,
         new_armature,
         new_armature_root_hull,
@@ -26,7 +27,8 @@ public class CreateArmature_k extends GPUKernel
         new_armature_bone_table,
         new_armature_mass,
         new_armature_animation_index,
-        new_armature_animation_time;
+        new_armature_animation_time,
+        new_armature_animation_state;
     }
 
     public CreateArmature_k(long command_queue_ptr, long kernel_ptr)

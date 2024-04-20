@@ -14,13 +14,17 @@ __kernel void set_control_points(__global int *control_flags,
     jump_mag[target] = new_jump_mag;
 }
 
-__kernel void handle_movement(__global float2 *armature_accel,
+__kernel void handle_movement(__global float4 *armatures,
+                              __global float2 *armature_accel,
                               __global int *armature_flags,
+                              __global int *armature_animation_indices,
+                              __global float *armature_animation_elapsed,
                               __global int *control_flags,
                               __global int *indices,
                               __global int *tick_budgets,
                               __global float *linear_mag,
-                              __global float *jump_mag)
+                              __global float *jump_mag,
+                              float dt)
 {
     int current_control_set = get_global_id(0);
     int current_flags = control_flags[current_control_set];
@@ -29,6 +33,7 @@ __kernel void handle_movement(__global float2 *armature_accel,
     float current_jump_mag = jump_mag[current_control_set];
 
     int current_index = indices[current_control_set];
+    float4 armature = armatures[current_index];
     float2 accel = armature_accel[current_index];
     int arm_flag = armature_flags[current_index];
 
@@ -37,6 +42,17 @@ __kernel void handle_movement(__global float2 *armature_accel,
     bool is_mv_u = (current_flags & UP) !=0;
     bool is_mv_d = (current_flags & DOWN) !=0;
     bool mv_jump = (current_flags & JUMP) !=0;
+
+
+    float threshold = 120.0f;
+    float2 vel = (armature.xy - armature.zw) / dt;
+    //if (vel.y > threshold)
+    // {
+    //     printf("debug: %f", vel.y);
+    // }
+
+    // todo: determine current state and transition accordingly
+
 
     accel.x = is_mv_l && !is_mv_r
         ? -current_linear_mag
@@ -61,10 +77,10 @@ __kernel void handle_movement(__global float2 *armature_accel,
 
     bool can_jump = (arm_flag & CAN_JUMP) !=0;
     current_budget = can_jump && !mv_jump
-        ? 20
+        ? 35
         : mv_jump 
             ? current_budget 
-            : 0;
+            : current_budget;
 
     arm_flag &= ~CAN_JUMP;
 
@@ -84,8 +100,28 @@ __kernel void handle_movement(__global float2 *armature_accel,
         ? jump_amount
         : accel.y;
 
+    int anim_state = 0;
+
+    if (vel.y < -threshold)
+    {
+        anim_state = 3;
+    }
+    else if (vel.y > threshold)
+    {
+        anim_state = 5;
+    }
+    else if (fabs(accel.x) > 0)
+    {
+        anim_state = 1;
+    }
+    else 
+    {
+        anim_state = 0;
+    }
+
     tick_budgets[current_control_set] = current_budget;
     armature_accel[current_index] = accel;
     armature_flags[current_index] = arm_flag;
+    armature_animation_indices[current_index] = anim_state;
 
 }
