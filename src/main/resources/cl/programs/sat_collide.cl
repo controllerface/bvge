@@ -293,6 +293,9 @@ __kernel void apply_reactions(__global float8 *reactions,
         ? 0.9f
         : 1.0f;
 
+
+    // todo: anti-grav can take into account slope of colliding edge, if any. right now, only relative object direction is considered.
+
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
     ag = ag <= 0.0f 

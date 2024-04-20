@@ -527,6 +527,26 @@ public class ModelRegistry
             {
                 animation_state = AnimationState.WALKING;
             }
+            else if (animation_name.contains("run"))
+            {
+                animation_state = AnimationState.RUNNING;
+            }
+            else if (animation_name.contains("jump"))
+            {
+                animation_state = AnimationState.JUMPING;
+            }
+            else if (animation_name.contains("inair"))
+            {
+                animation_state = AnimationState.IN_AIR;
+            }
+            else if (animation_name.contains("fall"))
+            {
+                animation_state = AnimationState.FALLING;
+            }
+            else if (animation_name.contains("land"))
+            {
+                animation_state = AnimationState.LANDING;
+            }
 
             int channel_count = raw_animation.mNumChannels();
             var channel_buffer = raw_animation.mChannels();
