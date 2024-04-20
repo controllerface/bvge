@@ -277,12 +277,12 @@ __kernel void integrate_armatures(__global float4 *armatures,
     float2 pos = armature.xy;
     float2 prv = armature.zw;
 
-    float threshold = 3.0f;
-    float2 vel = (pos - prv) / dt;
-    bool s_x = fabs(vel.x) < threshold;
-    bool s_y = fabs(vel.y) < threshold;
-    prv.x = s_x ? pos.x : prv.x;
-    prv.y = s_y ? pos.y : prv.y;
+    // float threshold = 32.0f;
+    // float2 vel = (pos - prv) / dt;
+    // bool s_x = fabs(vel.x) < threshold;
+    // bool s_y = fabs(vel.y) < threshold;
+    // prv.x = s_x ? pos.x : prv.x;
+    // prv.y = s_y ? pos.y : prv.y;
     // if (current_armature == 0)
     // {
     //     printf("debug: x-%f y-%f", vel.x, vel.y);

@@ -6,6 +6,7 @@ public enum AnimationState
     WALKING,
     RUNNING,
     FALLING,
+    JUMP_START,
     JUMPING,
     IN_AIR,
     LANDING,

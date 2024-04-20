@@ -642,6 +642,10 @@ public class ModelRegistry
         {
             return AnimationState.RUNNING;
         }
+        else if (animation_name.contains("recoil"))
+        {
+            return AnimationState.JUMP_START;
+        }
         else if (animation_name.contains("jump"))
         {
             return AnimationState.JUMPING;

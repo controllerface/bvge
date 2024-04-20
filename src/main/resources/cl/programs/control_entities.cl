@@ -1,10 +1,11 @@
-#define IDLE    0
-#define WALKING 1
-#define RUNNING 2
-#define FALLING 3
-#define JUMPING 4
-#define IN_AIR  5
-#define LANDING 6
+#define IDLE       0
+#define WALKING    1
+#define RUNNING    2
+#define FALLING    3
+#define JUMP_START 4
+#define JUMPING    5
+#define IN_AIR     6
+#define LANDING    7
 
 __kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
@@ -83,36 +84,37 @@ __kernel void handle_movement(__global float4 *armatures,
     // arm_flag &= ~CAN_JUMP;
 
     // jump amount
-    int tick_slice = current_budget > 0 
-        ? 1 
-        : 0;
+    // int tick_slice = current_budget > 0 
+    //     ? 1 
+    //     : 0;
 
-    current_budget = mv_jump 
-        ? current_budget - tick_slice 
-        : current_budget;
+    // current_budget = mv_jump 
+    //     ? current_budget - tick_slice 
+    //     : current_budget;
 
-    float jump_amount = mv_jump && tick_slice == 1
-        ? current_jump_mag
-        : 0;
+    // float jump_amount = mv_jump && tick_slice == 1
+    //     ? current_jump_mag
+    //     : 0;
 
-    accel.y = mv_jump 
-        ? jump_amount
-        : accel.y;
+    // accel.y = mv_jump 
+    //     ? jump_amount
+    //     : accel.y;
+int tick_slice = 0;
 
-
+    float ct = armature_animation_elapsed[current_index];
     int next_state = anim_state;
     switch(anim_state)
     {
         case IDLE:
             if (is_mv_l || is_mv_r) next_state = WALKING;
-            if (can_jump && mv_jump) next_state = JUMPING;
+            if (can_jump && mv_jump) next_state = JUMP_START;
             if (vel.y < -threshold) next_state = FALLING;
             if (vel.y > threshold) next_state = IN_AIR;
             break;
 
         case WALKING: 
             if (!is_mv_l && !is_mv_r) next_state = IDLE;
-            if (can_jump && mv_jump) next_state = JUMPING;
+            if (can_jump && mv_jump) next_state = JUMP_START;
             if (vel.y < -threshold) next_state = FALLING;
             if (vel.y > threshold) next_state = IN_AIR;
             break;
@@ -125,13 +127,23 @@ __kernel void handle_movement(__global float4 *armatures,
             if (vel.y > threshold) next_state = IN_AIR;
             break;
 
+        case JUMP_START:
+            if (ct > 0.08f) next_state = JUMPING;
+            break;
+
         case JUMPING:
-            printf("jump debug: %f", vel.y);
-            if (current_budget == 0) 
-            {
-                 next_state = FALLING; 
-                 if (vel.y > threshold) next_state = IN_AIR;
-            }
+            tick_slice = current_budget > 0 
+                ? 1 
+                : 0;
+
+            current_budget -= tick_slice;
+
+            float jump_amount = mv_jump && tick_slice == 1
+                ? current_jump_mag
+                : 0;
+
+            accel.y = jump_amount;
+            if (tick_slice == 0) next_state = IN_AIR;
             break;
 
         case IN_AIR:
@@ -140,7 +152,7 @@ __kernel void handle_movement(__global float4 *armatures,
             break;
 
         case LANDING:
-            next_state = IDLE; // todo: fix this
+            if (ct > 0.26f) next_state = IDLE;
             break;
 
     }
@@ -163,38 +175,6 @@ __kernel void handle_movement(__global float4 *armatures,
     // accel.y = is_mv_d 
     //     ? -current_linear_mag
     //     : accel.y;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // if (vel.y < -threshold)
-    // {
-    //     anim_state = 3;
-    // }
-    // else if (vel.y > threshold)
-    // {
-    //     anim_state = 5;
-    // }
-    // else if (fabs(accel.x) > 0)
-    // {
-    //     anim_state = 1;
-    // }
-    // else 
-    // {
-    //     anim_state = 0;
-    // }
-
 
 
     tick_budgets[current_control_set] = current_budget;

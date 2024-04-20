@@ -47,6 +47,18 @@ __kernel void resolve_constraints(__global int2 *hull_edge_tables,
             float2 p1_v = p1.xy;
             float2 p2_v = p2.xy;
 
+
+
+
+    // float2 p1_tail = p1.zw;
+    // float p1_dist = fast_distance(p1.xy, p1.zw);
+
+    // float2 p2_tail = p2.zw;
+    // float p2_dist = fast_distance(p2.xy, p2.zw);
+
+
+
+
             // calculate the normalized direction of separation
             float2 sub = p2_v - p1_v;
             float len = fast_length(sub);
@@ -66,6 +78,29 @@ __kernel void resolve_constraints(__global int2 *hull_edge_tables,
             p1.y = p1_v.y;
             p2.x = p2_v.x;
             p2.y = p2_v.y;
+
+
+
+    // using the initial data, compared to the new position, calculate the updated previous
+    // position to ensure it is equivalent to the initial position delta. This preserves 
+    // velocity.
+    // float2 p1_offset = p1.xy - p1_tail;
+    // float2 p2_offset = p2.xy - p2_tail;
+    // float new_len_1 = fast_length(p1_offset);
+    // float new_len_2 = fast_length(p2_offset);
+
+    // p1_offset = new_len_1 == 0.0f 
+    //     ? p1_offset 
+    //     : native_divide(p1_offset, new_len_1);
+
+    // p2_offset = new_len_2 == 0.0f 
+    //     ? p2_offset 
+    //     : native_divide(p2_offset, new_len_2);
+
+    // p1.zw = p1.xy - p1_dist * p1_offset;
+    // p2.zw = p2.xy - p2_dist * p2_offset;
+
+
 
             // set the updated points into the buffer
             points[p1_index] = p1;
