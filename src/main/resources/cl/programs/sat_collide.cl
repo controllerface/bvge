@@ -389,7 +389,7 @@ __kernel void move_armatures(__global float2 *hulls,
 
     flags = hit_floor 
         ? flags | CAN_JUMP
-        : flags;
+        : flags & ~CAN_JUMP;
 
     armatures[current_armature] = armature;
     armature_flags[current_armature] = flags;

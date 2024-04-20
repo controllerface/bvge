@@ -1,3 +1,11 @@
+#define IDLE    0
+#define WALKING 1
+#define RUNNING 2
+#define FALLING 3
+#define JUMPING 4
+#define IN_AIR  5
+#define LANDING 6
+
 __kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
                                  __global float *linear_mag,
@@ -36,6 +44,7 @@ __kernel void handle_movement(__global float4 *armatures,
     float4 armature = armatures[current_index];
     float2 accel = armature_accel[current_index];
     int arm_flag = armature_flags[current_index];
+    int anim_state = armature_animation_indices[current_index];
 
     bool is_mv_l = (current_flags & LEFT) !=0;
     bool is_mv_r = (current_flags & RIGHT) !=0;
@@ -44,16 +53,19 @@ __kernel void handle_movement(__global float4 *armatures,
     bool mv_jump = (current_flags & JUMP) !=0;
 
 
-    float threshold = 120.0f;
+    float threshold = 400.0f;
     float2 vel = (armature.xy - armature.zw) / dt;
     //if (vel.y > threshold)
     // {
     //     printf("debug: %f", vel.y);
     // }
 
+
+
     // todo: determine current state and transition accordingly
 
 
+    // update left/right movement
     accel.x = is_mv_l && !is_mv_r
         ? -current_linear_mag
         : accel.x;
@@ -62,28 +74,15 @@ __kernel void handle_movement(__global float4 *armatures,
         ? current_linear_mag
         : accel.x;
 
-    // todo: upward and downward movement is disabled so jumping can work correctly,
-    //  but may be worth doing some checks later to re-enbale this depending on circulmstances
-    //  for example swimming, or zero-G, etc.
-
-    accel.y = is_mv_u 
-        ? current_linear_mag
-        : accel.y;
-
-    accel.y = is_mv_d 
-        ? -current_linear_mag
-        : accel.y;
-
-
+    // can jump?
     bool can_jump = (arm_flag & CAN_JUMP) !=0;
     current_budget = can_jump && !mv_jump
-        ? 35
-        : mv_jump 
-            ? current_budget 
-            : current_budget;
+        ? 50
+        : current_budget;
 
-    arm_flag &= ~CAN_JUMP;
+    // arm_flag &= ~CAN_JUMP;
 
+    // jump amount
     int tick_slice = current_budget > 0 
         ? 1 
         : 0;
@@ -100,24 +99,103 @@ __kernel void handle_movement(__global float4 *armatures,
         ? jump_amount
         : accel.y;
 
-    int anim_state = 0;
 
-    if (vel.y < -threshold)
+    int next_state = anim_state;
+    switch(anim_state)
     {
-        anim_state = 3;
+        case IDLE:
+            if (is_mv_l || is_mv_r) next_state = WALKING;
+            if (can_jump && mv_jump) next_state = JUMPING;
+            if (vel.y < -threshold) next_state = FALLING;
+            if (vel.y > threshold) next_state = IN_AIR;
+            break;
+
+        case WALKING: 
+            if (!is_mv_l && !is_mv_r) next_state = IDLE;
+            if (can_jump && mv_jump) next_state = JUMPING;
+            if (vel.y < -threshold) next_state = FALLING;
+            if (vel.y > threshold) next_state = IN_AIR;
+            break;
+
+        case RUNNING:
+            break;
+
+        case FALLING:
+            if (can_jump) next_state = LANDING;
+            if (vel.y > threshold) next_state = IN_AIR;
+            break;
+
+        case JUMPING:
+            printf("jump debug: %f", vel.y);
+            if (current_budget == 0) 
+            {
+                 next_state = FALLING; 
+                 if (vel.y > threshold) next_state = IN_AIR;
+            }
+            break;
+
+        case IN_AIR:
+            if (can_jump) next_state = LANDING;
+            if (vel.y < -threshold) next_state = FALLING;
+            break;
+
+        case LANDING:
+            next_state = IDLE; // todo: fix this
+            break;
+
     }
-    else if (vel.y > threshold)
-    {
-        anim_state = 5;
-    }
-    else if (fabs(accel.x) > 0)
-    {
-        anim_state = 1;
-    }
-    else 
-    {
-        anim_state = 0;
-    }
+
+    if (anim_state != next_state) armature_animation_elapsed[current_index] = 0.0f;
+    anim_state = next_state;
+
+
+
+
+
+    // todo: upward and downward movement is disabled so jumping can work correctly,
+    //  but may be worth doing some checks later to re-enbale this depending on circulmstances
+    //  for example swimming, or zero-G, etc.
+
+    // accel.y = is_mv_u 
+    //     ? current_linear_mag
+    //     : accel.y;
+
+    // accel.y = is_mv_d 
+    //     ? -current_linear_mag
+    //     : accel.y;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // if (vel.y < -threshold)
+    // {
+    //     anim_state = 3;
+    // }
+    // else if (vel.y > threshold)
+    // {
+    //     anim_state = 5;
+    // }
+    // else if (fabs(accel.x) > 0)
+    // {
+    //     anim_state = 1;
+    // }
+    // else 
+    // {
+    //     anim_state = 0;
+    // }
+
+
 
     tick_budgets[current_control_set] = current_budget;
     armature_accel[current_index] = accel;

@@ -775,7 +775,7 @@ public class PhysicsSimulation extends GameSystem
                     .set_arg(SetControlPoints_k.Args.target, target_count)
                     .set_arg(SetControlPoints_k.Args.new_flags, flags)
                     .set_arg(SetControlPoints_k.Args.new_index, armature.index())
-                    .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 500)
+                    .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 350)
                     .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
                     .call(GPGPU.global_single_size);
             target_count++;

@@ -99,6 +99,16 @@ __kernel void animate_armatures(__global float16 *armature_bones,
     int current_animation = armature_animation_indices[current_armature]; 
     float current_frame_time = armature_animation_elapsed[current_armature] += delta_time;
 
+    // float16 x = (float16)
+    // (
+    //     -1.0, 0.0, 0.0, 0.0,
+    //     0.0, 1.0, 0.0, 0.0,
+    //     0.0, 0.0, 1.0, 0.0,
+    //     0.0, 0.0, 0.0, 1.0
+    // );
+
+    // model_transform = matrix_mul(model_transform, x);
+
     // note that armatures with no bones simply do nothing as the bone count will be zero
     int armature_bone_count = bone_table.y - bone_table.x + 1;
     for (int i = 0; i < armature_bone_count; i++)
