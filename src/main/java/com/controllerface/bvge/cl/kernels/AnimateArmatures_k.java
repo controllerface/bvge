@@ -9,6 +9,7 @@ public class AnimateArmatures_k extends GPUKernel
         armature_bones,
         bone_bind_poses,
         model_transforms,
+        armature_flags,
         armature_bone_reference_ids,
         armature_bone_parent_ids,
         bone_channel_tables,

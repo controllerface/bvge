@@ -146,6 +146,14 @@ __kernel void handle_movement(__global float4 *armatures,
     armature_animation_states[current_index] = anim_s;
 
 
+    arm_flag = is_mv_l || is_mv_r 
+        ? is_mv_l
+            ? arm_flag | FACE_LEFT 
+            : arm_flag & ~FACE_LEFT 
+        : arm_flag; 
+
+    
+
     // todo: upward and downward movement is disabled so jumping can work correctly,
     //  but may be worth doing some checks later to re-enbale this depending on circulmstances
     //  for example swimming, or zero-G, etc.

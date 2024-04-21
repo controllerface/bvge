@@ -75,6 +75,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
 __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global float16 *bone_bind_poses,
                                 __global float16 *model_transforms,
+                                __global int *armature_flags,
                                 __global int *armature_bone_reference_ids,
                                 __global int *armature_bone_parent_ids,
                                 __global int2 *bone_channel_tables,
@@ -95,19 +96,24 @@ __kernel void animate_armatures(__global float16 *armature_bones,
     int current_armature = get_global_id(0);
     int2 bone_table = bone_tables[current_armature];
     int armature_transform_id = armature_model_transforms[current_armature];
+    int flags = armature_flags[current_armature];
     float16 model_transform = model_transforms[armature_transform_id];
     int current_animation = armature_animation_indices[current_armature]; 
     float current_frame_time = armature_animation_elapsed[current_armature] += delta_time;
 
-    // float16 x = (float16)
-    // (
-    //     -1.0, 0.0, 0.0, 0.0,
-    //     0.0, 1.0, 0.0, 0.0,
-    //     0.0, 0.0, 1.0, 0.0,
-    //     0.0, 0.0, 0.0, 1.0
-    // );
+    float a = ((flags & FACE_LEFT) != 0)
+        ? -1.0 
+        : 1.0;
 
-    // model_transform = matrix_mul(model_transform, x);
+    float16 x = (float16)
+    (
+        a, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
+    );
+
+    model_transform = matrix_mul(x, model_transform);
 
     // note that armatures with no bones simply do nothing as the bone count will be zero
     int armature_bone_count = bone_table.y - bone_table.x + 1;

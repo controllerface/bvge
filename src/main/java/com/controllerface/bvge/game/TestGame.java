@@ -283,7 +283,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 100, 500);
+        genTestFigure(1f, -300, 1400);
 
         //genTestFigureNPC_2(1f, 100, 500);
 

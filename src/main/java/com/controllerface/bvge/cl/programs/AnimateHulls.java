@@ -9,6 +9,7 @@ public class AnimateHulls extends GPUProgram
     @Override
     public void init()
     {
+        src.add(const_armature_flags);
         src.add(const_hull_flags);
         src.add(const_identity_matrix);
         src.add(func_matrix_transform);
