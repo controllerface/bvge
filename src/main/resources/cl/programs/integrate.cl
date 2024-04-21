@@ -114,7 +114,7 @@ __kernel void integrate(__global float2 *hulls,
             diff = acc + i_acc + diff;
 
             // add damping component
-            diff *= damping;
+            diff.x *= damping;
             
             // set the prv to current pos
             prv = pos;

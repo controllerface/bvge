@@ -76,12 +76,15 @@ __kernel void handle_movement(__global float4 *armatures,
     
     float ct = armature_animation_elapsed[current_index];
     int next_state = anim_state;
+
+
+        current_budget = can_jump && !mv_jump
+            ? 20
+            : current_budget;
+
     switch(anim_state)
     {
         case IDLE:
-            current_budget = can_jump && !mv_jump
-                ? 40
-                : current_budget;
             if (is_mv_l || is_mv_r) next_state = WALKING;
             if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
             if (anim_s.x > 100) next_state = FALLING;
@@ -89,9 +92,6 @@ __kernel void handle_movement(__global float4 *armatures,
             break;
 
         case WALKING: 
-            current_budget = can_jump && !mv_jump
-                ? 40
-                : current_budget;
             if (!is_mv_l && !is_mv_r) next_state = IDLE;
             if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
             if (anim_s.x > 100) next_state = FALLING;
@@ -107,21 +107,14 @@ __kernel void handle_movement(__global float4 *armatures,
             break;
 
         case JUMP_START:
-            if (ct > 0.08f) next_state = JUMPING;
+            if (ct > 0.15f) next_state = JUMPING;
             break;
 
         case JUMPING:
-            tick_slice = current_budget > 0 
-                ? 1 
-                : 0;
-
+            tick_slice = current_budget > 0 ? 1 : 0;
             current_budget -= tick_slice;
-
-            float jump_amount = mv_jump && tick_slice == 1
-                ? current_jump_mag
-                : 0;
-
-            accel.y = current_jump_mag;
+            float jump_amount = tick_slice == 1 ? current_jump_mag : 0;
+            accel.y = jump_amount;
             if (tick_slice == 0) next_state = IN_AIR;
             break;
 
@@ -131,7 +124,7 @@ __kernel void handle_movement(__global float4 *armatures,
             break;
 
         case LANDING:
-            if (ct > 0.26f) next_state = IDLE;
+            if (ct > 0.22f) next_state = IDLE;
             break;
 
     }
