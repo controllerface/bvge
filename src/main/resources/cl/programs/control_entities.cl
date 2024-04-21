@@ -113,7 +113,11 @@ __kernel void handle_movement(__global float4 *armatures,
         case JUMPING:
             tick_slice = current_budget > 0 ? 1 : 0;
             current_budget -= tick_slice;
-            float jump_amount = tick_slice == 1 ? current_jump_mag : 0;
+            float jump_amount = tick_slice == 1 
+                ? mv_jump 
+                    ? current_jump_mag 
+                    : current_jump_mag / 2
+                : 0;
             accel.y = jump_amount;
             if (tick_slice == 0) next_state = IN_AIR;
             break;
@@ -146,10 +150,12 @@ __kernel void handle_movement(__global float4 *armatures,
     armature_animation_states[current_index] = anim_s;
 
 
-    arm_flag = is_mv_l || is_mv_r 
+    arm_flag = is_mv_l != is_mv_r 
         ? is_mv_l
             ? arm_flag | FACE_LEFT 
-            : arm_flag & ~FACE_LEFT 
+            : is_mv_r 
+                ? arm_flag & ~FACE_LEFT 
+                : arm_flag
         : arm_flag; 
 
     

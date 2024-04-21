@@ -115,6 +115,7 @@ __kernel void integrate(__global float2 *hulls,
 
             // add damping component
             diff.x *= damping;
+            diff.y = diff.y > 0 ? diff.y * damping : diff.y;
             
             // set the prv to current pos
             prv = pos;
@@ -293,6 +294,7 @@ __kernel void integrate_armatures(__global float4 *armatures,
         float2 diff = pos - prv;
         diff = acc + diff;
         diff.x *= damping;
+        diff.y = diff.y > 0 ? diff.y * damping : diff.y;
         prv = pos;
         pos = pos + diff;
         armature.xy = pos;
