@@ -15,6 +15,7 @@ public class CompactArmatures_k extends GPUKernel
         armature_flags,
         armature_animation_indices,
         armature_animation_elapsed,
+        armature_animation_states,
         armature_hull_tables,
         armature_bone_tables,
         hull_bone_tables,

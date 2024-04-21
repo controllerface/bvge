@@ -194,6 +194,7 @@ public class PhysicsSimulation extends GameSystem
         handle_movement_k = new HandleMovement_k(GPGPU.command_queue_ptr, handle_movements_k_ptr)
             .buf_arg(HandleMovement_k.Args.armatures, GPGPU.core_memory.buffer(BufferType.ARMATURE))
             .buf_arg(HandleMovement_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
+            .buf_arg(HandleMovement_k.Args.armature_animation_states, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_STATE))
             .buf_arg(HandleMovement_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
             .buf_arg(HandleMovement_k.Args.armature_animation_indices, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_INDEX))
             .buf_arg(HandleMovement_k.Args.armature_animation_elapsed, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_ELAPSED))

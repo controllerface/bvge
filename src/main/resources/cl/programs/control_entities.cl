@@ -25,6 +25,7 @@ __kernel void set_control_points(__global int *control_flags,
 
 __kernel void handle_movement(__global float4 *armatures,
                               __global float2 *armature_accel,
+                              __global short2 *armature_animation_states,
                               __global int *armature_flags,
                               __global int *armature_animation_indices,
                               __global float *armature_animation_elapsed,
@@ -54,17 +55,8 @@ __kernel void handle_movement(__global float4 *armatures,
     bool mv_jump = (current_flags & JUMP) !=0;
 
 
-    float threshold = 400.0f;
+    float threshold = 10.0f;
     float2 vel = (armature.xy - armature.zw) / dt;
-    //if (vel.y > threshold)
-    // {
-    //     printf("debug: %f", vel.y);
-    // }
-
-
-
-    // todo: determine current state and transition accordingly
-
 
     // update left/right movement
     accel.x = is_mv_l && !is_mv_r
@@ -77,54 +69,41 @@ __kernel void handle_movement(__global float4 *armatures,
 
     // can jump?
     bool can_jump = (arm_flag & CAN_JUMP) !=0;
-    current_budget = can_jump && !mv_jump
-        ? 50
-        : current_budget;
 
-    // arm_flag &= ~CAN_JUMP;
+    int tick_slice = 0;
 
-    // jump amount
-    // int tick_slice = current_budget > 0 
-    //     ? 1 
-    //     : 0;
-
-    // current_budget = mv_jump 
-    //     ? current_budget - tick_slice 
-    //     : current_budget;
-
-    // float jump_amount = mv_jump && tick_slice == 1
-    //     ? current_jump_mag
-    //     : 0;
-
-    // accel.y = mv_jump 
-    //     ? jump_amount
-    //     : accel.y;
-int tick_slice = 0;
-
+    short2 anim_s = armature_animation_states[current_index];
+    
     float ct = armature_animation_elapsed[current_index];
     int next_state = anim_state;
     switch(anim_state)
     {
         case IDLE:
+            current_budget = can_jump && !mv_jump
+                ? 40
+                : current_budget;
             if (is_mv_l || is_mv_r) next_state = WALKING;
-            if (can_jump && mv_jump) next_state = JUMP_START;
-            if (vel.y < -threshold) next_state = FALLING;
-            if (vel.y > threshold) next_state = IN_AIR;
+            if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
+            if (anim_s.x > 100) next_state = FALLING;
+            if (anim_s.y > 50) next_state = IN_AIR;
             break;
 
         case WALKING: 
+            current_budget = can_jump && !mv_jump
+                ? 40
+                : current_budget;
             if (!is_mv_l && !is_mv_r) next_state = IDLE;
-            if (can_jump && mv_jump) next_state = JUMP_START;
-            if (vel.y < -threshold) next_state = FALLING;
-            if (vel.y > threshold) next_state = IN_AIR;
+            if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
+            if (anim_s.x > 100) next_state = FALLING;
+            if (anim_s.y > 50) next_state = IN_AIR;
             break;
 
         case RUNNING:
             break;
 
         case FALLING:
-            if (can_jump) next_state = LANDING;
-            if (vel.y > threshold) next_state = IN_AIR;
+            if (can_jump) next_state = anim_s.x > 200 ? LANDING : IDLE;
+            if (anim_s.y > 50) next_state = IN_AIR;
             break;
 
         case JUMP_START:
@@ -142,13 +121,13 @@ int tick_slice = 0;
                 ? current_jump_mag
                 : 0;
 
-            accel.y = jump_amount;
+            accel.y = current_jump_mag;
             if (tick_slice == 0) next_state = IN_AIR;
             break;
 
         case IN_AIR:
-            if (can_jump) next_state = LANDING;
-            if (vel.y < -threshold) next_state = FALLING;
+            if (can_jump) next_state = anim_s.x > 200 ? LANDING : IDLE;
+            if (anim_s.x > 50) next_state = FALLING;
             break;
 
         case LANDING:
@@ -160,8 +139,18 @@ int tick_slice = 0;
     if (anim_state != next_state) armature_animation_elapsed[current_index] = 0.0f;
     anim_state = next_state;
 
+    anim_s.x = (vel.y < -threshold) 
+        ? anim_s.x + 1 
+        : 0;
 
+    anim_s.y = (vel.y > threshold) 
+        ? anim_s.y + 1 
+        : 0;
 
+    anim_s.x = anim_s.x > 1000 ? 1000 : anim_s.x;
+    anim_s.y = anim_s.y > 1000 ? 1000 : anim_s.y;
+
+    armature_animation_states[current_index] = anim_s;
 
 
     // todo: upward and downward movement is disabled so jumping can work correctly,

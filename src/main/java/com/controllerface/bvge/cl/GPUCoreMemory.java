@@ -694,6 +694,7 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.armature_flags, armature_flag_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_indices, armature_anim_index_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_elapsed, armature_anim_elapsed_buffer)
+            .buf_arg(CompactArmatures_k.Args.armature_animation_states, armature_anim_state_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_hull_tables, armature_hull_table_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_bone_tables, armature_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.hull_bone_tables, hull_bone_table_buffer)
@@ -778,6 +779,7 @@ public class GPUCoreMemory
             case ARMATURE                -> armature_buffer;
             case ARMATURE_ACCEL          -> armature_accel_buffer;
             case ARMATURE_ANIM_ELAPSED   -> armature_anim_elapsed_buffer;
+            case ARMATURE_ANIM_STATE     -> armature_anim_state_buffer;
             case ARMATURE_ANIM_INDEX     -> armature_anim_index_buffer;
             case ARMATURE_BONE           -> armature_bone_buffer;
             case ARMATURE_BONE_REFERENCE_ID -> armature_bone_reference_id_buffer;
