@@ -1,11 +1,13 @@
-#define IDLE       0
-#define WALKING    1
-#define RUNNING    2
-#define FALLING    3
-#define JUMP_START 4
-#define JUMPING    5
-#define IN_AIR     6
-#define LANDING    7
+#define IDLE         0
+#define WALKING      1
+#define RUNNING      2
+#define FALLING_FAST 3
+#define JUMP_START   4
+#define JUMPING      5
+#define IN_AIR       6
+#define LAND_HARD    7
+#define FALLING_SLOW 8
+#define LAND_SOFT    9
 
 __kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
@@ -77,32 +79,42 @@ __kernel void handle_movement(__global float4 *armatures,
     float ct = armature_animation_elapsed[current_index];
     int next_state = anim_state;
 
-
-        current_budget = can_jump && !mv_jump
-            ? 20
-            : current_budget;
+    current_budget = can_jump && !mv_jump
+        ? 20
+        : current_budget;
 
     switch(anim_state)
     {
         case IDLE:
             if (is_mv_l || is_mv_r) next_state = WALKING;
             if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
-            if (anim_s.x > 100) next_state = FALLING;
+            if (anim_s.x > 50) next_state = FALLING_SLOW;
             if (anim_s.y > 50) next_state = IN_AIR;
             break;
 
         case WALKING: 
             if (!is_mv_l && !is_mv_r) next_state = IDLE;
             if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
-            if (anim_s.x > 100) next_state = FALLING;
+            if (anim_s.x > 50) next_state = FALLING_SLOW;
             if (anim_s.y > 50) next_state = IN_AIR;
             break;
 
         case RUNNING:
             break;
 
-        case FALLING:
-            if (can_jump) next_state = anim_s.x > 200 ? LANDING : IDLE;
+        case FALLING_SLOW:
+            if (can_jump) next_state = anim_s.x > 200 
+                ? LAND_HARD 
+                : LAND_SOFT;
+            if (anim_s.x > 200) next_state = FALLING_FAST;
+            if (anim_s.y > 50) next_state = IN_AIR;
+            break;
+
+        case FALLING_FAST:
+            if (can_jump) next_state = anim_s.x > 200 
+                ? LAND_HARD 
+                : LAND_SOFT;
+            if (anim_s.x < 200) next_state = FALLING_SLOW;
             if (anim_s.y > 50) next_state = IN_AIR;
             break;
 
@@ -123,11 +135,17 @@ __kernel void handle_movement(__global float4 *armatures,
             break;
 
         case IN_AIR:
-            if (can_jump) next_state = anim_s.x > 200 ? LANDING : IDLE;
-            if (anim_s.x > 50) next_state = FALLING;
+            if (can_jump) next_state = anim_s.x > 200 
+                ? LAND_HARD 
+                : LAND_SOFT;
+            if (anim_s.x > 50) next_state = FALLING_SLOW;
             break;
 
-        case LANDING:
+        case LAND_SOFT:
+            if (ct > 0.08f) next_state = IDLE;
+            break;
+
+        case LAND_HARD:
             if (ct > 0.22f) next_state = IDLE;
             break;
 

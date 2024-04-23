@@ -654,13 +654,21 @@ public class ModelRegistry
         {
             return AnimationState.IN_AIR;
         }
-        else if (animation_name.contains("fall"))
+        else if (animation_name.contains("fall_fast"))
         {
-            return AnimationState.FALLING;
+            return AnimationState.FALLING_FAST;
         }
-        else if (animation_name.contains("land"))
+        else if (animation_name.contains("fall_slow"))
         {
-            return AnimationState.LANDING;
+            return AnimationState.FALLING_SLOW;
+        }
+        else if (animation_name.contains("land_hard"))
+        {
+            return AnimationState.LAND_HARD;
+        }
+        else if (animation_name.contains("land_soft"))
+        {
+            return AnimationState.LAND_SOFT;
         }
         else return AnimationState.UNKNOWN;
     }
