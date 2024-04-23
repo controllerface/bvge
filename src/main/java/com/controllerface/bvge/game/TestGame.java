@@ -298,7 +298,7 @@ public class TestGame extends GameMode
         //genCircles(150, 6f, 5f, 0, 100);
 
         //genCircles(20, 6f, 5f, 400, 800);
-        genSquares(100,  10f, 10f, -50, 200);
+        //genSquares(100,  10f, 10f, -50, 200);
 
         //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);
         //genSquares(1,  25f, 25f, 420, 200);
