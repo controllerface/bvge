@@ -95,10 +95,10 @@ public class PhysicsObjects
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
-        var mesh = ModelRegistry.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
+        var mesh = ModelRegistry.get_model_by_index(BASE_TRI_INDEX).meshes()[0];
 
         var hull = mesh.vertices();
-        hull = scale_hull(hull, size);
+        hull = scale_hull(hull, size * 5);
         hull = translate_hull(hull, x, y);
 
         var v1 = hull[0];

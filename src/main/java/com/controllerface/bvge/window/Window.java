@@ -58,6 +58,10 @@ public class Window
         this.g = 0.2f;
         this.b = 0.2f;
 
+//        this.r = 0.0f;
+//        this.g = 0.0f;
+//        this.b = 0.0f;
+
         this.a = 1;
     }
 

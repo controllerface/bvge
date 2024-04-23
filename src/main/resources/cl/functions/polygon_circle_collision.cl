@@ -147,7 +147,7 @@ inline void polygon_circle_collision(int polygon_id,
 
     vert_magnitude = any_static 
         ? static_vert ? 0.0f : 1.0f
-        : vert_magnitude;
+        : 0.0f;
 
     edge_magnitude = any_static 
         ? static_edge ? 0.0f : 1.0f

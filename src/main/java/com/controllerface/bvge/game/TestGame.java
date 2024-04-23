@@ -93,7 +93,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.dynamic_Box(x, y, size, 50f, 0.02f, 0.0003f);
+                var armature_index = PhysicsObjects.dynamic_Box(x, y, size, 50f, 0.03f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -248,6 +248,8 @@ public class TestGame extends GameMode
             ecs.registerSystem(new CrateRenderer(ecs));
             ecs.registerSystem(new ModelRenderer(ecs, "poly_model.glsl", TEST_MODEL_INDEX));
             ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_BLOCK_INDEX));
+            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_TRI_INDEX));
+            ecs.registerSystem(new LiquidRenderer(ecs));
         }
 
         // these are debug-level renderers for visualizing the modeled physics boundaries
@@ -297,15 +299,15 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        //genCircles(20, 6f, 5f, 400, 800);
-        //genSquares(100,  10f, 10f, -50, 200);
+        //genCircles(100, 11f, 10f, 0, 800);
+        genSquares(100,  10f, 10f, -50, 200);
 
         //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  6f, 5f, -120, 200);
-        //genTriangles(25,  5f, 5f, 0, 100);
+        //genTriangles(100,  10f, 10f, 0, 100);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);

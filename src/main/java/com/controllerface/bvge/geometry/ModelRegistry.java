@@ -36,6 +36,7 @@ public class ModelRegistry
     public static int TEST_MODEL_INDEX = -1;
     public static int TEST_SQUARE_INDEX = -1;
     public static int BASE_BLOCK_INDEX = -1;
+    public static int BASE_TRI_INDEX = -1;
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
 
@@ -769,5 +770,6 @@ public class ModelRegistry
         TEST_MODEL_INDEX_2 = load_model("/models/test_humanoid_2.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
         BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block", BLOCK_ALMANAC.uv_channels());
+        BASE_TRI_INDEX = load_model("/models/tri_test.fbx", "Base_Tri", BLOCK_ALMANAC.uv_channels());
     }
 }
