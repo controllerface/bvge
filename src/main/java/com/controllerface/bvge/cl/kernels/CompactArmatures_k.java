@@ -9,6 +9,7 @@ public class CompactArmatures_k extends GPUKernel
         buffer_in_1,
         buffer_in_2,
         armatures,
+        armature_masses,
         armature_root_hulls,
         armature_model_indices,
         armature_model_transforms,

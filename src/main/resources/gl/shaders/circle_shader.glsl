@@ -12,7 +12,7 @@ out VertexData
 void main()
 {
     vec2 pos_offset = aTransform.xy;
-    gl_Position = uVP * vec4(pos_offset, 0.0, 1.0);
+    gl_Position = uVP * vec4(pos_offset, 5.0, 1.0);
     vertex_data.transform = aTransform;
 }
 
@@ -45,25 +45,25 @@ void main()
     vec2 scaled1 = pos1 * vertex_data[0].transform.w;
     vec2 translated1 = scaled1 + pos_offset;
     fPosition = pos1 * 2;
-    gl_Position = uVP * vec4(translated1, 0.0, 1.0);  
+    gl_Position = uVP * vec4(translated1, 5.0, 1.0);  
     EmitVertex();   
 
     vec2 scaled2 = pos2 * vertex_data[0].transform.w;
     vec2 translated2 = scaled2 + pos_offset;
     fPosition = pos2 * 2;
-    gl_Position = uVP * vec4(translated2, 0.0, 1.0);
+    gl_Position = uVP * vec4(translated2, 5.0, 1.0);
     EmitVertex();
 
     vec2 scaled3 = pos3 * vertex_data[0].transform.w;
     vec2 translated3 = scaled3 + pos_offset;
     fPosition = pos3 * 2;
-    gl_Position = uVP * vec4(translated3, 0.0, 1.0);
+    gl_Position = uVP * vec4(translated3, 5.0, 1.0);
     EmitVertex();
 
     vec2 scaled4 = pos4 * vertex_data[0].transform.w;
     vec2 translated4 = scaled4 + pos_offset;
     fPosition = pos4  * 2;
-    gl_Position = uVP * vec4(translated4, 0.0, 1.0);
+    gl_Position = uVP * vec4(translated4, 5.0, 1.0);
     EmitVertex();
 
     EndPrimitive();

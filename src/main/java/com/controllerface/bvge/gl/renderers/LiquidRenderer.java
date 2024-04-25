@@ -14,6 +14,7 @@ import com.controllerface.bvge.window.Window;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
+import static java.lang.StringTemplate.*;
 import static org.lwjgl.opengl.ARBDirectStateAccess.glCreateVertexArrays;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;

@@ -125,7 +125,7 @@ inline void polygon_circle_collision(int polygon_id,
     min_distance = native_divide(min_distance, fast_length(collision_normal));
 
     // collision reaction and opposing direction calculation
-    float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
+    float2 vert_hull_opposing = (float2)(0.0f, 0.0f); //hull_b.xy - hull_a.xy;
     float2 edge_hull_opposing = (float2)(0.0f, 0.0f); //hull_a.xy - hull_b.xy;
     
     int vert_hull_flags = hull_flags[vert_hull_id];
@@ -147,11 +147,11 @@ inline void polygon_circle_collision(int polygon_id,
 
     vert_magnitude = any_static 
         ? static_vert ? 0.0f : 1.0f
-        : vert_magnitude;
+        : 1.0f;
 
     edge_magnitude = any_static 
         ? static_edge ? 0.0f : 1.0f
-        : 0.0f;//edge_magnitude;
+        : 0.0f; //edge_magnitude;
 
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];
