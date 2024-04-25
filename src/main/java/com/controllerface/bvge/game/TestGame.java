@@ -299,7 +299,7 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        //genCircles(100, 11f, 10f, 0, 800);
+        //genCircles(100, 10f, 10f, 0, 800);
         genSquares(100,  10f, 10f, -50, 200);
 
         //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);
@@ -307,7 +307,7 @@ public class TestGame extends GameMode
 
         //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  6f, 5f, -120, 200);
-        //genTriangles(100,  10f, 10f, 0, 100);
+        //genTriangles(25,  10f, 10f, 500, 2000);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);

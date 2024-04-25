@@ -126,7 +126,7 @@ inline void polygon_circle_collision(int polygon_id,
 
     // collision reaction and opposing direction calculation
     float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
-    float2 edge_hull_opposing = hull_a.xy - hull_b.xy;
+    float2 edge_hull_opposing = (float2)(0.0f, 1.0f); //hull_a.xy - hull_b.xy;
     
     int vert_hull_flags = hull_flags[vert_hull_id];
     int edge_hull_flags = hull_flags[edge_hull_id];
@@ -147,11 +147,11 @@ inline void polygon_circle_collision(int polygon_id,
 
     vert_magnitude = any_static 
         ? static_vert ? 0.0f : 1.0f
-        : 0.0f;
+        : vert_magnitude;
 
     edge_magnitude = any_static 
         ? static_edge ? 0.0f : 1.0f
-        : edge_magnitude;
+        : 0.0f;
 
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];
@@ -179,7 +179,7 @@ inline void polygon_circle_collision(int polygon_id,
         ? static_vert 
             ? vert_hull_friction 
             : edge_hull_friction
-        : max(vert_hull_friction, edge_hull_friction);
+        : 0.0f;//max(vert_hull_friction, edge_hull_friction);
 
     float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
     float2 edge_1_tangent = edge_1_rel_vel - dot(edge_1_rel_vel, collision_normal) * collision_normal;
@@ -206,7 +206,7 @@ inline void polygon_circle_collision(int polygon_id,
         ? static_vert 
             ? vert_hull_restitution 
             : edge_hull_restitution
-        : max(vert_hull_restitution, edge_hull_restitution);
+        : 0.0f;//max(vert_hull_restitution, edge_hull_restitution);
 
     float2 collision_invert = collision_normal * -1;
     float2 vertex_restitution = restituion_coefficient * dot(vertex_applied_vel, collision_normal) * collision_normal;
