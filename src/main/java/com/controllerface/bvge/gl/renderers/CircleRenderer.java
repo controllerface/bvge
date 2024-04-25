@@ -5,8 +5,8 @@ import com.controllerface.bvge.cl.kernels.PrepareTransforms_k;
 import com.controllerface.bvge.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.geometry.Models;
-import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.geometry.ModelRegistry;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
@@ -28,7 +28,6 @@ public class CircleRenderer extends GameSystem
 
     private static final int TRANSFORM_ATTRIBUTE = 0;
 
-    private final AbstractShader shader;
     private final GPUProgram prepare_transforms = new PrepareTransforms();
 
     private int vao;
@@ -37,18 +36,19 @@ public class CircleRenderer extends GameSystem
 
     private HullIndexData circle_hulls;
 
+    private Shader shader;
     private GPUKernel prepare_transforms_k;
 
     public CircleRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.load_shader("circle_shader.glsl");
         init_GL();
         init_CL();
     }
 
     public void init_GL()
     {
+        shader = Assets.load_shader("circle_shader.glsl");
         vao = glCreateVertexArrays();
         vbo = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
         glEnableVertexArrayAttrib(vao, TRANSFORM_ATTRIBUTE);
@@ -75,7 +75,7 @@ public class CircleRenderer extends GameSystem
         {
             GPGPU.cl_release_buffer(circle_hulls.indices());
         }
-        circle_hulls = GPGPU.GL_hull_filter(Models.CIRCLE_PARTICLE);
+        circle_hulls = GPGPU.GL_hull_filter(ModelRegistry.CIRCLE_PARTICLE);
 
         if (circle_hulls.count() == 0) return;
 
@@ -108,6 +108,7 @@ public class CircleRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo);
+        shader.destroy();
         prepare_transforms.destroy();
         GPGPU.cl_release_buffer(vbo_ptr);
     }

@@ -2,11 +2,10 @@ package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.PrepareArmatures_k;
-import com.controllerface.bvge.cl.kernels.PreparePoints_k;
 import com.controllerface.bvge.cl.programs.PrepareArmatures;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
@@ -27,25 +26,25 @@ public class ArmatureRenderer extends GameSystem
     private static final int BATCH_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
     private static final int POSITION_ATTRIBUTE = 0;
 
-    private final AbstractShader shader;
     private final GPUProgram prepare_armatures = new PrepareArmatures();
 
     private int vao;
     private int vertex_vbo;
     private long vertex_vbo_ptr;
 
+    private Shader shader;
     private GPUKernel prepare_armatures_k;
 
     public ArmatureRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.load_shader("armature_shader.glsl");
         init_GL();
         init_CL();
     }
 
     private void init_GL()
     {
+        shader = Assets.load_shader("armature_shader.glsl");
         vao = glCreateVertexArrays();
         vertex_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
@@ -97,6 +96,7 @@ public class ArmatureRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vertex_vbo);
+        shader.destroy();
         prepare_armatures.destroy();
         GPGPU.cl_release_buffer(vertex_vbo_ptr);
     }

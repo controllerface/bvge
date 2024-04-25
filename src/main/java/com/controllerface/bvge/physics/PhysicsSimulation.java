@@ -15,15 +15,15 @@ import static com.controllerface.bvge.cl.CLUtils.arg_long;
 
 public class PhysicsSimulation extends GameSystem
 {
-    private static final float TARGET_FPS = 60.0f;
+    private static final float TARGET_FPS = 24.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
-    private static final int TARGET_SUB_STEPS = 8;
+    private static final int TARGET_SUB_STEPS = 16;
     private static final int MAX_SUB_STEPS = TARGET_SUB_STEPS * 2;
     private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
     private static final int EDGE_STEPS = 8;
 
     // todo: gravity should not be a constant but calculated based on proximity next to planets and other large bodies
-    private static final float GRAVITY_MAGNITUDE = 9.8f * 4;
+    private static final float GRAVITY_MAGNITUDE = 9.8f * 10;
     private static final float GRAVITY_X = 0;
     private static final float GRAVITY_Y = -GRAVITY_MAGNITUDE * TARGET_FPS;
 
@@ -192,8 +192,12 @@ public class PhysicsSimulation extends GameSystem
 
         long handle_movements_k_ptr = control_entities.kernel_ptr(Kernel.handle_movement);
         handle_movement_k = new HandleMovement_k(GPGPU.command_queue_ptr, handle_movements_k_ptr)
+            .buf_arg(HandleMovement_k.Args.armatures, GPGPU.core_memory.buffer(BufferType.ARMATURE))
             .buf_arg(HandleMovement_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
+            .buf_arg(HandleMovement_k.Args.armature_animation_states, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_STATE))
             .buf_arg(HandleMovement_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
+            .buf_arg(HandleMovement_k.Args.armature_animation_indices, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_INDEX))
+            .buf_arg(HandleMovement_k.Args.armature_animation_elapsed, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_ELAPSED))
             .buf_arg(HandleMovement_k.Args.flags, control_point_flags)
             .buf_arg(HandleMovement_k.Args.indices, control_point_indices)
             .buf_arg(HandleMovement_k.Args.tick_budgets, control_point_tick_budgets)
@@ -336,6 +340,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(ApplyReactions_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
             .buf_arg(ApplyReactions_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.POINT_ANTI_GRAV))
             .buf_arg(ApplyReactions_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
+            .buf_arg(ApplyReactions_k.Args.point_hit_counts, GPGPU.core_memory.buffer(BufferType.POINT_HIT_COUNT))
             .buf_arg(ApplyReactions_k.Args.point_reactions, point_reaction_counts)
             .buf_arg(ApplyReactions_k.Args.point_offsets, point_reaction_offsets);
 
@@ -355,6 +360,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimateArmatures_k.Args.armature_bones, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE))
             .buf_arg(AnimateArmatures_k.Args.bone_bind_poses, GPGPU.core_memory.buffer(BufferType.BONE_BIND_POSE))
             .buf_arg(AnimateArmatures_k.Args.model_transforms, GPGPU.core_memory.buffer(BufferType.MODEL_TRANSFORM))
+            .buf_arg(AnimateArmatures_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
             .buf_arg(AnimateArmatures_k.Args.armature_bone_reference_ids, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE_REFERENCE_ID))
             .buf_arg(AnimateArmatures_k.Args.armature_bone_parent_ids, GPGPU.core_memory.buffer(BufferType.ARMATURE_BONE_PARENT_ID))
             .buf_arg(AnimateArmatures_k.Args.bone_channel_tables, GPGPU.core_memory.buffer(BufferType.BONE_ANIM_TABLE))
@@ -771,13 +777,14 @@ public class PhysicsSimulation extends GameSystem
                     .set_arg(SetControlPoints_k.Args.target, target_count)
                     .set_arg(SetControlPoints_k.Args.new_flags, flags)
                     .set_arg(SetControlPoints_k.Args.new_index, armature.index())
-                    .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 500)
+                    .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
                     .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
                     .call(GPGPU.global_single_size);
             target_count++;
         }
 
-        handle_movement_k.call(arg_long(target_count));
+        handle_movement_k.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)
+            .call(arg_long(target_count));
     }
 
     /**
@@ -792,6 +799,8 @@ public class PhysicsSimulation extends GameSystem
         // will be in their new locations, and points will have their current and previous location values
         // updated for this tick cycle.
         integrate();
+
+        update_controllable_entities();
 
         /*
         - Broad Phase Collision -
@@ -963,8 +972,6 @@ public class PhysicsSimulation extends GameSystem
                 if (sub_ticks <= MAX_SUB_STEPS)
                 {
                     this.time_accumulator -= FIXED_TIME_STEP;
-
-                    update_controllable_entities();
 
                     // perform one tick of the simulation
                     this.tick_simulation();

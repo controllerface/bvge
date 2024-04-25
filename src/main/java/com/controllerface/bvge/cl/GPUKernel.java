@@ -88,6 +88,16 @@ public abstract class GPUKernel
         return this;
     }
 
+    public GPUKernel set_arg(Enum<?> arg, short[] value)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var shortBuffer = mem_stack.shorts(value);
+            clSetKernelArg(this.kernel_ptr, arg.ordinal(), shortBuffer);
+        }
+        return this;
+    }
+
     public GPUKernel set_arg(Enum<?> arg, int[] value)
     {
         try (var mem_stack = MemoryStack.stackPush())

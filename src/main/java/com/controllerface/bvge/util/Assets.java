@@ -1,8 +1,8 @@
 package com.controllerface.bvge.util;
 
-import com.controllerface.bvge.gl.AbstractShader;
-import com.controllerface.bvge.gl.CircleShader;
 import com.controllerface.bvge.gl.Shader;
+import com.controllerface.bvge.gl.ThreeStageShader;
+import com.controllerface.bvge.gl.TwoStageShader;
 import com.controllerface.bvge.gl.Texture;
 import org.lwjgl.assimp.AITexture;
 
@@ -11,10 +11,10 @@ import java.util.Map;
 
 public class Assets
 {
-    private static Map<String, AbstractShader> shaders = new HashMap<>();
+    private static Map<String, Shader> shaders = new HashMap<>();
     private static Map<String, Texture> textures = new HashMap<>();
 
-    public static AbstractShader load_shader(String resourceName)
+    public static Shader load_shader(String resourceName)
     {
         if (shaders.containsKey(resourceName))
         {
@@ -22,14 +22,14 @@ public class Assets
         }
         else
         {
-            AbstractShader shader;
-            if (resourceName.contains("circle_shader") || resourceName.contains("bone_shader"))
+            Shader shader;
+            if (resourceName.contains("circle_shader") || resourceName.contains("water_shader"))
             {
-                shader = new CircleShader(resourceName);
+                shader = new ThreeStageShader(resourceName);
             }
             else
             {
-                shader = new Shader(resourceName);
+                shader = new TwoStageShader(resourceName);
             }
 
             shader.compile();

@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.kernels.PrepareBounds_k;
 import com.controllerface.bvge.cl.programs.PrepareBounds;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
@@ -30,19 +30,18 @@ public class BoundingBoxRenderer extends GameSystem
     private final int[] offsets = new int[Constants.Rendering.MAX_BATCH_SIZE];
     private final int[] counts = new int[Constants.Rendering.MAX_BATCH_SIZE];
 
-    private final AbstractShader shader;
     private final GPUProgram prepare_bounds = new PrepareBounds();
 
     private int vao;
     private int vbo;
     private long vbo_ptr;
 
+    private Shader shader;
     private GPUKernel prepare_bounds_k;
 
     public BoundingBoxRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.load_shader("bounding_outline.glsl");
         for (int i = 0; i < Constants.Rendering.MAX_BATCH_SIZE; i++)
         {
             offsets[i] = i * 4;
@@ -54,6 +53,7 @@ public class BoundingBoxRenderer extends GameSystem
 
     private void init_GL()
     {
+        shader = Assets.load_shader("bounding_outline.glsl");
         vao = glCreateVertexArrays();
         vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
@@ -109,6 +109,7 @@ public class BoundingBoxRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo);
+        shader.destroy();
         prepare_bounds.destroy();
         GPGPU.cl_release_buffer(vbo_ptr);
     }

@@ -7,20 +7,13 @@ public class Constants
     {
         // todo: experiment with this, maybe make it configurable
         public static final int MAX_BATCH_SIZE = 10_000;
-
         public static final int SCALAR_LENGTH = 1;
         public static final int SCALAR_FLOAT_SIZE = Float.BYTES;
-
-        public static final int VECTOR_2D_LENGTH = 2; // 2D vector; x,y
+        public static final int VECTOR_2D_LENGTH = 2; // x, y
         public static final int VECTOR_FLOAT_2D_SIZE = VECTOR_2D_LENGTH * Float.BYTES;
-        public static final int VECTOR_INT_2D_SIZE = VECTOR_2D_LENGTH * Integer.BYTES;
-
-        public static final int VECTOR_4D_LENGTH = 4; // 3D vector; x,y,z,w
+        public static final int VECTOR_4D_LENGTH = 4; // x, y, z, w
         public static final int VECTOR_FLOAT_4D_SIZE = VECTOR_4D_LENGTH * Float.BYTES;
-        public static final int VECTOR_INT_4D_SIZE = VECTOR_4D_LENGTH * Integer.BYTES;
     }
-
-    public static int EMPTY_FLAGS = 0;
 
     public enum HullFlags
     {
@@ -31,6 +24,8 @@ public class Constants
         OUT_OF_BOUNDS (0b0000_0000_0000_0000_0000_0000_0001_0000),
         NON_COLLIDING (0b0000_0000_0000_0000_0000_0000_0010_0000),
         IS_FOOT       (0b0000_0000_0000_0000_0000_0000_0100_0000),
+        SIDE_L        (0b0000_0000_0000_0000_0000_0000_1000_0000),
+        SIDE_R        (0b0000_0000_0000_0000_0000_0001_0000_0000),
 
         ;
 

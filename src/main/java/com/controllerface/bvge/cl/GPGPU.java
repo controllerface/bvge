@@ -732,10 +732,14 @@ public class GPGPU
 
         long max_mem = get_device_long(device_id_ptr, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
 
+        long sz_char = get_device_long(device_id_ptr, CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR);
+
+
         long sz_flt = get_device_long(device_id_ptr, CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT);
 
-        System.out.println("max mem: " + max_mem);
-        System.out.println("preferred float: " + sz_flt);
+        System.out.println(STR."max mem: \{max_mem}");
+        System.out.println(STR."preferred float: \{sz_flt}");
+        System.out.println(STR."preferred char: \{sz_char}");
 
         long int2_max = CLSize.cl_int2 * current_max_block_size;
         long int4_max = CLSize.cl_int4 * current_max_block_size;

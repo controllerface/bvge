@@ -12,28 +12,37 @@ public class Camera
     public Vector2f position;
     public Vector2f projectionSize = new Vector2f(1, 1);
 
-    private static final float MIN_ZOOM = 0.3f;
+    private static final float MAX_ZOOM = 2f;
+    private static final float MIN_ZOOM = 0.5f;
 
     private float zoom = 1f;
 
-    public Camera(Vector2f position)
+    int width, height;
+
+    public Camera(Vector2f position, int height, int width)
     {
+        this.height = height;
+        this.width = width;
         this.position = position;
         this.projectionMatrix = new Matrix4f();
         this.viewMatrix = new Matrix4f();
         this.uVP = new Matrix4f();
-        adjustProjection();
+        adjustProjection(this.height, this.width);
     }
 
-    public void adjustProjection()
+    public void adjustProjection(int height, int width)
     {
+        this.height = height;
+        this.width =  width;
+
         projectionMatrix.identity();
+
         projectionMatrix.ortho(0.0f,
             projectionSize.x * zoom,
             0.0f,
             projectionSize.y * zoom,
-            0.0f,
-            100.0f);
+            -5.0f,
+            5.0f);
 
         projectionMatrix.mul(getViewMatrix(), uVP);
     }
@@ -72,9 +81,9 @@ public class Camera
         {
             zoom = MIN_ZOOM;
         }
-        else if (zoom > 1000f)
+        else if (zoom > MAX_ZOOM)
         {
-            zoom = 1000f;
+            zoom = MAX_ZOOM;
         }
     }
 }

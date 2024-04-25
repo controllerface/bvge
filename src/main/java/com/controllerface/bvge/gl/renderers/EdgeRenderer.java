@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.kernels.PrepareEdges_k;
 import com.controllerface.bvge.cl.programs.PrepareEdges;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.gl.AbstractShader;
+import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
@@ -32,7 +32,6 @@ public class EdgeRenderer extends GameSystem
     private static final int EDGE_ATTRIBUTE = 0;
     private static final int FLAG_ATTRIBUTE = 1;
 
-    private final AbstractShader shader;
     private final GPUProgram prepare_edges = new PrepareEdges();
 
     private int vao;
@@ -41,18 +40,19 @@ public class EdgeRenderer extends GameSystem
     private long vertex_vbo_ptr;
     private long flag_vbo_ptr;
 
+    private Shader shader;
     private GPUKernel prepare_edges_k;
 
     public EdgeRenderer(ECS ecs)
     {
         super(ecs);
-        this.shader = Assets.load_shader("object_outline.glsl");
         init_GL();
         inti_CL();
     }
 
     private void init_GL()
     {
+        shader = Assets.load_shader("object_outline.glsl");
         vao = glCreateVertexArrays();
         edge_vbo = GLUtils.new_buffer_vec2(vao, EDGE_ATTRIBUTE, BATCH_BUFFER_SIZE);
         flag_vbo = GLUtils.new_buffer_float(vao, FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
@@ -110,6 +110,7 @@ public class EdgeRenderer extends GameSystem
         glDeleteVertexArrays(vao);
         glDeleteBuffers(edge_vbo);
         glDeleteBuffers(flag_vbo);
+        shader.destroy();
         prepare_edges.destroy();
         GPGPU.cl_release_buffer(vertex_vbo_ptr);
         GPGPU.cl_release_buffer(flag_vbo_ptr);

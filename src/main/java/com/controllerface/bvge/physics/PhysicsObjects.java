@@ -3,8 +3,9 @@ package com.controllerface.bvge.physics;
 import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
+import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.geometry.Mesh;
-import com.controllerface.bvge.geometry.Models;
+import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
@@ -14,7 +15,7 @@ import org.joml.Vector4f;
 import java.util.*;
 import java.util.stream.IntStream;
 
-import static com.controllerface.bvge.geometry.Models.*;
+import static com.controllerface.bvge.geometry.ModelRegistry.*;
 
 import static com.controllerface.bvge.util.Constants.*;
 
@@ -29,8 +30,6 @@ public class PhysicsObjects
     private static final List<float[]> convex_buffer = new ArrayList<>();
     private static final Stack<Vertex> hull_vertex_buffer = new Stack<>();
 
-    public static int FLAG_INTERIOR = 0x01;
-
     public static float edgeDistance(float[] a, float[] b)
     {
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
@@ -42,7 +41,7 @@ public class PhysicsObjects
         int next_hull_index = GPGPU.core_memory.next_hull();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
-        var mesh = Models.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
+        var mesh = ModelRegistry.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
 
         var vert = mesh.vertices()[0];
 
@@ -96,10 +95,10 @@ public class PhysicsObjects
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
-        var mesh = Models.get_model_by_index(TRIANGLE_PARTICLE).meshes()[0];
+        var mesh = ModelRegistry.get_model_by_index(BASE_TRI_INDEX).meshes()[0];
 
         var hull = mesh.vertices();
-        hull = scale_hull(hull, size);
+        hull = scale_hull(hull, size * 5);
         hull = translate_hull(hull, x, y);
 
         var v1 = hull[0];
@@ -120,9 +119,9 @@ public class PhysicsObjects
 
         var angle = MathEX.angle_between_lines(l1, l2);
 
-        var start_edge = GPGPU.core_memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), EMPTY_FLAGS);
-        GPGPU.core_memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), EMPTY_FLAGS);
-        var end_edge = GPGPU.core_memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1), EMPTY_FLAGS);
+        var start_edge = GPGPU.core_memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), 0);
+        GPGPU.core_memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), 0);
+        var end_edge = GPGPU.core_memory.new_edge(p3_index, p1_index, edgeDistance(p3, p1), 0);
 
         var point_table = CLUtils.arg_int2(p1_index, p3_index);
         var edge_table = CLUtils.arg_int2(start_edge, end_edge);
@@ -157,13 +156,13 @@ public class PhysicsObjects
             0);
     }
 
-    public static int box(float x, float y, float size, int flags, float mass, float friction, float restitution)
+    public static int box(float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
         // get the box mesh
-        var mesh = Models.get_model_by_index(SQUARE_PARTICLE).meshes()[0];
+        var mesh = ModelRegistry.get_model_by_index(model_id).meshes()[0];
 
         var hull = calculate_convex_hull(mesh.vertices());
         hull = scale_hull(hull, size);
@@ -191,10 +190,10 @@ public class PhysicsObjects
         var angle = MathEX.angle_between_lines(l1, l2);
 
         // box sides
-        var start_edge = GPGPU.core_memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), EMPTY_FLAGS);
-        GPGPU.core_memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), EMPTY_FLAGS);
-        GPGPU.core_memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3), EMPTY_FLAGS);
-        GPGPU.core_memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4), EMPTY_FLAGS);
+        var start_edge = GPGPU.core_memory.new_edge(p1_index, p2_index, edgeDistance(p2, p1), 0);
+        GPGPU.core_memory.new_edge(p2_index, p3_index, edgeDistance(p3, p2), 0);
+        GPGPU.core_memory.new_edge(p3_index, p4_index, edgeDistance(p4, p3), 0);
+        GPGPU.core_memory.new_edge(p4_index, p1_index, edgeDistance(p1, p4), 0);
 
         // corner braces
         GPGPU.core_memory.new_edge(p1_index, p3_index, edgeDistance(p3, p1), EdgeFlags.IS_INTERIOR.bits);
@@ -228,19 +227,19 @@ public class PhysicsObjects
             -1,
             -1f,
             hull_id,
-            SQUARE_PARTICLE,
+            model_id,
             0,
             0);
     }
 
     public static int dynamic_Box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size, HullFlags.NO_BONES.bits, mass, friction, restitution);
+        return box(x, y, size * 5, HullFlags.NO_BONES.bits, mass, friction, restitution, BASE_BLOCK_INDEX);
     }
 
     public static int static_box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution);
+        return box(x, y, size * 5, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, BASE_BLOCK_INDEX);
     }
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)
@@ -257,7 +256,7 @@ public class PhysicsObjects
         int next_armature_id = GPGPU.core_memory.next_armature();
 
         // get the model from the registry
-        var model = Models.get_model_by_index(model_index);
+        var model = ModelRegistry.get_model_by_index(model_index);
 
         // we need to track which hull is the root hull for this model
         int root_hull_id = -1;
@@ -299,7 +298,17 @@ public class PhysicsObjects
             var hull_mesh = meshes[mesh_index];
             if (hull_mesh.name().toLowerCase().contains("foot"))
             {
-                local_hull_flags = local_hull_flags | HullFlags.IS_FOOT.bits;
+                local_hull_flags |= HullFlags.IS_FOOT.bits;
+            }
+
+            if (hull_mesh.name().toLowerCase().contains(".r"))
+            {
+                local_hull_flags |= HullFlags.SIDE_R.bits;
+            }
+
+            if (hull_mesh.name().toLowerCase().contains(".l"))
+            {
+                local_hull_flags |= HullFlags.SIDE_L.bits;
             }
 
             // The hull is generated based on the mesh, so it's initial position and rotation
@@ -390,7 +399,7 @@ public class PhysicsObjects
                 var point_1 = convex_buffer.get(point_1_index);
                 var point_2 = convex_buffer.get(point_2_index);
                 var distance = edgeDistance(point_2, point_1);
-                var next_edge = GPGPU.core_memory.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance, EMPTY_FLAGS);
+                var next_edge = GPGPU.core_memory.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance, 0);
                 if (edge_start == -1)
                 {
                     edge_start = next_edge;
@@ -500,11 +509,13 @@ public class PhysicsObjects
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         int[] bone_table = CLUtils.arg_int2(first_armature_bone, last_armature_bone);
 
+        int idle_animation_id = AnimationState.IDLE.ordinal();
+
         return GPGPU.core_memory.new_armature(x, y,
             hull_table,
             bone_table,
             mass,
-            0,
+            idle_animation_id,
             0.0f,
             root_hull_id,
             model_index,
@@ -614,67 +625,80 @@ public class PhysicsObjects
         return out;
     }
 
-    /**
-     * Calculate a convex hull for the provided vertices. The returned vertex array will be a subset
-     * of the input array, and may contain all points within the input array, depending on the geometry
-     * it describes.
-     *
-     * @param in_points the points to wrap with in a convex hull
-     * @return vertex array that describes the convex hull
-     */
+
+    public static int orientation(Vertex p, Vertex q, Vertex r)
+    {
+        float val = (q.y() - p.y()) * (r.x() - q.x()) -
+            (q.x() - p.x()) * (r.y() - q.y());
+
+        if (val == 0)
+        {
+            return 0;  // collinear
+        }
+        return (val > 0)
+            ? 1
+            : 2; // clockwise or counter-clockwise
+    }
+
+
     public static Vertex[] calculate_convex_hull(Vertex[] in_points)
     {
-        // working objects for the loop.
-        // p is the current vertex of the calculated hull
-        // q is the next vertex of the calculated hull
-        Vertex p;
-        Vertex q;
+        Vertex[] points = new Vertex[in_points.length];
+        System.arraycopy(in_points, 0, points, 0, in_points.length);
+        int n = in_points.length;
+
+        // There must be at least 3 points
+        if (n < 3)
+        {
+            return points;
+        }
 
         // during hull creation, this holds the vertices that are currently designated as the hull
         hull_vertex_buffer.clear();
 
-        // because the input array is not intended to be changed, we make a copy of the input values
-        // and operate on the copy. This is needed because of the swap() calls, which will re-order
-        // the vertices in-place to aid with hull calculation.
-        Vertex[] points = new Vertex[in_points.length];
-        System.arraycopy(in_points, 0, points, 0, in_points.length);
-
-        // do the initial swap to set up the points array for processing,
-        // this is essentially one iteration of the loop
-        swap(points, 0, lowestPoint(points));
-        swap(points, 1, lowestPolarAngle(points, points[0]));
-
-        // init the working data for the loop, pushing the first vertex into the result buffer
-        int index = 0;
-        p = points[0];
-        q = points[1];
-        hull_vertex_buffer.push(p);
-
-        // loop until the calculated hull makes a loop around the mesh
-        while (!points[0].equals(q))
+        // Find the leftmost point
+        int l = 0;
+        for (int i = 1; i < n; i++)
         {
-            // push the next vertex into the buffer, since it has been calculated
-            hull_vertex_buffer.push(q);
-
-            // now iterate through the points and find the next candidate
-            double minorPolarAngle = 180D;
-            for (int i = points.length - 1; i >= 0; i--)
+            if (points[i].x() < points[l].x())
             {
-                if (!points[i].equals(q))
+                l = i;
+            }
+        }
+
+        // from leftmost point, move counterclockwise until the start point is reached again.
+        int p = l, q;
+        do
+        {
+            // Add current point to result
+            hull_vertex_buffer.push(points[p]);
+
+            // Search for a point 'q' such that
+            // orientation(p, q, x) is counterclockwise
+            // for all points 'x'. The idea is to keep
+            // track of last visited most counterclock-
+            // wise point in q. If any point 'i' is more
+            // counterclock-wise than q, then update q.
+            q = (p + 1) % n;
+
+            for (int i = 0; i < n; i++)
+            {
+                // If i is more counterclockwise than
+                // current q, then update q
+                if (orientation(points[p], points[i], points[q])
+                    == 2)
                 {
-                    double angle = 180D - q.angle_between(p, points[i]);
-                    if (angle < minorPolarAngle)
-                    {
-                        minorPolarAngle = angle;
-                        index = i;
-                    }
+                    q = i;
                 }
             }
 
-            // once a candidate has been found, swap out old current and swap in new next
+            // Now q is the most counterclockwise with
+            // respect to p. Set p as q for next iteration,
+            // so that q is added to result 'hull'
             p = q;
-            q = points[index];
-        }
+
+        } while (p != l);  // While we don't come to first
+        // point
 
         return hull_vertex_buffer.toArray(Vertex[]::new);
     }
@@ -703,21 +727,5 @@ public class PhysicsObjects
             vertex_table[hull_index] = next_index;
         }
         return vertex_table;
-    }
-
-    private static int lowestPolarAngle(Vertex[] points, Vertex lowestPoint)
-    {
-        int index = 0;
-        double minorPolarAngle = 180D;
-        for (int i = 1; i < points.length; i++)
-        {
-            double angle = lowestPoint.angle_between(points[i]);
-            if (angle < minorPolarAngle)
-            {
-                minorPolarAngle = angle;
-                index = i;
-            }
-        }
-        return index;
     }
 }

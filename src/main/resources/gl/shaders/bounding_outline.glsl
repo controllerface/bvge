@@ -8,8 +8,8 @@ uniform mat4 uVP;
 
 void main()
 {
-    fColor = vec3(0, .1, 0);
-    gl_Position = uVP * vec4(aPos, 0.0, 1.0);
+    fColor = vec3(1, 1, 1);
+    gl_Position = uVP * vec4(aPos, 5.0, 1.0);
 }
 
 #type fragment

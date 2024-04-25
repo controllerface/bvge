@@ -25,7 +25,7 @@ import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL20C.GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS;
 import static org.lwjgl.opengl.GL20C.GL_MAX_TEXTURE_IMAGE_UNITS;
 import static org.lwjgl.opengl.GL20C.GL_MAX_VERTEX_ATTRIBS;
-import static org.lwjgl.opengl.GL30C.GL_MAX_ARRAY_TEXTURE_LAYERS;
+import static org.lwjgl.opengl.GL30C.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
@@ -44,7 +44,7 @@ public class Window
 
     private static GameMode currentGameMode;
     private final ECS ecs = new ECS();
-    private final Camera camera = new Camera(new Vector2f(0, 0));
+    private final Camera camera;
 
     private Window()
     {
@@ -52,9 +52,15 @@ public class Window
         this.height = 1080;
         this.title = "BVGE Test";
 
-        this.r = 0.5f;
-        this.g = 0.5f;
-        this.b = 0.5f;
+        camera = new Camera(new Vector2f(0, 0), height, width);
+
+        this.r = 0.2f;
+        this.g = 0.2f;
+        this.b = 0.2f;
+
+//        this.r = 0.0f;
+//        this.g = 0.0f;
+//        this.b = 0.0f;
 
         this.a = 1;
     }
@@ -88,8 +94,9 @@ public class Window
     private void window_upkeep()
     {
         glClearColor(r, g, b, a);
-        glClear(GL_COLOR_BUFFER_BIT);
-        camera.adjustProjection();
+        //glClear(GL_COLOR_BUFFER_BIT);
+        camera.adjustProjection(this.height, this.width);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     public void init()
@@ -151,7 +158,25 @@ public class Window
         GL.createCapabilities();
 
         glEnable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(true);
+        glDepthFunc(GL_LESS);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        //glDepthRange(0.0, 1.0);
+
+
+        // Create and bind the default framebuffer (typically 0)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+//// Create and attach a depth buffer to the default framebuffer
+//        int p = glGenRenderbuffers();
+//        glBindRenderbuffer(GL_RENDERBUFFER, p);
+//        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, this.width, this.height); // Specify depth buffer dimensions
+//        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, p);
+//
+
+
+
 
         glViewport(0, 0, this.width, this.height);
 

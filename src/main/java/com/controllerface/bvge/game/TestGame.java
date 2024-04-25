@@ -4,16 +4,17 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.geometry.Meshes;
-import com.controllerface.bvge.geometry.Models;
+import com.controllerface.bvge.geometry.MeshRegistry;
+import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.renderers.*;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
 
 import java.util.EnumSet;
+import java.util.Random;
 
-import static com.controllerface.bvge.geometry.Models.*;
+import static com.controllerface.bvge.geometry.ModelRegistry.*;
 import static com.controllerface.bvge.util.Constants.HullFlags;
 
 public class TestGame extends GameMode
@@ -28,15 +29,15 @@ public class TestGame extends GameMode
         POINTS,     // model vertices
         ARMATURES,  // armature roots
         GRID,       // uniform grid
-    }
 
+    }
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
-            RenderType.HULLS,
+            //RenderType.HULLS,
             //RenderType.POINTS,
             //RenderType.ARMATURES,
             //RenderType.BOUNDS,
-            //RenderType.GRID,
+            //RenderType.GRID);//,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -44,14 +45,42 @@ public class TestGame extends GameMode
 
     private final UniformGrid uniformGrid = new UniformGrid();
 
+    private final Random random = new Random();
+
     public TestGame(ECS ecs, GameSystem screenBlankSystem)
     {
         super(ecs);
 
-        Meshes.init();
-        Models.init();
+        MeshRegistry.init();
+        ModelRegistry.init();
 
         this.screenBlankSystem = screenBlankSystem;
+    }
+
+
+    public float rando(float baseNumber, float percentage)
+    {
+
+        float upperBound = baseNumber * percentage;
+        return baseNumber + random.nextFloat() * (upperBound - baseNumber);
+
+    }
+
+    private void genSquaresRando(int box_size, float spacing, float size, float percentage, float start_x, float start_y)
+    {
+        System.out.println("generating: " + box_size * box_size + " Crates..");
+        for (int i = 0; i < box_size; i++)
+        {
+            for (int j = 0; j < box_size; j++)
+            {
+                float x = start_x + i * spacing;
+                float y = start_y + j * spacing;
+                //var npc = ecs.registerEntity(null);
+
+                var armature_index = PhysicsObjects.dynamic_Box(x, y, rando(size, percentage), 50f, 0.02f, 0.0003f);
+                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+            }
+        }
     }
 
     private void genSquares(int box_size, float spacing, float size, float start_x, float start_y)
@@ -64,7 +93,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.dynamic_Box(x, y, size, 50f, 0.02f, 0.0003f);
+                var armature_index = PhysicsObjects.dynamic_Box(x, y, size, 50f, 0.03f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -110,7 +139,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, -0.0000175f);
+                var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, -0.00001f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -176,7 +205,14 @@ public class TestGame extends GameMode
         //  and there is not a mechanism to keep ECS entities updated to compensate. Instead, some unique
         //  monotonically increasing value could be used, which doesn't change during entity life time
         ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
-        ecs.attachComponent(figure, Component.LinearForce, new LinearForce(2000));
+        ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1600));
+    }
+
+    private void genTestFigureNPC_2(float size, float x, float y)
+    {
+        //var figure = ecs.registerEntity(null);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON.bits, 50, 0.02f);
+        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestFigureNPC(float size, float x, float y)
@@ -191,17 +227,6 @@ public class TestGame extends GameMode
         //var figure = ecs.registerEntity(null);
         var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON.bits, .1f, 0.02f);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
-    }
-
-    private void genPlayer()
-    {
-        // player entity
-        var player = ecs.registerEntity("player");
-        var armature_index = PhysicsObjects.wrap_model(POLYGON1_MODEL,0,0, 32, HullFlags.IS_POLYGON.bits | HullFlags.NO_BONES.bits, 1, 0.02f);
-        ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
-        ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
-        ecs.attachComponent(player, Component.Armature, new ArmatureIndex(armature_index));
-        ecs.attachComponent(player, Component.LinearForce, new LinearForce(1500));
     }
 
     // note: order of adding systems is important
@@ -221,7 +246,10 @@ public class TestGame extends GameMode
         if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
         {
             ecs.registerSystem(new CrateRenderer(ecs));
-            ecs.registerSystem(new HumanoidRenderer(ecs));
+            ecs.registerSystem(new ModelRenderer(ecs, "poly_model.glsl", TEST_MODEL_INDEX));
+            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_BLOCK_INDEX));
+            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_TRI_INDEX));
+            ecs.registerSystem(new LiquidRenderer(ecs));
         }
 
         // these are debug-level renderers for visualizing the modeled physics boundaries
@@ -257,7 +285,9 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 400, 1100);
+        genTestFigure(1f, 100, 1400);
+
+        //genTestFigureNPC_2(1f, 100, 500);
 
 //        genTestFigureNPC(1f, 200, 0);
 //        genSquares(1,  25f, 25f, 420, 200);
@@ -268,17 +298,21 @@ public class TestGame extends GameMode
 //        genTestFigureNPC(1f, 100, 50);
 
         //genCircles(150, 6f, 5f, 0, 100);
-        genSquares(200,  5f, 5f, -100, 300);
+
+        genCircles(100, 10f, 10f, 0, 800);
+        genSquares(100,  10f, 10f, -50, 200);
+
+        //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  6f, 5f, -120, 200);
-        //genTriangles(25,  5f, 5f, 0, 100);
+        //genTriangles(25,  10f, 10f, 500, 2000);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);
 
-        genFloor(8, 150f, 150f, -70, -100, 0.02f);
+        genFloor(8, 150f, 150f, -70, -100, 0.03f);
         genWall(5, 150f, 150f, -220, -100);
         genWall(5, 150f, 150f, 1130, -100);
 

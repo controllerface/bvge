@@ -148,6 +148,7 @@ __kernel void apply_reactions(__global float8 *reactions,
                               __global float4 *points,
                               __global float *anti_gravity,
                               __global int *point_flags,
+                              __global ushort *point_hit_counts,
                               __global int *point_reactions,
                               __global int *point_offsets)
 {
@@ -158,13 +159,36 @@ __kernel void apply_reactions(__global float8 *reactions,
     int current_point = get_global_id(0);
     int reaction_count = point_reactions[current_point];
     int flags = point_flags[current_point];
-
+    ushort hit_count = point_hit_counts[current_point];
+    
     // exit on non-reactive points
     if (reaction_count == 0) 
     {
+        hit_count = hit_count == 0 
+            ? 0
+            : hit_count <= HIT_LOW_THRESHOLD 
+            ? hit_count - 1 
+            : hit_count <= HIT_LOW_MID_THRESHOLD
+            ? hit_count - 2
+            : hit_count <= HIT_MID_THRESHOLD 
+            ? hit_count - 3 
+            : hit_count <= HIT_HIGH_MID_THRESHOLD 
+            ? hit_count - 4 
+            : hit_count - 5;
+
+        point_hit_counts[current_point] = hit_count;
+        point_flags[current_point] = flags;
         return;
     }
     
+    hit_count = hit_count >= HIT_TOP_THRESHOLD 
+        ? HIT_TOP_THRESHOLD 
+        : hit_count + reaction_count;
+
+    hit_count = hit_count > HIT_MID_THRESHOLD && reaction_count == 1
+        ? hit_count - 2
+        : hit_count;
+
     // get the offset into the reaction buffer corresponding to this point
     int reaction_offset = point_offsets[current_point];
 
@@ -259,15 +283,30 @@ __kernel void apply_reactions(__global float8 *reactions,
         ? flags | HIT_FLOOR
         : flags;
 
+    float ag_min = hit_count <= HIT_LOW_THRESHOLD 
+        ? 0.5f
+        : hit_count <= HIT_LOW_MID_THRESHOLD
+        ? 0.7f
+        : hit_count <= HIT_MID_THRESHOLD 
+        ? 0.8f
+        : hit_count <= HIT_HIGH_MID_THRESHOLD 
+        ? 0.9f
+        : 1.0f;
+
+
+    // todo: anti-grav can take into account slope of colliding edge, if any. right now, only relative object direction is considered.
+
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
-    ag = ag <= 0.0f ? 0.0f : 1.0f;
-    //ag = ag >= 0.75f ? 1.0f : 0.0f;
+    ag = ag <= 0.0f 
+        ? 0.0f 
+        : max(ag, ag_min);
 
 
     anti_gravity[current_point] = ag;
     points[current_point] = point;
     point_flags[current_point] = flags;
+    point_hit_counts[current_point] = hit_count;
 
     // It is important to reset the counts and offsets to 0 after reactions are handled.
     // These reactions are only valid once, for the current frame.
@@ -340,17 +379,36 @@ __kernel void move_armatures(__global float2 *hulls,
 
     bool hit_floor = (all_flags & HIT_FLOOR) !=0;
 
-    armature.xy = had_bones 
-        ? armature.xy + diff
-        : last_center;
-
     armature.w = hit_floor 
         ? armature.y 
         : armature.w;
 
+    float2 initial_tail = armature.zw;
+    float initial_dist = fast_distance(armature.xy, armature.zw);
+
+
+    armature.xy = had_bones 
+        ? armature.xy + diff
+        : last_center;
+
+
+
+    float2 adjusted_offset = armature.xy - initial_tail;
+    float new_len = fast_length(adjusted_offset);
+
+    adjusted_offset = new_len == 0.0f 
+        ? adjusted_offset 
+        : native_divide(adjusted_offset, new_len);
+
+    armature.zw = armature.xy - initial_dist * adjusted_offset;
+
+
+
+
+
     flags = hit_floor 
         ? flags | CAN_JUMP
-        : flags;
+        : flags & ~CAN_JUMP;
 
     armatures[current_armature] = armature;
     armature_flags[current_armature] = flags;

@@ -104,7 +104,7 @@ public class KBMInput extends GameSystem
     {
         scrollX = xOffset;
         scrollY = yOffset;
-        float x = yOffset < 0 ? 0.05f : -0.05f;
+        float x = yOffset < 0 ? 0.5f : -0.5f;
         Window.get().camera().add_zoom(x);
     }
 
