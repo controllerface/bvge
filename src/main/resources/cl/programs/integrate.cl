@@ -60,9 +60,12 @@ __kernel void integrate(__global float2 *hulls,
     bool is_static = (hull_1_flags & IS_STATIC) !=0;
     bool is_circle = (hull_1_flags & IS_CIRCLE) !=0;
     bool no_bones = (hull_1_flags & NO_BONES) !=0;
+    bool in_liquid = (hull_1_flags & IN_LIQUID) !=0;
+    bool is_liquid = (hull_1_flags & IS_LIQUID) !=0;
 
     int x = hull_1_flags;
     x &= ~OUT_OF_BOUNDS;
+    x &= ~IN_LIQUID;
     hull_flags[current_hull] = x;
 
    	// get acc value and multiply by the timestep do get the displacement vector
@@ -98,6 +101,14 @@ __kernel void integrate(__global float2 *hulls,
 
     float2 anti_grav = generate_counter_vector(gravity, anti_grav_scale);
     float2 i_acc = anti_grav * (dt * dt);
+
+    // gravity = in_liquid
+    //     ? gravity * 0.5f
+    //     : gravity;
+
+    // float y_damping = in_liquid
+    //     ? .980f
+    //     : 1.0f;
 
     for (int i = start; i <= end; i++)
     {
@@ -265,6 +276,8 @@ __kernel void integrate_armatures(__global float4 *armatures,
     float damping = args[11];
 
     float4 armature = armatures[current_armature];
+    int _armature_flags = armature_flags[current_armature];
+    bool is_wet = (_armature_flags & IS_WET) != 0;
     int root_hull = armature_root_hulls[current_armature];
     float2 acc = armature_accel[current_armature];
     int root_hull_flags = hull_flags[root_hull];
@@ -272,7 +285,15 @@ __kernel void integrate_armatures(__global float4 *armatures,
     bool is_static = (root_hull_flags & IS_STATIC) !=0;
     bool no_bones = (root_hull_flags & NO_BONES) !=0;
 
-    acc = is_static 
+    gravity = is_wet
+        ? gravity * 0.25f
+        : gravity;
+
+    float y_damping = is_wet
+        ? .980f
+        : 1.0f;
+
+    acc = is_static
         ? acc
         : acc + gravity;
    	acc *= (dt * dt);
@@ -296,7 +317,11 @@ __kernel void integrate_armatures(__global float4 *armatures,
         float2 diff = pos - prv;
         diff = acc + diff;
         diff.x *= damping;
-        diff.y = diff.y > 0 ? diff.y * damping : diff.y;
+        diff.y *= y_damping;
+        diff.y = diff.y > 0
+            ? diff.y * damping
+            : diff.y;
+
         prv = pos;
         pos = pos + diff;
         armature.xy = pos;

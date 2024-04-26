@@ -81,6 +81,23 @@ inline void circle_collision(int hull_1_id,
     float2 hull_1_restitution_f = restituion_coefficient * dot(hull_1_applied_vel, collision_normal) * collision_normal;
     float2 hull_2_restitution_f = restituion_coefficient * dot(hull_2_applied_vel, collision_invert) * collision_invert;
     
+
+    //
+    int _point_flags = point_flags[hull_1_id];
+    bool flow_left = (_point_flags & FLOW_LEFT) != 0;
+    _point_flags = !flow_left
+        ? _point_flags | FLOW_LEFT
+        : _point_flags & ~FLOW_LEFT;
+
+    int _point_flags2 = point_flags[hull_2_id];
+    bool flow_left2 = (_point_flags2 & FLOW_LEFT) != 0;
+    _point_flags2 = !flow_left2
+        ? _point_flags2 | FLOW_LEFT
+        : _point_flags2 & ~FLOW_LEFT;
+
+    point_flags[hull_1_id] = _point_flags;
+    point_flags[hull_2_id] = _point_flags2;
+
     // store results
     float8 hull_1_reactions = (float8)(hull_1_collision, hull_1_opposing, hull_1_friction_f, hull_1_restitution_f);
     float8 hull_2_reactions = (float8)(hull_2_collision, hull_2_opposing, hull_2_friction_f, hull_2_restitution_f);

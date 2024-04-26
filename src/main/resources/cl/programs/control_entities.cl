@@ -60,17 +60,9 @@ __kernel void handle_movement(__global float4 *armatures,
     float threshold = 10.0f;
     float2 vel = (armature.xy - armature.zw) / dt;
 
-    // update left/right movement
-    accel.x = is_mv_l && !is_mv_r
-        ? -current_linear_mag
-        : accel.x;
-
-    accel.x = is_mv_r && !is_mv_l
-        ? current_linear_mag
-        : accel.x;
-
     // can jump?
     bool can_jump = (arm_flag & CAN_JUMP) !=0;
+    bool is_wet = (arm_flag & IS_WET) !=0;
 
     int tick_slice = 0;
 
@@ -79,8 +71,10 @@ __kernel void handle_movement(__global float4 *armatures,
     float ct = armature_animation_elapsed[current_index];
     int next_state = anim_state;
 
+    int b_reset = is_wet ? 10 : 20;
+
     current_budget = can_jump && !mv_jump
-        ? 20
+        ? b_reset
         : current_budget;
 
     switch(anim_state)
@@ -177,18 +171,30 @@ __kernel void handle_movement(__global float4 *armatures,
         : arm_flag; 
 
     
+    float w_mod = is_wet
+        ? 0.5f
+        : 1.0f;
+
+        // update left/right movement
+    accel.x = is_mv_l && !is_mv_r
+        ? -current_linear_mag * w_mod
+        : accel.x;
+
+    accel.x = is_mv_r && !is_mv_l
+        ? current_linear_mag * w_mod
+        : accel.x;
 
     // todo: upward and downward movement is disabled so jumping can work correctly,
     //  but may be worth doing some checks later to re-enbale this depending on circulmstances
     //  for example swimming, or zero-G, etc.
 
-    // accel.y = is_mv_u 
-    //     ? current_linear_mag
-    //     : accel.y;
+    accel.y = is_mv_u && is_wet
+        ? current_linear_mag * 1.2
+        : accel.y;
 
-    // accel.y = is_mv_d 
-    //     ? -current_linear_mag
-    //     : accel.y;
+    accel.y = is_mv_d && is_wet
+        ? -current_linear_mag
+        : accel.y;
 
 
     tick_budgets[current_control_set] = current_budget;

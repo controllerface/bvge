@@ -130,6 +130,20 @@ inline void polygon_circle_collision(int polygon_id,
     
     int vert_hull_flags = hull_flags[vert_hull_id];
     int edge_hull_flags = hull_flags[edge_hull_id];
+
+    bool has_water_particle = (vert_hull_flags & IS_LIQUID) != 0;
+    edge_hull_flags = has_water_particle
+        ? edge_hull_flags | IN_LIQUID
+        : edge_hull_flags;
+    hull_flags[edge_hull_id] = edge_hull_flags;
+
+    int _point_flags = point_flags[vert_index];
+    bool flow_left = (_point_flags & FLOW_LEFT) != 0;
+    _point_flags = !flow_left
+        ? _point_flags | FLOW_LEFT
+        : _point_flags & ~FLOW_LEFT;
+    point_flags[vert_index] = _point_flags;
+
     int vert_armature_id = hull_armature_ids[vert_hull_id];
     int edge_armature_id = hull_armature_ids[edge_hull_id];
     float vert_hull_mass = masses[vert_armature_id];
@@ -179,7 +193,7 @@ inline void polygon_circle_collision(int polygon_id,
         ? static_vert 
             ? vert_hull_friction 
             : edge_hull_friction
-        : 0.0f;//max(vert_hull_friction, edge_hull_friction);
+        : max(vert_hull_friction, edge_hull_friction);
 
     float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
     float2 edge_1_tangent = edge_1_rel_vel - dot(edge_1_rel_vel, collision_normal) * collision_normal;

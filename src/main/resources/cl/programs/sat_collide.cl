@@ -356,7 +356,8 @@ __kernel void move_armatures(__global float2 *hulls,
     int hull_count = end - start + 1;
 
     float2 diff = (float2)(0.0f);
-    int all_flags = 0;
+    int _point_flags = 0;
+    int _hull_flags = 0;
     float2 last_center = (float2)(0.0f);
     bool had_bones = false;
     for (int i = 0; i < hull_count; i++)
@@ -368,17 +369,20 @@ __kernel void move_armatures(__global float2 *hulls,
         bool no_bones = (hull_flag & NO_BONES) !=0;
         bool is_foot = (hull_flag & IS_FOOT) !=0;
 
+        _hull_flags |= hull_flag;
+
         if (!no_bones) had_bones = true;
 
         last_center = calculate_centroid(points, point_table);
         float2 diffa = last_center - hull.xy;
         diff += diffa;
-        all_flags = is_foot 
-            ? all_flags | consume_point_flags(point_flags, point_table)
-            : all_flags;
+        _point_flags = is_foot
+            ? _point_flags | consume_point_flags(point_flags, point_table)
+            : _point_flags;
     }
 
-    bool hit_floor = (all_flags & HIT_FLOOR) !=0;
+    bool hit_floor = (_point_flags & HIT_FLOOR) !=0;
+    bool hit_water = (_hull_flags & IN_LIQUID) !=0;
 
     armature.w = hit_floor 
         ? armature.y 
@@ -410,6 +414,10 @@ __kernel void move_armatures(__global float2 *hulls,
     flags = hit_floor 
         ? flags | CAN_JUMP
         : flags & ~CAN_JUMP;
+
+    flags = hit_water
+        ? flags | IS_WET
+        : flags & ~IS_WET;
 
     armatures[current_armature] = armature;
     armature_flags[current_armature] = flags;
