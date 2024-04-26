@@ -18,6 +18,7 @@ __kernel void integrate(__global float2 *hulls,
                         __global float2 *armature_accel,
                         __global float2 *hull_rotations,
                         __global float4 *points,
+                        __global ushort *point_hit_counts,
                         __global int *point_flags,
                         __global float4 *bounds,
                         __global int4 *bounds_index_data,
@@ -104,11 +105,11 @@ __kernel void integrate(__global float2 *hulls,
     float2 i_acc = anti_grav * (dt * dt);
 
     gravity = in_liquid
-        ? gravity * 0.2f
+        ? gravity * 0.1f
         : gravity;
 
     float y_damping = in_liquid
-        ? .980f
+        ? .970f
         : 1.0f;
 
     for (int i = start; i <= end; i++)
@@ -119,6 +120,18 @@ __kernel void integrate(__global float2 *hulls,
         // get pos/prv vectors
         float2 pos = point.xy;
         float2 prv = point.zw;
+
+        int hit_counts = point_hit_counts[i];
+
+        float col = hit_counts <= HIT_LOW_THRESHOLD
+            ? 0.30f 
+            : hit_counts <= HIT_LOW_MID_THRESHOLD
+                ? 0.25f 
+                : hit_counts <= HIT_MID_THRESHOLD
+                    ? 0.2f
+                    : hit_counts <= HIT_HIGH_MID_THRESHOLD
+                        ? 0.15
+                        : 0.1;
 
         if (!is_static)
         {
@@ -139,8 +152,8 @@ __kernel void integrate(__global float2 *hulls,
 
             float2 w_acc = is_liquid
                 ? flow_left
-                    ? (float2)(-10.0f, -gravity.y * 0.1f)
-                    : (float2)(10.0f, -gravity.y * 0.1f)
+                    ? (float2)(-gravity.y * 0.1f, -gravity.y * col)
+                    : (float2)(gravity.y * 0.1f, -gravity.y * col)
                 : (float2)(0.0f, 0.0f);
 
             w_acc *= (dt * dt);
@@ -151,9 +164,10 @@ __kernel void integrate(__global float2 *hulls,
             {
                 // add damping component
                 diff.x *= min(y_damping, damping);
-                diff.y *= y_damping;
             }
-            diff.y = diff.y > 0 ? diff.y * damping : diff.y;
+            
+                diff.y *= y_damping;
+                diff.y = diff.y > 0 ? diff.y * damping : diff.y;
 
             
             // set the prv to current pos

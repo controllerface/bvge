@@ -53,6 +53,7 @@ public enum Kernel
     prepare_bounds,
     prepare_edges,
     prepare_points,
+    prepare_liquids,
     prepare_transforms,
     read_position,
     resolve_constraints,

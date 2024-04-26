@@ -304,6 +304,19 @@ __kernel void apply_reactions(__global float8 *reactions,
         : max(ag, ag_min);
 
 
+
+
+    int _point_flags = point_flags[current_point];
+    bool flow_left = heading.x >= 0;
+    _point_flags = flow_left
+        ? _point_flags | FLOW_LEFT
+        : _point_flags & ~FLOW_LEFT;
+    point_flags[current_point] = _point_flags;
+
+
+
+
+
     anti_gravity[current_point] = ag;
     points[current_point] = point;
     point_flags[current_point] = flags;
