@@ -72,6 +72,7 @@ __kernel void integrate(__global float2 *hulls,
     acc = is_static 
         ? acc
         : acc + gravity;
+
    	acc *= (dt * dt);
 
 	// calculate the number of vertices, used later for centroid calculation
@@ -102,13 +103,13 @@ __kernel void integrate(__global float2 *hulls,
     float2 anti_grav = generate_counter_vector(gravity, anti_grav_scale);
     float2 i_acc = anti_grav * (dt * dt);
 
-    // gravity = in_liquid
-    //     ? gravity * 0.5f
-    //     : gravity;
+    gravity = in_liquid
+        ? gravity * 0.2f
+        : gravity;
 
-    // float y_damping = in_liquid
-    //     ? .980f
-    //     : 1.0f;
+    float y_damping = in_liquid
+        ? .980f
+        : 1.0f;
 
     for (int i = start; i <= end; i++)
     {
@@ -121,13 +122,39 @@ __kernel void integrate(__global float2 *hulls,
 
         if (!is_static)
         {
+            int _point_flags = point_flags[i];
+            bool flow_left = (_point_flags & FLOW_LEFT) != 0;
+
+            // if (flow_left)
+            // {
+            //     printf("fizz: %d", _point_flags);
+            // }
+            // else
+            // {
+            //     printf("buzz: %d", _point_flags);
+            // }
+
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
-            diff = acc + i_acc + diff;
 
-            // add damping component
-            diff.x *= damping;
+            float2 w_acc = is_liquid
+                ? flow_left
+                    ? (float2)(-10.0f, -gravity.y * 0.1f)
+                    : (float2)(10.0f, -gravity.y * 0.1f)
+                : (float2)(0.0f, 0.0f);
+
+            w_acc *= (dt * dt);
+
+            diff = w_acc + acc + i_acc + diff;
+
+            if (!is_liquid)
+            {
+                // add damping component
+                diff.x *= min(y_damping, damping);
+                diff.y *= y_damping;
+            }
             diff.y = diff.y > 0 ? diff.y * damping : diff.y;
+
             
             // set the prv to current pos
             prv = pos;
@@ -286,7 +313,7 @@ __kernel void integrate_armatures(__global float4 *armatures,
     bool no_bones = (root_hull_flags & NO_BONES) !=0;
 
     gravity = is_wet
-        ? gravity * 0.25f
+        ? gravity * 0.5f
         : gravity;
 
     float y_damping = is_wet

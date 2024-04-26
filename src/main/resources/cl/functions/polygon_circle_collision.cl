@@ -125,7 +125,7 @@ inline void polygon_circle_collision(int polygon_id,
     min_distance = native_divide(min_distance, fast_length(collision_normal));
 
     // collision reaction and opposing direction calculation
-    float2 vert_hull_opposing = (float2)(0.0f, 0.0f); //hull_b.xy - hull_a.xy;
+    float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
     float2 edge_hull_opposing = (float2)(0.0f, 0.0f); //hull_a.xy - hull_b.xy;
     
     int vert_hull_flags = hull_flags[vert_hull_id];
