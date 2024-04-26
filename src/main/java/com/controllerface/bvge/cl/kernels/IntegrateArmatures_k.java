@@ -7,6 +7,7 @@ public class IntegrateArmatures_k extends GPUKernel
     public enum Args
     {
         armatures,
+        armature_flags,
         armature_root_hulls,
         armature_accel,
         hull_flags,

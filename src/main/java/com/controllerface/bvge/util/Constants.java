@@ -26,14 +26,16 @@ public class Constants
         IS_FOOT       (0b0000_0000_0000_0000_0000_0000_0100_0000),
         SIDE_L        (0b0000_0000_0000_0000_0000_0000_1000_0000),
         SIDE_R        (0b0000_0000_0000_0000_0000_0001_0000_0000),
+        IS_LIQUID     (0b0000_0000_0000_0000_0000_0010_0000_0000),
+        IN_LIQUID     (0b0000_0000_0000_0000_0000_0100_0000_0000),
 
         ;
 
-        public final int bits;
+        public final int _int;
 
-        HullFlags(int bits)
+        HullFlags(int _int)
         {
-            this.bits = bits;
+            this._int = _int;
         }
     }
 
@@ -56,6 +58,7 @@ public class Constants
         IS_INTERIOR     (0b0000_0000_0000_0000_0000_0000_0000_0001),
         HIT_FLOOR       (0b0000_0000_0000_0000_0000_0000_0000_0010),
         HIT_WALL        (0b0000_0000_0000_0000_0000_0000_0000_0100),
+        FLOW_LEFT       (0b0000_0000_0000_0000_0000_0000_0000_1000),
 
         ;
 

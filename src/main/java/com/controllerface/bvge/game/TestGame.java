@@ -15,7 +15,7 @@ import java.util.EnumSet;
 import java.util.Random;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
-import static com.controllerface.bvge.util.Constants.HullFlags;
+import static com.controllerface.bvge.util.Constants.*;
 
 public class TestGame extends GameMode
 {
@@ -129,17 +129,24 @@ public class TestGame extends GameMode
         }
     }
 
-    private void genCircles(int box_size, float spacing, float size, float start_x, float start_y)
+    private void genWater(int box_size, float spacing, float size, float start_x, float start_y)
     {
-        System.out.println("generating: " + box_size * box_size + " Particles..");
+        boolean flip = false;
+        System.out.println("generating: " + box_size * box_size + " water particles..");
         for (int i = 0; i < box_size; i++)
         {
             for (int j = 0; j < box_size; j++)
             {
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-                //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, -0.00001f);
+                int flags = flip
+                    ? PointFlags.FLOW_LEFT.bits
+                    : 0;
+                flip = !flip;
+                var armature_index = PhysicsObjects.particle(x, y, size,
+                    .1f, 0.0f, -0.000011f,
+                    HullFlags.IS_LIQUID._int,
+                    flags);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -174,7 +181,7 @@ public class TestGame extends GameMode
     private void genTestCircle(float size, float x, float y)
     {
         //var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, 0.0f);
+        var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, 0.0f, 0, 0);
         //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -197,7 +204,7 @@ public class TestGame extends GameMode
         // circle entity
         var figure = ecs.registerEntity("player");
 
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON.bits, 100.5f, 0.02f);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.02f);
         ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
         // todo: determine if a different ID may be used for identifying entities that is not tied to the
@@ -211,21 +218,21 @@ public class TestGame extends GameMode
     private void genTestFigureNPC_2(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON.bits, 50, 0.02f);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestFigureNPC(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON.bits, 50, 0.02f);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genBoxModelNPC(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON.bits, .1f, 0.02f);
+        var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON._int, .1f, 0.02f);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -299,7 +306,7 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        genCircles(100, 10f, 10f, 0, 800);
+        genWater(100, 10f, 10f, 0, 800);
         genSquares(50,  10f, 10f, -50, 200);
 
         //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);

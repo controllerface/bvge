@@ -212,6 +212,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(Integrate_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
             .buf_arg(Integrate_k.Args.hull_rotations, GPGPU.core_memory.buffer(BufferType.HULL_ROTATION))
             .buf_arg(Integrate_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(Integrate_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
             .buf_arg(Integrate_k.Args.bounds, GPGPU.core_memory.buffer(BufferType.HULL_AABB))
             .buf_arg(Integrate_k.Args.bounds_index_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_INDEX))
             .buf_arg(Integrate_k.Args.bounds_bank_data, GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE))
@@ -222,6 +223,7 @@ public class PhysicsSimulation extends GameSystem
         long integrate_armatures_k_ptr = integrate.kernel_ptr(Kernel.integrate_armatures);
         integrate_armatures_k = new IntegrateArmatures_k(GPGPU.command_queue_ptr, integrate_armatures_k_ptr)
             .buf_arg(IntegrateArmatures_k.Args.armatures, GPGPU.core_memory.buffer(BufferType.ARMATURE))
+            .buf_arg(IntegrateArmatures_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
             .buf_arg(IntegrateArmatures_k.Args.armature_root_hulls, GPGPU.core_memory.buffer(BufferType.ARMATURE_ROOT_HULL))
             .buf_arg(IntegrateArmatures_k.Args.armature_accel, GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL))
             .buf_arg(IntegrateArmatures_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG));

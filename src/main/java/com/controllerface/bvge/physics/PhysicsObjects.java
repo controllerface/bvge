@@ -35,7 +35,7 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int particle(float x, float y, float size, float mass, float friction, float restitution)
+    public static int particle(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
@@ -51,7 +51,7 @@ public class PhysicsObjects
         var t1 = CLUtils.arg_int4(vert.vert_ref_id(), next_hull_index, 0, 0);
 
         // store the single point for the circle
-        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], vert.vert_ref_id(), next_hull_index, 0);
+        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], vert.vert_ref_id(), next_hull_index, point_flags);
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
@@ -64,7 +64,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = HullFlags.IS_CIRCLE.bits | HullFlags.NO_BONES.bits;
+        int hull_flags = flags | HullFlags.IS_CIRCLE._int | HullFlags.NO_BONES._int;
         int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(),
             position,
             scale,
@@ -131,7 +131,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = flags | HullFlags.IS_POLYGON.bits | HullFlags.NO_BONES.bits;
+        int hull_flags = flags | HullFlags.IS_POLYGON._int | HullFlags.NO_BONES._int;
         int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(),
             position,
             scale,
@@ -207,7 +207,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = flags | HullFlags.IS_POLYGON.bits;
+        int hull_flags = flags | HullFlags.IS_POLYGON._int;
         int hull_id = GPGPU.core_memory.new_hull(mesh.mesh_id(),
             position,
             scale,
@@ -234,17 +234,17 @@ public class PhysicsObjects
 
     public static int dynamic_Box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size * 5, HullFlags.NO_BONES.bits, mass, friction, restitution, BASE_BLOCK_INDEX);
+        return box(x, y, size * 5, HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX);
     }
 
     public static int static_box(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return box(x, y, size * 5, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, BASE_BLOCK_INDEX);
+        return box(x, y, size * 5, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX);
     }
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return tri(x, y, size, HullFlags.IS_STATIC.bits | HullFlags.NO_BONES.bits, mass, friction, restitution);
+        return tri(x, y, size, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution);
     }
 
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will
@@ -298,17 +298,17 @@ public class PhysicsObjects
             var hull_mesh = meshes[mesh_index];
             if (hull_mesh.name().toLowerCase().contains("foot"))
             {
-                local_hull_flags |= HullFlags.IS_FOOT.bits;
+                local_hull_flags |= HullFlags.IS_FOOT._int;
             }
 
             if (hull_mesh.name().toLowerCase().contains(".r"))
             {
-                local_hull_flags |= HullFlags.SIDE_R.bits;
+                local_hull_flags |= HullFlags.SIDE_R._int;
             }
 
             if (hull_mesh.name().toLowerCase().contains(".l"))
             {
-                local_hull_flags |= HullFlags.SIDE_L.bits;
+                local_hull_flags |= HullFlags.SIDE_L._int;
             }
 
             // The hull is generated based on the mesh, so it's initial position and rotation

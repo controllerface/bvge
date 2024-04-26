@@ -12,6 +12,7 @@ public class Integrate_k extends GPUKernel
         armature_accel,
         hull_rotations,
         points,
+        point_flags,
         bounds,
         bounds_index_data,
         bounds_bank_data,
