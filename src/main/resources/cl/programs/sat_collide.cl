@@ -305,9 +305,9 @@ __kernel void apply_reactions(__global float8 *reactions,
 
 
 
-
+    base_velocity = point.zw - point.xy;
     int _point_flags = point_flags[current_point];
-    bool flow_left = heading.x >= 0;
+    bool flow_left = base_velocity.x >= 0;
     _point_flags = flow_left
         ? _point_flags | FLOW_LEFT
         : _point_flags & ~FLOW_LEFT;

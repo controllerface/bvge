@@ -105,11 +105,11 @@ __kernel void integrate(__global float2 *hulls,
     float2 i_acc = anti_grav * (dt * dt);
 
     gravity = in_liquid
-        ? gravity * 0.1f
+        ? gravity * 0.75f
         : gravity;
 
     float y_damping = in_liquid
-        ? .970f
+        ? .990f
         : 1.0f;
 
     for (int i = start; i <= end; i++)
@@ -123,15 +123,15 @@ __kernel void integrate(__global float2 *hulls,
 
         int hit_counts = point_hit_counts[i];
 
-        float col = hit_counts <= HIT_LOW_THRESHOLD
-            ? 0.30f 
-            : hit_counts <= HIT_LOW_MID_THRESHOLD
-                ? 0.25f 
-                : hit_counts <= HIT_MID_THRESHOLD
-                    ? 0.2f
-                    : hit_counts <= HIT_HIGH_MID_THRESHOLD
-                        ? 0.15
-                        : 0.1;
+        // float col = hit_counts <= HIT_LOW_THRESHOLD
+        //     ? 0.30f 
+        //     : hit_counts <= HIT_LOW_MID_THRESHOLD
+        //         ? 0.25f 
+        //         : hit_counts <= HIT_MID_THRESHOLD
+        //             ? 0.2f
+        //             : hit_counts <= HIT_HIGH_MID_THRESHOLD
+        //                 ? 0.15
+        //                 : 0.1;
 
         if (!is_static)
         {
@@ -152,8 +152,8 @@ __kernel void integrate(__global float2 *hulls,
 
             float2 w_acc = is_liquid
                 ? flow_left
-                    ? (float2)(-gravity.y * 0.1f, -gravity.y * col)
-                    : (float2)(gravity.y * 0.1f, -gravity.y * col)
+                    ? (float2)(-gravity.y * 0.1f, -gravity.y * 0.1f)
+                    : (float2)(gravity.y * 0.1f, -gravity.y * 0.1f)
                 : (float2)(0.0f, 0.0f);
 
             w_acc *= (dt * dt);
