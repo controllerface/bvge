@@ -105,11 +105,11 @@ __kernel void integrate(__global float2 *hulls,
     float2 i_acc = anti_grav * (dt * dt);
 
     gravity = in_liquid
-        ? gravity * 0.75f
+        ? gravity * 0.25f
         : gravity;
 
     float y_damping = in_liquid
-        ? .990f
+        ? .950f
         : 1.0f;
 
     for (int i = start; i <= end; i++)
@@ -152,8 +152,8 @@ __kernel void integrate(__global float2 *hulls,
 
             float2 w_acc = is_liquid
                 ? flow_left
-                    ? (float2)(-gravity.y * 0.1f, -gravity.y * 0.1f)
-                    : (float2)(gravity.y * 0.1f, -gravity.y * 0.1f)
+                    ? (float2)(-gravity.y * 0.0001f, -gravity.y * 0.1f)
+                    : (float2)(gravity.y * 0.0001f, -gravity.y * 0.1f)
                 : (float2)(0.0f, 0.0f);
 
             w_acc *= (dt * dt);
@@ -331,7 +331,7 @@ __kernel void integrate_armatures(__global float4 *armatures,
         : gravity;
 
     float y_damping = is_wet
-        ? .980f
+        ? .985f
         : 1.0f;
 
     acc = is_static

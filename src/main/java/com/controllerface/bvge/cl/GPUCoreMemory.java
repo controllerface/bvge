@@ -126,8 +126,8 @@ public class GPUCoreMemory
     private final ResizableBuffer armature_anim_elapsed_buffer;
 
     /** short2
-     * x: current state
-     * y: previous state
+     * x: number of ticks moving downward
+     * y: number of ticks moving upward
      */
     private final ResizableBuffer armature_anim_state_buffer;
 
