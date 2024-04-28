@@ -144,7 +144,7 @@ public class TestGame extends GameMode
                     : 0;
                 flip = !flip;
                 var armature_index = PhysicsObjects.particle(x, y, size,
-                    .1f, -0.05f, -0.000001f,
+                    .1f, 0.0f, 0.0f,
                     HullFlags.IS_LIQUID._int,
                     flags);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
@@ -292,7 +292,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 1100, 1400);
+        genTestFigure(1f, 700, 1400);
 
         //genTestFigureNPC_2(1f, 100, 500);
 
@@ -306,8 +306,8 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        genWater(75, 10f, 10f, 0, 1400);
-        genSquares(50,  10f, 10f, -50, 200);
+        genWater(150, 10f, 10f, 0, 1400);
+        genSquares(75,  10f, 10f, -50, 200);
 
         //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);
         //genSquares(1,  25f, 25f, 420, 200);
@@ -319,9 +319,9 @@ public class TestGame extends GameMode
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);
 
-        genFloor(8, 150f, 150f, -70, -100, 0.03f);
+        genFloor(16, 150f, 150f, -70, -100, 0.03f);
         genWall(5, 150f, 150f, -220, -100);
-        genWall(5, 150f, 150f, 1130, -100);
+        genWall(5, 150f, 150f, 2330, -100);
 
         loadSystems();
     }

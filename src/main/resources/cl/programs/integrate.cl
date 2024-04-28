@@ -63,11 +63,11 @@ __kernel void integrate(__global float2 *hulls,
     bool no_bones = (hull_1_flags & NO_BONES) !=0;
     bool in_liquid = (hull_1_flags & IN_LIQUID) !=0;
     bool is_liquid = (hull_1_flags & IS_LIQUID) !=0;
+    bool touch_alike = (hull_1_flags & TOUCH_ALIKE) !=0;
 
-    int x = hull_1_flags;
-    x &= ~OUT_OF_BOUNDS;
-    x &= ~IN_LIQUID;
-    hull_flags[current_hull] = x;
+    gravity = in_liquid
+        ? gravity * 0.25f
+        : gravity;
 
    	// get acc value and multiply by the timestep do get the displacement vector
     acc = is_static 
@@ -104,12 +104,14 @@ __kernel void integrate(__global float2 *hulls,
     float2 anti_grav = generate_counter_vector(gravity, anti_grav_scale);
     float2 i_acc = anti_grav * (dt * dt);
 
-    gravity = in_liquid
-        ? gravity * 0.25f
-        : gravity;
+
 
     float y_damping = in_liquid
         ? .950f
+        : 1.0f;
+
+    float x_damping = touch_alike
+        ? .980f
         : 1.0f;
 
     for (int i = start; i <= end; i++)
@@ -138,38 +140,30 @@ __kernel void integrate(__global float2 *hulls,
             int _point_flags = point_flags[i];
             bool flow_left = (_point_flags & FLOW_LEFT) != 0;
 
-            // if (flow_left)
-            // {
-            //     printf("fizz: %d", _point_flags);
-            // }
-            // else
-            // {
-            //     printf("buzz: %d", _point_flags);
-            // }
-
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
 
-            float2 w_acc = is_liquid
+            float g_y = 0.1f;
+
+            float2 w_acc = (is_liquid & !touch_alike)
                 ? flow_left
-                    ? (float2)(-gravity.y * 0.0001f, -gravity.y * 0.1f)
-                    : (float2)(gravity.y * 0.0001f, -gravity.y * 0.1f)
+                    ? (float2)(-gravity.y * g_y, gravity.y * g_y)
+                    : (float2)(gravity.y * g_y, gravity.y * g_y)
                 : (float2)(0.0f, 0.0f);
 
             w_acc *= (dt * dt);
 
             diff = w_acc + acc + i_acc + diff;
 
+            // add damping component
             if (!is_liquid)
             {
-                // add damping component
                 diff.x *= min(y_damping, damping);
             }
-            
-                diff.y *= y_damping;
-                diff.y = diff.y > 0 ? diff.y * damping : diff.y;
+            diff.y *= y_damping;
+            diff.y = diff.y > 0 ? diff.y * damping : diff.y;
 
-            
+        
             // set the prv to current pos
             prv = pos;
 
@@ -288,14 +282,18 @@ __kernel void integrate(__global float2 *hulls,
     // rotation.y is the reference angle taken at object creation when rotation is zero
     rotation.x = rotation.y - r_x;
 
+    hull_1_flags &= ~OUT_OF_BOUNDS;
+    hull_1_flags &= ~IN_LIQUID;
+    hull_1_flags &= ~TOUCH_ALIKE;
+
     if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {
-        int x = hull_1_flags;
-        x = (x | OUT_OF_BOUNDS);
-        hull_flags[current_hull] = x;
+
+        hull_1_flags |= OUT_OF_BOUNDS;
         bounds_bank.y = 0;
     }
 
+    hull_flags[current_hull] = hull_1_flags;
     bounds[current_hull] = bounding_box;
     hulls[current_hull] = hull;
     hull_rotations[current_hull] = rotation;

@@ -8,6 +8,7 @@ inline void circle_collision(int hull_1_id,
                              __global float *hull_frictions,
                              __global float *hull_restitutions,
                              __global int *hull_armature_ids,
+                             __global int *hull_flags,
                              __global int2 *hull_point_tables,
                              __global float4 *points,
                              __global int *point_flags,
@@ -30,6 +31,8 @@ inline void circle_collision(int hull_1_id,
     
     int2 hull_1_table = hull_point_tables[hull_1_id];
     int2 hull_2_table = hull_point_tables[hull_2_id];
+    int hull_1_flags = hull_flags[hull_1_id];
+    int hull_2_flags = hull_flags[hull_2_id];
     float4 hull_1_center = points[hull_1_table.x];
     float4 hull_2_center = points[hull_2_table.x];
     int hull_1_armature_id = hull_armature_ids[hull_1_id];
@@ -107,4 +110,8 @@ inline void circle_collision(int hull_1_id,
     reaction_index[hull_2_reaction_index] = hull_2_table.x;
     atomic_inc(&reaction_counts[hull_1_table.x]);
     atomic_inc(&reaction_counts[hull_2_table.x]);
+    hull_1_flags |= TOUCH_ALIKE;
+    hull_2_flags |= TOUCH_ALIKE;
+    hull_flags[hull_1_id] = hull_1_flags;
+    hull_flags[hull_2_id] = hull_2_flags;
 }

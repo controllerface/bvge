@@ -84,6 +84,7 @@ __kernel void sat_collide(__global int2 *candidates,
             hull_frictions,
             hull_restitutions,
             hull_armature_ids,
+            hull_flags,
             hull_point_tables,
             points,
             point_flags,
@@ -307,14 +308,23 @@ __kernel void apply_reactions(__global float8 *reactions,
 
     base_velocity = point.zw - point.xy;
     int _point_flags = point_flags[current_point];
-    bool flow_left = base_velocity.x >= 0;
-    _point_flags = flow_left
-        ? _point_flags | FLOW_LEFT
-        : _point_flags & ~FLOW_LEFT;
+    bool flow_left   = (_point_flags & FLOW_LEFT) != 0;
+    bool moving_left = base_velocity.x >= 0;
+
+    // if (touch_alike)
+    // {
+    //     _point_flags = flow_left
+    //         ? _point_flags & ~FLOW_LEFT
+    //         : _point_flags | FLOW_LEFT;
+    // }
+    // else
+    // {
+        _point_flags = moving_left
+            ? _point_flags | FLOW_LEFT
+            : _point_flags & ~FLOW_LEFT;
+    //}
+
     point_flags[current_point] = _point_flags;
-
-
-
 
 
     anti_gravity[current_point] = ag;
