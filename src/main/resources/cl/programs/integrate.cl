@@ -31,6 +31,7 @@ __kernel void integrate(__global float2 *hulls,
     int current_hull = get_global_id(0);
 
     float dt = args[0];
+    float dt_2 = pown(dt, 2);
     float x_spacing = args[1];
     float y_spacing = args[2];
     float x_origin = args[3];
@@ -74,7 +75,7 @@ __kernel void integrate(__global float2 *hulls,
         ? acc
         : acc + gravity;
 
-   	acc *= (dt * dt);
+   	acc *= dt_2;
 
 	// calculate the number of vertices, used later for centroid calculation
 	int point_count = end - start + 1;
@@ -102,7 +103,7 @@ __kernel void integrate(__global float2 *hulls,
     }
 
     float2 anti_grav = generate_counter_vector(gravity, anti_grav_scale);
-    float2 i_acc = anti_grav * (dt * dt);
+    float2 i_acc = anti_grav * dt_2;
 
     float y_damping = in_liquid
         ? .980f
@@ -116,7 +117,6 @@ __kernel void integrate(__global float2 *hulls,
         // get pos/prv vectors
         float2 pos = point.xy;
         float2 prv = point.zw;
-
 
         float x_threshold = is_liquid ? 1.0f : 5.0f;
         // float y_threshold = is_liquid ? 4.0f : 5.0f;
@@ -150,15 +150,14 @@ __kernel void integrate(__global float2 *hulls,
                     : (float2)(gravity.y * g_x, gravity.y * g_y)
                 : (float2)(0.0f, 0.0f);
 
-            w_acc *= (dt * dt);
+            w_acc *= dt_2;
 
             diff = w_acc + acc + i_acc + diff;
 
             // add damping component
-            if (!is_liquid)
-            {
-                diff.x *= min(y_damping, damping);
-            }
+            diff.x = is_liquid 
+                ? diff.x
+                : diff.x * min(y_damping, damping);
             diff.y *= y_damping;
             diff.y = diff.y > 0 ? diff.y * damping : diff.y;
 

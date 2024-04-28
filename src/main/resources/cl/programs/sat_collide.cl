@@ -142,6 +142,15 @@ __kernel void sort_reactions(__global float8 *reactions_in,
     reactions_out[next] = reaction;
 }
 
+
+inline float2 scale_reaction(float2 reaction, float dot_a, float dot_b)
+{
+    float2 norm = fast_normalize(reaction);
+    float mag = fast_length(reaction);
+    float scale = 1 - native_divide(dot_a, (dot_a + fabs(dot_b)));
+    return norm * mag * scale;
+}
+
 /**
 Applies reactions to points by summing all the reactions serially, and then applying the composite 
 reaction to the point. 
@@ -223,21 +232,9 @@ __kernel void apply_reactions(__global float8 *reactions,
     bool sign_a = (dot_a >= 0.0f);
     bool sign_b = (dot_b >= 0.0f);
 
-    // if direction is not reversed by applying friction, it is applied directly. Otherwise it
-    // is scaled to ensure it applies only enough force to stop motion completely.
-    if (sign_a == sign_b)
-    {
-        point.xy += reaction.s45;
-    }    
-    else
-    {
-        float2 norm = fast_normalize(reaction.s45);
-        float mag = fast_length(reaction.s45);
-        float2 adjusted_reaction;
-        float scale = 1 - native_divide(dot_a, (dot_a + fabs(dot_b)));
-        adjusted_reaction = norm * mag * scale;
-        point.xy += adjusted_reaction;
-    }
+    point.xy = (sign_a == sign_b) 
+        ? point.xy + reaction.s45
+        : point.xy + scale_reaction(reaction.s45, dot_a, dot_b);
 
     // using the initial data, compared to the new position, calculate the updated previous
     // position to ensure it is equivalent to the initial position delta. This preserves 
@@ -251,7 +248,7 @@ __kernel void apply_reactions(__global float8 *reactions,
 
     point.zw = point.xy - initial_dist * adjusted_offset;
 
-     // apply restitution and adjust if necessary 
+    // apply restitution and adjust if necessary 
     float2 restitution_test = point.zw + reaction.s67;
     test_velocity = restitution_test - point.xy;
     base_velocity = point.zw - point.xy;
@@ -260,19 +257,9 @@ __kernel void apply_reactions(__global float8 *reactions,
     sign_a = (dot_a >= 0.0f);
     sign_b = (dot_b >= 0.0f);
 
-    if (sign_a == sign_b)
-    {
-        point.zw += reaction.s67;
-    }    
-    else
-    {
-        float2 norm = fast_normalize(reaction.s67);
-        float mag = fast_length(reaction.s67);
-        float2 adjusted_reaction;
-        float scale = 1 - native_divide(dot_a, (dot_a + fabs(dot_b)));
-        adjusted_reaction = norm * mag * scale;
-        point.zw += adjusted_reaction;
-    }
+    point.zw = (sign_a == sign_b) 
+        ? point.zw + reaction.s67
+        : point.zw + scale_reaction(reaction.s67, dot_a, dot_b);
 
     // in addition to velocity preservation, to aid in stabiliy, a non-real force of anti-gravity
     // is modeled to assist in keeping objects from colliding in the direction of gravity. This
@@ -304,29 +291,15 @@ __kernel void apply_reactions(__global float8 *reactions,
         ? 0.0f 
         : max(ag, ag_min);
 
-
-
-    base_velocity = point.zw - point.xy;
+    base_velocity = point.xy - point.zw;
     int _point_flags = point_flags[current_point];
-    bool flow_left   = (_point_flags & FLOW_LEFT) != 0;
     bool moving_left = base_velocity.x >= 0;
 
-    // if (touch_alike)
-    // {
-    //     _point_flags = flow_left
-    //         ? _point_flags & ~FLOW_LEFT
-    //         : _point_flags | FLOW_LEFT;
-    // }
-    // else
-    // {
-        _point_flags = moving_left
-            ? _point_flags | FLOW_LEFT
-            : _point_flags & ~FLOW_LEFT;
-    //}
-
+    _point_flags = moving_left
+        ? _point_flags | FLOW_LEFT
+        : _point_flags & ~FLOW_LEFT;
+    
     point_flags[current_point] = _point_flags;
-
-
     anti_gravity[current_point] = ag;
     points[current_point] = point;
     point_flags[current_point] = flags;
