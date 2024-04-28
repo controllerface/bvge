@@ -144,7 +144,7 @@ public class TestGame extends GameMode
                     : 0;
                 flip = !flip;
                 var armature_index = PhysicsObjects.particle(x, y, size,
-                    1f, -0.0f, 0.000004f,
+                    1f, -0.05f, 0.000004f,
                     HullFlags.IS_LIQUID._int,
                     flags);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));

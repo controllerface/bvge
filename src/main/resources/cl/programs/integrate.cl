@@ -66,7 +66,7 @@ __kernel void integrate(__global float2 *hulls,
     bool touch_alike = (hull_1_flags & TOUCH_ALIKE) !=0;
 
     gravity = in_liquid
-        ? gravity * 0.25f
+        ? gravity * 0.4f
         : gravity;
 
    	// get acc value and multiply by the timestep do get the displacement vector
@@ -105,7 +105,7 @@ __kernel void integrate(__global float2 *hulls,
     float2 i_acc = anti_grav * (dt * dt);
 
     float y_damping = in_liquid
-        ? .950f
+        ? .980f
         : 1.0f;
 
     for (int i = start; i <= end; i++)
@@ -118,19 +118,19 @@ __kernel void integrate(__global float2 *hulls,
         float2 prv = point.zw;
 
 
+        float x_threshold = is_liquid ? 1.0f : 5.0f;
+        // float y_threshold = is_liquid ? 4.0f : 5.0f;
+        
+        float2 vel = (pos - prv) ;/// dt;
+        bool s_x = fabs(vel.x) > x_threshold;
+        // bool s_y = fabs(vel.y) > y_threshold;
 
-    // float threshold = 10000.0f;
-    // float2 vel = (pos - prv) / dt;
-    // bool s_x = fabs(vel.x) > threshold;
-    // bool s_y = fabs(vel.y) > threshold;
-    // prv.x = s_x ? pos.x : prv.x;
-    // prv.y = s_y ? pos.y : prv.y;
-    // if (s_x || s_y)
-    // {
-    //     printf("debug: x-%f y-%f", vel.x, vel.y);
-    // }
+        float sign_x = vel.x < 0 ? -1 : 1;
+        // float sign_y = vel.y < 0 ? -1 : 1;
 
 
+        prv.x = s_x ? pos.x - sign_x * x_threshold : prv.x;
+        // prv.y = s_y ? pos.y - sign_y * y_threshold : prv.y;
 
 
         if (!is_static)
@@ -141,7 +141,7 @@ __kernel void integrate(__global float2 *hulls,
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
 
-            float g_x = 0.1f;
+            float g_x = 0.3f;
             float g_y = 0.1f;
 
             float2 w_acc = (is_liquid & !touch_alike)
@@ -324,7 +324,7 @@ __kernel void integrate_armatures(__global float4 *armatures,
     bool no_bones = (root_hull_flags & NO_BONES) !=0;
 
     gravity = is_wet
-        ? gravity * 0.5f
+        ? gravity * 0.4f
         : gravity;
 
     float y_damping = is_wet
