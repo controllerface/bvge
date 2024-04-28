@@ -161,11 +161,11 @@ inline void polygon_circle_collision(int polygon_id,
 
     vert_magnitude = any_static 
         ? static_vert ? 0.0f : 1.0f
-        : 1.0f;
+        : vert_magnitude;
 
     edge_magnitude = any_static 
         ? static_edge ? 0.0f : 1.0f
-        : 0.0f; //edge_magnitude;
+        : 0.0f;
 
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];

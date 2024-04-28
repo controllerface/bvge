@@ -104,14 +104,8 @@ __kernel void integrate(__global float2 *hulls,
     float2 anti_grav = generate_counter_vector(gravity, anti_grav_scale);
     float2 i_acc = anti_grav * (dt * dt);
 
-
-
     float y_damping = in_liquid
         ? .950f
-        : 1.0f;
-
-    float x_damping = touch_alike
-        ? .980f
         : 1.0f;
 
     for (int i = start; i <= end; i++)
@@ -123,17 +117,21 @@ __kernel void integrate(__global float2 *hulls,
         float2 pos = point.xy;
         float2 prv = point.zw;
 
-        int hit_counts = point_hit_counts[i];
 
-        // float col = hit_counts <= HIT_LOW_THRESHOLD
-        //     ? 0.30f 
-        //     : hit_counts <= HIT_LOW_MID_THRESHOLD
-        //         ? 0.25f 
-        //         : hit_counts <= HIT_MID_THRESHOLD
-        //             ? 0.2f
-        //             : hit_counts <= HIT_HIGH_MID_THRESHOLD
-        //                 ? 0.15
-        //                 : 0.1;
+
+    // float threshold = 10000.0f;
+    // float2 vel = (pos - prv) / dt;
+    // bool s_x = fabs(vel.x) > threshold;
+    // bool s_y = fabs(vel.y) > threshold;
+    // prv.x = s_x ? pos.x : prv.x;
+    // prv.y = s_y ? pos.y : prv.y;
+    // if (s_x || s_y)
+    // {
+    //     printf("debug: x-%f y-%f", vel.x, vel.y);
+    // }
+
+
+
 
         if (!is_static)
         {
@@ -143,12 +141,13 @@ __kernel void integrate(__global float2 *hulls,
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
 
+            float g_x = 0.1f;
             float g_y = 0.1f;
 
             float2 w_acc = (is_liquid & !touch_alike)
                 ? flow_left
-                    ? (float2)(-gravity.y * g_y, gravity.y * g_y)
-                    : (float2)(gravity.y * g_y, gravity.y * g_y)
+                    ? (float2)(-gravity.y * g_x, gravity.y * g_y)
+                    : (float2)(gravity.y * g_x, gravity.y * g_y)
                 : (float2)(0.0f, 0.0f);
 
             w_acc *= (dt * dt);
