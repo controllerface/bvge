@@ -485,10 +485,11 @@ __kernel void apply_reactions(__global float8 *reactions,
     point_offsets[current_point] = 0;
 }
 
-inline int consume_point_flags(__global int *point_flags,
-                           int2 point_table)
+inline int2 consume_point_flags(__global int *point_flags,
+                               __global ushort *point_hit_counts,
+                               int2 point_table)
 {
-    int result = 0;
+    int2 result = (int2)(0, 0);
 
     int start = point_table.x;
     int end   = point_table.y;
@@ -498,7 +499,9 @@ inline int consume_point_flags(__global int *point_flags,
     {
         int n = start + i;
         int flags = point_flags[n];
-        result |= flags;
+        ushort pc = point_hit_counts[n];
+        result.x |= flags;
+        result.y += (int)pc;
 
         // the floor flag must be "consumed" so it doesn't persist to the next tick
         flags &= ~HIT_FLOOR;
@@ -515,6 +518,7 @@ __kernel void move_armatures(__global float2 *hulls,
                              __global int2 *hull_point_tables,
                              __global int *hull_flags,
                              __global int *point_flags,
+                             __global ushort *point_hit_counts,
                              __global float4 *points)
 {
     int current_armature = get_global_id(0);
@@ -525,11 +529,14 @@ __kernel void move_armatures(__global float2 *hulls,
     int end = hull_table.y;
     int hull_count = end - start + 1;
 
+    int hull_flags_0 = hull_flags[start];
+
     float2 diff = (float2)(0.0f);
     int _point_flags = 0;
     int _hull_flags = 0;
     float2 last_center = (float2)(0.0f);
     bool had_bones = false;
+    int total_hits = 0;
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
@@ -546,13 +553,27 @@ __kernel void move_armatures(__global float2 *hulls,
         last_center = calculate_centroid(points, point_table);
         float2 diffa = last_center - hull.xy;
         diff += diffa;
+        int2 xa = consume_point_flags(point_flags, point_hit_counts, point_table);
+        total_hits += xa.y;
         _point_flags = is_foot
-            ? _point_flags | consume_point_flags(point_flags, point_table)
+            ? _point_flags | xa.x
             : _point_flags;
     }
 
     bool hit_floor = (_point_flags & HIT_FLOOR) !=0;
     bool hit_water = (_hull_flags & IN_LIQUID) !=0;
+
+    bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
+
+    int block_check = HIT_LOW_MID_THRESHOLD * 4;
+
+    bool go_static = !hit_water && is_block && total_hits >= block_check;
+
+    
+    hull_flags_0 = go_static 
+        ? hull_flags_0 | IS_STATIC
+        : hull_flags_0;
+    
 
     armature.w = hit_floor 
         ? armature.y 
@@ -561,12 +582,9 @@ __kernel void move_armatures(__global float2 *hulls,
     float2 initial_tail = armature.zw;
     float initial_dist = fast_distance(armature.xy, armature.zw);
 
-
     armature.xy = had_bones 
         ? armature.xy + diff
         : last_center;
-
-
 
     float2 adjusted_offset = armature.xy - initial_tail;
     float new_len = fast_length(adjusted_offset);
@@ -577,10 +595,6 @@ __kernel void move_armatures(__global float2 *hulls,
 
     armature.zw = armature.xy - initial_dist * adjusted_offset;
 
-
-
-
-
     flags = hit_floor 
         ? flags | CAN_JUMP
         : flags & ~CAN_JUMP;
@@ -589,6 +603,7 @@ __kernel void move_armatures(__global float2 *hulls,
         ? flags | IS_WET
         : flags & ~IS_WET;
 
+    hull_flags[start] = hull_flags_0;
     armatures[current_armature] = armature;
     armature_flags[current_armature] = flags;
 

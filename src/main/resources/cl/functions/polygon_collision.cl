@@ -186,8 +186,30 @@ inline void polygon_collision(int hull_1_id,
     float total_mass = vert_hull_mass + edge_hull_mass;
     float vert_magnitude = native_divide(edge_hull_mass, total_mass);
     float edge_magnitude = native_divide(vert_hull_mass, total_mass);
+
     bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
     bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
+    bool block_vert = (vert_hull_flags & IS_BLOCK) !=0;
+    bool block_edge = (edge_hull_flags & IS_BLOCK) !=0;
+
+    // if (block_vert || block_edge)
+    // {
+    //     printf("debug: %d %d", block_vert, block_edge);
+    // }
+
+    vert_hull_flags = (block_vert && block_edge) 
+        ? vert_hull_flags | TOUCH_ALIKE 
+        : vert_hull_flags;
+
+    edge_hull_flags = (block_vert && block_edge) 
+        ? edge_hull_flags | TOUCH_ALIKE 
+        : edge_hull_flags;
+
+
+    hull_flags[vert_hull_id] = vert_hull_flags;
+    hull_flags[edge_hull_id] = edge_hull_flags;
+
+
     bool any_static = (static_vert || static_edge);
 
     vert_magnitude = any_static 

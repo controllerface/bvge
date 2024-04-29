@@ -77,15 +77,15 @@ public class TestGame extends GameMode
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
 
-                var armature_index = PhysicsObjects.dynamic_Box(x, y, rando(size, percentage), 50f, 0.02f, 0.0003f);
+                var armature_index = PhysicsObjects.dynamic_block(x, y, rando(size, percentage), 50f, 0.02f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
     }
 
-    private void genSquares(int box_size, float spacing, float size, float start_x, float start_y)
+    private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y)
     {
-        System.out.println("generating: " + box_size * box_size + " Crates..");
+        System.out.println("generating: " + box_size * box_size + " Blocks..");
         for (int i = 0; i < box_size; i++)
         {
             for (int j = 0; j < box_size; j++)
@@ -93,7 +93,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.dynamic_Box(x, y, size, 50f, 0.03f, 0.0003f);
+                var armature_index = PhysicsObjects.dynamic_block(x, y, size, 50f, 0.03f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -188,7 +188,7 @@ public class TestGame extends GameMode
     private void genTestCrate(float size, float x, float y)
     {
         //var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.dynamic_Box(x, y, size, .1f, 0.02f, 0.0001f);
+        var armature_index = PhysicsObjects.dynamic_block(x, y, size, .1f, 0.02f, 0.0001f);
         //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -307,10 +307,10 @@ public class TestGame extends GameMode
         //genCircles(150, 6f, 5f, 0, 100);
 
         genWater(150, 10f, 10f, 0, 1400);
-        genSquares(100,  15f, 15f, -50, 200);
+        genBlocks(100,  15f, 15f, -50, 200);
 //
-        genSquares(100,  15f, 15f, 2500, 200);
-        genSquares(100,  15f, 15f, 2500, 3800);
+        genBlocks(100,  15f, 15f, 2500, 200);
+        genBlocks(100,  15f, 15f, 2500, 3800);
 
         //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);
         //genSquares(1,  25f, 25f, 420, 200);

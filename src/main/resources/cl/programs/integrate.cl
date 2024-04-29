@@ -66,6 +66,11 @@ __kernel void integrate(__global float2 *hulls,
     bool is_liquid = (hull_1_flags & IS_LIQUID) !=0;
     bool touch_alike = (hull_1_flags & TOUCH_ALIKE) !=0;
 
+    // wipe all ephemeral flags
+    hull_1_flags &= ~OUT_OF_BOUNDS;
+    hull_1_flags &= ~IN_LIQUID;
+    hull_1_flags &= ~TOUCH_ALIKE;
+
     gravity = in_liquid
         ? gravity * 0.4f
         : gravity;
@@ -279,10 +284,6 @@ __kernel void integrate(__global float2 *hulls,
     
     // rotation.y is the reference angle taken at object creation when rotation is zero
     rotation.x = rotation.y - r_x;
-
-    hull_1_flags &= ~OUT_OF_BOUNDS;
-    hull_1_flags &= ~IN_LIQUID;
-    hull_1_flags &= ~TOUCH_ALIKE;
 
     if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
     {

@@ -480,6 +480,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(MoveArmatures_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
             .buf_arg(MoveArmatures_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
             .buf_arg(MoveArmatures_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
+            .buf_arg(MoveArmatures_k.Args.point_hit_counts, GPGPU.core_memory.buffer(BufferType.POINT_HIT_COUNT))
             .buf_arg(MoveArmatures_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT));
 
         long animate_armatures_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_armatures);
@@ -823,7 +824,7 @@ public class PhysicsSimulation extends GameSystem
         point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
         point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
 
-        //sat_collide_k.call(global_work_size); // old way
+//        sat_collide_k.call(global_work_size); // old way
 
         sat_collide_p_k.call(global_work_size_p);
         sat_collide_c_k.call(global_work_size_c);

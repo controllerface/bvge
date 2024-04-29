@@ -13,6 +13,7 @@ public class MoveArmatures_k extends GPUKernel
         hull_point_tables,
         hull_flags,
         point_flags,
+        point_hit_counts,
         points
     }
 
