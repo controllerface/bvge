@@ -176,10 +176,10 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float4 pos = (float4)(point.xy, side_z, 1.0f);
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
 
-        float xxx = is_static ? 1.0f : col;
+        float xxx = is_static ? col - 0.1f : col;
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
-        color_buffer[ref_offset] = (float4)(col, xxx, col, 1.0f);
+        color_buffer[ref_offset] = (float4)(xxx, xxx, xxx, 1.0f);
     }
 
     int start_face = mesh_face_table.x;

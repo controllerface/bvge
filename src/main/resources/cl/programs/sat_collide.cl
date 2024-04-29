@@ -649,7 +649,7 @@ __kernel void move_armatures(__global float2 *hulls,
     bool hit_water = (_hull_flags & IN_LIQUID) !=0;
 
 
-    int block_check = HIT_TOP_THRESHOLD;
+    int block_check = HIT_TOP_THRESHOLD * 2;
 
     bool go_static = hit_floor && !hit_water && is_block && total_hits >= block_check;
 
