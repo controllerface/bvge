@@ -193,7 +193,7 @@ inline void polygon_circle_collision(int polygon_id,
         ? static_vert 
             ? vert_hull_friction 
             : edge_hull_friction
-        : max(vert_hull_friction, edge_hull_friction);
+        : 0.0f;//max(vert_hull_friction, edge_hull_friction);
 
     float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
     float2 edge_1_tangent = edge_1_rel_vel - dot(edge_1_rel_vel, collision_normal) * collision_normal;

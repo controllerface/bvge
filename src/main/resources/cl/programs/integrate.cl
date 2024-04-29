@@ -72,7 +72,7 @@ __kernel void integrate(__global float2 *hulls,
     hull_1_flags &= ~TOUCH_ALIKE;
 
     gravity = in_liquid
-        ? gravity * 0.4f
+        ? gravity * 0.25f
         : gravity;
 
    	// get acc value and multiply by the timestep do get the displacement vector
@@ -123,12 +123,12 @@ __kernel void integrate(__global float2 *hulls,
         float2 pos = point.xy;
         float2 prv = point.zw;
 
-        float x_threshold = is_liquid ? 1.0f : 5.0f;
-        // float y_threshold = is_liquid ? 4.0f : 5.0f;
+        float x_threshold = is_liquid ? 1.0f : 10.0f;
+        float y_threshold = is_liquid ? 4.0f : 1.0f;
         
         float2 vel = (pos - prv) ;/// dt;
         bool s_x = fabs(vel.x) > x_threshold;
-        // bool s_y = fabs(vel.y) > y_threshold;
+        bool s_y = in_liquid && fabs(vel.y) > y_threshold;
 
         float sign_x = vel.x < 0 ? -1 : 1;
         // float sign_y = vel.y < 0 ? -1 : 1;
@@ -163,8 +163,12 @@ __kernel void integrate(__global float2 *hulls,
             diff.x = is_liquid 
                 ? diff.x
                 : diff.x * min(y_damping, damping);
-            diff.y *= y_damping;
-            diff.y = diff.y > 0 ? diff.y * damping : diff.y;
+            diff.y = s_y 
+                ? diff.y * y_damping 
+                : diff.y;
+            diff.y = diff.y > 0 
+                ? diff.y * damping 
+                : diff.y;
 
         
             // set the prv to current pos

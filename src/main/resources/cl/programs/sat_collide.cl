@@ -615,7 +615,7 @@ __kernel void move_armatures(__global float2 *hulls,
 
     int hull_flags_0 = hull_flags[start];
     bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
-
+    
     float2 diff = (float2)(0.0f);
     int _point_flags = 0;
     int _hull_flags = 0;
@@ -647,11 +647,15 @@ __kernel void move_armatures(__global float2 *hulls,
 
     bool hit_floor = (_point_flags & HIT_FLOOR) !=0;
     bool hit_water = (_hull_flags & IN_LIQUID) !=0;
+    bool touch_alike = (_hull_flags & TOUCH_ALIKE) !=0;
 
 
     int block_check = HIT_TOP_THRESHOLD * 2;
 
-    bool go_static = hit_floor && !hit_water && is_block && total_hits >= block_check;
+    bool go_static = hit_floor  
+        && !hit_water 
+        && is_block 
+        && total_hits >= block_check;
 
     
     hull_flags_0 = go_static 

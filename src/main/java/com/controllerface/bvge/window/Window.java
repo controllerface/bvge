@@ -375,8 +375,8 @@ public class Window
                 fpsTimer -= 1.0;
 
                 // Print FPS to console
-                System.out.println("FPS: " + fps);
-                System.out.println("Frame Time (dt): " + dt);
+                System.out.println(STR."FPS: \{ fps }");
+                System.out.println(STR."Last DT: \{ dt }");
             }
 
 

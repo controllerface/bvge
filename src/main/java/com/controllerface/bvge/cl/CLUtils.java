@@ -34,7 +34,7 @@ public class CLUtils
     public static long cl_p(long context_ptr, long device_id_ptr, String ... src)
     {
         long program = clCreateProgramWithSource(context_ptr, src, null);
-        int result = clBuildProgram(program, device_id_ptr,  "-cl-denorms-are-zero -cl-mad-enable -cl-finite-math-only", null, 0);
+        int result = clBuildProgram(program, device_id_ptr,  "-cl-denorms-are-zero -cl-mad-enable", null, 0);
         if (result != CL_SUCCESS)
         {
             System.err.println("program build error: " + result);
