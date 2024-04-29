@@ -35,6 +35,12 @@ inline void polygon_collision(int hull_1_id,
 	int hull_2_point_count = hull_2_point_table.y - hull_2_point_table.x + 1;
 	int hull_2_edge_count  = hull_2_edge_table.y - hull_2_edge_table.x + 1;
 
+    int hull_1_flags = hull_flags[hull_1_id];
+    int hull_2_flags = hull_flags[hull_2_id];
+    bool b1_is_block = (hull_1_flags & IS_BLOCK) !=0;
+    bool b2_is_block = (hull_2_flags & IS_BLOCK) !=0;
+
+
     float min_distance = FLT_MAX;
 
     int vert_hull_id = -1;
@@ -48,7 +54,13 @@ inline void polygon_collision(int hull_1_id,
     float2 collision_normal;
     int2 vertex_table;
 
+    int max_axis = 0;
+    int this_axis = 0;
+
     // hull 1
+
+    max_axis = b1_is_block ? 2 : hull_1_edge_count;
+    __attribute__((opencl_unroll_hint(2)))
     for (int point_index = 0; point_index < hull_1_edge_count; point_index++)
     {
         int edge_index = hull_1_edge_table.x + point_index;
@@ -56,7 +68,8 @@ inline void polygon_collision(int hull_1_id,
         int edge_flag = edge_flags[edge_index];
         
         // do not test interior edges
-        if (edge_flag == 1) continue;
+        if (edge_flag == 1 || this_axis >= max_axis) continue;
+        this_axis++;
 
         int a_index = edge.x;
         int b_index = edge.y;
@@ -96,7 +109,11 @@ inline void polygon_collision(int hull_1_id,
         }
     }
     
+    this_axis = 0;
+    
     // hull 2
+    max_axis = b2_is_block ? 2 : hull_1_edge_count;
+    __attribute__((opencl_unroll_hint(2)))
     for (int point_index = 0; point_index < hull_2_edge_count; point_index++)
     {
         int edge_index = hull_2_edge_table.x + point_index;
@@ -104,7 +121,8 @@ inline void polygon_collision(int hull_1_id,
         int edge_flag = edge_flags[edge_index];
 
         // do not test interior edges
-        if (edge_flag == 1) continue;
+        if (edge_flag == 1 || this_axis >= max_axis) continue;
+        this_axis++;
 
         int a_index = edge.x;
         int b_index = edge.y;
