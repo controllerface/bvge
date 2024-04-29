@@ -7,11 +7,15 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.util.Constants;
+import org.lwjgl.system.MemoryUtil;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
+import static org.lwjgl.opencl.CL10.clWaitForEvents;
 
 public class PhysicsSimulation extends GameSystem
 {
@@ -64,6 +68,11 @@ public class PhysicsSimulation extends GameSystem
     private final GPUKernel aabb_collide_k;
     private final GPUKernel finalize_candidates_k;
     private final GPUKernel sat_collide_k;
+    private final GPUKernel sat_collide_p_k;
+    private final GPUKernel sat_collide_c_k;
+    private final GPUKernel sat_collide_pc_k;
+    private final GPUKernel sat_sort_count_k;
+    private final GPUKernel sat_sort_type_k;
     private final GPUKernel sort_reactions_k;
     private final GPUKernel apply_reactions_k;
     private final GPUKernel move_armatures_k;
@@ -77,6 +86,7 @@ public class PhysicsSimulation extends GameSystem
     private final long atomic_counter_ptr;
     private final long counts_data_ptr;
     private final long offsets_data_ptr;
+    private final long sat_counts_ptr;
 
     /** int
      * x: count of collision reactions for each point in the current frame
@@ -125,6 +135,9 @@ public class PhysicsSimulation extends GameSystem
     public final ResizableBuffer candidate_offsets;
     public final ResizableBuffer matches;
     public final ResizableBuffer matches_used;
+    public final ResizableBuffer sat_candidates_p;
+    public final ResizableBuffer sat_candidates_c;
+    public final ResizableBuffer sat_candidates_pc;
 
     public final ResizableBuffer control_point_flags;
     public final ResizableBuffer control_point_indices;
@@ -138,6 +151,10 @@ public class PhysicsSimulation extends GameSystem
     private long match_buffer_count = 0;
     private long candidate_buffer_count = 0;
 
+    private long sat_candidate_p_buffer_size = 0;
+    private long sat_candidate_c_buffer_size = 0;
+    private long sat_candidate_pc_buffer_size = 0;
+
     private float time_accumulator = 0.0f;
 
     public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
@@ -150,6 +167,7 @@ public class PhysicsSimulation extends GameSystem
         atomic_counter_ptr  = GPGPU.cl_new_pinned_int();
         counts_data_ptr     = GPGPU.cl_new_buffer(counts_buf_size);
         offsets_data_ptr    = GPGPU.cl_new_buffer(counts_buf_size);
+        sat_counts_ptr      = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 3);
 
         point_reaction_counts       = new TransientBuffer(CLSize.cl_int, 500_000L);
         point_reaction_offsets      = new TransientBuffer(CLSize.cl_int, 500_000L);
@@ -164,6 +182,10 @@ public class PhysicsSimulation extends GameSystem
         candidate_offsets           = new TransientBuffer(CLSize.cl_int, 500_000L);
         matches                     = new TransientBuffer(CLSize.cl_int, 500_000L);
         matches_used                = new TransientBuffer(CLSize.cl_int, 500_000L);
+
+        sat_candidates_p            = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        sat_candidates_c            = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        sat_candidates_pc           = new TransientBuffer(CLSize.cl_int2, 500_000L);
 
         control_point_flags         = new PersistentBuffer(CLSize.cl_int, 1);
         control_point_indices       = new PersistentBuffer(CLSize.cl_int, 1);
@@ -272,6 +294,23 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(CountCandidates_k.Args.x_subdivisions, uniform_grid.x_subdivisions)
             .set_arg(CountCandidates_k.Args.key_count_length, uniform_grid.directory_length);
 
+        long sat_sort_count_k_ptr = locate_in_bounds.kernel_ptr(Kernel.sat_sort_count);
+        sat_sort_count_k = new SatSortCount_k(GPGPU.command_queue_ptr, sat_sort_count_k_ptr)
+            .buf_arg(SatSortCount_k.Args.candidates, candidates)
+            .buf_arg(SatSortCount_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .ptr_arg(SatSortCount_k.Args.counter, sat_counts_ptr);
+
+        long sat_sort_type_k_ptr = locate_in_bounds.kernel_ptr(Kernel.sat_sort_type);
+        sat_sort_type_k = new SatSortCount_k(GPGPU.command_queue_ptr, sat_sort_type_k_ptr)
+            .buf_arg(SatSortType_k.Args.candidates, candidates)
+            .buf_arg(SatSortType_k.Args.sat_candidates_p, sat_candidates_p)
+            .buf_arg(SatSortType_k.Args.sat_candidates_c, sat_candidates_c)
+            .buf_arg(SatSortType_k.Args.sat_candidates_pc, sat_candidates_pc)
+            .buf_arg(SatSortType_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .ptr_arg(SatSortType_k.Args.counter, sat_counts_ptr);
+
+
+
         long scan_candidates_single_block_out_k_ptr = scan_key_candidates.kernel_ptr(Kernel.scan_candidates_single_block_out);
         scan_candidates_single_block_out_k = new ScanCandidatesSingleBlockOut_k(GPGPU.command_queue_ptr, scan_candidates_single_block_out_k_ptr);
 
@@ -328,6 +367,91 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
             .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
             .set_arg(SatCollide_k.Args.dt, FIXED_TIME_STEP);
+
+
+
+
+
+
+
+
+        long sat_collide_p_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide_p);
+        sat_collide_p_k = new SatCollide_k(GPGPU.command_queue_ptr, sat_collide_p_k_ptr)
+            .buf_arg(SatCollideP_k.Args.candidates, sat_candidates_p)
+            .buf_arg(SatCollideP_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
+            .buf_arg(SatCollideP_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.HULL_SCALE))
+            .buf_arg(SatCollideP_k.Args.hull_frictions, GPGPU.core_memory.buffer(BufferType.HULL_FRICTION))
+            .buf_arg(SatCollideP_k.Args.hull_restitutions, GPGPU.core_memory.buffer(BufferType.HULL_RESTITUTION))
+            .buf_arg(SatCollideP_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
+            .buf_arg(SatCollideP_k.Args.hull_edge_tables, GPGPU.core_memory.buffer(BufferType.HULL_EDGE_TABLE))
+            .buf_arg(SatCollideP_k.Args.hull_armature_ids, GPGPU.core_memory.buffer(BufferType.HULL_ARMATURE_ID))
+            .buf_arg(SatCollideP_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(SatCollideP_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
+            .buf_arg(SatCollideP_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(SatCollideP_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
+            .buf_arg(SatCollideP_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
+            .buf_arg(SatCollideP_k.Args.reactions, reactions_in)
+            .buf_arg(SatCollideP_k.Args.reaction_index, reaction_index)
+            .buf_arg(SatCollideP_k.Args.point_reactions, point_reaction_counts)
+            .buf_arg(SatCollideP_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
+            .ptr_arg(SatCollideP_k.Args.counter, atomic_counter_ptr)
+            .set_arg(SatCollideP_k.Args.dt, FIXED_TIME_STEP);
+
+        long sat_collide_c_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide_c);
+        sat_collide_c_k = new SatCollide_k(GPGPU.command_queue_ptr, sat_collide_c_k_ptr)
+            .buf_arg(SatCollideC_k.Args.candidates, sat_candidates_c)
+            .buf_arg(SatCollideC_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
+            .buf_arg(SatCollideC_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.HULL_SCALE))
+            .buf_arg(SatCollideC_k.Args.hull_frictions, GPGPU.core_memory.buffer(BufferType.HULL_FRICTION))
+            .buf_arg(SatCollideC_k.Args.hull_restitutions, GPGPU.core_memory.buffer(BufferType.HULL_RESTITUTION))
+            .buf_arg(SatCollideC_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
+            .buf_arg(SatCollideC_k.Args.hull_edge_tables, GPGPU.core_memory.buffer(BufferType.HULL_EDGE_TABLE))
+            .buf_arg(SatCollideC_k.Args.hull_armature_ids, GPGPU.core_memory.buffer(BufferType.HULL_ARMATURE_ID))
+            .buf_arg(SatCollideC_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(SatCollideC_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
+            .buf_arg(SatCollideC_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(SatCollideC_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
+            .buf_arg(SatCollideC_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
+            .buf_arg(SatCollideC_k.Args.reactions, reactions_in)
+            .buf_arg(SatCollideC_k.Args.reaction_index, reaction_index)
+            .buf_arg(SatCollideC_k.Args.point_reactions, point_reaction_counts)
+            .buf_arg(SatCollideC_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
+            .ptr_arg(SatCollideC_k.Args.counter, atomic_counter_ptr)
+            .set_arg(SatCollideC_k.Args.dt, FIXED_TIME_STEP);
+
+        long sat_collide_pc_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide_pc);
+        sat_collide_pc_k = new SatCollide_k(GPGPU.command_queue_ptr, sat_collide_pc_k_ptr)
+            .buf_arg(SatCollidePC_k.Args.candidates, sat_candidates_pc)
+            .buf_arg(SatCollidePC_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
+            .buf_arg(SatCollidePC_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.HULL_SCALE))
+            .buf_arg(SatCollidePC_k.Args.hull_frictions, GPGPU.core_memory.buffer(BufferType.HULL_FRICTION))
+            .buf_arg(SatCollidePC_k.Args.hull_restitutions, GPGPU.core_memory.buffer(BufferType.HULL_RESTITUTION))
+            .buf_arg(SatCollidePC_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
+            .buf_arg(SatCollidePC_k.Args.hull_edge_tables, GPGPU.core_memory.buffer(BufferType.HULL_EDGE_TABLE))
+            .buf_arg(SatCollidePC_k.Args.hull_armature_ids, GPGPU.core_memory.buffer(BufferType.HULL_ARMATURE_ID))
+            .buf_arg(SatCollidePC_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(SatCollidePC_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
+            .buf_arg(SatCollidePC_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
+            .buf_arg(SatCollidePC_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
+            .buf_arg(SatCollidePC_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
+            .buf_arg(SatCollidePC_k.Args.reactions, reactions_in)
+            .buf_arg(SatCollidePC_k.Args.reaction_index, reaction_index)
+            .buf_arg(SatCollidePC_k.Args.point_reactions, point_reaction_counts)
+            .buf_arg(SatCollidePC_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
+            .ptr_arg(SatCollidePC_k.Args.counter, atomic_counter_ptr)
+            .set_arg(SatCollidePC_k.Args.dt, FIXED_TIME_STEP);
+
+
+
+
+
+
+
+
+
+
+
+
 
         long sort_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.sort_reactions);
         sort_reactions_k = new SortReactions_k(GPGPU.command_queue_ptr, sort_reactions_k_ptr)
@@ -654,10 +778,38 @@ public class PhysicsSimulation extends GameSystem
         GPGPU.cl_release_buffer(counter_ptr);
     }
 
+    private void sort_sat_candidates()
+    {
+        int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
+        long[] global_work_size = new long[]{ candidate_pair_size };
+
+        GPGPU.cl_zero_buffer(sat_counts_ptr, CLSize.cl_int * 3);
+        sat_sort_count_k.call(global_work_size);
+
+        int[] type_counts = GPGPU.cl_read_pinned_int_buffer(sat_counts_ptr, CLSize.cl_int * 3, 3);
+
+        sat_candidate_p_buffer_size = type_counts[0];
+        sat_candidate_c_buffer_size = type_counts[1];
+        sat_candidate_pc_buffer_size = type_counts[2];
+
+        sat_candidates_p.ensure_capacity(sat_candidate_p_buffer_size);
+        sat_candidates_c.ensure_capacity(sat_candidate_c_buffer_size);
+        sat_candidates_pc.ensure_capacity(sat_candidate_pc_buffer_size);
+
+        GPGPU.cl_zero_buffer(sat_counts_ptr, CLSize.cl_int * 3);
+        sat_sort_type_k.call(global_work_size);
+
+        //System.out.println(Arrays.toString(x));
+    }
+
     private void sat_collide()
     {
         int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
         long[] global_work_size = new long[]{ candidate_pair_size };
+
+        long[] global_work_size_p = new long[]{ sat_candidate_p_buffer_size };
+        long[] global_work_size_c = new long[]{ sat_candidate_c_buffer_size };
+        long[] global_work_size_pc = new long[]{ sat_candidate_pc_buffer_size };
 
         GPGPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
@@ -671,7 +823,12 @@ public class PhysicsSimulation extends GameSystem
         point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
         point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
 
-        sat_collide_k.call(global_work_size);
+        //sat_collide_k.call(global_work_size); // old way
+
+        sat_collide_p_k.call(global_work_size_p);
+        sat_collide_c_k.call(global_work_size_c);
+        sat_collide_pc_k.call(global_work_size_pc);
+
         reaction_count = GPGPU.cl_read_pinned_int(atomic_counter_ptr);
     }
 
@@ -851,6 +1008,8 @@ public class PhysicsSimulation extends GameSystem
         // key bank. Hull bounds tables are updated with the correct offsets and counts as needed.
         generate_keys();
 
+        GPGPU.cl_zero_buffer(offsets_data_ptr, counts_buf_size);
+
         // After keys are generated, the next step is to calculate the space needed for the key map. This is
         // a similar process to calculating the bank offsets.
         GPGPU.scan_int_out(counts_data_ptr, offsets_data_ptr, uniform_grid.directory_length);
@@ -881,6 +1040,7 @@ public class PhysicsSimulation extends GameSystem
         // may be eliminated during the check.
         aabb_collide();
 
+
         // This last step cleans up the match table, retaining only the used sections of the buffer.
         // After this step, the matches are ready for the narrow phase check.
         finalize_candidates();
@@ -890,6 +1050,8 @@ public class PhysicsSimulation extends GameSystem
         {
             return;
         }
+
+        sort_sat_candidates();
 
         /*
         - Narrow Phase Collision/Reaction -

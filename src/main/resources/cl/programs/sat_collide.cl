@@ -119,6 +119,180 @@ __kernel void sat_collide(__global int2 *candidates,
     }
 }
 
+
+
+
+
+
+
+
+__kernel void sat_collide_p(__global int2 *candidates,
+                          __global float2 *hulls,
+                          __global float2 *hull_scales,
+                          __global float *hull_frictions,
+                          __global float *hull_restitutions,
+                          __global int2 *hull_point_tables,
+                          __global int2 *hull_edge_tables,
+                          __global int *hull_armature_ids,
+                          __global int *hull_flags,
+                          __global int *point_flags,
+                          __global float4 *points,
+                          __global int2 *edges,
+                          __global int *edge_flags,
+                          __global float8 *reactions,
+                          __global int *reaction_index,
+                          __global int *point_reactions,
+                          __global float *masses,
+                          __global int *counter,
+                          float dt)
+{
+    int gid = get_global_id(0);
+    
+    int2 current_pair = candidates[gid];
+    int b1_id = current_pair.x;
+    int b2_id = current_pair.y;
+
+    polygon_collision(b1_id, b2_id, 
+        hulls,
+        hull_frictions,
+        hull_restitutions,
+        hull_armature_ids,
+        hull_flags,
+        hull_point_tables,
+        hull_edge_tables,
+        point_flags,
+        points,
+        edges,
+        edge_flags,
+        reactions,
+        reaction_index,
+        point_reactions,
+        masses,
+        counter,
+        dt);
+
+}
+
+__kernel void sat_collide_c(__global int2 *candidates,
+                          __global float2 *hulls,
+                          __global float2 *hull_scales,
+                          __global float *hull_frictions,
+                          __global float *hull_restitutions,
+                          __global int2 *hull_point_tables,
+                          __global int2 *hull_edge_tables,
+                          __global int *hull_armature_ids,
+                          __global int *hull_flags,
+                          __global int *point_flags,
+                          __global float4 *points,
+                          __global int2 *edges,
+                          __global int *edge_flags,
+                          __global float8 *reactions,
+                          __global int *reaction_index,
+                          __global int *point_reactions,
+                          __global float *masses,
+                          __global int *counter,
+                          float dt)
+{
+    int gid = get_global_id(0);
+    
+    int2 current_pair = candidates[gid];
+    int b1_id = current_pair.x;
+    int b2_id = current_pair.y;
+    
+    circle_collision(b1_id, b2_id, 
+        hulls,
+        hull_scales,
+        hull_frictions,
+        hull_restitutions,
+        hull_armature_ids,
+        hull_flags,
+        hull_point_tables,
+        points,
+        point_flags,
+        reactions,
+        reaction_index,
+        point_reactions,
+        masses,
+        counter,
+        dt); 
+
+}
+
+__kernel void sat_collide_pc(__global int2 *candidates,
+                          __global float2 *hulls,
+                          __global float2 *hull_scales,
+                          __global float *hull_frictions,
+                          __global float *hull_restitutions,
+                          __global int2 *hull_point_tables,
+                          __global int2 *hull_edge_tables,
+                          __global int *hull_armature_ids,
+                          __global int *hull_flags,
+                          __global int *point_flags,
+                          __global float4 *points,
+                          __global int2 *edges,
+                          __global int *edge_flags,
+                          __global float8 *reactions,
+                          __global int *reaction_index,
+                          __global int *point_reactions,
+                          __global float *masses,
+                          __global int *counter,
+                          float dt)
+{
+    int gid = get_global_id(0);
+    
+    int2 current_pair = candidates[gid];
+    int b1_id = current_pair.x;
+    int b2_id = current_pair.y;
+    int hull_1_flags = hull_flags[b1_id];
+    int hull_2_flags = hull_flags[b2_id];
+    
+    bool b1_is_circle = (hull_1_flags & IS_CIRCLE) !=0;
+    bool b2_is_circle = (hull_2_flags & IS_CIRCLE) !=0;
+
+    int c_id = b1_is_circle ? b1_id : b2_id;
+    int p_id = b1_is_circle ? b2_id : b1_id;
+
+    polygon_circle_collision(p_id, c_id, 
+        hulls,
+        hull_scales,
+        hull_frictions,
+        hull_restitutions,
+        hull_armature_ids,
+        hull_flags,
+        hull_point_tables,
+        hull_edge_tables,
+        point_flags,
+        points,
+        edges,
+        edge_flags,
+        reactions,
+        reaction_index,
+        point_reactions,
+        masses,
+        counter,
+        dt); 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
 Sorts reaction values in ascending order by point index. Technically the sorting logic is handled 
 by way of the reaction scan kernel, which generates the appropriate counts and offsets for each

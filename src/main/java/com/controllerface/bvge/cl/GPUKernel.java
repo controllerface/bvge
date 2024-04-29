@@ -1,11 +1,13 @@
 package com.controllerface.bvge.cl;
 
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.k_call;
+import static com.controllerface.bvge.cl.CLUtils.k_call_wait;
 import static org.lwjgl.opencl.CL12.clSetKernelArg;
 
 public abstract class GPUKernel
@@ -116,6 +118,11 @@ public abstract class GPUKernel
             clSetKernelArg(this.kernel_ptr, arg.ordinal(), intBuffer);
         }
         return this;
+    }
+
+    public PointerBuffer call_wait(long[] global_work_size)
+    {
+        return k_call_wait(command_queue_ptr, kernel_ptr, global_work_size, null, null);
     }
 
     public void call(long[] global_work_size)

@@ -342,6 +342,9 @@ public class Window
         float lastTime = (float) glfwGetTime();
         float currentTime;
         float dt = -1.0f;
+        float fpsTimer = 0.0f;
+        int fps;
+        int frameCount = 0;
 
         while (!glfwWindowShouldClose(glfwWindow))
         {
@@ -362,6 +365,21 @@ public class Window
             currentTime = (float) glfwGetTime();
             dt = currentTime - lastTime;
             lastTime = currentTime;
+
+            frameCount++;
+            fpsTimer += dt;
+
+            if (fpsTimer >= 1.0) {
+                fps = frameCount;
+                frameCount = 0;
+                fpsTimer -= 1.0;
+
+                // Print FPS to console
+                System.out.println("FPS: " + fps);
+                System.out.println("Frame Time (dt): " + dt);
+            }
+
+
         }
     }
 

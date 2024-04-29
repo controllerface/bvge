@@ -73,6 +73,9 @@ public class GPGPU
      */
     public static long command_queue_ptr;
 
+    public static long async_command_queue_ptr;
+
+
     /**
      * The Open CL context associated with this class.
      */
@@ -193,6 +196,9 @@ public class GPGPU
         // Create a command-queue for the selected device
         command_queue_ptr = clCreateCommandQueue(context_ptr,
             device, 0, (IntBuffer) null);
+
+        async_command_queue_ptr = clCreateCommandQueue(context_ptr,
+            device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, (IntBuffer) null);
 
         MemoryUtil.memFree(ctx_props_buffer);
 
