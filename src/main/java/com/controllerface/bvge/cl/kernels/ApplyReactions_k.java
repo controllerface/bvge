@@ -12,7 +12,9 @@ public class ApplyReactions_k extends GPUKernel
         point_flags,
         point_hit_counts,
         point_reactions,
-        point_offsets;
+        point_offsets,
+        point_hull_indices,
+        hull_flags,
     }
 
     public ApplyReactions_k(long command_queue_ptr, long kernel_ptr)

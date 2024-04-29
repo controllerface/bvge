@@ -56,6 +56,7 @@ public abstract class GPUProgram
     protected static String func_matrix_transform         = read_src("functions/matrix_transform.cl");
     protected static String func_polygon_circle_collision = read_src("functions/polygon_circle_collision.cl");
     protected static String func_polygon_collision        = read_src("functions/polygon_collision.cl");
+    protected static String func_block_collision          = read_src("functions/block_collision.cl");
     protected static String func_polygon_distance         = read_src("functions/polygon_distance.cl");
     protected static String func_pos_vector_to_matrix     = read_src("functions/translation_vector_to_matrix.cl");
     protected static String func_project_circle           = read_src("functions/project_circle.cl");

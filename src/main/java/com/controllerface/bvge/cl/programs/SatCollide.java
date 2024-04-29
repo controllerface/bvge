@@ -23,6 +23,7 @@ public class SatCollide extends GPUProgram
         src.add(func_circle_collision);
         src.add(func_polygon_collision);
         src.add(func_polygon_circle_collision);
+        src.add(func_block_collision);
         src.add(CLUtils.read_src("programs/sat_collide.cl"));
 
         make_program();
@@ -30,6 +31,7 @@ public class SatCollide extends GPUProgram
         load_kernel(Kernel.sat_collide);
         load_kernel(Kernel.sat_collide_p);
         load_kernel(Kernel.sat_collide_c);
+        load_kernel(Kernel.sat_collide_b);
         load_kernel(Kernel.sat_collide_pc);
         load_kernel(Kernel.sort_reactions);
         load_kernel(Kernel.apply_reactions);

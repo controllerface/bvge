@@ -1,7 +1,7 @@
 /**
 Handles collision between two polygonal hulls
  */
-inline void polygon_collision(int hull_1_id, 
+inline void block_collision(int hull_1_id, 
                               int hull_2_id,
                               __global float2 *hulls,
                               __global float *hull_frictions,
@@ -49,6 +49,9 @@ inline void polygon_collision(int hull_1_id,
     int2 vertex_table;
 
     // hull 1
+    int p1 = 0;
+
+    __attribute__((opencl_unroll_hint(2)))
     for (int point_index = 0; point_index < hull_1_edge_count; point_index++)
     {
         int edge_index = hull_1_edge_table.x + point_index;
@@ -56,7 +59,8 @@ inline void polygon_collision(int hull_1_id,
         int edge_flag = edge_flags[edge_index];
         
         // do not test interior edges
-        if (edge_flag == 1) continue;
+        if (edge_flag == 1 || p1 > 1) continue;
+        p1++;
 
         int a_index = edge.x;
         int b_index = edge.y;
@@ -97,6 +101,10 @@ inline void polygon_collision(int hull_1_id,
     }
     
     // hull 2
+
+    p1 = 0;
+
+    __attribute__((opencl_unroll_hint(2)))
     for (int point_index = 0; point_index < hull_2_edge_count; point_index++)
     {
         int edge_index = hull_2_edge_table.x + point_index;
@@ -104,7 +112,8 @@ inline void polygon_collision(int hull_1_id,
         int edge_flag = edge_flags[edge_index];
 
         // do not test interior edges
-        if (edge_flag == 1) continue;
+        if (edge_flag == 1 || p1 > 1) continue;
+        p1++;
 
         int a_index = edge.x;
         int b_index = edge.y;
@@ -189,21 +198,21 @@ inline void polygon_collision(int hull_1_id,
 
     bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
     bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
-    // bool block_vert = (vert_hull_flags & IS_BLOCK) !=0;
-    // bool block_edge = (edge_hull_flags & IS_BLOCK) !=0;
+    bool block_vert = (vert_hull_flags & IS_BLOCK) !=0;
+    bool block_edge = (edge_hull_flags & IS_BLOCK) !=0;
 
-    // // if (block_vert || block_edge)
-    // // {
-    // //     printf("debug: %d %d", block_vert, block_edge);
-    // // }
+    // if (block_vert || block_edge)
+    // {
+    //     printf("debug: %d %d", block_vert, block_edge);
+    // }
 
-    // vert_hull_flags = (block_vert && block_edge) 
-    //     ? vert_hull_flags | TOUCH_ALIKE 
-    //     : vert_hull_flags;
+    vert_hull_flags = (block_vert && block_edge) 
+        ? vert_hull_flags | TOUCH_ALIKE 
+        : vert_hull_flags;
 
-    // edge_hull_flags = (block_vert && block_edge) 
-    //     ? edge_hull_flags | TOUCH_ALIKE 
-    //     : edge_hull_flags;
+    edge_hull_flags = (block_vert && block_edge) 
+        ? edge_hull_flags | TOUCH_ALIKE 
+        : edge_hull_flags;
 
 
     hull_flags[vert_hull_id] = vert_hull_flags;

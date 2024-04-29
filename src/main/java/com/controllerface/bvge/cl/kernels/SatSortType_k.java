@@ -10,6 +10,7 @@ public class SatSortType_k extends GPUKernel
         hull_flags,
         sat_candidates_p,
         sat_candidates_c,
+        sat_candidates_b,
         sat_candidates_pc,
         counter,
     }

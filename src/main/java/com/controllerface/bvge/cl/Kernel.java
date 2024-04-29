@@ -63,6 +63,7 @@ public enum Kernel
     sat_collide,
     sat_collide_p,
     sat_collide_c,
+    sat_collide_b,
     sat_collide_pc,
     sat_sort_count,
     sat_sort_type,

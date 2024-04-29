@@ -140,6 +140,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     bool side_r = (flags & SIDE_R) !=0;
     bool side_l = (flags & SIDE_L) !=0;
     bool touch_alike = (flags & TOUCH_ALIKE) !=0;
+    bool is_static = (flags & IS_STATIC) !=0;
 
 
     float side_z = side_r 
@@ -175,10 +176,10 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float4 pos = (float4)(point.xy, side_z, 1.0f);
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
 
-        //float xxx = touch_alike ? 1.2f : col;
+        float xxx = is_static ? 1.0f : col;
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
-        color_buffer[ref_offset] = (float4)(col, col, col, 1.0f);
+        color_buffer[ref_offset] = (float4)(col, xxx, col, 1.0f);
     }
 
     int start_face = mesh_face_table.x;

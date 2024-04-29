@@ -95,6 +95,9 @@ __kernel void sat_sort_count(__global int2 *candidates,
     bool b1_is_circle = (hull_1_flags & IS_CIRCLE) !=0;
     bool b2_is_circle = (hull_2_flags & IS_CIRCLE) !=0;
 
+    bool b1_is_block = (hull_1_flags & IS_BLOCK) !=0;
+    bool b2_is_block = (hull_2_flags & IS_BLOCK) !=0;
+
     bool b1_is_polygon = (hull_1_flags & IS_POLYGON) !=0;
     bool b2_is_polygon = (hull_2_flags & IS_POLYGON) !=0;
 
@@ -108,9 +111,13 @@ __kernel void sat_sort_count(__global int2 *candidates,
     {
         atomic_inc(&counter[1]);
     }
-    else 
+    else if (b1_is_block && b2_is_block) 
     {
         atomic_inc(&counter[2]);
+    }
+    else 
+    {
+        atomic_inc(&counter[3]);
     }
 }
 
@@ -118,6 +125,7 @@ __kernel void sat_sort_type(__global int2 *candidates,
                             __global int *hull_flags,
                             __global int2 *sat_candidates_p,
                             __global int2 *sat_candidates_c,
+                            __global int2 *sat_candidates_b,
                             __global int2 *sat_candidates_pc,
                             __global int *counter)
 {
@@ -134,6 +142,9 @@ __kernel void sat_sort_type(__global int2 *candidates,
     bool b1_is_circle = (hull_1_flags & IS_CIRCLE) !=0;
     bool b2_is_circle = (hull_2_flags & IS_CIRCLE) !=0;
 
+    bool b1_is_block = (hull_1_flags & IS_BLOCK) !=0;
+    bool b2_is_block = (hull_2_flags & IS_BLOCK) !=0;
+
     bool b1_is_polygon = (hull_1_flags & IS_POLYGON) !=0;
     bool b2_is_polygon = (hull_2_flags & IS_POLYGON) !=0;
 
@@ -149,9 +160,14 @@ __kernel void sat_sort_type(__global int2 *candidates,
         int id = atomic_inc(&counter[1]);
         sat_candidates_c[id] = current_pair;
     }
-    else 
+    else if (b1_is_block && b2_is_block) 
     {
         int id = atomic_inc(&counter[2]);
+        sat_candidates_b[id] = current_pair;
+    }
+    else 
+    {
+        int id = atomic_inc(&counter[3]);
         sat_candidates_pc[id] = current_pair;
     }
 }

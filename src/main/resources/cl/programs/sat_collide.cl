@@ -47,6 +47,9 @@ __kernel void sat_collide(__global int2 *candidates,
     bool b1_is_circle = (hull_1_flags & IS_CIRCLE) !=0;
     bool b2_is_circle = (hull_2_flags & IS_CIRCLE) !=0;
 
+    bool b1_is_block = (hull_1_flags & IS_BLOCK) !=0;
+    bool b2_is_block = (hull_2_flags & IS_BLOCK) !=0;
+
     bool b1_is_polygon = (hull_1_flags & IS_POLYGON) !=0;
     bool b2_is_polygon = (hull_2_flags & IS_POLYGON) !=0;
 
@@ -94,6 +97,27 @@ __kernel void sat_collide(__global int2 *candidates,
             masses,
             counter,
             dt); 
+    }
+    else if (b1_is_block && b2_is_block) 
+    {
+        block_collision(b1_id, b2_id, 
+            hulls,
+            hull_frictions,
+            hull_restitutions,
+            hull_armature_ids,
+            hull_flags,
+            hull_point_tables,
+            hull_edge_tables,
+            point_flags,
+            points,
+            edges,
+            edge_flags,
+            reactions,
+            reaction_index,
+            point_reactions,
+            masses,
+            counter,
+            dt);
     }
     else 
     {
@@ -218,6 +242,57 @@ __kernel void sat_collide_c(__global int2 *candidates,
 
 }
 
+
+
+__kernel void sat_collide_b(__global int2 *candidates,
+                          __global float2 *hulls,
+                          __global float2 *hull_scales,
+                          __global float *hull_frictions,
+                          __global float *hull_restitutions,
+                          __global int2 *hull_point_tables,
+                          __global int2 *hull_edge_tables,
+                          __global int *hull_armature_ids,
+                          __global int *hull_flags,
+                          __global int *point_flags,
+                          __global float4 *points,
+                          __global int2 *edges,
+                          __global int *edge_flags,
+                          __global float8 *reactions,
+                          __global int *reaction_index,
+                          __global int *point_reactions,
+                          __global float *masses,
+                          __global int *counter,
+                          float dt)
+{
+    int gid = get_global_id(0);
+    
+    int2 current_pair = candidates[gid];
+    int b1_id = current_pair.x;
+    int b2_id = current_pair.y;
+    
+    block_collision(b1_id, b2_id, 
+        hulls,
+        hull_frictions,
+        hull_restitutions,
+        hull_armature_ids,
+        hull_flags,
+        hull_point_tables,
+        hull_edge_tables,
+        point_flags,
+        points,
+        edges,
+        edge_flags,
+        reactions,
+        reaction_index,
+        point_reactions,
+        masses,
+        counter,
+        dt);
+}
+
+
+
+
 __kernel void sat_collide_pc(__global int2 *candidates,
                           __global float2 *hulls,
                           __global float2 *hull_scales,
@@ -335,7 +410,9 @@ __kernel void apply_reactions(__global float8 *reactions,
                               __global int *point_flags,
                               __global ushort *point_hit_counts,
                               __global int *point_reactions,
-                              __global int *point_offsets)
+                              __global int *point_offsets,
+                              __global int *point_hull_indices,
+                              __global int *hull_flags)
 {
     // todo: actual gravity vector should be provided, when it can change this should also be changable
     //  right now it is a static direction. note that magnitude of gravity is not important, only direction
@@ -346,20 +423,27 @@ __kernel void apply_reactions(__global float8 *reactions,
     int flags = point_flags[current_point];
     ushort hit_count = point_hit_counts[current_point];
     
+    int h_index = point_hull_indices[current_point];
+    int h_flags = hull_flags[h_index];
+    bool is_static = (h_flags & IS_STATIC) != 0;
+
     // exit on non-reactive points
     if (reaction_count == 0) 
     {
-        hit_count = hit_count == 0 
-            ? 0
-            : hit_count <= HIT_LOW_THRESHOLD 
-            ? hit_count - 1 
-            : hit_count <= HIT_LOW_MID_THRESHOLD
-            ? hit_count - 2
-            : hit_count <= HIT_MID_THRESHOLD 
-            ? hit_count - 3 
-            : hit_count <= HIT_HIGH_MID_THRESHOLD 
-            ? hit_count - 4 
-            : hit_count - 5;
+        if (!is_static)
+        {
+            hit_count = hit_count == 0 
+                ? 0
+                : hit_count <= HIT_LOW_THRESHOLD 
+                ? hit_count - 1 
+                : hit_count <= HIT_LOW_MID_THRESHOLD
+                ? hit_count - 2
+                : hit_count <= HIT_MID_THRESHOLD 
+                ? hit_count - 3 
+                : hit_count <= HIT_HIGH_MID_THRESHOLD 
+                ? hit_count - 4 
+                : hit_count - 5;
+        }
 
         point_hit_counts[current_point] = hit_count;
         point_flags[current_point] = flags;
@@ -530,6 +614,7 @@ __kernel void move_armatures(__global float2 *hulls,
     int hull_count = end - start + 1;
 
     int hull_flags_0 = hull_flags[start];
+    bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
 
     float2 diff = (float2)(0.0f);
     int _point_flags = 0;
@@ -555,7 +640,7 @@ __kernel void move_armatures(__global float2 *hulls,
         diff += diffa;
         int2 xa = consume_point_flags(point_flags, point_hit_counts, point_table);
         total_hits += xa.y;
-        _point_flags = is_foot
+        _point_flags = is_foot || is_block
             ? _point_flags | xa.x
             : _point_flags;
     }
@@ -563,11 +648,10 @@ __kernel void move_armatures(__global float2 *hulls,
     bool hit_floor = (_point_flags & HIT_FLOOR) !=0;
     bool hit_water = (_hull_flags & IN_LIQUID) !=0;
 
-    bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
 
-    int block_check = HIT_LOW_MID_THRESHOLD * 4;
+    int block_check = HIT_TOP_THRESHOLD;
 
-    bool go_static = !hit_water && is_block && total_hits >= block_check;
+    bool go_static = hit_floor && !hit_water && is_block && total_hits >= block_check;
 
     
     hull_flags_0 = go_static 
