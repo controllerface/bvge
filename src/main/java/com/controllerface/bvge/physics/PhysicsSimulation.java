@@ -6,13 +6,17 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.util.Constants;
 import org.lwjgl.system.MemoryUtil;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.SynchronousQueue;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static org.lwjgl.opencl.CL10.clWaitForEvents;
@@ -89,17 +93,20 @@ public class PhysicsSimulation extends GameSystem
     private final long offsets_data_ptr;
     private final long sat_counts_ptr;
 
-    /** int
+    /**
+     * int
      * x: count of collision reactions for each point in the current frame
      */
     public final ResizableBuffer point_reaction_counts;
 
-    /** int
+    /**
+     * int
      * x: offset into reaction buffer for each point in the current frame
      */
     public final ResizableBuffer point_reaction_offsets;
 
-    /** float8
+    /**
+     * float8
      * s0: collision reaction x
      * s1: collision reaction y
      * s2: opposing vector x
@@ -111,7 +118,8 @@ public class PhysicsSimulation extends GameSystem
      */
     public final ResizableBuffer reactions_in;
 
-    /** float8
+    /**
+     * float8
      * s0: collision reaction x
      * s1: collision reaction y
      * s2: opposing vector x
@@ -123,7 +131,8 @@ public class PhysicsSimulation extends GameSystem
      */
     public final ResizableBuffer reactions_out;
 
-    /** int
+    /**
+     * int
      * x: index of the point that reactions apply to
      */
     public final ResizableBuffer reaction_index;
@@ -167,35 +176,35 @@ public class PhysicsSimulation extends GameSystem
 
         counts_buf_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
 
-        atomic_counter_ptr  = GPGPU.cl_new_pinned_int();
-        counts_data_ptr     = GPGPU.cl_new_buffer(counts_buf_size);
-        offsets_data_ptr    = GPGPU.cl_new_buffer(counts_buf_size);
-        sat_counts_ptr      = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 4);
+        atomic_counter_ptr = GPGPU.cl_new_pinned_int();
+        counts_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
+        offsets_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
+        sat_counts_ptr = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 4);
 
-        point_reaction_counts       = new TransientBuffer(CLSize.cl_int, 500_000L);
-        point_reaction_offsets      = new TransientBuffer(CLSize.cl_int, 500_000L);
-        reactions_in                = new TransientBuffer(CLSize.cl_float8, 500_000L);
-        reactions_out               = new TransientBuffer(CLSize.cl_float8, 500_000L);
-        reaction_index              = new TransientBuffer(CLSize.cl_int, 500_000L);
-        key_map                     = new TransientBuffer(CLSize.cl_int, 500_000L);
-        key_bank                    = new TransientBuffer(CLSize.cl_int, 500_000L);
-        in_bounds                   = new TransientBuffer(CLSize.cl_int, 500_000L);
-        candidates                  = new TransientBuffer(CLSize.cl_int2, 500_000L);
-        candidate_counts            = new TransientBuffer(CLSize.cl_int2, 500_000L);
-        candidate_offsets           = new TransientBuffer(CLSize.cl_int, 500_000L);
-        matches                     = new TransientBuffer(CLSize.cl_int, 500_000L);
-        matches_used                = new TransientBuffer(CLSize.cl_int, 500_000L);
+        point_reaction_counts = new TransientBuffer(CLSize.cl_int, 500_000L);
+        point_reaction_offsets = new TransientBuffer(CLSize.cl_int, 500_000L);
+        reactions_in = new TransientBuffer(CLSize.cl_float8, 500_000L);
+        reactions_out = new TransientBuffer(CLSize.cl_float8, 500_000L);
+        reaction_index = new TransientBuffer(CLSize.cl_int, 500_000L);
+        key_map = new TransientBuffer(CLSize.cl_int, 500_000L);
+        key_bank = new TransientBuffer(CLSize.cl_int, 500_000L);
+        in_bounds = new TransientBuffer(CLSize.cl_int, 500_000L);
+        candidates = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        candidate_counts = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        candidate_offsets = new TransientBuffer(CLSize.cl_int, 500_000L);
+        matches = new TransientBuffer(CLSize.cl_int, 500_000L);
+        matches_used = new TransientBuffer(CLSize.cl_int, 500_000L);
 
-        sat_candidates_p            = new TransientBuffer(CLSize.cl_int2, 500_000L);
-        sat_candidates_c            = new TransientBuffer(CLSize.cl_int2, 500_000L);
-        sat_candidates_b            = new TransientBuffer(CLSize.cl_int2, 500_000L);
-        sat_candidates_pc           = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        sat_candidates_p = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        sat_candidates_c = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        sat_candidates_b = new TransientBuffer(CLSize.cl_int2, 500_000L);
+        sat_candidates_pc = new TransientBuffer(CLSize.cl_int2, 500_000L);
 
-        control_point_flags         = new PersistentBuffer(CLSize.cl_int, 1);
-        control_point_indices       = new PersistentBuffer(CLSize.cl_int, 1);
-        control_point_tick_budgets  = new PersistentBuffer(CLSize.cl_int, 1);
-        control_point_linear_mag    = new PersistentBuffer(CLSize.cl_float, 1);
-        control_point_jump_mag      = new PersistentBuffer(CLSize.cl_float, 1);
+        control_point_flags = new PersistentBuffer(CLSize.cl_int, 1);
+        control_point_indices = new PersistentBuffer(CLSize.cl_int, 1);
+        control_point_tick_budgets = new PersistentBuffer(CLSize.cl_int, 1);
+        control_point_linear_mag = new PersistentBuffer(CLSize.cl_float, 1);
+        control_point_jump_mag = new PersistentBuffer(CLSize.cl_float, 1);
 
         control_entities.init();
         integrate.init();
@@ -315,7 +324,6 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(SatSortType_k.Args.counter, sat_counts_ptr);
 
 
-
         long scan_candidates_single_block_out_k_ptr = scan_key_candidates.kernel_ptr(Kernel.scan_candidates_single_block_out);
         scan_candidates_single_block_out_k = new ScanCandidatesSingleBlockOut_k(GPGPU.command_queue_ptr, scan_candidates_single_block_out_k_ptr);
 
@@ -372,12 +380,6 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
             .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
             .set_arg(SatCollide_k.Args.dt, FIXED_TIME_STEP);
-
-
-
-
-
-
 
 
         long sat_collide_p_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide_p);
@@ -467,17 +469,6 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollidePC_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
             .ptr_arg(SatCollidePC_k.Args.counter, atomic_counter_ptr)
             .set_arg(SatCollidePC_k.Args.dt, FIXED_TIME_STEP);
-
-
-
-
-
-
-
-
-
-
-
 
 
         long sort_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.sort_reactions);
@@ -796,7 +787,7 @@ public class PhysicsSimulation extends GameSystem
 
         candidates.ensure_capacity(candidate_count);
 
-        int[] counter = new int[]{ 0 };
+        int[] counter = new int[]{0};
         var counter_ptr = GPGPU.cl_new_int_arg_buffer(counter);
 
         candidate_buffer_size = buffer_size;
@@ -811,7 +802,7 @@ public class PhysicsSimulation extends GameSystem
     private void sort_sat_candidates()
     {
         int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
-        long[] global_work_size = new long[]{ candidate_pair_size };
+        long[] global_work_size = new long[]{candidate_pair_size};
 
         GPGPU.cl_zero_buffer(sat_counts_ptr, CLSize.cl_int * 4);
         sat_sort_count_k.call(global_work_size);
@@ -837,12 +828,12 @@ public class PhysicsSimulation extends GameSystem
     private void sat_collide()
     {
         int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
-        long[] global_work_size = new long[]{ candidate_pair_size };
+        long[] global_work_size = new long[]{candidate_pair_size};
 
-        long[] global_work_size_p = new long[]{ sat_candidate_p_buffer_size };
-        long[] global_work_size_c = new long[]{ sat_candidate_c_buffer_size };
-        long[] global_work_size_b = new long[]{ sat_candidate_b_buffer_size };
-        long[] global_work_size_pc = new long[]{ sat_candidate_pc_buffer_size };
+        long[] global_work_size_p = new long[]{sat_candidate_p_buffer_size};
+        long[] global_work_size_c = new long[]{sat_candidate_c_buffer_size};
+        long[] global_work_size_b = new long[]{sat_candidate_b_buffer_size};
+        long[] global_work_size_pc = new long[]{sat_candidate_pc_buffer_size};
 
         GPGPU.cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
 
@@ -968,12 +959,12 @@ public class PhysicsSimulation extends GameSystem
             }
 
             set_control_points_k
-                    .set_arg(SetControlPoints_k.Args.target, target_count)
-                    .set_arg(SetControlPoints_k.Args.new_flags, flags)
-                    .set_arg(SetControlPoints_k.Args.new_index, armature.index())
-                    .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
-                    .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
-                    .call(GPGPU.global_single_size);
+                .set_arg(SetControlPoints_k.Args.target, target_count)
+                .set_arg(SetControlPoints_k.Args.new_flags, flags)
+                .set_arg(SetControlPoints_k.Args.new_index, armature.index())
+                .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
+                .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
+                .call(GPGPU.global_single_size);
             target_count++;
         }
 
@@ -1127,8 +1118,49 @@ public class PhysicsSimulation extends GameSystem
         apply_reactions();
     }
 
-    @Override
-    public void tick(float dt)
+    private final BlockingQueue<Float> q = new SynchronousQueue<>();
+    private final BlockingQueue<Long> r = new SynchronousQueue<>();
+
+    private final Thread t = Thread.ofVirtual().start(() ->
+    {
+        var xt =  Thread.ofVirtual().start(() -> {
+            try
+            {
+                r.put(0L);
+                System.out.println("thread started...");
+            }
+            catch (InterruptedException e)
+            {
+                throw new RuntimeException(e);
+            }
+        });
+        try
+        {
+            xt.join();
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
+        while (!Thread.currentThread().isInterrupted())
+        {
+            try
+            {
+                long s = System.currentTimeMillis();
+                t(q.take());
+                long e = System.currentTimeMillis() - s;
+                r.put(e);
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
+            }
+        }
+    });
+
+
+    private void t(float dt)
     {
         // Bones are animated once per time tick
         animate_armatures(dt);
@@ -1193,14 +1225,108 @@ public class PhysicsSimulation extends GameSystem
         // zero out the acceleration buffer, so it is empty for the next frame
         GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL).clear();
 
-        // Deletion of objects happens only once per simulation cycle, instead of every tick
-        // to ensure buffer compaction happens as infrequently as possible.
-        GPGPU.core_memory.delete_and_compact();
-
         // After all simulation is done for this pass, do one last animate pass so that vertices are all in
         // the expected location for rendering. The interplay between animation and edge constraints may leave
         // the points in slightly incorrect positions. This makes sure everything is good for the render step.
         animate_points();
+
+        // Deletion of objects happens only once per simulation tick, instead of every sub-step
+        // to ensure buffer compaction happens as infrequently as possible.
+        GPGPU.core_memory.delete_and_compact();
+    }
+
+    @Override
+    public void tick(float dt)
+    {
+        try
+        {
+            long last = r.take(); // todo: add timeout to this
+            if (Editor.ACTIVE)
+            {
+                Editor.queue_event("phys", String.valueOf(last));
+            }
+            q.put(dt);
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        // todo:
+        //  - wait for last physics tick thread to complete (semaphore)
+        //  - transfer relevant data to mirror buffers
+        //  - spawn next physics tick thread and return
+
+        //t(dt);
+
+
+//        // Bones are animated once per time tick
+//        animate_armatures(dt);
+//        animate_bones();
+//
+//        // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
+//        // convex shape. Animations may move points into positions where the geometry is slightly concave,
+//        // so this call acts as a small hedge against this happening before collision checks can be performed.
+//        resolve_constraints(EDGE_STEPS);
+//
+//        // Before the GPU begins the simulation cycle, player input is handled and the memory structures
+//        // in the GPU are updated with the proper values.
+//        //update_controllable_entities();
+//
+//        this.time_accumulator += dt;
+//        int sub_ticks = 0;
+//        while (this.time_accumulator >= TICK_RATE)
+//        {
+//            for (int i = 0; i < TARGET_SUB_STEPS; i++)
+//            {
+//                sub_ticks++;
+//
+//                // if we end up doing more sub ticks than is ideal, we will avoid ticking the simulation anymore
+//                // for this frame. This forces slower hardware to slow down a bit, which is less than ideal, but
+//                // is better than the alternative, which is system lockup.
+//                // todo: test a few different values on some lower-end hardware and try to find a sweet spot.
+//                if (sub_ticks <= MAX_SUB_STEPS)
+//                {
+//                    this.time_accumulator -= FIXED_TIME_STEP;
+//
+//                    // perform one tick of the simulation
+//                    this.tick_simulation();
+//
+//                    // Once all points have been relocated, all hulls are in their required positions for this frame.
+//                    // Movements applied to hulls are now accumulated and applied to their parent armatures.
+//                    move_armatures();
+//
+//                    // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
+//                    // objects that have animation will have their hulls moved into position for the current tick. It
+//                    // may seem odd to process animations as part of physics and not rendering, however this is required
+//                    // as the animated objects need to be accounted for in physical space. The hulls representing the
+//                    // rendered meshes are what is actually moved, and the result of the hull movement is used to position
+//                    // the original mesh for rendering. This separation is necessary as model geometry is too complex to
+//                    // use as a collision boundary.
+//                    animate_points();
+//
+//                    // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain
+//                    // their defined shapes. Without this step, the individual points of the tracked physics hulls will
+//                    // deform on impact, and may fly off in random directions, typically causing simulation failure. The
+//                    // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
+//                    // within the simulation.
+//                    resolve_constraints(EDGE_STEPS);
+//                }
+//                else
+//                {
+//                    // todo: when debug logging is added, log the amount of dropped simulation time
+//                    this.time_accumulator = 0;
+//                }
+//            }
+//        }
+//
+//        // zero out the acceleration buffer, so it is empty for the next frame
+//        GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL).clear();
+//
+//        // After all simulation is done for this pass, do one last animate pass so that vertices are all in
+//        // the expected location for rendering. The interplay between animation and edge constraints may leave
+//        // the points in slightly incorrect positions. This makes sure everything is good for the render step.
+//        animate_points();
     }
 
     @Override

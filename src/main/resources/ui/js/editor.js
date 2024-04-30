@@ -21,3 +21,4 @@ function handle_event(event)
 var event_source = new EventSource("/events");
 event_source.addEventListener('dt', handle_event);
 event_source.addEventListener('fps', handle_event);
+event_source.addEventListener('phys', handle_event);
