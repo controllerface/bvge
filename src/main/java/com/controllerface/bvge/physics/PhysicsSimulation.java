@@ -1130,14 +1130,6 @@ public class PhysicsSimulation extends GameSystem
     @Override
     public void tick(float dt)
     {
-        var armatures = ecs.getComponents(Component.Armature);
-
-        // possible during startup
-        if (armatures == null || armatures.isEmpty())
-        {
-            return;
-        }
-
         // Bones are animated once per time tick
         animate_armatures(dt);
         animate_bones();
@@ -1145,8 +1137,7 @@ public class PhysicsSimulation extends GameSystem
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
         // convex shape. Animations may move points into positions where the geometry is slightly concave,
         // so this call acts as a small hedge against this happening before collision checks can be performed.
-        // Because animations may move hulls drastically, this call is given multiple iterations.
-        resolve_constraints(1);
+        resolve_constraints(EDGE_STEPS);
 
         // Before the GPU begins the simulation cycle, player input is handled and the memory structures
         // in the GPU are updated with the proper values.
@@ -1190,9 +1181,6 @@ public class PhysicsSimulation extends GameSystem
                     // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
                     // within the simulation.
                     resolve_constraints(EDGE_STEPS);
-
-
-
                 }
                 else
                 {
@@ -1207,7 +1195,7 @@ public class PhysicsSimulation extends GameSystem
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
         // to ensure buffer compaction happens as infrequently as possible.
-        //GPGPU.core_memory.delete_and_compact();
+        GPGPU.core_memory.delete_and_compact();
 
         // After all simulation is done for this pass, do one last animate pass so that vertices are all in
         // the expected location for rendering. The interplay between animation and edge constraints may leave
