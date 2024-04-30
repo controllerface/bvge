@@ -29,6 +29,9 @@ inline void polygon_circle_collision(int polygon_id,
     int2 polygon_edge_table = hull_edge_tables[polygon_id];
     int2 circle_table = hull_point_tables[circle_id];
 
+    int hull_1_flags = hull_flags[polygon_id];
+    bool b1_is_block = (hull_1_flags & IS_BLOCK) !=0;
+
 	int polygon_vert_count = polygon_point_table.y - polygon_point_table.x + 1;
 	int polygon_edge_count = polygon_edge_table.y - polygon_edge_table.x + 1;
 
@@ -43,7 +46,13 @@ inline void polygon_circle_collision(int polygon_id,
     float2 collision_normal;
     int2 vertex_table = circle_table;
 
+
+    int max_axis = 0;
+    int this_axis = 0;
+
     // polygon
+    max_axis = b1_is_block ? 2 : polygon_edge_count;
+    __attribute__((opencl_unroll_hint(2)))
     for (int point_index = 0; point_index < polygon_edge_count; point_index++)
     {
         int edge_index = polygon_edge_table.x + point_index;
@@ -51,7 +60,8 @@ inline void polygon_circle_collision(int polygon_id,
         int edge_flag = edge_flags[edge_index];
         
         // do not test interior edges
-        if (edge_flag == 1) continue;
+        if (edge_flag == 1 || this_axis >= max_axis) continue;
+        this_axis++;
 
         int a_index = edge.x;
         int b_index = edge.y;
@@ -137,13 +147,6 @@ inline void polygon_circle_collision(int polygon_id,
         : edge_hull_flags;
     hull_flags[edge_hull_id] = edge_hull_flags;
 
-    // int _point_flags = point_flags[vert_index];
-    // bool flow_left = vert_hull_opposing.x >= 0; //(_point_flags & FLOW_LEFT) != 0;
-    // _point_flags = flow_left
-    //     ? _point_flags | FLOW_LEFT
-    //     : _point_flags & ~FLOW_LEFT;
-    // point_flags[vert_index] = _point_flags;
-
     int vert_armature_id = hull_armature_ids[vert_hull_id];
     int edge_armature_id = hull_armature_ids[edge_hull_id];
     float vert_hull_mass = masses[vert_armature_id];
@@ -165,7 +168,7 @@ inline void polygon_circle_collision(int polygon_id,
 
     edge_magnitude = any_static 
         ? static_edge ? 0.0f : 1.0f
-        : 0.0f;
+        : edge_magnitude;
 
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];
