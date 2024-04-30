@@ -73,6 +73,7 @@ public class GPGPU
      */
     public static long command_queue_ptr;
 
+    // todo: repurpose for decoupled render/physics concept
     public static long async_command_queue_ptr;
 
 
