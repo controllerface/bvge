@@ -307,7 +307,7 @@ public class TestGame extends GameMode
         //genCircles(150, 6f, 5f, 0, 100);
 
         genWater(150, 10f, 10f, 0, 1400);
-        genBlocks(75,  15f, 15f, -50, 200);
+        genBlocks(100,  15f, 15f, -50, 200);
         genBlocks(100,  15f, 15f, 2500, 200);
         genBlocks(100,  15f, 15f, 2500, 3800);
 

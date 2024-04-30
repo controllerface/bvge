@@ -303,18 +303,13 @@ public class GPGPU
 
     public static void cl_zero_buffer(long buffer_ptr, long buffer_size)
     {
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var event = mem_stack.callocPointer(1);
-            clEnqueueFillBuffer(command_queue_ptr,
-                buffer_ptr,
-                ZERO_PATTERN_BUFFER,
-                0,
-                buffer_size,
-                null,
-                event);
-            clWaitForEvents(event);
-        }
+        clEnqueueFillBuffer(command_queue_ptr,
+            buffer_ptr,
+            ZERO_PATTERN_BUFFER,
+            0,
+            buffer_size,
+            null,
+            null);
     }
 
     public static long cl_new_pinned_buffer(long size)
@@ -401,16 +396,11 @@ public class GPGPU
 
     public static void cl_transfer_buffer(long src_ptr, long dst_ptr, long size)
     {
-        try (var mem_stack = MemoryStack.stackPush())
+        int result = clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, null);
+        if (result != CL_SUCCESS)
         {
-            var event = mem_stack.callocPointer(1);
-            int result = clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, event);
-            clWaitForEvents(event);
-            if (result != CL_SUCCESS)
-            {
-                System.out.println("Error on buffer copy: " + result);
-                System.exit(1);
-            }
+            System.out.println("Error on buffer copy: " + result);
+            System.exit(1);
         }
     }
 
