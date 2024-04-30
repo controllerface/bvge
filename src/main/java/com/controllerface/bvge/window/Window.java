@@ -352,8 +352,8 @@ public class Window
 
             if (dt >= 0)
             {
-                ecs.tick(dt);
                 currentGameMode.update(dt);
+                ecs.tick(dt);
                 glfwSwapBuffers(glfwWindow);
             }
 
@@ -369,17 +369,18 @@ public class Window
             frameCount++;
             fpsTimer += dt;
 
-            if (fpsTimer >= 1.0) {
+
+            if (fpsTimer >= 1.0)
+            {
                 fps = frameCount;
                 frameCount = 0;
                 fpsTimer -= 1.0;
 
-                // Print FPS to console
-                System.out.println(STR."FPS: \{ fps }");
-                System.out.println(STR."Last DT: \{ dt }");
+                if (Editor.ACTIVE)
+                {
+                    Editor.queue_event("fps", String.valueOf(fps));
+                }
             }
-
-
         }
     }
 

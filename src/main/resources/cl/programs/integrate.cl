@@ -65,6 +65,7 @@ __kernel void integrate(__global float2 *hulls,
     bool in_liquid = (hull_1_flags & IN_LIQUID) !=0;
     bool is_liquid = (hull_1_flags & IS_LIQUID) !=0;
     bool touch_alike = (hull_1_flags & TOUCH_ALIKE) !=0;
+    bool out_of_bounds = (hull_1_flags & OUT_OF_BOUNDS) !=0;
 
     // wipe all ephemeral flags
     hull_1_flags &= ~OUT_OF_BOUNDS;
@@ -72,7 +73,7 @@ __kernel void integrate(__global float2 *hulls,
     hull_1_flags &= ~TOUCH_ALIKE;
 
     gravity = in_liquid
-        ? gravity * 0.25f
+        ? gravity * 1.5f
         : gravity;
 
    	// get acc value and multiply by the timestep do get the displacement vector
@@ -111,7 +112,7 @@ __kernel void integrate(__global float2 *hulls,
     float2 i_acc = anti_grav * dt_2;
 
     float y_damping = in_liquid
-        ? .980f
+        ? .920f
         : 1.0f;
 
     for (int i = start; i <= end; i++)
@@ -124,7 +125,7 @@ __kernel void integrate(__global float2 *hulls,
         float2 prv = point.zw;
 
         float x_threshold = is_liquid ? 1.0f : 10.0f;
-        float y_threshold = is_liquid ? 4.0f : 1.0f;
+        float y_threshold = is_liquid ? 2.0f : 1.0f;
         
         float2 vel = (pos - prv) ;/// dt;
         bool s_x = fabs(vel.x) > x_threshold;
@@ -146,13 +147,13 @@ __kernel void integrate(__global float2 *hulls,
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
 
-            float g_x = 0.3f;
-            float g_y = 0.1f;
+            float g_x = touch_alike ? 0.4f : 0.4;
+            float g_y = touch_alike ? 0.0f : 0.0;
 
             float2 w_acc = (is_liquid & !touch_alike)
                 ? flow_left
-                    ? (float2)(-gravity.y * g_x, gravity.y * g_y)
-                    : (float2)(gravity.y * g_x, gravity.y * g_y)
+                    ? (float2)(-gravity.y * g_x, 0.0f)
+                    : (float2)(gravity.y * g_x, 0.0f)
                 : (float2)(0.0f, 0.0f);
 
             w_acc *= dt_2;

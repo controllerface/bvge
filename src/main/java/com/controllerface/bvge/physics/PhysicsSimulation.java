@@ -22,7 +22,7 @@ public class PhysicsSimulation extends GameSystem
     private static final float TARGET_FPS = 24.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
     private static final int TARGET_SUB_STEPS = 16;
-    private static final int MAX_SUB_STEPS = 16;
+    private static final int MAX_SUB_STEPS = 20;
     private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
     private static final int EDGE_STEPS = 8;
 
@@ -1146,7 +1146,7 @@ public class PhysicsSimulation extends GameSystem
         // convex shape. Animations may move points into positions where the geometry is slightly concave,
         // so this call acts as a small hedge against this happening before collision checks can be performed.
         // Because animations may move hulls drastically, this call is given multiple iterations.
-        resolve_constraints(EDGE_STEPS);
+        resolve_constraints(1);
 
         // Before the GPU begins the simulation cycle, player input is handled and the memory structures
         // in the GPU are updated with the proper values.
@@ -1189,7 +1189,7 @@ public class PhysicsSimulation extends GameSystem
                     // deform on impact, and may fly off in random directions, typically causing simulation failure. The
                     // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
                     // within the simulation.
-                    resolve_constraints(1);
+                    resolve_constraints(EDGE_STEPS);
 
 
 
@@ -1207,7 +1207,7 @@ public class PhysicsSimulation extends GameSystem
 
         // Deletion of objects happens only once per simulation cycle, instead of every tick
         // to ensure buffer compaction happens as infrequently as possible.
-        GPGPU.core_memory.delete_and_compact();
+        //GPGPU.core_memory.delete_and_compact();
 
         // After all simulation is done for this pass, do one last animate pass so that vertices are all in
         // the expected location for rendering. The interplay between animation and edge constraints may leave

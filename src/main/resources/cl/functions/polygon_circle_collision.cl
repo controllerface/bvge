@@ -135,7 +135,7 @@ inline void polygon_circle_collision(int polygon_id,
     min_distance = native_divide(min_distance, fast_length(collision_normal));
 
     // collision reaction and opposing direction calculation
-    float2 vert_hull_opposing = (float2)(0.0f, 0.0f); //hull_b.xy - hull_a.xy;
+    float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
     float2 edge_hull_opposing = (float2)(0.0f, 0.0f); //hull_a.xy - hull_b.xy;
     
     int vert_hull_flags = hull_flags[vert_hull_id];
@@ -164,91 +164,91 @@ inline void polygon_circle_collision(int polygon_id,
 
     vert_magnitude = any_static 
         ? static_vert ? 0.0f : 1.0f
-        : vert_magnitude;
+        : 1.0f;
 
     edge_magnitude = any_static 
         ? static_edge ? 0.0f : 1.0f
-        : edge_magnitude;
+        : 0.0f;
 
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];
     float4 edge_point_2 = points[edge_index_b];
     float2 collision_vector = collision_normal * min_distance;
-    float contact = edge_contact(edge_point_1.xy, edge_point_2.xy, vertex_point.xy, collision_vector);
-    float inverse_contact = 1.0f - contact;
-    float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
-    float2 edge_1_collision = collision_vector * (inverse_contact * edge_magnitude * edge_scale) * -1;
-    float2 edge_2_collision = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
+    // float contact = edge_contact(edge_point_1.xy, edge_point_2.xy, vertex_point.xy, collision_vector);
+    // float inverse_contact = 1.0f - contact;
+    // float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
+    // float2 edge_1_collision = collision_vector * (inverse_contact * edge_magnitude * edge_scale) * -1;
+    // float2 edge_2_collision = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
     float2 vertex_collision = collision_vector * vert_magnitude;
 
     // friction
-    float2 vertex_diff = vertex_point.xy - vertex_point.zw;
-    float2 edge_1_diff = edge_point_1.xy - edge_point_1.zw;
-    float2 edge_2_diff = edge_point_2.xy - edge_point_2.zw;
-    float2 vertex_velocity = native_divide(vertex_diff, dt);
-    float2 edge_1_velocity = native_divide(edge_1_diff, dt);
-    float2 edge_2_velocity = native_divide(edge_2_diff, dt);
-    float2 vertex_rel_vel = vertex_velocity - collision_vector;
-    float2 edge_1_rel_vel = edge_1_velocity - collision_vector;
-    float2 edge_2_rel_vel = edge_2_velocity - collision_vector;
+    // float2 vertex_diff = vertex_point.xy - vertex_point.zw;
+    // float2 edge_1_diff = edge_point_1.xy - edge_point_1.zw;
+    // float2 edge_2_diff = edge_point_2.xy - edge_point_2.zw;
+    // float2 vertex_velocity = native_divide(vertex_diff, dt);
+    // float2 edge_1_velocity = native_divide(edge_1_diff, dt);
+    // float2 edge_2_velocity = native_divide(edge_2_diff, dt);
+    // float2 vertex_rel_vel = vertex_velocity - collision_vector;
+    // float2 edge_1_rel_vel = edge_1_velocity - collision_vector;
+    // float2 edge_2_rel_vel = edge_2_velocity - collision_vector;
 
-    float friction_coefficient = any_static 
-        ? static_vert 
-            ? vert_hull_friction 
-            : edge_hull_friction
-        : 0.0f;//max(vert_hull_friction, edge_hull_friction);
+    // float friction_coefficient = any_static 
+    //     ? static_vert 
+    //         ? vert_hull_friction 
+    //         : edge_hull_friction
+    //     : max(vert_hull_friction, edge_hull_friction);
 
-    float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
-    float2 edge_1_tangent = edge_1_rel_vel - dot(edge_1_rel_vel, collision_normal) * collision_normal;
-    float2 edge_2_tangent = edge_2_rel_vel - dot(edge_2_rel_vel, collision_normal) * collision_normal;
-    vertex_tangent = fast_normalize(vertex_tangent);
-    edge_1_tangent = fast_normalize(edge_1_tangent);
-    edge_2_tangent = fast_normalize(edge_2_tangent);
-    float2 vertex_friction = (-friction_coefficient * vertex_tangent) * vert_magnitude;
-    float2 edge_1_friction = (-friction_coefficient * edge_1_tangent) * edge_magnitude;
-    float2 edge_2_friction = (-friction_coefficient * edge_2_tangent) * edge_magnitude;
+    // float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
+    // float2 edge_1_tangent = edge_1_rel_vel - dot(edge_1_rel_vel, collision_normal) * collision_normal;
+    // float2 edge_2_tangent = edge_2_rel_vel - dot(edge_2_rel_vel, collision_normal) * collision_normal;
+    // vertex_tangent = fast_normalize(vertex_tangent);
+    // edge_1_tangent = fast_normalize(edge_1_tangent);
+    // edge_2_tangent = fast_normalize(edge_2_tangent);
+    // float2 vertex_friction = (-friction_coefficient * vertex_tangent) * vert_magnitude;
+    // float2 edge_1_friction = (-friction_coefficient * edge_1_tangent) * edge_magnitude;
+    // float2 edge_2_friction = (-friction_coefficient * edge_2_tangent) * edge_magnitude;
 
     // restitution
-    float2 vertex_applied = vertex_point.xy + vertex_collision;
-    float2 edge_1_applied = edge_point_1.xy + edge_1_collision;
-    float2 edge_2_applied = edge_point_2.xy + edge_2_collision;
-    float2 vertex_applied_diff = vertex_applied - vertex_point.zw;
-    float2 edge_1_applied_diff = edge_1_applied - edge_point_1.zw;
-    float2 edge_2_applied_diff = edge_2_applied - edge_point_2.zw;
-    float2 vertex_applied_vel = native_divide(vertex_applied_diff, dt);
-    float2 edge_1_applied_vel = native_divide(edge_1_applied_diff, dt);
-    float2 edge_2_applied_vel = native_divide(edge_2_applied_diff, dt);
+    // float2 vertex_applied = vertex_point.xy + vertex_collision;
+    // float2 edge_1_applied = edge_point_1.xy + edge_1_collision;
+    // float2 edge_2_applied = edge_point_2.xy + edge_2_collision;
+    // float2 vertex_applied_diff = vertex_applied - vertex_point.zw;
+    // float2 edge_1_applied_diff = edge_1_applied - edge_point_1.zw;
+    // float2 edge_2_applied_diff = edge_2_applied - edge_point_2.zw;
+    // float2 vertex_applied_vel = native_divide(vertex_applied_diff, dt);
+    // float2 edge_1_applied_vel = native_divide(edge_1_applied_diff, dt);
+    // float2 edge_2_applied_vel = native_divide(edge_2_applied_diff, dt);
 
-    float restituion_coefficient = any_static 
-        ? static_vert 
-            ? vert_hull_restitution 
-            : edge_hull_restitution
-        : 0.0f;//max(vert_hull_restitution, edge_hull_restitution);
+    // float restituion_coefficient = any_static 
+    //     ? static_vert 
+    //         ? vert_hull_restitution 
+    //         : edge_hull_restitution
+    //     : max(vert_hull_restitution, edge_hull_restitution);
 
-    float2 collision_invert = collision_normal * -1;
-    float2 vertex_restitution = restituion_coefficient * dot(vertex_applied_vel, collision_normal) * collision_normal;
-    float2 edge_1_restitution = restituion_coefficient * dot(edge_1_applied_vel, collision_invert) * collision_invert;
-    float2 edge_2_restitution = restituion_coefficient * dot(edge_2_applied_vel, collision_invert) * collision_invert;
+    // float2 collision_invert = collision_normal * -1;
+    // float2 vertex_restitution = restituion_coefficient * dot(vertex_applied_vel, collision_normal) * collision_normal;
+    // float2 edge_1_restitution = restituion_coefficient * dot(edge_1_applied_vel, collision_invert) * collision_invert;
+    // float2 edge_2_restitution = restituion_coefficient * dot(edge_2_applied_vel, collision_invert) * collision_invert;
 
     if (!static_vert)
     {
         int point_index = atomic_inc(&counter[0]);
-        float8 vertex_reactions = (float8)(vertex_collision, vert_hull_opposing, vertex_friction, vertex_restitution);
+        float8 vertex_reactions = (float8)(vertex_collision, vert_hull_opposing, (float2)(0.0f, 0.0f), (float2)(0.0f, 0.0f));
         reactions[point_index] = vertex_reactions;
         reaction_index[point_index] = vert_index;
         atomic_inc(&reaction_counts[vert_index]);
     }
-    if (!static_edge)
-    {
-        int edge_1_reaction_index = atomic_inc(&counter[0]);
-        int edge_2_reaction_index = atomic_inc(&counter[0]);
-        float8 edge_1_reactions = (float8)(edge_1_collision, edge_hull_opposing, edge_1_friction, edge_1_restitution);
-        float8 edge_2_reactions = (float8)(edge_2_collision, edge_hull_opposing, edge_2_friction, edge_2_restitution);
-        reactions[edge_1_reaction_index] = edge_1_reactions;
-        reactions[edge_2_reaction_index] = edge_2_reactions;
-        reaction_index[edge_1_reaction_index] = edge_index_a;
-        reaction_index[edge_2_reaction_index] = edge_index_b;
-        atomic_inc(&reaction_counts[edge_index_a]);
-        atomic_inc(&reaction_counts[edge_index_b]);
-    }
+    // if (!static_edge)
+    // {
+    //     int edge_1_reaction_index = atomic_inc(&counter[0]);
+    //     int edge_2_reaction_index = atomic_inc(&counter[0]);
+    //     float8 edge_1_reactions = (float8)(edge_1_collision, edge_hull_opposing, (float2)(0.0f, 0.0f), (float2)(0.0f, 0.0f));
+    //     float8 edge_2_reactions = (float8)(edge_2_collision, edge_hull_opposing, (float2)(0.0f, 0.0f), (float2)(0.0f, 0.0f));
+    //     reactions[edge_1_reaction_index] = edge_1_reactions;
+    //     reactions[edge_2_reaction_index] = edge_2_reactions;
+    //     reaction_index[edge_1_reaction_index] = edge_index_a;
+    //     reaction_index[edge_2_reaction_index] = edge_index_b;
+    //     atomic_inc(&reaction_counts[edge_index_a]);
+    //     atomic_inc(&reaction_counts[edge_index_b]);
+    // }
 }

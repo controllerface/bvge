@@ -19,9 +19,7 @@ public abstract class GameSystem
 
     abstract public void tick(float dt);
 
-    public void shutdown()
-    {
-        // todo: some systems probably should implement this in final code, or if unneeded,
-        //  it should be removed
-    }
+    public void reset() {}
+
+    public void shutdown() {}
 }
