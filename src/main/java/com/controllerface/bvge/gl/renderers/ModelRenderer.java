@@ -114,9 +114,9 @@ public class ModelRenderer extends GameSystem
 
         total_ptr = GPGPU.cl_new_pinned_int();
         query_ptr = GPGPU.new_mutable_buffer(raw_query);
-        counters_ptr = GPGPU.new_empty_buffer(mesh_size);
-        offsets_ptr = GPGPU.new_empty_buffer(mesh_size);
-        mesh_transfer_ptr = GPGPU.new_empty_buffer(ELEMENT_BUFFER_SIZE * 2);
+        counters_ptr = GPGPU.new_empty_buffer(GPGPU.command_queue_ptr, mesh_size);
+        offsets_ptr = GPGPU.new_empty_buffer(GPGPU.command_queue_ptr, mesh_size);
+        mesh_transfer_ptr = GPGPU.new_empty_buffer(GPGPU.command_queue_ptr, ELEMENT_BUFFER_SIZE * 2);
 
         mesh_query_p.init();
 
@@ -185,14 +185,14 @@ public class ModelRenderer extends GameSystem
 
         GPGPU.scan_int_out(counters_ptr, offsets_ptr, mesh_count);
 
-        int total_instances = GPGPU.cl_read_pinned_int(total_ptr);
+        int total_instances = GPGPU.cl_read_pinned_int(GPGPU.command_queue_ptr, total_ptr);
         if (total_instances == 0)
         {
             return;
         }
 
         long data_size = (long)total_instances * CLSize.cl_int4;
-        var mesh_details_ptr = GPGPU.new_empty_buffer(data_size);
+        var mesh_details_ptr = GPGPU.new_empty_buffer(GPGPU.command_queue_ptr, data_size);
 
         write_mesh_details_k
             .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
@@ -203,10 +203,10 @@ public class ModelRenderer extends GameSystem
             .set_arg(CountMeshBatches_k.Args.count, total_instances)
             .call(GPGPU.global_single_size);
 
-        int total_batches = GPGPU.cl_read_pinned_int(total_ptr);
+        int total_batches = GPGPU.cl_read_pinned_int(GPGPU.command_queue_ptr, total_ptr);
         long batch_index_size = (long) total_batches * CLSize.cl_int;
 
-        var mesh_offset_ptr = GPGPU.new_empty_buffer(batch_index_size);
+        var mesh_offset_ptr = GPGPU.new_empty_buffer(GPGPU.command_queue_ptr, batch_index_size);
 
         calculate_batch_offsets_k
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offset_ptr)

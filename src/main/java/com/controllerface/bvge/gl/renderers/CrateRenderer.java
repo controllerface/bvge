@@ -92,7 +92,7 @@ public class CrateRenderer extends GameSystem
         {
             GPGPU.cl_release_buffer(crate_hulls.indices());
         }
-        crate_hulls = GPGPU.GL_hull_filter(ModelRegistry.TEST_SQUARE_INDEX);
+        crate_hulls = GPGPU.GL_hull_filter(GPGPU.command_queue_ptr, ModelRegistry.TEST_SQUARE_INDEX);
 
         if (crate_hulls.count() == 0)
         {

@@ -2,16 +2,15 @@ package com.controllerface.bvge.cl;
 
 public class PersistentBuffer extends ResizableBuffer
 {
-    public PersistentBuffer(int item_size, long initial_capacity)
+    public PersistentBuffer(long queue_ptr, int item_size, long initial_capacity)
     {
-        super(item_size, initial_capacity);
+        super(queue_ptr, item_size, initial_capacity);
         clear();
     }
 
-    public PersistentBuffer(int item_size)
+    public PersistentBuffer(long queue_ptr, int item_size)
     {
-        super(item_size);
-        clear();
+        this(queue_ptr, item_size, DEFAULT_ITEM_CAPACITY);
     }
 
     public void ensure_capacity(long total_item_capacity)
@@ -28,11 +27,11 @@ public class PersistentBuffer extends ResizableBuffer
         }
 
         long new_pointer = GPGPU.cl_new_buffer(this.byte_capacity);
-        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, new_pointer, this.byte_capacity);
-        GPGPU.cl_transfer_buffer(this.pointer, new_pointer, previous_capacity);
+        GPGPU.cl_zero_buffer(queue_pointer, new_pointer, this.byte_capacity);
+        GPGPU.cl_transfer_buffer(queue_pointer, this.buffer_pointer, new_pointer, previous_capacity);
 
         release();
-        this.pointer = new_pointer;
+        this.buffer_pointer = new_pointer;
         update_registered_kernels();
     }
 
@@ -42,8 +41,8 @@ public class PersistentBuffer extends ResizableBuffer
         release();
         this.byte_capacity = source.byte_capacity;
         long new_pointer = GPGPU.cl_new_buffer(this.byte_capacity);
-        GPGPU.cl_transfer_buffer(source.pointer, new_pointer, source.byte_capacity);
-        this.pointer = new_pointer;
+        GPGPU.cl_transfer_buffer(queue_pointer, source.buffer_pointer, new_pointer, source.byte_capacity);
+        this.buffer_pointer = new_pointer;
         update_registered_kernels();
     }
 }

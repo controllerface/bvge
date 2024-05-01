@@ -2,14 +2,9 @@ package com.controllerface.bvge.cl;
 
 public class TransientBuffer extends ResizableBuffer
 {
-    public TransientBuffer(int item_size, long initial_capacity)
+    public TransientBuffer(long queue_ptr, int item_size, long initial_capacity)
     {
-        super(item_size, initial_capacity);
-    }
-
-    public TransientBuffer(int item_size)
-    {
-        super(item_size);
+        super(queue_ptr, item_size, initial_capacity);
     }
 
     public void ensure_capacity(long total_item_capacity)
@@ -19,7 +14,7 @@ public class TransientBuffer extends ResizableBuffer
 
         this.byte_capacity = required_capacity * 2;
         release();
-        this.pointer = GPGPU.cl_new_buffer(this.byte_capacity);
+        this.buffer_pointer = GPGPU.cl_new_buffer(this.byte_capacity);
         update_registered_kernels();
     }
 }
