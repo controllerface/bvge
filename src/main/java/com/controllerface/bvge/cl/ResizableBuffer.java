@@ -29,6 +29,11 @@ public abstract class ResizableBuffer
 
     abstract public void ensure_capacity(long total_item_capacity);
 
+    public void mirror_buffer(ResizableBuffer source)
+    {
+        throw new UnsupportedOperationException("this operation is not supported");
+    }
+
     protected void update_registered_kernels()
     {
         for (var registered : registered_kernels)

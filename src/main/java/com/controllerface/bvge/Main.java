@@ -3,6 +3,7 @@ package com.controllerface.bvge;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.window.Window;
+import org.lwjgl.system.Configuration;
 
 public class Main
 {

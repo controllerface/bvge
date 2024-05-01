@@ -8,25 +8,20 @@ import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.util.Constants;
-import org.lwjgl.system.MemoryUtil;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
-import static org.lwjgl.opencl.CL10.clWaitForEvents;
 
 public class PhysicsSimulation extends GameSystem
 {
     private static final float TARGET_FPS = 24.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
     private static final int TARGET_SUB_STEPS = 16;
-    private static final int MAX_SUB_STEPS = 20;
+    private static final int MAX_SUB_STEPS = 16;
     private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
     private static final int EDGE_STEPS = 8;
 
@@ -1232,7 +1227,7 @@ public class PhysicsSimulation extends GameSystem
 
         // Deletion of objects happens only once per simulation tick, instead of every sub-step
         // to ensure buffer compaction happens as infrequently as possible.
-        GPGPU.core_memory.delete_and_compact();
+        //GPGPU.core_memory.delete_and_compact();
     }
 
     @Override
@@ -1241,6 +1236,10 @@ public class PhysicsSimulation extends GameSystem
         try
         {
             long last = r.take(); // todo: add timeout to this
+
+            GPGPU.core_memory.delete_and_compact();
+            GPGPU.core_memory.mirror_buffers_ex();
+
             if (Editor.ACTIVE)
             {
                 Editor.queue_event("phys", String.valueOf(last));
@@ -1332,6 +1331,16 @@ public class PhysicsSimulation extends GameSystem
     @Override
     public void shutdown()
     {
+        t.interrupt();
+        try
+        {
+            t.join();
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
+
         integrate.destroy();
         scan_key_bank.destroy();
         generate_keys.destroy();

@@ -35,4 +35,15 @@ public class PersistentBuffer extends ResizableBuffer
         this.pointer = new_pointer;
         update_registered_kernels();
     }
+
+    @Override
+    public void mirror_buffer(ResizableBuffer source)
+    {
+        release();
+        this.byte_capacity = source.byte_capacity;
+        long new_pointer = GPGPU.cl_new_buffer(this.byte_capacity);
+        GPGPU.cl_transfer_buffer(source.pointer, new_pointer, source.byte_capacity);
+        this.pointer = new_pointer;
+        update_registered_kernels();
+    }
 }

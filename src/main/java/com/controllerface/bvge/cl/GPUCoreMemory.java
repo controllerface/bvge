@@ -418,6 +418,31 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer vertex_weight_buffer;
 
+
+
+
+
+    private final ResizableBuffer mirror_armature_buffer;
+    private final ResizableBuffer mirror_edge_buffer;
+    private final ResizableBuffer mirror_edge_flag_buffer;
+    private final ResizableBuffer mirror_hull_buffer;
+    private final ResizableBuffer mirror_hull_aabb_buffer;
+    private final ResizableBuffer mirror_hull_flag_buffer;
+    private final ResizableBuffer mirror_hull_mesh_id_buffer;
+    private final ResizableBuffer mirror_hull_point_table_buffer;
+    private final ResizableBuffer mirror_hull_rotation_buffer;
+    private final ResizableBuffer mirror_hull_scale_buffer;
+    private final ResizableBuffer mirror_point_buffer;
+    private final ResizableBuffer mirror_point_anti_gravity_buffer;
+    private final ResizableBuffer mirror_point_hit_count_buffer;
+    private final ResizableBuffer mirror_point_vertex_reference_buffer;
+
+
+
+
+
+
+
     private final long delete_counter_ptr;
     private final long position_buffer_ptr;
     private final long delete_sizes_ptr;
@@ -520,6 +545,24 @@ public class GPUCoreMemory
         vertex_texture_uv_buffer        = new PersistentBuffer(CLSize.cl_float2);
         vertex_uv_table_buffer          = new PersistentBuffer(CLSize.cl_int2);
         vertex_weight_buffer            = new PersistentBuffer(CLSize.cl_float4);
+
+
+        // mirrors:
+
+        mirror_armature_buffer                 = new PersistentBuffer(CLSize.cl_float4, 10_000L);
+        mirror_edge_buffer                     = new PersistentBuffer(CLSize.cl_int2, 24_000L);
+        mirror_edge_flag_buffer                = new PersistentBuffer(CLSize.cl_int, 24_000L);
+        mirror_hull_buffer                     = new PersistentBuffer(CLSize.cl_float2, 10_000L);
+        mirror_hull_aabb_buffer                = new PersistentBuffer(CLSize.cl_float4, 10_000L);
+        mirror_hull_flag_buffer                = new PersistentBuffer(CLSize.cl_int, 10_000L);
+        mirror_hull_mesh_id_buffer             = new PersistentBuffer(CLSize.cl_int, 10_000L);
+        mirror_hull_point_table_buffer         = new PersistentBuffer(CLSize.cl_int2, 10_000L);
+        mirror_hull_rotation_buffer            = new PersistentBuffer(CLSize.cl_float2, 10_000L);
+        mirror_hull_scale_buffer               = new PersistentBuffer(CLSize.cl_float2, 10_000L);
+        mirror_point_hit_count_buffer          = new PersistentBuffer(CLSize.cl_ushort, 50_000L);
+        mirror_point_anti_gravity_buffer       = new PersistentBuffer(CLSize.cl_float, 50_000L);
+        mirror_point_buffer                    = new PersistentBuffer(CLSize.cl_float4, 50_000L);
+        mirror_point_vertex_reference_buffer   = new PersistentBuffer(CLSize.cl_int, 50_000L);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -830,7 +873,40 @@ public class GPUCoreMemory
             case VERTEX_TEXTURE_UV       -> vertex_texture_uv_buffer;
             case VERTEX_UV_TABLE         -> vertex_uv_table_buffer;
             case VERTEX_WEIGHT           -> vertex_weight_buffer;
+
+            case MIRROR_EDGE -> mirror_edge_buffer;
+            case MIRROR_HULL -> mirror_hull_buffer;
+            case MIRROR_ARMATURE -> mirror_armature_buffer;
+            case MIRROR_POINT -> mirror_point_buffer;
+            case MIRROR_EDGE_FLAG -> mirror_edge_flag_buffer;
+            case MIRROR_HULL_AABB -> mirror_hull_aabb_buffer;
+            case MIRROR_HULL_FLAG -> mirror_hull_flag_buffer;
+            case MIRROR_HULL_MESH_ID -> mirror_hull_mesh_id_buffer;
+            case MIRROR_HULL_POINT_TABLE -> mirror_hull_point_table_buffer;
+            case MIRROR_HULL_ROTATION -> mirror_hull_rotation_buffer;
+            case MIRROR_HULL_SCALE -> mirror_hull_scale_buffer;
+            case MIRROR_POINT_ANTI_GRAV -> mirror_point_anti_gravity_buffer;
+            case MIRROR_POINT_HIT_COUNT -> mirror_point_hit_count_buffer;
+            case MIRROR_POINT_VERTEX_REFERENCE -> mirror_point_vertex_reference_buffer;
         };
+    }
+
+    public void mirror_buffers_ex()
+    {
+        mirror_armature_buffer.mirror_buffer(armature_buffer);
+        mirror_edge_buffer.mirror_buffer(edge_buffer);
+        mirror_edge_flag_buffer.mirror_buffer(edge_flag_buffer);
+        mirror_hull_buffer.mirror_buffer(hull_buffer);
+        mirror_hull_aabb_buffer.mirror_buffer(hull_aabb_buffer);
+        mirror_hull_flag_buffer.mirror_buffer(hull_flag_buffer);
+        mirror_hull_mesh_id_buffer.mirror_buffer(hull_mesh_id_buffer);
+        mirror_hull_point_table_buffer.mirror_buffer(hull_point_table_buffer);
+        mirror_hull_rotation_buffer.mirror_buffer(hull_rotation_buffer);
+        mirror_hull_scale_buffer.mirror_buffer(hull_scale_buffer);
+        mirror_point_hit_count_buffer.mirror_buffer(point_hit_count_buffer);
+        mirror_point_anti_gravity_buffer.mirror_buffer(point_anti_gravity_buffer);
+        mirror_point_buffer.mirror_buffer(point_buffer);
+        mirror_point_vertex_reference_buffer.mirror_buffer(point_vertex_reference_buffer);
     }
 
     // index methods

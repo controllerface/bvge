@@ -199,9 +199,7 @@ public class CLUtils
         try (var mem_stack = MemoryStack.stackPush())
         {
             var buffer = mem_to_buffer(mem_stack, mem);
-            var event = mem_stack.callocPointer(1);
-            int r = clEnqueueAcquireGLObjects(command_queue_ptr, buffer, null, event);
-            clWaitForEvents(event);
+            int r = clEnqueueAcquireGLObjects(command_queue_ptr, buffer, null, null);
             if (r != CL_SUCCESS)
             {
                 System.out.println("error: " + r);
@@ -214,9 +212,7 @@ public class CLUtils
         try (var mem_stack = MemoryStack.stackPush())
         {
             var buffer = mem_to_buffer(mem_stack, mem);
-            var event = mem_stack.callocPointer(1);
-            int r = clEnqueueReleaseGLObjects(command_queue_ptr, buffer, null, event);
-            clWaitForEvents(event);
+            int r = clEnqueueReleaseGLObjects(command_queue_ptr, buffer, null, null);
             if (r != CL_SUCCESS)
             {
                 System.out.println("error: " + r);

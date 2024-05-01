@@ -2,7 +2,6 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -74,7 +73,7 @@ public class GPGPU
     public static long command_queue_ptr;
 
     // todo: repurpose for decoupled render/physics concept
-    public static long async_command_queue_ptr;
+    public static long render_command_queue_ptr;
 
 
     /**
@@ -198,8 +197,13 @@ public class GPGPU
         command_queue_ptr = clCreateCommandQueue(context_ptr,
             device, 0, (IntBuffer) null);
 
-        async_command_queue_ptr = clCreateCommandQueue(context_ptr,
-            device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, (IntBuffer) null);
+        //var ib = MemoryUtil.memAllocInt(1);
+
+        render_command_queue_ptr = clCreateCommandQueue(context_ptr,
+            device, 0, (IntBuffer) null);
+
+        //var o = ib.get(0);
+
 
         MemoryUtil.memFree(ctx_props_buffer);
 
@@ -398,6 +402,16 @@ public class GPGPU
     public static void cl_transfer_buffer(long src_ptr, long dst_ptr, long size)
     {
         int result = clEnqueueCopyBuffer(command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on buffer copy: " + result);
+            System.exit(1);
+        }
+    }
+
+    public static void cl_transfer_buffer_ex(long src_ptr, long dst_ptr, long size)
+    {
+        int result = clEnqueueCopyBuffer(render_command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, null);
         if (result != CL_SUCCESS)
         {
             System.out.println("Error on buffer copy: " + result);
