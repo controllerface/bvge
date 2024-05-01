@@ -57,7 +57,7 @@ public abstract class ResizableBuffer
 
     public void clear()
     {
-        GPGPU.cl_zero_buffer(this.pointer, this.byte_capacity);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, this.pointer, this.byte_capacity);
     }
 
     public void release()

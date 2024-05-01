@@ -1274,7 +1274,7 @@ public class GPUCoreMemory
 
     public float[] read_position(int armature_index)
     {
-        GPGPU.cl_zero_buffer(position_buffer_ptr, CLSize.cl_float2);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, position_buffer_ptr, CLSize.cl_float2);
 
         read_position_k
             .ptr_arg(ReadPosition_k.Args.output, position_buffer_ptr)
@@ -1286,7 +1286,7 @@ public class GPUCoreMemory
 
     public void delete_and_compact()
     {
-        GPGPU.cl_zero_buffer(delete_counter_ptr, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, delete_counter_ptr, CLSize.cl_int);
 
         locate_out_of_bounds_k
             .ptr_arg(LocateOutOfBounds_k.Args.counter, delete_counter_ptr)
@@ -1360,7 +1360,7 @@ public class GPUCoreMemory
         long local_buffer_size = CLSize.cl_int2 * GPGPU.max_scan_block_size;
         long local_buffer_size2 = CLSize.cl_int4 * GPGPU.max_scan_block_size;
 
-        GPGPU.cl_zero_buffer(delete_sizes_ptr, CLSize.cl_int * 6);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6);
 
         scan_deletes_single_block_out_k
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
@@ -1397,7 +1397,7 @@ public class GPUCoreMemory
         GPGPU.scan_int2(delete_partial_buffer_1.pointer(), part_size);
         GPGPU.scan_int4(delete_partial_buffer_2.pointer(), part_size);
 
-        GPGPU.cl_zero_buffer(delete_sizes_ptr, CLSize.cl_int * 6);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6);
 
         complete_deletes_multi_block_out_k
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output1, o1_data_ptr)

@@ -174,10 +174,10 @@ public class ModelRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        GPGPU.cl_zero_buffer(counters_ptr, mesh_size);
-        GPGPU.cl_zero_buffer(offsets_ptr, mesh_size);
-        GPGPU.cl_zero_buffer(total_ptr, CLSize.cl_int);
-        GPGPU.cl_zero_buffer(mesh_transfer_ptr, ELEMENT_BUFFER_SIZE * 2);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, counters_ptr, mesh_size);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, offsets_ptr, mesh_size);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, total_ptr, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, mesh_transfer_ptr, ELEMENT_BUFFER_SIZE * 2);
 
         long[] hull_count = arg_long(GPGPU.core_memory.next_hull());
 
@@ -215,7 +215,7 @@ public class ModelRenderer extends GameSystem
             .call(GPGPU.global_single_size);
 
         int[] raw_offsets = new int[total_batches];
-        GPGPU.cl_read_buffer(mesh_offset_ptr, raw_offsets);
+        GPGPU.cl_read_buffer(GPGPU.command_queue_ptr, mesh_offset_ptr, raw_offsets);
 
         glBindVertexArray(vao);
 

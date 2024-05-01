@@ -280,9 +280,9 @@ public class GPGPU
 
     //#region Utility Methods
 
-    public static void cl_read_buffer(long src_ptr, int[] dst)
+    public static void cl_read_buffer(long queue_ptr, long src_ptr, int[] dst)
     {
-        clEnqueueReadBuffer(command_queue_ptr,
+        clEnqueueReadBuffer(queue_ptr,
             src_ptr,
             true,
             0,
@@ -306,7 +306,7 @@ public class GPGPU
         return clCreateBuffer(context_ptr, FLAGS_READ_CPU_COPY, src, null);
     }
 
-    public static void cl_zero_buffer(long buffer_ptr, long buffer_size)
+    public static void cl_zero_buffer(long queue_ptr, long buffer_ptr, long buffer_size)
     {
         clEnqueueFillBuffer(command_queue_ptr,
             buffer_ptr,
@@ -442,7 +442,7 @@ public class GPGPU
      */
     public static HullIndexData GL_hull_filter(int model_id)
     {
-        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
+        cl_zero_buffer(GPGPU.command_queue_ptr, atomic_counter_ptr, CLSize.cl_int);
 
         root_hull_count_k
             .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
@@ -459,7 +459,7 @@ public class GPGPU
         long final_buffer_size = (long) CLSize.cl_int * final_count;
         var hulls_out = cl_new_buffer(final_buffer_size);
 
-        cl_zero_buffer(atomic_counter_ptr, CLSize.cl_int);
+        cl_zero_buffer(GPGPU.command_queue_ptr, atomic_counter_ptr, CLSize.cl_int);
 
         root_hull_filter_k
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
@@ -705,7 +705,7 @@ public class GPGPU
     public static long new_empty_buffer(long size)
     {
         var new_buffer_ptr = cl_new_buffer(size);
-        cl_zero_buffer(new_buffer_ptr, size);
+        cl_zero_buffer(GPGPU.command_queue_ptr, new_buffer_ptr, size);
         return new_buffer_ptr;
     }
 

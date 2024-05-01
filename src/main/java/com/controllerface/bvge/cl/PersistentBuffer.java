@@ -28,7 +28,7 @@ public class PersistentBuffer extends ResizableBuffer
         }
 
         long new_pointer = GPGPU.cl_new_buffer(this.byte_capacity);
-        GPGPU.cl_zero_buffer(new_pointer, this.byte_capacity);
+        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, new_pointer, this.byte_capacity);
         GPGPU.cl_transfer_buffer(this.pointer, new_pointer, previous_capacity);
 
         release();
