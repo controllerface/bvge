@@ -37,7 +37,7 @@ public class TestGame extends GameMode
 //            RenderType.POINTS,
 //            RenderType.ARMATURES,
 //            RenderType.BOUNDS,
-//            RenderType.GRID,
+            RenderType.GRID,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -292,7 +292,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 2000, 3500);
+        genTestFigure(1f, 2000, 1200);
 
         //genTestFigureNPC_2(1f, 100, 500);
 
@@ -326,7 +326,7 @@ public class TestGame extends GameMode
         genFloor(32, 150f, 150f, 1700, 2200, 0.03f);
 
         genWall(15, 150f, 150f, -220, -100);
-        genWall(1, 150f, 150f, 2330, -100);
+        genWall(5, 150f, 150f, 2000, 1500);
         genWall(5, 150f, 150f, 4880, -100);
 
         loadSystems();
