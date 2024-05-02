@@ -134,14 +134,6 @@ public class GPGPU
     private static GPUKernel scan_int_multi_block_out_k;
     private static GPUKernel complete_int_multi_block_out_k;
 
-
-    private static GPUKernel scan_int_single_block_GL_k;
-    private static GPUKernel scan_int_multi_block_GL_k;
-    private static GPUKernel complete_int_multi_block_GL_k;
-    private static GPUKernel scan_int_single_block_out_GL_k;
-    private static GPUKernel scan_int_multi_block_out_GL_k;
-    private static GPUKernel complete_int_multi_block_out_GL_k;
-
     private static GPUKernel root_hull_count_k;
     private static GPUKernel root_hull_filter_k;
 
@@ -246,10 +238,6 @@ public class GPGPU
         scan_int_multi_block_k = new ScanIntMultiBlock_k(command_queue_ptr, scan_int_array_multi_ptr);
         complete_int_multi_block_k = new CompleteIntMultiBlock_k(command_queue_ptr, scan_int_array_comp_ptr);
 
-        scan_int_single_block_GL_k = new ScanIntSingleBlock_k(render_command_queue_ptr, scan_int_array_single_ptr);
-        scan_int_multi_block_GL_k = new ScanIntMultiBlock_k(render_command_queue_ptr, scan_int_array_multi_ptr);
-        complete_int_multi_block_GL_k = new CompleteIntMultiBlock_k(render_command_queue_ptr, scan_int_array_comp_ptr);
-
         // 2D vector integer exclusive scan in-place
 
         long scan_int2_array_single_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_single_block);
@@ -276,11 +264,6 @@ public class GPGPU
         scan_int_single_block_out_k = new ScanIntSingleBlockOut_k(command_queue_ptr, scan_int_array_out_single_ptr);
         scan_int_multi_block_out_k = new ScanIntMultiBlockOut_k(command_queue_ptr, scan_int_array_out_multi_ptr);
         complete_int_multi_block_out_k = new CompleteIntMultiBlockOut_k(command_queue_ptr, scan_int_array_out_comp_ptr);
-
-        scan_int_single_block_out_GL_k = new ScanIntSingleBlockOut_k(render_command_queue_ptr, scan_int_array_out_single_ptr);
-        scan_int_multi_block_out_GL_k = new ScanIntMultiBlockOut_k(render_command_queue_ptr, scan_int_array_out_multi_ptr);
-        complete_int_multi_block_out_GL_k = new CompleteIntMultiBlockOut_k(render_command_queue_ptr, scan_int_array_out_comp_ptr);
-
 
         // Open GL interop
 
@@ -427,16 +410,6 @@ public class GPGPU
         }
     }
 
-    public static void cl_transfer_buffer_ex(long src_ptr, long dst_ptr, long size)
-    {
-        int result = clEnqueueCopyBuffer(render_command_queue_ptr, src_ptr, dst_ptr, 0, 0, size, null, null);
-        if (result != CL_SUCCESS)
-        {
-            System.out.println("Error on buffer copy: " + result);
-            System.exit(1);
-        }
-    }
-
     public static int work_group_count(int n)
     {
         return (int) Math.ceil((float) n / (float) max_scan_block_size);
@@ -505,19 +478,6 @@ public class GPGPU
         }
     }
 
-    public static void scan_int_GL(long data_ptr, int n)
-    {
-        int k = work_group_count(n);
-        if (k == 1)
-        {
-            scan_single_block_int_GL(data_ptr, n);
-        }
-        else
-        {
-            scan_multi_block_int_GL(data_ptr, n, k);
-        }
-    }
-
     public static void scan_int2(long data_ptr, int n)
     {
         int k = work_group_count(n);
@@ -556,65 +516,6 @@ public class GPGPU
             scan_multi_block_int_out(data_ptr, o_data_ptr, n, k);
         }
     }
-
-    public static void scan_int_out_GL(long data_ptr, long o_data_ptr, int n)
-    {
-        int k = work_group_count(n);
-        if (k == 1)
-        {
-            scan_single_block_int_out_GL(data_ptr, o_data_ptr, n);
-        }
-        else
-        {
-            scan_multi_block_int_out_GL(data_ptr, o_data_ptr, n, k);
-        }
-    }
-
-    private static void scan_single_block_int_GL(long data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-
-        scan_int_single_block_GL_k
-                .ptr_arg(ScanIntSingleBlock_k.Args.data, data_ptr)
-                .loc_arg(ScanIntSingleBlock_k.Args.buffer, local_buffer_size)
-                .set_arg(ScanIntSingleBlock_k.Args.n, n)
-                .call(local_work_default, local_work_default);
-    }
-
-    private static void scan_multi_block_int_GL(long data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-        long gx = k * max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
-
-        var part_data = cl_new_buffer(part_buf_size);
-
-        scan_int_multi_block_GL_k
-                .ptr_arg(ScanIntMultiBlock_k.Args.data, data_ptr)
-                .loc_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
-                .ptr_arg(ScanIntMultiBlock_k.Args.part, part_data)
-                .set_arg(ScanIntMultiBlock_k.Args.n, n)
-                .call(global_work_size, local_work_default);
-
-        scan_int_GL(part_data, part_size);
-
-        complete_int_multi_block_GL_k
-                .ptr_arg(CompleteIntMultiBlock_k.Args.data, data_ptr)
-                .loc_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
-                .ptr_arg(CompleteIntMultiBlock_k.Args.part, part_data)
-                .set_arg(CompleteIntMultiBlock_k.Args.n, n)
-                .call(global_work_size, local_work_default);
-
-        cl_release_buffer(part_data);
-    }
-
-
-
-
-
-
 
     private static void scan_single_block_int(long data_ptr, int n)
     {
@@ -735,56 +636,6 @@ public class GPGPU
 
         cl_release_buffer(part_data);
     }
-
-
-
-
-
-    private static void scan_single_block_int_out_GL(long data_ptr, long o_data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-
-        scan_int_single_block_out_GL_k
-                .ptr_arg(ScanIntSingleBlockOut_k.Args.input, data_ptr)
-                .ptr_arg(ScanIntSingleBlockOut_k.Args.output, o_data_ptr)
-                .loc_arg(ScanIntSingleBlockOut_k.Args.buffer, local_buffer_size)
-                .set_arg(ScanIntSingleBlockOut_k.Args.n, n)
-                .call(local_work_default, local_work_default);
-    }
-
-    private static void scan_multi_block_int_out_GL(long data_ptr, long o_data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-        long gx = k * max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
-        var part_data = cl_new_buffer(part_buf_size);
-
-        scan_int_multi_block_out_GL_k
-                .ptr_arg(ScanIntMultiBlockOut_k.Args.input, data_ptr)
-                .ptr_arg(ScanIntMultiBlockOut_k.Args.output, o_data_ptr)
-                .loc_arg(ScanIntMultiBlockOut_k.Args.buffer, local_buffer_size)
-                .ptr_arg(ScanIntMultiBlockOut_k.Args.part, part_data)
-                .set_arg(ScanIntMultiBlockOut_k.Args.n, n)
-                .call(global_work_size, local_work_default);
-
-        scan_int_GL(part_data, part_size);
-
-        complete_int_multi_block_out_GL_k
-                .ptr_arg(CompleteIntMultiBlockOut_k.Args.output, o_data_ptr)
-                .loc_arg(CompleteIntMultiBlockOut_k.Args.buffer, local_buffer_size)
-                .ptr_arg(CompleteIntMultiBlockOut_k.Args.part, part_data)
-                .set_arg(CompleteIntMultiBlockOut_k.Args.n, n)
-                .call(global_work_size, local_work_default);
-
-        cl_release_buffer(part_data);
-    }
-
-
-
-
-
 
     private static void scan_single_block_int_out(long data_ptr, long o_data_ptr, int n)
     {

@@ -20,7 +20,5 @@ public class LocateInBounds extends GPUProgram
         load_kernel(Kernel.locate_in_bounds);
         load_kernel(Kernel.count_candidates);
         load_kernel(Kernel.finalize_candidates);
-        load_kernel(Kernel.sat_sort_count);
-        load_kernel(Kernel.sat_sort_type);
     }
 }

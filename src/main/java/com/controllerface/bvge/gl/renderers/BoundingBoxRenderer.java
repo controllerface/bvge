@@ -66,7 +66,7 @@ public class BoundingBoxRenderer extends GameSystem
         prepare_bounds.init();
 
         long ptr = prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
-        prepare_bounds_k = new PrepareBounds_k(GPGPU.command_queue_ptr, ptr)
+        prepare_bounds_k = new PrepareBounds_k(GPGPU.render_command_queue_ptr, ptr)
             .ptr_arg(PrepareBounds_k.Args.vbo, vbo_ptr)
             .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_AABB));
     }
@@ -80,7 +80,7 @@ public class BoundingBoxRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         int offset = 0;
-        for (int remaining = GPGPU.core_memory.next_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPGPU.core_memory.last_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             var offsets = MemoryUtil.memAllocInt(count).put(this.offsets, 0, count).flip();

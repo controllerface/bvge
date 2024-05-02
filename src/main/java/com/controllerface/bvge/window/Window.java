@@ -357,27 +357,24 @@ public class Window
                 glfwSwapBuffers(glfwWindow);
             }
 
+            currentTime = (float) glfwGetTime();
+            dt = currentTime - lastTime;
+            lastTime = currentTime;
+
             if (Editor.ACTIVE)
             {
                 Editor.queue_event("dt", String.valueOf(dt));
             }
 
-            currentTime = (float) glfwGetTime();
-            dt = currentTime - lastTime;
-            lastTime = currentTime;
-
-            frameCount++;
-            fpsTimer += dt;
-
-
-            if (fpsTimer >= 1.0)
+            if (Editor.ACTIVE)
             {
-                fps = frameCount;
-                frameCount = 0;
-                fpsTimer -= 1.0;
-
-                if (Editor.ACTIVE)
+                frameCount++;
+                fpsTimer += dt;
+                if (fpsTimer >= 1.0)
                 {
+                    fps = frameCount;
+                    frameCount = 0;
+                    fpsTimer -= 1.0;
                     Editor.queue_event("fps", String.valueOf(fps));
                 }
             }

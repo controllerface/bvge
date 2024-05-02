@@ -57,7 +57,7 @@ public class ArmatureRenderer extends GameSystem
         prepare_armatures.init();
 
         long ptr = prepare_armatures.kernel_ptr(Kernel.prepare_armatures);
-        prepare_armatures_k = new PrepareArmatures_k(GPGPU.command_queue_ptr, ptr)
+        prepare_armatures_k = new PrepareArmatures_k(GPGPU.render_command_queue_ptr, ptr)
             .ptr_arg(PrepareArmatures_k.Args.vertex_vbo, vertex_vbo_ptr)
             .buf_arg(PrepareArmatures_k.Args.points, GPGPU.core_memory.buffer(BufferType.MIRROR_ARMATURE));
     }
@@ -73,7 +73,7 @@ public class ArmatureRenderer extends GameSystem
         glPointSize(3);
 
         int offset = 0;
-        for (int remaining = GPGPU.core_memory.next_armature(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPGPU.core_memory.last_armature(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
 

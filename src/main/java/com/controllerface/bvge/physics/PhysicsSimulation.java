@@ -15,13 +15,15 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
+import static org.lwjgl.opencl.CL10.clFinish;
 
 public class PhysicsSimulation extends GameSystem
 {
     private static final float TARGET_FPS = 24.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
     private static final int TARGET_SUB_STEPS = 16;
-    private static final int MAX_SUB_STEPS = 16;
+    private static final int MAX_SUB_STEPS = 20;
     private static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
     private static final int EDGE_STEPS = 8;
 
@@ -67,12 +69,6 @@ public class PhysicsSimulation extends GameSystem
     private final GPUKernel aabb_collide_k;
     private final GPUKernel finalize_candidates_k;
     private final GPUKernel sat_collide_k;
-    private final GPUKernel sat_collide_p_k;
-    private final GPUKernel sat_collide_c_k;
-    private final GPUKernel sat_collide_b_k;
-    private final GPUKernel sat_collide_pc_k;
-    private final GPUKernel sat_sort_count_k;
-    private final GPUKernel sat_sort_type_k;
     private final GPUKernel sort_reactions_k;
     private final GPUKernel apply_reactions_k;
     private final GPUKernel move_armatures_k;
@@ -86,7 +82,6 @@ public class PhysicsSimulation extends GameSystem
     private final long atomic_counter_ptr;
     private final long counts_data_ptr;
     private final long offsets_data_ptr;
-    private final long sat_counts_ptr;
 
     /**
      * int
@@ -140,10 +135,6 @@ public class PhysicsSimulation extends GameSystem
     public final ResizableBuffer candidate_offsets;
     public final ResizableBuffer matches;
     public final ResizableBuffer matches_used;
-    public final ResizableBuffer sat_candidates_p;
-    public final ResizableBuffer sat_candidates_c;
-    public final ResizableBuffer sat_candidates_b;
-    public final ResizableBuffer sat_candidates_pc;
 
     public final ResizableBuffer control_point_flags;
     public final ResizableBuffer control_point_indices;
@@ -157,11 +148,6 @@ public class PhysicsSimulation extends GameSystem
     private long match_buffer_count = 0;
     private long candidate_buffer_count = 0;
 
-    private long sat_candidate_p_buffer_size = 0;
-    private long sat_candidate_c_buffer_size = 0;
-    private long sat_candidate_b_buffer_size = 0;
-    private long sat_candidate_pc_buffer_size = 0;
-
     private float time_accumulator = 0.0f;
 
     public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
@@ -174,7 +160,6 @@ public class PhysicsSimulation extends GameSystem
         atomic_counter_ptr = GPGPU.cl_new_pinned_int();
         counts_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
         offsets_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
-        sat_counts_ptr = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 4);
 
         point_reaction_counts = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 500_000L);
         point_reaction_offsets = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 500_000L);
@@ -189,11 +174,6 @@ public class PhysicsSimulation extends GameSystem
         candidate_offsets = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 500_000L);
         matches = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 500_000L);
         matches_used = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 500_000L);
-
-        sat_candidates_p = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 500_000L);
-        sat_candidates_c = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 500_000L);
-        sat_candidates_b = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 500_000L);
-        sat_candidates_pc = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 500_000L);
 
         control_point_flags = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 1);
         control_point_indices = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 1);
@@ -302,23 +282,6 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(CountCandidates_k.Args.x_subdivisions, uniform_grid.x_subdivisions)
             .set_arg(CountCandidates_k.Args.key_count_length, uniform_grid.directory_length);
 
-        long sat_sort_count_k_ptr = locate_in_bounds.kernel_ptr(Kernel.sat_sort_count);
-        sat_sort_count_k = new SatSortCount_k(GPGPU.command_queue_ptr, sat_sort_count_k_ptr)
-            .buf_arg(SatSortCount_k.Args.candidates, candidates)
-            .buf_arg(SatSortCount_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .ptr_arg(SatSortCount_k.Args.counter, sat_counts_ptr);
-
-        long sat_sort_type_k_ptr = locate_in_bounds.kernel_ptr(Kernel.sat_sort_type);
-        sat_sort_type_k = new SatSortCount_k(GPGPU.command_queue_ptr, sat_sort_type_k_ptr)
-            .buf_arg(SatSortType_k.Args.candidates, candidates)
-            .buf_arg(SatSortType_k.Args.sat_candidates_p, sat_candidates_p)
-            .buf_arg(SatSortType_k.Args.sat_candidates_c, sat_candidates_c)
-            .buf_arg(SatSortType_k.Args.sat_candidates_b, sat_candidates_b)
-            .buf_arg(SatSortType_k.Args.sat_candidates_pc, sat_candidates_pc)
-            .buf_arg(SatSortType_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .ptr_arg(SatSortType_k.Args.counter, sat_counts_ptr);
-
-
         long scan_candidates_single_block_out_k_ptr = scan_key_candidates.kernel_ptr(Kernel.scan_candidates_single_block_out);
         scan_candidates_single_block_out_k = new ScanCandidatesSingleBlockOut_k(GPGPU.command_queue_ptr, scan_candidates_single_block_out_k_ptr);
 
@@ -375,96 +338,6 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
             .ptr_arg(SatCollide_k.Args.counter, atomic_counter_ptr)
             .set_arg(SatCollide_k.Args.dt, FIXED_TIME_STEP);
-
-
-        long sat_collide_p_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide_p);
-        sat_collide_p_k = new SatCollideP_k(GPGPU.command_queue_ptr, sat_collide_p_k_ptr)
-            .buf_arg(SatCollideP_k.Args.candidates, sat_candidates_p)
-            .buf_arg(SatCollideP_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
-            .buf_arg(SatCollideP_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.HULL_SCALE))
-            .buf_arg(SatCollideP_k.Args.hull_frictions, GPGPU.core_memory.buffer(BufferType.HULL_FRICTION))
-            .buf_arg(SatCollideP_k.Args.hull_restitutions, GPGPU.core_memory.buffer(BufferType.HULL_RESTITUTION))
-            .buf_arg(SatCollideP_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
-            .buf_arg(SatCollideP_k.Args.hull_edge_tables, GPGPU.core_memory.buffer(BufferType.HULL_EDGE_TABLE))
-            .buf_arg(SatCollideP_k.Args.hull_armature_ids, GPGPU.core_memory.buffer(BufferType.HULL_ARMATURE_ID))
-            .buf_arg(SatCollideP_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .buf_arg(SatCollideP_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
-            .buf_arg(SatCollideP_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
-            .buf_arg(SatCollideP_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
-            .buf_arg(SatCollideP_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
-            .buf_arg(SatCollideP_k.Args.reactions, reactions_in)
-            .buf_arg(SatCollideP_k.Args.reaction_index, reaction_index)
-            .buf_arg(SatCollideP_k.Args.point_reactions, point_reaction_counts)
-            .buf_arg(SatCollideP_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
-            .ptr_arg(SatCollideP_k.Args.counter, atomic_counter_ptr)
-            .set_arg(SatCollideP_k.Args.dt, FIXED_TIME_STEP);
-
-        long sat_collide_c_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide_c);
-        sat_collide_c_k = new SatCollideC_k(GPGPU.command_queue_ptr, sat_collide_c_k_ptr)
-            .buf_arg(SatCollideC_k.Args.candidates, sat_candidates_c)
-            .buf_arg(SatCollideC_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
-            .buf_arg(SatCollideC_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.HULL_SCALE))
-            .buf_arg(SatCollideC_k.Args.hull_frictions, GPGPU.core_memory.buffer(BufferType.HULL_FRICTION))
-            .buf_arg(SatCollideC_k.Args.hull_restitutions, GPGPU.core_memory.buffer(BufferType.HULL_RESTITUTION))
-            .buf_arg(SatCollideC_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
-            .buf_arg(SatCollideC_k.Args.hull_edge_tables, GPGPU.core_memory.buffer(BufferType.HULL_EDGE_TABLE))
-            .buf_arg(SatCollideC_k.Args.hull_armature_ids, GPGPU.core_memory.buffer(BufferType.HULL_ARMATURE_ID))
-            .buf_arg(SatCollideC_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .buf_arg(SatCollideC_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
-            .buf_arg(SatCollideC_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
-            .buf_arg(SatCollideC_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
-            .buf_arg(SatCollideC_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
-            .buf_arg(SatCollideC_k.Args.reactions, reactions_in)
-            .buf_arg(SatCollideC_k.Args.reaction_index, reaction_index)
-            .buf_arg(SatCollideC_k.Args.point_reactions, point_reaction_counts)
-            .buf_arg(SatCollideC_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
-            .ptr_arg(SatCollideC_k.Args.counter, atomic_counter_ptr)
-            .set_arg(SatCollideC_k.Args.dt, FIXED_TIME_STEP);
-
-        long sat_collide_b_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide_b);
-        sat_collide_b_k = new SatCollideB_k(GPGPU.command_queue_ptr, sat_collide_b_k_ptr)
-            .buf_arg(SatCollideB_k.Args.candidates, sat_candidates_b)
-            .buf_arg(SatCollideB_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
-            .buf_arg(SatCollideB_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.HULL_SCALE))
-            .buf_arg(SatCollideB_k.Args.hull_frictions, GPGPU.core_memory.buffer(BufferType.HULL_FRICTION))
-            .buf_arg(SatCollideB_k.Args.hull_restitutions, GPGPU.core_memory.buffer(BufferType.HULL_RESTITUTION))
-            .buf_arg(SatCollideB_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
-            .buf_arg(SatCollideB_k.Args.hull_edge_tables, GPGPU.core_memory.buffer(BufferType.HULL_EDGE_TABLE))
-            .buf_arg(SatCollideB_k.Args.hull_armature_ids, GPGPU.core_memory.buffer(BufferType.HULL_ARMATURE_ID))
-            .buf_arg(SatCollideB_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .buf_arg(SatCollideB_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
-            .buf_arg(SatCollideB_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
-            .buf_arg(SatCollideB_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
-            .buf_arg(SatCollideB_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
-            .buf_arg(SatCollideB_k.Args.reactions, reactions_in)
-            .buf_arg(SatCollideB_k.Args.reaction_index, reaction_index)
-            .buf_arg(SatCollideB_k.Args.point_reactions, point_reaction_counts)
-            .buf_arg(SatCollideB_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
-            .ptr_arg(SatCollideB_k.Args.counter, atomic_counter_ptr)
-            .set_arg(SatCollideB_k.Args.dt, FIXED_TIME_STEP);
-
-        long sat_collide_pc_k_ptr = sat_collide.kernel_ptr(Kernel.sat_collide_pc);
-        sat_collide_pc_k = new SatCollidePC_k(GPGPU.command_queue_ptr, sat_collide_pc_k_ptr)
-            .buf_arg(SatCollidePC_k.Args.candidates, sat_candidates_pc)
-            .buf_arg(SatCollidePC_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
-            .buf_arg(SatCollidePC_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.HULL_SCALE))
-            .buf_arg(SatCollidePC_k.Args.hull_frictions, GPGPU.core_memory.buffer(BufferType.HULL_FRICTION))
-            .buf_arg(SatCollidePC_k.Args.hull_restitutions, GPGPU.core_memory.buffer(BufferType.HULL_RESTITUTION))
-            .buf_arg(SatCollidePC_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
-            .buf_arg(SatCollidePC_k.Args.hull_edge_tables, GPGPU.core_memory.buffer(BufferType.HULL_EDGE_TABLE))
-            .buf_arg(SatCollidePC_k.Args.hull_armature_ids, GPGPU.core_memory.buffer(BufferType.HULL_ARMATURE_ID))
-            .buf_arg(SatCollidePC_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .buf_arg(SatCollidePC_k.Args.point_flags, GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
-            .buf_arg(SatCollidePC_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT))
-            .buf_arg(SatCollidePC_k.Args.edges, GPGPU.core_memory.buffer(BufferType.EDGE))
-            .buf_arg(SatCollidePC_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
-            .buf_arg(SatCollidePC_k.Args.reactions, reactions_in)
-            .buf_arg(SatCollidePC_k.Args.reaction_index, reaction_index)
-            .buf_arg(SatCollidePC_k.Args.point_reactions, point_reaction_counts)
-            .buf_arg(SatCollidePC_k.Args.masses, GPGPU.core_memory.buffer(BufferType.ARMATURE_MASS))
-            .ptr_arg(SatCollidePC_k.Args.counter, atomic_counter_ptr)
-            .set_arg(SatCollidePC_k.Args.dt, FIXED_TIME_STEP);
-
 
         long sort_reactions_k_ptr = sat_collide.kernel_ptr(Kernel.sort_reactions);
         sort_reactions_k = new SortReactions_k(GPGPU.command_queue_ptr, sort_reactions_k_ptr)
@@ -553,6 +426,8 @@ public class PhysicsSimulation extends GameSystem
 
     private void integrate()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+
         float[] args =
             {
                 FIXED_TIME_STEP,
@@ -580,6 +455,12 @@ public class PhysicsSimulation extends GameSystem
             .call(arg_long(GPGPU.core_memory.next_armature()));
 
         GPGPU.cl_release_buffer(arg_mem_ptr);
+
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_integrate", String.valueOf(e));
+        }
     }
 
     private int scan_bounds_single_block(long data_ptr, int n)
@@ -646,12 +527,19 @@ public class PhysicsSimulation extends GameSystem
 
     private void calculate_bank_offsets()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         int bank_size = scan_key_bounds(GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE).pointer(), GPGPU.core_memory.next_hull());
         uniform_grid.resizeBank(bank_size);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_bank_offset", String.valueOf(e));
+        }
     }
 
     private void generate_keys()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         if (uniform_grid.get_key_bank_size() < 1)
         {
             return;
@@ -662,17 +550,29 @@ public class PhysicsSimulation extends GameSystem
         generate_keys_k
             .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
             .call(arg_long(GPGPU.core_memory.next_hull()));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_gen_keys", String.valueOf(e));
+        }
     }
 
     private void build_key_map(UniformGrid uniform_grid)
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         key_map.ensure_capacity(uniform_grid.getKey_map_size());
         GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, counts_data_ptr, counts_buf_size);
         build_key_map_k.call(arg_long(GPGPU.core_memory.next_hull()));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_key_map", String.valueOf(e));
+        }
     }
 
     private void locate_in_bounds()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         int hull_count = GPGPU.core_memory.next_hull();
         in_bounds.ensure_capacity(hull_count);
         GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, atomic_counter_ptr, CLSize.cl_int);
@@ -682,12 +582,23 @@ public class PhysicsSimulation extends GameSystem
             .call(arg_long(hull_count));
 
         candidate_buffer_count = GPGPU.cl_read_pinned_int(GPGPU.command_queue_ptr, atomic_counter_ptr);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_locate_inbounds", String.valueOf(e));
+        }
     }
 
     private void calculate_match_candidates()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         candidate_counts.ensure_capacity(candidate_buffer_count);
         count_candidates_k.call(arg_long(candidate_buffer_count));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_match_candidates", String.valueOf(e));
+        }
     }
 
     private int scan_single_block_candidates_out(long data_ptr, long o_data_ptr, int n)
@@ -758,21 +669,34 @@ public class PhysicsSimulation extends GameSystem
 
     private void calculate_match_offsets()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         candidate_offsets.ensure_capacity(candidate_buffer_count);
         match_buffer_count = scan_key_candidates(candidate_counts.pointer(), candidate_offsets.pointer(), (int) candidate_buffer_count);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_match_offsets", String.valueOf(e));
+        }
     }
 
     private void aabb_collide()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         matches.ensure_capacity(match_buffer_count);
         matches_used.ensure_capacity(candidate_buffer_count);
         GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, atomic_counter_ptr, CLSize.cl_int);
         aabb_collide_k.call(arg_long(candidate_buffer_count));
         candidate_count = GPGPU.cl_read_pinned_int(GPGPU.command_queue_ptr, atomic_counter_ptr);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_aabb_collide", String.valueOf(e));
+        }
     }
 
     private void finalize_candidates()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         if (candidate_count <= 0)
         {
             return;
@@ -792,44 +716,18 @@ public class PhysicsSimulation extends GameSystem
             .call(arg_long(candidate_buffer_count));
 
         GPGPU.cl_release_buffer(counter_ptr);
-    }
-
-    private void sort_sat_candidates()
-    {
-        int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
-        long[] global_work_size = new long[]{candidate_pair_size};
-
-        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, sat_counts_ptr, CLSize.cl_int * 4);
-        sat_sort_count_k.call(global_work_size);
-
-        int[] type_counts = GPGPU.cl_read_pinned_int_buffer(GPGPU.command_queue_ptr, sat_counts_ptr, CLSize.cl_int * 4, 4);
-
-        sat_candidate_p_buffer_size = type_counts[0];
-        sat_candidate_c_buffer_size = type_counts[1];
-        sat_candidate_b_buffer_size = type_counts[2];
-        sat_candidate_pc_buffer_size = type_counts[3];
-
-        sat_candidates_p.ensure_capacity(sat_candidate_p_buffer_size);
-        sat_candidates_c.ensure_capacity(sat_candidate_c_buffer_size);
-        sat_candidates_b.ensure_capacity(sat_candidate_b_buffer_size);
-        sat_candidates_pc.ensure_capacity(sat_candidate_pc_buffer_size);
-
-        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, sat_counts_ptr, CLSize.cl_int * 4);
-        sat_sort_type_k.call(global_work_size);
-
-        //System.out.println(Arrays.toString(x));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_finalize_candidates", String.valueOf(e));
+        }
     }
 
     private void sat_collide()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
         long[] global_work_size = new long[]{candidate_pair_size};
-
-        long[] global_work_size_p = new long[]{sat_candidate_p_buffer_size};
-        long[] global_work_size_c = new long[]{sat_candidate_c_buffer_size};
-        long[] global_work_size_b = new long[]{sat_candidate_b_buffer_size};
-        long[] global_work_size_pc = new long[]{sat_candidate_pc_buffer_size};
-
         GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, atomic_counter_ptr, CLSize.cl_int);
 
         long max_point_count = candidate_buffer_size
@@ -841,57 +739,98 @@ public class PhysicsSimulation extends GameSystem
         reaction_index.ensure_capacity(max_point_count);
         point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
         point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
-
-        sat_collide_k.call(global_work_size); // old way
-
-//        sat_collide_p_k.call(global_work_size_p);
-//        sat_collide_c_k.call(global_work_size_c);
-//        sat_collide_b_k.call(global_work_size_b);
-//        sat_collide_pc_k.call(global_work_size_pc);
-
+        sat_collide_k.call(global_work_size);
         reaction_count = GPGPU.cl_read_pinned_int(GPGPU.command_queue_ptr, atomic_counter_ptr);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_sat_collide", String.valueOf(e));
+        }
     }
 
     private void scan_reactions()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         GPGPU.scan_int_out(point_reaction_counts.pointer(), point_reaction_offsets.pointer(), GPGPU.core_memory.next_point());
         point_reaction_counts.clear();
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_sat_scan_reactions", String.valueOf(e));
+        }
     }
 
     private void sort_reactions()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         sort_reactions_k.call(arg_long(reaction_count));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_sat_sort_reactions", String.valueOf(e));
+        }
     }
 
     private void apply_reactions()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         apply_reactions_k.call(arg_long(GPGPU.core_memory.next_point()));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_sat_apply_reactions", String.valueOf(e));
+        }
     }
 
     private void move_armatures()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         move_armatures_k.call(arg_long(GPGPU.core_memory.next_armature()));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_move_armatures", String.valueOf(e));
+        }
     }
 
     private void animate_armatures(float dt)
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         animate_armatures_k
             .set_arg(AnimateArmatures_k.Args.delta_time, dt)
             .call(arg_long(GPGPU.core_memory.next_armature()));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_animate_armatures", String.valueOf(e));
+        }
     }
 
     private void animate_bones()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         animate_bones_k.call(arg_long(GPGPU.core_memory.next_bone()));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_animate_bones", String.valueOf(e));
+        }
     }
 
     private void animate_points()
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         animate_points_k.call(arg_long(GPGPU.core_memory.next_point()));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_animate_points", String.valueOf(e));
+        }
     }
 
     private void resolve_constraints(int steps)
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
         boolean last_step;
         for (int i = 0; i < steps; i++)
         {
@@ -903,6 +842,11 @@ public class PhysicsSimulation extends GameSystem
             resolve_constraints_k
                 .set_arg(ResolveConstraints_k.Args.process_all, n)
                 .call(arg_long(GPGPU.core_memory.next_hull()));
+        }
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_resolve_constraints", String.valueOf(e));
         }
     }
 
@@ -980,7 +924,7 @@ public class PhysicsSimulation extends GameSystem
         // updated for this tick cycle.
         integrate();
 
-        update_controllable_entities();
+//        update_controllable_entities();
 
         /*
         - Broad Phase Collision -
@@ -1116,13 +1060,13 @@ public class PhysicsSimulation extends GameSystem
     private final BlockingQueue<Float> q = new SynchronousQueue<>();
     private final BlockingQueue<Long> r = new SynchronousQueue<>();
 
-    private final Thread t = Thread.ofVirtual().start(() ->
+    private final Thread t = Thread.ofVirtual().name("Physics-Thread").start(() ->
     {
-        var xt =  Thread.ofVirtual().start(() -> {
+        var xt =  Thread.ofVirtual().start(() ->
+        {
             try
             {
                 r.put(0L);
-                System.out.println("thread started...");
             }
             catch (InterruptedException e)
             {
@@ -1141,14 +1085,14 @@ public class PhysicsSimulation extends GameSystem
         {
             try
             {
-                long s = System.currentTimeMillis();
-                t(q.take());
-                long e = System.currentTimeMillis() - s;
-                r.put(e);
+                var x = q.take();
+                long s = System.nanoTime();
+                t(x);
+                long e = System.nanoTime() - s;
+                r.put(e / 1000);
             }
             catch (InterruptedException e)
             {
-                e.printStackTrace();
                 Thread.currentThread().interrupt();
             }
         }
@@ -1185,6 +1129,8 @@ public class PhysicsSimulation extends GameSystem
                 if (sub_ticks <= MAX_SUB_STEPS)
                 {
                     this.time_accumulator -= FIXED_TIME_STEP;
+
+                    update_controllable_entities();
 
                     // perform one tick of the simulation
                     this.tick_simulation();
@@ -1227,7 +1173,7 @@ public class PhysicsSimulation extends GameSystem
 
         // Deletion of objects happens only once per simulation tick, instead of every sub-step
         // to ensure buffer compaction happens as infrequently as possible.
-        //GPGPU.core_memory.delete_and_compact();
+        GPGPU.core_memory.delete_and_compact();
     }
 
     @Override
@@ -1235,10 +1181,13 @@ public class PhysicsSimulation extends GameSystem
     {
         try
         {
+            clFinish(GPGPU.render_command_queue_ptr);
+
             long last = r.take(); // todo: add timeout to this
 
-            GPGPU.core_memory.delete_and_compact();
             GPGPU.core_memory.mirror_buffers_ex();
+
+            clFinish(GPGPU.command_queue_ptr);
 
             if (Editor.ACTIVE)
             {
@@ -1250,82 +1199,6 @@ public class PhysicsSimulation extends GameSystem
         {
             throw new RuntimeException(e);
         }
-
-        // todo:
-        //  - wait for last physics tick thread to complete (semaphore)
-        //  - transfer relevant data to mirror buffers
-        //  - spawn next physics tick thread and return
-
-        //t(dt);
-
-
-//        // Bones are animated once per time tick
-//        animate_armatures(dt);
-//        animate_bones();
-//
-//        // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
-//        // convex shape. Animations may move points into positions where the geometry is slightly concave,
-//        // so this call acts as a small hedge against this happening before collision checks can be performed.
-//        resolve_constraints(EDGE_STEPS);
-//
-//        // Before the GPU begins the simulation cycle, player input is handled and the memory structures
-//        // in the GPU are updated with the proper values.
-//        //update_controllable_entities();
-//
-//        this.time_accumulator += dt;
-//        int sub_ticks = 0;
-//        while (this.time_accumulator >= TICK_RATE)
-//        {
-//            for (int i = 0; i < TARGET_SUB_STEPS; i++)
-//            {
-//                sub_ticks++;
-//
-//                // if we end up doing more sub ticks than is ideal, we will avoid ticking the simulation anymore
-//                // for this frame. This forces slower hardware to slow down a bit, which is less than ideal, but
-//                // is better than the alternative, which is system lockup.
-//                // todo: test a few different values on some lower-end hardware and try to find a sweet spot.
-//                if (sub_ticks <= MAX_SUB_STEPS)
-//                {
-//                    this.time_accumulator -= FIXED_TIME_STEP;
-//
-//                    // perform one tick of the simulation
-//                    this.tick_simulation();
-//
-//                    // Once all points have been relocated, all hulls are in their required positions for this frame.
-//                    // Movements applied to hulls are now accumulated and applied to their parent armatures.
-//                    move_armatures();
-//
-//                    // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
-//                    // objects that have animation will have their hulls moved into position for the current tick. It
-//                    // may seem odd to process animations as part of physics and not rendering, however this is required
-//                    // as the animated objects need to be accounted for in physical space. The hulls representing the
-//                    // rendered meshes are what is actually moved, and the result of the hull movement is used to position
-//                    // the original mesh for rendering. This separation is necessary as model geometry is too complex to
-//                    // use as a collision boundary.
-//                    animate_points();
-//
-//                    // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain
-//                    // their defined shapes. Without this step, the individual points of the tracked physics hulls will
-//                    // deform on impact, and may fly off in random directions, typically causing simulation failure. The
-//                    // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
-//                    // within the simulation.
-//                    resolve_constraints(EDGE_STEPS);
-//                }
-//                else
-//                {
-//                    // todo: when debug logging is added, log the amount of dropped simulation time
-//                    this.time_accumulator = 0;
-//                }
-//            }
-//        }
-//
-//        // zero out the acceleration buffer, so it is empty for the next frame
-//        GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL).clear();
-//
-//        // After all simulation is done for this pass, do one last animate pass so that vertices are all in
-//        // the expected location for rendering. The interplay between animation and edge constraints may leave
-//        // the points in slightly incorrect positions. This makes sure everything is good for the render step.
-//        animate_points();
     }
 
     @Override

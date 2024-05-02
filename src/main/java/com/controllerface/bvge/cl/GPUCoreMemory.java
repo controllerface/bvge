@@ -423,6 +423,8 @@ public class GPUCoreMemory
 
 
     private final ResizableBuffer mirror_armature_buffer;
+    private final ResizableBuffer mirror_armature_model_id_buffer;
+    private final ResizableBuffer mirror_armature_root_hull_buffer;
     private final ResizableBuffer mirror_edge_buffer;
     private final ResizableBuffer mirror_edge_flag_buffer;
     private final ResizableBuffer mirror_hull_buffer;
@@ -463,6 +465,11 @@ public class GPUCoreMemory
     private int keyframe_index        = 0;
     private int bone_channel_index    = 0;
     private int animation_index       = 0;
+
+    private int last_hull_index       = 0;
+    private int last_point_index      = 0;
+    private int last_edge_index       = 0;
+    private int last_armature_index   = 0;
 
     public GPUCoreMemory()
     {
@@ -550,6 +557,8 @@ public class GPUCoreMemory
         // mirrors:
 
         mirror_armature_buffer                 = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float4, 10_000L);
+        mirror_armature_model_id_buffer        = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
+        mirror_armature_root_hull_buffer       = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
         mirror_edge_buffer                     = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 24_000L);
         mirror_edge_flag_buffer                = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 24_000L);
         mirror_hull_buffer                     = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2, 10_000L);
@@ -812,81 +821,82 @@ public class GPUCoreMemory
     {
         return switch (bufferType)
         {
-            case ANIM_FRAME_TIME         -> anim_frame_time_buffer;
-            case ANIM_KEY_FRAME          -> anim_key_frame_buffer;
-            case ANIM_POS_CHANNEL        -> anim_bone_pos_channel_buffer;
-            case ANIM_ROT_CHANNEL        -> anim_bone_rot_channel_buffer;
-            case ANIM_SCL_CHANNEL        -> anim_bone_scl_channel_buffer;
-            case ANIM_DURATION           -> anim_duration_buffer;
-            case ANIM_TICK_RATE          -> anim_tick_rate_buffer;
-            case ANIM_TIMING_INDEX       -> anim_timing_index_buffer;
-            case ARMATURE                -> armature_buffer;
-            case ARMATURE_ACCEL          -> armature_accel_buffer;
-            case ARMATURE_ANIM_ELAPSED   -> armature_anim_elapsed_buffer;
-            case ARMATURE_ANIM_STATE     -> armature_anim_state_buffer;
-            case ARMATURE_ANIM_INDEX     -> armature_anim_index_buffer;
-            case ARMATURE_BONE           -> armature_bone_buffer;
-            case ARMATURE_BONE_REFERENCE_ID -> armature_bone_reference_id_buffer;
-            case ARMATURE_BONE_PARENT_ID -> armature_bone_parent_id_buffer;
-            case ARMATURE_FLAG           -> armature_flag_buffer;
-            case ARMATURE_BONE_TABLE     -> armature_bone_table_buffer;
-            case ARMATURE_HULL_TABLE     -> armature_hull_table_buffer;
-            case ARMATURE_MASS           -> armature_mass_buffer;
-            case ARMATURE_MODEL_ID       -> armature_model_id_buffer;
-            case ARMATURE_ROOT_HULL      -> armature_root_hull_buffer;
-            case ARMATURE_TRANSFORM_ID   -> armature_model_transform_buffer;
-            case BONE_ANIM_TABLE         -> bone_anim_channel_table_buffer;
-            case BONE_BIND_POSE          -> bone_bind_pose_buffer;
-            case BONE_REFERENCE          -> bone_reference_buffer;
-            case EDGE                    -> edge_buffer;
-            case EDGE_FLAG               -> edge_flag_buffer;
-            case EDGE_LENGTH             -> edge_length_buffer;
-            case HULL                    -> hull_buffer;
-            case HULL_SCALE              -> hull_scale_buffer;
-            case HULL_AABB               -> hull_aabb_buffer;
-            case HULL_AABB_INDEX         -> hull_aabb_index_buffer;
-            case HULL_AABB_KEY_TABLE     -> hull_aabb_key_buffer;
-            case HULL_BONE               -> hull_bone_buffer;
-            case HULL_ARMATURE_ID        -> hull_armature_id_buffer;
-            case HULL_BONE_TABLE         -> hull_bone_table_buffer;
-            case HULL_BONE_BIND_POSE     -> hull_bind_pose_id_buffer;
-            case HULL_BONE_INV_BIND_POSE -> hull_inv_bind_pose_id_buffer;
-            case HULL_POINT_TABLE        -> hull_point_table_buffer;
-            case HULL_EDGE_TABLE         -> hull_edge_table_buffer;
-            case HULL_FLAG               -> hull_flag_buffer;
-            case HULL_FRICTION           -> hull_friction_buffer;
-            case HULL_RESTITUTION        -> hull_restitution_buffer;
-            case HULL_MESH_ID            -> hull_mesh_id_buffer;
-            case HULL_ROTATION           -> hull_rotation_buffer;
-            case MESH_FACE               -> mesh_face_buffer;
-            case MESH_VERTEX_TABLE       -> mesh_vertex_table_buffer;
-            case MESH_FACE_TABLE         -> mesh_face_table_buffer;
-            case MODEL_TRANSFORM         -> model_transform_buffer;
-            case POINT                   -> point_buffer;
-            case POINT_ANTI_GRAV         -> point_anti_gravity_buffer;
-            case POINT_BONE_TABLE        -> point_bone_table_buffer;
-            case POINT_VERTEX_REFERENCE  -> point_vertex_reference_buffer;
-            case POINT_HULL_INDEX        -> point_hull_index_buffer;
-            case POINT_FLAG              -> point_flag_buffer;
-            case POINT_HIT_COUNT         -> point_hit_count_buffer;
-            case VERTEX_REFERENCE        -> vertex_reference_buffer;
-            case VERTEX_TEXTURE_UV       -> vertex_texture_uv_buffer;
-            case VERTEX_UV_TABLE         -> vertex_uv_table_buffer;
-            case VERTEX_WEIGHT           -> vertex_weight_buffer;
-
-            case MIRROR_EDGE -> mirror_edge_buffer;
-            case MIRROR_HULL -> mirror_hull_buffer;
-            case MIRROR_ARMATURE -> mirror_armature_buffer;
-            case MIRROR_POINT -> mirror_point_buffer;
-            case MIRROR_EDGE_FLAG -> mirror_edge_flag_buffer;
-            case MIRROR_HULL_AABB -> mirror_hull_aabb_buffer;
-            case MIRROR_HULL_FLAG -> mirror_hull_flag_buffer;
-            case MIRROR_HULL_MESH_ID -> mirror_hull_mesh_id_buffer;
-            case MIRROR_HULL_POINT_TABLE -> mirror_hull_point_table_buffer;
-            case MIRROR_HULL_ROTATION -> mirror_hull_rotation_buffer;
-            case MIRROR_HULL_SCALE -> mirror_hull_scale_buffer;
-            case MIRROR_POINT_ANTI_GRAV -> mirror_point_anti_gravity_buffer;
-            case MIRROR_POINT_HIT_COUNT -> mirror_point_hit_count_buffer;
+            case ANIM_FRAME_TIME               -> anim_frame_time_buffer;
+            case ANIM_KEY_FRAME                -> anim_key_frame_buffer;
+            case ANIM_POS_CHANNEL              -> anim_bone_pos_channel_buffer;
+            case ANIM_ROT_CHANNEL              -> anim_bone_rot_channel_buffer;
+            case ANIM_SCL_CHANNEL              -> anim_bone_scl_channel_buffer;
+            case ANIM_DURATION                 -> anim_duration_buffer;
+            case ANIM_TICK_RATE                -> anim_tick_rate_buffer;
+            case ANIM_TIMING_INDEX             -> anim_timing_index_buffer;
+            case ARMATURE                      -> armature_buffer;
+            case ARMATURE_ACCEL                -> armature_accel_buffer;
+            case ARMATURE_ANIM_ELAPSED         -> armature_anim_elapsed_buffer;
+            case ARMATURE_ANIM_STATE           -> armature_anim_state_buffer;
+            case ARMATURE_ANIM_INDEX           -> armature_anim_index_buffer;
+            case ARMATURE_BONE                 -> armature_bone_buffer;
+            case ARMATURE_BONE_REFERENCE_ID    -> armature_bone_reference_id_buffer;
+            case ARMATURE_BONE_PARENT_ID       -> armature_bone_parent_id_buffer;
+            case ARMATURE_FLAG                 -> armature_flag_buffer;
+            case ARMATURE_BONE_TABLE           -> armature_bone_table_buffer;
+            case ARMATURE_HULL_TABLE           -> armature_hull_table_buffer;
+            case ARMATURE_MASS                 -> armature_mass_buffer;
+            case ARMATURE_MODEL_ID             -> armature_model_id_buffer;
+            case ARMATURE_ROOT_HULL            -> armature_root_hull_buffer;
+            case ARMATURE_TRANSFORM_ID         -> armature_model_transform_buffer;
+            case BONE_ANIM_TABLE               -> bone_anim_channel_table_buffer;
+            case BONE_BIND_POSE                -> bone_bind_pose_buffer;
+            case BONE_REFERENCE                -> bone_reference_buffer;
+            case EDGE                          -> edge_buffer;
+            case EDGE_FLAG                     -> edge_flag_buffer;
+            case EDGE_LENGTH                   -> edge_length_buffer;
+            case HULL                          -> hull_buffer;
+            case HULL_SCALE                    -> hull_scale_buffer;
+            case HULL_AABB                     -> hull_aabb_buffer;
+            case HULL_AABB_INDEX               -> hull_aabb_index_buffer;
+            case HULL_AABB_KEY_TABLE           -> hull_aabb_key_buffer;
+            case HULL_BONE                     -> hull_bone_buffer;
+            case HULL_ARMATURE_ID              -> hull_armature_id_buffer;
+            case HULL_BONE_TABLE               -> hull_bone_table_buffer;
+            case HULL_BONE_BIND_POSE           -> hull_bind_pose_id_buffer;
+            case HULL_BONE_INV_BIND_POSE       -> hull_inv_bind_pose_id_buffer;
+            case HULL_POINT_TABLE              -> hull_point_table_buffer;
+            case HULL_EDGE_TABLE               -> hull_edge_table_buffer;
+            case HULL_FLAG                     -> hull_flag_buffer;
+            case HULL_FRICTION                 -> hull_friction_buffer;
+            case HULL_RESTITUTION              -> hull_restitution_buffer;
+            case HULL_MESH_ID                  -> hull_mesh_id_buffer;
+            case HULL_ROTATION                 -> hull_rotation_buffer;
+            case MESH_FACE                     -> mesh_face_buffer;
+            case MESH_VERTEX_TABLE             -> mesh_vertex_table_buffer;
+            case MESH_FACE_TABLE               -> mesh_face_table_buffer;
+            case MODEL_TRANSFORM               -> model_transform_buffer;
+            case POINT                         -> point_buffer;
+            case POINT_ANTI_GRAV               -> point_anti_gravity_buffer;
+            case POINT_BONE_TABLE              -> point_bone_table_buffer;
+            case POINT_VERTEX_REFERENCE        -> point_vertex_reference_buffer;
+            case POINT_HULL_INDEX              -> point_hull_index_buffer;
+            case POINT_FLAG                    -> point_flag_buffer;
+            case POINT_HIT_COUNT               -> point_hit_count_buffer;
+            case VERTEX_REFERENCE              -> vertex_reference_buffer;
+            case VERTEX_TEXTURE_UV             -> vertex_texture_uv_buffer;
+            case VERTEX_UV_TABLE               -> vertex_uv_table_buffer;
+            case VERTEX_WEIGHT                 -> vertex_weight_buffer;
+            case MIRROR_EDGE                   -> mirror_edge_buffer;
+            case MIRROR_HULL                   -> mirror_hull_buffer;
+            case MIRROR_ARMATURE               -> mirror_armature_buffer;
+            case MIRROR_POINT                  -> mirror_point_buffer;
+            case MIRROR_ARMATURE_MODEL_ID      -> mirror_armature_model_id_buffer;
+            case MIRROR_ARMATURE_ROOT_HULL     -> mirror_armature_root_hull_buffer;
+            case MIRROR_EDGE_FLAG              -> mirror_edge_flag_buffer;
+            case MIRROR_HULL_AABB              -> mirror_hull_aabb_buffer;
+            case MIRROR_HULL_FLAG              -> mirror_hull_flag_buffer;
+            case MIRROR_HULL_MESH_ID           -> mirror_hull_mesh_id_buffer;
+            case MIRROR_HULL_POINT_TABLE       -> mirror_hull_point_table_buffer;
+            case MIRROR_HULL_ROTATION          -> mirror_hull_rotation_buffer;
+            case MIRROR_HULL_SCALE             -> mirror_hull_scale_buffer;
+            case MIRROR_POINT_ANTI_GRAV        -> mirror_point_anti_gravity_buffer;
+            case MIRROR_POINT_HIT_COUNT        -> mirror_point_hit_count_buffer;
             case MIRROR_POINT_VERTEX_REFERENCE -> mirror_point_vertex_reference_buffer;
         };
     }
@@ -894,6 +904,8 @@ public class GPUCoreMemory
     public void mirror_buffers_ex()
     {
         mirror_armature_buffer.mirror_buffer(armature_buffer);
+        mirror_armature_model_id_buffer.mirror_buffer(armature_model_id_buffer);
+        mirror_armature_root_hull_buffer.mirror_buffer(armature_root_hull_buffer);
         mirror_edge_buffer.mirror_buffer(edge_buffer);
         mirror_edge_flag_buffer.mirror_buffer(edge_flag_buffer);
         mirror_hull_buffer.mirror_buffer(hull_buffer);
@@ -907,6 +919,11 @@ public class GPUCoreMemory
         mirror_point_anti_gravity_buffer.mirror_buffer(point_anti_gravity_buffer);
         mirror_point_buffer.mirror_buffer(point_buffer);
         mirror_point_vertex_reference_buffer.mirror_buffer(point_vertex_reference_buffer);
+
+        last_edge_index     = edge_index;
+        last_armature_index = armature_index;
+        last_hull_index     = hull_index;
+        last_point_index    = point_index;
     }
 
     // index methods
@@ -939,6 +956,26 @@ public class GPUCoreMemory
     public int next_bone()
     {
         return bone_index;
+    }
+
+    public int last_point()
+    {
+        return last_point_index;
+    }
+
+    public int last_armature()
+    {
+        return last_armature_index;
+    }
+
+    public int last_hull()
+    {
+        return last_hull_index;
+    }
+
+    public int last_edge()
+    {
+        return last_edge_index;
     }
 
     public int new_animation_timings(float duration, float tick_rate)

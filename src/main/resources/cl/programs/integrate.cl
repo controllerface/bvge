@@ -125,7 +125,7 @@ __kernel void integrate(__global float2 *hulls,
         float2 prv = point.zw;
 
         float x_threshold = is_liquid ? 1.0f : 10.0f;
-        float y_threshold = is_liquid ? 2.0f : 1.0f;
+        float y_threshold = is_liquid ? 10.0f : 1.0f;
         
         float2 vel = (pos - prv) ;/// dt;
         bool s_x = fabs(vel.x) > x_threshold;
@@ -147,13 +147,14 @@ __kernel void integrate(__global float2 *hulls,
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
 
-            float g_x = touch_alike ? 0.4f : 0.4;
+            float g_x = touch_alike ? 0.01f : 0.01;
             float g_y = touch_alike ? 0.0f : 0.0;
 
-            float2 w_acc = (is_liquid & !touch_alike)
+// float2 w_acc = (float2)(0.0f, 0.0f);
+            float2 w_acc = (is_liquid)// & !touch_alike)
                 ? flow_left
-                    ? (float2)(-gravity.y * g_x, 0.0f)
-                    : (float2)(gravity.y * g_x, 0.0f)
+                    ? (float2)(-gravity.y * g_x, gravity.y * g_y)
+                    : (float2)(gravity.y * g_x, gravity.y * g_y)
                 : (float2)(0.0f, 0.0f);
 
             w_acc *= dt_2;

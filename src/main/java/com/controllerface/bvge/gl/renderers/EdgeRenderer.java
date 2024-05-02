@@ -68,7 +68,7 @@ public class EdgeRenderer extends GameSystem
         prepare_edges.init();
 
         long ptr = prepare_edges.kernel_ptr(Kernel.prepare_edges);
-        prepare_edges_k = new PrepareEdges_k(GPGPU.command_queue_ptr, ptr)
+        prepare_edges_k = new PrepareEdges_k(GPGPU.render_command_queue_ptr, ptr)
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vertex_vbo_ptr)
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, flag_vbo_ptr)
             .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT))
@@ -85,7 +85,7 @@ public class EdgeRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         int offset = 0;
-        for (int remaining = GPGPU.core_memory.next_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPGPU.core_memory.last_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
 

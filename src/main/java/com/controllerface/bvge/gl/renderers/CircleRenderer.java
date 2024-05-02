@@ -75,7 +75,7 @@ public class CircleRenderer extends GameSystem
         {
             GPGPU.cl_release_buffer(circle_hulls.indices());
         }
-        circle_hulls = GPGPU.GL_hull_filter(GPGPU.command_queue_ptr, ModelRegistry.CIRCLE_PARTICLE);
+        circle_hulls = GPGPU.GL_hull_filter(GPGPU.command_queue_ptr, ModelRegistry.CIRCLE_PARTICLE); // todo: factor out
 
         if (circle_hulls.count() == 0) return;
 

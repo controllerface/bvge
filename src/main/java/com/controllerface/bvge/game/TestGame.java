@@ -33,11 +33,11 @@ public class TestGame extends GameMode
     }
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
-            //RenderType.HULLS,
-            //RenderType.POINTS,
-            //RenderType.ARMATURES,
-            //RenderType.BOUNDS,
-            //RenderType.GRID,
+//            RenderType.HULLS,
+//            RenderType.POINTS,
+//            RenderType.ARMATURES,
+//            RenderType.BOUNDS,
+//            RenderType.GRID,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -144,7 +144,7 @@ public class TestGame extends GameMode
                     : 0;
                 flip = !flip;
                 var armature_index = PhysicsObjects.particle(x, y, size,
-                    1f, 0.0f, 0.000004f,
+                    1f, 0.0f, 0.00000f,
                     HullFlags.IS_LIQUID._int,
                     flags);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
@@ -252,7 +252,7 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
         {
-            ecs.registerSystem(new CrateRenderer(ecs));
+            //ecs.registerSystem(new CrateRenderer(ecs));
             ecs.registerSystem(new ModelRenderer(ecs, "poly_model.glsl", TEST_MODEL_INDEX));
             ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_BLOCK_INDEX));
             ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_TRI_INDEX));
@@ -306,7 +306,7 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        genWater(150, 10f, 10f, 0, 1400);
+        genWater(150, 11f, 10f, 0, 3000);
         genBlocks(100,  15f, 15f, -50, 200);
         genBlocks(100,  15f, 15f, 2500, 200);
         genBlocks(100,  15f, 15f, 2500, 3800);
@@ -326,7 +326,7 @@ public class TestGame extends GameMode
         genFloor(32, 150f, 150f, 1700, 2200, 0.03f);
 
         genWall(15, 150f, 150f, -220, -100);
-        genWall(5, 150f, 150f, 2330, -100);
+        genWall(1, 150f, 150f, 2330, -100);
         genWall(5, 150f, 150f, 4880, -100);
 
         loadSystems();

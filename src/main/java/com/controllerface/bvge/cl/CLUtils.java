@@ -152,37 +152,6 @@ public class CLUtils
         }
     }
 
-    public static PointerBuffer k_call_wait(long command_queue_ptr,
-                                            long kernel_ptr,
-                                            long[] global_work_size,
-                                            long[] local_work_size,
-                                            long[] global_work_offset)
-    {
-
-        PointerBuffer buffer = MemoryUtil.memAllocPointer(1);
-        try (var mem_stack = MemoryStack.stackPush())
-        {
-            var global_offset_ptr = int_to_buffer(mem_stack, global_work_offset);
-            var global_work_ptr = int_to_buffer(mem_stack, global_work_size);
-            var local_work_ptr = int_to_buffer(mem_stack, local_work_size);
-
-            int r = clEnqueueNDRangeKernel(command_queue_ptr,
-                kernel_ptr,
-                1,
-                global_offset_ptr,
-                global_work_ptr,
-                local_work_ptr,
-                null,
-                buffer);
-
-            if (r != CL_SUCCESS)
-            {
-                System.out.println("WTF!");
-            }
-        }
-        return buffer;
-    }
-
     private static PointerBuffer mem_to_buffer(MemoryStack mem_stack, List<Long> mem)
     {
         Objects.requireNonNull(mem);
