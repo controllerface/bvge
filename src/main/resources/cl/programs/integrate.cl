@@ -148,7 +148,7 @@ __kernel void integrate(__global float2 *hulls,
             float2 diff = pos - prv;
 
             float g_x = touch_alike ? 0.01f : 0.01;
-            float g_y = touch_alike ? 0.0f : 0.0;
+            float g_y = touch_alike ? 0.05f : 0.01;
 
 // float2 w_acc = (float2)(0.0f, 0.0f);
             float2 w_acc = (is_liquid)// & !touch_alike)

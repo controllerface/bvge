@@ -134,7 +134,7 @@ public class Window
             this.height = video_mode.height();
         }
 
-        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, primary_monitor, NULL);
+        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
         if (glfwWindow == NULL)
         {
             throw new IllegalStateException("could not create window");

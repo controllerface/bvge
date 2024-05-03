@@ -35,6 +35,7 @@ __kernel void count_candidates(__global int2 *bounds_bank_data,
     int end = spatial_index + spatial_length;
 
     int size = 0;
+    __attribute__((opencl_unroll_hint(8)))
     for (int i = spatial_index; i < end; i++)
     {
         int x = key_bank[i];
@@ -66,6 +67,7 @@ __kernel void finalize_candidates(__global int2 *input_candidates,
     int index = input_candidates[gid].x;
     int size = used[gid];
     int offset = match_offsets[gid];
+    __attribute__((opencl_unroll_hint(8)))
     for (int i = offset; i < (offset + size); i++)
     {
         int next = matches[i];

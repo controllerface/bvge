@@ -37,7 +37,7 @@ public class TestGame extends GameMode
 //            RenderType.POINTS,
 //            RenderType.ARMATURES,
 //            RenderType.BOUNDS,
-            RenderType.GRID,
+            //RenderType.GRID,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =

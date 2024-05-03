@@ -477,101 +477,101 @@ public class GPUCoreMemory
         position_buffer_ptr     = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
         delete_sizes_ptr        = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
 
-        hull_shift                      = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        edge_shift                      = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 24_000L);
-        point_shift                     = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 50_000L);
-        bone_shift                      = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        bone_bind_shift                 = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 24_000L);
-        delete_buffer_1                 = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 10_000L);
-        delete_buffer_2                 = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int4, 20_000L);
-        delete_partial_buffer_1         = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 10_000L);
-        delete_partial_buffer_2         = new TransientBuffer(GPGPU.command_queue_ptr, CLSize.cl_int4, 20_000L);
+        hull_shift                      = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        edge_shift                      = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 24_000L);
+        point_shift                     = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 50_000L);
+        bone_shift                      = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        bone_bind_shift                 = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 24_000L);
+        delete_buffer_1                 = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        delete_buffer_2                 = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int4, 20_000L);
+        delete_partial_buffer_1         = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        delete_partial_buffer_2         = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int4, 20_000L);
 
-        anim_bone_pos_channel_buffer    = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2);
-        anim_bone_rot_channel_buffer    = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2);
-        anim_bone_scl_channel_buffer    = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2);
-        anim_frame_time_buffer          = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float);
-        anim_key_frame_buffer           = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float4);
-        anim_duration_buffer            = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float);
-        anim_tick_rate_buffer           = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float);
-        anim_timing_index_buffer        = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int);
-        armature_accel_buffer           = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2, 10_000L);
-        armature_anim_elapsed_buffer    = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float, 10_000L);
-        armature_anim_state_buffer      = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_short2, 10_000L);
-        armature_anim_index_buffer      = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        armature_bone_buffer            = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float16);
-        armature_bone_reference_id_buffer = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int);
-        armature_bone_parent_id_buffer  = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int);
-        armature_buffer                 = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float4, 10_000L);
-        armature_flag_buffer            = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        armature_root_hull_buffer       = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        armature_model_id_buffer        = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        armature_model_transform_buffer = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
+        anim_bone_pos_channel_buffer    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2);
+        anim_bone_rot_channel_buffer    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2);
+        anim_bone_scl_channel_buffer    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2);
+        anim_frame_time_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float);
+        anim_key_frame_buffer           = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4);
+        anim_duration_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float);
+        anim_tick_rate_buffer           = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float);
+        anim_timing_index_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
+        armature_accel_buffer           = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        armature_anim_elapsed_buffer    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float, 10_000L);
+        armature_anim_state_buffer      = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_short2, 10_000L);
+        armature_anim_index_buffer      = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        armature_bone_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16);
+        armature_bone_reference_id_buffer = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
+        armature_bone_parent_id_buffer  = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
+        armature_buffer                 = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
+        armature_flag_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        armature_root_hull_buffer       = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        armature_model_id_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        armature_model_transform_buffer = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
 
-        armature_hull_table_buffer      = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 10_000L);
-        armature_bone_table_buffer      = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 10_000L);
+        armature_hull_table_buffer      = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        armature_bone_table_buffer      = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
 
-        armature_mass_buffer            = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float, 10_000L);
-        bone_anim_channel_table_buffer  = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2);
-        bone_bind_pose_buffer           = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float16);
-        bone_reference_buffer           = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float16);
-        edge_buffer                     = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 24_000L);
-        edge_flag_buffer                = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 24_000L);
-        edge_length_buffer              = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float, 24_000L);
-        hull_aabb_buffer                = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float4, 10_000L);
-        hull_aabb_index_buffer          = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int4, 10_000L);
-        hull_aabb_key_buffer            = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 10_000L);
-        hull_bone_buffer                = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float16, 10_000L);
-        hull_bind_pose_id_buffer        = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        hull_inv_bind_pose_id_buffer    = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        hull_buffer                     = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2, 10_000L);
-        hull_scale_buffer               = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2, 10_000L);
-        hull_point_table_buffer         = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 10_000L);
-        hull_edge_table_buffer          = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 10_000L);
-        hull_flag_buffer                = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        hull_bone_table_buffer          = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 10_000L);
-        hull_armature_id_buffer         = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        hull_friction_buffer            = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float, 10_000L);
-        hull_restitution_buffer         = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float, 10_000L);
-        hull_mesh_id_buffer             = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        hull_rotation_buffer            = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2, 10_000L);
-        mesh_face_buffer                = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int4);
-        mesh_vertex_table_buffer        = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2);
-        mesh_face_table_buffer          = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2);
-        model_transform_buffer          = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float16);
-        point_anti_gravity_buffer       = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float, 50_000L);
-        point_bone_table_buffer         = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int4, 50_000L);
-        point_buffer                    = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float4, 50_000L);
-        point_vertex_reference_buffer   = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 50_000L);
-        point_hull_index_buffer         = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 50_000L);
-        point_flag_buffer               = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 50_000L);
+        armature_mass_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float, 10_000L);
+        bone_anim_channel_table_buffer  = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2);
+        bone_bind_pose_buffer           = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16);
+        bone_reference_buffer           = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16);
+        edge_buffer                     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 24_000L);
+        edge_flag_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 24_000L);
+        edge_length_buffer              = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float, 24_000L);
+        hull_aabb_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
+        hull_aabb_index_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int4, 10_000L);
+        hull_aabb_key_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        hull_bone_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16, 10_000L);
+        hull_bind_pose_id_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        hull_inv_bind_pose_id_buffer    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        hull_buffer                     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        hull_scale_buffer               = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        hull_point_table_buffer         = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        hull_edge_table_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        hull_flag_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        hull_bone_table_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        hull_armature_id_buffer         = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        hull_friction_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float, 10_000L);
+        hull_restitution_buffer         = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float, 10_000L);
+        hull_mesh_id_buffer             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        hull_rotation_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        mesh_face_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int4);
+        mesh_vertex_table_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2);
+        mesh_face_table_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2);
+        model_transform_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16);
+        point_anti_gravity_buffer       = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float, 50_000L);
+        point_bone_table_buffer         = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int4, 50_000L);
+        point_buffer                    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 50_000L);
+        point_vertex_reference_buffer   = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 50_000L);
+        point_hull_index_buffer         = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 50_000L);
+        point_flag_buffer               = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 50_000L);
 
-        point_hit_count_buffer          = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_ushort, 50_000L);
+        point_hit_count_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_ushort, 50_000L);
 
-        vertex_reference_buffer         = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2);
-        vertex_texture_uv_buffer        = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2);
-        vertex_uv_table_buffer          = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2);
-        vertex_weight_buffer            = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float4);
+        vertex_reference_buffer         = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2);
+        vertex_texture_uv_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2);
+        vertex_uv_table_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2);
+        vertex_weight_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4);
 
 
         // mirrors:
 
-        mirror_armature_buffer                 = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float4, 10_000L);
-        mirror_armature_model_id_buffer        = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        mirror_armature_root_hull_buffer       = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        mirror_edge_buffer                     = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 24_000L);
-        mirror_edge_flag_buffer                = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 24_000L);
-        mirror_hull_buffer                     = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2, 10_000L);
-        mirror_hull_aabb_buffer                = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float4, 10_000L);
-        mirror_hull_flag_buffer                = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        mirror_hull_mesh_id_buffer             = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 10_000L);
-        mirror_hull_point_table_buffer         = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int2, 10_000L);
-        mirror_hull_rotation_buffer            = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2, 10_000L);
-        mirror_hull_scale_buffer               = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float2, 10_000L);
-        mirror_point_hit_count_buffer          = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_ushort, 50_000L);
-        mirror_point_anti_gravity_buffer       = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float, 50_000L);
-        mirror_point_buffer                    = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_float4, 50_000L);
-        mirror_point_vertex_reference_buffer   = new PersistentBuffer(GPGPU.command_queue_ptr, CLSize.cl_int, 50_000L);
+        mirror_armature_buffer                 = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
+        mirror_armature_model_id_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        mirror_armature_root_hull_buffer       = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        mirror_edge_buffer                     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 24_000L);
+        mirror_edge_flag_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 24_000L);
+        mirror_hull_buffer                     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        mirror_hull_aabb_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
+        mirror_hull_flag_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        mirror_hull_mesh_id_buffer             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        mirror_hull_point_table_buffer         = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        mirror_hull_rotation_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        mirror_hull_scale_buffer               = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        mirror_point_hit_count_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_ushort, 50_000L);
+        mirror_point_anti_gravity_buffer       = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float, 50_000L);
+        mirror_point_buffer                    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 50_000L);
+        mirror_point_vertex_reference_buffer   = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 50_000L);
 
         gpu_crud.init();
         scan_deletes.init();
@@ -579,7 +579,7 @@ public class GPUCoreMemory
         // create methods
 
         long create_point_k_ptr = gpu_crud.kernel_ptr(Kernel.create_point);
-        create_point_k = new CreatePoint_k(GPGPU.command_queue_ptr, create_point_k_ptr)
+        create_point_k = new CreatePoint_k(GPGPU.cl_cmd_queue_ptr, create_point_k_ptr)
             .buf_arg(CreatePoint_k.Args.points, point_buffer)
             .buf_arg(CreatePoint_k.Args.point_vertex_references, point_vertex_reference_buffer)
             .buf_arg(CreatePoint_k.Args.point_hull_indices, point_hull_index_buffer)
@@ -587,43 +587,43 @@ public class GPUCoreMemory
             .buf_arg(CreatePoint_k.Args.bone_tables, point_bone_table_buffer);
 
         long create_texture_uv_ptr = gpu_crud.kernel_ptr(Kernel.create_texture_uv);
-        create_texture_uv_k = new CreateTextureUV_k(GPGPU.command_queue_ptr, create_texture_uv_ptr)
+        create_texture_uv_k = new CreateTextureUV_k(GPGPU.cl_cmd_queue_ptr, create_texture_uv_ptr)
             .buf_arg(CreateTextureUV_k.Args.texture_uvs, vertex_texture_uv_buffer);
 
         long create_edge_k_ptr = gpu_crud.kernel_ptr(Kernel.create_edge);
-        create_edge_k = new CreateEdge_k(GPGPU.command_queue_ptr, create_edge_k_ptr)
+        create_edge_k = new CreateEdge_k(GPGPU.cl_cmd_queue_ptr, create_edge_k_ptr)
             .buf_arg(CreateEdge_k.Args.edges, edge_buffer)
             .buf_arg(CreateEdge_k.Args.edge_lengths, edge_length_buffer)
             .buf_arg(CreateEdge_k.Args.edge_flags, edge_flag_buffer);
 
         long create_keyframe_k_ptr = gpu_crud.kernel_ptr(Kernel.create_keyframe);
-        create_keyframe_k = new CreateKeyFrame_k(GPGPU.command_queue_ptr, create_keyframe_k_ptr)
+        create_keyframe_k = new CreateKeyFrame_k(GPGPU.cl_cmd_queue_ptr, create_keyframe_k_ptr)
             .buf_arg(CreateKeyFrame_k.Args.key_frames, anim_key_frame_buffer)
             .buf_arg(CreateKeyFrame_k.Args.frame_times, anim_frame_time_buffer);
 
         long create_vertex_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_vertex_reference);
-        create_vertex_reference_k = new CreateVertexRef_k(GPGPU.command_queue_ptr, create_vertex_reference_k_ptr)
+        create_vertex_reference_k = new CreateVertexRef_k(GPGPU.cl_cmd_queue_ptr, create_vertex_reference_k_ptr)
             .buf_arg(CreateVertexRef_k.Args.vertex_references, vertex_reference_buffer)
             .buf_arg(CreateVertexRef_k.Args.vertex_weights, vertex_weight_buffer)
             .buf_arg(CreateVertexRef_k.Args.uv_tables, vertex_uv_table_buffer);
 
         long create_bone_bind_pose_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_bind_pose);
-        create_bone_bind_pose_k = new CreateBoneBindPose_k(GPGPU.command_queue_ptr, create_bone_bind_pose_k_ptr)
+        create_bone_bind_pose_k = new CreateBoneBindPose_k(GPGPU.cl_cmd_queue_ptr, create_bone_bind_pose_k_ptr)
             .buf_arg(CreateBoneBindPose_k.Args.bone_bind_poses, bone_bind_pose_buffer);
 
         long create_bone_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_reference);
-        create_bone_reference_k = new CreateBoneRef_k(GPGPU.command_queue_ptr, create_bone_reference_k_ptr)
+        create_bone_reference_k = new CreateBoneRef_k(GPGPU.cl_cmd_queue_ptr, create_bone_reference_k_ptr)
             .buf_arg(CreateBoneRef_k.Args.bone_references, bone_reference_buffer);
 
         long create_bone_channel_k_ptr = gpu_crud.kernel_ptr(Kernel.create_bone_channel);
-        create_bone_channel_k = new CreateBoneChannel_k(GPGPU.command_queue_ptr, create_bone_channel_k_ptr)
+        create_bone_channel_k = new CreateBoneChannel_k(GPGPU.cl_cmd_queue_ptr, create_bone_channel_k_ptr)
             .buf_arg(CreateBoneChannel_k.Args.animation_timing_indices, anim_timing_index_buffer)
             .buf_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, anim_bone_pos_channel_buffer)
             .buf_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, anim_bone_rot_channel_buffer)
             .buf_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, anim_bone_scl_channel_buffer);
 
         long create_armature_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature);
-        create_armature_k = new CreateArmature_k(GPGPU.command_queue_ptr, create_armature_k_ptr)
+        create_armature_k = new CreateArmature_k(GPGPU.cl_cmd_queue_ptr, create_armature_k_ptr)
             .buf_arg(CreateArmature_k.Args.armatures, armature_buffer)
             .buf_arg(CreateArmature_k.Args.armature_root_hulls, armature_root_hull_buffer)
             .buf_arg(CreateArmature_k.Args.armature_model_indices, armature_model_id_buffer)
@@ -637,23 +637,23 @@ public class GPUCoreMemory
             .buf_arg(CreateArmature_k.Args.armature_animation_states, armature_anim_state_buffer);
 
         long create_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_hull_bone);
-        create_bone_k = new CreateHullBone_k(GPGPU.command_queue_ptr, create_bone_k_ptr)
+        create_bone_k = new CreateHullBone_k(GPGPU.cl_cmd_queue_ptr, create_bone_k_ptr)
             .buf_arg(CreateHullBone_k.Args.bones, hull_bone_buffer)
             .buf_arg(CreateHullBone_k.Args.hull_bind_pose_indicies, hull_bind_pose_id_buffer)
             .buf_arg(CreateHullBone_k.Args.hull_inv_bind_pose_indicies, hull_inv_bind_pose_id_buffer);
 
         long create_armature_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_armature_bone);
-        create_armature_bone_k = new CreateArmatureBone_k(GPGPU.command_queue_ptr, create_armature_bone_k_ptr)
+        create_armature_bone_k = new CreateArmatureBone_k(GPGPU.cl_cmd_queue_ptr, create_armature_bone_k_ptr)
             .buf_arg(CreateArmatureBone_k.Args.armature_bones, armature_bone_buffer)
             .buf_arg(CreateArmatureBone_k.Args.armature_bone_reference_ids, armature_bone_reference_id_buffer)
             .buf_arg(CreateArmatureBone_k.Args.armature_bone_parent_ids, armature_bone_parent_id_buffer);
 
         long create_model_transform_k_ptr = gpu_crud.kernel_ptr(Kernel.create_model_transform);
-        create_model_transform_k = new CreateModelTransform_k(GPGPU.command_queue_ptr, create_model_transform_k_ptr)
+        create_model_transform_k = new CreateModelTransform_k(GPGPU.cl_cmd_queue_ptr, create_model_transform_k_ptr)
             .buf_arg(CreateModelTransform_k.Args.model_transforms, model_transform_buffer);
 
         long create_hull_k_ptr = gpu_crud.kernel_ptr(Kernel.create_hull);
-        create_hull_k = new CreateHull_k(GPGPU.command_queue_ptr, create_hull_k_ptr)
+        create_hull_k = new CreateHull_k(GPGPU.cl_cmd_queue_ptr, create_hull_k_ptr)
             .buf_arg(CreateHull_k.Args.hulls, hull_buffer)
             .buf_arg(CreateHull_k.Args.hull_scales, hull_scale_buffer)
             .buf_arg(CreateHull_k.Args.hull_rotations, hull_rotation_buffer)
@@ -667,45 +667,45 @@ public class GPUCoreMemory
             .buf_arg(CreateHull_k.Args.hull_mesh_ids, hull_mesh_id_buffer);
 
         long create_mesh_reference_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_reference);
-        create_mesh_reference_k = new CreateMeshReference_k(GPGPU.command_queue_ptr, create_mesh_reference_k_ptr)
+        create_mesh_reference_k = new CreateMeshReference_k(GPGPU.cl_cmd_queue_ptr, create_mesh_reference_k_ptr)
             .buf_arg(CreateMeshReference_k.Args.mesh_vertex_tables, mesh_vertex_table_buffer)
             .buf_arg(CreateMeshReference_k.Args.mesh_face_tables, mesh_face_table_buffer);
 
         long create_mesh_face_k_ptr = gpu_crud.kernel_ptr(Kernel.create_mesh_face);
-        create_mesh_face_k = new CreateMeshFace_k(GPGPU.command_queue_ptr, create_mesh_face_k_ptr)
+        create_mesh_face_k = new CreateMeshFace_k(GPGPU.cl_cmd_queue_ptr, create_mesh_face_k_ptr)
             .buf_arg(CreateMeshFace_k.Args.mesh_faces, mesh_face_buffer);
 
         long create_animation_timings_k_ptr = gpu_crud.kernel_ptr(Kernel.create_animation_timings);
-        create_animation_timings_k = new CreateAnimationTimings_k(GPGPU.command_queue_ptr, create_animation_timings_k_ptr)
+        create_animation_timings_k = new CreateAnimationTimings_k(GPGPU.cl_cmd_queue_ptr, create_animation_timings_k_ptr)
             .buf_arg(CreateAnimationTimings_k.Args.animation_durations, anim_duration_buffer)
             .buf_arg(CreateAnimationTimings_k.Args.animation_tick_rates, anim_tick_rate_buffer);
 
         // read methods
 
         long read_position_k_ptr = gpu_crud.kernel_ptr(Kernel.read_position);
-        read_position_k = new ReadPosition_k(GPGPU.command_queue_ptr, read_position_k_ptr)
+        read_position_k = new ReadPosition_k(GPGPU.cl_cmd_queue_ptr, read_position_k_ptr)
             .buf_arg(ReadPosition_k.Args.armatures, armature_buffer);
 
         // update methods
 
         long update_accel_k_ptr = gpu_crud.kernel_ptr(Kernel.update_accel);
-        update_accel_k = new UpdateAccel_k(GPGPU.command_queue_ptr, update_accel_k_ptr)
+        update_accel_k = new UpdateAccel_k(GPGPU.cl_cmd_queue_ptr, update_accel_k_ptr)
             .buf_arg(UpdateAccel_k.Args.armature_accel, armature_accel_buffer);
 
         long set_bone_channel_table_k_ptr = gpu_crud.kernel_ptr(Kernel.set_bone_channel_table);
-        set_bone_channel_table_k = new SetBoneChannelTable_k(GPGPU.command_queue_ptr, set_bone_channel_table_k_ptr)
+        set_bone_channel_table_k = new SetBoneChannelTable_k(GPGPU.cl_cmd_queue_ptr, set_bone_channel_table_k_ptr)
             .buf_arg(SetBoneChannelTable_k.Args.bone_channel_tables, bone_anim_channel_table_buffer);
 
         // delete methods
 
         long locate_out_of_bounds_k_ptr = scan_deletes.kernel_ptr(Kernel.locate_out_of_bounds);
-        locate_out_of_bounds_k = new LocateOutOfBounds_k(GPGPU.command_queue_ptr, locate_out_of_bounds_k_ptr)
+        locate_out_of_bounds_k = new LocateOutOfBounds_k(GPGPU.cl_cmd_queue_ptr, locate_out_of_bounds_k_ptr)
             .buf_arg(LocateOutOfBounds_k.Args.hull_tables, armature_hull_table_buffer)
             .buf_arg(LocateOutOfBounds_k.Args.hull_flags, hull_flag_buffer)
             .buf_arg(LocateOutOfBounds_k.Args.armature_flags, armature_flag_buffer);
 
         long scan_deletes_single_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_single_block_out);
-        scan_deletes_single_block_out_k = new ScanDeletesSingleBlockOut_k(GPGPU.command_queue_ptr, scan_deletes_single_block_out_k_ptr)
+        scan_deletes_single_block_out_k = new ScanDeletesSingleBlockOut_k(GPGPU.cl_cmd_queue_ptr, scan_deletes_single_block_out_k_ptr)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, delete_sizes_ptr)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.armature_flags, armature_flag_buffer)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, armature_hull_table_buffer)
@@ -715,7 +715,7 @@ public class GPUCoreMemory
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_bone_tables, hull_bone_table_buffer);
 
         long scan_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_multi_block_out);
-        scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(GPGPU.command_queue_ptr, scan_deletes_multi_block_out_k_ptr)
+        scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(GPGPU.cl_cmd_queue_ptr, scan_deletes_multi_block_out_k_ptr)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.part1, delete_partial_buffer_1)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.part2, delete_partial_buffer_2)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.armature_flags, armature_flag_buffer)
@@ -726,7 +726,7 @@ public class GPUCoreMemory
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_bone_tables, hull_bone_table_buffer);
 
         long complete_deletes_multi_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.complete_deletes_multi_block_out);
-        complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(GPGPU.command_queue_ptr, complete_deletes_multi_block_out_k_ptr)
+        complete_deletes_multi_block_out_k = new CompleteDeletesMultiBlockOut_k(GPGPU.cl_cmd_queue_ptr, complete_deletes_multi_block_out_k_ptr)
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.sz, delete_sizes_ptr)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part1, delete_partial_buffer_1)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part2, delete_partial_buffer_2)
@@ -738,7 +738,7 @@ public class GPUCoreMemory
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_bone_tables, hull_bone_table_buffer);
 
         long compact_armatures_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armatures);
-        compact_armatures_k = new CompactArmatures_k(GPGPU.command_queue_ptr, compact_armatures_k_ptr)
+        compact_armatures_k = new CompactArmatures_k(GPGPU.cl_cmd_queue_ptr, compact_armatures_k_ptr)
             .buf_arg(CompactArmatures_k.Args.armatures, armature_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_masses, armature_mass_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_root_hulls, armature_root_hull_buffer)
@@ -767,7 +767,7 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.bone_bind_shift, bone_bind_shift);
 
         long compact_hulls_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_hulls);
-        compact_hulls_k = new CompactHulls_k(GPGPU.command_queue_ptr, compact_hulls_k_ptr)
+        compact_hulls_k = new CompactHulls_k(GPGPU.cl_cmd_queue_ptr, compact_hulls_k_ptr)
             .buf_arg(CompactHulls_k.Args.hull_shift, hull_shift)
             .buf_arg(CompactHulls_k.Args.hulls, hull_buffer)
             .buf_arg(CompactHulls_k.Args.hull_scales, hull_scale_buffer)
@@ -785,14 +785,14 @@ public class GPUCoreMemory
             .buf_arg(CompactHulls_k.Args.bounds_bank_data, hull_aabb_key_buffer);
 
         long compact_edges_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_edges);
-        compact_edges_k = new CompactEdges_k(GPGPU.command_queue_ptr, compact_edges_k_ptr)
+        compact_edges_k = new CompactEdges_k(GPGPU.cl_cmd_queue_ptr, compact_edges_k_ptr)
             .buf_arg(CompactEdges_k.Args.edge_shift, edge_shift)
             .buf_arg(CompactEdges_k.Args.edges, edge_buffer)
             .buf_arg(CompactEdges_k.Args.edge_lengths, edge_length_buffer)
             .buf_arg(CompactEdges_k.Args.edge_flags, edge_flag_buffer);
 
         long compact_points_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_points);
-        compact_points_k = new CompactPoints_k(GPGPU.command_queue_ptr, compact_points_k_ptr)
+        compact_points_k = new CompactPoints_k(GPGPU.cl_cmd_queue_ptr, compact_points_k_ptr)
             .buf_arg(CompactPoints_k.Args.point_shift, point_shift)
             .buf_arg(CompactPoints_k.Args.points, point_buffer)
             .buf_arg(CompactPoints_k.Args.anti_gravity, point_anti_gravity_buffer)
@@ -803,14 +803,14 @@ public class GPUCoreMemory
             .buf_arg(CompactPoints_k.Args.bone_tables, point_bone_table_buffer);
 
         long compact_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_bones);
-        compact_bones_k = new CompactBones_k(GPGPU.command_queue_ptr, compact_bones_k_ptr)
+        compact_bones_k = new CompactBones_k(GPGPU.cl_cmd_queue_ptr, compact_bones_k_ptr)
             .buf_arg(CompactBones_k.Args.bone_shift, bone_shift)
             .buf_arg(CompactBones_k.Args.bone_instances, hull_bone_buffer)
             .buf_arg(CompactBones_k.Args.hull_bind_pose_indicies, hull_bind_pose_id_buffer)
             .buf_arg(CompactBones_k.Args.hull_inv_bind_pose_indicies, hull_inv_bind_pose_id_buffer);
 
         long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armature_bones);
-        compact_armature_bones_k = new CompactArmatureBones_k(GPGPU.command_queue_ptr, compact_armature_bones_k_ptr)
+        compact_armature_bones_k = new CompactArmatureBones_k(GPGPU.cl_cmd_queue_ptr, compact_armature_bones_k_ptr)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_shift, bone_bind_shift)
             .buf_arg(CompactArmatureBones_k.Args.armature_bones, armature_bone_buffer)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_reference_ids, armature_bone_reference_id_buffer)
@@ -1311,19 +1311,19 @@ public class GPUCoreMemory
 
     public float[] read_position(int armature_index)
     {
-        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, position_buffer_ptr, CLSize.cl_float2);
+        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, position_buffer_ptr, CLSize.cl_float2);
 
         read_position_k
             .ptr_arg(ReadPosition_k.Args.output, position_buffer_ptr)
             .set_arg(ReadPosition_k.Args.target, armature_index)
             .call(GPGPU.global_single_size);
 
-        return GPGPU.cl_read_pinned_float_buffer(GPGPU.command_queue_ptr, position_buffer_ptr, CLSize.cl_float2, 2);
+        return GPGPU.cl_read_pinned_float_buffer(GPGPU.cl_cmd_queue_ptr, position_buffer_ptr, CLSize.cl_float2, 2);
     }
 
     public void delete_and_compact()
     {
-        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, delete_counter_ptr, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, delete_counter_ptr, CLSize.cl_int);
 
         locate_out_of_bounds_k
             .ptr_arg(LocateOutOfBounds_k.Args.counter, delete_counter_ptr)
@@ -1397,7 +1397,7 @@ public class GPUCoreMemory
         long local_buffer_size = CLSize.cl_int2 * GPGPU.max_scan_block_size;
         long local_buffer_size2 = CLSize.cl_int4 * GPGPU.max_scan_block_size;
 
-        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6);
+        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6);
 
         scan_deletes_single_block_out_k
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
@@ -1407,7 +1407,7 @@ public class GPUCoreMemory
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(GPGPU.command_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6, 6);
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.cl_cmd_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6, 6);
     }
 
     private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
@@ -1434,7 +1434,7 @@ public class GPUCoreMemory
         GPGPU.scan_int2(delete_partial_buffer_1.pointer(), part_size);
         GPGPU.scan_int4(delete_partial_buffer_2.pointer(), part_size);
 
-        GPGPU.cl_zero_buffer(GPGPU.command_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6);
+        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6);
 
         complete_deletes_multi_block_out_k
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output1, o1_data_ptr)
@@ -1444,7 +1444,7 @@ public class GPUCoreMemory
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(GPGPU.command_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6, 6);
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.cl_cmd_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6, 6);
     }
 
     private void compact_buffers(int[] shift_counts)
