@@ -962,8 +962,6 @@ public class PhysicsSimulation extends GameSystem
         // updated for this tick cycle.
         integrate();
 
-//        update_controllable_entities();
-
         /*
         - Broad Phase Collision -
         =========================
@@ -1032,9 +1030,9 @@ public class PhysicsSimulation extends GameSystem
         // In a second pass, candidate counts are scanned to determine the offsets into the match table that
         // correspond to each hull that will be checked for collisions.
         calculate_match_offsets();
-        if (match_buffer_count > 10_000_000)
+        if (match_buffer_count > 50_000_000)
         {
-            throw new RuntimeException("collision buffer too large");
+            throw new RuntimeException("collision buffer too large:" + match_buffer_count);
         }
 
         // Finally, the actual broad phase collision check is performed. Once complete, the match table will

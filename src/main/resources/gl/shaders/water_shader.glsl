@@ -99,9 +99,8 @@ void main()
     float distance = 1.0 - length(fPosition);
     float circle = smoothstep(0.0, fade, distance);
     circle *= smoothstep(thickness + fade, thickness, distance);
-    
-    vec3 scaled_rgb = circleColor.rgb * f_color.rgb;
-    vec4 sclaed_rgba = vec4(scaled_rgb.rgb, .25);
+
+    vec4 sclaed_rgba = circleColor * f_color;
 
     if (circle > 0) color = sclaed_rgba;
     else discard;

@@ -19,15 +19,15 @@ __kernel void prepare_liquids(__global float2 *hull_positions,
 
     int hit_counts = point_hit_counts[point_table.x];
 
-    float col = hit_counts <= HIT_LOW_THRESHOLD
-        ? 1.0f 
+    float4 col = hit_counts <= HIT_LOW_THRESHOLD
+        ? (float4)(1.05f, 1.05f, 1.05f, 0.5f) 
         : hit_counts <= HIT_LOW_MID_THRESHOLD
-            ? 0.9f 
+            ? (float4)(1.0f) 
             : hit_counts <= HIT_MID_THRESHOLD
-                ? 0.85f
+                ? (float4)(0.85f, 0.85f, 0.85f, 1.0f)
                 : hit_counts <= HIT_HIGH_MID_THRESHOLD
-                    ? 0.8
-                    : 0.7;
+                    ? (float4)(0.8f, 0.8f, 0.9f, 1.5f)
+                    : (float4)(0.7f, 0.7f, 0.7f, 1.75f);
 
     float4 transform_out;
     transform_out.x = position.x; 
@@ -36,5 +36,5 @@ __kernel void prepare_liquids(__global float2 *hull_positions,
     transform_out.w = scale.x; // note: uniform scale only
 
     transforms_out[gid] = transform_out;
-    colors_out[gid] = (float4)(col, col, col, 1.0f);
+    colors_out[gid] = col;
 }

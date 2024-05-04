@@ -125,7 +125,7 @@ __kernel void integrate(__global float2 *hulls,
         float2 prv = point.zw;
 
         float x_threshold = is_liquid ? 1.0f : 10.0f;
-        float y_threshold = is_liquid ? 10.0f : 1.0f;
+        float y_threshold = is_liquid ? 2.0f : 1.0f;
         
         float2 vel = (pos - prv) ;/// dt;
         bool s_x = fabs(vel.x) > x_threshold;
