@@ -10,6 +10,7 @@ import com.controllerface.bvge.gl.renderers.*;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.window.Window;
 
 import java.util.EnumSet;
 import java.util.Random;
@@ -43,7 +44,7 @@ public class TestGame extends GameMode
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
 //        EnumSet.allOf(RenderType.class);
 
-    private final UniformGrid uniformGrid = new UniformGrid();
+    private final UniformGrid uniformGrid = new UniformGrid(Window.get().width(), Window.get().height());
 
     private final Random random = new Random();
 
@@ -306,7 +307,7 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        genWater(75, 16f, 15f, 0, 3000);
+        genWater(100, 16f, 15f, 0, 3000);
         genBlocks(60,  25f, 25f, -50, 200);
         genBlocks(60,  25f, 25f, 2500, 200);
         genBlocks(60,  25f, 25f, 2500, 3800);

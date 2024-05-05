@@ -6,17 +6,17 @@ package com.controllerface.bvge.physics;
  */
 public class UniformGrid
 {
-    public final float perimeter_width = 2048f;
-    public final float perimeter_height = 1024f;
-    public final float width = (8192f - perimeter_width) * 2;
-    public final float height = (4096f - perimeter_height) * 2;
-    public final float inner_width = width - perimeter_width;
-    public final float inner_height = height - perimeter_height;
-    public final int x_subdivisions = 200;
-    public final int y_subdivisions = 100;
-    public final int directory_length = x_subdivisions * y_subdivisions;
-    public final float x_spacing = width / x_subdivisions;
-    public final float y_spacing = height / y_subdivisions;
+    public final float perimeter_width;// = 2048f;
+    public final float perimeter_height;// = 1024f;
+    public final float width;// = (8192f - perimeter_width) * 2;
+    public final float height;// = (4096f - perimeter_height) * 2;
+    public final float inner_width;// = width - perimeter_width;
+    public final float inner_height;// = height - perimeter_height;
+    public final int x_subdivisions;// = 200;
+    public final int y_subdivisions;// = 100;
+    public final int directory_length;// = x_subdivisions * y_subdivisions;
+    public final float x_spacing;// = width / x_subdivisions;
+    public final float y_spacing;// = height / y_subdivisions;
 
     private float x_origin = 0;
     private float y_origin = 0;
@@ -25,7 +25,23 @@ public class UniformGrid
     int key_bank_size = 0;
     int key_map_size = 0;
 
-    public UniformGrid() { }
+    public UniformGrid(int screen_width, int screen_height)
+    {
+        float x = (float)screen_width * 2.5f;
+        float y = (float)screen_height * 2.5f;
+        System.out.println(STR."x:\{screen_width} y:\{screen_height}");
+        perimeter_width = screen_width * .20f;
+        perimeter_height = screen_height * .30f;
+        inner_width = x;
+        inner_height = y;
+        width = inner_width + perimeter_width;
+        height = inner_height + perimeter_height;
+        x_subdivisions = 200;
+        y_subdivisions = 100;
+        directory_length = x_subdivisions * y_subdivisions;
+        x_spacing = width / x_subdivisions;
+        y_spacing = height / y_subdivisions;
+    }
 
     public void updateOrigin(float x_origin, float y_origin)
     {

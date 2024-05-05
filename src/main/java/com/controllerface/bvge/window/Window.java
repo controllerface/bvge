@@ -33,7 +33,8 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  */
 public class Window
 {
-    int width, height;
+    int width;
+    int height;
     String title;
 
     private static Window INSTANCE = null;
