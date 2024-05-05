@@ -42,6 +42,11 @@ __kernel void integrate(__global float2 *hulls,
     int y_subdivisions = (int) args[8];
     float2 gravity = (float2)(args[9], args[10]);
     float damping = args[11];
+
+    float inner_x_origin = args[12];
+    float inner_y_origin = args[13];
+    float inner_width = args[14];
+    float inner_height = args[15];
     
     // get hull from array
     float2 hull = hulls[current_hull];
@@ -66,14 +71,20 @@ __kernel void integrate(__global float2 *hulls,
     bool is_liquid = (hull_1_flags & IS_LIQUID) !=0;
     bool touch_alike = (hull_1_flags & TOUCH_ALIKE) !=0;
     bool out_of_bounds = (hull_1_flags & OUT_OF_BOUNDS) !=0;
+    bool in_perimiter = (hull_1_flags & IN_PERIMETER) !=0;
 
     // wipe all ephemeral flags
     hull_1_flags &= ~OUT_OF_BOUNDS;
+    hull_1_flags &= ~IN_PERIMETER;
     hull_1_flags &= ~IN_LIQUID;
     hull_1_flags &= ~TOUCH_ALIKE;
 
     gravity = in_liquid
         ? gravity * 1.5f
+        : gravity;
+
+    gravity = in_perimiter
+        ? (float2)(0.0f)
         : gravity;
 
    	// get acc value and multiply by the timestep do get the displacement vector
@@ -122,10 +133,10 @@ __kernel void integrate(__global float2 *hulls,
         
         // get pos/prv vectors
         float2 pos = point.xy;
-        float2 prv = point.zw;
+        float2 prv = in_perimiter || out_of_bounds ? point.xy : point.zw;
 
         float x_threshold = is_liquid ? 1.0f : 10.0f;
-        float y_threshold = is_liquid ? 2.0f : 1.0f;
+        float y_threshold = is_liquid ? 0.25f : 1.0f;
         
         float2 vel = (pos - prv) ;/// dt;
         bool s_x = fabs(vel.x) > x_threshold;
@@ -139,7 +150,7 @@ __kernel void integrate(__global float2 *hulls,
         // prv.y = s_y ? pos.y - sign_y * y_threshold : prv.y;
 
 
-        if (!is_static)
+        if (!is_static && !out_of_bounds)
         {
             int _point_flags = point_flags[i];
             bool flow_left = (_point_flags & FLOW_LEFT) != 0;
@@ -262,12 +273,9 @@ __kernel void integrate(__global float2 *hulls,
 
     int4 k = getExtents(keys);
     bounds_index = k;
+    bool in_bounds = is_in_bounds(bounding_box, x_origin, y_origin, width, height);
 
-    if (!is_in_bounds(bounding_box, x_origin, y_origin, width, height))
-    {
-        bounds_bank.y = 0;
-    }
-    else
+    if (in_bounds)
     {
         // calculate spatial index key bank size
         int x_count = (k.y - k.x) + 1;
@@ -275,6 +283,20 @@ __kernel void integrate(__global float2 *hulls,
         int count = x_count * y_count;
         int size = count * 2;
         bounds_bank.y = size;
+
+        bool _in_perimiter = !is_in_bounds(bounding_box, inner_x_origin, inner_y_origin, inner_width, inner_height);
+        if (_in_perimiter)
+        {
+            hull_1_flags |= IN_PERIMETER;
+        }
+    }
+    else
+    {
+        bounds_bank.y = 0;
+        if (!is_static)
+        {
+            hull_1_flags |= OUT_OF_BOUNDS;
+        }
     }
 
     float4 ref_point = points[start];
@@ -290,13 +312,6 @@ __kernel void integrate(__global float2 *hulls,
     
     // rotation.y is the reference angle taken at object creation when rotation is zero
     rotation.x = rotation.y - r_x;
-
-    if (!is_static && !is_in_bounds(bounding_box, x_origin, y_origin, width, height))
-    {
-
-        hull_1_flags |= OUT_OF_BOUNDS;
-        bounds_bank.y = 0;
-    }
 
     hull_flags[current_hull] = hull_1_flags;
     bounds[current_hull] = bounding_box;
@@ -344,17 +359,6 @@ __kernel void integrate_armatures(__global float4 *armatures,
 
     float2 pos = armature.xy;
     float2 prv = armature.zw;
-
-    // float threshold = 32.0f;
-    // float2 vel = (pos - prv) / dt;
-    // bool s_x = fabs(vel.x) < threshold;
-    // bool s_y = fabs(vel.y) < threshold;
-    // prv.x = s_x ? pos.x : prv.x;
-    // prv.y = s_y ? pos.y : prv.y;
-    // if (current_armature == 0)
-    // {
-    //     printf("debug: x-%f y-%f", vel.x, vel.y);
-    // }
 
     if (!is_static && !no_bones)
     {

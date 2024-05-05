@@ -65,8 +65,6 @@ public class UniformGridRenderer extends GameSystem
 
     private record GridData(float[] vertices, float[] colors) {}
 
-    private boolean once = false;
-
     private boolean inside_inner(float a0, float a1, float a2, float a3, float x, float y, float w, float h)
     {
         return a0 < x + w
@@ -79,14 +77,14 @@ public class UniformGridRenderer extends GameSystem
     {
         float[] vertex_data = new float[vertex_buffer_size];
         float[] color_data = new float[color_buffer_size];
-        vertex_data[0] = uniformGrid.getX_origin();                        // lower left X
-        vertex_data[1] = uniformGrid.getY_origin();                        // lower left Y
-        vertex_data[2] = uniformGrid.getX_origin() + uniformGrid.width;    // lower right X
-        vertex_data[3] = uniformGrid.getY_origin();                        // lower right Y
-        vertex_data[4] = uniformGrid.getX_origin() + uniformGrid.width;    // upper right X
-        vertex_data[5] = uniformGrid.getY_origin() + uniformGrid.height;   // upper right Y
-        vertex_data[6] = uniformGrid.getX_origin();                        // upper left X
-        vertex_data[7] = uniformGrid.getY_origin() + uniformGrid.height;   // upper left Y
+        vertex_data[0] = uniformGrid.x_origin();                        // lower left X
+        vertex_data[1] = uniformGrid.y_origin();                        // lower left Y
+        vertex_data[2] = uniformGrid.x_origin() + uniformGrid.width;    // lower right X
+        vertex_data[3] = uniformGrid.y_origin();                        // lower right Y
+        vertex_data[4] = uniformGrid.x_origin() + uniformGrid.width;    // upper right X
+        vertex_data[5] = uniformGrid.y_origin() + uniformGrid.height;   // upper right Y
+        vertex_data[6] = uniformGrid.x_origin();                        // upper left X
+        vertex_data[7] = uniformGrid.y_origin() + uniformGrid.height;   // upper left Y
 
         color_data[0]  = 0.5f; // v0
         color_data[1]  = 0.5f;
@@ -108,10 +106,10 @@ public class UniformGridRenderer extends GameSystem
         int vertex_index = 8;
         int color_index = 16;
 
-        float x_offset = uniformGrid.getX_origin();
-        float y_offset = uniformGrid.getY_origin();
-        float inner_x_offset = x_offset + (uniformGrid.width - uniformGrid.inner_width) / 2;
-        float inner_y_offset = y_offset + (uniformGrid.height - uniformGrid.inner_height) / 2;
+        float x_offset = uniformGrid.x_origin();
+        float y_offset = uniformGrid.y_origin();
+        float inner_x_offset = uniformGrid.inner_x_origin();
+        float inner_y_offset = uniformGrid.inner_y_origin();
 
         for (int x = 0; x < uniformGrid.x_subdivisions; x++)
         {
@@ -128,11 +126,6 @@ public class UniformGridRenderer extends GameSystem
                     inner_y_offset,
                     uniformGrid.inner_width,
                     uniformGrid.inner_height);
-
-                if (!once)
-                {
-                    System.out.println(STR."ring ding!\{current_x} :: \{current_y}");
-                }
 
                 float r = inside_inner
                     ? 0.0f
@@ -177,9 +170,6 @@ public class UniformGridRenderer extends GameSystem
                 color_data[color_index++] = a;
             }
         }
-
-
-        once = true;
 
         return new GridData(vertex_data, color_data);
     }

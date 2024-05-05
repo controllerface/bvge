@@ -5,6 +5,7 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
@@ -209,6 +210,8 @@ public class ModelRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+
         GPGPU.cl_zero_buffer(GPGPU.gl_cmd_queue_ptr, counters_ptr, mesh_size);
         GPGPU.cl_zero_buffer(GPGPU.gl_cmd_queue_ptr, offsets_ptr, mesh_size);
         GPGPU.cl_zero_buffer(GPGPU.gl_cmd_queue_ptr, total_ptr, CLSize.cl_int);
@@ -216,7 +219,13 @@ public class ModelRenderer extends GameSystem
 
         long[] hull_count = arg_long(GPGPU.core_memory.next_hull());
 
+        long si = Editor.ACTIVE ? System.nanoTime() : 0;
         count_mesh_instances_k.call(hull_count);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - si;
+            Editor.queue_event("render_model_count_meshes", String.valueOf(e));
+        }
 
         scan_int_out(counters_ptr, offsets_ptr, mesh_count);
 
@@ -229,25 +238,43 @@ public class ModelRenderer extends GameSystem
         long data_size = (long)total_instances * CLSize.cl_int4;
         var mesh_details_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, data_size);
 
+        si = Editor.ACTIVE ? System.nanoTime() : 0;
         write_mesh_details_k
             .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
             .call(hull_count);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - si;
+            Editor.queue_event("render_model_write_details", String.valueOf(e));
+        }
 
+        si = Editor.ACTIVE ? System.nanoTime() : 0;
         count_mesh_batches_k
             .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CountMeshBatches_k.Args.count, total_instances)
             .call(GPGPU.global_single_size);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - si;
+            Editor.queue_event("render_model_count_batches", String.valueOf(e));
+        }
 
         int total_batches = GPGPU.cl_read_pinned_int(GPGPU.gl_cmd_queue_ptr, total_ptr);
         long batch_index_size = (long) total_batches * CLSize.cl_int;
 
         var mesh_offset_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, batch_index_size);
 
+        si = Editor.ACTIVE ? System.nanoTime() : 0;
         calculate_batch_offsets_k
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offset_ptr)
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CalculateBatchOffsets_k.Args.count, total_instances)
             .call(GPGPU.global_single_size);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - si;
+            Editor.queue_event("render_model_batch_offsets", String.valueOf(e));
+        }
 
         int[] raw_offsets = new int[total_batches];
         GPGPU.cl_read_buffer(GPGPU.gl_cmd_queue_ptr, mesh_offset_ptr, raw_offsets);
@@ -263,6 +290,7 @@ public class ModelRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         shader.uploadIntArray("uTextures", texture_slots);
 
+        si = Editor.ACTIVE ? System.nanoTime() : 0;
         for (int current_batch = 0; current_batch < raw_offsets.length; current_batch++)
         {
             int next_batch = current_batch + 1;
@@ -291,16 +319,30 @@ public class ModelRenderer extends GameSystem
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
         }
 
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - si;
+            Editor.queue_event("render_model_batch_loop", String.valueOf(e));
+        }
+
         glBindVertexArray(0);
 
         shader.detach();
 
         GPGPU.cl_release_buffer(mesh_details_ptr);
         GPGPU.cl_release_buffer(mesh_offset_ptr);
+
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("render_model", String.valueOf(e));
+        }
     }
 
     private void scan_int(long data_ptr, int n)
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+
         int k = GPGPU.work_group_count(n);
         if (k == 1)
         {
@@ -310,10 +352,18 @@ public class ModelRenderer extends GameSystem
         {
             scan_multi_block_int(data_ptr, n, k);
         }
+
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("render_model_scan_int", String.valueOf(e));
+        }
     }
 
     private void scan_int_out(long data_ptr, long o_data_ptr, int n)
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+
         int k = GPGPU.work_group_count(n);
         if (k == 1)
         {
@@ -323,10 +373,18 @@ public class ModelRenderer extends GameSystem
         {
             scan_multi_block_int_out(data_ptr, o_data_ptr, n, k);
         }
+
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("render_model_scan_int_out", String.valueOf(e));
+        }
     }
 
     private void scan_int2(long data_ptr, int n)
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+
         int k = GPGPU.work_group_count(n);
         if (k == 1)
         {
@@ -335,6 +393,12 @@ public class ModelRenderer extends GameSystem
         else
         {
             scan_multi_block_int2(data_ptr, n, k);
+        }
+
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("render_model_scan_int2", String.valueOf(e));
         }
     }
 
