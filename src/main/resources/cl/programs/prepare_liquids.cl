@@ -27,7 +27,7 @@ __kernel void prepare_liquids(__global float2 *hull_positions,
                 ? (float4)(0.85f, 0.85f, 0.85f, 1.0f)
                 : hit_counts <= HIT_HIGH_MID_THRESHOLD
                     ? (float4)(0.8f, 0.8f, 0.9f, 1.5f)
-                    : (float4)(0.7f, 0.7f, 0.7f, 1.75f);
+                    : (float4)(0.7f, 0.7f, 0.7f, 2.0f);
 
     float4 transform_out;
     transform_out.x = position.x; 

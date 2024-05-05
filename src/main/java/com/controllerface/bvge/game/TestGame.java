@@ -306,17 +306,17 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        genWater(150, 11f, 10f, 0, 3000);
-        genBlocks(100,  15f, 15f, -50, 200);
-        genBlocks(100,  15f, 15f, 2500, 200);
-        genBlocks(100,  15f, 15f, 2500, 3800);
+        genWater(100, 16f, 15f, 0, 3000);
+        genBlocks(75,  25f, 25f, -50, 200);
+        //genTriangles(50,  25f, 25f, 2500, 200);
+        genBlocks(50,  25f, 25f, 2500, 3800);
 
-        //genSquaresRando(100,  5f, 5f, 0.8f, -100, 100);
+        genSquaresRando(50,  25f, 25f, 0.8f, 2500, 200);
         //genSquares(1,  25f, 25f, 420, 200);
 
         //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  6f, 5f, -120, 200);
-        //genTriangles(50,  10f, 10f, 500, 2000);
+        //genTriangles(50,  15f, 15f, 500, 2000);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);

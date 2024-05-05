@@ -6,10 +6,12 @@ package com.controllerface.bvge.physics;
  */
 public class UniformGrid
 {
-    public final float width = 8000 * 2;
-    public final float height = 4000 * 2;
-    public final float inner_width = 8000 * 1.5f;
-    public final float inner_height = 4000 * 1.5f;
+    public final float perimeter_width = 2048f;
+    public final float perimeter_height = 1024f;
+    public final float width = (8192f - perimeter_width) * 2;
+    public final float height = (4096f - perimeter_height) * 2;
+    public final float inner_width = width - perimeter_width;
+    public final float inner_height = height - perimeter_height;
     public final int x_subdivisions = 200;
     public final int y_subdivisions = 100;
     public final int directory_length = x_subdivisions * y_subdivisions;
