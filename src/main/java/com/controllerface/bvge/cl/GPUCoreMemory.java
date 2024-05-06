@@ -423,6 +423,7 @@ public class GPUCoreMemory
 
 
     private final ResizableBuffer mirror_armature_buffer;
+    private final ResizableBuffer mirror_armature_flag_buffer;
     private final ResizableBuffer mirror_armature_model_id_buffer;
     private final ResizableBuffer mirror_armature_root_hull_buffer;
     private final ResizableBuffer mirror_edge_buffer;
@@ -430,6 +431,7 @@ public class GPUCoreMemory
     private final ResizableBuffer mirror_hull_buffer;
     private final ResizableBuffer mirror_hull_aabb_buffer;
     private final ResizableBuffer mirror_hull_flag_buffer;
+    private final ResizableBuffer mirror_hull_armature_id_buffer;
     private final ResizableBuffer mirror_hull_mesh_id_buffer;
     private final ResizableBuffer mirror_hull_point_table_buffer;
     private final ResizableBuffer mirror_hull_rotation_buffer;
@@ -557,6 +559,7 @@ public class GPUCoreMemory
         // mirrors:
 
         mirror_armature_buffer                 = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
+        mirror_armature_flag_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
         mirror_armature_model_id_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
         mirror_armature_root_hull_buffer       = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
         mirror_edge_buffer                     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 24_000L);
@@ -564,6 +567,7 @@ public class GPUCoreMemory
         mirror_hull_buffer                     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
         mirror_hull_aabb_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
         mirror_hull_flag_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        mirror_hull_armature_id_buffer         = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
         mirror_hull_mesh_id_buffer             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
         mirror_hull_point_table_buffer         = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
         mirror_hull_rotation_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
@@ -885,11 +889,13 @@ public class GPUCoreMemory
             case MIRROR_EDGE                   -> mirror_edge_buffer;
             case MIRROR_HULL                   -> mirror_hull_buffer;
             case MIRROR_ARMATURE               -> mirror_armature_buffer;
+            case MIRROR_ARMATURE_FLAG          -> mirror_armature_flag_buffer;
             case MIRROR_POINT                  -> mirror_point_buffer;
             case MIRROR_ARMATURE_MODEL_ID      -> mirror_armature_model_id_buffer;
             case MIRROR_ARMATURE_ROOT_HULL     -> mirror_armature_root_hull_buffer;
             case MIRROR_EDGE_FLAG              -> mirror_edge_flag_buffer;
             case MIRROR_HULL_AABB              -> mirror_hull_aabb_buffer;
+            case MIRROR_HULL_ARMATURE_ID       -> mirror_hull_armature_id_buffer;
             case MIRROR_HULL_FLAG              -> mirror_hull_flag_buffer;
             case MIRROR_HULL_MESH_ID           -> mirror_hull_mesh_id_buffer;
             case MIRROR_HULL_POINT_TABLE       -> mirror_hull_point_table_buffer;
@@ -904,12 +910,14 @@ public class GPUCoreMemory
     public void mirror_buffers_ex()
     {
         mirror_armature_buffer.mirror_buffer(armature_buffer);
+        mirror_armature_flag_buffer.mirror_buffer(armature_flag_buffer);
         mirror_armature_model_id_buffer.mirror_buffer(armature_model_id_buffer);
         mirror_armature_root_hull_buffer.mirror_buffer(armature_root_hull_buffer);
         mirror_edge_buffer.mirror_buffer(edge_buffer);
         mirror_edge_flag_buffer.mirror_buffer(edge_flag_buffer);
         mirror_hull_buffer.mirror_buffer(hull_buffer);
         mirror_hull_aabb_buffer.mirror_buffer(hull_aabb_buffer);
+        mirror_hull_armature_id_buffer.mirror_buffer(hull_armature_id_buffer);
         mirror_hull_flag_buffer.mirror_buffer(hull_flag_buffer);
         mirror_hull_mesh_id_buffer.mirror_buffer(hull_mesh_id_buffer);
         mirror_hull_point_table_buffer.mirror_buffer(hull_point_table_buffer);

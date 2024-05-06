@@ -100,7 +100,9 @@ __kernel void transfer_detail_data(__global int4 *mesh_details,
 
 __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int *hull_mesh_ids,
+                                   __global int *hull_armature_ids,
                                    __global int *hull_flags,
+                                   __global int *armature_flags,
                                    __global int2 *mesh_vertex_tables,
                                    __global int2 *mesh_face_tables,
                                    __global int4 *mesh_faces,
@@ -136,17 +138,22 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     int2 point_table = hull_point_tables[hull_id];
     int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
     int2 mesh_face_table = mesh_face_tables[mesh_id];
+    int armature_id = hull_armature_ids[hull_id];
+    int a_flags = armature_flags[armature_id];
 
+    bool face_l = (a_flags & FACE_LEFT) !=0;
     bool side_r = (flags & SIDE_R) !=0;
     bool side_l = (flags & SIDE_L) !=0;
     bool touch_alike = (flags & TOUCH_ALIKE) !=0;
     bool is_static = (flags & IS_STATIC) !=0;
 
+    float r_layer = face_l ? -2.0 : 2.0;
+    float l_layer = face_l ? 2.0 : -2.0;
 
     float side_z = side_r 
-        ? 2.0f 
+        ? r_layer 
         : side_l 
-            ? -2.0f 
+            ? l_layer 
             : 0.0f; 
 
     int start_point = point_table.x;
