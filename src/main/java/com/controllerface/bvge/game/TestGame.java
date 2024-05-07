@@ -179,13 +179,6 @@ public class TestGame extends GameMode
         }
     }
 
-    private void genTestCircle(float size, float x, float y)
-    {
-        //var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.particle(x, y, size, .1f, 0.0f, 0.0f, 0, 0);
-        //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-    }
-
     private void genTestCrate(float size, float x, float y)
     {
         //var npc = ecs.registerEntity(null);
