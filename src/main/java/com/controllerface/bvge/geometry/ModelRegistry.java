@@ -40,7 +40,7 @@ public class ModelRegistry
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
 
-    private static final BlockAlmanac BLOCK_ALMANAC = new BlockAlmanac();
+    private static final BlockAtlas BLOCK_ATLAS = new BlockAtlas();
 
     private static final int DEFAULT_MODEL_LOAD_FLAGS =
         aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
@@ -377,6 +377,7 @@ public class ModelRegistry
 
         assert mesh_id == next_mesh : "Mesh alignment error";
 
+        // todo: add material data to the mesh class
         var new_mesh = new Mesh(mesh_name, mesh_id, mesh_vertices, mesh_faces, mesh_bones, mesh_node, hull_table);
 
         MeshRegistry.register_mesh(model_name, mesh_name, new_mesh);
@@ -451,12 +452,12 @@ public class ModelRegistry
                     float r = color_data.get(0);
                     float g = color_data.get(1);
                     float b = color_data.get(2);
-                    //System.out.println("Mat name=" + prop_name + " r=" + r + " g=" + g + " b=" + b);
+                    System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} r=\{r} g=\{g} b=\{b}");
                 }
                 else if (prop_name.startsWith("$mat."))
                 {
                     float v = raw_prop.mData().asFloatBuffer().get(0);
-                    //System.out.println("Mat name=" + prop_name + " v=" + v);
+                    System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} v=\{v}");
                 }
                 else
                 {
@@ -467,7 +468,7 @@ public class ModelRegistry
                             int f_count = raw_prop.mDataLength() / 4;
                             float[] float_out = new float[f_count];
                             float_buffer.get(float_out);
-                            //System.out.println("Mat name=" + prop_name + " float=" + Arrays.toString(float_out));
+                            System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} float=\{Arrays.toString(float_out)}");
                             break;
 
                         case 3:
@@ -476,7 +477,7 @@ public class ModelRegistry
                             byte[] bytes_out = new byte[s_count];
                             string_buffer.get(bytes_out);
                             var string = new String(bytes_out, StandardCharsets.UTF_8);
-                            //System.out.println("Mat name=" + prop_name + " string=" + string);
+                            System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} string=\{string}");
                             break;
 
                         case 4:
@@ -484,14 +485,11 @@ public class ModelRegistry
                             int i_count = raw_prop.mDataLength() / 4;
                             int[] int_out = new int[i_count];
                             int_buffer.get(int_out);
-                            //System.out.println("Mat name=" + prop_name + " int=" + Arrays.toString(int_out));
+                            System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} int=\{Arrays.toString(int_out)}");
                             break;
 
                         default:
-                            System.out.println("Debug mat prop:"
-                                + " type=" + raw_prop.mType()
-                                + " len=" + raw_prop.mDataLength()
-                                + " key=" + raw_prop.mKey().dataString());
+                            System.out.println(STR."Debug mat prop: type=\{raw_prop.mType()} len=\{raw_prop.mDataLength()} key=\{raw_prop.mKey().dataString()}");
                             break;
                     }
                 }
@@ -769,7 +767,7 @@ public class ModelRegistry
         TEST_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
         TEST_MODEL_INDEX_2 = load_model("/models/test_humanoid_2.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
-        BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block", BLOCK_ALMANAC.uv_channels());
-        BASE_TRI_INDEX = load_model("/models/tri_test.fbx", "Base_Tri", BLOCK_ALMANAC.uv_channels());
+        BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block", BLOCK_ATLAS.uv_channels());
+        BASE_TRI_INDEX = load_model("/models/tri_test.fbx", "Base_Tri", BLOCK_ATLAS.uv_channels());
     }
 }

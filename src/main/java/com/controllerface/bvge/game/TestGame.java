@@ -254,7 +254,7 @@ public class TestGame extends GameMode
         if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
         {
             //ecs.registerSystem(new CrateRenderer(ecs));
-            ecs.registerSystem(new ModelRenderer(ecs, "poly_model.glsl", TEST_MODEL_INDEX));
+            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", TEST_MODEL_INDEX));
             ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_BLOCK_INDEX));
             ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_TRI_INDEX));
             ecs.registerSystem(new LiquidRenderer(ecs));
@@ -307,10 +307,10 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-//        genWater(100, 16f, 15f, 0, 3000);
-//        genBlocks(75,  20f, 20f, -50, 200);
-//        genBlocks(75,  20f, 20f, 2500, 200);
-//        genBlocks(75,  20f, 20f, 2500, 3800);
+        genWater(100, 15f, 15f, 0, 3000);
+        genBlocks(75,  20f, 20f, -50, 200);
+        genBlocks(75,  20f, 20f, 2500, 200);
+        genBlocks(75,  20f, 20f, 2500, 3800);
 
         //genSquaresRando(50,  25f, 25f, 0.8f, 2500, 200);
         //genSquares(1,  25f, 25f, 420, 200);

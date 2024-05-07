@@ -154,6 +154,12 @@ __kernel void integrate(__global float2 *hulls,
         {
             int _point_flags = point_flags[i];
             bool flow_left = (_point_flags & FLOW_LEFT) != 0;
+            
+            int hit_count = point_hit_counts[i];
+            _point_flags = hit_count >= HIT_LOW_MID_THRESHOLD 
+                ? _point_flags | HIGH_DENSITY 
+                : _point_flags & ~HIGH_DENSITY;
+            point_flags[i] =  _point_flags;
 
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;

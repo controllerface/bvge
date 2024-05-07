@@ -39,6 +39,7 @@ event_source.addEventListener('phys_move_armatures', handle_event);
 event_source.addEventListener('phys_animate_armatures', handle_event);
 event_source.addEventListener('phys_animate_bones', handle_event);
 event_source.addEventListener('phys_animate_points', handle_event);
+event_source.addEventListener('phys_resolve_constraints', handle_event);
 event_source.addEventListener('render_model', handle_event);
 event_source.addEventListener('render_model_count_meshes', handle_event);
 event_source.addEventListener('render_model_write_details', handle_event);

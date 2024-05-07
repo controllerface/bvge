@@ -725,10 +725,7 @@ public class GPGPU
         long current_max_block_size = current_max_group_size * 2;
 
         long max_mem = get_device_long(device_id_ptr, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
-
         long sz_char = get_device_long(device_id_ptr, CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR);
-
-
         long sz_flt = get_device_long(device_id_ptr, CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT);
 
         System.out.println(STR."max mem: \{max_mem}");

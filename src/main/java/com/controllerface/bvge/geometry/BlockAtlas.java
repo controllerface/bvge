@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class BlockAlmanac
+public class BlockAtlas
 {
     private static final int ATLAS_SIZE = 32;
     private static final float UV_OFFSET = 0.03125f;
@@ -14,7 +14,7 @@ public class BlockAlmanac
 
     private final List<List<Vector2f>> uv_channels;
 
-    public BlockAlmanac()
+    public BlockAtlas()
     {
         uv_channels = Collections.unmodifiableList(generate_block_uvs());
     }
