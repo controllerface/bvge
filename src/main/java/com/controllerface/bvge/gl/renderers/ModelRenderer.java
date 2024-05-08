@@ -177,6 +177,7 @@ public class ModelRenderer extends GameSystem
             .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_MESH_ID))
             .buf_arg(TransferRenderData_k.Args.hull_armature_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_ARMATURE_ID))
             .buf_arg(TransferRenderData_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_FLAG))
+            .buf_arg(TransferRenderData_k.Args.hull_uv_offsets, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_UV_OFFSET))
             .buf_arg(TransferRenderData_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_ARMATURE_FLAG))
             .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPGPU.core_memory.buffer(BufferType.MESH_VERTEX_TABLE))
             .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.buffer(BufferType.MESH_FACE_TABLE))

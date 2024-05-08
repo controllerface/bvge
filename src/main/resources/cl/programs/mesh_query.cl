@@ -102,6 +102,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int *hull_mesh_ids,
                                    __global int *hull_armature_ids,
                                    __global int *hull_flags,
+                                   __global int *hull_uv_offsets,
                                    __global int *armature_flags,
                                    __global int2 *mesh_vertex_tables,
                                    __global int2 *mesh_face_tables,
@@ -139,6 +140,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
     int2 mesh_face_table = mesh_face_tables[mesh_id];
     int armature_id = hull_armature_ids[hull_id];
+    int uv_offset = hull_uv_offsets[hull_id];
     int a_flags = armature_flags[armature_id];
 
     bool face_l = (a_flags & FACE_LEFT) !=0;
@@ -176,9 +178,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         int point_vertex_reference = point_vertex_references[point_id];
         int2 uv_table = uv_tables[point_vertex_reference];
         int uv_count = uv_table.y - uv_table.x + 1;
-        int uv_index = uv_count == 1 
-            ? uv_table.x 
-            : uv_table.x + 30;
+        int uv_index =  uv_table.x + uv_offset;
         float2 uv = texture_uvs[uv_index]; // todo: select from available uvs based on hull data
         float4 pos = (float4)(point.xy, side_z, 1.0f);
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
