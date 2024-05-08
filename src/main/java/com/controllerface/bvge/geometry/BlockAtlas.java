@@ -23,24 +23,19 @@ public class BlockAtlas
 
     private List<Vector2f> generate_grid_uvs(int block_location)
     {
-        int block_index = block_location - 1;
-        if (block_index < 0 || block_index >= 1024)
+        if (block_location < 0 || block_location >= 1024)
         {
             throw new RuntimeException("block location must be within the range 0-1023 inclusive");
         }
 
-        int x = block_index % ATLAS_SIZE;
-        int y = block_index / ATLAS_SIZE;
-
+        int x = block_location % ATLAS_SIZE;
+        int y = block_location / ATLAS_SIZE;
         float u_0 = x * UV_OFFSET + UV_EPSILON;
         float v_0 = y * UV_OFFSET + UV_EPSILON;
-
         float u_1 = u_0 + UV_OFFSET - UV_EPSILON;
         float v_1 = v_0 + UV_EPSILON;
-
         float u_2 = u_0 + UV_OFFSET - UV_EPSILON;
         float v_2 = v_0 + UV_OFFSET - UV_EPSILON;
-
         float u_3 = u_0 + UV_EPSILON;
         float v_3 = v_0 + UV_OFFSET - UV_EPSILON;
 
@@ -59,7 +54,6 @@ public class BlockAtlas
         var uv_channels = new ArrayList<List<Vector2f>>();
 
         Arrays.stream(Mineral.values())
-            .filter(mineral -> mineral != Mineral.NOTHING)
             .map(mineral -> generate_grid_uvs(mineral.mineral_number))
             .forEach(uv_channels::add);
 
