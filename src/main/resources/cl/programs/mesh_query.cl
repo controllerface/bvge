@@ -168,18 +168,18 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float col = hit_counts <= HIT_LOW_THRESHOLD 
             ? 1.0f 
             : hit_counts <= HIT_LOW_MID_THRESHOLD 
-                ? 0.9f 
+                ? 0.80f 
                 : hit_counts <= HIT_MID_THRESHOLD
-                    ? 0.85f
+                    ? 0.70f
                     : hit_counts <= HIT_HIGH_MID_THRESHOLD 
-                        ? 0.8
-                        : 0.7;
+                        ? 0.60
+                        : 0.65;
 
         int point_vertex_reference = point_vertex_references[point_id];
         int2 uv_table = uv_tables[point_vertex_reference];
         int uv_count = uv_table.y - uv_table.x + 1;
         int uv_index =  uv_table.x + uv_offset;
-        float2 uv = texture_uvs[uv_index]; // todo: select from available uvs based on hull data
+        float2 uv = texture_uvs[uv_index];
         float4 pos = (float4)(point.xy, side_z, 1.0f);
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
 
