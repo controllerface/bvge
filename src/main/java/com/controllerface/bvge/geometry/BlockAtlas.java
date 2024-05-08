@@ -1,8 +1,10 @@
 package com.controllerface.bvge.geometry;
 
+import com.controllerface.bvge.substances.Mineral;
 import org.joml.Vector2f;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -10,7 +12,7 @@ public class BlockAtlas
 {
     private static final int ATLAS_SIZE = 32;
     private static final float UV_OFFSET = 0.03125f;
-    private static final float UV_EPSILON = 0.0f;
+    private static final float UV_EPSILON = (UV_OFFSET / 32f) * 2f;
 
     private final List<List<Vector2f>> uv_channels;
 
@@ -21,13 +23,14 @@ public class BlockAtlas
 
     private List<Vector2f> generate_grid_uvs(int block_location)
     {
-        if (block_location < 0 || block_location >= 1024)
+        int block_index = block_location - 1;
+        if (block_index < 0 || block_index >= 1024)
         {
             throw new RuntimeException("block location must be within the range 0-1023 inclusive");
         }
 
-        int x = block_location % ATLAS_SIZE;
-        int y = block_location / ATLAS_SIZE;
+        int x = block_index % ATLAS_SIZE;
+        int y = block_index / ATLAS_SIZE;
 
         float u_0 = x * UV_OFFSET + UV_EPSILON;
         float v_0 = y * UV_OFFSET + UV_EPSILON;
@@ -55,11 +58,10 @@ public class BlockAtlas
     {
         var uv_channels = new ArrayList<List<Vector2f>>();
 
-        // todo: define with names, possibly using config data, but probably just explicit code
-        uv_channels.add(generate_grid_uvs(0));
-        uv_channels.add(generate_grid_uvs(1));
-        uv_channels.add(generate_grid_uvs(2));
-        uv_channels.add(generate_grid_uvs(3));
+        Arrays.stream(Mineral.values())
+            .filter(mineral -> mineral != Mineral.NOTHING)
+            .map(mineral -> generate_grid_uvs(mineral.mineral_number))
+            .forEach(uv_channels::add);
 
         return uv_channels;
     }

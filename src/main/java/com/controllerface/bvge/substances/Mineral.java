@@ -40,12 +40,12 @@ public enum Mineral
 
     ;
 
-    public final byte mineral_number;
+    public final int mineral_number;
     public final Compound[] compounds;
 
     Mineral(Compound[] compounds)
     {
-        this.mineral_number = (byte) this.ordinal();
+        this.mineral_number = this.ordinal();
         this.compounds = compounds;
     }
 

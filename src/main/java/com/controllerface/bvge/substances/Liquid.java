@@ -4,14 +4,14 @@ import static com.controllerface.bvge.substances.Compound.*;
 
 public enum Liquid
 {
-    WATER                 (Compound.WATER),
-    BEER                  (Compound.WATER, HOP_MASH, SUCROSE, ETHANOL),
-    WINE                  (Compound.WATER, SUCROSE, FRUCTOSE, ETHANOL),
-    SEAWATER              (Compound.WATER, Compound.OCEANIC_IMPURITIES),
-    PEROXIDE_DISENFECTANT (Compound.WATER, Compound.PEROXIDE),
-    RUBBING_ALCOHOL       (Compound.WATER, ISOPROPANOL),
-    POOL_CHLORINE         (Compound.WATER, SODIUM_HYPOCHLORITE),
-    MURIATIC_ACID         (Compound.WATER, HYDROCHLORIC_ACID),
+    WATER                 (H2O),
+    BEER                  (H2O, HOP_MASH, SUCROSE, ETHANOL),
+    WINE                  (H2O, SUCROSE, FRUCTOSE, ETHANOL),
+    SEAWATER              (H2O, Compound.OCEANIC_IMPURITIES),
+    PEROXIDE_DISENFECTANT (H2O, H2O2),
+    RUBBING_ALCOHOL       (H2O, ISOPROPANOL),
+    POOL_CLEANER          (H2O, SODIUM_HYPOCHLORITE),
+    MURIATIC_ACID         (H2O, HYDROCHLORIC_ACID),
     GASOLINE              (OCTANE, BENZENE, XYLENE, ETHANOL),
 
     ;

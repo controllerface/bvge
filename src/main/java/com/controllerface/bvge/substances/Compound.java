@@ -48,13 +48,11 @@ public enum Compound
 
     CALCIUM_HYPOCHLORITE (Element.CHLORINE, CALCIUM, OXYGEN),
 
-
-    WATER                (HYDROGEN, OXYGEN, OXYGEN),
+    H2O                  (HYDROGEN, HYDROGEN, OXYGEN),
+    H2O2                 (HYDROGEN, OXYGEN, HYDROGEN, OXYGEN),
     HOP_MASH             (POTASSIUM, PHOSPHORUS, SULFUR, CALCIUM),
     OCEANIC_IMPURITIES   (Element.CHLORINE, SODIUM, MAGNESIUM, SULFUR),
-    PEROXIDE             (HYDROGEN, OXYGEN, HYDROGEN, OXYGEN),
     ISOPROPANOL          (Element.CARBON, HYDROGEN, OXYGEN),
-    CHLORINE             (Element.CHLORINE),
     SODIUM_HYPOCHLORITE  (Element.CHLORINE, SODIUM, OXYGEN),
     OCTANE               (Element.CARBON, HYDROGEN, HYDROGEN, HYDROGEN),
     BENZENE              (Element.CARBON, HYDROGEN, Element.CARBON, HYDROGEN),
@@ -66,13 +64,13 @@ public enum Compound
 
     ;
 
-    public final byte compound_number;
+    public final short compound_number;
 
     public final Element[] elements;
 
     Compound(Element[] elements)
     {
-        this.compound_number = (byte) this.ordinal();
+        this.compound_number = (short) this.ordinal();
         this.elements = elements;
     }
 
