@@ -2,7 +2,7 @@ package com.controllerface.bvge.substances;
 
 import static com.controllerface.bvge.substances.Compound.*;
 
-public enum Mineral
+public enum Solid
 {
     ANDESITE         (PLAGIOCLASE_FELDSPAR, PYROXENE, AMPHIBOLE, BIOTITE),
     BASALT           (PLAGIOCLASE_FELDSPAR, PYROXENE, OLIVINE, MAGNETITE),
@@ -43,28 +43,28 @@ public enum Mineral
     public final int mineral_number;
     public final Compound[] compounds;
 
-    Mineral(Compound[] compounds)
+    Solid(Compound[] compounds)
     {
         this.mineral_number = this.ordinal();
         this.compounds = compounds;
     }
 
-    Mineral(Compound compound_1)
+    Solid(Compound compound_1)
     {
         this(new Compound[]{compound_1, Compound.NOTHING, Compound.NOTHING, Compound.NOTHING});
     }
 
-    Mineral(Compound compound_1, Compound compound_2)
+    Solid(Compound compound_1, Compound compound_2)
     {
         this(new Compound[]{compound_1, compound_2, Compound.NOTHING, Compound.NOTHING});
     }
 
-    Mineral(Compound compound_1, Compound compound_2, Compound compound_3)
+    Solid(Compound compound_1, Compound compound_2, Compound compound_3)
     {
         this(new Compound[]{compound_1, compound_2,compound_3, Compound.NOTHING});
     }
 
-    Mineral(Compound compound_1, Compound compound_2, Compound compound_3, Compound compound_4)
+    Solid(Compound compound_1, Compound compound_2, Compound compound_3, Compound compound_4)
     {
         this(new Compound[]{compound_1, compound_2, compound_3, compound_4});
     }

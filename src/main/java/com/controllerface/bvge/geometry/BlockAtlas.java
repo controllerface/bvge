@@ -1,6 +1,6 @@
 package com.controllerface.bvge.geometry;
 
-import com.controllerface.bvge.substances.Mineral;
+import com.controllerface.bvge.substances.Solid;
 import org.joml.Vector2f;
 
 import java.util.ArrayList;
@@ -53,8 +53,8 @@ public class BlockAtlas
     {
         var uv_channels = new ArrayList<List<Vector2f>>();
 
-        Arrays.stream(Mineral.values())
-            .map(mineral -> generate_grid_uvs(mineral.mineral_number))
+        Arrays.stream(Solid.values())
+            .map(solid -> generate_grid_uvs(solid.mineral_number))
             .forEach(uv_channels::add);
 
         return uv_channels;

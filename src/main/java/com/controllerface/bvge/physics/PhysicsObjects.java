@@ -7,7 +7,7 @@ import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.geometry.Vertex;
-import com.controllerface.bvge.substances.Mineral;
+import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -159,7 +159,7 @@ public class PhysicsObjects
             0);
     }
 
-    public static int block(float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Mineral block_mineral)
+    public static int block(float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Solid block_mineral)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
@@ -236,14 +236,14 @@ public class PhysicsObjects
             0);
     }
 
-    public static int dynamic_block(float x, float y, float size, float mass, float friction, float restitution, Mineral block_mineral)
+    public static int dynamic_block(float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
     {
-        return block(x, y, size * 5, HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_mineral);
+        return block(x, y, size * 5, HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
     }
 
-    public static int static_box(float x, float y, float size, float mass, float friction, float restitution, Mineral block_mineral)
+    public static int static_box(float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
     {
-        return block(x, y, size * 5, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_mineral);
+        return block(x, y, size * 5, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
     }
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)

@@ -9,6 +9,7 @@ public class PrepareLiquids extends GPUProgram
     @Override
     public void init()
     {
+        src.add(const_liquid_lookup_table);
         src.add(const_hit_thresholds);
         src.add(CLUtils.read_src("programs/prepare_liquids.cl"));
 

@@ -10,7 +10,7 @@ import com.controllerface.bvge.gl.renderers.*;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
-import com.controllerface.bvge.substances.Mineral;
+import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.window.Window;
 
 import java.util.EnumSet;
@@ -79,13 +79,13 @@ public class TestGame extends GameMode
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
 
-                var armature_index = PhysicsObjects.dynamic_block(x, y, rando(size, percentage), 50f, 0.02f, 0.0003f, Mineral.ANDESITE);
+                var armature_index = PhysicsObjects.dynamic_block(x, y, rando(size, percentage), 50f, 0.02f, 0.0003f, Solid.ANDESITE);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
     }
 
-    private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y, Mineral block_mineral)
+    private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid block_mineral)
     {
         System.out.println("generating: " + box_size * box_size + " Blocks..");
         for (int i = 0; i < box_size; i++)
@@ -95,7 +95,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, block_mineral);
+                var armature_index = PhysicsObjects.dynamic_block(x, y, size, 500f, 0.05f, 0.0003f, block_mineral);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -162,7 +162,7 @@ public class TestGame extends GameMode
             float x = start_x + i * spacing;
             float y = start_y;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, Mineral.ANDESITE);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, Solid.ANDESITE);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
@@ -175,7 +175,7 @@ public class TestGame extends GameMode
             float x = start_x;
             float y = start_y + i * spacing;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, Mineral.ANDESITE);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, Solid.ANDESITE);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
@@ -183,7 +183,7 @@ public class TestGame extends GameMode
     private void genTestCrate(float size, float x, float y)
     {
         //var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.dynamic_block(x, y, size, .1f, 0.02f, 0.0001f, Mineral.ANDESITE);
+        var armature_index = PhysicsObjects.dynamic_block(x, y, size, .1f, 0.02f, 0.0001f, Solid.ANDESITE);
         //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -199,7 +199,7 @@ public class TestGame extends GameMode
         // circle entity
         var figure = ecs.registerEntity("player");
 
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.02f);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f);
         ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
         // todo: determine if a different ID may be used for identifying entities that is not tied to the
@@ -302,9 +302,9 @@ public class TestGame extends GameMode
         //genCircles(150, 6f, 5f, 0, 100);
 
         genWater(100, 15f, 15f, 0, 3000);
-        genBlocks(75,  20f, 20f, -50, 200, Mineral.SANDSTONE);
-        genBlocks(75,  20f, 20f, 2500, 200, Mineral.BASALT);
-        genBlocks(75,  20f, 20f, 2500, 3800, Mineral.SHALE);
+        genBlocks(40,  32f, 32f, -50, 200, Solid.PUMICE);
+        genBlocks(40,  32f, 32f, 2500, 200, Solid.PERIDOTITE);
+        genBlocks(40,  32f, 32f, 2500, 3800, Solid.GNEISS);
 
         //genSquaresRando(50,  25f, 25f, 0.8f, 2500, 200);
         //genSquares(1,  25f, 25f, 420, 200);
@@ -316,9 +316,9 @@ public class TestGame extends GameMode
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);
 
-        genFloor(16, 150f, 150f, -70, -100, 0.03f);
-        genFloor(32, 150f, 150f, 1700, -100, 0.03f);
-        genFloor(32, 150f, 150f, 1700, 2200, 0.03f);
+        genFloor(16, 150f, 150f, -70, -100, 0.3f);
+        genFloor(32, 150f, 150f, 1700, -100, 0.3f);
+        genFloor(32, 150f, 150f, 1700, 2200, 0.3f);
 
         genWall(15, 150f, 150f, -220, -100);
         genWall(5, 150f, 150f, 2000, 1500);

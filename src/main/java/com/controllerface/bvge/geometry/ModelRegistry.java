@@ -311,6 +311,7 @@ public class ModelRegistry
             int this_index = current_vertex_index.getAndIncrement();
             int this_vert = vert_index++;
             var raw_vertex = buffer.get();
+            System.out.println(raw_vertex.getClass().getCanonicalName());
             List<Vector2f> vertex_uvs = new ArrayList<>();
             String[] names = bone_name_map.get(this_vert);
             float[] weights = bone_weight_map.get(this_vert);
@@ -696,6 +697,29 @@ public class ModelRegistry
             mTransform.a2(), mTransform.b2(), mTransform.c2(), mTransform.d2(),
             mTransform.a3(), mTransform.b3(), mTransform.c3(), mTransform.d3(),
             mTransform.a4(), mTransform.b4(), mTransform.c4(), mTransform.d4());
+
+        var x = aiNode.mMetadata();
+        if (x != null)
+        {
+            int p = x.mNumProperties();
+            var ks = x.mKeys();
+            var vs = x.mValues();
+
+            for (int i = 0; i < p; i++)
+            {
+                var key = ks.get();
+                var val = vs.get();
+                var key_string = key.dataString();
+                System.out.println(STR."n:\{nodeName} k:\{key_string} v:\{val.mType()}");
+                if (key_string.equalsIgnoreCase("pin"))
+                {
+                    int k_int = val.mData(4).asIntBuffer().get();
+                    System.out.println(STR."int: \{k_int}");
+                }
+            }
+
+            System.out.println(p);
+        }
 
         var currentNode = new SceneNode(nodeName, parentNode, transform);
         nodeMap.put(nodeName, currentNode);
