@@ -311,7 +311,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 2000, 3200);
+        genTestFigure(1f, 2000, 1200);
 
         //genTestFigureNPC_2(1f, 100, 500);
 
@@ -325,10 +325,10 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
-        genBlocks(40,  32f, 32f, -50, 200, Solid.BASALT, Solid.ANDESITE, Solid.MUDSTONE);
-        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.SOAPSTONE);
-        genBlocks(40,  32f, 32f, 2500, 3800, Solid.PUMICE, Solid.OBSIDIAN, Solid.COAL_DEPOSIT);
+//        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
+        genBlocks(4,  32f, 32f, -50, 200, Solid.BASALT, Solid.ANDESITE, Solid.MUDSTONE);
+//        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.SOAPSTONE);
+//        genBlocks(40,  32f, 32f, 2500, 3800, Solid.PUMICE, Solid.OBSIDIAN, Solid.COAL_DEPOSIT);
 
         //genSquaresRando(50,  25f, 25f, 0.8f, 2500, 200);
         //genSquares(1,  25f, 25f, 420, 200);

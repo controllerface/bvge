@@ -2,24 +2,24 @@
 Handles collision between two polygonal hulls
  */
 inline void block_collision(int hull_1_id, 
-                              int hull_2_id,
-                              __global float2 *hulls,
-                              __global float *hull_frictions,
-                              __global float *hull_restitutions,
-                              __global int *hull_armature_ids,
-                              __global int *hull_flags,
-                              __global int2 *hull_point_tables,
-                              __global int2 *hull_edge_tables,
-                              __global int *point_flags,
-                              __global float4 *points,
-                              __global int2 *edges,
-                              __global int *edge_flags,
-                              __global float8 *reactions,
-                              __global int *reaction_index,
-                              __global int *reaction_counts,
-                              __global float *masses,
-                              __global int *counter,
-                              float dt)
+                            int hull_2_id,
+                            __global float2 *hulls,
+                            __global float *hull_frictions,
+                            __global float *hull_restitutions,
+                            __global int *hull_armature_ids,
+                            __global int *hull_flags,
+                            __global int2 *hull_point_tables,
+                            __global int2 *hull_edge_tables,
+                            __global int *point_flags,
+                            __global float4 *points,
+                            __global int2 *edges,
+                            __global int *edge_flags,
+                            __global float8 *reactions,
+                            __global int *reaction_index,
+                            __global int *reaction_counts,
+                            __global float *masses,
+                            __global int *counter,
+                            float dt)
 {
     float2 hull_1 = hulls[hull_1_id];
     float2 hull_2 = hulls[hull_2_id];
@@ -212,7 +212,6 @@ inline void block_collision(int hull_1_id,
     hull_flags[vert_hull_id] = vert_hull_flags;
     hull_flags[edge_hull_id] = edge_hull_flags;
 
-
     bool any_static = (static_vert || static_edge);
 
     vert_magnitude = any_static 
@@ -231,7 +230,6 @@ inline void block_collision(int hull_1_id,
         ? vertex_table.y 
         : vert_index - 1;
 
-
     int v_r = vertex_table.y == vert_index 
         ? vertex_table.x 
         : vert_index + 1;
@@ -244,8 +242,8 @@ inline void block_collision(int hull_1_id,
     float a_l = angle_between((float4)(vertex_point.xy, vertex_point_l.xy), (float4)(edge_point_1.xy, edge_point_2.xy));
     float a_r = angle_between((float4)(vertex_point.xy, vertex_point_r.xy), (float4)(edge_point_1.xy, edge_point_2.xy));
 
-    bool l_c = fabs(a_l) < .005;
-    bool r_c = fabs(a_r) < .005;
+    bool l_c = fabs(a_l) < .001;
+    bool r_c = fabs(a_r) < .001;
     bool v_extend = l_c || r_c;
 
     vertex_ex_index = v_extend 
@@ -260,10 +258,6 @@ inline void block_collision(int hull_1_id,
             : vertex_point_r
         : vertex_point_ex;
 
-    //printf("l: %f, r: %f", a_l, a_r);
-
-
-
     float2 collision_vector = collision_normal * min_distance;
 
     float2 edge_1_collision;
@@ -274,7 +268,6 @@ inline void block_collision(int hull_1_id,
         edge_1_collision = collision_vector * -edge_magnitude;
         edge_2_collision = collision_vector * -edge_magnitude;
     }
-
     else
     {
         float contact = edge_contact(edge_point_1.xy, edge_point_2.xy, vertex_point.xy, collision_vector);
