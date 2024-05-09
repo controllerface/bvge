@@ -135,7 +135,7 @@ __kernel void integrate(__global float2 *hulls,
         float2 pos = point.xy;
         float2 prv = in_perimiter || out_of_bounds ? point.xy : point.zw;
 
-        float x_threshold = is_liquid ? 1.0f : 10.0f;
+        float x_threshold = is_liquid ? 1.0f : 5.0f;
         float y_threshold = is_liquid ? 0.25f : 1.0f;
         
         float2 vel = (pos - prv) ;/// dt;

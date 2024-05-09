@@ -6,15 +6,15 @@ import static com.controllerface.bvge.substances.Compound.*;
 
 public enum Liquid
 {
-    WATER                 (new Vector4f(0.000f, 0.694f, 0.078f, 0.250f), H2O),
+    WATER                 (new Vector4f(0.000f, 0.048f, 0.494f, 0.250f), H2O),
     BEER                  (new Vector4f(0.839f, 0.588f ,0.114f, 0.250f), H2O, HOP_MASH, ETHANOL),
     WINE                  (new Vector4f(0.251f, 0.012f, 0.012f, 0.250f), H2O, SUCROSE, FRUCTOSE, ETHANOL),
     SEAWATER              (new Vector4f(0.000f, 0.100f, 0.200f, 0.250f), H2O, Compound.OCEANIC_IMPURITIES),
     PEROXIDE_DISENFECTANT (new Vector4f(0.949f, 0.949f, 0.949f, 0.250f), H2O, H2O2),
-    RUBBING_ALCOHOL       (new Vector4f(0.949f, 0.949f, 0.949f, 0.250f), H2O, ISOPROPANOL),
-    POOL_CLEANER          (new Vector4f(0.949f, 0.949f, 0.949f, 0.250f), H2O, SODIUM_HYPOCHLORITE),
-    MURIATIC_ACID         (new Vector4f(1.000f, 0.988f, 0.824f, 0.250f), H2O, HYDROCHLORIC_ACID),
-    GASOLINE              (new Vector4f(1.000f, 0.812f, 0.000f, 0.250f), OCTANE, BENZENE, XYLENE, ETHANOL),
+    RUBBING_ALCOHOL       (new Vector4f(0.100f, 0.100f, 0.100f, 0.250f), H2O, ISOPROPANOL),
+    POOL_CLEANER          (new Vector4f(0.294f, 0.294f, 0.394f, 0.250f), H2O, SODIUM_HYPOCHLORITE),
+    MURIATIC_ACID         (new Vector4f(0.200f, 0.198f, 0.182f, 0.250f), H2O, HYDROCHLORIC_ACID),
+    GASOLINE              (new Vector4f(0.500f, 0.406f, 0.000f, 0.250f), OCTANE, BENZENE, XYLENE, ETHANOL),
 
     ;
 

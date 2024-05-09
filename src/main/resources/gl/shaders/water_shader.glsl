@@ -50,7 +50,7 @@ void main()
     pos_offset.y = vertex_data[0].transform.y;
 
     float trs = vertex_data[0].transform.w;
-    trs *= 1 + clr.a;
+    trs *= 2.5 * clr.a + 1;
 
     vec2 scaled1 = pos1 * trs;
     vec2 translated1 = scaled1 + pos_offset;
@@ -92,7 +92,7 @@ out vec4 color;
 
 void main()
 {
-    vec4 circleColor = vec4(0.0, 0.1, 0.2, .25);
+    //vec4 circleColor = vec4(0.0, 0.1, 0.2, .25);
     float thickness = 1.0;
     float fade = 0.00005;
 
@@ -100,7 +100,7 @@ void main()
     float circle = smoothstep(0.0, fade, distance);
     circle *= smoothstep(thickness + fade, thickness, distance);
 
-    vec4 sclaed_rgba = circleColor * f_color;
+    vec4 sclaed_rgba = f_color;
 
     if (circle > 0) color = sclaed_rgba;
     else discard;

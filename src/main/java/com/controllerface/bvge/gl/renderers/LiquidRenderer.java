@@ -87,6 +87,7 @@ public class LiquidRenderer extends GameSystem
             .buf_arg(PrepareLiquids_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_SCALE))
             .buf_arg(PrepareLiquids_k.Args.hull_rotations, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_ROTATION))
             .buf_arg(PrepareLiquids_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_POINT_TABLE))
+            .buf_arg(PrepareLiquids_k.Args.hull_uv_offsets, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_UV_OFFSET))
             .buf_arg(PrepareLiquids_k.Args.point_hit_counts, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT_HIT_COUNT));
 
         long root_hull_filter_ptr = root_hull_filter.kernel_ptr(Kernel.root_hull_filter);

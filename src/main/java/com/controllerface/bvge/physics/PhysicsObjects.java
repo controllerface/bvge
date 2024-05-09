@@ -7,6 +7,7 @@ import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.geometry.Vertex;
+import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
@@ -36,7 +37,7 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int particle(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags)
+    public static int particle(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
@@ -76,7 +77,7 @@ public class PhysicsObjects
             friction,
             restitution,
             next_armature_id,
-            0,
+            particle_fluid.liquid_number,
             hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
 

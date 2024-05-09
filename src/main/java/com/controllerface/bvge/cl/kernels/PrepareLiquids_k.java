@@ -10,6 +10,7 @@ public class PrepareLiquids_k extends GPUKernel
         hull_scales,
         hull_rotations,
         hull_point_tables,
+        hull_uv_offsets,
         point_hit_counts,
         indices,
         transforms_out,

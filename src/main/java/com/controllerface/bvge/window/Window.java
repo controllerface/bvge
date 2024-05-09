@@ -55,9 +55,9 @@ public class Window
 
         camera = new Camera(new Vector2f(0, 0), height, width);
 
-        this.r = 0.2f;
-        this.g = 0.2f;
-        this.b = 0.2f;
+        this.r = 0.1f;
+        this.g = 0.1f;
+        this.b = 0.1f;
 
 //        this.r = 0.0f;
 //        this.g = 0.0f;
