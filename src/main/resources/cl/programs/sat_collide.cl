@@ -58,7 +58,28 @@ __kernel void sat_collide(__global int2 *candidates,
 
     // todo: it will probably be more performant to have separate kernels for each collision type. There should
     //  be a preliminary kernel that sorts the candidate pairs so they can be run on the right kernel
-    if (b1_is_polygon && b2_is_polygon) 
+    if (b1_is_block && b2_is_block) 
+    {
+        block_collision(b1_id, b2_id, 
+            hulls,
+            hull_frictions,
+            hull_restitutions,
+            hull_armature_ids,
+            hull_flags,
+            hull_point_tables,
+            hull_edge_tables,
+            point_flags,
+            points,
+            edges,
+            edge_flags,
+            reactions,
+            reaction_index,
+            point_reactions,
+            masses,
+            counter,
+            dt);
+    }
+    else if (b1_is_polygon && b2_is_polygon) 
     {
         polygon_collision(b1_id, b2_id, 
             hulls,
@@ -97,27 +118,6 @@ __kernel void sat_collide(__global int2 *candidates,
             masses,
             counter,
             dt); 
-    }
-    else if (b1_is_block && b2_is_block) 
-    {
-        block_collision(b1_id, b2_id, 
-            hulls,
-            hull_frictions,
-            hull_restitutions,
-            hull_armature_ids,
-            hull_flags,
-            hull_point_tables,
-            hull_edge_tables,
-            point_flags,
-            points,
-            edges,
-            edge_flags,
-            reactions,
-            reaction_index,
-            point_reactions,
-            masses,
-            counter,
-            dt);
     }
     else 
     {

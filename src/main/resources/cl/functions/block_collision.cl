@@ -21,7 +21,6 @@ inline void block_collision(int hull_1_id,
                               __global int *counter,
                               float dt)
 {
-
     float2 hull_1 = hulls[hull_1_id];
     float2 hull_2 = hulls[hull_2_id];
 
@@ -201,11 +200,6 @@ inline void block_collision(int hull_1_id,
     bool block_vert = (vert_hull_flags & IS_BLOCK) !=0;
     bool block_edge = (edge_hull_flags & IS_BLOCK) !=0;
 
-    // if (block_vert || block_edge)
-    // {
-    //     printf("debug: %d %d", block_vert, block_edge);
-    // }
-
     vert_hull_flags = (block_vert && block_edge) 
         ? vert_hull_flags | TOUCH_ALIKE 
         : vert_hull_flags;
@@ -232,12 +226,64 @@ inline void block_collision(int hull_1_id,
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];
     float4 edge_point_2 = points[edge_index_b];
+
+    int v_l = vertex_table.x == vert_index 
+        ? vertex_table.y 
+        : vert_index - 1;
+
+
+    int v_r = vertex_table.y == vert_index 
+        ? vertex_table.x 
+        : vert_index + 1;
+
+    float4 vertex_point_l = points[v_l];
+    float4 vertex_point_r = points[v_r];
+    float4 vertex_point_ex;
+    int vertex_ex_index;
+
+    float a_l = angle_between((float4)(vertex_point.xy, vertex_point_l.xy), (float4)(edge_point_1.xy, edge_point_2.xy));
+    float a_r = angle_between((float4)(vertex_point.xy, vertex_point_r.xy), (float4)(edge_point_1.xy, edge_point_2.xy));
+
+    bool l_c = fabs(a_l) < .005;
+    bool r_c = fabs(a_r) < .005;
+    bool v_extend = l_c || r_c;
+
+    vertex_ex_index = v_extend 
+        ? l_c
+            ? v_l
+            : v_r
+        : -1;
+
+    vertex_point_ex = v_extend
+        ? l_c
+            ? vertex_point_l
+            : vertex_point_r
+        : vertex_point_ex;
+
+    //printf("l: %f, r: %f", a_l, a_r);
+
+
+
     float2 collision_vector = collision_normal * min_distance;
-    float contact = edge_contact(edge_point_1.xy, edge_point_2.xy, vertex_point.xy, collision_vector);
-    float inverse_contact = 1.0f - contact;
-    float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
-    float2 edge_1_collision = collision_vector * (inverse_contact * edge_magnitude * edge_scale) * -1;
-    float2 edge_2_collision = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
+
+    float2 edge_1_collision;
+    float2 edge_2_collision;
+
+    if (v_extend)
+    {
+        edge_1_collision = collision_vector * -edge_magnitude;
+        edge_2_collision = collision_vector * -edge_magnitude;
+    }
+
+    else
+    {
+        float contact = edge_contact(edge_point_1.xy, edge_point_2.xy, vertex_point.xy, collision_vector);
+        float inverse_contact = 1.0f - contact;
+        float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
+        edge_1_collision = collision_vector * (inverse_contact * edge_magnitude * edge_scale) * -1;
+        edge_2_collision = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
+    }
+    
     float2 vertex_collision = collision_vector * vert_magnitude;
 
     // friction
@@ -296,6 +342,14 @@ inline void block_collision(int hull_1_id,
         reactions[point_index] = vertex_reactions;
         reaction_index[point_index] = vert_index;
         atomic_inc(&reaction_counts[vert_index]);
+        if (v_extend)
+        {
+            int point_index_ex = atomic_inc(&counter[0]);
+            float8 vertex_reactions_ex = (float8)(vertex_collision, vert_hull_opposing, vertex_friction, vertex_restitution);
+            reactions[point_index_ex] = vertex_reactions_ex;
+            reaction_index[point_index_ex] = vertex_ex_index;
+            atomic_inc(&reaction_counts[vertex_ex_index]);
+        }
     }
     if (!static_edge)
     {
