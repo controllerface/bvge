@@ -186,7 +186,7 @@ public class TestGame extends GameMode
             float x = start_x + i * spacing;
             float y = start_y;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, Solid.ANDESITE);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, Solid.BASALT);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
@@ -199,7 +199,7 @@ public class TestGame extends GameMode
             float x = start_x;
             float y = start_y + i * spacing;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, Solid.ANDESITE);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, Solid.BASALT);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }

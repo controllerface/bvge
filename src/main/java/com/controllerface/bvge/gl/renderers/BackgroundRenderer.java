@@ -1,16 +1,13 @@
 package com.controllerface.bvge.gl.renderers;
 
-import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
-import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import static com.controllerface.bvge.util.Constants.Rendering.*;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL45C.*;
@@ -42,30 +39,20 @@ public class BackgroundRenderer extends GameSystem
     {
         float[] vertices = new float[]
             {
-                -1.0f, -1.0f,
-                 1.0f, -1.0f,
-                 1.0f,  1.0f,
-
-                -1.0f, -1.0f,
-                 1.0f,  1.0f,
-                -1.0f,  1.0f,
+                -1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,
+                -1.0f, -1.0f, 1.0f,  1.0f, -1.0f, 1.0f,
             };
 
         float[] uvs = new float[]
             {
-                0.0f, 0.0f,
-                1.0f, 0.0f,
-                1.0f, 1.0f,
-
-                0.0f, 0.0f,
-                1.0f, 1.0f,
-                0.0f, 1.0f,
+                0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+                0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
             };
-
 
         texture = new Texture();
         texture.init("/img/cave_bg.png");
         shader = Assets.load_shader("bg_shader.glsl");
+        shader.uploadIntArray("uTextures", texture_slots);
         vao = glCreateVertexArrays();
         position_vbo = GLUtils.fill_buffer_vec2(vao, POSITION_ATTRIBUTE, vertices);
         uv_vbo = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);
@@ -78,17 +65,11 @@ public class BackgroundRenderer extends GameSystem
     public void tick(float dt)
     {
         glBindVertexArray(vao);
-
         shader.use();
         texture.bind(0);
-
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
-        shader.uploadIntArray("uTextures", texture_slots);
-
         glDrawArrays(GL_TRIANGLES, 0, 6);
-
         glBindVertexArray(0);
-
         shader.detach();
     }
 
