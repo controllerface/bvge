@@ -75,11 +75,11 @@ TransformBuffer get_node_transform_x(__global int2 *bone_channel_tables,
     float4 rot_final = quaternion_lerp(rot_pair.frame_a, rot_pair.frame_b, rot_pair.lerp_factor);
     float4 scl_final = vector_lerp(scl_pair.frame_a, scl_pair.frame_b, scl_pair.lerp_factor);
 
-    TransformBuffer output;
-    output.pos = pos_final;
-    output.rot = rot_final;
-    output.scl = scl_final;
-    return output;
+    TransformBuffer current_transform;
+    current_transform.pos = pos_final;
+    current_transform.rot = rot_final;
+    current_transform.scl = scl_final;
+    return current_transform;
 }
 
 
@@ -110,23 +110,19 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     //  done below must happen for both animations, and then the resulting values must 
     //  be interpolated between anbimations based on the scaling factor
 
-    TransformBuffer output = get_node_transform_x(bone_channel_tables, 
+    TransformBuffer current_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,
                         key_frames, frame_times, current_time.x, animation_index.x, bone_id);
 
-    float16 pos_matrix = translation_vector_to_matrix(output.pos);
-    float16 rot_matrix = rotation_quaternion_to_matrix(output.rot);
-    float16 scl_matrix = scaling_vector_to_matrix(output.scl);
+    float16 pos_matrix = translation_vector_to_matrix(current_transform.pos);
+    float16 rot_matrix = rotation_quaternion_to_matrix(current_transform.rot);
+    float16 scl_matrix = scaling_vector_to_matrix(current_transform.scl);
 
     bool no_blend = animation_index.y == -1; 
-        //|| current_blend.y <= 0
-        //|| current_blend.x <= 0;
-
     if (no_blend) return matrix_mul(matrix_mul(pos_matrix, rot_matrix), scl_matrix);
 
-
-    TransformBuffer output2 = get_node_transform_x(bone_channel_tables, 
+    TransformBuffer previous_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,
                         key_frames, frame_times, current_time.y, animation_index.y, bone_id);
@@ -135,9 +131,9 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
         ? current_blend.y / current_blend.x 
         : 0.0f;
 
-    float4 pos_final = vector_lerp(output2.pos, output.pos, blend_factor);
-    float4 rot_final = quaternion_lerp(output2.rot, output.rot, blend_factor);
-    float4 scl_final = vector_lerp(output2.scl, output.scl, blend_factor);
+    float4 pos_final = vector_lerp(previous_transform.pos, current_transform.pos, blend_factor);
+    float4 rot_final = quaternion_lerp(previous_transform.rot, current_transform.rot, blend_factor);
+    float4 scl_final = vector_lerp(previous_transform.scl, current_transform.scl, blend_factor);
 
     pos_matrix = translation_vector_to_matrix(pos_final);
     rot_matrix = rotation_quaternion_to_matrix(rot_final);
