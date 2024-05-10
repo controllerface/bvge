@@ -1103,16 +1103,10 @@ public class PhysicsSimulation extends GameSystem
 
     private void simulate(float dt)
     {
-
-
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
-        // convex shape. Animations may move points into positions where the geometry is slightly concave,
-        // so this call acts as a small hedge against this happening before collision checks can be performed.
+        // convex shape. Animations may move points into positions where the geometry becomes concave,
+        // so this call prevents collision errors due to non-convex shapes.
         resolve_constraints(EDGE_STEPS);
-
-        // Before the GPU begins the simulation cycle, player input is handled and the memory structures
-        // in the GPU are updated with the proper values.
-        //update_controllable_entities();
 
         this.time_accumulator += dt;
         int sub_ticks = 0;
@@ -1126,11 +1120,12 @@ public class PhysicsSimulation extends GameSystem
                 // if we end up doing more sub ticks than is ideal, we will avoid ticking the simulation anymore
                 // for this frame. This forces slower hardware to slow down a bit, which is less than ideal, but
                 // is better than the alternative, which is system lockup.
-                // todo: test a few different values on some lower-end hardware and try to find a sweet spot.
                 if (sub_ticks <= MAX_SUB_STEPS)
                 {
                     this.time_accumulator -= FIXED_TIME_STEP;
 
+                    // Before the GPU begins the step cycle, player input is handled and the memory structures
+                    // in the GPU are updated with the proper values.
                     update_controllable_entities();
 
                     // perform one tick of the simulation
@@ -1168,18 +1163,16 @@ public class PhysicsSimulation extends GameSystem
         // zero out the acceleration buffer, so it is empty for the next frame
         GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL).clear();
 
-        // After all simulation is done for this pass, do one last animate pass so that vertices are all in
-        // the expected location for rendering. The interplay between animation and edge constraints may leave
-        // the points in slightly incorrect positions. This makes sure everything is good for the render step.
-        animate_points();
-
         // Deletion of objects happens only once per simulation tick, instead of every sub-step
         // to ensure buffer compaction happens as infrequently as possible.
         //GPGPU.core_memory.delete_and_compact();
 
-        // Bones are animated once per time tick
+        // Armatures and bones are animated once per time tick, after all simulation is done for this pass. The interplay between
+        // animation and edge constraints may leave points in slightly incorrect positions. Animating here ensures the rendering
+        // step always sees the objects exactly in their correct positions.
         animate_armatures(dt - dropped_time);
         animate_bones();
+        animate_points();
     }
 
     @Override

@@ -39,14 +39,14 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                            __global float *animation_tick_rates,
                            __global float4 *key_frames,
                            __global float *frame_times,
-                           float current_time,
-                           int animation_index,
+                           float2 current_time,
+                           int2 animation_index,
                            int bone_id)
 {
-    if (animation_index < 0) return bone_bind_poses[bone_id];
+    if (animation_index.x < 0) return bone_bind_poses[bone_id];
 
     int2 channel_table = bone_channel_tables[bone_id];
-    int channel_index = channel_table.x + animation_index;
+    int channel_index = channel_table.x + animation_index.x;
     int timing_index = animation_timing_indices[channel_index];
     int2 pos_channel_table = bone_pos_channel_tables[channel_index];
     int2 rot_channel_table = bone_rot_channel_tables[channel_index];
@@ -54,7 +54,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     float duration = animation_durations[timing_index];
     float tick_rate = animation_tick_rates[timing_index];
 
-    float time_in_ticks = current_time * tick_rate;
+    float time_in_ticks = current_time.x * tick_rate;
     float anim_time_ticks = fmod(time_in_ticks, duration);
 
     KeyFramePair pos_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, pos_channel_table);
@@ -89,8 +89,8 @@ __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global int *animation_timing_indices,
                                 __global float *animation_durations,
                                 __global float *animation_tick_rates,
-                                __global int *armature_animation_indices,
-                                __global float *armature_animation_elapsed,
+                                __global int2 *armature_animation_indices,
+                                __global float2 *armature_animation_elapsed,
                                 float delta_time)
 {
     int current_armature = get_global_id(0);
@@ -98,8 +98,8 @@ __kernel void animate_armatures(__global float16 *armature_bones,
     int armature_transform_id = armature_model_transforms[current_armature];
     int flags = armature_flags[current_armature];
     float16 model_transform = model_transforms[armature_transform_id];
-    int current_animation = armature_animation_indices[current_armature]; 
-    float current_frame_time = armature_animation_elapsed[current_armature] += delta_time;
+    int2 current_animation = armature_animation_indices[current_armature]; 
+    float2 current_frame_time = armature_animation_elapsed[current_armature] += delta_time;
 
     float a = ((flags & FACE_LEFT) != 0)
         ? -1.0 
@@ -144,7 +144,7 @@ __kernel void animate_armatures(__global float16 *armature_bones,
         float16 global_transform = matrix_mul_affine(parent_transform, node_transform);
         armature_bones[current_bone_bind] = global_transform;
     }
-    armature_animation_elapsed[current_armature] = current_frame_time;
+    armature_animation_elapsed[current_armature].x = current_frame_time.x;
 }
 
 __kernel void animate_bones(__global float16 *bones,

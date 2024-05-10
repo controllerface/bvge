@@ -29,8 +29,8 @@ __kernel void handle_movement(__global float4 *armatures,
                               __global float2 *armature_accel,
                               __global short2 *armature_animation_states,
                               __global int *armature_flags,
-                              __global int *armature_animation_indices,
-                              __global float *armature_animation_elapsed,
+                              __global int2 *armature_animation_indices,
+                              __global float2 *armature_animation_elapsed,
                               __global int *control_flags,
                               __global int *indices,
                               __global int *tick_budgets,
@@ -48,7 +48,7 @@ __kernel void handle_movement(__global float4 *armatures,
     float4 armature = armatures[current_index];
     float2 accel = armature_accel[current_index];
     int arm_flag = armature_flags[current_index];
-    int anim_state = armature_animation_indices[current_index];
+    int2 anim_state = armature_animation_indices[current_index];
 
     bool is_mv_l = (current_flags & LEFT) !=0;
     bool is_mv_r = (current_flags & RIGHT) !=0;
@@ -68,8 +68,8 @@ __kernel void handle_movement(__global float4 *armatures,
 
     short2 anim_s = armature_animation_states[current_index];
     
-    float ct = armature_animation_elapsed[current_index];
-    int next_state = anim_state;
+    float2 ct = armature_animation_elapsed[current_index];
+    int next_state = anim_state.x;
 
     int b_reset = is_wet ? 10 : 20;
 
@@ -77,7 +77,7 @@ __kernel void handle_movement(__global float4 *armatures,
         ? b_reset
         : current_budget;
 
-    switch(anim_state)
+    switch(next_state)
     {
         case IDLE:
             if (is_mv_l || is_mv_r) next_state = WALKING;
@@ -113,7 +113,7 @@ __kernel void handle_movement(__global float4 *armatures,
             break;
 
         case JUMP_START:
-            if (ct > 0.15f) next_state = JUMPING;
+            if (ct.x > 0.15f) next_state = JUMPING;
             break;
 
         case JUMPING:
@@ -136,17 +136,17 @@ __kernel void handle_movement(__global float4 *armatures,
             break;
 
         case LAND_SOFT:
-            if (ct > 0.08f) next_state = IDLE;
+            if (ct.x > 0.08f) next_state = IDLE;
             break;
 
         case LAND_HARD:
-            if (ct > 0.22f) next_state = IDLE;
+            if (ct.x > 0.22f) next_state = IDLE;
             break;
 
     }
 
-    if (anim_state != next_state) armature_animation_elapsed[current_index] = 0.0f;
-    anim_state = next_state;
+    if (anim_state.x != next_state) armature_animation_elapsed[current_index].x = 0.0f;
+    anim_state.x = next_state;
 
     anim_s.x = (vel.y < -threshold) 
         ? anim_s.x + 1 
