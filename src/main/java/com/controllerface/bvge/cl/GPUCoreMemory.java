@@ -126,6 +126,12 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer armature_anim_elapsed_buffer;
 
+    /** float2
+     * x: the initial time of the current blend operation
+     * y: the remaining time of the current blend operation
+     */
+    private final ResizableBuffer armature_anim_blend_buffer;
+
     /** short2
      * x: number of ticks moving downward
      * y: number of ticks moving upward
@@ -508,7 +514,8 @@ public class GPUCoreMemory
         anim_timing_index_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
         armature_accel_buffer             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
         armature_anim_elapsed_buffer      = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
-        armature_motion_state_buffer = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_short2, 10_000L);
+        armature_anim_blend_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        armature_motion_state_buffer      = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_short2, 10_000L);
         armature_anim_index_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
         armature_bone_buffer              = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16);
         armature_bone_reference_id_buffer = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
@@ -757,6 +764,7 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.armature_flags, armature_flag_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_indices, armature_anim_index_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_elapsed, armature_anim_elapsed_buffer)
+            .buf_arg(CompactArmatures_k.Args.armature_animation_blend, armature_anim_blend_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_motion_states, armature_motion_state_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_hull_tables, armature_hull_table_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_bone_tables, armature_bone_table_buffer)
@@ -842,6 +850,7 @@ public class GPUCoreMemory
             case ANIM_TIMING_INDEX             -> anim_timing_index_buffer;
             case ARMATURE                      -> armature_buffer;
             case ARMATURE_ACCEL                -> armature_accel_buffer;
+            case ARMATURE_ANIM_BLEND           -> armature_anim_blend_buffer;
             case ARMATURE_ANIM_ELAPSED         -> armature_anim_elapsed_buffer;
             case ARMATURE_MOTION_STATE         -> armature_motion_state_buffer;
             case ARMATURE_ANIM_INDEX           -> armature_anim_index_buffer;
@@ -1202,6 +1211,7 @@ public class GPUCoreMemory
         armature_mass_buffer.ensure_capacity(capacity);
         armature_anim_index_buffer.ensure_capacity(capacity);
         armature_anim_elapsed_buffer.ensure_capacity(capacity);
+        armature_anim_blend_buffer.ensure_capacity(capacity);
         armature_motion_state_buffer.ensure_capacity(capacity);
         armature_hull_table_buffer.ensure_capacity(capacity);
         armature_bone_table_buffer.ensure_capacity(capacity);
@@ -1216,8 +1226,8 @@ public class GPUCoreMemory
             .set_arg(CreateArmature_k.Args.new_armature_hull_table, hull_table)
             .set_arg(CreateArmature_k.Args.new_armature_bone_table, bone_table)
             .set_arg(CreateArmature_k.Args.new_armature_mass, mass)
-            .set_arg(CreateArmature_k.Args.new_armature_animation_index, arg_int2(anim_index, anim_index))
-            .set_arg(CreateArmature_k.Args.new_armature_animation_time, arg_float2(0.0f, 0.0f))
+            .set_arg(CreateArmature_k.Args.new_armature_animation_index, arg_int2(anim_index, -1))
+            .set_arg(CreateArmature_k.Args.new_armature_animation_time, arg_float2(0.0f, 0.0f)) // todo: maybe remove these zero init ones
             .set_arg(CreateArmature_k.Args.new_armature_animation_state, arg_short2((short) 0, (short) 0))
             .call(GPGPU.global_single_size);
 
@@ -1577,6 +1587,7 @@ public class GPUCoreMemory
         armature_mass_buffer.release();
         armature_anim_index_buffer.release();
         armature_anim_elapsed_buffer.release();
+        armature_anim_blend_buffer.release();
         armature_motion_state_buffer.release();
         armature_hull_table_buffer.release();
         armature_bone_table_buffer.release();
@@ -1661,6 +1672,7 @@ public class GPUCoreMemory
         total += armature_mass_buffer.debug_data();
         total += armature_anim_index_buffer.debug_data();
         total += armature_anim_elapsed_buffer.debug_data();
+        total += armature_anim_blend_buffer.debug_data();
         total += armature_motion_state_buffer.debug_data();
         total += armature_hull_table_buffer.debug_data();
         total += armature_bone_table_buffer.debug_data();

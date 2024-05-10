@@ -210,6 +210,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(HandleMovement_k.Args.armature_flags, GPGPU.core_memory.buffer(BufferType.ARMATURE_FLAG))
             .buf_arg(HandleMovement_k.Args.armature_animation_indices, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_INDEX))
             .buf_arg(HandleMovement_k.Args.armature_animation_elapsed, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_ELAPSED))
+            .buf_arg(HandleMovement_k.Args.armature_animation_blend, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_BLEND))
             .buf_arg(HandleMovement_k.Args.flags, control_point_flags)
             .buf_arg(HandleMovement_k.Args.indices, control_point_indices)
             .buf_arg(HandleMovement_k.Args.tick_budgets, control_point_tick_budgets)
@@ -393,7 +394,8 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimateArmatures_k.Args.animation_durations, GPGPU.core_memory.buffer(BufferType.ANIM_DURATION))
             .buf_arg(AnimateArmatures_k.Args.animation_tick_rates, GPGPU.core_memory.buffer(BufferType.ANIM_TICK_RATE))
             .buf_arg(AnimateArmatures_k.Args.armature_animation_indices, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_INDEX))
-            .buf_arg(AnimateArmatures_k.Args.armature_animation_elapsed, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_ELAPSED));
+            .buf_arg(AnimateArmatures_k.Args.armature_animation_elapsed, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_ELAPSED))
+            .buf_arg(AnimateArmatures_k.Args.armature_animation_blend, GPGPU.core_memory.buffer(BufferType.ARMATURE_ANIM_BLEND));
 
         long animate_bones_k_ptr = animate_hulls.kernel_ptr(Kernel.animate_bones);
         animate_bones_k = new AnimateBones_k(GPGPU.cl_cmd_queue_ptr, animate_bones_k_ptr)

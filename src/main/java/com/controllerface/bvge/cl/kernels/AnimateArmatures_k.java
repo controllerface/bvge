@@ -25,6 +25,7 @@ public class AnimateArmatures_k extends GPUKernel
         animation_tick_rates,
         armature_animation_indices,
         armature_animation_elapsed,
+        armature_animation_blend,
         delta_time;
     }
 

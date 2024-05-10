@@ -5,6 +5,13 @@ typedef struct
     float lerp_factor;
 } KeyFramePair;
 
+typedef struct
+{
+    float4 pos;
+    float4 rot;
+    float4 scl;
+} TransformBuffer;
+
 inline KeyFramePair find_keyframe_pair(__global float4 *key_frames, 
                                        __global float *frame_times,
                                        float anim_time_ticks,
@@ -29,6 +36,58 @@ inline KeyFramePair find_keyframe_pair(__global float4 *key_frames,
     return result;
 }
 
+
+
+
+
+
+
+TransformBuffer get_node_transform_x(__global int2 *bone_channel_tables,
+                           __global int2 *bone_pos_channel_tables,
+                           __global int2 *bone_rot_channel_tables,
+                           __global int2 *bone_scl_channel_tables,
+                           __global int *animation_timing_indices,
+                           __global float *animation_durations,
+                           __global float *animation_tick_rates,
+                           __global float4 *key_frames,
+                           __global float *frame_times,
+                           float current_time,
+                           int animation_index,
+                           int bone_id)
+{
+    int2 channel_table = bone_channel_tables[bone_id];
+    int channel_index = channel_table.x + animation_index;
+    int timing_index = animation_timing_indices[channel_index];
+    int2 pos_channel_table = bone_pos_channel_tables[channel_index];
+    int2 rot_channel_table = bone_rot_channel_tables[channel_index];
+    int2 scl_channel_table = bone_scl_channel_tables[channel_index];
+    float duration = animation_durations[timing_index];
+    float tick_rate = animation_tick_rates[timing_index];
+
+    float time_in_ticks = current_time * tick_rate;
+    float anim_time_ticks = fmod(time_in_ticks, duration);
+
+    KeyFramePair pos_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, pos_channel_table);
+    KeyFramePair rot_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, rot_channel_table);
+    KeyFramePair scl_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, scl_channel_table);
+
+    float4 pos_final = vector_lerp(pos_pair.frame_a, pos_pair.frame_b, pos_pair.lerp_factor);
+    float4 rot_final = quaternion_lerp(rot_pair.frame_a, rot_pair.frame_b, rot_pair.lerp_factor);
+    float4 scl_final = vector_lerp(scl_pair.frame_a, scl_pair.frame_b, scl_pair.lerp_factor);
+
+    TransformBuffer output;
+    output.pos = pos_final;
+    output.rot = rot_final;
+    output.scl = scl_final;
+    return output;
+}
+
+
+
+
+
+
+
 float16 get_node_transform(__global float16 *bone_bind_poses,
                            __global int2 *bone_channel_tables,
                            __global int2 *bone_pos_channel_tables,
@@ -40,39 +99,49 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                            __global float4 *key_frames,
                            __global float *frame_times,
                            float2 current_time,
+                           float2 current_blend,
                            int2 animation_index,
                            int bone_id)
 {
     if (animation_index.x < 0) return bone_bind_poses[bone_id];
 
-    // TODO: if present in animation_index.y, a secondary animation shoudl be loaded
+    // TODO: if present in animation_index.y, a secondary animation should be loaded
     //  and interpolated between based on a scaling value. Essentially, all of what is
     //  done below must happen for both animations, and then the resulting values must 
     //  be interpolated between anbimations based on the scaling factor
 
-    int2 channel_table = bone_channel_tables[bone_id];
-    int channel_index = channel_table.x + animation_index.x;
-    int timing_index = animation_timing_indices[channel_index];
-    int2 pos_channel_table = bone_pos_channel_tables[channel_index];
-    int2 rot_channel_table = bone_rot_channel_tables[channel_index];
-    int2 scl_channel_table = bone_scl_channel_tables[channel_index];
-    float duration = animation_durations[timing_index];
-    float tick_rate = animation_tick_rates[timing_index];
+    TransformBuffer output = get_node_transform_x(bone_channel_tables, 
+                        bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
+                        animation_timing_indices, animation_durations, animation_tick_rates,
+                        key_frames, frame_times, current_time.x, animation_index.x, bone_id);
 
-    float time_in_ticks = current_time.x * tick_rate;
-    float anim_time_ticks = fmod(time_in_ticks, duration);
+    float16 pos_matrix = translation_vector_to_matrix(output.pos);
+    float16 rot_matrix = rotation_quaternion_to_matrix(output.rot);
+    float16 scl_matrix = scaling_vector_to_matrix(output.scl);
 
-    KeyFramePair pos_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, pos_channel_table);
-    KeyFramePair rot_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, rot_channel_table);
-    KeyFramePair scl_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, scl_channel_table);
+    bool no_blend = true;//animation_index.y == -1; 
+        //|| current_blend.y <= 0
+        //|| current_blend.x <= 0;
 
-    float4 pos_final = vector_lerp(pos_pair.frame_a, pos_pair.frame_b, pos_pair.lerp_factor);
-    float4 rot_final = quaternion_lerp(rot_pair.frame_a, rot_pair.frame_b, rot_pair.lerp_factor);
-    float4 scl_final = vector_lerp(scl_pair.frame_a, scl_pair.frame_b, scl_pair.lerp_factor);
+    if (no_blend) return matrix_mul(matrix_mul(pos_matrix, rot_matrix), scl_matrix);
 
-    float16 pos_matrix = translation_vector_to_matrix(pos_final);
-    float16 rot_matrix = rotation_quaternion_to_matrix(rot_final);
-    float16 scl_matrix = scaling_vector_to_matrix(scl_final);
+
+    TransformBuffer output2 = get_node_transform_x(bone_channel_tables, 
+                        bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
+                        animation_timing_indices, animation_durations, animation_tick_rates,
+                        key_frames, frame_times, current_time.y, animation_index.y, bone_id);
+
+    float blend_factor = current_blend.x > 0 
+        ? current_blend.y / current_blend.x 
+        : 0.0f;
+
+    float4 pos_final = vector_lerp(output2.pos, output.pos, blend_factor);
+    float4 rot_final = quaternion_lerp(output2.rot, output.rot, blend_factor);
+    float4 scl_final = vector_lerp(output2.scl, output.scl, blend_factor);
+
+    pos_matrix = translation_vector_to_matrix(pos_final);
+    rot_matrix = rotation_quaternion_to_matrix(rot_final);
+    scl_matrix = scaling_vector_to_matrix(scl_final);
 
     return matrix_mul(matrix_mul(pos_matrix, rot_matrix), scl_matrix);
 }
@@ -96,6 +165,7 @@ __kernel void animate_armatures(__global float16 *armature_bones,
                                 __global float *animation_tick_rates,
                                 __global int2 *armature_animation_indices,
                                 __global float2 *armature_animation_elapsed,
+                                __global float2 *armature_animation_blend,
                                 float delta_time)
 {
     int current_armature = get_global_id(0);
@@ -104,7 +174,8 @@ __kernel void animate_armatures(__global float16 *armature_bones,
     int flags = armature_flags[current_armature];
     float16 model_transform = model_transforms[armature_transform_id];
     int2 current_animation = armature_animation_indices[current_armature]; 
-    float2 current_frame_time = armature_animation_elapsed[current_armature] += delta_time;
+    float2 current_frame_time = armature_animation_elapsed[current_armature];
+    float2 current_blend_time = armature_animation_blend[current_armature];
 
     float a = ((flags & FACE_LEFT) != 0)
         ? -1.0 
@@ -143,13 +214,22 @@ __kernel void animate_armatures(__global float16 *armature_bones,
                                                     key_frames,
                                                     frame_times,
                                                     current_frame_time,
+                                                    current_blend_time,
                                                     current_animation,
                                                     bone_reference_id);
 
         float16 global_transform = matrix_mul_affine(parent_transform, node_transform);
         armature_bones[current_bone_bind] = global_transform;
     }
-    armature_animation_elapsed[current_armature].x = current_frame_time.x;
+    current_blend_time.y += delta_time;
+    current_animation.y = current_blend_time.y < current_blend_time.x 
+        ? current_animation.y
+        : -1; 
+
+    current_frame_time += delta_time;    
+    armature_animation_blend[current_armature] = current_blend_time;
+    armature_animation_indices[current_armature] = current_animation;
+    armature_animation_elapsed[current_armature] = current_frame_time;
 }
 
 __kernel void animate_bones(__global float16 *bones,

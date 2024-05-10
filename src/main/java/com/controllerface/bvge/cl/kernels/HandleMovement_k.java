@@ -12,6 +12,7 @@ public class HandleMovement_k extends GPUKernel
         armature_flags,
         armature_animation_indices,
         armature_animation_elapsed,
+        armature_animation_blend,
         flags,
         indices,
         tick_budgets,
