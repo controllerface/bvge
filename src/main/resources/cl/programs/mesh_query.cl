@@ -170,10 +170,10 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
             : hit_counts <= HIT_LOW_MID_THRESHOLD 
                 ? 0.80f 
                 : hit_counts <= HIT_MID_THRESHOLD
-                    ? 0.70f
+                    ? 0.60f
                     : hit_counts <= HIT_HIGH_MID_THRESHOLD 
-                        ? 0.60
-                        : 0.65;
+                        ? 0.55
+                        : 0.50;
 
         int point_vertex_reference = point_vertex_references[point_id];
         int2 uv_table = uv_tables[point_vertex_reference];

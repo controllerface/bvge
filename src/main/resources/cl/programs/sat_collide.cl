@@ -425,8 +425,7 @@ __kernel void move_armatures(__global float2 *hulls,
     bool hit_water = (_hull_flags & IN_LIQUID) !=0;
     bool touch_alike = (_hull_flags & TOUCH_ALIKE) !=0;
 
-
-    int block_check = HIT_TOP_THRESHOLD * 1.5;
+    int block_check = HIT_HIGH_MID_THRESHOLD * 1.5;
 
     bool go_static = hit_floor  
         && !hit_water 

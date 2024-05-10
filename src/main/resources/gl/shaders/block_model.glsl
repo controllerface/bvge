@@ -13,7 +13,7 @@ void main()
 {
     f_tex_coords = v_tex_coords;
     f_color = v_color;
-    gl_Position = uVP * v_position;//vec4(v_position, 0.0, 1.0);
+    gl_Position = uVP * v_position;
 }
 
 #type fragment

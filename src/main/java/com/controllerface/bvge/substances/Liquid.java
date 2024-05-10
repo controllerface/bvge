@@ -55,7 +55,7 @@ public enum Liquid
      * Generates an Open CL C lookup table for the colors of all defined liquids. The generated table will look
      * similar to this example at runtime:
      *
-     *     constant float4 lookup_table[] =
+     *     constant float4 liquid_lookup_table[] =
      *     {
      * 	     (float4)(0.000, 0.694, 0.078, 0.25),   // liquid 0 color
      * 	     // ... other colors go here ...
@@ -70,16 +70,18 @@ public enum Liquid
     {
         if (lookup_table.isEmpty())
         {
-            var buffer = new StringBuilder("constant float4 lookup_table[] = \n");
-            buffer.append("{\n");
+            var buffer = new StringBuilder();
+
+            buffer.append("constant float4 liquid_lookup_table[] = \n{\n");
             for (var liquid : values())
             {
-                var _color = liquid.color;
-                buffer.append("\t(float4)")
-                    .append(STR."(\{String.valueOf(_color.x)}, \{String.valueOf(_color.y)}, \{String.valueOf(_color.z)}, \{String.valueOf(_color.w)}),")
-                    .append("\n");
+                var x = String.valueOf(liquid.color.x);
+                var y = String.valueOf(liquid.color.y);
+                var z = String.valueOf(liquid.color.z);
+                var w = String.valueOf(liquid.color.w);
+                buffer.append(STR."\t(float4)(\{x}, \{y}, \{z}, \{w}),\n");
             }
-            buffer.append("};\n").append("\n");
+            buffer.append("};\n\n");
             lookup_table = buffer.toString();
         }
         return lookup_table;
