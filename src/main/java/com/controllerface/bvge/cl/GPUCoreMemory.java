@@ -130,7 +130,7 @@ public class GPUCoreMemory
      * x: number of ticks moving downward
      * y: number of ticks moving upward
      */
-    private final ResizableBuffer armature_anim_state_buffer;
+    private final ResizableBuffer armature_motion_state_buffer;
 
     /** int2
      * x: the currently running animation index
@@ -508,7 +508,7 @@ public class GPUCoreMemory
         anim_timing_index_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
         armature_accel_buffer             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
         armature_anim_elapsed_buffer      = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
-        armature_anim_state_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_short2, 10_000L);
+        armature_motion_state_buffer = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_short2, 10_000L);
         armature_anim_index_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
         armature_bone_buffer              = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16);
         armature_bone_reference_id_buffer = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
@@ -643,7 +643,7 @@ public class GPUCoreMemory
             .buf_arg(CreateArmature_k.Args.armature_masses, armature_mass_buffer)
             .buf_arg(CreateArmature_k.Args.armature_animation_indices, armature_anim_index_buffer)
             .buf_arg(CreateArmature_k.Args.armature_animation_elapsed, armature_anim_elapsed_buffer)
-            .buf_arg(CreateArmature_k.Args.armature_animation_states, armature_anim_state_buffer);
+            .buf_arg(CreateArmature_k.Args.armature_motion_states, armature_motion_state_buffer);
 
         long create_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_hull_bone);
         create_bone_k = new CreateHullBone_k(GPGPU.cl_cmd_queue_ptr, create_bone_k_ptr)
@@ -757,7 +757,7 @@ public class GPUCoreMemory
             .buf_arg(CompactArmatures_k.Args.armature_flags, armature_flag_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_indices, armature_anim_index_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_animation_elapsed, armature_anim_elapsed_buffer)
-            .buf_arg(CompactArmatures_k.Args.armature_animation_states, armature_anim_state_buffer)
+            .buf_arg(CompactArmatures_k.Args.armature_motion_states, armature_motion_state_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_hull_tables, armature_hull_table_buffer)
             .buf_arg(CompactArmatures_k.Args.armature_bone_tables, armature_bone_table_buffer)
             .buf_arg(CompactArmatures_k.Args.hull_bone_tables, hull_bone_table_buffer)
@@ -843,7 +843,7 @@ public class GPUCoreMemory
             case ARMATURE                      -> armature_buffer;
             case ARMATURE_ACCEL                -> armature_accel_buffer;
             case ARMATURE_ANIM_ELAPSED         -> armature_anim_elapsed_buffer;
-            case ARMATURE_ANIM_STATE           -> armature_anim_state_buffer;
+            case ARMATURE_MOTION_STATE         -> armature_motion_state_buffer;
             case ARMATURE_ANIM_INDEX           -> armature_anim_index_buffer;
             case ARMATURE_BONE                 -> armature_bone_buffer;
             case ARMATURE_BONE_REFERENCE_ID    -> armature_bone_reference_id_buffer;
@@ -1202,7 +1202,7 @@ public class GPUCoreMemory
         armature_mass_buffer.ensure_capacity(capacity);
         armature_anim_index_buffer.ensure_capacity(capacity);
         armature_anim_elapsed_buffer.ensure_capacity(capacity);
-        armature_anim_state_buffer.ensure_capacity(capacity);
+        armature_motion_state_buffer.ensure_capacity(capacity);
         armature_hull_table_buffer.ensure_capacity(capacity);
         armature_bone_table_buffer.ensure_capacity(capacity);
 
@@ -1577,7 +1577,7 @@ public class GPUCoreMemory
         armature_mass_buffer.release();
         armature_anim_index_buffer.release();
         armature_anim_elapsed_buffer.release();
-        armature_anim_state_buffer.release();
+        armature_motion_state_buffer.release();
         armature_hull_table_buffer.release();
         armature_bone_table_buffer.release();
 
@@ -1661,7 +1661,7 @@ public class GPUCoreMemory
         total += armature_mass_buffer.debug_data();
         total += armature_anim_index_buffer.debug_data();
         total += armature_anim_elapsed_buffer.debug_data();
-        total += armature_anim_state_buffer.debug_data();
+        total += armature_motion_state_buffer.debug_data();
         total += armature_hull_table_buffer.debug_data();
         total += armature_bone_table_buffer.debug_data();
 

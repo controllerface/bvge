@@ -16,7 +16,7 @@ public class CreateArmature_k extends GPUKernel
         armature_masses,
         armature_animation_indices,
         armature_animation_elapsed,
-        armature_animation_states,
+        armature_motion_states,
         target,
         new_armature,
         new_armature_root_hull,

@@ -27,7 +27,7 @@ __kernel void set_control_points(__global int *control_flags,
 
 __kernel void handle_movement(__global float4 *armatures,
                               __global float2 *armature_accel,
-                              __global short2 *armature_animation_states,
+                              __global short2 *armature_motion_states,
                               __global int *armature_flags,
                               __global int2 *armature_animation_indices,
                               __global float2 *armature_animation_elapsed,
@@ -66,7 +66,7 @@ __kernel void handle_movement(__global float4 *armatures,
 
     int tick_slice = 0;
 
-    short2 anim_s = armature_animation_states[current_index];
+    short2 motion_state = armature_motion_states[current_index];
     
     float2 ct = armature_animation_elapsed[current_index];
     int next_state = anim_state.x;
@@ -82,34 +82,34 @@ __kernel void handle_movement(__global float4 *armatures,
         case IDLE:
             if (is_mv_l || is_mv_r) next_state = WALKING;
             if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
-            if (anim_s.x > 50) next_state = FALLING_SLOW;
-            if (anim_s.y > 50) next_state = IN_AIR;
+            if (motion_state.x > 50) next_state = FALLING_SLOW;
+            if (motion_state.y > 50) next_state = IN_AIR;
             break;
 
         case WALKING: 
             if (!is_mv_l && !is_mv_r) next_state = IDLE;
             if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
-            if (anim_s.x > 50) next_state = FALLING_SLOW;
-            if (anim_s.y > 50) next_state = IN_AIR;
+            if (motion_state.x > 50) next_state = FALLING_SLOW;
+            if (motion_state.y > 50) next_state = IN_AIR;
             break;
 
         case RUNNING:
             break;
 
         case FALLING_SLOW:
-            if (can_jump) next_state = anim_s.x > 200 
+            if (can_jump) next_state = motion_state.x > 200 
                 ? LAND_HARD 
                 : LAND_SOFT;
-            if (anim_s.x > 200) next_state = FALLING_FAST;
-            if (anim_s.y > 50) next_state = IN_AIR;
+            if (motion_state.x > 200) next_state = FALLING_FAST;
+            if (motion_state.y > 50) next_state = IN_AIR;
             break;
 
         case FALLING_FAST:
-            if (can_jump) next_state = anim_s.x > 200 
+            if (can_jump) next_state = motion_state.x > 200 
                 ? LAND_HARD 
                 : LAND_SOFT;
-            if (anim_s.x < 200) next_state = FALLING_SLOW;
-            if (anim_s.y > 50) next_state = IN_AIR;
+            if (motion_state.x < 200) next_state = FALLING_SLOW;
+            if (motion_state.y > 50) next_state = IN_AIR;
             break;
 
         case JUMP_START:
@@ -129,10 +129,10 @@ __kernel void handle_movement(__global float4 *armatures,
             break;
 
         case IN_AIR:
-            if (can_jump) next_state = anim_s.x > 200 
+            if (can_jump) next_state = motion_state.x > 200 
                 ? LAND_HARD 
                 : LAND_SOFT;
-            if (anim_s.x > 50) next_state = FALLING_SLOW;
+            if (motion_state.x > 50) next_state = FALLING_SLOW;
             break;
 
         case LAND_SOFT:
@@ -145,21 +145,27 @@ __kernel void handle_movement(__global float4 *armatures,
 
     }
 
-    if (anim_state.x != next_state) armature_animation_elapsed[current_index].x = 0.0f;
+    if (anim_state.x != next_state) 
+    {
+        ct.y = ct.x;
+        ct.x = 0.0f;
+        anim_state.y = anim_state.x;
+        armature_animation_elapsed[current_index] = ct;
+    }
     anim_state.x = next_state;
 
-    anim_s.x = (vel.y < -threshold) 
-        ? anim_s.x + 1 
+    motion_state.x = (vel.y < -threshold) 
+        ? motion_state.x + 1 
         : 0;
 
-    anim_s.y = (vel.y > threshold) 
-        ? anim_s.y + 1 
+    motion_state.y = (vel.y > threshold) 
+        ? motion_state.y + 1 
         : 0;
 
-    anim_s.x = anim_s.x > 1000 ? 1000 : anim_s.x;
-    anim_s.y = anim_s.y > 1000 ? 1000 : anim_s.y;
+    motion_state.x = motion_state.x > 1000 ? 1000 : motion_state.x;
+    motion_state.y = motion_state.y > 1000 ? 1000 : motion_state.y;
 
-    armature_animation_states[current_index] = anim_s;
+    armature_motion_states[current_index] = motion_state;
 
 
     arm_flag = is_mv_l != is_mv_r 

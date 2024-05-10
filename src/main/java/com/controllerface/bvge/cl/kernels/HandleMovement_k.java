@@ -8,7 +8,7 @@ public class HandleMovement_k extends GPUKernel
     {
         armatures,
         armature_accel,
-        armature_animation_states,
+        armature_motion_states,
         armature_flags,
         armature_animation_indices,
         armature_animation_elapsed,
