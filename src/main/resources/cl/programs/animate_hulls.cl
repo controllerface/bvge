@@ -119,7 +119,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     float16 rot_matrix = rotation_quaternion_to_matrix(output.rot);
     float16 scl_matrix = scaling_vector_to_matrix(output.scl);
 
-    bool no_blend = true;//animation_index.y == -1; 
+    bool no_blend = animation_index.y == -1; 
         //|| current_blend.y <= 0
         //|| current_blend.x <= 0;
 
