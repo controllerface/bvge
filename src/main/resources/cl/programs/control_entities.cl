@@ -11,6 +11,51 @@
 #define SWIM_UP      10
 #define SWIM_DOWN    11
 
+typedef struct 
+{
+    bool is_mv_l;
+    bool is_mv_r;
+    bool mv_jump;
+    bool can_jump;
+    bool is_wet;
+    int current_budget;
+    short2 motion_state;
+    float2 current_time;
+    int2 anim_index;
+
+} InputState;
+
+typedef struct
+{
+    bool blend;
+    int blend_time;
+    int next_state;
+} OutputState;
+
+OutputState idle_state(InputState input)
+{
+    OutputState output;
+    output.next_state = IDLE;
+
+    if (input.is_mv_l || input.is_mv_r) output.next_state = WALKING;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = JUMP_START;
+    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    
+    if (output.next_state != IDLE)
+    {
+        float t = output.next_state == JUMP_START 
+            ? 0.1f
+            : 0.4f;
+        input.current_time.y = input.current_time.x;
+        input.anim_index.y = input.anim_index.x;
+        //armature_animation_blend[current_index] = (float2)(t, 0.0f);
+        output.blend = true;
+        output.blend_time = t;
+    }
+    return output;
+}
+
 __kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
                                  __global float *linear_mag,
@@ -78,23 +123,42 @@ __kernel void handle_movement(__global float4 *armatures,
         ? b_reset
         : current_budget;
 
+    InputState i;
+        i.is_mv_l = is_mv_l;
+        i.is_mv_r = is_mv_r;
+        i.mv_jump = mv_jump;
+        i.can_jump = can_jump;
+        i.is_wet = is_wet;
+        i.current_budget = current_budget;
+        i.motion_state = motion_state;
+        i.current_time = current_time;
+        i.anim_index = anim_index;
+
     int next_state = anim_index.x;
     switch(anim_index.x)
     {
         case IDLE:
-            if (is_mv_l || is_mv_r) next_state = WALKING;
-            if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
-            if (motion_state.x > 50) next_state = is_wet ? SWIM_DOWN : FALLING_SLOW;
-            if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
-            if (next_state != IDLE)
             {
-                float t = next_state == JUMP_START 
-                    ? 0.1f
-                    : 0.4f;
-                current_time.y = current_time.x;
-                anim_index.y = anim_index.x;
-                armature_animation_blend[current_index] = (float2)(t, 0.0f);
+                OutputState o = idle_state(i);
+                next_state = o.next_state;
+                if (o.blend)
+                {
+                    armature_animation_blend[current_index] = (float2)(o.blend_time, 0.0f);
+                }
             }
+            // if (is_mv_l || is_mv_r) next_state = WALKING;
+            // if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
+            // if (motion_state.x > 50) next_state = is_wet ? SWIM_DOWN : FALLING_SLOW;
+            // if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
+            // if (next_state != IDLE)
+            // {
+            //     float t = next_state == JUMP_START 
+            //         ? 0.1f
+            //         : 0.4f;
+            //     current_time.y = current_time.x;
+            //     anim_index.y = anim_index.x;
+            //     armature_animation_blend[current_index] = (float2)(t, 0.0f);
+            // }
             break;
 
         case WALKING: 
