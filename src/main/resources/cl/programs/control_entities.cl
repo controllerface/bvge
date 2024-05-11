@@ -20,39 +20,225 @@ typedef struct
     bool is_wet;
     int current_budget;
     short2 motion_state;
-    float2 current_time;
-    int2 anim_index;
-
+    float current_time;
+    int anim_index;
+    float jump_mag;
 } InputState;
 
 typedef struct
 {
     bool blend;
-    int blend_time;
+    bool accel;
+    float blend_time;
     int next_state;
+    float next_time;
+    int next_anim_index;
+    int next_budget;
+    float jump_amount;
 } OutputState;
+
+OutputState init_output(int current_state)
+{
+    OutputState o = { false, false, 0.0f, current_state, 0.0f, 0, 0, 0.0f };
+    return o;
+}
 
 OutputState idle_state(InputState input)
 {
     OutputState output;
+    output.blend = false;
     output.next_state = IDLE;
-
     if (input.is_mv_l || input.is_mv_r) output.next_state = WALKING;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = JUMP_START;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    
     if (output.next_state != IDLE)
     {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
         float t = output.next_state == JUMP_START 
             ? 0.1f
             : 0.4f;
-        input.current_time.y = input.current_time.x;
-        input.anim_index.y = input.anim_index.x;
-        //armature_animation_blend[current_index] = (float2)(t, 0.0f);
-        output.blend = true;
         output.blend_time = t;
     }
+    return output;
+}
+
+OutputState walking_state(InputState input)
+{
+    OutputState output;
+    output.blend = false;
+    output.next_state = WALKING;
+    if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = JUMP_START;
+    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    if (output.next_state != WALKING)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        float t = output.next_state == JUMP_START 
+            ? 0.1f
+            : 0.2f;
+        output.blend_time = t;
+    }
+    return output;
+}
+
+OutputState falling_slow_state(InputState input)
+{
+    OutputState output;
+    output.blend = false;
+    output.next_state = FALLING_SLOW;
+    if (input.can_jump) output.next_state = input.motion_state.x > 200 
+        ? LAND_HARD 
+        : LAND_SOFT;
+    if (input.motion_state.x > 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_FAST;
+    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    if (output.next_state != FALLING_SLOW)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        float t = output.next_state == JUMP_START 
+            ? 0.1f
+            : 0.2f;
+        output.blend_time = t;
+    }
+    return output;
+}
+
+OutputState falling_fast_state(InputState input)
+{
+    OutputState output;
+    output.blend = false;
+    output.next_state = FALLING_FAST;
+    if (input.can_jump) output.next_state = input.motion_state.x > 200 
+        ? LAND_HARD 
+        : LAND_SOFT;
+    if (input.is_wet) output.next_state = SWIM_DOWN;
+    if (input.motion_state.x < 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    if (output.next_state != FALLING_FAST)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        float t = output.next_state == JUMP_START 
+            ? 0.1f
+            : 0.2f;
+        output.blend_time = t;
+    }
+    return output;
+}
+
+OutputState jump_start_state(InputState input)
+{
+    OutputState output = init_output(JUMP_START);
+    if (input.current_time > 0.15f) output.next_state = JUMPING;
+    return output;
+}
+
+
+OutputState jumping_state(InputState input)
+{
+    OutputState output = init_output(JUMPING);
+    output.accel = true;
+    output.next_budget = input.current_budget;
+    int tick_slice = input.current_budget > 0 ? 1 : 0;
+    output.next_budget -= tick_slice;
+    output.jump_amount = tick_slice == 1 
+        ? input.mv_jump 
+            ? input.jump_mag 
+            : input.jump_mag / 2
+        : 0;
+    if (tick_slice == 0) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    if (output.next_state != JUMPING)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        output.blend_time = 0.5f;
+    }
+    return output;
+}
+
+OutputState in_air_state(InputState input)
+{
+    OutputState output = init_output(IN_AIR);
+    if (input.can_jump) output.next_state = input.motion_state.x > 200 
+        ? LAND_HARD 
+        : LAND_SOFT;
+    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (output.next_state != IN_AIR)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        float t = output.next_state == LAND_HARD || output.next_state == LAND_SOFT 
+            ? 0.1f
+            : 0.2f;
+        output.blend_time = t;
+    }
+    return output;
+}
+
+
+OutputState swim_up_state(InputState input)
+{
+    OutputState output = init_output(SWIM_UP);
+    if (input.can_jump) output.next_state = input.motion_state.x > 200 
+        ? LAND_HARD 
+        : LAND_SOFT;
+    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (output.next_state != SWIM_UP)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        float t = output.next_state == LAND_HARD || output.next_state == LAND_SOFT 
+            ? 0.1f
+            : 0.2f;
+        output.blend_time = t;
+    }
+    return output;
+}
+
+
+OutputState swim_down_state(InputState input)
+{
+    OutputState output = init_output(SWIM_DOWN);
+    if (input.can_jump) output.next_state = input.motion_state.x > 200 
+        ? LAND_HARD 
+        : LAND_SOFT;
+    if (input.motion_state.x > 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    if (output.next_state != SWIM_DOWN)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        float t = output.next_state == LAND_HARD || output.next_state == LAND_SOFT 
+            ? 0.1f
+            : 0.2f;
+        output.blend_time = t;
+    }
+    return output;
+}
+
+OutputState land_soft_state(InputState input)
+{
+    OutputState output = init_output(LAND_SOFT);
+    if (input.current_time > 0.08f) output.next_state = IDLE;
+    return output;
+}
+
+OutputState land_hard_state(InputState input)
+{
+    OutputState output = init_output(LAND_HARD);
+    if (input.current_time > 0.22f) output.next_state = IDLE;
     return output;
 }
 
@@ -87,225 +273,87 @@ __kernel void handle_movement(__global float4 *armatures,
                               float dt)
 {
     int current_control_set = get_global_id(0);
-    int current_flags = control_flags[current_control_set];
-    int current_budget = tick_budgets[current_control_set];
+
+    int current_flags        = control_flags[current_control_set];
+    int current_budget       = tick_budgets[current_control_set];
     float current_linear_mag = linear_mag[current_control_set];
-    float current_jump_mag = jump_mag[current_control_set];
+    float current_jump_mag   = jump_mag[current_control_set];
+    int current_index        = indices[current_control_set];
+    float4 armature          = armatures[current_index];
+    float2 accel             = armature_accel[current_index];
+    int arm_flag             = armature_flags[current_index];
+    int2 anim_index          = armature_animation_indices[current_index];
+    short2 motion_state      = armature_motion_states[current_index];
+    float2 current_time      = armature_animation_elapsed[current_index];
 
-    int current_index = indices[current_control_set];
-    float4 armature = armatures[current_index];
-    float2 accel = armature_accel[current_index];
-    int arm_flag = armature_flags[current_index];
-    int2 anim_index = armature_animation_indices[current_index];
-
-    bool is_mv_l = (current_flags & LEFT) !=0;
-    bool is_mv_r = (current_flags & RIGHT) !=0;
-    bool is_mv_u = (current_flags & UP) !=0;
-    bool is_mv_d = (current_flags & DOWN) !=0;
-    bool mv_jump = (current_flags & JUMP) !=0;
-
-    float threshold = 10.0f;
-    float2 vel = (armature.xy - armature.zw) / dt;
-
-    // can jump?
-    bool can_jump = (arm_flag & CAN_JUMP) !=0;
-    bool is_wet = (arm_flag & IS_WET) !=0;
-
-    int tick_slice = 0;
-
-    short2 motion_state = armature_motion_states[current_index];
-    
-    float2 current_time = armature_animation_elapsed[current_index];
-
-    int b_reset = is_wet ? 10 : 20;
+    bool is_mv_l  = (current_flags & LEFT)  !=0;
+    bool is_mv_r  = (current_flags & RIGHT) !=0;
+    bool is_mv_u  = (current_flags & UP)    !=0;
+    bool is_mv_d  = (current_flags & DOWN)  !=0;
+    bool mv_jump  = (current_flags & JUMP)  !=0;
+    bool can_jump = (arm_flag & CAN_JUMP)   !=0;
+    bool is_wet   = (arm_flag & IS_WET)     !=0;
 
     current_budget = can_jump && !mv_jump
-        ? b_reset
+        ? is_wet 
+            ? 10 
+            : 20
         : current_budget;
 
-    InputState i;
-        i.is_mv_l = is_mv_l;
-        i.is_mv_r = is_mv_r;
-        i.mv_jump = mv_jump;
-        i.can_jump = can_jump;
-        i.is_wet = is_wet;
-        i.current_budget = current_budget;
-        i.motion_state = motion_state;
-        i.current_time = current_time;
-        i.anim_index = anim_index;
+    InputState input;
+    input.is_mv_l        = is_mv_l;
+    input.is_mv_r        = is_mv_r;
+    input.mv_jump        = mv_jump;
+    input.can_jump       = can_jump;
+    input.is_wet         = is_wet;
+    input.current_budget = current_budget;
+    input.motion_state   = motion_state;
+    input.current_time   = current_time.x;
+    input.anim_index     = anim_index.x;
+    input.jump_mag       = current_jump_mag;
 
     int next_state = anim_index.x;
+    OutputState state_result;
+    state_result.blend = false;
+    bool use_state = false;
+
     switch(anim_index.x)
     {
-        case IDLE:
-            {
-                OutputState o = idle_state(i);
-                next_state = o.next_state;
-                if (o.blend)
-                {
-                    armature_animation_blend[current_index] = (float2)(o.blend_time, 0.0f);
-                }
-            }
-            // if (is_mv_l || is_mv_r) next_state = WALKING;
-            // if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
-            // if (motion_state.x > 50) next_state = is_wet ? SWIM_DOWN : FALLING_SLOW;
-            // if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
-            // if (next_state != IDLE)
-            // {
-            //     float t = next_state == JUMP_START 
-            //         ? 0.1f
-            //         : 0.4f;
-            //     current_time.y = current_time.x;
-            //     anim_index.y = anim_index.x;
-            //     armature_animation_blend[current_index] = (float2)(t, 0.0f);
-            // }
-            break;
-
-        case WALKING: 
-            if (!is_mv_l && !is_mv_r) next_state = IDLE;
-            if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
-            if (motion_state.x > 50) next_state = is_wet ? SWIM_DOWN : FALLING_SLOW;
-            if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
-            if (next_state != WALKING)
-            {
-                float t = next_state == JUMP_START 
-                    ? 0.1f
-                    : 0.2f;
-                current_time.y = current_time.x;
-                anim_index.y = anim_index.x;
-                armature_animation_blend[current_index] = (float2)(t, 0.0f);
-            }
-            break;
-
-        case RUNNING:
-            break;
-
-        case FALLING_SLOW:
-            if (can_jump) next_state = motion_state.x > 200 
-                ? LAND_HARD 
-                : LAND_SOFT;
-            if (motion_state.x > 200) next_state = is_wet ? SWIM_DOWN : FALLING_FAST;
-            if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
-            if (next_state != FALLING_SLOW)
-            {
-                float t = next_state == LAND_HARD || next_state == LAND_SOFT 
-                    ? 0.1f
-                    : 0.2f;
-                current_time.y = current_time.x;
-                anim_index.y = anim_index.x;
-                armature_animation_blend[current_index] = (float2)(t, 0.0f);
-            }
-            break;
-
-        case FALLING_FAST:
-            if (can_jump) next_state = motion_state.x > 200 
-                ? LAND_HARD 
-                : LAND_SOFT;
-            if (is_wet) next_state = SWIM_DOWN;
-            if (motion_state.x < 200) next_state = is_wet ? SWIM_DOWN : FALLING_SLOW;
-            if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
-            if (next_state != FALLING_FAST)
-            {
-                float t = next_state == LAND_HARD || next_state == LAND_SOFT 
-                    ? 0.1f
-                    : 0.2f;
-                current_time.y = current_time.x;
-                anim_index.y = anim_index.x;
-                armature_animation_blend[current_index] = (float2)(t, 0.0f);
-            }
-            break;
-
-        case JUMP_START:
-            if (current_time.x > 0.15f) next_state = JUMPING;
-            break;
-
-        case JUMPING:
-            tick_slice = current_budget > 0 ? 1 : 0;
-            current_budget -= tick_slice;
-            float jump_amount = tick_slice == 1 
-                ? mv_jump 
-                    ? current_jump_mag 
-                    : current_jump_mag / 2
-                : 0;
-            accel.y = jump_amount;
-            if (tick_slice == 0) next_state = is_wet ? SWIM_UP : IN_AIR;
-            if (next_state != JUMPING)
-            {
-                float t = 0.5f;
-                current_time.y = current_time.x;
-                anim_index.y = anim_index.x;
-                armature_animation_blend[current_index] = (float2)(t, 0.0f);
-            }
-            break;
-
-        case IN_AIR:
-            if (can_jump) next_state = motion_state.x > 200 
-                ? LAND_HARD 
-                : LAND_SOFT;
-            if (motion_state.x > 50) next_state = is_wet ? SWIM_DOWN : FALLING_SLOW;
-            if (next_state != IN_AIR)
-            {
-                float t = next_state == LAND_HARD || next_state == LAND_SOFT 
-                    ? 0.1f
-                    : 0.2f;
-                current_time.y = current_time.x;
-                anim_index.y = anim_index.x;
-                armature_animation_blend[current_index] = (float2)(t, 0.0f);
-            }
-            break;
-        
-        case SWIM_UP:
-            if (can_jump) next_state = motion_state.x > 200 
-                ? LAND_HARD 
-                : LAND_SOFT;
-            if (motion_state.x > 50) next_state = is_wet ? SWIM_DOWN : FALLING_SLOW;
-            if (next_state != SWIM_UP)
-            {
-                float t = next_state == LAND_HARD || next_state == LAND_SOFT 
-                    ? 0.1f
-                    : 0.2f;
-                current_time.y = current_time.x;
-                anim_index.y = anim_index.x;
-                armature_animation_blend[current_index] = (float2)(t, 0.0f);
-            }
-            break;
-
-        case SWIM_DOWN:
-            if (can_jump) next_state = motion_state.x > 200 
-                ? LAND_HARD 
-                : LAND_SOFT;
-            if (motion_state.x > 200) next_state = is_wet ? SWIM_DOWN : FALLING_SLOW;
-            if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
-            if (next_state != SWIM_DOWN)
-            {
-                float t = next_state == LAND_HARD || next_state == LAND_SOFT 
-                    ? 0.1f
-                    : 0.2f;
-                current_time.y = current_time.x;
-                anim_index.y = anim_index.x;
-                armature_animation_blend[current_index] = (float2)(t, 0.0f);
-            }
-            break;
-
-        case LAND_SOFT:
-            if (current_time.x > 0.08f) next_state = IDLE;
-            break;
-
-        case LAND_HARD:
-            if (current_time.x > 0.22f) next_state = IDLE;
-            break;
+        case IDLE:         state_result = idle_state(input);         break;
+        case WALKING:      state_result = walking_state(input);      break;
+        case RUNNING:      /* todo: implement running */             break;
+        case FALLING_SLOW: state_result = falling_slow_state(input); break;
+        case FALLING_FAST: state_result = falling_fast_state(input); break;
+        case JUMP_START:   state_result = jump_start_state(input);   break;
+        case JUMPING:      state_result = jumping_state(input);      break;
+        case IN_AIR:       state_result = in_air_state(input);       break;
+        case SWIM_UP:      state_result = swim_up_state(input);      break;
+        case SWIM_DOWN:    state_result = swim_down_state(input);    break;
+        case LAND_SOFT:    state_result = land_soft_state(input);    break;
+        case LAND_HARD:    state_result = land_hard_state(input);    break;
     }
 
+    next_state = state_result.next_state;
+    if (state_result.blend)
+    {
+        armature_animation_blend[current_index] = (float2)(state_result.blend_time, 0.0f);
+        current_time.y = state_result.next_time;
+        anim_index.y = state_result.next_anim_index;
+    }
+    if (state_result.accel)
+    {
+        accel.y = state_result.jump_amount;
+        current_budget = state_result.next_budget;
+    }
     if (anim_index.x != next_state) 
     {
-        // current_time.y = current_time.x;
-        // anim_index.y = anim_index.x;
-        // armature_animation_blend[current_index] = (float2)(0.3, 0.0f);
         current_time.x = 0.0f;
         armature_animation_elapsed[current_index] = current_time;
     }
     anim_index.x = next_state;
 
+    float threshold = 10.0f;
+    float2 vel = (armature.xy - armature.zw) / dt;
     motion_state.x = (vel.y < -threshold) 
         ? motion_state.x + 1 
         : 0;
@@ -318,7 +366,6 @@ __kernel void handle_movement(__global float4 *armatures,
     motion_state.y = motion_state.y > 1000 ? 1000 : motion_state.y;
 
     armature_motion_states[current_index] = motion_state;
-
 
     arm_flag = is_mv_l != is_mv_r 
         ? is_mv_l
