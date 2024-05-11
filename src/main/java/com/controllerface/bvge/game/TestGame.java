@@ -178,7 +178,7 @@ public class TestGame extends GameMode
         }
     }
 
-    private void genFloor(int floor_size, float spacing, float size, float start_x, float start_y, float friction)
+    private void genFloor(int floor_size, float spacing, float size, float start_x, float start_y, float friction, Solid solid)
     {
         System.out.println("generating floor size: " + floor_size);
         for (int i = 0; i < floor_size; i++)
@@ -186,12 +186,12 @@ public class TestGame extends GameMode
             float x = start_x + i * spacing;
             float y = start_y;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, Solid.BASALT);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, solid);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
 
-    private void genWall(int floor_size, float spacing, float size, float start_x, float start_y)
+    private void genWall(int floor_size, float spacing, float size, float start_x, float start_y, Solid solid)
     {
         System.out.println("generating wall size: " + floor_size);
         for (int i = 0; i < floor_size; i++)
@@ -199,7 +199,7 @@ public class TestGame extends GameMode
             float x = start_x;
             float y = start_y + i * spacing;
             //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, Solid.BASALT);
+            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, solid);
             //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
         }
     }
@@ -223,7 +223,7 @@ public class TestGame extends GameMode
         // circle entity
         var figure = ecs.registerEntity("player");
 
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f, 0,0);
         ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
         // todo: determine if a different ID may be used for identifying entities that is not tied to the
@@ -237,21 +237,21 @@ public class TestGame extends GameMode
     private void genTestFigureNPC_2(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0, 0);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestFigureNPC(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f);
+        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0,0);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genBoxModelNPC(float size, float x, float y)
     {
         //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON._int, .1f, 0.02f);
+        var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON._int, .1f, 0.02f, 0,0);
         //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
@@ -327,10 +327,10 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        genWater(100, 15f, 15f, 0, 3000, Liquid.SEAWATER);
-        genBlocks(40,  32f, 32f, -50, 200, Solid.BASALT, Solid.ANDESITE, Solid.MUDSTONE);
-        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.SOAPSTONE);
-        genBlocks(40,  32f, 32f, 2500, 3800, Solid.PUMICE, Solid.OBSIDIAN, Solid.COAL_DEPOSIT);
+        genWater(100, 15f, 15f, 0, 3000, Liquid.ALGAE);
+        genBlocks(40,  32f, 32f, -50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
+        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
+        genBlocks(40,  32f, 32f, 2500, 3800, Solid.QUARTZITE, Solid.QUARTZ_DIORITE, Solid.QUARTZ_MONZONITE);
 
         //genSquaresRando(50,  25f, 25f, 0.8f, 2500, 200);
         //genSquares(1,  25f, 25f, 420, 200);
@@ -342,13 +342,13 @@ public class TestGame extends GameMode
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);
 
-        genFloor(16, 150f, 150f, -70, -100, 0.5f);
-        genFloor(32, 150f, 150f, 1700, -100, 0.5f);
-        genFloor(32, 150f, 150f, 1700, 2200, 0.5f);
+        genFloor(16, 150f, 150f, -70, -100, 0.5f, Solid.ANDESITE);
+        genFloor(32, 150f, 150f, 1700, -100, 0.5f, Solid.ANDESITE);
+        genFloor(32, 150f, 150f, 1700, 2200, 0.5f, Solid.DIORITE);
 
-        genWall(15, 150f, 150f, -220, -100);
-        genWall(5, 150f, 150f, 2000, 1500);
-        genWall(5, 150f, 150f, 4880, -100);
+        genWall(15, 150f, 150f, -220, -100, Solid.ANDESITE);
+        genWall(5, 150f, 150f, 2000, 1500, Solid.DIORITE);
+        genWall(5, 150f, 150f, 4880, -100, Solid.ANDESITE);
 
         loadSystems();
     }

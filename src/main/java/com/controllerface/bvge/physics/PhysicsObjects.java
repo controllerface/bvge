@@ -240,6 +240,8 @@ public class PhysicsObjects
     public static int dynamic_block(float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
     {
         return block(x, y, size * 5, HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
+
+        //return wrap_model(BASE_BLOCK_INDEX, x, y, size, HullFlags.IS_BLOCK._int, mass, friction, restitution, block_material.mineral_number);
     }
 
     public static int static_box(float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
@@ -254,7 +256,7 @@ public class PhysicsObjects
 
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will
     //  probably break/crash.
-    public static int wrap_model(int model_index, float x, float y, float size, int global_hull_flags, float mass, float friction)
+    public static int wrap_model(int model_index, float x, float y, float size, int global_hull_flags, float mass, float friction, float restitution, int uv_offset)
     {
         // we need to know the next armature ID before we create it, so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
@@ -483,9 +485,9 @@ public class PhysicsObjects
                 edge_table,
                 bone_table,
                 friction,
-                0,
+                restitution,
                 next_armature_id,
-                0,
+                uv_offset,
                 flag_bits);
 
             if (first_hull == -1)
