@@ -141,7 +141,6 @@ OutputState jump_start_state(InputState input)
     return output;
 }
 
-
 OutputState jumping_state(InputState input)
 {
     OutputState output = init_output(JUMPING);
@@ -185,7 +184,6 @@ OutputState in_air_state(InputState input)
     return output;
 }
 
-
 OutputState swim_up_state(InputState input)
 {
     OutputState output = init_output(SWIM_UP);
@@ -205,7 +203,6 @@ OutputState swim_up_state(InputState input)
     }
     return output;
 }
-
 
 OutputState swim_down_state(InputState input)
 {
@@ -312,11 +309,7 @@ __kernel void handle_movement(__global float4 *armatures,
     input.anim_index     = anim_index.x;
     input.jump_mag       = current_jump_mag;
 
-    int next_state = anim_index.x;
     OutputState state_result;
-    state_result.blend = false;
-    bool use_state = false;
-
     switch(anim_index.x)
     {
         case IDLE:         state_result = idle_state(input);         break;
@@ -333,7 +326,6 @@ __kernel void handle_movement(__global float4 *armatures,
         case LAND_HARD:    state_result = land_hard_state(input);    break;
     }
 
-    next_state = state_result.next_state;
     if (state_result.blend)
     {
         armature_animation_blend[current_index] = (float2)(state_result.blend_time, 0.0f);
@@ -345,15 +337,17 @@ __kernel void handle_movement(__global float4 *armatures,
         accel.y = state_result.jump_amount;
         current_budget = state_result.next_budget;
     }
-    if (anim_index.x != next_state) 
+    if (anim_index.x != state_result.next_state) 
     {
         current_time.x = 0.0f;
         armature_animation_elapsed[current_index] = current_time;
     }
-    anim_index.x = next_state;
+
+    anim_index.x = state_result.next_state;
 
     float threshold = 10.0f;
     float2 vel = (armature.xy - armature.zw) / dt;
+
     motion_state.x = (vel.y < -threshold) 
         ? motion_state.x + 1 
         : 0;
@@ -362,25 +356,18 @@ __kernel void handle_movement(__global float4 *armatures,
         ? motion_state.y + 1 
         : 0;
 
-    motion_state.x = motion_state.x > 1000 ? 1000 : motion_state.x;
-    motion_state.y = motion_state.y > 1000 ? 1000 : motion_state.y;
+    motion_state.x = motion_state.x > 1000 
+        ? 1000 
+        : motion_state.x;
 
-    armature_motion_states[current_index] = motion_state;
+    motion_state.y = motion_state.y > 1000 
+        ? 1000 
+        : motion_state.y;
 
-    arm_flag = is_mv_l != is_mv_r 
-        ? is_mv_l
-            ? arm_flag | FACE_LEFT 
-            : is_mv_r 
-                ? arm_flag & ~FACE_LEFT 
-                : arm_flag
-        : arm_flag; 
-
-    
     float w_mod = is_wet
         ? 0.5f
         : 1.0f;
 
-    // update left/right movement
     accel.x = is_mv_l && !is_mv_r
         ? -current_linear_mag * w_mod
         : accel.x;
@@ -388,8 +375,6 @@ __kernel void handle_movement(__global float4 *armatures,
     accel.x = is_mv_r && !is_mv_l
         ? current_linear_mag * w_mod
         : accel.x;
-
-    // upward and downward movement is disabled unless in water
 
     accel.y = is_mv_u && is_wet
         ? current_linear_mag * 1.5
@@ -399,6 +384,15 @@ __kernel void handle_movement(__global float4 *armatures,
         ? -current_linear_mag
         : accel.y;
 
+    arm_flag = is_mv_l != is_mv_r 
+        ? is_mv_l
+            ? arm_flag | FACE_LEFT 
+            : is_mv_r 
+                ? arm_flag & ~FACE_LEFT 
+                : arm_flag
+        : arm_flag; 
+
+    armature_motion_states[current_index] = motion_state;
     tick_budgets[current_control_set] = current_budget;
     armature_accel[current_index] = accel;
     armature_flags[current_index] = arm_flag;
