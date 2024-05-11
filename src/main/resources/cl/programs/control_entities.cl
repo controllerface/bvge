@@ -8,6 +8,7 @@
 #define LAND_HARD    7
 #define FALLING_SLOW 8
 #define LAND_SOFT    9
+#define SWIM_UP      10
 
 __kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
@@ -83,7 +84,7 @@ __kernel void handle_movement(__global float4 *armatures,
             if (is_mv_l || is_mv_r) next_state = WALKING;
             if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
             if (motion_state.x > 50) next_state = FALLING_SLOW;
-            if (motion_state.y > 50) next_state = IN_AIR;
+            if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
             if (next_state != IDLE)
             {
                 float t = next_state == JUMP_START 
@@ -99,7 +100,7 @@ __kernel void handle_movement(__global float4 *armatures,
             if (!is_mv_l && !is_mv_r) next_state = IDLE;
             if (can_jump && current_budget > 0 && mv_jump) next_state = JUMP_START;
             if (motion_state.x > 50) next_state = FALLING_SLOW;
-            if (motion_state.y > 50) next_state = IN_AIR;
+            if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
             if (next_state != WALKING)
             {
                 float t = next_state == JUMP_START 
@@ -119,12 +120,12 @@ __kernel void handle_movement(__global float4 *armatures,
                 ? LAND_HARD 
                 : LAND_SOFT;
             if (motion_state.x > 200) next_state = FALLING_FAST;
-            if (motion_state.y > 50) next_state = IN_AIR;
+            if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
             if (next_state != FALLING_SLOW)
             {
                 float t = next_state == LAND_HARD || next_state == LAND_SOFT 
                     ? 0.1f
-                    : 0.5f;
+                    : 0.2f;
                 current_time.y = current_time.x;
                 anim_index.y = anim_index.x;
                 armature_animation_blend[current_index] = (float2)(t, 0.0f);
@@ -136,12 +137,12 @@ __kernel void handle_movement(__global float4 *armatures,
                 ? LAND_HARD 
                 : LAND_SOFT;
             if (motion_state.x < 200) next_state = FALLING_SLOW;
-            if (motion_state.y > 50) next_state = IN_AIR;
+            if (motion_state.y > 50) next_state = is_wet ? SWIM_UP : IN_AIR;
             if (next_state != FALLING_FAST)
             {
                 float t = next_state == LAND_HARD || next_state == LAND_SOFT 
                     ? 0.1f
-                    : 0.5f;
+                    : 0.2f;
                 current_time.y = current_time.x;
                 anim_index.y = anim_index.x;
                 armature_animation_blend[current_index] = (float2)(t, 0.0f);
@@ -161,7 +162,7 @@ __kernel void handle_movement(__global float4 *armatures,
                     : current_jump_mag / 2
                 : 0;
             accel.y = jump_amount;
-            if (tick_slice == 0) next_state = IN_AIR;
+            if (tick_slice == 0) next_state = is_wet ? SWIM_UP : IN_AIR;
             if (next_state != JUMPING)
             {
                 float t = 0.5f;
@@ -180,7 +181,23 @@ __kernel void handle_movement(__global float4 *armatures,
             {
                 float t = next_state == LAND_HARD || next_state == LAND_SOFT 
                     ? 0.1f
-                    : 0.5f;
+                    : 0.2f;
+                current_time.y = current_time.x;
+                anim_index.y = anim_index.x;
+                armature_animation_blend[current_index] = (float2)(t, 0.0f);
+            }
+            break;
+        
+        case SWIM_UP:
+            if (can_jump) next_state = motion_state.x > 200 
+                ? LAND_HARD 
+                : LAND_SOFT;
+            if (motion_state.x > 50) next_state = FALLING_SLOW;
+            if (next_state != SWIM_UP)
+            {
+                float t = next_state == LAND_HARD || next_state == LAND_SOFT 
+                    ? 0.1f
+                    : 0.2f;
                 current_time.y = current_time.x;
                 anim_index.y = anim_index.x;
                 armature_animation_blend[current_index] = (float2)(t, 0.0f);
@@ -194,7 +211,6 @@ __kernel void handle_movement(__global float4 *armatures,
         case LAND_HARD:
             if (current_time.x > 0.22f) next_state = IDLE;
             break;
-
     }
 
     if (anim_index.x != next_state) 

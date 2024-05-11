@@ -105,11 +105,6 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
 {
     if (animation_index.x < 0) return bone_bind_poses[bone_id];
 
-    // TODO: if present in animation_index.y, a secondary animation should be loaded
-    //  and interpolated between based on a scaling value. Essentially, all of what is
-    //  done below must happen for both animations, and then the resulting values must 
-    //  be interpolated between anbimations based on the scaling factor
-
     TransformBuffer current_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,

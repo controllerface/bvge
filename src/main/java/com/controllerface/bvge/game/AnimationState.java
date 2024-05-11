@@ -12,5 +12,6 @@ public enum AnimationState
     LAND_HARD,
     FALLING_SLOW,
     LAND_SOFT,
+    SWIM_UP,
     UNKNOWN,
 }

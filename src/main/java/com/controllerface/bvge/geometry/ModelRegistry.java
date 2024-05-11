@@ -670,6 +670,10 @@ public class ModelRegistry
         {
             return AnimationState.LAND_SOFT;
         }
+        else if (animation_name.contains("swim_up"))
+        {
+            return AnimationState.SWIM_UP;
+        }
         else return AnimationState.UNKNOWN;
     }
 

@@ -327,7 +327,7 @@ public class TestGame extends GameMode
 
         //genCircles(150, 6f, 5f, 0, 100);
 
-        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
+        genWater(100, 15f, 15f, 0, 3000, Liquid.SEAWATER);
         genBlocks(40,  32f, 32f, -50, 200, Solid.BASALT, Solid.ANDESITE, Solid.MUDSTONE);
         genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.SOAPSTONE);
         genBlocks(40,  32f, 32f, 2500, 3800, Solid.PUMICE, Solid.OBSIDIAN, Solid.COAL_DEPOSIT);
