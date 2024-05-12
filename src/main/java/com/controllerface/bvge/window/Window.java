@@ -235,6 +235,7 @@ public class Window
 
         // set current cursor
         glfwSetCursor(glfwWindow, cursor_id);
+        glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 
         var int_buffer = MemoryUtil.memAllocInt(1);

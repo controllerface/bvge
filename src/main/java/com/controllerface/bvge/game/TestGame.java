@@ -307,6 +307,8 @@ public class TestGame extends GameMode
         {
             ecs.registerSystem(new ArmatureRenderer(ecs));
         }
+
+        ecs.registerSystem(new MouseRenderer(ecs));
     }
 
     @Override

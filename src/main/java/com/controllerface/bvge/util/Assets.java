@@ -23,7 +23,9 @@ public class Assets
         else
         {
             Shader shader;
-            if (resourceName.contains("circle_shader") || resourceName.contains("water_shader"))
+            if (resourceName.contains("circle_shader")
+                || resourceName.contains("water_shader")
+                || resourceName.contains("mouse_shader"))
             {
                 shader = new ThreeStageShader(resourceName);
             }

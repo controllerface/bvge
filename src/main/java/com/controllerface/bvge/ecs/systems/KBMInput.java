@@ -39,6 +39,12 @@ public class KBMInput extends GameSystem
             controlPoints.set_rot_right(key_down[GLFW_KEY_E]);
             controlPoints.set_rotating_Left(key_down[GLFW_KEY_Q]);
             controlPoints.set_space_bar(key_down[GLFW_KEY_SPACE]);
+            controlPoints.set_primary(mouseButtonsPressed[GLFW_MOUSE_BUTTON_1]);
+            controlPoints.set_secondary(mouseButtonsPressed[GLFW_MOUSE_BUTTON_2]);
+            controlPoints.set_middle(mouseButtonsPressed[GLFW_MOUSE_BUTTON_3]);
+            controlPoints.set_back(mouseButtonsPressed[GLFW_MOUSE_BUTTON_4]);
+            controlPoints.set_forward(mouseButtonsPressed[GLFW_MOUSE_BUTTON_5]);
+            controlPoints.get_target().set(xPos, yPos);
         }
 
         // test camera moving code
@@ -110,7 +116,6 @@ public class KBMInput extends GameSystem
 
     public void mouseButtonCallback(long window, int button, int action, int mods)
     {
-        //System.out.println(button);
         if (action == GLFW_PRESS)
         {
             mouseButtonsDown++;

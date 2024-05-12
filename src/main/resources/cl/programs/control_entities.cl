@@ -284,6 +284,10 @@ __kernel void handle_movement(__global float4 *armatures,
     bool can_jump = (arm_flag & CAN_JUMP)   !=0;
     bool is_wet   = (arm_flag & IS_WET)     !=0;
 
+    float move_mod = is_wet 
+        ? 0.5f 
+        : 1.0f;
+
     current_budget = can_jump && !mv_jump
         ? is_wet 
             ? 10 
@@ -319,6 +323,11 @@ __kernel void handle_movement(__global float4 *armatures,
         case LAND_HARD:    state_result = land_hard_state(input);    break;
     }
 
+    bool new_state = anim_index.x != state_result.next_state;
+    float threshold = 10.0f;
+    float2 vel = (armature.xy - armature.zw) / dt;
+    
+    anim_index.x = state_result.next_state;
 
     current_time.y = state_result.blend 
         ? state_result.next_time 
@@ -332,27 +341,17 @@ __kernel void handle_movement(__global float4 *armatures,
         ? (float2)(state_result.blend_time, 0.0f)
         : current_blend;
 
-    //if (state_result.blend)
-    //{
-        //armature_animation_blend[current_index] = (float2)(state_result.blend_time, 0.0f);
-        //current_time.y = state_result.next_time;
-        //anim_index.y = state_result.next_anim_index;
-    //}
-    if (state_result.accel)
-    {
-        accel.y = state_result.jump_amount;
-        current_budget = state_result.next_budget;
-    }
-    if (anim_index.x != state_result.next_state) 
-    {
-        current_time.x = 0.0f;
-        armature_animation_elapsed[current_index] = current_time;
-    }
+    accel.y = state_result.accel 
+        ? state_result.jump_amount 
+        : accel.y;
 
-    anim_index.x = state_result.next_state;
+    current_budget = state_result.accel 
+        ? state_result.next_budget
+        : current_budget;
 
-    float threshold = 10.0f;
-    float2 vel = (armature.xy - armature.zw) / dt;
+    current_time.x = new_state 
+        ? 0.0f 
+        : current_time.x;
 
     motion_state.x = (vel.y < -threshold) 
         ? motion_state.x + 1 
@@ -370,16 +369,12 @@ __kernel void handle_movement(__global float4 *armatures,
         ? 1000 
         : motion_state.y;
 
-    float w_mod = is_wet
-        ? 0.5f
-        : 1.0f;
-
     accel.x = is_mv_l && !is_mv_r
-        ? -current_linear_mag * w_mod
+        ? -current_linear_mag * move_mod
         : accel.x;
 
     accel.x = is_mv_r && !is_mv_l
-        ? current_linear_mag * w_mod
+        ? current_linear_mag * move_mod
         : accel.x;
 
     accel.y = is_mv_u && is_wet
@@ -398,6 +393,7 @@ __kernel void handle_movement(__global float4 *armatures,
                 : arm_flag
         : arm_flag; 
 
+    armature_animation_elapsed[current_index] = current_time;
     armature_animation_blend[current_index] = current_blend;
     armature_motion_states[current_index] = motion_state;
     tick_budgets[current_control_set] = current_budget;
