@@ -164,11 +164,11 @@ inline void polygon_circle_collision(int polygon_id,
 
     vert_magnitude = any_static 
         ? static_vert ? 0.0f : 1.0f
-        : 2.0f;
+        : 1.0;
 
     edge_magnitude = any_static 
         ? static_edge ? 0.0f : 1.0f
-        : 0.0f;
+        : edge_magnitude;
 
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];
@@ -182,29 +182,29 @@ inline void polygon_circle_collision(int polygon_id,
     float2 vertex_collision = collision_vector * vert_magnitude;
 
     // friction
-    // float2 vertex_diff = vertex_point.xy - vertex_point.zw;
+    float2 vertex_diff = vertex_point.xy - vertex_point.zw;
     // float2 edge_1_diff = edge_point_1.xy - edge_point_1.zw;
     // float2 edge_2_diff = edge_point_2.xy - edge_point_2.zw;
-    // float2 vertex_velocity = native_divide(vertex_diff, dt);
+    float2 vertex_velocity = native_divide(vertex_diff, dt);
     // float2 edge_1_velocity = native_divide(edge_1_diff, dt);
     // float2 edge_2_velocity = native_divide(edge_2_diff, dt);
-    // float2 vertex_rel_vel = vertex_velocity - collision_vector;
+    float2 vertex_rel_vel = vertex_velocity - collision_vector;
     // float2 edge_1_rel_vel = edge_1_velocity - collision_vector;
     // float2 edge_2_rel_vel = edge_2_velocity - collision_vector;
 
-    // float friction_coefficient = any_static 
-    //     ? static_vert 
-    //         ? vert_hull_friction 
-    //         : edge_hull_friction
-    //     : max(vert_hull_friction, edge_hull_friction);
+    float friction_coefficient = any_static 
+        ? static_vert 
+            ? vert_hull_friction 
+            : edge_hull_friction
+        : max(vert_hull_friction, edge_hull_friction);
 
-    // float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
+    float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
     // float2 edge_1_tangent = edge_1_rel_vel - dot(edge_1_rel_vel, collision_normal) * collision_normal;
     // float2 edge_2_tangent = edge_2_rel_vel - dot(edge_2_rel_vel, collision_normal) * collision_normal;
-    // vertex_tangent = fast_normalize(vertex_tangent);
+    vertex_tangent = fast_normalize(vertex_tangent);
     // edge_1_tangent = fast_normalize(edge_1_tangent);
     // edge_2_tangent = fast_normalize(edge_2_tangent);
-    // float2 vertex_friction = (-friction_coefficient * vertex_tangent) * vert_magnitude;
+    float2 vertex_friction = (-friction_coefficient * vertex_tangent) * vert_magnitude;
     // float2 edge_1_friction = (-friction_coefficient * edge_1_tangent) * edge_magnitude;
     // float2 edge_2_friction = (-friction_coefficient * edge_2_tangent) * edge_magnitude;
 
@@ -219,13 +219,13 @@ inline void polygon_circle_collision(int polygon_id,
     // float2 edge_1_applied_vel = native_divide(edge_1_applied_diff, dt);
     // float2 edge_2_applied_vel = native_divide(edge_2_applied_diff, dt);
 
-    float restituion_coefficient = 0.00003f;
+    //float restituion_coefficient = 0.00003f;
 
-    // float restituion_coefficient = any_static 
-    //     ? static_vert 
-    //         ? vert_hull_restitution 
-    //         : edge_hull_restitution
-    //     : max(vert_hull_restitution, edge_hull_restitution);
+    float restituion_coefficient = any_static 
+        ? static_vert 
+            ? vert_hull_restitution 
+            : edge_hull_restitution
+        : max(vert_hull_restitution, edge_hull_restitution);
 
     // float2 collision_invert = collision_normal * -1;
     float2 vertex_restitution = restituion_coefficient * dot(vertex_applied_vel, collision_normal) * collision_normal;
@@ -235,7 +235,7 @@ inline void polygon_circle_collision(int polygon_id,
     if (!static_vert)
     {
         int point_index = atomic_inc(&counter[0]);
-        float8 vertex_reactions = (float8)(vertex_collision, vert_hull_opposing, (float2)(0.0f, 0.0f), vertex_restitution);
+        float8 vertex_reactions = (float8)(vertex_collision, vert_hull_opposing, vertex_friction, vertex_restitution);
         reactions[point_index] = vertex_reactions;
         reaction_index[point_index] = vert_index;
         atomic_inc(&reaction_counts[vert_index]);
@@ -244,8 +244,8 @@ inline void polygon_circle_collision(int polygon_id,
     // {
     //     int edge_1_reaction_index = atomic_inc(&counter[0]);
     //     int edge_2_reaction_index = atomic_inc(&counter[0]);
-    //     float8 edge_1_reactions = (float8)(edge_1_collision, edge_hull_opposing, (float2)(0.0f, 0.0f), (float2)(0.0f, 0.0f));
-    //     float8 edge_2_reactions = (float8)(edge_2_collision, edge_hull_opposing, (float2)(0.0f, 0.0f), (float2)(0.0f, 0.0f));
+    //     float8 edge_1_reactions = (float8)(edge_1_collision, edge_hull_opposing, edge_1_friction, edge_1_restitution);
+    //     float8 edge_2_reactions = (float8)(edge_2_collision, edge_hull_opposing, edge_2_friction, edge_2_restitution);
     //     reactions[edge_1_reaction_index] = edge_1_reactions;
     //     reactions[edge_2_reaction_index] = edge_2_reactions;
     //     reaction_index[edge_1_reaction_index] = edge_index_a;

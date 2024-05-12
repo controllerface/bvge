@@ -98,7 +98,7 @@ OutputState falling_slow_state(InputState input)
         output.next_anim_index = input.anim_index;
         float t = output.next_state == JUMP_START 
             ? 0.1f
-            : 0.2f;
+            : 0.4f;
         output.blend_time = t;
     }
     return output;
@@ -120,7 +120,7 @@ OutputState falling_fast_state(InputState input)
         output.next_anim_index = input.anim_index;
         float t = output.next_state == JUMP_START 
             ? 0.1f
-            : 0.2f;
+            : 0.4f;
         output.blend_time = t;
     }
     return output;
@@ -289,9 +289,7 @@ __kernel void handle_movement(__global float4 *armatures,
         : 1.0f;
 
     current_budget = can_jump && !mv_jump
-        ? is_wet 
-            ? 10 
-            : 20
+        ? 10 
         : current_budget;
 
     InputState input;
