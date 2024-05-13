@@ -78,25 +78,15 @@ public enum Compound
 
     ;
 
+    private static final int slot_count = 4;
     public final short compound_number;
     public final Element[] elements;
     
     Compound(Element ... elements)
     {
-        Element[] _e = new Element[]
-        {
-            Element.__,
-            Element.__,
-            Element.__,
-            Element.__,
-        };
-
-        if (elements != null)
-        {
-            System.arraycopy(elements, 0, _e, 0, Math.min(4, elements.length));
-        }
-
+        assert elements != null : "Null element list";
+        assert elements.length == slot_count;
         this.compound_number = ( short) this.ordinal();
-        this.elements = _e;
+        this.elements = elements;
     }
 }

@@ -1208,6 +1208,8 @@ public class PhysicsSimulation extends GameSystem
             }
         }
 
+        // TODO: read back mouse colliding objects here
+
         // zero out the acceleration buffer, so it is empty for the next frame
         GPGPU.core_memory.buffer(BufferType.ARMATURE_ACCEL).clear();
 
