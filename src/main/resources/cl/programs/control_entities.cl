@@ -98,7 +98,7 @@ OutputState falling_slow_state(InputState input)
         output.next_anim_index = input.anim_index;
         float t = output.next_state == JUMP_START 
             ? 0.1f
-            : 0.4f;
+            : 0.2f;
         output.blend_time = t;
     }
     return output;
@@ -120,7 +120,7 @@ OutputState falling_fast_state(InputState input)
         output.next_anim_index = input.anim_index;
         float t = output.next_state == JUMP_START 
             ? 0.1f
-            : 0.4f;
+            : 0.2f;
         output.blend_time = t;
     }
     return output;

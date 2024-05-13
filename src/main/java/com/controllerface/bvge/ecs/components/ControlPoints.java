@@ -25,7 +25,8 @@ public class ControlPoints implements GameComponent
     private boolean space_bar = false;
 
     // target position
-    private Vector2f target = new Vector2f();
+    private Vector2f screen_target = new Vector2f();
+    private Vector2f world_target = new Vector2f();
 
     public boolean is_disabled()
     {
@@ -157,8 +158,13 @@ public class ControlPoints implements GameComponent
         this.forward = forward;
     }
 
-    public Vector2f get_target()
+    public Vector2f get_screen_target()
     {
-        return target;
+        return screen_target;
+    }
+
+    public Vector2f get_world_target()
+    {
+        return world_target;
     }
 }

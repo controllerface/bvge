@@ -73,22 +73,6 @@ public class TestGame extends GameMode
         return random.nextInt(min, max);
     }
 
-    private void genSquaresRando(int box_size, float spacing, float size, float percentage, float start_x, float start_y)
-    {
-        System.out.println("generating: " + box_size * box_size + " Crates..");
-        for (int i = 0; i < box_size; i++)
-        {
-            for (int j = 0; j < box_size; j++)
-            {
-                float x = start_x + i * spacing;
-                float y = start_y + j * spacing;
-                //var npc = ecs.registerEntity(null);
-
-                var armature_index = PhysicsObjects.dynamic_block(x, y, rando_float(size, percentage), 50f, 0.02f, 0.0003f, Solid.ANDESITE);
-                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-            }
-        }
-    }
 
 //    private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid block_mineral)
 //    {
@@ -107,7 +91,6 @@ public class TestGame extends GameMode
 //    }
 
 
-
     private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
     {
         System.out.println("generating: " + box_size * box_size + " Blocks..");
@@ -119,6 +102,21 @@ public class TestGame extends GameMode
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
                 PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+            }
+        }
+    }
+
+    private void genSquaresRando(int box_size, float spacing, float size, float percentage, float start_x, float start_y, Solid ... minerals)
+    {
+        System.out.println("generating: " + box_size * box_size + " Blocks..");
+        for (int i = 0; i < box_size; i++)
+        {
+            for (int j = 0; j < box_size; j++)
+            {
+                float x = start_x + i * spacing;
+                float y = start_y + j * spacing;
+                int rx = rando_int(0, minerals.length);
+                PhysicsObjects.dynamic_block(x, y, rando_float(size, percentage), 90f, 0.03f, 0.0003f, minerals[rx]);
             }
         }
     }
@@ -147,7 +145,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.tri(x, y, size, 0, 50f, 0.02f, 0.0003f);
+                var armature_index = PhysicsObjects.tri(x, y, size, 0, 1f, 0.02f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -330,7 +328,7 @@ public class TestGame extends GameMode
         //genCircles(150, 6f, 5f, 0, 100);
 
         genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
-        genBlocks(40,  32f, 32f, -50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
+        genSquaresRando(40,  32f, 32f, 0.8f,-50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
         genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
         //genBlocks(40,  32f, 32f, 2500, 3800, Solid.QUARTZITE, Solid.QUARTZ_DIORITE, Solid.QUARTZ_MONZONITE);
 

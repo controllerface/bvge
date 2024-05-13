@@ -1,26 +1,20 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
-import com.controllerface.bvge.cl.kernels.PrepareTransforms_k;
-import com.controllerface.bvge.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.util.Assets;
-import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
 import java.util.Map;
+import java.util.Objects;
 
-import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_5;
 import static org.lwjgl.opengl.ARBDirectStateAccess.glCreateVertexArrays;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.*;
@@ -62,28 +56,24 @@ public class MouseRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        var controllables = ecs.getComponents(Component.ControlPoints);
-        ControlPoints ctrl_pts = null;
-        for (Map.Entry<String, GameComponent> entry : controllables.entrySet())
+        var control_components = ecs.getComponents(Component.ControlPoints);
+        ControlPoints control_points = null;
+        for (Map.Entry<String, GameComponent> entry : control_components.entrySet())
         {
             GameComponent component = entry.getValue();
-            ControlPoints controlPoints = Component.ControlPoints.coerce(component);
-            if (controlPoints.is_disabled()) continue;
-            ctrl_pts = controlPoints;
+            control_points = Component.ControlPoints.coerce(component);
         }
 
-        assert ctrl_pts != null : "Component was null";
-        assert !ctrl_pts.is_disabled() : "Component was disabled";
+        assert control_points != null : "Component was null";
+        Objects.requireNonNull(control_points);
 
         var camera = Window.get().camera();
-
-        float xx = ctrl_pts.get_target().x * camera.get_zoom() + camera.position.x;
-        float yy = (Window.get().height() - ctrl_pts.get_target().y) * camera.get_zoom() + camera.position.y;
-
-        float[] loc = { xx, yy, 25.0f, 25.0f };
+        float world_x = control_points.get_screen_target().x * camera.get_zoom() + camera.position.x;
+        float world_y = (Window.get().height() - control_points.get_screen_target().y) * camera.get_zoom() + camera.position.y;
+        control_points.get_world_target().set(world_x, world_y);
+        float[] loc = { world_x, world_y, 25.0f, 25.0f };
 
         glNamedBufferData(vbo, loc, GL_DYNAMIC_DRAW);
-
         glBindVertexArray(vao);
 
         shader.use();

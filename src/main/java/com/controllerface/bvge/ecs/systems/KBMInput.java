@@ -6,7 +6,6 @@ import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.window.Window;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -44,7 +43,7 @@ public class KBMInput extends GameSystem
             controlPoints.set_middle(mouseButtonsPressed[GLFW_MOUSE_BUTTON_3]);
             controlPoints.set_back(mouseButtonsPressed[GLFW_MOUSE_BUTTON_4]);
             controlPoints.set_forward(mouseButtonsPressed[GLFW_MOUSE_BUTTON_5]);
-            controlPoints.get_target().set(xPos, yPos);
+            controlPoints.get_screen_target().set(xPos, yPos);
         }
 
         // test camera moving code

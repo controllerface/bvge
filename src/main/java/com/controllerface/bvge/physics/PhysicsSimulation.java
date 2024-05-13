@@ -8,6 +8,7 @@ import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.util.Constants;
+import com.controllerface.bvge.window.Window;
 
 import java.util.Map;
 import java.util.Objects;
@@ -917,6 +918,38 @@ public class PhysicsSimulation extends GameSystem
 
         handle_movement_k.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)
             .call(arg_long(target_count));
+    }
+
+    private void update_controllable_entities2()
+    {
+        // todo: index and magnitudes only need to be set once, but may need some
+        //  checks or logic to ensure characters don't get deleted
+        var components = ecs.getComponents(Component.ControlPoints);
+
+        control_point_flags.ensure_capacity(components.size());
+        control_point_indices.ensure_capacity(components.size());
+        control_point_tick_budgets.ensure_capacity(components.size());
+        control_point_linear_mag.ensure_capacity(components.size());
+        control_point_jump_mag.ensure_capacity(components.size());
+
+        int target_count = 0;
+        for (Map.Entry<String, GameComponent> entry : components.entrySet())
+        {
+            String entity = entry.getKey();
+            GameComponent component = entry.getValue();
+            ControlPoints controlPoints = Component.ControlPoints.coerce(component);
+            ArmatureIndex armature = Component.Armature.forEntity(ecs, entity);
+            LinearForce force = Component.LinearForce.forEntity(ecs, entity);
+
+            Objects.requireNonNull(controlPoints);
+            Objects.requireNonNull(armature);
+            Objects.requireNonNull(force);
+
+            var camera = Window.get().camera();
+            float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position.x;
+            float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position.y;
+            controlPoints.get_world_target().set(world_x, world_y);
+        }
     }
 
     /**
