@@ -265,6 +265,17 @@ __kernel void update_accel(__global float2 *armature_accel,
     armature_accel[target] = accel;
 }
 
+__kernel void update_mouse_position(__global int *armature_root_hulls,
+                                    __global int2 *hull_point_tables,
+                                    __global float4 *points,
+                                    int target,
+                                    float2 new_value)
+{
+    int h = armature_root_hulls[target];
+    int2 t = hull_point_tables[h];
+    points[t.x].xy = new_value;
+}
+
 // todo: implement for armature
 __kernel void rotate_hull(__global float4 *hulls,
                           __global int4 *element_tables,

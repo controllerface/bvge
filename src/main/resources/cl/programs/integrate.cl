@@ -64,6 +64,7 @@ __kernel void integrate(__global float2 *hulls,
     int start = point_table.x;
     int end   = point_table.y;
 
+    bool is_cursor = (hull_1_flags & IS_CURSOR) !=0;
     bool is_static = (hull_1_flags & IS_STATIC) !=0;
     bool is_circle = (hull_1_flags & IS_CIRCLE) !=0;
     bool no_bones = (hull_1_flags & NO_BONES) !=0;
@@ -78,6 +79,7 @@ __kernel void integrate(__global float2 *hulls,
     hull_1_flags &= ~IN_PERIMETER;
     hull_1_flags &= ~IN_LIQUID;
     hull_1_flags &= ~TOUCH_ALIKE;
+    hull_1_flags &= ~CURSOR_OVER;
 
     gravity = in_liquid
         ? gravity * 1.5f
@@ -150,7 +152,7 @@ __kernel void integrate(__global float2 *hulls,
         // prv.y = s_y ? pos.y - sign_y * y_threshold : prv.y;
 
 
-        if (!is_static && !out_of_bounds)
+        if (!is_static && !out_of_bounds && !is_cursor)
         {
             int _point_flags = point_flags[i];
             bool flow_left = (_point_flags & FLOW_LEFT) != 0;
@@ -299,7 +301,7 @@ __kernel void integrate(__global float2 *hulls,
     else
     {
         bounds_bank.y = 0;
-        if (!is_static)
+        if (!is_static && !is_cursor)
         {
             hull_1_flags |= OUT_OF_BOUNDS;
         }

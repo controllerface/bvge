@@ -44,6 +44,28 @@ inline void circle_collision(int hull_1_id,
     float hull_1_mass = masses[hull_1_armature_id];
     float hull_2_mass = masses[hull_2_armature_id];
 
+    bool cursor_1 = (hull_1_flags & IS_CURSOR) !=0;
+    bool cursor_2 = (hull_2_flags & IS_CURSOR) !=0;
+    bool any_cursor = (cursor_1 || cursor_2);
+    if (any_cursor)
+    {
+        if (cursor_1)
+        {
+            hull_2_flags |= CURSOR_OVER;            
+            hull_flags[hull_2_id] = hull_2_flags;
+        }
+        else
+        {
+            hull_1_flags |= CURSOR_OVER;            
+            hull_flags[hull_1_id] = hull_1_flags;
+        }
+        return;
+    }
+
+    // todo: this should be conditional on liquid type
+    hull_1_flags |= TOUCH_ALIKE;
+    hull_2_flags |= TOUCH_ALIKE;
+
     // collision reaction and opposing direction calculation
     float2 hull_1_opposing = hull_2.xy - hull_1.xy;
     float2 hull_2_opposing = hull_1.xy - hull_2.xy;
@@ -83,21 +105,6 @@ inline void circle_collision(int hull_1_id,
     float2 collision_invert = collision_normal * -1;
     float2 hull_1_restitution_f = restituion_coefficient * dot(hull_1_applied_vel, collision_normal) * collision_normal;
     float2 hull_2_restitution_f = restituion_coefficient * dot(hull_2_applied_vel, collision_invert) * collision_invert;
-        
-    // int _point_flags = point_flags[hull_1_id];
-    // bool flow_left = hull_1_opposing.x >= 0;//(_point_flags & FLOW_LEFT) != 0;
-    // _point_flags = flow_left
-    //     ? _point_flags | FLOW_LEFT
-    //     : _point_flags & ~FLOW_LEFT;
-
-    // int _point_flags2 = point_flags[hull_2_id];
-    // bool flow_left2 = hull_2_opposing.x >= 0;//(_point_flags2 & FLOW_LEFT) != 0;
-    // _point_flags2 = flow_left2
-    //     ? _point_flags2 | FLOW_LEFT
-    //     : _point_flags2 & ~FLOW_LEFT;
-
-    // point_flags[hull_1_id] = _point_flags;
-    // point_flags[hull_2_id] = _point_flags2;
 
     // store results
     float8 hull_1_reactions = (float8)(hull_1_collision, hull_1_opposing, hull_1_friction_f, hull_1_restitution_f);
@@ -110,8 +117,6 @@ inline void circle_collision(int hull_1_id,
     reaction_index[hull_2_reaction_index] = hull_2_table.x;
     atomic_inc(&reaction_counts[hull_1_table.x]);
     atomic_inc(&reaction_counts[hull_2_table.x]);
-    hull_1_flags |= TOUCH_ALIKE;
-    hull_2_flags |= TOUCH_ALIKE;
     hull_flags[hull_1_id] = hull_1_flags;
     hull_flags[hull_2_id] = hull_2_flags;
 }

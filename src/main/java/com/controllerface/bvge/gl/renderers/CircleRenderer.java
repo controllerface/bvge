@@ -35,6 +35,7 @@ public class CircleRenderer extends GameSystem
     private long vbo_ptr;
 
     private HullIndexData circle_hulls;
+    private HullIndexData cursor_hulls;
 
     private Shader shader;
     private GPUKernel prepare_transforms_k;
@@ -75,9 +76,15 @@ public class CircleRenderer extends GameSystem
         {
             GPGPU.cl_release_buffer(circle_hulls.indices());
         }
-        circle_hulls = GPGPU.GL_hull_filter(GPGPU.cl_cmd_queue_ptr, ModelRegistry.CIRCLE_PARTICLE); // todo: factor out
+        if (cursor_hulls != null && cursor_hulls.indices() != -1)
+        {
+            GPGPU.cl_release_buffer(cursor_hulls.indices());
+        }
 
-        if (circle_hulls.count() == 0) return;
+        circle_hulls = GPGPU.GL_hull_filter(GPGPU.cl_cmd_queue_ptr, ModelRegistry.CIRCLE_PARTICLE); // todo: factor out
+        cursor_hulls = GPGPU.GL_hull_filter(GPGPU.cl_cmd_queue_ptr, ModelRegistry.CURSOR);
+
+        if (circle_hulls.count() == 0 && cursor_hulls.count() == 0) return;
 
         glBindVertexArray(vao);
 
@@ -92,6 +99,21 @@ public class CircleRenderer extends GameSystem
             prepare_transforms_k
                 .share_mem(vbo_ptr)
                 .ptr_arg(PrepareTransforms_k.Args.indices, circle_hulls.indices())
+                .set_arg(PrepareTransforms_k.Args.offset, offset)
+                .call(arg_long(count));
+
+            glDrawArrays(GL_POINTS, 0, count);
+            offset += count;
+        }
+
+        offset = 0;
+        for (int remaining = cursor_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        {
+            int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
+
+            prepare_transforms_k
+                .share_mem(vbo_ptr)
+                .ptr_arg(PrepareTransforms_k.Args.indices, cursor_hulls.indices())
                 .set_arg(PrepareTransforms_k.Args.offset, offset)
                 .call(arg_long(count));
 

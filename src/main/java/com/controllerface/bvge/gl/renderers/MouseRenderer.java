@@ -2,6 +2,7 @@ package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.components.ArmatureIndex;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.components.GameComponent;
@@ -71,7 +72,7 @@ public class MouseRenderer extends GameSystem
         float world_x = control_points.get_screen_target().x * camera.get_zoom() + camera.position.x;
         float world_y = (Window.get().height() - control_points.get_screen_target().y) * camera.get_zoom() + camera.position.y;
         control_points.get_world_target().set(world_x, world_y);
-        float[] loc = { world_x, world_y, 25.0f, 25.0f };
+        float[] loc = { world_x, world_y, 20.0f, 20.0f };
 
         glNamedBufferData(vbo, loc, GL_DYNAMIC_DRAW);
         glBindVertexArray(vao);

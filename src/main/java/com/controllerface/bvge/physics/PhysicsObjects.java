@@ -37,13 +37,13 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int particle(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid)
+    public static int particle(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, int model_id, int uv_variant)
     {
         int next_armature_id = GPGPU.core_memory.next_armature();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
-        var mesh = ModelRegistry.get_model_by_index(CIRCLE_PARTICLE).meshes()[0];
+        var mesh = ModelRegistry.get_model_by_index(model_id).meshes()[0];
 
         var vert = mesh.vertices()[0];
 
@@ -77,7 +77,7 @@ public class PhysicsObjects
             friction,
             restitution,
             next_armature_id,
-            particle_fluid.liquid_number,
+            uv_variant,
             hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
 
@@ -88,9 +88,19 @@ public class PhysicsObjects
             -1,
             -1f,
             hull_id,
-            CIRCLE_PARTICLE,
+            model_id,
             0,
             0);
+    }
+
+    public static int liquid_particle(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid)
+    {
+        return particle(x, y, size, mass, friction, restitution, flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number);
+    }
+
+    public static int circle_cursor(float x, float y, float size)
+    {
+        return particle(x, y, size, 0.0f, 0.0f, 0.0f, HullFlags.IS_CURSOR._int, 0, CURSOR, 0);
     }
 
     public static int tri(float x, float y, float size, int flags, float mass, float friction, float restitution)

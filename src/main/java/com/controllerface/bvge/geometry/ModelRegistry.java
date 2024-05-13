@@ -32,6 +32,8 @@ public class ModelRegistry
     public static final int TRIANGLE_PARTICLE = next_model_index.getAndIncrement();
     public static int SQUARE_PARTICLE = next_model_index.getAndIncrement();
 
+    public static int CURSOR = next_model_index.getAndIncrement();
+
     public static int TEST_MODEL_INDEX_2 = -1;
     public static int TEST_MODEL_INDEX = -1;
     public static int TEST_SQUARE_INDEX = -1;
@@ -788,6 +790,8 @@ public class ModelRegistry
 
     public static void init()
     {
+        loaded_models.put(CURSOR, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
+
         loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.TRIANGLE_MESH)));
         loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BOX_MESH)));

@@ -109,6 +109,27 @@ inline void polygon_circle_collision(int polygon_id,
     {
         return;
     }
+    int vert_hull_flags = hull_flags[vert_hull_id];
+    int edge_hull_flags = hull_flags[edge_hull_id];
+    
+    bool cursor_v = (vert_hull_flags & IS_CURSOR) !=0;
+    bool cursor_e = (edge_hull_flags & IS_CURSOR) !=0;
+    bool any_cursor = (cursor_v || cursor_e);
+    if (any_cursor)
+    {
+        if (cursor_v)
+        {
+            edge_hull_flags |= CURSOR_OVER;            
+            hull_flags[edge_hull_id] = edge_hull_flags;
+        }
+        else
+        {
+            vert_hull_flags |= CURSOR_OVER;            
+            hull_flags[vert_hull_id] = vert_hull_flags;
+        }
+        return;
+    }
+
     float abs_distance = fabs(_distance);
 
     if (abs_distance < min_distance)
@@ -138,8 +159,6 @@ inline void polygon_circle_collision(int polygon_id,
     float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
     float2 edge_hull_opposing = (float2)(0.0f, 0.0f); //hull_a.xy - hull_b.xy;
     
-    int vert_hull_flags = hull_flags[vert_hull_id];
-    int edge_hull_flags = hull_flags[edge_hull_id];
 
     bool has_water_particle = (vert_hull_flags & IS_LIQUID) != 0;
     edge_hull_flags = has_water_particle

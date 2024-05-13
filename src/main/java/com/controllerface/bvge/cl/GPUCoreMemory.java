@@ -40,6 +40,7 @@ public class GPUCoreMemory
     private final GPUKernel scan_deletes_single_block_out_k;
     private final GPUKernel set_bone_channel_table_k;
     private final GPUKernel update_accel_k;
+    private final GPUKernel update_mouse_position_k;
 
     // internal buffers
     /**
@@ -709,6 +710,12 @@ public class GPUCoreMemory
         update_accel_k = new UpdateAccel_k(GPGPU.cl_cmd_queue_ptr, update_accel_k_ptr)
             .buf_arg(UpdateAccel_k.Args.armature_accel, armature_accel_buffer);
 
+        long update_mouse_position_k_ptr = gpu_crud.kernel_ptr(Kernel.update_mouse_position);
+        update_mouse_position_k = new UpdateMousePosition_k(GPGPU.cl_cmd_queue_ptr, update_mouse_position_k_ptr)
+            .buf_arg(UpdateMousePosition_k.Args.armature_root_hulls, armature_root_hull_buffer)
+            .buf_arg(UpdateMousePosition_k.Args.hull_point_tables, hull_point_table_buffer)
+            .buf_arg(UpdateMousePosition_k.Args.points, point_buffer);
+
         long set_bone_channel_table_k_ptr = gpu_crud.kernel_ptr(Kernel.set_bone_channel_table);
         set_bone_channel_table_k = new SetBoneChannelTable_k(GPGPU.cl_cmd_queue_ptr, set_bone_channel_table_k_ptr)
             .buf_arg(SetBoneChannelTable_k.Args.bone_channel_tables, bone_anim_channel_table_buffer);
@@ -1338,6 +1345,14 @@ public class GPUCoreMemory
         update_accel_k
             .set_arg(UpdateAccel_k.Args.target, armature_index)
             .set_arg(UpdateAccel_k.Args.new_value, arg_float2(acc_x, acc_y))
+            .call(GPGPU.global_single_size);
+    }
+
+    public void update_position(int armature_index, float x, float y)
+    {
+        update_mouse_position_k
+            .set_arg(UpdateMousePosition_k.Args.target, armature_index)
+            .set_arg(UpdateMousePosition_k.Args.new_value, arg_float2(x, y))
             .call(GPGPU.global_single_size);
     }
 

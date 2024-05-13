@@ -80,6 +80,7 @@ public enum Kernel
     transfer_detail_data,
     transfer_render_data,
     update_accel,
+    update_mouse_position,
     write_mesh_details,
 
     set_control_points,

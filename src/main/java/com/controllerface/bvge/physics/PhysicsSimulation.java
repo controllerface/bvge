@@ -865,6 +865,10 @@ public class PhysicsSimulation extends GameSystem
         //  checks or logic to ensure characters don't get deleted
         var components = ecs.getComponents(Component.ControlPoints);
 
+        var ma = ecs.getComponentFor("mouse", Component.Armature);
+        ArmatureIndex ma_id = Component.Armature.coerce(ma);
+        Objects.requireNonNull(ma_id);
+
         control_point_flags.ensure_capacity(components.size());
         control_point_indices.ensure_capacity(components.size());
         control_point_tick_budgets.ensure_capacity(components.size());
@@ -913,6 +917,15 @@ public class PhysicsSimulation extends GameSystem
                 .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
                 .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
                 .call(GPGPU.global_single_size);
+
+            var camera = Window.get().camera();
+            float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position.x;
+            float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position.y;
+            controlPoints.get_world_target().set(world_x, world_y);
+
+            GPGPU.core_memory.update_position(ma_id.index(), world_x, world_y);
+
+            //System.out.println(STR."setting: \{controlPoints.get_world_target().x} : \{controlPoints.get_world_target().y}");
             target_count++;
         }
 

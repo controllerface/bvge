@@ -36,7 +36,7 @@ public class TestGame extends GameMode
     }
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
-//            RenderType.HULLS,
+            RenderType.HULLS,
 //            RenderType.POINTS,
 //            RenderType.ARMATURES,
 //            RenderType.BOUNDS,
@@ -166,8 +166,8 @@ public class TestGame extends GameMode
                     : 0;
                 flip = !flip;
                 int rx = rando_int(0, liquids.length);
-                var armature_index = PhysicsObjects.particle(x, y, size,
-                    50f, 0.0f, 0.00000f,
+                var armature_index = PhysicsObjects.liquid_particle(x, y, size,
+                    .1f, 0.0f, 0.00000f,
                     HullFlags.IS_LIQUID._int,
                     flags,
                     liquids[rx]);
@@ -230,6 +230,14 @@ public class TestGame extends GameMode
         //  monotonically increasing value could be used, which doesn't change during entity life time
         ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
         ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1600));
+    }
+
+    private void genCursor(float size, float x, float y)
+    {
+        // circle entity
+        var figure = ecs.registerEntity("mouse");
+        var armature_index = PhysicsObjects.circle_cursor(x, y, size);
+        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
     }
 
     private void genTestFigureNPC_2(float size, float x, float y)
@@ -314,7 +322,7 @@ public class TestGame extends GameMode
     {
         // player character
         genTestFigure(1f, 2000, 3200);
-
+        genCursor(20, 2000, 3200);
         //genTestFigureNPC_2(1f, 100, 500);
 
 //        genTestFigureNPC(1f, 200, 0);

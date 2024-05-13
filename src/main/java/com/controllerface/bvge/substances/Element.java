@@ -2,7 +2,7 @@ package com.controllerface.bvge.substances;
 
 public enum Element
 {
-    NOTHING("?"),
+    __("?"),
 
     H("HYDROGEN"),
     He("HELIUM"),
