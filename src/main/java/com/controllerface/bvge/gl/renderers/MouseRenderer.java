@@ -99,7 +99,6 @@ public class MouseRenderer extends GameSystem
         control_points.get_world_target().set(world_x, world_y);
         float[] loc = { world_x, world_y, -1.0f, 10.0f };
 
-        glEnable(GL_DEPTH);
         glBindVertexArray(vao);
 
         shader.use();
@@ -115,7 +114,6 @@ public class MouseRenderer extends GameSystem
         glDrawArrays(GL_POINTS, 0, 2);
 
         glBindVertexArray(0);
-        glDisable(GL_DEPTH);
         shader.detach();
     }
 

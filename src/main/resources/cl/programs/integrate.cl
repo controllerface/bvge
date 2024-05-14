@@ -130,6 +130,18 @@ __kernel void integrate(__global float2 *hulls,
 
     for (int i = start; i <= end; i++)
     {
+
+        // float anti_grav_scale = 0;
+        // //for (int i = start; i <= end; i++)
+        // //{
+        //     float point_scale = anti_gravity[i];
+        //     anti_gravity[i] = 0;
+        //     anti_grav_scale = max(point_scale, anti_grav_scale);
+        // //}
+
+        // float2 anti_grav = generate_counter_vector(gravity, anti_grav_scale);
+        // float2 i_acc = anti_grav * dt_2;
+
         // get this point
         float4 point = points[i];
         

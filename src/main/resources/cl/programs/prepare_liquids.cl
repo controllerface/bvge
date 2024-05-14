@@ -35,6 +35,7 @@ __kernel void prepare_liquids(__global float2 *hull_positions,
 
     c2 *= col;
 
+
     float4 transform_out;
     transform_out.x = position.x; 
     transform_out.y = position.y; 

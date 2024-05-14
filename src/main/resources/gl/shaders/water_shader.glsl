@@ -14,7 +14,7 @@ out VertexData
 void main()
 {
     vec2 pos_offset = aTransform.xy;
-    gl_Position = uVP * vec4(pos_offset, 3.0, 1.0);
+    gl_Position = uVP * vec4(pos_offset, 3.0 + aTransform.z , 1.0);
     vertex_data.transform = aTransform;
     vertex_data.color = v_color;
 }

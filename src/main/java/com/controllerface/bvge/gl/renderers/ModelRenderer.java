@@ -284,7 +284,6 @@ public class ModelRenderer extends GameSystem
 
         glBindVertexArray(vao);
 
-        glEnable(GL_DEPTH_TEST);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
 
         shader.use();
