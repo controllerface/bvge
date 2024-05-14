@@ -36,7 +36,7 @@ public class TestGame extends GameMode
     }
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
-            RenderType.HULLS,
+//            RenderType.HULLS,
 //            RenderType.POINTS,
 //            RenderType.ARMATURES,
 //            RenderType.BOUNDS,
@@ -322,7 +322,7 @@ public class TestGame extends GameMode
     {
         // player character
         genTestFigure(1f, 2000, 3200);
-        genCursor(20, 2000, 3200);
+        genCursor(20, 0, 0);
         //genTestFigureNPC_2(1f, 100, 500);
 
 //        genTestFigureNPC(1f, 200, 0);

@@ -158,7 +158,8 @@ __kernel void integrate(__global float2 *hulls,
             bool flow_left = (_point_flags & FLOW_LEFT) != 0;
             
             int hit_count = point_hit_counts[i];
-            _point_flags = hit_count >= HIT_LOW_MID_THRESHOLD 
+            bool high_density = hit_count >= HIT_LOW_MID_THRESHOLD;
+            _point_flags = high_density 
                 ? _point_flags | HIGH_DENSITY 
                 : _point_flags & ~HIGH_DENSITY;
             point_flags[i] =  _point_flags;
@@ -167,9 +168,9 @@ __kernel void integrate(__global float2 *hulls,
             float2 diff = pos - prv;
 
             float g_x = touch_alike ? 0.01f : 0.01;
-            float g_y = touch_alike ? 0.05f : 0.01;
+            float g_y = touch_alike ? 0.00f : 0.01;
 
-// float2 w_acc = (float2)(0.0f, 0.0f);
+ //float2 w_acc = (float2)(0.0f, 0.0f);
             float2 w_acc = (is_liquid)// & !touch_alike)
                 ? flow_left
                     ? (float2)(-gravity.y * g_x, gravity.y * g_y)

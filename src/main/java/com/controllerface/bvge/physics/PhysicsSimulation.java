@@ -921,7 +921,7 @@ public class PhysicsSimulation extends GameSystem
             var camera = Window.get().camera();
             float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position.x;
             float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position.y;
-            controlPoints.get_world_target().set(world_x, world_y);
+            //controlPoints.get_world_target().set(world_x, world_y);
 
             GPGPU.core_memory.update_position(ma_id.index(), world_x, world_y);
 

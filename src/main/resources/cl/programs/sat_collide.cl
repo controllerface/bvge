@@ -202,23 +202,43 @@ __kernel void apply_reactions(__global float8 *reactions,
     int h_index = point_hull_indices[current_point];
     int h_flags = hull_flags[h_index];
     bool is_static = (h_flags & IS_STATIC) != 0;
+    bool is_liquid = (h_flags & IS_LIQUID) != 0;
 
     // exit on non-reactive points
     if (reaction_count == 0) 
     {
         if (!is_static)
         {
-            hit_count = hit_count == 0 
-                ? 0
-                : hit_count <= HIT_LOW_THRESHOLD 
-                ? hit_count - 1 
-                : hit_count <= HIT_LOW_MID_THRESHOLD
-                ? hit_count - 2
-                : hit_count <= HIT_MID_THRESHOLD 
-                ? hit_count - 3 
-                : hit_count <= HIT_HIGH_MID_THRESHOLD 
-                ? hit_count - 4 
-                : hit_count - 5;
+            if(!is_liquid)
+            {
+                hit_count = hit_count == 0 
+                    ? 0
+                    : hit_count <= 3 
+                    ? hit_count
+                    : hit_count <= HIT_LOW_THRESHOLD 
+                    ? hit_count - 3 
+                    : hit_count <= HIT_LOW_MID_THRESHOLD
+                    ? hit_count - 2
+                    : hit_count <= HIT_MID_THRESHOLD 
+                    ? hit_count - 1 
+                    : hit_count <= HIT_HIGH_MID_THRESHOLD 
+                    ? hit_count - 0 
+                    : hit_count - 0;
+            }
+            else
+            {
+                hit_count = hit_count == 0 
+                    ? 0
+                    : hit_count <= HIT_LOW_THRESHOLD 
+                    ? hit_count - 1 
+                    : hit_count <= HIT_LOW_MID_THRESHOLD
+                    ? hit_count - 2
+                    : hit_count <= HIT_MID_THRESHOLD 
+                    ? hit_count - 3 
+                    : hit_count <= HIT_HIGH_MID_THRESHOLD 
+                    ? hit_count - 4 
+                    : hit_count - 5;
+            }
         }
 
         point_hit_counts[current_point] = hit_count;
@@ -425,7 +445,7 @@ __kernel void move_armatures(__global float2 *hulls,
     bool hit_water = (_hull_flags & IN_LIQUID) !=0;
     bool touch_alike = (_hull_flags & TOUCH_ALIKE) !=0;
 
-    int block_check = HIT_HIGH_MID_THRESHOLD * 1.5;
+    int block_check = HIT_TOP_THRESHOLD;
 
     bool go_static = hit_floor  
         && !hit_water 
