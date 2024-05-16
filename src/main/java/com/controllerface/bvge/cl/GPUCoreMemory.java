@@ -274,9 +274,11 @@ public class GPUCoreMemory
      */
     private final ResizableBuffer hull_inv_bind_pose_id_buffer;
 
-    /** float2
+    /** float4
      * x: current x position
      * y: current y position
+     * z: previous x position
+     * w: previous y position
      */
     private final ResizableBuffer hull_buffer;
 
@@ -541,7 +543,7 @@ public class GPUCoreMemory
         hull_bone_buffer                  = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16, 10_000L);
         hull_bind_pose_id_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
         hull_inv_bind_pose_id_buffer      = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
-        hull_buffer                       = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        hull_buffer                       = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
         hull_scale_buffer                 = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
         hull_point_table_buffer           = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
         hull_edge_table_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
@@ -576,7 +578,7 @@ public class GPUCoreMemory
         mirror_armature_root_hull_buffer     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
         mirror_edge_buffer                   = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 24_000L);
         mirror_edge_flag_buffer              = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 24_000L);
-        mirror_hull_buffer                   = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        mirror_hull_buffer                   = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
         mirror_hull_aabb_buffer              = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
         mirror_hull_flag_buffer              = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
         mirror_hull_armature_id_buffer       = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
@@ -1151,7 +1153,7 @@ public class GPUCoreMemory
 
         create_hull_k
             .set_arg(CreateHull_k.Args.target, hull_index)
-            .set_arg(CreateHull_k.Args.new_hull, position)
+            .set_arg(CreateHull_k.Args.new_hull, arg_float4(position[0], position[1], position[0], position[1]))
             .set_arg(CreateHull_k.Args.new_hull_scale, scale)
             .set_arg(CreateHull_k.Args.new_rotation, rotation)
             .set_arg(CreateHull_k.Args.new_friction, friction)

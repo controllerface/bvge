@@ -97,7 +97,7 @@ public class MouseRenderer extends GameSystem
         float world_x = control_points.get_screen_target().x * camera.get_zoom() + camera.position.x;
         float world_y = (Window.get().height() - control_points.get_screen_target().y) * camera.get_zoom() + camera.position.y;
         control_points.get_world_target().set(world_x, world_y);
-        float[] loc = { world_x, world_y, -1.0f, 10.0f };
+        float[] loc = { world_x, world_y, -1.0f, 15.0f };
 
         glBindVertexArray(vao);
 

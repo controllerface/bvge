@@ -3,7 +3,7 @@ Handles collision between two circular hulls
  */
 inline void circle_collision(int hull_1_id, 
                              int hull_2_id,
-                             __global float2 *hulls,
+                             __global float4 *hulls,
                              __global float2 *hull_scales,
                              __global float *hull_frictions,
                              __global float *hull_restitutions,
@@ -19,8 +19,8 @@ inline void circle_collision(int hull_1_id,
                              __global int *counter,
                              float dt)
 {
-    float2 hull_1 = hulls[hull_1_id];
-    float2 hull_2 = hulls[hull_2_id];
+    float4 hull_1 = hulls[hull_1_id];
+    float4 hull_2 = hulls[hull_2_id];
     float hull_1_radius = hull_scales[hull_1_id].y;
     float hull_2_radius = hull_scales[hull_2_id].y;
 

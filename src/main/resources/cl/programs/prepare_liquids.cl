@@ -1,4 +1,4 @@
-__kernel void prepare_liquids(__global float2 *hull_positions, 
+__kernel void prepare_liquids(__global float4 *hull_positions, 
                               __global float2 *hull_scales, 
                               __global float2 *hull_rotations,
                               __global int2 *hull_point_tables,
@@ -13,7 +13,7 @@ __kernel void prepare_liquids(__global float2 *hull_positions,
     int offset_gid = gid + offset;
     int current_hull = indices[offset_gid];
     
-    float2 position  = hull_positions[current_hull];
+    float4 position  = hull_positions[current_hull];
     float2 scale     = hull_scales[current_hull];
     float2 rotation  = hull_rotations[current_hull];
     int2 point_table = hull_point_tables[current_hull];

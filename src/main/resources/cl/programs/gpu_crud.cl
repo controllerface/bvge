@@ -202,7 +202,7 @@ __kernel void create_mesh_face(__global int4 *mesh_faces,
     mesh_faces[target] = new_mesh_face;
 }
 
-__kernel void create_hull(__global float2 *hulls,
+__kernel void create_hull(__global float4 *hulls,
                           __global float2 *hull_scales,
                           __global float2 *hull_rotations,
                           __global float *hull_frictions,
@@ -215,7 +215,7 @@ __kernel void create_hull(__global float2 *hulls,
                           __global int *hull_mesh_ids,
                           __global int *hull_uv_offsets,
                           int target,
-                          float2 new_hull,
+                          float4 new_hull,
                           float2 new_hull_scale,
                           float2 new_rotation,
                           float new_friction,

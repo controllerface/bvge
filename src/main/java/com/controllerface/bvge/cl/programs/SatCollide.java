@@ -32,5 +32,6 @@ public class SatCollide extends GPUProgram
         load_kernel(Kernel.sort_reactions);
         load_kernel(Kernel.apply_reactions);
         load_kernel(Kernel.move_armatures);
+        load_kernel(Kernel.move_hulls);
     }
 }

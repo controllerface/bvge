@@ -551,7 +551,7 @@ __kernel void compact_armatures(__global int2 *buffer_in_1,
 }
 
 __kernel void compact_hulls(__global int *hull_shift,
-                            __global float2 *hulls,
+                            __global float4 *hulls,
                             __global float2 *hull_scales,
                             __global int *hull_mesh_ids,
                             __global int *hull_uv_offsets,
@@ -569,7 +569,7 @@ __kernel void compact_hulls(__global int *hull_shift,
 {
     int current_hull = get_global_id(0);
     int shift = hull_shift[current_hull];
-    float2 hull = hulls[current_hull];
+    float4 hull = hulls[current_hull];
     float2 hull_scale = hull_scales[current_hull];
     float2 rotation = hull_rotations[current_hull];
     float friction = hull_frictions[current_hull];

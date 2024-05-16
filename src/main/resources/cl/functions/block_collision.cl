@@ -3,7 +3,7 @@ Handles collision between two polygonal hulls
  */
 inline void block_collision(int hull_1_id, 
                             int hull_2_id,
-                            __global float2 *hulls,
+                            __global float4 *hulls,
                             __global float *hull_frictions,
                             __global float *hull_restitutions,
                             __global int *hull_armature_ids,
@@ -21,8 +21,8 @@ inline void block_collision(int hull_1_id,
                             __global int *counter,
                             float dt)
 {
-    float2 hull_1 = hulls[hull_1_id];
-    float2 hull_2 = hulls[hull_2_id];
+    float4 hull_1 = hulls[hull_1_id];
+    float4 hull_2 = hulls[hull_2_id];
 
     int2 hull_1_point_table = hull_point_tables[hull_1_id];
     int2 hull_1_edge_table = hull_edge_tables[hull_1_id];
@@ -160,8 +160,8 @@ inline void block_collision(int hull_1_id,
         ? hull_1_id
         : hull_2_id;
 
-    float2 hull_a = hulls[hull_a_index];
-    float2 hull_b = hulls[hull_b_index];
+    float4 hull_a = hulls[hull_a_index];
+    float4 hull_b = hulls[hull_b_index];
 
     float2 direction = hull_a.xy - hull_b.xy;
     collision_normal = dot(direction, collision_normal) < 0

@@ -182,7 +182,7 @@ public class Window
         glViewport(0, 0, this.width, this.height);
 
         // mouse cursor
-        var cursor_stream = Window.class.getResourceAsStream("/img/reticule.png");
+        var cursor_stream = Window.class.getResourceAsStream("/img/reticule_circle_blue.png");
         BufferedImage image;
         try
         {
@@ -235,7 +235,7 @@ public class Window
 
         // set current cursor
         glfwSetCursor(glfwWindow, cursor_id);
-        glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        //glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
 
         var int_buffer = MemoryUtil.memAllocInt(1);

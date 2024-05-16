@@ -5,7 +5,7 @@ the min/max distances only, there is no index for circle projection, but
 this function returns a float3 so results can be used together with the 
 output of project_polygon.
  */
-inline float3 project_circle(float2 circle, float circle_size, float2 normal)
+inline float3 project_circle(float4 circle, float circle_size, float2 normal)
 {
     float3 result;
     result.x = (float)0; // min

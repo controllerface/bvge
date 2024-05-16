@@ -322,7 +322,7 @@ public class TestGame extends GameMode
     {
         // player character
         genTestFigure(1f, 2000, 3200);
-        genCursor(20, 0, 0);
+        genCursor(10, 0, 0);
         //genTestFigureNPC_2(1f, 100, 500);
 
 //        genTestFigureNPC(1f, 200, 0);

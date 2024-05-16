@@ -15,7 +15,7 @@ collisions, as there is only a single point, circles are always the vertex objec
 Circle/circle collisions use a simple distance/radius check.
  */
 __kernel void sat_collide(__global int2 *candidates,
-                          __global float2 *hulls,
+                          __global float4 *hulls,
                           __global float2 *hull_scales,
                           __global float *hull_frictions,
                           __global float *hull_restitutions,
@@ -365,6 +365,18 @@ __kernel void apply_reactions(__global float8 *reactions,
     point_offsets[current_point] = 0;
 }
 
+__kernel void move_hulls(__global float4 *hulls,
+                         __global int2 *hull_point_tables,
+                         __global float4 *points)
+{
+    int current_hull = get_global_id(0);
+    int2 point_table = hull_point_tables[current_hull];
+    float4 hull = hulls[current_hull];
+    hull.zw = hull.xy;
+    hull.xy = calculate_centroid(points, point_table);
+    hulls[current_hull] = hull;
+}
+
 inline int2 consume_point_flags(__global int *point_flags,
                                __global ushort *point_hit_counts,
                                int2 point_table)
@@ -391,7 +403,7 @@ inline int2 consume_point_flags(__global int *point_flags,
 
     return result;
 }
-__kernel void move_armatures(__global float2 *hulls,
+__kernel void move_armatures(__global float4 *hulls,
                              __global float4 *armatures,
                              __global int *armature_flags,
                              __global int2 *hull_tables,
@@ -421,7 +433,7 @@ __kernel void move_armatures(__global float2 *hulls,
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
-        float2 hull = hulls[n];
+        float4 hull = hulls[n];
         int hull_flag = hull_flags[n];
         int2 point_table = hull_point_tables[n];
         bool no_bones = (hull_flag & NO_BONES) !=0;
@@ -431,8 +443,8 @@ __kernel void move_armatures(__global float2 *hulls,
 
         if (!no_bones) had_bones = true;
 
-        last_center = calculate_centroid(points, point_table);
-        float2 diffa = last_center - hull.xy;
+        last_center = hull.xy;
+        float2 diffa = last_center - hull.zw;
         diff += diffa;
         int2 xa = consume_point_flags(point_flags, point_hit_counts, point_table);
         total_hits += xa.y;
@@ -489,5 +501,4 @@ __kernel void move_armatures(__global float2 *hulls,
     hull_flags[start] = hull_flags_0;
     armatures[current_armature] = armature;
     armature_flags[current_armature] = flags;
-
 }

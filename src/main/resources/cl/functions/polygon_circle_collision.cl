@@ -3,7 +3,7 @@ Handles collision between one polygonal hull and one circular hull
  */
 inline void polygon_circle_collision(int polygon_id, 
                                      int circle_id,
-                                     __global float2 *hulls,
+                                     __global float4 *hulls,
                                      __global float2 *hull_scales,
                                      __global float *hull_frictions,
                                      __global float *hull_restitutions,
@@ -22,8 +22,8 @@ inline void polygon_circle_collision(int polygon_id,
                                      __global int *counter,
                                       float dt)
 {
-    float2 polygon = hulls[polygon_id];
-    float2 circle = hulls[circle_id];
+    float4 polygon = hulls[polygon_id];
+    float4 circle = hulls[circle_id];
     float2 circle_scale = hull_scales[circle_id];
     int2 polygon_point_table = hull_point_tables[polygon_id];
     int2 polygon_edge_table = hull_edge_tables[polygon_id];
@@ -144,8 +144,8 @@ inline void polygon_circle_collision(int polygon_id,
     int hull_a_index = circle_id;
     int hull_b_index = polygon_id;
 
-    float2 hull_a = hulls[hull_a_index];
-    float2 hull_b = hulls[hull_b_index];
+    float4 hull_a = hulls[hull_a_index];
+    float4 hull_b = hulls[hull_b_index];
 
     float2 direction = hull_a.xy - hull_b.xy;
     collision_normal = dot(direction, collision_normal) < 0

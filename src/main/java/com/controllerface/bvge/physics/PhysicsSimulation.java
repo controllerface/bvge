@@ -73,6 +73,7 @@ public class PhysicsSimulation extends GameSystem
     private final GPUKernel sort_reactions_k;
     private final GPUKernel apply_reactions_k;
     private final GPUKernel move_armatures_k;
+    private final GPUKernel move_hulls_k;
     private final GPUKernel animate_armatures_k;
     private final GPUKernel animate_bones_k;
     private final GPUKernel animate_points_k;
@@ -364,6 +365,12 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(ApplyReactions_k.Args.point_hull_indices, GPGPU.core_memory.buffer(BufferType.POINT_HULL_INDEX))
             .buf_arg(ApplyReactions_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.HULL_FLAG));
 
+        long move_hulls_k_ptr = sat_collide.kernel_ptr(Kernel.move_hulls);
+        move_hulls_k = new MoveHulls_k(GPGPU.cl_cmd_queue_ptr, move_hulls_k_ptr)
+            .buf_arg(MoveHulls_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
+            .buf_arg(MoveHulls_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
+            .buf_arg(MoveHulls_k.Args.points, GPGPU.core_memory.buffer(BufferType.POINT));
+
         long move_armatures_k_ptr = sat_collide.kernel_ptr(Kernel.move_armatures);
         move_armatures_k = new MoveArmatures_k(GPGPU.cl_cmd_queue_ptr, move_armatures_k_ptr)
             .buf_arg(MoveArmatures_k.Args.hulls, GPGPU.core_memory.buffer(BufferType.HULL))
@@ -473,6 +480,20 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
+    //#region AABB Collision
+
+    private void calculate_bank_offsets()
+    {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+        int bank_size = scan_key_bounds(GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE).pointer(), GPGPU.core_memory.next_hull());
+        uniform_grid.resizeBank(bank_size);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_bank_offset", String.valueOf(e));
+        }
+    }
+
     private int scan_bounds_single_block(long data_ptr, int n)
     {
         long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
@@ -532,18 +553,6 @@ public class PhysicsSimulation extends GameSystem
         else
         {
             return scan_bounds_multi_block(data_ptr, n, k);
-        }
-    }
-
-    private void calculate_bank_offsets()
-    {
-        long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        int bank_size = scan_key_bounds(GPGPU.core_memory.buffer(BufferType.HULL_AABB_KEY_TABLE).pointer(), GPGPU.core_memory.next_hull());
-        uniform_grid.resizeBank(bank_size);
-        if (Editor.ACTIVE)
-        {
-            long e = System.nanoTime() - s;
-            Editor.queue_event("phys_bank_offset", String.valueOf(e));
         }
     }
 
@@ -733,6 +742,10 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
+    //#endregion
+
+    //#region SAT Collision
+
     private void sat_collide()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
@@ -792,7 +805,21 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
-    private void move_armatures()
+    //#endregion
+
+
+    private void resolve_hulls()
+    {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+        move_hulls_k.call(arg_long(GPGPU.core_memory.next_hull()));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_move_hulls", String.valueOf(e));
+        }
+    }
+
+    private void resolve_armatures()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
         move_armatures_k.call(arg_long(GPGPU.core_memory.next_armature()));
@@ -802,6 +829,8 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_move_armatures", String.valueOf(e));
         }
     }
+
+    //#region Animation
 
     private void animate_armatures(float dt)
     {
@@ -837,6 +866,8 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_animate_points", String.valueOf(e));
         }
     }
+
+    //#endregion
 
     private void resolve_constraints(int steps)
     {
@@ -934,38 +965,6 @@ public class PhysicsSimulation extends GameSystem
             .call(arg_long(target_count));
     }
 
-    private void update_controllable_entities2()
-    {
-        // todo: index and magnitudes only need to be set once, but may need some
-        //  checks or logic to ensure characters don't get deleted
-        var components = ecs.getComponents(Component.ControlPoints);
-
-        control_point_flags.ensure_capacity(components.size());
-        control_point_indices.ensure_capacity(components.size());
-        control_point_tick_budgets.ensure_capacity(components.size());
-        control_point_linear_mag.ensure_capacity(components.size());
-        control_point_jump_mag.ensure_capacity(components.size());
-
-        int target_count = 0;
-        for (Map.Entry<String, GameComponent> entry : components.entrySet())
-        {
-            String entity = entry.getKey();
-            GameComponent component = entry.getValue();
-            ControlPoints controlPoints = Component.ControlPoints.coerce(component);
-            ArmatureIndex armature = Component.Armature.forEntity(ecs, entity);
-            LinearForce force = Component.LinearForce.forEntity(ecs, entity);
-
-            Objects.requireNonNull(controlPoints);
-            Objects.requireNonNull(armature);
-            Objects.requireNonNull(force);
-
-            var camera = Window.get().camera();
-            float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position.x;
-            float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position.y;
-            controlPoints.get_world_target().set(world_x, world_y);
-        }
-    }
-
     /**
      * This is the core of the physics simulation. Upon return from this method, the simulation is
      * advanced one tick. Note that this class uses a fixed time step, so the time delta should always
@@ -1057,7 +1056,6 @@ public class PhysicsSimulation extends GameSystem
         // may be eliminated during the check.
         aabb_collide();
 
-
         // This last step cleans up the match table, retaining only the used sections of the buffer.
         // After this step, the matches are ready for the narrow phase check.
         finalize_candidates();
@@ -1067,8 +1065,6 @@ public class PhysicsSimulation extends GameSystem
         {
             return;
         }
-
-        //sort_sat_candidates();
 
         /*
         - Narrow Phase Collision/Reaction -
@@ -1180,9 +1176,13 @@ public class PhysicsSimulation extends GameSystem
                     // perform one tick of the simulation
                     this.tick_simulation();
 
+                    resolve_constraints(1);
+
+                    resolve_hulls();
+
                     // Once all points have been relocated, all hulls are in their required positions for this frame.
                     // Movements applied to hulls are now accumulated and applied to their parent armatures.
-                    move_armatures();
+                    resolve_armatures();
 
                     // Now we make a call to animate the vertices of bone-tracked hulls. This ensures that all tracked
                     // objects that have animation will have their hulls moved into position for the current tick. It
@@ -1195,7 +1195,7 @@ public class PhysicsSimulation extends GameSystem
 
                     // Once positions are adjusted, edge constraints are enforced to ensure that rigid bodies maintain
                     // their defined shapes. Without this step, the individual points of the tracked physics hulls will
-                    // deform on impact, and may fly off in random directions, typically causing simulation failure. The
+                    // deform on impact, possibly to non-convex shapes and typically causing simulation failure. The
                     // number of steps that are performed each tick has an impact on the accuracy of the hull boundaries
                     // within the simulation.
                     resolve_constraints(EDGE_STEPS);
@@ -1203,7 +1203,10 @@ public class PhysicsSimulation extends GameSystem
                 else
                 {
                     dropped_time = this.time_accumulator;
-                    // todo: when debug logging is added, log the amount of dropped simulation time
+                    if (Editor.ACTIVE)
+                    {
+                        Editor.queue_event("dropped", String.format("%f", dropped_time));
+                    }
                     this.time_accumulator = 0;
                 }
             }

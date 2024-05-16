@@ -1,4 +1,4 @@
-__kernel void prepare_transforms(__global float2 *hull_positions, 
+__kernel void prepare_transforms(__global float4 *hull_positions, 
                                  __global float2 *hull_scales, 
                                  __global float2 *hull_rotations,
                                  __global int *indices,
@@ -9,7 +9,7 @@ __kernel void prepare_transforms(__global float2 *hull_positions,
     int offset_gid = gid + offset;
     int index = indices[offset_gid];
     
-    float2 position = hull_positions[index];
+    float4 position = hull_positions[index];
     float2 scale    = hull_scales[index];
     float2 rotation = hull_rotations[index];
 
