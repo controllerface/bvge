@@ -34,7 +34,8 @@ public class PhysicsSimulation extends GameSystem
 
     // todo: investigate if this should be variable as well. It may make sense to increase damping in some cases,
     //  and lower it in others, for example in space vs on a planet. It may also be useful to set the direction
-    //  or make damping interact with the gravity vector in some way.
+    //  or make damping interact with the gravity vector in some way. Kernels already do this now, may be helpful
+    //  to have this as a variable.
     private static final float MOTION_DAMPING = .990f;
 
     private final UniformGrid uniform_grid;
@@ -1232,6 +1233,7 @@ public class PhysicsSimulation extends GameSystem
         {
             clFinish(GPGPU.gl_cmd_queue_ptr);
             long phys_time = last_phys_time.take();
+            // todo: read mouse selected objects
             GPGPU.core_memory.mirror_buffers_ex();
             clFinish(GPGPU.cl_cmd_queue_ptr);
             next_phys_time.put(dt);
@@ -1260,6 +1262,7 @@ public class PhysicsSimulation extends GameSystem
             throw new RuntimeException(e);
         }
 
+        control_entities.destroy();
         integrate.destroy();
         scan_key_bank.destroy();
         generate_keys.destroy();

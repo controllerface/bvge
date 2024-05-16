@@ -152,15 +152,10 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     float r_layer = face_l ? -2.0 : 2.0;
     float l_layer = face_l ? 2.0 : -2.0;
 
-    // float normalized = (float) hull_id / (float) 100000;
-    // float mappedValue = normalized * 0.99f;
-    // mappedValue = min(mappedValue, 0.99f);
-
     int wrappedValue = hull_id % 100000;
     float normalized = native_divide((float) wrappedValue, (float) (100000 - 1));
     float mappedValue = normalized * 0.99f;
 
-    // todo: for blocks, map z from 0 to MAX_int to between .0 and .99 and derive from hull index
     float side_z = side_r 
         ? r_layer 
         : side_l 
