@@ -112,6 +112,7 @@ inline void polygon_circle_collision(int polygon_id,
     int vert_hull_flags = hull_flags[vert_hull_id];
     int edge_hull_flags = hull_flags[edge_hull_id];
     
+    // cursor collision causes early exit
     bool cursor_v = (vert_hull_flags & IS_CURSOR) !=0;
     bool cursor_e = (edge_hull_flags & IS_CURSOR) !=0;
     bool any_cursor = (cursor_v || cursor_e);
@@ -129,6 +130,7 @@ inline void polygon_circle_collision(int polygon_id,
         }
         return;
     }
+
 
     float abs_distance = fabs(_distance);
 

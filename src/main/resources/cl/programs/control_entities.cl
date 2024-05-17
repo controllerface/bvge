@@ -399,3 +399,20 @@ __kernel void handle_movement(__global float4 *armatures,
     armature_flags[current_index] = arm_flag;
     armature_animation_indices[current_index] = anim_index;
 }
+
+__kernel void query_hovered(__global int *hull_flags,
+                            __global int *hull_ids,
+                            __global int *count)
+{
+    int current_hull = get_global_id(0);
+    int flags = hull_flags[current_hull];
+    bool is_hovered = (flags & CURSOR_OVER) !=0;
+    if (is_hovered)
+    {
+        int next = atomic_inc(&count[0]);
+        if (next < 10)
+        {
+            hull_ids[next] = current_hull;
+        }
+    }
+}

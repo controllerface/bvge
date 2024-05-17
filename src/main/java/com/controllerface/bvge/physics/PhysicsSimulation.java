@@ -20,6 +20,8 @@ import static org.lwjgl.opencl.CL10.clFinish;
 
 public class PhysicsSimulation extends GameSystem
 {
+    //#region Constants
+
     private static final float TARGET_FPS = 24.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
     private static final int TARGET_SUB_STEPS = 16;
@@ -38,7 +40,9 @@ public class PhysicsSimulation extends GameSystem
     //  to have this as a variable.
     private static final float MOTION_DAMPING = .990f;
 
-    private final UniformGrid uniform_grid;
+    //#endregion
+
+    //#region GPU Programs & Kernels
 
     private final GPUProgram control_entities = new ControlEntities();
     private final GPUProgram integrate = new Integrate();
@@ -54,7 +58,6 @@ public class PhysicsSimulation extends GameSystem
 
     private final GPUKernel set_control_points_k;
     private final GPUKernel handle_movement_k;
-
     private final GPUKernel integrate_k;
     private final GPUKernel integrate_armatures_k;
     private final GPUKernel scan_bounds_single_block_k;
@@ -79,8 +82,11 @@ public class PhysicsSimulation extends GameSystem
     private final GPUKernel animate_points_k;
     private final GPUKernel resolve_constraints_k;
 
-    private final long counts_buf_size;
+    //#endregion
 
+    //#region Buffers & Counters
+
+    private final long counts_buf_size;
     private final long atomic_counter_ptr;
     private final long counts_data_ptr;
     private final long offsets_data_ptr;
@@ -150,10 +156,50 @@ public class PhysicsSimulation extends GameSystem
     private long match_buffer_count = 0;
     private long candidate_buffer_count = 0;
 
+    //#endregion
+
+    //#region Simulation Data
+
+    private final UniformGrid uniform_grid;
+
     private float time_accumulator = 0.0f;
+
+    //#endregion
+
+    //#region Thread & Sync
 
     private final BlockingQueue<Float> next_phys_time = new SynchronousQueue<>();
     private final BlockingQueue<Long> last_phys_time = new SynchronousQueue<>();
+    private final Thread physics_simulation = Thread.ofVirtual().name("Physics-Simulation").start(() ->
+    {
+        try
+        {
+            last_phys_time.put(0L);
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        while (!Thread.currentThread().isInterrupted())
+        {
+            try
+            {
+                var dt = next_phys_time.take();
+                long start = System.nanoTime();
+                simulate(dt);
+                long end = System.nanoTime() - start;
+                last_phys_time.put(end);
+            }
+            catch (InterruptedException e)
+            {
+                Thread.currentThread().interrupt();
+            }
+        }
+    });
+
+
+    //#endregion
 
     public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
     {
@@ -437,6 +483,8 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(ResolveConstraints_k.Args.edge_lengths, GPGPU.core_memory.buffer(BufferType.EDGE_LENGTH));
     }
 
+    //#region Input & Integration
+
     private void integrate()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
@@ -479,6 +527,79 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_integrate", String.valueOf(e));
         }
     }
+
+    private void update_controllable_entities()
+    {
+        // todo: index and magnitudes only need to be set once, but may need some
+        //  checks or logic to ensure characters don't get deleted
+        var components = ecs.getComponents(Component.ControlPoints);
+
+        var mouse_armature = ecs.getComponentFor("mouse", Component.Armature);
+        ArmatureIndex mouse_object = Component.Armature.coerce(mouse_armature);
+        Objects.requireNonNull(mouse_object);
+
+        control_point_flags.ensure_capacity(components.size());
+        control_point_indices.ensure_capacity(components.size());
+        control_point_tick_budgets.ensure_capacity(components.size());
+        control_point_linear_mag.ensure_capacity(components.size());
+        control_point_jump_mag.ensure_capacity(components.size());
+
+        int target_count = 0;
+        for (Map.Entry<String, GameComponent> entry : components.entrySet())
+        {
+            String entity = entry.getKey();
+            GameComponent component = entry.getValue();
+            ControlPoints controlPoints = Component.ControlPoints.coerce(component);
+            ArmatureIndex armature = Component.Armature.forEntity(ecs, entity);
+            LinearForce force = Component.LinearForce.forEntity(ecs, entity);
+
+            Objects.requireNonNull(controlPoints);
+            Objects.requireNonNull(armature);
+            Objects.requireNonNull(force);
+
+            int flags = 0;
+            if (controlPoints.is_moving_left())
+            {
+                flags = flags | Constants.ControlFlags.LEFT.bits;
+            }
+            if (controlPoints.is_moving_right())
+            {
+                flags = flags | Constants.ControlFlags.RIGHT.bits;
+            }
+            if (controlPoints.is_moving_up())
+            {
+                flags = flags | Constants.ControlFlags.UP.bits;
+            }
+            if (controlPoints.is_moving_down())
+            {
+                flags = flags | Constants.ControlFlags.DOWN.bits;
+            }
+            if (controlPoints.is_space_bar_down())
+            {
+                flags = flags | Constants.ControlFlags.JUMP.bits;
+            }
+
+            set_control_points_k
+                .set_arg(SetControlPoints_k.Args.target, target_count)
+                .set_arg(SetControlPoints_k.Args.new_flags, flags)
+                .set_arg(SetControlPoints_k.Args.new_index, armature.index())
+                .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
+                .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
+                .call(GPGPU.global_single_size);
+
+            var camera = Window.get().camera();
+            float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position.x;
+            float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position.y;
+            GPGPU.core_memory.update_position(mouse_object.index(), world_x, world_y);
+
+            target_count++;
+        }
+
+        handle_movement_k.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)
+            .call(arg_long(target_count));
+    }
+
+    //#endregion
 
     //#region AABB Collision
 
@@ -741,7 +862,6 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_finalize_candidates", String.valueOf(e));
         }
     }
-
     //#endregion
 
     //#region SAT Collision
@@ -804,31 +924,7 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_sat_apply_reactions", String.valueOf(e));
         }
     }
-
     //#endregion
-
-
-    private void resolve_hulls()
-    {
-        long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        move_hulls_k.call(arg_long(GPGPU.core_memory.next_hull()));
-        if (Editor.ACTIVE)
-        {
-            long e = System.nanoTime() - s;
-            Editor.queue_event("phys_move_hulls", String.valueOf(e));
-        }
-    }
-
-    private void resolve_armatures()
-    {
-        long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        move_armatures_k.call(arg_long(GPGPU.core_memory.next_armature()));
-        if (Editor.ACTIVE)
-        {
-            long e = System.nanoTime() - s;
-            Editor.queue_event("phys_move_armatures", String.valueOf(e));
-        }
-    }
 
     //#region Animation
 
@@ -869,6 +965,8 @@ public class PhysicsSimulation extends GameSystem
 
     //#endregion
 
+    //#region Constraint Resolvers
+
     private void resolve_constraints(int steps)
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
@@ -891,79 +989,31 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
-    private void update_controllable_entities()
+    private void resolve_armatures()
     {
-        // todo: index and magnitudes only need to be set once, but may need some
-        //  checks or logic to ensure characters don't get deleted
-        var components = ecs.getComponents(Component.ControlPoints);
-
-        var ma = ecs.getComponentFor("mouse", Component.Armature);
-        ArmatureIndex ma_id = Component.Armature.coerce(ma);
-        Objects.requireNonNull(ma_id);
-
-        control_point_flags.ensure_capacity(components.size());
-        control_point_indices.ensure_capacity(components.size());
-        control_point_tick_budgets.ensure_capacity(components.size());
-        control_point_linear_mag.ensure_capacity(components.size());
-        control_point_jump_mag.ensure_capacity(components.size());
-
-        int target_count = 0;
-        for (Map.Entry<String, GameComponent> entry : components.entrySet())
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+        move_armatures_k.call(arg_long(GPGPU.core_memory.next_armature()));
+        if (Editor.ACTIVE)
         {
-            String entity = entry.getKey();
-            GameComponent component = entry.getValue();
-            ControlPoints controlPoints = Component.ControlPoints.coerce(component);
-            ArmatureIndex armature = Component.Armature.forEntity(ecs, entity);
-            LinearForce force = Component.LinearForce.forEntity(ecs, entity);
-
-            Objects.requireNonNull(controlPoints);
-            Objects.requireNonNull(armature);
-            Objects.requireNonNull(force);
-
-            int flags = 0;
-            if (controlPoints.is_moving_left())
-            {
-                flags = flags | Constants.ControlFlags.LEFT.bits;
-            }
-            if (controlPoints.is_moving_right())
-            {
-                flags = flags | Constants.ControlFlags.RIGHT.bits;
-            }
-            if (controlPoints.is_moving_up())
-            {
-                flags = flags | Constants.ControlFlags.UP.bits;
-            }
-            if (controlPoints.is_moving_down())
-            {
-                flags = flags | Constants.ControlFlags.DOWN.bits;
-            }
-            if (controlPoints.is_space_bar_down())
-            {
-                flags = flags | Constants.ControlFlags.JUMP.bits;
-            }
-
-            set_control_points_k
-                .set_arg(SetControlPoints_k.Args.target, target_count)
-                .set_arg(SetControlPoints_k.Args.new_flags, flags)
-                .set_arg(SetControlPoints_k.Args.new_index, armature.index())
-                .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
-                .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
-                .call(GPGPU.global_single_size);
-
-            var camera = Window.get().camera();
-            float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position.x;
-            float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position.y;
-            //controlPoints.get_world_target().set(world_x, world_y);
-
-            GPGPU.core_memory.update_position(ma_id.index(), world_x, world_y);
-
-            //System.out.println(STR."setting: \{controlPoints.get_world_target().x} : \{controlPoints.get_world_target().y}");
-            target_count++;
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_move_armatures", String.valueOf(e));
         }
-
-        handle_movement_k.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)
-            .call(arg_long(target_count));
     }
+
+    private void resolve_hulls()
+    {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+        move_hulls_k.call(arg_long(GPGPU.core_memory.next_hull()));
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_move_hulls", String.valueOf(e));
+        }
+    }
+
+    //#endregion
+
+    //#region Simulation Functions
 
     /**
      * This is the core of the physics simulation. Upon return from this method, the simulation is
@@ -1106,46 +1156,6 @@ public class PhysicsSimulation extends GameSystem
         apply_reactions();
     }
 
-    private void prime_physics()
-    {
-        try
-        {
-            last_phys_time.put(0L);
-        }
-        catch (InterruptedException e)
-        {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private final Thread t = Thread.ofVirtual().name("Physics-Thread").start(() ->
-    {
-        try
-        {
-            Thread.ofVirtual().start(this::prime_physics).join();
-        }
-        catch (InterruptedException e)
-        {
-            throw new RuntimeException(e);
-        }
-
-        while (!Thread.currentThread().isInterrupted())
-        {
-            try
-            {
-                var dt = next_phys_time.take();
-                long start = System.nanoTime();
-                simulate(dt);
-                long end = System.nanoTime() - start;
-                last_phys_time.put(end);
-            }
-            catch (InterruptedException e)
-            {
-                Thread.currentThread().interrupt();
-            }
-        }
-    });
-
     private void simulate(float dt)
     {
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
@@ -1229,6 +1239,10 @@ public class PhysicsSimulation extends GameSystem
         animate_points();
     }
 
+    //#endregion
+
+    //#region Public API
+
     @Override
     public void tick(float dt)
     {
@@ -1255,10 +1269,10 @@ public class PhysicsSimulation extends GameSystem
     @Override
     public void shutdown()
     {
-        t.interrupt();
+        physics_simulation.interrupt();
         try
         {
-            t.join();
+            physics_simulation.join();
         }
         catch (InterruptedException e)
         {
@@ -1302,6 +1316,8 @@ public class PhysicsSimulation extends GameSystem
         GPGPU.cl_release_buffer(counts_data_ptr);
         GPGPU.cl_release_buffer(offsets_data_ptr);
     }
+
+    //#endregion
 
     private void debug()
     {

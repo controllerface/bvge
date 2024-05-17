@@ -145,7 +145,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.tri(x, y, size, 0, 1f, 0.02f, 0.0003f);
+                var armature_index = PhysicsObjects.tri(x, y, size, 0, 20f, 0.02f, 0.0003f);
                 //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
@@ -345,7 +345,7 @@ public class TestGame extends GameMode
 
         //genCrates2(20, 5f, 0.025f, 100, 100);
         //genTriangles(130,  6f, 5f, -120, 200);
-        genTriangles(50,  32f, 32f, 2500, 3800);
+        genTriangles(50,  24f, 24f, 2500, 3800);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);

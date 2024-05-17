@@ -44,6 +44,7 @@ inline void circle_collision(int hull_1_id,
     float hull_1_mass = masses[hull_1_armature_id];
     float hull_2_mass = masses[hull_2_armature_id];
 
+    // cursor collision causes early exit
     bool cursor_1 = (hull_1_flags & IS_CURSOR) !=0;
     bool cursor_2 = (hull_2_flags & IS_CURSOR) !=0;
     bool any_cursor = (cursor_1 || cursor_2);
