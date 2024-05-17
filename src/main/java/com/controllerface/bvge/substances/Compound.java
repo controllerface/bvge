@@ -79,14 +79,14 @@ public enum Compound
     ;
 
     private static final int slot_count = 4;
-    public final short compound_number;
+    public final int compound_number;
     public final Element[] elements;
     
     Compound(Element ... elements)
     {
         assert elements != null : "Null element list";
         assert elements.length == slot_count;
-        this.compound_number = ( short) this.ordinal();
+        this.compound_number = this.ordinal();
         this.elements = elements;
     }
 }
