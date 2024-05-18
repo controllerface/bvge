@@ -74,14 +74,14 @@ public enum Liquid
         {
             var buffer = new StringBuilder();
 
-            buffer.append("constant float4 liquid_lookup_table[] = \n{\n");
+            buffer.append("constant float4 liquid_lookup_table[" + values().length + "] = \n{\n");
             for (var liquid : values())
             {
                 var x = String.valueOf(liquid.color.x);
                 var y = String.valueOf(liquid.color.y);
                 var z = String.valueOf(liquid.color.z);
                 var w = String.valueOf(liquid.color.w);
-                buffer.append("\t(float4)("+x+", "+y+", "+z+", "+w+"),\n");
+                buffer.append("\t(float4)("+x+"f, "+y+"f, "+z+"f, "+w+"f),\n");
             }
             buffer.append("};\n\n");
             lookup_table = buffer.toString();

@@ -12,6 +12,24 @@
 #define SWIM_DOWN    11
 #define PUNCH        12
 
+constant float transition_table[14][14] = 
+{
+	{0.0f,0.4f,0.4f,0.4f,0.1f,0.4f,0.4f,0.4f,0.4f,0.4f,0.4f,0.4f,0.1f,0.0f,},
+	{0.2f,0.0f,0.2f,0.2f,0.1f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.1f,0.0f,},
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
+	{0.2f,0.2f,0.2f,0.0f,0.1f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.1f,0.0f,},
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
+	{0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,},
+	{0.2f,0.2f,0.2f,0.2f,0.1f,0.2f,0.0f,0.2f,0.2f,0.2f,0.2f,0.2f,0.1f,0.0f,},
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
+	{0.2f,0.2f,0.2f,0.2f,0.1f,0.2f,0.2f,0.2f,0.0f,0.2f,0.2f,0.2f,0.1f,0.0f,},
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
+	{0.2f,0.2f,0.2f,0.2f,0.1f,0.2f,0.2f,0.2f,0.2f,0.2f,0.0f,0.2f,0.1f,0.0f,},
+	{0.2f,0.2f,0.2f,0.2f,0.1f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.0f,0.1f,0.0f,},
+	{0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,},
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
+};
+
 typedef struct 
 {
     bool is_mv_l;
@@ -58,10 +76,7 @@ OutputState idle_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        float t = output.next_state == JUMP_START || output.next_state == PUNCH 
-            ? 0.1f
-            : 0.4f;
-        output.blend_time = t;
+        output.blend_time = transition_table[IDLE][output.next_state];
     }
     return output;
 }
@@ -79,12 +94,8 @@ OutputState walking_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        float t = output.next_state == JUMP_START 
-            ? 0.1f
-            : output.next_state == PUNCH 
-                ? 0.0f
-                : 0.2f;
-        output.blend_time = t;
+        output.blend_time = transition_table[WALKING][output.next_state];
+
     }
     return output;
 }
@@ -102,10 +113,7 @@ OutputState falling_slow_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        float t = output.next_state == JUMP_START 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
+        output.blend_time = transition_table[FALLING_SLOW][output.next_state];
     }
     return output;
 }
@@ -124,10 +132,7 @@ OutputState falling_fast_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        float t = output.next_state == JUMP_START 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
+        output.blend_time = transition_table[FALLING_FAST][output.next_state];
     }
     return output;
 }
@@ -157,7 +162,7 @@ OutputState jumping_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        output.blend_time = 0.5f;
+        output.blend_time = transition_table[JUMPING][output.next_state];
     }
     return output;
 }
@@ -174,10 +179,7 @@ OutputState in_air_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        float t = output.next_state == LAND_HARD || output.next_state == LAND_SOFT 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
+        output.blend_time = transition_table[IN_AIR][output.next_state];
     }
     return output;
 }
@@ -194,10 +196,7 @@ OutputState swim_up_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        float t = output.next_state == LAND_HARD || output.next_state == LAND_SOFT 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
+        output.blend_time = transition_table[SWIM_UP][output.next_state];
     }
     return output;
 }
@@ -215,10 +214,7 @@ OutputState swim_down_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        float t = output.next_state == LAND_HARD || output.next_state == LAND_SOFT 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
+        output.blend_time = transition_table[SWIM_DOWN][output.next_state];
     }
     return output;
 }
@@ -246,7 +242,7 @@ OutputState punch_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        output.blend_time = 0.1;
+        output.blend_time = transition_table[PUNCH][output.next_state];
     }
     return output;
 }

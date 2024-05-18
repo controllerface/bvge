@@ -85,4 +85,35 @@ public class AnimationSettings
         }
         return m;
     }
+
+
+
+    private static String lookup_table = "";
+
+    public static String cl_lookup_table()
+    {
+        if (lookup_table.isEmpty())
+        {
+            var values = AnimationState.values();
+            int length = values.length;
+            var buffer = new StringBuilder();
+
+            buffer.append("constant float transition_table[").append(length).append("][").append(length).append("] = \n{\n");
+            for (var base_state : values)
+            {
+                buffer.append("\t{");
+                for (var next_state : values)
+                {
+                    float value = transitions.get(base_state).get(next_state);
+                    buffer.append(value).append("f,");
+                }
+                buffer.append("},\n");
+            }
+            buffer.append("};\n\n");
+            lookup_table = buffer.toString();
+        }
+        return lookup_table;
+    }
+
+
 }
