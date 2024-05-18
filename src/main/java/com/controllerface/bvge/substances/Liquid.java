@@ -81,7 +81,7 @@ public enum Liquid
                 var y = String.valueOf(liquid.color.y);
                 var z = String.valueOf(liquid.color.z);
                 var w = String.valueOf(liquid.color.w);
-                buffer.append(STR."\t(float4)(\{x}, \{y}, \{z}, \{w}),\n");
+                buffer.append("\t(float4)("+x+", "+y+", "+z+", "+w+"),\n");
             }
             buffer.append("};\n\n");
             lookup_table = buffer.toString();

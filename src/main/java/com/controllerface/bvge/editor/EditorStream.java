@@ -42,7 +42,7 @@ public class EditorStream
                 while (!Thread.currentThread().isInterrupted())
                 {
                     var next_event = event_queue.take();
-                    var message = STR."event: \{ next_event.name }\r\ndata: \{ next_event.value }\r\n\r\n";
+                    var message = "event: " + next_event.name + "\r\ndata: " + next_event.value + "\r\n\r\n";
                     response_stream.write(message.getBytes(StandardCharsets.UTF_8));
                 }
             }

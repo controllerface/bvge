@@ -241,33 +241,33 @@ public class Window
         var int_buffer = MemoryUtil.memAllocInt(1);
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, int_buffer);
         int r = int_buffer.get(0);
-        System.out.println(STR."max texture size: \{r}");
+        System.out.println("max texture size: " + r);
 
         int_buffer.clear();
         glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, int_buffer);
         r = int_buffer.get(0);
-        System.out.println(STR."max texture layers: \{r}");
+        System.out.println("max texture layers: " + r);
 
         int_buffer.clear();
         glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, int_buffer);
         r = int_buffer.get(0);
-        System.out.println(STR."max vertex attributes: \{r}");
+        System.out.println("max vertex attributes: " + r);
 
         int_buffer.clear();
         glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, int_buffer);
         r = int_buffer.get(0);
-        System.out.println(STR."max vertex shader texture units: \{r}");
+        System.out.println("max vertex shader texture units: " + r);
 
         int_buffer.clear();
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, int_buffer);
         r = int_buffer.get(0);
-        System.out.println(STR."max fragment shader texture units: \{r}");
+        System.out.println("max fragment shader texture units: " +r);
 
         var int_buffer2 = MemoryUtil.memAllocInt(2);
         glGetIntegerv(GL_POINT_SIZE_RANGE, int_buffer2);
         int a = int_buffer2.get(0);
         int b = int_buffer2.get(1);
-        System.out.println(STR."point size range: \{a} - \{b}");
+        System.out.println("point size range: " +a+" - "+b);
 
 
         MemoryUtil.memFree(int_buffer);

@@ -508,7 +508,7 @@ public class PhysicsObjects
 
             if (next_hull != hull_id)
             {
-                throw new RuntimeException(STR."hull/bone alignment error: h=\{hull_id} b=\{next_hull}");
+                throw new RuntimeException("hull/bone alignment error: h=" + hull_id + " b=" + next_hull);
             }
             if (mesh_index == model.root_index())
             {

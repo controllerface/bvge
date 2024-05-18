@@ -57,7 +57,7 @@ public class StaticAsset
         var mimeType = mimeTypes.get(extension);
         if (mimeType == null)
         {
-            throw new RuntimeException(STR."Unknown extension: \{extension}");
+            throw new RuntimeException("Unknown extension: " + extension);
         }
         return mimeType;
     }

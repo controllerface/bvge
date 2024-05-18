@@ -29,7 +29,7 @@ public class UniformGrid
     {
         float x = (float)screen_width * 2.5f;
         float y = (float)screen_height * 2.5f;
-        System.out.println(STR."x:\{screen_width} y:\{screen_height}");
+        System.out.println("x:" + screen_width + " y:" + screen_height);
         perimeter_width = screen_width * .20f;
         perimeter_height = screen_height * .30f;
         inner_width = x;

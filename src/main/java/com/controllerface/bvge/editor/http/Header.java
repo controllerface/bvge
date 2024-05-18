@@ -5,6 +5,6 @@ public record Header(String name, String value)
     @Override
     public String toString()
     {
-        return STR."[\{name} : \{value}]";
+        return "[" + name + " : " + value + "]";
     }
 }

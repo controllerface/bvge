@@ -5,6 +5,6 @@ public record RequestLine(String method, String uri, String version)
     @Override
     public String toString()
     {
-        return STR."[\{method} \{uri} \{version}]";
+        return "[" + method + " " + uri + " " + version + "]";
     }
 }

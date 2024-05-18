@@ -279,7 +279,7 @@ public class EditorServer
         }
         catch (IOException e)
         {
-            throw new RuntimeException(STR."Error starting editor server. port: \{port}", e);
+            throw new RuntimeException("Error starting editor server. port: " + port, e);
         }
     }
 
@@ -294,7 +294,7 @@ public class EditorServer
         }
         catch (IOException e)
         {
-            throw new RuntimeException(STR."Error stopping editor server. port: \{port}", e);
+            throw new RuntimeException("Error stopping editor server. port: " + port, e);
         }
     }
 }
