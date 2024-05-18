@@ -14,20 +14,20 @@
 
 constant float transition_table[14][14] = 
 {
-	{0.0f,0.4f,0.4f,0.4f,0.1f,0.4f,0.4f,0.4f,0.4f,0.4f,0.4f,0.4f,0.1f,0.0f,},
-	{0.2f,0.0f,0.2f,0.2f,0.1f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.1f,0.0f,},
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
-	{0.2f,0.2f,0.2f,0.0f,0.1f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.1f,0.0f,},
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
-	{0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,0.5f,},
-	{0.2f,0.2f,0.2f,0.2f,0.1f,0.2f,0.0f,0.2f,0.2f,0.2f,0.2f,0.2f,0.1f,0.0f,},
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
-	{0.2f,0.2f,0.2f,0.2f,0.1f,0.2f,0.2f,0.2f,0.0f,0.2f,0.2f,0.2f,0.1f,0.0f,},
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
-	{0.2f,0.2f,0.2f,0.2f,0.1f,0.2f,0.2f,0.2f,0.2f,0.2f,0.0f,0.2f,0.1f,0.0f,},
-	{0.2f,0.2f,0.2f,0.2f,0.1f,0.2f,0.2f,0.2f,0.2f,0.2f,0.2f,0.0f,0.1f,0.0f,},
-	{0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,},
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,},
+	{0.0f, 0.4f, 0.4f, 0.4f, 0.1f, 0.4f, 0.4f, 0.4f, 0.4f, 0.4f, 0.4f, 0.4f, 0.1f, 0.0f},
+	{0.2f, 0.0f, 0.2f, 0.2f, 0.1f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.0f},
+	{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+	{0.2f, 0.2f, 0.2f, 0.0f, 0.1f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.0f},
+	{0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},
+	{0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f},
+	{0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.2f, 0.0f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.0f},
+	{0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},
+	{0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.2f, 0.2f, 0.2f, 0.0f, 0.2f, 0.2f, 0.2f, 0.1f, 0.0f},
+	{0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},
+	{0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.0f, 0.2f, 0.1f, 0.0f},
+	{0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.0f, 0.1f, 0.0f},
+	{0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},
+	{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}
 };
 
 typedef struct 
@@ -141,6 +141,13 @@ OutputState jump_start_state(InputState input)
 {
     OutputState output = init_output(JUMP_START);
     if (input.current_time > 0.15f) output.next_state = JUMPING;
+    if (output.next_state != JUMP_START)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        output.blend_time = transition_table[JUMP_START][output.next_state];
+    }   
     return output;
 }
 
@@ -223,6 +230,13 @@ OutputState land_soft_state(InputState input)
 {
     OutputState output = init_output(LAND_SOFT);
     if (input.current_time > 0.08f) output.next_state = IDLE;
+    if (output.next_state != LAND_SOFT)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        output.blend_time = transition_table[LAND_SOFT][output.next_state];
+    }    
     return output;
 }
 
@@ -230,6 +244,13 @@ OutputState land_hard_state(InputState input)
 {
     OutputState output = init_output(LAND_HARD);
     if (input.current_time > 0.22f) output.next_state = IDLE;
+    if (output.next_state != LAND_HARD)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        output.blend_time = transition_table[LAND_HARD][output.next_state];
+    }        
     return output;
 }
 
@@ -340,10 +361,9 @@ __kernel void handle_movement(__global float4 *armatures,
         case PUNCH:        state_result = punch_state(input);        break;
     }
 
+    // transition handling
+
     bool new_state = anim_index.x != state_result.next_state;
-    float threshold = 10.0f;
-    float2 vel = (armature.xy - armature.zw) / dt;
-    
     anim_index.x = state_result.next_state;
 
     current_time.y = state_result.blend 
@@ -358,6 +378,12 @@ __kernel void handle_movement(__global float4 *armatures,
         ? (float2)(state_result.blend_time, 0.0f)
         : current_blend;
 
+    current_time.x = new_state 
+        ? 0.0f 
+        : current_time.x;
+
+    // jumping
+
     accel.y = state_result.accel 
         ? state_result.jump_amount 
         : accel.y;
@@ -366,9 +392,10 @@ __kernel void handle_movement(__global float4 *armatures,
         ? state_result.next_budget
         : current_budget;
 
-    current_time.x = new_state 
-        ? 0.0f 
-        : current_time.x;
+    // motion state
+
+    float threshold = 10.0f;
+    float2 vel = (armature.xy - armature.zw) / dt;
 
     motion_state.x = (vel.y < -threshold) 
         ? motion_state.x + 1 
@@ -386,6 +413,8 @@ __kernel void handle_movement(__global float4 *armatures,
         ? 1000 
         : motion_state.y;
 
+    // acceleration
+
     accel.x = is_mv_l && !is_mv_r
         ? -current_linear_mag * move_mod
         : accel.x;
@@ -401,6 +430,8 @@ __kernel void handle_movement(__global float4 *armatures,
     accel.y = is_mv_d && is_wet
         ? -current_linear_mag
         : accel.y;
+
+    // set flags
 
     arm_flag = is_mv_l != is_mv_r 
         ? is_mv_l
