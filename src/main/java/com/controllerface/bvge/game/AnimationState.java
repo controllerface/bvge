@@ -14,5 +14,6 @@ public enum AnimationState
     LAND_SOFT,
     SWIM_UP,
     SWIM_DOWN,
+    PUNCH,
     UNKNOWN,
 }

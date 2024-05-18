@@ -10,6 +10,7 @@
 #define LAND_SOFT    9
 #define SWIM_UP      10
 #define SWIM_DOWN    11
+#define PUNCH        12
 
 typedef struct 
 {
@@ -18,6 +19,7 @@ typedef struct
     bool mv_jump;
     bool can_jump;
     bool is_wet;
+    bool is_click_1;
     int current_budget;
     short2 motion_state;
     float current_time;
@@ -47,6 +49,7 @@ OutputState idle_state(InputState input)
 {
     OutputState output = init_output(IDLE);
     if (input.is_mv_l || input.is_mv_r) output.next_state = WALKING;
+    if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = JUMP_START;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
@@ -57,7 +60,9 @@ OutputState idle_state(InputState input)
         output.next_anim_index = input.anim_index;
         float t = output.next_state == JUMP_START 
             ? 0.1f
-            : 0.4f;
+            : output.next_state == PUNCH 
+                ? 0.0f
+                : 0.4f;
         output.blend_time = t;
     }
     return output;
@@ -67,6 +72,7 @@ OutputState walking_state(InputState input)
 {
     OutputState output = init_output(WALKING);
     if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
+    if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = JUMP_START;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
@@ -77,7 +83,9 @@ OutputState walking_state(InputState input)
         output.next_anim_index = input.anim_index;
         float t = output.next_state == JUMP_START 
             ? 0.1f
-            : 0.2f;
+            : output.next_state == PUNCH 
+                ? 0.0f
+                : 0.2f;
         output.blend_time = t;
     }
     return output;
@@ -231,6 +239,20 @@ OutputState land_hard_state(InputState input)
     return output;
 }
 
+OutputState punch_state(InputState input)
+{
+    OutputState output = init_output(PUNCH);
+    if (input.current_time > .25f) output.next_state = IDLE;
+    if (output.next_state != PUNCH)
+    {
+        output.blend = true;
+        output.next_time = input.current_time;
+        output.next_anim_index = input.anim_index;
+        output.blend_time = 0.1;
+    }
+    return output;
+}
+
 __kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
                                  __global float *linear_mag,
@@ -276,14 +298,15 @@ __kernel void handle_movement(__global float4 *armatures,
     float2 current_time      = armature_animation_elapsed[current_index];
     float2 current_blend     = armature_animation_blend[current_index];
 
-    bool is_mv_l  = (current_flags & LEFT)  !=0;
-    bool is_mv_r  = (current_flags & RIGHT) !=0;
-    bool is_mv_u  = (current_flags & UP)    !=0;
-    bool is_mv_d  = (current_flags & DOWN)  !=0;
-    bool mv_jump  = (current_flags & JUMP)  !=0;
-    bool can_jump = (arm_flag & CAN_JUMP)   !=0;
-    bool is_wet   = (arm_flag & IS_WET)     !=0;
-
+    bool is_mv_l    = (current_flags & LEFT)   !=0;
+    bool is_mv_r    = (current_flags & RIGHT)  !=0;
+    bool is_mv_u    = (current_flags & UP)     !=0;
+    bool is_mv_d    = (current_flags & DOWN)   !=0;
+    bool is_click_1 = (current_flags & MOUSE1) !=0;
+    bool mv_jump    = (current_flags & JUMP)   !=0;
+    bool can_jump   = (arm_flag & CAN_JUMP)    !=0;
+    bool is_wet     = (arm_flag & IS_WET)      !=0;
+    
     float move_mod = is_wet 
         ? 0.5f 
         : 1.0f;
@@ -298,6 +321,7 @@ __kernel void handle_movement(__global float4 *armatures,
     input.mv_jump        = mv_jump;
     input.can_jump       = can_jump;
     input.is_wet         = is_wet;
+    input.is_click_1     = is_click_1;
     input.current_budget = current_budget;
     input.motion_state   = motion_state;
     input.current_time   = current_time.x;
@@ -319,6 +343,7 @@ __kernel void handle_movement(__global float4 *armatures,
         case SWIM_DOWN:    state_result = swim_down_state(input);    break;
         case LAND_SOFT:    state_result = land_soft_state(input);    break;
         case LAND_HARD:    state_result = land_hard_state(input);    break;
+        case PUNCH:        state_result = punch_state(input);        break;
     }
 
     bool new_state = anim_index.x != state_result.next_state;

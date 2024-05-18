@@ -86,7 +86,7 @@ public class PhysicsSimulation extends GameSystem
 
     //#region Buffers & Counters
 
-    private final long counts_buf_size;
+    private final long grid_buffer_size;
     private final long atomic_counter_ptr;
     private final long counts_data_ptr;
     private final long offsets_data_ptr;
@@ -206,11 +206,11 @@ public class PhysicsSimulation extends GameSystem
         super(ecs);
         this.uniform_grid = uniform_grid;
 
-        counts_buf_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
+        grid_buffer_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
 
         atomic_counter_ptr = GPGPU.cl_new_pinned_int();
-        counts_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
-        offsets_data_ptr = GPGPU.cl_new_buffer(counts_buf_size);
+        counts_data_ptr = GPGPU.cl_new_buffer(grid_buffer_size);
+        offsets_data_ptr = GPGPU.cl_new_buffer(grid_buffer_size);
 
         point_reaction_counts = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 500_000L);
         point_reaction_offsets = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 500_000L);
@@ -578,6 +578,14 @@ public class PhysicsSimulation extends GameSystem
             {
                 flags = flags | Constants.ControlFlags.JUMP.bits;
             }
+            if (controlPoints.is_primary())
+            {
+                flags = flags | Constants.ControlFlags.MOUSE1.bits;
+            }
+            if (controlPoints.is_secondary())
+            {
+                flags = flags | Constants.ControlFlags.MOUSE2.bits;
+            }
 
             set_control_points_k
                 .set_arg(SetControlPoints_k.Args.target, target_count)
@@ -686,7 +694,7 @@ public class PhysicsSimulation extends GameSystem
         }
 
         key_bank.ensure_capacity(uniform_grid.get_key_bank_size());
-        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, counts_data_ptr, counts_buf_size);
+        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, counts_data_ptr, grid_buffer_size);
         generate_keys_k
             .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
             .call(arg_long(GPGPU.core_memory.next_hull()));
@@ -701,7 +709,7 @@ public class PhysicsSimulation extends GameSystem
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
         key_map.ensure_capacity(uniform_grid.getKey_map_size());
-        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, counts_data_ptr, counts_buf_size);
+        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, counts_data_ptr, grid_buffer_size);
         build_key_map_k.call(arg_long(GPGPU.core_memory.next_hull()));
         if (Editor.ACTIVE)
         {
@@ -1074,10 +1082,10 @@ public class PhysicsSimulation extends GameSystem
         // key bank. Hull bounds tables are updated with the correct offsets and counts as needed.
         generate_keys();
 
-        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, offsets_data_ptr, counts_buf_size);
-
         // After keys are generated, the next step is to calculate the space needed for the key map. This is
-        // a similar process to calculating the bank offsets.
+        // a similar process to calculating the bank offsets. The buffer is zeroed before use to clear out
+        // data that is present after the previous tick.
+        GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, offsets_data_ptr, grid_buffer_size);
         GPGPU.scan_int_out(counts_data_ptr, offsets_data_ptr, uniform_grid.directory_length);
 
         // Now, the keymap itself is built. This is the structure that provides the ability to query

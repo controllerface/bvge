@@ -676,6 +676,14 @@ public class ModelRegistry
         {
             return AnimationState.SWIM_UP;
         }
+        else if (animation_name.contains("swim_down"))
+        {
+            return AnimationState.SWIM_DOWN;
+        }
+        else if (animation_name.contains("punch"))
+        {
+            return AnimationState.PUNCH;
+        }
         else return AnimationState.UNKNOWN;
     }
 
