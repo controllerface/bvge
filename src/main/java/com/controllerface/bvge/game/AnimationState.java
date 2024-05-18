@@ -1,5 +1,9 @@
 package com.controllerface.bvge.game;
 
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+
 public enum AnimationState
 {
     IDLE,

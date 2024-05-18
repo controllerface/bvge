@@ -58,11 +58,9 @@ OutputState idle_state(InputState input)
         output.blend = true;
         output.next_time = input.current_time;
         output.next_anim_index = input.anim_index;
-        float t = output.next_state == JUMP_START 
+        float t = output.next_state == JUMP_START || output.next_state == PUNCH 
             ? 0.1f
-            : output.next_state == PUNCH 
-                ? 0.0f
-                : 0.4f;
+            : 0.4f;
         output.blend_time = t;
     }
     return output;
@@ -354,7 +352,7 @@ __kernel void handle_movement(__global float4 *armatures,
 
     current_time.y = state_result.blend 
         ? state_result.next_time 
-        :current_time.y;
+        : current_time.y;
 
     anim_index.y = state_result.blend 
         ? state_result.next_anim_index 
@@ -416,12 +414,12 @@ __kernel void handle_movement(__global float4 *armatures,
                 : arm_flag
         : arm_flag; 
 
+    armature_accel[current_index]             = accel;
+    armature_flags[current_index]             = arm_flag;
+    tick_budgets[current_control_set]         = current_budget;
+    armature_motion_states[current_index]     = motion_state;
+    armature_animation_blend[current_index]   = current_blend;
     armature_animation_elapsed[current_index] = current_time;
-    armature_animation_blend[current_index] = current_blend;
-    armature_motion_states[current_index] = motion_state;
-    tick_budgets[current_control_set] = current_budget;
-    armature_accel[current_index] = accel;
-    armature_flags[current_index] = arm_flag;
     armature_animation_indices[current_index] = anim_index;
 }
 
