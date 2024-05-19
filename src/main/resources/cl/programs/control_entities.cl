@@ -3,6 +3,7 @@ typedef struct
     bool is_mv_l;
     bool is_mv_r;
     bool mv_jump;
+    bool mv_run;
     bool can_jump;
     bool is_wet;
     bool is_click_1;
@@ -34,7 +35,7 @@ OutputState init_output(int current_state)
 OutputState idle_state(InputState input)
 {
     OutputState output = init_output(IDLE);
-    if (input.is_mv_l || input.is_mv_r) output.next_state = WALKING;
+    if (input.is_mv_l || input.is_mv_r) output.next_state = input.mv_run ? RUNNING : WALKING;
     if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
@@ -45,6 +46,19 @@ OutputState idle_state(InputState input)
 OutputState walking_state(InputState input)
 {
     OutputState output = init_output(WALKING);
+    if (input.mv_run) output.next_state = RUNNING;
+    if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
+    if (input.is_click_1) output.next_state = PUNCH;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
+    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    return output;
+}
+
+OutputState running_state(InputState input)
+{
+    OutputState output = init_output(RUNNING);
+    if (!input.mv_run) output.next_state = WALKING;
     if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
     if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
@@ -203,12 +217,15 @@ __kernel void handle_movement(__global float4 *armatures,
     bool is_mv_d    = (current_flags & DOWN)   !=0;
     bool is_click_1 = (current_flags & MOUSE1) !=0;
     bool mv_jump    = (current_flags & JUMP)   !=0;
+    bool mv_run     = (current_flags & RUN)    !=0;
     bool can_jump   = (arm_flag & CAN_JUMP)    !=0;
     bool is_wet     = (arm_flag & IS_WET)      !=0;
     
     float move_mod = is_wet 
         ? 0.5f 
-        : 1.0f;
+        : mv_run 
+            ? 2.0f
+            : 1.0f;
 
     current_budget = can_jump && !mv_jump
         ? 10 
@@ -218,6 +235,7 @@ __kernel void handle_movement(__global float4 *armatures,
     input.is_mv_l        = is_mv_l;
     input.is_mv_r        = is_mv_r;
     input.mv_jump        = mv_jump;
+    input.mv_run         = mv_run;
     input.can_jump       = can_jump;
     input.is_wet         = is_wet;
     input.is_click_1     = is_click_1;
@@ -232,7 +250,7 @@ __kernel void handle_movement(__global float4 *armatures,
     {
         case IDLE:         state_result = idle_state(input);         break;
         case WALKING:      state_result = walking_state(input);      break;
-        case RUNNING:      /* todo: implement running */             break;
+        case RUNNING:      state_result = running_state(input);      break;
         case FALLING_SLOW: state_result = falling_slow_state(input); break;
         case FALLING_FAST: state_result = falling_fast_state(input); break;
         case RECOIL:       state_result = recoil_state(input);       break;

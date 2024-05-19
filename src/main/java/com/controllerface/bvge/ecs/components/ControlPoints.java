@@ -26,6 +26,7 @@ public class ControlPoints implements GameComponent
                 case MOVE_LEFT       -> GLFW_KEY_A;
                 case MOVE_RIGHT      -> GLFW_KEY_D;
                 case JUMP            -> GLFW_KEY_SPACE;
+                case RUN             -> GLFW_KEY_LEFT_SHIFT;
                 case MOUSE_PRIMARY   -> GLFW_MOUSE_BUTTON_1;
                 case MOUSE_SECONDARY -> GLFW_MOUSE_BUTTON_2;
                 case MOUSE_MIDDLE    -> GLFW_MOUSE_BUTTON_3;

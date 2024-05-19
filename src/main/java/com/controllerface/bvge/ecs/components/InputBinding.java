@@ -8,6 +8,7 @@ public enum InputBinding
     MOVE_RIGHT(),
 
     JUMP(),
+    RUN(),
 
     MOUSE_PRIMARY(true),
     MOUSE_SECONDARY(true),

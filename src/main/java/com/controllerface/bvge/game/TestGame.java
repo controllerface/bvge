@@ -333,18 +333,9 @@ public class TestGame extends GameMode
 //        genSquares(1,  25f, 25f, 420, 200);
 //        genTestFigureNPC(1f, 100, 50);
 
-        //genCircles(150, 6f, 5f, 0, 100);
-
         genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
         genSquaresRando(40,  32f, 32f, 0.8f,-50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
         genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
-        //genBlocks(40,  32f, 32f, 2500, 3800, Solid.QUARTZITE, Solid.QUARTZ_DIORITE, Solid.QUARTZ_MONZONITE);
-
-        //genSquaresRando(50,  25f, 25f, 0.8f, 2500, 200);
-        //genSquares(1,  25f, 25f, 420, 200);
-
-        //genCrates2(20, 5f, 0.025f, 100, 100);
-        //genTriangles(130,  6f, 5f, -120, 200);
         genTriangles(50,  24f, 24f, 2500, 3800);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);

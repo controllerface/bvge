@@ -572,6 +572,7 @@ public class PhysicsSimulation extends GameSystem
                         case MOVE_LEFT -> Constants.ControlFlags.LEFT.bits;
                         case MOVE_RIGHT -> Constants.ControlFlags.RIGHT.bits;
                         case JUMP -> Constants.ControlFlags.JUMP.bits;
+                        case RUN -> Constants.ControlFlags.RUN.bits;
                         case MOUSE_PRIMARY -> Constants.ControlFlags.MOUSE1.bits;
                         case MOUSE_SECONDARY -> Constants.ControlFlags.MOUSE2.bits;
                         case MOUSE_MIDDLE -> 0;

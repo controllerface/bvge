@@ -133,8 +133,23 @@ public class AnimationSettings
                 case FALLING_FAST, FALLING_SLOW -> 0.5F;
             };
 
+            case RUNNING -> switch (to)
+            {
+                case RUNNING, UNKNOWN -> 0.0f;
+                case LAND_HARD,
+                     FALLING_SLOW,
+                     LAND_SOFT,
+                     SWIM_UP,
+                     SWIM_DOWN,
+                     FALLING_FAST,
+                     JUMPING,
+                     IN_AIR -> 0.2f;
+                case IDLE,
+                     WALKING -> 0.4f;
+                case PUNCH, RECOIL -> 0.1f;
+            };
+
             case JUMPING -> 0.5f;
-            case RUNNING -> 0.0f; // todo: implement this
             case RECOIL, LAND_HARD, LAND_SOFT -> 0.05f;
             case UNKNOWN -> 0.0f;
         };
