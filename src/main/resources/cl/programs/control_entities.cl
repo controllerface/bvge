@@ -147,7 +147,8 @@ OutputState land_hard_state(InputState input)
 OutputState punch_state(InputState input)
 {
     OutputState output = init_output(PUNCH);
-    if (!input.is_click_1) output.next_state = IDLE;
+    if (!input.is_click_1) output.next_state = (input.is_mv_l || input.is_mv_r) ? WALKING : IDLE;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
     return output;
 }
 
