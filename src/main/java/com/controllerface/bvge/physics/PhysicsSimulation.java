@@ -558,33 +558,28 @@ public class PhysicsSimulation extends GameSystem
             Objects.requireNonNull(force);
 
             int flags = 0;
-            if (controlPoints.is_moving_left())
+
+            var inputStates = controlPoints.input_states();
+            for (var binding : InputBinding.values())
             {
-                flags = flags | Constants.ControlFlags.LEFT.bits;
-            }
-            if (controlPoints.is_moving_right())
-            {
-                flags = flags | Constants.ControlFlags.RIGHT.bits;
-            }
-            if (controlPoints.is_moving_up())
-            {
-                flags = flags | Constants.ControlFlags.UP.bits;
-            }
-            if (controlPoints.is_moving_down())
-            {
-                flags = flags | Constants.ControlFlags.DOWN.bits;
-            }
-            if (controlPoints.is_space_bar_down())
-            {
-                flags = flags | Constants.ControlFlags.JUMP.bits;
-            }
-            if (controlPoints.is_primary())
-            {
-                flags = flags | Constants.ControlFlags.MOUSE1.bits;
-            }
-            if (controlPoints.is_secondary())
-            {
-                flags = flags | Constants.ControlFlags.MOUSE2.bits;
+                var on = inputStates.get(binding);
+                if (on)
+                {
+                    int flag = switch (binding)
+                    {
+                        case MOVE_UP -> Constants.ControlFlags.UP.bits;
+                        case MOVE_DOWN -> Constants.ControlFlags.DOWN.bits;
+                        case MOVE_LEFT -> Constants.ControlFlags.LEFT.bits;
+                        case MOVE_RIGHT -> Constants.ControlFlags.RIGHT.bits;
+                        case JUMP -> Constants.ControlFlags.JUMP.bits;
+                        case MOUSE_PRIMARY -> Constants.ControlFlags.MOUSE1.bits;
+                        case MOUSE_SECONDARY -> Constants.ControlFlags.MOUSE2.bits;
+                        case MOUSE_MIDDLE -> 0;
+                        case MOUSE_BACK -> 0;
+                        case MOUSE_FORWARD -> 0;
+                    };
+                    flags |= flag;
+                }
             }
 
             set_control_points_k

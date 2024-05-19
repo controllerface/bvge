@@ -23,6 +23,7 @@ public enum Liquid
     public final Vector4f color;
     public final byte liquid_number;
     public final Compound[] compounds;
+    private static String lookup_table = "";
 
     Liquid(Vector4f color, Compound[] compounds)
     {
@@ -50,8 +51,6 @@ public enum Liquid
     {
         this(color, new Compound[]{compound_1, compound_2, compound_3, compound_4});
     }
-
-    private static String lookup_table = "";
 
     /**
      * Generates an Open CL C lookup table for the colors of all defined liquids. The generated table will look

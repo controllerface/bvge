@@ -13,8 +13,16 @@ import static org.lwjgl.glfw.GLFW.*;
 public class KBMInput extends GameSystem
 {
     private final boolean[] key_down = new boolean[350];
+    private final boolean[] mouse_down = new boolean[9];
+    private int mouse_count = 0;
+    private boolean isDragging;
+    private double xPos;
+    private double yPos;
+    private double lastX;
+    private double lastY;
 
     double scrollX, scrollY;
+
     public KBMInput(ECS ecs)
     {
         super(ecs);
@@ -30,19 +38,7 @@ public class KBMInput extends GameSystem
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
             assert controlPoints != null : "Component was null";
             if (controlPoints.is_disabled()) continue;
-
-            controlPoints.set_moving_up(key_down[GLFW_KEY_W]);
-            controlPoints.set_moving_Left(key_down[GLFW_KEY_A]);
-            controlPoints.set_moving_down(key_down[GLFW_KEY_S]);
-            controlPoints.set_moving_right(key_down[GLFW_KEY_D]);
-            controlPoints.set_rot_right(key_down[GLFW_KEY_E]);
-            controlPoints.set_rotating_Left(key_down[GLFW_KEY_Q]);
-            controlPoints.set_space_bar(key_down[GLFW_KEY_SPACE]);
-            controlPoints.set_primary(mouseButtonsPressed[GLFW_MOUSE_BUTTON_1]);
-            controlPoints.set_secondary(mouseButtonsPressed[GLFW_MOUSE_BUTTON_2]);
-            controlPoints.set_middle(mouseButtonsPressed[GLFW_MOUSE_BUTTON_3]);
-            controlPoints.set_back(mouseButtonsPressed[GLFW_MOUSE_BUTTON_4]);
-            controlPoints.set_forward(mouseButtonsPressed[GLFW_MOUSE_BUTTON_5]);
+            controlPoints.update_input_states(key_down, mouse_down);
             controlPoints.get_screen_target().set(xPos, yPos);
         }
 
@@ -96,14 +92,6 @@ public class KBMInput extends GameSystem
         }
     }
 
-    private int mouseButtonsDown = 0;
-    private boolean[] mouseButtonsPressed = new boolean[9];
-    private boolean isDragging;
-    private double xPos;
-    private double yPos;
-    private double lastX;
-    private double lastY;
-
 
     public void mouseScrollCallback(long window, double xOffset, double yOffset)
     {
@@ -117,20 +105,20 @@ public class KBMInput extends GameSystem
     {
         if (action == GLFW_PRESS)
         {
-            mouseButtonsDown++;
+            mouse_count++;
 
-            if (button < mouseButtonsPressed.length)
+            if (button < mouse_down.length)
             {
-                mouseButtonsPressed[button] = true;
+                mouse_down[button] = true;
             }
         }
         else if (action == GLFW_RELEASE)
         {
-            mouseButtonsDown--;
+            mouse_count--;
 
-            if (button < mouseButtonsPressed.length)
+            if (button < mouse_down.length)
             {
-                mouseButtonsPressed[button] = false;
+                mouse_down[button] = false;
                 isDragging = false;
             }
         }
@@ -138,7 +126,7 @@ public class KBMInput extends GameSystem
 
     public void mousePosCallback(long window, double xpos, double ypos)
     {
-        if (mouseButtonsDown > 0)
+        if (mouse_count > 0)
         {
             isDragging = true;
         }

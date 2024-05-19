@@ -125,13 +125,14 @@ public class AnimationSettings
                 case PUNCH, RECOIL -> 0.1f;
             };
 
-            case PUNCH ->  switch (to)//0.1f;
+            case PUNCH -> switch (to)
             {
                 case PUNCH, UNKNOWN -> 0.0F;
                 case IDLE, WALKING, JUMPING -> 0.3F;
                 case RUNNING, RECOIL, IN_AIR, LAND_HARD, LAND_SOFT, SWIM_UP, SWIM_DOWN -> 0.2F;
                 case FALLING_FAST, FALLING_SLOW -> 0.5F;
             };
+
             case JUMPING -> 0.5f;
             case RUNNING -> 0.0f; // todo: implement this
             case RECOIL, LAND_HARD, LAND_SOFT -> 0.05f;
@@ -154,6 +155,23 @@ public class AnimationSettings
         return m;
     }
 
+    /**
+     * Generates an Open CL C lookup table for the transition times of all defined animations. The generated table will look
+     * similar to this example at runtime:
+     *
+     * constant float transition_table[14][14] =
+     * {
+     *   {0.2f, ... , 0.05f},               // transitions from anim 0, to 0 through n
+     *    // ... other timings go here ...
+     *   {0.1f, ... , 0.4f},                // transitions from anim n, to 0 through n
+     * };
+     *
+     * Each ordinal of the animation state enum is mapped such that the animation being transitioned from is mapped by ordinal
+     * to the first dimension of the array. Each animation being transitioned into is mapped by ordinal to the second dimension
+     * of the array. This means the array grows in size exponentially with the number of animation states, as all states must
+     * have some defined value (even if it is 0.0f) for a transition time from that state to all others.
+     * @return a String containing the generated lookup table.
+     */
     public static String cl_lookup_table()
     {
         if (lookup_table.isEmpty())
@@ -162,7 +180,7 @@ public class AnimationSettings
             int length = values.length;
             var buffer = new StringBuilder();
 
-            buffer.append("constant float transition_table[").append(length).append("][").append(length).append("] = \n{\n");
+            buffer.append(String.format("constant float transition_table[%d][%d] = \n{\n", length, length));
             for (var base_state : values)
             {
                 buffer.append("\t{");
