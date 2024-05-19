@@ -103,6 +103,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int *hull_armature_ids,
                                    __global int *hull_flags,
                                    __global int *hull_uv_offsets,
+                                   __global int *hull_integrity,
                                    __global int *armature_flags,
                                    __global int2 *mesh_vertex_tables,
                                    __global int2 *mesh_face_tables,
@@ -141,6 +142,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     int2 mesh_face_table = mesh_face_tables[mesh_id];
     int armature_id = hull_armature_ids[hull_id];
     int uv_offset = hull_uv_offsets[hull_id];
+    int integrity = hull_integrity[hull_id];
     int a_flags = armature_flags[armature_id];
 
     bool face_l = (a_flags & FACE_LEFT) !=0;
@@ -188,9 +190,12 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
 
         float xxx = is_static ? col - 0.07f : col;
+        float rrr = integrity > 100 
+            ? 0.0f 
+            : min((100 - integrity) / 100.0f, .5f);
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
-        color_buffer[ref_offset] = (float4)(xxx, xxx, xxx, 1.0f);
+        color_buffer[ref_offset] = (float4)(xxx + rrr, xxx, xxx, 1.0f);
     }
 
     int start_face = mesh_face_table.x;

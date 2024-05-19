@@ -214,6 +214,7 @@ __kernel void create_hull(__global float4 *hulls,
                           __global int *hull_flags,
                           __global int *hull_mesh_ids,
                           __global int *hull_uv_offsets,
+                          __global int *hull_integrity,
                           int target,
                           float4 new_hull,
                           float2 new_hull_scale,
@@ -226,7 +227,8 @@ __kernel void create_hull(__global float4 *hulls,
                           int new_armature_id,
                           int new_flags,
                           int new_hull_mesh_id,
-                          int new_hull_uv_offset)
+                          int new_hull_uv_offset,
+                          int new_hull_integrity)
 {
     hulls[target] = new_hull; 
     hull_scales[target] = new_hull_scale; 
@@ -240,6 +242,7 @@ __kernel void create_hull(__global float4 *hulls,
     hull_flags[target] = new_flags; 
     hull_mesh_ids[target] = new_hull_mesh_id;
     hull_uv_offsets[target] = new_hull_uv_offset;
+    hull_integrity[target] = new_hull_integrity;
 }
 
 // read functions

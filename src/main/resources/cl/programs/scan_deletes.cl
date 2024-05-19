@@ -558,6 +558,7 @@ __kernel void compact_hulls(__global int *hull_shift,
                             __global float2 *hull_rotations,
                             __global float *hull_frictions,
                             __global float *hull_restitutions,
+                            __global int *hull_integrity,
                             __global int2 *bone_tables,
                             __global int *armature_ids,
                             __global int *hull_flags,
@@ -574,6 +575,7 @@ __kernel void compact_hulls(__global int *hull_shift,
     float2 rotation = hull_rotations[current_hull];
     float friction = hull_frictions[current_hull];
     float restitution = hull_restitutions[current_hull];
+    int integrity = hull_integrity[current_hull];
     int2 bone_table = bone_tables[current_hull];
     int armature_id = armature_ids[current_hull];
     int hull_flag = hull_flags[current_hull];
@@ -594,6 +596,7 @@ __kernel void compact_hulls(__global int *hull_shift,
         hull_rotations[new_hull_index] = rotation;
         hull_frictions[new_hull_index] = friction;
         hull_restitutions[new_hull_index] = restitution;
+        hull_integrity[new_hull_index] = integrity;
         bone_tables[new_hull_index] = bone_table;
         armature_ids[new_hull_index] = armature_id;
         hull_flags[new_hull_index] = hull_flag;

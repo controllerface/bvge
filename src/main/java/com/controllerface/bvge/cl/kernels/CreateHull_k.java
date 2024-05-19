@@ -18,6 +18,7 @@ public class CreateHull_k extends GPUKernel
         hull_flags,
         hull_mesh_ids,
         hull_uv_offsets,
+        hull_integrity,
         target,
         new_hull,
         new_hull_scale,
@@ -31,6 +32,7 @@ public class CreateHull_k extends GPUKernel
         new_flags,
         new_hull_mesh_id,
         new_hull_uv_offset,
+        new_hull_integrity
     }
 
     public CreateHull_k(long command_queue_ptr, long kernel_ptr)

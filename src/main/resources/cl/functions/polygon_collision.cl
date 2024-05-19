@@ -6,6 +6,7 @@ inline void polygon_collision(int hull_1_id,
                               __global float4 *hulls,
                               __global float *hull_frictions,
                               __global float *hull_restitutions,
+                              __global int *hull_integrity,
                               __global int *hull_armature_ids,
                               __global int *hull_flags,
                               __global int2 *hull_point_tables,
@@ -39,7 +40,6 @@ inline void polygon_collision(int hull_1_id,
     int hull_2_flags = hull_flags[hull_2_id];
     bool b1_is_block = (hull_1_flags & IS_BLOCK) !=0;
     bool b2_is_block = (hull_2_flags & IS_BLOCK) !=0;
-
 
     float min_distance = FLT_MAX;
 
@@ -207,28 +207,12 @@ inline void polygon_collision(int hull_1_id,
 
     bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
     bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
-    // bool block_vert = (vert_hull_flags & IS_BLOCK) !=0;
-    // bool block_edge = (edge_hull_flags & IS_BLOCK) !=0;
 
-    // // if (block_vert || block_edge)
-    // // {
-    // //     printf("debug: %d %d", block_vert, block_edge);
-    // // }
-
-    // vert_hull_flags = (block_vert && block_edge) 
-    //     ? vert_hull_flags | TOUCH_ALIKE 
-    //     : vert_hull_flags;
-
-    // edge_hull_flags = (block_vert && block_edge) 
-    //     ? edge_hull_flags | TOUCH_ALIKE 
-    //     : edge_hull_flags;
-
-
-    hull_flags[vert_hull_id] = vert_hull_flags;
-    hull_flags[edge_hull_id] = edge_hull_flags;
-
+    bool hand_vert = (vert_hull_flags & IS_HAND) !=0;
+    bool hand_edge = (edge_hull_flags & IS_HAND) !=0;
 
     bool any_static = (static_vert || static_edge);
+    bool any_hand = (hand_vert || hand_edge);
 
     vert_magnitude = any_static 
         ? static_vert ? 0.0f : 1.0f
@@ -237,6 +221,17 @@ inline void polygon_collision(int hull_1_id,
     edge_magnitude = any_static 
         ? static_edge ? 0.0f : 1.0f
         : edge_magnitude;
+
+    int vdmg = any_hand 
+        ? hand_vert ? 0 : 1 
+        : 0;
+
+    int edmg = any_hand 
+        ? hand_edge ? 0 : 1 
+        : 0;
+
+    atomic_sub(&hull_integrity[vert_hull_id], vdmg);
+    atomic_sub(&hull_integrity[edge_hull_id], edmg);
 
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];

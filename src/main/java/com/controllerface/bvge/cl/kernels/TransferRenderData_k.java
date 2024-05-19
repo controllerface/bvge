@@ -11,6 +11,7 @@ public class TransferRenderData_k extends GPUKernel
         hull_armature_ids,
         hull_flags,
         hull_uv_offsets,
+        hull_integrity,
         armature_flags,
         mesh_vertex_tables,
         mesh_face_tables,

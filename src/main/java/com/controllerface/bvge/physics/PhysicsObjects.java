@@ -313,6 +313,12 @@ public class PhysicsObjects
             int local_hull_flags = 0;
             int next_hull = GPGPU.core_memory.next_hull();
             var hull_mesh = meshes[mesh_index];
+
+            if (hull_mesh.name().toLowerCase().contains("hand"))
+            {
+                local_hull_flags |= HullFlags.IS_HAND._int;
+            }
+
             if (hull_mesh.name().toLowerCase().contains("foot"))
             {
                 local_hull_flags |= HullFlags.IS_FOOT._int;

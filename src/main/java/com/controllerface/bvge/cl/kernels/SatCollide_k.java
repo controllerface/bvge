@@ -11,6 +11,7 @@ public class SatCollide_k extends GPUKernel
         hull_scales,
         hull_frictions,
         hull_restitutions,
+        hull_integrity,
         hull_point_tables,
         hull_edge_tables,
         hull_armature_ids,
