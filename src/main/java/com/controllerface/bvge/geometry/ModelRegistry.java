@@ -531,9 +531,8 @@ public class ModelRegistry
         for (int animation_index = 0; animation_index < raw_animation_count; animation_index++)
         {
             var raw_animation = AIAnimation.create(anim_buffer.get(animation_index));
-            var animation_name = raw_animation.mName().dataString().toLowerCase();
-
-            var animation_state = getAnimation_state(animation_name);
+            var animation_name = raw_animation.mName().dataString();
+            var animation_state = AnimationState.fuzzy_match(animation_name);
             anim_buf.put(animation_state, raw_animation);
         }
 
@@ -645,63 +644,6 @@ public class ModelRegistry
             }
             GPGPU.core_memory.set_bone_channel_table(bind_pose_id, new int[]{ c_start, c_end });
         });
-    }
-
-    private static AnimationState getAnimation_state(String animation_name)
-    {
-        if (animation_name.contains("idle"))
-        {
-            return AnimationState.IDLE;
-        }
-        else if (animation_name.contains("walk"))
-        {
-            return AnimationState.WALKING;
-        }
-        else if (animation_name.contains("run"))
-        {
-            return AnimationState.RUNNING;
-        }
-        else if (animation_name.contains("recoil"))
-        {
-            return AnimationState.JUMP_START;
-        }
-        else if (animation_name.contains("jump"))
-        {
-            return AnimationState.JUMPING;
-        }
-        else if (animation_name.contains("inair"))
-        {
-            return AnimationState.IN_AIR;
-        }
-        else if (animation_name.contains("fall_fast"))
-        {
-            return AnimationState.FALLING_FAST;
-        }
-        else if (animation_name.contains("fall_slow"))
-        {
-            return AnimationState.FALLING_SLOW;
-        }
-        else if (animation_name.contains("land_hard"))
-        {
-            return AnimationState.LAND_HARD;
-        }
-        else if (animation_name.contains("land_soft"))
-        {
-            return AnimationState.LAND_SOFT;
-        }
-        else if (animation_name.contains("swim_up"))
-        {
-            return AnimationState.SWIM_UP;
-        }
-        else if (animation_name.contains("swim_down"))
-        {
-            return AnimationState.SWIM_DOWN;
-        }
-        else if (animation_name.contains("punch"))
-        {
-            return AnimationState.PUNCH;
-        }
-        else return AnimationState.UNKNOWN;
     }
 
     private static void load_textures(AIScene aiScene, List<Texture> textures)

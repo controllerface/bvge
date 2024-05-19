@@ -26,7 +26,7 @@ public class AnimationSettings
                      JUMPING,
                      RUNNING,
                      IN_AIR -> 0.4f;
-                case PUNCH, JUMP_START -> 0.1f;
+                case PUNCH, RECOIL -> 0.1f;
             };
 
             case WALKING -> switch (to)
@@ -42,7 +42,7 @@ public class AnimationSettings
                      JUMPING,
                      RUNNING,
                      IN_AIR -> 0.2f;
-                case PUNCH, JUMP_START -> 0.1f;
+                case PUNCH, RECOIL -> 0.1f;
             };
 
             case FALLING_FAST -> switch (to)
@@ -58,7 +58,7 @@ public class AnimationSettings
                      JUMPING,
                      RUNNING,
                      IN_AIR -> 0.2f;
-                case PUNCH, JUMP_START -> 0.1f;
+                case PUNCH, RECOIL -> 0.1f;
             };
 
             case IN_AIR -> switch (to)
@@ -74,7 +74,7 @@ public class AnimationSettings
                      JUMPING,
                      RUNNING,
                      LAND_HARD -> 0.2f;
-                case PUNCH, JUMP_START -> 0.1f;
+                case PUNCH, RECOIL -> 0.1f;
             };
 
             case FALLING_SLOW -> switch (to)
@@ -90,7 +90,7 @@ public class AnimationSettings
                      JUMPING,
                      RUNNING,
                      IN_AIR -> 0.2f;
-                case PUNCH, JUMP_START -> 0.1f;
+                case PUNCH, RECOIL -> 0.1f;
             };
 
             case SWIM_UP -> switch (to)
@@ -106,7 +106,7 @@ public class AnimationSettings
                      JUMPING,
                      RUNNING,
                      IN_AIR -> 0.2f;
-                case PUNCH, JUMP_START -> 0.1f;
+                case PUNCH, RECOIL -> 0.1f;
             };
 
             case SWIM_DOWN -> switch (to)
@@ -122,13 +122,13 @@ public class AnimationSettings
                      JUMPING,
                      RUNNING,
                      IN_AIR -> 0.2f;
-                case PUNCH, JUMP_START -> 0.1f;
+                case PUNCH, RECOIL -> 0.1f;
             };
 
             case PUNCH -> 0.1f;
             case JUMPING -> 0.5f;
             case RUNNING -> 0.0f; // todo: implement this
-            case JUMP_START, LAND_HARD, LAND_SOFT -> 0.1f;
+            case RECOIL, LAND_HARD, LAND_SOFT -> 0.1f;
             case UNKNOWN -> 0.0f;
         };
     }
@@ -147,8 +147,6 @@ public class AnimationSettings
         }
         return m;
     }
-
-
 
     public static String cl_lookup_table()
     {
@@ -183,6 +181,4 @@ public class AnimationSettings
         }
         return lookup_table;
     }
-
-
 }

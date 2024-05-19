@@ -1,35 +1,3 @@
-#define IDLE         0
-#define WALKING      1
-#define RUNNING      2
-#define FALLING_FAST 3
-#define JUMP_START   4
-#define JUMPING      5
-#define IN_AIR       6
-#define LAND_HARD    7
-#define FALLING_SLOW 8
-#define LAND_SOFT    9
-#define SWIM_UP      10
-#define SWIM_DOWN    11
-#define PUNCH        12
-
-constant float transition_table[14][14] = 
-{
-	{0.0f, 0.4f, 0.4f, 0.4f, 0.1f, 0.4f, 0.4f, 0.4f, 0.4f, 0.4f, 0.4f, 0.4f, 0.1f, 0.0f},
-	{0.2f, 0.0f, 0.2f, 0.2f, 0.1f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.0f},
-	{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
-	{0.2f, 0.2f, 0.2f, 0.0f, 0.1f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.0f},
-	{0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},
-	{0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f},
-	{0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.2f, 0.0f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.0f},
-	{0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},
-	{0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.2f, 0.2f, 0.2f, 0.0f, 0.2f, 0.2f, 0.2f, 0.1f, 0.0f},
-	{0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},
-	{0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.0f, 0.2f, 0.1f, 0.0f},
-	{0.2f, 0.2f, 0.2f, 0.2f, 0.1f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.2f, 0.0f, 0.1f, 0.0f},
-	{0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f, 0.1f},
-	{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}
-};
-
 typedef struct 
 {
     bool is_mv_l;
@@ -68,16 +36,9 @@ OutputState idle_state(InputState input)
     OutputState output = init_output(IDLE);
     if (input.is_mv_l || input.is_mv_r) output.next_state = WALKING;
     if (input.is_click_1) output.next_state = PUNCH;
-    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = JUMP_START;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != IDLE)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[IDLE][output.next_state];
-    }
     return output;
 }
 
@@ -86,17 +47,9 @@ OutputState walking_state(InputState input)
     OutputState output = init_output(WALKING);
     if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
     if (input.is_click_1) output.next_state = PUNCH;
-    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = JUMP_START;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != WALKING)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[WALKING][output.next_state];
-
-    }
     return output;
 }
 
@@ -108,13 +61,6 @@ OutputState falling_slow_state(InputState input)
         : LAND_SOFT;
     if (input.motion_state.x > 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_FAST;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != FALLING_SLOW)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[FALLING_SLOW][output.next_state];
-    }
     return output;
 }
 
@@ -127,27 +73,13 @@ OutputState falling_fast_state(InputState input)
     if (input.is_wet) output.next_state = SWIM_DOWN;
     if (input.motion_state.x < 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != FALLING_FAST)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[FALLING_FAST][output.next_state];
-    }
     return output;
 }
 
-OutputState jump_start_state(InputState input)
+OutputState recoil_state(InputState input)
 {
-    OutputState output = init_output(JUMP_START);
+    OutputState output = init_output(RECOIL);
     if (input.current_time > 0.15f) output.next_state = JUMPING;
-    if (output.next_state != JUMP_START)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[JUMP_START][output.next_state];
-    }   
     return output;
 }
 
@@ -164,13 +96,6 @@ OutputState jumping_state(InputState input)
             : input.jump_mag / 2
         : 0;
     if (tick_slice == 0) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != JUMPING)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[JUMPING][output.next_state];
-    }
     return output;
 }
 
@@ -181,13 +106,6 @@ OutputState in_air_state(InputState input)
         ? LAND_HARD 
         : LAND_SOFT;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
-    if (output.next_state != IN_AIR)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[IN_AIR][output.next_state];
-    }
     return output;
 }
 
@@ -198,13 +116,6 @@ OutputState swim_up_state(InputState input)
         ? LAND_HARD 
         : LAND_SOFT;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
-    if (output.next_state != SWIM_UP)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[SWIM_UP][output.next_state];
-    }
     return output;
 }
 
@@ -216,13 +127,6 @@ OutputState swim_down_state(InputState input)
         : LAND_SOFT;
     if (input.motion_state.x > 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != SWIM_DOWN)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[SWIM_DOWN][output.next_state];
-    }
     return output;
 }
 
@@ -230,13 +134,6 @@ OutputState land_soft_state(InputState input)
 {
     OutputState output = init_output(LAND_SOFT);
     if (input.current_time > 0.08f) output.next_state = IDLE;
-    if (output.next_state != LAND_SOFT)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[LAND_SOFT][output.next_state];
-    }    
     return output;
 }
 
@@ -244,13 +141,6 @@ OutputState land_hard_state(InputState input)
 {
     OutputState output = init_output(LAND_HARD);
     if (input.current_time > 0.22f) output.next_state = IDLE;
-    if (output.next_state != LAND_HARD)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[LAND_HARD][output.next_state];
-    }        
     return output;
 }
 
@@ -258,13 +148,6 @@ OutputState punch_state(InputState input)
 {
     OutputState output = init_output(PUNCH);
     if (input.current_time > .25f) output.next_state = IDLE;
-    if (output.next_state != PUNCH)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = transition_table[PUNCH][output.next_state];
-    }
     return output;
 }
 
@@ -351,7 +234,7 @@ __kernel void handle_movement(__global float4 *armatures,
         case RUNNING:      /* todo: implement running */             break;
         case FALLING_SLOW: state_result = falling_slow_state(input); break;
         case FALLING_FAST: state_result = falling_fast_state(input); break;
-        case JUMP_START:   state_result = jump_start_state(input);   break;
+        case RECOIL:       state_result = recoil_state(input);       break;
         case JUMPING:      state_result = jumping_state(input);      break;
         case IN_AIR:       state_result = in_air_state(input);       break;
         case SWIM_UP:      state_result = swim_up_state(input);      break;
@@ -363,24 +246,25 @@ __kernel void handle_movement(__global float4 *armatures,
 
     // transition handling
 
-    bool new_state = anim_index.x != state_result.next_state;
-    anim_index.x = state_result.next_state;
+    bool blend = anim_index.x != state_result.next_state;
 
-    current_time.y = state_result.blend 
-        ? state_result.next_time 
+    current_time.y = blend 
+        ? current_time.x
         : current_time.y;
 
-    anim_index.y = state_result.blend 
-        ? state_result.next_anim_index 
+    anim_index.y = blend 
+        ? anim_index.x 
         : anim_index.y;
 
-    current_blend = state_result.blend 
-        ? (float2)(state_result.blend_time, 0.0f)
+    current_blend = blend 
+        ? (float2)(transition_table[anim_index.x][state_result.next_state], 0.0f)
         : current_blend;
 
-    current_time.x = new_state 
+    current_time.x = blend 
         ? 0.0f 
         : current_time.x;
+
+    anim_index.x = state_result.next_state;
 
     // jumping
 

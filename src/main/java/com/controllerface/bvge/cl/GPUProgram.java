@@ -1,5 +1,7 @@
 package com.controllerface.bvge.cl;
 
+import com.controllerface.bvge.game.AnimationSettings;
+import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.substances.Liquid;
 
 import java.util.ArrayList;
@@ -37,6 +39,8 @@ public abstract class GPUProgram
     protected static String const_identity_matrix          = read_src("constants/identity_matrix.cl");
 
     protected static String const_liquid_lookup_table      = Liquid.cl_lookup_table();
+    protected static String const_animation_lookup_table   = AnimationSettings.cl_lookup_table();
+    protected static String const_animation_states         = AnimationState.cl_constants();
 
     /**
      * Helper functions. Program implementations can use these functions to build out a program,
