@@ -125,10 +125,16 @@ public class AnimationSettings
                 case PUNCH, RECOIL -> 0.1f;
             };
 
-            case PUNCH -> 0.1f;
+            case PUNCH ->  switch (to)//0.1f;
+            {
+                case PUNCH, UNKNOWN -> 0.0F;
+                case IDLE, WALKING, JUMPING -> 0.3F;
+                case RUNNING, RECOIL, IN_AIR, LAND_HARD, LAND_SOFT, SWIM_UP, SWIM_DOWN -> 0.2F;
+                case FALLING_FAST, FALLING_SLOW -> 0.5F;
+            };
             case JUMPING -> 0.5f;
             case RUNNING -> 0.0f; // todo: implement this
-            case RECOIL, LAND_HARD, LAND_SOFT -> 0.1f;
+            case RECOIL, LAND_HARD, LAND_SOFT -> 0.05f;
             case UNKNOWN -> 0.0f;
         };
     }

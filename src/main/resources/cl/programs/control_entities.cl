@@ -147,7 +147,7 @@ OutputState land_hard_state(InputState input)
 OutputState punch_state(InputState input)
 {
     OutputState output = init_output(PUNCH);
-    if (input.current_time > .25f) output.next_state = IDLE;
+    if (!input.is_click_1) output.next_state = IDLE;
     return output;
 }
 
