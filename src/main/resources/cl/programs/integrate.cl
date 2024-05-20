@@ -15,7 +15,7 @@ them before this kernel completes.
 __kernel void integrate(__global float4 *hulls,
                         __global float2 *hull_scales,
                         __global int2 *hull_point_tables,
-                        __global float2 *armature_accel,
+                        __global float2 *entity_accel,
                         __global float2 *hull_rotations,
                         __global float4 *points,
                         __global ushort *point_hit_counts,
@@ -24,7 +24,7 @@ __kernel void integrate(__global float4 *hulls,
                         __global int4 *bounds_index_data,
                         __global int2 *bounds_bank_data,
                         __global int *hull_flags,
-                        __global int *hull_armature_ids,
+                        __global int *hull_entity_ids,
                         __global float *anti_gravity,
                         __global float *args)
 {
@@ -53,8 +53,8 @@ __kernel void integrate(__global float4 *hulls,
     float2 hull_scale = hull_scales[current_hull];
     int2 point_table = hull_point_tables[current_hull];
     int hull_1_flags = hull_flags[current_hull];
-    int hull_armature_id = hull_armature_ids[current_hull];
-    float2 acc = armature_accel[hull_armature_id];
+    int hull_entity_id = hull_entity_ids[current_hull];
+    float2 acc = entity_accel[hull_entity_id];
     float2 rotation = hull_rotations[current_hull];
     float4 bounding_box = bounds[current_hull];
     int4 bounds_index = bounds_index_data[current_hull];
@@ -342,24 +342,24 @@ __kernel void integrate(__global float4 *hulls,
     bounds_bank_data[current_hull] = bounds_bank;
 }
 
-__kernel void integrate_armatures(__global float4 *armatures,
-                                  __global int *armature_flags,
-                                  __global int *armature_root_hulls,
-                                  __global float2 *armature_accel,
+__kernel void integrate_entities(__global float4 *entities,
+                                  __global int *entity_flags,
+                                  __global int *entity_root_hulls,
+                                  __global float2 *entity_accel,
                                   __global int *hull_flags,
                                   __global float *args)
 {
-    int current_armature = get_global_id(0);
+    int current_entity = get_global_id(0);
 
     float dt = args[0];
     float2 gravity = (float2)(args[9], args[10]);
     float damping = args[11];
 
-    float4 armature = armatures[current_armature];
-    int _armature_flags = armature_flags[current_armature];
-    bool is_wet = (_armature_flags & IS_WET) != 0;
-    int root_hull = armature_root_hulls[current_armature];
-    float2 acc = armature_accel[current_armature];
+    float4 entity = entities[current_entity];
+    int _entity_flags = entity_flags[current_entity];
+    bool is_wet = (_entity_flags & IS_WET) != 0;
+    int root_hull = entity_root_hulls[current_entity];
+    float2 acc = entity_accel[current_entity];
     int root_hull_flags = hull_flags[root_hull];
 
     bool is_static = (root_hull_flags & IS_STATIC) !=0;
@@ -378,8 +378,8 @@ __kernel void integrate_armatures(__global float4 *armatures,
         : acc + gravity;
    	acc *= (dt * dt);
 
-    float2 pos = armature.xy;
-    float2 prv = armature.zw;
+    float2 pos = entity.xy;
+    float2 prv = entity.zw;
 
     if (!is_static && !no_bones)
     {
@@ -393,9 +393,9 @@ __kernel void integrate_armatures(__global float4 *armatures,
 
         prv = pos;
         pos = pos + diff;
-        armature.xy = pos;
-        armature.zw = prv;
+        entity.xy = pos;
+        entity.zw = prv;
     }
 
-    armatures[current_armature] = armature;
+    entities[current_entity] = entity;
 }

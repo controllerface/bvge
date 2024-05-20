@@ -87,11 +87,11 @@ out vec4 color;
 
 void main()
 {
-    float r = screen > 0.0 ? 0.0 : 1.0;
-    float g = screen > 0.0 ? 1.0 : 0.0;
+    float r = screen > 0.0 ? 1.0 : 0.0;
+    float g = screen > 0.0 ? 0.0 : 1.0;
     float b = 0;
-    vec4 circleColor = vec4(r, g, b, 1);
-    float thickness = .2;
+    vec4 circleColor = vec4(r, g, b, .6);
+    float thickness = .4;
     float fade = .0005;
 
     float distance = 1.0 - length(fPosition);

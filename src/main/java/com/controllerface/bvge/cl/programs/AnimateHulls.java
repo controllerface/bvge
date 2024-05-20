@@ -9,7 +9,7 @@ public class AnimateHulls extends GPUProgram
     @Override
     public void init()
     {
-        src.add(const_armature_flags);
+        src.add(const_entity_flags);
         src.add(const_hull_flags);
         src.add(const_identity_matrix);
         src.add(func_matrix_transform);
@@ -24,7 +24,7 @@ public class AnimateHulls extends GPUProgram
 
         make_program();
 
-        load_kernel(Kernel.animate_armatures);
+        load_kernel(Kernel.animate_entities);
         load_kernel(Kernel.animate_bones);
         load_kernel(Kernel.animate_points);
     }

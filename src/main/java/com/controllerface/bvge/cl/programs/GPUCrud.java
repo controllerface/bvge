@@ -15,7 +15,7 @@ public class GPUCrud extends GPUProgram
         make_program();
 
         load_kernel(Kernel.create_animation_timings);
-        load_kernel(Kernel.create_armature);
+        load_kernel(Kernel.create_entity);
         load_kernel(Kernel.create_armature_bone);
         load_kernel(Kernel.create_hull_bone);
         load_kernel(Kernel.create_bone_bind_pose);

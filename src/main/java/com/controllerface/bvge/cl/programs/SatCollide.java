@@ -10,7 +10,7 @@ public class SatCollide extends GPUProgram
     public void init()
     {
         src.add(const_hit_thresholds);
-        src.add(const_armature_flags);
+        src.add(const_entity_flags);
         src.add(const_hull_flags);
         src.add(const_point_flags);
         src.add(func_angle_between);
@@ -31,7 +31,7 @@ public class SatCollide extends GPUProgram
         load_kernel(Kernel.sat_collide);
         load_kernel(Kernel.sort_reactions);
         load_kernel(Kernel.apply_reactions);
-        load_kernel(Kernel.move_armatures);
+        load_kernel(Kernel.move_entities);
         load_kernel(Kernel.move_hulls);
     }
 }

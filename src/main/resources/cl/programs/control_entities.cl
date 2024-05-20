@@ -182,13 +182,13 @@ __kernel void set_control_points(__global int *control_flags,
     jump_mag[target] = new_jump_mag;
 }
 
-__kernel void handle_movement(__global float4 *armatures,
-                              __global float2 *armature_accel,
-                              __global short2 *armature_motion_states,
-                              __global int *armature_flags,
-                              __global int2 *armature_animation_indices,
-                              __global float2 *armature_animation_elapsed,
-                              __global float2 *armature_animation_blend,
+__kernel void handle_movement(__global float4 *entities,
+                              __global float2 *entity_accel,
+                              __global short2 *entity_motion_states,
+                              __global int *entity_flags,
+                              __global int2 *entity_animation_indices,
+                              __global float2 *entity_animation_elapsed,
+                              __global float2 *entity_animation_blend,
                               __global int *control_flags,
                               __global int *indices,
                               __global int *tick_budgets,
@@ -203,13 +203,13 @@ __kernel void handle_movement(__global float4 *armatures,
     float current_linear_mag = linear_mag[current_control_set];
     float current_jump_mag   = jump_mag[current_control_set];
     int current_index        = indices[current_control_set];
-    float4 armature          = armatures[current_index];
-    float2 accel             = armature_accel[current_index];
-    int arm_flag             = armature_flags[current_index];
-    int2 anim_index          = armature_animation_indices[current_index];
-    short2 motion_state      = armature_motion_states[current_index];
-    float2 current_time      = armature_animation_elapsed[current_index];
-    float2 current_blend     = armature_animation_blend[current_index];
+    float4 entity            = entities[current_index];
+    float2 accel             = entity_accel[current_index];
+    int arm_flag             = entity_flags[current_index];
+    int2 anim_index          = entity_animation_indices[current_index];
+    short2 motion_state      = entity_motion_states[current_index];
+    float2 current_time      = entity_animation_elapsed[current_index];
+    float2 current_blend     = entity_animation_blend[current_index];
 
     bool is_mv_l    = (current_flags & LEFT)   !=0;
     bool is_mv_r    = (current_flags & RIGHT)  !=0;
@@ -298,7 +298,7 @@ __kernel void handle_movement(__global float4 *armatures,
     // motion state
 
     float threshold = 10.0f;
-    float2 vel = (armature.xy - armature.zw) / dt;
+    float2 vel = (entity.xy - entity.zw) / dt;
 
     motion_state.x = (vel.y < -threshold) 
         ? motion_state.x + 1 
@@ -344,13 +344,13 @@ __kernel void handle_movement(__global float4 *armatures,
                 : arm_flag
         : arm_flag; 
 
-    armature_accel[current_index]             = accel;
-    armature_flags[current_index]             = arm_flag;
-    tick_budgets[current_control_set]         = current_budget;
-    armature_motion_states[current_index]     = motion_state;
-    armature_animation_blend[current_index]   = current_blend;
-    armature_animation_elapsed[current_index] = current_time;
-    armature_animation_indices[current_index] = anim_index;
+    entity_accel[current_index]             = accel;
+    entity_flags[current_index]             = arm_flag;
+    tick_budgets[current_control_set]       = current_budget;
+    entity_motion_states[current_index]     = motion_state;
+    entity_animation_blend[current_index]   = current_blend;
+    entity_animation_elapsed[current_index] = current_time;
+    entity_animation_indices[current_index] = anim_index;
 }
 
 __kernel void query_hovered(__global int *hull_flags,

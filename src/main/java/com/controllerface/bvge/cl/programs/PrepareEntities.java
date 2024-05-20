@@ -4,15 +4,15 @@ import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPUProgram;
 import com.controllerface.bvge.cl.Kernel;
 
-public class PrepareArmatures extends GPUProgram
+public class PrepareEntities extends GPUProgram
 {
     @Override
     public void init()
     {
-        src.add(CLUtils.read_src("programs/prepare_armatures.cl"));
+        src.add(CLUtils.read_src("programs/prepare_entities.cl"));
 
         make_program();
 
-        load_kernel(Kernel.prepare_armatures);
+        load_kernel(Kernel.prepare_entities);
     }
 }

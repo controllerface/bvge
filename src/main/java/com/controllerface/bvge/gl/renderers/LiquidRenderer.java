@@ -92,12 +92,12 @@ public class LiquidRenderer extends GameSystem
 
         long root_hull_filter_ptr = root_hull_filter.kernel_ptr(Kernel.root_hull_filter);
         root_hull_filter_k = new RootHullFilter_k(GPGPU.gl_cmd_queue_ptr, root_hull_filter_ptr)
-            .buf_arg(RootHullFilter_k.Args.armature_root_hulls, GPGPU.core_memory.buffer(BufferType.MIRROR_ARMATURE_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.armature_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ARMATURE_MODEL_ID));
+            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_ROOT_HULL))
+            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
 
         long root_hull_count_ptr = root_hull_filter.kernel_ptr(Kernel.root_hull_count);
         root_hull_count_k = new RootHullCount_k(GPGPU.gl_cmd_queue_ptr, root_hull_count_ptr)
-            .buf_arg(RootHullCount_k.Args.armature_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ARMATURE_MODEL_ID));
+            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
     }
 
     @Override
@@ -146,7 +146,7 @@ public class LiquidRenderer extends GameSystem
         root_hull_count_k
             .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.next_armature()));
+            .call(arg_long(GPGPU.core_memory.next_entity()));
 
         int final_count = GPGPU.cl_read_pinned_int(queue_ptr, atomic_counter_ptr);
 
@@ -164,7 +164,7 @@ public class LiquidRenderer extends GameSystem
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.next_armature()));
+            .call(arg_long(GPGPU.core_memory.next_entity()));
 
         return new HullIndexData(hulls_out, final_count);
     }

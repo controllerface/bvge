@@ -11,7 +11,7 @@ public class ControlEntities extends GPUProgram
     {
         src.add(const_control_flags);
         src.add(const_hull_flags);
-        src.add(const_armature_flags);
+        src.add(const_entity_flags);
         src.add(const_animation_states);
         src.add(const_animation_lookup_table);
         src.add(CLUtils.read_src("programs/control_entities.cl"));

@@ -6,7 +6,7 @@ public class CompleteDeletesMultiBlockOut_k extends GPUKernel
 {
     public enum Args
     {
-        armature_flags,
+        entity_flags,
         hull_tables,
         bone_tables,
         point_tables,

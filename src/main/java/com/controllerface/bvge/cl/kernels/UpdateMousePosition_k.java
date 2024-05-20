@@ -6,7 +6,7 @@ public class UpdateMousePosition_k extends GPUKernel
 {
     public enum Args
     {
-        armature_root_hulls,
+        entity_root_hulls,
         hull_point_tables,
         points,
         target,

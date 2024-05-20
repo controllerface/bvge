@@ -6,7 +6,7 @@ public class UpdateAccel_k extends GPUKernel
 {
     public enum Args
     {
-        armature_accel,
+        entity_accel,
         target,
         new_value;
     }

@@ -6,7 +6,7 @@ public class ReadPosition_k extends GPUKernel
 {
     public enum Args
     {
-        armatures,
+        entities,
         output,
         target;
     }

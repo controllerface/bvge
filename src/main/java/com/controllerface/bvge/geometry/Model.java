@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public record Model(Mesh[] meshes,
-                    Matrix4f armature_transform,
+                    Matrix4f entity_transform,
                     Map<String, Matrix4f> bone_transforms,
                     Map<String, Integer> bone_indices,
                     Map<Integer, BoneBindPose> bind_poses,

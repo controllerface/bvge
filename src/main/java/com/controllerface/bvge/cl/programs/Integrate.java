@@ -11,7 +11,7 @@ public class Integrate extends GPUProgram
     {
         src.add(const_hit_thresholds);
         src.add(const_point_flags);
-        src.add(const_armature_flags);
+        src.add(const_entity_flags);
         src.add(const_hull_flags);
         src.add(func_angle_between);
         src.add(func_rotate_point);
@@ -23,6 +23,6 @@ public class Integrate extends GPUProgram
         make_program();
 
         load_kernel(Kernel.integrate);
-        load_kernel(Kernel.integrate_armatures);
+        load_kernel(Kernel.integrate_entities);
     }
 }

@@ -261,12 +261,12 @@ public class GPGPU
 
         long root_hull_filter_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_filter);
         root_hull_filter_k = new RootHullFilter_k(cl_cmd_queue_ptr, root_hull_filter_ptr)
-            .buf_arg(RootHullFilter_k.Args.armature_root_hulls, core_memory.buffer(BufferType.ARMATURE_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.armature_model_indices, core_memory.buffer(BufferType.ARMATURE_MODEL_ID));
+            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, core_memory.buffer(BufferType.ENTITY_ROOT_HULL))
+            .buf_arg(RootHullFilter_k.Args.entity_model_indices, core_memory.buffer(BufferType.ENTITY_MODEL_ID));
 
         long root_hull_count_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_count);
         root_hull_count_k = new RootHullCount_k(cl_cmd_queue_ptr, root_hull_count_ptr)
-            .buf_arg(RootHullCount_k.Args.armature_model_indices, core_memory.buffer(BufferType.ARMATURE_MODEL_ID));
+            .buf_arg(RootHullCount_k.Args.entity_model_indices, core_memory.buffer(BufferType.ENTITY_MODEL_ID));
     }
 
     //#endregion
@@ -430,7 +430,7 @@ public class GPGPU
         root_hull_count_k
             .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.next_armature()));
+            .call(arg_long(GPGPU.core_memory.next_entity()));
 
         int final_count = cl_read_pinned_int(queue_ptr, atomic_counter_ptr);
 
@@ -448,7 +448,7 @@ public class GPGPU
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, atomic_counter_ptr)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.next_armature()));
+            .call(arg_long(GPGPU.core_memory.next_entity()));
 
         return new HullIndexData(hulls_out, final_count);
     }

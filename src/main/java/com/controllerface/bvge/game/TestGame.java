@@ -30,7 +30,7 @@ public class TestGame extends GameMode
         HULLS,      // physics hulls
         BOUNDS,     // bounding boxes
         POINTS,     // model vertices
-        ARMATURES,  // armature roots
+        ENTITIES,   // entity roots
         GRID,       // uniform grid
 
     }
@@ -38,7 +38,7 @@ public class TestGame extends GameMode
         EnumSet.of(
 //            RenderType.HULLS,
 //            RenderType.POINTS,
-//            RenderType.ARMATURES,
+//            RenderType.ENTITIES,
 //            RenderType.BOUNDS,
             RenderType.GRID,
             RenderType.MODELS);
@@ -72,24 +72,6 @@ public class TestGame extends GameMode
     {
         return random.nextInt(min, max);
     }
-
-
-//    private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid block_mineral)
-//    {
-//        System.out.println("generating: " + box_size * box_size + " Blocks..");
-//        for (int i = 0; i < box_size; i++)
-//        {
-//            for (int j = 0; j < box_size; j++)
-//            {
-//                float x = start_x + i * spacing;
-//                float y = start_y + j * spacing;
-//                //var npc = ecs.registerEntity(null);
-//                var armature_index = PhysicsObjects.dynamic_block(x, y, size, 500f, 0.05f, 0.0003f, block_mineral);
-//                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-//            }
-//        }
-//    }
-
 
     private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
     {
@@ -144,9 +126,7 @@ public class TestGame extends GameMode
             {
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-                //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.tri(x, y, size, 0, 20f, 0.02f, 0.0003f);
-                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+                PhysicsObjects.tri(x, y, size, 0, 20f, 0.02f, 0.0003f);
             }
         }
     }
@@ -166,12 +146,11 @@ public class TestGame extends GameMode
                     : 0;
                 flip = !flip;
                 int rx = rando_int(0, liquids.length);
-                var armature_index = PhysicsObjects.liquid_particle(x, y, size,
+                PhysicsObjects.liquid_particle(x, y, size,
                     .1f, 0.0f, 0.00000f,
                     HullFlags.IS_LIQUID._int,
                     flags,
                     liquids[rx]);
-                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
             }
         }
     }
@@ -183,9 +162,7 @@ public class TestGame extends GameMode
         {
             float x = start_x + i * spacing;
             float y = start_y;
-            //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, solid);
-            //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+            PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, solid);
         }
     }
 
@@ -196,24 +173,18 @@ public class TestGame extends GameMode
         {
             float x = start_x;
             float y = start_y + i * spacing;
-            //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, solid);
-            //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+            PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, solid);
         }
     }
 
     private void genTestCrate(float size, float x, float y)
     {
-        //var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.dynamic_block(x, y, size, .1f, 0.02f, 0.0001f, Solid.ANDESITE);
-        //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+        PhysicsObjects.dynamic_block(x, y, size, .1f, 0.02f, 0.0001f, Solid.ANDESITE);
     }
 
     private void genTestTriangle(float size, float x, float y)
     {
-       // var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f, 0.0003f);
-        //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
+       PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f, 0.0003f);
     }
 
     private void genTestFigure(float size, float x, float y)
@@ -221,44 +192,37 @@ public class TestGame extends GameMode
         // circle entity
         var figure = ecs.registerEntity("player");
 
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f, 0,0);
+        var entity_id = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f, 0,0);
         ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
         ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
         // todo: determine if a different ID may be used for identifying entities that is not tied to the
-        //  armature index directly. Now that objects can be deleted, this value can change frequently
+        //  entity index directly. Now that objects can be deleted, this value can change frequently
         //  and there is not a mechanism to keep ECS entities updated to compensate. Instead, some unique
         //  monotonically increasing value could be used, which doesn't change during entity life time
-        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
+        ecs.attachComponent(figure, Component.EntityId, new EntityIndex(entity_id));
         ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1600));
     }
 
     private void genCursor(float size, float x, float y)
     {
-        // circle entity
         var figure = ecs.registerEntity("mouse");
-        var armature_index = PhysicsObjects.circle_cursor(x, y, size);
-        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
+        var entity_index = PhysicsObjects.circle_cursor(x, y, size);
+        ecs.attachComponent(figure, Component.EntityId, new EntityIndex(entity_index));
     }
 
     private void genTestFigureNPC_2(float size, float x, float y)
     {
-        //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0, 0);
-        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
+        PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0, 0);
     }
 
     private void genTestFigureNPC(float size, float x, float y)
     {
-        //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0,0);
-        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
+        PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0,0);
     }
 
     private void genBoxModelNPC(float size, float x, float y)
     {
-        //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON._int, .1f, 0.02f, 0,0);
-        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
+        PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON._int, .1f, 0.02f, 0,0);
     }
 
     // note: order of adding systems is important
@@ -309,9 +273,9 @@ public class TestGame extends GameMode
             ecs.registerSystem(new UniformGridRenderer(ecs, uniformGrid));
         }
 
-        if (ACTIVE_RENDERERS.contains(RenderType.ARMATURES))
+        if (ACTIVE_RENDERERS.contains(RenderType.ENTITIES))
         {
-            ecs.registerSystem(new ArmatureRenderer(ecs));
+            ecs.registerSystem(new EntityRenderer(ecs));
         }
 
         ecs.registerSystem(new MouseRenderer(ecs));

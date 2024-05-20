@@ -18,11 +18,11 @@ __kernel void create_point(__global float4 *points,
                            int new_point_flags,
                            int4 new_bone_table)
 {
-    points[target] = new_point; 
+    points[target]                  = new_point; 
     point_vertex_references[target] = new_point_vertex_reference; 
-    point_hull_indices[target] = new_point_hull_index; 
-    point_flags[target] = new_point_flags; 
-    bone_tables[target] = new_bone_table; 
+    point_hull_indices[target]      = new_point_hull_index; 
+    point_flags[target]             = new_point_flags; 
+    bone_tables[target]             = new_bone_table; 
 }
 
 __kernel void create_edge(__global int2 *edges,
@@ -33,9 +33,9 @@ __kernel void create_edge(__global int2 *edges,
                           float new_edge_length,
                           int new_edge_flag)
 {
-    edges[target] = new_edge; 
+    edges[target]        = new_edge; 
     edge_lengths[target] = new_edge_length; 
-    edge_flags[target] = new_edge_flag; 
+    edge_flags[target]   = new_edge_flag; 
 }
 
 __kernel void create_bone_channel(__global int *animation_timing_indices,
@@ -49,9 +49,9 @@ __kernel void create_bone_channel(__global int *animation_timing_indices,
                                   int2 new_bone_scl_channel_table)
 {
     animation_timing_indices[target] = new_animation_timing_index;
-    bone_pos_channel_tables[target] = new_bone_pos_channel_table;
-    bone_rot_channel_tables[target] = new_bone_rot_channel_table;
-    bone_scl_channel_tables[target] = new_bone_scl_channel_table;
+    bone_pos_channel_tables[target]  = new_bone_pos_channel_table;
+    bone_rot_channel_tables[target]  = new_bone_rot_channel_table;
+    bone_scl_channel_tables[target]  = new_bone_scl_channel_table;
 }
 
 __kernel void set_bone_channel_table(__global int2 *bone_channel_tables,
@@ -67,7 +67,7 @@ __kernel void create_animation_timings(__global float *animation_durations,
                                        float new_animation_duration,
                                        float new_animation_tick_rate)
 {
-    animation_durations[target] = new_animation_duration;
+    animation_durations[target]  = new_animation_duration;
     animation_tick_rates[target] = new_animation_tick_rate;
 }
 
@@ -77,7 +77,7 @@ __kernel void create_keyframe(__global float4 *key_frames,
                               float4 new_keyframe,
                               float new_frame_time)
 {
-    key_frames[target] = new_keyframe;
+    key_frames[target]  = new_keyframe;
     frame_times[target] = new_frame_time;
 }
 
@@ -88,41 +88,41 @@ __kernel void create_texture_uv(__global float2 *texture_uvs,
     texture_uvs[target] = new_texture_uv; 
 }
 
-__kernel void create_armature(__global float4 *armatures,
-                              __global int *armature_root_hulls,
-                              __global int *armature_model_indices,
-                              __global int *armature_model_transforms,
-                              __global int *armature_flags,
-                              __global int2 *armature_hull_tables,
-                              __global int2 *armature_bone_tables,
-                              __global float *armature_masses,
-                              __global int2 *armature_animation_indices,
-                              __global float2 *armature_animation_elapsed,
-                              __global short2 *armature_motion_states,
-                              int target,
-                              float4 new_armature,
-                              int new_armature_root_hull,
-                              int new_armature_model_id,
-                              int new_armature_model_transform,
-                              int new_armature_flags,
-                              int2 new_hull_table,
-                              int2 new_bone_table,
-                              float new_armature_mass,
-                              int2 new_armature_animation_index,
-                              float2 new_armature_animation_time,
-                              short2 new_armature_motion_state)
+__kernel void create_entity(__global float4 *entities,
+                            __global int *entity_root_hulls,
+                            __global int *entity_model_indices,
+                            __global int *entity_model_transforms,
+                            __global int *entity_flags,
+                            __global int2 *entity_hull_tables,
+                            __global int2 *entity_bone_tables,
+                            __global float *entity_masses,
+                            __global int2 *entity_animation_indices,
+                            __global float2 *entity_animation_elapsed,
+                            __global short2 *entity_motion_states,
+                            int target,
+                            float4 new_entity,
+                            int new_entity_root_hull,
+                            int new_entity_model_id,
+                            int new_entity_model_transform,
+                            int new_entity_flags,
+                            int2 new_entity_hull_table,
+                            int2 new_entity_bone_table,
+                            float new_entity_mass,
+                            int2 new_entity_animation_index,
+                            float2 new_entity_animation_time,
+                            short2 new_entity_motion_state)
 {
-    armatures[target] = new_armature; 
-    armature_root_hulls[target] = new_armature_root_hull; 
-    armature_model_indices[target] = new_armature_model_id; 
-    armature_model_transforms[target] = new_armature_model_transform; 
-    armature_flags[target] = new_armature_flags; 
-    armature_hull_tables[target] = new_hull_table;
-    armature_bone_tables[target] = new_bone_table; 
-    armature_masses[target] = new_armature_mass;
-    armature_animation_indices[target] = new_armature_animation_index; 
-    armature_animation_elapsed[target] = new_armature_animation_time;
-    armature_motion_states[target] = new_armature_motion_state;
+    entities[target]                 = new_entity; 
+    entity_root_hulls[target]        = new_entity_root_hull; 
+    entity_model_indices[target]     = new_entity_model_id; 
+    entity_model_transforms[target]  = new_entity_model_transform; 
+    entity_flags[target]             = new_entity_flags; 
+    entity_hull_tables[target]       = new_entity_hull_table;
+    entity_bone_tables[target]       = new_entity_bone_table; 
+    entity_masses[target]            = new_entity_mass;
+    entity_animation_indices[target] = new_entity_animation_index; 
+    entity_animation_elapsed[target] = new_entity_animation_time;
+    entity_motion_states[target]     = new_entity_motion_state;
 }
 
 __kernel void create_vertex_reference(__global float2 *vertex_references,
@@ -134,8 +134,8 @@ __kernel void create_vertex_reference(__global float2 *vertex_references,
                                       int2 new_uv_table)
 {
     vertex_references[target] = new_vertex_reference; 
-    vertex_weights[target] = new_vertex_weights; 
-    uv_tables[target] = new_uv_table;
+    vertex_weights[target]    = new_vertex_weights; 
+    uv_tables[target]         = new_uv_table;
 }
 
 __kernel void create_model_transform(__global float16 *model_transforms,
@@ -167,8 +167,8 @@ __kernel void create_hull_bone(__global float16 *hull_bones,
                                int new_hull_bind_pose_id,
                                int new_hull_inv_bind_pose_id)
 {
-    hull_bones[target] = new_hull_bone; 
-    hull_bind_pose_indicies[target] = new_hull_bind_pose_id; 
+    hull_bones[target]                  = new_hull_bone; 
+    hull_bind_pose_indicies[target]     = new_hull_bind_pose_id; 
     hull_inv_bind_pose_indicies[target] = new_hull_inv_bind_pose_id; 
 }
 
@@ -180,9 +180,9 @@ __kernel void create_armature_bone(__global float16 *armature_bones,
                                    int new_armature_bone_reference,
                                    int new_armature_bone_parent_id)
 {
-    armature_bones[target] = new_armature_bone; 
+    armature_bones[target]              = new_armature_bone; 
     armature_bone_reference_ids[target] = new_armature_bone_reference;
-    armature_bone_parent_ids[target] = new_armature_bone_parent_id;
+    armature_bone_parent_ids[target]    = new_armature_bone_parent_id;
 }
 
 __kernel void create_mesh_reference(__global int2 *mesh_vertex_tables,
@@ -192,7 +192,7 @@ __kernel void create_mesh_reference(__global int2 *mesh_vertex_tables,
                                     int2 new_mesh_face_table)
 {
     mesh_vertex_tables[target] = new_mesh_vertex_table;
-    mesh_face_tables[target] = new_mesh_face_table;
+    mesh_face_tables[target]   = new_mesh_face_table;
 }
 
 __kernel void create_mesh_face(__global int4 *mesh_faces,
@@ -210,7 +210,7 @@ __kernel void create_hull(__global float4 *hulls,
                           __global int2 *hull_point_tables,
                           __global int2 *hull_edge_tables,
                           __global int2 *bone_tables,
-                          __global int *armature_ids,
+                          __global int *hull_entity_ids,
                           __global int *hull_flags,
                           __global int *hull_mesh_ids,
                           __global int *hull_uv_offsets,
@@ -224,58 +224,62 @@ __kernel void create_hull(__global float4 *hulls,
                           int2 new_point_table,
                           int2 new_edge_table,
                           int2 new_bone_table,
-                          int new_armature_id,
+                          int new_entity_id,
                           int new_flags,
                           int new_hull_mesh_id,
                           int new_hull_uv_offset,
                           int new_hull_integrity)
 {
-    hulls[target] = new_hull; 
-    hull_scales[target] = new_hull_scale; 
-    hull_rotations[target] = new_rotation; 
-    hull_frictions[target] = new_friction;
+    hulls[target]             = new_hull; 
+    hull_scales[target]       = new_hull_scale; 
+    hull_rotations[target]    = new_rotation; 
+    hull_frictions[target]    = new_friction;
     hull_restitutions[target] = new_restitution; 
     hull_point_tables[target] = new_point_table;
-    hull_edge_tables[target] = new_edge_table;
-    bone_tables[target] = new_bone_table; 
-    armature_ids[target] = new_armature_id; 
-    hull_flags[target] = new_flags; 
-    hull_mesh_ids[target] = new_hull_mesh_id;
-    hull_uv_offsets[target] = new_hull_uv_offset;
-    hull_integrity[target] = new_hull_integrity;
+    hull_edge_tables[target]  = new_edge_table;
+    bone_tables[target]       = new_bone_table; 
+    hull_entity_ids[target]   = new_entity_id; 
+    hull_flags[target]        = new_flags; 
+    hull_mesh_ids[target]     = new_hull_mesh_id;
+    hull_uv_offsets[target]   = new_hull_uv_offset;
+    hull_integrity[target]    = new_hull_integrity;
 }
 
 // read functions
 
-__kernel void read_position(__global float4 *armatures,
+__kernel void read_position(__global float4 *entities,
                             __global float *output,
                             int target)
 {
-    float4 armature = armatures[target];
-    output[0] = armature.x;
-    output[1] = armature.y;
+    float4 entity = entities[target];
+
+    output[0] = entity.x;
+    output[1] = entity.y;
 }
 
 
 // update functions
-__kernel void update_accel(__global float2 *armature_accel,
+__kernel void update_accel(__global float2 *entity_accel,
                            int target,
                            float2 new_value)
 {
-    float2 accel = armature_accel[target];
+    float2 accel = entity_accel[target];
+
     accel.x = new_value.x;
     accel.y = new_value.y;
-    armature_accel[target] = accel;
+
+    entity_accel[target] = accel;
 }
 
-__kernel void update_mouse_position(__global int *armature_root_hulls,
+__kernel void update_mouse_position(__global int *entity_root_hulls,
                                     __global int2 *hull_point_tables,
                                     __global float4 *points,
                                     int target,
                                     float2 new_value)
 {
-    int h = armature_root_hulls[target];
+    int h  = entity_root_hulls[target];
     int2 t = hull_point_tables[h];
+
     points[t.x].xy = new_value;
 }
 
@@ -286,11 +290,11 @@ __kernel void rotate_hull(__global float4 *hulls,
                           int target,
                           float angle)
 {
-    float4 hull = hulls[target];
+    float4 hull        = hulls[target];
     int4 element_table = element_tables[target];
-    int start = element_table.x;
-    int end   = element_table.y;
-    float2 origin = (float2)(hull.x, hull.y);
+    int start          = element_table.x;
+    int end            = element_table.y;
+    float2 origin      = (float2)(hull.x, hull.y);
     for (int i = start; i <= end; i++)
     {
         float4 point = points[i];

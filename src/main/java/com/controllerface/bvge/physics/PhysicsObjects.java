@@ -39,7 +39,7 @@ public class PhysicsObjects
 
     public static int particle(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, int model_id, int uv_variant)
     {
-        int next_armature_id = GPGPU.core_memory.next_armature();
+        int next_entity_id = GPGPU.core_memory.next_entity();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
         // get the circle mesh. this is almost silly to do but just for consistency :-)
@@ -76,12 +76,12 @@ public class PhysicsObjects
             bone_table,
             friction,
             restitution,
-            next_armature_id,
+            next_entity_id,
             uv_variant,
             hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
 
-        return GPGPU.core_memory.new_armature(x, y,
+        return GPGPU.core_memory.new_entity(x, y,
             hull_table,
             bone_table,
             mass,
@@ -105,7 +105,7 @@ public class PhysicsObjects
 
     public static int tri(float x, float y, float size, int flags, float mass, float friction, float restitution)
     {
-        int next_armature_id = GPGPU.core_memory.next_armature();
+        int next_entity_id = GPGPU.core_memory.next_entity();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
         var mesh = ModelRegistry.get_model_by_index(BASE_TRI_INDEX).meshes()[0];
@@ -154,11 +154,11 @@ public class PhysicsObjects
             bone_table,
             friction,
             restitution,
-            next_armature_id,
+            next_entity_id,
             0,
             hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        return GPGPU.core_memory.new_armature(x, y,
+        return GPGPU.core_memory.new_entity(x, y,
             hull_table,
             bone_table,
             mass,
@@ -172,7 +172,7 @@ public class PhysicsObjects
 
     public static int block(float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Solid block_mineral)
     {
-        int next_armature_id = GPGPU.core_memory.next_armature();
+        int next_entity_id = GPGPU.core_memory.next_entity();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
         // get the box mesh
@@ -231,11 +231,11 @@ public class PhysicsObjects
             bone_table,
             friction,
             restitution,
-            next_armature_id,
+            next_entity_id,
             block_mineral.mineral_number,
             hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        return GPGPU.core_memory.new_armature(x, y,
+        return GPGPU.core_memory.new_entity(x, y,
             hull_table,
             bone_table,
             mass,
@@ -268,9 +268,9 @@ public class PhysicsObjects
     //  probably break/crash.
     public static int wrap_model(int model_index, float x, float y, float size, int global_hull_flags, float mass, float friction, float restitution, int uv_offset)
     {
-        // we need to know the next armature ID before we create it, so it can be used for hulls
+        // we need to know the next entity ID before we create it, so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
-        int next_armature_id = GPGPU.core_memory.next_armature();
+        int next_entity_id = GPGPU.core_memory.next_entity();
 
         // get the model from the registry
         var model = ModelRegistry.get_model_by_index(model_index);
@@ -502,7 +502,7 @@ public class PhysicsObjects
                 bone_table,
                 friction,
                 restitution,
-                next_armature_id,
+                next_entity_id,
                 uv_offset,
                 flag_bits);
 
@@ -535,7 +535,7 @@ public class PhysicsObjects
 
         int idle_animation_id = AnimationState.IDLE.ordinal();
 
-        return GPGPU.core_memory.new_armature(x, y,
+        return GPGPU.core_memory.new_entity(x, y,
             hull_table,
             bone_table,
             mass,

@@ -7,7 +7,7 @@ inline void polygon_circle_collision(int polygon_id,
                                      __global float2 *hull_scales,
                                      __global float *hull_frictions,
                                      __global float *hull_restitutions,
-                                     __global int *hull_armature_ids,
+                                     __global int *hull_entity_ids,
                                      __global int *hull_flags,
                                      __global int2 *hull_point_tables,
                                      __global int2 *hull_edge_tables,
@@ -168,10 +168,10 @@ inline void polygon_circle_collision(int polygon_id,
         : edge_hull_flags;
     hull_flags[edge_hull_id] = edge_hull_flags;
 
-    int vert_armature_id = hull_armature_ids[vert_hull_id];
-    int edge_armature_id = hull_armature_ids[edge_hull_id];
-    float vert_hull_mass = masses[vert_armature_id];
-    float edge_hull_mass = masses[edge_armature_id];
+    int vert_entity_id = hull_entity_ids[vert_hull_id];
+    int edge_entity_id = hull_entity_ids[edge_hull_id];
+    float vert_hull_mass = masses[vert_entity_id];
+    float edge_hull_mass = masses[edge_entity_id];
     float vert_hull_friction = hull_frictions[vert_hull_id];
     float edge_hull_friction = hull_frictions[edge_hull_id];
     float vert_hull_restitution = hull_restitutions[vert_hull_id];

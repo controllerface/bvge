@@ -74,7 +74,7 @@ public class UniformGridRenderer extends GameSystem
     }
 
     // calculates a spatial index cell for a given point
-    private int[] get_key_for_point(float px, float py)
+    private int[] get_sector_for_point(float px, float py)
     {
         int[] out = new int[2];
         int index_x = (int) Math.floor(px / UniformGrid.SECTOR_SIZE);
@@ -100,22 +100,22 @@ public class UniformGridRenderer extends GameSystem
         vertex_buffer[v_i++] = rect.p3.x;  // upper left X
         vertex_buffer[v_i++] = rect.p3.y;  // upper left Y
 
-        color_buffer[c_i++] = 0.5f; // v0
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f; // v1
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f; // v2
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f; // v3
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f;
-        color_buffer[c_i++] = 0.5f;
+        color_buffer[c_i++] = rect.p0.r; // v0
+        color_buffer[c_i++] = rect.p0.g;
+        color_buffer[c_i++] = rect.p0.b;
+        color_buffer[c_i++] = rect.p0.a;
+        color_buffer[c_i++] = rect.p1.r; // v1
+        color_buffer[c_i++] = rect.p1.g;
+        color_buffer[c_i++] = rect.p1.b;
+        color_buffer[c_i++] = rect.p1.a;
+        color_buffer[c_i++] = rect.p2.r; // v2
+        color_buffer[c_i++] = rect.p2.g;
+        color_buffer[c_i++] = rect.p2.b;
+        color_buffer[c_i++] = rect.p2.a;
+        color_buffer[c_i++] = rect.p3.r; // v3
+        color_buffer[c_i++] = rect.p3.g;
+        color_buffer[c_i++] = rect.p3.b;
+        color_buffer[c_i++] = rect.p3.a;
 
         return new int[]{v_i - vertex_index, c_i - color_index};
     }
@@ -155,45 +155,45 @@ public class UniformGridRenderer extends GameSystem
         var outer_rect_p3 = new GridPoint(o_xo, o_yo + uniformGrid.outer_height, 0.5f, 0.5f, 0.5f, 0.5f);
         var outer_rect    = new GridRect(outer_rect_p0, outer_rect_p1, outer_rect_p2, outer_rect_p3);
 
-        var key0 = get_key_for_point(outer_rect.p0.x, outer_rect.p0.y);
-        var key1 = get_key_for_point(outer_rect.p1.x, outer_rect.p1.y);
-        var key2 = get_key_for_point(outer_rect.p2.x, outer_rect.p2.y);
-        var key3 = get_key_for_point(outer_rect.p3.x, outer_rect.p3.y);
+        var sector0 = get_sector_for_point(outer_rect.p0.x, outer_rect.p0.y);
+        var sector1 = get_sector_for_point(outer_rect.p1.x, outer_rect.p1.y);
+        var sector2 = get_sector_for_point(outer_rect.p2.x, outer_rect.p2.y);
+        var sector3 = get_sector_for_point(outer_rect.p3.x, outer_rect.p3.y);
 
-        float kx0 = (float)key0[0] * UniformGrid.SECTOR_SIZE;
-        float ky0 = (float)key0[1] * UniformGrid.SECTOR_SIZE;
+        float kx0 = (float)sector0[0] * UniformGrid.SECTOR_SIZE;
+        float ky0 = (float)sector0[1] * UniformGrid.SECTOR_SIZE;
 
-        float kx1 = (float)key1[0] * UniformGrid.SECTOR_SIZE;
-        float ky1 = (float)key1[1] * UniformGrid.SECTOR_SIZE;
+        float kx1 = (float)sector1[0] * UniformGrid.SECTOR_SIZE;
+        float ky1 = (float)sector1[1] * UniformGrid.SECTOR_SIZE;
 
-        float kx2 = (float)key2[0] * UniformGrid.SECTOR_SIZE;
-        float ky2 = (float)key2[1] * UniformGrid.SECTOR_SIZE;
+        float kx2 = (float)sector2[0] * UniformGrid.SECTOR_SIZE;
+        float ky2 = (float)sector2[1] * UniformGrid.SECTOR_SIZE;
 
-        float kx3 = (float)key3[0] * UniformGrid.SECTOR_SIZE;
-        float ky3 = (float)key3[1] * UniformGrid.SECTOR_SIZE;
+        float kx3 = (float)sector3[0] * UniformGrid.SECTOR_SIZE;
+        float ky3 = (float)sector3[1] * UniformGrid.SECTOR_SIZE;
 
-        var key_rect_0_p0 = new GridPoint(kx0, ky0, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_0_p1 = new GridPoint(kx0 + UniformGrid.SECTOR_SIZE, ky0, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_0_p2 = new GridPoint(kx0 + UniformGrid.SECTOR_SIZE, ky0 + UniformGrid.SECTOR_SIZE, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_0_p3 = new GridPoint(kx0, ky0 + UniformGrid.SECTOR_SIZE, 0.9f, 0.9f, 0.9f, 0.2f);
+        var key_rect_0_p0 = new GridPoint(kx0, ky0, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_0_p1 = new GridPoint(kx0 + UniformGrid.SECTOR_SIZE, ky0, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_0_p2 = new GridPoint(kx0 + UniformGrid.SECTOR_SIZE, ky0 + UniformGrid.SECTOR_SIZE, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_0_p3 = new GridPoint(kx0, ky0 + UniformGrid.SECTOR_SIZE, 0.7f, 0.9f, 0.7f, 0.2f);
         var key_rect_0    = new GridRect(key_rect_0_p0, key_rect_0_p1, key_rect_0_p2, key_rect_0_p3);
 
-        var key_rect_1_p0 = new GridPoint(kx1, ky1, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_1_p1 = new GridPoint(kx1 + UniformGrid.SECTOR_SIZE, ky1, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_1_p2 = new GridPoint(kx1 + UniformGrid.SECTOR_SIZE, ky1 + UniformGrid.SECTOR_SIZE, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_1_p3 = new GridPoint(kx1, ky1 + UniformGrid.SECTOR_SIZE, 0.9f, 0.9f, 0.9f, 0.2f);
+        var key_rect_1_p0 = new GridPoint(kx1, ky1, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_1_p1 = new GridPoint(kx1 + UniformGrid.SECTOR_SIZE, ky1, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_1_p2 = new GridPoint(kx1 + UniformGrid.SECTOR_SIZE, ky1 + UniformGrid.SECTOR_SIZE, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_1_p3 = new GridPoint(kx1, ky1 + UniformGrid.SECTOR_SIZE, 0.7f, 0.9f, 0.7f, 0.2f);
         var key_rect_1    = new GridRect(key_rect_1_p0, key_rect_1_p1, key_rect_1_p2, key_rect_1_p3);
 
-        var key_rect_2_p0 = new GridPoint(kx2, ky2, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_2_p1 = new GridPoint(kx2 + UniformGrid.SECTOR_SIZE, ky2, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_2_p2 = new GridPoint(kx2 + UniformGrid.SECTOR_SIZE, ky2 + UniformGrid.SECTOR_SIZE, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_2_p3 = new GridPoint(kx2, ky2 + UniformGrid.SECTOR_SIZE, 0.9f, 0.9f, 0.9f, 0.2f);
+        var key_rect_2_p0 = new GridPoint(kx2, ky2, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_2_p1 = new GridPoint(kx2 + UniformGrid.SECTOR_SIZE, ky2, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_2_p2 = new GridPoint(kx2 + UniformGrid.SECTOR_SIZE, ky2 + UniformGrid.SECTOR_SIZE, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_2_p3 = new GridPoint(kx2, ky2 + UniformGrid.SECTOR_SIZE, 0.7f, 0.9f, 0.7f, 0.2f);
         var key_rect_2    = new GridRect(key_rect_2_p0, key_rect_2_p1, key_rect_2_p2, key_rect_2_p3);
 
-        var key_rect_3_p0 = new GridPoint(kx3, ky3, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_3_p1 = new GridPoint(kx3 + UniformGrid.SECTOR_SIZE, ky3, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_3_p2 = new GridPoint(kx3 + UniformGrid.SECTOR_SIZE, ky3 + UniformGrid.SECTOR_SIZE, 0.9f, 0.9f, 0.9f, 0.2f);
-        var key_rect_3_p3 = new GridPoint(kx3, ky3 + UniformGrid.SECTOR_SIZE, 0.9f, 0.9f, 0.9f, 0.2f);
+        var key_rect_3_p0 = new GridPoint(kx3, ky3, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_3_p1 = new GridPoint(kx3 + UniformGrid.SECTOR_SIZE, ky3, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_3_p2 = new GridPoint(kx3 + UniformGrid.SECTOR_SIZE, ky3 + UniformGrid.SECTOR_SIZE, 0.7f, 0.9f, 0.7f, 0.2f);
+        var key_rect_3_p3 = new GridPoint(kx3, ky3 + UniformGrid.SECTOR_SIZE, 0.7f, 0.9f, 0.7f, 0.2f);
         var key_rect_3    = new GridRect(key_rect_3_p0, key_rect_3_p1, key_rect_3_p2, key_rect_3_p3);
 
         int[] out;

@@ -31,7 +31,7 @@ public abstract class GPUProgram
      * code will define matching constants for easy interoperability.
      * todo: generate the GPU code from the CPU constants instead of duplicating the code in both places
      */
-    protected static String const_armature_flags           = read_src("constants/armature_flags.cl");
+    protected static String const_entity_flags             = read_src("constants/entity_flags.cl");
     protected static String const_hull_flags               = read_src("constants/hull_flags.cl");
     protected static String const_point_flags              = read_src("constants/point_flags.cl");
     protected static String const_control_flags            = read_src("constants/control_flags.cl");

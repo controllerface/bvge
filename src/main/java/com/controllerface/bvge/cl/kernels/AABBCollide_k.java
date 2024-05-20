@@ -8,7 +8,7 @@ public class AABBCollide_k extends GPUKernel
     {
         bounds,
         bounds_bank_data,
-        hull_armature_ids,
+        hull_entity_ids,
         hull_flags,
         candidates,
         match_offsets,

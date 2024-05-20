@@ -106,11 +106,11 @@ inline float map(float x, float in_min, float in_max, float out_min, float out_m
 
 __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int *hull_mesh_ids,
-                                   __global int *hull_armature_ids,
+                                   __global int *hull_entity_ids,
                                    __global int *hull_flags,
                                    __global int *hull_uv_offsets,
                                    __global int *hull_integrity,
-                                   __global int *armature_flags,
+                                   __global int *entity_flags,
                                    __global int2 *mesh_vertex_tables,
                                    __global int2 *mesh_face_tables,
                                    __global int4 *mesh_faces,
@@ -146,10 +146,10 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     int2 point_table = hull_point_tables[hull_id];
     int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
     int2 mesh_face_table = mesh_face_tables[mesh_id];
-    int armature_id = hull_armature_ids[hull_id];
+    int entity_id = hull_entity_ids[hull_id];
     int uv_offset = hull_uv_offsets[hull_id];
     int integrity = hull_integrity[hull_id];
-    int a_flags = armature_flags[armature_id];
+    int a_flags = entity_flags[entity_id];
 
     bool face_l = (a_flags & FACE_LEFT) !=0;
     bool side_r = (flags & SIDE_R) !=0;

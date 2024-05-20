@@ -99,7 +99,7 @@ public class ModelRegistry
 
         var bind_name_map = new HashMap<String, Integer>();
         var model_transform = new AtomicReference<Matrix4f>();
-        var armature_transform = new AtomicReference<Matrix4f>();
+        var entity_transform = new AtomicReference<Matrix4f>();
 
         var animation_map = new EnumMap<AnimationState, Integer>(AnimationState.class);
 
@@ -116,7 +116,7 @@ public class ModelRegistry
             load_materials(ai_scene);
 
             // generate the bind pose transforms, setting the initial state of the armature
-            generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, model_transform, armature_transform,-1);
+            generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, model_transform, entity_transform,-1);
 
             load_animations(ai_scene, bind_name_map, animation_map);
             load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map, baked_uvs);
@@ -133,7 +133,7 @@ public class ModelRegistry
                 root_transform_index = GPGPU.core_memory.new_model_transform(MathEX.raw_matrix(model_transform.get()));
             }
             var model = new Model(meshes,
-                armature_transform.get(),
+                entity_transform.get(),
                 bone_transforms,
                 bind_name_map,
                 bind_pose_map,
@@ -714,7 +714,7 @@ public class ModelRegistry
                                             Map<String, Integer> bind_name_map,
                                             Map<Integer, BoneBindPose> bind_pose_map,
                                             AtomicReference<Matrix4f> model_matrix,
-                                            AtomicReference<Matrix4f> armature_matrix,
+                                            AtomicReference<Matrix4f> entity_matrix,
                                             int parent_index)
     {
         var name = current_node.name;
@@ -730,7 +730,7 @@ public class ModelRegistry
         {
             boolean model_ok = model_matrix.compareAndSet(null, node_transform);
             assert model_ok : "model transform already set";
-            boolean armature_ok = armature_matrix.compareAndSet(null, node_transform);
+            boolean armature_ok = entity_matrix.compareAndSet(null, node_transform);
             assert armature_ok : "armature transform already set";
         }
 
@@ -746,7 +746,7 @@ public class ModelRegistry
         }
         for (SceneNode child : current_node.children)
         {
-            generate_transforms(child, transforms, global_transform, bind_name_map, bind_pose_map, model_matrix, armature_matrix, parent);
+            generate_transforms(child, transforms, global_transform, bind_name_map, bind_pose_map, model_matrix, entity_matrix, parent);
         }
     }
 

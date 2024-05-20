@@ -5,7 +5,7 @@ import com.controllerface.bvge.ecs.ECS;
 public enum Component
 {
     ControlPoints(ControlPoints.class),
-    Armature(ArmatureIndex.class),
+    EntityId(EntityIndex.class),
     LinearForce(LinearForce.class),
     CameraFocus(CameraFocus.class),
 

@@ -8,7 +8,7 @@ public class LocateOutOfBounds_k extends GPUKernel
     {
         hull_tables,
         hull_flags,
-        armature_flags,
+        entity_flags,
         counter;
     }
 
