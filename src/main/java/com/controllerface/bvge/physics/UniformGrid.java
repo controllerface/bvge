@@ -6,7 +6,10 @@ package com.controllerface.bvge.physics;
  */
 public class UniformGrid
 {
-    public final static float SECTOR_SIZE = 2048.0f;
+    public final static float SECTOR_SIZE = 2048.0f; // pixels per row
+    public final static float BLOCK_COUNT = 64.0f;   // blocks per row
+    public final static float BLOCK_SIZE  = 32.0f;   // pixels per block row
+
     public final float perimeter_width;// = 2048f;
     public final float perimeter_height;// = 1024f;
     public final float width;// = (8192f - perimeter_width) * 2;
@@ -25,6 +28,8 @@ public class UniformGrid
     private float y_origin = 0;
     private float inner_x_origin = 0;
     private float inner_y_origin = 0;
+    private float outer_x_origin = 0;
+    private float outer_y_origin = 0;
     int key_bank_size = 0;
     int key_map_size = 0;
 
@@ -54,6 +59,8 @@ public class UniformGrid
         this.y_origin = y_origin;
         this.inner_x_origin = this.x_origin + (width - inner_width) / 2;
         this.inner_y_origin = this.y_origin + (height - inner_height) / 2;
+        this.outer_x_origin = this.x_origin - perimeter_width;
+        this.outer_y_origin = this.y_origin - perimeter_height;
     }
 
     public void resizeBank(int size)
@@ -91,5 +98,15 @@ public class UniformGrid
     public float inner_y_origin()
     {
         return inner_y_origin;
+    }
+
+    public float outer_x_origin()
+    {
+        return outer_x_origin;
+    }
+
+    public float outer_y_origin()
+    {
+        return outer_y_origin;
     }
 }

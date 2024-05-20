@@ -187,20 +187,17 @@ public class TestGame extends GameMode
        PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f, 0.0003f);
     }
 
-    private void genTestFigure(float size, float x, float y)
+    private void genPlayer(float size, float x, float y)
     {
-        // circle entity
-        var figure = ecs.registerEntity("player");
-
+        var player = ecs.registerEntity("player");
         var entity_id = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f, 0,0);
-        ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
-        ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
-        // todo: determine if a different ID may be used for identifying entities that is not tied to the
-        //  entity index directly. Now that objects can be deleted, this value can change frequently
-        //  and there is not a mechanism to keep ECS entities updated to compensate. Instead, some unique
-        //  monotonically increasing value could be used, which doesn't change during entity life time
-        ecs.attachComponent(figure, Component.EntityId, new EntityIndex(entity_id));
-        ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1600));
+        var cursor_id = PhysicsObjects.circle_cursor(0,0, 10);
+
+        ecs.attachComponent(player, Component.EntityId, new EntityIndex(entity_id));
+        ecs.attachComponent(player, Component.CursorId, new EntityIndex(cursor_id));
+        ecs.attachComponent(player, Component.ControlPoints, new ControlPoints());
+        ecs.attachComponent(player, Component.CameraFocus, new CameraFocus());
+        ecs.attachComponent(player, Component.LinearForce, new LinearForce(1600));
     }
 
     private void genCursor(float size, float x, float y)
@@ -285,8 +282,8 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genTestFigure(1f, 2000, 3200);
-        genCursor(10, 0, 0);
+        genPlayer(1f, 2000, 3200);
+        //genCursor(10, 0, 0);
         //genTestFigureNPC_2(1f, 100, 500);
 
 //        genTestFigureNPC(1f, 200, 0);

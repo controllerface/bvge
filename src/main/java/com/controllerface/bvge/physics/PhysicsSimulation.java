@@ -535,9 +535,9 @@ public class PhysicsSimulation extends GameSystem
         //  checks or logic to ensure characters don't get deleted
         var components = ecs.getComponents(Component.ControlPoints);
 
-        var mouse_entity = ecs.getComponentFor("mouse", Component.EntityId);
-        EntityIndex mouse_object = Component.EntityId.coerce(mouse_entity);
-        Objects.requireNonNull(mouse_object);
+//        var mouse_entity = ecs.getComponentFor("mouse", Component.EntityId);
+//        EntityIndex mouse_object = Component.EntityId.coerce(mouse_entity);
+//        Objects.requireNonNull(mouse_object);
 
         control_point_flags.ensure_capacity(components.size());
         control_point_indices.ensure_capacity(components.size());
@@ -552,6 +552,7 @@ public class PhysicsSimulation extends GameSystem
             GameComponent component = entry.getValue();
             ControlPoints controlPoints = Component.ControlPoints.coerce(component);
             EntityIndex entity_id = Component.EntityId.forEntity(ecs, entity_name);
+            EntityIndex cursor_entity_id = Component.CursorId.forEntity(ecs, entity_name);
             LinearForce force = Component.LinearForce.forEntity(ecs, entity_name);
 
             Objects.requireNonNull(controlPoints);
@@ -595,7 +596,7 @@ public class PhysicsSimulation extends GameSystem
             var camera = Window.get().camera();
             float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position.x;
             float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position.y;
-            GPGPU.core_memory.update_position(mouse_object.index(), world_x, world_y);
+            GPGPU.core_memory.update_position(cursor_entity_id.index(), world_x, world_y);
 
             target_count++;
         }
