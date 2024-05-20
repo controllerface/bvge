@@ -200,13 +200,6 @@ public class TestGame extends GameMode
         ecs.attachComponent(player, Component.LinearForce, new LinearForce(1600));
     }
 
-    private void genCursor(float size, float x, float y)
-    {
-        var figure = ecs.registerEntity("mouse");
-        var entity_index = PhysicsObjects.circle_cursor(x, y, size);
-        ecs.attachComponent(figure, Component.EntityId, new EntityIndex(entity_index));
-    }
-
     private void genTestFigureNPC_2(float size, float x, float y)
     {
         PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0, 0);
@@ -286,7 +279,7 @@ public class TestGame extends GameMode
         //genCursor(10, 0, 0);
         //genTestFigureNPC_2(1f, 100, 500);
 
-//        genTestFigureNPC(1f, 200, 0);
+//        genTestFigureNPC(1f, 200, 1200);
 //        genSquares(1,  25f, 25f, 420, 200);
 //        genTestFigureNPC(1f, 200, 100);
 //        genSquares(1,  25f, 25f, 420, 200);
@@ -294,10 +287,10 @@ public class TestGame extends GameMode
 //        genSquares(1,  25f, 25f, 420, 200);
 //        genTestFigureNPC(1f, 100, 50);
 
-        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
-        genSquaresRando(40,  32f, 32f, 0.8f,-50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
-        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
-        genTriangles(50,  24f, 24f, 2500, 3800);
+//        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
+//        genSquaresRando(40,  32f, 32f, 0.8f,-50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
+//        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
+//        genTriangles(50,  24f, 24f, 2500, 3800);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);
