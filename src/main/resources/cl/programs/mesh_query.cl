@@ -98,6 +98,12 @@ __kernel void transfer_detail_data(__global int4 *mesh_details,
     mesh_transfer[t_index] = details;
 }
 
+
+inline float map(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int *hull_mesh_ids,
                                    __global int *hull_armature_ids,
@@ -192,7 +198,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float xxx = is_static ? col - 0.07f : col;
         float rrr = integrity > 100 
             ? 0.0f 
-            : min((100 - integrity) / 100.0f, .5f);
+            : .3f - map((float) integrity, 0.0f, 100.0f, 0.0f, .3f);
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
         color_buffer[ref_offset] = (float4)(xxx + rrr, xxx, xxx, 1.0f);
