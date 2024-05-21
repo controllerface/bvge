@@ -43,7 +43,8 @@ public class UniformGridRenderer extends GameSystem
 
     private void init_GL()
     {
-        int draw_count = uniformGrid.x_subdivisions * uniformGrid.y_subdivisions + 8;
+        int sector_0_count = UniformGrid.BLOCK_COUNT * UniformGrid.BLOCK_COUNT;
+        int draw_count = uniformGrid.x_subdivisions * uniformGrid.y_subdivisions + 8 + sector_0_count;
         first = new int[draw_count];
         count = new int[draw_count];
         vertex_buffer_size = draw_count * VERTICES_PER_BOX * VECTOR_FLOAT_2D_SIZE;
@@ -241,6 +242,56 @@ public class UniformGridRenderer extends GameSystem
         out = write_rect(sector_3, vertex_data, color_data, vertex_index, color_index);
         vertex_index += out[0];
         color_index  += out[1];
+
+
+        float sx_offset = 0 * (int)UniformGrid.SECTOR_SIZE;
+        float sy_offset = 0 * (int)UniformGrid.SECTOR_SIZE;
+
+        for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
+        {
+            for (int y = 0; y < UniformGrid.BLOCK_COUNT; y++)
+            {
+                float r = 0.4f;
+                float g = 0.1f;
+                float b = 0.1f;
+                float a = 0.9f;
+
+                float current_x = (x * UniformGrid.BLOCK_SIZE) + sx_offset;
+                float current_y = (y * UniformGrid.BLOCK_SIZE) + sy_offset;
+                vertex_data[vertex_index++] = current_x;
+                vertex_data[vertex_index++] = current_y;
+                vertex_data[vertex_index++] = current_x + UniformGrid.BLOCK_SIZE;
+                vertex_data[vertex_index++] = current_y;
+                vertex_data[vertex_index++] = current_x + UniformGrid.BLOCK_SIZE;
+                vertex_data[vertex_index++] = current_y + UniformGrid.BLOCK_SIZE;
+                vertex_data[vertex_index++] = current_x;
+                vertex_data[vertex_index++] = current_y + UniformGrid.BLOCK_SIZE;
+
+                color_data[color_index++] = r; // v0
+                color_data[color_index++] = g;
+                color_data[color_index++] = b;
+                color_data[color_index++] = a;
+                color_data[color_index++] = r; // v1
+                color_data[color_index++] = g;
+                color_data[color_index++] = b;
+                color_data[color_index++] = a;
+                color_data[color_index++] = r; // v2
+                color_data[color_index++] = g;
+                color_data[color_index++] = b;
+                color_data[color_index++] = a;
+                color_data[color_index++] = r; // v3
+                color_data[color_index++] = g;
+                color_data[color_index++] = b;
+                color_data[color_index++] = a;
+            }
+        }
+
+
+
+
+
+
+
 
         float x_offset = uniformGrid.x_origin();
         float y_offset = uniformGrid.y_origin();

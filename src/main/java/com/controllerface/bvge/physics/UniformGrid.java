@@ -6,9 +6,9 @@ package com.controllerface.bvge.physics;
  */
 public class UniformGrid
 {
-    public final static float SECTOR_SIZE = 2048.0f; // pixels per row
-    public final static float BLOCK_COUNT = 64.0f;   // blocks per row
-    public final static float BLOCK_SIZE  = 32.0f;   // pixels per block row
+    public final static int BLOCK_SIZE  = 32;   // pixels per block row
+    public final static int BLOCK_COUNT = 64;   // blocks per row
+    public final static float SECTOR_SIZE = BLOCK_SIZE * BLOCK_COUNT; // pixels per row
 
     public final float perimeter_width;// = 2048f;
     public final float perimeter_height;// = 1024f;

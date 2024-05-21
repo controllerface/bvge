@@ -88,7 +88,7 @@ public class TestGame extends GameMode
         }
     }
 
-    private void genNoiseBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
+    private void genNoiseBlocks(boolean dynamic, int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
     {
         //System.out.println("generating: " + box_size * box_size + " Blocks..");
         for (int i = 0; i < box_size; i++)
@@ -98,7 +98,9 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+                int _  = dynamic
+                    ? PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx])
+                    : PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
             }
         }
     }
@@ -149,7 +151,7 @@ public class TestGame extends GameMode
     private void genWater(int box_size, float spacing, float size, float start_x, float start_y, Liquid ... liquids)
     {
         boolean flip = false;
-        System.out.println("generating: " + box_size * box_size + " water particles..");
+        //System.out.println("generating: " + box_size * box_size + " water particles..");
         for (int i = 0; i < box_size; i++)
         {
             for (int j = 0; j < box_size; j++)
@@ -287,7 +289,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genPlayer(1f, 0, 500);
+        genPlayer(1f, -100, 100);
         //genCursor(10, 0, 0);
         //genTestFigureNPC_2(1f, 100, 500);
 
@@ -324,6 +326,7 @@ public class TestGame extends GameMode
     public void start()
     {
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
+        noise.SetFractalType(FastNoiseLite.FractalType.FBm);
     }
 
     private record Sector(int x, int y) { }
@@ -386,7 +389,7 @@ public class TestGame extends GameMode
 
         if (load_changed)
         {
-            System.out.println(loaded_sectors.size() + " sectors loaded");
+            //System.out.println(loaded_sectors.size() + " sectors loaded");
         }
     }
 
@@ -397,24 +400,45 @@ public class TestGame extends GameMode
 
     private void load_sector(Sector sector)
     {
+        //if (sector.x == 0 && sector.y == 0) return;
+
         float x_offset = sector.x * (int)UniformGrid.SECTOR_SIZE;
         float y_offset = sector.y * (int)UniformGrid.SECTOR_SIZE;
+
+        int count = 0;
 
         for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
         {
             for (int y = 0; y < UniformGrid.BLOCK_COUNT; y++)
             {
-                float nx = x + x_offset;
-                float ny = y + y_offset;
-                float bx = (nx + x * UniformGrid.BLOCK_SIZE);
-                float by = (ny + y * UniformGrid.BLOCK_SIZE);
-                if (by > 0) continue;
-                float n = noise.GetNoise(nx, ny);
+
+                float world_x = (x * UniformGrid.BLOCK_SIZE) + x_offset + 16;
+                float world_y = (y * UniformGrid.BLOCK_SIZE) + y_offset;
+
+                float block_x = world_x / UniformGrid.BLOCK_SIZE;
+                float block_y = world_y / UniformGrid.BLOCK_SIZE;
+                //if (world_y >= 0) continue; // consider 0 ground level for now
+
+                float n = noise.GetNoise(block_x, block_y);
+
                 int block = (int)map(n, -1, 1, 0, Solid.values().length);
+
                 var solid = Solid.values()[block];
-                genNoiseBlocks(1, 0, UniformGrid.BLOCK_SIZE, bx, by, solid);
-                System.out.println("DEBUG x:" + nx + " y:" + ny + " noise:" + n);
+
+                boolean gen_static = n > 0;
+
+//                if (noise.GetNoise(block_x + 1, block_y) <= 0
+//                    ||noise.GetNoise(block_x + 1, block_y + 1) <= 0
+//                    ||noise.GetNoise(block_x, block_y + 1) <= 0
+//                    ||noise.GetNoise(block_x, block_y) <= 0)
+
+                if (gen_static) genNoiseBlocks(false, 1, 0, UniformGrid.BLOCK_SIZE, world_x, world_y, solid);
+                else if (n > -.05) genWater(1, 0, 24f, world_x, world_y, Liquid.WATER);
+                count++;
+                //System.out.println("DEBUG x:" + nx + " y:" + ny + " noise:" + n);
             }
         }
+
+        //System.out.println("generated: " + count + " blocks");
     }
 }
