@@ -30,23 +30,21 @@ __kernel void integrate(__global float4 *hulls,
 {
     int current_hull = get_global_id(0);
 
-    float dt = args[0];
+    float dt             = args[0];
+    float2 gravity       = (float2)(args[1], args[2]);
+    float damping        = args[3];
+    float x_spacing      = args[4];
+    float y_spacing      = args[5];
+    float x_origin       = args[6];
+    float y_origin       = args[7];
+    float width          = args[8];
+    float height         = args[9];
+    float inner_x_origin = args[10];
+    float inner_y_origin = args[11];
+    float inner_width    = args[12];
+    float inner_height   = args[13];
+    
     float dt_2 = pown(dt, 2);
-    float x_spacing = args[1];
-    float y_spacing = args[2];
-    float x_origin = args[3];
-    float y_origin = args[4];
-    float width = args[5];
-    float height = args[6];
-    int x_subdivisions = (int) args[7];
-    int y_subdivisions = (int) args[8];
-    float2 gravity = (float2)(args[9], args[10]);
-    float damping = args[11];
-
-    float inner_x_origin = args[12];
-    float inner_y_origin = args[13];
-    float inner_width = args[14];
-    float inner_height = args[15];
     
     // get hull from array
     float4 hull = hulls[current_hull];
@@ -270,27 +268,19 @@ __kernel void integrate(__global float4 *hulls,
 
     keys[0] = get_key_for_point(bounding_box.s0, bounding_box.s1, 
         x_spacing, y_spacing,
-        x_origin, y_origin,
-        width, height,
-        x_subdivisions, y_subdivisions);
+        x_origin, y_origin);
 
     keys[1] = get_key_for_point(max_x, bounding_box.s1, 
         x_spacing, y_spacing,
-        x_origin, y_origin,
-        width, height,
-        x_subdivisions, y_subdivisions);
+        x_origin, y_origin);
 
     keys[2] = get_key_for_point(max_x, max_y, 
         x_spacing, y_spacing,
-        x_origin, y_origin,
-        width, height,
-        x_subdivisions, y_subdivisions);
+        x_origin, y_origin);
 
     keys[3] = get_key_for_point(bounding_box.s0, max_y, 
         x_spacing, y_spacing,
-        x_origin, y_origin,
-        width, height,
-        x_subdivisions, y_subdivisions);
+        x_origin, y_origin);
 
     int4 k = getExtents(keys);
     bounds_index = k;
@@ -352,8 +342,12 @@ __kernel void integrate_entities(__global float4 *entities,
     int current_entity = get_global_id(0);
 
     float dt = args[0];
-    float2 gravity = (float2)(args[9], args[10]);
-    float damping = args[11];
+    float2 gravity = (float2)(args[1], args[2]);
+    float damping = args[3];
+    float sector_x = args[14];
+    float sector_y = args[15];
+    float sector_w = args[16];
+    float sector_h = args[17];
 
     float4 entity = entities[current_entity];
     int _entity_flags = entity_flags[current_entity];
@@ -364,7 +358,6 @@ __kernel void integrate_entities(__global float4 *entities,
 
     bool is_static = (root_hull_flags & IS_STATIC) !=0;
     bool no_bones = (root_hull_flags & NO_BONES) !=0;
-
     gravity = is_wet
         ? gravity * 0.4f
         : gravity;
@@ -397,5 +390,12 @@ __kernel void integrate_entities(__global float4 *entities,
         entity.zw = prv;
     }
 
+    bool sector_in = is_point_in_bounds(pos, sector_x, sector_y, sector_w, sector_h);
+
+    _entity_flags = sector_in 
+        ? _entity_flags & ~SECTOR_OUT
+        : _entity_flags | SECTOR_OUT; 
+
     entities[current_entity] = entity;
+    entity_flags[current_entity] = _entity_flags;
 }

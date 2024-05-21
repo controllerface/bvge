@@ -493,21 +493,23 @@ public class PhysicsSimulation extends GameSystem
         float[] args =
             {
                 FIXED_TIME_STEP,
+                GRAVITY_X,
+                GRAVITY_Y,
+                MOTION_DAMPING,
                 uniform_grid.x_spacing,
                 uniform_grid.y_spacing,
                 uniform_grid.x_origin(),
                 uniform_grid.y_origin(),
                 uniform_grid.width,
                 uniform_grid.height,
-                (float) uniform_grid.x_subdivisions,
-                (float) uniform_grid.y_subdivisions,
-                GRAVITY_X,
-                GRAVITY_Y,
-                MOTION_DAMPING,
                 uniform_grid.inner_x_origin(),
                 uniform_grid.inner_y_origin(),
                 uniform_grid.inner_width,
                 uniform_grid.inner_height,
+                uniform_grid.sector_origin_x(),
+                uniform_grid.sector_origin_y(),
+                uniform_grid.sector_width(),
+                uniform_grid.sector_height(),
             };
 
         var arg_mem_ptr = GPGPU.cl_new_cpu_copy_buffer(args);

@@ -14,8 +14,7 @@ import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.window.Window;
 
-import java.util.EnumSet;
-import java.util.Random;
+import java.util.*;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
 import static com.controllerface.bvge.util.Constants.*;
@@ -218,16 +217,11 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
-        // all physics calculations should be done first
-        ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid));
+        ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid)); // all physics calculations should be done first
+        ecs.registerSystem(new CameraTracking(ecs, uniformGrid)); // camera is handled before rendering occurs, but after collision has been resolved
+        ecs.registerSystem(screenBlankSystem); // the blanking system clears the screen before rendering passes
 
-        // camera movement must be handled before rendering occurs, but after collision has been resolved
-        ecs.registerSystem(new CameraTracking(ecs, uniformGrid));
-
-        // the blanking system clears the screen before rendering passes
-        ecs.registerSystem(screenBlankSystem);
-
-        // main renderers go here, one for each model type that can be rendered
+        // renderers are added in the order in which they will render
 
         ecs.registerSystem(new BackgroundRenderer(ecs));
 
@@ -240,7 +234,9 @@ public class TestGame extends GameMode
             ecs.registerSystem(new LiquidRenderer(ecs));
         }
 
-        // these are debug-level renderers for visualizing the modeled physics boundaries
+        ecs.registerSystem(new MouseRenderer(ecs));
+
+        // the following are debug renderers
 
         if (ACTIVE_RENDERERS.contains(RenderType.HULLS))
         {
@@ -268,7 +264,7 @@ public class TestGame extends GameMode
             ecs.registerSystem(new EntityRenderer(ecs));
         }
 
-        ecs.registerSystem(new MouseRenderer(ecs));
+
     }
 
     @Override
@@ -287,10 +283,10 @@ public class TestGame extends GameMode
 //        genSquares(1,  25f, 25f, 420, 200);
 //        genTestFigureNPC(1f, 100, 50);
 
-//        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
-//        genSquaresRando(40,  32f, 32f, 0.8f,-50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
-//        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
-//        genTriangles(50,  24f, 24f, 2500, 3800);
+        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
+        genSquaresRando(40,  32f, 32f, 0.8f,-50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
+        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
+        genTriangles(50,  24f, 24f, 2500, 3800);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);
@@ -311,8 +307,67 @@ public class TestGame extends GameMode
     {
     }
 
+    private record Sector(int x, int y) { }
+
+    private Set<Sector> last_loaded_sectors = new HashSet<>();
+    private Set<Sector> loaded_sectors = new HashSet<>();
+
     @Override
     public void update(float dt)
     {
+        float o_xo = uniformGrid.outer_x_origin();
+        float o_yo = uniformGrid.outer_y_origin();
+
+        float o_xu = o_xo + uniformGrid.outer_width;
+        float o_yu = o_yo + uniformGrid.outer_height;
+
+        var sector_0_key = UniformGridRenderer.get_sector_for_point(o_xo, o_yo);
+        var sector_2_key = UniformGridRenderer.get_sector_for_point(o_xu, o_yu);
+
+        float sector_size = UniformGrid.SECTOR_SIZE;
+
+        float sector_0_origin_x = (float)sector_0_key[0] * sector_size;
+        float sector_0_origin_y = (float)sector_0_key[1] * sector_size;
+
+        float sector_2_origin_x = (float)sector_2_key[0] * sector_size;
+        float sector_2_origin_y = (float)sector_2_key[1] * sector_size;
+
+        uniformGrid.update_sector_metrics(sector_0_origin_x, sector_0_origin_y,
+             Math.abs(sector_0_origin_x - (sector_2_origin_x + sector_size)),
+            Math.abs(sector_0_origin_y - (sector_2_origin_y + sector_size)));
+
+        last_loaded_sectors.clear();
+        last_loaded_sectors.addAll(loaded_sectors);
+        loaded_sectors.clear();
+
+        boolean load_changed = false;
+        for (int sx = sector_0_key[0]; sx <= sector_2_key[0]; sx ++)
+        {
+            for (int sy = sector_0_key[1]; sy <= sector_2_key[1]; sy++)
+            {
+                var sector = new Sector(sx, sy);
+                loaded_sectors.add(sector);
+                if (!last_loaded_sectors.contains(sector))
+                {
+                    System.out.println("loading sector: ["+sx+","+sy+"]");
+                    load_changed = true;
+
+                }
+            }
+        }
+
+        for (var last : last_loaded_sectors)
+        {
+            if (!loaded_sectors.contains(last))
+            {
+                System.out.println("unloading sector: ["+last.x+","+last.y+"]");
+                load_changed = true;
+            }
+        }
+
+        if (load_changed)
+        {
+            System.out.println(loaded_sectors.size() + " sectors loaded");
+        }
     }
 }

@@ -33,6 +33,11 @@ public class UniformGrid
     int key_bank_size = 0;
     int key_map_size = 0;
 
+    private float sector_origin_x = 0;
+    private float sector_origin_y = 0;
+    private float sector_width = 0;
+    private float sector_height = 0;
+
     public UniformGrid(int screen_width, int screen_height)
     {
         float x = (float)screen_width * 2.5f;
@@ -51,6 +56,14 @@ public class UniformGrid
         directory_length = x_subdivisions * y_subdivisions;
         x_spacing = width / x_subdivisions;
         y_spacing = height / y_subdivisions;
+    }
+
+    public void update_sector_metrics(float sector_origin_x, float sector_origin_y, float sector_width, float sector_height)
+    {
+        this.sector_origin_x = sector_origin_x;
+        this.sector_origin_y = sector_origin_y;
+        this.sector_width = sector_width;
+        this.sector_height = sector_height;
     }
 
     public void updateOrigin(float x_origin, float y_origin)
@@ -108,5 +121,25 @@ public class UniformGrid
     public float outer_y_origin()
     {
         return outer_y_origin;
+    }
+
+    public float sector_origin_x()
+    {
+        return sector_origin_x;
+    }
+
+    public float sector_origin_y()
+    {
+        return sector_origin_y;
+    }
+
+    public float sector_width()
+    {
+        return sector_width;
+    }
+
+    public float sector_height()
+    {
+        return sector_height;
     }
 }

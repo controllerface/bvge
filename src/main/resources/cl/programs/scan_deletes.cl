@@ -79,9 +79,10 @@ __kernel void locate_out_of_bounds(__global int2 *entity_hull_tables,
         }
     }
 
-    if (out_count == hull_count)
+    int flags = entity_flags[gid];
+    bool sector_out = (flags & SECTOR_OUT) !=0;
+    if (out_count == hull_count && sector_out)
     {
-        int flags = entity_flags[gid];
         flags = (flags | DELETED);
         entity_flags[gid] = flags;
     }

@@ -8,3 +8,15 @@ inline bool is_in_bounds(float4 a, float x, float y, float w, float h)
         && a.s1 < y + h
         && a.s1 + a.s3 > y;
 }
+
+
+/**
+Determines if a given point is within a provided boundary.
+ */
+inline bool is_point_in_bounds(float2 p, float x, float y, float w, float h)
+{
+    return p.x >= x 
+        && p.x <= x + w 
+        && p.y >= y 
+        && p.y <= y + h;
+}
