@@ -537,10 +537,6 @@ public class PhysicsSimulation extends GameSystem
         //  checks or logic to ensure characters don't get deleted
         var components = ecs.getComponents(Component.ControlPoints);
 
-//        var mouse_entity = ecs.getComponentFor("mouse", Component.EntityId);
-//        EntityIndex mouse_object = Component.EntityId.coerce(mouse_entity);
-//        Objects.requireNonNull(mouse_object);
-
         control_point_flags.ensure_capacity(components.size());
         control_point_indices.ensure_capacity(components.size());
         control_point_tick_budgets.ensure_capacity(components.size());

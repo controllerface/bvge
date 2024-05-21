@@ -323,7 +323,7 @@ public class TestGame extends GameMode
     @Override
     public void start()
     {
-        noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
     }
 
     private record Sector(int x, int y) { }
@@ -390,6 +390,11 @@ public class TestGame extends GameMode
         }
     }
 
+    private float map(float x, float in_min, float in_max, float out_min, float out_max)
+    {
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
+
     private void load_sector(Sector sector)
     {
         float x_offset = sector.x * (int)UniformGrid.SECTOR_SIZE;
@@ -404,10 +409,11 @@ public class TestGame extends GameMode
                 float bx = (nx + x * UniformGrid.BLOCK_SIZE);
                 float by = (ny + y * UniformGrid.BLOCK_SIZE);
                 if (by > 0) continue;
-                float n = noise.GetNoise(bx, by);
-                if (n > 0.0f) genNoiseBlocks(1, UniformGrid.BLOCK_SIZE, UniformGrid.BLOCK_SIZE, bx, by, Solid.ANDESITE, Solid.COAL_DEPOSIT);
-                else genNoiseBlocks(1, UniformGrid.BLOCK_SIZE, UniformGrid.BLOCK_SIZE, bx, by, Solid.OBSIDIAN, Solid.PUMICE);
-                //System.out.println("DEBUG x:" + bx + " y:" + by + " noise:" + n);
+                float n = noise.GetNoise(nx, ny);
+                int block = (int)map(n, -1, 1, 0, Solid.values().length);
+                var solid = Solid.values()[block];
+                genNoiseBlocks(1, 0, UniformGrid.BLOCK_SIZE, bx, by, solid);
+                System.out.println("DEBUG x:" + nx + " y:" + ny + " noise:" + n);
             }
         }
     }
