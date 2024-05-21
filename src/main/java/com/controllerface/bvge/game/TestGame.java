@@ -12,6 +12,7 @@ import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
+import com.controllerface.bvge.util.FastNoiseLite;
 import com.controllerface.bvge.window.Window;
 
 import java.util.*;
@@ -39,7 +40,7 @@ public class TestGame extends GameMode
 //            RenderType.POINTS,
 //            RenderType.ENTITIES,
 //            RenderType.BOUNDS,
-            RenderType.GRID,
+//            RenderType.GRID,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -74,7 +75,7 @@ public class TestGame extends GameMode
 
     private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
     {
-        System.out.println("generating: " + box_size * box_size + " Blocks..");
+        //System.out.println("generating: " + box_size * box_size + " Blocks..");
         for (int i = 0; i < box_size; i++)
         {
             for (int j = 0; j < box_size; j++)
@@ -83,6 +84,21 @@ public class TestGame extends GameMode
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
                 PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+            }
+        }
+    }
+
+    private void genNoiseBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
+    {
+        //System.out.println("generating: " + box_size * box_size + " Blocks..");
+        for (int i = 0; i < box_size; i++)
+        {
+            for (int j = 0; j < box_size; j++)
+            {
+                float x = start_x + i * spacing;
+                float y = start_y + j * spacing;
+                int rx = rando_int(0, minerals.length);
+                PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
             }
         }
     }
@@ -271,7 +287,7 @@ public class TestGame extends GameMode
     public void load()
     {
         // player character
-        genPlayer(1f, 2000, 3200);
+        genPlayer(1f, 0, 500);
         //genCursor(10, 0, 0);
         //genTestFigureNPC_2(1f, 100, 500);
 
@@ -283,28 +299,31 @@ public class TestGame extends GameMode
 //        genSquares(1,  25f, 25f, 420, 200);
 //        genTestFigureNPC(1f, 100, 50);
 
-        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
-        genSquaresRando(40,  32f, 32f, 0.8f,-50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
-        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
-        genTriangles(50,  24f, 24f, 2500, 3800);
+//        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
+//        genSquaresRando(40,  32f, 32f, 0.8f,-50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
+//        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
+//        genTriangles(50,  24f, 24f, 2500, 3800);
 
         //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
         //PhysicsObjects.static_box(0,0,10,10, 0f);
 
-        genFloor(16, 150f, 150f, -70, -100, 0.5f, Solid.ANDESITE);
-        genFloor(32, 150f, 150f, 1700, -100, 0.5f, Solid.ANDESITE);
-        genFloor(32, 150f, 150f, 1700, 2200, 0.5f, Solid.DIORITE);
-
-        genWall(15, 150f, 150f, -220, -100, Solid.ANDESITE);
-        genWall(5, 150f, 150f, 2000, 1500, Solid.DIORITE);
-        genWall(5, 150f, 150f, 4880, -100, Solid.ANDESITE);
+//        genFloor(16, 150f, 150f, -70, -100, 0.5f, Solid.ANDESITE);
+//        genFloor(32, 150f, 150f, 1700, -100, 0.5f, Solid.ANDESITE);
+//        genFloor(32, 150f, 150f, 1700, 2200, 0.5f, Solid.DIORITE);
+//
+//        genWall(15, 150f, 150f, -220, -100, Solid.ANDESITE);
+//        genWall(5, 150f, 150f, 2000, 1500, Solid.DIORITE);
+//        genWall(5, 150f, 150f, 4880, -100, Solid.ANDESITE);
 
         loadSystems();
     }
 
+    FastNoiseLite noise = new FastNoiseLite();
+
     @Override
     public void start()
     {
+        noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
     }
 
     private record Sector(int x, int y) { }
@@ -349,9 +368,9 @@ public class TestGame extends GameMode
                 loaded_sectors.add(sector);
                 if (!last_loaded_sectors.contains(sector))
                 {
-                    System.out.println("loading sector: ["+sx+","+sy+"]");
+                    //System.out.println("loading sector: ["+sx+","+sy+"]");
+                    load_sector(sector);
                     load_changed = true;
-
                 }
             }
         }
@@ -360,7 +379,7 @@ public class TestGame extends GameMode
         {
             if (!loaded_sectors.contains(last))
             {
-                System.out.println("unloading sector: ["+last.x+","+last.y+"]");
+                //System.out.println("unloading sector: ["+last.x+","+last.y+"]");
                 load_changed = true;
             }
         }
@@ -368,6 +387,28 @@ public class TestGame extends GameMode
         if (load_changed)
         {
             System.out.println(loaded_sectors.size() + " sectors loaded");
+        }
+    }
+
+    private void load_sector(Sector sector)
+    {
+        float x_offset = sector.x * (int)UniformGrid.SECTOR_SIZE;
+        float y_offset = sector.y * (int)UniformGrid.SECTOR_SIZE;
+
+        for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
+        {
+            for (int y = 0; y < UniformGrid.BLOCK_COUNT; y++)
+            {
+                float nx = x + x_offset;
+                float ny = y + y_offset;
+                float bx = (nx + x * UniformGrid.BLOCK_SIZE);
+                float by = (ny + y * UniformGrid.BLOCK_SIZE);
+                if (by > 0) continue;
+                float n = noise.GetNoise(bx, by);
+                if (n > 0.0f) genNoiseBlocks(1, UniformGrid.BLOCK_SIZE, UniformGrid.BLOCK_SIZE, bx, by, Solid.ANDESITE, Solid.COAL_DEPOSIT);
+                else genNoiseBlocks(1, UniformGrid.BLOCK_SIZE, UniformGrid.BLOCK_SIZE, bx, by, Solid.OBSIDIAN, Solid.PUMICE);
+                //System.out.println("DEBUG x:" + bx + " y:" + by + " noise:" + n);
+            }
         }
     }
 }

@@ -304,7 +304,7 @@ __kernel void integrate(__global float4 *hulls,
     else
     {
         bounds_bank.y = 0;
-        if (!is_static && !is_cursor)
+        if (!is_cursor)
         {
             hull_1_flags |= OUT_OF_BOUNDS;
         }
