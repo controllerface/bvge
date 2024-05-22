@@ -1,5 +1,6 @@
 package com.controllerface.bvge.game;
 
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
@@ -7,6 +8,7 @@ import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.geometry.MeshRegistry;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.renderers.*;
+import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
@@ -88,7 +90,7 @@ public class TestGame extends GameMode
         }
     }
 
-    private void genNoiseBlocks(boolean dynamic, int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
+    private void genNoiseBlocks(PhysicsEntityBatch batch, boolean dynamic, int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
     {
         //System.out.println("generating: " + box_size * box_size + " Blocks..");
         for (int i = 0; i < box_size; i++)
@@ -98,9 +100,8 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                int _  = dynamic
-                    ? PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx])
-                    : PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+                if (dynamic) PhysicsObjects.dynamic_block_ex(batch, x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+                else PhysicsObjects.static_box_ex(batch, x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
             }
         }
     }
@@ -401,6 +402,8 @@ public class TestGame extends GameMode
         float x_offset = sector.x * (int)UniformGrid.SECTOR_SIZE;
         float y_offset = sector.y * (int)UniformGrid.SECTOR_SIZE;
 
+        var batch = new PhysicsEntityBatch();
+
         for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
         {
             for (int y = 0; y < UniformGrid.BLOCK_COUNT; y++)
@@ -426,10 +429,12 @@ public class TestGame extends GameMode
                 {
                     int block = (int)map(n, 0, 1, 0, Solid.values().length);
                     var solid = Solid.values()[block];
-                    genNoiseBlocks(gen_dyn, 1, 0, UniformGrid.BLOCK_SIZE, world_x, world_y, solid);
+                    genNoiseBlocks(batch, gen_dyn, 1, 0, UniformGrid.BLOCK_SIZE, world_x, world_y, solid);
                 }
                 else if (n < -.2) genWater(1, 0, 16f, world_x, world_y, Liquid.WATER);
             }
         }
+
+        GPGPU.core_memory.process_entity_batch(batch);
     }
 }

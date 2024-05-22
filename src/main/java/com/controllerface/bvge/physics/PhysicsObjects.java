@@ -330,6 +330,16 @@ public class PhysicsObjects
 
 
 
+    public static void dynamic_block_ex(PhysicsEntityBatch batch, float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
+    {
+        block_EX(batch, x, y, size * 5, HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
+    }
+
+    public static void static_box_ex(PhysicsEntityBatch batch, float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
+    {
+        block_EX(batch, x, y, size * 5, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
+    }
+
 
     public static int dynamic_block(float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
     {
