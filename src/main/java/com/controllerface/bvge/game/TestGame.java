@@ -421,19 +421,22 @@ public class TestGame extends GameMode
 
                 float n = noise.GetNoise(block_x, block_y);
 
-                int block = (int)map(n, -1, 1, 0, Solid.values().length);
 
-                var solid = Solid.values()[block];
+                boolean gen_block = n >= 0;
+                boolean gen_dyn = false;
 
-                boolean gen_static = n > 0;
+                if (noise.GetNoise(block_x, block_y-1) <= 0)
+                {
+                    gen_dyn = true;
+                }
 
-//                if (noise.GetNoise(block_x + 1, block_y) <= 0
-//                    ||noise.GetNoise(block_x + 1, block_y + 1) <= 0
-//                    ||noise.GetNoise(block_x, block_y + 1) <= 0
-//                    ||noise.GetNoise(block_x, block_y) <= 0)
-
-                if (gen_static) genNoiseBlocks(false, 1, 0, UniformGrid.BLOCK_SIZE, world_x, world_y, solid);
-                else if (n > -.05) genWater(1, 0, 24f, world_x, world_y, Liquid.WATER);
+                if (gen_block)
+                {
+                    int block = (int)map(n, 0, 1, 0, Solid.values().length);
+                    var solid = Solid.values()[block];
+                    genNoiseBlocks(gen_dyn, 1, 0, UniformGrid.BLOCK_SIZE, world_x, world_y, solid);
+                }
+                else if (n < -.2) genWater(1, 0, 16f, world_x, world_y, Liquid.WATER);
                 count++;
                 //System.out.println("DEBUG x:" + nx + " y:" + ny + " noise:" + n);
             }
