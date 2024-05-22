@@ -3,6 +3,7 @@ package com.controllerface.bvge.cl;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.ScanDeletes;
+import com.controllerface.bvge.physics.PhysicsEntityBatch;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 
@@ -1076,6 +1077,314 @@ public class GPUCoreMemory
         return last_edge_index;
     }
 
+
+    private int vec2_stride  = 2;
+    private int vec4_stride  = 4;
+    private int vec16_stride = 16;
+
+    public void process_entity_batch(PhysicsEntityBatch batch)
+    {
+        int edge_count = batch.edges.size();
+        int edge_capacity = edge_index + edge_count;
+        edge_buffer.ensure_capacity(edge_capacity);
+        edge_length_buffer.ensure_capacity(edge_capacity);
+        edge_flag_buffer.ensure_capacity(edge_capacity);
+        int[] edge_copy          = new int[edge_count * vec2_stride];
+        float[] edge_length_copy = new float[edge_count];
+        int[] edge_flag_copy     = new int[edge_count];
+        int next_edge     = 0;
+        int edge_offset_2 = 0;
+        for (var edge : batch.edges)
+        {
+            int next_edge_2 = next_edge + edge_offset_2;
+            edge_copy[next_edge_2]     = edge.p1();
+            edge_copy[next_edge_2 + 1] = edge.p2();
+            edge_length_copy[next_edge]   = edge.l();
+            edge_flag_copy[next_edge]     = edge.flags();
+            edge_offset_2 += vec2_stride;
+            next_edge++;
+        }
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, edge_buffer.buffer_pointer, edge_index, edge_copy);
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, edge_length_buffer.buffer_pointer, edge_index, edge_length_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, edge_flag_buffer.buffer_pointer, edge_index, edge_flag_copy);
+        edge_index += edge_count;
+
+
+        int point_count = batch.points.size();
+        int point_capacity = point_index + point_count;
+        point_buffer.ensure_capacity(point_capacity);
+        point_vertex_reference_buffer.ensure_capacity(point_capacity);
+        point_hull_index_buffer.ensure_capacity(point_capacity);
+        point_flag_buffer.ensure_capacity(point_capacity);
+        point_bone_table_buffer.ensure_capacity(point_capacity);
+        point_anti_gravity_buffer.ensure_capacity(point_capacity); // transient
+        point_hit_count_buffer.ensure_capacity(point_capacity);    // transient
+        float[] point_copy              = new float[point_count * vec4_stride];
+        int[] point_vertex_ref_copy     = new int[point_count];
+        int[] point_hull_index_copy     = new int[point_count];
+        int[] point_flag_copy           = new int[point_count];
+        int[] point_bone_table_copy     = new int[point_count * vec4_stride];
+        int next_point     = 0;
+        int point_offset_4 = 0;
+        for (var point : batch.points)
+        {
+            int next_point_4 = next_point + point_offset_4;
+            point_copy[next_point_4]                = point.position()[0];
+            point_copy[next_point_4 + 1]            = point.position()[1];
+            point_copy[next_point_4 + 2]            = point.position()[0];
+            point_copy[next_point_4 + 3]            = point.position()[1];
+            point_bone_table_copy[next_point_4]     = point.bone_ids()[0];
+            point_bone_table_copy[next_point_4 + 1] = point.bone_ids()[1];
+            point_bone_table_copy[next_point_4 + 2] = point.bone_ids()[2];
+            point_bone_table_copy[next_point_4 + 3] = point.bone_ids()[3];
+            point_vertex_ref_copy[next_point]       = point.vertex_index();
+            point_hull_index_copy[next_point]       = point.hull_index();
+            point_flag_copy[next_point]             = point.flags();
+            point_offset_4 += vec4_stride;
+            next_point++;
+        }
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, point_buffer.buffer_pointer, point_index, point_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, point_bone_table_buffer.buffer_pointer, point_index, point_bone_table_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, point_vertex_reference_buffer.buffer_pointer, point_index, point_vertex_ref_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, point_hull_index_buffer.buffer_pointer, point_index, point_hull_index_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, point_flag_buffer.buffer_pointer, point_index, point_flag_copy);
+        point_index += point_count;
+
+
+        int hull_count = batch.hulls.size();
+        int hull_capacity = hull_index + hull_count;
+        hull_b.ensure_capacity(hull_capacity);
+        hull_scale_b.ensure_capacity(hull_capacity);
+        hull_rotation_b.ensure_capacity(hull_capacity);
+        hull_friction_b.ensure_capacity(hull_capacity);
+        hull_restitution_b.ensure_capacity(hull_capacity);
+        hull_point_table_b.ensure_capacity(hull_capacity);
+        hull_edge_table_b.ensure_capacity(hull_capacity);
+        hull_bone_table_b.ensure_capacity(hull_capacity);
+        hull_entity_id_b.ensure_capacity(hull_capacity);
+        hull_flag_b.ensure_capacity(hull_capacity);
+        hull_mesh_id_b.ensure_capacity(hull_capacity);
+        hull_uv_offset_b.ensure_capacity(hull_capacity);
+        hull_integrity_b.ensure_capacity(hull_capacity);
+        hull_aabb_b.ensure_capacity(hull_capacity);       // transient
+        hull_aabb_index_b.ensure_capacity(hull_capacity); // transient
+        hull_aabb_key_b.ensure_capacity(hull_capacity);   // transient
+        float[] hulls_copy             = new float[hull_count + vec4_stride];
+        float[] hull_scales_copy       = new float[hull_count + vec2_stride];
+        float[] hull_rotations_copy    = new float[hull_count + vec2_stride];
+        float[] hull_frictions_copy    = new float[hull_count];
+        float[] hull_restitutions_copy = new float[hull_count];
+        int[] hull_point_tables_copy   = new int[hull_count + vec2_stride];
+        int[] hull_edge_tables_copy    = new int[hull_count + vec2_stride];
+        int[] bone_tables_copy         = new int[hull_count + vec2_stride];
+        int[] hull_entity_ids_copy     = new int[hull_count];
+        int[] hull_flags_copy          = new int[hull_count];
+        int[] hull_mesh_ids_copy       = new int[hull_count];
+        int[] hull_uv_offsets_copy     = new int[hull_count];
+        int[] hull_integrity_copy      = new int[hull_count];
+        int next_hull     = 0;
+        int hull_offset_2 = 0;
+        int hull_offset_4 = 0;
+        for (var hull :  batch.hulls)
+        {
+            int next_hull_2 = next_hull + hull_offset_2;
+            int next_hull_4 = next_hull + hull_offset_4;
+            hulls_copy[next_hull_4]                 = hull.position()[0];
+            hulls_copy[next_hull_4 + 1]             = hull.position()[1];
+            hulls_copy[next_hull_4 + 2]             = hull.position()[0];
+            hulls_copy[next_hull_4 + 3]             = hull.position()[1];
+            hull_scales_copy[next_hull_2]           = hull.scale()[0];
+            hull_scales_copy[next_hull_2 + 1]       = hull.scale()[1];
+            hull_rotations_copy[next_hull_2]        = hull.rotation()[0];
+            hull_rotations_copy[next_hull_2 + 1]    = hull.rotation()[1];
+            hull_frictions_copy[next_hull]          = hull.friction();
+            hull_restitutions_copy[next_hull]       = hull.restitution();
+            hull_point_tables_copy[next_hull_2]     = hull.point_table()[0];
+            hull_point_tables_copy[next_hull_2 + 1] = hull.point_table()[1];
+            hull_edge_tables_copy[next_hull_2]      = hull.edge_table()[0];
+            hull_edge_tables_copy[next_hull_2 + 1]  = hull.edge_table()[1];
+            bone_tables_copy[next_hull_2]           = hull.bone_table()[0];
+            bone_tables_copy[next_hull_2 + 1]       = hull.bone_table()[1];
+            hull_entity_ids_copy[next_hull] = hull.entity_id();
+            hull_flags_copy[next_hull] = hull.flags();
+            hull_mesh_ids_copy[next_hull] = hull.mesh_id();
+            hull_uv_offsets_copy[next_hull] = hull.uv_offset();
+            hull_integrity_copy[next_hull] = 100; // todo: this needs state save/load to work correctly
+            hull_offset_2 += vec2_stride;
+            hull_offset_4 += vec4_stride;
+            next_hull++;
+        }
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, hull_b.buffer_pointer, hull_index, hulls_copy);
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, hull_scale_b.buffer_pointer, hull_index, hull_scales_copy);
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, hull_rotation_b.buffer_pointer, hull_index, hull_rotations_copy);
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, hull_friction_b.buffer_pointer, hull_index, hull_frictions_copy);
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, hull_restitution_b.buffer_pointer, hull_index, hull_restitutions_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_point_table_b.buffer_pointer, hull_index, hull_point_tables_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_edge_table_b.buffer_pointer, hull_index, hull_edge_tables_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_bone_table_b.buffer_pointer, hull_index, bone_tables_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_entity_id_b.buffer_pointer, hull_index, hull_entity_ids_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_flag_b.buffer_pointer, hull_index, hull_flags_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_mesh_id_b.buffer_pointer, hull_index, hull_mesh_ids_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_uv_offset_b.buffer_pointer, hull_index, hull_uv_offsets_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_integrity_b.buffer_pointer, hull_index, hull_integrity_copy);
+        hull_index += hull_count;
+
+
+        int entity_count = batch.entities.size();
+        int entity_capacity = entity_index + entity_count;
+        entity_buffer.ensure_capacity(entity_capacity);
+        entity_anim_elapsed_buffer.ensure_capacity(entity_capacity);
+        entity_motion_state_buffer.ensure_capacity(entity_capacity);
+        entity_anim_index_buffer.ensure_capacity(entity_capacity);
+        entity_hull_table_buffer.ensure_capacity(entity_capacity);
+        entity_bone_table_buffer.ensure_capacity(entity_capacity);
+        entity_mass_buffer.ensure_capacity(entity_capacity);
+        entity_root_hull_buffer.ensure_capacity(entity_capacity);
+        entity_model_id_buffer.ensure_capacity(entity_capacity);
+        entity_model_transform_buffer.ensure_capacity(entity_capacity);
+        entity_flag_buffer.ensure_capacity(entity_capacity);
+        entity_accel_buffer.ensure_capacity(entity_capacity);      // transient
+        entity_anim_blend_buffer.ensure_capacity(entity_capacity); // transient
+        float[] entities_copy                 = new float[entity_count + vec4_stride];
+        float[] entity_animation_elapsed_copy = new float[entity_count + vec2_stride];
+        short[] entity_motion_states_copy     = new short[entity_count + vec2_stride];
+        int[] entity_animation_indices_copy   = new int[entity_count + vec2_stride];
+        int[] entity_hull_tables_copy         = new int[entity_count + vec2_stride];
+        int[] entity_bone_tables_copy         = new int[entity_count + vec2_stride];
+        float[] entity_masses_copy            = new float[entity_count];
+        int[] entity_root_hulls_copy          = new int[entity_count];
+        int[] entity_model_indices_copy       = new int[entity_count];
+        int[] entity_model_transforms_copy    = new int[entity_count];
+        int[] entity_flags_copy               = new int[entity_count];
+        int next_entity     = 0;
+        int entity_offset_2 = 0;
+        int entity_offset_4 = 0;
+        for (var entity : batch.entities)
+        {
+            int next_entity_2 = next_entity + entity_offset_2;
+            int next_entity_4 = next_entity + entity_offset_4;
+            entities_copy[next_entity_4]                     = entity.x();
+            entities_copy[next_entity_4 + 1]                 = entity.y();
+            entities_copy[next_entity_4 + 2]                 = entity.x();
+            entities_copy[next_entity_4 + 3]                 = entity.y();
+            entity_animation_elapsed_copy[next_entity_2]     = entity.anim_time();
+            entity_animation_elapsed_copy[next_entity_2 + 1] = 0.0f;
+            entity_motion_states_copy[next_entity_2]         = (short) 0;
+            entity_motion_states_copy[next_entity_2 + 1]     = (short) 0;
+            entity_animation_indices_copy[next_entity_2]     = entity.anim_index();
+            entity_animation_indices_copy[next_entity_2 + 1] = -1;
+            entity_hull_tables_copy[next_entity_2]           = entity.hull_table()[0];
+            entity_hull_tables_copy[next_entity_2 + 1]       = entity.hull_table()[1];
+            entity_bone_tables_copy[next_entity_2]           = entity.bone_table()[0];
+            entity_bone_tables_copy[next_entity_2 + 1]       = entity.bone_table()[1];
+            entity_masses_copy[next_entity] = entity.mass();
+            entity_root_hulls_copy[next_entity] = entity.root_hull();
+            entity_model_indices_copy[next_entity] = entity.model_id();
+            entity_model_transforms_copy[next_entity] = entity.model_transform_id();
+            entity_flags_copy[next_entity] = entity.flags();
+            entity_offset_2 += vec2_stride;
+            entity_offset_4 += vec4_stride;
+            next_entity++;
+        }
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, entity_buffer.buffer_pointer, entity_index, entities_copy);
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, entity_anim_elapsed_buffer.buffer_pointer, entity_index, entity_animation_elapsed_copy);
+        GPGPU.cl_write_short_buffer(GPGPU.cl_cmd_queue_ptr, entity_motion_state_buffer.buffer_pointer, entity_index, entity_motion_states_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_anim_index_buffer.buffer_pointer, entity_index, entity_animation_indices_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_hull_table_buffer.buffer_pointer, entity_index, entity_hull_tables_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_bone_table_buffer.buffer_pointer, entity_index, entity_bone_tables_copy);
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, entity_mass_buffer.buffer_pointer, entity_index, entity_masses_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_root_hull_buffer.buffer_pointer, entity_index, entity_root_hulls_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_model_id_buffer.buffer_pointer, entity_index, entity_model_indices_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_model_transform_buffer.buffer_pointer, entity_index, entity_model_transforms_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_flag_buffer.buffer_pointer, entity_index, entity_flags_copy);
+        entity_index += entity_count;
+
+
+        int hull_bone_count = batch.hull_bones.size();
+        int hull_bone_capacity = hull_bone_index + hull_bone_count;
+        hull_bone_b.ensure_capacity(hull_bone_capacity);
+        hull_bone_bind_pose_id_b.ensure_capacity(hull_bone_capacity);
+        hull_bone_inv_bind_pose_id_b.ensure_capacity(hull_bone_capacity);
+        float[] hull_bones_copy               = new float[hull_bone_count + vec16_stride];
+        int[] hull_bone_bind_pose_id_copy     = new int[hull_bone_count];
+        int[] hull_bone_inv_bind_pose_id_copy = new int[hull_bone_count];
+        int next_hull_bone      = 0;
+        int hull_bone_offset_16 = 0;
+        for (var hull_bone : batch.hull_bones)
+        {
+            int next_hull_bone_16 = next_hull_bone + hull_bone_offset_16;
+            hull_bones_copy[next_hull_bone_16]       = hull_bone.bone_data()[0];
+            hull_bones_copy[next_hull_bone_16 + 1]   = hull_bone.bone_data()[1];
+            hull_bones_copy[next_hull_bone_16 + 2]   = hull_bone.bone_data()[2];
+            hull_bones_copy[next_hull_bone_16 + 3]   = hull_bone.bone_data()[3];
+            hull_bones_copy[next_hull_bone_16 + 4]   = hull_bone.bone_data()[4];
+            hull_bones_copy[next_hull_bone_16 + 5]   = hull_bone.bone_data()[5];
+            hull_bones_copy[next_hull_bone_16 + 6]   = hull_bone.bone_data()[6];
+            hull_bones_copy[next_hull_bone_16 + 7]   = hull_bone.bone_data()[7];
+            hull_bones_copy[next_hull_bone_16 + 8]   = hull_bone.bone_data()[8];
+            hull_bones_copy[next_hull_bone_16 + 9]   = hull_bone.bone_data()[9];
+            hull_bones_copy[next_hull_bone_16 + 10]  = hull_bone.bone_data()[10];
+            hull_bones_copy[next_hull_bone_16 + 11]  = hull_bone.bone_data()[11];
+            hull_bones_copy[next_hull_bone_16 + 12]  = hull_bone.bone_data()[12];
+            hull_bones_copy[next_hull_bone_16 + 13]  = hull_bone.bone_data()[13];
+            hull_bones_copy[next_hull_bone_16 + 14]  = hull_bone.bone_data()[14];
+            hull_bones_copy[next_hull_bone_16 + 15]  = hull_bone.bone_data()[15];
+            hull_bone_bind_pose_id_copy[next_hull_bone]     = hull_bone.bind_pose_id();
+            hull_bone_inv_bind_pose_id_copy[next_hull_bone] = hull_bone.inv_bind_pose_id();
+            hull_bone_offset_16 += vec16_stride;
+            next_hull_bone ++;
+        }
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, hull_bone_b.buffer_pointer, hull_bone_index, hull_bones_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_bone_bind_pose_id_b.buffer_pointer, hull_bone_index, hull_bone_bind_pose_id_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_bone_inv_bind_pose_id_b.buffer_pointer, hull_bone_index, hull_bone_inv_bind_pose_id_copy);
+        hull_bone_index += hull_bone_count;
+
+
+        int aramture_bone_count = batch.armature_bones.size();
+        int armature_bone_capacity = armature_bone_index + aramture_bone_count;
+        armature_bone_buffer.ensure_capacity(armature_bone_capacity);
+        armature_bone_reference_id_buffer.ensure_capacity(armature_bone_capacity);
+        armature_bone_parent_id_buffer.ensure_capacity(armature_bone_capacity);
+        float[] armature_bones_copy               = new float[aramture_bone_count + vec16_stride];
+        int[] armature_bone_reference_id_copy     = new int[aramture_bone_count];
+        int[] armature_bone_parent_id_copy = new int[aramture_bone_count];
+        int next_armature_bone      = 0;
+        int armature_bone_offset_16 = 0;
+        for (var armature_bone : batch.armature_bones)
+        {
+            int next_armature_bone_16 = next_armature_bone + armature_bone_offset_16;
+            armature_bones_copy[next_armature_bone_16]          = armature_bone.bone_data()[0];
+            armature_bones_copy[next_armature_bone_16 + 1]      = armature_bone.bone_data()[1];
+            armature_bones_copy[next_armature_bone_16 + 2]      = armature_bone.bone_data()[2];
+            armature_bones_copy[next_armature_bone_16 + 3]      = armature_bone.bone_data()[3];
+            armature_bones_copy[next_armature_bone_16 + 4]      = armature_bone.bone_data()[4];
+            armature_bones_copy[next_armature_bone_16 + 5]      = armature_bone.bone_data()[5];
+            armature_bones_copy[next_armature_bone_16 + 6]      = armature_bone.bone_data()[6];
+            armature_bones_copy[next_armature_bone_16 + 7]      = armature_bone.bone_data()[7];
+            armature_bones_copy[next_armature_bone_16 + 8]      = armature_bone.bone_data()[8];
+            armature_bones_copy[next_armature_bone_16 + 9]      = armature_bone.bone_data()[9];
+            armature_bones_copy[next_armature_bone_16 + 10]     = armature_bone.bone_data()[10];
+            armature_bones_copy[next_armature_bone_16 + 11]     = armature_bone.bone_data()[11];
+            armature_bones_copy[next_armature_bone_16 + 12]     = armature_bone.bone_data()[12];
+            armature_bones_copy[next_armature_bone_16 + 13]     = armature_bone.bone_data()[13];
+            armature_bones_copy[next_armature_bone_16 + 14]     = armature_bone.bone_data()[14];
+            armature_bones_copy[next_armature_bone_16 + 15]     = armature_bone.bone_data()[15];
+            armature_bone_reference_id_copy[next_armature_bone] = armature_bone.bone_reference();
+            armature_bone_parent_id_copy[next_armature_bone]    = armature_bone.bone_parent_id();
+            armature_bone_offset_16 += vec16_stride;
+            next_armature_bone ++;
+        }
+
+        GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr,armature_bone_buffer.buffer_pointer, armature_bone_index, armature_bones_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, armature_bone_reference_id_buffer.buffer_pointer, armature_bone_index, armature_bone_reference_id_copy);
+        GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, armature_bone_parent_id_buffer.buffer_pointer, armature_bone_index, armature_bone_parent_id_copy);
+        armature_bone_index += aramture_bone_count;
+
+
+    }
+
+
+
     public int new_animation_timings(float duration, float tick_rate)
     {
         int capacity = animation_index + 1;
@@ -1164,9 +1473,7 @@ public class GPUCoreMemory
         point_vertex_reference_buffer.ensure_capacity(capacity);
         point_hull_index_buffer.ensure_capacity(capacity);
         point_flag_buffer.ensure_capacity(capacity);
-
         point_hit_count_buffer.ensure_capacity(capacity);
-
         point_bone_table_buffer.ensure_capacity(capacity);
 
         var new_point = new float[]{position[0], position[1], position[0], position[1]};

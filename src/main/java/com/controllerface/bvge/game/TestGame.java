@@ -281,15 +281,13 @@ public class TestGame extends GameMode
         {
             ecs.registerSystem(new EntityRenderer(ecs));
         }
-
-
     }
 
     @Override
     public void load()
     {
         // player character
-        genPlayer(1f, -100, 100);
+        genPlayer(1f, 0, 2500);
         //genCursor(10, 0, 0);
         //genTestFigureNPC_2(1f, 100, 500);
 
@@ -400,32 +398,26 @@ public class TestGame extends GameMode
 
     private void load_sector(Sector sector)
     {
-        //if (sector.x == 0 && sector.y == 0) return;
-
         float x_offset = sector.x * (int)UniformGrid.SECTOR_SIZE;
         float y_offset = sector.y * (int)UniformGrid.SECTOR_SIZE;
-
-        int count = 0;
 
         for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
         {
             for (int y = 0; y < UniformGrid.BLOCK_COUNT; y++)
             {
 
-                float world_x = (x * UniformGrid.BLOCK_SIZE) + x_offset + 16;
+                float world_x = (x * UniformGrid.BLOCK_SIZE) + x_offset + (UniformGrid.BLOCK_SIZE / 2f);
                 float world_y = (y * UniformGrid.BLOCK_SIZE) + y_offset;
 
                 float block_x = world_x / UniformGrid.BLOCK_SIZE;
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
-                //if (world_y >= 0) continue; // consider 0 ground level for now
 
                 float n = noise.GetNoise(block_x, block_y);
-
 
                 boolean gen_block = n >= 0;
                 boolean gen_dyn = false;
 
-                if (noise.GetNoise(block_x, block_y-1) <= 0)
+                if (noise.GetNoise(block_x, block_y - 1) <= 0)
                 {
                     gen_dyn = true;
                 }
@@ -437,11 +429,7 @@ public class TestGame extends GameMode
                     genNoiseBlocks(gen_dyn, 1, 0, UniformGrid.BLOCK_SIZE, world_x, world_y, solid);
                 }
                 else if (n < -.2) genWater(1, 0, 16f, world_x, world_y, Liquid.WATER);
-                count++;
-                //System.out.println("DEBUG x:" + nx + " y:" + ny + " noise:" + n);
             }
         }
-
-        //System.out.println("generated: " + count + " blocks");
     }
 }

@@ -1162,6 +1162,8 @@ public class PhysicsSimulation extends GameSystem
 
     private void simulate(float dt)
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
         // convex shape. Animations may move points into positions where the geometry becomes concave,
         // so this call prevents collision errors due to non-convex shapes.
@@ -1241,6 +1243,12 @@ public class PhysicsSimulation extends GameSystem
         animate_entities(dt - dropped_time);
         animate_bones();
         animate_points();
+
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_cycle", String.valueOf(e));
+        }
     }
 
     //#endregion
@@ -1254,7 +1262,10 @@ public class PhysicsSimulation extends GameSystem
         {
             clFinish(GPGPU.gl_cmd_queue_ptr);
             long phys_time = last_phys_time.take();
+
+            // todo: wire up sector load request classes
             // todo: read mouse selected objects
+
             GPGPU.core_memory.mirror_buffers_ex();
             clFinish(GPGPU.cl_cmd_queue_ptr);
             next_phys_time.put(dt);

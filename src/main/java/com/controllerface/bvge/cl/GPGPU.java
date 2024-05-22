@@ -402,6 +402,36 @@ public class GPGPU
         }
     }
 
+    public static void cl_write_short_buffer(long queue_ptr, long dst_ptr, long offset, short[] shorts)
+    {
+        int result = clEnqueueWriteBuffer(queue_ptr, dst_ptr, true, offset, shorts, null, null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on buffer copy: " + result);
+            System.exit(1);
+        }
+    }
+
+    public static void cl_write_int_buffer(long queue_ptr, long dst_ptr, long offset, int[] ints)
+    {
+        int result = clEnqueueWriteBuffer(queue_ptr, dst_ptr, true, offset, ints, null, null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on buffer copy: " + result);
+            System.exit(1);
+        }
+    }
+
+    public static void cl_write_float_buffer(long queue_ptr, long dst_ptr, long offset, float[] floats)
+    {
+        int result = clEnqueueWriteBuffer(queue_ptr, dst_ptr, true, offset, floats, null, null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on buffer copy: " + result);
+            System.exit(1);
+        }
+    }
+
     public static int work_group_count(int n)
     {
         return (int) Math.ceil((float) n / (float) max_scan_block_size);

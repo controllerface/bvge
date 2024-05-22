@@ -247,6 +247,90 @@ public class PhysicsObjects
             0);
     }
 
+
+
+
+    public static PhysicsEntityBatch block_EX(PhysicsEntityBatch physicsEntityBatch, float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Solid block_mineral)
+    {
+        int next_entity_id = physicsEntityBatch.next_entity();
+        int next_hull_index = physicsEntityBatch.next_hull();
+
+        // get the box mesh
+        var mesh = ModelRegistry.get_model_by_index(model_id).meshes()[0];
+
+        var hull = calculate_convex_hull(mesh.vertices());
+        hull = scale_hull(hull, size);
+        hull = translate_hull(hull, x, y);
+
+        var v1 = hull[0];
+        var v2 = hull[1];
+        var v3 = hull[2];
+        var v4 = hull[3];
+
+        var p1 = CLUtils.arg_float2(v1.x(), v1.y());
+        var p2 = CLUtils.arg_float2(v2.x(), v2.y());
+        var p3 = CLUtils.arg_float2(v3.x(), v3.y());
+        var p4 = CLUtils.arg_float2(v4.x(), v4.y());
+
+        var p1_index = physicsEntityBatch.new_point(p1, new int[4], v1.vert_ref_id(), next_hull_index, 0);
+        var p2_index = physicsEntityBatch.new_point(p2, new int[4], v2.vert_ref_id(), next_hull_index, 0);
+        var p3_index = physicsEntityBatch.new_point(p3, new int[4], v3.vert_ref_id(), next_hull_index, 0);
+        var p4_index = physicsEntityBatch.new_point(p4, new int[4], v4.vert_ref_id(), next_hull_index, 0);
+
+        MathEX.centroid(vector_buffer, p1, p2, p3, p4);
+        var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+        var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+
+        var angle = MathEX.angle_between_lines(l1, l2);
+
+        // box sides
+        var start_edge = physicsEntityBatch.new_edge(p1_index, p2_index, edgeDistance(p2, p1), 0);
+        physicsEntityBatch.new_edge(p2_index, p3_index, edgeDistance(p3, p2), 0);
+        physicsEntityBatch.new_edge(p3_index, p4_index, edgeDistance(p4, p3), 0);
+        physicsEntityBatch.new_edge(p4_index, p1_index, edgeDistance(p1, p4), 0);
+
+        // corner braces
+        physicsEntityBatch.new_edge(p1_index, p3_index, edgeDistance(p3, p1), EdgeFlags.IS_INTERIOR.bits);
+        var end_edge = physicsEntityBatch.new_edge(p2_index, p4_index, edgeDistance(p4, p2), EdgeFlags.IS_INTERIOR.bits);
+
+        var point_table = CLUtils.arg_int2(p1_index, p4_index);
+        var edge_table = CLUtils.arg_int2(start_edge, end_edge);
+        var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
+        var scale = CLUtils.arg_float2(size, size);
+        var rotation = CLUtils.arg_float2(0, angle);
+
+        // there is only one hull, so it is the main hull ID by default
+        int[] bone_table = CLUtils.arg_int2(0, -1);
+        int hull_flags = flags | HullFlags.IS_POLYGON._int;
+        int hull_id = physicsEntityBatch.new_hull(mesh.mesh_id(),
+            position,
+            scale,
+            rotation,
+            point_table,
+            edge_table,
+            bone_table,
+            friction,
+            restitution,
+            next_entity_id,
+            block_mineral.mineral_number,
+            hull_flags);
+        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        var xxx = physicsEntityBatch.new_entity(x, y,
+            hull_table,
+            bone_table,
+            mass,
+            -1,
+            -1f,
+            hull_id,
+            model_id,
+            0,
+            0);
+        return physicsEntityBatch;
+    }
+
+
+
+
     public static int dynamic_block(float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
     {
         return block(x, y, size * 5, HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
@@ -546,6 +630,301 @@ public class PhysicsObjects
             model.root_transform_index(),
             0);
     }
+
+
+
+
+
+
+    public static PhysicsEntityBatch wrap_model_EX(PhysicsEntityBatch physicsEntityBatch, int model_index, float x, float y, float size, int global_hull_flags, float mass, float friction, float restitution, int uv_offset)
+    {
+        // we need to know the next entity ID before we create it, so it can be used for hulls
+        // note: like all other memory accessing methods, this relies on single-threaded operation
+        int next_entity_id = physicsEntityBatch.next_entity();
+
+        // get the model from the registry
+        var model = ModelRegistry.get_model_by_index(model_index);
+
+        // we need to track which hull is the root hull for this model
+        int root_hull_id = -1;
+        float root_x = 0;
+        float root_y = 0;
+
+        var meshes = model.meshes();
+        int first_hull = -1;
+        int last_hull = -1;
+        int first_armature_bone = -1;
+        int last_armature_bone = -1;
+
+        var armature_bone_map = new HashMap<String, Integer>();
+        var armature_bone_parent_map = new HashMap<Integer, Integer>();
+        for (Map.Entry<Integer, BoneBindPose> entry : model.bind_poses().entrySet())
+        {
+            var bind_pose_ref_id = entry.getKey();
+            var bind_pose = entry.getValue();
+            var raw_matrix = CLUtils.arg_float16_matrix(bind_pose.transform());
+            int bind_parent = bind_pose.parent() == -1
+                ? -1
+                : armature_bone_parent_map.get(bind_pose.parent());
+
+            int next_armature_bone = physicsEntityBatch.new_armature_bone(bind_pose_ref_id, bind_parent, raw_matrix);
+            if (first_armature_bone == -1)
+            {
+                first_armature_bone = next_armature_bone;
+            }
+            last_armature_bone = next_armature_bone;
+
+            armature_bone_map.put(bind_pose.bone_name(), next_armature_bone);
+            armature_bone_parent_map.put(bind_pose_ref_id, next_armature_bone);
+        }
+
+        for (int mesh_index = 0; mesh_index < meshes.length; mesh_index++)
+        {
+            int local_hull_flags = 0;
+            int next_hull = physicsEntityBatch.next_hull();
+            var hull_mesh = meshes[mesh_index];
+
+            if (hull_mesh.name().toLowerCase().contains("hand"))
+            {
+                local_hull_flags |= HullFlags.IS_HAND._int;
+            }
+
+            if (hull_mesh.name().toLowerCase().contains("foot"))
+            {
+                local_hull_flags |= HullFlags.IS_FOOT._int;
+            }
+
+            if (hull_mesh.name().toLowerCase().contains(".r"))
+            {
+                local_hull_flags |= HullFlags.SIDE_R._int;
+            }
+
+            if (hull_mesh.name().toLowerCase().contains(".l"))
+            {
+                local_hull_flags |= HullFlags.SIDE_L._int;
+            }
+
+            // The hull is generated based on the mesh, so it's initial position and rotation
+            // are set from the mesh data using its transform. Then, the mesh is scaled to the
+            // desired size and moved to the spawn location in world space.
+            var new_mesh = transform_hull(hull_mesh.vertices(), hull_mesh.sceneNode().transform);
+            new_mesh = scale_hull(new_mesh, size);
+            new_mesh = translate_hull(new_mesh, x, y);
+            var new_hull = generate_convex_hull(hull_mesh, new_mesh);
+            var new_interior_hull = generate_interior_hull(hull_mesh, new_mesh);
+
+            var bone_map = new HashMap<String, Integer>();
+            int start_hull_bone = -1;
+            int end_hull_bone = -1;
+            for (int bone_index = 0; bone_index < hull_mesh.bone_offsets().size(); bone_index++)
+            {
+                var bone_offset = hull_mesh.bone_offsets().get(bone_index);
+                var bone_bind_pose = model.bone_transforms().get(bone_offset.name());
+                var bone_transform = bone_bind_pose.mul(bone_offset.transform(), matrix_buffer);
+                var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
+                var bind_pose_id = armature_bone_map.get(bone_offset.name());
+                int next_bone = physicsEntityBatch.new_hull_bone(raw_matrix, bind_pose_id, bone_offset.offset_ref_id());
+                bone_map.put(bone_offset.name(), next_bone);
+
+                if (start_hull_bone == -1)
+                {
+                    start_hull_bone = next_bone;
+                }
+                end_hull_bone = next_bone;
+            }
+
+            // generate the points in memory for this object
+            int start_point = -1;
+            int end_point = -1;
+
+            int[] convex_table = new int[new_hull.length];
+            convex_buffer.clear();
+
+            // create convex hull points first, in hull order (not mesh order)
+            for (int point_index = 0; point_index < new_hull.length; point_index++)
+            {
+                var next_vertex = new_hull[point_index];
+                var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
+
+                var bone_names = next_vertex.bone_names();
+                int[] bone_ids = new int[4];
+                for (int i = 0; i < bone_ids.length; i++)
+                {
+                    bone_ids[i] = find_bone_index(bone_map, bone_names, i);
+                }
+                var next_point = physicsEntityBatch.new_point(new_point, bone_ids, next_vertex.vert_ref_id(), next_hull, 0);
+
+                if (start_point == -1)
+                {
+                    start_point = next_point;
+                }
+                end_point = next_point;
+
+                convex_table[point_index] = next_point;
+                convex_buffer.add(new_point);
+            }
+
+            // any interior points are added after convex points. Points retain their original
+            // reference vertex ID, allowing them to be accessed in mesh-order when necessary
+            for (Vertex next_vertex : new_interior_hull)
+            {
+                var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
+
+                var bone_names = next_vertex.bone_names();
+                int[] bone_ids = new int[4];
+                for (int i = 0; i < bone_ids.length; i++)
+                {
+                    bone_ids[i] = find_bone_index(bone_map, bone_names, i);
+                }
+                end_point = physicsEntityBatch.new_point(new_point, bone_ids, next_vertex.vert_ref_id(), next_hull, PointFlags.IS_INTERIOR.bits);
+            }
+
+            // generate edges in memory for this object
+            int edge_start = -1;
+            int edge_end = -1;
+            for (int point_1_index = 0; point_1_index < new_hull.length; point_1_index++)
+            {
+                int point_2_index = point_1_index + 1;
+                if (point_2_index == new_hull.length)
+                {
+                    point_2_index = 0;
+                }
+                var point_1 = convex_buffer.get(point_1_index);
+                var point_2 = convex_buffer.get(point_2_index);
+                var distance = edgeDistance(point_2, point_1);
+                var next_edge = physicsEntityBatch.new_edge(convex_table[point_1_index], convex_table[point_2_index], distance, 0);
+                if (edge_start == -1)
+                {
+                    edge_start = next_edge;
+                }
+                edge_end = next_edge;
+            }
+
+            // calculate interior edges
+
+            // connect every other
+            if (new_hull.length > 4)
+            {
+                //pass 1
+                for (int p1_index = 0; p1_index < new_hull.length; p1_index++)
+                {
+                    int p2_index = p1_index + 2;
+                    if (p2_index > convex_buffer.size() - 1)
+                    {
+                        continue;
+                    }
+                    var p1 = convex_buffer.get(p1_index);
+                    var p2 = convex_buffer.get(p2_index);
+                    var distance = edgeDistance(p2, p1);
+                    edge_end = physicsEntityBatch.new_edge(convex_table[p1_index], convex_table[p2_index], distance, EdgeFlags.IS_INTERIOR.bits);
+                }
+            }
+
+            // pass 2
+            boolean odd_count = new_hull.length % 2 != 0;
+            int half_count = new_hull.length / 2;
+            int quarter_count = half_count / 2;
+            for (int p1_index = 0; p1_index < half_count; p1_index++)
+            {
+                int p2_index = p1_index + half_count;
+                var p1 = convex_buffer.get(p1_index);
+                var p2 = convex_buffer.get(p2_index);
+                var distance = edgeDistance(p2, p1);
+                edge_end = physicsEntityBatch.new_edge(convex_table[p1_index], convex_table[p2_index], distance, EdgeFlags.IS_INTERIOR.bits);
+
+                if (quarter_count > 1)
+                {
+                    int p3_index = p1_index + quarter_count;
+                    var p3 = convex_buffer.get(p3_index);
+                    var distance2 = edgeDistance(p3, p1);
+                    edge_end = physicsEntityBatch.new_edge(convex_table[p1_index], convex_table[p3_index], distance2, EdgeFlags.IS_INTERIOR.bits);
+                }
+            }
+            if (odd_count) // if there was an odd vertex at the end, connect it to the mid-point
+            {
+                int p2_index = convex_table.length - 1;
+                var p1 = convex_buffer.get(half_count + 1);
+                var p2 = convex_buffer.get(p2_index);
+                var distance = edgeDistance(p2, p1);
+                edge_end = physicsEntityBatch.new_edge(convex_table[half_count + 1], convex_table[p2_index], distance, EdgeFlags.IS_INTERIOR.bits);
+            }
+
+            // calculate centroid and reference angle
+            MathEX.centroid(vector_buffer, new_hull);
+            var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+            var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, new_hull[0].x(), new_hull[0].y());
+            var angle = MathEX.angle_between_lines(l1, l2);
+
+            var point_table = CLUtils.arg_int2(start_point, end_point);
+            var edge_table = CLUtils.arg_int2(edge_start, edge_end);
+            var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
+            var scale = CLUtils.arg_float2(size, size);
+            var rotation = CLUtils.arg_float2(0, angle);
+
+            int flag_bits = global_hull_flags | local_hull_flags;
+            int[] bone_table = CLUtils.arg_int2(start_hull_bone, end_hull_bone);
+            int hull_id = physicsEntityBatch.new_hull(hull_mesh.mesh_id(),
+                position,
+                scale,
+                rotation,
+                point_table,
+                edge_table,
+                bone_table,
+                friction,
+                restitution,
+                next_entity_id,
+                uv_offset,
+                flag_bits);
+
+            if (first_hull == -1)
+            {
+                first_hull = hull_id;
+            }
+            last_hull = hull_id;
+
+            if (next_hull != hull_id)
+            {
+                throw new RuntimeException("hull/bone alignment error: h=" + hull_id + " b=" + next_hull);
+            }
+            if (mesh_index == model.root_index())
+            {
+                root_hull_id = hull_id;
+                root_x = vector_buffer.x;
+                root_y = vector_buffer.y;
+            }
+        }
+
+        if (root_hull_id == -1)
+        {
+            throw new IllegalStateException("There was no root hull determined. "
+                + "Check model data to ensure it is correct");
+        }
+
+        int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
+        int[] bone_table = CLUtils.arg_int2(first_armature_bone, last_armature_bone);
+
+        int idle_animation_id = AnimationState.IDLE.ordinal();
+
+        var ent = physicsEntityBatch.new_entity(x, y,
+            hull_table,
+            bone_table,
+            mass,
+            idle_animation_id,
+            0.0f,
+            root_hull_id,
+            model_index,
+            model.root_transform_index(),
+            0);
+
+
+        // todo: return result batch
+        return physicsEntityBatch;
+    }
+
+
+
+
+
 
 
     private static int find_bone_index(Map<String, Integer> bone_map, String[] bone_names, int index)
