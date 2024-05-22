@@ -100,8 +100,11 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                if (dynamic) PhysicsObjects.dynamic_block_ex(batch, x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
-                else PhysicsObjects.static_box_ex(batch, x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+//                if (dynamic) PhysicsObjects.dynamic_block_ex(batch, x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+//                else PhysicsObjects.static_box_ex(batch, x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+
+                if (dynamic) PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+                else PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
             }
         }
     }
@@ -435,6 +438,6 @@ public class TestGame extends GameMode
             }
         }
 
-        GPGPU.core_memory.process_entity_batch(batch);
+        //GPGPU.core_memory.process_entity_batch(batch);
     }
 }

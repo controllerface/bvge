@@ -1085,6 +1085,12 @@ public class GPUCoreMemory
     public void process_entity_batch(PhysicsEntityBatch batch)
     {
         int edge_count = batch.edges.size();
+        int point_count = batch.points.size();
+        int hull_count = batch.hulls.size();
+        int entity_count = batch.entities.size();
+        int hull_bone_count = batch.hull_bones.size();
+        int armature_bone_count = batch.armature_bones.size();
+
         if (edge_count > 0)
         {
             int edge_capacity = edge_index + edge_count;
@@ -1098,21 +1104,19 @@ public class GPUCoreMemory
             int next_edge_2 = 0;
             for (var edge : batch.edges)
             {
-                edge_copy[next_edge_2] = edge.p1();
-                edge_copy[next_edge_2 + 1] = edge.p2();
+                edge_copy[next_edge_2]      = point_index + edge.p1();
+                edge_copy[next_edge_2 + 1]  = point_index + edge.p2();
                 edge_length_copy[next_edge] = edge.l();
-                edge_flag_copy[next_edge] = edge.flags();
+                edge_flag_copy[next_edge]   = edge.flags();
                 next_edge_2 += vec2_stride;
                 next_edge++;
             }
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, edge_buffer.buffer_pointer, edge_index, edge_copy);
             GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, edge_length_buffer.buffer_pointer, edge_index, edge_length_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, edge_flag_buffer.buffer_pointer, edge_index, edge_flag_copy);
-            edge_index += edge_count;
         }
 
 
-        int point_count = batch.points.size();
         if (point_count > 0)
         {
             int point_capacity = point_index + point_count;
@@ -1132,17 +1136,17 @@ public class GPUCoreMemory
             int next_point_4 = 0;
             for (var point : batch.points)
             {
-                point_copy[next_point_4] = point.position()[0];
-                point_copy[next_point_4 + 1] = point.position()[1];
-                point_copy[next_point_4 + 2] = point.position()[0];
-                point_copy[next_point_4 + 3] = point.position()[1];
-                point_bone_table_copy[next_point_4] = point.bone_ids()[0];
-                point_bone_table_copy[next_point_4 + 1] = point.bone_ids()[1];
-                point_bone_table_copy[next_point_4 + 2] = point.bone_ids()[2];
-                point_bone_table_copy[next_point_4 + 3] = point.bone_ids()[3];
-                point_vertex_ref_copy[next_point] = point.vertex_index();
-                point_hull_index_copy[next_point] = point.hull_index();
-                point_flag_copy[next_point] = point.flags();
+                point_copy[next_point_4]                = point.position()[0];
+                point_copy[next_point_4 + 1]            = point.position()[1];
+                point_copy[next_point_4 + 2]            = point.position()[0];
+                point_copy[next_point_4 + 3]            = point.position()[1];
+                point_bone_table_copy[next_point_4]     = hull_bone_index + point.bone_ids()[0];
+                point_bone_table_copy[next_point_4 + 1] = hull_bone_index + point.bone_ids()[1];
+                point_bone_table_copy[next_point_4 + 2] = hull_bone_index + point.bone_ids()[2];
+                point_bone_table_copy[next_point_4 + 3] = hull_bone_index + point.bone_ids()[3];
+                point_vertex_ref_copy[next_point]       = point.vertex_index();
+                point_hull_index_copy[next_point]       = hull_index + point.hull_index();
+                point_flag_copy[next_point]             = point.flags();
                 next_point_4 += vec4_stride;
                 next_point++;
             }
@@ -1151,11 +1155,9 @@ public class GPUCoreMemory
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, point_vertex_reference_buffer.buffer_pointer, point_index, point_vertex_ref_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, point_hull_index_buffer.buffer_pointer, point_index, point_hull_index_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, point_flag_buffer.buffer_pointer, point_index, point_flag_copy);
-            point_index += point_count;
         }
 
 
-        int hull_count = batch.hulls.size();
         if (hull_count > 0)
         {
             int hull_capacity = hull_index + hull_count;
@@ -1193,27 +1195,27 @@ public class GPUCoreMemory
             int next_hull_4 = 0;
             for (var hull : batch.hulls)
             {
-                hulls_copy[next_hull_4] = hull.position()[0];
-                hulls_copy[next_hull_4 + 1] = hull.position()[1];
-                hulls_copy[next_hull_4 + 2] = hull.position()[0];
-                hulls_copy[next_hull_4 + 3] = hull.position()[1];
-                hull_scales_copy[next_hull_2] = hull.scale()[0];
-                hull_scales_copy[next_hull_2 + 1] = hull.scale()[1];
-                hull_rotations_copy[next_hull_2] = hull.rotation()[0];
-                hull_rotations_copy[next_hull_2 + 1] = hull.rotation()[1];
-                hull_frictions_copy[next_hull] = hull.friction();
-                hull_restitutions_copy[next_hull] = hull.restitution();
-                hull_point_tables_copy[next_hull_2] = hull.point_table()[0];
-                hull_point_tables_copy[next_hull_2 + 1] = hull.point_table()[1];
-                hull_edge_tables_copy[next_hull_2] = hull.edge_table()[0];
-                hull_edge_tables_copy[next_hull_2 + 1] = hull.edge_table()[1];
-                bone_tables_copy[next_hull_2] = hull.bone_table()[0];
-                bone_tables_copy[next_hull_2 + 1] = hull.bone_table()[1];
-                hull_entity_ids_copy[next_hull] = hull.entity_id();
-                hull_flags_copy[next_hull] = hull.flags();
-                hull_mesh_ids_copy[next_hull] = hull.mesh_id();
-                hull_uv_offsets_copy[next_hull] = hull.uv_offset();
-                hull_integrity_copy[next_hull] = 100; // todo: this needs state save/load to work correctly
+                hulls_copy[next_hull_4]                 = hull.position()[0];
+                hulls_copy[next_hull_4 + 1]             = hull.position()[1];
+                hulls_copy[next_hull_4 + 2]             = hull.position()[0];
+                hulls_copy[next_hull_4 + 3]             = hull.position()[1];
+                hull_scales_copy[next_hull_2]           = hull.scale()[0];
+                hull_scales_copy[next_hull_2 + 1]       = hull.scale()[1];
+                hull_rotations_copy[next_hull_2]        = hull.rotation()[0];
+                hull_rotations_copy[next_hull_2 + 1]    = hull.rotation()[1];
+                hull_frictions_copy[next_hull]          = hull.friction();
+                hull_restitutions_copy[next_hull]       = hull.restitution();
+                hull_point_tables_copy[next_hull_2]     = point_index + hull.point_table()[0];
+                hull_point_tables_copy[next_hull_2 + 1] = point_index + hull.point_table()[1];
+                hull_edge_tables_copy[next_hull_2]      = edge_index + hull.edge_table()[0];
+                hull_edge_tables_copy[next_hull_2 + 1]  = edge_index + hull.edge_table()[1];
+                bone_tables_copy[next_hull_2]           = hull_bone_index + hull.bone_table()[0];
+                bone_tables_copy[next_hull_2 + 1]       = hull_bone_index + hull.bone_table()[1];
+                hull_entity_ids_copy[next_hull]         = entity_index + hull.entity_id();
+                hull_flags_copy[next_hull]              = hull.flags();
+                hull_mesh_ids_copy[next_hull]           = hull.mesh_id();
+                hull_uv_offsets_copy[next_hull]         = hull.uv_offset();
+                hull_integrity_copy[next_hull]          = 100; // todo: this needs state save/load to work correctly
                 next_hull_2 += vec2_stride;
                 next_hull_4 += vec4_stride;
                 next_hull++;
@@ -1231,11 +1233,9 @@ public class GPUCoreMemory
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_mesh_id_b.buffer_pointer, hull_index, hull_mesh_ids_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_uv_offset_b.buffer_pointer, hull_index, hull_uv_offsets_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_integrity_b.buffer_pointer, hull_index, hull_integrity_copy);
-            hull_index += hull_count;
         }
 
 
-        int entity_count = batch.entities.size();
         if (entity_count > 0)
         {
             int entity_capacity = entity_index + entity_count;
@@ -1268,25 +1268,25 @@ public class GPUCoreMemory
             int next_entity_4 = 0;
             for (var entity : batch.entities)
             {
-                entities_copy[next_entity_4] = entity.x();
-                entities_copy[next_entity_4 + 1] = entity.y();
-                entities_copy[next_entity_4 + 2] = entity.x();
-                entities_copy[next_entity_4 + 3] = entity.y();
-                entity_animation_elapsed_copy[next_entity_2] = entity.anim_time();
+                entities_copy[next_entity_4]                     = entity.x();
+                entities_copy[next_entity_4 + 1]                 = entity.y();
+                entities_copy[next_entity_4 + 2]                 = entity.x();
+                entities_copy[next_entity_4 + 3]                 = entity.y();
+                entity_animation_elapsed_copy[next_entity_2]     = entity.anim_time();
                 entity_animation_elapsed_copy[next_entity_2 + 1] = 0.0f;
-                entity_motion_states_copy[next_entity_2] = (short) 0;
-                entity_motion_states_copy[next_entity_2 + 1] = (short) 0;
-                entity_animation_indices_copy[next_entity_2] = entity.anim_index();
+                entity_motion_states_copy[next_entity_2]         = (short) 0;
+                entity_motion_states_copy[next_entity_2 + 1]     = (short) 0;
+                entity_animation_indices_copy[next_entity_2]     = entity.anim_index();
                 entity_animation_indices_copy[next_entity_2 + 1] = -1;
-                entity_hull_tables_copy[next_entity_2] = entity.hull_table()[0];
-                entity_hull_tables_copy[next_entity_2 + 1] = entity.hull_table()[1];
-                entity_bone_tables_copy[next_entity_2] = entity.bone_table()[0];
-                entity_bone_tables_copy[next_entity_2 + 1] = entity.bone_table()[1];
-                entity_masses_copy[next_entity] = entity.mass();
-                entity_root_hulls_copy[next_entity] = entity.root_hull();
-                entity_model_indices_copy[next_entity] = entity.model_id();
-                entity_model_transforms_copy[next_entity] = entity.model_transform_id();
-                entity_flags_copy[next_entity] = entity.flags();
+                entity_hull_tables_copy[next_entity_2]           = hull_index + entity.hull_table()[0];
+                entity_hull_tables_copy[next_entity_2 + 1]       = hull_index + entity.hull_table()[1];
+                entity_bone_tables_copy[next_entity_2]           = armature_bone_index + entity.bone_table()[0];
+                entity_bone_tables_copy[next_entity_2 + 1]       = armature_bone_index + entity.bone_table()[1];
+                entity_masses_copy[next_entity]                  = entity.mass();
+                entity_root_hulls_copy[next_entity]              = hull_index + entity.root_hull();
+                entity_model_indices_copy[next_entity]           = entity.model_id();
+                entity_model_transforms_copy[next_entity]        = entity.model_transform_id();
+                entity_flags_copy[next_entity]                   = entity.flags();
                 next_entity_2 += vec2_stride;
                 next_entity_4 += vec4_stride;
                 next_entity++;
@@ -1302,11 +1302,9 @@ public class GPUCoreMemory
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_model_id_buffer.buffer_pointer, entity_index, entity_model_indices_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_model_transform_buffer.buffer_pointer, entity_index, entity_model_transforms_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, entity_flag_buffer.buffer_pointer, entity_index, entity_flags_copy);
-            entity_index += entity_count;
         }
 
 
-        int hull_bone_count = batch.hull_bones.size();
         if (hull_bone_count > 0)
         {
             int hull_bone_capacity = hull_bone_index + hull_bone_count;
@@ -1336,7 +1334,7 @@ public class GPUCoreMemory
                 hull_bones_copy[next_hull_bone_16 + 13] = hull_bone.bone_data()[13];
                 hull_bones_copy[next_hull_bone_16 + 14] = hull_bone.bone_data()[14];
                 hull_bones_copy[next_hull_bone_16 + 15] = hull_bone.bone_data()[15];
-                hull_bone_bind_pose_id_copy[next_hull_bone] = hull_bone.bind_pose_id();
+                hull_bone_bind_pose_id_copy[next_hull_bone] = armature_bone_index + hull_bone.bind_pose_id();
                 hull_bone_inv_bind_pose_id_copy[next_hull_bone] = hull_bone.inv_bind_pose_id();
                 next_hull_bone_16 += vec16_stride;
                 next_hull_bone++;
@@ -1344,11 +1342,9 @@ public class GPUCoreMemory
             GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, hull_bone_b.buffer_pointer, hull_bone_index, hull_bones_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_bone_bind_pose_id_b.buffer_pointer, hull_bone_index, hull_bone_bind_pose_id_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, hull_bone_inv_bind_pose_id_b.buffer_pointer, hull_bone_index, hull_bone_inv_bind_pose_id_copy);
-            hull_bone_index += hull_bone_count;
         }
 
 
-        int armature_bone_count = batch.armature_bones.size();
         if (armature_bone_count > 0)
         {
             int armature_bone_capacity = armature_bone_index + armature_bone_count;
@@ -1379,7 +1375,7 @@ public class GPUCoreMemory
                 armature_bones_copy[next_armature_bone_16 + 14] = armature_bone.bone_data()[14];
                 armature_bones_copy[next_armature_bone_16 + 15] = armature_bone.bone_data()[15];
                 armature_bone_reference_id_copy[next_armature_bone] = armature_bone.bone_reference();
-                armature_bone_parent_id_copy[next_armature_bone] = armature_bone.bone_parent_id();
+                armature_bone_parent_id_copy[next_armature_bone] = armature_bone_index + armature_bone.bone_parent_id();
                 next_armature_bone_16 += vec16_stride;
                 next_armature_bone++;
             }
@@ -1387,9 +1383,14 @@ public class GPUCoreMemory
             GPGPU.cl_write_float_buffer(GPGPU.cl_cmd_queue_ptr, armature_bone_buffer.buffer_pointer, armature_bone_index, armature_bones_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, armature_bone_reference_id_buffer.buffer_pointer, armature_bone_index, armature_bone_reference_id_copy);
             GPGPU.cl_write_int_buffer(GPGPU.cl_cmd_queue_ptr, armature_bone_parent_id_buffer.buffer_pointer, armature_bone_index, armature_bone_parent_id_copy);
-            armature_bone_index += armature_bone_count;
         }
 
+        edge_index += edge_count;
+        armature_bone_index += armature_bone_count;
+        hull_bone_index += hull_bone_count;
+        entity_index += entity_count;
+        hull_index += hull_count;
+        point_index += point_count;
     }
 
 
