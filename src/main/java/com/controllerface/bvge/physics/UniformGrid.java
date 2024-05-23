@@ -1,5 +1,10 @@
 package com.controllerface.bvge.physics;
 
+import com.controllerface.bvge.game.Sector;
+
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Container class for the runtime values of a uniform grid spatial partition. The grid boundary is
  * dynamically resizable and is calculated relative to the screen dimensions.
@@ -38,6 +43,8 @@ public class UniformGrid
     private float sector_width = 0;
     private float sector_height = 0;
 
+    private Set<Sector> loaded_sectors = new HashSet<>();
+
     public UniformGrid(int screen_width, int screen_height)
     {
         float x = (float)screen_width * 2.5f;
@@ -58,12 +65,19 @@ public class UniformGrid
         y_spacing = height / y_subdivisions;
     }
 
-    public void update_sector_metrics(float sector_origin_x, float sector_origin_y, float sector_width, float sector_height)
+    public void update_sector_metrics(Set<Sector> loaded_sectors, float sector_origin_x, float sector_origin_y, float sector_width, float sector_height)
     {
+        this.loaded_sectors.clear();
+        this.loaded_sectors.addAll(loaded_sectors);
         this.sector_origin_x = sector_origin_x;
         this.sector_origin_y = sector_origin_y;
         this.sector_width = sector_width;
         this.sector_height = sector_height;
+    }
+
+    public boolean is_sector_loaded(Sector sector)
+    {
+        return loaded_sectors.contains(sector);
     }
 
     public void updateOrigin(float x_origin, float y_origin)

@@ -402,9 +402,26 @@ public class GPGPU
         }
     }
 
-    public static void cl_write_short_buffer(long queue_ptr, long dst_ptr, long offset, short[] shorts)
+    public static void cl_write_short_buffer(long queue_ptr, long dst_ptr, long offset, long count, short[] shorts)
     {
-        int result = clEnqueueWriteBuffer(queue_ptr, dst_ptr, true, offset, shorts, null, null);
+        var out = clEnqueueMapBuffer(queue_ptr,
+            dst_ptr,
+            true,
+            CL_MAP_WRITE,
+            offset,
+            CLSize.cl_short * (long)shorts.length,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
+        assert out != null;
+
+        var m = MemoryUtil.memAllocShort(shorts.length);
+        m.put(shorts);
+        MemoryUtil.memCopy(m, out.asShortBuffer());
+        int result = clEnqueueUnmapMemObject(queue_ptr, dst_ptr, out, null, null);
+        MemoryUtil.memFree(m);
         if (result != CL_SUCCESS)
         {
             System.out.println("Error on buffer copy: " + result);
@@ -412,9 +429,26 @@ public class GPGPU
         }
     }
 
-    public static void cl_write_int_buffer(long queue_ptr, long dst_ptr, long offset, int[] ints)
+    public static void cl_write_int_buffer(long queue_ptr, long dst_ptr, long offset, long count, int[] ints)
     {
-        int result = clEnqueueWriteBuffer(queue_ptr, dst_ptr, true, offset, ints, null, null);
+        var out = clEnqueueMapBuffer(queue_ptr,
+            dst_ptr,
+            true,
+            CL_MAP_WRITE,
+            offset,
+            CLSize.cl_int * (long)ints.length,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
+        assert out != null;
+
+        var m = MemoryUtil.memAllocInt(ints.length);
+        m.put(ints);
+        MemoryUtil.memCopy(m, out.asIntBuffer());
+        int result = clEnqueueUnmapMemObject(queue_ptr, dst_ptr, out, null, null);
+        MemoryUtil.memFree(m);
         if (result != CL_SUCCESS)
         {
             System.out.println("Error on buffer copy: " + result);
@@ -422,9 +456,26 @@ public class GPGPU
         }
     }
 
-    public static void cl_write_float_buffer(long queue_ptr, long dst_ptr, long offset, float[] floats)
+    public static void cl_write_float_buffer(long queue_ptr, long dst_ptr, long offset, long count, float[] floats)
     {
-        int result = clEnqueueWriteBuffer(queue_ptr, dst_ptr, true, offset, floats, null, null);
+        var out = clEnqueueMapBuffer(queue_ptr,
+            dst_ptr,
+            true,
+            CL_MAP_WRITE,
+            offset,
+            CLSize.cl_float * (long)floats.length,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
+        assert out != null;
+
+        var m = MemoryUtil.memAllocFloat(floats.length);
+        m.put(floats);
+        MemoryUtil.memCopy(m, out.asFloatBuffer());
+        int result = clEnqueueUnmapMemObject(queue_ptr, dst_ptr, out, null, null);
+        MemoryUtil.memFree(m);
         if (result != CL_SUCCESS)
         {
             System.out.println("Error on buffer copy: " + result);

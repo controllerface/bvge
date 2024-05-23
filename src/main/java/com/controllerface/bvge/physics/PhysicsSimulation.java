@@ -1249,6 +1249,34 @@ public class PhysicsSimulation extends GameSystem
             long e = System.nanoTime() - s;
             Editor.queue_event("phys_cycle", String.valueOf(e));
         }
+
+        var batch = GPGPU.core_memory.next_batch();
+        while (batch != null)
+        {
+            if (uniform_grid.is_sector_loaded(batch.sector))
+            {
+                for (var solid : batch.solids)
+                {
+                    if (solid.dynamic())
+                    {
+                        PhysicsObjects.dynamic_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.block_material());
+                    }
+                    else
+                    {
+                        PhysicsObjects.static_box(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.block_material());
+                    }
+                }
+                for (var tri : batch.tris)
+                {
+                    PhysicsObjects.tri(tri.x(), tri.y(), tri.size(), tri.flags(), tri.mass(), tri.friction(), tri.restitution());
+                }
+                for (var liquid : batch.liquids)
+                {
+                    PhysicsObjects.liquid_particle(liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
+                }
+            }
+            batch = GPGPU.core_memory.next_batch();
+        }
     }
 
     //#endregion

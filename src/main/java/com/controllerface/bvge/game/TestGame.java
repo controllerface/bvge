@@ -90,7 +90,7 @@ public class TestGame extends GameMode
         }
     }
 
-    private void genNoiseBlocks(PhysicsEntityBatch batch, boolean dynamic, int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
+    private void genNoiseBlocks(boolean dynamic, int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
     {
         //System.out.println("generating: " + box_size * box_size + " Blocks..");
         for (int i = 0; i < box_size; i++)
@@ -100,9 +100,6 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-//                if (dynamic) PhysicsObjects.dynamic_block_ex(batch, x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
-//                else PhysicsObjects.static_box_ex(batch, x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
-
                 if (dynamic) PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
                 else PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
             }
@@ -331,8 +328,6 @@ public class TestGame extends GameMode
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
     }
 
-    private record Sector(int x, int y) { }
-
     private Set<Sector> last_loaded_sectors = new HashSet<>();
     private Set<Sector> loaded_sectors = new HashSet<>();
 
@@ -356,10 +351,6 @@ public class TestGame extends GameMode
         float sector_2_origin_x = (float)sector_2_key[0] * sector_size;
         float sector_2_origin_y = (float)sector_2_key[1] * sector_size;
 
-        uniformGrid.update_sector_metrics(sector_0_origin_x, sector_0_origin_y,
-             Math.abs(sector_0_origin_x - (sector_2_origin_x + sector_size)),
-            Math.abs(sector_0_origin_y - (sector_2_origin_y + sector_size)));
-
         last_loaded_sectors.clear();
         last_loaded_sectors.addAll(loaded_sectors);
         loaded_sectors.clear();
@@ -373,7 +364,7 @@ public class TestGame extends GameMode
                 loaded_sectors.add(sector);
                 if (!last_loaded_sectors.contains(sector))
                 {
-                    //System.out.println("loading sector: ["+sx+","+sy+"]");
+                    System.out.println("loading sector: ["+sx+","+sy+"]");
                     load_sector(sector);
                     load_changed = true;
                 }
@@ -393,6 +384,10 @@ public class TestGame extends GameMode
         {
             //System.out.println(loaded_sectors.size() + " sectors loaded");
         }
+
+        uniformGrid.update_sector_metrics(loaded_sectors, sector_0_origin_x, sector_0_origin_y,
+            Math.abs(sector_0_origin_x - (sector_2_origin_x + sector_size)),
+            Math.abs(sector_0_origin_y - (sector_2_origin_y + sector_size)));
     }
 
     private float map(float x, float in_min, float in_max, float out_min, float out_max)
@@ -400,22 +395,39 @@ public class TestGame extends GameMode
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 
+    private Solid[] block_pallette = new Solid[]
+        {
+            Solid.MUDSTONE,
+            Solid.CLAYSTONE,
+            Solid.ANDESITE,
+            Solid.DIORITE,
+            Solid.SOAPSTONE,
+            Solid.LIMESTONE,
+            Solid.SANDSTONE,
+            Solid.SCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.WHITESCHIST,
+        };
+
     private void load_sector(Sector sector)
     {
-        float x_offset = sector.x * (int)UniformGrid.SECTOR_SIZE;
-        float y_offset = sector.y * (int)UniformGrid.SECTOR_SIZE;
+        float x_offset = sector.x() * (int)UniformGrid.SECTOR_SIZE;
+        float y_offset = sector.y() * (int)UniformGrid.SECTOR_SIZE;
 
-        var batch = new PhysicsEntityBatch();
+        var batch = new PhysicsEntityBatch(sector);
 
+        boolean flip = false;
         for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
         {
             for (int y = 0; y < UniformGrid.BLOCK_COUNT; y++)
             {
 
-                float world_x = (x * UniformGrid.BLOCK_SIZE) + x_offset + (UniformGrid.BLOCK_SIZE / 2f);
+                float world_x = (x * UniformGrid.BLOCK_SIZE) + x_offset;
+                float world_x_block = world_x + (UniformGrid.BLOCK_SIZE / 2f);
                 float world_y = (y * UniformGrid.BLOCK_SIZE) + y_offset;
 
-                float block_x = world_x / UniformGrid.BLOCK_SIZE;
+                float block_x = world_x_block / UniformGrid.BLOCK_SIZE;
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
 
                 float n = noise.GetNoise(block_x, block_y);
@@ -430,14 +442,24 @@ public class TestGame extends GameMode
 
                 if (gen_block)
                 {
-                    int block = (int)map(n, 0, 1, 0, Solid.values().length);
-                    var solid = Solid.values()[block];
-                    genNoiseBlocks(batch, gen_dyn, 1, 0, UniformGrid.BLOCK_SIZE, world_x, world_y, solid);
+                    int block = (int)map(n, 0, 1, 0, block_pallette.length);
+                    var solid = block_pallette[block];
+                    batch.new_block(gen_dyn, world_x_block, world_y, UniformGrid.BLOCK_SIZE, 90f, 0.03f, 0.0003f, solid);
                 }
-                else if (n < -.2) genWater(1, 0, 16f, world_x, world_y, Liquid.WATER);
+                else if (n < -.2)
+                {
+                    int flags = flip
+                        ? PointFlags.FLOW_LEFT.bits
+                        : 0;
+                    flip = !flip;
+                    batch.new_liquid(world_x, world_y,  UniformGrid.BLOCK_SIZE, .1f, 0.0f, 0.00000f, HullFlags.IS_LIQUID._int, flags, Liquid.WATER);
+                }
+                else if (n < -.15)
+                {
+                    batch.new_tri(world_x, world_y,  UniformGrid.BLOCK_SIZE, 0,.1f, 0.0f, 0.00000f);
+                }
             }
         }
-
-        //GPGPU.core_memory.process_entity_batch(batch);
+        GPGPU.core_memory.new_batch(batch);
     }
 }
