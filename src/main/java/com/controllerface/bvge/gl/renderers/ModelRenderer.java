@@ -141,7 +141,8 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(CountMeshInstances_k.Args.query, query_ptr)
             .ptr_arg(CountMeshInstances_k.Args.total, total_ptr)
             .set_arg(CountMeshInstances_k.Args.count, mesh_count)
-            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_MESH_ID));
+            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_MESH_ID))
+            .buf_arg(CountMeshInstances_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_FLAG));
 
         long write_details_k_ptr = mesh_query_p.kernel_ptr(Kernel.write_mesh_details);
         write_mesh_details_k = new WriteMeshDetails_k(GPGPU.gl_cmd_queue_ptr, write_details_k_ptr)
@@ -150,6 +151,7 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(WriteMeshDetails_k.Args.offsets, offsets_ptr)
             .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
             .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_MESH_ID))
+            .buf_arg(WriteMeshDetails_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_FLAG))
             .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.buffer(BufferType.MESH_VERTEX_TABLE))
             .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.buffer(BufferType.MESH_FACE_TABLE));
 

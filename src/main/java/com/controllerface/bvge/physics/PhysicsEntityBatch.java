@@ -11,7 +11,7 @@ public class PhysicsEntityBatch
 {
     public final Sector sector;
 
-    public record SolidEntity(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, Solid block_material) { }
+    public record SolidEntity(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material) { }
     public record LiquidEntity(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid) { }
     public record Tri(float x, float y, float size, int flags, float mass, float friction, float restitution) { }
 
@@ -24,9 +24,9 @@ public class PhysicsEntityBatch
         this.sector = sector;
     }
 
-    public void new_block(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
+    public void new_block(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
-        solids.add(new SolidEntity(dynamic, x, y, size, mass, friction, restitution, block_material));
+        solids.add(new SolidEntity(dynamic, x, y, size, mass, friction, restitution, flags, block_material));
     }
 
     public void new_liquid(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid)

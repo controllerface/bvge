@@ -7,6 +7,7 @@ public class CountMeshInstances_k extends GPUKernel
     public enum Args
     {
         hull_mesh_ids,
+        hull_flags,
         counters,
         query,
         total,

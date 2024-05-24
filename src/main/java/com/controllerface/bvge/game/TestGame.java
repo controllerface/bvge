@@ -38,7 +38,7 @@ public class TestGame extends GameMode
     }
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
-//            RenderType.HULLS,
+//            RenderType.HULLS);//,
 //            RenderType.POINTS,
 //            RenderType.ENTITIES,
 //            RenderType.BOUNDS,
@@ -85,7 +85,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+                PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
             }
         }
     }
@@ -100,8 +100,8 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                if (dynamic) PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
-                else PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
+                if (dynamic) PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
+                else PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
             }
         }
     }
@@ -116,7 +116,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                PhysicsObjects.dynamic_block(x, y, rando_float(size, percentage), 90f, 0.03f, 0.0003f, minerals[rx]);
+                PhysicsObjects.dynamic_block(x, y, rando_float(size, percentage), 90f, 0.03f, 0.0003f, 0, minerals[rx]);
             }
         }
     }
@@ -180,7 +180,7 @@ public class TestGame extends GameMode
         {
             float x = start_x + i * spacing;
             float y = start_y;
-            PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, solid);
+            PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, 0, solid);
         }
     }
 
@@ -191,13 +191,13 @@ public class TestGame extends GameMode
         {
             float x = start_x;
             float y = start_y + i * spacing;
-            PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, solid);
+            PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, 0, solid);
         }
     }
 
     private void genTestCrate(float size, float x, float y)
     {
-        PhysicsObjects.dynamic_block(x, y, size, .1f, 0.02f, 0.0001f, Solid.ANDESITE);
+        PhysicsObjects.dynamic_block(x, y, size, .1f, 0.02f, 0.0001f, 0, Solid.ANDESITE);
     }
 
     private void genTestTriangle(float size, float x, float y)
@@ -364,7 +364,7 @@ public class TestGame extends GameMode
                 loaded_sectors.add(sector);
                 if (!last_loaded_sectors.contains(sector))
                 {
-                    System.out.println("loading sector: ["+sx+","+sy+"]");
+                    //System.out.println("loading sector: ["+sx+","+sy+"]");
                     load_sector(sector);
                     load_changed = true;
                 }
@@ -435,16 +435,16 @@ public class TestGame extends GameMode
                 boolean gen_block = n >= 0;
                 boolean gen_dyn = false;
 
-                if (noise.GetNoise(block_x, block_y - 1) <= 0)
-                {
-                    gen_dyn = true;
-                }
+//                if (noise.GetNoise(block_x, block_y - 1) < 0)
+//                {
+//                    gen_dyn = true;
+//                }
 
                 if (gen_block)
                 {
                     int block = (int)map(n, 0, 1, 0, block_pallette.length);
                     var solid = block_pallette[block];
-                    batch.new_block(gen_dyn, world_x_block, world_y, UniformGrid.BLOCK_SIZE, 90f, 0.03f, 0.0003f, solid);
+                    batch.new_block(gen_dyn, world_x_block, world_y, UniformGrid.BLOCK_SIZE, 90f, 0.03f, 0.0003f, HullFlags.OUT_OF_BOUNDS._int, solid);
                 }
                 else if (n < -.2)
                 {
@@ -452,11 +452,13 @@ public class TestGame extends GameMode
                         ? PointFlags.FLOW_LEFT.bits
                         : 0;
                     flip = !flip;
-                    batch.new_liquid(world_x, world_y,  UniformGrid.BLOCK_SIZE, .1f, 0.0f, 0.00000f, HullFlags.IS_LIQUID._int, flags, Liquid.WATER);
+                    batch.new_liquid(world_x, world_y,  UniformGrid.BLOCK_SIZE, .1f, 0.0f, 0.00000f,
+                        HullFlags.IS_LIQUID._int | HullFlags.OUT_OF_BOUNDS._int,
+                        flags, Liquid.WATER);
                 }
                 else if (n < -.15)
                 {
-                    batch.new_tri(world_x, world_y,  UniformGrid.BLOCK_SIZE, 0,.1f, 0.0f, 0.00000f);
+                    batch.new_tri(world_x, world_y,  UniformGrid.BLOCK_SIZE, HullFlags.OUT_OF_BOUNDS._int,.1f, 0.0f, 0.00000f);
                 }
             }
         }

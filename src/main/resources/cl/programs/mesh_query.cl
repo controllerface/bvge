@@ -1,4 +1,5 @@
 __kernel void count_mesh_instances(__global int *hull_mesh_ids,
+                                   __global int *hull_flags,
                                    __global int *counters,
                                    __global int *query,
                                    __global int *total,
@@ -6,6 +7,11 @@ __kernel void count_mesh_instances(__global int *hull_mesh_ids,
 {
     int hull_id = get_global_id(0);
     int mesh_id = hull_mesh_ids[hull_id];
+    int hull_flag = hull_flags[hull_id];
+    bool out_of_bounds = (hull_flag & OUT_OF_BOUNDS) !=0;
+    bool in_perimeter = (hull_flag & IN_PERIMETER) !=0;
+    if (out_of_bounds || in_perimeter) return;
+
     for (int i = 0; i < count; i++)
     {
         int nx = query[i];
@@ -18,6 +24,7 @@ __kernel void count_mesh_instances(__global int *hull_mesh_ids,
 }
 
 __kernel void write_mesh_details(__global int *hull_mesh_ids,
+                                 __global int *hull_flags,
                                  __global int2 *mesh_vertex_tables,
                                  __global int2 *mesh_face_tables,
                                  __global int *counters, 
@@ -28,6 +35,11 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
 {
     int hull_id = get_global_id(0);
     int mesh_id = hull_mesh_ids[hull_id];
+    int hull_flag = hull_flags[hull_id];
+    bool out_of_bounds = (hull_flag & OUT_OF_BOUNDS) !=0;
+    bool in_perimeter = (hull_flag & IN_PERIMETER) !=0;
+    if (out_of_bounds || in_perimeter) return;
+
     for (int i = 0; i < count; i++)
     {
         int nx = query[i];

@@ -247,16 +247,16 @@ public class PhysicsObjects
             0);
     }
 
-    public static int dynamic_block(float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
+    public static int dynamic_block(float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
-        return block(x, y, size * 5, HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
+        return block(x, y, size * 5, flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
 
         //return wrap_model(BASE_BLOCK_INDEX, x, y, size, HullFlags.IS_BLOCK._int, mass, friction, restitution, block_material.mineral_number);
     }
 
-    public static int static_box(float x, float y, float size, float mass, float friction, float restitution, Solid block_material)
+    public static int static_box(float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
-        return block(x, y, size * 5, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
+        return block(x, y, size * 5, flags | HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
     }
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)

@@ -1259,11 +1259,11 @@ public class PhysicsSimulation extends GameSystem
                 {
                     if (solid.dynamic())
                     {
-                        PhysicsObjects.dynamic_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.block_material());
+                        PhysicsObjects.dynamic_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.block_material());
                     }
                     else
                     {
-                        PhysicsObjects.static_box(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.block_material());
+                        PhysicsObjects.static_box(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.block_material());
                     }
                 }
                 for (var tri : batch.tris)
