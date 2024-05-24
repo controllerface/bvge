@@ -664,6 +664,7 @@ public class GPUCoreMemory
             .buf_arg(CreatePoint_k.Args.points, point_buffer)
             .buf_arg(CreatePoint_k.Args.point_vertex_references, point_vertex_reference_buffer)
             .buf_arg(CreatePoint_k.Args.point_hull_indices, point_hull_index_buffer)
+            .buf_arg(CreatePoint_k.Args.point_hit_counts, point_hit_count_buffer)
             .buf_arg(CreatePoint_k.Args.point_flags, point_flag_buffer)
             .buf_arg(CreatePoint_k.Args.bone_tables, point_bone_table_buffer);
 

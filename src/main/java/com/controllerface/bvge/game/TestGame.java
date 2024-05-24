@@ -38,11 +38,11 @@ public class TestGame extends GameMode
     }
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(
-//            RenderType.HULLS);//,
+//            RenderType.HULLS,
 //            RenderType.POINTS,
 //            RenderType.ENTITIES,
 //            RenderType.BOUNDS,
-//            RenderType.GRID,
+            RenderType.GRID,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -427,6 +427,8 @@ public class TestGame extends GameMode
                 float world_x_block = world_x + (UniformGrid.BLOCK_SIZE / 2f);
                 float world_y = (y * UniformGrid.BLOCK_SIZE) + y_offset;
 
+                if (world_y >= 0) continue;
+
                 float block_x = world_x_block / UniformGrid.BLOCK_SIZE;
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
 
@@ -452,7 +454,7 @@ public class TestGame extends GameMode
                         ? PointFlags.FLOW_LEFT.bits
                         : 0;
                     flip = !flip;
-                    batch.new_liquid(world_x, world_y,  UniformGrid.BLOCK_SIZE, .1f, 0.0f, 0.00000f,
+                    batch.new_liquid(world_x, world_y,  UniformGrid.BLOCK_SIZE / 2f, .1f, 0.0f, 0.00000f,
                         HullFlags.IS_LIQUID._int | HullFlags.OUT_OF_BOUNDS._int,
                         flags, Liquid.WATER);
                 }

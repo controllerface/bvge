@@ -9,6 +9,7 @@ public class CreatePoint_k extends GPUKernel
         points,
         point_vertex_references,
         point_hull_indices,
+        point_hit_counts,
         point_flags,
         bone_tables,
         target,

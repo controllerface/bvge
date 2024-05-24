@@ -9,6 +9,7 @@ are designed to operate on a single target object.
 __kernel void create_point(__global float4 *points,
                            __global int *point_vertex_references,
                            __global int *point_hull_indices,
+                           __global ushort *point_hit_counts,
                            __global int *point_flags,
                            __global int4 *bone_tables,
                            int target,
@@ -23,6 +24,7 @@ __kernel void create_point(__global float4 *points,
     point_hull_indices[target]      = new_point_hull_index; 
     point_flags[target]             = new_point_flags; 
     bone_tables[target]             = new_bone_table; 
+    point_hit_counts[target] = 0;
 }
 
 __kernel void create_edge(__global int2 *edges,
