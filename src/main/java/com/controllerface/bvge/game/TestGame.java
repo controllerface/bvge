@@ -42,7 +42,7 @@ public class TestGame extends GameMode
 //            RenderType.POINTS,
 //            RenderType.ENTITIES,
 //            RenderType.BOUNDS,
-            RenderType.GRID,
+//            RenderType.GRID,
             RenderType.MODELS);
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
@@ -426,8 +426,6 @@ public class TestGame extends GameMode
                 float world_x = (x * UniformGrid.BLOCK_SIZE) + x_offset;
                 float world_x_block = world_x + (UniformGrid.BLOCK_SIZE / 2f);
                 float world_y = (y * UniformGrid.BLOCK_SIZE) + y_offset;
-
-                if (world_y >= 0) continue;
 
                 float block_x = world_x_block / UniformGrid.BLOCK_SIZE;
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
