@@ -102,6 +102,7 @@ public class Texture
             // do this or it will leak memory
             stbi_image_free(image);
         }
+        //glGenerateMipmap(texId);
     }
 
     public void init(String resource_path)
@@ -165,7 +166,7 @@ public class Texture
             assert false : "Error: couldn't load image: " + resource_path;
         }
 
-        glGenerateMipmap(texId);
+        //glGenerateMipmap(texId);
 
         // do this or it will leak memory
         stbi_image_free(image);

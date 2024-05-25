@@ -1176,7 +1176,7 @@ public class GPUCoreMemory
         return edge_index++;
     }
 
-    public int new_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int flags)
+    public int new_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int hit_count, int flags)
     {
         int capacity = point_index + 1;
         point_buffer.ensure_capacity(capacity);
@@ -1193,6 +1193,7 @@ public class GPUCoreMemory
             .set_arg(CreatePoint_k.Args.new_point, new_point)
             .set_arg(CreatePoint_k.Args.new_point_vertex_reference, vertex_index)
             .set_arg(CreatePoint_k.Args.new_point_hull_index, hull_index)
+            .set_arg(CreatePoint_k.Args.new_point_hit_count, (short) hit_count)
             .set_arg(CreatePoint_k.Args.new_point_flags, flags)
             .set_arg(CreatePoint_k.Args.new_bone_table, bone_ids)
             .call(GPGPU.global_single_size);

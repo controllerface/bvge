@@ -189,15 +189,11 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float4 point = points[point_id];
         int hit_counts = point_hit_counts[point_id];
 
+        float sgadfg = map((float) hit_counts, 0, HIT_TOP_THRESHOLD, 0.0f, 0.5f);
+
         float col = hit_counts <= HIT_LOW_THRESHOLD 
             ? 1.0f 
-            : hit_counts <= HIT_LOW_MID_THRESHOLD 
-                ? 0.80f 
-                : hit_counts <= HIT_MID_THRESHOLD
-                    ? 0.60f
-                    : hit_counts <= HIT_HIGH_MID_THRESHOLD 
-                        ? 0.55
-                        : 0.50;
+            : 1 - sgadfg;
 
         int point_vertex_reference = point_vertex_references[point_id];
         int2 uv_table = uv_tables[point_vertex_reference];

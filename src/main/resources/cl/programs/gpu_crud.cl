@@ -16,6 +16,7 @@ __kernel void create_point(__global float4 *points,
                            float4 new_point,
                            int new_point_vertex_reference,
                            int new_point_hull_index,
+                           ushort new_point_hit_count,
                            int new_point_flags,
                            int4 new_bone_table)
 {
@@ -24,7 +25,7 @@ __kernel void create_point(__global float4 *points,
     point_hull_indices[target]      = new_point_hull_index; 
     point_flags[target]             = new_point_flags; 
     bone_tables[target]             = new_bone_table; 
-    point_hit_counts[target] = 0;
+    point_hit_counts[target] = new_point_hit_count;
 }
 
 __kernel void create_edge(__global int2 *edges,

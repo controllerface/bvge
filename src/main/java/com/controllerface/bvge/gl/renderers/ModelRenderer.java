@@ -265,16 +265,16 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_count_batches", String.valueOf(e));
         }
 
-        float tx = (float)total_instances / (float)MAX_BATCH_SIZE;
-        int b_test = (int)Math.ceil(tx);
+//        float tx = (float)total_instances / (float)MAX_BATCH_SIZE;
+//        int b_test = (int)Math.ceil(tx);
 
         int total_batches = GPGPU.cl_read_pinned_int(GPGPU.gl_cmd_queue_ptr, total_ptr);
         long batch_index_size = (long) total_batches * CLSize.cl_int;
 
-        if (b_test!=total_batches)
-        {
-            System.out.println("wrong number: expected: " + total_batches + " got: " + b_test);
-        }
+//        if (b_test!=total_batches)
+//        {
+//            System.out.println("wrong number: expected: " + total_batches + " got: " + b_test);
+//        }
 
         var mesh_offset_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, batch_index_size);
 

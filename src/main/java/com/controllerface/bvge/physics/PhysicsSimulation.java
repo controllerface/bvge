@@ -1100,7 +1100,7 @@ public class PhysicsSimulation extends GameSystem
         // In a second pass, candidate counts are scanned to determine the offsets into the match table that
         // correspond to each hull that will be checked for collisions.
         calculate_match_offsets();
-        if (match_buffer_count > 50_000_000)
+        if (match_buffer_count > 100_000_000)
         {
             throw new RuntimeException("collision buffer too large:" + match_buffer_count);
         }
@@ -1158,6 +1158,37 @@ public class PhysicsSimulation extends GameSystem
         // Now all points with reactions are able to sum all their reactions and apply them, as well as
         // enforcing constraints on the velocities of the affected points.
         apply_reactions();
+    }
+
+    private void process_sector_batches()
+    {
+        var batch = GPGPU.core_memory.next_batch();
+        while (batch != null)
+        {
+            if (uniform_grid.is_sector_loaded(batch.sector))
+            {
+                for (var solid : batch.blocks)
+                {
+                    if (solid.dynamic())
+                    {
+                        PhysicsObjects.dynamic_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.block_material());
+                    }
+                    else
+                    {
+                        PhysicsObjects.static_box(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.block_material());
+                    }
+                }
+                for (var tri : batch.tris)
+                {
+                    PhysicsObjects.tri(tri.x(), tri.y(), tri.size(), tri.flags(), tri.mass(), tri.friction(), tri.restitution());
+                }
+                for (var liquid : batch.liquids)
+                {
+                    PhysicsObjects.liquid_particle(liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
+                }
+            }
+            batch = GPGPU.core_memory.next_batch();
+        }
     }
 
     private void simulate(float dt)
@@ -1249,34 +1280,6 @@ public class PhysicsSimulation extends GameSystem
             long e = System.nanoTime() - s;
             Editor.queue_event("phys_cycle", String.valueOf(e));
         }
-
-        var batch = GPGPU.core_memory.next_batch();
-        while (batch != null)
-        {
-            if (uniform_grid.is_sector_loaded(batch.sector))
-            {
-                for (var solid : batch.solids)
-                {
-                    if (solid.dynamic())
-                    {
-                        PhysicsObjects.dynamic_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.block_material());
-                    }
-                    else
-                    {
-                        PhysicsObjects.static_box(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.block_material());
-                    }
-                }
-                for (var tri : batch.tris)
-                {
-                    PhysicsObjects.tri(tri.x(), tri.y(), tri.size(), tri.flags(), tri.mass(), tri.friction(), tri.restitution());
-                }
-                for (var liquid : batch.liquids)
-                {
-                    PhysicsObjects.liquid_particle(liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
-                }
-            }
-            batch = GPGPU.core_memory.next_batch();
-        }
     }
 
     //#endregion
@@ -1293,7 +1296,7 @@ public class PhysicsSimulation extends GameSystem
 
             // todo: wire up sector load request classes
             // todo: read mouse selected objects
-
+            process_sector_batches();
             GPGPU.core_memory.mirror_buffers_ex();
             clFinish(GPGPU.cl_cmd_queue_ptr);
             next_phys_time.put(dt);

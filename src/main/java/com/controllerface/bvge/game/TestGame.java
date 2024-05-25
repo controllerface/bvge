@@ -399,15 +399,18 @@ public class TestGame extends GameMode
         {
             Solid.MUDSTONE,
             Solid.CLAYSTONE,
-            Solid.ANDESITE,
-            Solid.DIORITE,
-            Solid.SOAPSTONE,
-            Solid.LIMESTONE,
-            Solid.SANDSTONE,
-            Solid.SCHIST,
+            Solid.WHITESCHIST,
             Solid.GREENSCHIST,
             Solid.BLUESCHIST,
+            Solid.SCHIST,
             Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
         };
 
     private void load_sector(Sector sector)
@@ -432,19 +435,17 @@ public class TestGame extends GameMode
 
                 float n = noise.GetNoise(block_x, block_y);
 
-                boolean gen_block = n >= 0;
+                boolean gen_block = n >= -.03;
                 boolean gen_dyn = false;
 
-//                if (noise.GetNoise(block_x, block_y - 1) < 0)
-//                {
-//                    gen_dyn = true;
-//                }
+                float sz = UniformGrid.BLOCK_SIZE; //rando_float(UniformGrid.BLOCK_SIZE, .8f);
+                float szw = rando_float(UniformGrid.BLOCK_SIZE * 0.75f , .75f);
 
                 if (gen_block)
                 {
-                    int block = (int)map(n, 0, 1, 0, block_pallette.length);
+                    int block = (int)map(n, -.03f, 1f, 0f, (float)block_pallette.length);
                     var solid = block_pallette[block];
-                    batch.new_block(gen_dyn, world_x_block, world_y, UniformGrid.BLOCK_SIZE, 90f, 0.03f, 0.0003f, HullFlags.OUT_OF_BOUNDS._int, solid);
+                    batch.new_block(gen_dyn, world_x_block, world_y, sz, 90f, 0.03f, 0.0003f, HullFlags.OUT_OF_BOUNDS._int, solid);
                 }
                 else if (n < -.2)
                 {
@@ -452,13 +453,13 @@ public class TestGame extends GameMode
                         ? PointFlags.FLOW_LEFT.bits
                         : 0;
                     flip = !flip;
-                    batch.new_liquid(world_x, world_y,  UniformGrid.BLOCK_SIZE / 2f, .1f, 0.0f, 0.00000f,
+                    batch.new_liquid(world_x, world_y,  szw, .1f, 0.0f, 0.00000f,
                         HullFlags.IS_LIQUID._int | HullFlags.OUT_OF_BOUNDS._int,
                         flags, Liquid.WATER);
                 }
                 else if (n < -.15)
                 {
-                    batch.new_tri(world_x, world_y,  UniformGrid.BLOCK_SIZE, HullFlags.OUT_OF_BOUNDS._int,.1f, 0.0f, 0.00000f);
+                    batch.new_tri(world_x, world_y,  sz, HullFlags.OUT_OF_BOUNDS._int,.1f, 0.0f, 0.00000f);
                 }
             }
         }

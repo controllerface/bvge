@@ -53,7 +53,7 @@ public class PhysicsObjects
         var t1 = CLUtils.arg_int4(vert.vert_ref_id(), next_hull_index, 0, 0);
 
         // store the single point for the circle
-        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], vert.vert_ref_id(), next_hull_index, point_flags);
+        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], vert.vert_ref_id(), next_hull_index, 0, point_flags);
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
@@ -122,9 +122,9 @@ public class PhysicsObjects
         var p2 = CLUtils.arg_float2(v2.x(), v2.y());
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
 
-        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], v1.vert_ref_id(), next_hull_index, 0);
-        var p2_index = GPGPU.core_memory.new_point(p2, new int[4], v2.vert_ref_id(), next_hull_index, 0);
-        var p3_index = GPGPU.core_memory.new_point(p3, new int[4], v3.vert_ref_id(), next_hull_index, 0);
+        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], v1.vert_ref_id(), next_hull_index, 0,0);
+        var p2_index = GPGPU.core_memory.new_point(p2, new int[4], v2.vert_ref_id(), next_hull_index, 0,0);
+        var p3_index = GPGPU.core_memory.new_point(p3, new int[4], v3.vert_ref_id(), next_hull_index, 0,0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -192,10 +192,16 @@ public class PhysicsObjects
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
         var p4 = CLUtils.arg_float2(v4.x(), v4.y());
 
-        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], v1.vert_ref_id(), next_hull_index, 0);
-        var p2_index = GPGPU.core_memory.new_point(p2, new int[4], v2.vert_ref_id(), next_hull_index, 0);
-        var p3_index = GPGPU.core_memory.new_point(p3, new int[4], v3.vert_ref_id(), next_hull_index, 0);
-        var p4_index = GPGPU.core_memory.new_point(p4, new int[4], v4.vert_ref_id(), next_hull_index, 0);
+        int h1 = random.nextInt(100, 4000);
+        int h2 = random.nextInt(100, 4000);
+        int h3 = random.nextInt(100, 4000);
+        int h4 = random.nextInt(100, 4000);
+
+
+        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], v1.vert_ref_id(), next_hull_index, h1,0);
+        var p2_index = GPGPU.core_memory.new_point(p2, new int[4], v2.vert_ref_id(), next_hull_index, h2,0);
+        var p3_index = GPGPU.core_memory.new_point(p3, new int[4], v3.vert_ref_id(), next_hull_index, h3,0);
+        var p4_index = GPGPU.core_memory.new_point(p4, new int[4], v4.vert_ref_id(), next_hull_index, h4,0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -263,6 +269,8 @@ public class PhysicsObjects
     {
         return tri(x, y, size, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution);
     }
+
+    private static final Random random = new Random();
 
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will
     //  probably break/crash.
@@ -382,7 +390,7 @@ public class PhysicsObjects
                 {
                     bone_ids[i] = find_bone_index(bone_map, bone_names, i);
                 }
-                var next_point = GPGPU.core_memory.new_point(new_point, bone_ids, next_vertex.vert_ref_id(), next_hull, 0);
+                var next_point = GPGPU.core_memory.new_point(new_point, bone_ids, next_vertex.vert_ref_id(), next_hull, 0,0);
 
                 if (start_point == -1)
                 {
@@ -400,13 +408,15 @@ public class PhysicsObjects
             {
                 var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
 
+                int n = random.nextInt(100, 4000);
+
                 var bone_names = next_vertex.bone_names();
                 int[] bone_ids = new int[4];
                 for (int i = 0; i < bone_ids.length; i++)
                 {
                     bone_ids[i] = find_bone_index(bone_map, bone_names, i);
                 }
-                end_point = GPGPU.core_memory.new_point(new_point, bone_ids, next_vertex.vert_ref_id(), next_hull, PointFlags.IS_INTERIOR.bits);
+                end_point = GPGPU.core_memory.new_point(new_point, bone_ids, next_vertex.vert_ref_id(), next_hull, 0, PointFlags.IS_INTERIOR.bits);
             }
 
             // generate edges in memory for this object
