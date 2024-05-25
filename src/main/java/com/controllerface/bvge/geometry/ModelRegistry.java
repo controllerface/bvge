@@ -757,11 +757,12 @@ public class ModelRegistry
 
     public static void init()
     {
+        var texture = Assets.load_texture("/img/blocks.png");
         loaded_models.put(CURSOR, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
 
         loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.TRIANGLE_MESH)));
-        loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BOX_MESH)));
+        loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BOX_MESH), texture));
 
         TEST_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
         TEST_MODEL_INDEX_2 = load_model("/models/test_humanoid_2.fbx", "Humanoid");

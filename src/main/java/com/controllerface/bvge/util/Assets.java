@@ -55,4 +55,19 @@ public class Assets
             return texture;
         }
     }
+
+    public static Texture load_texture(String resourceName)
+    {
+        if (textures.containsKey(resourceName))
+        {
+            return textures.get(resourceName);
+        }
+        else
+        {
+            Texture texture = new Texture();
+            texture.init(resourceName);
+            Assets.textures.put(resourceName, texture);
+            return texture;
+        }
+    }
 }

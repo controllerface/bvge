@@ -20,7 +20,7 @@ import java.util.function.Predicate;
 public class EditorServer
 {
     private final int port;
-    private final long EVENT_INTERVAL = Duration.ofMillis(200).toMillis();
+    private final long EVENT_INTERVAL = Duration.ofMillis(500).toMillis();
     private ServerSocket server_socket;
     private Thread incoming;
     private Thread outgoing;

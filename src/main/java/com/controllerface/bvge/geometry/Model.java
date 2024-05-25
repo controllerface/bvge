@@ -29,4 +29,16 @@ public record Model(Mesh[] meshes,
             0,
             -1);
     }
+
+    public static Model fromBasicMesh(Mesh mesh, Texture texture)
+    {
+        return new Model(new Mesh[]{ mesh },
+            new Matrix4f(),
+            Map.of(BoneOffset.IDENTITY_BONE_NAME, new Matrix4f()),
+            Collections.emptyMap(),
+            Collections.emptyMap(),
+            Collections.singletonList(texture),
+            0,
+            -1);
+    }
 }

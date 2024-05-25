@@ -248,7 +248,7 @@ public class TestGame extends GameMode
         {
             //ecs.registerSystem(new CrateRenderer(ecs));
             ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", TEST_MODEL_INDEX));
-            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_BLOCK_INDEX));
+            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", SQUARE_PARTICLE));
             ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_TRI_INDEX));
             ecs.registerSystem(new LiquidRenderer(ecs));
         }
@@ -413,6 +413,13 @@ public class TestGame extends GameMode
             Solid.SCHIST,
         };
 
+    private static final float block_range_floor = -0.03f;
+
+    private final int m(float n)
+    {
+        return (int)map(n, block_range_floor, 1f, 0f, (float)block_pallette.length);
+    }
+
     private void load_sector(Sector sector)
     {
         float x_offset = sector.x() * (int)UniformGrid.SECTOR_SIZE;
@@ -429,23 +436,35 @@ public class TestGame extends GameMode
                 float world_x = (x * UniformGrid.BLOCK_SIZE) + x_offset;
                 float world_x_block = world_x + (UniformGrid.BLOCK_SIZE / 2f);
                 float world_y = (y * UniformGrid.BLOCK_SIZE) + y_offset;
+                float world_y_block = world_y + (UniformGrid.BLOCK_SIZE / 2f);
 
                 float block_x = world_x_block / UniformGrid.BLOCK_SIZE;
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
 
                 float n = noise.GetNoise(block_x, block_y);
+                int[] nn = new int[8];
+                nn[0] = m(noise.GetNoise(block_x - 1, block_y - 1));
+                nn[1] = m(noise.GetNoise(block_x, block_y - 1));
+                nn[2] = m(noise.GetNoise(block_x + 1, block_y-1));
 
-                boolean gen_block = n >= -.03;
+                nn[0] = m(noise.GetNoise(block_x - 1, block_y));
+                nn[0] = m(noise.GetNoise(block_x + 1, block_y));
+
+                nn[0] = m(noise.GetNoise(block_x - 1, block_y + 1));
+                nn[1] = m(noise.GetNoise(block_x, block_y + 1));
+                nn[2] = m(noise.GetNoise(block_x + 1, block_y + 1));
+
+                boolean gen_block = n >= block_range_floor;
                 boolean gen_dyn = false;
 
-                float sz = UniformGrid.BLOCK_SIZE; //rando_float(UniformGrid.BLOCK_SIZE, .8f);
+                float sz = UniformGrid.BLOCK_SIZE + 2;
                 float szw = rando_float(UniformGrid.BLOCK_SIZE * 0.75f , .75f);
 
                 if (gen_block)
                 {
-                    int block = (int)map(n, -.03f, 1f, 0f, (float)block_pallette.length);
+                    int block = m(n);
                     var solid = block_pallette[block];
-                    batch.new_block(gen_dyn, world_x_block, world_y, sz, 90f, 0.03f, 0.0003f, HullFlags.OUT_OF_BOUNDS._int, solid);
+                    batch.new_block(gen_dyn, world_x_block, world_y_block, sz, 90f, 0.03f, 0.0003f, HullFlags.OUT_OF_BOUNDS._int, solid);
                 }
                 else if (n < -.2)
                 {
