@@ -329,8 +329,8 @@ public class TestGame extends GameMode
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
 
         noise2.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
-        noise2.SetFractalType(FastNoiseLite.FractalType.FBm);
-        noise2.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Manhattan);
+        //noise2.SetFractalType(FastNoiseLite.FractalType.FBm);
+        //noise2.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Manhattan);
     }
 
     private Set<Sector> last_loaded_sectors = new HashSet<>();
@@ -450,22 +450,22 @@ public class TestGame extends GameMode
             Solid.WHITESCHIST,
             Solid.GREENSCHIST,
             Solid.BLUESCHIST,
-//            Solid.SCHIST,
-//            Solid.WHITESCHIST,
-//            Solid.GREENSCHIST,
-//            Solid.BLUESCHIST,
-//            Solid.SCHIST,
-//            Solid.WHITESCHIST,
-//            Solid.GREENSCHIST,
-//            Solid.BLUESCHIST,
-//            Solid.SCHIST,
-//            Solid.WHITESCHIST,
-//            Solid.GREENSCHIST,
-//            Solid.BLUESCHIST,
-//            Solid.SCHIST,
-//            Solid.WHITESCHIST,
-//            Solid.GREENSCHIST,
-//            Solid.BLUESCHIST,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
         };
 
     private static final float block_range_floor = -0.03f;
@@ -494,7 +494,9 @@ public class TestGame extends GameMode
                 float world_y_block = world_y + (UniformGrid.BLOCK_SIZE / 2f);
 
                 float block_x = world_x_block / UniformGrid.BLOCK_SIZE;
+                float block_x_2 = world_x_block / (UniformGrid.BLOCK_SIZE * 8f);
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
+
 
                 float n = noise.GetNoise(block_x, block_y);
 //                int[] nn = new int[8];
@@ -513,7 +515,7 @@ public class TestGame extends GameMode
                 boolean gen_dyn = false;
 
                 float sz = UniformGrid.BLOCK_SIZE + 1;
-                float szw = rando_float(UniformGrid.BLOCK_SIZE , .85f);
+                float szw = rando_float(UniformGrid.BLOCK_SIZE * .75f , .95f);
 
                 if (gen_block)
                 {
@@ -521,7 +523,7 @@ public class TestGame extends GameMode
                     var solid = block_pallette[block];
                     if (solid != Solid.MUDSTONE && solid != Solid.CLAYSTONE)
                     {
-                        float n2 = Math.abs(noise2.GetNoise(block_x, block_y));
+                        float n2 = Math.abs(noise2.GetNoise(block_x_2, block_y));
                         block = m(n2, 0, (float)block_pallette2.length);
                         solid = block_pallette2[block];
                     }
