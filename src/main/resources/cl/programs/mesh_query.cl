@@ -60,7 +60,6 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
 }
 
 __kernel void count_mesh_batches(__global int4 *mesh_details, 
-                                 //__global int *total,
                                  int max_per_batch,
                                  int count)
 {
@@ -79,8 +78,6 @@ __kernel void count_mesh_batches(__global int4 *mesh_details,
         mesh_details[i] = next;
         current_batch_count += next.y;
     }
-    // int bc = current_batch + 1;
-    // total[0] = bc;
 }
 
 __kernel void calculate_batch_offsets(__global int *mesh_offsets,

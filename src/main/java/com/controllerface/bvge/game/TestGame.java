@@ -320,12 +320,17 @@ public class TestGame extends GameMode
     }
 
     FastNoiseLite noise = new FastNoiseLite();
+    FastNoiseLite noise2 = new FastNoiseLite();
 
     @Override
     public void start()
     {
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+
+        noise2.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
+        noise2.SetFractalType(FastNoiseLite.FractalType.FBm);
+        noise2.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Manhattan);
     }
 
     private Set<Sector> last_loaded_sectors = new HashSet<>();
@@ -398,7 +403,18 @@ public class TestGame extends GameMode
     private Solid[] block_pallette = new Solid[]
         {
             Solid.MUDSTONE,
+            Solid.MUDSTONE,
             Solid.CLAYSTONE,
+            Solid.CLAYSTONE,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
             Solid.WHITESCHIST,
             Solid.GREENSCHIST,
             Solid.BLUESCHIST,
@@ -411,13 +427,52 @@ public class TestGame extends GameMode
             Solid.GREENSCHIST,
             Solid.BLUESCHIST,
             Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+        };
+
+    private Solid[] block_pallette2 = new Solid[]
+        {
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+            Solid.SCHIST,
+            Solid.WHITESCHIST,
+            Solid.GREENSCHIST,
+            Solid.BLUESCHIST,
+//            Solid.SCHIST,
+//            Solid.WHITESCHIST,
+//            Solid.GREENSCHIST,
+//            Solid.BLUESCHIST,
+//            Solid.SCHIST,
+//            Solid.WHITESCHIST,
+//            Solid.GREENSCHIST,
+//            Solid.BLUESCHIST,
+//            Solid.SCHIST,
+//            Solid.WHITESCHIST,
+//            Solid.GREENSCHIST,
+//            Solid.BLUESCHIST,
+//            Solid.SCHIST,
+//            Solid.WHITESCHIST,
+//            Solid.GREENSCHIST,
+//            Solid.BLUESCHIST,
         };
 
     private static final float block_range_floor = -0.03f;
 
-    private final int m(float n)
+    private final int m(float n, float floor, float length)
     {
-        return (int)map(n, block_range_floor, 1f, 0f, (float)block_pallette.length);
+        return (int)map(n, floor, 1f, 0f, length);
     }
 
     private void load_sector(Sector sector)
@@ -442,28 +497,34 @@ public class TestGame extends GameMode
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
 
                 float n = noise.GetNoise(block_x, block_y);
-                int[] nn = new int[8];
-                nn[0] = m(noise.GetNoise(block_x - 1, block_y - 1));
-                nn[1] = m(noise.GetNoise(block_x, block_y - 1));
-                nn[2] = m(noise.GetNoise(block_x + 1, block_y-1));
-
-                nn[0] = m(noise.GetNoise(block_x - 1, block_y));
-                nn[0] = m(noise.GetNoise(block_x + 1, block_y));
-
-                nn[0] = m(noise.GetNoise(block_x - 1, block_y + 1));
-                nn[1] = m(noise.GetNoise(block_x, block_y + 1));
-                nn[2] = m(noise.GetNoise(block_x + 1, block_y + 1));
+//                int[] nn = new int[8];
+//                nn[0] = m(noise.GetNoise(block_x - 1, block_y - 1));
+//                nn[1] = m(noise.GetNoise(block_x, block_y - 1));
+//                nn[2] = m(noise.GetNoise(block_x + 1, block_y-1));
+//
+//                nn[0] = m(noise.GetNoise(block_x - 1, block_y));
+//                nn[0] = m(noise.GetNoise(block_x + 1, block_y));
+//
+//                nn[0] = m(noise.GetNoise(block_x - 1, block_y + 1));
+//                nn[1] = m(noise.GetNoise(block_x, block_y + 1));
+//                nn[2] = m(noise.GetNoise(block_x + 1, block_y + 1));
 
                 boolean gen_block = n >= block_range_floor;
                 boolean gen_dyn = false;
 
                 float sz = UniformGrid.BLOCK_SIZE + 1;
-                float szw = rando_float(UniformGrid.BLOCK_SIZE , .5f);
+                float szw = rando_float(UniformGrid.BLOCK_SIZE , .85f);
 
                 if (gen_block)
                 {
-                    int block = m(n);
+                    int block = m(n, block_range_floor, (float)block_pallette.length);
                     var solid = block_pallette[block];
+                    if (solid != Solid.MUDSTONE && solid != Solid.CLAYSTONE)
+                    {
+                        float n2 = Math.abs(noise2.GetNoise(block_x, block_y));
+                        block = m(n2, 0, (float)block_pallette2.length);
+                        solid = block_pallette2[block];
+                    }
                     batch.new_block(gen_dyn, world_x_block, world_y_block, sz, 90f, 0.03f, 0.0003f, HullFlags.OUT_OF_BOUNDS._int, solid);
                 }
                 else if (n < -.2)
