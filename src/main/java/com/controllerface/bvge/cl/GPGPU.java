@@ -85,12 +85,6 @@ public class GPGPU
      */
     private static long device_id_ptr;
 
-    /**
-     * There are several kernels that use an atomic counter, so rather than re-allocate a new
-     * buffer for every call, this buffer is reused in all kernels that need a counter.
-     */
-    private static long atomic_counter_ptr;
-
     public static GPUCoreMemory core_memory;
 
     //#endregion
@@ -99,7 +93,6 @@ public class GPGPU
 
     private enum Program
     {
-        root_hull_filter(new RootHullFilter()), // todo: move this out, renderers should have their own local copy
         scan_int2_array(new ScanInt2Array()),
         scan_int4_array(new ScanInt4Array()),
         scan_int_array(new ScanIntArray()),
@@ -131,9 +124,6 @@ public class GPGPU
     private static GPUKernel scan_int_single_block_out_k;
     private static GPUKernel scan_int_multi_block_out_k;
     private static GPUKernel complete_int_multi_block_out_k;
-
-    private static GPUKernel root_hull_count_k;
-    private static GPUKernel root_hull_filter_k;
 
     //#endregion
 
@@ -206,7 +196,6 @@ public class GPGPU
 
     private static void init_memory()
     {
-        atomic_counter_ptr = cl_new_pinned_int();
         core_memory = new GPUCoreMemory();
     }
 
@@ -256,17 +245,6 @@ public class GPGPU
         scan_int_single_block_out_k = new ScanIntSingleBlockOut_k(cl_cmd_queue_ptr, scan_int_array_out_single_ptr);
         scan_int_multi_block_out_k = new ScanIntMultiBlockOut_k(cl_cmd_queue_ptr, scan_int_array_out_multi_ptr);
         complete_int_multi_block_out_k = new CompleteIntMultiBlockOut_k(cl_cmd_queue_ptr, scan_int_array_out_comp_ptr);
-
-        // Open GL interop
-
-        long root_hull_filter_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_filter);
-        root_hull_filter_k = new RootHullFilter_k(cl_cmd_queue_ptr, root_hull_filter_ptr)
-            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, core_memory.buffer(BufferType.ENTITY_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.entity_model_indices, core_memory.buffer(BufferType.ENTITY_MODEL_ID));
-
-        long root_hull_count_ptr = Program.root_hull_filter.gpu.kernel_ptr(Kernel.root_hull_count);
-        root_hull_count_k = new RootHullCount_k(cl_cmd_queue_ptr, root_hull_count_ptr)
-            .buf_arg(RootHullCount_k.Args.entity_model_indices, core_memory.buffer(BufferType.ENTITY_MODEL_ID));
     }
 
     //#endregion
@@ -402,87 +380,6 @@ public class GPGPU
         }
     }
 
-    public static void cl_write_short_buffer(long queue_ptr, long dst_ptr, long offset, long count, short[] shorts)
-    {
-        var out = clEnqueueMapBuffer(queue_ptr,
-            dst_ptr,
-            true,
-            CL_MAP_WRITE,
-            offset,
-            CLSize.cl_short * (long)shorts.length,
-            null,
-            null,
-            (IntBuffer) null,
-            null);
-
-        assert out != null;
-
-        var m = MemoryUtil.memAllocShort(shorts.length);
-        m.put(shorts);
-        MemoryUtil.memCopy(m, out.asShortBuffer());
-        int result = clEnqueueUnmapMemObject(queue_ptr, dst_ptr, out, null, null);
-        MemoryUtil.memFree(m);
-        if (result != CL_SUCCESS)
-        {
-            System.out.println("Error on buffer copy: " + result);
-            System.exit(1);
-        }
-    }
-
-    public static void cl_write_int_buffer(long queue_ptr, long dst_ptr, long offset, long count, int[] ints)
-    {
-        var out = clEnqueueMapBuffer(queue_ptr,
-            dst_ptr,
-            true,
-            CL_MAP_WRITE,
-            offset,
-            CLSize.cl_int * (long)ints.length,
-            null,
-            null,
-            (IntBuffer) null,
-            null);
-
-        assert out != null;
-
-        var m = MemoryUtil.memAllocInt(ints.length);
-        m.put(ints);
-        MemoryUtil.memCopy(m, out.asIntBuffer());
-        int result = clEnqueueUnmapMemObject(queue_ptr, dst_ptr, out, null, null);
-        MemoryUtil.memFree(m);
-        if (result != CL_SUCCESS)
-        {
-            System.out.println("Error on buffer copy: " + result);
-            System.exit(1);
-        }
-    }
-
-    public static void cl_write_float_buffer(long queue_ptr, long dst_ptr, long offset, long count, float[] floats)
-    {
-        var out = clEnqueueMapBuffer(queue_ptr,
-            dst_ptr,
-            true,
-            CL_MAP_WRITE,
-            offset,
-            CLSize.cl_float * (long)floats.length,
-            null,
-            null,
-            (IntBuffer) null,
-            null);
-
-        assert out != null;
-
-        var m = MemoryUtil.memAllocFloat(floats.length);
-        m.put(floats);
-        MemoryUtil.memCopy(m, out.asFloatBuffer());
-        int result = clEnqueueUnmapMemObject(queue_ptr, dst_ptr, out, null, null);
-        MemoryUtil.memFree(m);
-        if (result != CL_SUCCESS)
-        {
-            System.out.println("Error on buffer copy: " + result);
-            System.exit(1);
-        }
-    }
-
     public static int work_group_count(int n)
     {
         return (int) Math.ceil((float) n / (float) max_scan_block_size);
@@ -495,44 +392,6 @@ public class GPGPU
     public static long share_memory(int vboID)
     {
         return clCreateFromGLBuffer(context_ptr, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
-    }
-
-    /**
-     * Performs a filter query on all physics hulls, returning an index buffer and count of items.
-     * The returned object will contain the indices of all hulls that match the model with the given ID.
-     *
-     * @param model_id ID of model to filter on
-     * @return a HullIndexData object with the query result
-     */
-    @Deprecated // todo: all uses of this should be converted to us the gl context
-    public static HullIndexData GL_hull_filter(long queue_ptr, int model_id)
-    {
-        cl_zero_buffer(queue_ptr, atomic_counter_ptr, CLSize.cl_int);
-
-        root_hull_count_k
-            .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
-            .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.next_entity()));
-
-        int final_count = cl_read_pinned_int(queue_ptr, atomic_counter_ptr);
-
-        if (final_count == 0)
-        {
-            return new HullIndexData(-1, final_count);
-        }
-
-        long final_buffer_size = (long) CLSize.cl_int * final_count;
-        var hulls_out = cl_new_buffer(final_buffer_size);
-
-        cl_zero_buffer(queue_ptr, atomic_counter_ptr, CLSize.cl_int);
-
-        root_hull_filter_k
-            .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
-            .ptr_arg(RootHullFilter_k.Args.counter, atomic_counter_ptr)
-            .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.next_entity()));
-
-        return new HullIndexData(hulls_out, final_count);
     }
 
     //#endregion

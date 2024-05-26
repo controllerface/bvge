@@ -2,7 +2,10 @@ package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.PrepareTransforms_k;
+import com.controllerface.bvge.cl.kernels.RootHullCount_k;
+import com.controllerface.bvge.cl.kernels.RootHullFilter_k;
 import com.controllerface.bvge.cl.programs.PrepareTransforms;
+import com.controllerface.bvge.cl.programs.RootHullFilter;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
@@ -35,11 +38,17 @@ public class MouseRenderer extends GameSystem
     private long vbo_ptr;
 
     private final GPUProgram prepare_transforms = new PrepareTransforms();
+    private final GPUProgram root_hull_filter = new RootHullFilter();
 
     private HullIndexData cursor_hulls;
 
     private Shader shader;
+
     private GPUKernel prepare_transforms_k;
+    private GPUKernel root_hull_filter_k;
+    private GPUKernel root_hull_count_k;
+    private long atomic_counter_ptr;
+
 
 
     public MouseRenderer(ECS ecs)
@@ -57,18 +66,59 @@ public class MouseRenderer extends GameSystem
         glEnableVertexArrayAttrib(vao, TRANSFORM_ATTRIBUTE);
     }
 
+
     private void init_CL()
     {
         vbo_ptr = GPGPU.share_memory(vbo);
-
+        atomic_counter_ptr = GPGPU.cl_new_pinned_int();
         prepare_transforms.init();
+        root_hull_filter.init();
 
         long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
-        prepare_transforms_k = (new PrepareTransforms_k(GPGPU.cl_cmd_queue_ptr, ptr))
+        prepare_transforms_k = (new PrepareTransforms_k(GPGPU.gl_cmd_queue_ptr, ptr))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, vbo_ptr)
             .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL))
             .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_SCALE))
             .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_ROTATION));
+
+        long root_hull_filter_ptr = root_hull_filter.kernel_ptr(Kernel.root_hull_filter);
+        root_hull_filter_k = new RootHullFilter_k(GPGPU.gl_cmd_queue_ptr, root_hull_filter_ptr)
+            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_ROOT_HULL))
+            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
+
+        long root_hull_count_ptr =  root_hull_filter.kernel_ptr(Kernel.root_hull_count);
+        root_hull_count_k = new RootHullCount_k(GPGPU.gl_cmd_queue_ptr, root_hull_count_ptr)
+            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
+    }
+
+    public HullIndexData hull_filter(long queue_ptr, int model_id)
+    {
+        GPGPU.cl_zero_buffer(queue_ptr, atomic_counter_ptr, CLSize.cl_int);
+
+        root_hull_count_k
+            .ptr_arg(RootHullCount_k.Args.counter, atomic_counter_ptr)
+            .set_arg(RootHullCount_k.Args.model_id, model_id)
+            .call(arg_long(GPGPU.core_memory.next_entity()));
+
+        int final_count =  GPGPU.cl_read_pinned_int(queue_ptr, atomic_counter_ptr);
+
+        if (final_count == 0)
+        {
+            return new HullIndexData(-1, final_count);
+        }
+
+        long final_buffer_size = (long) CLSize.cl_int * final_count;
+        var hulls_out =  GPGPU.cl_new_buffer(final_buffer_size);
+
+        GPGPU.cl_zero_buffer(queue_ptr, atomic_counter_ptr, CLSize.cl_int);
+
+        root_hull_filter_k
+            .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
+            .ptr_arg(RootHullFilter_k.Args.counter, atomic_counter_ptr)
+            .set_arg(RootHullFilter_k.Args.model_id, model_id)
+            .call(arg_long(GPGPU.core_memory.next_entity()));
+
+        return new HullIndexData(hulls_out, final_count);
     }
 
     @Override
@@ -78,7 +128,7 @@ public class MouseRenderer extends GameSystem
         {
             GPGPU.cl_release_buffer(cursor_hulls.indices());
         }
-        cursor_hulls = GPGPU.GL_hull_filter(GPGPU.cl_cmd_queue_ptr, ModelRegistry.CURSOR);
+        cursor_hulls = hull_filter(GPGPU.gl_cmd_queue_ptr, ModelRegistry.CURSOR);
 
         if (cursor_hulls.count() == 0) return;
 
@@ -97,7 +147,7 @@ public class MouseRenderer extends GameSystem
         float world_x = control_points.get_screen_target().x * camera.get_zoom() + camera.position.x;
         float world_y = (Window.get().height() - control_points.get_screen_target().y) * camera.get_zoom() + camera.position.y;
         control_points.get_world_target().set(world_x, world_y);
-        float[] loc = { world_x, world_y, -1.0f, 15.0f };
+        float[] mouse_loc = { world_x, world_y, -1.0f, 15.0f };
 
         glBindVertexArray(vao);
 
@@ -110,7 +160,7 @@ public class MouseRenderer extends GameSystem
                 .set_arg(PrepareTransforms_k.Args.offset, 0)
                 .call(arg_long(1));
 
-        glNamedBufferSubData(vbo, VECTOR_FLOAT_4D_SIZE, loc);
+        glNamedBufferSubData(vbo, VECTOR_FLOAT_4D_SIZE, mouse_loc);
         glDrawArrays(GL_POINTS, 0, 2);
 
         glBindVertexArray(0);
@@ -124,5 +174,8 @@ public class MouseRenderer extends GameSystem
         glDeleteBuffers(vbo);
         shader.destroy();
         GPGPU.cl_release_buffer(vbo_ptr);
+        prepare_transforms.destroy();
+        root_hull_filter.destroy();
+        GPGPU.cl_release_buffer(atomic_counter_ptr);
     }
 }

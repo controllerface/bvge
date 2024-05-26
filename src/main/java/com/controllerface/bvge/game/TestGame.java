@@ -458,7 +458,7 @@ public class TestGame extends GameMode
                 boolean gen_dyn = false;
 
                 float sz = UniformGrid.BLOCK_SIZE + 1;
-                float szw = rando_float(UniformGrid.BLOCK_SIZE * 0.75f , .85f);
+                float szw = rando_float(UniformGrid.BLOCK_SIZE , .5f);
 
                 if (gen_block)
                 {
