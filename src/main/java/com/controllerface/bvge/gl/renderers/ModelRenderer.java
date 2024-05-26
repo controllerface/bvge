@@ -14,6 +14,9 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
+import java.time.Duration;
+import java.util.Arrays;
+
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.*;
 import static org.lwjgl.opengl.GL45C.*;
@@ -56,6 +59,7 @@ public class ModelRenderer extends GameSystem
 
     private int[] raw_query;
     private int mesh_count;
+    private int index_count;
     private long mesh_size;
 
     private Texture texture;
@@ -95,6 +99,7 @@ public class ModelRenderer extends GameSystem
         shader = Assets.load_shader(shader_file);
         texture = model.textures().getFirst();
         mesh_count = model.meshes().length;
+        index_count = Arrays.stream(model.meshes()).mapToInt(m->m.faces().length * 3).sum();
         mesh_size = (long)mesh_count * CLSize.cl_int;
         raw_query = new int[mesh_count];
         for (int i = 0; i < model.meshes().length; i++)
@@ -157,7 +162,7 @@ public class ModelRenderer extends GameSystem
 
         long count_batches_k_ptr = mesh_query_p.kernel_ptr(Kernel.count_mesh_batches);
         count_mesh_batches_k = new CountMeshBatches_k(GPGPU.gl_cmd_queue_ptr, count_batches_k_ptr)
-            .ptr_arg(CountMeshBatches_k.Args.total, total_ptr)
+            //.ptr_arg(CountMeshBatches_k.Args.total, total_ptr)
             .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
 
         long calc_offsets_k_ptr = mesh_query_p.kernel_ptr(Kernel.calculate_batch_offsets);
@@ -213,6 +218,33 @@ public class ModelRenderer extends GameSystem
         complete_int_multi_block_out_k = new CompleteIntMultiBlockOut_k(GPGPU.gl_cmd_queue_ptr, scan_int_array_out_comp_ptr);
     }
 
+
+
+    private int count_mesh_batches(int max_per_batch, int count)
+    {
+        int current_batch_count = 0;
+        int current_batch = 0;
+
+        int x = count / mesh_count;
+
+        for (int i = 0; i < x; i++)
+        {
+            for (var mesh : ModelRegistry.get_model_by_index(model_id).meshes())
+            {
+                int next_y = mesh.faces().length * 3;
+                int next_e_total = next_y + current_batch_count;
+                if (next_e_total > max_per_batch)
+                {
+                    current_batch++;
+                    current_batch_count = 0;
+                }
+                current_batch_count += next_y;
+            }
+        }
+        return current_batch + 1;
+    }
+
+
     @Override
     public void tick(float dt)
     {
@@ -254,6 +286,9 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_write_details", String.valueOf(e));
         }
 
+        int[] buf = new int[1];
+        var t = Thread.ofVirtual().start(() -> buf[0] =count_mesh_batches(MAX_BATCH_SIZE, total_instances));
+
         si = Editor.ACTIVE ? System.nanoTime() : 0;
         count_mesh_batches_k
             .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
@@ -265,16 +300,12 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_count_batches", String.valueOf(e));
         }
 
-//        float tx = (float)total_instances / (float)MAX_BATCH_SIZE;
-//        int b_test = (int)Math.ceil(tx);
+        try { t.join(Duration.ofMillis(500)); }
+        catch (InterruptedException e) { throw new RuntimeException(e); }
 
-        int total_batches = GPGPU.cl_read_pinned_int(GPGPU.gl_cmd_queue_ptr, total_ptr);
+        int total_batches = buf[0];
+
         long batch_index_size = (long) total_batches * CLSize.cl_int;
-
-//        if (b_test!=total_batches)
-//        {
-//            System.out.println("wrong number: expected: " + total_batches + " got: " + b_test);
-//        }
 
         var mesh_offset_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, batch_index_size);
 

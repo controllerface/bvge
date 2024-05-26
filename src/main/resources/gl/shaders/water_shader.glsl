@@ -50,7 +50,7 @@ void main()
     pos_offset.y = vertex_data[0].transform.y;
 
     float trs = vertex_data[0].transform.w;
-    trs *= 1.5 * clr.a + 2;
+    trs *= clr.a + 1.5;
 
     vec2 scaled1 = pos1 * trs;
     vec2 translated1 = scaled1 + pos_offset;

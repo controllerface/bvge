@@ -28,16 +28,15 @@ public class ModelRegistry
 {
     private static final AtomicInteger next_model_index = new AtomicInteger(0);
 
+    public static int BASE_BLOCK_INDEX = next_model_index.getAndIncrement();
     public static final int CIRCLE_PARTICLE = next_model_index.getAndIncrement();
     public static final int TRIANGLE_PARTICLE = next_model_index.getAndIncrement();
-    public static int SQUARE_PARTICLE = next_model_index.getAndIncrement();
 
     public static int CURSOR = next_model_index.getAndIncrement();
 
     public static int TEST_MODEL_INDEX_2 = -1;
-    public static int TEST_MODEL_INDEX = -1;
+    public static int PLAYER_MODEL_INDEX = -1;
     public static int TEST_SQUARE_INDEX = -1;
-    public static int BASE_BLOCK_INDEX = -1;
     public static int BASE_TRI_INDEX = -1;
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
@@ -372,8 +371,8 @@ public class ModelRegistry
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
         int[] vertex_table = new int[2];
         int[] face_table = new int[2];
-        vertex_table[0] = mesh_vertices[0].vert_ref_id();
-        vertex_table[1] = mesh_vertices[mesh_vertices.length - 1].vert_ref_id();
+        vertex_table[0] = mesh_vertices[0].index();
+        vertex_table[1] = mesh_vertices[mesh_vertices.length - 1].index();
         face_table[0] = mesh_faces[0].index();
         face_table[1] = mesh_faces[mesh_faces.length - 1].index();
         var mesh_id = GPGPU.core_memory.new_mesh_reference(vertex_table, face_table);
@@ -759,15 +758,14 @@ public class ModelRegistry
     {
         var texture = Assets.load_texture("/img/blocks.png");
         loaded_models.put(CURSOR, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
+        loaded_models.put(BASE_BLOCK_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BLOCK_MESH), texture));
 
         loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
         loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.TRIANGLE_MESH)));
-        loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BOX_MESH), texture));
 
-        TEST_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
+        PLAYER_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
         TEST_MODEL_INDEX_2 = load_model("/models/test_humanoid_2.fbx", "Humanoid");
         TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
-        BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block", BLOCK_ATLAS.uv_channels());
         BASE_TRI_INDEX = load_model("/models/tri_test.fbx", "Base_Tri", BLOCK_ATLAS.uv_channels());
     }
 }

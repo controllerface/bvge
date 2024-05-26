@@ -50,10 +50,10 @@ public class PhysicsObjects
         // the model points are always zero so the * and + are for educational purposes
         var p1 = CLUtils.arg_float2(vert.x() * size + x, vert.y() * size + y);
 
-        var t1 = CLUtils.arg_int4(vert.vert_ref_id(), next_hull_index, 0, 0);
+        var t1 = CLUtils.arg_int4(vert.index(), next_hull_index, 0, 0);
 
         // store the single point for the circle
-        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], vert.vert_ref_id(), next_hull_index, 0, point_flags);
+        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], vert.index(), next_hull_index, 0, point_flags);
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
@@ -122,9 +122,9 @@ public class PhysicsObjects
         var p2 = CLUtils.arg_float2(v2.x(), v2.y());
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
 
-        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], v1.vert_ref_id(), next_hull_index, 0,0);
-        var p2_index = GPGPU.core_memory.new_point(p2, new int[4], v2.vert_ref_id(), next_hull_index, 0,0);
-        var p3_index = GPGPU.core_memory.new_point(p3, new int[4], v3.vert_ref_id(), next_hull_index, 0,0);
+        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], v1.index(), next_hull_index, 0,0);
+        var p2_index = GPGPU.core_memory.new_point(p2, new int[4], v2.index(), next_hull_index, 0,0);
+        var p3_index = GPGPU.core_memory.new_point(p3, new int[4], v3.index(), next_hull_index, 0,0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -198,10 +198,10 @@ public class PhysicsObjects
         int h4 = random.nextInt(100, 4000);
 
 
-        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], v1.vert_ref_id(), next_hull_index, h1,0);
-        var p2_index = GPGPU.core_memory.new_point(p2, new int[4], v2.vert_ref_id(), next_hull_index, h2,0);
-        var p3_index = GPGPU.core_memory.new_point(p3, new int[4], v3.vert_ref_id(), next_hull_index, h3,0);
-        var p4_index = GPGPU.core_memory.new_point(p4, new int[4], v4.vert_ref_id(), next_hull_index, h4,0);
+        var p1_index = GPGPU.core_memory.new_point(p1, new int[4], v1.index(), next_hull_index, h1,0);
+        var p2_index = GPGPU.core_memory.new_point(p2, new int[4], v2.index(), next_hull_index, h2,0);
+        var p3_index = GPGPU.core_memory.new_point(p3, new int[4], v3.index(), next_hull_index, h3,0);
+        var p4_index = GPGPU.core_memory.new_point(p4, new int[4], v4.index(), next_hull_index, h4,0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -255,14 +255,12 @@ public class PhysicsObjects
 
     public static int dynamic_block(float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
-        return block(x, y, size, flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, SQUARE_PARTICLE, block_material);
-
-        //return wrap_model(BASE_BLOCK_INDEX, x, y, size, HullFlags.IS_BLOCK._int, mass, friction, restitution, block_material.mineral_number);
+        return block(x, y, size, flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
     }
 
     public static int static_box(float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
-        return block(x, y, size, flags | HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, SQUARE_PARTICLE, block_material);
+        return block(x, y, size, flags | HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
     }
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)
@@ -390,7 +388,7 @@ public class PhysicsObjects
                 {
                     bone_ids[i] = find_bone_index(bone_map, bone_names, i);
                 }
-                var next_point = GPGPU.core_memory.new_point(new_point, bone_ids, next_vertex.vert_ref_id(), next_hull, 0,0);
+                var next_point = GPGPU.core_memory.new_point(new_point, bone_ids, next_vertex.index(), next_hull, 0,0);
 
                 if (start_point == -1)
                 {
@@ -416,7 +414,7 @@ public class PhysicsObjects
                 {
                     bone_ids[i] = find_bone_index(bone_map, bone_names, i);
                 }
-                end_point = GPGPU.core_memory.new_point(new_point, bone_ids, next_vertex.vert_ref_id(), next_hull, 0, PointFlags.IS_INTERIOR.bits);
+                end_point = GPGPU.core_memory.new_point(new_point, bone_ids, next_vertex.index(), next_hull, 0, PointFlags.IS_INTERIOR.bits);
             }
 
             // generate edges in memory for this object
@@ -591,7 +589,7 @@ public class PhysicsObjects
         {
             var next = input[i];
             var vec = matrix4f.transform(new Vector4f(next.x(), next.y(), 0.0f, 1.0f));
-            output[i] = new Vertex(next.vert_ref_id(), vec.x, vec.y, next.uv_data(), next.bone_names(), next.bone_weights());
+            output[i] = new Vertex(next.index(), vec.x, vec.y, next.uv_data(), next.bone_names(), next.bone_weights());
         }
         return output;
     }

@@ -504,6 +504,7 @@ public class GPGPU
      * @param model_id ID of model to filter on
      * @return a HullIndexData object with the query result
      */
+    @Deprecated // todo: all uses of this should be converted to us the gl context
     public static HullIndexData GL_hull_filter(long queue_ptr, int model_id)
     {
         cl_zero_buffer(queue_ptr, atomic_counter_ptr, CLSize.cl_int);

@@ -14,7 +14,7 @@ public class MeshRegistry
 
     public static final int CIRCLE_MESH = next_mesh_index.getAndIncrement();
     public static final int TRIANGLE_MESH = next_mesh_index.getAndIncrement();
-    public static final int BOX_MESH = next_mesh_index.getAndIncrement();
+    public static final int BLOCK_MESH = next_mesh_index.getAndIncrement();
 
     private static final Map<Integer, Mesh> loaded_meshes = new HashMap<>();
     private static final Map<String, Integer> mesh_index_map = new HashMap<>();
@@ -66,120 +66,56 @@ public class MeshRegistry
         return new Mesh("int_triangle",-1, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 
+    private static Vertex block_vertex(float x, float y, int uv_index)
+    {
+        int[] uv_table = new int[2];
+        uv_table[0] = -1;
+        var uv_list = new ArrayList<Vector2f>();
+        for (var uv_channel : BLOCK_ATLAS.uv_channels())
+        {
+            var channel = uv_channel.get(uv_index);
+            uv_list.add(channel);
+            var uv_ref_1 = GPGPU.core_memory.new_texture_uv(channel.x, channel.y);
+            if (uv_table[0] == -1) { uv_table[0] = uv_ref_1; }
+            uv_table[1] = uv_ref_1;
+        }
+        int v1 = GPGPU.core_memory.new_vertex_reference(x, y, new float[4], uv_table);
+        return new Vertex(v1, x, y, uv_list, new String[0], new float[0]);
+    }
+
+    private static Face face(int p0, int p1, int p2)
+    {
+        int[] raw_face_1 = new int[]{ p0, p1, p2, GPGPU.core_memory.next_mesh() };
+        int face_id_1 = GPGPU.core_memory.new_mesh_face(raw_face_1);
+        return new Face(face_id_1, p0, p1, p2);
+    }
+
+    private static final float[] BLOCK =  new float[]
+        {
+            -0.5f, -0.5f, // bottom left
+             0.5f, -0.5f, // bottom right
+             0.5f,  0.5f, // top right
+            -0.5f,  0.5f, // top left
+        };
+
     /**
      * A simple unit square; 4 vertices defining a square of size 1.
      */
-    private static Mesh generate_square_mesh()
+    private static Mesh generate_block_mesh()
     {
-        Vertex[] vertices = new Vertex[4];
-        Face[] faces = new Face[2];
+        var verts = new Vertex[4];
+        verts[0] = block_vertex(BLOCK[0], BLOCK[1], 0);
+        verts[1] = block_vertex(BLOCK[2], BLOCK[3], 1);
+        verts[2] = block_vertex(BLOCK[4], BLOCK[5], 2);
+        verts[3] = block_vertex(BLOCK[6], BLOCK[7], 3);
 
-        float halfSize = 1f / 2f;
+        var faces        = new Face[]{ face(0, 1, 2), face(0, 2, 3) };
+        var vert_table   = new int[]{ verts[0].index(), verts[3].index() };
+        var face_table   = new int[]{ faces[0].index(), faces[1].index() };
+        var hull         = PhysicsObjects.calculate_convex_hull_table(verts);
+        int mesh_id      = GPGPU.core_memory.new_mesh_reference(vert_table, face_table);
 
-        int[] uv_table_1 = new int[2];
-        int[] uv_table_2 = new int[2];
-        int[] uv_table_3 = new int[2];
-        int[] uv_table_4 = new int[2];
-        uv_table_1[0] = -1;
-        uv_table_2[0] = -1;
-        uv_table_3[0] = -1;
-        uv_table_4[0] = -1;
-        var uv_list_1 = new ArrayList<Vector2f>();
-        var uv_list_2 = new ArrayList<Vector2f>();
-        var uv_list_3 = new ArrayList<Vector2f>();
-        var uv_list_4 = new ArrayList<Vector2f>();
-
-
-        for (var channel : BLOCK_ATLAS.uv_channels())
-        {
-            var chan_1 = channel.get(0);
-            uv_list_1.add(chan_1);
-            var uv_ref_1 = GPGPU.core_memory.new_texture_uv(chan_1.x, chan_1.y);
-            if (uv_table_1[0] == -1) { uv_table_1[0] = uv_ref_1; }
-            uv_table_1[1] = uv_ref_1;
-        }
-
-        for (var channel : BLOCK_ATLAS.uv_channels())
-        {
-            var chan_2 = channel.get(1);
-            uv_list_2.add(chan_2);
-            var uv_ref_2 = GPGPU.core_memory.new_texture_uv(chan_2.x, chan_2.y);
-            if (uv_table_2[0] == -1) { uv_table_2[0] = uv_ref_2; }
-            uv_table_2[1] = uv_ref_2;
-        }
-
-        for (var channel : BLOCK_ATLAS.uv_channels())
-        {
-            var chan_3 = channel.get(2);
-            uv_list_3.add(chan_3);
-            var uv_ref_3 = GPGPU.core_memory.new_texture_uv(chan_3.x, chan_3.y);
-            if (uv_table_3[0] == -1) { uv_table_3[0] = uv_ref_3; }
-            uv_table_3[1] = uv_ref_3;
-        }
-
-        for (var channel : BLOCK_ATLAS.uv_channels())
-        {
-            var chan_4 = channel.get(3);
-            uv_list_4.add(chan_4);
-            var uv_ref_4 = GPGPU.core_memory.new_texture_uv(chan_4.x, chan_4.y);
-            if (uv_table_4[0] == -1) { uv_table_4[0] = uv_ref_4; }
-            uv_table_4[1] = uv_ref_4;
-        }
-
-        float x1 = -halfSize;
-        float y1 = -halfSize;
-        int v1 = GPGPU.core_memory.new_vertex_reference(x1, y1, new float[4], uv_table_1);
-
-        float x2 = halfSize;
-        float y2 = -halfSize;
-        int v2 = GPGPU.core_memory.new_vertex_reference(x2, y2, new float[4], uv_table_2);
-
-        float x3 = halfSize;
-        float y3 = halfSize;
-        int v3 = GPGPU.core_memory.new_vertex_reference(x3, y3, new float[4], uv_table_3);
-
-        float x4 = -halfSize;
-        float y4 = halfSize;
-        int v4 = GPGPU.core_memory.new_vertex_reference(x4, y4, new float[4], uv_table_4);
-
-        vertices[0] = new Vertex(v1, x1, y1, uv_list_1, new String[0], new float[0]);
-        vertices[1] = new Vertex(v2, x2, y2, uv_list_2, new String[0], new float[0]);
-        vertices[2] = new Vertex(v3, x3, y3, uv_list_3, new String[0], new float[0]);
-        vertices[3] = new Vertex(v4, x4, y4, uv_list_4, new String[0], new float[0]);
-
-
-        int next_mesh = GPGPU.core_memory.next_mesh();
-
-        int[] raw_face_1 = new int[4];
-        raw_face_1[0] = 0;
-        raw_face_1[1] = 1;
-        raw_face_1[2] = 2;
-        raw_face_1[3] = next_mesh;
-
-        int[] raw_face_2 = new int[4];
-        raw_face_2[0] = 0;
-        raw_face_2[1] = 2;
-        raw_face_2[2] = 3;
-        raw_face_2[3] = next_mesh;
-
-        int face_id_1 = GPGPU.core_memory.new_mesh_face(raw_face_1);
-        int face_id_2 = GPGPU.core_memory.new_mesh_face(raw_face_2);
-
-        // face need to be created in memory
-        faces[0] = new Face(face_id_1,0, 1, 2);
-        faces[1] = new Face(face_id_2,0, 2, 3);
-
-        var hull_table = PhysicsObjects.calculate_convex_hull_table(vertices);
-
-        int[] vertex_table = new int[2];
-        int[] face_table = new int[2];
-        vertex_table[0] = v1;
-        vertex_table[1] = v4;
-        face_table[0] = face_id_1;
-        face_table[1] = face_id_2;
-        var mesh_id = GPGPU.core_memory.new_mesh_reference(vertex_table, face_table);
-
-        return new Mesh("int_square", mesh_id, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull_table);
+        return new Mesh("block", mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 
     public static int register_mesh(String model_name, String mesh_name, Mesh mesh)
@@ -205,6 +141,6 @@ public class MeshRegistry
     {
         register_mesh(CIRCLE_MESH, generate_circle_mesh());
         register_mesh(TRIANGLE_MESH, generate_tri_mesh());
-        register_mesh(BOX_MESH, generate_square_mesh());
+        register_mesh(BLOCK_MESH, generate_block_mesh());
     }
 }
