@@ -1162,6 +1162,8 @@ public class PhysicsSimulation extends GameSystem
 
     private void process_sector_batches()
     {
+        long sd = Editor.ACTIVE ? System.nanoTime() : 0;
+
         var batch = GPGPU.core_memory.next_batch();
         while (batch != null)
         {
@@ -1188,6 +1190,11 @@ public class PhysicsSimulation extends GameSystem
                 }
             }
             batch = GPGPU.core_memory.next_batch();
+        }
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - sd;
+            Editor.queue_event("sector_load", String.valueOf(e));
         }
     }
 
@@ -1264,9 +1271,17 @@ public class PhysicsSimulation extends GameSystem
         // zero out the acceleration buffer, so it is empty for the next frame
         GPGPU.core_memory.buffer(BufferType.ENTITY_ACCEL).clear();
 
+        long sd = Editor.ACTIVE ? System.nanoTime() : 0;
+
         // Deletion of objects happens only once per simulation tick, instead of every sub-step
         // to ensure buffer compaction happens as infrequently as possible.
         GPGPU.core_memory.delete_and_compact();
+
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - sd;
+            Editor.queue_event("phys_compact", String.valueOf(e));
+        }
 
         // Armatures and bones are animated once per time tick, after all simulation is done for this pass. The interplay between
         // animation and edge constraints may leave points in slightly incorrect positions. Animating here ensures the rendering
@@ -1293,9 +1308,6 @@ public class PhysicsSimulation extends GameSystem
         {
             clFinish(GPGPU.gl_cmd_queue_ptr);
             long phys_time = last_phys_time.take();
-
-            // todo: wire up sector load request classes
-            // todo: read mouse selected objects
             process_sector_batches();
             GPGPU.core_memory.mirror_buffers_ex();
             clFinish(GPGPU.cl_cmd_queue_ptr);

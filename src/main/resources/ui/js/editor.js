@@ -39,6 +39,8 @@ event_source.addEventListener('phys_sat_apply_reactions', handle_event);
 event_source.addEventListener('phys_move_entities', handle_event);
 event_source.addEventListener('phys_move_hulls', handle_event);
 event_source.addEventListener('phys_cycle', handle_event);
+event_source.addEventListener('sector_load', handle_event);
+event_source.addEventListener('phys_compact', handle_event);
 event_source.addEventListener('phys_animate_entities', handle_event);
 event_source.addEventListener('phys_animate_bones', handle_event);
 event_source.addEventListener('phys_animate_points', handle_event);
