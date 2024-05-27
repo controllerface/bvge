@@ -14,9 +14,6 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import java.time.Duration;
-import java.util.Arrays;
-
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.*;
 import static org.lwjgl.opengl.GL45C.*;
@@ -24,6 +21,7 @@ import static org.lwjgl.opengl.GL45C.*;
 public class ModelRenderer extends GameSystem
 {
     private static final int ELEMENT_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES;
+    private static final int TEXTURE_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES;
     private static final int COMMAND_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES * 5;
     private static final int VERTEX_BUFFER_SIZE  = MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
     private static final int UV_BUFFER_SIZE  = MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
@@ -31,6 +29,7 @@ public class ModelRenderer extends GameSystem
     private static final int POSITION_ATTRIBUTE  = 0;
     private static final int UV_COORD_ATTRIBUTE  = 1;
     private static final int COLOR_ATTRIBUTE     = 2;
+    private static final int TEXTURE_ATTRIBUTE   = 3;
 
     private final int[] texture_slots = { 0 };
 
@@ -42,15 +41,17 @@ public class ModelRenderer extends GameSystem
     private int vao;
     private int ebo;
     private int cbo;
-    private int vbo;
-    private int uvo;
-    private int vcb;
+    private int vbo_position;
+    private int vbo_texture_uv;
+    private int vbo_color;
+    private int vbo_texture_slot;
 
     private long command_buffer_ptr;
     private long element_buffer_ptr;
     private long vertex_buffer_ptr;
     private long uv_buffer_ptr;
     private long color_buffer_ptr;
+    private long slot_buffer_ptr;
     private long query_ptr;
     private long counters_ptr;
     private long total_ptr;
@@ -102,34 +103,37 @@ public class ModelRenderer extends GameSystem
         mesh_count = model.meshes().length;
         mesh_size = (long)mesh_count * CLSize.cl_int;
         raw_query = new int[mesh_count * int2_stride];
-        int x2s = 0;
-        for (int i = 0; i < model.meshes().length; i++)
+
+        int query_index = 0;
+        for (var mesh : model.meshes())
         {
-            var m = model.meshes()[i];
-            raw_query[x2s++] = m.mesh_id();
-            raw_query[x2s++] = 0;
+            raw_query[query_index++] = mesh.mesh_id();
+            raw_query[query_index++] = 0;
         }
 
         vao = glCreateVertexArrays();
         ebo = GLUtils.dynamic_element_buffer(vao, ELEMENT_BUFFER_SIZE);
         cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
 
-        vbo = GLUtils.new_buffer_vec4(vao, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
-        uvo = GLUtils.new_buffer_vec2(vao, UV_COORD_ATTRIBUTE, UV_BUFFER_SIZE);
-        vcb = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BUFFER_SIZE);
+        vbo_position     = GLUtils.new_buffer_vec4(vao, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
+        vbo_texture_uv   = GLUtils.new_buffer_vec2(vao, UV_COORD_ATTRIBUTE, UV_BUFFER_SIZE);
+        vbo_color        = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BUFFER_SIZE);
+        vbo_texture_slot = GLUtils.new_buffer_int(vao, TEXTURE_ATTRIBUTE, TEXTURE_BUFFER_SIZE);
 
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_COORD_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, COLOR_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao, TEXTURE_ATTRIBUTE);
     }
 
     private void init_CL()
     {
         command_buffer_ptr = GPGPU.share_memory(cbo);
         element_buffer_ptr = GPGPU.share_memory(ebo);
-        vertex_buffer_ptr  = GPGPU.share_memory(vbo);
-        uv_buffer_ptr      = GPGPU.share_memory(uvo);
-        color_buffer_ptr   = GPGPU.share_memory(vcb);
+        vertex_buffer_ptr  = GPGPU.share_memory(vbo_position);
+        uv_buffer_ptr      = GPGPU.share_memory(vbo_texture_uv);
+        color_buffer_ptr   = GPGPU.share_memory(vbo_color);
+        slot_buffer_ptr    = GPGPU.share_memory(vbo_texture_slot);
         total_ptr          = GPGPU.cl_new_pinned_int();
         query_ptr          = GPGPU.new_mutable_buffer(raw_query);
         counters_ptr       = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, mesh_size);
@@ -179,6 +183,7 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.uv_buffer, uv_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.color_buffer, color_buffer_ptr)
+            .ptr_arg(TransferRenderData_k.Args.slot_buffer, slot_buffer_ptr)
             .ptr_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_ptr)
             .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_POINT_TABLE))
             .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_MESH_ID))
@@ -273,12 +278,16 @@ public class ModelRenderer extends GameSystem
 
         int[] batch_buffer = new int[1];
         var count_task = Thread.ofVirtual().start(() -> batch_buffer[0] = count_mesh_batches(MAX_BATCH_SIZE, total_instances));
-        long data_size = (long)total_instances * CLSize.cl_int4;
-        var mesh_details_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, data_size);
+
+        long details_size = (long)total_instances * CLSize.cl_int4;
+        long texture_size = (long)total_instances * CLSize.cl_int;
+        var mesh_details_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, details_size);
+        var mesh_texture_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, texture_size);
 
         si = Editor.ACTIVE ? System.nanoTime() : 0;
         write_mesh_details_k
             .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
+            .ptr_arg(WriteMeshDetails_k.Args.mesh_texture, mesh_texture_ptr)
             .call(hull_count);
         if (Editor.ACTIVE)
         {
@@ -352,7 +361,9 @@ public class ModelRenderer extends GameSystem
                 .share_mem(vertex_buffer_ptr)
                 .share_mem(uv_buffer_ptr)
                 .share_mem(color_buffer_ptr)
+                .share_mem(slot_buffer_ptr)
                 .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
+                .ptr_arg(TransferRenderData_k.Args.mesh_texture, mesh_texture_ptr)
                 .set_arg(TransferRenderData_k.Args.offset, offset)
                 .call(arg_long(count));
 
@@ -370,6 +381,7 @@ public class ModelRenderer extends GameSystem
         shader.detach();
 
         GPGPU.cl_release_buffer(mesh_details_ptr);
+        GPGPU.cl_release_buffer(mesh_texture_ptr);
         GPGPU.cl_release_buffer(mesh_offset_ptr);
 
         if (Editor.ACTIVE)
@@ -569,8 +581,8 @@ public class ModelRenderer extends GameSystem
         glDeleteVertexArrays(vao);
         glDeleteBuffers(cbo);
         glDeleteBuffers(ebo);
-        glDeleteBuffers(vbo);
-        glDeleteBuffers(uvo);
+        glDeleteBuffers(vbo_position);
+        glDeleteBuffers(vbo_texture_uv);
         shader.destroy();
         texture.destroy();
         mesh_query_p.destroy();

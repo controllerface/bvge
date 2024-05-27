@@ -14,6 +14,7 @@ public class WriteMeshDetails_k extends GPUKernel
         query,
         offsets,
         mesh_details,
+        mesh_texture,
         count;
     }
 

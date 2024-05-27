@@ -31,6 +31,7 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
                                  __global int2 *query, 
                                  __global int *offsets,
                                  __global int4 *mesh_details,
+                                 __global int *mesh_texture,
                                  int count)
 {
     int hull_id = get_global_id(0);
@@ -42,7 +43,8 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
 
     for (int i = 0; i < count; i++)
     {
-        int nx = query[i].x;
+        int2 q = query[i];
+        int nx = q.x;
         if (mesh_id == nx)
         {
             int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
@@ -55,6 +57,7 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
             out.z = hull_id;
             int id = offset + bank;
             mesh_details[id] = out;
+            mesh_texture[id] = q.y;
         }
     }
 }
@@ -132,8 +135,10 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global float4 *vertex_buffer,
                                    __global float2 *uv_buffer,
                                    __global float4 *color_buffer,
+                                   __global int *slot_buffer,
                                    __global int *element_buffer,
                                    __global int4 *mesh_details,
+                                   __global int *mesh_texture,
                                    __global int2 *mesh_transfer,
                                    int offset)
 {
@@ -141,6 +146,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     int d_index = t_index + offset;
     int c_index = t_index * 5;
     int4 details = mesh_details[d_index];
+    int texture = mesh_texture[d_index];
     int2 transfer = mesh_transfer[t_index];
 
     command_buffer[c_index] = details.y;
@@ -186,11 +192,11 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float4 point = points[point_id];
         int hit_counts = point_hit_counts[point_id];
 
-        float sgadfg = map((float) hit_counts, 0, HIT_TOP_THRESHOLD, 0.0f, 0.5f);
+        float hit_color = map((float) hit_counts, 0, HIT_TOP_THRESHOLD, 0.0f, 0.5f);
 
         float col = hit_counts <= HIT_LOW_THRESHOLD 
             ? 1.0f 
-            : 1 - sgadfg;
+            : 1 - hit_color;
 
         int point_vertex_reference = point_vertex_references[point_id];
         int2 uv_table = uv_tables[point_vertex_reference];
@@ -207,6 +213,8 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
         color_buffer[ref_offset] = (float4)(xxx + rrr, xxx, xxx, 1.0f);
+        slot_buffer[ref_offset] = texture;
+        // todo: add texture buffer, store `texture` variable
     }
 
     int start_face = mesh_face_table.x;
