@@ -6,6 +6,7 @@ import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.geometry.Model;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
@@ -31,7 +32,7 @@ public class ModelRenderer extends GameSystem
     private static final int COLOR_ATTRIBUTE     = 2;
     private static final int TEXTURE_ATTRIBUTE   = 3;
 
-    private final int[] texture_slots = { 0 };
+    private final int[] texture_slots = { 0, 1, 2 };
 
     private final GPUProgram mesh_query_p       = new MeshQuery();
     private final GPUProgram scan_int2_array    = new ScanInt2Array();
@@ -62,7 +63,7 @@ public class ModelRenderer extends GameSystem
     private int mesh_count;
     private long mesh_size;
 
-    private Texture texture;
+    private Texture[] textures;
     private Shader shader;
 
     private GPUKernel count_mesh_instances_k;
@@ -81,33 +82,46 @@ public class ModelRenderer extends GameSystem
     private GPUKernel scan_int_multi_block_out_k;
     private GPUKernel complete_int_multi_block_out_k;
 
-    private final int model_id;
+    private final int[] model_ids;
     private final String shader_file;
 
-    public ModelRenderer(ECS ecs, int model_id)
+    public ModelRenderer(ECS ecs, int ... model_ids)
     {
         super(ecs);
         this.shader_file = "block_model.glsl";
-        this.model_id = model_id;
+        this.model_ids = model_ids;
+        this.textures = new Texture[model_ids.length];
         init_GL();
         init_CL();
     }
 
     private void init_GL()
     {
-        var model  = ModelRegistry.get_model_by_index(model_id);
+        shader = Assets.load_shader(shader_file);
 
-        shader     = Assets.load_shader(shader_file);
-        texture    = model.textures().getFirst();
-        mesh_count = model.meshes().length;
+        Model[] models = new Model[model_ids.length];
+
+        for (int i = 0; i < model_ids.length; i++)
+        {
+            var model = ModelRegistry.get_model_by_index(model_ids[i]);
+            models[i] = model;
+            mesh_count += model.meshes().length;
+        }
+
         mesh_size  = (long)mesh_count * CLSize.cl_int;
         raw_query  = new int[mesh_count * 2]; // int2
 
+        int texture_slot = 0;
         int query_index = 0;
-        for (var mesh : model.meshes())
+        for (var model : models)
         {
-            raw_query[query_index++] = mesh.mesh_id();
-            raw_query[query_index++] = 0;
+            for (var mesh : model.meshes())
+            {
+                raw_query[query_index++] = mesh.mesh_id();
+                raw_query[query_index++] = texture_slot;
+            }
+            textures[texture_slot] = model.textures().getFirst();
+            texture_slot++;
         }
 
         vao = glCreateVertexArrays();
@@ -223,31 +237,6 @@ public class ModelRenderer extends GameSystem
         complete_int_multi_block_out_k = new CompleteIntMultiBlockOut_k(GPGPU.gl_cmd_queue_ptr, scan_int_array_out_comp_ptr);
     }
 
-    private int count_mesh_batches(int max_per_batch, int count)
-    {
-        int current_batch_count = 0;
-        int current_batch = 0;
-
-        int model_count = count / mesh_count;
-
-        for (int i = 0; i < model_count; i++)
-        {
-            for (var mesh : ModelRegistry.get_model_by_index(model_id).meshes())
-            {
-                int next_y = mesh.faces().length * 3;
-                int next_e_total = next_y + current_batch_count;
-                if (next_e_total > max_per_batch)
-                {
-                    current_batch++;
-                    current_batch_count = 0;
-                }
-                current_batch_count += next_y;
-            }
-        }
-        return current_batch + 1;
-    }
-
-
     @Override
     public void tick(float dt)
     {
@@ -327,7 +316,10 @@ public class ModelRenderer extends GameSystem
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
 
         shader.use();
-        texture.bind(0);
+        for (int i  = 0; i < textures.length; i++)
+        {
+            textures[i].bind(i);
+        }
 
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         shader.uploadIntArray("uTextures", texture_slots);
@@ -576,9 +568,12 @@ public class ModelRenderer extends GameSystem
         glDeleteBuffers(ebo);
         glDeleteBuffers(vbo_position);
         glDeleteBuffers(vbo_texture_uv);
+        glDeleteBuffers(vbo_color);
+        glDeleteBuffers(vbo_texture_slot);
+
         shader.destroy();
-        texture.destroy();
         mesh_query_p.destroy();
+        for (var t : textures){ t.destroy(); }
         GPGPU.cl_release_buffer(element_buffer_ptr);
         GPGPU.cl_release_buffer(vertex_buffer_ptr);
         GPGPU.cl_release_buffer(command_buffer_ptr);

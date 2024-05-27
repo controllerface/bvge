@@ -28,7 +28,7 @@ flat in int f_tex_slot;
 
 out vec4 color;
 
-uniform sampler2D uTextures[1];
+uniform sampler2D uTextures[3];
 
 void main()
 {

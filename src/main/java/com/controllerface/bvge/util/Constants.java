@@ -9,6 +9,7 @@ public class Constants
         public static final int MAX_BATCH_SIZE = (256 * 256) * 4;
         public static final int SCALAR_LENGTH = 1;
         public static final int SCALAR_FLOAT_SIZE = Float.BYTES;
+        public static final int SCALAR_INT_SIZE = Integer.BYTES;
         public static final int VECTOR_2D_LENGTH = 2; // x, y
         public static final int VECTOR_FLOAT_2D_SIZE = VECTOR_2D_LENGTH * Float.BYTES;
         public static final int VECTOR_4D_LENGTH = 4; // x, y, z, w

@@ -58,6 +58,7 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
             int id = offset + bank;
             mesh_details[id] = out;
             mesh_texture[id] = q.y;
+            //printf("debug in tex:%d mesh:%d", q.y, mesh_id);
         }
     }
 }
@@ -217,6 +218,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         uv_buffer[ref_offset] = uv;
         color_buffer[ref_offset] = (float4)(xxx + rrr, xxx, xxx, 1.0f);
         slot_buffer[ref_offset] = texture;
+        //printf("debug out tex:%d mesh:%d", texture, mesh_id);
     }
 
     int start_face = mesh_face_table.x;

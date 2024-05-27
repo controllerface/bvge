@@ -247,9 +247,9 @@ public class TestGame extends GameMode
         if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
         {
             //ecs.registerSystem(new CrateRenderer(ecs));
-            ecs.registerSystem(new ModelRenderer(ecs, PLAYER_MODEL_INDEX));
-            ecs.registerSystem(new ModelRenderer(ecs, BASE_BLOCK_INDEX));
-            ecs.registerSystem(new ModelRenderer(ecs, BASE_TRI_INDEX));
+            ecs.registerSystem(new ModelRenderer(ecs, PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_TRI_INDEX));
+            //ecs.registerSystem(new ModelRenderer(ecs, BASE_BLOCK_INDEX));
+            //ecs.registerSystem(new ModelRenderer(ecs, BASE_TRI_INDEX));
             ecs.registerSystem(new LiquidRenderer(ecs));
         }
 

@@ -19,7 +19,7 @@ public class GLUtils
                                      int bind_index,
                                      int buffer_size)
     {
-        return dynamic_int_buffer(vao, bind_index, buffer_size, SCALAR_LENGTH, SCALAR_FLOAT_SIZE);
+        return dynamic_int_buffer(vao, bind_index, buffer_size, SCALAR_LENGTH, SCALAR_INT_SIZE);
     }
 
     public static int new_buffer_vec2(int vao,
