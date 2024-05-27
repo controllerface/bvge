@@ -7,7 +7,7 @@ public class CountMeshBatches_k extends GPUKernel
     public enum Args
     {
         mesh_details,
-        //total,
+        total,
         max_per_batch,
         count;
     }

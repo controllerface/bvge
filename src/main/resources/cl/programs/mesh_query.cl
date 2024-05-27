@@ -63,6 +63,7 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
 }
 
 __kernel void count_mesh_batches(__global int4 *mesh_details, 
+                                 __global int *total,
                                  int max_per_batch,
                                  int count)
 {
@@ -81,6 +82,8 @@ __kernel void count_mesh_batches(__global int4 *mesh_details,
         mesh_details[i] = next;
         current_batch_count += next.y;
     }
+    int bc = current_batch + 1;
+    total[0] = bc;
 }
 
 __kernel void calculate_batch_offsets(__global int *mesh_offsets,
@@ -214,7 +217,6 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         uv_buffer[ref_offset] = uv;
         color_buffer[ref_offset] = (float4)(xxx + rrr, xxx, xxx, 1.0f);
         slot_buffer[ref_offset] = texture;
-        // todo: add texture buffer, store `texture` variable
     }
 
     int start_face = mesh_face_table.x;

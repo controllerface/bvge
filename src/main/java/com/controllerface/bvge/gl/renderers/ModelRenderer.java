@@ -84,25 +84,24 @@ public class ModelRenderer extends GameSystem
     private final int model_id;
     private final String shader_file;
 
-    public ModelRenderer(ECS ecs, String shader_file, int model_id)
+    public ModelRenderer(ECS ecs, int model_id)
     {
         super(ecs);
-        this.shader_file = shader_file;
+        this.shader_file = "block_model.glsl";
         this.model_id = model_id;
         init_GL();
         init_CL();
     }
 
-    private static final int int2_stride = 2;
-
     private void init_GL()
     {
-        var model = ModelRegistry.get_model_by_index(model_id);
-        shader = Assets.load_shader(shader_file);
-        texture = model.textures().getFirst();
+        var model  = ModelRegistry.get_model_by_index(model_id);
+
+        shader     = Assets.load_shader(shader_file);
+        texture    = model.textures().getFirst();
         mesh_count = model.meshes().length;
-        mesh_size = (long)mesh_count * CLSize.cl_int;
-        raw_query = new int[mesh_count * int2_stride];
+        mesh_size  = (long)mesh_count * CLSize.cl_int;
+        raw_query  = new int[mesh_count * 2]; // int2
 
         int query_index = 0;
         for (var mesh : model.meshes())
@@ -167,6 +166,7 @@ public class ModelRenderer extends GameSystem
 
         long count_batches_k_ptr = mesh_query_p.kernel_ptr(Kernel.count_mesh_batches);
         count_mesh_batches_k = new CountMeshBatches_k(GPGPU.gl_cmd_queue_ptr, count_batches_k_ptr)
+            .ptr_arg(CountMeshBatches_k.Args.total, total_ptr)
             .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
 
         long calc_offsets_k_ptr = mesh_query_p.kernel_ptr(Kernel.calculate_batch_offsets);
@@ -276,9 +276,6 @@ public class ModelRenderer extends GameSystem
             return;
         }
 
-        int[] batch_buffer = new int[1];
-        var count_task = Thread.ofVirtual().start(() -> batch_buffer[0] = count_mesh_batches(MAX_BATCH_SIZE, total_instances));
-
         long details_size = (long)total_instances * CLSize.cl_int4;
         long texture_size = (long)total_instances * CLSize.cl_int;
         var mesh_details_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, details_size);
@@ -306,11 +303,7 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_count_batches", String.valueOf(e));
         }
 
-        try { count_task.join(); }
-        catch (InterruptedException e) { throw new RuntimeException(e); }
-
-        int total_batches = batch_buffer[0];
-
+        int total_batches = GPGPU.cl_read_pinned_int(GPGPU.gl_cmd_queue_ptr, total_ptr);
         long batch_index_size = (long) total_batches * CLSize.cl_int;
 
         var mesh_offset_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, batch_index_size);
