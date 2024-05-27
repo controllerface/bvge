@@ -329,8 +329,8 @@ public class TestGame extends GameMode
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
 
         noise2.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
-        //noise2.SetFractalType(FastNoiseLite.FractalType.FBm);
-        //noise2.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Manhattan);
+        noise2.SetFractalType(FastNoiseLite.FractalType.FBm);
+        noise2.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Hybrid);
     }
 
     private Set<Sector> last_loaded_sectors = new HashSet<>();
@@ -454,23 +454,25 @@ public class TestGame extends GameMode
             Solid.WHITESCHIST,
             Solid.GREENSCHIST,
             Solid.BLUESCHIST,
-            Solid.SCHIST,
-            Solid.WHITESCHIST,
-            Solid.GREENSCHIST,
-            Solid.BLUESCHIST,
-            Solid.SCHIST,
-            Solid.WHITESCHIST,
-            Solid.GREENSCHIST,
-            Solid.BLUESCHIST,
-            Solid.SCHIST,
-            Solid.WHITESCHIST,
-            Solid.GREENSCHIST,
-            Solid.BLUESCHIST,
+//            Solid.SCHIST,
+//            Solid.WHITESCHIST,
+//            Solid.GREENSCHIST,
+//            Solid.BLUESCHIST,
+//            Solid.SCHIST,
+//            Solid.WHITESCHIST,
+//            Solid.GREENSCHIST,
+//            Solid.BLUESCHIST,
+//            Solid.SCHIST,
+//            Solid.WHITESCHIST,
+//            Solid.GREENSCHIST,
+//            Solid.BLUESCHIST,
         };
 
-    private static final float block_range_floor = -0.03f;
+    private static final float block_range_floor = -0.07f;
+    private static final float water_range_floor = -0.2f;
+    private static final float taco_range_floor = -0.15f;
 
-    private final int m(float n, float floor, float length)
+    private int m(float n, float floor, float length)
     {
         return (int)map(n, floor, 1f, 0f, length);
     }
@@ -494,7 +496,7 @@ public class TestGame extends GameMode
                 float world_y_block = world_y + (UniformGrid.BLOCK_SIZE / 2f);
 
                 float block_x = world_x_block / UniformGrid.BLOCK_SIZE;
-                float block_x_2 = world_x_block / (UniformGrid.BLOCK_SIZE * 8f);
+                float block_x_2 = world_x_block / (UniformGrid.BLOCK_SIZE * 10f);
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
 
 
@@ -529,7 +531,7 @@ public class TestGame extends GameMode
                     }
                     batch.new_block(gen_dyn, world_x_block, world_y_block, sz, 90f, 0.03f, 0.0003f, HullFlags.OUT_OF_BOUNDS._int, solid);
                 }
-                else if (n < -.2)
+                else if (n < water_range_floor)
                 {
                     int flags = flip
                         ? PointFlags.FLOW_LEFT.bits
@@ -539,7 +541,7 @@ public class TestGame extends GameMode
                         HullFlags.IS_LIQUID._int | HullFlags.OUT_OF_BOUNDS._int,
                         flags, Liquid.WATER);
                 }
-                else if (n < -.15)
+                else if (n < taco_range_floor)
                 {
                     batch.new_tri(world_x, world_y,  sz, HullFlags.OUT_OF_BOUNDS._int,.1f, 0.0f, 0.00000f);
                 }

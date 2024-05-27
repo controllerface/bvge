@@ -34,9 +34,9 @@ public class ModelRenderer extends GameSystem
 
     private final int[] texture_slots = { 0 };
 
-    private final GPUProgram mesh_query_p = new MeshQuery();
-    private final GPUProgram scan_int2_array = new ScanInt2Array();
-    private final GPUProgram scan_int_array = new ScanIntArray();
+    private final GPUProgram mesh_query_p       = new MeshQuery();
+    private final GPUProgram scan_int2_array    = new ScanInt2Array();
+    private final GPUProgram scan_int_array     = new ScanIntArray();
     private final GPUProgram scan_int_array_out = new ScanIntArrayOut();
 
     private int vao;
@@ -92,6 +92,8 @@ public class ModelRenderer extends GameSystem
         init_CL();
     }
 
+    private static final int int2_stride = 2;
+
     private void init_GL()
     {
         var model = ModelRegistry.get_model_by_index(model_id);
@@ -99,11 +101,13 @@ public class ModelRenderer extends GameSystem
         texture = model.textures().getFirst();
         mesh_count = model.meshes().length;
         mesh_size = (long)mesh_count * CLSize.cl_int;
-        raw_query = new int[mesh_count];
+        raw_query = new int[mesh_count * int2_stride];
+        int x2s = 0;
         for (int i = 0; i < model.meshes().length; i++)
         {
             var m = model.meshes()[i];
-            raw_query[i] = m.mesh_id();
+            raw_query[x2s++] = m.mesh_id();
+            raw_query[x2s++] = 0;
         }
 
         vao = glCreateVertexArrays();
@@ -123,15 +127,14 @@ public class ModelRenderer extends GameSystem
     {
         command_buffer_ptr = GPGPU.share_memory(cbo);
         element_buffer_ptr = GPGPU.share_memory(ebo);
-        vertex_buffer_ptr = GPGPU.share_memory(vbo);
-        uv_buffer_ptr = GPGPU.share_memory(uvo);
-        color_buffer_ptr = GPGPU.share_memory(vcb);
-
-        total_ptr = GPGPU.cl_new_pinned_int();
-        query_ptr = GPGPU.new_mutable_buffer(raw_query);
-        counters_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, mesh_size);
-        offsets_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, mesh_size);
-        mesh_transfer_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, ELEMENT_BUFFER_SIZE * 2);
+        vertex_buffer_ptr  = GPGPU.share_memory(vbo);
+        uv_buffer_ptr      = GPGPU.share_memory(uvo);
+        color_buffer_ptr   = GPGPU.share_memory(vcb);
+        total_ptr          = GPGPU.cl_new_pinned_int();
+        query_ptr          = GPGPU.new_mutable_buffer(raw_query);
+        counters_ptr       = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, mesh_size);
+        offsets_ptr        = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, mesh_size);
+        mesh_transfer_ptr  = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, ELEMENT_BUFFER_SIZE * 2);
 
         mesh_query_p.init();
         scan_int_array.init();

@@ -1283,6 +1283,8 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_compact", String.valueOf(e));
         }
 
+        process_sector_batches();
+
         // Armatures and bones are animated once per time tick, after all simulation is done for this pass. The interplay between
         // animation and edge constraints may leave points in slightly incorrect positions. Animating here ensures the rendering
         // step always sees the objects exactly in their correct positions.
@@ -1308,7 +1310,6 @@ public class PhysicsSimulation extends GameSystem
         {
             clFinish(GPGPU.gl_cmd_queue_ptr);
             long phys_time = last_phys_time.take();
-            process_sector_batches();
             GPGPU.core_memory.mirror_buffers_ex();
             clFinish(GPGPU.cl_cmd_queue_ptr);
             next_phys_time.put(dt);

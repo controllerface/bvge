@@ -1,7 +1,7 @@
 __kernel void count_mesh_instances(__global int *hull_mesh_ids,
                                    __global int *hull_flags,
                                    __global int *counters,
-                                   __global int *query,
+                                   __global int2 *query,
                                    __global int *total,
                                    int count)
 {
@@ -14,7 +14,7 @@ __kernel void count_mesh_instances(__global int *hull_mesh_ids,
 
     for (int i = 0; i < count; i++)
     {
-        int nx = query[i];
+        int nx = query[i].x;
         if (mesh_id == nx)
         {
             int x = atomic_inc(&counters[i]);
@@ -28,7 +28,7 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
                                  __global int2 *mesh_vertex_tables,
                                  __global int2 *mesh_face_tables,
                                  __global int *counters, 
-                                 __global int *query, 
+                                 __global int2 *query, 
                                  __global int *offsets,
                                  __global int4 *mesh_details,
                                  int count)
@@ -42,7 +42,7 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
 
     for (int i = 0; i < count; i++)
     {
-        int nx = query[i];
+        int nx = query[i].x;
         if (mesh_id == nx)
         {
             int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
