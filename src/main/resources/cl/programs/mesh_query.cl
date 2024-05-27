@@ -139,7 +139,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global float4 *vertex_buffer,
                                    __global float2 *uv_buffer,
                                    __global float4 *color_buffer,
-                                   __global int *slot_buffer,
+                                   __global float *slot_buffer,
                                    __global int *element_buffer,
                                    __global int4 *mesh_details,
                                    __global int *mesh_texture,
@@ -217,7 +217,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
         color_buffer[ref_offset] = (float4)(xxx + rrr, xxx, xxx, 1.0f);
-        slot_buffer[ref_offset] = texture;
+        slot_buffer[ref_offset] = (float)texture;
         //printf("debug out tex:%d mesh:%d", texture, mesh_id);
     }
 

@@ -468,7 +468,7 @@ public class TestGame extends GameMode
 //            Solid.BLUESCHIST,
         };
 
-    private static final float block_range_floor = -0.07f;
+    private static final float block_range_floor = -0.03f;
     private static final float water_range_floor = -0.2f;
     private static final float taco_range_floor = -0.15f;
 

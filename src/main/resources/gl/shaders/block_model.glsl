@@ -3,7 +3,7 @@
 layout (location = 0) in vec4 v_position;
 layout (location = 1) in vec2 v_tex_coords;
 layout (location = 2) in vec4 v_color;
-layout (location = 3) in int v_tex_slot;
+layout (location = 3) in float v_tex_slot;
 
 out vec2 f_tex_coords;
 out vec4 f_color;
@@ -14,7 +14,7 @@ uniform mat4 uVP;
 void main()
 {
     f_tex_coords = v_tex_coords;
-    f_tex_slot = v_tex_slot;
+    f_tex_slot = int(v_tex_slot);
     f_color = v_color;
     gl_Position = uVP * v_position;
 }

@@ -22,7 +22,7 @@ import static org.lwjgl.opengl.GL45C.*;
 public class ModelRenderer extends GameSystem
 {
     private static final int ELEMENT_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES;
-    private static final int TEXTURE_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES;
+    private static final int TEXTURE_BUFFER_SIZE = MAX_BATCH_SIZE * SCALAR_FLOAT_SIZE;
     private static final int COMMAND_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES * 5;
     private static final int VERTEX_BUFFER_SIZE  = MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
     private static final int UV_BUFFER_SIZE  = MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
@@ -131,7 +131,7 @@ public class ModelRenderer extends GameSystem
         vbo_position     = GLUtils.new_buffer_vec4(vao, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
         vbo_texture_uv   = GLUtils.new_buffer_vec2(vao, UV_COORD_ATTRIBUTE, UV_BUFFER_SIZE);
         vbo_color        = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BUFFER_SIZE);
-        vbo_texture_slot = GLUtils.new_buffer_int(vao, TEXTURE_ATTRIBUTE, TEXTURE_BUFFER_SIZE);
+        vbo_texture_slot = GLUtils.new_buffer_float(vao, TEXTURE_ATTRIBUTE, TEXTURE_BUFFER_SIZE);
 
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_COORD_ATTRIBUTE);
