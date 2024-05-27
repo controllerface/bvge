@@ -333,12 +333,22 @@ public class ModelRenderer extends GameSystem
                 ? total_instances - offset
                 : raw_offsets[next_batch] - offset;
 
+            long st = Editor.ACTIVE ? System.nanoTime() : 0;
+
             transfer_detail_data_k
                 .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details_ptr)
                 .set_arg(TransferDetailData_k.Args.offset, offset)
                 .call(arg_long(count));
 
+            if (Editor.ACTIVE)
+            {
+                long e = System.nanoTime() - st;
+                Editor.queue_event("render_detail_transfer", String.valueOf(e));
+            }
+
             scan_int2(mesh_transfer_ptr, count);
+
+            st = Editor.ACTIVE ? System.nanoTime() : 0;
 
             transfer_render_data_k
                 .share_mem(command_buffer_ptr)
@@ -351,6 +361,12 @@ public class ModelRenderer extends GameSystem
                 .ptr_arg(TransferRenderData_k.Args.mesh_texture, mesh_texture_ptr)
                 .set_arg(TransferRenderData_k.Args.offset, offset)
                 .call(arg_long(count));
+
+            if (Editor.ACTIVE)
+            {
+                long e = System.nanoTime() - st;
+                Editor.queue_event("render_data_transfer", String.valueOf(e));
+            }
 
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
         }

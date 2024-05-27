@@ -191,6 +191,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
 
     int start_point = point_table.x;
     int end_point = point_table.y;
+    __attribute__((opencl_unroll_hint(4)))
     for (int point_id = start_point; point_id <= end_point; point_id++)
     {
         float4 point = points[point_id];
@@ -223,6 +224,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
 
     int start_face = mesh_face_table.x;
     int end_face = mesh_face_table.y;
+    __attribute__((opencl_unroll_hint(2)))
     for (int face_id = start_face; face_id <= end_face; face_id++)
     {
         int4 face = mesh_faces[face_id];

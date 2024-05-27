@@ -46,6 +46,8 @@ event_source.addEventListener('phys_animate_bones', handle_event);
 event_source.addEventListener('phys_animate_points', handle_event);
 event_source.addEventListener('phys_resolve_constraints', handle_event);
 event_source.addEventListener('render_model', handle_event);
+event_source.addEventListener('render_detail_transfer', handle_event);
+event_source.addEventListener('render_data_transfer', handle_event);
 event_source.addEventListener('render_model_count_meshes', handle_event);
 event_source.addEventListener('render_model_write_details', handle_event);
 event_source.addEventListener('render_model_count_batches', handle_event);

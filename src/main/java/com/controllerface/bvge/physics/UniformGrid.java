@@ -12,7 +12,7 @@ import java.util.Set;
 public class UniformGrid
 {
     public final static int BLOCK_SIZE  = 32;   // pixels per block row
-    public final static int BLOCK_COUNT = 8;   // blocks per row
+    public final static int BLOCK_COUNT = 16;   // blocks per row
     public final static float SECTOR_SIZE = BLOCK_SIZE * BLOCK_COUNT; // pixels per row
 
     public final float perimeter_width;// = 2048f;
@@ -50,14 +50,14 @@ public class UniformGrid
         float x = (float)screen_width * 2.5f;
         float y = (float)screen_height * 2.5f;
         System.out.println("x:" + screen_width + " y:" + screen_height);
-        perimeter_width = screen_width * .20f;
-        perimeter_height = screen_height * .30f;
+        perimeter_width = screen_width * .40f;
+        perimeter_height = screen_height * .50f;
         inner_width = x;
         inner_height = y;
         width = inner_width + perimeter_width;
         height = inner_height + perimeter_height;
-        outer_width = width + perimeter_width * 2;
-        outer_height = height + perimeter_height * 2;
+        outer_width = width + perimeter_width;
+        outer_height = height + perimeter_height;
         x_subdivisions = 200;
         y_subdivisions = 100;
         directory_length = x_subdivisions * y_subdivisions;
@@ -86,8 +86,8 @@ public class UniformGrid
         this.y_origin = y_origin;
         this.inner_x_origin = this.x_origin + (width - inner_width) / 2;
         this.inner_y_origin = this.y_origin + (height - inner_height) / 2;
-        this.outer_x_origin = this.x_origin - perimeter_width;
-        this.outer_y_origin = this.y_origin - perimeter_height;
+        this.outer_x_origin = this.x_origin - perimeter_width + (perimeter_width / 2);
+        this.outer_y_origin = this.y_origin - perimeter_height + (perimeter_height / 2);
     }
 
     public void resizeBank(int size)
