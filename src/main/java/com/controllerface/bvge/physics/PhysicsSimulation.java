@@ -7,6 +7,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
@@ -1197,16 +1198,17 @@ public class PhysicsSimulation extends GameSystem
                 {
                     if (solid.dynamic())
                     {
-                        PhysicsObjects.dynamic_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.block_material());
+                        PhysicsObjects.dynamic_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
                     }
                     else
                     {
-                        PhysicsObjects.static_box(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.block_material());
+                        PhysicsObjects.static_box(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
                     }
                 }
-                for (var tri : batch.tris)
+                for (var shard : batch.shards)
                 {
-                    PhysicsObjects.tri(tri.x(), tri.y(), tri.size(), tri.flags(), tri.mass(), tri.friction(), tri.restitution());
+                    int id = shard.spike() ? ModelRegistry.BASE_SPIKE_INDEX : ModelRegistry.BASE_SHARD_INDEX;
+                    PhysicsObjects.tri(shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
                 }
                 for (var liquid : batch.liquids)
                 {

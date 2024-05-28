@@ -13,7 +13,8 @@ public class MeshRegistry
     private static final AtomicInteger next_mesh_index = new AtomicInteger(0);
 
     public static final int CIRCLE_MESH = next_mesh_index.getAndIncrement();
-    public static final int TRIANGLE_MESH = next_mesh_index.getAndIncrement();
+    public static final int SHARD_MESH = next_mesh_index.getAndIncrement();
+    public static final int SPIKE_MESH = next_mesh_index.getAndIncrement();
     public static final int BLOCK_MESH = next_mesh_index.getAndIncrement();
 
     private static final Map<Integer, Mesh> loaded_meshes = new HashMap<>();
@@ -21,49 +22,39 @@ public class MeshRegistry
 
     private static final BlockAtlas BLOCK_ATLAS = new BlockAtlas();
 
+    private static final float[] BLOCK =  new float[]
+        {
+            -0.5f, -0.5f, // bottom left
+             0.5f, -0.5f, // bottom right
+             0.5f,  0.5f, // top right
+            -0.5f,  0.5f, // top left
+        };
+
+    private static final float[] SHARD =  new float[]
+        {
+            -0.5f, -0.5f, // bottom left
+             0.5f, -0.5f, // bottom right
+             0.5f,  0.5f, // top
+        };
+
+    private static final float[] SPIKE =  new float[]
+        {
+            -0.5f, -0.5f, // bottom left
+             0.5f, -0.5f, // bottom right
+             0.0f,  0.366f, // top
+        };
+
+    public static void init()
+    {
+        register_mesh(CIRCLE_MESH, generate_circle_mesh());
+        register_mesh(SHARD_MESH, generate_shard_mesh());
+        register_mesh(SPIKE_MESH, generate_spike_mesh());
+        register_mesh(BLOCK_MESH, generate_block_mesh());
+    }
+
     public static Mesh get_mesh_by_index(int index)
     {
         return loaded_meshes.get(index);
-    }
-
-    private static Mesh generate_circle_mesh()
-    {
-        var vert_ref_id = GPGPU.core_memory.new_vertex_reference(0,0, new float[4], new int[2]);
-        var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList(), new String[0], new float[0]) };
-        var faces = new Face[]{ new Face(-1,0, 0, 0) };
-        var hull = new int[]{ 0 };
-        return new Mesh("int_circle",-1, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
-    }
-
-    /**
-     * A simple triangle; 3 vertices defining a triangle with a base width of 1
-     */
-    private static Mesh generate_tri_mesh()
-    {
-        Vertex[] vertices = new Vertex[3];
-        Face[] faces = new Face[1];
-
-        float halfSize = 1f / 2f;
-
-        float x1 = -halfSize;
-        float y1 = 0;
-        int v1 = GPGPU.core_memory.new_vertex_reference(x1, y1, new float[4], new int[2]);
-        float x2 = halfSize;
-        float y2 = 0;
-        int v2 = GPGPU.core_memory.new_vertex_reference(x2, y2, new float[4], new int[2]);
-        float x3 = 0f;
-        float y3 = 0.866f;
-        int v3 = GPGPU.core_memory.new_vertex_reference(x3, y3, new float[4], new int[2]);
-
-        vertices[0] = new Vertex(v1, x1, y1, Collections.emptyList(), new String[0], new float[0]);
-        vertices[1] = new Vertex(v2, x2, y2, Collections.emptyList(), new String[0], new float[0]);
-        vertices[2] = new Vertex(v3, x3, y3, Collections.emptyList(), new String[0], new float[0]);
-
-        faces[0] = new Face(-1,0, 1, 2);
-
-        var hull = new int[]{ 0, 1, 2 };
-
-        return new Mesh("int_triangle",-1, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 
     private static Vertex block_vertex(float x, float y, int uv_index)
@@ -90,13 +81,33 @@ public class MeshRegistry
         return new Face(face_id_1, p0, p1, p2);
     }
 
-    private static final float[] BLOCK =  new float[]
+    public static int register_mesh(String model_name, String mesh_name, Mesh mesh)
+    {
+        var mesh_key =  model_name + ":" + mesh_name;
+        if (mesh_index_map.containsKey(mesh_key))
         {
-            -0.5f, -0.5f, // bottom left
-             0.5f, -0.5f, // bottom right
-             0.5f,  0.5f, // top right
-            -0.5f,  0.5f, // top left
-        };
+            throw new IllegalStateException("mesh: " + mesh_key + "already registered.");
+        }
+
+        var mesh_id = next_mesh_index.getAndIncrement();
+        mesh_index_map.put(mesh_key, mesh_id);
+        register_mesh(mesh_id, mesh);
+        return mesh_id;
+    }
+
+    private static void register_mesh(int id, Mesh mesh)
+    {
+        loaded_meshes.put(id, mesh);
+    }
+
+    private static Mesh generate_circle_mesh()
+    {
+        var vert_ref_id = GPGPU.core_memory.new_vertex_reference(0,0, new float[4], new int[2]);
+        var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList(), new String[0], new float[0]) };
+        var faces = new Face[]{ new Face(-1,0, 0, 0) };
+        var hull = new int[]{ 0 };
+        return new Mesh("int_circle",-1, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
+    }
 
     /**
      * A simple unit square; 4 vertices defining a square of size 1.
@@ -118,29 +129,38 @@ public class MeshRegistry
         return new Mesh("block", mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 
-    public static int register_mesh(String model_name, String mesh_name, Mesh mesh)
+    /**
+     * A simple triangle; 3 vertices defining a triangle with a base width of 1
+     */
+    private static Mesh generate_shard_mesh()
     {
-        var mesh_key =  model_name + ":" + mesh_name;
-        if (mesh_index_map.containsKey(mesh_key))
-        {
-            throw new IllegalStateException("mesh: " + mesh_key + "already registered.");
-        }
+        var verts = new Vertex[3];
+        verts[0] = block_vertex(SHARD[0], SHARD[1], 0);
+        verts[1] = block_vertex(SHARD[2], SHARD[3], 1);
+        verts[2] = block_vertex(SHARD[4], SHARD[5], 2);
 
-        var mesh_id = next_mesh_index.getAndIncrement();
-        mesh_index_map.put(mesh_key, mesh_id);
-        register_mesh(mesh_id, mesh);
-        return mesh_id;
+        var faces        = new Face[]{ face(0, 1, 2) };
+        var vert_table   = new int[]{ verts[0].index(), verts[2].index() };
+        var face_table   = new int[]{ faces[0].index(), faces[0].index() };
+        var hull         = PhysicsObjects.calculate_convex_hull_table(verts);
+        int mesh_id      = GPGPU.core_memory.new_mesh_reference(vert_table, face_table);
+
+        return new Mesh("shard", mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 
-    private static void register_mesh(int id, Mesh mesh)
+    private static Mesh generate_spike_mesh()
     {
-        loaded_meshes.put(id, mesh);
-    }
+        var verts = new Vertex[3];
+        verts[0] = block_vertex(SPIKE[0], SPIKE[1], 0);
+        verts[1] = block_vertex(SPIKE[2], SPIKE[3], 1);
+        verts[2] = block_vertex(SPIKE[4], SPIKE[5], 2);
 
-    public static void init()
-    {
-        register_mesh(CIRCLE_MESH, generate_circle_mesh());
-        register_mesh(TRIANGLE_MESH, generate_tri_mesh());
-        register_mesh(BLOCK_MESH, generate_block_mesh());
+        var faces        = new Face[]{ face(0, 1, 2) };
+        var vert_table   = new int[]{ verts[0].index(), verts[2].index() };
+        var face_table   = new int[]{ faces[0].index(), faces[0].index() };
+        var hull         = PhysicsObjects.calculate_convex_hull_table(verts);
+        int mesh_id      = GPGPU.core_memory.new_mesh_reference(vert_table, face_table);
+
+        return new Mesh("spike", mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 }

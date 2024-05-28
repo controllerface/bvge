@@ -15,6 +15,12 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.stream.Stream;
+
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.*;
 import static org.lwjgl.opengl.GL45C.*;
@@ -33,7 +39,7 @@ public class ModelRenderer extends GameSystem
     private static final int TEXTURE_ATTRIBUTE   = 3;
 
     // todo: base this off of number of texture units
-    private final int[] texture_slots = { 0, 1, 2 };
+    private final int[] texture_slots = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     private final GPUProgram mesh_query_p       = new MeshQuery();
     private final GPUProgram scan_int2_array    = new ScanInt2Array();
@@ -91,7 +97,6 @@ public class ModelRenderer extends GameSystem
         super(ecs);
         this.shader_file = "block_model.glsl";
         this.model_ids = model_ids;
-        this.textures = new Texture[model_ids.length];
         init_GL();
         init_CL();
     }
@@ -113,18 +118,33 @@ public class ModelRenderer extends GameSystem
         mesh_size = (long)mesh_count * CLSize.cl_int;
         raw_query = new int[mesh_count * 2]; // int2
 
-        int texture_slot = 0;
+        var texture_buffer = new LinkedHashSet<Texture>();
+
         int query_index = 0;
         for (var model : models)
         {
+            var model_texture = model.textures().getFirst();
+            texture_buffer.add(model_texture);
+
+            int tex_slot = 0;
+            for (var texture : texture_buffer)
+            {
+                if (model_texture.equals(texture)) break;
+                tex_slot++;
+            }
+
             for (var mesh : model.meshes())
             {
                 raw_query[query_index++] = mesh.mesh_id();
-                raw_query[query_index++] = texture_slot;
+                raw_query[query_index++] = tex_slot;
             }
-            // todo: check loaded textures for redundancy, allow for many models that can share a single texture.
-            textures[texture_slot] = model.textures().getFirst();
-            texture_slot++;
+        }
+
+        textures = new Texture[texture_buffer.size()];
+        int texture_index = 0;
+        for (var texture : texture_buffer)
+        {
+            textures[texture_index++] = texture;
         }
 
         vao = glCreateVertexArrays();

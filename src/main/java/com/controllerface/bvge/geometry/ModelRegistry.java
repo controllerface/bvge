@@ -28,16 +28,15 @@ public class ModelRegistry
 {
     private static final AtomicInteger next_model_index = new AtomicInteger(0);
 
-    public static int BASE_BLOCK_INDEX = next_model_index.getAndIncrement();
+    public static final int BASE_BLOCK_INDEX = next_model_index.getAndIncrement();
     public static final int CIRCLE_PARTICLE = next_model_index.getAndIncrement();
-    public static final int TRIANGLE_PARTICLE = next_model_index.getAndIncrement();
+    public static final int BASE_SHARD_INDEX = next_model_index.getAndIncrement();
+    public static final int BASE_SPIKE_INDEX = next_model_index.getAndIncrement();
 
     public static int CURSOR = next_model_index.getAndIncrement();
 
     public static int TEST_MODEL_INDEX_2 = -1;
     public static int PLAYER_MODEL_INDEX = -1;
-    public static int TEST_SQUARE_INDEX = -1;
-    public static int BASE_TRI_INDEX = -1;
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
 
@@ -758,14 +757,13 @@ public class ModelRegistry
     {
         var texture = Assets.load_texture("/img/blocks.png");
         loaded_models.put(CURSOR, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
-        loaded_models.put(BASE_BLOCK_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BLOCK_MESH), texture));
-
         loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
-        loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.TRIANGLE_MESH)));
+
+        loaded_models.put(BASE_BLOCK_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BLOCK_MESH), texture));
+        loaded_models.put(BASE_SHARD_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.SHARD_MESH), texture));
+        loaded_models.put(BASE_SPIKE_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.SPIKE_MESH), texture));
 
         PLAYER_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
         TEST_MODEL_INDEX_2 = load_model("/models/test_humanoid_2.fbx", "Humanoid");
-        TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
-        BASE_TRI_INDEX = load_model("/models/tri_test.fbx", "Base_Tri", BLOCK_ATLAS.uv_channels());
     }
 }

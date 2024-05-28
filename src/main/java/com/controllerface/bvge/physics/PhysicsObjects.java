@@ -103,15 +103,15 @@ public class PhysicsObjects
         return particle(x, y, size, 0.0f, 0.0f, 0.0f, HullFlags.IS_CURSOR._int, 0, CURSOR, 0);
     }
 
-    public static int tri(float x, float y, float size, int flags, float mass, float friction, float restitution)
+    public static int tri(float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Solid shard_mineral)
     {
         int next_entity_id = GPGPU.core_memory.next_entity();
         int next_hull_index = GPGPU.core_memory.next_hull();
 
-        var mesh = ModelRegistry.get_model_by_index(BASE_TRI_INDEX).meshes()[0];
+        var mesh = ModelRegistry.get_model_by_index(model_id).meshes()[0];
 
         var hull = mesh.vertices();
-        hull = scale_hull(hull, size * 5);
+        hull = scale_hull(hull, size);
         hull = translate_hull(hull, x, y);
 
         var v1 = hull[0];
@@ -155,7 +155,7 @@ public class PhysicsObjects
             friction,
             restitution,
             next_entity_id,
-            0,
+            shard_mineral.mineral_number,
             hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         return GPGPU.core_memory.new_entity(x, y,
@@ -165,7 +165,7 @@ public class PhysicsObjects
             -1,
             -1f,
             hull_id,
-            TRIANGLE_PARTICLE,
+            model_id,
             0,
             0);
     }
@@ -265,7 +265,7 @@ public class PhysicsObjects
 
     public static int static_tri(float x, float y, float size, float mass, float friction, float restitution)
     {
-        return tri(x, y, size, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution);
+        return tri(x, y, size, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_SHARD_INDEX, Solid.ANDESITE);
     }
 
     private static final Random random = new Random();
@@ -594,30 +594,6 @@ public class PhysicsObjects
         return output;
     }
 
-    // below was pasted and modified from here:
-    // https://github.com/rolandopalermo/convex-hull-algorithms/blob/master/src/main/java/com/rolandopalermo/algorithms/convexhull/graphics2D/GiftWrapping.java
-
-    public static int lowestPoint(Vertex[] points)
-    {
-        Vertex lowest = points[0];
-        int index = 0;
-        for (int i = 1; i < points.length; i++)
-        {
-            if (points[i].y() < lowest.y() || (points[i].y() == lowest.y() && points[i].x() > lowest.x()))
-            {
-                lowest = points[i];
-                index = i;
-            }
-        }
-        return index;
-    }
-
-    public static void swap(Vertex[] points, int index0, int index1)
-    {
-        Vertex temp = points[index0];
-        points[index0] = points[index1];
-        points[index1] = temp;
-    }
 
     public static Vertex[] generate_convex_hull(Mesh mesh, Vertex[] source)
     {

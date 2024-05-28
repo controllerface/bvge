@@ -121,20 +121,6 @@ public class TestGame extends GameMode
         }
     }
 
-    private void genCrates2(int box_size, float spacing, float size, float start_x, float start_y)
-    {
-        System.out.println("generating: " + box_size * box_size + " Crates..");
-        for (int i = 0; i < box_size; i++)
-        {
-            for (int j = 0; j < box_size; j++)
-            {
-                float x = start_x + i * spacing;
-                float y = start_y + j * spacing;
-                genBoxModelNPC(size, x, y);
-            }
-        }
-    }
-
     private void genTriangles(int box_size, float spacing, float size, float start_x, float start_y)
     {
         System.out.println("generating: " + box_size * box_size + " Triangles..");
@@ -144,7 +130,7 @@ public class TestGame extends GameMode
             {
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-                PhysicsObjects.tri(x, y, size, 0, 20f, 0.02f, 0.0003f);
+                PhysicsObjects.tri(x, y, size, 0, 20f, 0.02f, 0.0003f, ModelRegistry.BASE_SHARD_INDEX, Solid.ANDESITE);
             }
         }
     }
@@ -202,7 +188,7 @@ public class TestGame extends GameMode
 
     private void genTestTriangle(float size, float x, float y)
     {
-       PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f, 0.0003f);
+       PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f, 0.0003f, ModelRegistry.BASE_SHARD_INDEX, Solid.ANDESITE);
     }
 
     private void genPlayer(float size, float x, float y)
@@ -228,10 +214,6 @@ public class TestGame extends GameMode
         PhysicsObjects.wrap_model(PLAYER_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0,0);
     }
 
-    private void genBoxModelNPC(float size, float x, float y)
-    {
-        PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON._int, .1f, 0.02f, 0,0);
-    }
 
     // note: order of adding systems is important
     private void loadSystems()
@@ -246,7 +228,7 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
         {
-            ecs.registerSystem(new ModelRenderer(ecs, PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_TRI_INDEX));
+            ecs.registerSystem(new ModelRenderer(ecs, PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, BASE_SHARD_INDEX));
             ecs.registerSystem(new LiquidRenderer(ecs));
         }
 
@@ -469,6 +451,8 @@ public class TestGame extends GameMode
 
         var batch = new PhysicsEntityBatch(sector);
 
+        var spike = true;
+
         boolean flip = false;
         for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
         {
@@ -489,8 +473,8 @@ public class TestGame extends GameMode
                 boolean gen_block = n >= block_range_floor;
                 boolean gen_dyn = false;
 
-                float sz = UniformGrid.BLOCK_SIZE + 1;
-                float szw = rando_float(UniformGrid.BLOCK_SIZE * .75f , .95f);
+                float sz_solid = UniformGrid.BLOCK_SIZE + 1;
+                float sz_liquid = rando_float(UniformGrid.BLOCK_SIZE * .75f , .95f);
 
                 if (gen_block)
                 {
@@ -502,21 +486,21 @@ public class TestGame extends GameMode
                         block = m(n2, 0, (float)block_pallette2.length);
                         solid = block_pallette2[block];
                     }
-                    batch.new_block(gen_dyn, world_x_block, world_y_block, sz, 90f, 0.03f, 0.0003f, HullFlags.OUT_OF_BOUNDS._int, solid);
+                    batch.new_block(gen_dyn, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, HullFlags.OUT_OF_BOUNDS._int, solid);
                 }
                 else if (n < water_range_floor)
                 {
-                    int flags = flip
+                    int hull_flags = HullFlags.IS_LIQUID._int | HullFlags.OUT_OF_BOUNDS._int;
+                    int point_flags = flip
                         ? PointFlags.FLOW_LEFT.bits
                         : 0;
                     flip = !flip;
-                    batch.new_liquid(world_x, world_y,  szw, .1f, 0.0f, 0.00000f,
-                        HullFlags.IS_LIQUID._int | HullFlags.OUT_OF_BOUNDS._int,
-                        flags, Liquid.WATER);
+                    batch.new_liquid(world_x, world_y,  sz_liquid, .1f, 0.0f, 0.00000f, hull_flags, point_flags, Liquid.WATER);
                 }
                 else if (n < taco_range_floor)
                 {
-                    batch.new_tri(world_x, world_y,  sz, HullFlags.OUT_OF_BOUNDS._int,.1f, 0.0f, 0.00000f);
+                    batch.new_shard(spike, world_x, world_y,  sz_solid, HullFlags.OUT_OF_BOUNDS._int,.1f, 0.05f, 0.005f, block_pallette[0]);
+                    spike = !spike;
                 }
             }
         }

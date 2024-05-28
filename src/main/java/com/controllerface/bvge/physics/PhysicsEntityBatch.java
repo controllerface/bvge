@@ -1,7 +1,6 @@
 package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.game.Sector;
-import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
 
 import java.util.ArrayList;
@@ -11,13 +10,13 @@ public class PhysicsEntityBatch
 {
     public final Sector sector;
 
-    public record BlockEntity(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material) { }
-    public record LiquidEntity(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid) { }
-    public record Tri(float x, float y, float size, int flags, float mass, float friction, float restitution) { }
+    public record Block(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid material) { }
+    public record Shard(boolean spike, float x, float y, float size, int flags, float mass, float friction, float restitution, Solid material) { }
+    public record Liquid(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, com.controllerface.bvge.substances.Liquid particle_fluid) { }
 
-    public final List<BlockEntity> blocks = new ArrayList<>();
-    public final List<LiquidEntity> liquids = new ArrayList<>();
-    public final List<Tri> tris = new ArrayList<>();
+    public final List<Block> blocks = new ArrayList<>();
+    public final List<Shard> shards = new ArrayList<>();
+    public final List<Liquid> liquids = new ArrayList<>();
 
     public PhysicsEntityBatch(Sector sector)
     {
@@ -26,16 +25,16 @@ public class PhysicsEntityBatch
 
     public void new_block(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
-        blocks.add(new BlockEntity(dynamic, x, y, size, mass, friction, restitution, flags, block_material));
+        blocks.add(new Block(dynamic, x, y, size, mass, friction, restitution, flags, block_material));
     }
 
-    public void new_liquid(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid)
+    public void new_shard(boolean spike, float x, float y, float size, int flags, float mass, float friction, float restitution, Solid material)
     {
-        liquids.add(new LiquidEntity(x, y, size, mass, friction, restitution, flags, point_flags, particle_fluid));
+        shards.add(new Shard(spike, x, y, size, flags, mass, friction, restitution, material));
     }
 
-    public void new_tri(float x, float y, float size, int flags, float mass, float friction, float restitution)
+    public void new_liquid(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, com.controllerface.bvge.substances.Liquid particle_fluid)
     {
-        tris.add(new Tri(x, y, size, flags, mass, friction, restitution));
+        liquids.add(new Liquid(x, y, size, mass, friction, restitution, flags, point_flags, particle_fluid));
     }
 }
