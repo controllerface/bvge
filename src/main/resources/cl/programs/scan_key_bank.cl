@@ -100,8 +100,6 @@ __kernel void scan_bounds_multi_block(__global int2 *bounds_bank_data,
     }
 }
 
-constant int2 dummy = (int2)(0.0f, 0.0f);
-
 __kernel void complete_bounds_multi_block(__global int2 *bounds_bank_data,
                                           __global int *sz,
                                           __local int *buffer, 
@@ -120,33 +118,36 @@ __kernel void complete_bounds_multi_block(__global int2 *bounds_bank_data,
     int grpid = get_group_id(0);
     int partial = part[grpid];
 
-    bool a_ok = a_index < n;
-    bool b_ok = b_index < n;
+    bool a_ok = (a_index < n);
+    bool b_ok = (b_index < n);
 
-    int2 bank_a = a_ok ? bounds_bank_data[a_index] : dummy;
-    int2 bank_b = b_ok ? bounds_bank_data[b_index] : dummy;
+    int2 a = bounds_bank_data[a_index];
+    int2 b = bounds_bank_data[b_index];
 
-    // copy into local data padding elements >= n with identity
-    int buf_a = a_ok ? bank_a.x : 0;
-    int buf_b = b_ok ? bank_b.x : 0;
+    int buf_a = (a_ok) ? a.x : 0;
+    int buf_b = (b_ok) ? b.x : 0;
     buf_a += partial;
     buf_b += partial;
 
-    bank_a.x = a_ok ? native_divide((float)buf_a, 2) : bank_a.x;
-    bank_b.x = b_ok ? native_divide((float)buf_b, 2) : bank_b.x;
-    
-    if (a_index == n - 1)
+    // copy back to global data
+    if (a_ok)
     {
-        sz[0] = (bank_a.x + bank_a.y) * 2;
+        a.x = native_divide((float)buf_a, 2);
+        bounds_bank_data[a_index] = a;
+        if (a_index == n - 1)
+        {
+            sz[0] = (a.x + a.y) * 2;
+        }
     }
-
-    if (b_index == n - 1)
+    if (b_ok)
     {
-        sz[0] = (bank_b.x + bank_b.y) * 2;
+        b.x = native_divide((float)buf_b, 2);
+        bounds_bank_data[b_index] = b;
+        if (b_index == n - 1)
+        {
+            sz[0] = (b.x + b.y) * 2;
+        }
     }
-
     buffer[local_a_index] = buf_a;
     buffer[local_b_index] = buf_b;
-    bounds_bank_data[a_index] = bank_a;
-    bounds_bank_data[b_index] = bank_b;
 }

@@ -2,6 +2,7 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -348,6 +349,22 @@ public class GPGPU
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
         return clCreateBuffer(context_ptr, flags, CLSize.cl_int, null);
+    }
+
+    public static long cl_new_unpinned_int()
+    {
+        long flags = CL_MEM_HOST_READ_ONLY;
+        return clCreateBuffer(context_ptr, flags, CLSize.cl_int, null);
+    }
+
+    public static int cl_read_unpinned_int(long queue_ptr, long pinned_ptr)
+    {
+        try(var stack = MemoryStack.stackPush())
+        {
+            var pb = stack.mallocInt(1);
+            clEnqueueReadBuffer(queue_ptr, pinned_ptr, true, 0, pb, null, null);
+            return pb.get(0);
+        }
     }
 
     public static int cl_read_pinned_int(long queue_ptr, long pinned_ptr)

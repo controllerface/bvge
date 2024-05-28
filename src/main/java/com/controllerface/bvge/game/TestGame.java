@@ -246,10 +246,7 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
         {
-            //ecs.registerSystem(new CrateRenderer(ecs));
             ecs.registerSystem(new ModelRenderer(ecs, PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_TRI_INDEX));
-            //ecs.registerSystem(new ModelRenderer(ecs, BASE_BLOCK_INDEX));
-            //ecs.registerSystem(new ModelRenderer(ecs, BASE_TRI_INDEX));
             ecs.registerSystem(new LiquidRenderer(ecs));
         }
 
@@ -438,34 +435,22 @@ public class TestGame extends GameMode
 
     private Solid[] block_pallette2 = new Solid[]
         {
-            Solid.SCHIST,
-            Solid.WHITESCHIST,
-            Solid.GREENSCHIST,
-            Solid.BLUESCHIST,
-            Solid.SCHIST,
-            Solid.WHITESCHIST,
-            Solid.GREENSCHIST,
-            Solid.BLUESCHIST,
-            Solid.SCHIST,
-            Solid.WHITESCHIST,
-            Solid.GREENSCHIST,
-            Solid.BLUESCHIST,
-            Solid.SCHIST,
-            Solid.WHITESCHIST,
-            Solid.GREENSCHIST,
-            Solid.BLUESCHIST,
-//            Solid.SCHIST,
-//            Solid.WHITESCHIST,
-//            Solid.GREENSCHIST,
-//            Solid.BLUESCHIST,
-//            Solid.SCHIST,
-//            Solid.WHITESCHIST,
-//            Solid.GREENSCHIST,
-//            Solid.BLUESCHIST,
-//            Solid.SCHIST,
-//            Solid.WHITESCHIST,
-//            Solid.GREENSCHIST,
-//            Solid.BLUESCHIST,
+            Solid.MUGEARITE,
+            Solid.ANDESITE,
+            Solid.BASALT,
+            Solid.DIORITE,
+            Solid.MUGEARITE,
+            Solid.ANDESITE,
+            Solid.BASALT,
+            Solid.DIORITE,
+            Solid.MUGEARITE,
+            Solid.ANDESITE,
+            Solid.BASALT,
+            Solid.DIORITE,
+            Solid.MUGEARITE,
+            Solid.ANDESITE,
+            Solid.BASALT,
+            Solid.DIORITE,
         };
 
     private static final float block_range_floor = -0.03f;
@@ -499,19 +484,7 @@ public class TestGame extends GameMode
                 float block_x_2 = world_x_block / (UniformGrid.BLOCK_SIZE * 10f);
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
 
-
                 float n = noise.GetNoise(block_x, block_y);
-//                int[] nn = new int[8];
-//                nn[0] = m(noise.GetNoise(block_x - 1, block_y - 1));
-//                nn[1] = m(noise.GetNoise(block_x, block_y - 1));
-//                nn[2] = m(noise.GetNoise(block_x + 1, block_y-1));
-//
-//                nn[0] = m(noise.GetNoise(block_x - 1, block_y));
-//                nn[0] = m(noise.GetNoise(block_x + 1, block_y));
-//
-//                nn[0] = m(noise.GetNoise(block_x - 1, block_y + 1));
-//                nn[1] = m(noise.GetNoise(block_x, block_y + 1));
-//                nn[2] = m(noise.GetNoise(block_x + 1, block_y + 1));
 
                 boolean gen_block = n >= block_range_floor;
                 boolean gen_dyn = false;

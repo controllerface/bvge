@@ -32,6 +32,7 @@ public class ModelRenderer extends GameSystem
     private static final int COLOR_ATTRIBUTE     = 2;
     private static final int TEXTURE_ATTRIBUTE   = 3;
 
+    // todo: base this off of number of texture units
     private final int[] texture_slots = { 0, 1, 2 };
 
     private final GPUProgram mesh_query_p       = new MeshQuery();
@@ -101,6 +102,7 @@ public class ModelRenderer extends GameSystem
 
         Model[] models = new Model[model_ids.length];
 
+        // todo: sum and validate texture count here
         for (int i = 0; i < model_ids.length; i++)
         {
             var model = ModelRegistry.get_model_by_index(model_ids[i]);
@@ -108,8 +110,8 @@ public class ModelRenderer extends GameSystem
             mesh_count += model.meshes().length;
         }
 
-        mesh_size  = (long)mesh_count * CLSize.cl_int;
-        raw_query  = new int[mesh_count * 2]; // int2
+        mesh_size = (long)mesh_count * CLSize.cl_int;
+        raw_query = new int[mesh_count * 2]; // int2
 
         int texture_slot = 0;
         int query_index = 0;
@@ -120,6 +122,7 @@ public class ModelRenderer extends GameSystem
                 raw_query[query_index++] = mesh.mesh_id();
                 raw_query[query_index++] = texture_slot;
             }
+            // todo: check loaded textures for redundancy, allow for many models that can share a single texture.
             textures[texture_slot] = model.textures().getFirst();
             texture_slot++;
         }
@@ -309,8 +312,18 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_batch_offsets", String.valueOf(e));
         }
 
+
+
+        si = Editor.ACTIVE ? System.nanoTime() : 0;
         int[] raw_offsets = new int[total_batches];
         GPGPU.cl_read_buffer(GPGPU.gl_cmd_queue_ptr, mesh_offset_ptr, raw_offsets);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - si;
+            Editor.queue_event("render_buffer_read", String.valueOf(e));
+        }
+
+
 
         glBindVertexArray(vao);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);

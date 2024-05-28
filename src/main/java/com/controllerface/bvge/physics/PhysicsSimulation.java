@@ -208,7 +208,7 @@ public class PhysicsSimulation extends GameSystem
 
         grid_buffer_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
 
-        atomic_counter_ptr = GPGPU.cl_new_pinned_int();
+        atomic_counter_ptr = GPGPU.cl_new_unpinned_int();
         counts_data_ptr = GPGPU.cl_new_buffer(grid_buffer_size);
         offsets_data_ptr = GPGPU.cl_new_buffer(grid_buffer_size);
 
@@ -632,11 +632,13 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(ScanBoundsSingleBlock_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        return GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
     }
 
     private int scan_bounds_multi_block(long data_ptr, int n, int k)
     {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+
         long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
         long gx = k * GPGPU.max_scan_block_size;
         long[] global_work_size = arg_long(gx);
@@ -651,9 +653,17 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(ScanBoundsMultiBlock_k.Args.n, n)
             .call(global_work_size, GPGPU.local_work_default);
 
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_bank_scan_bounds", String.valueOf(e));
+        }
+
         GPGPU.scan_int(p_data, part_size);
 
         GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr, CLSize.cl_int);
+
+        s = Editor.ACTIVE ? System.nanoTime() : 0;
 
         complete_bounds_multi_block_k
             .ptr_arg(CompleteBoundsMultiBlock_k.Args.bounds_bank_data, data_ptr)
@@ -665,7 +675,21 @@ public class PhysicsSimulation extends GameSystem
 
         GPGPU.cl_release_buffer(p_data);
 
-        return GPGPU.cl_read_pinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_bank_complete_bounds", String.valueOf(e));
+        }
+
+        s = Editor.ACTIVE ? System.nanoTime() : 0;
+        int r = GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_bank_read_pinned", String.valueOf(e));
+        }
+
+        return r;
     }
 
     private int scan_key_bounds(long data_ptr, int n)
@@ -725,7 +749,7 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(LocateInBounds_k.Args.counter, atomic_counter_ptr)
             .call(arg_long(hull_count));
 
-        candidate_buffer_count = GPGPU.cl_read_pinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        candidate_buffer_count = GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -759,7 +783,7 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        return GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
     }
 
     private int scan_multi_block_candidates_out(long data_ptr, long o_data_ptr, int n, int k)
@@ -795,7 +819,7 @@ public class PhysicsSimulation extends GameSystem
 
         GPGPU.cl_release_buffer(p_data);
 
-        return GPGPU.cl_read_pinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        return GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
     }
 
     private int scan_key_candidates(long data_ptr, long o_data_ptr, int n)
@@ -830,7 +854,7 @@ public class PhysicsSimulation extends GameSystem
         matches_used.ensure_capacity(candidate_buffer_count);
         GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr, CLSize.cl_int);
         aabb_collide_k.call(arg_long(candidate_buffer_count));
-        candidate_count = GPGPU.cl_read_pinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        candidate_count = GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -887,7 +911,7 @@ public class PhysicsSimulation extends GameSystem
         point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
         point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
         sat_collide_k.call(global_work_size);
-        reaction_count = GPGPU.cl_read_pinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        reaction_count = GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -1283,7 +1307,6 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_compact", String.valueOf(e));
         }
 
-        process_sector_batches();
 
         // Armatures and bones are animated once per time tick, after all simulation is done for this pass. The interplay between
         // animation and edge constraints may leave points in slightly incorrect positions. Animating here ensures the rendering
@@ -1310,6 +1333,7 @@ public class PhysicsSimulation extends GameSystem
         {
             clFinish(GPGPU.gl_cmd_queue_ptr);
             long phys_time = last_phys_time.take();
+            process_sector_batches();
             GPGPU.core_memory.mirror_buffers_ex();
             clFinish(GPGPU.cl_cmd_queue_ptr);
             next_phys_time.put(dt);

@@ -204,11 +204,11 @@ public class Window
         // convert image to RGBA format
         var cursor_buffer = MemoryUtil.memAlloc(width * height * 4);
 
-        for (int y = 0; y < height; y++)
+        for (int cur_y = 0; cur_y < height; cur_y++)
         {
-            for (int x = 0; x < width; x++)
+            for (int cur_x = 0; cur_x < width; cur_x++)
             {
-                int pixel = pixels[y * width + x];
+                int pixel = pixels[cur_y * width + cur_x];
                 cursor_buffer.put((byte) ((pixel >> 16) & 0xFF));  // red
                 cursor_buffer.put((byte) ((pixel >> 8) & 0xFF));   // green
                 cursor_buffer.put((byte) (pixel & 0xFF));          // blue
