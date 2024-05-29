@@ -552,8 +552,8 @@ public class GPUCoreMemory
     public GPUCoreMemory()
     {
         delete_counter_ptr      = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
-        position_buffer_ptr     = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
-        delete_sizes_ptr        = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
+        position_buffer_ptr     = GPGPU.cl_new_buffer(CLSize.cl_float2);
+        delete_sizes_ptr        = GPGPU.cl_new_buffer(CLSize.cl_int * 6);
 
         // transients
         hull_shift              = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
@@ -1449,7 +1449,9 @@ public class GPUCoreMemory
             .set_arg(ReadPosition_k.Args.target, entity_index)
             .call(GPGPU.global_single_size);
 
-        return GPGPU.cl_read_pinned_float_buffer(GPGPU.cl_cmd_queue_ptr, position_buffer_ptr, CLSize.cl_float2, 2);
+        float[] float2 = new float[2];
+        GPGPU.cl_read_float_buffer(GPGPU.cl_cmd_queue_ptr, position_buffer_ptr, float2);
+        return float2;
     }
 
     public void delete_and_compact()
@@ -1538,7 +1540,9 @@ public class GPUCoreMemory
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(GPGPU.cl_cmd_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6, 6);
+        int[] int6 = new int[6];
+        GPGPU.cl_read_int_buffer(GPGPU.cl_cmd_queue_ptr, delete_sizes_ptr, int6);
+        return int6;
     }
 
     private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
@@ -1575,7 +1579,9 @@ public class GPUCoreMemory
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(GPGPU.cl_cmd_queue_ptr, delete_sizes_ptr, CLSize.cl_int * 6, 6);
+        int[] int6 = new int[6];
+        GPGPU.cl_read_int_buffer(GPGPU.cl_cmd_queue_ptr, delete_sizes_ptr, int6);
+        return int6;
     }
 
     private void compact_buffers(int[] shift_counts)

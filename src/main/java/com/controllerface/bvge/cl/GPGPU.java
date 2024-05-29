@@ -253,7 +253,18 @@ public class GPGPU
 
     //#region Utility Methods
 
-    public static void cl_read_buffer(long queue_ptr, long src_ptr, int[] dst)
+    public static void cl_read_int_buffer(long queue_ptr, long src_ptr, int[] dst)
+    {
+        clEnqueueReadBuffer(queue_ptr,
+            src_ptr,
+            true,
+            0,
+            dst,
+            null,
+            null);
+    }
+
+    public static void cl_read_float_buffer(long queue_ptr, long src_ptr, float[] dst)
     {
         clEnqueueReadBuffer(queue_ptr,
             src_ptr,
