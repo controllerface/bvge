@@ -17,6 +17,8 @@ public class UniformGrid
 
     public final float perimeter_width;// = 2048f;
     public final float perimeter_height;// = 1024f;
+    public final float outer_perimeter_width;// = 2048f;
+    public final float outer_perimeter_height;// = 1024f;
     public final float width;// = (8192f - perimeter_width) * 2;
     public final float height;// = (4096f - perimeter_height) * 2;
     public final float inner_width;// = width - perimeter_width;
@@ -52,12 +54,14 @@ public class UniformGrid
         System.out.println("x:" + screen_width + " y:" + screen_height);
         perimeter_width = screen_width * .40f;
         perimeter_height = screen_height * .50f;
+        outer_perimeter_width = screen_width * .10f;
+        outer_perimeter_height = screen_height * .20f;
         inner_width = x;
         inner_height = y;
         width = inner_width + perimeter_width;
         height = inner_height + perimeter_height;
-        outer_width = width + perimeter_width;
-        outer_height = height + perimeter_height;
+        outer_width = width + outer_perimeter_width;
+        outer_height = height + outer_perimeter_height;
         x_subdivisions = 200;
         y_subdivisions = 100;
         directory_length = x_subdivisions * y_subdivisions;
@@ -86,8 +90,8 @@ public class UniformGrid
         this.y_origin = y_origin;
         this.inner_x_origin = this.x_origin + (width - inner_width) / 2;
         this.inner_y_origin = this.y_origin + (height - inner_height) / 2;
-        this.outer_x_origin = this.x_origin - perimeter_width + (perimeter_width / 2);
-        this.outer_y_origin = this.y_origin - perimeter_height + (perimeter_height / 2);
+        this.outer_x_origin = this.x_origin - outer_perimeter_width + (outer_perimeter_width / 2);
+        this.outer_y_origin = this.y_origin - outer_perimeter_height + (outer_perimeter_height / 2);
     }
 
     public void resizeBank(int size)

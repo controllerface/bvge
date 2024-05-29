@@ -11,7 +11,6 @@ import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -1199,11 +1198,12 @@ public class PhysicsSimulation extends GameSystem
                 {
                     if (solid.dynamic())
                     {
-                        PhysicsObjects.dynamic_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
+                        PhysicsObjects.base_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
                     }
                     else
                     {
-                        PhysicsObjects.static_box(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
+                        int flags = solid.flags() | Constants.HullFlags.IS_STATIC._int;
+                        PhysicsObjects.base_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), flags, solid.material());
                     }
                 }
                 for (var shard : batch.shards)

@@ -253,7 +253,7 @@ public class PhysicsObjects
             0);
     }
 
-    public static int dynamic_block(float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
+    public static int base_block(float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
         return block(x, y, size, flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
     }

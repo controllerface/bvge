@@ -85,7 +85,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
+                PhysicsObjects.base_block(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
             }
         }
     }
@@ -100,7 +100,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                if (dynamic) PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
+                if (dynamic) PhysicsObjects.base_block(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
                 else PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
             }
         }
@@ -116,7 +116,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                PhysicsObjects.dynamic_block(x, y, rando_float(size, percentage), 90f, 0.03f, 0.0003f, 0, minerals[rx]);
+                PhysicsObjects.base_block(x, y, rando_float(size, percentage), 90f, 0.03f, 0.0003f, 0, minerals[rx]);
             }
         }
     }
@@ -183,7 +183,7 @@ public class TestGame extends GameMode
 
     private void genTestCrate(float size, float x, float y)
     {
-        PhysicsObjects.dynamic_block(x, y, size, .1f, 0.02f, 0.0001f, 0, Solid.ANDESITE);
+        PhysicsObjects.base_block(x, y, size, .1f, 0.02f, 0.0001f, 0, Solid.ANDESITE);
     }
 
     private void genTestTriangle(float size, float x, float y)
