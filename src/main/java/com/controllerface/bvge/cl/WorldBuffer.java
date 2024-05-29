@@ -109,8 +109,11 @@ public class WorldBuffer implements WorldContainer
     private int hull_bone_index = 0;
     private int armature_bone_index = 0;
 
+    private final WorldContainer parent;
+
     public WorldBuffer(GPUCoreMemory parent)
     {
+        this.parent = parent;
         gpu_crud.init();
 
         entity_accel_buffer               = new PersistentBuffer(GPGPU.sector_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
@@ -294,7 +297,28 @@ public class WorldBuffer implements WorldContainer
 
         long merge_entity_k_ptr = gpu_crud.kernel_ptr(Kernel.merge_entity);
         merge_entity_k = new MergeEntity_k(GPGPU.sector_cmd_queue_ptr, merge_entity_k_ptr)
-            .
+            .buf_arg(MergeEntity_k.Args.entities_in, entity_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_animation_elapsed_in, entity_anim_elapsed_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_motion_states_in, entity_motion_state_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_animation_indices_in, entity_anim_index_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_hull_tables_in, entity_hull_table_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_bone_tables_in, entity_bone_table_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_masses_in, entity_mass_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_root_hulls_in, entity_root_hull_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_model_indices_in, entity_model_id_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_model_transforms_in, entity_model_transform_buffer)
+            .buf_arg(MergeEntity_k.Args.entity_flags_in, entity_flag_buffer)
+            .buf_arg(MergeEntity_k.Args.entities_out, parent.buffer(BufferType.ENTITY))
+            .buf_arg(MergeEntity_k.Args.entity_animation_elapsed_out, parent.buffer(BufferType.ENTITY_ANIM_ELAPSED))
+            .buf_arg(MergeEntity_k.Args.entity_motion_states_out, parent.buffer(BufferType.ENTITY_MOTION_STATE))
+            .buf_arg(MergeEntity_k.Args.entity_animation_indices_out, parent.buffer(BufferType.ENTITY_ANIM_INDEX))
+            .buf_arg(MergeEntity_k.Args.entity_hull_tables_out, parent.buffer(BufferType.ENTITY_HULL_TABLE))
+            .buf_arg(MergeEntity_k.Args.entity_bone_tables_out, parent.buffer(BufferType.ENTITY_BONE_TABLE))
+            .buf_arg(MergeEntity_k.Args.entity_masses_out, parent.buffer(BufferType.ENTITY_MASS))
+            .buf_arg(MergeEntity_k.Args.entity_root_hulls_out, parent.buffer(BufferType.ENTITY_ROOT_HULL))
+            .buf_arg(MergeEntity_k.Args.entity_model_indices_out, parent.buffer(BufferType.ENTITY_MODEL_ID))
+            .buf_arg(MergeEntity_k.Args.entity_model_transforms_out, parent.buffer(BufferType.ENTITY_TRANSFORM_ID))
+            .buf_arg(MergeEntity_k.Args.entity_flags_out, parent.buffer(BufferType.ENTITY_FLAG));
 
     }
 
@@ -608,6 +632,38 @@ public class WorldBuffer implements WorldContainer
     @Override
     public void merge_into_parent()
     {
+        merge_point_k
+                .set_arg(MergePoint_k.Args.hull_offset, parent.next_hull())
+                .set_arg(MergePoint_k.Args.point_offset, parent.next_point())
+                .set_arg(MergePoint_k.Args.bone_offset, parent.next_hull_bone())
+                .call(arg_long(point_index));
 
+        merge_edge_k
+                .set_arg(MergeEdge_k.Args.edge_offset, parent.next_edge())
+                .set_arg(MergeEdge_k.Args.point_offset, parent.next_point())
+                .call(arg_long(edge_index));
+
+        merge_hull_k
+                .set_arg(MergeHull_k.Args.hull_offset, parent.next_hull())
+                .set_arg(MergeHull_k.Args.hull_bone_offset, parent.next_hull_bone())
+                .set_arg(MergeHull_k.Args.point_offset, parent.next_point())
+                .set_arg(MergeHull_k.Args.edge_offset, parent.next_edge())
+                .set_arg(MergeHull_k.Args.entity_offset, parent.next_entity())
+                .call(arg_long(hull_index));
+
+        merge_entity_k
+                .set_arg(MergeEntity_k.Args.entity_offset, parent.next_entity())
+                .set_arg(MergeEntity_k.Args.hull_offset, parent.next_hull())
+                .set_arg(MergeEntity_k.Args.armature_bone_offset, parent.next_armature_bone())
+                .call(arg_long(entity_index));
+
+        merge_hull_bone_k
+                .set_arg(MergeHullBone_k.Args.hull_bone_offset, parent.next_hull_bone())
+                .set_arg(MergeHullBone_k.Args.armature_bone_offset, parent.next_armature_bone())
+                .call(arg_long(hull_bone_index));
+
+        merge_armature_bone_k
+                .set_arg(MergeArmatureBone_k.Args.armature_bone_offset, parent.next_armature_bone())
+                .call(arg_long(armature_bone_index));
     }
 }
