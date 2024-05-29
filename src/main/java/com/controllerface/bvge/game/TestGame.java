@@ -85,7 +85,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                PhysicsObjects.base_block(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
+                PhysicsObjects.base_block(GPGPU.core_memory, x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
             }
         }
     }
@@ -100,8 +100,8 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                if (dynamic) PhysicsObjects.base_block(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
-                else PhysicsObjects.static_box(x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
+                if (dynamic) PhysicsObjects.base_block(GPGPU.core_memory, x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
+                else PhysicsObjects.static_box(GPGPU.core_memory, x, y, size, 90f, 0.03f, 0.0003f, 0, minerals[rx]);
             }
         }
     }
@@ -116,7 +116,7 @@ public class TestGame extends GameMode
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
                 int rx = rando_int(0, minerals.length);
-                PhysicsObjects.base_block(x, y, rando_float(size, percentage), 90f, 0.03f, 0.0003f, 0, minerals[rx]);
+                PhysicsObjects.base_block(GPGPU.core_memory, x, y, rando_float(size, percentage), 90f, 0.03f, 0.0003f, 0, minerals[rx]);
             }
         }
     }
@@ -130,7 +130,7 @@ public class TestGame extends GameMode
             {
                 float x = start_x + i * spacing;
                 float y = start_y + j * spacing;
-                PhysicsObjects.tri(x, y, size, 0, 20f, 0.02f, 0.0003f, ModelRegistry.BASE_SHARD_INDEX, Solid.ANDESITE);
+                PhysicsObjects.tri(GPGPU.core_memory, x, y, size, 0, 20f, 0.02f, 0.0003f, ModelRegistry.BASE_SHARD_INDEX, Solid.ANDESITE);
             }
         }
     }
@@ -150,7 +150,7 @@ public class TestGame extends GameMode
                     : 0;
                 flip = !flip;
                 int rx = rando_int(0, liquids.length);
-                PhysicsObjects.liquid_particle(x, y, size,
+                PhysicsObjects.liquid_particle(GPGPU.core_memory, x, y, size,
                     .1f, 0.0f, 0.00000f,
                     HullFlags.IS_LIQUID._int,
                     flags,
@@ -166,7 +166,7 @@ public class TestGame extends GameMode
         {
             float x = start_x + i * spacing;
             float y = start_y;
-            PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, 0, solid);
+            PhysicsObjects.static_box(GPGPU.core_memory, x, y, size, 0, friction, 0.0003f, 0, solid);
         }
     }
 
@@ -177,25 +177,25 @@ public class TestGame extends GameMode
         {
             float x = start_x;
             float y = start_y + i * spacing;
-            PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, 0, solid);
+            PhysicsObjects.static_box(GPGPU.core_memory, x, y, size, 0, 0.0f, 0.0f, 0, solid);
         }
     }
 
     private void genTestCrate(float size, float x, float y)
     {
-        PhysicsObjects.base_block(x, y, size, .1f, 0.02f, 0.0001f, 0, Solid.ANDESITE);
+        PhysicsObjects.base_block(GPGPU.core_memory, x, y, size, .1f, 0.02f, 0.0001f, 0, Solid.ANDESITE);
     }
 
     private void genTestTriangle(float size, float x, float y)
     {
-       PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f, 0.0003f, ModelRegistry.BASE_SHARD_INDEX, Solid.ANDESITE);
+       PhysicsObjects.tri(GPGPU.core_memory, x, y, size, 0, .1f, 0.02f, 0.0003f, ModelRegistry.BASE_SHARD_INDEX, Solid.ANDESITE);
     }
 
     private void genPlayer(float size, float x, float y)
     {
         var player = ecs.registerEntity("player");
-        var entity_id = PhysicsObjects.wrap_model(PLAYER_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f, 0,0);
-        var cursor_id = PhysicsObjects.circle_cursor(0,0, 10);
+        var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory, PLAYER_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f, 0,0);
+        var cursor_id = PhysicsObjects.circle_cursor(GPGPU.core_memory, 0,0, 10);
 
         ecs.attachComponent(player, Component.EntityId, new EntityIndex(entity_id));
         ecs.attachComponent(player, Component.CursorId, new EntityIndex(cursor_id));
@@ -206,12 +206,12 @@ public class TestGame extends GameMode
 
     private void genTestFigureNPC_2(float size, float x, float y)
     {
-        PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0, 0);
+        PhysicsObjects.wrap_model(GPGPU.core_memory, TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0, 0);
     }
 
     private void genTestFigureNPC(float size, float x, float y)
     {
-        PhysicsObjects.wrap_model(PLAYER_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0,0);
+        PhysicsObjects.wrap_model(GPGPU.core_memory, PLAYER_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0,0);
     }
 
 

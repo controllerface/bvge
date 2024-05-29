@@ -30,6 +30,12 @@ public class GPUCrud extends GPUProgram
         load_kernel(Kernel.create_point);
         load_kernel(Kernel.create_texture_uv);
         load_kernel(Kernel.create_vertex_reference);
+        load_kernel(Kernel.merge_point);
+        load_kernel(Kernel.merge_edge);
+        load_kernel(Kernel.merge_hull);
+        load_kernel(Kernel.merge_entity);
+        load_kernel(Kernel.merge_hull_bone);
+        load_kernel(Kernel.merge_armature_bone);
         load_kernel(Kernel.read_position);
         load_kernel(Kernel.rotate_hull);
         load_kernel(Kernel.set_bone_channel_table);

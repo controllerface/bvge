@@ -76,6 +76,8 @@ public class GPGPU
 
     public static long gl_cmd_queue_ptr;
 
+    public static long sector_cmd_queue_ptr;
+
     /**
      * The Open CL context associated with this class.
      */
@@ -189,6 +191,9 @@ public class GPGPU
             device, 0, (IntBuffer) null);
 
         gl_cmd_queue_ptr = clCreateCommandQueue(context_ptr,
+            device, 0, (IntBuffer) null);
+
+        sector_cmd_queue_ptr = clCreateCommandQueue(context_ptr,
             device, 0, (IntBuffer) null);
 
         MemoryUtil.memFree(ctx_props_buffer);
@@ -827,6 +832,7 @@ public class GPGPU
 
         clReleaseCommandQueue(cl_cmd_queue_ptr);
         clReleaseCommandQueue(gl_cmd_queue_ptr);
+        clReleaseCommandQueue(sector_cmd_queue_ptr);
         clReleaseContext(context_ptr);
         MemoryUtil.memFree(ZERO_PATTERN_BUFFER);
     }

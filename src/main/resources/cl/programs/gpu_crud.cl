@@ -25,7 +25,7 @@ __kernel void create_point(__global float4 *points,
     point_hull_indices[target]      = new_point_hull_index; 
     point_flags[target]             = new_point_flags; 
     bone_tables[target]             = new_bone_table; 
-    point_hit_counts[target] = new_point_hit_count;
+    point_hit_counts[target]        = new_point_hit_count;
 }
 
 __kernel void create_edge(__global int2 *edges,
@@ -285,6 +285,179 @@ __kernel void update_mouse_position(__global int *entity_root_hulls,
 
     points[t.x].xy = new_value;
 }
+
+
+
+
+
+__kernel void merge_point(__global float4 *points_in,
+                          __global int *point_vertex_references_in,
+                          __global int *point_hull_indices_in,
+                          __global ushort *point_hit_counts_in,
+                          __global int *point_flags_in,
+                          __global int4 *bone_tables_in,
+                          __global float4 *points_out,
+                          __global int *point_vertex_references_out,
+                          __global int *point_hull_indices_out,
+                          __global ushort *point_hit_counts_out,
+                          __global int *point_flags_out,
+                          __global int4 *bone_tables_out,
+                          int point_offset,
+                          int bone_offset,
+                          int hull_offset)
+{
+    int current_point = get_global_id(0);
+    int target_point = current_point + point_offset;
+    points_out[target_point]                  = points_in[current_point]; 
+    point_vertex_references_out[target_point] = point_vertex_references_in[current_point]; 
+    point_hull_indices_out[target_point]      = point_hull_indices_in[current_point] + hull_offset; 
+    point_hit_counts_out[target_point]        = point_hit_counts_in[current_point]; 
+    point_flags_out[target_point]             = point_flags_in[current_point]; 
+    bone_tables_out[target_point]             = bone_tables_in[current_point] + (int4)(bone_offset); 
+}
+
+__kernel void merge_edge(__global int2 *edges_in,
+                          __global float *edge_lengths_in,
+                          __global int *edge_flags_in,
+                          __global int2 *edges_out,
+                          __global float *edge_lengths_out,
+                          __global int *edge_flags_out,
+                          int edge_offset,
+                          int point_offset)
+{
+    int current_edge = get_global_id(0);
+    int target_edge = current_edge + edge_offset;
+    edges_out[target_edge]        = edges_in[current_edge] + (int2)(point_offset); 
+    edge_lengths_out[target_edge] = edge_lengths_in[current_edge]; 
+    edge_flags_out[target_edge]   = edge_flags_in[current_edge]; 
+}
+
+__kernel void merge_hull_bone(__global float16 *hull_bones_in,
+                               __global int *hull_bind_pose_indicies_in,
+                               __global int *hull_inv_bind_pose_indicies_in,
+                               __global float16 *hull_bones_out,
+                               __global int *hull_bind_pose_indicies_out,
+                               __global int *hull_inv_bind_pose_indicies_out,
+                               int hull_bone_offset,
+                               int armature_bone_offset)
+{
+    int current_hull_bone = get_global_id(0);
+    int target_hull_bone = current_hull_bone + hull_bone_offset;
+    hull_bones_out[target_hull_bone]                  = hull_bones_in[current_hull_bone]; 
+    hull_bind_pose_indicies_out[target_hull_bone]     = hull_bind_pose_indicies_in[current_hull_bone] + armature_bone_offset; 
+    hull_inv_bind_pose_indicies_out[target_hull_bone] = hull_inv_bind_pose_indicies_in[current_hull_bone]; 
+}
+
+__kernel void merge_armature_bone(__global float16 *armature_bones_in,
+                                   __global int *armature_bone_reference_ids_in,
+                                   __global int *armature_bone_parent_ids_in,
+                                   __global float16 *armature_bones_out,
+                                   __global int *armature_bone_reference_ids_out,
+                                   __global int *armature_bone_parent_ids_out,
+                                   int armature_bone_offset)
+{
+    int current_armature_bone = get_global_id(0);
+    int target_armature_bone = current_armature_bone + armature_bone_offset;
+    armature_bones_out[target_armature_bone]              = armature_bones_in[current_armature_bone]; 
+    armature_bone_reference_ids_out[target_armature_bone] = armature_bone_reference_ids_in[current_armature_bone];
+    armature_bone_parent_ids_out[target_armature_bone]    = armature_bone_parent_ids_in[current_armature_bone] + armature_bone_offset;
+}
+
+__kernel void merge_hull(__global float4 *hulls_in,
+                          __global float2 *hull_scales_in,
+                          __global float2 *hull_rotations_in,
+                          __global float *hull_frictions_in,
+                          __global float *hull_restitutions_in,
+                          __global int2 *hull_point_tables_in,
+                          __global int2 *hull_edge_tables_in,
+                          __global int2 *bone_tables_in,
+                          __global int *hull_entity_ids_in,
+                          __global int *hull_flags_in,
+                          __global int *hull_mesh_ids_in,
+                          __global int *hull_uv_offsets_in,
+                          __global int *hull_integrity_in,
+                          __global float4 *hulls_out,
+                          __global float2 *hull_scales_out,
+                          __global float2 *hull_rotations_out,
+                          __global float *hull_frictions_out,
+                          __global float *hull_restitutions_out,
+                          __global int2 *hull_point_tables_out,
+                          __global int2 *hull_edge_tables_out,
+                          __global int2 *bone_tables_out,
+                          __global int *hull_entity_ids_out,
+                          __global int *hull_flags_out,
+                          __global int *hull_mesh_ids_out,
+                          __global int *hull_uv_offsets_out,
+                          __global int *hull_integrity_out,
+                          int hull_offset,
+                          int hull_bone_offset,
+                          int entity_offset,
+                          int edge_offset,
+                          int point_offset)
+{
+    int current_hull = get_global_id(0);
+    int target_hull = current_hull + hull_offset;
+    
+    hulls_out[target_hull]             = hulls_in[current_hull];
+    hull_scales_out[target_hull]       = hull_scales_in[current_hull];
+    hull_rotations_out[target_hull]    = hull_rotations_in[current_hull];
+    hull_frictions_out[target_hull]    = hull_frictions_in[current_hull];
+    hull_restitutions_out[target_hull] = hull_restitutions_in[current_hull];
+    hull_point_tables_out[target_hull] = hull_point_tables_in[current_hull] + (int2)(point_offset);
+    hull_edge_tables_out[target_hull]  = hull_edge_tables_in[current_hull] + (int2)(edge_offset);
+    bone_tables_out[target_hull]       = bone_tables_in[current_hull] + (int2)(hull_bone_offset);
+    hull_entity_ids_out[target_hull]   = hull_entity_ids_in[current_hull] + entity_offset;
+    hull_flags_out[target_hull]        = hull_flags_in[current_hull];
+    hull_mesh_ids_out[target_hull]     = hull_mesh_ids_in[current_hull];
+    hull_uv_offsets_out[target_hull]   = hull_uv_offsets_in[current_hull];
+    hull_integrity_out[target_hull]    = hull_integrity_in[current_hull];
+}
+
+__kernel void merge_entity(__global float4 *entities_in,
+                            __global float2 *entity_animation_elapsed_in,
+                            __global short2 *entity_motion_states_in,
+                            __global int2 *entity_animation_indices_in,
+                            __global int2 *entity_hull_tables_in,
+                            __global int2 *entity_bone_tables_in,
+                            __global float *entity_masses_in,
+                            __global int *entity_root_hulls_in,
+                            __global int *entity_model_indices_in,
+                            __global int *entity_model_transforms_in,
+                            __global int *entity_flags_in,
+                            __global float4 *entities_out,
+                            __global float2 *entity_animation_elapsed_out,
+                            __global short2 *entity_motion_states_out,
+                            __global int2 *entity_animation_indices_out,
+                            __global int2 *entity_hull_tables_out,
+                            __global int2 *entity_bone_tables_out,
+                            __global float *entity_masses_out,
+                            __global int *entity_root_hulls_out,
+                            __global int *entity_model_indices_out,
+                            __global int *entity_model_transforms_out,
+                            __global int *entity_flags_out,
+                            int entity_offset,
+                            int hull_offset,
+                            int armature_bone_offset)
+{
+    int current_entity = get_global_id(0);
+    int target_entity = current_entity + entity_offset;
+
+    entities_out[target_entity]                 = entities_in[current_entity];
+    entity_animation_elapsed_out[target_entity] = entity_animation_elapsed_in[current_entity];
+    entity_motion_states_out[target_entity]     = entity_motion_states_in[current_entity];
+    entity_animation_indices_out[target_entity] = entity_animation_indices_in[current_entity];
+    entity_hull_tables_out[target_entity]       = entity_hull_tables_in[current_entity] + (int2)(hull_offset);
+    entity_bone_tables_out[target_entity]       = entity_bone_tables_in[current_entity] + (int2)(armature_bone_offset);
+    entity_masses_out[target_entity]            = entity_masses_in[current_entity];
+    entity_root_hulls_out[target_entity]        = entity_root_hulls_in[current_entity] + hull_offset;
+    entity_model_indices_out[target_entity]     = entity_model_indices_in[current_entity];
+    entity_model_transforms_out[target_entity]  = entity_model_transforms_in[current_entity];
+    entity_flags_out[target_entity]             = entity_flags_in[current_entity];
+}
+
+
+
+
 
 // todo: implement for armature
 __kernel void rotate_hull(__global float4 *hulls,

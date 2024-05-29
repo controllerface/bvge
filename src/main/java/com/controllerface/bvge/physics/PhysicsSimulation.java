@@ -1199,22 +1199,22 @@ public class PhysicsSimulation extends GameSystem
                 {
                     if (solid.dynamic())
                     {
-                        PhysicsObjects.base_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
+                        PhysicsObjects.base_block(GPGPU.core_memory, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
                     }
                     else
                     {
                         int flags = solid.flags() | Constants.HullFlags.IS_STATIC._int;
-                        PhysicsObjects.base_block(solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), flags, solid.material());
+                        PhysicsObjects.base_block(GPGPU.core_memory, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), flags, solid.material());
                     }
                 }
                 for (var shard : batch.shards)
                 {
                     int id = shard.spike() ? ModelRegistry.BASE_SPIKE_INDEX : ModelRegistry.BASE_SHARD_INDEX;
-                    PhysicsObjects.tri(shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
+                    PhysicsObjects.tri(GPGPU.core_memory, shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
                 }
                 for (var liquid : batch.liquids)
                 {
-                    PhysicsObjects.liquid_particle(liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
+                    PhysicsObjects.liquid_particle(GPGPU.core_memory, liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
                 }
             }
             batch = GPGPU.core_memory.next_batch();

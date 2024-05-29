@@ -4,16 +4,13 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.ScanDeletes;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
-import com.controllerface.bvge.physics.PhysicsObjects;
 
-import java.nio.ByteBuffer;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 
-public class GPUCoreMemory
+public class GPUCoreMemory implements WorldContainer
 {
     private final GPUProgram gpu_crud = new GPUCrud();
     private final GPUProgram scan_deletes = new ScanDeletes();
@@ -1064,6 +1061,11 @@ public class GPUCoreMemory
         return hull_bone_index;
     }
 
+    public int next_armature_bone()
+    {
+        return armature_bone_index;
+    }
+
     public int last_point()
     {
         return last_point_index;
@@ -1610,6 +1612,7 @@ public class GPUCoreMemory
 //        k_call(command_queue, _k.get(Kernel.rotate_hull), global_single_size);
     }
 
+    @Override
     public void destroy()
     {
 //        System.out.println("--- shutting down --- ");
@@ -1704,6 +1707,12 @@ public class GPUCoreMemory
         GPGPU.cl_release_buffer(delete_counter_ptr);
         GPGPU.cl_release_buffer(position_buffer_ptr);
         GPGPU.cl_release_buffer(delete_sizes_ptr);
+    }
+
+    @Override
+    public void merge_into_parent()
+    {
+        throw new UnsupportedOperationException("Cannot merge core world memory");
     }
 
     private void debug()
