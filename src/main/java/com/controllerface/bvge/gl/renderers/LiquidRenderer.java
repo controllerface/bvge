@@ -15,6 +15,8 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
+import java.nio.ByteBuffer;
+
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.MAX_BATCH_SIZE;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
@@ -72,7 +74,7 @@ public class LiquidRenderer extends GameSystem
 
     private void init_CL()
     {
-        atomic_counter_ptr = GPGPU.cl_new_pinned_int();
+        atomic_counter_ptr = GPGPU.cl_new_unpinned_int();
         vbo_ptr = GPGPU.share_memory(vbo);
         color_buffer_ptr = GPGPU.share_memory(vcb);
 
@@ -148,7 +150,7 @@ public class LiquidRenderer extends GameSystem
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .call(arg_long(GPGPU.core_memory.next_entity()));
 
-        int final_count = GPGPU.cl_read_pinned_int(queue_ptr, atomic_counter_ptr);
+        int final_count = GPGPU.cl_read_unpinned_int(queue_ptr, atomic_counter_ptr);
 
         if (final_count == 0)
         {

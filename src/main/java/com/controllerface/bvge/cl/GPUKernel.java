@@ -2,11 +2,13 @@ package com.controllerface.bvge.cl;
 
 import org.lwjgl.system.MemoryStack;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.k_call;
 import static org.lwjgl.opencl.CL12.clSetKernelArg;
+import static org.lwjgl.opencl.CL20.clSetKernelArgSVMPointer;
 
 public abstract class GPUKernel
 {
@@ -39,6 +41,12 @@ public abstract class GPUKernel
             var pointerBuffer = mem_stack.callocPointer(1).put(0, pointer);
             clSetKernelArg(this.kernel_ptr, arg.ordinal(), pointerBuffer);
         }
+        return this;
+    }
+
+    public GPUKernel ptr_arg(Enum<?> arg, ByteBuffer buffer)
+    {
+        clSetKernelArgSVMPointer(this.kernel_ptr, arg.ordinal(), buffer);
         return this;
     }
 

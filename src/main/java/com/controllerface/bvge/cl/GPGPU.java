@@ -290,6 +290,11 @@ public class GPGPU
             null);
     }
 
+    public static void cl_zero_buffer(long queue_ptr, ByteBuffer buffer_ptr, long buffer_size)
+    {
+        clEnqueueSVMMemFill(queue_ptr, buffer_ptr, ZERO_PATTERN_BUFFER, null, null);
+    }
+
     public static long cl_new_pinned_buffer(long size)
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
@@ -358,11 +363,24 @@ public class GPGPU
         return clCreateBuffer(context_ptr, flags, CLSize.cl_int, null);
     }
 
-//    public static long cl_new_svm_int()
-//    {
-//        long flags = CL_MEM_READ_WRITE;
-//        return clSVMAlloc(context_ptr, flags, CLSize.cl_int, 0);
-//    }
+    public static ByteBuffer cl_new_svm_int()
+    {
+        long flags = CL_MEM_READ_WRITE;
+        return clSVMAlloc(context_ptr, flags, CLSize.cl_int, 0);
+    }
+
+    public static int cl_read_svm_int(long queue_ptr, ByteBuffer svm_buffer)
+    {
+        int result = clEnqueueSVMMap(queue_ptr, true, CL_MAP_READ, svm_buffer, null, null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on scm buffer creation: " + result);
+            System.exit(1);
+        }
+        int v = svm_buffer.getInt(0);
+        clEnqueueSVMUnmap(queue_ptr, svm_buffer, null, null);
+        return v;
+    }
 
     public static int cl_read_unpinned_int(long queue_ptr, long pinned_ptr)
     {
@@ -662,6 +680,11 @@ public class GPGPU
         clReleaseMemObject(mem_ptr);
     }
 
+    public static void cl_release_buffer(ByteBuffer mem_ptr)
+    {
+        clSVMFree(context_ptr, mem_ptr);
+    }
+
     public static void init()
     {
         device_id_ptr = init_device();
@@ -672,21 +695,21 @@ public class GPGPU
         System.out.println(get_device_string(device_id_ptr, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
-        long svm_caps = get_device_long(device_id_ptr, CL_DEVICE_SVM_CAPABILITIES);
-
-        if ((svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) != 0) {
-            System.out.println("Device supports coarse-grained buffer SVM\n");
-        }
-        if ((svm_caps & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) != 0) {
-            System.out.println("Device supports fine-grained buffer SVM\n");
-        }
-        if ((svm_caps & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM) != 0) {
-            System.out.println("Device supports fine-grained system SVM\n");
-        }
-        if ((svm_caps & CL_DEVICE_SVM_ATOMICS) != 0) {
-            System.out.println("Device supports SVM atomics\n");
-        }
-        System.out.println("SVM: " + svm_caps);
+//        long svm_caps = get_device_long(device_id_ptr, CL_DEVICE_SVM_CAPABILITIES);
+//
+//        if ((svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) != 0) {
+//            System.out.println("Device supports coarse-grained buffer SVM\n");
+//        }K
+//        if ((svm_caps & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) != 0) {
+//            System.out.println("Device supports fine-grained buffer SVM\n");
+//        }
+//        if ((svm_caps & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM) != 0) {
+//            System.out.println("Device supports fine-grained system SVM\n");
+//        }
+//        if ((svm_caps & CL_DEVICE_SVM_ATOMICS) != 0) {
+//            System.out.println("Device supports SVM atomics\n");
+//        }
+//        System.out.println("SVM: " + svm_caps);
 
         // At runtime, local buffers are used to perform prefix scan operations.
         // It is vital that the max scan block size does not exceed the maximum
