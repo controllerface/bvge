@@ -48,7 +48,7 @@ public class MouseRenderer extends GameSystem
     private GPUKernel prepare_transforms_k;
     private GPUKernel root_hull_filter_k;
     private GPUKernel root_hull_count_k;
-    private long atomic_counter_ptr;
+    private ByteBuffer atomic_counter_ptr;
 
 
 
@@ -71,7 +71,7 @@ public class MouseRenderer extends GameSystem
     private void init_CL()
     {
         vbo_ptr = GPGPU.share_memory(vbo);
-        atomic_counter_ptr = GPGPU.cl_new_unpinned_int();
+        atomic_counter_ptr = GPGPU.cl_new_svm_int();
         prepare_transforms.init();
         root_hull_filter.init();
 
@@ -101,7 +101,7 @@ public class MouseRenderer extends GameSystem
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .call(arg_long(GPGPU.core_memory.next_entity()));
 
-        int final_count =  GPGPU.cl_read_unpinned_int(queue_ptr, atomic_counter_ptr);
+        int final_count =  GPGPU.cl_read_svm_int(queue_ptr, atomic_counter_ptr);
 
         if (final_count == 0)
         {

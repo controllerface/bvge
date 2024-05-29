@@ -11,6 +11,7 @@ import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -88,7 +89,7 @@ public class PhysicsSimulation extends GameSystem
     //#region Buffers & Counters
 
     private final long grid_buffer_size;
-    private final long atomic_counter_ptr;
+    private final ByteBuffer atomic_counter_ptr;
     private final long counts_data_ptr;
     private final long offsets_data_ptr;
 
@@ -209,7 +210,7 @@ public class PhysicsSimulation extends GameSystem
 
         grid_buffer_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
 
-        atomic_counter_ptr = GPGPU.cl_new_unpinned_int();
+        atomic_counter_ptr = GPGPU.cl_new_svm_int();
         counts_data_ptr = GPGPU.cl_new_buffer(grid_buffer_size);
         offsets_data_ptr = GPGPU.cl_new_buffer(grid_buffer_size);
 
@@ -633,7 +634,7 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(ScanBoundsSingleBlock_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        return GPGPU.cl_read_svm_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
     }
 
     private int scan_bounds_multi_block(long data_ptr, int n, int k)
@@ -683,7 +684,7 @@ public class PhysicsSimulation extends GameSystem
         }
 
         s = Editor.ACTIVE ? System.nanoTime() : 0;
-        int r = GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        int r = GPGPU.cl_read_svm_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -750,7 +751,7 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(LocateInBounds_k.Args.counter, atomic_counter_ptr)
             .call(arg_long(hull_count));
 
-        candidate_buffer_count = GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        candidate_buffer_count = GPGPU.cl_read_svm_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -784,7 +785,7 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        return GPGPU.cl_read_svm_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
     }
 
     private int scan_multi_block_candidates_out(long data_ptr, long o_data_ptr, int n, int k)
@@ -820,7 +821,7 @@ public class PhysicsSimulation extends GameSystem
 
         GPGPU.cl_release_buffer(p_data);
 
-        return GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        return GPGPU.cl_read_svm_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
     }
 
     private int scan_key_candidates(long data_ptr, long o_data_ptr, int n)
@@ -855,7 +856,7 @@ public class PhysicsSimulation extends GameSystem
         matches_used.ensure_capacity(candidate_buffer_count);
         GPGPU.cl_zero_buffer(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr, CLSize.cl_int);
         aabb_collide_k.call(arg_long(candidate_buffer_count));
-        candidate_count = GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        candidate_count = GPGPU.cl_read_svm_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -912,7 +913,7 @@ public class PhysicsSimulation extends GameSystem
         point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
         point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
         sat_collide_k.call(global_work_size);
-        reaction_count = GPGPU.cl_read_unpinned_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
+        reaction_count = GPGPU.cl_read_svm_int(GPGPU.cl_cmd_queue_ptr, atomic_counter_ptr);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;

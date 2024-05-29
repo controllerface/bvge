@@ -379,6 +379,41 @@ public class GPGPU
         long flags = CL_MEM_READ_WRITE;
         return clSVMAlloc(context_ptr, flags, CLSize.cl_int, 0);
     }
+    public static ByteBuffer cl_new_svm_buffer(long size)
+    {
+        long flags = CL_MEM_READ_WRITE;
+        return clSVMAlloc(context_ptr, flags, size, 0);
+    }
+
+    public static void cl_read_svm_int_buffer(long queue_ptr, ByteBuffer svm_buffer, int[] dst)
+    {
+        int result = clEnqueueSVMMap(queue_ptr, true, CL_MAP_READ, svm_buffer, null, null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on scm buffer creation: " + result);
+            System.exit(1);
+        }
+        for (int i = 0; i < dst.length; i++)
+        {
+            dst[i] = svm_buffer.getInt(i);
+        }
+        clEnqueueSVMUnmap(queue_ptr, svm_buffer, null, null);
+    }
+
+    public static void cl_read_svm_float_buffer(long queue_ptr, ByteBuffer svm_buffer, float[] dst)
+    {
+        int result = clEnqueueSVMMap(queue_ptr, true, CL_MAP_READ, svm_buffer, null, null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on scm buffer creation: " + result);
+            System.exit(1);
+        }
+        for (int i = 0; i < dst.length; i++)
+        {
+            dst[i] = svm_buffer.getFloat(i);
+        }
+        clEnqueueSVMUnmap(queue_ptr, svm_buffer, null, null);
+    }
 
     public static int cl_read_svm_int(long queue_ptr, ByteBuffer svm_buffer)
     {
