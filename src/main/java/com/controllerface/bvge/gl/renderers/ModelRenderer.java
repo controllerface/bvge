@@ -171,7 +171,7 @@ public class ModelRenderer extends GameSystem
         uv_buffer_ptr      = GPGPU.share_memory(vbo_texture_uv);
         color_buffer_ptr   = GPGPU.share_memory(vbo_color);
         slot_buffer_ptr    = GPGPU.share_memory(vbo_texture_slot);
-        total_ptr          = GPGPU.cl_new_unpinned_int();
+        total_ptr          = GPGPU.cl_new_pinned_int();
         query_ptr          = GPGPU.new_mutable_buffer(raw_query);
         counters_ptr       = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, mesh_size);
         offsets_ptr        = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, mesh_size);
@@ -283,7 +283,7 @@ public class ModelRenderer extends GameSystem
 
         scan_int_out(counters_ptr, offsets_ptr, mesh_count);
 
-        int total_instances = GPGPU.cl_read_unpinned_int(GPGPU.gl_cmd_queue_ptr, total_ptr);
+        int total_instances = GPGPU.cl_read_pinned_int(GPGPU.gl_cmd_queue_ptr, total_ptr);
         if (total_instances == 0)
         {
             return;
@@ -316,7 +316,7 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_count_batches", String.valueOf(e));
         }
 
-        int total_batches = GPGPU.cl_read_unpinned_int(GPGPU.gl_cmd_queue_ptr, total_ptr);
+        int total_batches = GPGPU.cl_read_pinned_int(GPGPU.gl_cmd_queue_ptr, total_ptr);
         long batch_index_size = (long) total_batches * CLSize.cl_int;
 
         var mesh_offset_ptr = GPGPU.new_empty_buffer(GPGPU.gl_cmd_queue_ptr, batch_index_size);
