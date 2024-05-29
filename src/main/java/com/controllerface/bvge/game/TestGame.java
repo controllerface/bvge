@@ -500,7 +500,6 @@ public class TestGame extends GameMode
                 else if (n < taco_range_floor)
                 {
                     batch.new_shard(spike, world_x, world_y,  sz_solid, HullFlags.OUT_OF_BOUNDS._int,.1f, 0.05f, 0.005f, block_pallette[0]);
-                    spike = !spike;
                 }
             }
         }

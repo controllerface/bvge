@@ -13,6 +13,7 @@ import java.util.List;
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.lwjgl.opencl.CL12.*;
 import static org.lwjgl.opencl.CL12GL.clCreateFromGLBuffer;
+import static org.lwjgl.opencl.CL20.*;
 import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
 import static org.lwjgl.opencl.KHRGLSharing.CL_WGL_HDC_KHR;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
@@ -357,6 +358,12 @@ public class GPGPU
         return clCreateBuffer(context_ptr, flags, CLSize.cl_int, null);
     }
 
+//    public static long cl_new_svm_int()
+//    {
+//        long flags = CL_MEM_READ_WRITE;
+//        return clSVMAlloc(context_ptr, flags, CLSize.cl_int, 0);
+//    }
+
     public static int cl_read_unpinned_int(long queue_ptr, long pinned_ptr)
     {
         try(var stack = MemoryStack.stackPush())
@@ -664,6 +671,22 @@ public class GPGPU
         System.out.println(get_device_string(device_id_ptr, CL_DEVICE_NAME));
         System.out.println(get_device_string(device_id_ptr, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
+
+        long svm_caps = get_device_long(device_id_ptr, CL_DEVICE_SVM_CAPABILITIES);
+
+        if ((svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) != 0) {
+            System.out.println("Device supports coarse-grained buffer SVM\n");
+        }
+        if ((svm_caps & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) != 0) {
+            System.out.println("Device supports fine-grained buffer SVM\n");
+        }
+        if ((svm_caps & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM) != 0) {
+            System.out.println("Device supports fine-grained system SVM\n");
+        }
+        if ((svm_caps & CL_DEVICE_SVM_ATOMICS) != 0) {
+            System.out.println("Device supports SVM atomics\n");
+        }
+        System.out.println("SVM: " + svm_caps);
 
         // At runtime, local buffers are used to perform prefix scan operations.
         // It is vital that the max scan block size does not exceed the maximum
