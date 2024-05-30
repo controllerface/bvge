@@ -5,6 +5,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.MeshRegistry;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.renderers.*;
@@ -14,6 +15,7 @@ import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.util.FastNoiseLite;
 import com.controllerface.bvge.window.Window;
 

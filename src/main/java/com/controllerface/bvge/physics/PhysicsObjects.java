@@ -2,7 +2,6 @@ package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.WorldContainer;
 import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.geometry.Mesh;
@@ -50,8 +49,6 @@ public class PhysicsObjects
 
         // the model points are always zero so the * and + are for educational purposes
         var p1 = CLUtils.arg_float2(vert.x() * size + x, vert.y() * size + y);
-
-        var t1 = CLUtils.arg_int4(vert.index(), next_hull_index, 0, 0);
 
         // store the single point for the circle
         var p1_index = world.new_point(p1, new int[4], vert.index(), next_hull_index, 0, point_flags);

@@ -3,12 +3,17 @@ package com.controllerface.bvge.cl;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.ScanDeletes;
+import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
+import com.controllerface.bvge.physics.PhysicsObjects;
+import com.controllerface.bvge.util.Constants;
 
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
+import static org.lwjgl.opencl.CL10.clFinish;
 
 public class GPUCoreMemory implements WorldContainer
 {
@@ -547,6 +552,8 @@ public class GPUCoreMemory implements WorldContainer
     private int last_edge_index       = 0;
     private int last_entity_index = 0;
 
+    private final WorldBuffer world_buffer;
+
     public GPUCoreMemory()
     {
         delete_counter_ptr      = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
@@ -906,6 +913,8 @@ public class GPUCoreMemory implements WorldContainer
             .buf_arg(CompactArmatureBones_k.Args.armature_bones, armature_bone_buffer)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_reference_ids, armature_bone_reference_id_buffer)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_parent_ids, armature_bone_parent_id_buffer);
+
+        this.world_buffer = new WorldBuffer(this);
     }
 
     public ResizableBuffer buffer(BufferType bufferType)
@@ -1095,8 +1104,110 @@ public class GPUCoreMemory implements WorldContainer
 
     public void new_batch(PhysicsEntityBatch batch)
     {
-        batches.add(batch);
+        //batches.add(batch);
+        batch_immediate(batch);
+    }
 
+    private void batch_immediate(PhysicsEntityBatch batch)
+    {
+        for (var solid : batch.blocks)
+        {
+            if (solid.dynamic())
+            {
+                PhysicsObjects.base_block(world_buffer, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
+            }
+            else
+            {
+                int flags = solid.flags() | Constants.HullFlags.IS_STATIC._int;
+                PhysicsObjects.base_block(world_buffer, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), flags, solid.material());
+            }
+        }
+        for (var shard : batch.shards)
+        {
+            int id = shard.spike() ? ModelRegistry.BASE_SPIKE_INDEX : ModelRegistry.BASE_SHARD_INDEX;
+            PhysicsObjects.tri(world_buffer, shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
+        }
+        for (var liquid : batch.liquids)
+        {
+            PhysicsObjects.liquid_particle(world_buffer, liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
+        }
+    }
+
+    public void process_world_buffer()
+    {
+        int point_count = world_buffer.next_point();
+        int edge_count = world_buffer.next_edge();
+        int hull_count = world_buffer.next_hull();
+        int entity_count = world_buffer.next_entity();
+        int hull_bone_count = world_buffer.next_hull_bone();
+        int armature_bone_count = world_buffer.next_armature_bone();
+
+        int point_capacity = point_count + next_point();
+        int edge_capacity = edge_count + next_edge();
+        int hull_capacity = hull_count + next_hull();
+        int entity_capacity = entity_count + next_entity();
+        int hull_bone_capacity = hull_bone_count + next_hull_bone();
+        int armature_bone_capacity = armature_bone_count + next_armature_bone();
+
+        point_buffer.ensure_capacity(point_capacity);
+        point_anti_gravity_buffer.ensure_capacity(point_capacity);
+        point_vertex_reference_buffer.ensure_capacity(point_capacity);
+        point_hull_index_buffer.ensure_capacity(point_capacity);
+        point_flag_buffer.ensure_capacity(point_capacity);
+        point_hit_count_buffer.ensure_capacity(point_capacity);
+        point_bone_table_buffer.ensure_capacity(point_capacity);
+
+        edge_buffer.ensure_capacity(edge_capacity);
+        edge_length_buffer.ensure_capacity(edge_capacity);
+        edge_flag_buffer.ensure_capacity(edge_capacity);
+
+        hull_b.ensure_capacity(hull_capacity);
+        hull_scale_b.ensure_capacity(hull_capacity);
+        hull_mesh_id_b.ensure_capacity(hull_capacity);
+        hull_uv_offset_b.ensure_capacity(hull_capacity);
+        hull_rotation_b.ensure_capacity(hull_capacity);
+        hull_integrity_b.ensure_capacity(hull_capacity);
+        hull_point_table_b.ensure_capacity(hull_capacity);
+        hull_edge_table_b.ensure_capacity(hull_capacity);
+        hull_flag_b.ensure_capacity(hull_capacity);
+        hull_bone_table_b.ensure_capacity(hull_capacity);
+        hull_entity_id_b.ensure_capacity(hull_capacity);
+        hull_friction_b.ensure_capacity(hull_capacity);
+        hull_restitution_b.ensure_capacity(hull_capacity);
+        hull_aabb_b.ensure_capacity(hull_capacity);
+        hull_aabb_index_b.ensure_capacity(hull_capacity);
+        hull_aabb_key_b.ensure_capacity(hull_capacity);
+
+        entity_buffer.ensure_capacity(entity_capacity);
+        entity_flag_buffer.ensure_capacity(entity_capacity);
+        entity_root_hull_buffer.ensure_capacity(entity_capacity);
+        entity_model_id_buffer.ensure_capacity(entity_capacity);
+        entity_model_transform_buffer.ensure_capacity(entity_capacity);
+        entity_accel_buffer.ensure_capacity(entity_capacity);
+        entity_mass_buffer.ensure_capacity(entity_capacity);
+        entity_anim_index_buffer.ensure_capacity(entity_capacity);
+        entity_anim_elapsed_buffer.ensure_capacity(entity_capacity);
+        entity_anim_blend_buffer.ensure_capacity(entity_capacity);
+        entity_motion_state_buffer.ensure_capacity(entity_capacity);
+        entity_hull_table_buffer.ensure_capacity(entity_capacity);
+        entity_bone_table_buffer.ensure_capacity(entity_capacity);
+
+        hull_bone_b.ensure_capacity(hull_bone_capacity);
+        hull_bone_bind_pose_id_b.ensure_capacity(hull_bone_capacity);
+        hull_bone_inv_bind_pose_id_b.ensure_capacity(hull_bone_capacity);
+
+        armature_bone_buffer.ensure_capacity(armature_bone_capacity);
+        armature_bone_reference_id_buffer.ensure_capacity(armature_bone_capacity);
+        armature_bone_parent_id_buffer.ensure_capacity(armature_bone_capacity);
+
+        world_buffer.merge_into_parent(this);
+
+        point_index += point_count;
+        edge_index += edge_count;
+        hull_index += hull_count;
+        entity_index += entity_count;
+        hull_bone_index += hull_bone_count;
+        armature_bone_index += armature_bone_count;
     }
 
     public int new_animation_timings(float duration, float tick_rate)
@@ -1406,6 +1517,12 @@ public class GPUCoreMemory implements WorldContainer
         return armature_bone_index++;
     }
 
+    @Override
+    public void merge_into_parent(WorldContainer parent)
+    {
+        throw new UnsupportedOperationException("Cannot merge from core memory");
+    }
+
     public int new_model_transform(float[] transform_data)
     {
         int capacity = model_transform_index + 1;
@@ -1662,9 +1779,7 @@ public class GPUCoreMemory implements WorldContainer
         point_vertex_reference_buffer.release();
         point_hull_index_buffer.release();
         point_flag_buffer.release();
-
         point_hit_count_buffer.release();
-
         point_bone_table_buffer.release();
         vertex_reference_buffer.release();
         vertex_weight_buffer.release();
@@ -1709,12 +1824,6 @@ public class GPUCoreMemory implements WorldContainer
         GPGPU.cl_release_buffer(delete_sizes_ptr);
     }
 
-    @Override
-    public void merge_into_parent()
-    {
-        throw new UnsupportedOperationException("Cannot merge core world memory");
-    }
-
     private void debug()
     {
         long total = 0;
@@ -1754,9 +1863,7 @@ public class GPUCoreMemory implements WorldContainer
         total += point_vertex_reference_buffer.debug_data();
         total += point_hull_index_buffer.debug_data();
         total += point_flag_buffer.debug_data();
-
         total += point_hit_count_buffer.debug_data();
-
         total += point_bone_table_buffer.debug_data();
         total += vertex_reference_buffer.debug_data();
         total += vertex_weight_buffer.debug_data();

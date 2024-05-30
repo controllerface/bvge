@@ -36,7 +36,7 @@ public interface WorldContainer
     int new_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id);
     int new_armature_bone(int bone_reference, int bone_parent_id, float[] bone_data);
 
-    void destroy();
+    void merge_into_parent(WorldContainer parent);
 
-    void merge_into_parent();
+    void destroy();
 }

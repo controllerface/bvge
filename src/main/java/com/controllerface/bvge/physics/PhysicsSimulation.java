@@ -1186,6 +1186,11 @@ public class PhysicsSimulation extends GameSystem
         apply_reactions();
     }
 
+    private void process_world_buffer()
+    {
+        GPGPU.core_memory.process_world_buffer();
+    }
+
     private void process_sector_batches()
     {
         long sd = Editor.ACTIVE ? System.nanoTime() : 0;
@@ -1337,7 +1342,8 @@ public class PhysicsSimulation extends GameSystem
         {
             clFinish(GPGPU.gl_cmd_queue_ptr);
             long phys_time = last_phys_time.take();
-            process_sector_batches();
+            //process_sector_batches();
+            process_world_buffer();
             GPGPU.core_memory.mirror_buffers_ex();
             clFinish(GPGPU.cl_cmd_queue_ptr);
             next_phys_time.put(dt);

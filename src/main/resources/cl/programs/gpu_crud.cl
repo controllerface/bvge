@@ -11,7 +11,7 @@ __kernel void create_point(__global float4 *points,
                            __global int *point_hull_indices,
                            __global ushort *point_hit_counts,
                            __global int *point_flags,
-                           __global int4 *bone_tables,
+                           __global int4 *point_bone_tables,
                            int target,
                            float4 new_point,
                            int new_point_vertex_reference,
@@ -24,7 +24,7 @@ __kernel void create_point(__global float4 *points,
     point_vertex_references[target] = new_point_vertex_reference; 
     point_hull_indices[target]      = new_point_hull_index; 
     point_flags[target]             = new_point_flags; 
-    bone_tables[target]             = new_bone_table; 
+    point_bone_tables[target]             = new_bone_table; 
     point_hit_counts[target]        = new_point_hit_count;
 }
 
@@ -295,13 +295,13 @@ __kernel void merge_point(__global float4 *points_in,
                           __global int *point_hull_indices_in,
                           __global ushort *point_hit_counts_in,
                           __global int *point_flags_in,
-                          __global int4 *bone_tables_in,
+                          __global int4 *point_bone_tables_in,
                           __global float4 *points_out,
                           __global int *point_vertex_references_out,
                           __global int *point_hull_indices_out,
                           __global ushort *point_hit_counts_out,
                           __global int *point_flags_out,
-                          __global int4 *bone_tables_out,
+                          __global int4 *point_bone_tables_out,
                           int point_offset,
                           int bone_offset,
                           int hull_offset)
@@ -313,7 +313,7 @@ __kernel void merge_point(__global float4 *points_in,
     point_hull_indices_out[target_point]      = point_hull_indices_in[current_point] + hull_offset; 
     point_hit_counts_out[target_point]        = point_hit_counts_in[current_point]; 
     point_flags_out[target_point]             = point_flags_in[current_point]; 
-    bone_tables_out[target_point]             = bone_tables_in[current_point] + (int4)(bone_offset); 
+    point_bone_tables_out[target_point]       = point_bone_tables_in[current_point] + (int4)(bone_offset); 
 }
 
 __kernel void merge_edge(__global int2 *edges_in,

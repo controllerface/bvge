@@ -396,7 +396,7 @@ public class GPGPU
         if (result != CL_SUCCESS)
         {
             System.out.println("Error on scm buffer creation: " + result);
-            System.exit(1);
+            throw new RuntimeException("Error on scm buffer creation: " + result);
         }
         for (int i = 0; i < dst.length; i++)
         {
@@ -411,7 +411,7 @@ public class GPGPU
         if (result != CL_SUCCESS)
         {
             System.out.println("Error on scm buffer creation: " + result);
-            System.exit(1);
+            throw new RuntimeException("Error on scm buffer creation: " + result);
         }
         for (int i = 0; i < dst.length; i++)
         {
@@ -426,7 +426,7 @@ public class GPGPU
         if (result != CL_SUCCESS)
         {
             System.out.println("Error on scm buffer creation: " + result);
-            System.exit(1);
+            throw new RuntimeException("Error on scm buffer creation: " + result);
         }
         int v = svm_buffer.getInt(0);
         clEnqueueSVMUnmap(queue_ptr, svm_buffer, null, null);
@@ -469,7 +469,7 @@ public class GPGPU
         if (result != CL_SUCCESS)
         {
             System.out.println("Error on buffer copy: " + result);
-            System.exit(1);
+            throw new RuntimeException("Error on buffer copy: " + result);
         }
     }
 
