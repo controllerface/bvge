@@ -26,6 +26,7 @@ public class SectorLoader extends GameSystem
 
     FastNoiseLite noise = new FastNoiseLite();
     FastNoiseLite noise2 = new FastNoiseLite();
+    FastNoiseLite noise3 = new FastNoiseLite();
     private final Random random = new Random();
     private final Thread loader;
 
@@ -35,9 +36,14 @@ public class SectorLoader extends GameSystem
         this.uniformGrid = uniformGrid;
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+
         noise2.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
         noise2.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise2.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Hybrid);
+
+        noise3.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        noise3.SetFractalType(FastNoiseLite.FractalType.PingPong);
+
         this.loader = Thread.ofVirtual().start(() ->
         {
             while (!Thread.currentThread().isInterrupted())
@@ -116,6 +122,8 @@ public class SectorLoader extends GameSystem
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 
+    private Solid rare = Solid.COAL_DEPOSIT;
+
     private Solid[] block_pallette = new Solid[]
         {
             Solid.MUDSTONE,
@@ -158,6 +166,7 @@ public class SectorLoader extends GameSystem
             Solid.ANDESITE,
             Solid.BASALT,
             Solid.DIORITE,
+            rare,
             Solid.MUGEARITE,
             Solid.ANDESITE,
             Solid.BASALT,
@@ -170,6 +179,85 @@ public class SectorLoader extends GameSystem
             Solid.ANDESITE,
             Solid.BASALT,
             Solid.DIORITE,
+        };
+
+    private Solid[] block_pallette3 = new Solid[]
+        {
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.KIMBERLITE,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.KIMBERLITE,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.COAL_DEPOSIT,
+            Solid.KIMBERLITE,
         };
 
     private static final float block_range_floor = -0.03f;
@@ -186,6 +274,11 @@ public class SectorLoader extends GameSystem
 
         float upperBound = baseNumber * percentage;
         return baseNumber + random.nextFloat() * (upperBound - baseNumber);
+    }
+
+    public int rando_int(int min, int max)
+    {
+        return random.nextInt(min, max);
     }
 
     private void load_sector(Sector sector)
@@ -211,6 +304,7 @@ public class SectorLoader extends GameSystem
                 float block_x = world_x_block / UniformGrid.BLOCK_SIZE;
                 float block_x_2 = world_x_block / (UniformGrid.BLOCK_SIZE * 10f);
                 float block_y = world_y / UniformGrid.BLOCK_SIZE;
+                float block_y_2 = world_y_block / (UniformGrid.BLOCK_SIZE * .1f);
 
                 float n = noise.GetNoise(block_x, block_y);
 
@@ -229,6 +323,12 @@ public class SectorLoader extends GameSystem
                         float n2 = Math.abs(noise2.GetNoise(block_x_2, block_y));
                         block = m(n2, 0, (float)block_pallette2.length);
                         solid = block_pallette2[block];
+                        if (solid == rare)
+                        {
+                            float n3 = Math.abs(noise3.GetNoise(block_x_2, block_y_2));
+                            block = m(n3, 0, (float)block_pallette3.length);
+                            solid = block_pallette3[block];
+                        }
                     }
                     batch.new_block(gen_dyn, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, Constants.HullFlags.OUT_OF_BOUNDS._int, solid);
                 }
