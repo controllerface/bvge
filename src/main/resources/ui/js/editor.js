@@ -60,3 +60,4 @@ event_source.addEventListener('render_model_batch_loop', handle_event);
 event_source.addEventListener('render_model_scan_int', handle_event);
 event_source.addEventListener('render_model_scan_int_out', handle_event);
 event_source.addEventListener('render_model_scan_int2', handle_event);
+event_source.addEventListener('render_cl_cycle', handle_event);

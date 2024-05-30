@@ -261,8 +261,9 @@ public class ModelRenderer extends GameSystem
         complete_int_multi_block_out_k = new CompleteIntMultiBlockOut_k(GPGPU.gl_cmd_queue_ptr, scan_int_array_out_comp_ptr);
     }
 
-    @Override
-    public void tick(float dt)
+    private record BatchData( int[] raw_offsets, int total_instances, long mesh_details_ptr, long mesh_texture_ptr) { }
+
+    private BatchData tick_CL()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
 
@@ -286,7 +287,7 @@ public class ModelRenderer extends GameSystem
         int total_instances = GPGPU.cl_read_svm_int(GPGPU.gl_cmd_queue_ptr, total_ptr);
         if (total_instances == 0)
         {
-            return;
+            return null;
         }
 
         long details_size = (long)total_instances * CLSize.cl_int4;
@@ -333,19 +334,25 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_batch_offsets", String.valueOf(e));
         }
 
-
-
         si = Editor.ACTIVE ? System.nanoTime() : 0;
         int[] raw_offsets = new int[total_batches];
         GPGPU.cl_read_int_buffer(GPGPU.gl_cmd_queue_ptr, mesh_offset_ptr, raw_offsets);
+        GPGPU.cl_release_buffer(mesh_offset_ptr);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;
             Editor.queue_event("render_buffer_read", String.valueOf(e));
         }
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("render_cl_cycle", String.valueOf(e));
+        }
+        return new BatchData(raw_offsets, total_instances, mesh_details_ptr, mesh_texture_ptr);
+    }
 
-
-
+    private void tick_GL(BatchData batch_data)
+    {
         glBindVertexArray(vao);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
 
@@ -358,19 +365,19 @@ public class ModelRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         shader.uploadIntArray("uTextures", texture_slots);
 
-        si = Editor.ACTIVE ? System.nanoTime() : 0;
-        for (int current_batch = 0; current_batch < raw_offsets.length; current_batch++)
+        long si = Editor.ACTIVE ? System.nanoTime() : 0;
+        for (int current_batch = 0; current_batch < batch_data.raw_offsets.length; current_batch++)
         {
             int next_batch = current_batch + 1;
-            int offset = raw_offsets[current_batch];
-            int count = next_batch == raw_offsets.length
-                ? total_instances - offset
-                : raw_offsets[next_batch] - offset;
+            int offset = batch_data.raw_offsets[current_batch];
+            int count = next_batch == batch_data.raw_offsets.length
+                ? batch_data.total_instances - offset
+                : batch_data.raw_offsets[next_batch] - offset;
 
             long st = Editor.ACTIVE ? System.nanoTime() : 0;
 
             transfer_detail_data_k
-                .ptr_arg(TransferDetailData_k.Args.mesh_details, mesh_details_ptr)
+                .ptr_arg(TransferDetailData_k.Args.mesh_details, batch_data.mesh_details_ptr)
                 .set_arg(TransferDetailData_k.Args.offset, offset)
                 .call(arg_long(count));
 
@@ -391,8 +398,8 @@ public class ModelRenderer extends GameSystem
                 .share_mem(uv_buffer_ptr)
                 .share_mem(color_buffer_ptr)
                 .share_mem(slot_buffer_ptr)
-                .ptr_arg(TransferRenderData_k.Args.mesh_details, mesh_details_ptr)
-                .ptr_arg(TransferRenderData_k.Args.mesh_texture, mesh_texture_ptr)
+                .ptr_arg(TransferRenderData_k.Args.mesh_details, batch_data.mesh_details_ptr)
+                .ptr_arg(TransferRenderData_k.Args.mesh_texture, batch_data.mesh_texture_ptr)
                 .set_arg(TransferRenderData_k.Args.offset, offset)
                 .call(arg_long(count));
 
@@ -411,13 +418,92 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_batch_loop", String.valueOf(e));
         }
 
-        glBindVertexArray(0);
-
         shader.detach();
+        glBindVertexArray(0);
+    }
 
-        GPGPU.cl_release_buffer(mesh_details_ptr);
-        GPGPU.cl_release_buffer(mesh_texture_ptr);
-        GPGPU.cl_release_buffer(mesh_offset_ptr);
+    @Override
+    public void tick(float dt)
+    {
+        long s = Editor.ACTIVE ? System.nanoTime() : 0;
+
+        var batch_data = tick_CL();
+        if (batch_data == null) return;
+
+        tick_GL(batch_data);
+
+//        glBindVertexArray(vao);
+//        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
+//
+//        shader.use();
+//        for (int i  = 0; i < textures.length; i++)
+//        {
+//            textures[i].bind(i);
+//        }
+//
+//        shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
+//        shader.uploadIntArray("uTextures", texture_slots);
+//
+//        long si = Editor.ACTIVE ? System.nanoTime() : 0;
+//        for (int current_batch = 0; current_batch < batch_data.raw_offsets.length; current_batch++)
+//        {
+//            int next_batch = current_batch + 1;
+//            int offset = batch_data.raw_offsets[current_batch];
+//            int count = next_batch == batch_data.raw_offsets.length
+//                ? batch_data.total_instances - offset
+//                : batch_data.raw_offsets[next_batch] - offset;
+//
+//            long st = Editor.ACTIVE ? System.nanoTime() : 0;
+//
+//            transfer_detail_data_k
+//                .ptr_arg(TransferDetailData_k.Args.mesh_details, batch_data.mesh_details_ptr)
+//                .set_arg(TransferDetailData_k.Args.offset, offset)
+//                .call(arg_long(count));
+//
+//            if (Editor.ACTIVE)
+//            {
+//                long e = System.nanoTime() - st;
+//                Editor.queue_event("render_detail_transfer", String.valueOf(e));
+//            }
+//
+//            scan_int2(mesh_transfer_ptr, count);
+//
+//            st = Editor.ACTIVE ? System.nanoTime() : 0;
+//
+//            transfer_render_data_k
+//                .share_mem(command_buffer_ptr)
+//                .share_mem(element_buffer_ptr)
+//                .share_mem(vertex_buffer_ptr)
+//                .share_mem(uv_buffer_ptr)
+//                .share_mem(color_buffer_ptr)
+//                .share_mem(slot_buffer_ptr)
+//                .ptr_arg(TransferRenderData_k.Args.mesh_details, batch_data.mesh_details_ptr)
+//                .ptr_arg(TransferRenderData_k.Args.mesh_texture, batch_data.mesh_texture_ptr)
+//                .set_arg(TransferRenderData_k.Args.offset, offset)
+//                .call(arg_long(count));
+//
+//            if (Editor.ACTIVE)
+//            {
+//                long e = System.nanoTime() - st;
+//                Editor.queue_event("render_data_transfer", String.valueOf(e));
+//            }
+//
+//            glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, count, 0);
+//        }
+//
+//        if (Editor.ACTIVE)
+//        {
+//            long e = System.nanoTime() - si;
+//            Editor.queue_event("render_model_batch_loop", String.valueOf(e));
+//        }
+//
+//        glBindVertexArray(0);
+//
+//        shader.detach();
+
+        GPGPU.cl_release_buffer(batch_data.mesh_details_ptr);
+        GPGPU.cl_release_buffer(batch_data.mesh_texture_ptr);
+
 
         if (Editor.ACTIVE)
         {

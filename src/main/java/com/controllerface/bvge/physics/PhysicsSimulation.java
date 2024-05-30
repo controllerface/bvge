@@ -7,7 +7,6 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
-import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
@@ -1188,42 +1187,8 @@ public class PhysicsSimulation extends GameSystem
 
     private void process_world_buffer()
     {
-        GPGPU.core_memory.process_world_buffer();
-    }
-
-    private void process_sector_batches()
-    {
         long sd = Editor.ACTIVE ? System.nanoTime() : 0;
-
-        var batch = GPGPU.core_memory.next_batch();
-        while (batch != null)
-        {
-            if (uniform_grid.is_sector_loaded(batch.sector))
-            {
-                for (var solid : batch.blocks)
-                {
-                    if (solid.dynamic())
-                    {
-                        PhysicsObjects.base_block(GPGPU.core_memory, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
-                    }
-                    else
-                    {
-                        int flags = solid.flags() | Constants.HullFlags.IS_STATIC._int;
-                        PhysicsObjects.base_block(GPGPU.core_memory, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), flags, solid.material());
-                    }
-                }
-                for (var shard : batch.shards)
-                {
-                    int id = shard.spike() ? ModelRegistry.BASE_SPIKE_INDEX : ModelRegistry.BASE_SHARD_INDEX;
-                    PhysicsObjects.tri(GPGPU.core_memory, shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
-                }
-                for (var liquid : batch.liquids)
-                {
-                    PhysicsObjects.liquid_particle(GPGPU.core_memory, liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
-                }
-            }
-            batch = GPGPU.core_memory.next_batch();
-        }
+        GPGPU.core_memory.process_world_buffer();
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - sd;
@@ -1342,7 +1307,9 @@ public class PhysicsSimulation extends GameSystem
         {
             clFinish(GPGPU.gl_cmd_queue_ptr);
             long phys_time = last_phys_time.take();
-            //process_sector_batches();
+            GPGPU.core_memory.await_sector();
+            GPGPU.core_memory.reset_sector();
+            clFinish(GPGPU.sector_cmd_queue_ptr);
             process_world_buffer();
             GPGPU.core_memory.mirror_buffers_ex();
             clFinish(GPGPU.cl_cmd_queue_ptr);

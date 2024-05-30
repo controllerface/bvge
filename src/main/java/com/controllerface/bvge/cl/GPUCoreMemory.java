@@ -3,13 +3,14 @@ package com.controllerface.bvge.cl;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.ScanDeletes;
-import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Constants;
 
 import java.util.Queue;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
@@ -1095,16 +1096,28 @@ public class GPUCoreMemory implements WorldContainer
         return last_edge_index;
     }
 
-    private Queue<PhysicsEntityBatch> batches = new LinkedBlockingDeque<>();
 
-    public PhysicsEntityBatch next_batch()
+    private final CyclicBarrier sector_barrier = new CyclicBarrier(2);
+
+    public void reset_sector()
     {
-        return batches.poll();
+        sector_barrier.reset();
+    }
+
+    public void await_sector()
+    {
+        try
+        {
+            sector_barrier.await();
+        }
+        catch (InterruptedException | BrokenBarrierException e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 
     public void new_batch(PhysicsEntityBatch batch)
     {
-        //batches.add(batch);
         batch_immediate(batch);
     }
 
@@ -1141,6 +1154,15 @@ public class GPUCoreMemory implements WorldContainer
         int entity_count = world_buffer.next_entity();
         int hull_bone_count = world_buffer.next_hull_bone();
         int armature_bone_count = world_buffer.next_armature_bone();
+
+        int total = point_count
+            + edge_count
+            + hull_count
+            + entity_count
+            + hull_bone_count
+            + armature_bone_count;
+
+        if (total == 0) return;
 
         int point_capacity = point_count + next_point();
         int edge_capacity = edge_count + next_edge();
@@ -1200,7 +1222,9 @@ public class GPUCoreMemory implements WorldContainer
         armature_bone_reference_id_buffer.ensure_capacity(armature_bone_capacity);
         armature_bone_parent_id_buffer.ensure_capacity(armature_bone_capacity);
 
+        clFinish(GPGPU.cl_cmd_queue_ptr);
         world_buffer.merge_into_parent(this);
+        clFinish(GPGPU.sector_cmd_queue_ptr);
 
         point_index += point_count;
         edge_index += edge_count;
@@ -1732,6 +1756,7 @@ public class GPUCoreMemory implements WorldContainer
     @Override
     public void destroy()
     {
+        world_buffer.destroy();
 //        System.out.println("--- shutting down --- ");
 //
 //        System.out.println("hulls      : " + hull_index);

@@ -5,6 +5,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.ecs.systems.SectorLoader;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.MeshRegistry;
 import com.controllerface.bvge.geometry.ModelRegistry;
@@ -220,6 +221,7 @@ public class TestGame extends GameMode
     // note: order of adding systems is important
     private void loadSystems()
     {
+        ecs.registerSystem(new SectorLoader(ecs, uniformGrid));
         ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid)); // all physics calculations should be done first
         ecs.registerSystem(new CameraTracking(ecs, uniformGrid)); // camera is handled before rendering occurs, but after collision has been resolved
         ecs.registerSystem(screenBlankSystem); // the blanking system clears the screen before rendering passes
@@ -320,60 +322,60 @@ public class TestGame extends GameMode
     @Override
     public void update(float dt)
     {
-        float o_xo = uniformGrid.outer_x_origin();
-        float o_yo = uniformGrid.outer_y_origin();
-
-        float o_xu = o_xo + uniformGrid.outer_width;
-        float o_yu = o_yo + uniformGrid.outer_height;
-
-        var sector_0_key = UniformGridRenderer.get_sector_for_point(o_xo, o_yo);
-        var sector_2_key = UniformGridRenderer.get_sector_for_point(o_xu, o_yu);
-
-        float sector_size = UniformGrid.SECTOR_SIZE;
-
-        float sector_0_origin_x = (float)sector_0_key[0] * sector_size;
-        float sector_0_origin_y = (float)sector_0_key[1] * sector_size;
-
-        float sector_2_origin_x = (float)sector_2_key[0] * sector_size;
-        float sector_2_origin_y = (float)sector_2_key[1] * sector_size;
-
-        last_loaded_sectors.clear();
-        last_loaded_sectors.addAll(loaded_sectors);
-        loaded_sectors.clear();
-
-        boolean load_changed = false;
-        for (int sx = sector_0_key[0]; sx <= sector_2_key[0]; sx ++)
-        {
-            for (int sy = sector_0_key[1]; sy <= sector_2_key[1]; sy++)
-            {
-                var sector = new Sector(sx, sy);
-                loaded_sectors.add(sector);
-                if (!last_loaded_sectors.contains(sector))
-                {
-                    //System.out.println("loading sector: ["+sx+","+sy+"]");
-                    load_sector(sector);
-                    load_changed = true;
-                }
-            }
-        }
-
-        for (var last : last_loaded_sectors)
-        {
-            if (!loaded_sectors.contains(last))
-            {
-                //System.out.println("unloading sector: ["+last.x+","+last.y+"]");
-                load_changed = true;
-            }
-        }
-
-        if (load_changed)
-        {
-            //System.out.println(loaded_sectors.size() + " sectors loaded");
-        }
-
-        uniformGrid.update_sector_metrics(loaded_sectors, sector_0_origin_x, sector_0_origin_y,
-            Math.abs(sector_0_origin_x - (sector_2_origin_x + sector_size)),
-            Math.abs(sector_0_origin_y - (sector_2_origin_y + sector_size)));
+//        float o_xo = uniformGrid.outer_x_origin();
+//        float o_yo = uniformGrid.outer_y_origin();
+//
+//        float o_xu = o_xo + uniformGrid.outer_width;
+//        float o_yu = o_yo + uniformGrid.outer_height;
+//
+//        var sector_0_key = UniformGridRenderer.get_sector_for_point(o_xo, o_yo);
+//        var sector_2_key = UniformGridRenderer.get_sector_for_point(o_xu, o_yu);
+//
+//        float sector_size = UniformGrid.SECTOR_SIZE;
+//
+//        float sector_0_origin_x = (float)sector_0_key[0] * sector_size;
+//        float sector_0_origin_y = (float)sector_0_key[1] * sector_size;
+//
+//        float sector_2_origin_x = (float)sector_2_key[0] * sector_size;
+//        float sector_2_origin_y = (float)sector_2_key[1] * sector_size;
+//
+//        last_loaded_sectors.clear();
+//        last_loaded_sectors.addAll(loaded_sectors);
+//        loaded_sectors.clear();
+//
+//        boolean load_changed = false;
+//        for (int sx = sector_0_key[0]; sx <= sector_2_key[0]; sx ++)
+//        {
+//            for (int sy = sector_0_key[1]; sy <= sector_2_key[1]; sy++)
+//            {
+//                var sector = new Sector(sx, sy);
+//                loaded_sectors.add(sector);
+//                if (!last_loaded_sectors.contains(sector))
+//                {
+//                    //System.out.println("loading sector: ["+sx+","+sy+"]");
+//                    load_sector(sector);
+//                    load_changed = true;
+//                }
+//            }
+//        }
+//
+//        for (var last : last_loaded_sectors)
+//        {
+//            if (!loaded_sectors.contains(last))
+//            {
+//                //System.out.println("unloading sector: ["+last.x+","+last.y+"]");
+//                load_changed = true;
+//            }
+//        }
+//
+//        if (load_changed)
+//        {
+//            //System.out.println(loaded_sectors.size() + " sectors loaded");
+//        }
+//
+//        uniformGrid.update_sector_metrics(loaded_sectors, sector_0_origin_x, sector_0_origin_y,
+//            Math.abs(sector_0_origin_x - (sector_2_origin_x + sector_size)),
+//            Math.abs(sector_0_origin_y - (sector_2_origin_y + sector_size)));
     }
 
     private float map(float x, float in_min, float in_max, float out_min, float out_max)
