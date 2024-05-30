@@ -10,7 +10,11 @@ import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.util.FastNoiseLite;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -24,15 +28,20 @@ public class SectorLoader extends GameSystem
     private Set<Sector> last_loaded_sectors = new HashSet<>();
     private Set<Sector> loaded_sectors = new HashSet<>();
 
+    private final Cache<Sector, PhysicsEntityBatch> sector_cache;
+
     FastNoiseLite noise = new FastNoiseLite();
     FastNoiseLite noise2 = new FastNoiseLite();
     FastNoiseLite noise3 = new FastNoiseLite();
     private final Random random = new Random();
     private final Thread loader;
-
+    private final Duration STALE_TIME = Duration.of(5, ChronoUnit.MINUTES);
     public SectorLoader(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
+        this.sector_cache = Caffeine.newBuilder()
+            .expireAfterAccess(STALE_TIME)
+            .build();
         this.uniformGrid = uniformGrid;
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
@@ -72,7 +81,8 @@ public class SectorLoader extends GameSystem
                             loaded_sectors.add(sector);
                             if (!last_loaded_sectors.contains(sector))
                             {
-                                load_sector(sector);
+                                var sector_batch = sector_cache.get(sector, this::load_sector);
+                                GPGPU.core_memory.new_batch(sector_batch);
                             }
                         }
                     }
@@ -281,7 +291,7 @@ public class SectorLoader extends GameSystem
         return random.nextInt(min, max);
     }
 
-    private void load_sector(Sector sector)
+    private PhysicsEntityBatch load_sector(Sector sector)
     {
         float x_offset = sector.x() * (int)UniformGrid.SECTOR_SIZE;
         float y_offset = sector.y() * (int)UniformGrid.SECTOR_SIZE;
@@ -312,7 +322,7 @@ public class SectorLoader extends GameSystem
                 boolean gen_dyn = false;
 
                 float sz_solid = UniformGrid.BLOCK_SIZE + 1;
-                float sz_liquid = rando_float(UniformGrid.BLOCK_SIZE * .75f , .95f);
+                float sz_liquid = rando_float(UniformGrid.BLOCK_SIZE * .75f , .90f);
 
                 if (gen_block)
                 {
@@ -347,6 +357,6 @@ public class SectorLoader extends GameSystem
                 }
             }
         }
-        GPGPU.core_memory.new_batch(batch);
+        return batch;
     }
 }
