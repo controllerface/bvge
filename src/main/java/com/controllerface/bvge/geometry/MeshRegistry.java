@@ -37,11 +37,18 @@ public class MeshRegistry
              0.5f,  0.5f, // top
         };
 
+//    private static final float[] SPIKE =  new float[]
+//        {
+//            -0.5f, -0.5f, // bottom left
+//             0.5f, -0.5f, // bottom right
+//             0.0f,  0.366f, // top
+//        };
+
     private static final float[] SPIKE =  new float[]
         {
-            -0.5f, -0.5f, // bottom left
-             0.5f, -0.5f, // bottom right
-             0.0f,  0.366f, // top
+            0.5f, 0.5f, // bottom left
+            -0.5f, 0.5f, // bottom right
+            0.0f,  -0.366f, // top
         };
 
     public static void init()

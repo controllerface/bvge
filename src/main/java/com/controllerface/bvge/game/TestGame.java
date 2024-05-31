@@ -78,17 +78,17 @@ public class TestGame extends GameMode
     }
 
 
-    // note: order of adding systems is important
+    // note: order of adding systems is relevant
     private void loadSystems()
     {
         ecs.registerSystem(new SectorLoader(ecs, uniformGrid));
-        ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid)); // all physics calculations should be done first
-        ecs.registerSystem(new CameraTracking(ecs, uniformGrid)); // camera is handled before rendering occurs, but after collision has been resolved
-        ecs.registerSystem(screenBlankSystem); // the blanking system clears the screen before rendering passes
+        ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid));
+        ecs.registerSystem(new CameraTracking(ecs, uniformGrid));
 
-        // renderers are added in the order in which they will render
+        ecs.registerSystem(screenBlankSystem);
 
         ecs.registerSystem(new BackgroundRenderer(ecs));
+        ecs.registerSystem(new MouseRenderer(ecs));
 
         if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
         {
@@ -96,7 +96,6 @@ public class TestGame extends GameMode
             ecs.registerSystem(new LiquidRenderer(ecs));
         }
 
-        ecs.registerSystem(new MouseRenderer(ecs));
 
         // the following are debug renderers
 

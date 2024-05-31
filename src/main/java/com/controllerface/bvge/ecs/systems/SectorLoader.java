@@ -320,6 +320,10 @@ public class SectorLoader extends GameSystem
                 float block_y_2 = world_y_block / (UniformGrid.BLOCK_SIZE * .1f);
 
                 float n = noise.GetNoise(block_x, block_y);
+                float n_below = noise.GetNoise(block_x, block_y - 1);
+                boolean underside = n_below < block_range_floor && n_below > taco_range_floor;
+                boolean drop = underside && ((int)block_y % 2 == 0);
+                if (drop) continue;
 
                 boolean gen_block = n >= block_range_floor;
                 boolean gen_dyn = false;
@@ -343,7 +347,10 @@ public class SectorLoader extends GameSystem
                             solid = block_pallette3[block];
                         }
                     }
-                    batch.new_block(gen_dyn, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, Constants.HullFlags.OUT_OF_BOUNDS._int, solid);
+                    int flags = !gen_dyn ? Constants.HullFlags.IS_STATIC._int : 0;
+                    flags |= Constants.HullFlags.OUT_OF_BOUNDS._int;
+                    if (underside) batch.new_shard(spike, world_x_block, world_y_block, sz_solid, flags,.1f, 0.05f, 0.005f, Solid.PERIDOTITE);
+                    else batch.new_block(gen_dyn, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, Constants.HullFlags.OUT_OF_BOUNDS._int, solid);
                 }
                 else if (n < water_range_floor)
                 {

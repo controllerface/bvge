@@ -120,9 +120,13 @@ public class PhysicsObjects
         var p2 = CLUtils.arg_float2(v2.x(), v2.y());
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
 
-        var p1_index = world.new_point(p1, new int[4], v1.index(), next_hull_index, 0,0);
-        var p2_index = world.new_point(p2, new int[4], v2.index(), next_hull_index, 0,0);
-        var p3_index = world.new_point(p3, new int[4], v3.index(), next_hull_index, 0,0);
+        int h1 = random.nextInt(100, 4000);
+        int h2 = random.nextInt(100, 4000);
+        int h3 = random.nextInt(100, 4000);
+
+        var p1_index = world.new_point(p1, new int[4], v1.index(), next_hull_index, h1,0);
+        var p2_index = world.new_point(p2, new int[4], v2.index(), next_hull_index, h2,0);
+        var p3_index = world.new_point(p3, new int[4], v3.index(), next_hull_index, h3,0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -194,7 +198,6 @@ public class PhysicsObjects
         int h2 = random.nextInt(100, 4000);
         int h3 = random.nextInt(100, 4000);
         int h4 = random.nextInt(100, 4000);
-
 
         var p1_index = world.new_point(p1, new int[4], v1.index(), next_hull_index, h1,0);
         var p2_index = world.new_point(p2, new int[4], v2.index(), next_hull_index, h2,0);
