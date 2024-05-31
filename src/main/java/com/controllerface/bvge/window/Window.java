@@ -328,7 +328,7 @@ public class Window
 
         // order of system registry is important, systems run in the order they are added
         var inputSystem = new KBMInput(ecs);
-        ecs.registerSystem(inputSystem);
+        ecs.register_system(inputSystem);
 
         init_input(inputSystem);
     }

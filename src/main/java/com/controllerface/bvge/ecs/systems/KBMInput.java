@@ -31,7 +31,7 @@ public class KBMInput extends GameSystem
     @Override
     public void tick(float dt)
     {
-        var controllables = ecs.getComponents(Component.ControlPoints);
+        var controllables = ecs.get_components(Component.ControlPoints);
         for (Map.Entry<String, GameComponent> entry : controllables.entrySet())
         {
             GameComponent component = entry.getValue();

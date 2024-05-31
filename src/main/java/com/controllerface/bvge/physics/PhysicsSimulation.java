@@ -536,7 +536,7 @@ public class PhysicsSimulation extends GameSystem
     {
         // todo: index and magnitudes only need to be set once, but may need some
         //  checks or logic to ensure characters don't get deleted
-        var components = ecs.getComponents(Component.ControlPoints);
+        var components = ecs.get_components(Component.ControlPoints);
 
         control_point_flags.ensure_capacity(components.size());
         control_point_indices.ensure_capacity(components.size());

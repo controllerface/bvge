@@ -42,7 +42,7 @@ public enum Component
      */
     public <T extends GameComponent> T forEntity(ECS ecs, String entity)
     {
-        var componentClass = ecs.getComponentFor(entity, this);
+        var componentClass = ecs.get_component_for(entity, this);
         return componentClass == null ? null : coerce(componentClass);
     }
 }

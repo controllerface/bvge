@@ -133,7 +133,7 @@ public class MouseRenderer extends GameSystem
 
         if (cursor_hulls.count() == 0) return;
 
-        var control_components = ecs.getComponents(Component.ControlPoints);
+        var control_components = ecs.get_components(Component.ControlPoints);
         ControlPoints control_points = null;
         for (Map.Entry<String, GameComponent> entry : control_components.entrySet())
         {
