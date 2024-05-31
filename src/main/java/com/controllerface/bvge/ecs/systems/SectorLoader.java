@@ -73,14 +73,17 @@ public class SectorLoader extends GameSystem
                     last_loaded_sectors.addAll(loaded_sectors);
                     loaded_sectors.clear();
 
+                    int columns = sector_2_key[1] - sector_0_key[1];
+
                     for (int sx = sector_0_key[0]; sx <= sector_2_key[0]; sx++)
                     {
                         for (int sy = sector_0_key[1]; sy <= sector_2_key[1]; sy++)
                         {
                             var sector = new Sector(sx, sy);
-                            loaded_sectors.add(sector);
-                            if (!last_loaded_sectors.contains(sector))
+                            if (last_loaded_sectors.contains(sector)) loaded_sectors.add(sector);
+                            else if (columns-- > 0)
                             {
+                                loaded_sectors.add(sector);
                                 var sector_batch = sector_cache.get(sector, this::load_sector);
                                 GPGPU.core_memory.new_batch(sector_batch);
                             }

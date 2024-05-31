@@ -311,7 +311,7 @@ public class ModelRegistry
             int this_index = current_vertex_index.getAndIncrement();
             int this_vert = vert_index++;
             var raw_vertex = buffer.get();
-            System.out.println(raw_vertex.getClass().getCanonicalName());
+            //System.out.println(raw_vertex.getClass().getCanonicalName());
             List<Vector2f> vertex_uvs = new ArrayList<>();
             String[] names = bone_name_map.get(this_vert);
             float[] weights = bone_weight_map.get(this_vert);
@@ -453,18 +453,18 @@ public class ModelRegistry
                     float r = color_data.get(0);
                     float g = color_data.get(1);
                     float b = color_data.get(2);
-                    System.out.println("Mat type=" + raw_prop.mType()
-                            + " name=" + prop_name
-                            + " r=" + r
-                            + " g=" + g
-                            + " b=" + b);
+//                    System.out.println("Mat type=" + raw_prop.mType()
+//                            + " name=" + prop_name
+//                            + " r=" + r
+//                            + " g=" + g
+//                            + " b=" + b);
                 }
                 else if (prop_name.startsWith("$mat."))
                 {
                     float v = raw_prop.mData().asFloatBuffer().get(0);
-                    System.out.println("Mat type=" + raw_prop.mType()
-                            + " name=" + prop_name
-                            + " v=" + v);
+//                    System.out.println("Mat type=" + raw_prop.mType()
+//                            + " name=" + prop_name
+//                            + " v=" + v);
                 }
                 else
                 {
@@ -475,9 +475,9 @@ public class ModelRegistry
                             int f_count = raw_prop.mDataLength() / 4;
                             float[] float_out = new float[f_count];
                             float_buffer.get(float_out);
-                            System.out.println("Mat type=" + raw_prop.mType()
-                                    + " name=" + prop_name
-                                    + " float=" + Arrays.toString(float_out));
+//                            System.out.println("Mat type=" + raw_prop.mType()
+//                                    + " name=" + prop_name
+//                                    + " float=" + Arrays.toString(float_out));
                             break;
 
                         case 3:
@@ -486,9 +486,9 @@ public class ModelRegistry
                             byte[] bytes_out = new byte[s_count];
                             string_buffer.get(bytes_out);
                             var string = new String(bytes_out, StandardCharsets.UTF_8);
-                            System.out.println("Mat type=" + raw_prop.mType()
-                                    + " name=" + prop_name
-                                    + " string=" + string);
+//                            System.out.println("Mat type=" + raw_prop.mType()
+//                                    + " name=" + prop_name
+//                                    + " string=" + string);
                             break;
 
                         case 4:
@@ -496,15 +496,15 @@ public class ModelRegistry
                             int i_count = raw_prop.mDataLength() / 4;
                             int[] int_out = new int[i_count];
                             int_buffer.get(int_out);
-                            System.out.println("Mat type=" + raw_prop.mType()
-                                    + " name=" + prop_name
-                                    + " int=" + Arrays.toString(int_out));
+//                            System.out.println("Mat type=" + raw_prop.mType()
+//                                    + " name=" + prop_name
+//                                    + " int=" + Arrays.toString(int_out));
                             break;
 
                         default:
-                            System.out.println("Debug mat prop: type=" + raw_prop.mType()
-                                    + " len=" + raw_prop.mDataLength()
-                                    + " key=" + raw_prop.mKey().dataString());
+//                            System.out.println("Debug mat prop: type=" + raw_prop.mType()
+//                                    + " len=" + raw_prop.mDataLength()
+//                                    + " key=" + raw_prop.mKey().dataString());
                             break;
                     }
                 }
@@ -546,10 +546,10 @@ public class ModelRegistry
             int anim_timing_id = GPGPU.core_memory.new_animation_timings((float)raw_animation.mDuration(), (float)raw_animation.mTicksPerSecond());
             animation_map.put(animation_state, current_index++);
 
-            System.out.println("anim" + raw_animation.mName().dataString()
-                    + " state:" + animation_state
-                    + " id:" + anim_timing_id
-                    + " duration:" + raw_animation.mDuration());
+//            System.out.println("anim" + raw_animation.mName().dataString()
+//                    + " state:" + animation_state
+//                    + " id:" + anim_timing_id
+//                    + " duration:" + raw_animation.mDuration());
 
 
             int channel_count = raw_animation.mNumChannels();
@@ -681,15 +681,15 @@ public class ModelRegistry
                 var key = ks.get();
                 var val = vs.get();
                 var key_string = key.dataString();
-                System.out.println("n:" + nodeName + " k:" + key_string + " v:" + val.mType());
+                //System.out.println("n:" + nodeName + " k:" + key_string + " v:" + val.mType());
                 if (key_string.equalsIgnoreCase("pin"))
                 {
                     int k_int = val.mData(4).asIntBuffer().get();
-                    System.out.println("int: " + k_int);
+                    //System.out.println("int: " + k_int);
                 }
             }
 
-            System.out.println(p);
+            //System.out.println(p);
         }
 
         var currentNode = new SceneNode(nodeName, parentNode, transform);

@@ -36,7 +36,6 @@ public class EditorServer
         Not Found""").getBytes(StandardCharsets.UTF_8);
 
     private final List<EditorStream> streams = new CopyOnWriteArrayList<>();
-
     private final Map<String, String> stat_events = new ConcurrentHashMap<>();
 
     @FunctionalInterface
@@ -75,16 +74,12 @@ public class EditorServer
         private final Predicate<String> uri_filter;
         private final EndpointHandler handler;
 
-        EndPoint(EndpointMethod method,
-                 String uri,
-                 EndpointHandler handler)
+        EndPoint(EndpointMethod method, String uri, EndpointHandler handler)
         {
             this(method, (test_uri) -> test_uri.equals(uri), handler);
         }
 
-        EndPoint(EndpointMethod method,
-                 Predicate<String> uri_filter,
-                 EndpointHandler handler)
+        EndPoint(EndpointMethod method, Predicate<String> uri_filter, EndpointHandler handler)
         {
             this.method = method;
             this.uri_filter = uri_filter;
@@ -172,6 +167,7 @@ public class EditorServer
                     if (tokens.length != 3)
                     {
                         error = true;
+                        System.err.println("Invalid HTTP line");
                         continue;
                     }
                     line = new RequestLine(tokens[0], tokens[1], tokens[2]);
@@ -182,21 +178,16 @@ public class EditorServer
                     if (tokens.length < 1)
                     {
                         error = true;
+                        System.err.println("Invalid HTTP header");
                         continue;
                     }
                     headers.add(new Header(tokens[0].trim(), tokens[1].trim()));
                 }
             }
         }
-        if (error)
-        {
-            System.err.println("Invalid header, aborting connection");
-        }
-        else
-        {
-            return new Request(line, headers);
-        }
-        return null;
+
+        if (error) return null;
+        else return new Request(line, headers);
     }
 
     private void process_client(Socket client_connection)
@@ -208,10 +199,7 @@ public class EditorServer
         }
         catch (Exception _)
         {
-            try
-            {
-                client_connection.close();
-            }
+            try { client_connection.close(); }
             catch (Exception _) { }
         }
     }

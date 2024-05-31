@@ -124,6 +124,7 @@ public class StaticAsset
         var assetMap = new HashMap<String, StaticAsset>();
 
         assetMap.put("/",           StaticAsset.make("/ui/html/editor.html"));
+        assetMap.put("/stats.html", StaticAsset.make("/ui/html/stats.html"));
         assetMap.put("/editor.js",  StaticAsset.make("/ui/js/editor.js"));
         assetMap.put("/editor.css", StaticAsset.make("/ui/css/editor.css"));
 

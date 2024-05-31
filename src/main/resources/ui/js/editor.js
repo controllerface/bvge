@@ -32,6 +32,7 @@ event_source.addEventListener('phys_gen_keys', handle_event);
 event_source.addEventListener('phys_key_map', handle_event);
 event_source.addEventListener('phys_locate_inbounds', handle_event);
 event_source.addEventListener('phys_match_candidates', handle_event);
+event_source.addEventListener('phys_match_buffer_count', handle_event);
 event_source.addEventListener('phys_match_offsets', handle_event);
 event_source.addEventListener('phys_aabb_collide', handle_event);
 event_source.addEventListener('phys_finalize_candidates', handle_event);

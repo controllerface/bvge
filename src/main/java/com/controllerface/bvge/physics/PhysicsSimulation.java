@@ -1122,6 +1122,11 @@ public class PhysicsSimulation extends GameSystem
         // necessary to correctly determine how much of the table each hull will require.
         calculate_match_candidates();
 
+        if (Editor.ACTIVE)
+        {
+            Editor.queue_event("phys_match_buffer_count", String.valueOf(match_buffer_count));
+        }
+
         // In a second pass, candidate counts are scanned to determine the offsets into the match table that
         // correspond to each hull that will be checked for collisions.
         calculate_match_offsets();
