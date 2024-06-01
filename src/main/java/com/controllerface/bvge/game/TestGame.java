@@ -87,7 +87,6 @@ public class TestGame extends GameMode
             ecs.register_system(new LiquidRenderer(ecs));
         }
 
-
         // debug renderers
 
         if (ACTIVE_RENDERERS.contains(RenderType.HULLS))
@@ -125,12 +124,8 @@ public class TestGame extends GameMode
     }
 
     @Override
-    public void start()
-    {}
+    public void start() { }
 
     @Override
-    public void update(float dt)
-    {
-
-    }
+    public void update(float dt) { }
 }

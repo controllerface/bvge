@@ -1286,7 +1286,6 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_compact", String.valueOf(e));
         }
 
-
         // Armatures and bones are animated once per time tick, after all simulation is done for this pass. The interplay between
         // animation and edge constraints may leave points in slightly incorrect positions. Animating here ensures the rendering
         // step always sees the objects exactly in their correct positions.

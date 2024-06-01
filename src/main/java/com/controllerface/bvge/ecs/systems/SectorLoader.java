@@ -10,6 +10,7 @@ import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.util.FastNoiseLite;
+import com.controllerface.bvge.util.MathEX;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -25,17 +26,21 @@ public class SectorLoader extends GameSystem
 {
     private final UniformGrid uniformGrid;
 
-    private Set<Sector> last_loaded_sectors = new HashSet<>();
-    private Set<Sector> loaded_sectors = new HashSet<>();
+    private final Set<Sector> last_loaded_sectors = new HashSet<>();
+    private final Set<Sector> loaded_sectors = new HashSet<>();
 
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
 
-    FastNoiseLite noise = new FastNoiseLite();
-    FastNoiseLite noise2 = new FastNoiseLite();
-    FastNoiseLite noise3 = new FastNoiseLite();
+    private final FastNoiseLite noise = new FastNoiseLite();
+    private final FastNoiseLite noise2 = new FastNoiseLite();
+    private final FastNoiseLite noise3 = new FastNoiseLite();
     private final Random random = new Random();
     private final Thread loader;
     private final Duration STALE_TIME = Duration.of(5, ChronoUnit.MINUTES);
+    private final BlockingQueue<SectorBounds> next_load = new ArrayBlockingQueue<>(1);
+
+    private record SectorBounds(float outer_x_origin, float outer_y_origin, float outer_x_corner, float outer_y_corner) { }
+
     public SectorLoader(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
@@ -104,9 +109,6 @@ public class SectorLoader extends GameSystem
         });
     }
 
-    private record SectorRect(float outer_x_origin, float outer_y_origin, float outer_x_corner, float outer_y_corner) { }
-    private BlockingQueue<SectorRect> next_load = new ArrayBlockingQueue<>(1);
-
     @Override
     public void tick(float dt)
     {
@@ -116,7 +118,7 @@ public class SectorLoader extends GameSystem
         float outer_y_corner = outer_y_origin + uniformGrid.outer_height;
         try
         {
-            next_load.put(new SectorRect(outer_x_origin, outer_y_origin, outer_x_corner, outer_y_corner));
+            next_load.put(new SectorBounds(outer_x_origin, outer_y_origin, outer_x_corner, outer_y_corner));
         }
         catch (InterruptedException e)
         {
@@ -128,11 +130,6 @@ public class SectorLoader extends GameSystem
     public void shutdown()
     {
         loader.interrupt();
-    }
-
-    private float map(float x, float in_min, float in_max, float out_min, float out_max)
-    {
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 
     private Solid rare = Solid.COAL_DEPOSIT;
@@ -279,7 +276,7 @@ public class SectorLoader extends GameSystem
 
     private int m(float n, float floor, float length)
     {
-        return (int)map(n, floor, 1f, 0f, length);
+        return (int) MathEX.map(n, floor, 1f, 0f, length);
     }
 
     public float rando_float(float baseNumber, float percentage)

@@ -52,7 +52,7 @@ public class GPUCoreMemory implements WorldContainer
     private final GPUKernel update_accel_k;
     private final GPUKernel update_mouse_position_k;
 
-    // internal buffers
+    // Bookkeeping buffers
 
     //#region Compaction/Shift Buffers
 
@@ -83,74 +83,199 @@ public class GPUCoreMemory implements WorldContainer
 
     //#endregion
 
-    // external buffers
+    //#region Mirror Buffers
 
-    //#region Animation Data Buffers
-
-    /** int2
-     * x: position channel start index
-     * y: position channel end index
+    /**
+     * Mirror buffers are configured only for certain core buffers, and are used solely for rendering purposes.
+     * Between physics simulation ticks, rendering threads use the mirror buffers to render the state of the objects
+     * while the physics thread is busy calculating the data for the next frame.
      */
-    private final ResizableBuffer anim_bone_pos_channel_buffer;
-
-    /** int2
-     * x: rotation channel start index
-     * y: rotation channel end index
-     */
-    private final ResizableBuffer anim_bone_rot_channel_buffer;
-
-    /** int2
-     * x: scaling channel start index
-     * y: scaling channel end index
-     */
-    private final ResizableBuffer anim_bone_scl_channel_buffer;
-
-    /** float
-     * x: key frame timestamp
-     */
-    private final ResizableBuffer anim_frame_time_buffer;
-
-    /** float4
-     * x: vector/quaternion x
-     * y: vector/quaternion y
-     * z: vector/quaternion z
-     * w: vector/quaternion w
-     */
-    private final ResizableBuffer anim_key_frame_buffer;
-
-    /** float
-     * x: animation duration
-     */
-    private final ResizableBuffer anim_duration_buffer;
-
-    /** float
-     * x: animation tick rate (FPS)
-     */
-    private final ResizableBuffer anim_tick_rate_buffer;
-
-    /** int
-     * x: animation timing index
-     */
-    private final ResizableBuffer anim_timing_index_buffer;
+    private final ResizableBuffer mirror_entity_buffer;
+    private final ResizableBuffer mirror_entity_flag_buffer;
+    private final ResizableBuffer mirror_entity_model_id_buffer;
+    private final ResizableBuffer mirror_entity_root_hull_buffer;
+    private final ResizableBuffer mirror_edge_buffer;
+    private final ResizableBuffer mirror_edge_flag_buffer;
+    private final ResizableBuffer mirror_hull_buffer;
+    private final ResizableBuffer mirror_hull_aabb_buffer;
+    private final ResizableBuffer mirror_hull_flag_buffer;
+    private final ResizableBuffer mirror_hull_entity_id_buffer;
+    private final ResizableBuffer mirror_hull_mesh_id_buffer;
+    private final ResizableBuffer mirror_hull_uv_offset_buffer;
+    private final ResizableBuffer mirror_hull_integrity_buffer;
+    private final ResizableBuffer mirror_hull_point_table_buffer;
+    private final ResizableBuffer mirror_hull_rotation_buffer;
+    private final ResizableBuffer mirror_hull_scale_buffer;
+    private final ResizableBuffer mirror_point_buffer;
+    private final ResizableBuffer mirror_point_anti_gravity_buffer;
+    private final ResizableBuffer mirror_point_hit_count_buffer;
+    private final ResizableBuffer mirror_point_vertex_reference_buffer;
 
     //#endregion
 
-    //#region Armature Buffers
+    // external buffers
 
-    /** float16
-     * s0-sF: Column-major, 4x4 transformation matrix, armature bone instance
+    //#region Point Buffers
+
+    /** float
+     * x: anti-gravity magnitude for each point
      */
-    private final ResizableBuffer armature_bone_buffer;
+    private final ResizableBuffer point_anti_gravity_buffer;
+
+    /** int4
+     * x: bone 1 instance id
+     * y: bone 2 instance id
+     * z: bone 3 instance id
+     * w: bone 4 instance id
+     */
+    private final ResizableBuffer point_bone_table_buffer;
+
+    /** float4
+     * x: current x position
+     * y: current y position
+     * z: previous x position
+     * w: previous y position
+     */
+    private final ResizableBuffer point_buffer;
 
     /** int
-     * x: bind pose reference id
+     * x: reference vertex index
      */
-    private final ResizableBuffer armature_bone_reference_id_buffer;
+    private final ResizableBuffer point_vertex_reference_buffer;
 
     /** int
-     * x: armature bone parent id
+     * x: hull index
      */
-    private final ResizableBuffer armature_bone_parent_id_buffer;
+    private final ResizableBuffer point_hull_index_buffer;
+
+    /** int
+     * x: vertex flags (bit field)
+     */
+    private final ResizableBuffer point_flag_buffer;
+
+    /** ushort
+     * x: recent collision hit counter
+     */
+    private final ResizableBuffer point_hit_count_buffer;
+
+    //#endregion
+
+    //#region Edge Buffers
+
+    /** int2
+     * x: point 1 index
+     * y: point 2 index
+     */
+    private final ResizableBuffer edge_buffer;
+
+    /** int
+     * x: edge flags (bit-field)
+     */
+    private final ResizableBuffer edge_flag_buffer;
+
+    /** float
+     * x: edge constraint length
+     */
+    private final ResizableBuffer edge_length_buffer;
+
+    //#endregion
+
+    //#region Hull Buffers
+
+    /** float4
+     * x: corner x position
+     * y: corner y position
+     * z: width
+     * w: height
+     */
+    private final ResizableBuffer hull_aabb_b;
+
+    /** int4
+     * x: minimum x key index
+     * y: maximum x key index
+     * z: minimum y key index
+     * w: maximum y key index
+     */
+    private final ResizableBuffer hull_aabb_index_b;
+
+    /** int2
+     * x: key bank offset
+     * y: key bank size
+     */
+    private final ResizableBuffer hull_aabb_key_b;
+
+    /** float4
+     * x: current x position
+     * y: current y position
+     * z: previous x position
+     * w: previous y position
+     */
+    private final ResizableBuffer hull_b;
+
+    /** float2
+     * x: scale x
+     * y: scale y
+     */
+    private final ResizableBuffer hull_scale_b;
+
+    /** int2
+     * x: start point index
+     * y: end point index
+     */
+    private final ResizableBuffer hull_point_table_b;
+
+    /** int2
+     * x: start edge index
+     * y: end edge index
+     */
+    private final ResizableBuffer hull_edge_table_b;
+
+    /** int
+     * x: hull flags (bit-field)
+     */
+    private final ResizableBuffer hull_flag_b;
+
+    /** int
+     * x: entity id for aligned hull
+     */
+    private final ResizableBuffer hull_entity_id_b;
+
+    /** int2
+     * x: start bone
+     * y: end bone
+     */
+    private final ResizableBuffer hull_bone_table_b;
+
+    /** float
+     * x: friction coefficient
+     */
+    private final ResizableBuffer hull_friction_b;
+
+    /** float
+     * x: restitution coefficient
+     */
+    private final ResizableBuffer hull_restitution_b;
+
+    /** int
+     * x: reference mesh id
+     */
+    private final ResizableBuffer hull_mesh_id_b;
+
+    /** int
+     * x: offset index of the UV to use for this hull
+     */
+    private final ResizableBuffer hull_uv_offset_b;
+
+    /** float2
+     * x: initial reference angle
+     * y: current rotation
+     */
+    private final ResizableBuffer hull_rotation_b;
+
+    /** int
+     * x: the integrity (i.e. health) of the hull
+     */
+    private final ResizableBuffer hull_integrity_b;
 
     //#endregion
 
@@ -233,6 +358,96 @@ public class GPUCoreMemory implements WorldContainer
 
     //#endregion
 
+    //#region Hull Bone Buffers
+
+    /** float16
+     * s0-sF: Column-major, 4x4 transformation matrix, hull bone instance
+     */
+    private final ResizableBuffer hull_bone_b;
+
+    /** int
+     * x: bone bind pose index (model space)
+     */
+    private final ResizableBuffer hull_bone_bind_pose_id_b;
+
+    /** int
+     * x: bone inverse bind pose index (mesh-space)
+     */
+    private final ResizableBuffer hull_bone_inv_bind_pose_id_b;
+
+    //#endregion
+
+    //#region Armature Bone Buffers
+
+    /** float16
+     * s0-sF: Column-major, 4x4 transformation matrix, armature bone instance
+     */
+    private final ResizableBuffer armature_bone_buffer;
+
+    /** int
+     * x: bind pose reference id
+     */
+    private final ResizableBuffer armature_bone_reference_id_buffer;
+
+    /** int
+     * x: armature bone parent id
+     */
+    private final ResizableBuffer armature_bone_parent_id_buffer;
+
+    //#endregion
+
+    // reference buffers
+
+    //#region Animation Data Buffers
+
+    /** int2
+     * x: position channel start index
+     * y: position channel end index
+     */
+    private final ResizableBuffer anim_bone_pos_channel_buffer;
+
+    /** int2
+     * x: rotation channel start index
+     * y: rotation channel end index
+     */
+    private final ResizableBuffer anim_bone_rot_channel_buffer;
+
+    /** int2
+     * x: scaling channel start index
+     * y: scaling channel end index
+     */
+    private final ResizableBuffer anim_bone_scl_channel_buffer;
+
+    /** float
+     * x: key frame timestamp
+     */
+    private final ResizableBuffer anim_frame_time_buffer;
+
+    /** float4
+     * x: vector/quaternion x
+     * y: vector/quaternion y
+     * z: vector/quaternion z
+     * w: vector/quaternion w
+     */
+    private final ResizableBuffer anim_key_frame_buffer;
+
+    /** float
+     * x: animation duration
+     */
+    private final ResizableBuffer anim_duration_buffer;
+
+    /** float
+     * x: animation tick rate (FPS)
+     */
+    private final ResizableBuffer anim_tick_rate_buffer;
+
+    /** int
+     * x: animation timing index
+     */
+    private final ResizableBuffer anim_timing_index_buffer;
+
+    //#endregion
+
     //#region Bone Buffers
 
     /** int2
@@ -250,140 +465,6 @@ public class GPUCoreMemory implements WorldContainer
      * s0-sF: Column-major, 4x4 transformation matrix, model-space bone reference (bind pose)
      */
     private final ResizableBuffer bone_reference_buffer;
-
-    //#endregion
-
-    //#region Edge Buffers
-
-    /** int2
-     * x: point 1 index
-     * y: point 2 index
-     */
-    private final ResizableBuffer edge_buffer;
-
-    /** int
-     * x: edge flags (bit-field)
-     */
-    private final ResizableBuffer edge_flag_buffer;
-
-    /** float
-     * x: edge constraint length
-     */
-    private final ResizableBuffer edge_length_buffer;
-
-    //#endregion
-
-    //#region Hull Buffers
-
-    /** float4
-     * x: corner x position
-     * y: corner y position
-     * z: width
-     * w: height
-     */
-    private final ResizableBuffer hull_aabb_b;
-
-    /** int4
-     * x: minimum x key index
-     * y: maximum x key index
-     * z: minimum y key index
-     * w: maximum y key index
-     */
-    private final ResizableBuffer hull_aabb_index_b;
-
-    /** int2
-     * x: key bank offset
-     * y: key bank size
-     */
-    private final ResizableBuffer hull_aabb_key_b;
-
-    /** float16
-     * s0-sF: Column-major, 4x4 transformation matrix, hull bone instance
-     */
-    private final ResizableBuffer hull_bone_b;
-
-    /** int
-     * x: bone bind pose index (model space)
-     */
-    private final ResizableBuffer hull_bone_bind_pose_id_b;
-
-    /** int
-     * x: bone inverse bind pose index (mesh-space)
-     */
-    private final ResizableBuffer hull_bone_inv_bind_pose_id_b;
-
-    /** float4
-     * x: current x position
-     * y: current y position
-     * z: previous x position
-     * w: previous y position
-     */
-    private final ResizableBuffer hull_b;
-
-    /** float2
-     * x: scale x
-     * y: scale y
-     */
-    private final ResizableBuffer hull_scale_b;
-
-    /** int2
-     * x: start point index
-     * y: end point index
-     */
-    private final ResizableBuffer hull_point_table_b;
-
-    /** int2
-     * x: start edge index
-     * y: end edge index
-     */
-    private final ResizableBuffer hull_edge_table_b;
-
-    /** int
-     * x: hull flags (bit-field)
-     */
-    private final ResizableBuffer hull_flag_b;
-
-    /** int
-     * x: entity id for aligned hull
-     */
-    private final ResizableBuffer hull_entity_id_b;
-
-    /** int2
-     * x: start bone
-     * y: end bone
-     */
-    private final ResizableBuffer hull_bone_table_b;
-
-    /** float
-     * x: friction coefficient
-     */
-    private final ResizableBuffer hull_friction_b;
-
-    /** float
-     * x: restitution coefficient
-     */
-    private final ResizableBuffer hull_restitution_b;
-
-    /** int
-     * x: reference mesh id
-     */
-    private final ResizableBuffer hull_mesh_id_b;
-
-    /** int
-     * x: offset index of the UV to use for this hull
-     */
-    private final ResizableBuffer hull_uv_offset_b;
-
-    /** float2
-     * x: initial reference angle
-     * y: current rotation
-     */
-    private final ResizableBuffer hull_rotation_b;
-
-    /** int
-     * x: the integrity (i.e. health) of the hull
-     */
-    private final ResizableBuffer hull_integrity_b;
 
     //#endregion
 
@@ -413,51 +494,6 @@ public class GPUCoreMemory implements WorldContainer
      * s0-sF: Column-major, 4x4 transformation matrix
      */
     private final ResizableBuffer model_transform_buffer;
-
-    //#endregion
-
-    //#region Point Buffers
-
-    /** float
-     * x: anti-gravity magnitude for each point
-     */
-    private final ResizableBuffer point_anti_gravity_buffer;
-
-    /** int4
-     * x: bone 1 instance id
-     * y: bone 2 instance id
-     * z: bone 3 instance id
-     * w: bone 4 instance id
-     */
-    private final ResizableBuffer point_bone_table_buffer;
-
-    /** float4
-     * x: current x position
-     * y: current y position
-     * z: previous x position
-     * w: previous y position
-     */
-    private final ResizableBuffer point_buffer;
-
-    /** int
-     * x: reference vertex index
-     */
-    private final ResizableBuffer point_vertex_reference_buffer;
-
-    /** int
-     * x: hull index
-     */
-    private final ResizableBuffer point_hull_index_buffer;
-
-    /** int
-     * x: vertex flags (bit field)
-     */
-    private final ResizableBuffer point_flag_buffer;
-
-    /** ushort
-     * x: recent collision hit counter
-     */
-    private final ResizableBuffer point_hit_count_buffer;
 
     //#endregion
 
@@ -491,36 +527,6 @@ public class GPUCoreMemory implements WorldContainer
 
     //#endregion
 
-    //#region Mirror Buffers
-
-    /**
-     * Mirror buffers are configured only for certain core buffers, and are used solely for rendering purposes.
-     * Between physics simulation ticks, rendering threads use the mirror buffers to render the state of the objects
-     * while the physics thread is busy calculating the data for the next frame.
-     */
-    private final ResizableBuffer mirror_entity_buffer;
-    private final ResizableBuffer mirror_entity_flag_buffer;
-    private final ResizableBuffer mirror_entity_model_id_buffer;
-    private final ResizableBuffer mirror_entity_root_hull_buffer;
-    private final ResizableBuffer mirror_edge_buffer;
-    private final ResizableBuffer mirror_edge_flag_buffer;
-    private final ResizableBuffer mirror_hull_buffer;
-    private final ResizableBuffer mirror_hull_aabb_buffer;
-    private final ResizableBuffer mirror_hull_flag_buffer;
-    private final ResizableBuffer mirror_hull_entity_id_buffer;
-    private final ResizableBuffer mirror_hull_mesh_id_buffer;
-    private final ResizableBuffer mirror_hull_uv_offset_buffer;
-    private final ResizableBuffer mirror_hull_integrity_buffer;
-    private final ResizableBuffer mirror_hull_point_table_buffer;
-    private final ResizableBuffer mirror_hull_rotation_buffer;
-    private final ResizableBuffer mirror_hull_scale_buffer;
-    private final ResizableBuffer mirror_point_buffer;
-    private final ResizableBuffer mirror_point_anti_gravity_buffer;
-    private final ResizableBuffer mirror_point_hit_count_buffer;
-    private final ResizableBuffer mirror_point_vertex_reference_buffer;
-
-    //#endregion
-
     private final long delete_counter_ptr;
     private final long position_buffer_ptr;
     private final long delete_sizes_ptr;
@@ -551,7 +557,7 @@ public class GPUCoreMemory implements WorldContainer
     private int last_hull_index       = 0;
     private int last_point_index      = 0;
     private int last_edge_index       = 0;
-    private int last_entity_index = 0;
+    private int last_entity_index     = 0;
 
     private final WorldBuffer world_buffer;
 
