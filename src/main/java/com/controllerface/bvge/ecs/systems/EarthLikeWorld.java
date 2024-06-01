@@ -22,7 +22,7 @@ public class EarthLikeWorld implements WorldType
     private static final float water_range_floor = -0.2f;
     private static final float taco_range_floor = -0.15f;
 
-    private int m(float n, float floor, float length)
+    private int map_to_block(float n, float floor, float length)
     {
         return (int) MathEX.map(n, floor, 1f, 0f, length);
     }
@@ -214,8 +214,6 @@ public class EarthLikeWorld implements WorldType
                 float n = noise.GetNoise(block_x, block_y);
                 float n_below = noise.GetNoise(block_x, block_y - 1);
                 boolean underside = n_below < block_range_floor && n_below > taco_range_floor;
-                boolean drop = underside && ((int)block_y % 2 == 0);
-                if (drop) continue;
 
                 boolean gen_block = n >= block_range_floor;
                 boolean gen_dyn = false;
@@ -225,17 +223,17 @@ public class EarthLikeWorld implements WorldType
 
                 if (gen_block)
                 {
-                    int block = m(n, block_range_floor, (float)block_pallette.length);
+                    int block = map_to_block(n, block_range_floor, (float)block_pallette.length);
                     var solid = block_pallette[block];
                     if (solid != Solid.MUDSTONE && solid != Solid.CLAYSTONE)
                     {
                         float n2 = Math.abs(noise2.GetNoise(block_x_2, block_y));
-                        block = m(n2, 0, (float)block_pallette2.length);
+                        block = map_to_block(n2, 0, (float)block_pallette2.length);
                         solid = block_pallette2[block];
                         if (solid == rare)
                         {
                             float n3 = Math.abs(noise3.GetNoise(block_x_2, block_y_2));
-                            block = m(n3, 0, (float)block_pallette3.length);
+                            block = map_to_block(n3, 0, (float)block_pallette3.length);
                             solid = block_pallette3[block];
                         }
                     }

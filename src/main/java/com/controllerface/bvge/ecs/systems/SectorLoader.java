@@ -6,18 +6,12 @@ import com.controllerface.bvge.game.Sector;
 import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
-import com.controllerface.bvge.substances.Liquid;
-import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.util.Constants;
-import com.controllerface.bvge.util.FastNoiseLite;
-import com.controllerface.bvge.util.MathEX;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -25,16 +19,11 @@ import java.util.concurrent.BlockingQueue;
 public class SectorLoader extends GameSystem
 {
     private final UniformGrid uniformGrid;
-
     private final Set<Sector> last_loaded_sectors = new HashSet<>();
     private final Set<Sector> loaded_sectors = new HashSet<>();
-
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
-
     private final Thread loader;
-    private final Duration STALE_TIME = Duration.of(5, ChronoUnit.MINUTES);
-    private final BlockingQueue<SectorBounds> next_load = new ArrayBlockingQueue<>(1);
-
+    private final BlockingQueue<SectorBounds> next_sector_bounds = new ArrayBlockingQueue<>(1);
     private final WorldType world = new EarthLikeWorld();
 
     private record SectorBounds(float outer_x_origin, float outer_y_origin, float outer_x_corner, float outer_y_corner) { }
@@ -43,7 +32,7 @@ public class SectorLoader extends GameSystem
     {
         super(ecs);
         this.sector_cache = Caffeine.newBuilder()
-            .expireAfterAccess(STALE_TIME)
+            .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
             .build();
         this.uniformGrid = uniformGrid;
 
@@ -53,9 +42,9 @@ public class SectorLoader extends GameSystem
             {
                 try
                 {
-                    var next = next_load.take();
-                    var sector_0_key = UniformGridRenderer.get_sector_for_point(next.outer_x_origin, next.outer_y_origin);
-                    var sector_2_key = UniformGridRenderer.get_sector_for_point(next.outer_x_corner, next.outer_y_corner);
+                    var sector_bounds = next_sector_bounds.take();
+                    var sector_0_key = UniformGridRenderer.get_sector_for_point(sector_bounds.outer_x_origin, sector_bounds.outer_y_origin);
+                    var sector_2_key = UniformGridRenderer.get_sector_for_point(sector_bounds.outer_x_corner, sector_bounds.outer_y_corner);
 
                     float sector_0_origin_x = (float) sector_0_key[0] * UniformGrid.SECTOR_SIZE;
                     float sector_0_origin_y = (float) sector_0_key[1] * UniformGrid.SECTOR_SIZE;
@@ -107,7 +96,7 @@ public class SectorLoader extends GameSystem
         float outer_y_corner = outer_y_origin + uniformGrid.outer_height;
         try
         {
-            next_load.put(new SectorBounds(outer_x_origin, outer_y_origin, outer_x_corner, outer_y_corner));
+            next_sector_bounds.put(new SectorBounds(outer_x_origin, outer_y_origin, outer_x_corner, outer_y_corner));
         }
         catch (InterruptedException e)
         {

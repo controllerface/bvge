@@ -11,25 +11,25 @@ import java.util.Set;
  */
 public class UniformGrid
 {
-    public final static int BLOCK_SIZE  = 32;   // pixels per block row
-    public final static int BLOCK_COUNT = 16;   // blocks per row
-    public final static float SECTOR_SIZE = BLOCK_SIZE * BLOCK_COUNT; // pixels per row
+    public final static int BLOCK_SIZE  = 32;
+    public final static int BLOCK_COUNT = 16;
+    public final static float SECTOR_SIZE = BLOCK_SIZE * BLOCK_COUNT;
 
-    public final float perimeter_width;// = 2048f;
-    public final float perimeter_height;// = 1024f;
-    public final float outer_perimeter_width;// = 2048f;
-    public final float outer_perimeter_height;// = 1024f;
-    public final float width;// = (8192f - perimeter_width) * 2;
-    public final float height;// = (4096f - perimeter_height) * 2;
-    public final float inner_width;// = width - perimeter_width;
-    public final float inner_height;// = height - perimeter_height;
-    public final float outer_width;// = width - perimeter_width;
-    public final float outer_height;// = height - perimeter_height;
-    public final int x_subdivisions;// = 200;
-    public final int y_subdivisions;// = 100;
-    public final int directory_length;// = x_subdivisions * y_subdivisions;
-    public final float x_spacing;// = width / x_subdivisions;
-    public final float y_spacing;// = height / y_subdivisions;
+    public final float perimeter_width;
+    public final float perimeter_height;
+    public final float outer_perimeter_width;
+    public final float outer_perimeter_height;
+    public final float width;
+    public final float height;
+    public final float inner_width;
+    public final float inner_height;
+    public final float outer_width;
+    public final float outer_height;
+    public final int x_subdivisions;
+    public final int y_subdivisions;
+    public final int directory_length;
+    public final float x_spacing;
+    public final float y_spacing;
 
     private float x_origin = 0;
     private float y_origin = 0;
@@ -45,13 +45,12 @@ public class UniformGrid
     private float sector_width = 0;
     private float sector_height = 0;
 
-    private Set<Sector> loaded_sectors = new HashSet<>();
+    private final Set<Sector> loaded_sectors = new HashSet<>();
 
     public UniformGrid(int screen_width, int screen_height)
     {
         float x = (float)screen_width * 2.5f;
         float y = (float)screen_height * 2.5f;
-        System.out.println("x:" + screen_width + " y:" + screen_height);
         perimeter_width = screen_width * .20f;
         perimeter_height = screen_height * .30f;
         outer_perimeter_width = screen_width * .10f;
@@ -77,11 +76,6 @@ public class UniformGrid
         this.sector_origin_y = sector_origin_y;
         this.sector_width = sector_width;
         this.sector_height = sector_height;
-    }
-
-    public boolean is_sector_loaded(Sector sector)
-    {
-        return loaded_sectors.contains(sector);
     }
 
     public void updateOrigin(float x_origin, float y_origin)

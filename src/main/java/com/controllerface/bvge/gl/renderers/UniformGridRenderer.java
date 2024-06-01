@@ -34,6 +34,9 @@ public class UniformGridRenderer extends GameSystem
 
     private Shader shader;
 
+    private record GridPoint(float x, float y, float r, float g, float b, float a) { }
+    private record GridBounds(GridPoint p0, GridPoint p1, GridPoint p2, GridPoint p3) { }
+
     public UniformGridRenderer(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
@@ -85,10 +88,9 @@ public class UniformGridRenderer extends GameSystem
         return out;
     }
 
-    public record GridPoint(float x, float y, float r, float g, float b, float a) { }
-    public record GridRect(GridPoint p0, GridPoint p1, GridPoint p2, GridPoint p3) { }
 
-    private int[] write_rect(GridRect rect, float[] vertex_buffer, float[] color_buffer, int vertex_index, int color_index)
+
+    private int[] write_rect(GridBounds rect, float[] vertex_buffer, float[] color_buffer, int vertex_index, int color_index)
     {
         int v_i = vertex_index;
         int c_i = color_index;
@@ -143,35 +145,34 @@ public class UniformGridRenderer extends GameSystem
         float s_xo = uniformGrid.sector_origin_x();
         float s_yo = uniformGrid.sector_origin_y();
 
-        var base_rect_p0 = new GridPoint(xo, yo, 0.5f, 0.5f, 0.5f, 0.5f);
-        var base_rect_p1 = new GridPoint(xo + uniformGrid.width, yo, 0.5f, 0.5f, 0.5f, 0.5f);
-        var base_rect_p2 = new GridPoint(xo + uniformGrid.width, yo + uniformGrid.height, 0.5f, 0.5f, 0.5f, 0.5f);
-        var base_rect_p3 = new GridPoint(xo, yo + uniformGrid.height, 0.5f, 0.5f, 0.5f, 0.5f);
-        var base_rect    = new GridRect(base_rect_p0, base_rect_p1, base_rect_p2, base_rect_p3);
+        var base_bounds_p0 = new GridPoint(xo, yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var base_bounds_p1 = new GridPoint(xo + uniformGrid.width, yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var base_bounds_p2 = new GridPoint(xo + uniformGrid.width, yo + uniformGrid.height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var base_bounds_p3 = new GridPoint(xo, yo + uniformGrid.height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var base_bounds    = new GridBounds(base_bounds_p0, base_bounds_p1, base_bounds_p2, base_bounds_p3);
 
-        var inner_rect_p0 = new GridPoint(i_xo, i_yo, 0.5f, 0.5f, 0.5f, 0.5f);
-        var inner_rect_p1 = new GridPoint(i_xo + uniformGrid.inner_width, i_yo, 0.5f, 0.5f, 0.5f, 0.5f);
-        var inner_rect_p2 = new GridPoint(i_xo + uniformGrid.inner_width, i_yo + uniformGrid.inner_height, 0.5f, 0.5f, 0.5f, 0.5f);
-        var inner_rect_p3 = new GridPoint(i_xo, i_yo + uniformGrid.inner_height, 0.5f, 0.5f, 0.5f, 0.5f);
-        var inner_rect    = new GridRect(inner_rect_p0, inner_rect_p1, inner_rect_p2, inner_rect_p3);
+        var inner_bounds_p0 = new GridPoint(i_xo, i_yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var inner_bounds_p1 = new GridPoint(i_xo + uniformGrid.inner_width, i_yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var inner_bounds_p2 = new GridPoint(i_xo + uniformGrid.inner_width, i_yo + uniformGrid.inner_height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var inner_bounds_p3 = new GridPoint(i_xo, i_yo + uniformGrid.inner_height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var inner_bounds    = new GridBounds(inner_bounds_p0, inner_bounds_p1, inner_bounds_p2, inner_bounds_p3);
 
-        var outer_rect_p0 = new GridPoint(o_xo, o_yo, 0.5f, 0.5f, 0.5f, 0.5f);
-        var outer_rect_p1 = new GridPoint(o_xo + uniformGrid.outer_width, o_yo, 0.5f, 0.5f, 0.5f, 0.5f);
-        var outer_rect_p2 = new GridPoint(o_xo + uniformGrid.outer_width, o_yo + uniformGrid.outer_height, 0.5f, 0.5f, 0.5f, 0.5f);
-        var outer_rect_p3 = new GridPoint(o_xo, o_yo + uniformGrid.outer_height, 0.5f, 0.5f, 0.5f, 0.5f);
-        var outer_rect    = new GridRect(outer_rect_p0, outer_rect_p1, outer_rect_p2, outer_rect_p3);
+        var outer_bounds_p0 = new GridPoint(o_xo, o_yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var outer_bounds_p1 = new GridPoint(o_xo + uniformGrid.outer_width, o_yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var outer_bounds_p2 = new GridPoint(o_xo + uniformGrid.outer_width, o_yo + uniformGrid.outer_height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var outer_bounds_p3 = new GridPoint(o_xo, o_yo + uniformGrid.outer_height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var outer_bounds    = new GridBounds(outer_bounds_p0, outer_bounds_p1, outer_bounds_p2, outer_bounds_p3);
 
-        var sector_rect_p0 = new GridPoint(s_xo, s_yo, 0.9f, 0.5f, 0.5f, 0.5f);
-        var sector_rect_p1 = new GridPoint(s_xo + uniformGrid.sector_width(), s_yo, 0.9f, 0.5f, 0.5f, 0.5f);
-        var sector_rect_p2 = new GridPoint(s_xo + uniformGrid.sector_width(), s_yo + uniformGrid.sector_height(), 0.9f, 0.5f, 0.5f, 0.5f);
-        var sector_rect_p3 = new GridPoint(s_xo, s_yo + uniformGrid.sector_height(), 0.9f, 0.5f, 0.5f, 0.5f);
-        var sector_rect    = new GridRect(sector_rect_p0, sector_rect_p1, sector_rect_p2, sector_rect_p3);
+        var sector_bounds_p0 = new GridPoint(s_xo, s_yo, 0.9f, 0.5f, 0.5f, 0.5f);
+        var sector_bounds_p1 = new GridPoint(s_xo + uniformGrid.sector_width(), s_yo, 0.9f, 0.5f, 0.5f, 0.5f);
+        var sector_bounds_p2 = new GridPoint(s_xo + uniformGrid.sector_width(), s_yo + uniformGrid.sector_height(), 0.9f, 0.5f, 0.5f, 0.5f);
+        var sector_bounds_p3 = new GridPoint(s_xo, s_yo + uniformGrid.sector_height(), 0.9f, 0.5f, 0.5f, 0.5f);
+        var sector_bounds    = new GridBounds(sector_bounds_p0, sector_bounds_p1, sector_bounds_p2, sector_bounds_p3);
 
-
-        var sector_0_key = get_sector_for_point(outer_rect.p0.x, outer_rect.p0.y);
-        var sector_1_key = get_sector_for_point(outer_rect.p1.x, outer_rect.p1.y);
-        var sector_2_key = get_sector_for_point(outer_rect.p2.x, outer_rect.p2.y);
-        var sector_3_key = get_sector_for_point(outer_rect.p3.x, outer_rect.p3.y);
+        var sector_0_key = get_sector_for_point(outer_bounds.p0.x, outer_bounds.p0.y);
+        var sector_1_key = get_sector_for_point(outer_bounds.p1.x, outer_bounds.p1.y);
+        var sector_2_key = get_sector_for_point(outer_bounds.p2.x, outer_bounds.p2.y);
+        var sector_3_key = get_sector_for_point(outer_bounds.p3.x, outer_bounds.p3.y);
 
         float sector_0_origin_x = (float)sector_0_key[0] * sector_size;
         float sector_0_origin_y = (float)sector_0_key[1] * sector_size;
@@ -189,41 +190,41 @@ public class UniformGridRenderer extends GameSystem
         var sector_0_p1 = new GridPoint(sector_0_origin_x + sector_size, sector_0_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_0_p2 = new GridPoint(sector_0_origin_x + sector_size, sector_0_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_0_p3 = new GridPoint(sector_0_origin_x, sector_0_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
-        var sector_0    = new GridRect(sector_0_p0, sector_0_p1, sector_0_p2, sector_0_p3);
+        var sector_0    = new GridBounds(sector_0_p0, sector_0_p1, sector_0_p2, sector_0_p3);
 
         var sector_1_p0 = new GridPoint(sector_1_origin_x, sector_1_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_1_p1 = new GridPoint(sector_1_origin_x + sector_size, sector_1_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_1_p2 = new GridPoint(sector_1_origin_x + sector_size, sector_1_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_1_p3 = new GridPoint(sector_1_origin_x, sector_1_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
-        var sector_1    = new GridRect(sector_1_p0, sector_1_p1, sector_1_p2, sector_1_p3);
+        var sector_1    = new GridBounds(sector_1_p0, sector_1_p1, sector_1_p2, sector_1_p3);
 
         var sector_2_p0 = new GridPoint(sector_2_origin_x, sector_2_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_2_p1 = new GridPoint(sector_2_origin_x + sector_size, sector_2_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_2_p2 = new GridPoint(sector_2_origin_x + sector_size, sector_2_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_2_p3 = new GridPoint(sector_2_origin_x, sector_2_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
-        var sector_2    = new GridRect(sector_2_p0, sector_2_p1, sector_2_p2, sector_2_p3);
+        var sector_2    = new GridBounds(sector_2_p0, sector_2_p1, sector_2_p2, sector_2_p3);
 
         var sector_3_p0 = new GridPoint(sector_3_origin_x, sector_3_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_3_p1 = new GridPoint(sector_3_origin_x + sector_size, sector_3_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_3_p2 = new GridPoint(sector_3_origin_x + sector_size, sector_3_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
         var sector_3_p3 = new GridPoint(sector_3_origin_x, sector_3_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
-        var sector_3    = new GridRect(sector_3_p0, sector_3_p1, sector_3_p2, sector_3_p3);
+        var sector_3    = new GridBounds(sector_3_p0, sector_3_p1, sector_3_p2, sector_3_p3);
 
         int[] out;
 
-        out = write_rect(base_rect, vertex_data, color_data, vertex_index, color_index);
+        out = write_rect(base_bounds, vertex_data, color_data, vertex_index, color_index);
         vertex_index += out[0];
         color_index  += out[1];
 
-        out = write_rect(inner_rect, vertex_data, color_data, vertex_index, color_index);
+        out = write_rect(inner_bounds, vertex_data, color_data, vertex_index, color_index);
         vertex_index += out[0];
         color_index  += out[1];
 
-        out = write_rect(outer_rect, vertex_data, color_data, vertex_index, color_index);
+        out = write_rect(outer_bounds, vertex_data, color_data, vertex_index, color_index);
         vertex_index += out[0];
         color_index  += out[1];
 
-        out = write_rect(sector_rect, vertex_data, color_data, vertex_index, color_index);
+        out = write_rect(sector_bounds, vertex_data, color_data, vertex_index, color_index);
         vertex_index += out[0];
         color_index  += out[1];
 
@@ -243,10 +244,6 @@ public class UniformGridRenderer extends GameSystem
         vertex_index += out[0];
         color_index  += out[1];
 
-
-        float sx_offset = 0 * (int)UniformGrid.SECTOR_SIZE;
-        float sy_offset = 0 * (int)UniformGrid.SECTOR_SIZE;
-
         for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
         {
             for (int y = 0; y < UniformGrid.BLOCK_COUNT; y++)
@@ -256,8 +253,8 @@ public class UniformGridRenderer extends GameSystem
                 float b = 0.1f;
                 float a = 0.9f;
 
-                float current_x = (x * UniformGrid.BLOCK_SIZE) + sx_offset;
-                float current_y = (y * UniformGrid.BLOCK_SIZE) + sy_offset;
+                float current_x = (x * UniformGrid.BLOCK_SIZE) + UniformGrid.SECTOR_SIZE;
+                float current_y = (y * UniformGrid.BLOCK_SIZE) + UniformGrid.SECTOR_SIZE;
                 vertex_data[vertex_index++] = current_x;
                 vertex_data[vertex_index++] = current_y;
                 vertex_data[vertex_index++] = current_x + UniformGrid.BLOCK_SIZE;
@@ -285,13 +282,6 @@ public class UniformGridRenderer extends GameSystem
                 color_data[color_index++] = a;
             }
         }
-
-
-
-
-
-
-
 
         float x_offset = uniformGrid.x_origin();
         float y_offset = uniformGrid.y_origin();

@@ -8,10 +8,8 @@ import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Constants;
 
-import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.lwjgl.opencl.CL10.clFinish;
@@ -64,11 +62,11 @@ public class GPUCoreMemory implements WorldContainer
      * bone shift buffer. Points, edges, and hulls work the same way.
      */
 
-    private final ResizableBuffer armature_bone_shift;
-    private final ResizableBuffer hull_bone_shift;
-    private final ResizableBuffer edge_shift;
-    private final ResizableBuffer hull_shift;
-    private final ResizableBuffer point_shift;
+    private final ResizableBuffer b_armature_bone_shift;
+    private final ResizableBuffer b_hull_bone_shift;
+    private final ResizableBuffer b_edge_shift;
+    private final ResizableBuffer b_hull_shift;
+    private final ResizableBuffer b_point_shift;
 
     /**
      * During the deletion process, these buffers are used during the parallel scan of the relevant data
@@ -285,31 +283,31 @@ public class GPUCoreMemory implements WorldContainer
      * x: current x acceleration
      * y: current y acceleration
      */
-    private final ResizableBuffer entity_accel_buffer;
+    private final ResizableBuffer entity_accel_b;
 
     /** float2
      * x: the last rendered timestamp of the current animation
      * y: the last rendered timestamp of the previous animation
      */
-    private final ResizableBuffer entity_anim_elapsed_buffer;
+    private final ResizableBuffer entity_anim_elapsed_b;
 
     /** float2
      * x: the initial time of the current blend operation
      * y: the remaining time of the current blend operation
      */
-    private final ResizableBuffer entity_anim_blend_buffer;
+    private final ResizableBuffer entity_anim_blend_b;
 
     /** short2
      * x: number of ticks moving downward
      * y: number of ticks moving upward
      */
-    private final ResizableBuffer entity_motion_state_buffer;
+    private final ResizableBuffer entity_motion_state_b;
 
     /** int2
      * x: the currently running animation index
      * y: the previously running animation index
      */
-    private final ResizableBuffer entity_anim_index_buffer;
+    private final ResizableBuffer entity_anim_index_b;
 
     /** float4
      * x: current x position
@@ -317,44 +315,44 @@ public class GPUCoreMemory implements WorldContainer
      * z: previous x position
      * w: previous y position
      */
-    private final ResizableBuffer entity_buffer;
+    private final ResizableBuffer entity_b;
 
     /** int
      * x: entity flags (bit-field)
      */
-    private final ResizableBuffer entity_flag_buffer;
+    private final ResizableBuffer entity_flag_b;
 
     /** int
      * x: root hull index of the aligned entity
      */
-    private final ResizableBuffer entity_root_hull_buffer;
+    private final ResizableBuffer entity_root_hull_b;
 
     /** int
      * x: model id of the aligned entity
      */
-    private final ResizableBuffer entity_model_id_buffer;
+    private final ResizableBuffer entity_model_id_b;
 
     /** int
      * x: model transform index of the aligned entity
      */
-    private final ResizableBuffer entity_model_transform_buffer;
+    private final ResizableBuffer entity_model_transform_b;
 
     /** int2
      * x: start hull index
      * y: end hull index
      */
-    private final ResizableBuffer entity_hull_table_buffer;
+    private final ResizableBuffer entity_hull_table_b;
 
     /** int2
      * x: start bone anim index
      * y: end bone anim index
      */
-    private final ResizableBuffer entity_bone_table_buffer;
+    private final ResizableBuffer entity_bone_table_b;
 
     /** float
      * x: mass of the entity
      */
-    private final ResizableBuffer entity_mass_buffer;
+    private final ResizableBuffer entity_mass_b;
 
     //#endregion
 
@@ -568,11 +566,11 @@ public class GPUCoreMemory implements WorldContainer
         delete_sizes_ptr        = GPGPU.cl_new_buffer(CLSize.cl_int * 6);
 
         // transients
-        hull_shift              = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
-        edge_shift              = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 24_000L);
-        point_shift             = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 50_000L);
-        hull_bone_shift         = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
-        armature_bone_shift     = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 24_000L);
+        b_hull_shift            = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        b_edge_shift            = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 24_000L);
+        b_point_shift           = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 50_000L);
+        b_hull_bone_shift       = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        b_armature_bone_shift   = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 24_000L);
         delete_buffer_1         = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
         delete_buffer_2         = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int4, 20_000L);
         delete_partial_buffer_1 = new TransientBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
@@ -587,22 +585,22 @@ public class GPUCoreMemory implements WorldContainer
         anim_duration_buffer              = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float);
         anim_tick_rate_buffer             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float);
         anim_timing_index_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
-        entity_accel_buffer               = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
-        entity_anim_elapsed_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
-        entity_anim_blend_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
-        entity_motion_state_buffer        = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_short2, 10_000L);
-        entity_anim_index_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        entity_accel_b                    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        entity_anim_elapsed_b             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        entity_anim_blend_b               = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float2, 10_000L);
+        entity_motion_state_b             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_short2, 10_000L);
+        entity_anim_index_b               = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
         armature_bone_buffer              = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16);
         armature_bone_reference_id_buffer = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
         armature_bone_parent_id_buffer    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int);
-        entity_buffer                     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
-        entity_flag_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
-        entity_root_hull_buffer           = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
-        entity_model_id_buffer            = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
-        entity_model_transform_buffer     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
-        entity_hull_table_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
-        entity_bone_table_buffer          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
-        entity_mass_buffer                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float, 10_000L);
+        entity_b                          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float4, 10_000L);
+        entity_flag_b                     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        entity_root_hull_b                = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        entity_model_id_b                 = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        entity_model_transform_b          = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int, 10_000L);
+        entity_hull_table_b               = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        entity_bone_table_b               = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2, 10_000L);
+        entity_mass_b                     = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float, 10_000L);
         bone_anim_channel_table_buffer    = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_int2);
         bone_bind_pose_buffer             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16);
         bone_reference_buffer             = new PersistentBuffer(GPGPU.cl_cmd_queue_ptr, CLSize.cl_float16);
@@ -718,17 +716,17 @@ public class GPUCoreMemory implements WorldContainer
 
         long create_entity_k_ptr = gpu_crud.kernel_ptr(Kernel.create_entity);
         create_entity_k = new CreateEntity_k(GPGPU.cl_cmd_queue_ptr, create_entity_k_ptr)
-            .buf_arg(CreateEntity_k.Args.entities, entity_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_root_hulls, entity_root_hull_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_model_indices, entity_model_id_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_model_transforms, entity_model_transform_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_flags, entity_flag_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_hull_tables, entity_hull_table_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_bone_tables, entity_bone_table_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_masses, entity_mass_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_animation_indices, entity_anim_index_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_animation_elapsed, entity_anim_elapsed_buffer)
-            .buf_arg(CreateEntity_k.Args.entity_motion_states, entity_motion_state_buffer);
+            .buf_arg(CreateEntity_k.Args.entities, entity_b)
+            .buf_arg(CreateEntity_k.Args.entity_root_hulls, entity_root_hull_b)
+            .buf_arg(CreateEntity_k.Args.entity_model_indices, entity_model_id_b)
+            .buf_arg(CreateEntity_k.Args.entity_model_transforms, entity_model_transform_b)
+            .buf_arg(CreateEntity_k.Args.entity_flags, entity_flag_b)
+            .buf_arg(CreateEntity_k.Args.entity_hull_tables, entity_hull_table_b)
+            .buf_arg(CreateEntity_k.Args.entity_bone_tables, entity_bone_table_b)
+            .buf_arg(CreateEntity_k.Args.entity_masses, entity_mass_b)
+            .buf_arg(CreateEntity_k.Args.entity_animation_indices, entity_anim_index_b)
+            .buf_arg(CreateEntity_k.Args.entity_animation_elapsed, entity_anim_elapsed_b)
+            .buf_arg(CreateEntity_k.Args.entity_motion_states, entity_motion_state_b);
 
         long create_bone_k_ptr = gpu_crud.kernel_ptr(Kernel.create_hull_bone);
         create_bone_k = new CreateHullBone_k(GPGPU.cl_cmd_queue_ptr, create_bone_k_ptr)
@@ -780,17 +778,17 @@ public class GPUCoreMemory implements WorldContainer
 
         long read_position_k_ptr = gpu_crud.kernel_ptr(Kernel.read_position);
         read_position_k = new ReadPosition_k(GPGPU.cl_cmd_queue_ptr, read_position_k_ptr)
-            .buf_arg(ReadPosition_k.Args.entities, entity_buffer);
+            .buf_arg(ReadPosition_k.Args.entities, entity_b);
 
         // update methods
 
         long update_accel_k_ptr = gpu_crud.kernel_ptr(Kernel.update_accel);
         update_accel_k = new UpdateAccel_k(GPGPU.cl_cmd_queue_ptr, update_accel_k_ptr)
-            .buf_arg(UpdateAccel_k.Args.entity_accel, entity_accel_buffer);
+            .buf_arg(UpdateAccel_k.Args.entity_accel, entity_accel_b);
 
         long update_mouse_position_k_ptr = gpu_crud.kernel_ptr(Kernel.update_mouse_position);
         update_mouse_position_k = new UpdateMousePosition_k(GPGPU.cl_cmd_queue_ptr, update_mouse_position_k_ptr)
-            .buf_arg(UpdateMousePosition_k.Args.entity_root_hulls, entity_root_hull_buffer)
+            .buf_arg(UpdateMousePosition_k.Args.entity_root_hulls, entity_root_hull_b)
             .buf_arg(UpdateMousePosition_k.Args.hull_point_tables, hull_point_table_b)
             .buf_arg(UpdateMousePosition_k.Args.points, point_buffer);
 
@@ -802,16 +800,16 @@ public class GPUCoreMemory implements WorldContainer
 
         long locate_out_of_bounds_k_ptr = scan_deletes.kernel_ptr(Kernel.locate_out_of_bounds);
         locate_out_of_bounds_k = new LocateOutOfBounds_k(GPGPU.cl_cmd_queue_ptr, locate_out_of_bounds_k_ptr)
-            .buf_arg(LocateOutOfBounds_k.Args.hull_tables, entity_hull_table_buffer)
+            .buf_arg(LocateOutOfBounds_k.Args.hull_tables, entity_hull_table_b)
             .buf_arg(LocateOutOfBounds_k.Args.hull_flags, hull_flag_b)
-            .buf_arg(LocateOutOfBounds_k.Args.entity_flags, entity_flag_buffer);
+            .buf_arg(LocateOutOfBounds_k.Args.entity_flags, entity_flag_b);
 
         long scan_deletes_single_block_out_k_ptr = scan_deletes.kernel_ptr(Kernel.scan_deletes_single_block_out);
         scan_deletes_single_block_out_k = new ScanDeletesSingleBlockOut_k(GPGPU.cl_cmd_queue_ptr, scan_deletes_single_block_out_k_ptr)
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.sz, delete_sizes_ptr)
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.entity_flags, entity_flag_buffer)
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, entity_hull_table_buffer)
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.bone_tables, entity_bone_table_buffer)
+            .buf_arg(ScanDeletesSingleBlockOut_k.Args.entity_flags, entity_flag_b)
+            .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables, entity_hull_table_b)
+            .buf_arg(ScanDeletesSingleBlockOut_k.Args.bone_tables, entity_bone_table_b)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.point_tables, hull_point_table_b)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.edge_tables, hull_edge_table_b)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_bone_tables, hull_bone_table_b);
@@ -820,9 +818,9 @@ public class GPUCoreMemory implements WorldContainer
         scan_deletes_multi_block_out_k = new ScanDeletesMultiBlockOut_k(GPGPU.cl_cmd_queue_ptr, scan_deletes_multi_block_out_k_ptr)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.part1, delete_partial_buffer_1)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.part2, delete_partial_buffer_2)
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.entity_flags, entity_flag_buffer)
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, entity_hull_table_buffer)
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.bone_tables, entity_bone_table_buffer)
+            .buf_arg(ScanDeletesMultiBlockOut_k.Args.entity_flags, entity_flag_b)
+            .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables, entity_hull_table_b)
+            .buf_arg(ScanDeletesMultiBlockOut_k.Args.bone_tables, entity_bone_table_b)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.point_tables, hull_point_table_b)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.edge_tables, hull_edge_table_b)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_bone_tables, hull_bone_table_b);
@@ -832,27 +830,27 @@ public class GPUCoreMemory implements WorldContainer
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.sz, delete_sizes_ptr)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part1, delete_partial_buffer_1)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part2, delete_partial_buffer_2)
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.entity_flags, entity_flag_buffer)
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, entity_hull_table_buffer)
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.bone_tables, entity_bone_table_buffer)
+            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.entity_flags, entity_flag_b)
+            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables, entity_hull_table_b)
+            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.bone_tables, entity_bone_table_b)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.point_tables, hull_point_table_b)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.edge_tables, hull_edge_table_b)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_bone_tables, hull_bone_table_b);
 
         long compact_entities_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_entities);
         compact_entities_k = new CompactEntities_k(GPGPU.cl_cmd_queue_ptr, compact_entities_k_ptr)
-            .buf_arg(CompactEntities_k.Args.entities, entity_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_masses, entity_mass_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_root_hulls, entity_root_hull_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_model_indices, entity_model_id_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_model_transforms, entity_model_transform_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_flags, entity_flag_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_animation_indices, entity_anim_index_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_animation_elapsed, entity_anim_elapsed_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_animation_blend, entity_anim_blend_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_motion_states, entity_motion_state_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_entity_hull_tables, entity_hull_table_buffer)
-            .buf_arg(CompactEntities_k.Args.entity_bone_tables, entity_bone_table_buffer)
+            .buf_arg(CompactEntities_k.Args.entities, entity_b)
+            .buf_arg(CompactEntities_k.Args.entity_masses, entity_mass_b)
+            .buf_arg(CompactEntities_k.Args.entity_root_hulls, entity_root_hull_b)
+            .buf_arg(CompactEntities_k.Args.entity_model_indices, entity_model_id_b)
+            .buf_arg(CompactEntities_k.Args.entity_model_transforms, entity_model_transform_b)
+            .buf_arg(CompactEntities_k.Args.entity_flags, entity_flag_b)
+            .buf_arg(CompactEntities_k.Args.entity_animation_indices, entity_anim_index_b)
+            .buf_arg(CompactEntities_k.Args.entity_animation_elapsed, entity_anim_elapsed_b)
+            .buf_arg(CompactEntities_k.Args.entity_animation_blend, entity_anim_blend_b)
+            .buf_arg(CompactEntities_k.Args.entity_motion_states, entity_motion_state_b)
+            .buf_arg(CompactEntities_k.Args.entity_entity_hull_tables, entity_hull_table_b)
+            .buf_arg(CompactEntities_k.Args.entity_bone_tables, entity_bone_table_b)
             .buf_arg(CompactEntities_k.Args.hull_bone_tables, hull_bone_table_b)
             .buf_arg(CompactEntities_k.Args.hull_entity_ids, hull_entity_id_b)
             .buf_arg(CompactEntities_k.Args.hull_point_tables, hull_point_table_b)
@@ -863,15 +861,15 @@ public class GPUCoreMemory implements WorldContainer
             .buf_arg(CompactEntities_k.Args.armature_bone_parent_ids, armature_bone_parent_id_buffer)
             .buf_arg(CompactEntities_k.Args.hull_bind_pose_indices, hull_bone_bind_pose_id_b)
             .buf_arg(CompactEntities_k.Args.edges, edge_buffer)
-            .buf_arg(CompactEntities_k.Args.hull_bone_shift, hull_bone_shift)
-            .buf_arg(CompactEntities_k.Args.point_shift, point_shift)
-            .buf_arg(CompactEntities_k.Args.edge_shift, edge_shift)
-            .buf_arg(CompactEntities_k.Args.hull_shift, hull_shift)
-            .buf_arg(CompactEntities_k.Args.armature_bone_shift, armature_bone_shift);
+            .buf_arg(CompactEntities_k.Args.hull_bone_shift, b_hull_bone_shift)
+            .buf_arg(CompactEntities_k.Args.point_shift, b_point_shift)
+            .buf_arg(CompactEntities_k.Args.edge_shift, b_edge_shift)
+            .buf_arg(CompactEntities_k.Args.hull_shift, b_hull_shift)
+            .buf_arg(CompactEntities_k.Args.armature_bone_shift, b_armature_bone_shift);
 
         long compact_hulls_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_hulls);
         compact_hulls_k = new CompactHulls_k(GPGPU.cl_cmd_queue_ptr, compact_hulls_k_ptr)
-            .buf_arg(CompactHulls_k.Args.hull_shift, hull_shift)
+            .buf_arg(CompactHulls_k.Args.hull_shift, b_hull_shift)
             .buf_arg(CompactHulls_k.Args.hulls, hull_b)
             .buf_arg(CompactHulls_k.Args.hull_scales, hull_scale_b)
             .buf_arg(CompactHulls_k.Args.hull_mesh_ids, hull_mesh_id_b)
@@ -891,14 +889,14 @@ public class GPUCoreMemory implements WorldContainer
 
         long compact_edges_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_edges);
         compact_edges_k = new CompactEdges_k(GPGPU.cl_cmd_queue_ptr, compact_edges_k_ptr)
-            .buf_arg(CompactEdges_k.Args.edge_shift, edge_shift)
+            .buf_arg(CompactEdges_k.Args.edge_shift, b_edge_shift)
             .buf_arg(CompactEdges_k.Args.edges, edge_buffer)
             .buf_arg(CompactEdges_k.Args.edge_lengths, edge_length_buffer)
             .buf_arg(CompactEdges_k.Args.edge_flags, edge_flag_buffer);
 
         long compact_points_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_points);
         compact_points_k = new CompactPoints_k(GPGPU.cl_cmd_queue_ptr, compact_points_k_ptr)
-            .buf_arg(CompactPoints_k.Args.point_shift, point_shift)
+            .buf_arg(CompactPoints_k.Args.point_shift, b_point_shift)
             .buf_arg(CompactPoints_k.Args.points, point_buffer)
             .buf_arg(CompactPoints_k.Args.anti_gravity, point_anti_gravity_buffer)
             .buf_arg(CompactPoints_k.Args.point_vertex_references, point_vertex_reference_buffer)
@@ -909,14 +907,14 @@ public class GPUCoreMemory implements WorldContainer
 
         long compact_hull_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_hull_bones);
         compact_hull_bones_k = new CompactHullBones_k(GPGPU.cl_cmd_queue_ptr, compact_hull_bones_k_ptr)
-            .buf_arg(CompactHullBones_k.Args.hull_bone_shift, hull_bone_shift)
+            .buf_arg(CompactHullBones_k.Args.hull_bone_shift, b_hull_bone_shift)
             .buf_arg(CompactHullBones_k.Args.bone_instances, hull_bone_b)
             .buf_arg(CompactHullBones_k.Args.hull_bind_pose_indicies, hull_bone_bind_pose_id_b)
             .buf_arg(CompactHullBones_k.Args.hull_inv_bind_pose_indicies, hull_bone_inv_bind_pose_id_b);
 
         long compact_armature_bones_k_ptr = scan_deletes.kernel_ptr(Kernel.compact_armature_bones);
         compact_armature_bones_k = new CompactArmatureBones_k(GPGPU.cl_cmd_queue_ptr, compact_armature_bones_k_ptr)
-            .buf_arg(CompactArmatureBones_k.Args.armature_bone_shift, armature_bone_shift)
+            .buf_arg(CompactArmatureBones_k.Args.armature_bone_shift, b_armature_bone_shift)
             .buf_arg(CompactArmatureBones_k.Args.armature_bones, armature_bone_buffer)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_reference_ids, armature_bone_reference_id_buffer)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_parent_ids, armature_bone_parent_id_buffer);
@@ -936,22 +934,22 @@ public class GPUCoreMemory implements WorldContainer
             case ANIM_DURATION                 -> anim_duration_buffer;
             case ANIM_TICK_RATE                -> anim_tick_rate_buffer;
             case ANIM_TIMING_INDEX             -> anim_timing_index_buffer;
-            case ENTITY -> entity_buffer;
-            case ENTITY_ACCEL -> entity_accel_buffer;
-            case ENTITY_ANIM_BLEND -> entity_anim_blend_buffer;
-            case ENTITY_ANIM_ELAPSED -> entity_anim_elapsed_buffer;
-            case ENTITY_MOTION_STATE -> entity_motion_state_buffer;
-            case ENTITY_ANIM_INDEX -> entity_anim_index_buffer;
+            case ENTITY -> entity_b;
+            case ENTITY_ACCEL -> entity_accel_b;
+            case ENTITY_ANIM_BLEND -> entity_anim_blend_b;
+            case ENTITY_ANIM_ELAPSED -> entity_anim_elapsed_b;
+            case ENTITY_MOTION_STATE -> entity_motion_state_b;
+            case ENTITY_ANIM_INDEX -> entity_anim_index_b;
             case ARMATURE_BONE                 -> armature_bone_buffer;
             case ARMATURE_BONE_REFERENCE_ID    -> armature_bone_reference_id_buffer;
             case ARMATURE_BONE_PARENT_ID       -> armature_bone_parent_id_buffer;
-            case ENTITY_FLAG -> entity_flag_buffer;
-            case ENTITY_BONE_TABLE -> entity_bone_table_buffer;
-            case ENTITY_HULL_TABLE -> entity_hull_table_buffer;
-            case ENTITY_MASS -> entity_mass_buffer;
-            case ENTITY_MODEL_ID -> entity_model_id_buffer;
-            case ENTITY_ROOT_HULL -> entity_root_hull_buffer;
-            case ENTITY_TRANSFORM_ID -> entity_model_transform_buffer;
+            case ENTITY_FLAG -> entity_flag_b;
+            case ENTITY_BONE_TABLE -> entity_bone_table_b;
+            case ENTITY_HULL_TABLE -> entity_hull_table_b;
+            case ENTITY_MASS -> entity_mass_b;
+            case ENTITY_MODEL_ID -> entity_model_id_b;
+            case ENTITY_ROOT_HULL -> entity_root_hull_b;
+            case ENTITY_TRANSFORM_ID -> entity_model_transform_b;
             case BONE_ANIM_TABLE               -> bone_anim_channel_table_buffer;
             case BONE_BIND_POSE                -> bone_bind_pose_buffer;
             case BONE_REFERENCE                -> bone_reference_buffer;
@@ -1018,10 +1016,10 @@ public class GPUCoreMemory implements WorldContainer
 
     public void mirror_buffers_ex()
     {
-        mirror_entity_buffer.mirror_buffer(entity_buffer);
-        mirror_entity_flag_buffer.mirror_buffer(entity_flag_buffer);
-        mirror_entity_model_id_buffer.mirror_buffer(entity_model_id_buffer);
-        mirror_entity_root_hull_buffer.mirror_buffer(entity_root_hull_buffer);
+        mirror_entity_buffer.mirror_buffer(entity_b);
+        mirror_entity_flag_buffer.mirror_buffer(entity_flag_b);
+        mirror_entity_model_id_buffer.mirror_buffer(entity_model_id_b);
+        mirror_entity_root_hull_buffer.mirror_buffer(entity_root_hull_b);
         mirror_edge_buffer.mirror_buffer(edge_buffer);
         mirror_edge_flag_buffer.mirror_buffer(edge_flag_buffer);
         mirror_hull_buffer.mirror_buffer(hull_b);
@@ -1154,11 +1152,11 @@ public class GPUCoreMemory implements WorldContainer
 
     public void process_world_buffer()
     {
-        int point_count = world_buffer.next_point();
-        int edge_count = world_buffer.next_edge();
-        int hull_count = world_buffer.next_hull();
-        int entity_count = world_buffer.next_entity();
-        int hull_bone_count = world_buffer.next_hull_bone();
+        int point_count         = world_buffer.next_point();
+        int edge_count          = world_buffer.next_edge();
+        int hull_count          = world_buffer.next_hull();
+        int entity_count        = world_buffer.next_entity();
+        int hull_bone_count     = world_buffer.next_hull_bone();
         int armature_bone_count = world_buffer.next_armature_bone();
 
         int total = point_count
@@ -1170,11 +1168,11 @@ public class GPUCoreMemory implements WorldContainer
 
         if (total == 0) return;
 
-        int point_capacity = point_count + next_point();
-        int edge_capacity = edge_count + next_edge();
-        int hull_capacity = hull_count + next_hull();
-        int entity_capacity = entity_count + next_entity();
-        int hull_bone_capacity = hull_bone_count + next_hull_bone();
+        int point_capacity         = point_count + next_point();
+        int edge_capacity          = edge_count + next_edge();
+        int hull_capacity          = hull_count + next_hull();
+        int entity_capacity        = entity_count + next_entity();
+        int hull_bone_capacity     = hull_bone_count + next_hull_bone();
         int armature_bone_capacity = armature_bone_count + next_armature_bone();
 
         point_buffer.ensure_capacity(point_capacity);
@@ -1206,19 +1204,19 @@ public class GPUCoreMemory implements WorldContainer
         hull_aabb_index_b.ensure_capacity(hull_capacity);
         hull_aabb_key_b.ensure_capacity(hull_capacity);
 
-        entity_buffer.ensure_capacity(entity_capacity);
-        entity_flag_buffer.ensure_capacity(entity_capacity);
-        entity_root_hull_buffer.ensure_capacity(entity_capacity);
-        entity_model_id_buffer.ensure_capacity(entity_capacity);
-        entity_model_transform_buffer.ensure_capacity(entity_capacity);
-        entity_accel_buffer.ensure_capacity(entity_capacity);
-        entity_mass_buffer.ensure_capacity(entity_capacity);
-        entity_anim_index_buffer.ensure_capacity(entity_capacity);
-        entity_anim_elapsed_buffer.ensure_capacity(entity_capacity);
-        entity_anim_blend_buffer.ensure_capacity(entity_capacity);
-        entity_motion_state_buffer.ensure_capacity(entity_capacity);
-        entity_hull_table_buffer.ensure_capacity(entity_capacity);
-        entity_bone_table_buffer.ensure_capacity(entity_capacity);
+        entity_b.ensure_capacity(entity_capacity);
+        entity_flag_b.ensure_capacity(entity_capacity);
+        entity_root_hull_b.ensure_capacity(entity_capacity);
+        entity_model_id_b.ensure_capacity(entity_capacity);
+        entity_model_transform_b.ensure_capacity(entity_capacity);
+        entity_accel_b.ensure_capacity(entity_capacity);
+        entity_mass_b.ensure_capacity(entity_capacity);
+        entity_anim_index_b.ensure_capacity(entity_capacity);
+        entity_anim_elapsed_b.ensure_capacity(entity_capacity);
+        entity_anim_blend_b.ensure_capacity(entity_capacity);
+        entity_motion_state_b.ensure_capacity(entity_capacity);
+        entity_hull_table_b.ensure_capacity(entity_capacity);
+        entity_bone_table_b.ensure_capacity(entity_capacity);
 
         hull_bone_b.ensure_capacity(hull_bone_capacity);
         hull_bone_bind_pose_id_b.ensure_capacity(hull_bone_capacity);
@@ -1437,19 +1435,19 @@ public class GPUCoreMemory implements WorldContainer
                           int flags)
     {
         int capacity = entity_index + 1;
-        entity_buffer.ensure_capacity(capacity);
-        entity_flag_buffer.ensure_capacity(capacity);
-        entity_root_hull_buffer.ensure_capacity(capacity);
-        entity_model_id_buffer.ensure_capacity(capacity);
-        entity_model_transform_buffer.ensure_capacity(capacity);
-        entity_accel_buffer.ensure_capacity(capacity);
-        entity_mass_buffer.ensure_capacity(capacity);
-        entity_anim_index_buffer.ensure_capacity(capacity);
-        entity_anim_elapsed_buffer.ensure_capacity(capacity);
-        entity_anim_blend_buffer.ensure_capacity(capacity);
-        entity_motion_state_buffer.ensure_capacity(capacity);
-        entity_hull_table_buffer.ensure_capacity(capacity);
-        entity_bone_table_buffer.ensure_capacity(capacity);
+        entity_b.ensure_capacity(capacity);
+        entity_flag_b.ensure_capacity(capacity);
+        entity_root_hull_b.ensure_capacity(capacity);
+        entity_model_id_b.ensure_capacity(capacity);
+        entity_model_transform_b.ensure_capacity(capacity);
+        entity_accel_b.ensure_capacity(capacity);
+        entity_mass_b.ensure_capacity(capacity);
+        entity_anim_index_b.ensure_capacity(capacity);
+        entity_anim_elapsed_b.ensure_capacity(capacity);
+        entity_anim_blend_b.ensure_capacity(capacity);
+        entity_motion_state_b.ensure_capacity(capacity);
+        entity_hull_table_b.ensure_capacity(capacity);
+        entity_bone_table_b.ensure_capacity(capacity);
 
         create_entity_k
             .set_arg(CreateEntity_k.Args.target, entity_index)
@@ -1622,17 +1620,17 @@ public class GPUCoreMemory implements WorldContainer
             return;
         }
 
-        hull_shift.ensure_capacity(hull_index);
-        edge_shift.ensure_capacity(edge_index);
-        point_shift.ensure_capacity(point_index);
-        hull_bone_shift.ensure_capacity(hull_bone_index);
-        armature_bone_shift.ensure_capacity(armature_bone_index);
+        b_hull_shift.ensure_capacity(hull_index);
+        b_edge_shift.ensure_capacity(edge_index);
+        b_point_shift.ensure_capacity(point_index);
+        b_hull_bone_shift.ensure_capacity(hull_bone_index);
+        b_armature_bone_shift.ensure_capacity(armature_bone_index);
 
-        hull_shift.clear();
-        edge_shift.clear();
-        point_shift.clear();
-        hull_bone_shift.clear();
-        armature_bone_shift.clear();
+        b_hull_shift.clear();
+        b_edge_shift.clear();
+        b_point_shift.clear();
+        b_hull_bone_shift.clear();
+        b_armature_bone_shift.clear();
 
         compact_entities_k
             .ptr_arg(CompactEntities_k.Args.buffer_in_1, delete_buffer_1.pointer())
@@ -1773,11 +1771,11 @@ public class GPUCoreMemory implements WorldContainer
 
         gpu_crud.destroy();
         scan_deletes.destroy();
-        hull_shift.release();
-        edge_shift.release();
-        point_shift.release();
-        hull_bone_shift.release();
-        armature_bone_shift.release();
+        b_hull_shift.release();
+        b_edge_shift.release();
+        b_point_shift.release();
+        b_hull_bone_shift.release();
+        b_armature_bone_shift.release();
         delete_buffer_1.release();
         delete_buffer_2.release();
         delete_partial_buffer_1.release();
@@ -1834,19 +1832,19 @@ public class GPUCoreMemory implements WorldContainer
         armature_bone_buffer.release();
         armature_bone_reference_id_buffer.release();
         armature_bone_parent_id_buffer.release();
-        entity_buffer.release();
-        entity_flag_buffer.release();
-        entity_root_hull_buffer.release();
-        entity_model_id_buffer.release();
-        entity_model_transform_buffer.release();
-        entity_accel_buffer.release();
-        entity_mass_buffer.release();
-        entity_anim_index_buffer.release();
-        entity_anim_elapsed_buffer.release();
-        entity_anim_blend_buffer.release();
-        entity_motion_state_buffer.release();
-        entity_hull_table_buffer.release();
-        entity_bone_table_buffer.release();
+        entity_b.release();
+        entity_flag_b.release();
+        entity_root_hull_b.release();
+        entity_model_id_b.release();
+        entity_model_transform_b.release();
+        entity_accel_b.release();
+        entity_mass_b.release();
+        entity_anim_index_b.release();
+        entity_anim_elapsed_b.release();
+        entity_anim_blend_b.release();
+        entity_motion_state_b.release();
+        entity_hull_table_b.release();
+        entity_bone_table_b.release();
 
         debug();
 
@@ -1858,11 +1856,11 @@ public class GPUCoreMemory implements WorldContainer
     private void debug()
     {
         long total = 0;
-        total += hull_shift.debug_data();
-        total += edge_shift.debug_data();
-        total += point_shift.debug_data();
-        total += hull_bone_shift.debug_data();
-        total += armature_bone_shift.debug_data();
+        total += b_hull_shift.debug_data();
+        total += b_edge_shift.debug_data();
+        total += b_point_shift.debug_data();
+        total += b_hull_bone_shift.debug_data();
+        total += b_armature_bone_shift.debug_data();
         total += delete_buffer_1.debug_data();
         total += delete_buffer_2.debug_data();
         total += delete_partial_buffer_1.debug_data();
@@ -1918,19 +1916,19 @@ public class GPUCoreMemory implements WorldContainer
         total += armature_bone_buffer.debug_data();
         total += armature_bone_reference_id_buffer.debug_data();
         total += armature_bone_parent_id_buffer.debug_data();
-        total += entity_buffer.debug_data();
-        total += entity_flag_buffer.debug_data();
-        total += entity_root_hull_buffer.debug_data();
-        total += entity_model_id_buffer.debug_data();
-        total += entity_model_transform_buffer.debug_data();
-        total += entity_accel_buffer.debug_data();
-        total += entity_mass_buffer.debug_data();
-        total += entity_anim_index_buffer.debug_data();
-        total += entity_anim_elapsed_buffer.debug_data();
-        total += entity_anim_blend_buffer.debug_data();
-        total += entity_motion_state_buffer.debug_data();
-        total += entity_hull_table_buffer.debug_data();
-        total += entity_bone_table_buffer.debug_data();
+        total += entity_b.debug_data();
+        total += entity_flag_b.debug_data();
+        total += entity_root_hull_b.debug_data();
+        total += entity_model_id_b.debug_data();
+        total += entity_model_transform_b.debug_data();
+        total += entity_accel_b.debug_data();
+        total += entity_mass_b.debug_data();
+        total += entity_anim_index_b.debug_data();
+        total += entity_anim_elapsed_b.debug_data();
+        total += entity_anim_blend_b.debug_data();
+        total += entity_motion_state_b.debug_data();
+        total += entity_hull_table_b.debug_data();
+        total += entity_bone_table_b.debug_data();
 
         //System.out.println("---------------------------");
         System.out.println("Core Memory Usage: MB " + ((float) total / 1024f / 1024f));
