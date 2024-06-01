@@ -72,22 +72,22 @@ public class GPGPU
     /**
      * The Open CL command queue that this class uses to issue GPU commands.
      */
-    public static long cl_cmd_queue_ptr;
+    public static long ptr_cl_cmd_queue;
 
-    public static long gl_cmd_queue_ptr;
+    public static long ptr_gl_cmd_queue;
 
-    public static long sector_cmd_queue_ptr;
+    public static long ptr_sector_cmd_queue;
 
     /**
      * The Open CL context associated with this class.
      */
-    private static long context_ptr;
+    private static long ptr_context;
 
     /**
      * An array of devices that support being used with Open CL. In practice, this should
      * only ever have single element, and that device should be the main GPU in the system.
      */
-    private static long device_id_ptr;
+    private static long ptr_device_id;
 
     public static GPUCoreMemory core_memory;
 
@@ -116,18 +116,18 @@ public class GPGPU
 
     //#region Kernel Objects
 
-    private static GPUKernel scan_int_single_block_k;
-    private static GPUKernel scan_int_multi_block_k;
-    private static GPUKernel complete_int_multi_block_k;
-    private static GPUKernel scan_int2_single_block_k;
-    private static GPUKernel scan_int2_multi_block_k;
-    private static GPUKernel complete_int2_multi_block_k;
-    private static GPUKernel scan_int4_single_block_k;
-    private static GPUKernel scan_int4_multi_block_k;
-    private static GPUKernel complete_int4_multi_block_k;
-    private static GPUKernel scan_int_single_block_out_k;
-    private static GPUKernel scan_int_multi_block_out_k;
-    private static GPUKernel complete_int_multi_block_out_k;
+    private static GPUKernel k_scan_int_single_block;
+    private static GPUKernel k_scan_int_multi_block;
+    private static GPUKernel k_complete_int_multi_block;
+    private static GPUKernel k_scan_int2_single_block;
+    private static GPUKernel k_scan_int2_multi_block;
+    private static GPUKernel k_complete_int2_multi_block;
+    private static GPUKernel k_scan_int4_single_block;
+    private static GPUKernel k_scan_int4_multi_block;
+    private static GPUKernel k_complete_int4_multi_block;
+    private static GPUKernel k_scan_int_single_block_out;
+    private static GPUKernel k_scan_int_multi_block_out;
+    private static GPUKernel k_complete_int_multi_block_out;
 
     //#endregion
 
@@ -135,8 +135,6 @@ public class GPGPU
 
     private static long init_device()
     {
-        // TODO: may need some updates for cases where there's more than one possible device
-
         // The platform, device type and device number
         // that will be used
         long deviceType = CL_DEVICE_TYPE_GPU;
@@ -183,17 +181,17 @@ public class GPGPU
             .put(0L)
             .flip();
 
-        context_ptr = clCreateContext(ctx_props_buffer,
+        ptr_context = clCreateContext(ctx_props_buffer,
             device, null, 0L, null);
 
         // Create a command-queue for the selected device
-        cl_cmd_queue_ptr = clCreateCommandQueue(context_ptr,
+        ptr_cl_cmd_queue = clCreateCommandQueue(ptr_context,
             device, 0, (IntBuffer) null);
 
-        gl_cmd_queue_ptr = clCreateCommandQueue(context_ptr,
+        ptr_gl_cmd_queue = clCreateCommandQueue(ptr_context,
             device, 0, (IntBuffer) null);
 
-        sector_cmd_queue_ptr = clCreateCommandQueue(context_ptr,
+        ptr_sector_cmd_queue = clCreateCommandQueue(ptr_context,
             device, 0, (IntBuffer) null);
 
         MemoryUtil.memFree(ctx_props_buffer);
@@ -219,39 +217,39 @@ public class GPGPU
     {
         // integer exclusive scan in-place
 
-        long scan_int_array_single_ptr = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_single_block);
-        long scan_int_array_multi_ptr = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_multi_block);
-        long scan_int_array_comp_ptr = Program.scan_int_array.gpu.kernel_ptr(Kernel.complete_int_multi_block);
-        scan_int_single_block_k = new ScanIntSingleBlock_k(cl_cmd_queue_ptr, scan_int_array_single_ptr);
-        scan_int_multi_block_k = new ScanIntMultiBlock_k(cl_cmd_queue_ptr, scan_int_array_multi_ptr);
-        complete_int_multi_block_k = new CompleteIntMultiBlock_k(cl_cmd_queue_ptr, scan_int_array_comp_ptr);
+        long k_ptr_scan_int_array_single = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_single_block);
+        long k_ptr_scan_int_array_multi = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_multi_block);
+        long k_ptr_scan_int_array_comp = Program.scan_int_array.gpu.kernel_ptr(Kernel.complete_int_multi_block);
+        k_scan_int_single_block = new ScanIntSingleBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_single);
+        k_scan_int_multi_block = new ScanIntMultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_multi);
+        k_complete_int_multi_block = new CompleteIntMultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_comp);
 
         // 2D vector integer exclusive scan in-place
 
-        long scan_int2_array_single_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_single_block);
-        long scan_int2_array_multi_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_multi_block);
-        long scan_int2_array_comp_ptr = Program.scan_int2_array.gpu.kernel_ptr(Kernel.complete_int2_multi_block);
-        scan_int2_single_block_k = new ScanInt2SingleBlock_k(cl_cmd_queue_ptr, scan_int2_array_single_ptr);
-        scan_int2_multi_block_k = new ScanInt2MultiBlock_k(cl_cmd_queue_ptr, scan_int2_array_multi_ptr);
-        complete_int2_multi_block_k = new CompleteInt2MultiBlock_k(cl_cmd_queue_ptr, scan_int2_array_comp_ptr);
+        long k_ptr_scan_int2_array_single = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_single_block);
+        long k_ptr_scan_int2_array_multi = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_multi_block);
+        long k_ptr_scan_int2_array_comp = Program.scan_int2_array.gpu.kernel_ptr(Kernel.complete_int2_multi_block);
+        k_scan_int2_single_block = new ScanInt2SingleBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int2_array_single);
+        k_scan_int2_multi_block = new ScanInt2MultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int2_array_multi);
+        k_complete_int2_multi_block = new CompleteInt2MultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int2_array_comp);
 
         // 4D vector integer exclusive scan in-place
 
-        long scan_int4_array_single_ptr = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_single_block);
-        long scan_int4_array_multi_ptr = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_multi_block);
-        long scan_int4_array_comp_ptr = Program.scan_int4_array.gpu.kernel_ptr(Kernel.complete_int4_multi_block);
-        scan_int4_single_block_k = new ScanInt4SingleBlock_k(cl_cmd_queue_ptr, scan_int4_array_single_ptr);
-        scan_int4_multi_block_k = new ScanInt4MultiBlock_k(cl_cmd_queue_ptr, scan_int4_array_multi_ptr);
-        complete_int4_multi_block_k = new CompleteInt4MultiBlock_k(cl_cmd_queue_ptr, scan_int4_array_comp_ptr);
+        long k_ptr_scan_int4_array_single = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_single_block);
+        long k_ptr_scan_int4_array_multi = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_multi_block);
+        long k_ptr_scan_int4_array_comp = Program.scan_int4_array.gpu.kernel_ptr(Kernel.complete_int4_multi_block);
+        k_scan_int4_single_block = new ScanInt4SingleBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int4_array_single);
+        k_scan_int4_multi_block = new ScanInt4MultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int4_array_multi);
+        k_complete_int4_multi_block = new CompleteInt4MultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int4_array_comp);
 
         // integer exclusive scan to output buffer
 
-        long scan_int_array_out_single_ptr = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_single_block_out);
-        long scan_int_array_out_multi_ptr = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_multi_block_out);
-        long scan_int_array_out_comp_ptr = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.complete_int_multi_block_out);
-        scan_int_single_block_out_k = new ScanIntSingleBlockOut_k(cl_cmd_queue_ptr, scan_int_array_out_single_ptr);
-        scan_int_multi_block_out_k = new ScanIntMultiBlockOut_k(cl_cmd_queue_ptr, scan_int_array_out_multi_ptr);
-        complete_int_multi_block_out_k = new CompleteIntMultiBlockOut_k(cl_cmd_queue_ptr, scan_int_array_out_comp_ptr);
+        long k_ptr_scan_int_array_out_single = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_single_block_out);
+        long k_ptr_scan_int_array_out_multi = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_multi_block_out);
+        long k_ptr_scan_int_array_out_comp = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.complete_int_multi_block_out);
+        k_scan_int_single_block_out = new ScanIntSingleBlockOut_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_out_single);
+        k_scan_int_multi_block_out = new ScanIntMultiBlockOut_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_out_multi);
+        k_complete_int_multi_block_out = new CompleteIntMultiBlockOut_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_out_comp);
     }
 
     //#endregion
@@ -282,17 +280,17 @@ public class GPGPU
 
     public static long cl_new_buffer(long size)
     {
-        return clCreateBuffer(context_ptr, FLAGS_WRITE_GPU, size, null);
+        return clCreateBuffer(ptr_context, FLAGS_WRITE_GPU, size, null);
     }
 
     public static long cl_new_int_arg_buffer(int[] src)
     {
-        return clCreateBuffer(context_ptr, FLAGS_WRITE_CPU_COPY, src, null);
+        return clCreateBuffer(ptr_context, FLAGS_WRITE_CPU_COPY, src, null);
     }
 
     public static long cl_new_cpu_copy_buffer(float[] src)
     {
-        return clCreateBuffer(context_ptr, FLAGS_READ_CPU_COPY, src, null);
+        return clCreateBuffer(ptr_context, FLAGS_READ_CPU_COPY, src, null);
     }
 
     public static void cl_zero_buffer(long queue_ptr, long buffer_ptr, long buffer_size)
@@ -314,7 +312,7 @@ public class GPGPU
     public static long cl_new_pinned_buffer(long size)
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        return clCreateBuffer(context_ptr, flags, size, null);
+        return clCreateBuffer(ptr_context, flags, size, null);
     }
 
     public static int[] cl_read_pinned_int_buffer(long queue_ptr, long pinned_ptr, long size, int count)
@@ -370,24 +368,24 @@ public class GPGPU
     public static long cl_new_pinned_int()
     {
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        return clCreateBuffer(context_ptr, flags, CLSize.cl_int, null);
+        return clCreateBuffer(ptr_context, flags, CLSize.cl_int, null);
     }
 
     public static long cl_new_unpinned_int()
     {
         long flags = CL_MEM_HOST_READ_ONLY;
-        return clCreateBuffer(context_ptr, flags, CLSize.cl_int, null);
+        return clCreateBuffer(ptr_context, flags, CLSize.cl_int, null);
     }
 
     public static ByteBuffer cl_new_svm_int()
     {
         long flags = CL_MEM_READ_WRITE;
-        return clSVMAlloc(context_ptr, flags, CLSize.cl_int, 0);
+        return clSVMAlloc(ptr_context, flags, CLSize.cl_int, 0);
     }
     public static ByteBuffer cl_new_svm_buffer(long size)
     {
         long flags = CL_MEM_READ_WRITE;
-        return clSVMAlloc(context_ptr, flags, size, 0);
+        return clSVMAlloc(ptr_context, flags, size, 0);
     }
 
     public static void cl_read_svm_int_buffer(long queue_ptr, ByteBuffer svm_buffer, int[] dst)
@@ -484,7 +482,7 @@ public class GPGPU
 
     public static long share_memory(int vboID)
     {
-        return clCreateFromGLBuffer(context_ptr, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
+        return clCreateFromGLBuffer(ptr_context, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
     }
 
     //#endregion
@@ -547,7 +545,7 @@ public class GPGPU
     {
         long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
-        scan_int_single_block_k
+        k_scan_int_single_block
             .ptr_arg(ScanIntSingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanIntSingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanIntSingleBlock_k.Args.n, n)
@@ -564,7 +562,7 @@ public class GPGPU
 
         var part_data = cl_new_buffer(part_buf_size);
 
-        scan_int_multi_block_k
+        k_scan_int_multi_block
             .ptr_arg(ScanIntMultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanIntMultiBlock_k.Args.part, part_data)
@@ -573,7 +571,7 @@ public class GPGPU
 
         scan_int(part_data, part_size);
 
-        complete_int_multi_block_k
+        k_complete_int_multi_block
             .ptr_arg(CompleteIntMultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteIntMultiBlock_k.Args.part, part_data)
@@ -587,7 +585,7 @@ public class GPGPU
     {
         long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
 
-       scan_int2_single_block_k
+       k_scan_int2_single_block
             .ptr_arg(ScanInt2SingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt2SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt2SingleBlock_k.Args.n, n)
@@ -604,7 +602,7 @@ public class GPGPU
 
         var part_data = cl_new_buffer(part_buf_size);
 
-        scan_int2_multi_block_k
+        k_scan_int2_multi_block
             .ptr_arg(ScanInt2MultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanInt2MultiBlock_k.Args.part, part_data)
@@ -613,7 +611,7 @@ public class GPGPU
 
         scan_int2(part_data, part_size);
 
-        complete_int2_multi_block_k
+        k_complete_int2_multi_block
             .ptr_arg(CompleteInt2MultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteInt2MultiBlock_k.Args.part, part_data)
@@ -627,7 +625,7 @@ public class GPGPU
     {
         long local_buffer_size = CLSize.cl_int4 * max_scan_block_size;
 
-        scan_int4_single_block_k
+        k_scan_int4_single_block
             .ptr_arg(ScanInt4SingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt4SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt4SingleBlock_k.Args.n, n)
@@ -644,7 +642,7 @@ public class GPGPU
 
         var part_data = cl_new_buffer(part_buf_size);
 
-        scan_int4_multi_block_k
+        k_scan_int4_multi_block
             .ptr_arg(ScanInt4MultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt4MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(ScanInt4MultiBlock_k.Args.part, part_data)
@@ -653,7 +651,7 @@ public class GPGPU
 
         scan_int4(part_data, part_size);
 
-        complete_int4_multi_block_k
+        k_complete_int4_multi_block
             .ptr_arg(CompleteInt4MultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteInt4MultiBlock_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteInt4MultiBlock_k.Args.part, part_data)
@@ -667,7 +665,7 @@ public class GPGPU
     {
         long local_buffer_size = CLSize.cl_int * max_scan_block_size;
 
-        scan_int_single_block_out_k
+        k_scan_int_single_block_out
             .ptr_arg(ScanIntSingleBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanIntSingleBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(ScanIntSingleBlockOut_k.Args.buffer, local_buffer_size)
@@ -684,7 +682,7 @@ public class GPGPU
         long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
         var part_data = cl_new_buffer(part_buf_size);
 
-        scan_int_multi_block_out_k
+        k_scan_int_multi_block_out
             .ptr_arg(ScanIntMultiBlockOut_k.Args.input, data_ptr)
             .ptr_arg(ScanIntMultiBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(ScanIntMultiBlockOut_k.Args.buffer, local_buffer_size)
@@ -694,7 +692,7 @@ public class GPGPU
 
         scan_int(part_data, part_size);
 
-        complete_int_multi_block_out_k
+        k_complete_int_multi_block_out
             .ptr_arg(CompleteIntMultiBlockOut_k.Args.output, o_data_ptr)
             .loc_arg(CompleteIntMultiBlockOut_k.Args.buffer, local_buffer_size)
             .ptr_arg(CompleteIntMultiBlockOut_k.Args.part, part_data)
@@ -711,12 +709,12 @@ public class GPGPU
     public static long build_gpu_program(List<String> src_strings)
     {
         String[] src = src_strings.toArray(new String[]{});
-        return CLUtils.cl_p(context_ptr, device_id_ptr, src);
+        return CLUtils.cl_p(ptr_context, ptr_device_id, src);
     }
 
     public static long new_mutable_buffer(int[] src)
     {
-        return clCreateBuffer(context_ptr, FLAGS_READ_CPU_COPY, src, null);
+        return clCreateBuffer(ptr_context, FLAGS_READ_CPU_COPY, src, null);
     }
 
     public static long new_empty_buffer(long queue_ptr, long size)
@@ -733,17 +731,17 @@ public class GPGPU
 
     public static void cl_release_buffer(ByteBuffer mem_ptr)
     {
-        clSVMFree(context_ptr, mem_ptr);
+        clSVMFree(ptr_context, mem_ptr);
     }
 
     public static void init()
     {
-        device_id_ptr = init_device();
+        ptr_device_id = init_device();
 
         System.out.println("-------- OPEN CL DEVICE -----------");
-        System.out.println(get_device_string(device_id_ptr, CL_DEVICE_VENDOR));
-        System.out.println(get_device_string(device_id_ptr, CL_DEVICE_NAME));
-        System.out.println(get_device_string(device_id_ptr, CL_DRIVER_VERSION));
+        System.out.println(get_device_string(ptr_device_id, CL_DEVICE_VENDOR));
+        System.out.println(get_device_string(ptr_device_id, CL_DEVICE_NAME));
+        System.out.println(get_device_string(ptr_device_id, CL_DRIVER_VERSION));
         System.out.println("-----------------------------------\n");
 
 //        long svm_caps = get_device_long(device_id_ptr, CL_DEVICE_SVM_CAPABILITIES);
@@ -775,13 +773,13 @@ public class GPGPU
          * exactly this amount can fail, likely due to some small amount of the local buffer being
          * used by the hardware either for individual arguments, or some other internal data.
          */
-        long max_local_buffer_size = get_device_long(device_id_ptr, CL_DEVICE_LOCAL_MEM_SIZE);
-        long current_max_group_size = get_device_long(device_id_ptr, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        long max_local_buffer_size = get_device_long(ptr_device_id, CL_DEVICE_LOCAL_MEM_SIZE);
+        long current_max_group_size = get_device_long(ptr_device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE);
         long current_max_block_size = current_max_group_size * 2;
 
-        long max_mem = get_device_long(device_id_ptr, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
-        long sz_char = get_device_long(device_id_ptr, CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR);
-        long sz_flt = get_device_long(device_id_ptr, CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT);
+        long max_mem = get_device_long(ptr_device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
+        long sz_char = get_device_long(ptr_device_id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR);
+        long sz_flt = get_device_long(ptr_device_id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT);
 
         System.out.println("max mem: " + max_mem);
         System.out.println("preferred float: " + sz_flt);
@@ -830,10 +828,10 @@ public class GPGPU
 
         core_memory.destroy();
 
-        clReleaseCommandQueue(cl_cmd_queue_ptr);
-        clReleaseCommandQueue(gl_cmd_queue_ptr);
-        clReleaseCommandQueue(sector_cmd_queue_ptr);
-        clReleaseContext(context_ptr);
+        clReleaseCommandQueue(ptr_cl_cmd_queue);
+        clReleaseCommandQueue(ptr_gl_cmd_queue);
+        clReleaseCommandQueue(ptr_sector_cmd_queue);
+        clReleaseContext(ptr_context);
         MemoryUtil.memFree(ZERO_PATTERN_BUFFER);
     }
 

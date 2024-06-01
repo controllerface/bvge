@@ -27,17 +27,16 @@ public class BoundingBoxRenderer extends GameSystem
     private static final int BATCH_BUFFER_SIZE = BATCH_VERTEX_COUNT * Float.BYTES;
     private static final int POSITION_ATTRIBUTE = 0;
 
-    private final int[] offsets = new int[Constants.Rendering.MAX_BATCH_SIZE];
-    private final int[] counts = new int[Constants.Rendering.MAX_BATCH_SIZE];
-
-    private final GPUProgram prepare_bounds = new PrepareBounds();
+    private final GPUProgram p_prepare_bounds = new PrepareBounds();
+    private GPUKernel k_prepare_bounds;
+    private Shader shader;
 
     private int vao;
-    private int vbo;
-    private long vbo_ptr;
+    private int vbo_position;
+    private long ptr_vbo_position;
 
-    private Shader shader;
-    private GPUKernel prepare_bounds_k;
+    private final int[] offsets = new int[Constants.Rendering.MAX_BATCH_SIZE];
+    private final int[] counts = new int[Constants.Rendering.MAX_BATCH_SIZE];
 
     public BoundingBoxRenderer(ECS ecs)
     {
@@ -55,19 +54,18 @@ public class BoundingBoxRenderer extends GameSystem
     {
         shader = Assets.load_shader("bounding_outline.glsl");
         vao = glCreateVertexArrays();
-        vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        vbo_position = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
     }
 
     private void init_CL()
     {
-        vbo_ptr = GPGPU.share_memory(vbo);
+        p_prepare_bounds.init();
+        ptr_vbo_position = GPGPU.share_memory(vbo_position);
 
-        prepare_bounds.init();
-
-        long ptr = prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
-        prepare_bounds_k = new PrepareBounds_k(GPGPU.gl_cmd_queue_ptr, ptr)
-            .ptr_arg(PrepareBounds_k.Args.vbo, vbo_ptr)
+        long k_ptr_prepare_bounds = p_prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
+        k_prepare_bounds = new PrepareBounds_k(GPGPU.ptr_gl_cmd_queue, k_ptr_prepare_bounds)
+            .ptr_arg(PrepareBounds_k.Args.vbo, ptr_vbo_position)
             .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_AABB));
     }
 
@@ -86,8 +84,8 @@ public class BoundingBoxRenderer extends GameSystem
             var offsets = MemoryUtil.memAllocInt(count).put(this.offsets, 0, count).flip();
             var counts = MemoryUtil.memAllocInt(count).put(this.counts, 0, count).flip();
 
-            prepare_bounds_k
-                .share_mem(vbo_ptr)
+            k_prepare_bounds
+                .share_mem(ptr_vbo_position)
                 .set_arg(PrepareBounds_k.Args.offset, offset)
                 .call(arg_long(count));
 
@@ -99,18 +97,17 @@ public class BoundingBoxRenderer extends GameSystem
             offset += count;
         }
 
-        glBindVertexArray(0);
-
         shader.detach();
+        glBindVertexArray(0);
     }
 
     @Override
     public void shutdown()
     {
         glDeleteVertexArrays(vao);
-        glDeleteBuffers(vbo);
+        glDeleteBuffers(vbo_position);
         shader.destroy();
-        prepare_bounds.destroy();
-        GPGPU.cl_release_buffer(vbo_ptr);
+        p_prepare_bounds.destroy();
+        GPGPU.cl_release_buffer(ptr_vbo_position);
     }
 }
