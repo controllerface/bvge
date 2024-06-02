@@ -188,7 +188,7 @@ public class EarthLikeWorld implements WorldType
     @Override
     public PhysicsEntityBatch load_sector(Sector sector)
     {
-        float x_offset = sector.x() * (int) UniformGrid.SECTOR_SIZE;
+        float x_offset = sector.x() * (int)UniformGrid.SECTOR_SIZE;
         float y_offset = sector.y() * (int)UniformGrid.SECTOR_SIZE;
 
         var batch = new PhysicsEntityBatch(sector);

@@ -1120,12 +1120,7 @@ public class GPUCoreMemory implements WorldContainer
         }
     }
 
-    public void new_batch(PhysicsEntityBatch batch)
-    {
-        batch_immediate(batch);
-    }
-
-    private void batch_immediate(PhysicsEntityBatch batch)
+    public void load_entity_batch(PhysicsEntityBatch batch)
     {
         for (var solid : batch.blocks)
         {
