@@ -21,6 +21,7 @@ public class SectorLoader extends GameSystem
     private final UniformGrid uniformGrid;
     private final Set<Sector> last_loaded_sectors = new HashSet<>();
     private final Set<Sector> loaded_sectors = new HashSet<>();
+    private final Set<Sector> deferred_sectors = new HashSet<>();
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
     private final Thread loader;
     private final BlockingQueue<SectorBounds> next_sector_bounds = new ArrayBlockingQueue<>(1);
@@ -60,6 +61,7 @@ public class SectorLoader extends GameSystem
                     // it should be set to the number of rows in the sector grid, with processing being done
                     // in column-major order. I.e. only a single column of sectors loads each frame
                     int slots = sector_2_key[1] - sector_0_key[1];
+
                     for (int sx = sector_0_key[0]; sx <= sector_2_key[0]; sx++)
                     {
                         for (int sy = sector_0_key[1]; sy <= sector_2_key[1]; sy++)
@@ -75,6 +77,10 @@ public class SectorLoader extends GameSystem
                                 loaded_sectors.add(sector);
                                 var sector_batch = sector_cache.get(sector, world::load_sector);
                                 GPGPU.core_memory.load_entity_batch(sector_batch);
+                            }
+                            else
+                            {
+                                deferred_sectors.add(sector);
                             }
                         }
                     }

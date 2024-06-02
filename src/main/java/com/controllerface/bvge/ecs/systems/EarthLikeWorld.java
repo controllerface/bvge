@@ -218,8 +218,8 @@ public class EarthLikeWorld implements WorldType
                 boolean gen_block = n >= block_range_floor;
                 boolean gen_dyn = false;
 
-                float sz_solid = UniformGrid.BLOCK_SIZE + 1;
-                float sz_liquid = rando_float(UniformGrid.BLOCK_SIZE * .75f , .90f);
+                float sz_solid = UniformGrid.BLOCK_SIZE;
+                float sz_liquid = rando_float(UniformGrid.BLOCK_SIZE * .85f, .65f);
 
                 if (gen_block)
                 {
@@ -239,7 +239,7 @@ public class EarthLikeWorld implements WorldType
                     }
                     int flags = !gen_dyn ? Constants.HullFlags.IS_STATIC._int : 0;
                     flags |= Constants.HullFlags.OUT_OF_BOUNDS._int;
-                    if (underside) batch.new_shard(spike, world_x_block, world_y_block, sz_solid, flags,.1f, 0.05f, 0.005f, Solid.PERIDOTITE);
+                    if (underside) batch.new_shard(spike, world_x_block, world_y_block, sz_solid, flags,.1f, 0.0f, 0.005f, Solid.PERIDOTITE);
                     else batch.new_block(gen_dyn, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, Constants.HullFlags.OUT_OF_BOUNDS._int, solid);
                 }
                 else if (n < water_range_floor)
@@ -249,11 +249,11 @@ public class EarthLikeWorld implements WorldType
                         ? Constants.PointFlags.FLOW_LEFT.bits
                         : 0;
                     flip = !flip;
-                    batch.new_liquid(world_x, world_y,  sz_liquid, .1f, 0.0f, 0.00000f, hull_flags, point_flags, Liquid.WATER);
+                    batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, 0.00000f, hull_flags, point_flags, Liquid.WATER);
                 }
                 else if (n < taco_range_floor)
                 {
-                    batch.new_shard(spike, world_x, world_y,  sz_solid, Constants.HullFlags.OUT_OF_BOUNDS._int,.1f, 0.05f, 0.005f, block_pallette[0]);
+                    batch.new_shard(spike, world_x_block, world_y_block,  sz_solid, Constants.HullFlags.OUT_OF_BOUNDS._int,.1f, 0.05f, 0.005f, block_pallette[0]);
                 }
             }
         }

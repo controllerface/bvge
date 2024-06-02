@@ -6,10 +6,7 @@ public class LocateOutOfBounds_k extends GPUKernel
 {
     public enum Args
     {
-        hull_tables,
-        hull_flags,
         entity_flags,
-        counter;
     }
 
     public LocateOutOfBounds_k(long command_queue_ptr, long kernel_ptr)

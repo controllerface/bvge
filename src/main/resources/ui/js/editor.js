@@ -55,6 +55,7 @@ event_source.addEventListener('render_data_transfer', handle_event);
 event_source.addEventListener('render_buffer_read', handle_event);
 event_source.addEventListener('render_batch_count', handle_event);
 event_source.addEventListener('render_instance_count', handle_event);
+event_source.addEventListener('render_liquid_count', handle_event);
 event_source.addEventListener('render_model_count_meshes', handle_event);
 event_source.addEventListener('render_model_write_details', handle_event);
 event_source.addEventListener('render_model_count_batches', handle_event);

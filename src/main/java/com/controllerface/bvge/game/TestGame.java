@@ -17,11 +17,12 @@ import com.controllerface.bvge.window.Window;
 import java.util.*;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
-import static com.controllerface.bvge.util.Constants.*;
 
 public class TestGame extends GameMode
 {
     private final GameSystem blanking_system;
+    private final int GRID_WIDTH = 3840;
+    private final int GRID_HEIGHT = 2160;
 
     private enum RenderType
     {
@@ -31,7 +32,7 @@ public class TestGame extends GameMode
         POINTS,     // model vertices
         ENTITIES,   // entity roots
         GRID,       // uniform grid
-        }
+    }
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(RenderType.GAME
@@ -42,7 +43,8 @@ public class TestGame extends GameMode
 //            ,RenderType.GRID
             );
 
-    private final UniformGrid uniformGrid = new UniformGrid(Window.get().width(), Window.get().height());
+    //private final UniformGrid uniformGrid = new UniformGrid(Window.get().width(), Window.get().height());
+    private final UniformGrid uniformGrid = new UniformGrid(GRID_WIDTH, GRID_HEIGHT);
 
 
     public TestGame(ECS ecs, GameSystem blanking_system)
@@ -58,7 +60,7 @@ public class TestGame extends GameMode
     private void gen_player(float size, float x, float y)
     {
         var player = ecs.register_entity("player");
-        var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory, PLAYER_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f, 0,0);
+        var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory, PLAYER_MODEL_INDEX, x, y, size, 100.5f, 0.05f, 0,0);
         var cursor_id = PhysicsObjects.circle_cursor(GPGPU.core_memory, 0,0, 10);
 
         ecs.attach_component(player, Component.EntityId, new EntityIndex(entity_id));

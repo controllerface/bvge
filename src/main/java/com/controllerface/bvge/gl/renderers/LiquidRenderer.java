@@ -8,6 +8,7 @@ import com.controllerface.bvge.cl.programs.PrepareLiquids;
 import com.controllerface.bvge.cl.programs.RootHullFilter;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Shader;
@@ -77,7 +78,7 @@ public class LiquidRenderer extends GameSystem
         ptr_vbo_color = GPGPU.share_memory(vbo_color);
 
         long k_ptr_prepare_liquids = p_prepare_liquids.kernel_ptr(Kernel.prepare_liquids);
-        k_prepare_liquids = (new PrepareLiquids_k(GPGPU.ptr_gl_cmd_queue, k_ptr_prepare_liquids))
+        k_prepare_liquids = (new PrepareLiquids_k(GPGPU.ptr_render_queue, k_ptr_prepare_liquids))
             .ptr_arg(PrepareLiquids_k.Args.transforms_out, ptr_vbo_transform)
             .ptr_arg(PrepareLiquids_k.Args.colors_out, ptr_vbo_color)
             .buf_arg(PrepareLiquids_k.Args.hull_positions, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL))
@@ -88,12 +89,12 @@ public class LiquidRenderer extends GameSystem
             .buf_arg(PrepareLiquids_k.Args.point_hit_counts, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT_HIT_COUNT));
 
         long k_ptr_root_hull_filter = p_root_hull_filter.kernel_ptr(Kernel.root_hull_filter);
-        k_root_hull_filter = new RootHullFilter_k(GPGPU.ptr_gl_cmd_queue, k_ptr_root_hull_filter)
+        k_root_hull_filter = new RootHullFilter_k(GPGPU.ptr_render_queue, k_ptr_root_hull_filter)
             .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_ROOT_HULL))
             .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
 
         long k_ptr_root_hull_count = p_root_hull_filter.kernel_ptr(Kernel.root_hull_count);
-        k_root_hull_count = new RootHullCount_k(GPGPU.ptr_gl_cmd_queue, k_ptr_root_hull_count)
+        k_root_hull_count = new RootHullCount_k(GPGPU.ptr_render_queue, k_ptr_root_hull_count)
             .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
     }
 
@@ -104,7 +105,13 @@ public class LiquidRenderer extends GameSystem
         {
             GPGPU.cl_release_buffer(circle_hulls.indices());
         }
-        circle_hulls = GL_hull_filter(GPGPU.ptr_gl_cmd_queue, ModelRegistry.CIRCLE_PARTICLE);
+        circle_hulls = GL_hull_filter(GPGPU.ptr_render_queue, ModelRegistry.CIRCLE_PARTICLE);
+
+
+        if (Editor.ACTIVE)
+        {
+            Editor.queue_event("render_liquid_count", String.valueOf(circle_hulls.count()));
+        }
 
         if (circle_hulls.count() == 0) return;
 

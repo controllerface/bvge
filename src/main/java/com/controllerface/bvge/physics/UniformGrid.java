@@ -49,8 +49,8 @@ public class UniformGrid
 
     public UniformGrid(int screen_width, int screen_height)
     {
-        float x = (float)screen_width * 2.5f;
-        float y = (float)screen_height * 2.5f;
+        float x = (float)screen_width * 2f;
+        float y = (float)screen_height * 2f;
         perimeter_width = screen_width * .20f;
         perimeter_height = screen_height * .30f;
         outer_perimeter_width = screen_width * .10f;

@@ -73,11 +73,11 @@ public class GPGPU
     /**
      * The Open CL command queue that this class uses to issue GPU commands.
      */
-    public static long ptr_cl_cmd_queue;
+    public static long ptr_compute_queue;
 
-    public static long ptr_gl_cmd_queue;
+    public static long ptr_render_queue;
 
-    public static long ptr_sector_cmd_queue;
+    public static long ptr_sector_queue;
 
     /**
      * The Open CL context associated with this class.
@@ -186,13 +186,13 @@ public class GPGPU
             device, null, 0L, null);
 
         // Create a command-queue for the selected device
-        ptr_cl_cmd_queue = clCreateCommandQueue(ptr_context,
+        ptr_compute_queue = clCreateCommandQueue(ptr_context,
             device, 0, (IntBuffer) null);
 
-        ptr_gl_cmd_queue = clCreateCommandQueue(ptr_context,
+        ptr_render_queue = clCreateCommandQueue(ptr_context,
             device, 0, (IntBuffer) null);
 
-        ptr_sector_cmd_queue = clCreateCommandQueue(ptr_context,
+        ptr_sector_queue = clCreateCommandQueue(ptr_context,
             device, 0, (IntBuffer) null);
 
         MemoryUtil.memFree(ctx_props_buffer);
@@ -221,36 +221,36 @@ public class GPGPU
         long k_ptr_scan_int_array_single = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_single_block);
         long k_ptr_scan_int_array_multi = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_multi_block);
         long k_ptr_scan_int_array_comp = Program.scan_int_array.gpu.kernel_ptr(Kernel.complete_int_multi_block);
-        k_scan_int_single_block = new ScanIntSingleBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_single);
-        k_scan_int_multi_block = new ScanIntMultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_multi);
-        k_complete_int_multi_block = new CompleteIntMultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_comp);
+        k_scan_int_single_block = new ScanIntSingleBlock_k(ptr_compute_queue, k_ptr_scan_int_array_single);
+        k_scan_int_multi_block = new ScanIntMultiBlock_k(ptr_compute_queue, k_ptr_scan_int_array_multi);
+        k_complete_int_multi_block = new CompleteIntMultiBlock_k(ptr_compute_queue, k_ptr_scan_int_array_comp);
 
         // 2D vector integer exclusive scan in-place
 
         long k_ptr_scan_int2_array_single = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_single_block);
         long k_ptr_scan_int2_array_multi = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_multi_block);
         long k_ptr_scan_int2_array_comp = Program.scan_int2_array.gpu.kernel_ptr(Kernel.complete_int2_multi_block);
-        k_scan_int2_single_block = new ScanInt2SingleBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int2_array_single);
-        k_scan_int2_multi_block = new ScanInt2MultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int2_array_multi);
-        k_complete_int2_multi_block = new CompleteInt2MultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int2_array_comp);
+        k_scan_int2_single_block = new ScanInt2SingleBlock_k(ptr_compute_queue, k_ptr_scan_int2_array_single);
+        k_scan_int2_multi_block = new ScanInt2MultiBlock_k(ptr_compute_queue, k_ptr_scan_int2_array_multi);
+        k_complete_int2_multi_block = new CompleteInt2MultiBlock_k(ptr_compute_queue, k_ptr_scan_int2_array_comp);
 
         // 4D vector integer exclusive scan in-place
 
         long k_ptr_scan_int4_array_single = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_single_block);
         long k_ptr_scan_int4_array_multi = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_multi_block);
         long k_ptr_scan_int4_array_comp = Program.scan_int4_array.gpu.kernel_ptr(Kernel.complete_int4_multi_block);
-        k_scan_int4_single_block = new ScanInt4SingleBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int4_array_single);
-        k_scan_int4_multi_block = new ScanInt4MultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int4_array_multi);
-        k_complete_int4_multi_block = new CompleteInt4MultiBlock_k(ptr_cl_cmd_queue, k_ptr_scan_int4_array_comp);
+        k_scan_int4_single_block = new ScanInt4SingleBlock_k(ptr_compute_queue, k_ptr_scan_int4_array_single);
+        k_scan_int4_multi_block = new ScanInt4MultiBlock_k(ptr_compute_queue, k_ptr_scan_int4_array_multi);
+        k_complete_int4_multi_block = new CompleteInt4MultiBlock_k(ptr_compute_queue, k_ptr_scan_int4_array_comp);
 
         // integer exclusive scan to output buffer
 
         long k_ptr_scan_int_array_out_single = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_single_block_out);
         long k_ptr_scan_int_array_out_multi = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_multi_block_out);
         long k_ptr_scan_int_array_out_comp = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.complete_int_multi_block_out);
-        k_scan_int_single_block_out = new ScanIntSingleBlockOut_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_out_single);
-        k_scan_int_multi_block_out = new ScanIntMultiBlockOut_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_out_multi);
-        k_complete_int_multi_block_out = new CompleteIntMultiBlockOut_k(ptr_cl_cmd_queue, k_ptr_scan_int_array_out_comp);
+        k_scan_int_single_block_out = new ScanIntSingleBlockOut_k(ptr_compute_queue, k_ptr_scan_int_array_out_single);
+        k_scan_int_multi_block_out = new ScanIntMultiBlockOut_k(ptr_compute_queue, k_ptr_scan_int_array_out_multi);
+        k_complete_int_multi_block_out = new CompleteIntMultiBlockOut_k(ptr_compute_queue, k_ptr_scan_int_array_out_comp);
     }
 
     //#endregion
@@ -800,9 +800,9 @@ public class GPGPU
 
         core_memory.destroy();
 
-        clReleaseCommandQueue(ptr_cl_cmd_queue);
-        clReleaseCommandQueue(ptr_gl_cmd_queue);
-        clReleaseCommandQueue(ptr_sector_cmd_queue);
+        clReleaseCommandQueue(ptr_compute_queue);
+        clReleaseCommandQueue(ptr_render_queue);
+        clReleaseCommandQueue(ptr_sector_queue);
         clReleaseContext(ptr_context);
         MemoryUtil.memFree(ZERO_PATTERN_BUFFER);
     }

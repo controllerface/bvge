@@ -273,7 +273,7 @@ public class PhysicsObjects
 
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will
     //  probably break/crash.
-    public static int wrap_model(WorldContainer world, int model_index, float x, float y, float size, int global_hull_flags, float mass, float friction, float restitution, int uv_offset)
+    public static int wrap_model(WorldContainer world, int model_index, float x, float y, float size, float mass, float friction, float restitution, int uv_offset)
     {
         // we need to know the next entity ID before we create it, so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
@@ -500,7 +500,7 @@ public class PhysicsObjects
             var scale = CLUtils.arg_float2(size, size);
             var rotation = CLUtils.arg_float2(0, angle);
 
-            int flag_bits = global_hull_flags | local_hull_flags;
+            int flag_bits = HullFlags.IS_POLYGON._int | local_hull_flags;
             int[] bone_table = CLUtils.arg_int2(start_hull_bone, end_hull_bone);
             int hull_id = world.new_hull(hull_mesh.mesh_id(),
                 position,

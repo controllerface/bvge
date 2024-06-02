@@ -72,19 +72,19 @@ public class MouseRenderer extends GameSystem
         svm_atomic_counter = GPGPU.cl_new_svm_int();
 
         long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
-        k_prepare_transforms = (new PrepareTransforms_k(GPGPU.ptr_gl_cmd_queue, ptr))
+        k_prepare_transforms = (new PrepareTransforms_k(GPGPU.ptr_render_queue, ptr))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transforms)
             .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL))
             .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_SCALE))
             .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_ROTATION));
 
         long root_hull_filter_ptr = root_hull_filter.kernel_ptr(Kernel.root_hull_filter);
-        k_root_hull_filter = new RootHullFilter_k(GPGPU.ptr_gl_cmd_queue, root_hull_filter_ptr)
+        k_root_hull_filter = new RootHullFilter_k(GPGPU.ptr_render_queue, root_hull_filter_ptr)
             .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_ROOT_HULL))
             .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
 
         long root_hull_count_ptr =  root_hull_filter.kernel_ptr(Kernel.root_hull_count);
-        k_root_hull_count = new RootHullCount_k(GPGPU.ptr_gl_cmd_queue, root_hull_count_ptr)
+        k_root_hull_count = new RootHullCount_k(GPGPU.ptr_render_queue, root_hull_count_ptr)
             .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
     }
 
@@ -125,7 +125,7 @@ public class MouseRenderer extends GameSystem
         {
             GPGPU.cl_release_buffer(cursor_hulls.indices());
         }
-        cursor_hulls = hull_filter(GPGPU.ptr_gl_cmd_queue, ModelRegistry.CURSOR);
+        cursor_hulls = hull_filter(GPGPU.ptr_render_queue, ModelRegistry.CURSOR);
 
         if (cursor_hulls.count() == 0) return;
 

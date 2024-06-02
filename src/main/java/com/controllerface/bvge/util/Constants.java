@@ -6,7 +6,7 @@ public class Constants
     public static class Rendering
     {
         // todo: experiment with this, maybe make it configurable
-        public static final int MAX_BATCH_SIZE = (256 * 256) * 4;
+        public static final int MAX_BATCH_SIZE = (256 * 256);
         public static final int SCALAR_LENGTH = 1;
         public static final int SCALAR_FLOAT_SIZE = Float.BYTES;
         public static final int SCALAR_INT_SIZE = Integer.BYTES;

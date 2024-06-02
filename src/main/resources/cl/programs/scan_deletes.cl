@@ -58,30 +58,12 @@ inline DropCounts calculate_drop_counts(int entity_id,
     return drop_counts;
 }
 
-__kernel void locate_out_of_bounds(__global int2 *entity_hull_tables,
-                                   __global int *hull_flags,
-                                   __global int *entity_flags,
-                                   __global int *counter)
+__kernel void locate_out_of_bounds(__global int *entity_flags)
 {
     int gid = get_global_id(0);
-    int2 hull_table = entity_hull_tables[gid];
-    int hull_count = hull_table.y - hull_table.x + 1;
-    
-    int out_count = 0;
-    for (int i = 0; i < hull_count; i++)
-    {
-        int current_hull = hull_table.x + i;
-        int hull_flag = hull_flags[current_hull];
-        bool is_out = (hull_flag & OUT_OF_BOUNDS) !=0;
-        if (is_out)
-        {
-            out_count++;
-        }
-    }
-
     int flags = entity_flags[gid];
     bool sector_out = (flags & SECTOR_OUT) !=0;
-    if (out_count == hull_count && sector_out)
+    if (sector_out)
     {
         flags = (flags | DELETED);
         entity_flags[gid] = flags;
