@@ -31,10 +31,10 @@ public class SectorLoader extends GameSystem
     public SectorLoader(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
+        this.uniformGrid = uniformGrid;
         this.sector_cache = Caffeine.newBuilder()
             .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
             .build();
-        this.uniformGrid = uniformGrid;
 
         this.loader = Thread.ofVirtual().start(() ->
         {
@@ -58,14 +58,18 @@ public class SectorLoader extends GameSystem
 
                     // This "slots" count is used to control how many sectors are loaded each tick. Generally,
                     // it should be set to the number of rows in the sector grid, with processing being done
-                    // in column-major order. This makes it so only a single column of sectors loads each frame
+                    // in column-major order. I.e. only a single column of sectors loads each frame
                     int slots = sector_2_key[1] - sector_0_key[1];
                     for (int sx = sector_0_key[0]; sx <= sector_2_key[0]; sx++)
                     {
                         for (int sy = sector_0_key[1]; sy <= sector_2_key[1]; sy++)
                         {
                             var sector = new Sector(sx, sy);
-                            if (last_loaded_sectors.contains(sector)) loaded_sectors.add(sector);
+                            if (last_loaded_sectors.contains(sector))
+                            {
+                                loaded_sectors.add(sector);
+                                var _ = sector_cache.getIfPresent(sector);
+                            }
                             else if (slots-- > 0)
                             {
                                 loaded_sectors.add(sector);

@@ -286,6 +286,11 @@ public class ModelRenderer extends GameSystem
             return null;
         }
 
+        if (Editor.ACTIVE)
+        {
+            Editor.queue_event("render_instance_count", String.valueOf(total_instances));
+        }
+
         long details_size = (long)total_instances * CLSize.cl_int4;
         long texture_size = (long)total_instances * CLSize.cl_int;
         var mesh_details_ptr = GPGPU.new_empty_buffer(GPGPU.ptr_gl_cmd_queue, details_size);
@@ -314,9 +319,13 @@ public class ModelRenderer extends GameSystem
         }
 
         int total_batches = GPGPU.cl_read_svm_int(GPGPU.ptr_gl_cmd_queue, svm_total);
+        if (Editor.ACTIVE)
+        {
+            Editor.queue_event("render_batch_count", String.valueOf(total_batches));
+        }
         long batch_index_size = (long) total_batches * CLSize.cl_int;
 
-        var mesh_offset_ptr = GPGPU.new_empty_buffer(GPGPU.ptr_gl_cmd_queue, batch_index_size);
+        var mesh_offset_ptr = GPGPU.cl_new_pinned_buffer(batch_index_size);
 
         si = Editor.ACTIVE ? System.nanoTime() : 0;
         k_calculate_batch_offsets
@@ -331,8 +340,7 @@ public class ModelRenderer extends GameSystem
         }
 
         si = Editor.ACTIVE ? System.nanoTime() : 0;
-        int[] raw_offsets = new int[total_batches];
-        GPGPU.cl_read_int_buffer(GPGPU.ptr_gl_cmd_queue, mesh_offset_ptr, raw_offsets);
+        int[] raw_offsets = GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_gl_cmd_queue, mesh_offset_ptr, CLSize.cl_int, total_batches);
         GPGPU.cl_release_buffer(mesh_offset_ptr);
         if (Editor.ACTIVE)
         {

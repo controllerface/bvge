@@ -153,7 +153,7 @@ public class Window
         }
 
         glfwMakeContextCurrent(glfwWindow);
-        glfwSwapInterval(0); // v-sync
+        glfwSwapInterval(1); // v-sync
 
         // note: this must be called or nothing will work
         GL.createCapabilities();

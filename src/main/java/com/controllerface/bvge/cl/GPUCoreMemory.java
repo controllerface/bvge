@@ -7,7 +7,10 @@ import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Constants;
+import org.lwjgl.opencl.CL;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
@@ -562,8 +565,8 @@ public class GPUCoreMemory implements WorldContainer
     public GPUCoreMemory()
     {
         ptr_delete_counter  = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
-        ptr_position_buffer = GPGPU.cl_new_buffer(CLSize.cl_float2);
-        ptr_delete_sizes    = GPGPU.cl_new_buffer(CLSize.cl_int * 6);
+        ptr_position_buffer = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
+        ptr_delete_sizes    = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
 
         // transients
         b_hull_shift            = new TransientBuffer(GPGPU.ptr_cl_cmd_queue, CLSize.cl_int, 10_000L);
@@ -1592,9 +1595,7 @@ public class GPUCoreMemory implements WorldContainer
             .set_arg(ReadPosition_k.Args.target, entity_index)
             .call(GPGPU.global_single_size);
 
-        float[] float2 = new float[2];
-        GPGPU.cl_read_float_buffer(GPGPU.ptr_cl_cmd_queue, ptr_position_buffer, float2);
-        return float2;
+        return GPGPU.cl_read_pinned_float_buffer(GPGPU.ptr_cl_cmd_queue, ptr_position_buffer, CLSize.cl_float, 2);
     }
 
     public void delete_and_compact()
@@ -1683,9 +1684,7 @@ public class GPUCoreMemory implements WorldContainer
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        int[] int6 = new int[6];
-        GPGPU.cl_read_int_buffer(GPGPU.ptr_cl_cmd_queue, ptr_delete_sizes, int6);
-        return int6;
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_cl_cmd_queue, ptr_delete_sizes, CLSize.cl_int, 6);
     }
 
     private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
@@ -1722,9 +1721,7 @@ public class GPUCoreMemory implements WorldContainer
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPGPU.local_work_default);
 
-        int[] int6 = new int[6];
-        GPGPU.cl_read_int_buffer(GPGPU.ptr_cl_cmd_queue, ptr_delete_sizes, int6);
-        return int6;
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_cl_cmd_queue, ptr_delete_sizes, CLSize.cl_int, 6);
     }
 
     private void compact_buffers(int[] shift_counts)

@@ -284,7 +284,7 @@ __kernel void integrate(__global float4 *hulls,
 
     int4 k = getExtents(keys);
     bounds_index = k;
-    bool in_bounds = is_in_bounds(bounding_box, x_origin, y_origin, width, height);
+    bool in_bounds = is_box_in_bounds(bounding_box, x_origin, y_origin, width, height);
 
     if (in_bounds)
     {
@@ -295,7 +295,7 @@ __kernel void integrate(__global float4 *hulls,
         int size = count * 2;
         bounds_bank.y = size;
 
-        bool _in_perimiter = !is_in_bounds(bounding_box, inner_x_origin, inner_y_origin, inner_width, inner_height);
+        bool _in_perimiter = !is_box_in_bounds(bounding_box, inner_x_origin, inner_y_origin, inner_width, inner_height);
         if (_in_perimiter)
         {
             hull_1_flags |= IN_PERIMETER;

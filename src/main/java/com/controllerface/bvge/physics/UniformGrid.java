@@ -74,8 +74,8 @@ public class UniformGrid
         this.loaded_sectors.addAll(loaded_sectors);
         this.sector_origin_x = sector_origin_x;
         this.sector_origin_y = sector_origin_y;
-        this.sector_width = sector_width;
-        this.sector_height = sector_height;
+        this.sector_width    = sector_width;
+        this.sector_height    = sector_height;
     }
 
     public void updateOrigin(float x_origin, float y_origin)

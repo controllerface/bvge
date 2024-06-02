@@ -103,7 +103,7 @@ public class CircleRenderer extends GameSystem
         }
 
         long final_buffer_size = (long) CLSize.cl_int * final_count;
-        var hulls_out =  GPGPU.cl_new_buffer(final_buffer_size);
+        var hulls_out = GPGPU.cl_new_buffer(final_buffer_size);
 
         GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLSize.cl_int);
 
