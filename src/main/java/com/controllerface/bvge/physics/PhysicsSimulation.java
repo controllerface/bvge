@@ -10,9 +10,7 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -1188,7 +1186,7 @@ public class PhysicsSimulation extends GameSystem
     private void process_world_buffer()
     {
         long sd = Editor.ACTIVE ? System.nanoTime() : 0;
-        GPGPU.core_memory.process_world_buffer();
+        GPGPU.core_memory.transfer_world_input();
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - sd;
@@ -1274,11 +1272,8 @@ public class PhysicsSimulation extends GameSystem
         // this step determines how many of each object type is in that state, so they
         // can be transferred into the egress buffer, and eventually onto disk.
         int[] egress_counts = GPGPU.core_memory.count_egress_entities();
-        boolean any_egress = egress_counts[0] > 0;
-        if (any_egress)
-        {
-            GPGPU.core_memory.process_egress_buffer(egress_counts);
-        }
+        if (egress_counts[0] > 0) GPGPU.core_memory.transfer_egress_buffer(egress_counts);
+        else GPGPU.core_memory.clear_egress_counts();
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - se;

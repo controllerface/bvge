@@ -9,14 +9,14 @@ are designed to operate on a single target object.
 __kernel void create_point(__global float4 *points,
                            __global int *point_vertex_references,
                            __global int *point_hull_indices,
-                           __global ushort *point_hit_counts,
+                           __global short *point_hit_counts,
                            __global int *point_flags,
                            __global int4 *point_bone_tables,
                            int target,
                            float4 new_point,
                            int new_point_vertex_reference,
                            int new_point_hull_index,
-                           ushort new_point_hit_count,
+                           short new_point_hit_count,
                            int new_point_flags,
                            int4 new_bone_table)
 {
@@ -289,13 +289,13 @@ __kernel void update_mouse_position(__global int *entity_root_hulls,
 __kernel void merge_point(__global float4 *points_in,
                           __global int *point_vertex_references_in,
                           __global int *point_hull_indices_in,
-                          __global ushort *point_hit_counts_in,
+                          __global short *point_hit_counts_in,
                           __global int *point_flags_in,
                           __global int4 *point_bone_tables_in,
                           __global float4 *points_out,
                           __global int *point_vertex_references_out,
                           __global int *point_hull_indices_out,
-                          __global ushort *point_hit_counts_out,
+                          __global short *point_hit_counts_out,
                           __global int *point_flags_out,
                           __global int4 *point_bone_tables_out,
                           int point_offset,
@@ -505,7 +505,7 @@ __kernel void count_egress_entities(__global int *entity_flags,
 __kernel void egress_entities(__global float4 *points_in,
                               __global int *point_vertex_references_in,
                               __global int *point_hull_indices_in,
-                              __global ushort *point_hit_counts_in,
+                              __global short *point_hit_counts_in,
                               __global int *point_flags_in,
                               __global int4 *point_bone_tables_in,
                               __global int2 *edges_in,
@@ -544,7 +544,7 @@ __kernel void egress_entities(__global float4 *points_in,
                               __global float4 *points_out,
                               __global int *point_vertex_references_out,
                               __global int *point_hull_indices_out,
-                              __global ushort *point_hit_counts_out,
+                              __global short *point_hit_counts_out,
                               __global int *point_flags_out,
                               __global int4 *point_bone_tables_out,
                               __global int2 *edges_out,
@@ -721,7 +721,7 @@ __kernel void egress_entities(__global float4 *points_in,
                 int point_vertex_reference = point_vertex_references_in[current_point];
                 int point_hull_index       = point_hull_indices_in[current_point];
                 int point_flag             = point_flags_in[current_point];
-                ushort point_hit_counts    = point_hit_counts_in[current_point];
+                short point_hit_counts    = point_hit_counts_in[current_point];
                 int4 point_bone_table      = point_bone_tables_in[current_point];
 
                 int4 point_bone_offsets   = (int4)(0.0f, 0.0f, 0.0f, 0.0f);
@@ -778,16 +778,16 @@ __kernel void egress_entities(__global float4 *points_in,
 
         // write out entity data
         entities_out[new_entity_id]                  = entity;
-        entity_masses_out[current_entity]            = entity_mass;
-        entity_hull_tables_out[current_entity]       = entity_hull_table;
-        entity_bone_tables_out[current_entity]       = entity_bone_table;
-        entity_root_hulls_out[current_entity]        = entity_root_hull;
-        entity_model_indices_out[current_entity]     = entity_model_id;
-        entity_model_transforms_out[current_entity]  = entity_model_transform_id;
-        entity_flags_out[current_entity]             = entity_flag;
-        entity_animation_indices_out[current_entity] = entity_anim_index;
-        entity_animation_elapsed_out[current_entity] = entity_anim_time;
-        entity_motion_states_out[current_entity]     = entity_anim_states;
+        entity_masses_out[new_entity_id]            = entity_mass;
+        entity_hull_tables_out[new_entity_id]       = entity_hull_table;
+        entity_bone_tables_out[new_entity_id]       = entity_bone_table;
+        entity_root_hulls_out[new_entity_id]        = entity_root_hull;
+        entity_model_indices_out[new_entity_id]     = entity_model_id;
+        entity_model_transforms_out[new_entity_id]  = entity_model_transform_id;
+        entity_flags_out[new_entity_id]             = entity_flag;
+        entity_animation_indices_out[new_entity_id] = entity_anim_index;
+        entity_animation_elapsed_out[new_entity_id] = entity_anim_time;
+        entity_motion_states_out[new_entity_id]     = entity_anim_states;
     }
 }
 

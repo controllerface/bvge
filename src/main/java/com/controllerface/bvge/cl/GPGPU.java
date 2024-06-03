@@ -279,6 +279,17 @@ public class GPGPU
             null);
     }
 
+    public static void cl_read_short_buffer(long queue_ptr, long src_ptr, short[] dst)
+    {
+        clEnqueueReadBuffer(queue_ptr,
+            src_ptr,
+            true,
+            0,
+            dst,
+            null,
+            null);
+    }
+
     public static long cl_new_buffer(long size)
     {
         return clCreateBuffer(ptr_context, FLAGS_WRITE_GPU, size, null);
@@ -315,6 +326,89 @@ public class GPGPU
         long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
         return clCreateBuffer(ptr_context, flags, size, null);
     }
+
+    public static void cl_map_read_int_buffer(long queue_ptr, long pinned_ptr, long size, int count, int[] output)
+    {
+        var out = clEnqueueMapBuffer(queue_ptr,
+            pinned_ptr,
+            true,
+            CL_MAP_READ,
+            0,
+            size * (long)count,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
+        assert out != null;
+
+        var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+        for (int i = 0; i < count; i++)
+        {
+            output[i] = int_buffer.get(i);
+        }
+        clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+    }
+
+    public static void cl_map_read_float_buffer(long queue_ptr, long pinned_ptr, long size, int count, float[] output)
+    {
+        try (var stack = MemoryStack.stackPush())
+        {
+            var ib = stack.mallocInt(1);
+
+            var out = clEnqueueMapBuffer(queue_ptr,
+                pinned_ptr,
+                true,
+                CL_MAP_READ,
+                0,
+                size * (long) count,
+                null,
+                null,
+                ib,
+                null);
+
+            assert out != null;
+
+            int r = ib.get(0);
+
+            if (r != CL_SUCCESS)
+            {
+                System.out.println("error: " + r);
+            }
+
+            var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+            for (int i = 0; i < count; i++)
+            {
+                output[i] = float_buffer.get(i);
+            }
+            clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+        }
+    }
+
+    public static void cl_map_read_short_buffer(long queue_ptr, long pinned_ptr, long size, int count, short[] output)
+    {
+        var out = clEnqueueMapBuffer(queue_ptr,
+            pinned_ptr,
+            true,
+            CL_MAP_READ,
+            0,
+            size * (long)count,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
+
+        assert out != null;
+
+        var short_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+        for (int i = 0; i < count; i++)
+        {
+            output[i] = short_buffer.get(i);
+        }
+        clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+    }
+
+
 
     public static int[] cl_read_pinned_int_buffer(long queue_ptr, long pinned_ptr, long size, int count)
     {

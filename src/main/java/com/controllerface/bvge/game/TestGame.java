@@ -6,14 +6,20 @@ import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.SectorLoader;
+import com.controllerface.bvge.ecs.systems.SectorUnloader;
 import com.controllerface.bvge.geometry.MeshRegistry;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.renderers.*;
+import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.window.Window;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
@@ -23,6 +29,8 @@ public class TestGame extends GameMode
     private final GameSystem blanking_system;
     private final int GRID_WIDTH = 3840;
     private final int GRID_HEIGHT = 2160;
+
+    private final Cache<Sector, PhysicsEntityBatch> sector_cache;
 
     private enum RenderType
     {
@@ -58,6 +66,10 @@ public class TestGame extends GameMode
         ModelRegistry.init();
 
         this.blanking_system = blanking_system;
+        this.sector_cache = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
+            .build();
+
     }
 
     private void gen_player(float size, float x, float y)
@@ -73,12 +85,11 @@ public class TestGame extends GameMode
         ecs.attach_component(player, Component.LinearForce, new LinearForce(1600));
     }
 
-
-    // note: order of adding systems is relevant
     private void load_systems()
     {
-        ecs.register_system(new SectorLoader(ecs, uniformGrid));
+        ecs.register_system(new SectorLoader(ecs, uniformGrid, sector_cache));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid));
+        ecs.register_system(new SectorUnloader(ecs, sector_cache));
         ecs.register_system(new CameraTracking(ecs, uniformGrid));
 
         ecs.register_system(blanking_system);

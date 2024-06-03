@@ -7,10 +7,7 @@ import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -29,13 +26,11 @@ public class SectorLoader extends GameSystem
 
     private record SectorBounds(float outer_x_origin, float outer_y_origin, float outer_x_corner, float outer_y_corner) { }
 
-    public SectorLoader(ECS ecs, UniformGrid uniformGrid)
+    public SectorLoader(ECS ecs, UniformGrid uniformGrid, Cache<Sector, PhysicsEntityBatch> sector_cache)
     {
         super(ecs);
         this.uniformGrid = uniformGrid;
-        this.sector_cache = Caffeine.newBuilder()
-            .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
-            .build();
+        this.sector_cache = sector_cache;
 
         this.loader = Thread.ofVirtual().start(() ->
         {

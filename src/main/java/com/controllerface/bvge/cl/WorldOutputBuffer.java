@@ -2,6 +2,8 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
+import com.controllerface.bvge.ecs.systems.UnloadedSector;
+import org.lwjgl.opencl.CL;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 
@@ -12,9 +14,9 @@ public class WorldOutputBuffer
 
     //#region Armature Buffers
 
-    private final ResizableBuffer b_armature_bone;
-    private final ResizableBuffer b_armature_bone_reference_id;
-    private final ResizableBuffer b_armature_bone_parent_id;
+    private final ResizableBuffer b_entity_bone;
+    private final ResizableBuffer b_entity_bone_reference_id;
+    private final ResizableBuffer b_entity_bone_parent_id;
 
     //#endregion
 
@@ -88,12 +90,15 @@ public class WorldOutputBuffer
         this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
 
         // persistent buffers
+
+
+        b_entity_bone                 = new PersistentBuffer(this.ptr_queue, CLSize.cl_float16);
+        b_entity_bone_reference_id    = new PersistentBuffer(this.ptr_queue, CLSize.cl_int);
+        b_entity_bone_parent_id       = new PersistentBuffer(this.ptr_queue, CLSize.cl_int);
+
         b_entity_anim_elapsed        = new PersistentBuffer(this.ptr_queue, CLSize.cl_float2, 1_000L);
         b_entity_motion_state        = new PersistentBuffer(this.ptr_queue, CLSize.cl_short2, 1_000L);
         b_entity_anim_index          = new PersistentBuffer(this.ptr_queue, CLSize.cl_int2, 1_000L);
-        b_armature_bone              = new PersistentBuffer(this.ptr_queue, CLSize.cl_float16);
-        b_armature_bone_reference_id = new PersistentBuffer(this.ptr_queue, CLSize.cl_int);
-        b_armature_bone_parent_id    = new PersistentBuffer(this.ptr_queue, CLSize.cl_int);
         b_entity                     = new PersistentBuffer(this.ptr_queue, CLSize.cl_float4, 1_000L);
         b_entity_flag                = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 1_000L);
         b_entity_root_hull           = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 1_000L);
@@ -102,12 +107,15 @@ public class WorldOutputBuffer
         b_entity_hull_table          = new PersistentBuffer(this.ptr_queue, CLSize.cl_int2, 1_000L);
         b_entity_bone_table          = new PersistentBuffer(this.ptr_queue, CLSize.cl_int2, 1_000L);
         b_entity_mass                = new PersistentBuffer(this.ptr_queue, CLSize.cl_float, 1_000L);
+
         b_edge                       = new PersistentBuffer(this.ptr_queue, CLSize.cl_int2, 2_400L);
         b_edge_flag                  = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 2_400L);
         b_edge_length                = new PersistentBuffer(this.ptr_queue, CLSize.cl_float, 2_400L);
+
         b_hull_bone                  = new PersistentBuffer(this.ptr_queue, CLSize.cl_float16, 1_000L);
         b_hull_bone_bind_pose_id     = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 1_000L);
         b_hull_bone_inv_bind_pose_id = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 1_000L);
+
         b_hull                       = new PersistentBuffer(this.ptr_queue, CLSize.cl_float4, 1_000L);
         b_hull_scale                 = new PersistentBuffer(this.ptr_queue, CLSize.cl_float2, 1_000L);
         b_hull_point_table           = new PersistentBuffer(this.ptr_queue, CLSize.cl_int2, 1_000L);
@@ -121,12 +129,13 @@ public class WorldOutputBuffer
         b_hull_uv_offset             = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 1_000L);
         b_hull_rotation              = new PersistentBuffer(this.ptr_queue, CLSize.cl_float2, 1_000L);
         b_hull_integrity             = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 1_000L);
+
         b_point_bone_table           = new PersistentBuffer(this.ptr_queue, CLSize.cl_int4, 5_000L);
         b_point                      = new PersistentBuffer(this.ptr_queue, CLSize.cl_float4, 5_000L);
         b_point_vertex_reference     = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 5_000L);
         b_point_hull_index           = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 5_000L);
         b_point_flag                 = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 5_000L);
-        b_point_hit_count            = new PersistentBuffer(this.ptr_queue, CLSize.cl_ushort, 5_000L);
+        b_point_hit_count            = new PersistentBuffer(this.ptr_queue, CLSize.cl_short, 5_000L);
 
         p_gpu_crud.init();
 
@@ -207,22 +216,22 @@ public class WorldOutputBuffer
             .buf_arg(EgressEntities_k.Args.hull_bones_out,                  b_hull_bone)
             .buf_arg(EgressEntities_k.Args.hull_bind_pose_indicies_out,     b_hull_bone_bind_pose_id)
             .buf_arg(EgressEntities_k.Args.hull_inv_bind_pose_indicies_out, b_hull_bone_inv_bind_pose_id)
-            .buf_arg(EgressEntities_k.Args.armature_bones_out,              b_armature_bone)
-            .buf_arg(EgressEntities_k.Args.armature_bone_reference_ids_out, b_armature_bone_reference_id)
-            .buf_arg(EgressEntities_k.Args.armature_bone_parent_ids_out,    b_armature_bone_parent_id)
+            .buf_arg(EgressEntities_k.Args.armature_bones_out, b_entity_bone)
+            .buf_arg(EgressEntities_k.Args.armature_bone_reference_ids_out, b_entity_bone_reference_id)
+            .buf_arg(EgressEntities_k.Args.armature_bone_parent_ids_out, b_entity_bone_parent_id)
             .ptr_arg(EgressEntities_k.Args.counters,                        ptr_egress_sizes);
     }
 
-    public void pull_from_parent(int entity_count, int[] offsets)
+    public void pull_from_parent(int entity_count, int[] egress_counts)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_sizes, CLSize.cl_int * 6);
 
-        int entity_capacity        = offsets[0];
-        int hull_capacity          = offsets[1];
-        int point_capacity         = offsets[2];
-        int edge_capacity          = offsets[3];
-        int hull_bone_capacity     = offsets[4];
-        int armature_bone_capacity = offsets[5];
+        int entity_capacity        = egress_counts[0];
+        int hull_capacity          = egress_counts[1];
+        int point_capacity         = egress_counts[2];
+        int edge_capacity          = egress_counts[3];
+        int hull_bone_capacity     = egress_counts[4];
+        int entity_bone_capacity   = egress_counts[5];
 
         b_point.ensure_capacity(point_capacity);
         b_point_vertex_reference.ensure_capacity(point_capacity);
@@ -265,11 +274,84 @@ public class WorldOutputBuffer
         b_hull_bone_bind_pose_id.ensure_capacity(hull_bone_capacity);
         b_hull_bone_inv_bind_pose_id.ensure_capacity(hull_bone_capacity);
 
-        b_armature_bone.ensure_capacity(armature_bone_capacity);
-        b_armature_bone_reference_id.ensure_capacity(armature_bone_capacity);
-        b_armature_bone_parent_id.ensure_capacity(armature_bone_capacity);
+        b_entity_bone.ensure_capacity(entity_bone_capacity);
+        b_entity_bone_reference_id.ensure_capacity(entity_bone_capacity);
+        b_entity_bone_parent_id.ensure_capacity(entity_bone_capacity);
 
         k_egress_entities.call(arg_long(entity_count));
+    }
+
+    public void unload_sector(UnloadedSector unloaded_sector, int[] counts)
+    {
+        int entity_capacity        = counts[0];
+        int hull_capacity          = counts[1];
+        int point_capacity         = counts[2];
+        int edge_capacity          = counts[3];
+        int hull_bone_capacity     = counts[4];
+        int entity_bone_capacity   = counts[5];
+
+        if (point_capacity > 0)
+        {
+            b_point.transfer_out_float(unloaded_sector.raw_point,                                         CLSize.cl_float4,  point_capacity);
+            b_point_vertex_reference.transfer_out_int(unloaded_sector.raw_point_vertex_reference,         CLSize.cl_int,     point_capacity);
+            b_point_hull_index.transfer_out_int(unloaded_sector.raw_point_hull_index,                     CLSize.cl_int,     point_capacity);
+            b_point_flag.transfer_out_int(unloaded_sector.raw_point_flag,                                 CLSize.cl_int,     point_capacity);
+            b_point_hit_count.transfer_out_short(unloaded_sector.raw_point_hit_count,                     CLSize.cl_short,   point_capacity);
+            b_point_bone_table.transfer_out_int(unloaded_sector.raw_point_bone_table,                     CLSize.cl_int4,    point_capacity);
+        }
+
+        if (entity_capacity > 0)
+        {
+            b_edge.transfer_out_int(unloaded_sector.raw_edge,                                             CLSize.cl_int2,    edge_capacity);
+            b_edge_length.transfer_out_float(unloaded_sector.raw_edge_length,                             CLSize.cl_float,   edge_capacity);
+            b_edge_flag.transfer_out_int(unloaded_sector.raw_edge_flag,                                   CLSize.cl_int,     edge_capacity);
+        }
+
+        if (hull_capacity > 0)
+        {
+            b_hull.transfer_out_float(unloaded_sector.raw_hull,                                           CLSize.cl_float4,  hull_capacity);
+            b_hull_scale.transfer_out_float(unloaded_sector.raw_hull_scale,                               CLSize.cl_float2,  hull_capacity);
+            b_hull_mesh_id.transfer_out_int(unloaded_sector.raw_hull_mesh_id,                             CLSize.cl_int,     hull_capacity);
+            b_hull_uv_offset.transfer_out_int(unloaded_sector.raw_hull_uv_offset,                         CLSize.cl_int,     hull_capacity);
+            b_hull_rotation.transfer_out_float(unloaded_sector.raw_hull_rotation,                         CLSize.cl_float2,  hull_capacity);
+            b_hull_integrity.transfer_out_int(unloaded_sector.raw_hull_integrity,                         CLSize.cl_int,     hull_capacity);
+            b_hull_point_table.transfer_out_int(unloaded_sector.raw_hull_point_table,                     CLSize.cl_int2,    hull_capacity);
+            b_hull_edge_table.transfer_out_int(unloaded_sector.raw_hull_edge_table,                       CLSize.cl_int2,    hull_capacity);
+            b_hull_flag.transfer_out_int(unloaded_sector.raw_hull_flag,                                   CLSize.cl_int,     hull_capacity);
+            b_hull_bone_table.transfer_out_int(unloaded_sector.raw_hull_bone_table,                       CLSize.cl_int2,    hull_capacity);
+            b_hull_entity_id.transfer_out_int(unloaded_sector.raw_hull_entity_id,                         CLSize.cl_int,     hull_capacity);
+            b_hull_friction.transfer_out_float(unloaded_sector.raw_hull_friction,                         CLSize.cl_float,   hull_capacity);
+            b_hull_restitution.transfer_out_float(unloaded_sector.raw_hull_restitution,                   CLSize.cl_float,   hull_capacity);
+        }
+
+        if (entity_capacity > 0)
+        {
+            b_entity.transfer_out_float(unloaded_sector.raw_entity,                                       CLSize.cl_float4,  entity_capacity);
+            b_entity_flag.transfer_out_int(unloaded_sector.raw_entity_flag,                               CLSize.cl_int,     entity_capacity);
+            b_entity_root_hull.transfer_out_int(unloaded_sector.raw_entity_root_hull,                     CLSize.cl_int,     entity_capacity);
+            b_entity_model_id.transfer_out_int(unloaded_sector.raw_entity_model_id,                       CLSize.cl_int,     entity_capacity);
+            b_entity_model_transform.transfer_out_int(unloaded_sector.raw_entity_model_transform,         CLSize.cl_int,     entity_capacity);
+            b_entity_mass.transfer_out_float(unloaded_sector.raw_entity_mass,                             CLSize.cl_float,   entity_capacity);
+            b_entity_anim_index.transfer_out_int(unloaded_sector.raw_entity_anim_index,                   CLSize.cl_int2,    entity_capacity);
+            b_entity_anim_elapsed.transfer_out_float(unloaded_sector.raw_entity_anim_elapsed,             CLSize.cl_float2,  entity_capacity);
+            b_entity_motion_state.transfer_out_short(unloaded_sector.raw_entity_motion_state,             CLSize.cl_short2,  entity_capacity);
+            b_entity_hull_table.transfer_out_int(unloaded_sector.raw_entity_hull_table,                   CLSize.cl_int2,    entity_capacity);
+            b_entity_bone_table.transfer_out_int(unloaded_sector.raw_entity_bone_table,                   CLSize.cl_int2,    entity_capacity);
+        }
+
+        if (hull_bone_capacity > 0)
+        {
+            b_hull_bone.transfer_out_float(unloaded_sector.raw_hull_bone,                                 CLSize.cl_float16, hull_bone_capacity);
+            b_hull_bone_bind_pose_id.transfer_out_int(unloaded_sector.raw_hull_bone_bind_pose_id,         CLSize.cl_int,     hull_bone_capacity);
+            b_hull_bone_inv_bind_pose_id.transfer_out_int(unloaded_sector.raw_hull_bone_inv_bind_pose_id, CLSize.cl_int,     hull_bone_capacity);
+        }
+
+        if (entity_bone_capacity > 0)
+        {
+            b_entity_bone.transfer_out_float(unloaded_sector.raw_entity_bone,                             CLSize.cl_float16, entity_bone_capacity);
+            b_entity_bone_reference_id.transfer_out_int(unloaded_sector.raw_entity_bone_reference_id,     CLSize.cl_int,     entity_bone_capacity);
+            b_entity_bone_parent_id.transfer_out_int(unloaded_sector.raw_entity_bone_parent_id,           CLSize.cl_int,     entity_bone_capacity);
+        }
     }
 
     public void destroy()
@@ -301,9 +383,9 @@ public class WorldOutputBuffer
         b_point_flag.release();
         b_point_hit_count.release();
         b_point_bone_table.release();
-        b_armature_bone.release();
-        b_armature_bone_reference_id.release();
-        b_armature_bone_parent_id.release();
+        b_entity_bone.release();
+        b_entity_bone_reference_id.release();
+        b_entity_bone_parent_id.release();
         b_entity.release();
         b_entity_flag.release();
         b_entity_root_hull.release();
@@ -347,9 +429,9 @@ public class WorldOutputBuffer
         total += b_point_flag.debug_data();
         total += b_point_hit_count.debug_data();
         total += b_point_bone_table.debug_data();
-        total += b_armature_bone.debug_data();
-        total += b_armature_bone_reference_id.debug_data();
-        total += b_armature_bone_parent_id.debug_data();
+        total += b_entity_bone.debug_data();
+        total += b_entity_bone_reference_id.debug_data();
+        total += b_entity_bone_parent_id.debug_data();
         total += b_entity.debug_data();
         total += b_entity_flag.debug_data();
         total += b_entity_root_hull.debug_data();
@@ -363,6 +445,6 @@ public class WorldOutputBuffer
         total += b_entity_bone_table.debug_data();
 
         //System.out.println("---------------------------");
-        System.out.println("World Buffer Memory Usage: MB " + ((float) total / 1024f / 1024f));
+        System.out.println("Egress Buffer Memory Usage: MB " + ((float) total / 1024f / 1024f));
     }
 }

@@ -60,6 +60,21 @@ public abstract class ResizableBuffer
         GPGPU.cl_release_buffer(this.buffer_pointer);
     }
 
+    public void transfer_out_int(int[] ints, long size, int count)
+    {
+        GPGPU.cl_map_read_int_buffer(this.queue_pointer, this.buffer_pointer, size, count, ints);
+    }
+
+    public void transfer_out_float(float[] floats, long size, int count)
+    {
+        GPGPU.cl_map_read_float_buffer(this.queue_pointer, this.buffer_pointer, size, count, floats);
+    }
+
+    public void transfer_out_short(short[] shorts, long size, int count)
+    {
+        GPGPU.cl_map_read_short_buffer(this.queue_pointer, this.buffer_pointer, size, count, shorts);
+    }
+
     public long debug_data()
     {
         //System.out.println("buffer total: KB " + this.byte_capacity / 1024f);

@@ -148,7 +148,7 @@ public class WorldInputBuffer implements WorldContainer
         b_point_vertex_reference     = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 5_000L);
         b_point_hull_index           = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 5_000L);
         b_point_flag                 = new PersistentBuffer(this.ptr_queue, CLSize.cl_int, 5_000L);
-        b_point_hit_count            = new PersistentBuffer(this.ptr_queue, CLSize.cl_ushort, 5_000L);
+        b_point_hit_count            = new PersistentBuffer(this.ptr_queue, CLSize.cl_short, 5_000L);
 
         p_gpu_crud.init();
 

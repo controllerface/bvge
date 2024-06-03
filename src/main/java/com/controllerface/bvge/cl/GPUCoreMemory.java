@@ -3,6 +3,7 @@ package com.controllerface.bvge.cl;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.ScanDeletes;
+import com.controllerface.bvge.ecs.systems.UnloadedSector;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
@@ -568,7 +569,7 @@ public class GPUCoreMemory implements WorldContainer
      * Each iteration, the sector loader waits on this barrier once it is done loading sectors, and then the
      * main loop does the same, tripping the barrier, which it then immediately resets.
      */
-    private final CyclicBarrier sector_barrier = new CyclicBarrier(2);
+    private final CyclicBarrier sector_barrier = new CyclicBarrier(3);
 
     public GPUCoreMemory()
     {
@@ -648,7 +649,7 @@ public class GPUCoreMemory implements WorldContainer
         b_point_vertex_reference     = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int, 50_000L);
         b_point_hull_index           = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int, 50_000L);
         b_point_flag                 = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int, 50_000L);
-        b_point_hit_count            = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_ushort, 50_000L);
+        b_point_hit_count            = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_short, 50_000L);
         b_vertex_reference           = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float2);
         b_vertex_texture_uv          = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float2);
         b_vertex_uv_table            = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int2);
@@ -671,7 +672,7 @@ public class GPUCoreMemory implements WorldContainer
         mb_hull_point_table       = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int2, 10_000L);
         mb_hull_rotation          = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float2, 10_000L);
         mb_hull_scale             = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float2, 10_000L);
-        mb_point_hit_count        = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_ushort, 50_000L);
+        mb_point_hit_count        = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_short, 50_000L);
         mb_point_anti_gravity     = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float, 50_000L);
         mb_mirror_point           = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float4, 50_000L);
         mb_point_vertex_reference = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int, 50_000L);
@@ -1133,7 +1134,8 @@ public class GPUCoreMemory implements WorldContainer
         {
             sector_barrier.await();
         }
-        catch (InterruptedException | BrokenBarrierException e)
+        catch (InterruptedException _) { }
+        catch (BrokenBarrierException e)
         {
             throw new RuntimeException(e);
         }
@@ -1164,14 +1166,43 @@ public class GPUCoreMemory implements WorldContainer
         }
     }
 
-    public void process_egress_buffer(int[] egress_counts)
+    private int[] last_egress_counts = new int[6];
+
+    public int[] last_egress_counts()
     {
+        return last_egress_counts;
+    }
+
+    public void clear_egress_counts()
+    {
+        last_egress_counts[0] = 0;
+        last_egress_counts[1] = 0;
+        last_egress_counts[2] = 0;
+        last_egress_counts[3] = 0;
+        last_egress_counts[4] = 0;
+        last_egress_counts[5] = 0;
+    }
+
+    public void transfer_egress_buffer(int[] egress_counts)
+    {
+        last_egress_counts[0] = egress_counts[0];
+        last_egress_counts[1] = egress_counts[1];
+        last_egress_counts[2] = egress_counts[2];
+        last_egress_counts[3] = egress_counts[3];
+        last_egress_counts[4] = egress_counts[4];
+        last_egress_counts[5] = egress_counts[5];
+
         clFinish(GPGPU.ptr_compute_queue);
         outgoing_world_buffer.pull_from_parent(entity_index, egress_counts);
         clFinish(GPGPU.ptr_sector_queue);
     }
 
-    public void process_world_buffer()
+    public void transfer_world_output(UnloadedSector unloadedSector, int[] egress_counts)
+    {
+        outgoing_world_buffer.unload_sector(unloadedSector, egress_counts);
+    }
+
+    public void transfer_world_input()
     {
         int point_count         = incoming_world_buffer.next_point();
         int edge_count          = incoming_world_buffer.next_edge();
@@ -1780,6 +1811,7 @@ public class GPUCoreMemory implements WorldContainer
     public void destroy()
     {
         incoming_world_buffer.destroy();
+        outgoing_world_buffer.destroy();
 
         p_gpu_crud.destroy();
         p_scan_deletes.destroy();

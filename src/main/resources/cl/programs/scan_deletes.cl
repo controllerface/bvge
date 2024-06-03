@@ -618,7 +618,7 @@ __kernel void compact_points(__global int *point_shift,
                              __global int *point_vertex_references,
                              __global int *point_hull_indices,
                              __global int *point_flags,
-                             __global ushort *point_hit_counts,
+                             __global short *point_hit_counts,
                              __global int4 *bone_tables)
 {
     int current_point = get_global_id(0);
@@ -628,7 +628,7 @@ __kernel void compact_points(__global int *point_shift,
     int point_vertex_reference = point_vertex_references[current_point];
     int point_hull_index = point_hull_indices[current_point];
     int point_flag = point_flags[current_point];
-    ushort hit_counts = point_hit_counts[current_point];
+    short hit_counts = point_hit_counts[current_point];
     int4 bone_table = bone_tables[current_point];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)

@@ -186,7 +186,7 @@ __kernel void apply_reactions(__global float8 *reactions,
                               __global float4 *points,
                               __global float *anti_gravity,
                               __global int *point_flags,
-                              __global ushort *point_hit_counts,
+                              __global short *point_hit_counts,
                               __global int *point_reactions,
                               __global int *point_offsets,
                               __global int *point_hull_indices,
@@ -199,7 +199,7 @@ __kernel void apply_reactions(__global float8 *reactions,
     int current_point = get_global_id(0);
     int reaction_count = point_reactions[current_point];
     int flags = point_flags[current_point];
-    ushort hit_count = point_hit_counts[current_point];
+    short hit_count = point_hit_counts[current_point];
     
     int h_index = point_hull_indices[current_point];
     int h_flags = hull_flags[h_index];
@@ -380,7 +380,7 @@ __kernel void move_hulls(__global float4 *hulls,
 }
 
 inline int2 consume_point_flags(__global int *point_flags,
-                               __global ushort *point_hit_counts,
+                               __global short *point_hit_counts,
                                int2 point_table)
 {
     int2 result = (int2)(0, 0);
@@ -393,7 +393,7 @@ inline int2 consume_point_flags(__global int *point_flags,
     {
         int n = start + i;
         int flags = point_flags[n];
-        ushort pc = point_hit_counts[n];
+        short pc = point_hit_counts[n];
         result.x |= flags;
         result.y += (int)pc;
 
@@ -412,7 +412,7 @@ __kernel void move_entities(__global float4 *hulls,
                             __global int2 *hull_point_tables,
                             __global int *hull_flags,
                             __global int *point_flags,
-                            __global ushort *point_hit_counts,
+                            __global short *point_hit_counts,
                             __global float4 *points)
 {
     int current_entity = get_global_id(0);
