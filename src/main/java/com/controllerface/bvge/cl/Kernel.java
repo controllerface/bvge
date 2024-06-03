@@ -42,6 +42,7 @@ public enum Kernel
     create_point,
     create_texture_uv,
     create_vertex_reference,
+    egress_entities,
     finalize_candidates,
     generate_keys,
     integrate,

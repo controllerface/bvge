@@ -1269,24 +1269,26 @@ public class PhysicsSimulation extends GameSystem
         // zero out the acceleration buffer, so it is empty for the next frame
         GPGPU.core_memory.buffer(BufferType.ENTITY_ACCEL).clear();
 
-        long sd = Editor.ACTIVE ? System.nanoTime() : 0;
-
-        // todo: detect SECTOR_OUT entities, and write to separate buffer
-        //  may want to count both out and DELETED in an int2, and gate on
-        //  both processes on being non-zero count
-
+        long se = Editor.ACTIVE ? System.nanoTime() : 0;
+        // Entities that are exiting the playable area are considered to be "in egress",
+        // this step determines how many of each object type is in that state, so they
+        // can be transferred into the egress buffer, and eventually onto disk.
         int[] egress_counts = GPGPU.core_memory.count_egress_entities();
-
-        boolean any_egress = egress_counts[0] > 0 || egress_counts[6] > 0;
+        boolean any_egress = egress_counts[0] > 0;
+        if (any_egress)
+        {
+            GPGPU.core_memory.process_egress_buffer(egress_counts);
+        }
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - se;
+            Editor.queue_event("phys_egress", String.valueOf(e));
+        }
 
         // Deletion of objects happens only once per simulation tick, instead of every sub-step
         // to ensure buffer compaction happens as infrequently as possible.
-        if (any_egress)
-        {
-            System.out.println("debug:" + Arrays.toString(egress_counts));
-            GPGPU.core_memory.delete_and_compact();
-        }
-
+        long sd = Editor.ACTIVE ? System.nanoTime() : 0;
+        GPGPU.core_memory.delete_and_compact();
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - sd;

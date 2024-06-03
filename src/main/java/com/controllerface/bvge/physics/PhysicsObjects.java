@@ -32,6 +32,8 @@ public class PhysicsObjects
     private static final List<float[]> convex_buffer = new ArrayList<>();
     private static final Stack<Vertex> hull_vertex_buffer = new Stack<>();
 
+    private static final int[] EMPTY_POINT_BONE_TABLE = new int[]{ -1, -1, -1, -1 };
+
     public static float edgeDistance(float[] a, float[] b)
     {
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
@@ -51,7 +53,7 @@ public class PhysicsObjects
         var p1 = CLUtils.arg_float2(vert.x() * size + x, vert.y() * size + y);
 
         // store the single point for the circle
-        var p1_index = world.new_point(p1, new int[4], vert.index(), next_hull_index, 0, point_flags);
+        var p1_index = world.new_point(p1, EMPTY_POINT_BONE_TABLE, vert.index(), next_hull_index, 0, point_flags);
 
         var l1 = CLUtils.arg_float4(x, y, x, y + 1);
         var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
@@ -124,9 +126,9 @@ public class PhysicsObjects
         int h2 = random.nextInt(100, 4000);
         int h3 = random.nextInt(100, 4000);
 
-        var p1_index = world.new_point(p1, new int[4], v1.index(), next_hull_index, h1,0);
-        var p2_index = world.new_point(p2, new int[4], v2.index(), next_hull_index, h2,0);
-        var p3_index = world.new_point(p3, new int[4], v3.index(), next_hull_index, h3,0);
+        var p1_index = world.new_point(p1, EMPTY_POINT_BONE_TABLE, v1.index(), next_hull_index, h1,0);
+        var p2_index = world.new_point(p2, EMPTY_POINT_BONE_TABLE, v2.index(), next_hull_index, h2,0);
+        var p3_index = world.new_point(p3, EMPTY_POINT_BONE_TABLE, v3.index(), next_hull_index, h3,0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -199,10 +201,10 @@ public class PhysicsObjects
         int h3 = random.nextInt(100, 4000);
         int h4 = random.nextInt(100, 4000);
 
-        var p1_index = world.new_point(p1, new int[4], v1.index(), next_hull_index, h1,0);
-        var p2_index = world.new_point(p2, new int[4], v2.index(), next_hull_index, h2,0);
-        var p3_index = world.new_point(p3, new int[4], v3.index(), next_hull_index, h3,0);
-        var p4_index = world.new_point(p4, new int[4], v4.index(), next_hull_index, h4,0);
+        var p1_index = world.new_point(p1, EMPTY_POINT_BONE_TABLE, v1.index(), next_hull_index, h1,0);
+        var p2_index = world.new_point(p2, EMPTY_POINT_BONE_TABLE, v2.index(), next_hull_index, h2,0);
+        var p3_index = world.new_point(p3, EMPTY_POINT_BONE_TABLE, v3.index(), next_hull_index, h3,0);
+        var p4_index = world.new_point(p4, EMPTY_POINT_BONE_TABLE, v4.index(), next_hull_index, h4,0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);

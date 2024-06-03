@@ -559,7 +559,9 @@ public class GPUCoreMemory implements WorldContainer
     private int last_edge_index       = 0;
     private int last_entity_index     = 0;
 
-    private final WorldBuffer world_buffer;
+    private final WorldInputBuffer incoming_world_buffer;
+    private final WorldOutputBuffer outgoing_world_buffer;
+
 
     /**
      * This barrier is used to facilitate co-operation between the sector loading thread and the main loop.
@@ -573,7 +575,7 @@ public class GPUCoreMemory implements WorldContainer
         ptr_delete_counter  = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
         ptr_position_buffer = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
         ptr_delete_sizes    = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
-        ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 7);
+        ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
 
         // transients
         b_hull_shift            = new TransientBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int, 10_000L);
@@ -935,9 +937,10 @@ public class GPUCoreMemory implements WorldContainer
             .buf_arg(CountEgressEntities_k.Args.hull_point_tables,  b_hull_point_table)
             .buf_arg(CountEgressEntities_k.Args.hull_edge_tables,   b_hull_edge_table)
             .buf_arg(CountEgressEntities_k.Args.hull_bone_tables,   b_hull_bone_table)
-            .ptr_arg(CountEgressEntities_k.Args.counter, ptr_egress_sizes);
+            .ptr_arg(CountEgressEntities_k.Args.counters,           ptr_egress_sizes);
 
-        this.world_buffer = new WorldBuffer(this);
+        this.incoming_world_buffer = new WorldInputBuffer(GPGPU.ptr_sector_queue, this);
+        this.outgoing_world_buffer = new WorldOutputBuffer(GPGPU.ptr_sector_queue, this);
     }
 
     public ResizableBuffer buffer(BufferType bufferType)
@@ -1142,33 +1145,40 @@ public class GPUCoreMemory implements WorldContainer
         {
             if (solid.dynamic())
             {
-                PhysicsObjects.base_block(world_buffer, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
+                PhysicsObjects.base_block(incoming_world_buffer, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
             }
             else
             {
                 int flags = solid.flags() | Constants.HullFlags.IS_STATIC._int;
-                PhysicsObjects.base_block(world_buffer, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), flags, solid.material());
+                PhysicsObjects.base_block(incoming_world_buffer, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), flags, solid.material());
             }
         }
         for (var shard : batch.shards)
         {
             int id = shard.spike() ? ModelRegistry.BASE_SPIKE_INDEX : ModelRegistry.BASE_SHARD_INDEX;
-            PhysicsObjects.tri(world_buffer, shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
+            PhysicsObjects.tri(incoming_world_buffer, shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
         }
         for (var liquid : batch.liquids)
         {
-            PhysicsObjects.liquid_particle(world_buffer, liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
+            PhysicsObjects.liquid_particle(incoming_world_buffer, liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
         }
+    }
+
+    public void process_egress_buffer(int[] egress_counts)
+    {
+        clFinish(GPGPU.ptr_compute_queue);
+        outgoing_world_buffer.pull_from_parent(entity_index, egress_counts);
+        clFinish(GPGPU.ptr_sector_queue);
     }
 
     public void process_world_buffer()
     {
-        int point_count         = world_buffer.next_point();
-        int edge_count          = world_buffer.next_edge();
-        int hull_count          = world_buffer.next_hull();
-        int entity_count        = world_buffer.next_entity();
-        int hull_bone_count     = world_buffer.next_hull_bone();
-        int armature_bone_count = world_buffer.next_armature_bone();
+        int point_count         = incoming_world_buffer.next_point();
+        int edge_count          = incoming_world_buffer.next_edge();
+        int hull_count          = incoming_world_buffer.next_hull();
+        int entity_count        = incoming_world_buffer.next_entity();
+        int hull_bone_count     = incoming_world_buffer.next_hull_bone();
+        int armature_bone_count = incoming_world_buffer.next_armature_bone();
 
         int total = point_count
             + edge_count
@@ -1238,7 +1248,7 @@ public class GPUCoreMemory implements WorldContainer
         b_armature_bone_parent_id.ensure_capacity(armature_bone_capacity);
 
         clFinish(GPGPU.ptr_compute_queue);
-        world_buffer.merge_into_parent(this);
+        incoming_world_buffer.merge_into_parent(this);
         clFinish(GPGPU.ptr_sector_queue);
 
         point_index += point_count;
@@ -1562,6 +1572,7 @@ public class GPUCoreMemory implements WorldContainer
         throw new UnsupportedOperationException("Cannot merge core memory");
     }
 
+
     public int new_model_transform(float[] transform_data)
     {
         int capacity = model_transform_index + 1;
@@ -1613,9 +1624,9 @@ public class GPUCoreMemory implements WorldContainer
 
     public int[] count_egress_entities()
     {
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, CLSize.cl_int * 7);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, CLSize.cl_int * 6);
         k_count_egress_entities.call(arg_long(entity_index));
-        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, CLSize.cl_int, 7);
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, CLSize.cl_int, 6);
     }
 
     public void delete_and_compact()
@@ -1768,7 +1779,7 @@ public class GPUCoreMemory implements WorldContainer
     @Override
     public void destroy()
     {
-        world_buffer.destroy();
+        incoming_world_buffer.destroy();
 
         p_gpu_crud.destroy();
         p_scan_deletes.destroy();
