@@ -260,8 +260,8 @@ __kernel void read_position(__global float4 *entities,
     output[1] = entity.y;
 }
 
-
 // update functions
+
 __kernel void update_accel(__global float2 *entity_accel,
                            int target,
                            float2 new_value)
@@ -285,10 +285,6 @@ __kernel void update_mouse_position(__global int *entity_root_hulls,
 
     points[t.x].xy = new_value;
 }
-
-
-
-
 
 __kernel void merge_point(__global float4 *points_in,
                           __global int *point_vertex_references_in,
@@ -455,7 +451,54 @@ __kernel void merge_entity(__global float4 *entities_in,
     entity_flags_out[target_entity]             = entity_flags_in[current_entity];
 }
 
+__kernel void count_egress_entities(__global int *entity_flags,
+                                    __global int2 *entity_hull_tables,
+                                    __global int2 *entity_bone_tables,
+                                    __global int2 *hull_point_tables,
+                                    __global int2 *hull_edge_tables,
+                                    __global int2 *hull_bone_tables,
+                                    __global int *counter)
+{
+    int current_entity = get_global_id(0);
 
+    int flags       = entity_flags[current_entity];
+    bool sector_out = (flags & SECTOR_OUT) !=0;
+    bool deleted    = (flags & DELETED) !=0;
+
+    if (deleted) atomic_inc(&counter[6]);
+    if (sector_out)
+    {
+        int2 hull_table         = entity_hull_tables[current_entity];
+        int2 entitiy_bone_table = entity_bone_tables[current_entity];
+        
+        int hull_count         = hull_table.y - hull_table.x + 1;
+        int entitiy_bone_count = entitiy_bone_table.y - entitiy_bone_table.x + 1;
+        int point_count        = 0;
+        int edge_count         = 0;
+        int hull_bone_count    = 0;
+
+        for (int current_hull = hull_table.x; current_hull <= hull_table.y; current_hull++)
+        {
+            int2 point_table     = hull_point_tables[current_hull];
+            int2 edge_table      = hull_edge_tables[current_hull];
+            int2 hull_bone_table = hull_bone_tables[current_hull];
+
+            point_count     += point_table.y - point_table.x + 1;
+            edge_count      += edge_table.y - edge_table.x + 1;
+            hull_bone_count += hull_bone_table.y - hull_bone_table.x + 1;
+        }
+
+        atomic_inc(&counter[0]); 
+        atomic_add(&counter[1], hull_count);
+        atomic_add(&counter[2], point_count);
+        atomic_add(&counter[3], edge_count);
+        atomic_add(&counter[4], hull_bone_count);
+        atomic_add(&counter[5], entitiy_bone_count);
+        
+        flags = (flags | DELETED);
+        entity_flags[current_entity] = flags;
+    }
+}
 
 
 

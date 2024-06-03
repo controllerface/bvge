@@ -43,6 +43,9 @@ public class TestGame extends GameMode
 //            ,RenderType.GRID
             );
 
+//    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
+//        EnumSet.of(RenderType.HULLS);
+
     //private final UniformGrid uniformGrid = new UniformGrid(Window.get().width(), Window.get().height());
     private final UniformGrid uniformGrid = new UniformGrid(GRID_WIDTH, GRID_HEIGHT);
 

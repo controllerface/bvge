@@ -203,29 +203,29 @@ inline void polygon_circle_collision(int polygon_id,
     float2 vertex_collision = collision_vector * vert_magnitude;
 
     // friction
-    //float2 vertex_diff = vertex_point.xy - vertex_point.zw;
+    float2 vertex_diff = vertex_point.xy - vertex_point.zw;
     // float2 edge_1_diff = edge_point_1.xy - edge_point_1.zw;
     // float2 edge_2_diff = edge_point_2.xy - edge_point_2.zw;
-    //float2 vertex_velocity = native_divide(vertex_diff, dt);
+    float2 vertex_velocity = native_divide(vertex_diff, dt);
     // float2 edge_1_velocity = native_divide(edge_1_diff, dt);
     // float2 edge_2_velocity = native_divide(edge_2_diff, dt);
-    //float2 vertex_rel_vel = vertex_velocity - collision_vector;
+    float2 vertex_rel_vel = vertex_velocity - collision_vector;
     // float2 edge_1_rel_vel = edge_1_velocity - collision_vector;
     // float2 edge_2_rel_vel = edge_2_velocity - collision_vector;
 
-    // float friction_coefficient = any_static 
-    //     ? static_vert 
-    //         ? vert_hull_friction 
-    //         : edge_hull_friction
-    //     : max(vert_hull_friction, edge_hull_friction);
+    float friction_coefficient = any_static 
+        ? static_vert 
+            ? vert_hull_friction 
+            : edge_hull_friction
+        : max(vert_hull_friction, edge_hull_friction);
 
-    //float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
+    float2 vertex_tangent = vertex_rel_vel - dot(vertex_rel_vel, collision_normal) * collision_normal;
     // float2 edge_1_tangent = edge_1_rel_vel - dot(edge_1_rel_vel, collision_normal) * collision_normal;
     // float2 edge_2_tangent = edge_2_rel_vel - dot(edge_2_rel_vel, collision_normal) * collision_normal;
-    //vertex_tangent = fast_normalize(vertex_tangent);
+    vertex_tangent = fast_normalize(vertex_tangent);
     // edge_1_tangent = fast_normalize(edge_1_tangent);
     // edge_2_tangent = fast_normalize(edge_2_tangent);
-    //float2 vertex_friction = (-friction_coefficient * vertex_tangent) * vert_magnitude;
+    float2 vertex_friction = (-friction_coefficient * vertex_tangent) * vert_magnitude;
     // float2 edge_1_friction = (-friction_coefficient * edge_1_tangent) * edge_magnitude;
     // float2 edge_2_friction = (-friction_coefficient * edge_2_tangent) * edge_magnitude;
 

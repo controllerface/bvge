@@ -23,6 +23,7 @@ public enum Kernel
     complete_int_multi_block,
     complete_int_multi_block_out,
     count_candidates,
+    count_egress_entities,
     count_mesh_batches,
     count_mesh_instances,
     create_animation_timings,

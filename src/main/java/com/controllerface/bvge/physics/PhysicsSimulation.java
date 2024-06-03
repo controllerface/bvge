@@ -10,7 +10,9 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -57,31 +59,31 @@ public class PhysicsSimulation extends GameSystem
     private final GPUProgram p_animate_hulls = new AnimateHulls();
     private final GPUProgram p_resolve_constraints = new ResolveConstraints();
 
-    private final GPUKernel k_set_control_points;
+    private final GPUKernel k_aabb_collide;
+    private final GPUKernel k_animate_bones;
+    private final GPUKernel k_animate_entities;
+    private final GPUKernel k_animate_points;
+    private final GPUKernel k_apply_reactions;
+    private final GPUKernel k_build_key_map;
+    private final GPUKernel k_complete_bounds_multi_block;
+    private final GPUKernel k_complete_candidates_multi_block_out;
+    private final GPUKernel k_count_candidates;
+    private final GPUKernel k_finalize_candidates;
+    private final GPUKernel k_generate_keys;
     private final GPUKernel k_handle_movement;
     private final GPUKernel k_integrate;
     private final GPUKernel k_integrate_entities;
-    private final GPUKernel k_scan_bounds_single_block;
-    private final GPUKernel k_scan_bounds_multi_block;
-    private final GPUKernel k_complete_bounds_multi_block;
-    private final GPUKernel k_generate_keys;
-    private final GPUKernel k_build_key_map;
     private final GPUKernel k_locate_in_bounds;
-    private final GPUKernel k_count_candidates;
-    private final GPUKernel k_scan_candidates_single_block_out;
-    private final GPUKernel k_scan_candidates_multi_block_out;
-    private final GPUKernel k_complete_candidates_multi_block_out;
-    private final GPUKernel k_aabb_collide;
-    private final GPUKernel k_finalize_candidates;
-    private final GPUKernel k_sat_collide;
-    private final GPUKernel k_sort_reactions;
-    private final GPUKernel k_apply_reactions;
     private final GPUKernel k_move_entities;
     private final GPUKernel k_move_hulls;
-    private final GPUKernel k_animate_entities;
-    private final GPUKernel k_animate_bones;
-    private final GPUKernel k_animate_points;
     private final GPUKernel k_resolve_constraints;
+    private final GPUKernel k_sat_collide;
+    private final GPUKernel k_scan_bounds_multi_block;
+    private final GPUKernel k_scan_bounds_single_block;
+    private final GPUKernel k_scan_candidates_multi_block_out;
+    private final GPUKernel k_scan_candidates_single_block_out;
+    private final GPUKernel k_set_control_points;
+    private final GPUKernel k_sort_reactions;
 
     //#endregion
 
@@ -1273,9 +1275,17 @@ public class PhysicsSimulation extends GameSystem
         //  may want to count both out and DELETED in an int2, and gate on
         //  both processes on being non-zero count
 
+        int[] egress_counts = GPGPU.core_memory.count_egress_entities();
+
+        boolean any_egress = egress_counts[0] > 0 || egress_counts[6] > 0;
+
         // Deletion of objects happens only once per simulation tick, instead of every sub-step
         // to ensure buffer compaction happens as infrequently as possible.
-        GPGPU.core_memory.delete_and_compact();
+        if (any_egress)
+        {
+            System.out.println("debug:" + Arrays.toString(egress_counts));
+            GPGPU.core_memory.delete_and_compact();
+        }
 
         if (Editor.ACTIVE)
         {

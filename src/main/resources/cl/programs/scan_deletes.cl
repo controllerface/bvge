@@ -17,11 +17,11 @@ inline DropCounts calculate_drop_counts(int entity_id,
                                         __global int2 *hull_bone_tables)
 {
     DropCounts drop_counts;
-    drop_counts.bone_count = 0;
-    drop_counts.point_count = 0;
-    drop_counts.edge_count = 0;
-    drop_counts.hull_count = 0;
-    drop_counts.entity_count = 0;
+    drop_counts.bone_count      = 0;
+    drop_counts.point_count     = 0;
+    drop_counts.edge_count      = 0;
+    drop_counts.hull_count      = 0;
+    drop_counts.entity_count    = 0;
     drop_counts.bone_bind_count = 0;
 
     int flags = entity_flags[entity_id];

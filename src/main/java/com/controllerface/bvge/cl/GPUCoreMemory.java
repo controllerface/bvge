@@ -20,20 +20,21 @@ public class GPUCoreMemory implements WorldContainer
     private final GPUProgram p_scan_deletes = new ScanDeletes();
 
     private final GPUKernel k_compact_armature_bones;
+    private final GPUKernel k_compact_edges;
     private final GPUKernel k_compact_entities;
     private final GPUKernel k_compact_hull_bones;
-    private final GPUKernel k_compact_edges;
     private final GPUKernel k_compact_hulls;
     private final GPUKernel k_compact_points;
     private final GPUKernel k_complete_deletes_multi_block_out;
+    private final GPUKernel k_count_egress_entities;
     private final GPUKernel k_create_animation_timings;
     private final GPUKernel k_create_armature_bone;
-    private final GPUKernel k_create_entity;
+    private final GPUKernel k_create_bone;
     private final GPUKernel k_create_bone_bind_pose;
     private final GPUKernel k_create_bone_channel;
-    private final GPUKernel k_create_bone;
     private final GPUKernel k_create_bone_reference;
     private final GPUKernel k_create_edge;
+    private final GPUKernel k_create_entity;
     private final GPUKernel k_create_hull;
     private final GPUKernel k_create_keyframe;
     private final GPUKernel k_create_mesh_face;
@@ -528,6 +529,7 @@ public class GPUCoreMemory implements WorldContainer
     private final long ptr_delete_counter;
     private final long ptr_position_buffer;
     private final long ptr_delete_sizes;
+    private final long ptr_egress_sizes;
 
     private int hull_index            = 0;
     private int point_index           = 0;
@@ -571,6 +573,7 @@ public class GPUCoreMemory implements WorldContainer
         ptr_delete_counter  = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
         ptr_position_buffer = GPGPU.cl_new_pinned_buffer(CLSize.cl_float2);
         ptr_delete_sizes    = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
+        ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 7);
 
         // transients
         b_hull_shift            = new TransientBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int, 10_000L);
@@ -923,6 +926,16 @@ public class GPUCoreMemory implements WorldContainer
             .buf_arg(CompactArmatureBones_k.Args.armature_bones,              b_armature_bone)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_reference_ids, b_armature_bone_reference_id)
             .buf_arg(CompactArmatureBones_k.Args.armature_bone_parent_ids,    b_armature_bone_parent_id);
+
+        long k_ptr_count_egress_candidates = p_gpu_crud.kernel_ptr(Kernel.count_egress_entities);
+        k_count_egress_entities = new CountEgressEntities_k(GPGPU.ptr_compute_queue, k_ptr_count_egress_candidates)
+            .buf_arg(CountEgressEntities_k.Args.entity_flags,       b_entity_flag)
+            .buf_arg(CountEgressEntities_k.Args.entity_hull_tables, b_entity_hull_table)
+            .buf_arg(CountEgressEntities_k.Args.entity_bone_tables, b_entity_bone_table)
+            .buf_arg(CountEgressEntities_k.Args.hull_point_tables,  b_hull_point_table)
+            .buf_arg(CountEgressEntities_k.Args.hull_edge_tables,   b_hull_edge_table)
+            .buf_arg(CountEgressEntities_k.Args.hull_bone_tables,   b_hull_bone_table)
+            .ptr_arg(CountEgressEntities_k.Args.counter, ptr_egress_sizes);
 
         this.world_buffer = new WorldBuffer(this);
     }
@@ -1598,9 +1611,16 @@ public class GPUCoreMemory implements WorldContainer
         return GPGPU.cl_read_pinned_float_buffer(GPGPU.ptr_compute_queue, ptr_position_buffer, CLSize.cl_float, 2);
     }
 
+    public int[] count_egress_entities()
+    {
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, CLSize.cl_int * 7);
+        k_count_egress_entities.call(arg_long(entity_index));
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, CLSize.cl_int, 7);
+    }
+
     public void delete_and_compact()
     {
-        k_locate_out_of_bounds.call(arg_long(entity_index));
+        //k_locate_out_of_bounds.call(arg_long(entity_index));
 
         b_delete_1.ensure_capacity(entity_index);
         b_delete_2.ensure_capacity(entity_index);
