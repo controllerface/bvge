@@ -572,7 +572,7 @@ public class GPUCoreMemory implements WorldContainer
      * Each iteration, the sector loader waits on this barrier once it is done loading sectors, and then the
      * main loop does the same, tripping the barrier, which it then immediately resets.
      */
-    private final CyclicBarrier sector_barrier = new CyclicBarrier(2);
+    private final CyclicBarrier sector_barrier = new CyclicBarrier(3);
 
     public GPUCoreMemory()
     {
