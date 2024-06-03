@@ -14,9 +14,13 @@ public class PhysicsEntityBatch
     public record Shard(boolean spike, float x, float y, float size, int flags, float mass, float friction, float restitution, Solid material) { }
     public record Liquid(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, com.controllerface.bvge.substances.Liquid particle_fluid) { }
 
+    public record Entity(int model_id, float x, float y, float size, float mass, float friction, float restitution, int flags, int uv_offset) { }
+
     public final List<Block> blocks = new ArrayList<>();
     public final List<Shard> shards = new ArrayList<>();
     public final List<Liquid> liquids = new ArrayList<>();
+
+    public final List<Entity> entities = new ArrayList<>();
 
     public PhysicsEntityBatch(Sector sector)
     {
@@ -36,5 +40,10 @@ public class PhysicsEntityBatch
     public void new_liquid(float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, com.controllerface.bvge.substances.Liquid particle_fluid)
     {
         liquids.add(new Liquid(x, y, size, mass, friction, restitution, flags, point_flags, particle_fluid));
+    }
+
+    public void new_entity(int model_id, float x, float y, float size, float mass, float friction, float restitution, int flags, int uv_offset)
+    {
+        entities.add(new Entity(model_id, x, y, size, mass, friction, restitution, flags, uv_offset));
     }
 }

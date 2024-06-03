@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs.systems;
 
-public class UnloadedSector
+public class UnloadedSectorSlice
 {
     public int[] raw_point_bone_table           = new int[0];
     public float[] raw_point                    = new float[0];
@@ -61,14 +61,14 @@ public class UnloadedSector
         int hull_vec2         = hull_capacity        * 2;
         int hull_vec4         = hull_capacity        * 4;
         int point_vec4        = point_capacity       * 4;
-        int edge_vec2         = edge_capacity        * 4;
+        int edge_vec2         = edge_capacity        * 2;
         int hull_bone_vec16   = hull_bone_capacity   * 16;
         int entity_bone_vec16 = entity_bone_capacity * 16;
 
+        raw_entity                     = ensure_float(raw_entity,                   entity_vec4);
         raw_entity_anim_elapsed        = ensure_float(raw_entity_anim_elapsed,      entity_vec2);
         raw_entity_motion_state        = ensure_short(raw_entity_motion_state,      entity_vec2);
         raw_entity_anim_index          = ensure_int(raw_entity_anim_index,          entity_vec2);
-        raw_entity                     = ensure_float(raw_entity,                   entity_vec4);
         raw_entity_flag                = ensure_int(raw_entity_flag,                entity_capacity);
         raw_entity_root_hull           = ensure_int(raw_entity_root_hull,           entity_capacity);
         raw_entity_model_id            = ensure_int(raw_entity_model_id,            entity_capacity);
@@ -91,8 +91,8 @@ public class UnloadedSector
         raw_hull_rotation              = ensure_float(raw_hull_rotation,            hull_vec2);
         raw_hull_integrity             = ensure_int(raw_hull_integrity,             hull_capacity);
 
-        raw_point_bone_table           = ensure_int(raw_point_bone_table,           point_vec4);
         raw_point                      = ensure_float(raw_point,                    point_vec4);
+        raw_point_bone_table           = ensure_int(raw_point_bone_table,           point_vec4);
         raw_point_vertex_reference     = ensure_int(raw_point_vertex_reference,     point_capacity);
         raw_point_hull_index           = ensure_int(raw_point_hull_index,           point_capacity);
         raw_point_flag                 = ensure_int(raw_point_flag,                 point_capacity);

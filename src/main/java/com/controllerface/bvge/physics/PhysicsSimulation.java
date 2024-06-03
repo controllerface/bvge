@@ -1319,6 +1319,7 @@ public class PhysicsSimulation extends GameSystem
             GPGPU.core_memory.reset_sector();
             clFinish(GPGPU.ptr_sector_queue);
             process_world_buffer();
+            GPGPU.core_memory.swap_egress_buffers();
             GPGPU.core_memory.mirror_buffers_ex();
             clFinish(GPGPU.ptr_compute_queue);
             next_phys_time.put(dt);
