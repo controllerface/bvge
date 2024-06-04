@@ -1,12 +1,15 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.window.Window;
+
+import java.util.Map;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
@@ -244,17 +247,39 @@ public class UniformGridRenderer extends GameSystem
         vertex_index += out[0];
         color_index  += out[1];
 
+
+
+
+        var components = ecs.get_components(Component.ControlPoints);
+        int target_count = 0;
+        ControlPoints controlPoints = null;
+        for (Map.Entry<String, GameComponent> entry : components.entrySet())
+        {
+            //String entity_name = entry.getKey();
+            GameComponent component = entry.getValue();
+            controlPoints = Component.ControlPoints.coerce(component);
+//            EntityIndex entity_id = Component.EntityId.forEntity(ecs, entity_name);
+//            EntityIndex cursor_entity_id = Component.CursorId.forEntity(ecs, entity_name);
+//            LinearForce force = Component.LinearForce.forEntity(ecs, entity_name);
+        }
+
+        var sec = UniformGridRenderer.get_sector_for_point(controlPoints.get_world_target().x, controlPoints.get_world_target().y);
+
+
+        float offset_x = sec[0] * UniformGrid.BLOCK_COUNT;
+        float offset_y = sec[1] * UniformGrid.BLOCK_COUNT;
+
         for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
         {
             for (int y = 0; y < UniformGrid.BLOCK_COUNT; y++)
             {
                 float r = 0.4f;
-                float g = 0.1f;
+                float g = 1.1f;
                 float b = 0.1f;
                 float a = 0.9f;
 
-                float current_x = (x * UniformGrid.BLOCK_SIZE) + UniformGrid.SECTOR_SIZE;
-                float current_y = (y * UniformGrid.BLOCK_SIZE) + UniformGrid.SECTOR_SIZE;
+                float current_x = ((x+ offset_x) * UniformGrid.BLOCK_SIZE);
+                float current_y = ((y+ offset_y) * UniformGrid.BLOCK_SIZE);
                 vertex_data[vertex_index++] = current_x;
                 vertex_data[vertex_index++] = current_y;
                 vertex_data[vertex_index++] = current_x + UniformGrid.BLOCK_SIZE;
