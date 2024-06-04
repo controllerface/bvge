@@ -2,12 +2,12 @@ package com.controllerface.bvge.ecs.systems;
 
 public class UnloadedSectorSlice
 {
-    public int[] raw_point_bone_table           = new int[0];
     public float[] raw_point                    = new float[0];
+    public int[] raw_point_bone_table           = new int[0];
     public int[] raw_point_vertex_reference     = new int[0];
     public int[] raw_point_hull_index           = new int[0];
-    public int[] raw_point_flag                 = new int[0];
     public short[] raw_point_hit_count          = new short[0];
+    public int[] raw_point_flag                 = new int[0];
 
     public int[] raw_edge                       = new int[0];
     public int[] raw_edge_flag                  = new int[0];
@@ -17,20 +17,20 @@ public class UnloadedSectorSlice
     public float[] raw_hull_scale               = new float[0];
     public int[] raw_hull_point_table           = new int[0];
     public int[] raw_hull_edge_table            = new int[0];
-    public int[] raw_hull_flag                  = new int[0];
     public int[] raw_hull_bone_table            = new int[0];
+    public float[] raw_hull_rotation            = new float[0];
+    public int[] raw_hull_flag                  = new int[0];
     public int[] raw_hull_entity_id             = new int[0];
     public float[] raw_hull_friction            = new float[0];
     public float[] raw_hull_restitution         = new float[0];
     public int[] raw_hull_mesh_id               = new int[0];
     public int[] raw_hull_uv_offset             = new int[0];
-    public float[] raw_hull_rotation            = new float[0];
     public int[] raw_hull_integrity             = new int[0];
 
+    public float[] raw_entity                   = new float[0];
     public float[] raw_entity_anim_elapsed      = new float[0];
     public short[] raw_entity_motion_state      = new short[0];
     public int[] raw_entity_anim_index          = new int[0];
-    public float[] raw_entity                   = new float[0];
     public int[] raw_entity_flag                = new int[0];
     public int[] raw_entity_root_hull           = new int[0];
     public int[] raw_entity_model_id            = new int[0];

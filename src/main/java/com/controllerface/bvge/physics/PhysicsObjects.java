@@ -6,6 +6,7 @@ import com.controllerface.bvge.cl.WorldContainer;
 import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.ModelRegistry;
+import com.controllerface.bvge.geometry.UnloadedEntity;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
@@ -557,6 +558,20 @@ public class PhysicsObjects
             model.root_transform_index(),
             0);
     }
+
+//    public static int reload_entity(WorldContainer world, UnloadedEntity entity)
+//    {
+//        if (entity.model_id() == CIRCLE_PARTICLE)
+//        {}
+//        else if (entity.model_id() == BASE_BLOCK_INDEX)
+//        {}
+//        else if (entity.model_id() == BASE_SHARD_INDEX)
+//        {}
+//        else if (entity.model_id() == BASE_SPIKE_INDEX)
+//        {}
+//        else
+//        {}
+//    }
 
     private static int find_bone_index(Map<String, Integer> bone_map, String[] bone_names, int index)
     {

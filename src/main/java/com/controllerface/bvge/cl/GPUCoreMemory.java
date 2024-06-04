@@ -13,6 +13,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
+import static com.controllerface.bvge.geometry.ModelRegistry.*;
 import static org.lwjgl.opencl.CL10.clFinish;
 
 public class GPUCoreMemory implements WorldContainer
@@ -1163,6 +1164,13 @@ public class GPUCoreMemory implements WorldContainer
 
     public void load_entity_batch(PhysicsEntityBatch batch)
     {
+
+        for (var entity : batch.entities)
+        {
+
+        }
+
+
         for (var solid : batch.blocks)
         {
             if (solid.dynamic())
@@ -1177,7 +1185,7 @@ public class GPUCoreMemory implements WorldContainer
         }
         for (var shard : batch.shards)
         {
-            int id = shard.spike() ? ModelRegistry.BASE_SPIKE_INDEX : ModelRegistry.BASE_SHARD_INDEX;
+            int id = shard.spike() ? ModelRegistry.BASE_SPIKE_INDEX : BASE_SHARD_INDEX;
             PhysicsObjects.tri(incoming_world_buffer, shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
         }
         for (var liquid : batch.liquids)

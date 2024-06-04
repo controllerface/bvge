@@ -705,8 +705,8 @@ __kernel void egress_entities(__global float4 *points_in,
                 edge_point_offsets.x = edge.x - initial_hull_point_offset;
                 edge_point_offsets.y = edge.y - initial_hull_point_offset;
 
-                new_edge_points.x = edge_offset + edge_point_offsets.x;
-                new_edge_points.y = edge_offset + edge_point_offsets.y;
+                new_edge_points.x = point_offset + edge_point_offsets.x;
+                new_edge_points.y = point_offset + edge_point_offsets.y;
 
                 edges_out[new_edge_id]        = new_edge_points;
                 edge_lengths_out[new_edge_id] = edge_length;
@@ -721,7 +721,7 @@ __kernel void egress_entities(__global float4 *points_in,
                 int point_vertex_reference = point_vertex_references_in[current_point];
                 int point_hull_index       = point_hull_indices_in[current_point];
                 int point_flag             = point_flags_in[current_point];
-                short point_hit_counts    = point_hit_counts_in[current_point];
+                short point_hit_counts     = point_hit_counts_in[current_point];
                 int4 point_bone_table      = point_bone_tables_in[current_point];
 
                 int4 point_bone_offsets   = (int4)(0.0f, 0.0f, 0.0f, 0.0f);
@@ -746,10 +746,10 @@ __kernel void egress_entities(__global float4 *points_in,
             }
 
             hull_point_table.x = next_hull_point_x;
-            hull_edge_table.x  = next_hull_edge_table_x;
-            hull_bone_table.x  = next_hull_bone_table_x;
             hull_point_table.y = point_offset + point_offset_count - 1;
+            hull_edge_table.x  = next_hull_edge_table_x;
             hull_edge_table.y  = edge_offset + edge_offset_count - 1;
+            hull_bone_table.x  = next_hull_bone_table_x;
             hull_bone_table.y  = hull_bone_offset + hull_bone_offset_count - 1;
 
             hulls_out[new_hull_id]             = hull;
