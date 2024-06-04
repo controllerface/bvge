@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.programs.GPUCrud;
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_short2;
 
-public class WorldInputBuffer implements WorldContainer
+public class SectorInputBuffer implements SectorContainer
 {
     private final GPUProgram p_gpu_crud = new GPUCrud();
 
@@ -104,7 +104,7 @@ public class WorldInputBuffer implements WorldContainer
     private final long ptr_egress_sizes;
 
 
-    public WorldInputBuffer(long ptr_queue, GPUCoreMemory core_memory)
+    public SectorInputBuffer(long ptr_queue, GPUCoreMemory core_memory)
     {
         this.ptr_queue         = ptr_queue;
         this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 7);
@@ -354,7 +354,7 @@ public class WorldInputBuffer implements WorldContainer
         b_point_bone_table.ensure_capacity(capacity);
 
         var new_point = position.length == 2
-            ? new float[]{ position[0], position[1], position[0], position[1] }
+            ? arg_float4(position[0], position[1], position[0], position[1])
             : position;
 
         k_create_point
@@ -406,9 +406,13 @@ public class WorldInputBuffer implements WorldContainer
         b_hull_friction.ensure_capacity(capacity);
         b_hull_restitution.ensure_capacity(capacity);
 
+        var new_hull = position.length == 2
+            ? arg_float4(position[0], position[1], position[0], position[1])
+            : position;
+
         k_create_hull
             .set_arg(CreateHull_k.Args.target, hull_index)
-            .set_arg(CreateHull_k.Args.new_hull, arg_float4(position[0], position[1], position[0], position[1]))
+            .set_arg(CreateHull_k.Args.new_hull, new_hull)
             .set_arg(CreateHull_k.Args.new_hull_scale, scale)
             .set_arg(CreateHull_k.Args.new_rotation, rotation)
             .set_arg(CreateHull_k.Args.new_friction, friction)
@@ -497,7 +501,7 @@ public class WorldInputBuffer implements WorldContainer
     }
 
     @Override
-    public void merge_into_parent(WorldContainer parent)
+    public void merge_into_parent(SectorContainer parent)
     {
         if (point_index > 0) k_merge_point
             .set_arg(MergePoint_k.Args.point_offset, parent.next_point())

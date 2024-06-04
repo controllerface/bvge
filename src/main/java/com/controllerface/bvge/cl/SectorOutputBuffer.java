@@ -5,9 +5,8 @@ import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.ecs.systems.UnloadedSectorSlice;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
-import static org.lwjgl.opencl.CL10.clFinish;
 
-public class WorldOutputBuffer
+public class SectorOutputBuffer
 {
     private final GPUProgram p_gpu_crud = new GPUCrud();
     private final GPUKernel k_egress_entities;
@@ -84,7 +83,7 @@ public class WorldOutputBuffer
     private final long ptr_queue;
     private final long ptr_egress_sizes;
 
-    public WorldOutputBuffer(long ptr_queue, GPUCoreMemory core_memory)
+    public SectorOutputBuffer(long ptr_queue, GPUCoreMemory core_memory)
     {
         this.ptr_queue         = ptr_queue;
         this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);

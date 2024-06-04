@@ -248,23 +248,15 @@ public class UniformGridRenderer extends GameSystem
         color_index  += out[1];
 
 
-
-
         var components = ecs.get_components(Component.ControlPoints);
-        int target_count = 0;
         ControlPoints controlPoints = null;
         for (Map.Entry<String, GameComponent> entry : components.entrySet())
         {
-            //String entity_name = entry.getKey();
             GameComponent component = entry.getValue();
             controlPoints = Component.ControlPoints.coerce(component);
-//            EntityIndex entity_id = Component.EntityId.forEntity(ecs, entity_name);
-//            EntityIndex cursor_entity_id = Component.CursorId.forEntity(ecs, entity_name);
-//            LinearForce force = Component.LinearForce.forEntity(ecs, entity_name);
         }
 
         var sec = UniformGridRenderer.get_sector_for_point(controlPoints.get_world_target().x, controlPoints.get_world_target().y);
-
 
         float offset_x = sec[0] * UniformGrid.BLOCK_COUNT;
         float offset_y = sec[1] * UniformGrid.BLOCK_COUNT;
