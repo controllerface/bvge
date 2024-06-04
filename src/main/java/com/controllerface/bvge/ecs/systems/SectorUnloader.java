@@ -39,7 +39,6 @@ public class SectorUnloader extends GameSystem
                         int entity_count = last_counts[0];
                         if (entity_count > 0)
                         {
-                            running_batches.clear();
                             sectors.ensure_space(last_counts);
                             GPGPU.core_memory.transfer_world_output(sectors, last_counts);
                             for (int entity_offset = 0; entity_offset < entity_count - 1; entity_offset++)
@@ -162,11 +161,6 @@ public class SectorUnloader extends GameSystem
                                         var point_hit_count        = sectors.raw_point_hit_count[point_offset];
                                         var point_flags            = sectors.raw_point_flag[point_offset];
 
-                                        if (point_hull_index != hull_offset)
-                                        {
-                                            System.out.println("mismatch: " + point_hull_index + " : " + hull_offset);
-                                        }
-
                                         hull_points[hull_point_count++] = new UnloadedPoint(point_x, point_y, point_z, point_w,
                                             point_bone_table_x, point_bone_table_y, point_bone_table_z, point_bone_table_w,
                                             point_vertex_reference, point_hull_index, point_hit_count, point_flags);
@@ -227,27 +221,28 @@ public class SectorUnloader extends GameSystem
 
 
                                 // todo: sector objects can probably be cached since they are immutable records
-                                //var raw_sector = UniformGridRenderer.get_sector_for_point(entity_x, entity_y);
-                                //var sec = new Sector(raw_sector[0], raw_sector[1]);
-                                //var batch = running_batches.computeIfAbsent(sec, PhysicsEntityBatch::new);
+                                var raw_sector = UniformGridRenderer.get_sector_for_point(entity_x, entity_y);
+                                var sec = new Sector(raw_sector[0], raw_sector[1]);
+                                var batch = running_batches.computeIfAbsent(sec, PhysicsEntityBatch::new);
 
 
-
-
+                                int adjusted_root_hull = entity_root_hull - entity_hull_table_x;
                                 var unloaded_entity = new UnloadedEntity(entity_x, entity_y, entity_z, entity_w,
                                     entity_anim_elapsed_x, entity_anim_elapsed_y,
                                     entity_motion_state_x, entity_motion_state_y,
                                     entity_anim_index_x, entity_anim_index_y,
                                     entity_model_id, entity_model_transform,
-                                    entity_mass, entity_root_hull, entity_flag,
-                                    new UnloadedHull[0], entity_bones);
+                                    entity_mass, adjusted_root_hull, entity_flag,
+                                    entity_hulls, entity_bones);
 
-                                //batch.new_entity(unloaded_entity);
+                                batch.new_entity(unloaded_entity);
                             }
-//                            for (var entry : running_batches.entrySet())
-//                            {
-//                                sector_cache.put(entry.getKey(), entry.getValue());
-//                            }
+                            for (var entry : running_batches.entrySet())
+                            {
+                                sector_cache.put(entry.getKey(), entry.getValue());
+                            }
+                            running_batches.clear();
+
                         }
                     }
                     GPGPU.core_memory.await_sector();

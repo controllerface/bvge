@@ -67,7 +67,7 @@ public class TestGame extends GameMode
 
         this.blanking_system = blanking_system;
         this.sector_cache = Caffeine.newBuilder()
-            .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
+            .expireAfterAccess(Duration.of(1, ChronoUnit.HOURS))
             .build();
 
     }

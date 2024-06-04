@@ -353,7 +353,10 @@ public class WorldInputBuffer implements WorldContainer
         b_point_hit_count.ensure_capacity(capacity);
         b_point_bone_table.ensure_capacity(capacity);
 
-        var new_point = new float[]{position[0], position[1], position[0], position[1]};
+        var new_point = position.length == 2
+            ? new float[]{ position[0], position[1], position[0], position[1] }
+            : position;
+
         k_create_point
             .set_arg(CreatePoint_k.Args.target, point_index)
             .set_arg(CreatePoint_k.Args.new_point, new_point)
@@ -424,7 +427,7 @@ public class WorldInputBuffer implements WorldContainer
     }
 
     @Override
-    public int new_entity(float x, float y, int[] hull_table, int[] bone_table, float mass, int anim_index, float anim_time, int root_hull, int model_id, int model_transform_id, int flags)
+    public int new_entity(float x, float y, float z, float w, int[] hull_table, int[] bone_table, float mass, int anim_index, float anim_time, int root_hull, int model_id, int model_transform_id, int flags)
     {
         int capacity = entity_index + 1;
         b_entity.ensure_capacity(capacity);
@@ -441,7 +444,7 @@ public class WorldInputBuffer implements WorldContainer
 
         k_create_entity
             .set_arg(CreateEntity_k.Args.target, entity_index)
-            .set_arg(CreateEntity_k.Args.new_entity, arg_float4(x, y, x, y))
+            .set_arg(CreateEntity_k.Args.new_entity, arg_float4(x, y, z, w))
             .set_arg(CreateEntity_k.Args.new_entity_root_hull, root_hull)
             .set_arg(CreateEntity_k.Args.new_entity_model_id, model_id)
             .set_arg(CreateEntity_k.Args.new_entity_model_transform, model_transform_id)

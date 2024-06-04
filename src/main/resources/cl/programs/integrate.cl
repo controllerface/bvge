@@ -358,9 +358,13 @@ __kernel void integrate_entities(__global float4 *entities,
 
     bool is_static = (root_hull_flags & IS_STATIC) !=0;
     bool no_bones = (root_hull_flags & NO_BONES) !=0;
-    gravity = is_wet
-        ? gravity * 0.4f
-        : gravity;
+    bool is_cursor = (root_hull_flags & IS_CURSOR) !=0;
+
+    gravity = (float2)(0.0f);
+
+    // gravity = is_wet
+    //     ? gravity * 0.4f
+    //     : gravity;
 
     float y_damping = is_wet
         ? .985f
@@ -395,6 +399,10 @@ __kernel void integrate_entities(__global float4 *entities,
     _entity_flags = sector_in 
         ? _entity_flags & ~SECTOR_OUT
         : _entity_flags | SECTOR_OUT; 
+
+    _entity_flags = is_cursor 
+        ? _entity_flags & ~SECTOR_OUT
+        : _entity_flags; 
 
     entities[current_entity] = entity;
     entity_flags[current_entity] = _entity_flags;

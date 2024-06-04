@@ -23,7 +23,7 @@ public interface WorldContainer
                  int entity_id,
                  int uv_offset,
                  int flags);
-    int new_entity(float x, float y,
+    int new_entity(float x, float y, float z, float w,
                    int[] hull_table,
                    int[] bone_table,
                    float mass,

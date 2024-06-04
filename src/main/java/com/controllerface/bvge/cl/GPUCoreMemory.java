@@ -1167,7 +1167,7 @@ public class GPUCoreMemory implements WorldContainer
 
         for (var entity : batch.entities)
         {
-
+            PhysicsObjects.reload_entity(incoming_world_buffer, entity);
         }
 
 
@@ -1411,7 +1411,10 @@ public class GPUCoreMemory implements WorldContainer
         b_point_hit_count.ensure_capacity(capacity);
         b_point_bone_table.ensure_capacity(capacity);
 
-        var new_point = new float[]{position[0], position[1], position[0], position[1]};
+        var new_point = position.length == 2
+            ? new float[]{ position[0], position[1], position[0], position[1] }
+            : position;
+
         k_create_point
             .set_arg(CreatePoint_k.Args.target, point_index)
             .set_arg(CreatePoint_k.Args.new_point, new_point)
@@ -1505,7 +1508,7 @@ public class GPUCoreMemory implements WorldContainer
         return face_index++;
     }
 
-    public int new_entity(float x, float y,
+    public int new_entity(float x, float y, float z, float w,
                           int[] hull_table,
                           int[] bone_table,
                           float mass,
@@ -1533,7 +1536,7 @@ public class GPUCoreMemory implements WorldContainer
 
         k_create_entity
             .set_arg(CreateEntity_k.Args.target, entity_index)
-            .set_arg(CreateEntity_k.Args.new_entity, arg_float4(x, y, x, y))
+            .set_arg(CreateEntity_k.Args.new_entity, arg_float4(x, y, z, w))
             .set_arg(CreateEntity_k.Args.new_entity_root_hull, root_hull)
             .set_arg(CreateEntity_k.Args.new_entity_model_id, model_id)
             .set_arg(CreateEntity_k.Args.new_entity_model_transform, model_transform_id)
@@ -1542,7 +1545,7 @@ public class GPUCoreMemory implements WorldContainer
             .set_arg(CreateEntity_k.Args.new_entity_bone_table, bone_table)
             .set_arg(CreateEntity_k.Args.new_entity_mass, mass)
             .set_arg(CreateEntity_k.Args.new_entity_animation_index, arg_int2(anim_index, -1))
-            .set_arg(CreateEntity_k.Args.new_entity_animation_time, arg_float2(0.0f, 0.0f)) // todo: maybe remove these zero init ones
+            .set_arg(CreateEntity_k.Args.new_entity_animation_time, arg_float2(anim_time, 0.0f)) // todo: maybe remove these zero init ones
             .set_arg(CreateEntity_k.Args.new_entity_animation_state, arg_short2((short) 0, (short) 0))
             .call(GPGPU.global_single_size);
 

@@ -82,7 +82,7 @@ public class PhysicsObjects
             hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
 
-        return world.new_entity(x, y,
+        return world.new_entity(x, y, x, y,
             hull_table,
             bone_table,
             mass,
@@ -163,7 +163,7 @@ public class PhysicsObjects
             shard_mineral.mineral_number,
             hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        return world.new_entity(x, y,
+        return world.new_entity(x, y, x, y,
             hull_table,
             bone_table,
             mass,
@@ -245,7 +245,7 @@ public class PhysicsObjects
             block_mineral.mineral_number,
             hull_flags);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        return world.new_entity(x, y,
+        return world.new_entity(x, y, x, y,
             hull_table,
             bone_table,
             mass,
@@ -547,7 +547,7 @@ public class PhysicsObjects
 
         int idle_animation_id = AnimationState.IDLE.ordinal();
 
-        return world.new_entity(x, y,
+        return world.new_entity(x, y, x, y,
             hull_table,
             bone_table,
             mass,
@@ -559,19 +559,70 @@ public class PhysicsObjects
             0);
     }
 
-//    public static int reload_entity(WorldContainer world, UnloadedEntity entity)
-//    {
-//        if (entity.model_id() == CIRCLE_PARTICLE)
-//        {}
-//        else if (entity.model_id() == BASE_BLOCK_INDEX)
-//        {}
-//        else if (entity.model_id() == BASE_SHARD_INDEX)
-//        {}
-//        else if (entity.model_id() == BASE_SPIKE_INDEX)
-//        {}
-//        else
-//        {}
-//    }
+    public static int reload_entity(WorldContainer world, UnloadedEntity entity)
+    {
+        if (entity.model_id() == CIRCLE_PARTICLE
+            || entity.model_id() == BASE_BLOCK_INDEX
+            || entity.model_id() == BASE_SHARD_INDEX
+            || entity.model_id() == BASE_SPIKE_INDEX)
+        {
+            int[] h_ids = new int[entity.hulls().length];
+            int h_offset = 0;
+            for (var hull : entity.hulls())
+            {
+                int[] p_ids = new int[hull.points().length];
+                int[] e_ids = new int[hull.edges().length];
+
+                int p_offset = 0;
+                int e_offset = 0;
+                for (var point : hull.points())
+                {
+                    int p = world.new_point(new float[]{ point.x(), point.y(), point.z(), point.w()},
+                        new int[]{ point.bone_1(), point.bone_2(), point.bone_3(), point.bone_4() },
+                        point.vertex_reference(), world.next_hull(), point.hit_count(), point.flags());
+                    p_ids[p_offset++] = p;
+                }
+                for (var edge : hull.edges())
+                {
+                    //System.out.println("debug: " + edge.p1() + " : " + edge.p2());
+                    if (edge.p1() < 0 || edge.p2() < 0)
+                    {
+                        System.out.println("stop");
+                    }
+                    int e = world.new_edge(p_ids[edge.p1()], p_ids[edge.p2()], edge.length(), edge.flags());
+                    e_ids[e_offset++] = e;
+                }
+                try
+                {
+                    int[] edge_table = entity.model_id() == CIRCLE_PARTICLE
+                        ? new int[]{0 ,-1 }
+                        : new int[]{ e_ids[0], e_ids[e_ids.length-1] };
+                    int h = world.new_hull(hull.mesh_id(),
+                        new float[]{ hull.x(), hull.y(), hull.z(), hull.w() },
+                        new float[]{ hull.scale_x(), hull.scale_y()},
+                        new float[]{  hull.rotation_x(), hull.rotation_y() },
+                        new int[]{ p_ids[0], p_ids[p_ids.length-1] },
+                        edge_table,
+                        new int[]{ 0, -1 },
+                        hull.friction(), hull.restitution(),
+                        world.next_entity(), hull.uv_offset(), hull.flags());
+                    h_ids[h_offset++] = h;
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
+            }
+                      int e = world.new_entity(entity.x(), entity.y(), entity.z(), entity.w(),
+                new int[]{ h_ids[0], h_ids[h_ids.length - 1] },
+                new int[]{0, -1},
+                entity.mass(), entity.anim_index_x(), entity.anim_elapsed_x(),
+                h_ids[entity.root_hull()], entity.model_id(), entity.model_transform_id(), entity.flags());
+            return e;
+        }
+        return 0;
+    }
 
     private static int find_bone_index(Map<String, Integer> bone_map, String[] bone_names, int index)
     {

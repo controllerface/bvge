@@ -55,7 +55,7 @@ public class SectorLoader extends GameSystem
                     // This "slots" count is used to control how many sectors are loaded each tick. Generally,
                     // it should be set to the number of rows in the sector grid, with processing being done
                     // in column-major order. I.e. only a single column of sectors loads each frame
-                    int slots = sector_2_key[1] - sector_0_key[1];
+                    //int slots = sector_2_key[1] - sector_0_key[1];
 
                     for (int sx = sector_0_key[0]; sx <= sector_2_key[0]; sx++)
                     {
@@ -67,18 +67,25 @@ public class SectorLoader extends GameSystem
                                 loaded_sectors.add(sector);
                                 var _ = sector_cache.getIfPresent(sector);
                             }
-                            else if (slots-- > 0)
+                            else //if (slots-- > 0)
                             {
                                 loaded_sectors.add(sector);
                                 var sector_batch = sector_cache.get(sector, world::load_sector);
                                 GPGPU.core_memory.load_entity_batch(sector_batch);
                             }
-                            else
-                            {
-                                deferred_sectors.add(sector);
-                            }
+//                            else
+//                            {
+//                                deferred_sectors.add(sector);
+//                            }
                         }
                     }
+                    last_loaded_sectors.forEach(s->
+                    {
+                        if (!loaded_sectors.contains(s))
+                        {
+                            sector_cache.put(s, new PhysicsEntityBatch(s));
+                        }
+                    });
 
                     uniformGrid.update_sector_metrics(loaded_sectors, sector_0_origin_x, sector_0_origin_y,
                         Math.abs(sector_0_origin_x - (sector_2_origin_x + UniformGrid.SECTOR_SIZE)),

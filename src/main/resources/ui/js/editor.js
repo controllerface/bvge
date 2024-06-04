@@ -67,3 +67,4 @@ event_source.addEventListener('render_model_scan_int_out', handle_event);
 event_source.addEventListener('render_model_scan_int2', handle_event);
 event_source.addEventListener('render_cl_cycle', handle_event);
 event_source.addEventListener('cl_read_svm_int', handle_event);
+event_source.addEventListener('mouse_sector', handle_event);

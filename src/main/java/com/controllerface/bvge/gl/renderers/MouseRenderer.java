@@ -11,6 +11,7 @@ import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Shader;
@@ -145,6 +146,14 @@ public class MouseRenderer extends GameSystem
         float world_y = (Window.get().height() - control_points.get_screen_target().y) * camera.get_zoom() + camera.position.y;
         control_points.get_world_target().set(world_x, world_y);
         float[] mouse_loc = { world_x, world_y, -1.0f, 15.0f };
+
+
+        if (Editor.ACTIVE)
+        {
+            var sector = UniformGridRenderer.get_sector_for_point(world_x, world_y);
+            Editor.queue_event("mouse_sector", sector[0] + ":" + sector[1]);
+        }
+
 
         glBindVertexArray(vao);
 
