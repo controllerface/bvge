@@ -1167,21 +1167,26 @@ public class GPUCoreMemory implements SectorContainer
         {
             PhysicsObjects.load_entity(incoming_sector_buffer, entity);
         }
-        for (var solid : batch.blocks)
+        for (var block : batch.blocks)
         {
-            if (solid.dynamic())
+            if (block.dynamic())
             {
-                PhysicsObjects.base_block(incoming_sector_buffer, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), solid.flags(), solid.material());
+                PhysicsObjects.base_block(incoming_sector_buffer, block.x(), block.y(), block.size(), block.mass(), block.friction(), block.restitution(), block.flags(), block.material(), block.hits());
             }
             else
             {
-                int flags = solid.flags() | Constants.HullFlags.IS_STATIC._int;
-                PhysicsObjects.base_block(incoming_sector_buffer, solid.x(), solid.y(), solid.size(), solid.mass(), solid.friction(), solid.restitution(), flags, solid.material());
+                int flags = block.flags() | Constants.HullFlags.IS_STATIC._int;
+                PhysicsObjects.base_block(incoming_sector_buffer, block.x(), block.y(), block.size(), block.mass(), block.friction(), block.restitution(), flags, block.material(), block.hits());
             }
         }
         for (var shard : batch.shards)
         {
-            int id = shard.spike() ? ModelRegistry.BASE_SPIKE_INDEX : BASE_SHARD_INDEX;
+            int id = shard.spike()
+                ? ModelRegistry.BASE_SPIKE_INDEX
+                : shard.flip()
+                    ? L_SHARD_INDEX
+                    : R_SHARD_INDEX;
+
             PhysicsObjects.tri(incoming_sector_buffer, shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
         }
         for (var liquid : batch.liquids)

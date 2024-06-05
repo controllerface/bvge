@@ -360,11 +360,11 @@ __kernel void integrate_entities(__global float4 *entities,
     bool no_bones = (root_hull_flags & NO_BONES) !=0;
     bool is_cursor = (root_hull_flags & IS_CURSOR) !=0;
 
-    gravity = (float2)(0.0f);
+    //gravity = (float2)(0.0f);
 
-    // gravity = is_wet
-    //     ? gravity * 0.4f
-    //     : gravity;
+    gravity = is_wet
+        ? gravity * 0.4f
+        : gravity;
 
     float y_damping = is_wet
         ? .985f

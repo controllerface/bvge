@@ -326,11 +326,11 @@ __kernel void handle_movement(__global float4 *entities,
         ? current_linear_mag * move_mod
         : accel.x;
 
-    accel.y = is_mv_u //&& is_wet
+    accel.y = is_mv_u && is_wet
         ? current_linear_mag * 1.5
         : accel.y;
 
-    accel.y = is_mv_d //&& is_wet
+    accel.y = is_mv_d && is_wet
         ? -current_linear_mag
         : accel.y;
 

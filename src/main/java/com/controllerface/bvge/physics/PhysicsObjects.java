@@ -123,8 +123,8 @@ public class PhysicsObjects
         var p2 = CLUtils.arg_float2(v2.x(), v2.y());
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
 
-        int h1 = random.nextInt(100, 4000);
-        int h2 = random.nextInt(100, 4000);
+        int h1 = random.nextInt(100, 1000);
+        int h2 = random.nextInt(100, 1000);
         int h3 = random.nextInt(100, 4000);
 
         var p1_index = world.new_point(p1, EMPTY_POINT_BONE_TABLE, v1.index(), next_hull_index, h1,0);
@@ -175,7 +175,8 @@ public class PhysicsObjects
             0);
     }
 
-    public static int block(SectorContainer world, float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Solid block_mineral)
+    public static int block(SectorContainer world, float x, float y, float size, int global_hull_flags, float mass, float friction, float restitution, int model_id, Solid block_mineral,
+                            int[] hits)
     {
         int next_entity_id = world.next_entity();
         int next_hull_index = world.next_hull();
@@ -197,15 +198,12 @@ public class PhysicsObjects
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
         var p4 = CLUtils.arg_float2(v4.x(), v4.y());
 
-        int h1 = random.nextInt(100, 4000);
-        int h2 = random.nextInt(100, 4000);
-        int h3 = random.nextInt(100, 4000);
-        int h4 = random.nextInt(100, 4000);
 
-        var p1_index = world.new_point(p1, EMPTY_POINT_BONE_TABLE, v1.index(), next_hull_index, h1,0);
-        var p2_index = world.new_point(p2, EMPTY_POINT_BONE_TABLE, v2.index(), next_hull_index, h2,0);
-        var p3_index = world.new_point(p3, EMPTY_POINT_BONE_TABLE, v3.index(), next_hull_index, h3,0);
-        var p4_index = world.new_point(p4, EMPTY_POINT_BONE_TABLE, v4.index(), next_hull_index, h4,0);
+
+        var p1_index = world.new_point(p1, EMPTY_POINT_BONE_TABLE, v1.index(), next_hull_index, hits[0],0);
+        var p2_index = world.new_point(p2, EMPTY_POINT_BONE_TABLE, v2.index(), next_hull_index, hits[1],0);
+        var p3_index = world.new_point(p3, EMPTY_POINT_BONE_TABLE, v3.index(), next_hull_index, hits[2],0);
+        var p4_index = world.new_point(p4, EMPTY_POINT_BONE_TABLE, v4.index(), next_hull_index, hits[3],0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
         var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
@@ -231,7 +229,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = flags | HullFlags.IS_POLYGON._int;
+        int hull_flags = global_hull_flags | HullFlags.IS_POLYGON._int;
         int hull_id = world.new_hull(mesh.mesh_id(),
             position,
             scale,
@@ -259,17 +257,37 @@ public class PhysicsObjects
 
     public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
-        return block(world, x, y, size, flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
+        int h1 = random.nextInt(100, 4000);
+        int h2 = random.nextInt(100, 4000);
+        int h3 = random.nextInt(100, 4000);
+        int h4 = random.nextInt(100, 4000);
+        int[] hits =  new int[]{ h1, h2, h3, h4 };
+        return base_block(world, x, y, size, mass, friction, restitution, flags, block_material, hits);
+    }
+
+    public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material, int[] hits)
+    {
+        return block(world, x, y, size, flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
     }
 
     public static int static_box(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
-        return block(world, x, y, size, flags | HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material);
+        int h1 = random.nextInt(100, 4000);
+        int h2 = random.nextInt(100, 4000);
+        int h3 = random.nextInt(100, 4000);
+        int h4 = random.nextInt(100, 4000);
+        int[] hits =  new int[]{ h1, h2, h3, h4 };
+        return base_block(world, x, y, size, mass, friction, restitution, flags, block_material, hits);
+    }
+
+    public static int static_box(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material, int[] hits)
+    {
+        return block(world, x, y, size, flags | HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
     }
 
     public static int static_tri(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution)
     {
-        return tri(world, x, y, size, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_SHARD_INDEX, Solid.ANDESITE);
+        return tri(world, x, y, size, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, R_SHARD_INDEX, Solid.ANDESITE);
     }
 
     private static final Random random = new Random();

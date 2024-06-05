@@ -13,7 +13,8 @@ public class MeshRegistry
     private static final AtomicInteger next_mesh_index = new AtomicInteger(0);
 
     public static final int CIRCLE_MESH = next_mesh_index.getAndIncrement();
-    public static final int SHARD_MESH = next_mesh_index.getAndIncrement();
+    public static final int R_SHARD_MESH = next_mesh_index.getAndIncrement();
+    public static final int L_SHARD_MESH = next_mesh_index.getAndIncrement();
     public static final int SPIKE_MESH = next_mesh_index.getAndIncrement();
     public static final int BLOCK_MESH = next_mesh_index.getAndIncrement();
 
@@ -30,11 +31,18 @@ public class MeshRegistry
             -0.5f,  0.5f, // top left
         };
 
-    private static final float[] SHARD =  new float[]
+    private static final float[] R_SHARD =  new float[]
         {
             -0.5f, -0.5f, // bottom left
              0.5f, -0.5f, // bottom right
              0.5f,  0.5f, // top
+        };
+
+    private static final float[] L_SHARD =  new float[]
+        {
+            -0.5f, -0.5f, // bottom left
+             0.5f, -0.5f, // bottom right
+            -0.5f,  0.5f, // top
         };
 
 //    private static final float[] SPIKE =  new float[]
@@ -54,7 +62,8 @@ public class MeshRegistry
     public static void init()
     {
         register_mesh(CIRCLE_MESH, generate_circle_mesh());
-        register_mesh(SHARD_MESH, generate_shard_mesh());
+        register_mesh(R_SHARD_MESH, generate_shard_mesh(R_SHARD, "r_shard"));
+        register_mesh(L_SHARD_MESH, generate_shard_mesh(L_SHARD, "l_shard"));
         register_mesh(SPIKE_MESH, generate_spike_mesh());
         register_mesh(BLOCK_MESH, generate_block_mesh());
     }
@@ -139,7 +148,7 @@ public class MeshRegistry
     /**
      * A simple triangle; 3 vertices defining a triangle with a base width of 1
      */
-    private static Mesh generate_shard_mesh()
+    private static Mesh generate_shard_mesh(float[] SHARD, String name)
     {
         var verts = new Vertex[3];
         verts[0] = block_vertex(SHARD[0], SHARD[1], 0);
@@ -152,7 +161,7 @@ public class MeshRegistry
         var hull         = PhysicsObjects.calculate_convex_hull_table(verts);
         int mesh_id      = GPGPU.core_memory.new_mesh_reference(vert_table, face_table);
 
-        return new Mesh("shard", mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
+        return new Mesh(name, mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 
     private static Mesh generate_spike_mesh()

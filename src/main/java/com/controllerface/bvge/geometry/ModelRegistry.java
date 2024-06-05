@@ -30,7 +30,8 @@ public class ModelRegistry
 
     public static final int BASE_BLOCK_INDEX = next_model_index.getAndIncrement();
     public static final int CIRCLE_PARTICLE = next_model_index.getAndIncrement();
-    public static final int BASE_SHARD_INDEX = next_model_index.getAndIncrement();
+    public static final int R_SHARD_INDEX = next_model_index.getAndIncrement();
+    public static final int L_SHARD_INDEX = next_model_index.getAndIncrement();
     public static final int BASE_SPIKE_INDEX = next_model_index.getAndIncrement();
     public static final int CURSOR = next_model_index.getAndIncrement();
 
@@ -757,7 +758,8 @@ public class ModelRegistry
         loaded_models.put(CURSOR, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
         loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
         loaded_models.put(BASE_BLOCK_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BLOCK_MESH), texture));
-        loaded_models.put(BASE_SHARD_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.SHARD_MESH), texture));
+        loaded_models.put(R_SHARD_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.R_SHARD_MESH), texture));
+        loaded_models.put(L_SHARD_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.L_SHARD_MESH), texture));
         loaded_models.put(BASE_SPIKE_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.SPIKE_MESH), texture));
 
         PLAYER_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
