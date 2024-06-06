@@ -24,5 +24,5 @@ public interface WorldType
      * @param sector the sector for which loading is being requested
      * @return a batch of entities that are present in the given sector
      */
-    PhysicsEntityBatch load_sector(Sector sector);
+    PhysicsEntityBatch generate_sector(Sector sector);
 }

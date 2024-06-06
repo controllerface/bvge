@@ -1,6 +1,7 @@
 package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.game.Sector;
+import org.joml.Vector2f;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -46,6 +47,7 @@ public class UniformGrid
     private float sector_height = 0;
 
     private final Set<Sector> loaded_sectors = new HashSet<>();
+    private final Vector2f world_position = new Vector2f();
 
     public UniformGrid(int screen_width, int screen_height)
     {
@@ -78,8 +80,9 @@ public class UniformGrid
         this.sector_height    = sector_height;
     }
 
-    public void updateOrigin(float x_origin, float y_origin)
+    public void updateOrigin(float x_origin, float y_origin, float x_player, float y_player)
     {
+        this.world_position.set(x_player, y_player);
         this.x_origin = x_origin;
         this.y_origin = y_origin;
         this.inner_x_origin = this.x_origin + (width - inner_width) / 2;
@@ -153,5 +156,10 @@ public class UniformGrid
     public float sector_height()
     {
         return sector_height;
+    }
+
+    public Vector2f getWorld_position()
+    {
+        return world_position;
     }
 }

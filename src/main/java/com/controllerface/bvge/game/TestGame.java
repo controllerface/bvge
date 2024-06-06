@@ -98,7 +98,7 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.GAME))
         {
-            ecs.register_system(new ModelRenderer(ecs, PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX));
+            ecs.register_system(new ModelRenderer(ecs, uniformGrid, PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX));
             ecs.register_system(new LiquidRenderer(ecs));
         }
 

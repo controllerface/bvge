@@ -2,6 +2,7 @@ package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Sector;
 import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
@@ -68,11 +69,6 @@ public class SectorLoader extends GameSystem
         old_loaded_sectors.addAll(new_loaded_sectors);
         new_loaded_sectors.clear();
 
-        // This "slots" count is used to control how many sectors are loaded each tick. Generally,
-        // it should be set to the number of rows in the sector grid, with processing being done
-        // in column-major order. I.e. only a single column of sectors loads each frame
-        int slots = sector_2_key[1] - sector_0_key[1];
-
         for (int sx = sector_0_key[0]; sx <= sector_2_key[0]; sx++)
         {
             for (int sy = sector_0_key[1]; sy <= sector_2_key[1]; sy++)
@@ -83,20 +79,20 @@ public class SectorLoader extends GameSystem
                     new_loaded_sectors.add(sector);
                     var _ = sector_cache.getIfPresent(sector);
                 }
-                else if (slots-- > 0)
+                else
                 {
                     new_loaded_sectors.add(sector);
-                    var sector_batch = sector_cache.get(sector, world::load_sector);
+                    var sector_batch = sector_cache.get(sector, world::generate_sector);
                     GPGPU.core_memory.load_entity_batch(sector_batch);
                 }
             }
         }
 
-        old_loaded_sectors.forEach(s->
+        old_loaded_sectors.forEach(sector->
         {
-            if (!new_loaded_sectors.contains(s))
+            if (!new_loaded_sectors.contains(sector))
             {
-                sector_cache.put(s, new PhysicsEntityBatch(s));
+                sector_cache.put(sector, new PhysicsEntityBatch(sector));
             }
         });
 
@@ -121,6 +117,10 @@ public class SectorLoader extends GameSystem
         catch (InterruptedException e)
         {
             throw new RuntimeException(e);
+        }
+        if (Editor.ACTIVE)
+        {
+            Editor.queue_event("sector_count", String.valueOf(new_loaded_sectors.size()));
         }
     }
 

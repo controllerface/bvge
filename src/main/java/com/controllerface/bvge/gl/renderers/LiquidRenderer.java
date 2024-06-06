@@ -7,6 +7,9 @@ import com.controllerface.bvge.cl.kernels.RootHullFilter_k;
 import com.controllerface.bvge.cl.programs.PrepareLiquids;
 import com.controllerface.bvge.cl.programs.RootHullFilter;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ControlPoints;
+import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
@@ -17,6 +20,8 @@ import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.MAX_BATCH_SIZE;
@@ -117,7 +122,20 @@ public class LiquidRenderer extends GameSystem
 
         glBindVertexArray(vao);
         shader.use();
+
+        var control_components = ecs.get_components(Component.ControlPoints);
+        ControlPoints control_points = null;
+        for (Map.Entry<String, GameComponent> entry : control_components.entrySet())
+        {
+            GameComponent component = entry.getValue();
+            control_points = Component.ControlPoints.coerce(component);
+        }
+
+        assert control_points != null : "Component was null";
+        Objects.requireNonNull(control_points);
+
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
+        shader.uploadvec2f("uMouse", control_points.get_world_target());
 
         int offset = 0;
         for (int remaining = circle_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)

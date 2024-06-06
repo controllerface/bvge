@@ -4,6 +4,9 @@ import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ControlPoints;
+import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.Model;
@@ -11,12 +14,15 @@ import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Texture;
+import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.*;
@@ -24,6 +30,8 @@ import static org.lwjgl.opengl.GL45C.*;
 
 public class ModelRenderer extends GameSystem
 {
+    private final UniformGrid uniformGrid;
+
     private static final int ELEMENT_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES;
     private static final int TEXTURE_BUFFER_SIZE = MAX_BATCH_SIZE * SCALAR_FLOAT_SIZE;
     private static final int COMMAND_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES * 5;
@@ -89,9 +97,10 @@ public class ModelRenderer extends GameSystem
     private final int[] model_ids;
     private final String shader_file;
 
-    public ModelRenderer(ECS ecs, int ... model_ids)
+    public ModelRenderer(ECS ecs, UniformGrid uniformGrid, int ... model_ids)
     {
         super(ecs);
+        this.uniformGrid = uniformGrid;
         this.shader_file = "block_model.glsl";
         this.model_ids = model_ids;
         init_GL();
@@ -366,8 +375,21 @@ public class ModelRenderer extends GameSystem
             textures[i].bind(i);
         }
 
+        var control_components = ecs.get_components(Component.ControlPoints);
+        ControlPoints control_points = null;
+        for (Map.Entry<String, GameComponent> entry : control_components.entrySet())
+        {
+            GameComponent component = entry.getValue();
+            control_points = Component.ControlPoints.coerce(component);
+        }
+
+        assert control_points != null : "Component was null";
+        Objects.requireNonNull(control_points);
+
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         shader.uploadIntArray("uTextures", texture_slots);
+        shader.uploadvec2f("uMouse", control_points.get_world_target());
+        shader.uploadvec2f("uCamera", uniformGrid.getWorld_position());
 
         long si = Editor.ACTIVE ? System.nanoTime() : 0;
         for (int current_batch = 0; current_batch < batch_data.raw_offsets.length; current_batch++)
