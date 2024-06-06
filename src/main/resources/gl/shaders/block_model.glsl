@@ -16,7 +16,7 @@ uniform mat4 uVP;
 
 void main()
 {
-    float s_buf = 0.0;
+    float s_buf = 0.1;
     if (v_tex_coords.x == 0.0 && v_tex_coords.y == 0.03125) s_buf = 0.5;
     if (v_tex_coords.x == 0.03125 && v_tex_coords.y == 0.03125) s_buf = 0.5;
     if (v_tex_coords.x == 0.03125 && v_tex_coords.y == 0.0625) s_buf = 0.5;
@@ -54,6 +54,7 @@ void main()
     float radius = 1000.0;
     vec3 normal = normalize(Normal);
     vec3 light_color = vec3(1.0, 1.0, 1.0); 
+    vec3 light_color2 = vec3(0.7, 0.5, 0.5); 
     vec3 frag_position = vec3(FragPos, 0);
     vec3 light_vector = light_position - frag_position;
     float distance = length(light_vector);
@@ -67,12 +68,12 @@ void main()
     vec3 view_vector = normalize(view_source - frag_position);
     vec3 reflect_vector = reflect(-light_direction, normal);
     float specular_strength =  s_spec;
-    float shininess = 32.0;
+    float shininess = 64.0;
     float spec = pow(max(dot(view_vector, reflect_vector), 0.0), shininess);
     vec3 specular = specular_strength * spec * light_color * attenuation;
 
     // Ambient light
-    vec3 ambient = vec3(0.01, 0.01, 0.01);
+    vec3 ambient = vec3(0.03, 0.01, 0.02);
 
     vec3 lighting = ambient + diffuse + specular;
 

@@ -12,7 +12,6 @@ import com.controllerface.bvge.util.MathEX;
 import java.util.Random;
 
 import static com.controllerface.bvge.substances.Solid.ANDESITE;
-import static com.controllerface.bvge.substances.Solid.KIMBERLITE;
 
 public class EarthLikeWorld implements WorldType
 {
@@ -23,7 +22,7 @@ public class EarthLikeWorld implements WorldType
 
     private static final float block_range_floor = -0.03f;
     private static final float water_range_floor = -0.2f;
-    private static final float taco_range_floor = -0.15f;
+    private static final float shard_range_floor = -0.15f;
 
     private int map_to_block(float n, float floor, float length)
     {
@@ -33,6 +32,7 @@ public class EarthLikeWorld implements WorldType
     public EarthLikeWorld()
     {
         noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
+        noise.SetFrequency(0.02f);
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
 
         noise2.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
@@ -249,7 +249,7 @@ public class EarthLikeWorld implements WorldType
             flags |= Constants.HullFlags.OUT_OF_BOUNDS._int;
 
             float mn_below = noise.GetNoise(block_x, block_y - 1);
-            boolean underside = mn_below < block_range_floor && mn_below > taco_range_floor;
+            boolean underside = mn_below < block_range_floor && mn_below > shard_range_floor;
             if (underside) batch.new_shard(true, false, world_x_block, world_y_block, sz_solid, flags,.1f, 0.0f, 0.005f, ANDESITE);
             else
             {
@@ -274,11 +274,11 @@ public class EarthLikeWorld implements WorldType
                     float n_bleft  = noise.GetNoise(block_x - 1, block_y - 1);
                     float n_bright = noise.GetNoise(block_x + 1, block_y - 1);
 
-                    boolean air_above = n_above < block_range_floor && n_above > taco_range_floor;
-                    boolean air_labove = n_uleft < block_range_floor && n_uleft > taco_range_floor;
-                    boolean air_rabove = n_uright < block_range_floor && n_uright > taco_range_floor;
-                    boolean air_left = n_left < block_range_floor && n_left > taco_range_floor;
-                    boolean air_right = n_right < block_range_floor && n_right > taco_range_floor;
+                    boolean air_above = n_above < block_range_floor && n_above > shard_range_floor;
+                    boolean air_labove = n_uleft < block_range_floor && n_uleft > shard_range_floor;
+                    boolean air_rabove = n_uright < block_range_floor && n_uright > shard_range_floor;
+                    boolean air_left = n_left < block_range_floor && n_left > shard_range_floor;
+                    boolean air_right = n_right < block_range_floor && n_right > shard_range_floor;
 
                     shard = air_above && air_left && air_labove && !air_right;
                     flip_shard = air_above && air_right && air_rabove && !air_left;
@@ -333,7 +333,7 @@ public class EarthLikeWorld implements WorldType
             flip = !flip;
             batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, 0.00000f, hull_flags, point_flags, Liquid.WATER);
         }
-        else if (n < taco_range_floor)
+        else if (n < shard_range_floor)
         {
             batch.new_shard(true, false, world_x_block, world_y_block,  sz_solid, Constants.HullFlags.OUT_OF_BOUNDS._int,.1f, 0.05f, 0.005f, Solid.BASALT);
         }

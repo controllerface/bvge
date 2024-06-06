@@ -87,10 +87,10 @@ out vec4 color;
 
 void main()
 {
-    float r = screen > 0.0 ? 1.0 : 0.0;
-    float g = screen > 0.0 ? 0.0 : 1.0;
+    float r = screen > 0.0 ? 0.5 : 0.0;
+    float g = screen > 0.0 ? 0.0 : 0.5;
     float b = 0;
-    vec4 circleColor = vec4(r, g, b, .6);
+    vec4 circleColor = vec4(r, g, b, .3);
     float thickness = .4;
     float fade = .0005;
 
@@ -100,6 +100,4 @@ void main()
     
     if (circle > 0) color = circleColor;
     else discard;
-    //color.a *= circle;
-
 }
