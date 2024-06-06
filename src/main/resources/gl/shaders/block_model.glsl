@@ -59,7 +59,7 @@ void main()
     float distance = length(light_vector);
     vec3 light_direction = normalize(light_vector);
     float diff_mag = max(0.0, dot(light_direction, normal));
-    float attenuation = pow(smoothstep(radius, 0.0, distance), 2);
+    float attenuation = pow(smoothstep(radius, 0.0, distance), .5);
     vec3 diffuse = diff_mag * light_color * attenuation;
 
     // specular
