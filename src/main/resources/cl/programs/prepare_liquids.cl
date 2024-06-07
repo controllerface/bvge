@@ -21,15 +21,17 @@ __kernel void prepare_liquids(__global float4 *hull_positions,
 
     int hit_counts = point_hit_counts[point_table.x];
 
-    float4 col = hit_counts <= HIT_LOW_THRESHOLD
-        ? (float4)(1.05f, 1.05f, 1.05f, 0.5f) 
-        : hit_counts <= HIT_LOW_MID_THRESHOLD
-            ? (float4)(1.0f) 
-            : hit_counts <= HIT_MID_THRESHOLD
-                ? (float4)(0.85f, 0.85f, 0.85f, 1.0f)
-                : hit_counts <= HIT_HIGH_MID_THRESHOLD
-                    ? (float4)(0.8f, 0.8f, 0.9f, 1.5f)
-                    : (float4)(0.7f, 0.7f, 0.7f, 2.0f);
+    // float4 col = hit_counts <= HIT_LOW_THRESHOLD
+    //     ? (float4)(1.05f, 1.05f, 1.05f, 0.5f) 
+    //     : hit_counts <= HIT_LOW_MID_THRESHOLD
+    //         ? (float4)(1.0f) 
+    //         : hit_counts <= HIT_MID_THRESHOLD
+    //             ? (float4)(0.85f, 0.85f, 0.85f, 1.0f)
+    //             : hit_counts <= HIT_HIGH_MID_THRESHOLD
+    //                 ? (float4)(0.8f, 0.8f, 0.9f, 1.5f)
+    //                 : (float4)(0.7f, 0.7f, 0.7f, 2.0f);
+
+    float4 col = (float4)(1.0f, 1.0f, 1.0f, 2.0f);
 
     float4 c2 = liquid_lookup_table[uv_offset];
 

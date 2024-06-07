@@ -132,7 +132,7 @@ void main()
     // Ambient light
     vec3 ambient = vec3(0.31, 0.31, 0.31);
 
-    vec3 lighting = ambient + diffuse;
+    vec3 lighting = ambient + diffuse + specular;
 
 
 

@@ -55,7 +55,7 @@ public class SectorUnloader extends GameSystem
         {
             sectors.ensure_space(last_counts);
             GPGPU.core_memory.transfer_world_output(sectors, last_counts);
-            for (int entity_offset = 0; entity_offset < entity_count - 1; entity_offset++)
+            for (int entity_offset = 0; entity_offset < entity_count; entity_offset++)
             {
                 int entity_4_x = entity_offset * 4;
                 int entity_4_y = entity_4_x + 1;

@@ -48,6 +48,7 @@ public class EarthLikeWorld implements WorldType
     private Solid[] block_pallette = new Solid[]
         {
             Solid.MUDSTONE,
+            Solid.MUDSTONE,
             Solid.CLAYSTONE,
             Solid.SCHIST,
             Solid.WHITESCHIST,
@@ -331,7 +332,7 @@ public class EarthLikeWorld implements WorldType
                 ? Constants.PointFlags.FLOW_LEFT.bits
                 : 0;
             flip = !flip;
-            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, 0.00000f, hull_flags, point_flags, Liquid.WATER);
+            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, -0.00001f, hull_flags, point_flags, Liquid.WATER);
         }
         else if (n < shard_range_floor)
         {

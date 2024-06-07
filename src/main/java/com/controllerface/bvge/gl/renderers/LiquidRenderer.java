@@ -15,6 +15,7 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Shader;
+import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
@@ -36,6 +37,8 @@ import static org.lwjgl.opengl.GL45C.glEnableVertexArrayAttrib;
 
 public class LiquidRenderer extends GameSystem
 {
+    private final UniformGrid uniformGrid;
+
     public static final int CIRCLES_BUFFER_SIZE = MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
     private static final int COLOR_BUFFER_SIZE  = MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
     private static final int TRANSFORM_ATTRIBUTE = 0;
@@ -57,9 +60,11 @@ public class LiquidRenderer extends GameSystem
 
     private HullIndexData circle_hulls;
 
-    public LiquidRenderer(ECS ecs)
+    public LiquidRenderer(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
+        this.uniformGrid = uniformGrid;
+
         init_GL();
         init_CL();
     }
@@ -136,6 +141,7 @@ public class LiquidRenderer extends GameSystem
 
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         shader.uploadvec2f("uMouse", control_points.get_world_target());
+        shader.uploadvec2f("uCamera", uniformGrid.getWorld_position());
 
         int offset = 0;
         for (int remaining = circle_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
