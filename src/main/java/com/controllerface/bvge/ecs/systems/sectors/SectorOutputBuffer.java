@@ -1,8 +1,12 @@
-package com.controllerface.bvge.cl;
+package com.controllerface.bvge.ecs.systems.sectors;
 
+import com.controllerface.bvge.cl.*;
+import com.controllerface.bvge.cl.buffers.BufferType;
+import com.controllerface.bvge.cl.buffers.PersistentBuffer;
+import com.controllerface.bvge.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
-import com.controllerface.bvge.ecs.systems.UnloadedSectorSlice;
+import com.controllerface.bvge.cl.programs.GPUProgram;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 

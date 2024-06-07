@@ -1,4 +1,4 @@
-package com.controllerface.bvge.ecs.systems;
+package com.controllerface.bvge.ecs.systems.sectors;
 
 public class UnloadedSectorSlice
 {

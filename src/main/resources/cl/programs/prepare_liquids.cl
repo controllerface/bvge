@@ -31,7 +31,11 @@ __kernel void prepare_liquids(__global float4 *hull_positions,
     //                 ? (float4)(0.8f, 0.8f, 0.9f, 1.5f)
     //                 : (float4)(0.7f, 0.7f, 0.7f, 2.0f);
 
-    float4 col = (float4)(1.0f, 1.0f, 1.0f, 2.0f);
+    float4 col = hit_counts <= HIT_LOW_THRESHOLD
+        ? (float4)(1.0f, 1.0f, 1.0f, 0.5f) 
+        : (float4)(0.8f, 0.8f, 0.8f, 2.0f);
+
+    //float4 col = (float4)(1.0f, 1.0f, 1.0f, 2.0f);
 
     float4 c2 = liquid_lookup_table[uv_offset];
 

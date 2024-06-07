@@ -1,7 +1,11 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
+import com.controllerface.bvge.cl.buffers.BufferType;
+import com.controllerface.bvge.cl.kernels.GPUKernel;
+import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.kernels.PrepareEntities_k;
+import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.PrepareEntities;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;

@@ -1,10 +1,11 @@
-package com.controllerface.bvge.cl;
+package com.controllerface.bvge.cl.kernels;
 
+import com.controllerface.bvge.cl.CLUtils;
+import com.controllerface.bvge.cl.buffers.ResizableBuffer;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.k_call;

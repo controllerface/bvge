@@ -1,6 +1,6 @@
 package com.controllerface.bvge.physics;
 
-import com.controllerface.bvge.game.Sector;
+import com.controllerface.bvge.ecs.systems.sectors.Sector;
 import com.controllerface.bvge.geometry.UnloadedEntity;
 import com.controllerface.bvge.substances.Solid;
 

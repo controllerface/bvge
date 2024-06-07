@@ -1,9 +1,17 @@
 package com.controllerface.bvge.cl;
 
+import com.controllerface.bvge.cl.buffers.BufferType;
+import com.controllerface.bvge.cl.buffers.PersistentBuffer;
+import com.controllerface.bvge.cl.buffers.ResizableBuffer;
+import com.controllerface.bvge.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
+import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.ScanDeletes;
-import com.controllerface.bvge.ecs.systems.UnloadedSectorSlice;
+import com.controllerface.bvge.ecs.systems.sectors.SectorContainer;
+import com.controllerface.bvge.ecs.systems.sectors.SectorInputBuffer;
+import com.controllerface.bvge.ecs.systems.sectors.SectorOutputBuffer;
+import com.controllerface.bvge.ecs.systems.sectors.UnloadedSectorSlice;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;

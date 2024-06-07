@@ -1,9 +1,11 @@
-package com.controllerface.bvge.ecs.systems;
+package com.controllerface.bvge.ecs.systems.sectors;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
-import com.controllerface.bvge.game.Sector;
+import com.controllerface.bvge.game.world.EarthLikeWorld;
+import com.controllerface.bvge.game.world.WorldType;
 import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;

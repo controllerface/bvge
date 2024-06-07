@@ -1,6 +1,10 @@
 package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.cl.*;
+import com.controllerface.bvge.cl.buffers.BufferType;
+import com.controllerface.bvge.cl.buffers.PersistentBuffer;
+import com.controllerface.bvge.cl.buffers.ResizableBuffer;
+import com.controllerface.bvge.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;

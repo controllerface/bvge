@@ -1,6 +1,6 @@
-package com.controllerface.bvge.ecs.systems;
+package com.controllerface.bvge.game.world;
 
-import com.controllerface.bvge.game.Sector;
+import com.controllerface.bvge.ecs.systems.sectors.Sector;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.substances.Liquid;

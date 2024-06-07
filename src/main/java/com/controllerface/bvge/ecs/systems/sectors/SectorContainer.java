@@ -1,4 +1,4 @@
-package com.controllerface.bvge.cl;
+package com.controllerface.bvge.ecs.systems.sectors;
 
 public interface SectorContainer
 {

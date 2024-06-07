@@ -1,4 +1,6 @@
-package com.controllerface.bvge.cl;
+package com.controllerface.bvge.cl.buffers;
+
+import com.controllerface.bvge.cl.GPGPU;
 
 public class TransientBuffer extends ResizableBuffer
 {

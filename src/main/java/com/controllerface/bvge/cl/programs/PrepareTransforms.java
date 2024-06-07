@@ -1,8 +1,7 @@
 package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.GPUProgram;
-import com.controllerface.bvge.cl.Kernel;
+import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class PrepareTransforms extends GPUProgram
 {

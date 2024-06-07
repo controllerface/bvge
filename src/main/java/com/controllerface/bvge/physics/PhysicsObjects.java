@@ -2,7 +2,7 @@ package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.SectorContainer;
+import com.controllerface.bvge.ecs.systems.sectors.SectorContainer;
 import com.controllerface.bvge.game.AnimationState;
 import com.controllerface.bvge.geometry.Mesh;
 import com.controllerface.bvge.geometry.ModelRegistry;

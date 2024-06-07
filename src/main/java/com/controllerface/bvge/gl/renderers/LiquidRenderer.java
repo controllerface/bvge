@@ -1,9 +1,9 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
-import com.controllerface.bvge.cl.kernels.PrepareLiquids_k;
-import com.controllerface.bvge.cl.kernels.RootHullCount_k;
-import com.controllerface.bvge.cl.kernels.RootHullFilter_k;
+import com.controllerface.bvge.cl.buffers.BufferType;
+import com.controllerface.bvge.cl.kernels.*;
+import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.PrepareLiquids;
 import com.controllerface.bvge.cl.programs.RootHullFilter;
 import com.controllerface.bvge.ecs.ECS;

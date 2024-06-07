@@ -715,8 +715,8 @@ public class ModelRegistry
                                             int parent_index)
     {
         var name = current_node.name;
-        boolean is_bone = name.toLowerCase().contains("bone")
-            && !name.toLowerCase().contains("_end");
+        boolean bone_end = name.toLowerCase().contains("_end");
+        boolean is_bone = name.toLowerCase().contains("bone") && !bone_end;
         boolean is_armature = name.equalsIgnoreCase("Armature");
         var node_transform = current_node.transform;
         var global_transform = parent_transform.mul(node_transform, new Matrix4f());
