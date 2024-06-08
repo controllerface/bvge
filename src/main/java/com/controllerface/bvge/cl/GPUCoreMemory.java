@@ -1646,13 +1646,6 @@ public class GPUCoreMemory implements SectorContainer
         return armature_bone_index++;
     }
 
-    @Override
-    public void merge_into_parent(SectorContainer parent)
-    {
-        throw new UnsupportedOperationException("Cannot merge core memory");
-    }
-
-
     public int new_model_transform(float[] transform_data)
     {
         int capacity = model_transform_index + 1;

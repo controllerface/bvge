@@ -109,7 +109,7 @@ void main()
 {
     // diffuse
     vec3 light_position = vec3(uMouse.xy, 10.0);
-    float radius = 1000.0;
+    float radius = 200.0;
     vec3 normal = normalize(Normal);
     vec3 light_color = vec3(1.0, 1.0, 1.0); 
     vec3 frag_position = vec3(FragPos, 0);

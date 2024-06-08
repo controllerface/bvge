@@ -25,7 +25,7 @@ public class SectorOutputBuffer
     {
         this.ptr_queue         = ptr_queue;
         this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
-        this.sector_group = new UnorderedSectorGroup(this.ptr_queue, ENTITY_CAP, HULL_CAP, EDGE_CAP, POINT_CAP);
+        this.sector_group = new UnorderedSectorGroup(this.ptr_queue);
         p_gpu_crud.init();
 
         long k_ptr_egress_candidates = p_gpu_crud.kernel_ptr(Kernel.egress_entities);
