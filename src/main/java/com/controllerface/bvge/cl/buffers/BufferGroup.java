@@ -13,7 +13,7 @@ public abstract class BufferGroup
         this.ptr_queue = ptr_queue;
     }
 
-    public ResizableBuffer get_buffer(BufferType bufferType)
+    public ResizableBuffer buffer(BufferType bufferType)
     {
         return buffers.get(bufferType);
     }

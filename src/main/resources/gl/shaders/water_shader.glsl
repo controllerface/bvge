@@ -52,7 +52,7 @@ void main()
     pos_offset.y = vertex_data[0].transform.y;
 
     float trs = vertex_data[0].transform.w;
-    trs *= 1.5 * clr.a + 1.5;
+    trs *= 2 * clr.a + 1.5;
 
     vec2 scaled1 = pos1 * trs;
     vec2 translated1 = scaled1 + pos_offset;
@@ -134,15 +134,8 @@ void main()
 
     vec3 lighting = ambient + diffuse + specular;
 
-
-
-
-    float thickness = 1.0;
-    float fade = 0.00005;
-
     float distance = 1.0 - length(fPosition);
-    float circle = smoothstep(0.0, fade, distance);
-    circle *= smoothstep(thickness + fade, thickness, distance);
+    float circle = smoothstep(0.0, 1.0, distance);
 
     vec4 scaled_rgba = f_color;
     scaled_rgba.rgb *= lighting;

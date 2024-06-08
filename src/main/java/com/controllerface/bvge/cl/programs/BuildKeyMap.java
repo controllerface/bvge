@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class BuildKeyMap extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(prag_int32_base_atomics);
         src.add(func_calculate_key_index);
@@ -15,5 +15,7 @@ public class BuildKeyMap extends GPUProgram
         make_program();
 
         load_kernel(Kernel.build_key_map);
+
+        return this;
     }
 }

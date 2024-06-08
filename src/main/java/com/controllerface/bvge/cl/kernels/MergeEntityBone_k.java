@@ -1,6 +1,6 @@
 package com.controllerface.bvge.cl.kernels;
 
-public class MergeArmatureBone_k extends GPUKernel
+public class MergeEntityBone_k extends GPUKernel
 {
     public enum Args
     {
@@ -13,7 +13,7 @@ public class MergeArmatureBone_k extends GPUKernel
         armature_bone_offset,
     }
 
-    public MergeArmatureBone_k(long command_queue_ptr, long kernel_ptr)
+    public MergeEntityBone_k(long command_queue_ptr, long kernel_ptr)
     {
         super(command_queue_ptr, kernel_ptr);
     }

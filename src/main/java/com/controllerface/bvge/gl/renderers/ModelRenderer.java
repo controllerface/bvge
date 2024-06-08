@@ -37,7 +37,7 @@ public class ModelRenderer extends GameSystem
     private static final int TEXTURE_BUFFER_SIZE = MAX_BATCH_SIZE * SCALAR_FLOAT_SIZE;
     private static final int COMMAND_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES * 5;
     private static final int VERTEX_BUFFER_SIZE  = MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
-    private static final int UV_BUFFER_SIZE  = MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
+    private static final int UV_BUFFER_SIZE      = MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
     private static final int COLOR_BUFFER_SIZE   = MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
     private static final int POSITION_ATTRIBUTE  = 0;
     private static final int UV_COORD_ATTRIBUTE  = 1;
@@ -173,15 +173,15 @@ public class ModelRenderer extends GameSystem
     {
         ptr_command_buffer = GPGPU.share_memory(cbo);
         ptr_element_buffer = GPGPU.share_memory(ebo);
-        ptr_vertex_buffer = GPGPU.share_memory(vbo_position);
-        ptr_uv_buffer = GPGPU.share_memory(vbo_texture_uv);
-        ptr_color_buffer = GPGPU.share_memory(vbo_color);
-        ptr_slot_buffer = GPGPU.share_memory(vbo_texture_slot);
-        svm_total = GPGPU.cl_new_svm_int();
-        ptr_query = GPGPU.new_mutable_buffer(raw_query);
-        ptr_counters = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, mesh_size);
-        ptr_offsets = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, mesh_size);
-        ptr_mesh_transfer = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, ELEMENT_BUFFER_SIZE * 2);
+        ptr_vertex_buffer  = GPGPU.share_memory(vbo_position);
+        ptr_uv_buffer      = GPGPU.share_memory(vbo_texture_uv);
+        ptr_color_buffer   = GPGPU.share_memory(vbo_color);
+        ptr_slot_buffer    = GPGPU.share_memory(vbo_texture_slot);
+        svm_total          = GPGPU.cl_new_svm_int();
+        ptr_query          = GPGPU.new_mutable_buffer(raw_query);
+        ptr_counters       = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, mesh_size);
+        ptr_offsets        = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, mesh_size);
+        ptr_mesh_transfer  = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, ELEMENT_BUFFER_SIZE * 2);
 
         p_mesh_query.init();
         p_scan_int_array.init();

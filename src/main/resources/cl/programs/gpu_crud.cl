@@ -175,17 +175,17 @@ __kernel void create_hull_bone(__global float16 *hull_bones,
     hull_inv_bind_pose_indicies[target] = new_hull_inv_bind_pose_id; 
 }
 
-__kernel void create_armature_bone(__global float16 *armature_bones,
-                                   __global int *armature_bone_reference_ids,
-                                   __global int *armature_bone_parent_ids,
+__kernel void create_entity_bone(__global float16 *entity_bones,
+                                   __global int *entity_bone_reference_ids,
+                                   __global int *entity_bone_parent_ids,
                                    int target,
-                                   float16 new_armature_bone,
-                                   int new_armature_bone_reference,
-                                   int new_armature_bone_parent_id)
+                                   float16 new_entity_bone,
+                                   int new_entity_bone_reference,
+                                   int new_entity_bone_parent_id)
 {
-    armature_bones[target]              = new_armature_bone; 
-    armature_bone_reference_ids[target] = new_armature_bone_reference;
-    armature_bone_parent_ids[target]    = new_armature_bone_parent_id;
+    entity_bones[target]              = new_entity_bone; 
+    entity_bone_reference_ids[target] = new_entity_bone_reference;
+    entity_bone_parent_ids[target]    = new_entity_bone_parent_id;
 }
 
 __kernel void create_mesh_reference(__global int2 *mesh_vertex_tables,
@@ -344,19 +344,19 @@ __kernel void merge_hull_bone(__global float16 *hull_bones_in,
     hull_inv_bind_pose_indicies_out[target_hull_bone] = hull_inv_bind_pose_indicies_in[current_hull_bone]; 
 }
 
-__kernel void merge_armature_bone(__global float16 *armature_bones_in,
-                                   __global int *armature_bone_reference_ids_in,
-                                   __global int *armature_bone_parent_ids_in,
-                                   __global float16 *armature_bones_out,
-                                   __global int *armature_bone_reference_ids_out,
-                                   __global int *armature_bone_parent_ids_out,
-                                   int armature_bone_offset)
+__kernel void merge_entity_bone(__global float16 *entity_bones_in,
+                                   __global int *entity_bone_reference_ids_in,
+                                   __global int *entity_bone_parent_ids_in,
+                                   __global float16 *entity_bones_out,
+                                   __global int *entity_bone_reference_ids_out,
+                                   __global int *entity_bone_parent_ids_out,
+                                   int entity_bone_offset)
 {
-    int current_armature_bone = get_global_id(0);
-    int target_armature_bone = current_armature_bone + armature_bone_offset;
-    armature_bones_out[target_armature_bone]              = armature_bones_in[current_armature_bone]; 
-    armature_bone_reference_ids_out[target_armature_bone] = armature_bone_reference_ids_in[current_armature_bone];
-    armature_bone_parent_ids_out[target_armature_bone]    = armature_bone_parent_ids_in[current_armature_bone] + armature_bone_offset;
+    int current_entity_bone = get_global_id(0);
+    int target_entity_bone = current_entity_bone + entity_bone_offset;
+    entity_bones_out[target_entity_bone]              = entity_bones_in[current_entity_bone]; 
+    entity_bone_reference_ids_out[target_entity_bone] = entity_bone_reference_ids_in[current_entity_bone];
+    entity_bone_parent_ids_out[target_entity_bone]    = entity_bone_parent_ids_in[current_entity_bone] + entity_bone_offset;
 }
 
 __kernel void merge_hull(__global float4 *hulls_in,
@@ -366,7 +366,7 @@ __kernel void merge_hull(__global float4 *hulls_in,
                           __global float *hull_restitutions_in,
                           __global int2 *hull_point_tables_in,
                           __global int2 *hull_edge_tables_in,
-                          __global int2 *bone_tables_in,
+                          __global int2 *hull_bone_tables_in,
                           __global int *hull_entity_ids_in,
                           __global int *hull_flags_in,
                           __global int *hull_mesh_ids_in,
@@ -379,7 +379,7 @@ __kernel void merge_hull(__global float4 *hulls_in,
                           __global float *hull_restitutions_out,
                           __global int2 *hull_point_tables_out,
                           __global int2 *hull_edge_tables_out,
-                          __global int2 *bone_tables_out,
+                          __global int2 *hull_bone_tables_out,
                           __global int *hull_entity_ids_out,
                           __global int *hull_flags_out,
                           __global int *hull_mesh_ids_out,
@@ -401,7 +401,7 @@ __kernel void merge_hull(__global float4 *hulls_in,
     hull_restitutions_out[target_hull] = hull_restitutions_in[current_hull];
     hull_point_tables_out[target_hull] = hull_point_tables_in[current_hull] + (int2)(point_offset);
     hull_edge_tables_out[target_hull]  = hull_edge_tables_in[current_hull] + (int2)(edge_offset);
-    bone_tables_out[target_hull]       = bone_tables_in[current_hull] + (int2)(hull_bone_offset);
+    hull_bone_tables_out[target_hull]       = hull_bone_tables_in[current_hull] + (int2)(hull_bone_offset);
     hull_entity_ids_out[target_hull]   = hull_entity_ids_in[current_hull] + entity_offset;
     hull_flags_out[target_hull]        = hull_flags_in[current_hull];
     hull_mesh_ids_out[target_hull]     = hull_mesh_ids_in[current_hull];

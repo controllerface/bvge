@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class Integrate extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(const_hit_thresholds);
         src.add(const_point_flags);
@@ -23,5 +23,7 @@ public class Integrate extends GPUProgram
 
         load_kernel(Kernel.integrate);
         load_kernel(Kernel.integrate_entities);
+
+        return this;
     }
 }

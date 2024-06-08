@@ -102,7 +102,7 @@ public abstract class GPUProgram
     /**
      * Signals the program implementation to compile itself, and load any kernels into the kernel map.
      */
-    public abstract void init();
+    public abstract GPUProgram init();
 
     /**
      * Compiles this program, making the kernels it provides ready for use in an Open CL context.

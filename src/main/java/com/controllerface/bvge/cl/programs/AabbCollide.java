@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class AabbCollide extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(const_hull_flags);
         src.add(func_do_bounds_intersect);
@@ -16,5 +16,7 @@ public class AabbCollide extends GPUProgram
         make_program();
 
         load_kernel(Kernel.aabb_collide);
+
+        return this;
     }
 }

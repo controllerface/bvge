@@ -22,10 +22,7 @@ import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL45C.*;
 
-/**
- * Renders physics edge constraints. All defined edges are rendered as lines.
- */
-public class EntityRenderer extends GameSystem
+public class EntityPositionRenderer extends GameSystem
 {
     private static final int BATCH_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
     private static final int POSITION_ATTRIBUTE = 0;
@@ -38,7 +35,7 @@ public class EntityRenderer extends GameSystem
     private int vbo_vertex;
     private long ptr_vbo_vertex;
 
-    public EntityRenderer(ECS ecs)
+    public EntityPositionRenderer(ECS ecs)
     {
         super(ecs);
         init_GL();
@@ -47,7 +44,7 @@ public class EntityRenderer extends GameSystem
 
     private void init_GL()
     {
-        shader = Assets.load_shader("entity_shader.glsl");
+        shader = Assets.load_shader("entity_position_shader.glsl");
         vao = glCreateVertexArrays();
         vbo_vertex = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);

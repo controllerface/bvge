@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class ScanIntArrayOut extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(func_exclusive_scan);
         src.add(CLUtils.read_src("programs/scan_int_array_out.cl"));
@@ -16,5 +16,7 @@ public class ScanIntArrayOut extends GPUProgram
         load_kernel(Kernel.scan_int_single_block_out);
         load_kernel(Kernel.scan_int_multi_block_out);
         load_kernel(Kernel.complete_int_multi_block_out);
+
+        return this;
     }
 }

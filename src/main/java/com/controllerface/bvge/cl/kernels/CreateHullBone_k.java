@@ -4,11 +4,11 @@ public class CreateHullBone_k extends GPUKernel
 {
     public enum Args
     {
-        bones,
+        hull_bones,
         hull_bind_pose_indicies,
         hull_inv_bind_pose_indicies,
         target,
-        new_bone,
+        new_hull_bone,
         new_hull_bind_pose_id,
         new_hull_inv_bind_pose_id,
     }

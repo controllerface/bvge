@@ -58,18 +58,6 @@ inline DropCounts calculate_drop_counts(int entity_id,
     return drop_counts;
 }
 
-__kernel void locate_out_of_bounds(__global int *entity_flags)
-{
-    int gid = get_global_id(0);
-    int flags = entity_flags[gid];
-    bool sector_out = (flags & SECTOR_OUT) !=0;
-    if (sector_out)
-    {
-        flags = (flags | DELETED);
-        entity_flags[gid] = flags;
-    }
-}
-
 __kernel void scan_deletes_single_block_out(__global int *entity_flags,
                                             __global int2 *entity_hull_tables,
                                             __global int2 *bone_tables,

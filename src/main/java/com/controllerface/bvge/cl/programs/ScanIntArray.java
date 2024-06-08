@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class ScanIntArray extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(func_exclusive_scan);
         src.add(CLUtils.read_src("programs/scan_int_array.cl"));
@@ -16,5 +16,7 @@ public class ScanIntArray extends GPUProgram
         load_kernel(Kernel.scan_int_single_block);
         load_kernel(Kernel.scan_int_multi_block);
         load_kernel(Kernel.complete_int_multi_block);
+
+        return this;
     }
 }

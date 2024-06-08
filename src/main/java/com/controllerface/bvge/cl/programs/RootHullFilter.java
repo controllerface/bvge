@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class RootHullFilter extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(CLUtils.read_src("programs/root_hull_filter.cl"));
 
@@ -14,5 +14,7 @@ public class RootHullFilter extends GPUProgram
 
         load_kernel(Kernel.root_hull_count);
         load_kernel(Kernel.root_hull_filter);
+
+        return this;
     }
 }

@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class AnimateHulls extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(const_entity_flags);
         src.add(const_hull_flags);
@@ -26,5 +26,7 @@ public class AnimateHulls extends GPUProgram
         load_kernel(Kernel.animate_entities);
         load_kernel(Kernel.animate_bones);
         load_kernel(Kernel.animate_points);
+
+        return this;
     }
 }

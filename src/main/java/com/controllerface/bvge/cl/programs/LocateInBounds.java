@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class LocateInBounds extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(prag_int32_base_atomics);
         src.add(const_hull_flags);
@@ -19,5 +19,7 @@ public class LocateInBounds extends GPUProgram
         load_kernel(Kernel.locate_in_bounds);
         load_kernel(Kernel.count_candidates);
         load_kernel(Kernel.finalize_candidates);
+
+        return this;
     }
 }

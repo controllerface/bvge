@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class SatCollide extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(const_hit_thresholds);
         src.add(const_entity_flags);
@@ -32,5 +32,7 @@ public class SatCollide extends GPUProgram
         load_kernel(Kernel.apply_reactions);
         load_kernel(Kernel.move_entities);
         load_kernel(Kernel.move_hulls);
+
+        return this;
     }
 }

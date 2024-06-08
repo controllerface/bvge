@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class GPUCrud extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(const_entity_flags);
         src.add(func_rotate_point);
@@ -16,7 +16,7 @@ public class GPUCrud extends GPUProgram
 
         load_kernel(Kernel.create_animation_timings);
         load_kernel(Kernel.create_entity);
-        load_kernel(Kernel.create_armature_bone);
+        load_kernel(Kernel.create_entity_bone);
         load_kernel(Kernel.create_hull_bone);
         load_kernel(Kernel.create_bone_bind_pose);
         load_kernel(Kernel.create_bone_channel);
@@ -37,11 +37,13 @@ public class GPUCrud extends GPUProgram
         load_kernel(Kernel.merge_hull);
         load_kernel(Kernel.merge_entity);
         load_kernel(Kernel.merge_hull_bone);
-        load_kernel(Kernel.merge_armature_bone);
+        load_kernel(Kernel.merge_entity_bone);
         load_kernel(Kernel.read_position);
         load_kernel(Kernel.rotate_hull);
         load_kernel(Kernel.set_bone_channel_table);
         load_kernel(Kernel.update_accel);
         load_kernel(Kernel.update_mouse_position);
+
+        return this;
     }
 }

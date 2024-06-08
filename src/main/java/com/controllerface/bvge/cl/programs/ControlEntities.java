@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class ControlEntities extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(const_control_flags);
         src.add(const_hull_flags);
@@ -19,5 +19,7 @@ public class ControlEntities extends GPUProgram
 
         load_kernel(Kernel.set_control_points);
         load_kernel(Kernel.handle_movement);
+
+        return this;
     }
 }

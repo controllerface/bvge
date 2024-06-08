@@ -128,7 +128,7 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.ENTITIES))
         {
-            ecs.register_system(new EntityRenderer(ecs));
+            ecs.register_system(new EntityPositionRenderer(ecs));
         }
     }
 

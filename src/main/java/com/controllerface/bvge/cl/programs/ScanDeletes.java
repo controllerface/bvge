@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class ScanDeletes extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(const_entity_flags);
         src.add(const_hull_flags);
@@ -15,7 +15,6 @@ public class ScanDeletes extends GPUProgram
 
         make_program();
 
-        load_kernel(Kernel.locate_out_of_bounds);
         load_kernel(Kernel.scan_deletes_single_block_out);
         load_kernel(Kernel.scan_deletes_multi_block_out);
         load_kernel(Kernel.complete_deletes_multi_block_out);
@@ -25,5 +24,7 @@ public class ScanDeletes extends GPUProgram
         load_kernel(Kernel.compact_points);
         load_kernel(Kernel.compact_hull_bones);
         load_kernel(Kernel.compact_armature_bones);
+
+        return this;
     }
 }

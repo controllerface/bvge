@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class MeshQuery extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(const_entity_flags);
         src.add(const_hull_flags);
@@ -22,5 +22,7 @@ public class MeshQuery extends GPUProgram
         load_kernel(Kernel.calculate_batch_offsets);
         load_kernel(Kernel.transfer_detail_data);
         load_kernel(Kernel.transfer_render_data);
+
+        return this;
     }
 }

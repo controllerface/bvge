@@ -6,7 +6,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 public class PrepareLiquids extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(const_liquid_lookup_table);
         src.add(const_hit_thresholds);
@@ -15,5 +15,7 @@ public class PrepareLiquids extends GPUProgram
         make_program();
 
         load_kernel(Kernel.prepare_liquids);
+
+        return this;
     }
 }
