@@ -106,13 +106,10 @@ public class SectorInputBuffer implements SectorContainer
     private int armature_bone_index   = 0;
 
     private final long ptr_queue;
-    private final long ptr_egress_sizes;
-
 
     public SectorInputBuffer(long ptr_queue, GPUCoreMemory core_memory)
     {
         this.ptr_queue         = ptr_queue;
-        this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 7);
 
         // persistent buffers
         b_entity_anim_elapsed        = new PersistentBuffer(this.ptr_queue, CLSize.cl_float2, 1_000L);
@@ -306,9 +303,9 @@ public class SectorInputBuffer implements SectorContainer
             .buf_arg(MergeArmatureBone_k.Args.armature_bones_in, b_armature_bone)
             .buf_arg(MergeArmatureBone_k.Args.armature_bone_reference_ids_in, b_armature_bone_reference_id)
             .buf_arg(MergeArmatureBone_k.Args.armature_bone_parent_ids_in, b_armature_bone_parent_id)
-            .buf_arg(MergeArmatureBone_k.Args.armature_bones_out, core_memory.buffer(BufferType.ARMATURE_BONE))
-            .buf_arg(MergeArmatureBone_k.Args.armature_bone_reference_ids_out, core_memory.buffer(BufferType.ARMATURE_BONE_REFERENCE_ID))
-            .buf_arg(MergeArmatureBone_k.Args.armature_bone_parent_ids_out, core_memory.buffer(BufferType.ARMATURE_BONE_PARENT_ID));
+            .buf_arg(MergeArmatureBone_k.Args.armature_bones_out, core_memory.buffer(BufferType.ENTITY_BONE))
+            .buf_arg(MergeArmatureBone_k.Args.armature_bone_reference_ids_out, core_memory.buffer(BufferType.ENTITY_BONE_REFERENCE_ID))
+            .buf_arg(MergeArmatureBone_k.Args.armature_bone_parent_ids_out, core_memory.buffer(BufferType.ENTITY_BONE_PARENT_ID));
     }
 
     @Override

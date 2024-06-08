@@ -13,7 +13,7 @@ import java.util.concurrent.*;
 
 public class SectorUnloader extends GameSystem
 {
-    private final UnloadedSectorSlice sectors                     = new UnloadedSectorSlice();
+    private final UnorderedSectorGroup.Raw sectors                = new UnorderedSectorGroup.Raw();
     private final Map<Sector, PhysicsEntityBatch> running_batches = new HashMap<>();
     private final BlockingQueue<Float> next_dt                    = new ArrayBlockingQueue<>(1);
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
