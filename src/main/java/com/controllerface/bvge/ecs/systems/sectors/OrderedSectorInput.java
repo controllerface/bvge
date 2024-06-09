@@ -11,8 +11,6 @@ import static com.controllerface.bvge.cl.CLUtils.arg_short2;
 
 public class OrderedSectorInput
 {
-    private final long ptr_queue;
-    private final GPUProgram p_gpu_crud;
     private final BufferGroup sector_group;
 
     private final GPUKernel k_create_point;
@@ -22,75 +20,73 @@ public class OrderedSectorInput
     private final GPUKernel k_create_hull_bone;
     private final GPUKernel k_create_entity_bone;
 
-    private int point_index           = 0;
-    private int edge_index            = 0;
-    private int hull_index            = 0;
-    private int entity_index          = 0;
-    private int hull_bone_index       = 0;
-    private int entity_bone_index     = 0;
+    private int point_index       = 0;
+    private int edge_index        = 0;
+    private int hull_index        = 0;
+    private int entity_index      = 0;
+    private int hull_bone_index   = 0;
+    private int entity_bone_index = 0;
 
-    public OrderedSectorInput(long ptrQueue, GPUProgram pGpuCrud, BufferGroup sectorGroup)
+    public OrderedSectorInput(long ptr_queue, GPUProgram p_gpu_crud, BufferGroup sector_group)
     {
-        this.ptr_queue = ptrQueue;
-        this.p_gpu_crud = pGpuCrud;
-        sector_group = sectorGroup;
+        this.sector_group = sector_group;
 
-        long k_ptr_create_point = this.p_gpu_crud.kernel_ptr(Kernel.create_point);
-        k_create_point = new CreatePoint_k(this.ptr_queue, k_ptr_create_point)
-            .buf_arg(CreatePoint_k.Args.points, sector_group.buffer(BufferType.POINT))
-            .buf_arg(CreatePoint_k.Args.point_vertex_references, sector_group.buffer(BufferType.POINT_VERTEX_REFERENCE))
-            .buf_arg(CreatePoint_k.Args.point_hull_indices, sector_group.buffer(BufferType.POINT_HULL_INDEX))
-            .buf_arg(CreatePoint_k.Args.point_hit_counts, sector_group.buffer(BufferType.POINT_HIT_COUNT))
-            .buf_arg(CreatePoint_k.Args.point_flags, sector_group.buffer(BufferType.POINT_FLAG))
-            .buf_arg(CreatePoint_k.Args.point_bone_tables, sector_group.buffer(BufferType.POINT_BONE_TABLE));
+        long k_ptr_create_point = p_gpu_crud.kernel_ptr(Kernel.create_point);
+        k_create_point = new CreatePoint_k(ptr_queue, k_ptr_create_point)
+            .buf_arg(CreatePoint_k.Args.points,                         this.sector_group.buffer(BufferType.POINT))
+            .buf_arg(CreatePoint_k.Args.point_vertex_references,        this.sector_group.buffer(BufferType.POINT_VERTEX_REFERENCE))
+            .buf_arg(CreatePoint_k.Args.point_hull_indices,             this.sector_group.buffer(BufferType.POINT_HULL_INDEX))
+            .buf_arg(CreatePoint_k.Args.point_hit_counts,               this.sector_group.buffer(BufferType.POINT_HIT_COUNT))
+            .buf_arg(CreatePoint_k.Args.point_flags,                    this.sector_group.buffer(BufferType.POINT_FLAG))
+            .buf_arg(CreatePoint_k.Args.point_bone_tables,              this.sector_group.buffer(BufferType.POINT_BONE_TABLE));
 
-        long k_ptr_create_edge = this.p_gpu_crud.kernel_ptr(Kernel.create_edge);
-        k_create_edge = new CreateEdge_k(this.ptr_queue, k_ptr_create_edge)
-            .buf_arg(CreateEdge_k.Args.edges, sector_group.buffer(BufferType.EDGE))
-            .buf_arg(CreateEdge_k.Args.edge_lengths, sector_group.buffer(BufferType.EDGE_LENGTH))
-            .buf_arg(CreateEdge_k.Args.edge_flags, sector_group.buffer(BufferType.EDGE_FLAG));
+        long k_ptr_create_edge = p_gpu_crud.kernel_ptr(Kernel.create_edge);
+        k_create_edge = new CreateEdge_k(ptr_queue, k_ptr_create_edge)
+            .buf_arg(CreateEdge_k.Args.edges,                           this.sector_group.buffer(BufferType.EDGE))
+            .buf_arg(CreateEdge_k.Args.edge_lengths,                    this.sector_group.buffer(BufferType.EDGE_LENGTH))
+            .buf_arg(CreateEdge_k.Args.edge_flags,                      this.sector_group.buffer(BufferType.EDGE_FLAG));
 
-        long k_ptr_create_hull = this.p_gpu_crud.kernel_ptr(Kernel.create_hull);
-        k_create_hull = new CreateHull_k(this.ptr_queue, k_ptr_create_hull)
-            .buf_arg(CreateHull_k.Args.hulls, sector_group.buffer(BufferType.HULL))
-            .buf_arg(CreateHull_k.Args.hull_scales, sector_group.buffer(BufferType.HULL_SCALE))
-            .buf_arg(CreateHull_k.Args.hull_rotations, sector_group.buffer(BufferType.HULL_ROTATION))
-            .buf_arg(CreateHull_k.Args.hull_frictions, sector_group.buffer(BufferType.HULL_FRICTION))
-            .buf_arg(CreateHull_k.Args.hull_restitutions, sector_group.buffer(BufferType.HULL_RESTITUTION))
-            .buf_arg(CreateHull_k.Args.hull_point_tables, sector_group.buffer(BufferType.HULL_POINT_TABLE))
-            .buf_arg(CreateHull_k.Args.hull_edge_tables, sector_group.buffer(BufferType.HULL_EDGE_TABLE))
-            .buf_arg(CreateHull_k.Args.hull_bone_tables, sector_group.buffer(BufferType.HULL_BONE_TABLE))
-            .buf_arg(CreateHull_k.Args.hull_entity_ids, sector_group.buffer(BufferType.HULL_ENTITY_ID))
-            .buf_arg(CreateHull_k.Args.hull_flags, sector_group.buffer(BufferType.HULL_FLAG))
-            .buf_arg(CreateHull_k.Args.hull_mesh_ids, sector_group.buffer(BufferType.HULL_MESH_ID))
-            .buf_arg(CreateHull_k.Args.hull_uv_offsets, sector_group.buffer(BufferType.HULL_UV_OFFSET))
-            .buf_arg(CreateHull_k.Args.hull_integrity, sector_group.buffer(BufferType.HULL_INTEGRITY));
+        long k_ptr_create_hull = p_gpu_crud.kernel_ptr(Kernel.create_hull);
+        k_create_hull = new CreateHull_k(ptr_queue, k_ptr_create_hull)
+            .buf_arg(CreateHull_k.Args.hulls,                           this.sector_group.buffer(BufferType.HULL))
+            .buf_arg(CreateHull_k.Args.hull_scales,                     this.sector_group.buffer(BufferType.HULL_SCALE))
+            .buf_arg(CreateHull_k.Args.hull_rotations,                  this.sector_group.buffer(BufferType.HULL_ROTATION))
+            .buf_arg(CreateHull_k.Args.hull_frictions,                  this.sector_group.buffer(BufferType.HULL_FRICTION))
+            .buf_arg(CreateHull_k.Args.hull_restitutions,               this.sector_group.buffer(BufferType.HULL_RESTITUTION))
+            .buf_arg(CreateHull_k.Args.hull_point_tables,               this.sector_group.buffer(BufferType.HULL_POINT_TABLE))
+            .buf_arg(CreateHull_k.Args.hull_edge_tables,                this.sector_group.buffer(BufferType.HULL_EDGE_TABLE))
+            .buf_arg(CreateHull_k.Args.hull_bone_tables,                this.sector_group.buffer(BufferType.HULL_BONE_TABLE))
+            .buf_arg(CreateHull_k.Args.hull_entity_ids,                 this.sector_group.buffer(BufferType.HULL_ENTITY_ID))
+            .buf_arg(CreateHull_k.Args.hull_flags,                      this.sector_group.buffer(BufferType.HULL_FLAG))
+            .buf_arg(CreateHull_k.Args.hull_mesh_ids,                   this.sector_group.buffer(BufferType.HULL_MESH_ID))
+            .buf_arg(CreateHull_k.Args.hull_uv_offsets,                 this.sector_group.buffer(BufferType.HULL_UV_OFFSET))
+            .buf_arg(CreateHull_k.Args.hull_integrity,                  this.sector_group.buffer(BufferType.HULL_INTEGRITY));
 
-        long k_ptr_create_entity = this.p_gpu_crud.kernel_ptr(Kernel.create_entity);
-        k_create_entity = new CreateEntity_k(this.ptr_queue, k_ptr_create_entity)
-            .buf_arg(CreateEntity_k.Args.entities, sector_group.buffer(BufferType.ENTITY))
-            .buf_arg(CreateEntity_k.Args.entity_root_hulls, sector_group.buffer(BufferType.ENTITY_ROOT_HULL))
-            .buf_arg(CreateEntity_k.Args.entity_model_indices, sector_group.buffer(BufferType.ENTITY_MODEL_ID))
-            .buf_arg(CreateEntity_k.Args.entity_model_transforms, sector_group.buffer(BufferType.ENTITY_TRANSFORM_ID))
-            .buf_arg(CreateEntity_k.Args.entity_flags, sector_group.buffer(BufferType.ENTITY_FLAG))
-            .buf_arg(CreateEntity_k.Args.entity_hull_tables, sector_group.buffer(BufferType.ENTITY_HULL_TABLE))
-            .buf_arg(CreateEntity_k.Args.entity_bone_tables, sector_group.buffer(BufferType.ENTITY_BONE_TABLE))
-            .buf_arg(CreateEntity_k.Args.entity_masses, sector_group.buffer(BufferType.ENTITY_MASS))
-            .buf_arg(CreateEntity_k.Args.entity_animation_indices, sector_group.buffer(BufferType.ENTITY_ANIM_INDEX))
-            .buf_arg(CreateEntity_k.Args.entity_animation_elapsed, sector_group.buffer(BufferType.ENTITY_ANIM_ELAPSED))
-            .buf_arg(CreateEntity_k.Args.entity_motion_states, sector_group.buffer(BufferType.ENTITY_MOTION_STATE));
+        long k_ptr_create_entity = p_gpu_crud.kernel_ptr(Kernel.create_entity);
+        k_create_entity = new CreateEntity_k(ptr_queue, k_ptr_create_entity)
+            .buf_arg(CreateEntity_k.Args.entities,                      this.sector_group.buffer(BufferType.ENTITY))
+            .buf_arg(CreateEntity_k.Args.entity_root_hulls,             this.sector_group.buffer(BufferType.ENTITY_ROOT_HULL))
+            .buf_arg(CreateEntity_k.Args.entity_model_indices,          this.sector_group.buffer(BufferType.ENTITY_MODEL_ID))
+            .buf_arg(CreateEntity_k.Args.entity_model_transforms,       this.sector_group.buffer(BufferType.ENTITY_TRANSFORM_ID))
+            .buf_arg(CreateEntity_k.Args.entity_flags,                  this.sector_group.buffer(BufferType.ENTITY_FLAG))
+            .buf_arg(CreateEntity_k.Args.entity_hull_tables,            this.sector_group.buffer(BufferType.ENTITY_HULL_TABLE))
+            .buf_arg(CreateEntity_k.Args.entity_bone_tables,            this.sector_group.buffer(BufferType.ENTITY_BONE_TABLE))
+            .buf_arg(CreateEntity_k.Args.entity_masses,                 this.sector_group.buffer(BufferType.ENTITY_MASS))
+            .buf_arg(CreateEntity_k.Args.entity_animation_indices,      this.sector_group.buffer(BufferType.ENTITY_ANIM_INDEX))
+            .buf_arg(CreateEntity_k.Args.entity_animation_elapsed,      this.sector_group.buffer(BufferType.ENTITY_ANIM_ELAPSED))
+            .buf_arg(CreateEntity_k.Args.entity_motion_states,          this.sector_group.buffer(BufferType.ENTITY_MOTION_STATE));
 
-        long k_ptr_create_hull_bone = this.p_gpu_crud.kernel_ptr(Kernel.create_hull_bone);
-        k_create_hull_bone = new CreateHullBone_k(this.ptr_queue, k_ptr_create_hull_bone)
-            .buf_arg(CreateHullBone_k.Args.hull_bones, sector_group.buffer(BufferType.HULL_BONE))
-            .buf_arg(CreateHullBone_k.Args.hull_bind_pose_indicies, sector_group.buffer(BufferType.HULL_BONE_BIND_POSE))
-            .buf_arg(CreateHullBone_k.Args.hull_inv_bind_pose_indicies, sector_group.buffer(BufferType.HULL_BONE_INV_BIND_POSE));
+        long k_ptr_create_hull_bone = p_gpu_crud.kernel_ptr(Kernel.create_hull_bone);
+        k_create_hull_bone = new CreateHullBone_k(ptr_queue, k_ptr_create_hull_bone)
+            .buf_arg(CreateHullBone_k.Args.hull_bones,                  this.sector_group.buffer(BufferType.HULL_BONE))
+            .buf_arg(CreateHullBone_k.Args.hull_bind_pose_indicies,     this.sector_group.buffer(BufferType.HULL_BONE_BIND_POSE))
+            .buf_arg(CreateHullBone_k.Args.hull_inv_bind_pose_indicies, this.sector_group.buffer(BufferType.HULL_BONE_INV_BIND_POSE));
 
-        long k_ptr_create_entity_bone = this.p_gpu_crud.kernel_ptr(Kernel.create_entity_bone);
-        k_create_entity_bone = new CreateEntityBone_k(this.ptr_queue, k_ptr_create_entity_bone)
-            .buf_arg(CreateEntityBone_k.Args.entity_bones, sector_group.buffer(BufferType.ENTITY_BONE))
-            .buf_arg(CreateEntityBone_k.Args.entity_bone_reference_ids, sector_group.buffer(BufferType.ENTITY_BONE_REFERENCE_ID))
-            .buf_arg(CreateEntityBone_k.Args.entity_bone_parent_ids, sector_group.buffer(BufferType.ENTITY_BONE_PARENT_ID));
+        long k_ptr_create_entity_bone = p_gpu_crud.kernel_ptr(Kernel.create_entity_bone);
+        k_create_entity_bone = new CreateEntityBone_k(ptr_queue, k_ptr_create_entity_bone)
+            .buf_arg(CreateEntityBone_k.Args.entity_bones,              this.sector_group.buffer(BufferType.ENTITY_BONE))
+            .buf_arg(CreateEntityBone_k.Args.entity_bone_reference_ids, this.sector_group.buffer(BufferType.ENTITY_BONE_REFERENCE_ID))
+            .buf_arg(CreateEntityBone_k.Args.entity_bone_parent_ids,    this.sector_group.buffer(BufferType.ENTITY_BONE_PARENT_ID));
     }
 
     public int point_index()
@@ -283,5 +279,25 @@ public class OrderedSectorInput
         entity_index          = 0;
         hull_bone_index       = 0;
         entity_bone_index     = 0;
+    }
+
+    public void expand(int point_count, int edge_count, int hull_count, int entity_count, int hull_bone_count, int armature_bone_count)
+    {
+        point_index       += point_count;
+        edge_index        += edge_count;
+        hull_index        += hull_count;
+        entity_index      += entity_count;
+        hull_bone_index   += hull_bone_count;
+        entity_bone_index += armature_bone_count;
+    }
+
+    public void compact(int[] shift_counts) // todo: unify ordering of counts in all places, should be: point, edge, hull, entity, hull bone, entity bone
+    {
+        edge_index        -= (shift_counts[0]);
+        hull_bone_index   -= (shift_counts[1]);
+        point_index       -= (shift_counts[2]);
+        hull_index        -= (shift_counts[3]);
+        entity_index      -= (shift_counts[4]);
+        entity_bone_index -= (shift_counts[5]);
     }
 }

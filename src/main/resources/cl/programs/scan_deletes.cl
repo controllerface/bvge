@@ -363,14 +363,14 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
                                __global float4 *points,
                                __global int *point_hull_indices,
                                __global int4 *bone_tables,
-                               __global int *armature_bone_parent_ids,
+                               __global int *entity_bone_parent_ids,
                                __global int *hull_bind_pose_indicies,
                                __global int2 *edges,
                                __global int *hull_bone_shift,
                                __global int *point_shift,
                                __global int *edge_shift,
                                __global int *hull_shift,
-                               __global int *armature_bone_shift)
+                               __global int *entity_bone_shift)
 {
     // get drop counts for this entity
     int gid = get_global_id(0);
@@ -439,12 +439,12 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
     for (int i = 0; i < entity_bone_count; i++)
     {
         int current_bone_bind = bone_table.x + i;
-        int bone_parent_id = armature_bone_parent_ids[current_bone_bind];
+        int bone_parent_id = entity_bone_parent_ids[current_bone_bind];
         bone_parent_id = bone_parent_id == -1
             ? -1
             : bone_parent_id - drop.bone_bind_count;
-        armature_bone_parent_ids[current_bone_bind] = bone_parent_id;
-        armature_bone_shift[current_bone_bind] = drop.bone_bind_count;
+        entity_bone_parent_ids[current_bone_bind] = bone_parent_id;
+        entity_bone_shift[current_bone_bind] = drop.bone_bind_count;
     }
 
     // hulls
@@ -652,16 +652,16 @@ __kernel void compact_hull_bones(__global int *hull_bone_shift,
     }
 }
 
-__kernel void compact_armature_bones(__global int *armature_bone_shift,
+__kernel void compact_armature_bones(__global int *entity_bone_shift,
                                      __global float16 *armature_bones,
                                      __global int *armature_bone_reference_ids,
-                                     __global int *armature_bone_parent_ids)
+                                     __global int *entity_bone_parent_ids)
 {
     int current_armature_bone = get_global_id(0);
-    int shift = armature_bone_shift[current_armature_bone];
+    int shift = entity_bone_shift[current_armature_bone];
     float16 armature_bone = armature_bones[current_armature_bone];    
     int bone_reference = armature_bone_reference_ids[current_armature_bone];
-    int bone_parent_id = armature_bone_parent_ids[current_armature_bone];
+    int bone_parent_id = entity_bone_parent_ids[current_armature_bone];
 
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
@@ -669,6 +669,6 @@ __kernel void compact_armature_bones(__global int *armature_bone_shift,
         int new_bone_index = current_armature_bone - shift;
         armature_bones[new_bone_index] = armature_bone;
         armature_bone_reference_ids[new_bone_index] = bone_reference;
-        armature_bone_parent_ids[new_bone_index] = bone_parent_id;
+        entity_bone_parent_ids[new_bone_index] = bone_parent_id;
     }
 }

@@ -10,10 +10,10 @@ import static com.controllerface.bvge.cl.CLUtils.*;
 
 public class SectorOutputBuffer
 {
-    private static final long ENTITY_CAP = 1_000L;
-    private static final long HULL_CAP = 1_000L;
-    private static final long EDGE_CAP = 2_400L;
-    private static final long POINT_CAP = 5_000L;
+    private static final long ENTITY_INIT = 1_000L;
+    private static final long HULL_INIT = 1_000L;
+    private static final long EDGE_INIT = 2_400L;
+    private static final long POINT_INIT = 5_000L;
 
     private final GPUProgram p_gpu_crud = new GPUCrud();
     private final GPUKernel k_egress_entities;
@@ -25,7 +25,7 @@ public class SectorOutputBuffer
     {
         this.ptr_queue         = ptr_queue;
         this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
-        this.sector_group = new UnorderedSectorGroup(this.ptr_queue);
+        this.sector_group = new UnorderedSectorGroup(this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         p_gpu_crud.init();
 
         long k_ptr_egress_candidates = p_gpu_crud.kernel_ptr(Kernel.egress_entities);

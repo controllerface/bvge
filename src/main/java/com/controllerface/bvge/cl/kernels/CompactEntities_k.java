@@ -25,14 +25,14 @@ public class CompactEntities_k extends GPUKernel
         points,
         point_hull_indices,
         point_bone_tables,
-        armature_bone_parent_ids,
+        entity_bone_parent_ids,
         hull_bind_pose_indices,
         edges,
         hull_bone_shift,
         point_shift,
         edge_shift,
         hull_shift,
-        armature_bone_shift;
+        entity_bone_shift;
     }
 
     public CompactEntities_k(long command_queue_ptr, long kernel_ptr)

@@ -4,6 +4,8 @@ import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.buffers.BufferGroup;
 import com.controllerface.bvge.cl.buffers.BufferType;
 
+import static com.controllerface.bvge.cl.buffers.BufferType.*;
+
 public class OrderedSectorGroup extends BufferGroup
 {
     public OrderedSectorGroup(long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
@@ -54,5 +56,53 @@ public class OrderedSectorGroup extends BufferGroup
         set_buffer(BufferType.ENTITY_HULL_TABLE,        new_buffer(CLSize.cl_int2,   entity_init));
         set_buffer(BufferType.ENTITY_BONE_TABLE,        new_buffer(CLSize.cl_int2,   entity_init));
         set_buffer(BufferType.ENTITY_MASS,              new_buffer(CLSize.cl_float,  entity_init));
+    }
+
+    public void ensure_capacity(int point_capacity, int edge_capacity, int hull_capacity, int entity_capacity, int hull_bone_capacity, int entity_bone_capacity)
+    {
+        buffer(HULL_BONE)                .ensure_capacity(hull_bone_capacity);
+        buffer(HULL_BONE_BIND_POSE)      .ensure_capacity(hull_bone_capacity);
+        buffer(HULL_BONE_INV_BIND_POSE)  .ensure_capacity(hull_bone_capacity);
+
+        buffer(ENTITY_BONE)              .ensure_capacity(entity_bone_capacity);
+        buffer(ENTITY_BONE_REFERENCE_ID) .ensure_capacity(entity_bone_capacity);
+        buffer(ENTITY_BONE_PARENT_ID)    .ensure_capacity(entity_bone_capacity);
+
+        buffer(EDGE)                     .ensure_capacity(edge_capacity);
+        buffer(EDGE_LENGTH)              .ensure_capacity(edge_capacity);
+        buffer(EDGE_FLAG)                .ensure_capacity(edge_capacity);
+
+        buffer(POINT)                    .ensure_capacity(point_capacity);
+        buffer(POINT_VERTEX_REFERENCE)   .ensure_capacity(point_capacity);
+        buffer(POINT_HULL_INDEX)         .ensure_capacity(point_capacity);
+        buffer(POINT_BONE_TABLE)         .ensure_capacity(point_capacity);
+        buffer(POINT_HIT_COUNT)          .ensure_capacity(point_capacity);
+        buffer(POINT_FLAG)               .ensure_capacity(point_capacity);
+
+        buffer(HULL)                     .ensure_capacity(hull_capacity);
+        buffer(HULL_SCALE)               .ensure_capacity(hull_capacity);
+        buffer(HULL_POINT_TABLE)         .ensure_capacity(hull_capacity);
+        buffer(HULL_EDGE_TABLE)          .ensure_capacity(hull_capacity);
+        buffer(HULL_FLAG)                .ensure_capacity(hull_capacity);
+        buffer(HULL_BONE_TABLE)          .ensure_capacity(hull_capacity);
+        buffer(HULL_ENTITY_ID)           .ensure_capacity(hull_capacity);
+        buffer(HULL_FRICTION)            .ensure_capacity(hull_capacity);
+        buffer(HULL_RESTITUTION)         .ensure_capacity(hull_capacity);
+        buffer(HULL_MESH_ID)             .ensure_capacity(hull_capacity);
+        buffer(HULL_UV_OFFSET)           .ensure_capacity(hull_capacity);
+        buffer(HULL_ROTATION)            .ensure_capacity(hull_capacity);
+        buffer(HULL_INTEGRITY)           .ensure_capacity(hull_capacity);
+
+        buffer(ENTITY_ANIM_ELAPSED)      .ensure_capacity(entity_capacity);
+        buffer(ENTITY_MOTION_STATE)      .ensure_capacity(entity_capacity);
+        buffer(ENTITY_ANIM_INDEX)        .ensure_capacity(entity_capacity);
+        buffer(ENTITY)                   .ensure_capacity(entity_capacity);
+        buffer(ENTITY_FLAG)              .ensure_capacity(entity_capacity);
+        buffer(ENTITY_ROOT_HULL)         .ensure_capacity(entity_capacity);
+        buffer(ENTITY_MODEL_ID)          .ensure_capacity(entity_capacity);
+        buffer(ENTITY_TRANSFORM_ID)      .ensure_capacity(entity_capacity);
+        buffer(ENTITY_HULL_TABLE)        .ensure_capacity(entity_capacity);
+        buffer(ENTITY_BONE_TABLE)        .ensure_capacity(entity_capacity);
+        buffer(ENTITY_MASS)              .ensure_capacity(entity_capacity);
     }
 }
