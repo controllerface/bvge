@@ -332,7 +332,7 @@ public class EarthLikeWorld implements WorldType
                 ? Constants.PointFlags.FLOW_LEFT.bits
                 : 0;
             flip = !flip;
-            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, -0.00001f, hull_flags, point_flags, Liquid.FRESHWATER);
+            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, -0.000001f, hull_flags, point_flags, Liquid.FRESHWATER);
         }
         else if (n < shard_range_floor)
         {
