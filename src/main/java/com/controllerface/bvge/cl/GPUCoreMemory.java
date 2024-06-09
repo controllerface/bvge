@@ -126,62 +126,6 @@ public class GPUCoreMemory implements SectorContainer
      */
     private final ResizableBuffer b_point_anti_gravity;
 
-//    /** int4
-//     * x: bone 1 instance id
-//     * y: bone 2 instance id
-//     * z: bone 3 instance id
-//     * w: bone 4 instance id
-//     */
-//    private final ResizableBuffer b_point_bone_table;
-//
-//    /** float4
-//     * x: current x position
-//     * y: current y position
-//     * z: previous x position
-//     * w: previous y position
-//     */
-//    private final ResizableBuffer b_point;
-//
-//    /** int
-//     * x: reference vertex index
-//     */
-//    private final ResizableBuffer b_point_vertex_reference;
-//
-//    /** int
-//     * x: hull index
-//     */
-//    private final ResizableBuffer b_point_hull_index;
-//
-//    /** int
-//     * x: vertex flags (bit field)
-//     */
-//    private final ResizableBuffer b_point_flag;
-//
-//    /** ushort
-//     * x: recent collision hit counter
-//     */
-//    private final ResizableBuffer b_point_hit_count;
-
-    //#endregion
-
-    //#region Edge Buffers
-
-//    /** int2
-//     * x: point 1 index
-//     * y: point 2 index
-//     */
-//    private final ResizableBuffer b_edge;
-//
-//    /** int
-//     * x: edge flags (bit-field)
-//     */
-//    private final ResizableBuffer b_edge_flag;
-//
-//    /** float
-//     * x: edge constraint length
-//     */
-//    private final ResizableBuffer b_edge_length;
-
     //#endregion
 
     //#region Hull Buffers
@@ -208,79 +152,6 @@ public class GPUCoreMemory implements SectorContainer
      */
     private final ResizableBuffer b_hull_aabb_key;
 
-//    /** float4
-//     * x: current x position
-//     * y: current y position
-//     * z: previous x position
-//     * w: previous y position
-//     */
-//    private final ResizableBuffer b_hull;
-//
-//    /** float2
-//     * x: scale x
-//     * y: scale y
-//     */
-//    private final ResizableBuffer b_hull_scale;
-//
-//    /** int2
-//     * x: start point index
-//     * y: end point index
-//     */
-//    private final ResizableBuffer b_hull_point_table;
-//
-//    /** int2
-//     * x: start edge index
-//     * y: end edge index
-//     */
-//    private final ResizableBuffer b_hull_edge_table;
-//
-//    /** int
-//     * x: hull flags (bit-field)
-//     */
-//    private final ResizableBuffer b_hull_flag;
-//
-//    /** int
-//     * x: entity id for aligned hull
-//     */
-//    private final ResizableBuffer b_hull_entity_id;
-//
-//    /** int2
-//     * x: start bone
-//     * y: end bone
-//     */
-//    private final ResizableBuffer b_hull_bone_table;
-//
-//    /** float
-//     * x: friction coefficient
-//     */
-//    private final ResizableBuffer b_hull_friction;
-//
-//    /** float
-//     * x: restitution coefficient
-//     */
-//    private final ResizableBuffer b_hull_restitution;
-//
-//    /** int
-//     * x: reference mesh id
-//     */
-//    private final ResizableBuffer b_hull_mesh_id;
-//
-//    /** int
-//     * x: offset index of the UV to use for this hull
-//     */
-//    private final ResizableBuffer b_hull_uv_offset;
-//
-//    /** float2
-//     * x: initial reference angle
-//     * y: current rotation
-//     */
-//    private final ResizableBuffer b_hull_rotation;
-//
-//    /** int
-//     * x: the integrity (i.e. health) of the hull
-//     */
-//    private final ResizableBuffer b_hull_integrity;
-
     //#endregion
 
     //#region Entity Buffers
@@ -296,107 +167,6 @@ public class GPUCoreMemory implements SectorContainer
      * y: the remaining time of the current blend operation
      */
     private final ResizableBuffer b_entity_anim_blend;
-
-//    /** float2
-//     * x: the last rendered timestamp of the current animation
-//     * y: the last rendered timestamp of the previous animation
-//     */
-//    private final ResizableBuffer b_entity_anim_elapsed;
-//
-//    /** short2
-//     * x: number of ticks moving downward
-//     * y: number of ticks moving upward
-//     */
-//    private final ResizableBuffer b_entity_motion_state;
-//
-//    /** int2
-//     * x: the currently running animation index
-//     * y: the previously running animation index
-//     */
-//    private final ResizableBuffer b_entity_anim_index;
-//
-//    /** float4
-//     * x: current x position
-//     * y: current y position
-//     * z: previous x position
-//     * w: previous y position
-//     */
-//    private final ResizableBuffer b_entity;
-//
-//    /** int
-//     * x: entity flags (bit-field)
-//     */
-//    private final ResizableBuffer b_entity_flag;
-//
-//    /** int
-//     * x: root hull index of the aligned entity
-//     */
-//    private final ResizableBuffer b_entity_root_hull;
-//
-//    /** int
-//     * x: model id of the aligned entity
-//     */
-//    private final ResizableBuffer b_entity_model_id;
-//
-//    /** int
-//     * x: model transform index of the aligned entity
-//     */
-//    private final ResizableBuffer b_entity_model_transform;
-//
-//    /** int2
-//     * x: start hull index
-//     * y: end hull index
-//     */
-//    private final ResizableBuffer b_entity_hull_table;
-//
-//    /** int2
-//     * x: start bone anim index
-//     * y: end bone anim index
-//     */
-//    private final ResizableBuffer b_entity_bone_table;
-//
-//    /** float
-//     * x: mass of the entity
-//     */
-//    private final ResizableBuffer b_entity_mass;
-
-    //#endregion
-
-    //#region Hull Bone Buffers
-
-//    /** float16
-//     * s0-sF: Column-major, 4x4 transformation matrix, hull bone instance
-//     */
-//    private final ResizableBuffer b_hull_bone;
-//
-//    /** int
-//     * x: bone bind pose index (model space)
-//     */
-//    private final ResizableBuffer b_hull_bone_bind_pose_id;
-//
-//    /** int
-//     * x: bone inverse bind pose index (mesh-space)
-//     */
-//    private final ResizableBuffer b_hull_bone_inv_bind_pose_id;
-
-    //#endregion
-
-    //#region Armature Bone Buffers
-
-//    /** float16
-//     * s0-sF: Column-major, 4x4 transformation matrix, armature bone instance
-//     */
-//    private final ResizableBuffer b_entity_bone;
-//
-//    /** int
-//     * x: bind pose reference id
-//     */
-//    private final ResizableBuffer b_entity_bone_reference_id;
-//
-//    /** int
-//     * x: armature bone parent id
-//     */
-//    private final ResizableBuffer b_entity_bone_parent_id;
 
     //#endregion
 
@@ -558,13 +328,13 @@ public class GPUCoreMemory implements SectorContainer
     private int last_edge_index       = 0;
     private int last_entity_index     = 0;
 
-    private int[] active_egress_counts = new int[6];
-    private int[] inactive_egress_counts = new int[6];
-    private final SectorInputBuffer incoming_sector_buffer;
-    private final SectorOutputBuffer outgoing_sector_buffer_a;
-    private final SectorOutputBuffer outgoing_sector_buffer_b;
-    private final OrderedSectorGroup sector_group;
-    private final OrderedSectorInput sector_input;
+    private final int[] active_egress_counts = new int[6];
+    private final int[] inactive_egress_counts = new int[6];
+    private final OrderedSectorInput incoming_sector_buffer;
+    private final UnorderedSectorOutput outgoing_sector_buffer_a;
+    private final UnorderedSectorOutput outgoing_sector_buffer_b;
+    private final SectorGroup sector_group;
+    private final SectorInput sector_input;
     boolean flip_outgoing_sector = false;
 
     /**
@@ -648,8 +418,8 @@ public class GPUCoreMemory implements SectorContainer
         p_gpu_crud.init();
         p_scan_deletes.init();
 
-        this.sector_group = new OrderedSectorGroup(GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        this.sector_input = new OrderedSectorInput(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.sector_group);
+        this.sector_group = new SectorGroup(GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_input = new SectorInput(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.sector_group);
 
         long k_ptr_create_texture_uv = p_gpu_crud.kernel_ptr(Kernel.create_texture_uv);
         k_create_texture_uv = new CreateTextureUV_k(GPGPU.ptr_compute_queue, k_ptr_create_texture_uv)
@@ -848,9 +618,9 @@ public class GPUCoreMemory implements SectorContainer
             .buf_arg(CountEgressEntities_k.Args.hull_bone_tables,   sector_group.buffer(BufferType.HULL_BONE_TABLE))
             .ptr_arg(CountEgressEntities_k.Args.counters,           ptr_egress_sizes);
 
-        this.incoming_sector_buffer = new SectorInputBuffer(GPGPU.ptr_sector_queue, this);
-        this.outgoing_sector_buffer_a = new SectorOutputBuffer(GPGPU.ptr_sector_queue, this);
-        this.outgoing_sector_buffer_b = new SectorOutputBuffer(GPGPU.ptr_sector_queue, this);
+        this.incoming_sector_buffer   = new OrderedSectorInput(GPGPU.ptr_sector_queue, this);
+        this.outgoing_sector_buffer_a = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
+        this.outgoing_sector_buffer_b = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
     }
 
     public ResizableBuffer buffer(BufferType bufferType)
@@ -1625,6 +1395,7 @@ public class GPUCoreMemory implements SectorContainer
         GPGPU.cl_release_buffer(ptr_delete_counter);
         GPGPU.cl_release_buffer(ptr_position_buffer);
         GPGPU.cl_release_buffer(ptr_delete_sizes);
+        GPGPU.cl_release_buffer(ptr_egress_sizes);
     }
 
     private void debug()

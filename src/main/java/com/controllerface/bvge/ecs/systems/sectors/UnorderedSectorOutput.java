@@ -8,7 +8,7 @@ import com.controllerface.bvge.cl.programs.GPUProgram;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 
-public class SectorOutputBuffer
+public class UnorderedSectorOutput
 {
     private static final long ENTITY_INIT = 1_000L;
     private static final long HULL_INIT = 1_000L;
@@ -21,7 +21,7 @@ public class SectorOutputBuffer
     private final long ptr_egress_sizes;
     private final UnorderedSectorGroup sector_group;
 
-    public SectorOutputBuffer(long ptr_queue, GPUCoreMemory core_memory)
+    public UnorderedSectorOutput(long ptr_queue, GPUCoreMemory core_memory)
     {
         this.ptr_queue         = ptr_queue;
         this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(CLSize.cl_int * 6);
@@ -114,7 +114,13 @@ public class SectorOutputBuffer
     public void pull_from_parent(int entity_count, int[] egress_counts)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_sizes, CLSize.cl_int * 6);
-        sector_group.ensure_capacity(egress_counts);
+        int entity_capacity        = egress_counts[0];
+        int hull_capacity          = egress_counts[1];
+        int point_capacity         = egress_counts[2];
+        int edge_capacity          = egress_counts[3];
+        int hull_bone_capacity     = egress_counts[4];
+        int entity_bone_capacity   = egress_counts[5];
+        sector_group.ensure_capacity(point_capacity, edge_capacity, hull_capacity, entity_capacity, hull_bone_capacity, entity_bone_capacity);
         k_egress_entities.call(arg_long(entity_count));
     }
 
