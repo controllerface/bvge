@@ -15,6 +15,7 @@ collisions, as there is only a single point, circles are always the vertex objec
 Circle/circle collisions use a simple distance/radius check.
  */
 __kernel void sat_collide(__global int2 *candidates,
+                          __global int *entity_model_transforms,
                           __global float4 *hulls,
                           __global float2 *hull_scales,
                           __global float *hull_frictions,
@@ -124,6 +125,7 @@ __kernel void sat_collide(__global int2 *candidates,
     else 
     {
         polygon_circle_collision(p_id, c_id, 
+            entity_model_transforms,
             hulls,
             hull_scales,
             hull_frictions,
@@ -410,6 +412,7 @@ __kernel void move_entities(__global float4 *hulls,
                             __global int *entity_flags,
                             __global int2 *hull_tables,
                             __global int2 *hull_point_tables,
+                            __global int *hull_integrity,
                             __global int *hull_flags,
                             __global int *point_flags,
                             __global short *point_hit_counts,
@@ -425,6 +428,9 @@ __kernel void move_entities(__global float4 *hulls,
 
     int hull_flags_0 = hull_flags[start];
     bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
+
+    int hull_0_integrity = hull_integrity[start];
+    bool single_hull = hull_count == 1;
 
     float2 diff = (float2)(0.0f);
     int _point_flags = 0;
@@ -466,12 +472,12 @@ __kernel void move_entities(__global float4 *hulls,
         && is_block 
         && total_hits >= block_check;
 
+    bool destory = single_hull && hull_0_integrity <= 0;
     
     hull_flags_0 = go_static 
         ? hull_flags_0 | IS_STATIC
         : hull_flags_0;
     
-
     entity.w = hit_floor 
         ? entity.y 
         : entity.w;
@@ -499,6 +505,10 @@ __kernel void move_entities(__global float4 *hulls,
     flags = hit_water
         ? flags | IS_WET
         : flags & ~IS_WET;
+
+    flags = destory
+        ? flags | DELETED
+        : flags & ~DELETED;
 
     hull_flags[start] = hull_flags_0;
     entities[current_entity] = entity;

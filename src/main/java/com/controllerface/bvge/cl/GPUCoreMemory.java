@@ -861,7 +861,9 @@ public class GPUCoreMemory implements SectorContainer
                     ? L_SHARD_INDEX
                     : R_SHARD_INDEX;
 
-            PhysicsObjects.tri(incoming_sector_buffer, shard.x(), shard.y(), shard.size(), shard.flags(), shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
+            int shard_flags = shard.flags();// | Constants.HullFlags.IS_BLOCK._int | Constants.HullFlags.NO_BONES._int;
+
+            PhysicsObjects.tri(incoming_sector_buffer, shard.x(), shard.y(), shard.size(), shard_flags, shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
         }
         for (var liquid : batch.liquids)
         {
@@ -1076,7 +1078,7 @@ public class GPUCoreMemory implements SectorContainer
     }
 
     @Override
-    public int new_entity(float x, float y, float z, float w,
+    public int[] new_entity(float x, float y, float z, float w,
                           int[] hull_table,
                           int[] bone_table,
                           float mass,

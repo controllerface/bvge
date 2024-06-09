@@ -175,6 +175,8 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     bool side_l = (flags & SIDE_L) !=0;
     bool touch_alike = (flags & TOUCH_ALIKE) !=0;
     bool is_static = (flags & IS_STATIC) !=0;
+    bool cursor_over = (flags & CURSOR_OVER) !=0;
+    bool in_range = (flags & IN_RANGE) !=0;
 
     float r_layer = face_l ? -2.0 : 2.0;
     float l_layer = face_l ? 2.0 : -2.0;
@@ -215,9 +217,12 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float rrr = integrity > 100 
             ? 0.0f 
             : .3f - map((float) integrity, 0.0f, 100.0f, 0.0f, .3f);
+        float bbb = cursor_over && in_range 
+            ? 2.0f 
+            : 0.0f;
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
-        color_buffer[ref_offset] = (float4)(xxx + rrr, xxx, xxx, 1.0f);
+        color_buffer[ref_offset] = (float4)(xxx + rrr, xxx, xxx + bbb, 1.0f);
         slot_buffer[ref_offset] = (float)texture;
         //if (texture == 3) printf("debug out tex:%d mesh:%d", texture, mesh_id);
     }

@@ -175,7 +175,7 @@ public class SectorInput
         return hull_index++;
     }
 
-    public int create_entity(float x, float y, float z, float w, int[] hull_table, int[] bone_table, float mass, int anim_index, float anim_time, int root_hull, int model_id, int model_transform_id, int flags)
+    public int[] create_entity(float x, float y, float z, float w, int[] hull_table, int[] bone_table, float mass, int anim_index, float anim_time, int root_hull, int model_id, int model_transform_id, int flags)
     {
         int capacity = entity_index + 1;
         sector_group.buffer(ENTITY).ensure_capacity(capacity);
@@ -205,7 +205,7 @@ public class SectorInput
             .set_arg(CreateEntity_k.Args.new_entity_animation_state, arg_short2((short) 0, (short) 0))
             .call(GPGPU.global_single_size);
 
-        return entity_index++;
+        return new int[]{ entity_index++, root_hull };
     }
 
     public int create_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id)

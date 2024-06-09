@@ -3,6 +3,7 @@ Handles collision between one polygonal hull and one circular hull
  */
 inline void polygon_circle_collision(int polygon_id, 
                                      int circle_id,
+                                     __global int *entity_model_transforms,
                                      __global float4 *hulls,
                                      __global float2 *hull_scales,
                                      __global float *hull_frictions,
@@ -45,7 +46,6 @@ inline void polygon_circle_collision(int polygon_id,
         
     float2 collision_normal;
     int2 vertex_table = circle_table;
-
 
     int max_axis = 0;
     int this_axis = 0;
@@ -111,7 +111,12 @@ inline void polygon_circle_collision(int polygon_id,
     }
     int vert_hull_flags = hull_flags[vert_hull_id];
     int edge_hull_flags = hull_flags[edge_hull_id];
+    int vert_entity_id = hull_entity_ids[vert_hull_id];
+    int edge_entity_id = hull_entity_ids[edge_hull_id];
     
+    float4 hull_v = hulls[circle_id];
+    float4 hull_e = hulls[polygon_id];
+
     // cursor collision causes early exit
     bool cursor_v = (vert_hull_flags & IS_CURSOR) !=0;
     bool cursor_e = (edge_hull_flags & IS_CURSOR) !=0;
@@ -120,12 +125,22 @@ inline void polygon_circle_collision(int polygon_id,
     {
         if (cursor_v)
         {
-            edge_hull_flags |= CURSOR_OVER;            
+            int id = entity_model_transforms[vert_entity_id];
+            float4 owner = hulls[id];
+            float center_distance = fast_distance(owner.xy, hull_e.xy);
+            bool in_range = center_distance <= 100.0f;
+            edge_hull_flags |= CURSOR_OVER;           
+            if (in_range) edge_hull_flags |= IN_RANGE;
             hull_flags[edge_hull_id] = edge_hull_flags;
         }
         else
         {
-            vert_hull_flags |= CURSOR_OVER;            
+            int id = entity_model_transforms[edge_entity_id];
+            float4 owner = hulls[id];
+            float center_distance = fast_distance(owner.xy, hull_v.xy);
+            bool in_range = center_distance <= 100.0f;
+            vert_hull_flags |= CURSOR_OVER;     
+            if (in_range) vert_hull_flags |= IN_RANGE;       
             hull_flags[vert_hull_id] = vert_hull_flags;
         }
         return;
@@ -143,13 +158,9 @@ inline void polygon_circle_collision(int polygon_id,
 
     collision_normal = fast_normalize(collision_normal);
 
-    int hull_a_index = circle_id;
-    int hull_b_index = polygon_id;
 
-    float4 hull_a = hulls[hull_a_index];
-    float4 hull_b = hulls[hull_b_index];
 
-    float2 direction = hull_a.xy - hull_b.xy;
+    float2 direction = hull_v.xy - hull_e.xy;
     collision_normal = dot(direction, collision_normal) < 0
         ? collision_normal * -1
         : collision_normal;
@@ -158,8 +169,8 @@ inline void polygon_circle_collision(int polygon_id,
     min_distance = native_divide(min_distance, fast_length(collision_normal));
 
     // collision reaction and opposing direction calculation
-    float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
-    float2 edge_hull_opposing = (float2)(0.0f, 0.0f); //hull_a.xy - hull_b.xy;
+    float2 vert_hull_opposing = hull_e.xy - hull_v.xy;
+    float2 edge_hull_opposing = (float2)(0.0f, 0.0f); //hull_v.xy - hull_e.xy;
     
 
     bool has_water_particle = (vert_hull_flags & IS_LIQUID) != 0;
@@ -168,8 +179,6 @@ inline void polygon_circle_collision(int polygon_id,
         : edge_hull_flags;
     hull_flags[edge_hull_id] = edge_hull_flags;
 
-    int vert_entity_id = hull_entity_ids[vert_hull_id];
-    int edge_entity_id = hull_entity_ids[edge_hull_id];
     float vert_hull_mass = masses[vert_entity_id];
     float edge_hull_mass = masses[edge_entity_id];
     float vert_hull_friction = hull_frictions[vert_hull_id];

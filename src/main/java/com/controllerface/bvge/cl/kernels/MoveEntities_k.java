@@ -9,6 +9,7 @@ public class MoveEntities_k extends GPUKernel
         entity_flags,
         entity_hull_tables,
         hull_point_tables,
+        hull_integrity,
         hull_flags,
         point_flags,
         point_hit_counts,

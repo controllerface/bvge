@@ -40,7 +40,9 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int particle(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, int model_id, int uv_variant)
+    public static int particle(SectorContainer world, float x, float y, float size,
+                               float mass, float friction, float restitution, int range_link,
+                               int flags, int point_flags, int model_id, int uv_variant)
     {
         int next_entity_id = world.next_entity();
         int next_hull_index = world.next_hull();
@@ -90,18 +92,18 @@ public class PhysicsObjects
             -1f,
             hull_id,
             model_id,
-            0,
-            0);
+            range_link,
+            0)[0];
     }
 
     public static int liquid_particle(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid)
     {
-        return particle(world, x, y, size, mass, friction, restitution, flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number);
+        return particle(world, x, y, size, mass, friction, restitution, 0, flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number);
     }
 
-    public static int circle_cursor(SectorContainer world, float x, float y, float size)
+    public static int circle_cursor(SectorContainer world, float x, float y, float size, int range_link)
     {
-        return particle(world, x, y, size, 0.0f, 0.0f, 0.0f, HullFlags.IS_CURSOR._int, 0, CURSOR, 0);
+        return particle(world, x, y, size, 0.0f, 0.0f, 0.0f, range_link, HullFlags.IS_CURSOR._int, 0, CURSOR, 0);
     }
 
     public static int tri(SectorContainer world, float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Solid shard_mineral)
@@ -172,7 +174,7 @@ public class PhysicsObjects
             hull_id,
             model_id,
             0,
-            0);
+            0)[0];
     }
 
     public static int block(SectorContainer world, float x, float y, float size, int global_hull_flags, float mass, float friction, float restitution, int model_id, Solid block_mineral,
@@ -252,7 +254,7 @@ public class PhysicsObjects
             hull_id,
             model_id,
             0,
-            0);
+            0)[0];
     }
 
     public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
@@ -294,7 +296,7 @@ public class PhysicsObjects
 
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will
     //  probably break/crash.
-    public static int wrap_model(SectorContainer world, int model_index, float x, float y, float size, float mass, float friction, float restitution, int uv_offset)
+    public static int[] wrap_model(SectorContainer world, int model_index, float x, float y, float size, float mass, float friction, float restitution, int uv_offset)
     {
         // we need to know the next entity ID before we create it, so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
@@ -647,7 +649,7 @@ public class PhysicsObjects
         int[] a_tbl = make_table(a_ids);
         return world.new_entity(entity.x(), entity.y(), entity.z(), entity.w(),
             h_tbl, a_tbl, entity.mass(), entity.anim_index_x(), entity.anim_elapsed_x(),
-            h_ids[entity.root_hull()], entity.model_id(), entity.model_transform_id(), entity.flags());
+            h_ids[entity.root_hull()], entity.model_id(), entity.model_transform_id(), entity.flags())[0];
 
     }
 

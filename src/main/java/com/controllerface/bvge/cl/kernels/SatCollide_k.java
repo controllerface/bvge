@@ -5,6 +5,7 @@ public class SatCollide_k extends GPUKernel
     public enum Args
     {
         candidates,
+        entity_model_transforms,
         hulls,
         hull_scales,
         hull_frictions,
