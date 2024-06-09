@@ -15,6 +15,7 @@ public class SatCollide extends GPUProgram
         src.add(func_angle_between);
         src.add(func_calculate_centroid);
         src.add(func_closest_point_circle);
+        src.add(func_point_polygon_containment);
         src.add(func_project_circle);
         src.add(func_project_polygon);
         src.add(func_polygon_distance);

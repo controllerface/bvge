@@ -51,32 +51,33 @@ public abstract class GPUProgram
      * reused and also kept separate from the core kernel code, which helps keep these functions
      * focused on a single task. See the function source files themselves for usage information.
      */
-    protected static String func_angle_between            = read_src("functions/angle_between.cl");
-    protected static String func_calculate_centroid       = read_src("functions/calculate_centroid.cl");
-    protected static String func_calculate_key_index      = read_src("functions/calculate_key_index.cl");
-    protected static String func_circle_collision         = read_src("functions/circle_collision.cl");
-    protected static String func_closest_point_circle     = read_src("functions/closest_point_circle.cl");
-    protected static String func_do_bounds_intersect      = read_src("functions/do_bounds_intersect.cl");
-    protected static String func_edge_contact             = read_src("functions/edge_contact.cl");
-    protected static String func_exclusive_scan           = read_src("functions/exclusive_scan.cl");
-    protected static String func_get_extents              = read_src("functions/get_extents.cl");
-    protected static String func_get_key_for_point        = read_src("functions/get_key_for_point.cl");
-    protected static String func_is_in_bounds             = read_src("functions/is_in_bounds.cl");
-    protected static String func_matrix_mul_affine        = read_src("functions/matrix_multiply_affine.cl");
-    protected static String func_matrix_multiply          = read_src("functions/matrix_multiply.cl");
-    protected static String func_matrix_transform         = read_src("functions/matrix_transform.cl");
-    protected static String func_polygon_circle_collision = read_src("functions/polygon_circle_collision.cl");
-    protected static String func_polygon_collision        = read_src("functions/polygon_collision.cl");
-    protected static String func_block_collision          = read_src("functions/block_collision.cl");
-    protected static String func_polygon_distance         = read_src("functions/polygon_distance.cl");
-    protected static String func_pos_vector_to_matrix     = read_src("functions/translation_vector_to_matrix.cl");
-    protected static String func_project_circle           = read_src("functions/project_circle.cl");
-    protected static String func_project_polygon          = read_src("functions/project_polygon.cl");
-    protected static String func_quaternion_lerp          = read_src("functions/quaternion_lerp.cl");
-    protected static String func_rot_quaternion_to_matrix = read_src("functions/rotation_quaternion_to_matrix.cl");
-    protected static String func_rotate_point             = read_src("functions/rotate_point.cl");
-    protected static String func_scl_vector_to_matrix     = read_src("functions/scaling_vector_to_matrix.cl");
-    protected static String func_vector_lerp              = read_src("functions/vector_lerp.cl");
+    protected static String func_angle_between             = read_src("functions/angle_between.cl");
+    protected static String func_calculate_centroid        = read_src("functions/calculate_centroid.cl");
+    protected static String func_calculate_key_index       = read_src("functions/calculate_key_index.cl");
+    protected static String func_circle_collision          = read_src("functions/circle_collision.cl");
+    protected static String func_closest_point_circle      = read_src("functions/closest_point_circle.cl");
+    protected static String func_do_bounds_intersect       = read_src("functions/do_bounds_intersect.cl");
+    protected static String func_edge_contact              = read_src("functions/edge_contact.cl");
+    protected static String func_exclusive_scan            = read_src("functions/exclusive_scan.cl");
+    protected static String func_get_extents               = read_src("functions/get_extents.cl");
+    protected static String func_get_key_for_point         = read_src("functions/get_key_for_point.cl");
+    protected static String func_is_in_bounds              = read_src("functions/is_in_bounds.cl");
+    protected static String func_matrix_mul_affine         = read_src("functions/matrix_multiply_affine.cl");
+    protected static String func_matrix_multiply           = read_src("functions/matrix_multiply.cl");
+    protected static String func_matrix_transform          = read_src("functions/matrix_transform.cl");
+    protected static String func_polygon_circle_collision  = read_src("functions/polygon_circle_collision.cl");
+    protected static String func_polygon_collision         = read_src("functions/polygon_collision.cl");
+    protected static String func_block_collision           = read_src("functions/block_collision.cl");
+    protected static String func_polygon_distance          = read_src("functions/polygon_distance.cl");
+    protected static String func_point_polygon_containment = read_src("functions/point_polygon_containment.cl");
+    protected static String func_pos_vector_to_matrix      = read_src("functions/translation_vector_to_matrix.cl");
+    protected static String func_project_circle            = read_src("functions/project_circle.cl");
+    protected static String func_project_polygon           = read_src("functions/project_polygon.cl");
+    protected static String func_quaternion_lerp           = read_src("functions/quaternion_lerp.cl");
+    protected static String func_rot_quaternion_to_matrix  = read_src("functions/rotation_quaternion_to_matrix.cl");
+    protected static String func_rotate_point              = read_src("functions/rotate_point.cl");
+    protected static String func_scl_vector_to_matrix      = read_src("functions/scaling_vector_to_matrix.cl");
+    protected static String func_vector_lerp               = read_src("functions/vector_lerp.cl");
 
     /**
      * Simple header line to ensure atomics are enabled. May not be required in more modern drivers, but

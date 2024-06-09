@@ -18,6 +18,7 @@ typedef struct
 {
     bool blend;
     bool accel;
+    bool attack;
     float blend_time;
     int next_state;
     float next_time;
@@ -28,7 +29,7 @@ typedef struct
 
 OutputState init_output(int current_state)
 {
-    OutputState o = { false, false, 0.0f, current_state, 0.0f, 0, 0, 0.0f };
+    OutputState o = { false, false, false, 0.0f, current_state, 0.0f, 0, 0, 0.0f };
     return o;
 }
 
@@ -163,6 +164,7 @@ OutputState punch_state(InputState input)
     OutputState output = init_output(PUNCH);
     if (!input.is_click_1) output.next_state = (input.is_mv_l || input.is_mv_r) ? WALKING : IDLE;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
+    if (output.next_state == PUNCH) output.attack = true;
     return output;
 }
 
@@ -343,6 +345,10 @@ __kernel void handle_movement(__global float4 *entities,
                 ? arm_flag & ~FACE_LEFT 
                 : arm_flag
         : arm_flag; 
+
+    arm_flag = state_result.attack 
+        ? arm_flag | ATTACKING 
+        : arm_flag & ~ATTACKING; 
 
     entity_accel[current_index]             = accel;
     entity_flags[current_index]             = arm_flag;

@@ -78,6 +78,8 @@ __kernel void integrate(__global float4 *hulls,
     hull_1_flags &= ~IN_LIQUID;
     hull_1_flags &= ~TOUCH_ALIKE;
     hull_1_flags &= ~CURSOR_OVER;
+    hull_1_flags &= ~IN_RANGE;
+    hull_1_flags &= ~CURSOR_HIT;
 
     gravity = in_liquid
         ? gravity * 1.5f

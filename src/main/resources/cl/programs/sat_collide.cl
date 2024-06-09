@@ -16,6 +16,7 @@ Circle/circle collisions use a simple distance/radius check.
  */
 __kernel void sat_collide(__global int2 *candidates,
                           __global int *entity_model_transforms,
+                          __global int *entity_flags,
                           __global float4 *hulls,
                           __global float2 *hull_scales,
                           __global float *hull_frictions,
@@ -84,6 +85,7 @@ __kernel void sat_collide(__global int2 *candidates,
     else if (b1_is_polygon && b2_is_polygon) 
     {
         polygon_collision(b1_id, b2_id, 
+            entity_flags,
             hulls,
             hull_frictions,
             hull_restitutions,
@@ -472,7 +474,7 @@ __kernel void move_entities(__global float4 *hulls,
         && is_block 
         && total_hits >= block_check;
 
-    bool destory = single_hull && hull_0_integrity <= 0;
+    bool destroy = single_hull && hull_0_integrity <= 0;
     
     hull_flags_0 = go_static 
         ? hull_flags_0 | IS_STATIC
@@ -506,7 +508,7 @@ __kernel void move_entities(__global float4 *hulls,
         ? flags | IS_WET
         : flags & ~IS_WET;
 
-    flags = destory
+    flags = destroy
         ? flags | DELETED
         : flags & ~DELETED;
 

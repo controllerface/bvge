@@ -135,7 +135,7 @@ public class TestGame extends GameMode
     @Override
     public void load()
     {
-        gen_player(1f, -250, 0);
+        gen_player(1.2f, -250, 0);
         load_systems();
     }
 

@@ -384,6 +384,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(SatCollide_k.Args.edge_flags,              GPGPU.core_memory.buffer(BufferType.EDGE_FLAG))
             .buf_arg(SatCollide_k.Args.masses,                  GPGPU.core_memory.buffer(BufferType.ENTITY_MASS))
             .buf_arg(SatCollide_k.Args.entity_model_transforms, GPGPU.core_memory.buffer(BufferType.ENTITY_TRANSFORM_ID))
+            .buf_arg(SatCollide_k.Args.entity_flags,            GPGPU.core_memory.buffer(BufferType.ENTITY_FLAG))
             .buf_arg(SatCollide_k.Args.candidates,              b_candidates)
             .buf_arg(SatCollide_k.Args.reactions,               b_reactions_in)
             .buf_arg(SatCollide_k.Args.reaction_index,          b_reaction_index)

@@ -3,6 +3,7 @@ Handles collision between two polygonal hulls
  */
 inline void polygon_collision(int hull_1_id, 
                               int hull_2_id,
+                              __global int *entity_flags,
                               __global float4 *hulls,
                               __global float *hull_frictions,
                               __global float *hull_restitutions,
@@ -195,6 +196,8 @@ inline void polygon_collision(int hull_1_id,
     int edge_hull_flags = hull_flags[edge_hull_id];
     int vert_entity_id = hull_entity_ids[vert_hull_id];
     int edge_entity_id = hull_entity_ids[edge_hull_id];
+    int vert_entity_flags = entity_flags[vert_entity_id];
+    int edge_entity_flags = entity_flags[edge_entity_id];
     float vert_hull_mass = masses[vert_entity_id];
     float edge_hull_mass = masses[edge_entity_id];
     float vert_hull_friction = hull_frictions[vert_hull_id];
@@ -211,6 +214,9 @@ inline void polygon_collision(int hull_1_id,
     bool hand_vert = (vert_hull_flags & IS_HAND) !=0;
     bool hand_edge = (edge_hull_flags & IS_HAND) !=0;
 
+    bool atk_vert = (vert_entity_flags & ATTACKING) !=0;
+    bool atk_edge = (edge_entity_flags & ATTACKING) !=0;
+
     bool any_static = (static_vert || static_edge);
     bool any_hand = (hand_vert || hand_edge);
 
@@ -222,12 +228,12 @@ inline void polygon_collision(int hull_1_id,
         ? static_edge ? 0.0f : 1.0f
         : edge_magnitude;
 
-    int vdmg = any_hand 
-        ? hand_vert ? 0 : 1 
+    int vdmg = any_hand && hand_edge && atk_edge
+        ? 1
         : 0;
 
-    int edmg = any_hand 
-        ? hand_edge ? 0 : 1 
+    int edmg = any_hand && hand_vert && atk_vert 
+        ? 1
         : 0;
 
     atomic_sub(&hull_integrity[vert_hull_id], vdmg);

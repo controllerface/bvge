@@ -128,9 +128,11 @@ inline void polygon_circle_collision(int polygon_id,
             int id = entity_model_transforms[vert_entity_id];
             float4 owner = hulls[id];
             float center_distance = fast_distance(owner.xy, hull_e.xy);
-            bool in_range = center_distance <= 100.0f;
+            bool hit = point_polygon_containment(polygon_id, hull_v.xy, hull_edge_tables, points, edges, edge_flags);
+            bool in_range = center_distance <= 150.0f;
             edge_hull_flags |= CURSOR_OVER;           
             if (in_range) edge_hull_flags |= IN_RANGE;
+            if (hit) edge_hull_flags |= CURSOR_HIT;
             hull_flags[edge_hull_id] = edge_hull_flags;
         }
         else
@@ -138,9 +140,11 @@ inline void polygon_circle_collision(int polygon_id,
             int id = entity_model_transforms[edge_entity_id];
             float4 owner = hulls[id];
             float center_distance = fast_distance(owner.xy, hull_v.xy);
-            bool in_range = center_distance <= 100.0f;
+            bool hit = point_polygon_containment(circle_id, hull_e.xy, hull_edge_tables, points, edges, edge_flags);
+            bool in_range = center_distance <= 150.0f;
             vert_hull_flags |= CURSOR_OVER;     
-            if (in_range) vert_hull_flags |= IN_RANGE;       
+            if (in_range) vert_hull_flags |= IN_RANGE;   
+            if (hit) vert_hull_flags |= CURSOR_HIT;    
             hull_flags[vert_hull_id] = vert_hull_flags;
         }
         return;

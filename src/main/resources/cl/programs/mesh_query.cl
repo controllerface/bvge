@@ -177,6 +177,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     bool is_static = (flags & IS_STATIC) !=0;
     bool cursor_over = (flags & CURSOR_OVER) !=0;
     bool in_range = (flags & IN_RANGE) !=0;
+    bool cursor_hit = (flags & CURSOR_HIT) !=0;
 
     float r_layer = face_l ? -2.0 : 2.0;
     float l_layer = face_l ? 2.0 : -2.0;
@@ -214,15 +215,27 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
 
         float xxx = is_static ? col - 0.07f : col;
+
+        // todo: integrity needs to be reflected some other way, so the red channel can be used for UI
         float rrr = integrity > 100 
             ? 0.0f 
-            : .3f - map((float) integrity, 0.0f, 100.0f, 0.0f, .3f);
+            : .6f - map((float) integrity, 0.0f, 100.0f, 0.0f, .6f);
+        
+        rrr = cursor_hit && !in_range 
+            ? 0.5f 
+            : 0;
+
         float bbb = cursor_over && in_range 
-            ? 2.0f 
+            ? 3.0f 
             : 0.0f;
+
+        float ggg = cursor_hit && in_range
+            ? 1.0f 
+            : 0.0f;
+
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
-        color_buffer[ref_offset] = (float4)(xxx + rrr, xxx, xxx + bbb, 1.0f);
+        color_buffer[ref_offset] = (float4)(xxx + rrr, xxx + ggg, xxx + bbb - ggg*2, 1.0f);
         slot_buffer[ref_offset] = (float)texture;
         //if (texture == 3) printf("debug out tex:%d mesh:%d", texture, mesh_id);
     }
