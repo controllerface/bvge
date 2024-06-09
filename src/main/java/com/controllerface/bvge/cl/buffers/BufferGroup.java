@@ -18,11 +18,6 @@ public abstract class BufferGroup
         return buffers.get(bufferType);
     }
 
-    protected ResizableBuffer new_buffer(int size)
-    {
-        return new PersistentBuffer(this.ptr_queue, size);
-    }
-
     protected ResizableBuffer new_buffer(int size, long initial_capacity)
     {
         return new PersistentBuffer(this.ptr_queue, size, initial_capacity);
