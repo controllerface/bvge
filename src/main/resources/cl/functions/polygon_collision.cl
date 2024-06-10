@@ -228,16 +228,16 @@ inline void polygon_collision(int hull_1_id,
         ? static_edge ? 0.0f : 1.0f
         : edge_magnitude;
 
-    int vdmg = any_hand && hand_edge && atk_edge
-        ? 1
-        : 0;
+    // int vdmg = any_hand && hand_edge && atk_edge
+    //     ? 1
+    //     : 0;
 
-    int edmg = any_hand && hand_vert && atk_vert 
-        ? 1
-        : 0;
+    // int edmg = any_hand && hand_vert && atk_vert 
+    //     ? 1
+    //     : 0;
 
-    atomic_sub(&hull_integrity[vert_hull_id], vdmg);
-    atomic_sub(&hull_integrity[edge_hull_id], edmg);
+    // atomic_sub(&hull_integrity[vert_hull_id], vdmg);
+    // atomic_sub(&hull_integrity[edge_hull_id], edmg);
 
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];

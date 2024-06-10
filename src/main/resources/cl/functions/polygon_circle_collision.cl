@@ -4,10 +4,12 @@ Handles collision between one polygonal hull and one circular hull
 inline void polygon_circle_collision(int polygon_id, 
                                      int circle_id,
                                      __global int *entity_model_transforms,
+                                     __global int *entity_flags,
                                      __global float4 *hulls,
                                      __global float2 *hull_scales,
                                      __global float *hull_frictions,
                                      __global float *hull_restitutions,
+                                     __global int *hull_integrity,
                                      __global int *hull_entity_ids,
                                      __global int *hull_flags,
                                      __global int2 *hull_point_tables,
@@ -121,18 +123,26 @@ inline void polygon_circle_collision(int polygon_id,
     bool cursor_v = (vert_hull_flags & IS_CURSOR) !=0;
     bool cursor_e = (edge_hull_flags & IS_CURSOR) !=0;
     bool any_cursor = (cursor_v || cursor_e);
+
+    // bool atk_vert = (vert_entity_flags & ATTACKING) !=0;
+    // bool atk_edge = (edge_entity_flags & ATTACKING) !=0;
+
     if (any_cursor)
     {
         if (cursor_v)
         {
-            int id = entity_model_transforms[vert_entity_id];
-            float4 owner = hulls[id];
+            int owner_id = entity_model_transforms[vert_entity_id];
+            float4 owner = hulls[owner_id];
+            int owner_entity_id = hull_entity_ids[owner_id];
+            int owner_entity_flags = entity_flags[owner_entity_id];
+            bool atk = (owner_entity_flags & ATTACKING) !=0;
             float center_distance = fast_distance(owner.xy, hull_e.xy);
             bool hit = point_polygon_containment(polygon_id, hull_v.xy, hull_edge_tables, points, edges, edge_flags);
             bool in_range = center_distance <= 150.0f;
             edge_hull_flags |= CURSOR_OVER;           
             if (in_range) edge_hull_flags |= IN_RANGE;
             if (hit) edge_hull_flags |= CURSOR_HIT;
+            if (atk && in_range && hit) atomic_sub(&hull_integrity[edge_hull_id], 1); // hard-coded 1 damage
             hull_flags[edge_hull_id] = edge_hull_flags;
         }
         else
