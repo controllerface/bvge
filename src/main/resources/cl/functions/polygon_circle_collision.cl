@@ -121,45 +121,25 @@ inline void polygon_circle_collision(int polygon_id,
 
     // cursor collision causes early exit
     bool cursor_v = (vert_hull_flags & IS_CURSOR) !=0;
-    bool cursor_e = (edge_hull_flags & IS_CURSOR) !=0;
-    bool any_cursor = (cursor_v || cursor_e);
-
-    // bool atk_vert = (vert_entity_flags & ATTACKING) !=0;
-    // bool atk_edge = (edge_entity_flags & ATTACKING) !=0;
-
-    if (any_cursor)
+    if (cursor_v)
     {
-        if (cursor_v)
-        {
-            int owner_id = entity_model_transforms[vert_entity_id];
-            float4 owner = hulls[owner_id];
-            int owner_entity_id = hull_entity_ids[owner_id];
-            int owner_entity_flags = entity_flags[owner_entity_id];
-            bool atk = (owner_entity_flags & ATTACKING) !=0;
-            float center_distance = fast_distance(owner.xy, hull_e.xy);
-            bool hit = point_polygon_containment(polygon_id, hull_v.xy, hull_edge_tables, points, edges, edge_flags);
-            bool in_range = center_distance <= 150.0f;
-            edge_hull_flags |= CURSOR_OVER;           
-            if (in_range) edge_hull_flags |= IN_RANGE;
-            if (hit) edge_hull_flags |= CURSOR_HIT;
-            if (atk && in_range && hit) atomic_sub(&hull_integrity[edge_hull_id], 1); // hard-coded 1 damage
-            hull_flags[edge_hull_id] = edge_hull_flags;
-        }
-        else
-        {
-            int id = entity_model_transforms[edge_entity_id];
-            float4 owner = hulls[id];
-            float center_distance = fast_distance(owner.xy, hull_v.xy);
-            bool hit = point_polygon_containment(circle_id, hull_e.xy, hull_edge_tables, points, edges, edge_flags);
-            bool in_range = center_distance <= 150.0f;
-            vert_hull_flags |= CURSOR_OVER;     
-            if (in_range) vert_hull_flags |= IN_RANGE;   
-            if (hit) vert_hull_flags |= CURSOR_HIT;    
-            hull_flags[vert_hull_id] = vert_hull_flags;
-        }
+        int owner_id = entity_model_transforms[vert_entity_id];
+        float4 owner = hulls[owner_id];
+        int owner_entity_id = hull_entity_ids[owner_id];        
+        if (owner_entity_id == edge_entity_id) return; //prevent selecting/hitting yourself
+
+        int owner_entity_flags = entity_flags[owner_entity_id];
+        bool atk = (owner_entity_flags & ATTACKING) !=0;
+        float center_distance = fast_distance(owner.xy, hull_e.xy);
+        bool hit = point_polygon_containment(polygon_id, hull_v.xy, hull_edge_tables, points, edges, edge_flags);
+        bool in_range = center_distance <= 150.0f;
+        edge_hull_flags |= CURSOR_OVER;           
+        if (in_range) edge_hull_flags |= IN_RANGE;
+        if (hit) edge_hull_flags |= CURSOR_HIT;
+        if (atk && in_range && hit) atomic_sub(&hull_integrity[edge_hull_id], 1); // hard-coded 1 damage
+        hull_flags[edge_hull_id] = edge_hull_flags;
         return;
     }
-
 
     float abs_distance = fabs(_distance);
 

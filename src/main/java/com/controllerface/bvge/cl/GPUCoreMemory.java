@@ -33,6 +33,11 @@ public class GPUCoreMemory implements SectorContainer
     private static final long DELETE_1_INIT = 10_000L;
     private static final long DELETE_2_INIT = 20_000L;
 
+    private static final int DELETE_COUNTERS = 6;
+    private static final int EGRESS_COUNTERS = 6;
+    private static final int DELETE_COUNTERS_SIZE = cl_int * DELETE_COUNTERS;
+    private static final int EGRESS_COUNTERS_SIZE = cl_int * EGRESS_COUNTERS;
+
     private final GPUProgram p_gpu_crud = new GPUCrud();
     private final GPUProgram p_scan_deletes = new ScanDeletes();
 
@@ -353,8 +358,8 @@ public class GPUCoreMemory implements SectorContainer
     {
         ptr_delete_counter  = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
         ptr_position_buffer = GPGPU.cl_new_pinned_buffer(cl_float2);
-        ptr_delete_sizes    = GPGPU.cl_new_pinned_buffer(cl_int * 6);
-        ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(cl_int * 6);
+        ptr_delete_sizes    = GPGPU.cl_new_pinned_buffer(DELETE_COUNTERS_SIZE);
+        ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(EGRESS_COUNTERS_SIZE);
 
         // transients
         b_hull_shift                 = new TransientBuffer(GPGPU.ptr_compute_queue, cl_int, HULL_INIT);
@@ -1203,13 +1208,21 @@ public class GPUCoreMemory implements SectorContainer
 
     public int[] count_egress_entities()
     {
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int * 6);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, EGRESS_COUNTERS_SIZE);
         k_count_egress_entities.call(arg_long(sector_input.entity_index()));
-        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int, 6);
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int, EGRESS_COUNTERS);
     }
+
+    private int skipped = 0;
 
     public void delete_and_compact()
     {
+        if (skipped < 10)
+        {
+            skipped++;
+            return;
+        }
+
         b_delete_1.ensure_capacity(sector_input.entity_index());
         b_delete_2.ensure_capacity(sector_input.entity_index());
 
@@ -1278,7 +1291,7 @@ public class GPUCoreMemory implements SectorContainer
         long local_buffer_size = cl_int2 * GPGPU.max_scan_block_size;
         long local_buffer_size2 = cl_int4 * GPGPU.max_scan_block_size;
 
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_delete_sizes, cl_int * 6);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_delete_sizes, DELETE_COUNTERS_SIZE);
 
         k_scan_deletes_single_block_out
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
@@ -1288,7 +1301,7 @@ public class GPUCoreMemory implements SectorContainer
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_delete_sizes, cl_int, 6);
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_delete_sizes, cl_int, DELETE_COUNTERS);
     }
 
     private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
@@ -1315,7 +1328,7 @@ public class GPUCoreMemory implements SectorContainer
         GPGPU.scan_int2(b_delete_partial_1.pointer(), part_size);
         GPGPU.scan_int4(b_delete_partial_2.pointer(), part_size);
 
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_delete_sizes, cl_int * 6);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_delete_sizes, DELETE_COUNTERS_SIZE);
 
         k_complete_deletes_multi_block_out
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output1, o1_data_ptr)
@@ -1325,7 +1338,7 @@ public class GPUCoreMemory implements SectorContainer
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_delete_sizes, cl_int, 6);
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_delete_sizes, cl_int, DELETE_COUNTERS);
     }
 
     private void compact_buffers(int[] shift_counts)

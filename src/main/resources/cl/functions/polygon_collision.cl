@@ -211,14 +211,7 @@ inline void polygon_collision(int hull_1_id,
     bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
     bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
 
-    bool hand_vert = (vert_hull_flags & IS_HAND) !=0;
-    bool hand_edge = (edge_hull_flags & IS_HAND) !=0;
-
-    bool atk_vert = (vert_entity_flags & ATTACKING) !=0;
-    bool atk_edge = (edge_entity_flags & ATTACKING) !=0;
-
     bool any_static = (static_vert || static_edge);
-    bool any_hand = (hand_vert || hand_edge);
 
     vert_magnitude = any_static 
         ? static_vert ? 0.0f : 1.0f
@@ -227,17 +220,6 @@ inline void polygon_collision(int hull_1_id,
     edge_magnitude = any_static 
         ? static_edge ? 0.0f : 1.0f
         : edge_magnitude;
-
-    // int vdmg = any_hand && hand_edge && atk_edge
-    //     ? 1
-    //     : 0;
-
-    // int edmg = any_hand && hand_vert && atk_vert 
-    //     ? 1
-    //     : 0;
-
-    // atomic_sub(&hull_integrity[vert_hull_id], vdmg);
-    // atomic_sub(&hull_integrity[edge_hull_id], edmg);
 
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];

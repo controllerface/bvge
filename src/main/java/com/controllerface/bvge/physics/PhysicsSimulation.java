@@ -564,6 +564,7 @@ public class PhysicsSimulation extends GameSystem
             for (var binding : InputBinding.values())
             {
                 var on = inputStates.get(binding);
+                if (on == null) continue;
                 if (on)
                 {
                     int flag = switch (binding)
@@ -1205,10 +1206,19 @@ public class PhysicsSimulation extends GameSystem
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
 
+        //----------------------//
+        // Pre-Simulation Setup //
+        //----------------------//
+
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
         // convex shape. Animations may move points into positions where the geometry becomes concave,
         // so this call prevents collision errors due to non-convex shapes.
         resolve_constraints(EDGE_STEPS);
+
+
+        //-----------------//
+        // Simulation Loop //
+        //-----------------//
 
         this.time_accumulator += dt;
         int sub_ticks = 0;
@@ -1268,6 +1278,10 @@ public class PhysicsSimulation extends GameSystem
                 }
             }
         }
+
+        //-------------------------//
+        // Post Simulation Cleanup //
+        //-------------------------//
 
         // TODO: read back mouse colliding objects here
 

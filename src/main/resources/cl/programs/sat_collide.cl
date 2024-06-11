@@ -44,8 +44,6 @@ __kernel void sat_collide(__global int2 *candidates,
     int b2_id = current_pair.y;
     int hull_1_flags = hull_flags[b1_id];
     int hull_2_flags = hull_flags[b2_id];
-    bool b1s = (hull_1_flags & IS_STATIC) !=0;
-    bool b2s = (hull_2_flags & IS_STATIC) !=0;
     
     bool b1_is_circle = (hull_1_flags & IS_CIRCLE) !=0;
     bool b2_is_circle = (hull_2_flags & IS_CIRCLE) !=0;

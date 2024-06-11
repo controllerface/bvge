@@ -465,7 +465,6 @@ __kernel void count_egress_entities(__global int *entity_flags,
     bool sector_out = (flags & SECTOR_OUT) !=0;
     bool deleted    = (flags & DELETED) !=0;
 
-    if (deleted) atomic_inc(&counters[6]);
     if (sector_out)
     {
         int2 hull_table        = entity_hull_tables[current_entity];
@@ -500,8 +499,13 @@ __kernel void count_egress_entities(__global int *entity_flags,
     }
 }
 
-
-
+/**
+This kernel converts entities and their constituent components from the ordered layout used in 
+the game world, to an un-ordered format. During this process, all object tables are converted
+from direct indices to relative offfsets. The converted objects are processed in a CPU task
+that further converts them into a form that is able to then re-enter the world. At that point,
+their relative offsets are mapped back to an in-order format as they are spawned. 
+*/
 __kernel void egress_entities(__global float4 *points_in,
                               __global int *point_vertex_references_in,
                               __global int *point_hull_indices_in,
