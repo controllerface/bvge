@@ -4,7 +4,7 @@ import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.animation.BoneChannel;
 import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.cl.GPGPU;
-import com.controllerface.bvge.game.AnimationState;
+import com.controllerface.bvge.animation.AnimationState;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Assets;

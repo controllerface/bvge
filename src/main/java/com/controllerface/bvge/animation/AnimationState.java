@@ -1,4 +1,4 @@
-package com.controllerface.bvge.game;
+package com.controllerface.bvge.animation;
 
 import java.util.Arrays;
 

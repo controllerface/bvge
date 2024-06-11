@@ -3,8 +3,8 @@ package com.controllerface.bvge.cl.programs;
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.kernels.Kernel;
-import com.controllerface.bvge.game.AnimationSettings;
-import com.controllerface.bvge.game.AnimationState;
+import com.controllerface.bvge.animation.AnimationSettings;
+import com.controllerface.bvge.animation.AnimationState;
 import com.controllerface.bvge.substances.Liquid;
 
 import java.util.ArrayList;

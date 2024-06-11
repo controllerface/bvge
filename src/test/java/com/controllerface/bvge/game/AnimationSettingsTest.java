@@ -1,8 +1,7 @@
 package com.controllerface.bvge.game;
 
+import com.controllerface.bvge.animation.AnimationSettings;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class AnimationSettingsTest
 {

@@ -29,9 +29,6 @@ public class SectorLoader extends GameSystem
 
     private record SectorBounds(float outer_x_origin, float outer_y_origin, float outer_x_corner, float outer_y_corner) { }
 
-    int max_skip = 5;
-    int skip = 0;
-
     public SectorLoader(ECS ecs, UniformGrid uniformGrid, Cache<Sector, PhysicsEntityBatch> sector_cache_in)
     {
         super(ecs);
@@ -61,14 +58,6 @@ public class SectorLoader extends GameSystem
 
     private void load_sectors(SectorBounds sector_bounds)
     {
-
-        if (skip < max_skip)
-        {
-            skip++;
-            GPGPU.core_memory.await_sector();
-            return;
-        }
-
         var sector_0_key = UniformGridRenderer.get_sector_for_point(sector_bounds.outer_x_origin, sector_bounds.outer_y_origin);
         var sector_2_key = UniformGridRenderer.get_sector_for_point(sector_bounds.outer_x_corner, sector_bounds.outer_y_corner);
 

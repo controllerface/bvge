@@ -1224,13 +1224,14 @@ public class GPUCoreMemory implements SectorContainer
         return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int, EGRESS_COUNTERS);
     }
 
-    private int skipped = 0;
+    private int init_skip_count = 0;
+    private int init_skip_max = 10;
 
     public void delete_and_compact()
     {
-        if (skipped < 10)
+        if (init_skip_count < init_skip_max)
         {
-            skipped++;
+            init_skip_count++;
             return;
         }
 
