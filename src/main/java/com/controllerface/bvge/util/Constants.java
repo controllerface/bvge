@@ -81,6 +81,26 @@ public class Constants
         }
     }
 
+    public enum EntityFlags
+    {
+        DELETED    (0b0000_0000_0000_0000_0000_0000_0000_0001),
+        CAN_JUMP   (0b0000_0000_0000_0000_0000_0000_0000_0010),
+        FACE_LEFT  (0b0000_0000_0000_0000_0000_0000_0000_0100),
+        IS_WET     (0b0000_0000_0000_0000_0000_0000_0000_1000),
+        SECTOR_OUT (0b0000_0000_0000_0000_0000_0000_0001_0000),
+        ATTACKING  (0b0000_0000_0000_0000_0000_0000_0010_0000),
+        BROKEN     (0b0000_0000_0000_0000_0000_0000_0100_0000),
+
+        ;
+
+        public final int bits;
+
+        EntityFlags(int bits)
+        {
+            this.bits = bits;
+        }
+    }
+
     public enum ControlFlags
     {
         LEFT   (0b0000_0000_0000_0000_0000_0000_0000_0001),

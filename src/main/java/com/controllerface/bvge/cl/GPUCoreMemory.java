@@ -34,7 +34,7 @@ public class GPUCoreMemory implements SectorContainer
     private static final long DELETE_2_INIT = 20_000L;
 
     private static final int DELETE_COUNTERS = 6;
-    private static final int EGRESS_COUNTERS = 6;
+    private static final int EGRESS_COUNTERS = 12;
     private static final int DELETE_COUNTERS_SIZE = cl_int * DELETE_COUNTERS;
     private static final int EGRESS_COUNTERS_SIZE = cl_int * EGRESS_COUNTERS;
 
@@ -339,11 +339,12 @@ public class GPUCoreMemory implements SectorContainer
     private int last_entity_index     = 0;
 
     boolean flip_outgoing_sector = false;
-    private final int[] active_egress_counts = new int[6];
-    private final int[] inactive_egress_counts = new int[6];
+    private final int[] active_egress_counts = new int[12];
+    private final int[] inactive_egress_counts = new int[12];
     private final OrderedSectorInput incoming_sector_buffer;
     private final UnorderedSectorOutput outgoing_sector_buffer_a;
     private final UnorderedSectorOutput outgoing_sector_buffer_b;
+    private final BrokenObjectBuffer broken_objects;
     private final SectorGroup sector_group;
     private final SectorInput sector_input;
 
@@ -627,6 +628,7 @@ public class GPUCoreMemory implements SectorContainer
         this.incoming_sector_buffer   = new OrderedSectorInput(GPGPU.ptr_sector_queue, this);
         this.outgoing_sector_buffer_a = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
         this.outgoing_sector_buffer_b = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
+        this.broken_objects           = new BrokenObjectBuffer(GPGPU.ptr_sector_queue, this);
     }
 
     public ResizableBuffer buffer(BufferType bufferType)
@@ -816,12 +818,18 @@ public class GPUCoreMemory implements SectorContainer
 
     public void swap_egress_buffers()
     {
-        inactive_egress_counts[0] = active_egress_counts[0];
-        inactive_egress_counts[1] = active_egress_counts[1];
-        inactive_egress_counts[2] = active_egress_counts[2];
-        inactive_egress_counts[3] = active_egress_counts[3];
-        inactive_egress_counts[4] = active_egress_counts[4];
-        inactive_egress_counts[5] = active_egress_counts[5];
+        inactive_egress_counts[0]  = active_egress_counts[0];
+        inactive_egress_counts[1]  = active_egress_counts[1];
+        inactive_egress_counts[2]  = active_egress_counts[2];
+        inactive_egress_counts[3]  = active_egress_counts[3];
+        inactive_egress_counts[4]  = active_egress_counts[4];
+        inactive_egress_counts[5]  = active_egress_counts[5];
+        inactive_egress_counts[6]  = active_egress_counts[6];
+        inactive_egress_counts[7]  = active_egress_counts[7];
+        inactive_egress_counts[8]  = active_egress_counts[8];
+        inactive_egress_counts[9]  = active_egress_counts[9];
+        inactive_egress_counts[10] = active_egress_counts[10];
+        inactive_egress_counts[11] = active_egress_counts[11];
         flip_outgoing_sector = !flip_outgoing_sector;
     }
 
@@ -866,7 +874,7 @@ public class GPUCoreMemory implements SectorContainer
                     ? L_SHARD_INDEX
                     : R_SHARD_INDEX;
 
-            int shard_flags = shard.flags();// | Constants.HullFlags.IS_BLOCK._int | Constants.HullFlags.NO_BONES._int;
+            int shard_flags = shard.flags();
 
             PhysicsObjects.tri(incoming_sector_buffer, shard.x(), shard.y(), shard.size(), shard_flags, shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
         }
@@ -881,37 +889,40 @@ public class GPUCoreMemory implements SectorContainer
         return inactive_egress_counts;
     }
 
-    public void clear_egress_counts()
+    public void set_egress_counts(int[] egress_counts)
     {
-        active_egress_counts[0] = 0;
-        active_egress_counts[1] = 0;
-        active_egress_counts[2] = 0;
-        active_egress_counts[3] = 0;
-        active_egress_counts[4] = 0;
-        active_egress_counts[5] = 0;
+        active_egress_counts[0]  = egress_counts[0];
+        active_egress_counts[1]  = egress_counts[1];
+        active_egress_counts[2]  = egress_counts[2];
+        active_egress_counts[3]  = egress_counts[3];
+        active_egress_counts[4]  = egress_counts[4];
+        active_egress_counts[5]  = egress_counts[5];
+        active_egress_counts[6]  = egress_counts[6];
+        active_egress_counts[7]  = egress_counts[7];
+        active_egress_counts[8]  = egress_counts[8];
+        active_egress_counts[9]  = egress_counts[9];
+        active_egress_counts[10] = egress_counts[10];
+        active_egress_counts[11] = egress_counts[11];
     }
 
-    public void transfer_egress_buffer(int[] egress_counts)
+    public void egress_broken()
     {
-        active_egress_counts[0] = egress_counts[0];
-        active_egress_counts[1] = egress_counts[1];
-        active_egress_counts[2] = egress_counts[2];
-        active_egress_counts[3] = egress_counts[3];
-        active_egress_counts[4] = egress_counts[4];
-        active_egress_counts[5] = egress_counts[5];
+        broken_objects.egress_broken();
+    }
 
+    public void egress_sectors()
+    {
         int entity_index = sector_input.entity_index();
-
         clFinish(GPGPU.ptr_compute_queue);
-        if (flip_outgoing_sector) outgoing_sector_buffer_b.pull_from_parent(entity_index, egress_counts);
-        else outgoing_sector_buffer_a.pull_from_parent(entity_index, egress_counts);
+        if (flip_outgoing_sector) outgoing_sector_buffer_b.egress_sectors(entity_index, active_egress_counts);
+        else outgoing_sector_buffer_a.egress_sectors(entity_index, active_egress_counts);
         clFinish(GPGPU.ptr_sector_queue);
     }
 
-    public void transfer_world_output(UnorderedSectorGroup.Raw unloaded_sectors, int[] egress_counts)
+    public void unload_sectors(UnorderedSectorGroup.Raw unloaded_sectors, int[] egress_counts)
     {
-        if (flip_outgoing_sector) outgoing_sector_buffer_a.unload_sector(unloaded_sectors, egress_counts);
-        else outgoing_sector_buffer_b.unload_sector(unloaded_sectors, egress_counts);
+        if (flip_outgoing_sector) outgoing_sector_buffer_a.unload_sectors(unloaded_sectors, egress_counts);
+        else outgoing_sector_buffer_b.unload_sectors(unloaded_sectors, egress_counts);
         clFinish(GPGPU.ptr_sector_queue);
     }
 
@@ -1083,7 +1094,7 @@ public class GPUCoreMemory implements SectorContainer
     }
 
     @Override
-    public int[] new_entity(float x, float y, float z, float w,
+    public int new_entity(float x, float y, float z, float w,
                           int[] hull_table,
                           int[] bone_table,
                           float mass,

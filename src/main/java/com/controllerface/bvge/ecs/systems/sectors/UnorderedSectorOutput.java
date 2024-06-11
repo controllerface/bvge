@@ -30,7 +30,7 @@ public class UnorderedSectorOutput
         p_gpu_crud.init();
 
         long k_ptr_egress_candidates = p_gpu_crud.kernel_ptr(Kernel.egress_entities);
-        k_egress_entities = new EgressEntities_k(GPGPU.ptr_compute_queue, k_ptr_egress_candidates)
+        k_egress_entities = new EgressEntities_k(this.ptr_queue, k_ptr_egress_candidates)
             .buf_arg(EgressEntities_k.Args.points_in,                       core_memory.buffer(POINT))
             .buf_arg(EgressEntities_k.Args.point_vertex_references_in,      core_memory.buffer(POINT_VERTEX_REFERENCE))
             .buf_arg(EgressEntities_k.Args.point_hull_indices_in,           core_memory.buffer(POINT_HULL_INDEX))
@@ -112,7 +112,7 @@ public class UnorderedSectorOutput
             .ptr_arg(EgressEntities_k.Args.counters,                        ptr_egress_sizes);
     }
 
-    public void pull_from_parent(int entity_count, int[] egress_counts)
+    public void egress_sectors(int entity_count, int[] egress_counts)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_sizes, cl_int * 6);
         int entity_capacity        = egress_counts[0];
@@ -125,7 +125,7 @@ public class UnorderedSectorOutput
         k_egress_entities.call(arg_long(entity_count));
     }
 
-    public void unload_sector(UnorderedSectorGroup.Raw raw_sectors, int[] counts)
+    public void unload_sectors(UnorderedSectorGroup.Raw raw_sectors, int[] counts)
     {
         sector_group.unload_sectors(raw_sectors, counts);
     }

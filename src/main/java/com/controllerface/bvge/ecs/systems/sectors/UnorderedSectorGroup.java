@@ -19,17 +19,9 @@ public class UnorderedSectorGroup extends SectorGroup
         int hull_bone_capacity     = counts[4];
         int entity_bone_capacity   = counts[5];
 
-        int entity_vec2       = entity_capacity      * 2;
-        int entity_vec4       = entity_capacity      * 4;
-        int hull_vec2         = hull_capacity        * 2;
-        int hull_vec4         = hull_capacity        * 4;
-        int point_vec4        = point_capacity       * 4;
-        int edge_vec2         = edge_capacity        * 2;
-        int hull_bone_vec16   = hull_bone_capacity   * 16;
-        int entity_bone_vec16 = entity_bone_capacity * 16;
-
         if (hull_bone_capacity > 0)
         {
+            int hull_bone_vec16 = hull_bone_capacity * 16;
             buffer(HULL_BONE).transfer_out_float(raw.hull_bone,                              cl_float, hull_bone_vec16);
             buffer(HULL_BONE_BIND_POSE).transfer_out_int(raw.hull_bone_bind_pose_id,         cl_int,   hull_bone_capacity);
             buffer(HULL_BONE_INV_BIND_POSE).transfer_out_int(raw.hull_bone_inv_bind_pose_id, cl_int,   hull_bone_capacity);
@@ -37,6 +29,7 @@ public class UnorderedSectorGroup extends SectorGroup
 
         if (entity_bone_capacity > 0)
         {
+            int entity_bone_vec16 = entity_bone_capacity * 16;
             buffer(ENTITY_BONE).transfer_out_float(raw.entity_bone,                          cl_float, entity_bone_vec16);
             buffer(ENTITY_BONE_REFERENCE_ID).transfer_out_int(raw.entity_bone_reference_id,  cl_int,   entity_bone_capacity);
             buffer(ENTITY_BONE_PARENT_ID).transfer_out_int(raw.entity_bone_parent_id,        cl_int,   entity_bone_capacity);
@@ -44,6 +37,7 @@ public class UnorderedSectorGroup extends SectorGroup
 
         if (edge_capacity > 0)
         {
+            int edge_vec2 = edge_capacity * 2;
             buffer(EDGE).transfer_out_int(raw.edge,                                          cl_int,   edge_vec2);
             buffer(EDGE_LENGTH).transfer_out_float(raw.edge_length,                          cl_float, edge_capacity);
             buffer(EDGE_FLAG).transfer_out_int(raw.edge_flag,                                cl_int,   edge_capacity);
@@ -51,6 +45,7 @@ public class UnorderedSectorGroup extends SectorGroup
 
         if (point_capacity > 0)
         {
+            int point_vec4 = point_capacity * 4;
             buffer(POINT).transfer_out_float(raw.point,                                      cl_float, point_vec4);
             buffer(POINT_VERTEX_REFERENCE).transfer_out_int(raw.point_vertex_reference,      cl_int,   point_capacity);
             buffer(POINT_HULL_INDEX).transfer_out_int(raw.point_hull_index,                  cl_int,   point_capacity);
@@ -61,6 +56,8 @@ public class UnorderedSectorGroup extends SectorGroup
 
         if (hull_capacity > 0)
         {
+            int hull_vec2 = hull_capacity * 2;
+            int hull_vec4 = hull_capacity * 4;
             buffer(HULL).transfer_out_float(raw.hull,                                        cl_float, hull_vec4);
             buffer(HULL_SCALE).transfer_out_float(raw.hull_scale,                            cl_float, hull_vec2);
             buffer(HULL_MESH_ID).transfer_out_int(raw.hull_mesh_id,                          cl_int,   hull_capacity);
@@ -78,6 +75,8 @@ public class UnorderedSectorGroup extends SectorGroup
 
         if (entity_capacity > 0)
         {
+            int entity_vec2 = entity_capacity * 2;
+            int entity_vec4 = entity_capacity * 4;
             buffer(ENTITY).transfer_out_float(raw.entity,                                    cl_float, entity_vec4);
             buffer(ENTITY_FLAG).transfer_out_int(raw.entity_flag,                            cl_int,   entity_capacity);
             buffer(ENTITY_ROOT_HULL).transfer_out_int(raw.entity_root_hull,                  cl_int,   entity_capacity);

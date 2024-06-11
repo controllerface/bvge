@@ -1293,8 +1293,10 @@ public class PhysicsSimulation extends GameSystem
         // this step determines how many of each object type is in that state, so they
         // can be transferred into the egress buffer, and eventually onto disk.
         int[] egress_counts = GPGPU.core_memory.count_egress_entities();
-        if (egress_counts[0] > 0) GPGPU.core_memory.transfer_egress_buffer(egress_counts);
-        else GPGPU.core_memory.clear_egress_counts();
+        GPGPU.core_memory.set_egress_counts(egress_counts);
+        if (egress_counts[0] > 0) GPGPU.core_memory.egress_sectors();
+        if (egress_counts[6] > 0) GPGPU.core_memory.egress_broken();
+
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - se;

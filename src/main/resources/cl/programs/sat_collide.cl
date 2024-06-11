@@ -509,8 +509,8 @@ __kernel void move_entities(__global float4 *hulls,
         : flags & ~IS_WET;
 
     flags = destroy
-        ? flags | DELETED
-        : flags & ~DELETED;
+        ? flags | BROKEN
+        : flags & ~BROKEN;
 
     hull_flags[start] = hull_flags_0;
     entities[current_entity] = entity;

@@ -227,7 +227,7 @@ __kernel void create_hull(__global float4 *hulls,
                           int2 new_point_table,
                           int2 new_edge_table,
                           int2 new_bone_table,
-                          int new_entity_id,
+                          int entity_id_offset,
                           int new_flags,
                           int new_hull_mesh_id,
                           int new_hull_uv_offset,
@@ -241,7 +241,7 @@ __kernel void create_hull(__global float4 *hulls,
     hull_point_tables[target] = new_point_table;
     hull_edge_tables[target]  = new_edge_table;
     bone_tables[target]       = new_bone_table; 
-    hull_entity_ids[target]   = new_entity_id; 
+    hull_entity_ids[target]   = entity_id_offset; 
     hull_flags[target]        = new_flags; 
     hull_mesh_ids[target]     = new_hull_mesh_id;
     hull_uv_offsets[target]   = new_hull_uv_offset;
@@ -463,9 +463,9 @@ __kernel void count_egress_entities(__global int *entity_flags,
 
     int flags       = entity_flags[current_entity];
     bool sector_out = (flags & SECTOR_OUT) !=0;
-    bool deleted    = (flags & DELETED) !=0;
+    bool broken     = (flags & BROKEN) !=0;
 
-    if (sector_out)
+    if (sector_out || broken)
     {
         int2 hull_table        = entity_hull_tables[current_entity];
         int2 entity_bone_table = entity_bone_tables[current_entity];
@@ -487,16 +487,39 @@ __kernel void count_egress_entities(__global int *entity_flags,
             hull_bone_count += hull_bone_table.y - hull_bone_table.x + 1;
         }
 
-        atomic_inc(&counters[0]); 
-        atomic_add(&counters[1], hull_count);
-        atomic_add(&counters[2], point_count);
-        atomic_add(&counters[3], edge_count);
-        atomic_add(&counters[4], hull_bone_count);
-        atomic_add(&counters[5], entity_bone_count);
+        if (sector_out)
+        {
+            atomic_inc(&counters[0]); 
+            atomic_add(&counters[1], hull_count);
+            atomic_add(&counters[2], point_count);
+            atomic_add(&counters[3], edge_count);
+            atomic_add(&counters[4], hull_bone_count);
+            atomic_add(&counters[5], entity_bone_count);
+        }
+        else
+        {
+            atomic_inc(&counters[6]); 
+            atomic_add(&counters[7],  hull_count);
+            atomic_add(&counters[8],  point_count);
+            atomic_add(&counters[9],  edge_count);
+            atomic_add(&counters[10], hull_bone_count);
+            atomic_add(&counters[11], entity_bone_count);
+        }
         
         flags = (flags | DELETED);
         entity_flags[current_entity] = flags;
     }
+}
+
+__kernel void egress_broken(__global float4 *entities_in, __global int *entity_flags_in)
+{
+    int current_entity = get_global_id(0);
+
+    int flags       = entity_flags_in[current_entity];
+    bool broken     = (flags & BROKEN) !=0;
+
+    // todo: write out entitiy position
+    // todo: write out type (block, shard, etc.) 
 }
 
 /**
@@ -625,12 +648,21 @@ __kernel void egress_entities(__global float4 *points_in,
             hull_bone_count += hull_bone_table.y - hull_bone_table.x + 1;
         }
 
-        int new_entity_id      = atomic_inc(&counters[0]); 
-        int hull_offset        = atomic_add(&counters[1], hull_count);
-        int point_offset       = atomic_add(&counters[2], point_count);
-        int edge_offset        = edge_count == 0 ? 0 : atomic_add(&counters[3], edge_count);
-        int hull_bone_offset   = hull_bone_count == 0 ? 0 :atomic_add(&counters[4], hull_bone_count);
-        int entity_bone_offset = entity_bone_count == 0 ? 0 : atomic_add(&counters[5], entity_bone_count);
+        int entity_id_offset = atomic_inc(&counters[0]); 
+        int hull_offset      = atomic_add(&counters[1], hull_count);
+        int point_offset     = atomic_add(&counters[2], point_count);
+
+        int edge_offset = edge_count == 0 
+            ? 0 
+            : atomic_add(&counters[3], edge_count);
+            
+        int hull_bone_offset = hull_bone_count == 0 
+            ? 0 
+            : atomic_add(&counters[4], hull_bone_count);
+
+        int entity_bone_offset = entity_bone_count == 0 
+            ? 0 
+            : atomic_add(&counters[5], entity_bone_count);
         
         int hull_offset_count        = 0;
         int point_offset_count       = 0;
@@ -763,7 +795,7 @@ __kernel void egress_entities(__global float4 *points_in,
             hull_restitutions_out[new_hull_id] = hull_restitution;
             hull_integrity_out[new_hull_id]    = hull_integrity;
             hull_bone_tables_out[new_hull_id]  = hull_bone_table;
-            hull_entity_ids_out[new_hull_id]   = new_entity_id;
+            hull_entity_ids_out[new_hull_id]   = entity_id_offset;
             hull_flags_out[new_hull_id]        = hull_flag;
             hull_point_tables_out[new_hull_id] = hull_point_table;
             hull_edge_tables_out[new_hull_id]  = hull_edge_table;
@@ -781,17 +813,17 @@ __kernel void egress_entities(__global float4 *points_in,
         entity_flag         &= ~DELETED;
 
         // write out entity data
-        entities_out[new_entity_id]                  = entity;
-        entity_masses_out[new_entity_id]            = entity_mass;
-        entity_hull_tables_out[new_entity_id]       = entity_hull_table;
-        entity_bone_tables_out[new_entity_id]       = entity_bone_table;
-        entity_root_hulls_out[new_entity_id]        = entity_root_hull;
-        entity_model_indices_out[new_entity_id]     = entity_model_id;
-        entity_model_transforms_out[new_entity_id]  = entity_model_transform_id;
-        entity_flags_out[new_entity_id]             = entity_flag;
-        entity_animation_indices_out[new_entity_id] = entity_anim_index;
-        entity_animation_elapsed_out[new_entity_id] = entity_anim_time;
-        entity_motion_states_out[new_entity_id]     = entity_anim_states;
+        entities_out[entity_id_offset]                 = entity;
+        entity_masses_out[entity_id_offset]            = entity_mass;
+        entity_hull_tables_out[entity_id_offset]       = entity_hull_table;
+        entity_bone_tables_out[entity_id_offset]       = entity_bone_table;
+        entity_root_hulls_out[entity_id_offset]        = entity_root_hull;
+        entity_model_indices_out[entity_id_offset]     = entity_model_id;
+        entity_model_transforms_out[entity_id_offset]  = entity_model_transform_id;
+        entity_flags_out[entity_id_offset]             = entity_flag;
+        entity_animation_indices_out[entity_id_offset] = entity_anim_index;
+        entity_animation_elapsed_out[entity_id_offset] = entity_anim_time;
+        entity_motion_states_out[entity_id_offset]     = entity_anim_states;
     }
 }
 
