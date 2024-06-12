@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
 
@@ -70,7 +71,7 @@ public class TestGame extends GameMode
         ModelRegistry.init();
 
         this.blanking_system = blanking_system;
-        this.spawn_queue = new ConcurrentLinkedQueue<>();
+        this.spawn_queue = new LinkedBlockingDeque<>();
         this.sector_cache = Caffeine.newBuilder()
             .expireAfterAccess(Duration.of(1, ChronoUnit.HOURS))
             .build();

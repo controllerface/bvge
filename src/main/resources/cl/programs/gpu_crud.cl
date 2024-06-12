@@ -511,6 +511,7 @@ __kernel void count_egress_entities(__global int *entity_flags,
 __kernel void egress_broken(__global float4 *entities, 
                             __global int *entity_flags,
                             __global int2 *entity_hull_tables,
+                            __global float4 *hulls, 
                             __global int *hull_uv_offsets,
                             __global float2 *positions,
                             __global int *model_ids,
@@ -520,7 +521,6 @@ __kernel void egress_broken(__global float4 *entities,
 
     int flags   = entity_flags[current_entity];
     bool broken = (flags & BROKEN) !=0;
-
     if (broken)
     {
         int2 hull_table = entity_hull_tables[current_entity];
@@ -529,9 +529,10 @@ __kernel void egress_broken(__global float4 *entities,
 
         for (int current_hull = hull_table.x; current_hull <= hull_table.y; current_hull++)
         {
+            float4 hull = hulls[current_hull];
             int uv_offset = hull_uv_offsets[current_hull];
             int entity_id_offset = atomic_inc(&counter[0]); 
-            positions[entity_id_offset] = entity.xy;
+            positions[entity_id_offset] = hull.xy;
             model_ids[entity_id_offset] = uv_offset;
         }
     }

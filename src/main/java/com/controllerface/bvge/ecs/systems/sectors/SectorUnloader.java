@@ -271,8 +271,20 @@ public class SectorUnloader extends GameSystem
                 float x = raw_broken.positions[offset_2];
                 float y = raw_broken.positions[offset_2 + 1];
 
+                //System.out.println("spawning: " + model + " at: " + x + "," + y);
+
                 var solid = Solid.values()[model];
-                batch.new_block(true, x, y, UniformGrid.BLOCK_SIZE, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
+                float sz = UniformGrid.BLOCK_SIZE / 2;
+                float offset = (sz / 2) - 5f ;
+//                batch.new_block(true, x - offset, y - offset, sz, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
+//                batch.new_block(true, x - offset, y + offset, sz, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
+//                batch.new_block(true, x + offset, y - offset, sz, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
+//                batch.new_block(true, x + offset, y + offset, sz, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
+
+                batch.new_shard(true, false, x - offset, y - offset, sz, 0, 30,0, 0, solid);
+                batch.new_shard(true, false, x - offset, y + offset, sz, 0, 30,0, 0, solid);
+                batch.new_shard(true, false, x + offset, y - offset, sz, 0, 30,0, 0, solid);
+                batch.new_shard(true, false, x + offset, y + offset, sz, 0, 30,0, 0, solid);
             }
             spawn_queue.offer(batch);
         }

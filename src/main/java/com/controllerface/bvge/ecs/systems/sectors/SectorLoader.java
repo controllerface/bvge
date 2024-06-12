@@ -49,11 +49,6 @@ public class SectorLoader extends GameSystem
             {
                 try
                 {
-                    PhysicsEntityBatch batch;
-                    while ((batch = spawn_queue.poll()) != null)
-                    {
-                        GPGPU.core_memory.load_entity_batch(batch);
-                    }
                     load_sectors(next_sector_bounds.take());
                 }
                 catch (InterruptedException e)
@@ -109,6 +104,13 @@ public class SectorLoader extends GameSystem
         uniformGrid.update_sector_metrics(new_loaded_sectors, sector_0_origin_x, sector_0_origin_y,
             Math.abs(sector_0_origin_x - (sector_2_origin_x + UniformGrid.SECTOR_SIZE)),
             Math.abs(sector_0_origin_y - (sector_2_origin_y + UniformGrid.SECTOR_SIZE)));
+
+        PhysicsEntityBatch batch;
+        while ((batch = spawn_queue.poll()) != null)
+        {
+            //System.out.println("spawning: " + batch + " sz: " + batch.blocks.size());
+            GPGPU.core_memory.load_entity_batch(batch);
+        }
 
         GPGPU.core_memory.await_sector();
     }

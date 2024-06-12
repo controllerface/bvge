@@ -833,7 +833,7 @@ public class GPUCoreMemory implements SectorContainer
         inactive_egress_counts[5]  = active_egress_counts[5];
         inactive_egress_counts[6]  = active_egress_counts[6];
         outgoing_sector_buffer.flip();
-        //broken_object_buffer.flip();
+        broken_object_buffer.flip();
     }
 
     public void reset_sector()
@@ -912,7 +912,7 @@ public class GPUCoreMemory implements SectorContainer
 
     public void unload_broken(BrokenObjectBuffer.Raw unloaded_broken, int count)
     {
-        broken_object_buffer.front().unload_broken(unloaded_broken, count);
+        broken_object_buffer.back().unload_broken(unloaded_broken, count);
         clFinish(GPGPU.ptr_sector_queue);
     }
 

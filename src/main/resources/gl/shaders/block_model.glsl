@@ -73,7 +73,7 @@ void main()
     vec3 specular = specular_strength * spec * light_color * attenuation;
 
     // Ambient light
-    vec3 ambient = vec3(0.03, 0.01, 0.02);
+    vec3 ambient = vec3(0.06, 0.02, 0.04);
 
     vec3 lighting = ambient + diffuse + specular;
 
