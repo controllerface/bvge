@@ -338,13 +338,12 @@ public class GPUCoreMemory implements SectorContainer
     private int last_edge_index       = 0;
     private int last_entity_index     = 0;
 
-    boolean flip_outgoing_sector = false;
     private final int[] active_egress_counts = new int[7];
     private final int[] inactive_egress_counts = new int[7];
     private final OrderedSectorInput incoming_sector_buffer;
-    private final UnorderedSectorOutput outgoing_sector_buffer_a;
-    private final UnorderedSectorOutput outgoing_sector_buffer_b;
-    private final BrokenObjectBuffer broken_objects;
+    private final DoubleBuffer<UnorderedSectorOutput> outgoing_sector_buffer;
+    private final DoubleBuffer<BrokenObjectBuffer> broken_object_buffer;
+    //private final BrokenObjectBuffer broken_objects;
     private final SectorGroup sector_group;
     private final SectorInput sector_input;
 
@@ -625,10 +624,14 @@ public class GPUCoreMemory implements SectorContainer
             .buf_arg(CountEgressEntities_k.Args.hull_bone_tables, sector_group.buffer(HULL_BONE_TABLE))
             .ptr_arg(CountEgressEntities_k.Args.counters, ptr_egress_sizes);
 
-        this.incoming_sector_buffer   = new OrderedSectorInput(GPGPU.ptr_sector_queue, this);
-        this.outgoing_sector_buffer_a = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
-        this.outgoing_sector_buffer_b = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
-        this.broken_objects           = new BrokenObjectBuffer(GPGPU.ptr_sector_queue, this);
+        this.incoming_sector_buffer  = new OrderedSectorInput(GPGPU.ptr_sector_queue, this);
+        //this.broken_objects          = new BrokenObjectBuffer(GPGPU.ptr_sector_queue, this);
+        var outgoing_sector_buffer_a = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
+        var outgoing_sector_buffer_b = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
+        this.outgoing_sector_buffer  = new DoubleBuffer<>(outgoing_sector_buffer_a, outgoing_sector_buffer_b);
+        var broken_objects_a = new BrokenObjectBuffer(GPGPU.ptr_sector_queue, this);
+        var broken_objects_b = new BrokenObjectBuffer(GPGPU.ptr_sector_queue, this);
+        this.broken_object_buffer = new DoubleBuffer<>(broken_objects_a, broken_objects_b);
     }
 
     public ResizableBuffer buffer(BufferType bufferType)
@@ -829,7 +832,8 @@ public class GPUCoreMemory implements SectorContainer
         inactive_egress_counts[4]  = active_egress_counts[4];
         inactive_egress_counts[5]  = active_egress_counts[5];
         inactive_egress_counts[6]  = active_egress_counts[6];
-        flip_outgoing_sector = !flip_outgoing_sector;
+        outgoing_sector_buffer.flip();
+        //broken_object_buffer.flip();
     }
 
     public void reset_sector()
@@ -901,25 +905,27 @@ public class GPUCoreMemory implements SectorContainer
 
     public void egress_broken()
     {
-        broken_objects.egress_broken(sector_input.entity_index(), active_egress_counts[6]);
+        clFinish(GPGPU.ptr_compute_queue);
+        broken_object_buffer.front().egress_broken(sector_input.entity_index(), active_egress_counts[6]);
+        clFinish(GPGPU.ptr_sector_queue);
+    }
+
+    public void unload_broken(BrokenObjectBuffer.Raw unloaded_broken, int count)
+    {
+        broken_object_buffer.front().unload_broken(unloaded_broken, count);
+        clFinish(GPGPU.ptr_sector_queue);
     }
 
     public void egress_sectors()
     {
         clFinish(GPGPU.ptr_compute_queue);
-        var outgoing_buffer = flip_outgoing_sector
-            ? outgoing_sector_buffer_b
-            : outgoing_sector_buffer_a;
-        outgoing_buffer.egress_sectors(sector_input.entity_index(), active_egress_counts);
+        outgoing_sector_buffer.front().egress_sectors(sector_input.entity_index(), active_egress_counts);
         clFinish(GPGPU.ptr_sector_queue);
     }
 
     public void unload_sectors(UnorderedSectorGroup.Raw unloaded_sectors, int[] egress_counts)
     {
-        var outgoing_buffer = flip_outgoing_sector
-            ? outgoing_sector_buffer_a
-            : outgoing_sector_buffer_b;
-        outgoing_buffer.unload_sectors(unloaded_sectors, egress_counts);
+        outgoing_sector_buffer.back().unload_sectors(unloaded_sectors, egress_counts);
         clFinish(GPGPU.ptr_sector_queue);
     }
 
@@ -1375,8 +1381,8 @@ public class GPUCoreMemory implements SectorContainer
     {
         sector_group.destroy();
         incoming_sector_buffer.destroy();
-        outgoing_sector_buffer_a.destroy();
-        outgoing_sector_buffer_b.destroy();
+        outgoing_sector_buffer.front().destroy();
+        outgoing_sector_buffer.back().destroy();
 
         p_gpu_crud.destroy();
         p_scan_deletes.destroy();

@@ -9,7 +9,7 @@ import java.util.List;
 
 public class PhysicsEntityBatch
 {
-    public final Sector sector;
+    //public final Sector sector;
 
     public record Block(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid material, int[] hits) { }
     public record Shard(boolean spike, boolean flip, float x, float y, float size, int flags, float mass, float friction, float restitution, Solid material) { }
@@ -22,9 +22,9 @@ public class PhysicsEntityBatch
 
     public final List<UnloadedEntity> entities = new ArrayList<>();
 
-    public PhysicsEntityBatch(Sector sector)
+    public PhysicsEntityBatch()
     {
-        this.sector = sector;
+        //this.sector = sector;
     }
 
     public void new_block(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material, int[] hits)

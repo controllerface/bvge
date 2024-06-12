@@ -195,7 +195,7 @@ public class EarthLikeWorld implements WorldType
         float x_offset = sector.x() * (int)UniformGrid.SECTOR_SIZE;
         float y_offset = sector.y() * (int)UniformGrid.SECTOR_SIZE;
 
-        var batch = new PhysicsEntityBatch(sector);
+        var batch = new PhysicsEntityBatch();
 
         for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
         {

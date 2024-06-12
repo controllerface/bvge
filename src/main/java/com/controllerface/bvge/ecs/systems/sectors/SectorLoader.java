@@ -12,6 +12,7 @@ import com.controllerface.bvge.physics.UniformGrid;
 import com.github.benmanes.caffeine.cache.Cache;
 
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -23,17 +24,19 @@ public class SectorLoader extends GameSystem
     private final Set<Sector> new_loaded_sectors = new HashSet<>();
     private final UniformGrid uniformGrid;
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
+    private final Queue<PhysicsEntityBatch> spawn_queue;
     private final Thread task_thread;
 
     private final BlockingQueue<SectorBounds> next_sector_bounds = new ArrayBlockingQueue<>(1);
 
     private record SectorBounds(float outer_x_origin, float outer_y_origin, float outer_x_corner, float outer_y_corner) { }
 
-    public SectorLoader(ECS ecs, UniformGrid uniformGrid, Cache<Sector, PhysicsEntityBatch> sector_cache_in)
+    public SectorLoader(ECS ecs, UniformGrid uniformGrid, Cache<Sector, PhysicsEntityBatch> sector_cache_in, Queue<PhysicsEntityBatch> spawn_queue_in)
     {
         super(ecs);
         this.uniformGrid = uniformGrid;
         this.sector_cache = sector_cache_in;
+        this.spawn_queue = spawn_queue_in;
         this.task_thread = Thread.ofVirtual().start(new SectorLoadTask());
     }
 
@@ -46,6 +49,11 @@ public class SectorLoader extends GameSystem
             {
                 try
                 {
+                    PhysicsEntityBatch batch;
+                    while ((batch = spawn_queue.poll()) != null)
+                    {
+                        GPGPU.core_memory.load_entity_batch(batch);
+                    }
                     load_sectors(next_sector_bounds.take());
                 }
                 catch (InterruptedException e)
@@ -94,7 +102,7 @@ public class SectorLoader extends GameSystem
         {
             if (!new_loaded_sectors.contains(sector))
             {
-                sector_cache.put(sector, new PhysicsEntityBatch(sector));
+                sector_cache.put(sector, new PhysicsEntityBatch());
             }
         });
 

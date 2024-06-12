@@ -21,6 +21,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
 
@@ -31,6 +34,7 @@ public class TestGame extends GameMode
     private final int GRID_HEIGHT = 2160;
 
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
+    private final Queue<PhysicsEntityBatch> spawn_queue;
 
     private enum RenderType
     {
@@ -66,6 +70,7 @@ public class TestGame extends GameMode
         ModelRegistry.init();
 
         this.blanking_system = blanking_system;
+        this.spawn_queue = new ConcurrentLinkedQueue<>();
         this.sector_cache = Caffeine.newBuilder()
             .expireAfterAccess(Duration.of(1, ChronoUnit.HOURS))
             .build();
@@ -87,9 +92,9 @@ public class TestGame extends GameMode
 
     private void load_systems()
     {
-        ecs.register_system(new SectorLoader(ecs, uniformGrid, sector_cache));
+        ecs.register_system(new SectorLoader(ecs, uniformGrid, sector_cache, spawn_queue));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid));
-        ecs.register_system(new SectorUnloader(ecs, sector_cache));
+        ecs.register_system(new SectorUnloader(ecs, sector_cache, spawn_queue));
         ecs.register_system(new CameraTracking(ecs, uniformGrid));
 
         ecs.register_system(blanking_system);

@@ -467,7 +467,9 @@ __kernel void count_egress_entities(__global int *entity_flags,
 
     if(broken)
     {
-        atomic_inc(&counters[6]); 
+        int2 hull_table = entity_hull_tables[current_entity];
+        int hull_count  = hull_table.y - hull_table.x + 1;
+        atomic_add(&counters[6], hull_count); 
         flags = (flags | DELETED);
         entity_flags[current_entity] = flags;
     }
@@ -508,7 +510,8 @@ __kernel void count_egress_entities(__global int *entity_flags,
 
 __kernel void egress_broken(__global float4 *entities, 
                             __global int *entity_flags,
-                            __global int *entity_model_indices,
+                            __global int2 *entity_hull_tables,
+                            __global int *hull_uv_offsets,
                             __global float2 *positions,
                             __global int *model_ids,
                             __global int *counter)
@@ -520,11 +523,17 @@ __kernel void egress_broken(__global float4 *entities,
 
     if (broken)
     {
-        int entity_id_offset = atomic_inc(&counter[0]); 
+        int2 hull_table = entity_hull_tables[current_entity];
+        int hull_count  = hull_table.y - hull_table.x + 1;
         float4 entity = entities[current_entity];
-        int model_id = entity_model_indices[current_entity];
-        positions[entity_id_offset] = entity.xy;
-        model_ids[entity_id_offset] = model_id;
+
+        for (int current_hull = hull_table.x; current_hull <= hull_table.y; current_hull++)
+        {
+            int uv_offset = hull_uv_offsets[current_hull];
+            int entity_id_offset = atomic_inc(&counter[0]); 
+            positions[entity_id_offset] = entity.xy;
+            model_ids[entity_id_offset] = uv_offset;
+        }
     }
 }
 

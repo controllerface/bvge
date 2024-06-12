@@ -6,6 +6,9 @@ import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.geometry.*;
 import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
+import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.substances.Solid;
+import com.controllerface.bvge.util.Constants;
 import com.github.benmanes.caffeine.cache.Cache;
 
 import java.util.*;
@@ -14,15 +17,18 @@ import java.util.concurrent.*;
 public class SectorUnloader extends GameSystem
 {
     private final UnorderedSectorGroup.Raw raw_sectors = new UnorderedSectorGroup.Raw();
+    private final BrokenObjectBuffer.Raw raw_broken = new BrokenObjectBuffer.Raw();
     private final Map<Sector, PhysicsEntityBatch> running_batches = new HashMap<>();
     private final BlockingQueue<Float> next_dt                    = new ArrayBlockingQueue<>(1);
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
+    private final Queue<PhysicsEntityBatch> spawn_queue;
     private final Thread task_thread;
 
-    public SectorUnloader(ECS ecs, Cache<Sector, PhysicsEntityBatch> sector_cache)
+    public SectorUnloader(ECS ecs, Cache<Sector, PhysicsEntityBatch> sector_cache, Queue<PhysicsEntityBatch> spawn_queue)
     {
         super(ecs);
         this.sector_cache = sector_cache;
+        this.spawn_queue = spawn_queue;
         this.task_thread = Thread.ofVirtual().start(new SectorUnloadTask());
         boolean ok = this.next_dt.offer(-1f);
         assert ok : "unable to start SectorLoader";
@@ -234,7 +240,7 @@ public class SectorUnloader extends GameSystem
                 // todo: sector objects can probably be cached since they are immutable records
                 var raw_sector = UniformGridRenderer.get_sector_for_point(entity_x, entity_y);
                 var sec = new Sector(raw_sector[0], raw_sector[1]);
-                var batch = running_batches.computeIfAbsent(sec, PhysicsEntityBatch::new);
+                var batch = running_batches.computeIfAbsent(sec, (_) -> new PhysicsEntityBatch());
                 int adjusted_root_hull = entity_root_hull - entity_hull_table_x;
 
                 var unloaded_entity = new UnloadedEntity(entity_x, entity_y, entity_z, entity_w,
@@ -252,6 +258,23 @@ public class SectorUnloader extends GameSystem
                 sector_cache.put(entry.getKey(), entry.getValue());
             }
             running_batches.clear();
+        }
+
+        if (last_counts[6] > 0)
+        {
+            var batch = new PhysicsEntityBatch();
+            raw_broken.ensure_space(last_counts[6]);
+            GPGPU.core_memory.unload_broken(raw_broken, last_counts[6]);
+            int offset_2 = 0;
+            for (int model : raw_broken.model_ids)
+            {
+                float x = raw_broken.positions[offset_2];
+                float y = raw_broken.positions[offset_2 + 1];
+
+                var solid = Solid.values()[model];
+                batch.new_block(true, x, y, UniformGrid.BLOCK_SIZE, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
+            }
+            spawn_queue.offer(batch);
         }
         GPGPU.core_memory.await_sector();
     }

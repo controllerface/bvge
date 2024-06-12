@@ -27,7 +27,7 @@ void main()
     f_tex_slot = int(v_tex_slot);
     f_color = v_color;
     FragPos = v_position.xy;
-    Normal = vec3(0.0, 0.0, 1.0);
+    Normal = vec3(0, 0, 1.0);
     gl_Position = uVP * v_position;
 }
 
