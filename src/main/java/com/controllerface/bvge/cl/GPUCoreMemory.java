@@ -912,17 +912,20 @@ public class GPUCoreMemory implements SectorContainer
 
     public void egress_sectors()
     {
-        int entity_index = sector_input.entity_index();
         clFinish(GPGPU.ptr_compute_queue);
-        if (flip_outgoing_sector) outgoing_sector_buffer_b.egress_sectors(entity_index, active_egress_counts);
-        else outgoing_sector_buffer_a.egress_sectors(entity_index, active_egress_counts);
+        var outgoing_buffer = flip_outgoing_sector
+            ? outgoing_sector_buffer_b
+            : outgoing_sector_buffer_a;
+        outgoing_buffer.egress_sectors(sector_input.entity_index(), active_egress_counts);
         clFinish(GPGPU.ptr_sector_queue);
     }
 
     public void unload_sectors(UnorderedSectorGroup.Raw unloaded_sectors, int[] egress_counts)
     {
-        if (flip_outgoing_sector) outgoing_sector_buffer_a.unload_sectors(unloaded_sectors, egress_counts);
-        else outgoing_sector_buffer_b.unload_sectors(unloaded_sectors, egress_counts);
+        var outgoing_buffer = flip_outgoing_sector
+            ? outgoing_sector_buffer_a
+            : outgoing_sector_buffer_b;
+        outgoing_buffer.unload_sectors(unloaded_sectors, egress_counts);
         clFinish(GPGPU.ptr_sector_queue);
     }
 

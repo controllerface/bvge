@@ -511,15 +511,26 @@ __kernel void count_egress_entities(__global int *entity_flags,
     }
 }
 
-__kernel void egress_broken(__global float4 *entities_in, __global int *entity_flags_in)
+__kernel void egress_broken(__global float4 *entities, 
+                            __global int *entity_flags,
+                            __global int *entity_model_indices,
+                            __global float2 *positions,
+                            __global int *model_ids,
+                            __global int *counters)
 {
     int current_entity = get_global_id(0);
 
-    int flags       = entity_flags_in[current_entity];
-    bool broken     = (flags & BROKEN) !=0;
+    int flags   = entity_flags[current_entity];
+    bool broken = (flags & BROKEN) !=0;
 
-    // todo: write out entitiy position
-    // todo: write out type (block, shard, etc.) 
+    if (broken)
+    {
+        int entity_id_offset = atomic_inc(&counters[0]); 
+        float4 entity = entities[current_entity];
+        int model_id = entity_model_indices[current_entity];
+        positions[entity_id_offset] = entity.xy;
+        model_ids[entity_id_offset] = model_id;
+    }
 }
 
 /**
