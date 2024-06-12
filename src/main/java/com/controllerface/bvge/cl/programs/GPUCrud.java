@@ -32,6 +32,7 @@ public class GPUCrud extends GPUProgram
         load_kernel(Kernel.create_vertex_reference);
         load_kernel(Kernel.count_egress_entities);
         load_kernel(Kernel.egress_entities);
+        load_kernel(Kernel.egress_broken);
         load_kernel(Kernel.merge_point);
         load_kernel(Kernel.merge_edge);
         load_kernel(Kernel.merge_hull);

@@ -32,7 +32,7 @@ public class Main
 //            e.printStackTrace();
 //        }
 
-        Configuration.DEBUG.set(true);
+        //Configuration.DEBUG.set(true);
         //Configuration.DISABLE_CHECKS.set(true);
         Window window = Window.get();
         window.init();

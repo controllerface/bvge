@@ -465,7 +465,13 @@ __kernel void count_egress_entities(__global int *entity_flags,
     bool sector_out = (flags & SECTOR_OUT) !=0;
     bool broken     = (flags & BROKEN) !=0;
 
-    if (sector_out || broken)
+    if(broken)
+    {
+        atomic_inc(&counters[6]); 
+        flags = (flags | DELETED);
+        entity_flags[current_entity] = flags;
+    }
+    if (sector_out)
     {
         int2 hull_table        = entity_hull_tables[current_entity];
         int2 entity_bone_table = entity_bone_tables[current_entity];
@@ -487,24 +493,13 @@ __kernel void count_egress_entities(__global int *entity_flags,
             hull_bone_count += hull_bone_table.y - hull_bone_table.x + 1;
         }
 
-        if (sector_out)
-        {
-            atomic_inc(&counters[0]); 
-            atomic_add(&counters[1], hull_count);
-            atomic_add(&counters[2], point_count);
-            atomic_add(&counters[3], edge_count);
-            atomic_add(&counters[4], hull_bone_count);
-            atomic_add(&counters[5], entity_bone_count);
-        }
-        else
-        {
-            atomic_inc(&counters[6]); 
-            atomic_add(&counters[7],  hull_count);
-            atomic_add(&counters[8],  point_count);
-            atomic_add(&counters[9],  edge_count);
-            atomic_add(&counters[10], hull_bone_count);
-            atomic_add(&counters[11], entity_bone_count);
-        }
+
+        atomic_inc(&counters[0]); 
+        atomic_add(&counters[1], hull_count);
+        atomic_add(&counters[2], point_count);
+        atomic_add(&counters[3], edge_count);
+        atomic_add(&counters[4], hull_bone_count);
+        atomic_add(&counters[5], entity_bone_count);
         
         flags = (flags | DELETED);
         entity_flags[current_entity] = flags;
@@ -516,7 +511,7 @@ __kernel void egress_broken(__global float4 *entities,
                             __global int *entity_model_indices,
                             __global float2 *positions,
                             __global int *model_ids,
-                            __global int *counters)
+                            __global int *counter)
 {
     int current_entity = get_global_id(0);
 
@@ -525,7 +520,7 @@ __kernel void egress_broken(__global float4 *entities,
 
     if (broken)
     {
-        int entity_id_offset = atomic_inc(&counters[0]); 
+        int entity_id_offset = atomic_inc(&counter[0]); 
         float4 entity = entities[current_entity];
         int model_id = entity_model_indices[current_entity];
         positions[entity_id_offset] = entity.xy;

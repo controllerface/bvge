@@ -34,7 +34,7 @@ public class GPUCoreMemory implements SectorContainer
     private static final long DELETE_2_INIT = 20_000L;
 
     private static final int DELETE_COUNTERS = 6;
-    private static final int EGRESS_COUNTERS = 12;
+    private static final int EGRESS_COUNTERS = 7;
     private static final int DELETE_COUNTERS_SIZE = cl_int * DELETE_COUNTERS;
     private static final int EGRESS_COUNTERS_SIZE = cl_int * EGRESS_COUNTERS;
 
@@ -339,8 +339,8 @@ public class GPUCoreMemory implements SectorContainer
     private int last_entity_index     = 0;
 
     boolean flip_outgoing_sector = false;
-    private final int[] active_egress_counts = new int[12];
-    private final int[] inactive_egress_counts = new int[12];
+    private final int[] active_egress_counts = new int[7];
+    private final int[] inactive_egress_counts = new int[7];
     private final OrderedSectorInput incoming_sector_buffer;
     private final UnorderedSectorOutput outgoing_sector_buffer_a;
     private final UnorderedSectorOutput outgoing_sector_buffer_b;
@@ -635,6 +635,10 @@ public class GPUCoreMemory implements SectorContainer
     {
         return switch (bufferType)
         {
+            // todo: maybe pull from a secondary buffer
+            case BROKEN_MODEL_IDS -> null;
+            case BROKEN_POSITIONS -> null;
+
             case ANIM_FRAME_TIME               -> b_anim_frame_time;
             case ANIM_KEY_FRAME                -> b_anim_key_frame;
             case ANIM_POS_CHANNEL              -> b_anim_bone_pos_channel;
@@ -825,11 +829,6 @@ public class GPUCoreMemory implements SectorContainer
         inactive_egress_counts[4]  = active_egress_counts[4];
         inactive_egress_counts[5]  = active_egress_counts[5];
         inactive_egress_counts[6]  = active_egress_counts[6];
-        inactive_egress_counts[7]  = active_egress_counts[7];
-        inactive_egress_counts[8]  = active_egress_counts[8];
-        inactive_egress_counts[9]  = active_egress_counts[9];
-        inactive_egress_counts[10] = active_egress_counts[10];
-        inactive_egress_counts[11] = active_egress_counts[11];
         flip_outgoing_sector = !flip_outgoing_sector;
     }
 
@@ -898,16 +897,11 @@ public class GPUCoreMemory implements SectorContainer
         active_egress_counts[4]  = egress_counts[4];
         active_egress_counts[5]  = egress_counts[5];
         active_egress_counts[6]  = egress_counts[6];
-        active_egress_counts[7]  = egress_counts[7];
-        active_egress_counts[8]  = egress_counts[8];
-        active_egress_counts[9]  = egress_counts[9];
-        active_egress_counts[10] = egress_counts[10];
-        active_egress_counts[11] = egress_counts[11];
     }
 
     public void egress_broken()
     {
-        broken_objects.egress_broken();
+        broken_objects.egress_broken(sector_input.entity_index(), active_egress_counts[6]);
     }
 
     public void egress_sectors()

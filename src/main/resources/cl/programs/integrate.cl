@@ -179,7 +179,7 @@ __kernel void integrate(__global float4 *hulls,
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
 
-            float g_x = touch_alike ? 0.01f : 0.01;
+            float g_x = touch_alike ? 0.01f : 0.1;
             float g_y = touch_alike ? 0.00f : 0.01;
 
  //float2 w_acc = (float2)(0.0f, 0.0f);
