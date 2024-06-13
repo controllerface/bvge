@@ -420,16 +420,18 @@ public class PhysicsSimulation extends GameSystem
 
         long k_ptr_move_entities = p_sat_collide.kernel_ptr(Kernel.move_entities);
         k_move_entities = new MoveEntities_k(GPGPU.ptr_compute_queue, k_ptr_move_entities)
-            .buf_arg(MoveEntities_k.Args.hulls,              GPGPU.core_memory.buffer(BufferType.HULL))
-            .buf_arg(MoveEntities_k.Args.entities,           GPGPU.core_memory.buffer(BufferType.ENTITY))
-            .buf_arg(MoveEntities_k.Args.entity_flags,       GPGPU.core_memory.buffer(BufferType.ENTITY_FLAG))
-            .buf_arg(MoveEntities_k.Args.entity_hull_tables, GPGPU.core_memory.buffer(BufferType.ENTITY_HULL_TABLE))
-            .buf_arg(MoveEntities_k.Args.hull_point_tables,  GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
-            .buf_arg(MoveEntities_k.Args.hull_integrity,     GPGPU.core_memory.buffer(BufferType.HULL_INTEGRITY))
-            .buf_arg(MoveEntities_k.Args.hull_flags,         GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
-            .buf_arg(MoveEntities_k.Args.point_flags,        GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
-            .buf_arg(MoveEntities_k.Args.point_hit_counts,   GPGPU.core_memory.buffer(BufferType.POINT_HIT_COUNT))
-            .buf_arg(MoveEntities_k.Args.points,             GPGPU.core_memory.buffer(BufferType.POINT));
+            .buf_arg(MoveEntities_k.Args.hulls,                GPGPU.core_memory.buffer(BufferType.HULL))
+            .buf_arg(MoveEntities_k.Args.entities,             GPGPU.core_memory.buffer(BufferType.ENTITY))
+            .buf_arg(MoveEntities_k.Args.entity_flags,         GPGPU.core_memory.buffer(BufferType.ENTITY_FLAG))
+            .buf_arg(MoveEntities_k.Args.entity_motion_states, GPGPU.core_memory.buffer(BufferType.ENTITY_MOTION_STATE))
+            .buf_arg(MoveEntities_k.Args.entity_hull_tables,   GPGPU.core_memory.buffer(BufferType.ENTITY_HULL_TABLE))
+            .buf_arg(MoveEntities_k.Args.hull_point_tables,    GPGPU.core_memory.buffer(BufferType.HULL_POINT_TABLE))
+            .buf_arg(MoveEntities_k.Args.hull_integrity,       GPGPU.core_memory.buffer(BufferType.HULL_INTEGRITY))
+            .buf_arg(MoveEntities_k.Args.hull_flags,           GPGPU.core_memory.buffer(BufferType.HULL_FLAG))
+            .buf_arg(MoveEntities_k.Args.point_flags,          GPGPU.core_memory.buffer(BufferType.POINT_FLAG))
+            .buf_arg(MoveEntities_k.Args.point_hit_counts,     GPGPU.core_memory.buffer(BufferType.POINT_HIT_COUNT))
+            .buf_arg(MoveEntities_k.Args.points,               GPGPU.core_memory.buffer(BufferType.POINT))
+            .set_arg(MoveEntities_k.Args.dt,                   FIXED_TIME_STEP);
 
         long k_ptr_animate_entities = p_animate_hulls.kernel_ptr(Kernel.animate_entities);
         k_animate_entities = new AnimateEntities_k(GPGPU.ptr_compute_queue, k_ptr_animate_entities)

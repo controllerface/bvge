@@ -454,6 +454,7 @@ __kernel void merge_entity(__global float4 *entities_in,
 __kernel void count_egress_entities(__global int *entity_flags,
                                     __global int2 *entity_hull_tables,
                                     __global int2 *entity_bone_tables,
+                                    __global int *hull_flags,
                                     __global int2 *hull_point_tables,
                                     __global int2 *hull_edge_tables,
                                     __global int2 *hull_bone_tables,
@@ -464,14 +465,23 @@ __kernel void count_egress_entities(__global int *entity_flags,
     int flags       = entity_flags[current_entity];
     bool sector_out = (flags & SECTOR_OUT) !=0;
     bool broken     = (flags & BROKEN) !=0;
+    bool collected  = (flags & COLLECTED) !=0;
 
+    if(collected)
+    {
+        flags = (flags | DELETED);
+        entity_flags[current_entity] = flags;
+    }
     if(broken)
     {
         int2 hull_table = entity_hull_tables[current_entity];
+        int hull_0_flags = hull_flags[hull_table.x];
         int hull_count  = hull_table.y - hull_table.x + 1;
-        atomic_add(&counters[6], hull_count); 
+        bool collectable = (hull_0_flags & COLLECTABLE) !=0;
         flags = (flags | DELETED);
         entity_flags[current_entity] = flags;
+        if (collectable) return;
+        atomic_add(&counters[6], hull_count); 
     }
     if (sector_out)
     {
@@ -513,6 +523,7 @@ __kernel void egress_broken(__global float4 *entities,
                             __global int2 *entity_hull_tables,
                             __global int *entity_model_ids,
                             __global float4 *hulls, 
+                            __global int *hull_flags,
                             __global int *hull_uv_offsets,
                             __global float2 *positions,
                             __global int *uv_offsets,
@@ -529,6 +540,10 @@ __kernel void egress_broken(__global float4 *entities,
         int hull_count  = hull_table.y - hull_table.x + 1;
         float4 entity = entities[current_entity];
         int entity_model_id = entity_model_ids[current_entity];
+
+        int hull_0_flags = hull_flags[hull_table.x];
+        bool collectable = (hull_0_flags & COLLECTABLE) !=0;
+        if (collectable) return;
 
         for (int current_hull = hull_table.x; current_hull <= hull_table.y; current_hull++)
         {

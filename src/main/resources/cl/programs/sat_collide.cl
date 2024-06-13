@@ -412,13 +412,15 @@ inline int2 consume_point_flags(__global int *point_flags,
 __kernel void move_entities(__global float4 *hulls,
                             __global float4 *entities,
                             __global int *entity_flags,
+                            __global short2 *entity_motion_states,
                             __global int2 *hull_tables,
                             __global int2 *hull_point_tables,
                             __global int *hull_integrity,
                             __global int *hull_flags,
                             __global int *point_flags,
                             __global short *point_hit_counts,
-                            __global float4 *points)
+                            __global float4 *points,
+                            float dt)
 {
     int current_entity = get_global_id(0);
     float4 entity = entities[current_entity];
@@ -427,9 +429,12 @@ __kernel void move_entities(__global float4 *hulls,
     int start = hull_table.x;
     int end = hull_table.y;
     int hull_count = end - start + 1;
+    short2 motion_state = entity_motion_states[current_entity];
+
 
     int hull_flags_0 = hull_flags[start];
     bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
+    bool collectable = (hull_flags_0 & COLLECTABLE) != 0;
 
     int hull_0_integrity = hull_integrity[start];
     bool single_hull = hull_count == 1;
@@ -471,6 +476,7 @@ __kernel void move_entities(__global float4 *hulls,
 
     bool go_static = hit_floor  
         && !hit_water 
+        && !collectable 
         && is_block 
         && total_hits >= block_check;
 
@@ -512,6 +518,27 @@ __kernel void move_entities(__global float4 *hulls,
         ? flags | BROKEN
         : flags & ~BROKEN;
 
+
+    // float threshold = 10.0f;
+    // float2 vel = (entity.xy - entity.zw) / dt;
+
+    // motion_state.x = (vel.y < -threshold) 
+    //     ? motion_state.x + 1 
+    //     : 0;
+
+    // motion_state.y = (vel.y > threshold) 
+    //     ? motion_state.y + 1 
+    //     : 0;
+
+    // motion_state.x = motion_state.x > 1000 
+    //     ? 1000 
+    //     : motion_state.x;
+
+    // motion_state.y = motion_state.y > 1000 
+    //     ? 1000 
+    //     : motion_state.y;
+
+    // entity_motion_states[current_entity] = motion_state;
     hull_flags[start] = hull_flags_0;
     entities[current_entity] = entity;
     entity_flags[current_entity] = flags;

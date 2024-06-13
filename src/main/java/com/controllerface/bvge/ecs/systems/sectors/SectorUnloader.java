@@ -280,28 +280,27 @@ public class SectorUnloader extends GameSystem
 
                 if (m == ModelRegistry.BASE_BLOCK_INDEX)
                 {
-                    batch.new_block(true, x - offset, y - offset, sz, 90, 0,0, 0, solid, new int[4]);
-                    batch.new_block(true, x - offset, y + offset, sz, 90, 0,0, 0, solid, new int[4]);
-                    batch.new_block(true, x + offset, y - offset, sz, 90, 0,0, 0, solid, new int[4]);
+                    batch.new_block(true, x - offset, y - offset, sz, 90, 0,0, Constants.HullFlags.COLLECTABLE._int, solid, new int[4]);
+                    batch.new_block(true, x - offset, y + offset, sz, 90, 0,0, Constants.HullFlags.COLLECTABLE._int, solid, new int[4]);
+                    batch.new_block(true, x + offset, y - offset, sz, 90, 0,0, Constants.HullFlags.COLLECTABLE._int, solid, new int[4]);
                     //batch.new_block(true, x + offset, y + offset, sz, 90, 0,0, 0, solid, new int[4]);
                 }
                 else if (m == ModelRegistry.L_SHARD_INDEX)
                 {
-                    batch.new_shard(false, false, x - offset, y + offset, sz, 0, 30,0, 0, solid);
-                    batch.new_shard(false, true, x + offset, y + offset, sz, 0, 30,0, 0, solid);
+                    batch.new_shard(false, false, x - offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
+                    batch.new_shard(false, true, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
                 }
                 else if (m == ModelRegistry.R_SHARD_INDEX)
                 {
-                    batch.new_shard(false, true, x - offset, y + offset, sz, 0, 30,0, 0, solid);
-                    batch.new_shard(false, false, x + offset, y + offset, sz, 0, 30,0, 0, solid);
+                    batch.new_shard(false, true, x - offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
+                    batch.new_shard(false, false, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
                 }
                 else if (m == ModelRegistry.BASE_SPIKE_INDEX)
                 {
-                    batch.new_shard(true, false, x - offset, y + offset, sz, 0, 30,0, 0, solid);
-                    batch.new_shard(true, false, x + offset, y - offset, sz, 0, 30,0, 0, solid);
-                    batch.new_shard(true, false, x + offset, y + offset, sz, 0, 30,0, 0, solid);
+                    batch.new_shard(true, false, x - offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
+                    batch.new_shard(true, false, x + offset, y - offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
+                    batch.new_shard(true, false, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
                 }
-
             }
             spawn_queue.offer(batch);
         }

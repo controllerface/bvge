@@ -9,6 +9,7 @@ public class GPUCrud extends GPUProgram
     public GPUProgram init()
     {
         src.add(const_entity_flags);
+        src.add(const_hull_flags);
         src.add(func_rotate_point);
         src.add(CLUtils.read_src("programs/gpu_crud.cl"));
 

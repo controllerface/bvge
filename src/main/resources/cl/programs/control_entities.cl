@@ -7,6 +7,7 @@ typedef struct
     bool can_jump;
     bool is_wet;
     bool is_click_1;
+    bool is_click_2;
     int current_budget;
     short2 motion_state;
     float current_time;
@@ -39,7 +40,7 @@ OutputState idle_state(InputState input)
     if (input.is_mv_l || input.is_mv_r) output.next_state = input.mv_run ? RUNNING : WALKING;
     if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
-    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.motion_state.x > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
     return output;
 }
@@ -51,7 +52,7 @@ OutputState walking_state(InputState input)
     if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
     if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
-    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.motion_state.x > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
     return output;
 }
@@ -63,7 +64,7 @@ OutputState running_state(InputState input)
     if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
     if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
-    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.motion_state.x > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
     return output;
 }
@@ -218,6 +219,7 @@ __kernel void handle_movement(__global float4 *entities,
     bool is_mv_u    = (current_flags & UP)     !=0;
     bool is_mv_d    = (current_flags & DOWN)   !=0;
     bool is_click_1 = (current_flags & MOUSE1) !=0;
+    bool is_click_2 = (current_flags & MOUSE2) !=0;
     bool mv_jump    = (current_flags & JUMP)   !=0;
     bool mv_run     = (current_flags & RUN)    !=0;
     bool can_jump   = (arm_flag & CAN_JUMP)    !=0;
@@ -241,6 +243,7 @@ __kernel void handle_movement(__global float4 *entities,
     input.can_jump       = can_jump;
     input.is_wet         = is_wet;
     input.is_click_1     = is_click_1;
+    input.is_click_2     = is_click_2;
     input.current_budget = current_budget;
     input.motion_state   = motion_state;
     input.current_time   = current_time.x;
@@ -349,6 +352,10 @@ __kernel void handle_movement(__global float4 *entities,
     arm_flag = state_result.attack 
         ? arm_flag | ATTACKING 
         : arm_flag & ~ATTACKING; 
+
+    arm_flag = is_click_2 
+        ? arm_flag | CAN_COLLECT 
+        : arm_flag & ~CAN_COLLECT; 
 
     entity_accel[current_index]             = accel;
     entity_flags[current_index]             = arm_flag;

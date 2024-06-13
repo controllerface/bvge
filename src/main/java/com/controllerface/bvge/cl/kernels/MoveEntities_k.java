@@ -7,13 +7,15 @@ public class MoveEntities_k extends GPUKernel
         hulls,
         entities,
         entity_flags,
+        entity_motion_states,
         entity_hull_tables,
         hull_point_tables,
         hull_integrity,
         hull_flags,
         point_flags,
         point_hit_counts,
-        points
+        points,
+        dt,
     }
 
     public MoveEntities_k(long command_queue_ptr, long kernel_ptr)

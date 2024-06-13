@@ -45,6 +45,7 @@ public class BrokenObjectBuffer
             .buf_arg(EgressBroken_k.Args.entity_hull_tables, core_memory.buffer(BufferType.ENTITY_HULL_TABLE))
             .buf_arg(EgressBroken_k.Args.entity_model_ids, core_memory.buffer(BufferType.ENTITY_MODEL_ID))
             .buf_arg(EgressBroken_k.Args.hulls, core_memory.buffer(BufferType.HULL))
+            .buf_arg(EgressBroken_k.Args.hull_flags, core_memory.buffer(BufferType.HULL_FLAG))
             .buf_arg(EgressBroken_k.Args.hull_uv_offsets, core_memory.buffer(BufferType.HULL_UV_OFFSET))
             .buf_arg(EgressBroken_k.Args.positions, broken_group.buffer(BufferType.BROKEN_POSITIONS))
             .buf_arg(EgressBroken_k.Args.uv_offsets, broken_group.buffer(BufferType.BROKEN_UV_OFFSETS))

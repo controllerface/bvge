@@ -7,6 +7,7 @@ public class CountEgressEntities_k extends GPUKernel
         entity_flags,
         entity_hull_tables,
         entity_bone_tables,
+        hull_flags,
         hull_point_tables,
         hull_edge_tables,
         hull_bone_tables,

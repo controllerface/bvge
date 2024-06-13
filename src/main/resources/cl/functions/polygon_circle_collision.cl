@@ -130,13 +130,16 @@ inline void polygon_circle_collision(int polygon_id,
 
         int owner_entity_flags = entity_flags[owner_entity_id];
         bool atk = (owner_entity_flags & ATTACKING) !=0;
+        bool collect = (owner_entity_flags & CAN_COLLECT) !=0;
         float center_distance = fast_distance(owner.xy, hull_e.xy);
         bool hit = point_polygon_containment(polygon_id, hull_v.xy, hull_edge_tables, points, edges, edge_flags);
-        bool in_range = center_distance <= 150.0f;
+        bool in_range = center_distance <= 192.0f;
+        bool collectable = (edge_hull_flags & COLLECTABLE) !=0;
         edge_hull_flags |= CURSOR_OVER;           
         if (in_range) edge_hull_flags |= IN_RANGE;
         if (hit) edge_hull_flags |= CURSOR_HIT;
         if (atk && in_range && hit) atomic_sub(&hull_integrity[edge_hull_id], 1); // hard-coded 1 damage
+        if (in_range && collect && collectable) entity_flags[edge_entity_id] |= COLLECTED;
         hull_flags[edge_hull_id] = edge_hull_flags;
         return;
     }

@@ -257,51 +257,17 @@ public class PhysicsObjects
             0);
     }
 
-    public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
-    {
-        int h1 = random.nextInt(100, 4000);
-        int h2 = random.nextInt(100, 4000);
-        int h3 = random.nextInt(100, 4000);
-        int h4 = random.nextInt(100, 4000);
-        int[] hits =  new int[]{ h1, h2, h3, h4 };
-        return base_block(world, x, y, size, mass, friction, restitution, flags, block_material, hits);
-    }
 
     public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material, int[] hits)
     {
         return block(world, x, y, size, flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
     }
 
-    public static int base_block2(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material, int[] hits)
-    {
-        return block(world, x, y, size, flags | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
-    }
-
-    public static int static_box(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
-    {
-        int h1 = random.nextInt(100, 4000);
-        int h2 = random.nextInt(100, 4000);
-        int h3 = random.nextInt(100, 4000);
-        int h4 = random.nextInt(100, 4000);
-        int[] hits =  new int[]{ h1, h2, h3, h4 };
-        return base_block(world, x, y, size, mass, friction, restitution, flags, block_material, hits);
-    }
-
-    public static int static_box(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material, int[] hits)
-    {
-        return block(world, x, y, size, flags | HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
-    }
-
-    public static int static_tri(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution)
-    {
-        return tri(world, x, y, size, HullFlags.IS_STATIC._int | HullFlags.NO_BONES._int, mass, friction, restitution, R_SHARD_INDEX, Solid.ANDESITE);
-    }
-
     private static final Random random = new Random();
 
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will
     //  probably break/crash.
-    public static int[] wrap_model(SectorContainer world, int model_index, float x, float y, float size, float mass, float friction, float restitution, int uv_offset)
+    public static int[] wrap_model(SectorContainer world, int model_index, float x, float y, float size, float mass, float friction, float restitution, int uv_offset, int flags)
     {
         // we need to know the next entity ID before we create it, so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
@@ -573,7 +539,7 @@ public class PhysicsObjects
             hull_table, bone_table,
             mass, idle_animation_id, 0.0f,
             root_hull_id, model_index, model.root_transform_index(),
-            0);
+            flags);
         result[1] = root_hull_id;
         return result;
     }

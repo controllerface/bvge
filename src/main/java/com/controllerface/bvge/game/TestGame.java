@@ -15,6 +15,7 @@ import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.util.Constants;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -81,7 +82,7 @@ public class TestGame extends GameMode
     private void gen_player(float size, float x, float y)
     {
         var player = ecs.register_entity("player");
-        var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory, PLAYER_MODEL_INDEX, x, y, size, 100.5f, 0.05f, 0,0);
+        var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory, PLAYER_MODEL_INDEX, x, y, size, 100.5f, 0.05f, 0,0, Constants.EntityFlags.CAN_COLLECT.bits);
         var cursor_id = PhysicsObjects.circle_cursor(GPGPU.core_memory, 0,0, 10, entity_id[1]);
 
         ecs.attach_component(player, Component.EntityId, new EntityIndex(entity_id[0]));

@@ -619,6 +619,7 @@ public class GPUCoreMemory implements SectorContainer
             .buf_arg(CountEgressEntities_k.Args.entity_flags, sector_group.buffer(ENTITY_FLAG))
             .buf_arg(CountEgressEntities_k.Args.entity_hull_tables, sector_group.buffer(ENTITY_HULL_TABLE))
             .buf_arg(CountEgressEntities_k.Args.entity_bone_tables, sector_group.buffer(ENTITY_BONE_TABLE))
+            .buf_arg(CountEgressEntities_k.Args.hull_flags, sector_group.buffer(HULL_FLAG))
             .buf_arg(CountEgressEntities_k.Args.hull_point_tables, sector_group.buffer(HULL_POINT_TABLE))
             .buf_arg(CountEgressEntities_k.Args.hull_edge_tables, sector_group.buffer(HULL_EDGE_TABLE))
             .buf_arg(CountEgressEntities_k.Args.hull_bone_tables, sector_group.buffer(HULL_BONE_TABLE))
@@ -861,7 +862,7 @@ public class GPUCoreMemory implements SectorContainer
         {
             if (block.dynamic())
             {
-                PhysicsObjects.base_block2(incoming_sector_buffer, block.x(), block.y(), block.size(), block.mass(), block.friction(), block.restitution(), block.flags(), block.material(), block.hits());
+                PhysicsObjects.base_block(incoming_sector_buffer, block.x(), block.y(), block.size(), block.mass(), block.friction(), block.restitution(), block.flags(), block.material(), block.hits());
             }
             else
             {
