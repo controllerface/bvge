@@ -266,25 +266,42 @@ public class SectorUnloader extends GameSystem
             raw_broken.ensure_space(last_counts[6]);
             GPGPU.core_memory.unload_broken(raw_broken, last_counts[6]);
             int offset_2 = 0;
-            for (int model : raw_broken.model_ids)
+            int offset_1 = 0;
+            for (int uv_offset : raw_broken.uv_offsets)
             {
-                float x = raw_broken.positions[offset_2];
-                float y = raw_broken.positions[offset_2 + 1];
+                float x = raw_broken.positions[offset_2++];
+                float y = raw_broken.positions[offset_2++];
 
-                //System.out.println("spawning: " + model + " at: " + x + "," + y);
+                float m = raw_broken.model_ids[offset_1++];
 
-                var solid = Solid.values()[model];
+                var solid = Solid.values()[uv_offset];
                 float sz = UniformGrid.BLOCK_SIZE / 2;
-                float offset = (sz / 2) - 5f ;
-//                batch.new_block(true, x - offset, y - offset, sz, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
-//                batch.new_block(true, x - offset, y + offset, sz, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
-//                batch.new_block(true, x + offset, y - offset, sz, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
-//                batch.new_block(true, x + offset, y + offset, sz, 90, 0,0, Constants.HullFlags.IS_BLOCK._int, solid, new int[4]);
+                float offset = (sz / 2) - 2f ;
 
-                batch.new_shard(true, false, x - offset, y - offset, sz, 0, 30,0, 0, solid);
-                batch.new_shard(true, false, x - offset, y + offset, sz, 0, 30,0, 0, solid);
-                batch.new_shard(true, false, x + offset, y - offset, sz, 0, 30,0, 0, solid);
-                batch.new_shard(true, false, x + offset, y + offset, sz, 0, 30,0, 0, solid);
+                if (m == ModelRegistry.BASE_BLOCK_INDEX)
+                {
+                    batch.new_block(true, x - offset, y - offset, sz, 90, 0,0, 0, solid, new int[4]);
+                    batch.new_block(true, x - offset, y + offset, sz, 90, 0,0, 0, solid, new int[4]);
+                    batch.new_block(true, x + offset, y - offset, sz, 90, 0,0, 0, solid, new int[4]);
+                    //batch.new_block(true, x + offset, y + offset, sz, 90, 0,0, 0, solid, new int[4]);
+                }
+                else if (m == ModelRegistry.L_SHARD_INDEX)
+                {
+                    batch.new_shard(false, false, x - offset, y + offset, sz, 0, 30,0, 0, solid);
+                    batch.new_shard(false, true, x + offset, y + offset, sz, 0, 30,0, 0, solid);
+                }
+                else if (m == ModelRegistry.R_SHARD_INDEX)
+                {
+                    batch.new_shard(false, true, x - offset, y + offset, sz, 0, 30,0, 0, solid);
+                    batch.new_shard(false, false, x + offset, y + offset, sz, 0, 30,0, 0, solid);
+                }
+                else if (m == ModelRegistry.BASE_SPIKE_INDEX)
+                {
+                    batch.new_shard(true, false, x - offset, y + offset, sz, 0, 30,0, 0, solid);
+                    batch.new_shard(true, false, x + offset, y - offset, sz, 0, 30,0, 0, solid);
+                    batch.new_shard(true, false, x + offset, y + offset, sz, 0, 30,0, 0, solid);
+                }
+
             }
             spawn_queue.offer(batch);
         }

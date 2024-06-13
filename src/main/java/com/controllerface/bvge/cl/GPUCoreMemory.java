@@ -625,7 +625,6 @@ public class GPUCoreMemory implements SectorContainer
             .ptr_arg(CountEgressEntities_k.Args.counters, ptr_egress_sizes);
 
         this.incoming_sector_buffer  = new OrderedSectorInput(GPGPU.ptr_sector_queue, this);
-        //this.broken_objects          = new BrokenObjectBuffer(GPGPU.ptr_sector_queue, this);
         var outgoing_sector_buffer_a = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
         var outgoing_sector_buffer_b = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
         this.outgoing_sector_buffer  = new DoubleBuffer<>(outgoing_sector_buffer_a, outgoing_sector_buffer_b);
@@ -639,8 +638,9 @@ public class GPUCoreMemory implements SectorContainer
         return switch (bufferType)
         {
             // todo: maybe pull from a secondary buffer
-            case BROKEN_MODEL_IDS -> null;
             case BROKEN_POSITIONS -> null;
+            case BROKEN_UV_OFFSETS -> null;
+            case BROKEN_MODEL_IDS -> null;
 
             case ANIM_FRAME_TIME               -> b_anim_frame_time;
             case ANIM_KEY_FRAME                -> b_anim_key_frame;
@@ -861,7 +861,7 @@ public class GPUCoreMemory implements SectorContainer
         {
             if (block.dynamic())
             {
-                PhysicsObjects.base_block(incoming_sector_buffer, block.x(), block.y(), block.size(), block.mass(), block.friction(), block.restitution(), block.flags(), block.material(), block.hits());
+                PhysicsObjects.base_block2(incoming_sector_buffer, block.x(), block.y(), block.size(), block.mass(), block.friction(), block.restitution(), block.flags(), block.material(), block.hits());
             }
             else
             {

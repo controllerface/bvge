@@ -322,7 +322,8 @@ public class EarthLikeWorld implements WorldType
                     .1f, 0.05f, 0.005f, solid);
                 else
 
-                    batch.new_block(false, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, Constants.HullFlags.OUT_OF_BOUNDS._int, solid, hits);
+                    batch.new_block(false, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f,
+                        Constants.HullFlags.IS_STATIC._int | Constants.HullFlags.OUT_OF_BOUNDS._int, solid, hits);
             }
         }
 //        else if (n < water_range_floor)

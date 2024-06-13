@@ -272,6 +272,11 @@ public class PhysicsObjects
         return block(world, x, y, size, flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
     }
 
+    public static int base_block2(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material, int[] hits)
+    {
+        return block(world, x, y, size, flags | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
+    }
+
     public static int static_box(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material)
     {
         int h1 = random.nextInt(100, 4000);
@@ -307,8 +312,6 @@ public class PhysicsObjects
 
         // we need to track which hull is the root hull for this model
         int root_hull_id = -1;
-        float root_x = 0;
-        float root_y = 0;
 
         var meshes = model.meshes();
         int first_hull = -1;
@@ -551,8 +554,6 @@ public class PhysicsObjects
             if (mesh_index == model.root_index())
             {
                 root_hull_id = hull_id;
-                root_x = vector_buffer.x;
-                root_y = vector_buffer.y;
             }
         }
 
@@ -581,12 +582,16 @@ public class PhysicsObjects
 
     private static int[] make_table(int[] ids)
     {
-        return ids.length == 0 ? EMPTY_TABLE : new int[]{ ids[0], ids[ids.length - 1] };
+        return ids.length == 0
+            ? EMPTY_TABLE
+            : new int[]{ ids[0], ids[ids.length - 1] };
     }
 
     private static int get_index(int offset, int[] ids)
     {
-        return offset == -1 ? -1 : ids[offset];
+        return offset == -1
+            ? -1
+            : ids[offset];
     }
 
     public static void load_entity(SectorContainer world, UnloadedEntity entity)
@@ -635,7 +640,7 @@ public class PhysicsObjects
             int[] he_tbl = make_table(he_ids);
             int[] hb_tbl = make_table(hb_ids);
             float[] pos = new float[]{ hull.x(), hull.y(), hull.z(), hull.w() };
-            float[] scl = new float[]{ hull.scale_x(), hull.scale_y()};
+            float[] scl = new float[]{ hull.scale_x(), hull.scale_y() };
             float[] rot = new float[]{ hull.rotation_x(), hull.rotation_y() };
             eh_ids[eh_index++] = world.new_hull(hull.mesh_id(), pos, scl, rot,
                 hp_tbl, he_tbl, hb_tbl, hull.friction(), hull.restitution(),
@@ -748,13 +753,13 @@ public class PhysicsObjects
         System.arraycopy(in_points, 0, points, 0, in_points.length);
         int n = in_points.length;
 
-        // There must be at least 3 points
+        // There must be at least 3 points, or the hull is convex by default
         if (n < 3)
         {
             return points;
         }
 
-        // during hull creation, this holds the vertices that are currently designated as the hull
+        // during hull creation, this holds the vertices that are currently designated as the convex hull
         hull_vertex_buffer.clear();
 
         // Find the leftmost point
@@ -809,7 +814,7 @@ public class PhysicsObjects
      * index array is returned. This array contains a mapping for each hull vertex to the corresponding vertex
      * in the input vertex array.
      * This is useful for storing the hull data in a more compact format, because the hull is itself made up of
-     * vertices that are already present in the meshes data, it is more space efficient to store them as an
+     * vertices that are already present in the meshe data, it is more space efficient to store them as an
      * index array and use this as a lookup table at run time, if the vertex is even needed.
      *
      * @param in_points the points to wrap with in a convex hull

@@ -7,9 +7,11 @@ public class EgressBroken_k extends GPUKernel
         entities,
         entity_flags,
         entity_hull_tables,
+        entity_model_ids,
         hulls,
         hull_uv_offsets,
         positions,
+        uv_offsets,
         model_ids,
         counter,
     }
