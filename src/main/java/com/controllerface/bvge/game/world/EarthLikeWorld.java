@@ -326,18 +326,18 @@ public class EarthLikeWorld implements WorldType
                         Constants.HullFlags.IS_STATIC._int | Constants.HullFlags.OUT_OF_BOUNDS._int, solid, hits);
             }
         }
-//        else if (n < water_range_floor)
-//        {
-//            int hull_flags = Constants.HullFlags.IS_LIQUID._int | Constants.HullFlags.OUT_OF_BOUNDS._int;
-//            int point_flags = flip
-//                ? Constants.PointFlags.FLOW_LEFT.bits
-//                : 0;
-//            flip = !flip;
-//            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, -0.000001f, hull_flags, point_flags, Liquid.FRESHWATER);
-//        }
-//        else if (n < shard_range_floor)
-//        {
-//            batch.new_shard(true, false, world_x_block, world_y_block,  sz_solid, Constants.HullFlags.OUT_OF_BOUNDS._int,.1f, 0.00f, 0.005f, Solid.BASALT);
-//        }
+        else if (n < water_range_floor)
+        {
+            int hull_flags = Constants.HullFlags.IS_LIQUID._int | Constants.HullFlags.OUT_OF_BOUNDS._int;
+            int point_flags = flip
+                ? Constants.PointFlags.FLOW_LEFT.bits
+                : 0;
+            flip = !flip;
+            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, -0.000001f, hull_flags, point_flags, Liquid.FRESHWATER);
+        }
+        else if (n < shard_range_floor)
+        {
+            batch.new_shard(true, false, world_x_block, world_y_block,  sz_solid, Constants.HullFlags.OUT_OF_BOUNDS._int,.1f, 0.00f, 0.005f, Solid.BASALT);
+        }
     }
 }
