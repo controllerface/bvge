@@ -3,7 +3,7 @@ Performs axis-aligned bounding box collision detection as part of a broad phase 
  */
 __kernel void aabb_collide(__global float4 *bounds,
                            __global int2 *bounds_bank_data,
-                           __global int *hull_armature_ids,
+                           __global int *hull_entity_ids,
                            __global int *hull_flags,
                            __global int2 *candidates,
                            __global int *match_offsets,
@@ -25,7 +25,7 @@ __kernel void aabb_collide(__global float4 *bounds,
     float4 bound = bounds[index];
     int2 bounds_bank = bounds_bank_data[index];
     int flags = hull_flags[index];
-    int armature_id = hull_armature_ids[index];
+    int entity_id = hull_entity_ids[index];
 
     int spatial_index = bounds_bank.x * 2;
     int spatial_length = bounds_bank.y;
@@ -75,8 +75,8 @@ __kernel void aabb_collide(__global float4 *bounds,
 
             // no collisions between hulls that are part of the same amrature
             int candiate_flags = hull_flags[next];
-            int candiate_armature_id = hull_armature_ids[next];
-            if (candiate_armature_id == armature_id)
+            int candiate_entity_id = hull_entity_ids[next];
+            if (candiate_entity_id == entity_id)
             {
                 continue;
             }

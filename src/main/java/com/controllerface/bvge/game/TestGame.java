@@ -1,373 +1,154 @@
 package com.controllerface.bvge.game;
 
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.ecs.systems.sectors.Sector;
+import com.controllerface.bvge.ecs.systems.sectors.SectorLoader;
+import com.controllerface.bvge.ecs.systems.sectors.SectorUnloader;
 import com.controllerface.bvge.geometry.MeshRegistry;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.renderers.*;
+import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
-import com.controllerface.bvge.substances.Liquid;
-import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.window.Window;
+import com.controllerface.bvge.util.Constants;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
-import java.util.EnumSet;
-import java.util.Random;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
-import static com.controllerface.bvge.util.Constants.*;
 
 public class TestGame extends GameMode
 {
-    private final GameSystem screenBlankSystem;
+    private final GameSystem blanking_system;
+    private final int GRID_WIDTH = 3840;
+    private final int GRID_HEIGHT = 2160;
+
+    private final Cache<Sector, PhysicsEntityBatch> sector_cache;
+    private final Queue<PhysicsEntityBatch> spawn_queue;
 
     private enum RenderType
     {
-        MODELS,     // normal objects
+        GAME,       // normal objects
         HULLS,      // physics hulls
         BOUNDS,     // bounding boxes
         POINTS,     // model vertices
-        ARMATURES,  // armature roots
+        ENTITIES,   // entity roots
         GRID,       // uniform grid
-
     }
+
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-        EnumSet.of(
-//            RenderType.HULLS,
-//            RenderType.POINTS,
-//            RenderType.ARMATURES,
-//            RenderType.BOUNDS,
-//            RenderType.GRID,
-            RenderType.MODELS);
+        EnumSet.of(RenderType.GAME
+//            ,RenderType.HULLS
+//            ,RenderType.POINTS
+//            ,RenderType.ENTITIES
+//            ,RenderType.BOUNDS
+//            ,RenderType.GRID
+            );
 
 //    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-//        EnumSet.allOf(RenderType.class);
+//        EnumSet.of(RenderType.HULLS);
 
-    private final UniformGrid uniformGrid = new UniformGrid(Window.get().width(), Window.get().height());
+    //private final UniformGrid uniformGrid = new UniformGrid(Window.get().width(), Window.get().height());
+    private final UniformGrid uniformGrid = new UniformGrid(GRID_WIDTH, GRID_HEIGHT);
 
-    private final Random random = new Random();
 
-    public TestGame(ECS ecs, GameSystem screenBlankSystem)
+    public TestGame(ECS ecs, GameSystem blanking_system)
     {
         super(ecs);
 
         MeshRegistry.init();
         ModelRegistry.init();
 
-        this.screenBlankSystem = screenBlankSystem;
+        this.blanking_system = blanking_system;
+        this.spawn_queue = new LinkedBlockingDeque<>();
+        this.sector_cache = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.of(1, ChronoUnit.HOURS))
+            .build();
+
     }
 
-
-    public float rando_float(float baseNumber, float percentage)
+    private void gen_player(float size, float x, float y)
     {
+        var player = ecs.register_entity("player");
+        var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory, PLAYER_MODEL_INDEX, x, y, size, 100.5f, 0.05f, 0,0, Constants.EntityFlags.CAN_COLLECT.bits);
+        var cursor_id = PhysicsObjects.circle_cursor(GPGPU.core_memory, 0,0, 10, entity_id[1]);
 
-        float upperBound = baseNumber * percentage;
-        return baseNumber + random.nextFloat() * (upperBound - baseNumber);
+        ecs.attach_component(player, Component.EntityId, new EntityIndex(entity_id[0]));
+        ecs.attach_component(player, Component.CursorId, new EntityIndex(cursor_id));
+        ecs.attach_component(player, Component.ControlPoints, new ControlPoints());
+        ecs.attach_component(player, Component.CameraFocus, new CameraFocus());
+        ecs.attach_component(player, Component.LinearForce, new LinearForce(1600));
     }
 
-    public int rando_int(int min, int max)
+    private void load_systems()
     {
-        return random.nextInt(min, max);
-    }
+        ecs.register_system(new SectorLoader(ecs, uniformGrid, sector_cache, spawn_queue));
+        ecs.register_system(new PhysicsSimulation(ecs, uniformGrid));
+        ecs.register_system(new SectorUnloader(ecs, sector_cache, spawn_queue));
+        ecs.register_system(new CameraTracking(ecs, uniformGrid));
 
+        ecs.register_system(blanking_system);
 
-//    private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid block_mineral)
-//    {
-//        System.out.println("generating: " + box_size * box_size + " Blocks..");
-//        for (int i = 0; i < box_size; i++)
-//        {
-//            for (int j = 0; j < box_size; j++)
-//            {
-//                float x = start_x + i * spacing;
-//                float y = start_y + j * spacing;
-//                //var npc = ecs.registerEntity(null);
-//                var armature_index = PhysicsObjects.dynamic_block(x, y, size, 500f, 0.05f, 0.0003f, block_mineral);
-//                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-//            }
-//        }
-//    }
+        ecs.register_system(new BackgroundRenderer(ecs));
+        ecs.register_system(new MouseRenderer(ecs));
 
-
-    private void genBlocks(int box_size, float spacing, float size, float start_x, float start_y, Solid ... minerals)
-    {
-        System.out.println("generating: " + box_size * box_size + " Blocks..");
-        for (int i = 0; i < box_size; i++)
+        if (ACTIVE_RENDERERS.contains(RenderType.GAME))
         {
-            for (int j = 0; j < box_size; j++)
-            {
-                float x = start_x + i * spacing;
-                float y = start_y + j * spacing;
-                int rx = rando_int(0, minerals.length);
-                PhysicsObjects.dynamic_block(x, y, size, 90f, 0.03f, 0.0003f, minerals[rx]);
-            }
-        }
-    }
-
-    private void genSquaresRando(int box_size, float spacing, float size, float percentage, float start_x, float start_y, Solid ... minerals)
-    {
-        System.out.println("generating: " + box_size * box_size + " Blocks..");
-        for (int i = 0; i < box_size; i++)
-        {
-            for (int j = 0; j < box_size; j++)
-            {
-                float x = start_x + i * spacing;
-                float y = start_y + j * spacing;
-                int rx = rando_int(0, minerals.length);
-                PhysicsObjects.dynamic_block(x, y, rando_float(size, percentage), 90f, 0.03f, 0.0003f, minerals[rx]);
-            }
-        }
-    }
-
-    private void genCrates2(int box_size, float spacing, float size, float start_x, float start_y)
-    {
-        System.out.println("generating: " + box_size * box_size + " Crates..");
-        for (int i = 0; i < box_size; i++)
-        {
-            for (int j = 0; j < box_size; j++)
-            {
-                float x = start_x + i * spacing;
-                float y = start_y + j * spacing;
-                genBoxModelNPC(size, x, y);
-            }
-        }
-    }
-
-    private void genTriangles(int box_size, float spacing, float size, float start_x, float start_y)
-    {
-        System.out.println("generating: " + box_size * box_size + " Triangles..");
-        for (int i = 0; i < box_size; i++)
-        {
-            for (int j = 0; j < box_size; j++)
-            {
-                float x = start_x + i * spacing;
-                float y = start_y + j * spacing;
-                //var npc = ecs.registerEntity(null);
-                var armature_index = PhysicsObjects.tri(x, y, size, 0, 20f, 0.02f, 0.0003f);
-                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-            }
-        }
-    }
-
-    private void genWater(int box_size, float spacing, float size, float start_x, float start_y, Liquid ... liquids)
-    {
-        boolean flip = false;
-        System.out.println("generating: " + box_size * box_size + " water particles..");
-        for (int i = 0; i < box_size; i++)
-        {
-            for (int j = 0; j < box_size; j++)
-            {
-                float x = start_x + i * spacing;
-                float y = start_y + j * spacing;
-                int flags = flip
-                    ? PointFlags.FLOW_LEFT.bits
-                    : 0;
-                flip = !flip;
-                int rx = rando_int(0, liquids.length);
-                var armature_index = PhysicsObjects.liquid_particle(x, y, size,
-                    .1f, 0.0f, 0.00000f,
-                    HullFlags.IS_LIQUID._int,
-                    flags,
-                    liquids[rx]);
-                //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-            }
-        }
-    }
-
-    private void genFloor(int floor_size, float spacing, float size, float start_x, float start_y, float friction, Solid solid)
-    {
-        System.out.println("generating floor size: " + floor_size);
-        for (int i = 0; i < floor_size; i++)
-        {
-            float x = start_x + i * spacing;
-            float y = start_y;
-            //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, friction, 0.0003f, solid);
-            //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-        }
-    }
-
-    private void genWall(int floor_size, float spacing, float size, float start_x, float start_y, Solid solid)
-    {
-        System.out.println("generating wall size: " + floor_size);
-        for (int i = 0; i < floor_size; i++)
-        {
-            float x = start_x;
-            float y = start_y + i * spacing;
-            //var npc = ecs.registerEntity(null);
-            var armature_index = PhysicsObjects.static_box(x, y, size, 0, 0.0f, 0.0f, solid);
-            //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-        }
-    }
-
-    private void genTestCrate(float size, float x, float y)
-    {
-        //var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.dynamic_block(x, y, size, .1f, 0.02f, 0.0001f, Solid.ANDESITE);
-        //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-    }
-
-    private void genTestTriangle(float size, float x, float y)
-    {
-       // var npc = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.tri(x, y, size, 0, .1f, 0.02f, 0.0003f);
-        //ecs.attachComponent(npc, Component.Armature, new ArmatureIndex(armature_index));
-    }
-
-    private void genTestFigure(float size, float x, float y)
-    {
-        // circle entity
-        var figure = ecs.registerEntity("player");
-
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 100.5f, 0.05f, 0,0);
-        ecs.attachComponent(figure, Component.ControlPoints, new ControlPoints());
-        ecs.attachComponent(figure, Component.CameraFocus, new CameraFocus());
-        // todo: determine if a different ID may be used for identifying entities that is not tied to the
-        //  armature index directly. Now that objects can be deleted, this value can change frequently
-        //  and there is not a mechanism to keep ECS entities updated to compensate. Instead, some unique
-        //  monotonically increasing value could be used, which doesn't change during entity life time
-        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
-        ecs.attachComponent(figure, Component.LinearForce, new LinearForce(1600));
-    }
-
-    private void genCursor(float size, float x, float y)
-    {
-        // circle entity
-        var figure = ecs.registerEntity("mouse");
-        var armature_index = PhysicsObjects.circle_cursor(x, y, size);
-        ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
-    }
-
-    private void genTestFigureNPC_2(float size, float x, float y)
-    {
-        //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX_2, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0, 0);
-        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
-    }
-
-    private void genTestFigureNPC(float size, float x, float y)
-    {
-        //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_MODEL_INDEX, x, y, size, HullFlags.IS_POLYGON._int, 50, 0.02f, 0,0);
-        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
-    }
-
-    private void genBoxModelNPC(float size, float x, float y)
-    {
-        //var figure = ecs.registerEntity(null);
-        var armature_index = PhysicsObjects.wrap_model(TEST_SQUARE_INDEX, x, y, size, HullFlags.IS_POLYGON._int, .1f, 0.02f, 0,0);
-        //ecs.attachComponent(figure, Component.Armature, new ArmatureIndex(armature_index));
-    }
-
-    // note: order of adding systems is important
-    private void loadSystems()
-    {
-        // all physics calculations should be done first
-        ecs.registerSystem(new PhysicsSimulation(ecs, uniformGrid));
-
-        // camera movement must be handled before rendering occurs, but after collision has been resolved
-        ecs.registerSystem(new CameraTracking(ecs, uniformGrid));
-
-        // the blanking system clears the screen before rendering passes
-        ecs.registerSystem(screenBlankSystem);
-
-        // main renderers go here, one for each model type that can be rendered
-
-        ecs.registerSystem(new BackgroundRenderer(ecs));
-
-        if (ACTIVE_RENDERERS.contains(RenderType.MODELS))
-        {
-            //ecs.registerSystem(new CrateRenderer(ecs));
-            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", TEST_MODEL_INDEX));
-            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_BLOCK_INDEX));
-            ecs.registerSystem(new ModelRenderer(ecs, "block_model.glsl", BASE_TRI_INDEX));
-            ecs.registerSystem(new LiquidRenderer(ecs));
+            ecs.register_system(new ModelRenderer(ecs, uniformGrid, PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX));
+            ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
         }
 
-        // these are debug-level renderers for visualizing the modeled physics boundaries
+        // debug renderers
 
         if (ACTIVE_RENDERERS.contains(RenderType.HULLS))
         {
-            ecs.registerSystem(new EdgeRenderer(ecs));
-            ecs.registerSystem(new CircleRenderer(ecs));
+            ecs.register_system(new EdgeRenderer(ecs));
+            ecs.register_system(new CircleRenderer(ecs));
         }
 
         if (ACTIVE_RENDERERS.contains(RenderType.BOUNDS))
         {
-            ecs.registerSystem(new BoundingBoxRenderer(ecs));
+            ecs.register_system(new BoundingBoxRenderer(ecs));
         }
 
         if (ACTIVE_RENDERERS.contains(RenderType.POINTS))
         {
-            ecs.registerSystem(new PointRenderer(ecs));
+            ecs.register_system(new PointRenderer(ecs));
         }
 
         if (ACTIVE_RENDERERS.contains(RenderType.GRID))
         {
-            ecs.registerSystem(new UniformGridRenderer(ecs, uniformGrid));
+            ecs.register_system(new UniformGridRenderer(ecs, uniformGrid));
         }
 
-        if (ACTIVE_RENDERERS.contains(RenderType.ARMATURES))
+        if (ACTIVE_RENDERERS.contains(RenderType.ENTITIES))
         {
-            ecs.registerSystem(new ArmatureRenderer(ecs));
+            ecs.register_system(new EntityPositionRenderer(ecs));
         }
-
-        ecs.registerSystem(new MouseRenderer(ecs));
     }
 
     @Override
     public void load()
     {
-        // player character
-        genTestFigure(1f, 2000, 3200);
-        genCursor(10, 0, 0);
-        //genTestFigureNPC_2(1f, 100, 500);
-
-//        genTestFigureNPC(1f, 200, 0);
-//        genSquares(1,  25f, 25f, 420, 200);
-//        genTestFigureNPC(1f, 200, 100);
-//        genSquares(1,  25f, 25f, 420, 200);
-//        genTestFigureNPC(1f, 200, 250);
-//        genSquares(1,  25f, 25f, 420, 200);
-//        genTestFigureNPC(1f, 100, 50);
-
-        //genCircles(150, 6f, 5f, 0, 100);
-
-        genWater(100, 15f, 15f, 0, 3000, Liquid.WATER);
-        genSquaresRando(40,  32f, 32f, 0.8f,-50, 200, Solid.CLAYSTONE, Solid.SOAPSTONE, Solid.MUDSTONE);
-        genBlocks(40,  32f, 32f, 2500, 200, Solid.GREENSCHIST, Solid.SCHIST, Solid.BLUESCHIST, Solid.WHITESCHIST);
-        //genBlocks(40,  32f, 32f, 2500, 3800, Solid.QUARTZITE, Solid.QUARTZ_DIORITE, Solid.QUARTZ_MONZONITE);
-
-        //genSquaresRando(50,  25f, 25f, 0.8f, 2500, 200);
-        //genSquares(1,  25f, 25f, 420, 200);
-
-        //genCrates2(20, 5f, 0.025f, 100, 100);
-        //genTriangles(130,  6f, 5f, -120, 200);
-        genTriangles(50,  24f, 24f, 2500, 3800);
-
-        //PhysicsObjects.static_tri(0,-25, 150, 1, 0.02f);
-        //PhysicsObjects.static_box(0,0,10,10, 0f);
-
-        genFloor(16, 150f, 150f, -70, -100, 0.5f, Solid.ANDESITE);
-        genFloor(32, 150f, 150f, 1700, -100, 0.5f, Solid.ANDESITE);
-        genFloor(32, 150f, 150f, 1700, 2200, 0.5f, Solid.DIORITE);
-
-        genWall(15, 150f, 150f, -220, -100, Solid.ANDESITE);
-        genWall(5, 150f, 150f, 2000, 1500, Solid.DIORITE);
-        genWall(5, 150f, 150f, 4880, -100, Solid.ANDESITE);
-
-        loadSystems();
+        gen_player(1.2f, -250, 0);
+        load_systems();
     }
 
     @Override
-    public void start()
-    {
-    }
+    public void start() { }
 
     @Override
-    public void update(float dt)
-    {
-    }
+    public void update(float dt) { }
 }

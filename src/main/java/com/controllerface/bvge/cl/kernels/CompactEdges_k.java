@@ -1,7 +1,5 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPUKernel;
-
 public class CompactEdges_k extends GPUKernel
 {
     public enum Args

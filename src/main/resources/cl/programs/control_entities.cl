@@ -1,23 +1,13 @@
-#define IDLE         0
-#define WALKING      1
-#define RUNNING      2
-#define FALLING_FAST 3
-#define JUMP_START   4
-#define JUMPING      5
-#define IN_AIR       6
-#define LAND_HARD    7
-#define FALLING_SLOW 8
-#define LAND_SOFT    9
-#define SWIM_UP      10
-#define SWIM_DOWN    11
-
 typedef struct 
 {
     bool is_mv_l;
     bool is_mv_r;
     bool mv_jump;
+    bool mv_run;
     bool can_jump;
     bool is_wet;
+    bool is_click_1;
+    bool is_click_2;
     int current_budget;
     short2 motion_state;
     float current_time;
@@ -29,6 +19,7 @@ typedef struct
 {
     bool blend;
     bool accel;
+    bool attack;
     float blend_time;
     int next_state;
     float next_time;
@@ -39,47 +30,42 @@ typedef struct
 
 OutputState init_output(int current_state)
 {
-    OutputState o = { false, false, 0.0f, current_state, 0.0f, 0, 0, 0.0f };
+    OutputState o = { false, false, false, 0.0f, current_state, 0.0f, 0, 0, 0.0f };
     return o;
 }
 
 OutputState idle_state(InputState input)
 {
     OutputState output = init_output(IDLE);
-    if (input.is_mv_l || input.is_mv_r) output.next_state = WALKING;
-    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = JUMP_START;
-    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.is_mv_l || input.is_mv_r) output.next_state = input.mv_run ? RUNNING : WALKING;
+    if (input.is_click_1) output.next_state = PUNCH;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
+    if (input.motion_state.x > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != IDLE)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        float t = output.next_state == JUMP_START 
-            ? 0.1f
-            : 0.4f;
-        output.blend_time = t;
-    }
     return output;
 }
 
 OutputState walking_state(InputState input)
 {
     OutputState output = init_output(WALKING);
+    if (input.mv_run) output.next_state = RUNNING;
     if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
-    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = JUMP_START;
-    if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.is_click_1) output.next_state = PUNCH;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
+    if (input.motion_state.x > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != WALKING)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        float t = output.next_state == JUMP_START 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
-    }
+    return output;
+}
+
+OutputState running_state(InputState input)
+{
+    OutputState output = init_output(RUNNING);
+    if (!input.mv_run) output.next_state = WALKING;
+    if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
+    if (input.is_click_1) output.next_state = PUNCH;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
+    if (input.motion_state.x > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
     return output;
 }
 
@@ -91,16 +77,6 @@ OutputState falling_slow_state(InputState input)
         : LAND_SOFT;
     if (input.motion_state.x > 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_FAST;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != FALLING_SLOW)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        float t = output.next_state == JUMP_START 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
-    }
     return output;
 }
 
@@ -113,22 +89,12 @@ OutputState falling_fast_state(InputState input)
     if (input.is_wet) output.next_state = SWIM_DOWN;
     if (input.motion_state.x < 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != FALLING_FAST)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        float t = output.next_state == JUMP_START 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
-    }
     return output;
 }
 
-OutputState jump_start_state(InputState input)
+OutputState recoil_state(InputState input)
 {
-    OutputState output = init_output(JUMP_START);
+    OutputState output = init_output(RECOIL);
     if (input.current_time > 0.15f) output.next_state = JUMPING;
     return output;
 }
@@ -146,13 +112,6 @@ OutputState jumping_state(InputState input)
             : input.jump_mag / 2
         : 0;
     if (tick_slice == 0) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != JUMPING)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        output.blend_time = 0.5f;
-    }
     return output;
 }
 
@@ -163,16 +122,6 @@ OutputState in_air_state(InputState input)
         ? LAND_HARD 
         : LAND_SOFT;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
-    if (output.next_state != IN_AIR)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        float t = output.next_state == LAND_HARD || output.next_state == LAND_SOFT 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
-    }
     return output;
 }
 
@@ -183,16 +132,6 @@ OutputState swim_up_state(InputState input)
         ? LAND_HARD 
         : LAND_SOFT;
     if (input.motion_state.x > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
-    if (output.next_state != SWIM_UP)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        float t = output.next_state == LAND_HARD || output.next_state == LAND_SOFT 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
-    }
     return output;
 }
 
@@ -204,16 +143,6 @@ OutputState swim_down_state(InputState input)
         : LAND_SOFT;
     if (input.motion_state.x > 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
     if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
-    if (output.next_state != SWIM_DOWN)
-    {
-        output.blend = true;
-        output.next_time = input.current_time;
-        output.next_anim_index = input.anim_index;
-        float t = output.next_state == LAND_HARD || output.next_state == LAND_SOFT 
-            ? 0.1f
-            : 0.2f;
-        output.blend_time = t;
-    }
     return output;
 }
 
@@ -228,6 +157,15 @@ OutputState land_hard_state(InputState input)
 {
     OutputState output = init_output(LAND_HARD);
     if (input.current_time > 0.22f) output.next_state = IDLE;
+    return output;
+}
+
+OutputState punch_state(InputState input)
+{
+    OutputState output = init_output(PUNCH);
+    if (!input.is_click_1) output.next_state = (input.is_mv_l || input.is_mv_r) ? WALKING : IDLE;
+    if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
+    if (output.next_state == PUNCH) output.attack = true;
     return output;
 }
 
@@ -247,13 +185,13 @@ __kernel void set_control_points(__global int *control_flags,
     jump_mag[target] = new_jump_mag;
 }
 
-__kernel void handle_movement(__global float4 *armatures,
-                              __global float2 *armature_accel,
-                              __global short2 *armature_motion_states,
-                              __global int *armature_flags,
-                              __global int2 *armature_animation_indices,
-                              __global float2 *armature_animation_elapsed,
-                              __global float2 *armature_animation_blend,
+__kernel void handle_movement(__global float4 *entities,
+                              __global float2 *entity_accel,
+                              __global short2 *entity_motion_states,
+                              __global int *entity_flags,
+                              __global int2 *entity_animation_indices,
+                              __global float2 *entity_animation_elapsed,
+                              __global float2 *entity_animation_blend,
                               __global int *control_flags,
                               __global int *indices,
                               __global int *tick_budgets,
@@ -268,25 +206,30 @@ __kernel void handle_movement(__global float4 *armatures,
     float current_linear_mag = linear_mag[current_control_set];
     float current_jump_mag   = jump_mag[current_control_set];
     int current_index        = indices[current_control_set];
-    float4 armature          = armatures[current_index];
-    float2 accel             = armature_accel[current_index];
-    int arm_flag             = armature_flags[current_index];
-    int2 anim_index          = armature_animation_indices[current_index];
-    short2 motion_state      = armature_motion_states[current_index];
-    float2 current_time      = armature_animation_elapsed[current_index];
-    float2 current_blend     = armature_animation_blend[current_index];
+    float4 entity            = entities[current_index];
+    float2 accel             = entity_accel[current_index];
+    int arm_flag             = entity_flags[current_index];
+    int2 anim_index          = entity_animation_indices[current_index];
+    short2 motion_state      = entity_motion_states[current_index];
+    float2 current_time      = entity_animation_elapsed[current_index];
+    float2 current_blend     = entity_animation_blend[current_index];
 
-    bool is_mv_l  = (current_flags & LEFT)  !=0;
-    bool is_mv_r  = (current_flags & RIGHT) !=0;
-    bool is_mv_u  = (current_flags & UP)    !=0;
-    bool is_mv_d  = (current_flags & DOWN)  !=0;
-    bool mv_jump  = (current_flags & JUMP)  !=0;
-    bool can_jump = (arm_flag & CAN_JUMP)   !=0;
-    bool is_wet   = (arm_flag & IS_WET)     !=0;
-
+    bool is_mv_l    = (current_flags & LEFT)   !=0;
+    bool is_mv_r    = (current_flags & RIGHT)  !=0;
+    bool is_mv_u    = (current_flags & UP)     !=0;
+    bool is_mv_d    = (current_flags & DOWN)   !=0;
+    bool is_click_1 = (current_flags & MOUSE1) !=0;
+    bool is_click_2 = (current_flags & MOUSE2) !=0;
+    bool mv_jump    = (current_flags & JUMP)   !=0;
+    bool mv_run     = (current_flags & RUN)    !=0;
+    bool can_jump   = (arm_flag & CAN_JUMP)    !=0;
+    bool is_wet     = (arm_flag & IS_WET)      !=0;
+    
     float move_mod = is_wet 
         ? 0.5f 
-        : 1.0f;
+        : mv_run 
+            ? 2.0f
+            : 1.0f;
 
     current_budget = can_jump && !mv_jump
         ? 10 
@@ -296,8 +239,11 @@ __kernel void handle_movement(__global float4 *armatures,
     input.is_mv_l        = is_mv_l;
     input.is_mv_r        = is_mv_r;
     input.mv_jump        = mv_jump;
+    input.mv_run         = mv_run;
     input.can_jump       = can_jump;
     input.is_wet         = is_wet;
+    input.is_click_1     = is_click_1;
+    input.is_click_2     = is_click_2;
     input.current_budget = current_budget;
     input.motion_state   = motion_state;
     input.current_time   = current_time.x;
@@ -309,35 +255,42 @@ __kernel void handle_movement(__global float4 *armatures,
     {
         case IDLE:         state_result = idle_state(input);         break;
         case WALKING:      state_result = walking_state(input);      break;
-        case RUNNING:      /* todo: implement running */             break;
+        case RUNNING:      state_result = running_state(input);      break;
         case FALLING_SLOW: state_result = falling_slow_state(input); break;
         case FALLING_FAST: state_result = falling_fast_state(input); break;
-        case JUMP_START:   state_result = jump_start_state(input);   break;
+        case RECOIL:       state_result = recoil_state(input);       break;
         case JUMPING:      state_result = jumping_state(input);      break;
         case IN_AIR:       state_result = in_air_state(input);       break;
         case SWIM_UP:      state_result = swim_up_state(input);      break;
         case SWIM_DOWN:    state_result = swim_down_state(input);    break;
         case LAND_SOFT:    state_result = land_soft_state(input);    break;
         case LAND_HARD:    state_result = land_hard_state(input);    break;
+        case PUNCH:        state_result = punch_state(input);        break;
     }
 
-    bool new_state = anim_index.x != state_result.next_state;
-    float threshold = 10.0f;
-    float2 vel = (armature.xy - armature.zw) / dt;
-    
-    anim_index.x = state_result.next_state;
+    // transition handling
 
-    current_time.y = state_result.blend 
-        ? state_result.next_time 
-        :current_time.y;
+    bool blend = anim_index.x != state_result.next_state;
 
-    anim_index.y = state_result.blend 
-        ? state_result.next_anim_index 
+    current_time.y = blend 
+        ? current_time.x
+        : current_time.y;
+
+    anim_index.y = blend 
+        ? anim_index.x 
         : anim_index.y;
 
-    current_blend = state_result.blend 
-        ? (float2)(state_result.blend_time, 0.0f)
+    current_blend = blend 
+        ? (float2)(transition_table[anim_index.x][state_result.next_state], 0.0f)
         : current_blend;
+
+    current_time.x = blend 
+        ? 0.0f 
+        : current_time.x;
+
+    anim_index.x = state_result.next_state;
+
+    // jumping
 
     accel.y = state_result.accel 
         ? state_result.jump_amount 
@@ -347,9 +300,10 @@ __kernel void handle_movement(__global float4 *armatures,
         ? state_result.next_budget
         : current_budget;
 
-    current_time.x = new_state 
-        ? 0.0f 
-        : current_time.x;
+    // motion state
+
+    float threshold = 10.0f;
+    float2 vel = (entity.xy - entity.zw) / dt;
 
     motion_state.x = (vel.y < -threshold) 
         ? motion_state.x + 1 
@@ -367,6 +321,8 @@ __kernel void handle_movement(__global float4 *armatures,
         ? 1000 
         : motion_state.y;
 
+    // acceleration
+
     accel.x = is_mv_l && !is_mv_r
         ? -current_linear_mag * move_mod
         : accel.x;
@@ -383,6 +339,8 @@ __kernel void handle_movement(__global float4 *armatures,
         ? -current_linear_mag
         : accel.y;
 
+    // set flags
+
     arm_flag = is_mv_l != is_mv_r 
         ? is_mv_l
             ? arm_flag | FACE_LEFT 
@@ -391,13 +349,21 @@ __kernel void handle_movement(__global float4 *armatures,
                 : arm_flag
         : arm_flag; 
 
-    armature_animation_elapsed[current_index] = current_time;
-    armature_animation_blend[current_index] = current_blend;
-    armature_motion_states[current_index] = motion_state;
-    tick_budgets[current_control_set] = current_budget;
-    armature_accel[current_index] = accel;
-    armature_flags[current_index] = arm_flag;
-    armature_animation_indices[current_index] = anim_index;
+    arm_flag = state_result.attack 
+        ? arm_flag | ATTACKING 
+        : arm_flag & ~ATTACKING; 
+
+    arm_flag = is_click_2 
+        ? arm_flag | CAN_COLLECT 
+        : arm_flag & ~CAN_COLLECT; 
+
+    entity_accel[current_index]             = accel;
+    entity_flags[current_index]             = arm_flag;
+    tick_budgets[current_control_set]       = current_budget;
+    entity_motion_states[current_index]     = motion_state;
+    entity_animation_blend[current_index]   = current_blend;
+    entity_animation_elapsed[current_index] = current_time;
+    entity_animation_indices[current_index] = anim_index;
 }
 
 __kernel void query_hovered(__global int *hull_flags,

@@ -23,6 +23,7 @@ public enum Liquid
     public final Vector4f color;
     public final byte liquid_number;
     public final Compound[] compounds;
+    private static String lookup_table = "";
 
     Liquid(Vector4f color, Compound[] compounds)
     {
@@ -51,8 +52,6 @@ public enum Liquid
         this(color, new Compound[]{compound_1, compound_2, compound_3, compound_4});
     }
 
-    private static String lookup_table = "";
-
     /**
      * Generates an Open CL C lookup table for the colors of all defined liquids. The generated table will look
      * similar to this example at runtime:
@@ -74,14 +73,14 @@ public enum Liquid
         {
             var buffer = new StringBuilder();
 
-            buffer.append("constant float4 liquid_lookup_table[] = \n{\n");
+            buffer.append("constant float4 liquid_lookup_table[" + values().length + "] = \n{\n");
             for (var liquid : values())
             {
                 var x = String.valueOf(liquid.color.x);
                 var y = String.valueOf(liquid.color.y);
                 var z = String.valueOf(liquid.color.z);
                 var w = String.valueOf(liquid.color.w);
-                buffer.append(STR."\t(float4)(\{x}, \{y}, \{z}, \{w}),\n");
+                buffer.append("\t(float4)("+x+"f, "+y+"f, "+z+"f, "+w+"f),\n");
             }
             buffer.append("};\n\n");
             lookup_table = buffer.toString();

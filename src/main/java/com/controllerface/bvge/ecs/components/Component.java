@@ -5,7 +5,8 @@ import com.controllerface.bvge.ecs.ECS;
 public enum Component
 {
     ControlPoints(ControlPoints.class),
-    Armature(ArmatureIndex.class),
+    EntityId(EntityIndex.class),
+    CursorId(EntityIndex.class),
     LinearForce(LinearForce.class),
     CameraFocus(CameraFocus.class),
 
@@ -41,7 +42,7 @@ public enum Component
      */
     public <T extends GameComponent> T forEntity(ECS ecs, String entity)
     {
-        var componentClass = ecs.getComponentFor(entity, this);
+        var componentClass = ecs.get_component_for(entity, this);
         return componentClass == null ? null : coerce(componentClass);
     }
 }

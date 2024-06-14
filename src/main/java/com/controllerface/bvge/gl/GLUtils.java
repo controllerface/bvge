@@ -15,6 +15,13 @@ public class GLUtils
         return dynamic_float_buffer(vao, bind_index, buffer_size, SCALAR_LENGTH, SCALAR_FLOAT_SIZE);
     }
 
+    public static int new_buffer_int(int vao,
+                                     int bind_index,
+                                     int buffer_size)
+    {
+        return dynamic_int_buffer(vao, bind_index, buffer_size, SCALAR_LENGTH, SCALAR_INT_SIZE);
+    }
+
     public static int new_buffer_vec2(int vao,
                                       int bind_index,
                                       int buffer_size)
@@ -79,6 +86,27 @@ public class GLUtils
             DEFAULT_STRIDE,
             GL_DYNAMIC_DRAW);
     }
+
+
+    private static int dynamic_int_buffer(int vao,
+                                            int bind_index,
+                                            int buffer_size,
+                                            int data_count,
+                                            int data_size)
+    {
+        return create_vertex_buffer(vao,
+            DEFAULT_OFFSET,
+            bind_index,
+            bind_index,
+            buffer_size,
+            GL_INT,
+            data_count,
+            data_size,
+            DEFAULT_STRIDE,
+            GL_DYNAMIC_DRAW);
+    }
+
+
 
     private static int static_float_buffer(int vao,
                                            int bind_index,

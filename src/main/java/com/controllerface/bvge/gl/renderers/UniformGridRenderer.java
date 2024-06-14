@@ -1,12 +1,15 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.window.Window;
+
+import java.util.Map;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
@@ -34,6 +37,9 @@ public class UniformGridRenderer extends GameSystem
 
     private Shader shader;
 
+    private record GridPoint(float x, float y, float r, float g, float b, float a) { }
+    private record GridBounds(GridPoint p0, GridPoint p1, GridPoint p2, GridPoint p3) { }
+
     public UniformGridRenderer(ECS ecs, UniformGrid uniformGrid)
     {
         super(ecs);
@@ -43,7 +49,8 @@ public class UniformGridRenderer extends GameSystem
 
     private void init_GL()
     {
-        int draw_count = uniformGrid.x_subdivisions * uniformGrid.y_subdivisions + 1;
+        int sector_0_count = UniformGrid.BLOCK_COUNT * UniformGrid.BLOCK_COUNT;
+        int draw_count = uniformGrid.x_subdivisions * uniformGrid.y_subdivisions + 8 + sector_0_count;
         first = new int[draw_count];
         count = new int[draw_count];
         vertex_buffer_size = draw_count * VERTICES_PER_BOX * VECTOR_FLOAT_2D_SIZE;
@@ -63,7 +70,7 @@ public class UniformGridRenderer extends GameSystem
         glEnableVertexArrayAttrib(vao, COLOR_ATTRIBUTE);
     }
 
-    private record GridData(float[] vertices, float[] colors) {}
+    private record GridData(float[] vertices, float[] colors) { }
 
     private boolean inside_inner(float a0, float a1, float a2, float a3, float x, float y, float w, float h)
     {
@@ -73,38 +80,225 @@ public class UniformGridRenderer extends GameSystem
             && a1 + a3 > y;
     }
 
+    // calculates a spatial index cell for a given point
+    public static int[] get_sector_for_point(float px, float py)
+    {
+        int[] out = new int[2];
+        int index_x = (int) Math.floor(px / UniformGrid.SECTOR_SIZE);
+        int index_y = (int) Math.floor(py / UniformGrid.SECTOR_SIZE);
+        out[0] = index_x;
+        out[1] = index_y;
+        return out;
+    }
+
+
+
+    private int[] write_rect(GridBounds rect, float[] vertex_buffer, float[] color_buffer, int vertex_index, int color_index)
+    {
+        int v_i = vertex_index;
+        int c_i = color_index;
+        vertex_buffer[v_i++] = rect.p0.x;  // lower left X
+        vertex_buffer[v_i++] = rect.p0.y;  // lower left Y
+        vertex_buffer[v_i++] = rect.p1.x;  // lower right X
+        vertex_buffer[v_i++] = rect.p1.y;  // lower right Y
+        vertex_buffer[v_i++] = rect.p2.x;  // upper right X
+        vertex_buffer[v_i++] = rect.p2.y;  // upper right Y
+        vertex_buffer[v_i++] = rect.p3.x;  // upper left X
+        vertex_buffer[v_i++] = rect.p3.y;  // upper left Y
+
+        color_buffer[c_i++] = rect.p0.r; // v0
+        color_buffer[c_i++] = rect.p0.g;
+        color_buffer[c_i++] = rect.p0.b;
+        color_buffer[c_i++] = rect.p0.a;
+        color_buffer[c_i++] = rect.p1.r; // v1
+        color_buffer[c_i++] = rect.p1.g;
+        color_buffer[c_i++] = rect.p1.b;
+        color_buffer[c_i++] = rect.p1.a;
+        color_buffer[c_i++] = rect.p2.r; // v2
+        color_buffer[c_i++] = rect.p2.g;
+        color_buffer[c_i++] = rect.p2.b;
+        color_buffer[c_i++] = rect.p2.a;
+        color_buffer[c_i++] = rect.p3.r; // v3
+        color_buffer[c_i++] = rect.p3.g;
+        color_buffer[c_i++] = rect.p3.b;
+        color_buffer[c_i++] = rect.p3.a;
+
+        return new int[]{v_i - vertex_index, c_i - color_index};
+    }
+
     private GridData load_grid_data()
     {
         float[] vertex_data = new float[vertex_buffer_size];
         float[] color_data = new float[color_buffer_size];
-        vertex_data[0] = uniformGrid.x_origin();                        // lower left X
-        vertex_data[1] = uniformGrid.y_origin();                        // lower left Y
-        vertex_data[2] = uniformGrid.x_origin() + uniformGrid.width;    // lower right X
-        vertex_data[3] = uniformGrid.y_origin();                        // lower right Y
-        vertex_data[4] = uniformGrid.x_origin() + uniformGrid.width;    // upper right X
-        vertex_data[5] = uniformGrid.y_origin() + uniformGrid.height;   // upper right Y
-        vertex_data[6] = uniformGrid.x_origin();                        // upper left X
-        vertex_data[7] = uniformGrid.y_origin() + uniformGrid.height;   // upper left Y
 
-        color_data[0]  = 0.5f; // v0
-        color_data[1]  = 0.5f;
-        color_data[2]  = 0.5f;
-        color_data[3]  = 0.5f;
-        color_data[4]  = 0.5f; // v1
-        color_data[5]  = 0.5f;
-        color_data[6]  = 0.5f;
-        color_data[7]  = 0.5f;
-        color_data[8]  = 0.5f; // v2
-        color_data[9]  = 0.5f;
-        color_data[10] = 0.5f;
-        color_data[11] = 0.5f;
-        color_data[12] = 0.5f; // v3
-        color_data[13] = 0.5f;
-        color_data[14] = 0.5f;
-        color_data[15] = 0.5f;
+        int vertex_index = 0;
+        int color_index = 0;
 
-        int vertex_index = 8;
-        int color_index = 16;
+        float sector_size = UniformGrid.SECTOR_SIZE;
+
+        float xo = uniformGrid.x_origin();
+        float yo = uniformGrid.y_origin();
+
+        float i_xo = uniformGrid.inner_x_origin();
+        float i_yo = uniformGrid.inner_y_origin();
+
+        float o_xo = uniformGrid.outer_x_origin();
+        float o_yo = uniformGrid.outer_y_origin();
+
+        float s_xo = uniformGrid.sector_origin_x();
+        float s_yo = uniformGrid.sector_origin_y();
+
+        var base_bounds_p0 = new GridPoint(xo, yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var base_bounds_p1 = new GridPoint(xo + uniformGrid.width, yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var base_bounds_p2 = new GridPoint(xo + uniformGrid.width, yo + uniformGrid.height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var base_bounds_p3 = new GridPoint(xo, yo + uniformGrid.height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var base_bounds    = new GridBounds(base_bounds_p0, base_bounds_p1, base_bounds_p2, base_bounds_p3);
+
+        var inner_bounds_p0 = new GridPoint(i_xo, i_yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var inner_bounds_p1 = new GridPoint(i_xo + uniformGrid.inner_width, i_yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var inner_bounds_p2 = new GridPoint(i_xo + uniformGrid.inner_width, i_yo + uniformGrid.inner_height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var inner_bounds_p3 = new GridPoint(i_xo, i_yo + uniformGrid.inner_height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var inner_bounds    = new GridBounds(inner_bounds_p0, inner_bounds_p1, inner_bounds_p2, inner_bounds_p3);
+
+        var outer_bounds_p0 = new GridPoint(o_xo, o_yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var outer_bounds_p1 = new GridPoint(o_xo + uniformGrid.outer_width, o_yo, 0.5f, 0.5f, 0.5f, 0.5f);
+        var outer_bounds_p2 = new GridPoint(o_xo + uniformGrid.outer_width, o_yo + uniformGrid.outer_height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var outer_bounds_p3 = new GridPoint(o_xo, o_yo + uniformGrid.outer_height, 0.5f, 0.5f, 0.5f, 0.5f);
+        var outer_bounds    = new GridBounds(outer_bounds_p0, outer_bounds_p1, outer_bounds_p2, outer_bounds_p3);
+
+        var sector_bounds_p0 = new GridPoint(s_xo, s_yo, 0.9f, 0.5f, 0.5f, 0.5f);
+        var sector_bounds_p1 = new GridPoint(s_xo + uniformGrid.sector_width(), s_yo, 0.9f, 0.5f, 0.5f, 0.5f);
+        var sector_bounds_p2 = new GridPoint(s_xo + uniformGrid.sector_width(), s_yo + uniformGrid.sector_height(), 0.9f, 0.5f, 0.5f, 0.5f);
+        var sector_bounds_p3 = new GridPoint(s_xo, s_yo + uniformGrid.sector_height(), 0.9f, 0.5f, 0.5f, 0.5f);
+        var sector_bounds    = new GridBounds(sector_bounds_p0, sector_bounds_p1, sector_bounds_p2, sector_bounds_p3);
+
+        var sector_0_key = get_sector_for_point(outer_bounds.p0.x, outer_bounds.p0.y);
+        var sector_1_key = get_sector_for_point(outer_bounds.p1.x, outer_bounds.p1.y);
+        var sector_2_key = get_sector_for_point(outer_bounds.p2.x, outer_bounds.p2.y);
+        var sector_3_key = get_sector_for_point(outer_bounds.p3.x, outer_bounds.p3.y);
+
+        float sector_0_origin_x = (float)sector_0_key[0] * sector_size;
+        float sector_0_origin_y = (float)sector_0_key[1] * sector_size;
+
+        float sector_1_origin_x = (float)sector_1_key[0] * sector_size;
+        float sector_1_origin_y = (float)sector_1_key[1] * sector_size;
+
+        float sector_2_origin_x = (float)sector_2_key[0] * sector_size;
+        float sector_2_origin_y = (float)sector_2_key[1] * sector_size;
+
+        float sector_3_origin_x = (float)sector_3_key[0] * sector_size;
+        float sector_3_origin_y = (float)sector_3_key[1] * sector_size;
+
+        var sector_0_p0 = new GridPoint(sector_0_origin_x, sector_0_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_0_p1 = new GridPoint(sector_0_origin_x + sector_size, sector_0_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_0_p2 = new GridPoint(sector_0_origin_x + sector_size, sector_0_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_0_p3 = new GridPoint(sector_0_origin_x, sector_0_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_0    = new GridBounds(sector_0_p0, sector_0_p1, sector_0_p2, sector_0_p3);
+
+        var sector_1_p0 = new GridPoint(sector_1_origin_x, sector_1_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_1_p1 = new GridPoint(sector_1_origin_x + sector_size, sector_1_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_1_p2 = new GridPoint(sector_1_origin_x + sector_size, sector_1_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_1_p3 = new GridPoint(sector_1_origin_x, sector_1_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_1    = new GridBounds(sector_1_p0, sector_1_p1, sector_1_p2, sector_1_p3);
+
+        var sector_2_p0 = new GridPoint(sector_2_origin_x, sector_2_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_2_p1 = new GridPoint(sector_2_origin_x + sector_size, sector_2_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_2_p2 = new GridPoint(sector_2_origin_x + sector_size, sector_2_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_2_p3 = new GridPoint(sector_2_origin_x, sector_2_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_2    = new GridBounds(sector_2_p0, sector_2_p1, sector_2_p2, sector_2_p3);
+
+        var sector_3_p0 = new GridPoint(sector_3_origin_x, sector_3_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_3_p1 = new GridPoint(sector_3_origin_x + sector_size, sector_3_origin_y, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_3_p2 = new GridPoint(sector_3_origin_x + sector_size, sector_3_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_3_p3 = new GridPoint(sector_3_origin_x, sector_3_origin_y + sector_size, 0.9f, 0.5f, 0.5f, 0.2f);
+        var sector_3    = new GridBounds(sector_3_p0, sector_3_p1, sector_3_p2, sector_3_p3);
+
+        int[] out;
+
+        out = write_rect(base_bounds, vertex_data, color_data, vertex_index, color_index);
+        vertex_index += out[0];
+        color_index  += out[1];
+
+        out = write_rect(inner_bounds, vertex_data, color_data, vertex_index, color_index);
+        vertex_index += out[0];
+        color_index  += out[1];
+
+        out = write_rect(outer_bounds, vertex_data, color_data, vertex_index, color_index);
+        vertex_index += out[0];
+        color_index  += out[1];
+
+        out = write_rect(sector_bounds, vertex_data, color_data, vertex_index, color_index);
+        vertex_index += out[0];
+        color_index  += out[1];
+
+        out = write_rect(sector_0, vertex_data, color_data, vertex_index, color_index);
+        vertex_index += out[0];
+        color_index  += out[1];
+
+        out = write_rect(sector_1, vertex_data, color_data, vertex_index, color_index);
+        vertex_index += out[0];
+        color_index  += out[1];
+
+        out = write_rect(sector_2, vertex_data, color_data, vertex_index, color_index);
+        vertex_index += out[0];
+        color_index  += out[1];
+
+        out = write_rect(sector_3, vertex_data, color_data, vertex_index, color_index);
+        vertex_index += out[0];
+        color_index  += out[1];
+
+
+        var components = ecs.get_components(Component.ControlPoints);
+        ControlPoints controlPoints = null;
+        for (Map.Entry<String, GameComponent> entry : components.entrySet())
+        {
+            GameComponent component = entry.getValue();
+            controlPoints = Component.ControlPoints.coerce(component);
+        }
+
+        var sec = UniformGridRenderer.get_sector_for_point(controlPoints.get_world_target().x, controlPoints.get_world_target().y);
+
+        float offset_x = sec[0] * UniformGrid.BLOCK_COUNT;
+        float offset_y = sec[1] * UniformGrid.BLOCK_COUNT;
+
+        for (int x = 0; x < UniformGrid.BLOCK_COUNT; x++)
+        {
+            for (int y = 0; y < UniformGrid.BLOCK_COUNT; y++)
+            {
+                float r = 0.4f;
+                float g = 1.1f;
+                float b = 0.1f;
+                float a = 0.9f;
+
+                float current_x = ((x+ offset_x) * UniformGrid.BLOCK_SIZE);
+                float current_y = ((y+ offset_y) * UniformGrid.BLOCK_SIZE);
+                vertex_data[vertex_index++] = current_x;
+                vertex_data[vertex_index++] = current_y;
+                vertex_data[vertex_index++] = current_x + UniformGrid.BLOCK_SIZE;
+                vertex_data[vertex_index++] = current_y;
+                vertex_data[vertex_index++] = current_x + UniformGrid.BLOCK_SIZE;
+                vertex_data[vertex_index++] = current_y + UniformGrid.BLOCK_SIZE;
+                vertex_data[vertex_index++] = current_x;
+                vertex_data[vertex_index++] = current_y + UniformGrid.BLOCK_SIZE;
+
+                color_data[color_index++] = r; // v0
+                color_data[color_index++] = g;
+                color_data[color_index++] = b;
+                color_data[color_index++] = a;
+                color_data[color_index++] = r; // v1
+                color_data[color_index++] = g;
+                color_data[color_index++] = b;
+                color_data[color_index++] = a;
+                color_data[color_index++] = r; // v2
+                color_data[color_index++] = g;
+                color_data[color_index++] = b;
+                color_data[color_index++] = a;
+                color_data[color_index++] = r; // v3
+                color_data[color_index++] = g;
+                color_data[color_index++] = b;
+                color_data[color_index++] = a;
+            }
+        }
 
         float x_offset = uniformGrid.x_origin();
         float y_offset = uniformGrid.y_origin();

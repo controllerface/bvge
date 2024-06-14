@@ -1,12 +1,10 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPUKernel;
-
 public class ReadPosition_k extends GPUKernel
 {
     public enum Args
     {
-        armatures,
+        entities,
         output,
         target;
     }

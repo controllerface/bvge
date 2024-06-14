@@ -6,9 +6,10 @@ public class Constants
     public static class Rendering
     {
         // todo: experiment with this, maybe make it configurable
-        public static final int MAX_BATCH_SIZE = (256 * 256) * 4;
+        public static final int MAX_BATCH_SIZE = (256 * 256);
         public static final int SCALAR_LENGTH = 1;
         public static final int SCALAR_FLOAT_SIZE = Float.BYTES;
+        public static final int SCALAR_INT_SIZE = Integer.BYTES;
         public static final int VECTOR_2D_LENGTH = 2; // x, y
         public static final int VECTOR_FLOAT_2D_SIZE = VECTOR_2D_LENGTH * Float.BYTES;
         public static final int VECTOR_4D_LENGTH = 4; // x, y, z, w
@@ -34,6 +35,10 @@ public class Constants
         IN_PERIMETER  (0b0000_0000_0000_0000_0100_0000_0000_0000),
         IS_CURSOR     (0b0000_0000_0000_0000_1000_0000_0000_0000),
         CURSOR_OVER   (0b0000_0000_0000_0001_0000_0000_0000_0000),
+        IS_HAND       (0b0000_0000_0000_0010_0000_0000_0000_0000),
+        IN_RANGE      (0b0000_0000_0000_0100_0000_0000_0000_0000),
+        CURSOR_HIT    (0b0000_0000_0000_1000_0000_0000_0000_0000),
+        COLLECTABLE   (0b0000_0000_0001_0000_0000_0000_0000_0000),
 
         ;
 
@@ -77,13 +82,37 @@ public class Constants
         }
     }
 
+    public enum EntityFlags
+    {
+        DELETED     (0b0000_0000_0000_0000_0000_0000_0000_0001),
+        CAN_JUMP    (0b0000_0000_0000_0000_0000_0000_0000_0010),
+        FACE_LEFT   (0b0000_0000_0000_0000_0000_0000_0000_0100),
+        IS_WET      (0b0000_0000_0000_0000_0000_0000_0000_1000),
+        SECTOR_OUT  (0b0000_0000_0000_0000_0000_0000_0001_0000),
+        ATTACKING   (0b0000_0000_0000_0000_0000_0000_0010_0000),
+        BROKEN      (0b0000_0000_0000_0000_0000_0000_0100_0000),
+        CAN_COLLECT (0b0000_0000_0000_0000_0000_0000_1000_0000),
+
+        ;
+
+        public final int bits;
+
+        EntityFlags(int bits)
+        {
+            this.bits = bits;
+        }
+    }
+
     public enum ControlFlags
     {
-        LEFT  (0b0000_0000_0000_0000_0000_0000_0000_0001),
-        RIGHT (0b0000_0000_0000_0000_0000_0000_0000_0010),
-        UP    (0b0000_0000_0000_0000_0000_0000_0000_0100),
-        DOWN  (0b0000_0000_0000_0000_0000_0000_0000_1000),
-        JUMP  (0b0000_0000_0000_0000_0000_0000_0001_0000),
+        LEFT   (0b0000_0000_0000_0000_0000_0000_0000_0001),
+        RIGHT  (0b0000_0000_0000_0000_0000_0000_0000_0010),
+        UP     (0b0000_0000_0000_0000_0000_0000_0000_0100),
+        DOWN   (0b0000_0000_0000_0000_0000_0000_0000_1000),
+        JUMP   (0b0000_0000_0000_0000_0000_0000_0001_0000),
+        MOUSE1 (0b0000_0000_0000_0000_0000_0000_0010_0000),
+        MOUSE2 (0b0000_0000_0000_0000_0000_0000_0100_0000),
+        RUN    (0b0000_0000_0000_0000_0000_0000_1000_0000),
 
         ;
 

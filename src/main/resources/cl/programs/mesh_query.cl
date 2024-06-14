@@ -1,14 +1,20 @@
 __kernel void count_mesh_instances(__global int *hull_mesh_ids,
+                                   __global int *hull_flags,
                                    __global int *counters,
-                                   __global int *query,
+                                   __global int2 *query,
                                    __global int *total,
                                    int count)
 {
     int hull_id = get_global_id(0);
     int mesh_id = hull_mesh_ids[hull_id];
+    int hull_flag = hull_flags[hull_id];
+    bool out_of_bounds = (hull_flag & OUT_OF_BOUNDS) !=0;
+    bool in_perimeter = (hull_flag & IN_PERIMETER) !=0;
+    if (out_of_bounds || in_perimeter) return;
+
     for (int i = 0; i < count; i++)
     {
-        int nx = query[i];
+        int nx = query[i].x;
         if (mesh_id == nx)
         {
             int x = atomic_inc(&counters[i]);
@@ -18,19 +24,27 @@ __kernel void count_mesh_instances(__global int *hull_mesh_ids,
 }
 
 __kernel void write_mesh_details(__global int *hull_mesh_ids,
+                                 __global int *hull_flags,
                                  __global int2 *mesh_vertex_tables,
                                  __global int2 *mesh_face_tables,
                                  __global int *counters, 
-                                 __global int *query, 
+                                 __global int2 *query, 
                                  __global int *offsets,
                                  __global int4 *mesh_details,
+                                 __global int *mesh_texture,
                                  int count)
 {
     int hull_id = get_global_id(0);
     int mesh_id = hull_mesh_ids[hull_id];
+    int hull_flag = hull_flags[hull_id];
+    bool out_of_bounds = (hull_flag & OUT_OF_BOUNDS) !=0;
+    bool in_perimeter = (hull_flag & IN_PERIMETER) !=0;
+    if (out_of_bounds || in_perimeter) return;
+
     for (int i = 0; i < count; i++)
     {
-        int nx = query[i];
+        int2 q = query[i];
+        int nx = q.x;
         if (mesh_id == nx)
         {
             int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
@@ -43,6 +57,8 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
             out.z = hull_id;
             int id = offset + bank;
             mesh_details[id] = out;
+            mesh_texture[id] = q.y;
+            //printf("debug in tex:%d mesh:%d", q.y, mesh_id);
         }
     }
 }
@@ -98,17 +114,24 @@ __kernel void transfer_detail_data(__global int4 *mesh_details,
     mesh_transfer[t_index] = details;
 }
 
+
+inline float map(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int *hull_mesh_ids,
-                                   __global int *hull_armature_ids,
+                                   __global int *hull_entity_ids,
                                    __global int *hull_flags,
                                    __global int *hull_uv_offsets,
-                                   __global int *armature_flags,
+                                   __global int *hull_integrity,
+                                   __global int *entity_flags,
                                    __global int2 *mesh_vertex_tables,
                                    __global int2 *mesh_face_tables,
                                    __global int4 *mesh_faces,
                                    __global float4 *points,
-                                   __global ushort *point_hit_counts,
+                                   __global short *point_hit_counts,
                                    __global int *point_vertex_references,
                                    __global int2 *uv_tables,
                                    __global float2 *texture_uvs,
@@ -116,8 +139,10 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global float4 *vertex_buffer,
                                    __global float2 *uv_buffer,
                                    __global float4 *color_buffer,
+                                   __global float *slot_buffer,
                                    __global int *element_buffer,
                                    __global int4 *mesh_details,
+                                   __global int *mesh_texture,
                                    __global int2 *mesh_transfer,
                                    int offset)
 {
@@ -125,6 +150,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     int d_index = t_index + offset;
     int c_index = t_index * 5;
     int4 details = mesh_details[d_index];
+    int texture = mesh_texture[d_index];
     int2 transfer = mesh_transfer[t_index];
 
     command_buffer[c_index] = details.y;
@@ -139,15 +165,19 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     int2 point_table = hull_point_tables[hull_id];
     int2 mesh_vertex_table = mesh_vertex_tables[mesh_id];
     int2 mesh_face_table = mesh_face_tables[mesh_id];
-    int armature_id = hull_armature_ids[hull_id];
+    int entity_id = hull_entity_ids[hull_id];
     int uv_offset = hull_uv_offsets[hull_id];
-    int a_flags = armature_flags[armature_id];
+    int integrity = hull_integrity[hull_id];
+    int a_flags = entity_flags[entity_id];
 
     bool face_l = (a_flags & FACE_LEFT) !=0;
     bool side_r = (flags & SIDE_R) !=0;
     bool side_l = (flags & SIDE_L) !=0;
     bool touch_alike = (flags & TOUCH_ALIKE) !=0;
     bool is_static = (flags & IS_STATIC) !=0;
+    bool cursor_over = (flags & CURSOR_OVER) !=0;
+    bool in_range = (flags & IN_RANGE) !=0;
+    bool cursor_hit = (flags & CURSOR_HIT) !=0;
 
     float r_layer = face_l ? -2.0 : 2.0;
     float l_layer = face_l ? 2.0 : -2.0;
@@ -164,20 +194,17 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
 
     int start_point = point_table.x;
     int end_point = point_table.y;
+    __attribute__((opencl_unroll_hint(4)))
     for (int point_id = start_point; point_id <= end_point; point_id++)
     {
         float4 point = points[point_id];
         int hit_counts = point_hit_counts[point_id];
 
+        float hit_color = map((float) hit_counts, 0, HIT_TOP_THRESHOLD, 0.0f, 0.5f);
+
         float col = hit_counts <= HIT_LOW_THRESHOLD 
             ? 1.0f 
-            : hit_counts <= HIT_LOW_MID_THRESHOLD 
-                ? 0.80f 
-                : hit_counts <= HIT_MID_THRESHOLD
-                    ? 0.60f
-                    : hit_counts <= HIT_HIGH_MID_THRESHOLD 
-                        ? 0.55
-                        : 0.50;
+            : 1 - hit_color;
 
         int point_vertex_reference = point_vertex_references[point_id];
         int2 uv_table = uv_tables[point_vertex_reference];
@@ -188,13 +215,36 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
 
         float xxx = is_static ? col - 0.07f : col;
+
+        // todo: integrity needs to be reflected some other way, so the red channel can be used for UI
+        float aaa = integrity > 100 
+            ? 0.0f 
+            : 1.0f - map((float) integrity, 0.0f, 100.0f, 0.0f, 1.0f);
+
+        float rf = 1.0 - aaa;
+        
+        float rrr  = cursor_hit && !in_range 
+            ? 0.5f 
+            : 0;
+
+        float bbb = cursor_over && in_range 
+            ? 3.0f 
+            : 0.0f;
+
+        float ggg = cursor_hit && in_range
+            ? 1.0f 
+            : 0.0f;
+
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
-        color_buffer[ref_offset] = (float4)(xxx, xxx, xxx, 1.0f);
+        color_buffer[ref_offset] = (float4)((xxx + rrr) * rf, (xxx + ggg) * rf, (xxx + bbb - ggg * 3) * rf, 1.0f);
+        slot_buffer[ref_offset] = (float)texture;
+        //if (texture == 3) printf("debug out tex:%d mesh:%d", texture, mesh_id);
     }
 
     int start_face = mesh_face_table.x;
     int end_face = mesh_face_table.y;
+    __attribute__((opencl_unroll_hint(2)))
     for (int face_id = start_face; face_id <= end_face; face_id++)
     {
         int4 face = mesh_faces[face_id];

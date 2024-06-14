@@ -1,7 +1,5 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPUKernel;
-
 public class CreatePoint_k extends GPUKernel
 {
     public enum Args
@@ -9,14 +7,16 @@ public class CreatePoint_k extends GPUKernel
         points,
         point_vertex_references,
         point_hull_indices,
+        point_hit_counts,
         point_flags,
-        bone_tables,
+        point_bone_tables,
         target,
         new_point,
         new_point_vertex_reference,
         new_point_hull_index,
+        new_point_hit_count,
         new_point_flags,
-        new_bone_table;
+        new_point_bone_table;
     }
 
     public CreatePoint_k(long command_queue_ptr, long kernel_ptr)

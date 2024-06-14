@@ -1,12 +1,10 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPUKernel;
-
 public class UpdateAccel_k extends GPUKernel
 {
     public enum Args
     {
-        armature_accel,
+        entity_accel,
         target,
         new_value;
     }

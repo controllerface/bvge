@@ -1,7 +1,5 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPUKernel;
-
 public class CompactHulls_k extends GPUKernel
 {
     public enum Args
@@ -14,8 +12,9 @@ public class CompactHulls_k extends GPUKernel
         hull_rotations,
         hull_frictions,
         hull_restitutions,
-        bone_tables,
-        armature_ids,
+        hull_integrity,
+        hull_bone_tables,
+        hull_entity_ids,
         hull_flags,
         hull_point_tables,
         hull_edge_tables,

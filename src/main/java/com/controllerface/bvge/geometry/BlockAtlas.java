@@ -12,7 +12,7 @@ public class BlockAtlas
 {
     private static final int ATLAS_SIZE = 32;
     private static final float UV_OFFSET = 0.03125f;
-    private static final float UV_EPSILON = (UV_OFFSET / 32f) * 2f;
+    private static final float UV_EPSILON = 0f;//(UV_OFFSET / 32f) * 8;
 
     private final List<List<Vector2f>> uv_channels;
 

@@ -2,7 +2,7 @@ package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.ArmatureIndex;
+import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.window.Window;
@@ -30,12 +30,12 @@ public class CameraTracking extends GameSystem
     @Override
     public void tick(float dt)
     {
-        var focusTargets = ecs.getComponents(Component.CameraFocus);
+        var focusTargets = ecs.get_components(Component.CameraFocus);
         var focusTarget = focusTargets.entrySet().stream().findAny().orElseThrow();
-        ArmatureIndex armature = Component.Armature.forEntity(ecs, focusTarget.getKey());
-        if (armature == null) return;
+        EntityIndex entity_id = Component.EntityId.forEntity(ecs, focusTarget.getKey());
+        if (entity_id == null) return;
 
-        float[] pos = GPGPU.core_memory.read_position(armature.index());
+        float[] pos = GPGPU.core_memory.read_position(entity_id.index());
         float pos_x = pos[0];
         float pos_y = pos[1];
         var camera = Window.get().camera();
@@ -49,6 +49,6 @@ public class CameraTracking extends GameSystem
         var new_origin_y = (pos_y - height / camera.get_zoom()) + (y_offset + dy);
         camera.position.x = new_x;
         camera.position.y = new_y;
-        uniformGrid.updateOrigin(new_origin_x, new_origin_y);
+        uniformGrid.updateOrigin(new_origin_x, new_origin_y, pos_x, pos_y);
     }
 }

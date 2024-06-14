@@ -3,10 +3,12 @@ Handles collision between two polygonal hulls
  */
 inline void polygon_collision(int hull_1_id, 
                               int hull_2_id,
+                              __global int *entity_flags,
                               __global float4 *hulls,
                               __global float *hull_frictions,
                               __global float *hull_restitutions,
-                              __global int *hull_armature_ids,
+                              __global int *hull_integrity,
+                              __global int *hull_entity_ids,
                               __global int *hull_flags,
                               __global int2 *hull_point_tables,
                               __global int2 *hull_edge_tables,
@@ -39,7 +41,6 @@ inline void polygon_collision(int hull_1_id,
     int hull_2_flags = hull_flags[hull_2_id];
     bool b1_is_block = (hull_1_flags & IS_BLOCK) !=0;
     bool b2_is_block = (hull_2_flags & IS_BLOCK) !=0;
-
 
     float min_distance = FLT_MAX;
 
@@ -193,10 +194,12 @@ inline void polygon_collision(int hull_1_id,
 
     int vert_hull_flags = hull_flags[vert_hull_id];
     int edge_hull_flags = hull_flags[edge_hull_id];
-    int vert_armature_id = hull_armature_ids[vert_hull_id];
-    int edge_armature_id = hull_armature_ids[edge_hull_id];
-    float vert_hull_mass = masses[vert_armature_id];
-    float edge_hull_mass = masses[edge_armature_id];
+    int vert_entity_id = hull_entity_ids[vert_hull_id];
+    int edge_entity_id = hull_entity_ids[edge_hull_id];
+    int vert_entity_flags = entity_flags[vert_entity_id];
+    int edge_entity_flags = entity_flags[edge_entity_id];
+    float vert_hull_mass = masses[vert_entity_id];
+    float edge_hull_mass = masses[edge_entity_id];
     float vert_hull_friction = hull_frictions[vert_hull_id];
     float edge_hull_friction = hull_frictions[edge_hull_id];
     float vert_hull_restitution = hull_restitutions[vert_hull_id];
@@ -207,26 +210,6 @@ inline void polygon_collision(int hull_1_id,
 
     bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
     bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
-    // bool block_vert = (vert_hull_flags & IS_BLOCK) !=0;
-    // bool block_edge = (edge_hull_flags & IS_BLOCK) !=0;
-
-    // // if (block_vert || block_edge)
-    // // {
-    // //     printf("debug: %d %d", block_vert, block_edge);
-    // // }
-
-    // vert_hull_flags = (block_vert && block_edge) 
-    //     ? vert_hull_flags | TOUCH_ALIKE 
-    //     : vert_hull_flags;
-
-    // edge_hull_flags = (block_vert && block_edge) 
-    //     ? edge_hull_flags | TOUCH_ALIKE 
-    //     : edge_hull_flags;
-
-
-    hull_flags[vert_hull_id] = vert_hull_flags;
-    hull_flags[edge_hull_id] = edge_hull_flags;
-
 
     bool any_static = (static_vert || static_edge);
 
@@ -245,8 +228,8 @@ inline void polygon_collision(int hull_1_id,
     float contact = edge_contact(edge_point_1.xy, edge_point_2.xy, vertex_point.xy, collision_vector);
     float inverse_contact = 1.0f - contact;
     float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
-    float2 edge_1_collision = collision_vector * (inverse_contact * edge_magnitude * edge_scale) * -1;
-    float2 edge_2_collision = collision_vector * (contact * edge_magnitude * edge_scale) * -1;
+    float2 edge_1_collision = -collision_vector * (inverse_contact * edge_magnitude * edge_scale);
+    float2 edge_2_collision = -collision_vector * (contact * edge_magnitude * edge_scale);
     float2 vertex_collision = collision_vector * vert_magnitude;
 
     // friction

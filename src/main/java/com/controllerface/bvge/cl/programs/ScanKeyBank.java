@@ -1,13 +1,12 @@
 package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.GPUProgram;
-import com.controllerface.bvge.cl.Kernel;
+import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class ScanKeyBank extends GPUProgram
 {
     @Override
-    public void init()
+    public GPUProgram init()
     {
         src.add(func_exclusive_scan);
         src.add(CLUtils.read_src("programs/scan_key_bank.cl"));
@@ -17,5 +16,7 @@ public class ScanKeyBank extends GPUProgram
         load_kernel(Kernel.scan_bounds_single_block);
         load_kernel(Kernel.scan_bounds_multi_block);
         load_kernel(Kernel.complete_bounds_multi_block);
+
+        return this;
     }
 }

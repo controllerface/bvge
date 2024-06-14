@@ -4,7 +4,7 @@ import com.controllerface.bvge.animation.BoneBindPose;
 import com.controllerface.bvge.animation.BoneChannel;
 import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.cl.GPGPU;
-import com.controllerface.bvge.game.AnimationState;
+import com.controllerface.bvge.animation.AnimationState;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Assets;
@@ -28,17 +28,14 @@ public class ModelRegistry
 {
     private static final AtomicInteger next_model_index = new AtomicInteger(0);
 
+    public static final int BASE_BLOCK_INDEX = next_model_index.getAndIncrement();
     public static final int CIRCLE_PARTICLE = next_model_index.getAndIncrement();
-    public static final int TRIANGLE_PARTICLE = next_model_index.getAndIncrement();
-    public static int SQUARE_PARTICLE = next_model_index.getAndIncrement();
+    public static final int R_SHARD_INDEX = next_model_index.getAndIncrement();
+    public static final int L_SHARD_INDEX = next_model_index.getAndIncrement();
+    public static final int BASE_SPIKE_INDEX = next_model_index.getAndIncrement();
+    public static final int CURSOR = next_model_index.getAndIncrement();
 
-    public static int CURSOR = next_model_index.getAndIncrement();
-
-    public static int TEST_MODEL_INDEX_2 = -1;
-    public static int TEST_MODEL_INDEX = -1;
-    public static int TEST_SQUARE_INDEX = -1;
-    public static int BASE_BLOCK_INDEX = -1;
-    public static int BASE_TRI_INDEX = -1;
+    public static int PLAYER_MODEL_INDEX = -1;
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
 
@@ -99,7 +96,7 @@ public class ModelRegistry
 
         var bind_name_map = new HashMap<String, Integer>();
         var model_transform = new AtomicReference<Matrix4f>();
-        var armature_transform = new AtomicReference<Matrix4f>();
+        var entity_transform = new AtomicReference<Matrix4f>();
 
         var animation_map = new EnumMap<AnimationState, Integer>(AnimationState.class);
 
@@ -116,7 +113,7 @@ public class ModelRegistry
             load_materials(ai_scene);
 
             // generate the bind pose transforms, setting the initial state of the armature
-            generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, model_transform, armature_transform,-1);
+            generate_transforms(scene_node, bone_transforms, new Matrix4f(), bind_name_map, bind_pose_map, model_transform, entity_transform,-1);
 
             load_animations(ai_scene, bind_name_map, animation_map);
             load_raw_meshes(mesh_count, model_name, meshes, mesh_buffer, node_map, baked_uvs);
@@ -133,7 +130,7 @@ public class ModelRegistry
                 root_transform_index = GPGPU.core_memory.new_model_transform(MathEX.raw_matrix(model_transform.get()));
             }
             var model = new Model(meshes,
-                armature_transform.get(),
+                entity_transform.get(),
                 bone_transforms,
                 bind_name_map,
                 bind_pose_map,
@@ -313,7 +310,7 @@ public class ModelRegistry
             int this_index = current_vertex_index.getAndIncrement();
             int this_vert = vert_index++;
             var raw_vertex = buffer.get();
-            System.out.println(raw_vertex.getClass().getCanonicalName());
+            //System.out.println(raw_vertex.getClass().getCanonicalName());
             List<Vector2f> vertex_uvs = new ArrayList<>();
             String[] names = bone_name_map.get(this_vert);
             float[] weights = bone_weight_map.get(this_vert);
@@ -372,8 +369,8 @@ public class ModelRegistry
         var hull_table = PhysicsObjects.calculate_convex_hull_table(mesh_vertices);
         int[] vertex_table = new int[2];
         int[] face_table = new int[2];
-        vertex_table[0] = mesh_vertices[0].vert_ref_id();
-        vertex_table[1] = mesh_vertices[mesh_vertices.length - 1].vert_ref_id();
+        vertex_table[0] = mesh_vertices[0].index();
+        vertex_table[1] = mesh_vertices[mesh_vertices.length - 1].index();
         face_table[0] = mesh_faces[0].index();
         face_table[1] = mesh_faces[mesh_faces.length - 1].index();
         var mesh_id = GPGPU.core_memory.new_mesh_reference(vertex_table, face_table);
@@ -455,12 +452,18 @@ public class ModelRegistry
                     float r = color_data.get(0);
                     float g = color_data.get(1);
                     float b = color_data.get(2);
-                    System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} r=\{r} g=\{g} b=\{b}");
+//                    System.out.println("Mat type=" + raw_prop.mType()
+//                            + " name=" + prop_name
+//                            + " r=" + r
+//                            + " g=" + g
+//                            + " b=" + b);
                 }
                 else if (prop_name.startsWith("$mat."))
                 {
                     float v = raw_prop.mData().asFloatBuffer().get(0);
-                    System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} v=\{v}");
+//                    System.out.println("Mat type=" + raw_prop.mType()
+//                            + " name=" + prop_name
+//                            + " v=" + v);
                 }
                 else
                 {
@@ -471,7 +474,9 @@ public class ModelRegistry
                             int f_count = raw_prop.mDataLength() / 4;
                             float[] float_out = new float[f_count];
                             float_buffer.get(float_out);
-                            System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} float=\{Arrays.toString(float_out)}");
+//                            System.out.println("Mat type=" + raw_prop.mType()
+//                                    + " name=" + prop_name
+//                                    + " float=" + Arrays.toString(float_out));
                             break;
 
                         case 3:
@@ -480,7 +485,9 @@ public class ModelRegistry
                             byte[] bytes_out = new byte[s_count];
                             string_buffer.get(bytes_out);
                             var string = new String(bytes_out, StandardCharsets.UTF_8);
-                            System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} string=\{string}");
+//                            System.out.println("Mat type=" + raw_prop.mType()
+//                                    + " name=" + prop_name
+//                                    + " string=" + string);
                             break;
 
                         case 4:
@@ -488,11 +495,15 @@ public class ModelRegistry
                             int i_count = raw_prop.mDataLength() / 4;
                             int[] int_out = new int[i_count];
                             int_buffer.get(int_out);
-                            System.out.println(STR."Mat type=\{raw_prop.mType()} name=\{prop_name} int=\{Arrays.toString(int_out)}");
+//                            System.out.println("Mat type=" + raw_prop.mType()
+//                                    + " name=" + prop_name
+//                                    + " int=" + Arrays.toString(int_out));
                             break;
 
                         default:
-                            System.out.println(STR."Debug mat prop: type=\{raw_prop.mType()} len=\{raw_prop.mDataLength()} key=\{raw_prop.mKey().dataString()}");
+//                            System.out.println("Debug mat prop: type=" + raw_prop.mType()
+//                                    + " len=" + raw_prop.mDataLength()
+//                                    + " key=" + raw_prop.mKey().dataString());
                             break;
                     }
                 }
@@ -517,9 +528,8 @@ public class ModelRegistry
         for (int animation_index = 0; animation_index < raw_animation_count; animation_index++)
         {
             var raw_animation = AIAnimation.create(anim_buffer.get(animation_index));
-            var animation_name = raw_animation.mName().dataString().toLowerCase();
-
-            var animation_state = getAnimation_state(animation_name);
+            var animation_name = raw_animation.mName().dataString();
+            var animation_state = AnimationState.fuzzy_match(animation_name);
             anim_buf.put(animation_state, raw_animation);
         }
 
@@ -535,7 +545,10 @@ public class ModelRegistry
             int anim_timing_id = GPGPU.core_memory.new_animation_timings((float)raw_animation.mDuration(), (float)raw_animation.mTicksPerSecond());
             animation_map.put(animation_state, current_index++);
 
-            System.out.println(STR."anim\{raw_animation.mName().dataString()} state:\{animation_state} id:\{anim_timing_id} duration:\{raw_animation.mDuration()}");
+//            System.out.println("anim" + raw_animation.mName().dataString()
+//                    + " state:" + animation_state
+//                    + " id:" + anim_timing_id
+//                    + " duration:" + raw_animation.mDuration());
 
 
             int channel_count = raw_animation.mNumChannels();
@@ -630,55 +643,6 @@ public class ModelRegistry
         });
     }
 
-    private static AnimationState getAnimation_state(String animation_name)
-    {
-        if (animation_name.contains("idle"))
-        {
-            return AnimationState.IDLE;
-        }
-        else if (animation_name.contains("walk"))
-        {
-            return AnimationState.WALKING;
-        }
-        else if (animation_name.contains("run"))
-        {
-            return AnimationState.RUNNING;
-        }
-        else if (animation_name.contains("recoil"))
-        {
-            return AnimationState.JUMP_START;
-        }
-        else if (animation_name.contains("jump"))
-        {
-            return AnimationState.JUMPING;
-        }
-        else if (animation_name.contains("inair"))
-        {
-            return AnimationState.IN_AIR;
-        }
-        else if (animation_name.contains("fall_fast"))
-        {
-            return AnimationState.FALLING_FAST;
-        }
-        else if (animation_name.contains("fall_slow"))
-        {
-            return AnimationState.FALLING_SLOW;
-        }
-        else if (animation_name.contains("land_hard"))
-        {
-            return AnimationState.LAND_HARD;
-        }
-        else if (animation_name.contains("land_soft"))
-        {
-            return AnimationState.LAND_SOFT;
-        }
-        else if (animation_name.contains("swim_up"))
-        {
-            return AnimationState.SWIM_UP;
-        }
-        else return AnimationState.UNKNOWN;
-    }
-
     private static void load_textures(AIScene aiScene, List<Texture> textures)
     {
         if (aiScene.mNumTextures() <= 0)
@@ -716,15 +680,15 @@ public class ModelRegistry
                 var key = ks.get();
                 var val = vs.get();
                 var key_string = key.dataString();
-                System.out.println(STR."n:\{nodeName} k:\{key_string} v:\{val.mType()}");
+                //System.out.println("n:" + nodeName + " k:" + key_string + " v:" + val.mType());
                 if (key_string.equalsIgnoreCase("pin"))
                 {
                     int k_int = val.mData(4).asIntBuffer().get();
-                    System.out.println(STR."int: \{k_int}");
+                    //System.out.println("int: " + k_int);
                 }
             }
 
-            System.out.println(p);
+            //System.out.println(p);
         }
 
         var currentNode = new SceneNode(nodeName, parentNode, transform);
@@ -747,12 +711,12 @@ public class ModelRegistry
                                             Map<String, Integer> bind_name_map,
                                             Map<Integer, BoneBindPose> bind_pose_map,
                                             AtomicReference<Matrix4f> model_matrix,
-                                            AtomicReference<Matrix4f> armature_matrix,
+                                            AtomicReference<Matrix4f> entity_matrix,
                                             int parent_index)
     {
         var name = current_node.name;
-        boolean is_bone = name.toLowerCase().contains("bone")
-            && !name.toLowerCase().contains("_end");
+        boolean bone_end = name.toLowerCase().contains("_end");
+        boolean is_bone = name.toLowerCase().contains("bone") && !bone_end;
         boolean is_armature = name.equalsIgnoreCase("Armature");
         var node_transform = current_node.transform;
         var global_transform = parent_transform.mul(node_transform, new Matrix4f());
@@ -763,7 +727,7 @@ public class ModelRegistry
         {
             boolean model_ok = model_matrix.compareAndSet(null, node_transform);
             assert model_ok : "model transform already set";
-            boolean armature_ok = armature_matrix.compareAndSet(null, node_transform);
+            boolean armature_ok = entity_matrix.compareAndSet(null, node_transform);
             assert armature_ok : "armature transform already set";
         }
 
@@ -779,7 +743,7 @@ public class ModelRegistry
         }
         for (SceneNode child : current_node.children)
         {
-            generate_transforms(child, transforms, global_transform, bind_name_map, bind_pose_map, model_matrix, armature_matrix, parent);
+            generate_transforms(child, transforms, global_transform, bind_name_map, bind_pose_map, model_matrix, entity_matrix, parent);
         }
     }
 
@@ -790,16 +754,14 @@ public class ModelRegistry
 
     public static void init()
     {
+        var texture = Assets.load_texture("/img/blocks.png");
         loaded_models.put(CURSOR, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
-
         loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
-        loaded_models.put(TRIANGLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.TRIANGLE_MESH)));
-        loaded_models.put(SQUARE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BOX_MESH)));
+        loaded_models.put(BASE_BLOCK_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.BLOCK_MESH), texture));
+        loaded_models.put(R_SHARD_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.R_SHARD_MESH), texture));
+        loaded_models.put(L_SHARD_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.L_SHARD_MESH), texture));
+        loaded_models.put(BASE_SPIKE_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.SPIKE_MESH), texture));
 
-        TEST_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
-        TEST_MODEL_INDEX_2 = load_model("/models/test_humanoid_2.fbx", "Humanoid");
-        TEST_SQUARE_INDEX = load_model("/models/test_square.fbx", "Crate");
-        BASE_BLOCK_INDEX = load_model("/models/block_test.fbx", "Base_Block", BLOCK_ATLAS.uv_channels());
-        BASE_TRI_INDEX = load_model("/models/tri_test.fbx", "Base_Tri", BLOCK_ATLAS.uv_channels());
+        PLAYER_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
     }
 }

@@ -1,7 +1,11 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
+import com.controllerface.bvge.cl.buffers.BufferType;
+import com.controllerface.bvge.cl.kernels.GPUKernel;
+import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.kernels.PrepareEdges_k;
+import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.PrepareEdges;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
@@ -32,16 +36,15 @@ public class EdgeRenderer extends GameSystem
     private static final int EDGE_ATTRIBUTE = 0;
     private static final int FLAG_ATTRIBUTE = 1;
 
-    private final GPUProgram prepare_edges = new PrepareEdges();
+    private final GPUProgram p_prepare_edges = new PrepareEdges();
+    private GPUKernel k_prepare_edges;
+    private Shader shader;
 
     private int vao;
-    private int edge_vbo;
-    private int flag_vbo;
-    private long vertex_vbo_ptr;
-    private long flag_vbo_ptr;
-
-    private Shader shader;
-    private GPUKernel prepare_edges_k;
+    private int vbo_edge;
+    private int vbo_flag;
+    private long ptr_vbo_edge;
+    private long ptr_vbo_flag;
 
     public EdgeRenderer(ECS ecs)
     {
@@ -54,23 +57,22 @@ public class EdgeRenderer extends GameSystem
     {
         shader = Assets.load_shader("object_outline.glsl");
         vao = glCreateVertexArrays();
-        edge_vbo = GLUtils.new_buffer_vec2(vao, EDGE_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        flag_vbo = GLUtils.new_buffer_float(vao, FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
+        vbo_edge = GLUtils.new_buffer_vec2(vao, EDGE_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        vbo_flag = GLUtils.new_buffer_float(vao, FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
         glEnableVertexArrayAttrib(vao, EDGE_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, FLAG_ATTRIBUTE);
     }
 
     private void inti_CL()
     {
-        vertex_vbo_ptr = GPGPU.share_memory(edge_vbo);
-        flag_vbo_ptr = GPGPU.share_memory(flag_vbo);
+        p_prepare_edges.init();
+        ptr_vbo_edge = GPGPU.share_memory(vbo_edge);
+        ptr_vbo_flag = GPGPU.share_memory(vbo_flag);
 
-        prepare_edges.init();
-
-        long ptr = prepare_edges.kernel_ptr(Kernel.prepare_edges);
-        prepare_edges_k = new PrepareEdges_k(GPGPU.gl_cmd_queue_ptr, ptr)
-            .ptr_arg(PrepareEdges_k.Args.vertex_vbo, vertex_vbo_ptr)
-            .ptr_arg(PrepareEdges_k.Args.flag_vbo, flag_vbo_ptr)
+        long k_ptr_prepare_edges = p_prepare_edges.kernel_ptr(Kernel.prepare_edges);
+        k_prepare_edges = new PrepareEdges_k(GPGPU.ptr_render_queue, k_ptr_prepare_edges)
+            .ptr_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
+            .ptr_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)
             .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT))
             .buf_arg(PrepareEdges_k.Args.edges, GPGPU.core_memory.buffer(BufferType.MIRROR_EDGE))
             .buf_arg(PrepareEdges_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_EDGE_FLAG));
@@ -80,7 +82,6 @@ public class EdgeRenderer extends GameSystem
     public void tick(float dt)
     {
         glBindVertexArray(vao);
-
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
@@ -89,9 +90,9 @@ public class EdgeRenderer extends GameSystem
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
 
-            prepare_edges_k
-                .share_mem(vertex_vbo_ptr)
-                .share_mem(flag_vbo_ptr)
+            k_prepare_edges
+                .share_mem(ptr_vbo_edge)
+                .share_mem(ptr_vbo_flag)
                 .set_arg(PrepareEdges_k.Args.offset, offset)
                 .call(arg_long(count));
 
@@ -99,20 +100,19 @@ public class EdgeRenderer extends GameSystem
             offset += count;
         }
 
-        glBindVertexArray(0);
-
         shader.detach();
+        glBindVertexArray(0);
     }
 
     @Override
     public void shutdown()
     {
         glDeleteVertexArrays(vao);
-        glDeleteBuffers(edge_vbo);
-        glDeleteBuffers(flag_vbo);
+        glDeleteBuffers(vbo_edge);
+        glDeleteBuffers(vbo_flag);
         shader.destroy();
-        prepare_edges.destroy();
-        GPGPU.cl_release_buffer(vertex_vbo_ptr);
-        GPGPU.cl_release_buffer(flag_vbo_ptr);
+        p_prepare_edges.destroy();
+        GPGPU.cl_release_buffer(ptr_vbo_edge);
+        GPGPU.cl_release_buffer(ptr_vbo_flag);
     }
 }

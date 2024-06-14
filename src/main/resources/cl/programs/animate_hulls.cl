@@ -137,36 +137,36 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     return matrix_mul(matrix_mul(pos_matrix, rot_matrix), scl_matrix);
 }
 
-__kernel void animate_armatures(__global float16 *armature_bones,
-                                __global float16 *bone_bind_poses,
-                                __global float16 *model_transforms,
-                                __global int *armature_flags,
-                                __global int *armature_bone_reference_ids,
-                                __global int *armature_bone_parent_ids,
-                                __global int2 *bone_channel_tables,
-                                __global int2 *bone_pos_channel_tables,
-                                __global int2 *bone_rot_channel_tables,
-                                __global int2 *bone_scl_channel_tables,
-                                __global int *armature_model_transforms,
-                                __global int2 *bone_tables,
-                                __global float4 *key_frames,
-                                __global float *frame_times,
-                                __global int *animation_timing_indices,
-                                __global float *animation_durations,
-                                __global float *animation_tick_rates,
-                                __global int2 *armature_animation_indices,
-                                __global float2 *armature_animation_elapsed,
-                                __global float2 *armature_animation_blend,
-                                float delta_time)
+__kernel void animate_entities(__global float16 *armature_bones,
+                               __global float16 *bone_bind_poses,
+                               __global float16 *model_transforms,
+                               __global int *entity_flags,
+                               __global int *armature_bone_reference_ids,
+                               __global int *armature_bone_parent_ids,
+                               __global int2 *bone_channel_tables,
+                               __global int2 *bone_pos_channel_tables,
+                               __global int2 *bone_rot_channel_tables,
+                               __global int2 *bone_scl_channel_tables,
+                               __global int *entity_model_transforms,
+                               __global int2 *entity_bone_tables,
+                               __global float4 *key_frames,
+                               __global float *frame_times,
+                               __global int *animation_timing_indices,
+                               __global float *animation_durations,
+                               __global float *animation_tick_rates,
+                               __global int2 *entity_animation_indices,
+                               __global float2 *entity_animation_elapsed,
+                               __global float2 *entity_animation_blend,
+                               float delta_time)
 {
-    int current_armature = get_global_id(0);
-    int2 bone_table = bone_tables[current_armature];
-    int armature_transform_id = armature_model_transforms[current_armature];
-    int flags = armature_flags[current_armature];
-    float16 model_transform = model_transforms[armature_transform_id];
-    int2 current_animation = armature_animation_indices[current_armature]; 
-    float2 current_frame_time = armature_animation_elapsed[current_armature];
-    float2 current_blend_time = armature_animation_blend[current_armature];
+    int current_entity = get_global_id(0);
+    int2 bone_table = entity_bone_tables[current_entity];
+    int entity_transform_id = entity_model_transforms[current_entity];
+    int flags = entity_flags[current_entity];
+    float16 model_transform = model_transforms[entity_transform_id];
+    int2 current_animation = entity_animation_indices[current_entity]; 
+    float2 current_frame_time = entity_animation_elapsed[current_entity];
+    float2 current_blend_time = entity_animation_blend[current_entity];
 
     float a = ((flags & FACE_LEFT) != 0)
         ? -1.0 
@@ -182,7 +182,7 @@ __kernel void animate_armatures(__global float16 *armature_bones,
 
     model_transform = matrix_mul(x, model_transform);
 
-    // note that armatures with no bones simply do nothing as the bone count will be zero
+    // note that entities with no bones simply do nothing as the bone count will be zero
     int armature_bone_count = bone_table.y - bone_table.x + 1;
     for (int i = 0; i < armature_bone_count; i++)
     {
@@ -218,9 +218,9 @@ __kernel void animate_armatures(__global float16 *armature_bones,
         : -1; 
 
     current_frame_time += delta_time;    
-    armature_animation_blend[current_armature] = current_blend_time;
-    armature_animation_indices[current_armature] = current_animation;
-    armature_animation_elapsed[current_armature] = current_frame_time;
+    entity_animation_blend[current_entity] = current_blend_time;
+    entity_animation_indices[current_entity] = current_animation;
+    entity_animation_elapsed[current_entity] = current_frame_time;
 }
 
 __kernel void animate_bones(__global float16 *bones,
@@ -240,13 +240,13 @@ __kernel void animate_bones(__global float16 *bones,
 
 __kernel void animate_points(__global float4 *points,
                              __global float2 *hull_scales,
-                             __global int *hull_armature_ids,
+                             __global int *hull_entity_ids,
                              __global int *hull_flags,
                              __global int *point_vertex_references,
                              __global int *point_hull_indices,
                              __global int4 *bone_tables,
                              __global float4 *vertex_weights,
-                             __global float4 *armatures,
+                             __global float4 *entities,
                              __global float2 *vertex_references,
                              __global float16 *bones)
 {
@@ -258,7 +258,7 @@ __kernel void animate_points(__global float4 *points,
     int point_hull_index = point_hull_indices[gid];
     
     int hull_flag = hull_flags[point_hull_index];
-    int hull_armature_id = hull_armature_ids[point_hull_index];
+    int hull_entity_id = hull_entity_ids[point_hull_index];
     bool no_bones = (hull_flag & NO_BONES) !=0;
     if (no_bones) return;
 
@@ -278,7 +278,7 @@ __kernel void animate_points(__global float4 *points,
     test_bone += bone4 * reference_weights.w;
     
     float2 hull_scale = hull_scales[point_hull_index];
-    float4 armature = armatures[hull_armature_id]; 
+    float4 entity = entities[hull_entity_id]; 
 
     float4 padded = (float4)(reference_vertex.x, reference_vertex.y, 0.0f, 1.0f);
     float4 after_bone = matrix_transform(test_bone, padded);
@@ -287,7 +287,7 @@ __kernel void animate_points(__global float4 *points,
     // this is effectively a model transform with just scale and position
     un_padded.x *= hull_scale.x;
     un_padded.y *= hull_scale.y;
-    un_padded += armature.xy;
+    un_padded += entity.xy;
     point.x = un_padded.x;
     point.y = un_padded.y;
     points[gid] = point;

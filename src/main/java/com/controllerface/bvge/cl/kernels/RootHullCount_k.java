@@ -1,12 +1,10 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPUKernel;
-
 public class RootHullCount_k extends GPUKernel
 {
     public enum Args
     {
-        armature_model_indices,
+        entity_model_indices,
         counter,
         model_id;
     }

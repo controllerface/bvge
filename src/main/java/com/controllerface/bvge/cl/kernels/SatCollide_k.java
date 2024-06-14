@@ -1,19 +1,20 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPUKernel;
-
 public class SatCollide_k extends GPUKernel
 {
     public enum Args
     {
         candidates,
+        entity_model_transforms,
+        entity_flags,
         hulls,
         hull_scales,
         hull_frictions,
         hull_restitutions,
+        hull_integrity,
         hull_point_tables,
         hull_edge_tables,
-        hull_armature_ids,
+        hull_entity_ids,
         hull_flags,
         point_flags,
         points,

@@ -16,42 +16,42 @@ public class ECS
 
     public ECS()
     {
-        // register all components at creation time. This is necessary to ensure all the
-        // available components can be used before any systems or entities make use of them
+        // register all standard components at creation time. This is necessary to ensure all the
+        // base components can be used before systems or entities reference them
         for (Component component : Component.values())
         {
-            registerComponent(component);
+            register_component(component);
         }
     }
 
-    private void registerComponent(Component component)
+    private void register_component(Component component)
     {
         components.put(component, new HashMap<>());
     }
 
-    public String registerEntity(String id)
+    public String register_entity(String id)
     {
-        var targetId = id;
+        var target_id = id;
         if (id == null || id.isEmpty())
         {
-            targetId = "entity_" + count++;
+            target_id = "entity_" + count++;
         }
-        entities.add(targetId);
-        return targetId;
+        entities.add(target_id);
+        return target_id;
     }
 
 
-    public void registerSystem(GameSystem system)
+    public void register_system(GameSystem system)
     {
         systems.add(system);
     }
 
-    public void attachComponent(String id, Component type, GameComponent component)
+    public void attach_component(String id, Component type, GameComponent component)
     {
         components.get(type).put(id, component);
     }
 
-    public GameComponent getComponentFor(String id, Component type)
+    public GameComponent get_component_for(String id, Component type)
     {
         return components.get(type).get(id);
     }
@@ -62,7 +62,7 @@ public class ECS
      * @param type the type of component map to retrieve
      * @return the components map for the given component type. may be empty
      */
-    public Map<String, GameComponent> getComponents(Component type)
+    public Map<String, GameComponent> get_components(Component type)
     {
         return components.get(type);
     }

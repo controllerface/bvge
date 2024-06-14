@@ -15,13 +15,16 @@ collisions, as there is only a single point, circles are always the vertex objec
 Circle/circle collisions use a simple distance/radius check.
  */
 __kernel void sat_collide(__global int2 *candidates,
+                          __global int *entity_model_transforms,
+                          __global int *entity_flags,
                           __global float4 *hulls,
                           __global float2 *hull_scales,
                           __global float *hull_frictions,
                           __global float *hull_restitutions,
+                          __global int *hull_integrity,
                           __global int2 *hull_point_tables,
                           __global int2 *hull_edge_tables,
-                          __global int *hull_armature_ids,
+                          __global int *hull_entity_ids,
                           __global int *hull_flags,
                           __global int *point_flags,
                           __global float4 *points,
@@ -41,8 +44,6 @@ __kernel void sat_collide(__global int2 *candidates,
     int b2_id = current_pair.y;
     int hull_1_flags = hull_flags[b1_id];
     int hull_2_flags = hull_flags[b2_id];
-    bool b1s = (hull_1_flags & IS_STATIC) !=0;
-    bool b2s = (hull_2_flags & IS_STATIC) !=0;
     
     bool b1_is_circle = (hull_1_flags & IS_CIRCLE) !=0;
     bool b2_is_circle = (hull_2_flags & IS_CIRCLE) !=0;
@@ -64,7 +65,7 @@ __kernel void sat_collide(__global int2 *candidates,
             hulls,
             hull_frictions,
             hull_restitutions,
-            hull_armature_ids,
+            hull_entity_ids,
             hull_flags,
             hull_point_tables,
             hull_edge_tables,
@@ -82,10 +83,12 @@ __kernel void sat_collide(__global int2 *candidates,
     else if (b1_is_polygon && b2_is_polygon) 
     {
         polygon_collision(b1_id, b2_id, 
+            entity_flags,
             hulls,
             hull_frictions,
             hull_restitutions,
-            hull_armature_ids,
+            hull_integrity,
+            hull_entity_ids,
             hull_flags,
             hull_point_tables,
             hull_edge_tables,
@@ -107,7 +110,7 @@ __kernel void sat_collide(__global int2 *candidates,
             hull_scales,
             hull_frictions,
             hull_restitutions,
-            hull_armature_ids,
+            hull_entity_ids,
             hull_flags,
             hull_point_tables,
             points,
@@ -122,11 +125,14 @@ __kernel void sat_collide(__global int2 *candidates,
     else 
     {
         polygon_circle_collision(p_id, c_id, 
+            entity_model_transforms,
+            entity_flags,
             hulls,
             hull_scales,
             hull_frictions,
             hull_restitutions,
-            hull_armature_ids,
+            hull_integrity,
+            hull_entity_ids,
             hull_flags,
             hull_point_tables,
             hull_edge_tables,
@@ -184,7 +190,7 @@ __kernel void apply_reactions(__global float8 *reactions,
                               __global float4 *points,
                               __global float *anti_gravity,
                               __global int *point_flags,
-                              __global ushort *point_hit_counts,
+                              __global short *point_hit_counts,
                               __global int *point_reactions,
                               __global int *point_offsets,
                               __global int *point_hull_indices,
@@ -197,7 +203,7 @@ __kernel void apply_reactions(__global float8 *reactions,
     int current_point = get_global_id(0);
     int reaction_count = point_reactions[current_point];
     int flags = point_flags[current_point];
-    ushort hit_count = point_hit_counts[current_point];
+    short hit_count = point_hit_counts[current_point];
     
     int h_index = point_hull_indices[current_point];
     int h_flags = hull_flags[h_index];
@@ -378,7 +384,7 @@ __kernel void move_hulls(__global float4 *hulls,
 }
 
 inline int2 consume_point_flags(__global int *point_flags,
-                               __global ushort *point_hit_counts,
+                               __global short *point_hit_counts,
                                int2 point_table)
 {
     int2 result = (int2)(0, 0);
@@ -391,7 +397,7 @@ inline int2 consume_point_flags(__global int *point_flags,
     {
         int n = start + i;
         int flags = point_flags[n];
-        ushort pc = point_hit_counts[n];
+        short pc = point_hit_counts[n];
         result.x |= flags;
         result.y += (int)pc;
 
@@ -403,26 +409,35 @@ inline int2 consume_point_flags(__global int *point_flags,
 
     return result;
 }
-__kernel void move_armatures(__global float4 *hulls,
-                             __global float4 *armatures,
-                             __global int *armature_flags,
-                             __global int2 *hull_tables,
-                             __global int2 *hull_point_tables,
-                             __global int *hull_flags,
-                             __global int *point_flags,
-                             __global ushort *point_hit_counts,
-                             __global float4 *points)
+__kernel void move_entities(__global float4 *hulls,
+                            __global float4 *entities,
+                            __global int *entity_flags,
+                            __global short2 *entity_motion_states,
+                            __global int2 *hull_tables,
+                            __global int2 *hull_point_tables,
+                            __global int *hull_integrity,
+                            __global int *hull_flags,
+                            __global int *point_flags,
+                            __global short *point_hit_counts,
+                            __global float4 *points,
+                            float dt)
 {
-    int current_armature = get_global_id(0);
-    float4 armature = armatures[current_armature];
-    int flags = armature_flags[current_armature];
-    int2 hull_table = hull_tables[current_armature];
+    int current_entity = get_global_id(0);
+    float4 entity = entities[current_entity];
+    int flags = entity_flags[current_entity];
+    int2 hull_table = hull_tables[current_entity];
     int start = hull_table.x;
     int end = hull_table.y;
     int hull_count = end - start + 1;
+    short2 motion_state = entity_motion_states[current_entity];
+
 
     int hull_flags_0 = hull_flags[start];
     bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
+    bool collectable = (hull_flags_0 & COLLECTABLE) != 0;
+
+    int hull_0_integrity = hull_integrity[start];
+    bool single_hull = hull_count == 1;
 
     float2 diff = (float2)(0.0f);
     int _point_flags = 0;
@@ -461,34 +476,35 @@ __kernel void move_armatures(__global float4 *hulls,
 
     bool go_static = hit_floor  
         && !hit_water 
+        && !collectable 
         && is_block 
         && total_hits >= block_check;
 
+    bool destroy = single_hull && hull_0_integrity <= 0;
     
     hull_flags_0 = go_static 
         ? hull_flags_0 | IS_STATIC
         : hull_flags_0;
     
+    entity.w = hit_floor 
+        ? entity.y 
+        : entity.w;
 
-    armature.w = hit_floor 
-        ? armature.y 
-        : armature.w;
+    float2 initial_tail = entity.zw;
+    float initial_dist = fast_distance(entity.xy, entity.zw);
 
-    float2 initial_tail = armature.zw;
-    float initial_dist = fast_distance(armature.xy, armature.zw);
-
-    armature.xy = had_bones 
-        ? armature.xy + diff
+    entity.xy = had_bones 
+        ? entity.xy + diff
         : last_center;
 
-    float2 adjusted_offset = armature.xy - initial_tail;
+    float2 adjusted_offset = entity.xy - initial_tail;
     float new_len = fast_length(adjusted_offset);
 
     adjusted_offset = new_len == 0.0f 
         ? adjusted_offset 
         : native_divide(adjusted_offset, new_len);
 
-    armature.zw = armature.xy - initial_dist * adjusted_offset;
+    entity.zw = entity.xy - initial_dist * adjusted_offset;
 
     flags = hit_floor 
         ? flags | CAN_JUMP
@@ -498,7 +514,32 @@ __kernel void move_armatures(__global float4 *hulls,
         ? flags | IS_WET
         : flags & ~IS_WET;
 
+    flags = destroy
+        ? flags | BROKEN
+        : flags & ~BROKEN;
+
+
+    // float threshold = 10.0f;
+    // float2 vel = (entity.xy - entity.zw) / dt;
+
+    // motion_state.x = (vel.y < -threshold) 
+    //     ? motion_state.x + 1 
+    //     : 0;
+
+    // motion_state.y = (vel.y > threshold) 
+    //     ? motion_state.y + 1 
+    //     : 0;
+
+    // motion_state.x = motion_state.x > 1000 
+    //     ? 1000 
+    //     : motion_state.x;
+
+    // motion_state.y = motion_state.y > 1000 
+    //     ? 1000 
+    //     : motion_state.y;
+
+    // entity_motion_states[current_entity] = motion_state;
     hull_flags[start] = hull_flags_0;
-    armatures[current_armature] = armature;
-    armature_flags[current_armature] = flags;
+    entities[current_entity] = entity;
+    entity_flags[current_entity] = flags;
 }

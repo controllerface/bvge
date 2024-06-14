@@ -71,8 +71,8 @@ __kernel void scan_bounds_multi_block(__global int2 *bounds_bank_data,
     int k = get_num_groups(0);
 
     // copy into local data padding elements >= n with 0
-    buffer[local_a_index] = (a_index < n) ? (int)bounds_bank_data[a_index].y : 0;
-    buffer[local_b_index] = (b_index < n) ? (int)bounds_bank_data[b_index].y : 0;
+    buffer[local_a_index] = (a_index < n) ? bounds_bank_data[a_index].y : 0;
+    buffer[local_b_index] = (b_index < n) ? bounds_bank_data[b_index].y : 0;
 
     // ON EACH SUBARRAY
     // a reduce on each subarray
@@ -116,28 +116,38 @@ __kernel void complete_bounds_multi_block(__global int2 *bounds_bank_data,
     int local_a_index = (2 * local_id);
     int local_b_index = (2 * local_id) + 1;
     int grpid = get_group_id(0);
+    int partial = part[grpid];
 
-    // copy into local data padding elements >= n with identity
-    buffer[local_a_index] = (a_index < n) ? (int)bounds_bank_data[a_index].x : 0;
-    buffer[local_b_index] = (b_index < n) ? (int)bounds_bank_data[b_index].x : 0;
-    buffer[local_a_index] += part[grpid];
-    buffer[local_b_index] += part[grpid];
+    bool a_ok = (a_index < n);
+    bool b_ok = (b_index < n);
+
+    int2 a = bounds_bank_data[a_index];
+    int2 b = bounds_bank_data[b_index];
+
+    int buf_a = (a_ok) ? a.x : 0;
+    int buf_b = (b_ok) ? b.x : 0;
+    buf_a += partial;
+    buf_b += partial;
 
     // copy back to global data
-    if (a_index < n) 
+    if (a_ok)
     {
-        bounds_bank_data[a_index].x = native_divide((float)buffer[local_a_index], 2);
+        a.x = native_divide((float)buf_a, 2);
+        bounds_bank_data[a_index] = a;
         if (a_index == n - 1)
         {
-            sz[0] = (bounds_bank_data[a_index].x + bounds_bank_data[a_index].y) * 2;
+            sz[0] = (a.x + a.y) * 2;
         }
     }
-    if (b_index < n) 
+    if (b_ok)
     {
-        bounds_bank_data[b_index].x = native_divide((float)buffer[local_b_index], 2);
+        b.x = native_divide((float)buf_b, 2);
+        bounds_bank_data[b_index] = b;
         if (b_index == n - 1)
         {
-            sz[0] = (bounds_bank_data[b_index].x + bounds_bank_data[b_index].y) * 2;
+            sz[0] = (b.x + b.y) * 2;
         }
     }
+    buffer[local_a_index] = buf_a;
+    buffer[local_b_index] = buf_b;
 }

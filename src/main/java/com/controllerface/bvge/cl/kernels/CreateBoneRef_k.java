@@ -1,7 +1,5 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPUKernel;
-
 public class CreateBoneRef_k extends GPUKernel
 {
 

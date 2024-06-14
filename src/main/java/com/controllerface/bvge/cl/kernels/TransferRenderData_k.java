@@ -1,17 +1,16 @@
 package com.controllerface.bvge.cl.kernels;
 
-import com.controllerface.bvge.cl.GPUKernel;
-
 public class TransferRenderData_k extends GPUKernel
 {
     public enum Args
     {
         hull_point_tables,
         hull_mesh_ids,
-        hull_armature_ids,
+        hull_entity_ids,
         hull_flags,
         hull_uv_offsets,
-        armature_flags,
+        hull_integrity,
+        entity_flags,
         mesh_vertex_tables,
         mesh_face_tables,
         mesh_faces,
@@ -24,8 +23,10 @@ public class TransferRenderData_k extends GPUKernel
         vertex_buffer,
         uv_buffer,
         color_buffer,
+        slot_buffer,
         element_buffer,
         mesh_details,
+        mesh_texture,
         mesh_transfer,
         offset;
     }

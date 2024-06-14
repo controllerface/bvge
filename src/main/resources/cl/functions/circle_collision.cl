@@ -7,7 +7,7 @@ inline void circle_collision(int hull_1_id,
                              __global float2 *hull_scales,
                              __global float *hull_frictions,
                              __global float *hull_restitutions,
-                             __global int *hull_armature_ids,
+                             __global int *hull_entity_ids,
                              __global int *hull_flags,
                              __global int2 *hull_point_tables,
                              __global float4 *points,
@@ -35,14 +35,14 @@ inline void circle_collision(int hull_1_id,
     int hull_2_flags = hull_flags[hull_2_id];
     float4 hull_1_center = points[hull_1_table.x];
     float4 hull_2_center = points[hull_2_table.x];
-    int hull_1_armature_id = hull_armature_ids[hull_1_id];
-    int hull_2_armature_id = hull_armature_ids[hull_2_id];
+    int hull_1_entity_id = hull_entity_ids[hull_1_id];
+    int hull_2_entity_id = hull_entity_ids[hull_2_id];
     float hull_1_friction = hull_frictions[hull_1_id];
     float hull_2_friction = hull_frictions[hull_2_id];
     float hull_1_restitution = hull_restitutions[hull_1_id];
     float hull_2_restitution = hull_restitutions[hull_2_id];
-    float hull_1_mass = masses[hull_1_armature_id];
-    float hull_2_mass = masses[hull_2_armature_id];
+    float hull_1_mass = masses[hull_1_entity_id];
+    float hull_2_mass = masses[hull_2_entity_id];
 
     // cursor collision causes early exit
     bool cursor_1 = (hull_1_flags & IS_CURSOR) !=0;

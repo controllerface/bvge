@@ -3,11 +3,14 @@ Handles collision between one polygonal hull and one circular hull
  */
 inline void polygon_circle_collision(int polygon_id, 
                                      int circle_id,
+                                     __global int *entity_model_transforms,
+                                     __global int *entity_flags,
                                      __global float4 *hulls,
                                      __global float2 *hull_scales,
                                      __global float *hull_frictions,
                                      __global float *hull_restitutions,
-                                     __global int *hull_armature_ids,
+                                     __global int *hull_integrity,
+                                     __global int *hull_entity_ids,
                                      __global int *hull_flags,
                                      __global int2 *hull_point_tables,
                                      __global int2 *hull_edge_tables,
@@ -45,7 +48,6 @@ inline void polygon_circle_collision(int polygon_id,
         
     float2 collision_normal;
     int2 vertex_table = circle_table;
-
 
     int max_axis = 0;
     int this_axis = 0;
@@ -111,26 +113,36 @@ inline void polygon_circle_collision(int polygon_id,
     }
     int vert_hull_flags = hull_flags[vert_hull_id];
     int edge_hull_flags = hull_flags[edge_hull_id];
+    int vert_entity_id = hull_entity_ids[vert_hull_id];
+    int edge_entity_id = hull_entity_ids[edge_hull_id];
     
+    float4 hull_v = hulls[circle_id];
+    float4 hull_e = hulls[polygon_id];
+
     // cursor collision causes early exit
     bool cursor_v = (vert_hull_flags & IS_CURSOR) !=0;
-    bool cursor_e = (edge_hull_flags & IS_CURSOR) !=0;
-    bool any_cursor = (cursor_v || cursor_e);
-    if (any_cursor)
+    if (cursor_v)
     {
-        if (cursor_v)
-        {
-            edge_hull_flags |= CURSOR_OVER;            
-            hull_flags[edge_hull_id] = edge_hull_flags;
-        }
-        else
-        {
-            vert_hull_flags |= CURSOR_OVER;            
-            hull_flags[vert_hull_id] = vert_hull_flags;
-        }
+        int owner_id = entity_model_transforms[vert_entity_id];
+        float4 owner = hulls[owner_id];
+        int owner_entity_id = hull_entity_ids[owner_id];        
+        if (owner_entity_id == edge_entity_id) return; //prevent selecting/hitting yourself
+
+        int owner_entity_flags = entity_flags[owner_entity_id];
+        bool atk = (owner_entity_flags & ATTACKING) !=0;
+        bool collect = (owner_entity_flags & CAN_COLLECT) !=0;
+        float center_distance = fast_distance(owner.xy, hull_e.xy);
+        bool hit = point_polygon_containment(polygon_id, hull_v.xy, hull_edge_tables, points, edges, edge_flags);
+        bool in_range = center_distance <= 192.0f;
+        bool collectable = (edge_hull_flags & COLLECTABLE) !=0;
+        edge_hull_flags |= CURSOR_OVER;           
+        if (in_range) edge_hull_flags |= IN_RANGE;
+        if (hit) edge_hull_flags |= CURSOR_HIT;
+        if (atk && in_range && hit) atomic_sub(&hull_integrity[edge_hull_id], 1); // hard-coded 1 damage
+        if (in_range && collect && collectable) entity_flags[edge_entity_id] |= COLLECTED;
+        hull_flags[edge_hull_id] = edge_hull_flags;
         return;
     }
-
 
     float abs_distance = fabs(_distance);
 
@@ -143,13 +155,9 @@ inline void polygon_circle_collision(int polygon_id,
 
     collision_normal = fast_normalize(collision_normal);
 
-    int hull_a_index = circle_id;
-    int hull_b_index = polygon_id;
 
-    float4 hull_a = hulls[hull_a_index];
-    float4 hull_b = hulls[hull_b_index];
 
-    float2 direction = hull_a.xy - hull_b.xy;
+    float2 direction = hull_v.xy - hull_e.xy;
     collision_normal = dot(direction, collision_normal) < 0
         ? collision_normal * -1
         : collision_normal;
@@ -158,8 +166,8 @@ inline void polygon_circle_collision(int polygon_id,
     min_distance = native_divide(min_distance, fast_length(collision_normal));
 
     // collision reaction and opposing direction calculation
-    float2 vert_hull_opposing = hull_b.xy - hull_a.xy;
-    float2 edge_hull_opposing = (float2)(0.0f, 0.0f); //hull_a.xy - hull_b.xy;
+    float2 vert_hull_opposing = hull_e.xy - hull_v.xy;
+    float2 edge_hull_opposing = (float2)(0.0f, 0.0f); //hull_v.xy - hull_e.xy;
     
 
     bool has_water_particle = (vert_hull_flags & IS_LIQUID) != 0;
@@ -168,10 +176,8 @@ inline void polygon_circle_collision(int polygon_id,
         : edge_hull_flags;
     hull_flags[edge_hull_id] = edge_hull_flags;
 
-    int vert_armature_id = hull_armature_ids[vert_hull_id];
-    int edge_armature_id = hull_armature_ids[edge_hull_id];
-    float vert_hull_mass = masses[vert_armature_id];
-    float edge_hull_mass = masses[edge_armature_id];
+    float vert_hull_mass = masses[vert_entity_id];
+    float edge_hull_mass = masses[edge_entity_id];
     float vert_hull_friction = hull_frictions[vert_hull_id];
     float edge_hull_friction = hull_frictions[edge_hull_id];
     float vert_hull_restitution = hull_restitutions[vert_hull_id];
@@ -182,6 +188,7 @@ inline void polygon_circle_collision(int polygon_id,
     bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
     bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
     bool any_static = (static_vert || static_edge);
+    float2 collision_vector = collision_normal * min_distance;
 
     vert_magnitude = any_static 
         ? static_vert ? 0.0f : 1.0f
@@ -194,7 +201,6 @@ inline void polygon_circle_collision(int polygon_id,
     float4 vertex_point = points[vert_index];
     float4 edge_point_1 = points[edge_index_a];
     float4 edge_point_2 = points[edge_index_b];
-    float2 collision_vector = collision_normal * min_distance;
     // float contact = edge_contact(edge_point_1.xy, edge_point_2.xy, vertex_point.xy, collision_vector);
     // float inverse_contact = 1.0f - contact;
     // float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
@@ -240,13 +246,13 @@ inline void polygon_circle_collision(int polygon_id,
     // float2 edge_1_applied_vel = native_divide(edge_1_applied_diff, dt);
     // float2 edge_2_applied_vel = native_divide(edge_2_applied_diff, dt);
 
-    //float restituion_coefficient = 0.00003f;
+    float restituion_coefficient = 0.0003f;
 
-    float restituion_coefficient = any_static 
-        ? static_vert 
-            ? vert_hull_restitution 
-            : edge_hull_restitution
-        : max(vert_hull_restitution, edge_hull_restitution);
+    // float restituion_coefficient = any_static 
+    //     ? static_vert 
+    //         ? vert_hull_restitution 
+    //         : edge_hull_restitution
+    //     : max(vert_hull_restitution, edge_hull_restitution);
 
     // float2 collision_invert = collision_normal * -1;
     float2 vertex_restitution = restituion_coefficient * dot(vertex_applied_vel, collision_normal) * collision_normal;
@@ -256,7 +262,7 @@ inline void polygon_circle_collision(int polygon_id,
     if (!static_vert)
     {
         int point_index = atomic_inc(&counter[0]);
-        float8 vertex_reactions = (float8)(vertex_collision, vert_hull_opposing, vertex_friction, vertex_restitution);
+        float8 vertex_reactions = (float8)(vertex_collision, vert_hull_opposing, (float2)(0.0f, 0.0f), vertex_restitution);
         reactions[point_index] = vertex_reactions;
         reaction_index[point_index] = vert_index;
         atomic_inc(&reaction_counts[vert_index]);
