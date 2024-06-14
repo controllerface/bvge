@@ -1222,7 +1222,6 @@ public class PhysicsSimulation extends GameSystem
         // so this call prevents collision errors due to non-convex shapes.
         resolve_constraints(EDGE_STEPS);
 
-
         //-----------------//
         // Simulation Loop //
         //-----------------//
@@ -1300,9 +1299,7 @@ public class PhysicsSimulation extends GameSystem
         // this step determines how many of each object type is in that state, so they
         // can be transferred into the egress buffer, and eventually onto disk.
         int[] egress_counts = GPGPU.core_memory.count_egress_entities();
-        GPGPU.core_memory.set_egress_counts(egress_counts);
-        if (egress_counts[0] > 0) GPGPU.core_memory.egress_sectors();
-        if (egress_counts[6] > 0) GPGPU.core_memory.egress_broken();
+        GPGPU.core_memory.egress(egress_counts);
 
         if (Editor.ACTIVE)
         {

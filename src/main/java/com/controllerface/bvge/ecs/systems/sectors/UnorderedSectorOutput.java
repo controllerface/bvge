@@ -112,7 +112,7 @@ public class UnorderedSectorOutput
             .ptr_arg(EgressEntities_k.Args.counters,                        ptr_egress_sizes);
     }
 
-    public void egress_sectors(int entity_count, int[] egress_counts)
+    public void egress(int entity_count, int[] egress_counts)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_sizes, cl_int * 6);
         int entity_capacity        = egress_counts[0];
@@ -125,7 +125,7 @@ public class UnorderedSectorOutput
         k_egress_entities.call(arg_long(entity_count));
     }
 
-    public void unload_sectors(UnorderedSectorGroup.Raw raw_sectors, int[] counts)
+    public void unload(UnorderedSectorGroup.Raw raw_sectors, int[] counts)
     {
         sector_group.unload_sectors(raw_sectors, counts);
     }

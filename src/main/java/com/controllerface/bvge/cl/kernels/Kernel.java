@@ -44,6 +44,7 @@ public enum Kernel
     create_vertex_reference,
     egress_entities,
     egress_broken,
+    egress_collected,
     finalize_candidates,
     generate_keys,
     integrate,

@@ -53,7 +53,7 @@ public class BrokenObjectBuffer
             .ptr_arg(EgressBroken_k.Args.counter, ptr_egress_size);
     }
 
-    public void egress_broken(int entity_count, int egress_count)
+    public void egress(int entity_count, int egress_count)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
         broken_group.buffer(BufferType.BROKEN_POSITIONS).ensure_capacity(egress_count);
@@ -62,7 +62,7 @@ public class BrokenObjectBuffer
         k_egress_broken.call(arg_long(entity_count));
     }
 
-    public void unload_broken(BrokenObjectBuffer.Raw raw, int count)
+    public void unload(BrokenObjectBuffer.Raw raw, int count)
     {
         if (count > 0)
         {

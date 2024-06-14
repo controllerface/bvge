@@ -16,8 +16,10 @@ import java.util.concurrent.*;
 
 public class SectorUnloader extends GameSystem
 {
-    private final UnorderedSectorGroup.Raw raw_sectors = new UnorderedSectorGroup.Raw();
-    private final BrokenObjectBuffer.Raw raw_broken = new BrokenObjectBuffer.Raw();
+    private final UnorderedSectorGroup.Raw raw_sectors    = new UnorderedSectorGroup.Raw();
+    private final BrokenObjectBuffer.Raw raw_broken       = new BrokenObjectBuffer.Raw();
+    private final CollectedObjectBuffer.Raw raw_collected = new CollectedObjectBuffer.Raw();
+
     private final Map<Sector, PhysicsEntityBatch> running_batches = new HashMap<>();
     private final BlockingQueue<Float> next_dt                    = new ArrayBlockingQueue<>(1);
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
@@ -59,7 +61,6 @@ public class SectorUnloader extends GameSystem
         int entity_count = (dt == -1f)  ? 0 : last_counts[0];
         if (entity_count > 0)
         {
-            raw_sectors.ensure_space(last_counts);
             GPGPU.core_memory.unload_sectors(raw_sectors, last_counts);
             for (int entity_offset = 0; entity_offset < entity_count; entity_offset++)
             {
@@ -263,7 +264,6 @@ public class SectorUnloader extends GameSystem
         if (last_counts[6] > 0)
         {
             var batch = new PhysicsEntityBatch();
-            raw_broken.ensure_space(last_counts[6]);
             GPGPU.core_memory.unload_broken(raw_broken, last_counts[6]);
             int offset_2 = 0;
             int offset_1 = 0;
@@ -303,6 +303,12 @@ public class SectorUnloader extends GameSystem
                 }
             }
             spawn_queue.offer(batch);
+        }
+        if (last_counts[7] > 0)
+        {
+            GPGPU.core_memory.unload_collected(raw_collected, last_counts[7]);
+            System.out.println("debug1: " + Arrays.toString(raw_collected.uv_offsets));
+            System.out.println("debug2: " + Arrays.toString(raw_collected.flags));
         }
         GPGPU.core_memory.await_sector();
     }
