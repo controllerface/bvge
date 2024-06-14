@@ -214,14 +214,13 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float4 pos = (float4)(point.xy, side_z, 1.0f);
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
 
-        float xxx = is_static ? col - 0.07f : col;
+        //float xxx = is_static ? col - 0.07f : col;
 
-        // todo: integrity needs to be reflected some other way, so the red channel can be used for UI
         float aaa = integrity > 100 
             ? 0.0f 
             : 1.0f - map((float) integrity, 0.0f, 100.0f, 0.0f, 1.0f);
 
-        float rf = 1.0 - aaa;
+        aaa = 1.0 - aaa;
         
         float rrr  = cursor_hit && !in_range 
             ? 0.5f 
@@ -237,7 +236,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
 
         vertex_buffer[ref_offset] = pos;
         uv_buffer[ref_offset] = uv;
-        color_buffer[ref_offset] = (float4)((xxx + rrr) * rf, (xxx + ggg) * rf, (xxx + bbb - ggg * 3) * rf, 1.0f);
+        color_buffer[ref_offset] = (float4)((col + rrr) * aaa, (col + ggg) * aaa, (col + bbb - ggg * 3) * aaa, 1.0f);
         slot_buffer[ref_offset] = (float)texture;
         //if (texture == 3) printf("debug out tex:%d mesh:%d", texture, mesh_id);
     }

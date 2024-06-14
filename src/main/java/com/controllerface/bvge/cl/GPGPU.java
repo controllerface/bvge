@@ -94,44 +94,6 @@ public class GPGPU
 
     //#endregion
 
-    //#region Program Objects
-
-    private enum Program
-    {
-        scan_int2_array(new ScanInt2Array()),
-        scan_int4_array(new ScanInt4Array()),
-        scan_int_array(new ScanIntArray()),
-        scan_int_array_out(new ScanIntArrayOut()),
-
-        ;
-
-        public final GPUProgram gpu;
-
-        Program(GPUProgram program)
-        {
-            this.gpu = program;
-        }
-    }
-
-    //#endregion
-
-    //#region Kernel Objects
-
-    private static GPUKernel k_scan_int_single_block;
-    private static GPUKernel k_scan_int_multi_block;
-    private static GPUKernel k_complete_int_multi_block;
-    private static GPUKernel k_scan_int2_single_block;
-    private static GPUKernel k_scan_int2_multi_block;
-    private static GPUKernel k_complete_int2_multi_block;
-    private static GPUKernel k_scan_int4_single_block;
-    private static GPUKernel k_scan_int4_multi_block;
-    private static GPUKernel k_complete_int4_multi_block;
-    private static GPUKernel k_scan_int_single_block_out;
-    private static GPUKernel k_scan_int_multi_block_out;
-    private static GPUKernel k_complete_int_multi_block_out;
-
-    //#endregion
-
     //#region Init Methods
 
     private static long init_device()
@@ -203,54 +165,6 @@ public class GPGPU
     private static void init_memory()
     {
         core_memory = new GPUCoreMemory();
-    }
-
-    /**
-     * Creates reusable GPUKernel objects that the individual API methods use to implement
-     * the CPU-GPU transition layer. Pre-generating kernels this way helps to reduce calls
-     * to set kernel arguments, which can be expensive. Where possible, kernel arguments
-     * can be set once, and then subsequent calls to that kernel do not require setting
-     * the argument again. Only arguments with data that changes need to be updated.
-     * Generally, kernel functions operate on large arrays of data, which can be defined
-     * as arguments only once, even if the contents of these arrays changes often.
-     */
-    private static void init_kernels()
-    {
-        // integer exclusive scan in-place
-
-        long k_ptr_scan_int_array_single = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_single_block);
-        long k_ptr_scan_int_array_multi = Program.scan_int_array.gpu.kernel_ptr(Kernel.scan_int_multi_block);
-        long k_ptr_scan_int_array_comp = Program.scan_int_array.gpu.kernel_ptr(Kernel.complete_int_multi_block);
-        k_scan_int_single_block = new ScanIntSingleBlock_k(ptr_compute_queue, k_ptr_scan_int_array_single);
-        k_scan_int_multi_block = new ScanIntMultiBlock_k(ptr_compute_queue, k_ptr_scan_int_array_multi);
-        k_complete_int_multi_block = new CompleteIntMultiBlock_k(ptr_compute_queue, k_ptr_scan_int_array_comp);
-
-        // 2D vector integer exclusive scan in-place
-
-        long k_ptr_scan_int2_array_single = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_single_block);
-        long k_ptr_scan_int2_array_multi = Program.scan_int2_array.gpu.kernel_ptr(Kernel.scan_int2_multi_block);
-        long k_ptr_scan_int2_array_comp = Program.scan_int2_array.gpu.kernel_ptr(Kernel.complete_int2_multi_block);
-        k_scan_int2_single_block = new ScanInt2SingleBlock_k(ptr_compute_queue, k_ptr_scan_int2_array_single);
-        k_scan_int2_multi_block = new ScanInt2MultiBlock_k(ptr_compute_queue, k_ptr_scan_int2_array_multi);
-        k_complete_int2_multi_block = new CompleteInt2MultiBlock_k(ptr_compute_queue, k_ptr_scan_int2_array_comp);
-
-        // 4D vector integer exclusive scan in-place
-
-        long k_ptr_scan_int4_array_single = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_single_block);
-        long k_ptr_scan_int4_array_multi = Program.scan_int4_array.gpu.kernel_ptr(Kernel.scan_int4_multi_block);
-        long k_ptr_scan_int4_array_comp = Program.scan_int4_array.gpu.kernel_ptr(Kernel.complete_int4_multi_block);
-        k_scan_int4_single_block = new ScanInt4SingleBlock_k(ptr_compute_queue, k_ptr_scan_int4_array_single);
-        k_scan_int4_multi_block = new ScanInt4MultiBlock_k(ptr_compute_queue, k_ptr_scan_int4_array_multi);
-        k_complete_int4_multi_block = new CompleteInt4MultiBlock_k(ptr_compute_queue, k_ptr_scan_int4_array_comp);
-
-        // integer exclusive scan to output buffer
-
-        long k_ptr_scan_int_array_out_single = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_single_block_out);
-        long k_ptr_scan_int_array_out_multi = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.scan_int_multi_block_out);
-        long k_ptr_scan_int_array_out_comp = Program.scan_int_array_out.gpu.kernel_ptr(Kernel.complete_int_multi_block_out);
-        k_scan_int_single_block_out = new ScanIntSingleBlockOut_k(ptr_compute_queue, k_ptr_scan_int_array_out_single);
-        k_scan_int_multi_block_out = new ScanIntMultiBlockOut_k(ptr_compute_queue, k_ptr_scan_int_array_out_multi);
-        k_complete_int_multi_block_out = new CompleteIntMultiBlockOut_k(ptr_compute_queue, k_ptr_scan_int_array_out_comp);
     }
 
     //#endregion
@@ -408,8 +322,6 @@ public class GPGPU
         clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
     }
 
-
-
     public static int[] cl_read_pinned_int_buffer(long queue_ptr, long pinned_ptr, long size, int count)
     {
         var out = clEnqueueMapBuffer(queue_ptr,
@@ -553,223 +465,6 @@ public class GPGPU
 
     //#endregion
 
-    //#region Exclusive scan variants
-
-    public static void scan_int(long data_ptr, int n)
-    {
-        int k = work_group_count(n);
-        if (k == 1)
-        {
-            scan_single_block_int(data_ptr, n);
-        }
-        else
-        {
-            scan_multi_block_int(data_ptr, n, k);
-        }
-    }
-
-    public static void scan_int2(long data_ptr, int n)
-    {
-        int k = work_group_count(n);
-        if (k == 1)
-        {
-            scan_single_block_int2(data_ptr, n);
-        }
-        else
-        {
-            scan_multi_block_int2(data_ptr, n, k);
-        }
-    }
-
-    public static void scan_int4(long data_ptr, int n)
-    {
-        int k = work_group_count(n);
-        if (k == 1)
-        {
-            scan_single_block_int4(data_ptr, n);
-        }
-        else
-        {
-            scan_multi_block_int4(data_ptr, n, k);
-        }
-    }
-
-    public static void scan_int_out(long data_ptr, long o_data_ptr, int n)
-    {
-        int k = work_group_count(n);
-        if (k == 1)
-        {
-            scan_single_block_int_out(data_ptr, o_data_ptr, n);
-        }
-        else
-        {
-            scan_multi_block_int_out(data_ptr, o_data_ptr, n, k);
-        }
-    }
-
-    private static void scan_single_block_int(long data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-
-        k_scan_int_single_block
-            .ptr_arg(ScanIntSingleBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanIntSingleBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanIntSingleBlock_k.Args.n, n)
-            .call(local_work_default, local_work_default);
-    }
-
-    private static void scan_multi_block_int(long data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-        long gx = k * max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
-
-        var part_data = cl_new_buffer(part_buf_size);
-
-        k_scan_int_multi_block
-            .ptr_arg(ScanIntMultiBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanIntMultiBlock_k.Args.part, part_data)
-            .set_arg(ScanIntMultiBlock_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        scan_int(part_data, part_size);
-
-        k_complete_int_multi_block
-            .ptr_arg(CompleteIntMultiBlock_k.Args.data, data_ptr)
-            .loc_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteIntMultiBlock_k.Args.part, part_data)
-            .set_arg(CompleteIntMultiBlock_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        cl_release_buffer(part_data);
-    }
-
-    private static void scan_single_block_int2(long data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
-
-       k_scan_int2_single_block
-            .ptr_arg(ScanInt2SingleBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanInt2SingleBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanInt2SingleBlock_k.Args.n, n)
-            .call(local_work_default, local_work_default);
-    }
-
-    private static void scan_multi_block_int2(long data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int2 * max_scan_block_size;
-        long gx = k * max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int2 * ((long) part_size));
-
-        var part_data = cl_new_buffer(part_buf_size);
-
-        k_scan_int2_multi_block
-            .ptr_arg(ScanInt2MultiBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanInt2MultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanInt2MultiBlock_k.Args.part, part_data)
-            .set_arg(ScanInt2MultiBlock_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        scan_int2(part_data, part_size);
-
-        k_complete_int2_multi_block
-            .ptr_arg(CompleteInt2MultiBlock_k.Args.data, data_ptr)
-            .loc_arg(CompleteInt2MultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteInt2MultiBlock_k.Args.part, part_data)
-            .set_arg(CompleteInt2MultiBlock_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        cl_release_buffer(part_data);
-    }
-
-    private static void scan_single_block_int4(long data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int4 * max_scan_block_size;
-
-        k_scan_int4_single_block
-            .ptr_arg(ScanInt4SingleBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanInt4SingleBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanInt4SingleBlock_k.Args.n, n)
-            .call(local_work_default, local_work_default);
-    }
-
-    private static void scan_multi_block_int4(long data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int4 * max_scan_block_size;
-        long gx = k * max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int4 * ((long) part_size));
-
-        var part_data = cl_new_buffer(part_buf_size);
-
-        k_scan_int4_multi_block
-            .ptr_arg(ScanInt4MultiBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanInt4MultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanInt4MultiBlock_k.Args.part, part_data)
-            .set_arg(ScanInt4MultiBlock_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        scan_int4(part_data, part_size);
-
-        k_complete_int4_multi_block
-            .ptr_arg(CompleteInt4MultiBlock_k.Args.data, data_ptr)
-            .loc_arg(CompleteInt4MultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteInt4MultiBlock_k.Args.part, part_data)
-            .set_arg(CompleteInt4MultiBlock_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        cl_release_buffer(part_data);
-    }
-
-    private static void scan_single_block_int_out(long data_ptr, long o_data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-
-        k_scan_int_single_block_out
-            .ptr_arg(ScanIntSingleBlockOut_k.Args.input, data_ptr)
-            .ptr_arg(ScanIntSingleBlockOut_k.Args.output, o_data_ptr)
-            .loc_arg(ScanIntSingleBlockOut_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanIntSingleBlockOut_k.Args.n, n)
-            .call(local_work_default, local_work_default);
-    }
-
-    private static void scan_multi_block_int_out(long data_ptr, long o_data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int * max_scan_block_size;
-        long gx = k * max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
-        var part_data = cl_new_buffer(part_buf_size);
-
-        k_scan_int_multi_block_out
-            .ptr_arg(ScanIntMultiBlockOut_k.Args.input, data_ptr)
-            .ptr_arg(ScanIntMultiBlockOut_k.Args.output, o_data_ptr)
-            .loc_arg(ScanIntMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanIntMultiBlockOut_k.Args.part, part_data)
-            .set_arg(ScanIntMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        scan_int(part_data, part_size);
-
-        k_complete_int_multi_block_out
-            .ptr_arg(CompleteIntMultiBlockOut_k.Args.output, o_data_ptr)
-            .loc_arg(CompleteIntMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteIntMultiBlockOut_k.Args.part, part_data)
-            .set_arg(CompleteIntMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, local_work_default);
-
-        cl_release_buffer(part_data);
-    }
-
-    //#endregion
-
     //#region Misc. Public API
 
     public static long build_gpu_program(List<String> src_strings)
@@ -870,28 +565,14 @@ public class GPGPU
         max_scan_block_size = current_max_block_size;
         local_work_default = arg_long(max_work_group_size);
 
-        // initialize gpu programs
-        for (var program : Program.values())
-        {
-            program.gpu.init();
-        }
-
         //OpenCLUtils.debugDeviceDetails(device_ids);
 
         // create memory buffers
         init_memory();
-
-        // Create re-usable kernel objects
-        init_kernels();
     }
 
     public static void destroy()
     {
-        for (Program program : Program.values())
-        {
-            if (program.gpu != null) program.gpu.destroy();
-        }
-
         core_memory.destroy();
 
         clReleaseCommandQueue(ptr_compute_queue);

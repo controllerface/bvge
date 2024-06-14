@@ -197,12 +197,17 @@ public class PhysicsSimulation extends GameSystem
     });
 
 
+    private final GPUScanScalarInt gpu_int_scan;
+    private final GPUScanScalarIntOut gpu_int_scan_out;
+
     //#endregion
 
     public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
     {
         super(ecs);
         this.uniform_grid = uniform_grid;
+        gpu_int_scan     = new GPUScanScalarInt(GPGPU.ptr_compute_queue);
+        gpu_int_scan_out = new GPUScanScalarIntOut(GPGPU.ptr_compute_queue, gpu_int_scan);
 
         grid_buffer_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
 
@@ -663,7 +668,7 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_bank_scan_bounds", String.valueOf(e));
         }
 
-        GPGPU.scan_int(p_data, part_size);
+        gpu_int_scan.scan_int(p_data, part_size);
 
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
 
@@ -808,7 +813,7 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(ScanCandidatesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPGPU.local_work_default);
 
-        GPGPU.scan_int(p_data, part_size);
+        gpu_int_scan.scan_int(p_data, part_size);
 
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
 
@@ -926,7 +931,7 @@ public class PhysicsSimulation extends GameSystem
     private void scan_reactions()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        GPGPU.scan_int_out(b_point_reaction_counts.pointer(), b_point_reaction_offsets.pointer(), GPGPU.core_memory.next_point());
+        gpu_int_scan_out.scan_int_out(b_point_reaction_counts.pointer(), b_point_reaction_offsets.pointer(), GPGPU.core_memory.next_point());
         b_point_reaction_counts.clear();
         if (Editor.ACTIVE)
         {
@@ -1110,7 +1115,7 @@ public class PhysicsSimulation extends GameSystem
         // a similar process to calculating the bank offsets. The buffer is zeroed before use to clear out
         // data that is present after the previous tick.
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_offsets_data, grid_buffer_size);
-        GPGPU.scan_int_out(ptr_counts_data, ptr_offsets_data, uniform_grid.directory_length);
+        gpu_int_scan_out.scan_int_out(ptr_counts_data, ptr_offsets_data, uniform_grid.directory_length);
 
         // Now, the keymap itself is built. This is the structure that provides the ability to query
         // objects within the uniform grid structure.
@@ -1372,6 +1377,9 @@ public class PhysicsSimulation extends GameSystem
         {
             throw new RuntimeException(e);
         }
+
+        gpu_int_scan.destroy();
+        gpu_int_scan_out.destroy();
 
         p_control_entities.destroy();
         p_integrate.destroy();

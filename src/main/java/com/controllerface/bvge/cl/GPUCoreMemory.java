@@ -354,12 +354,18 @@ public class GPUCoreMemory implements SectorContainer
      */
     private final CyclicBarrier sector_barrier = new CyclicBarrier(3);
 
+    private final GPUScanVectorInt2 gpu_int2_scan;
+    private final GPUScanVectorInt4 gpu_int4_scan;
+
     public GPUCoreMemory()
     {
         ptr_delete_counter  = GPGPU.cl_new_int_arg_buffer(new int[]{ 0 });
         ptr_position_buffer = GPGPU.cl_new_pinned_buffer(cl_float2);
         ptr_delete_sizes    = GPGPU.cl_new_pinned_buffer(DELETE_COUNTERS_SIZE);
         ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(EGRESS_COUNTERS_SIZE);
+
+        gpu_int2_scan = new GPUScanVectorInt2(GPGPU.ptr_compute_queue);
+        gpu_int4_scan = new GPUScanVectorInt4(GPGPU.ptr_compute_queue);
 
         // transients
         b_hull_shift                 = new TransientBuffer(GPGPU.ptr_compute_queue, cl_int, HULL_INIT);
@@ -1341,8 +1347,8 @@ public class GPUCoreMemory implements SectorContainer
             .call(global_work_size, GPGPU.local_work_default);
 
         // note the partial buffers are scanned and updated in-place
-        GPGPU.scan_int2(b_delete_partial_1.pointer(), part_size);
-        GPGPU.scan_int4(b_delete_partial_2.pointer(), part_size);
+        gpu_int2_scan.scan_int2(b_delete_partial_1.pointer(), part_size);
+        gpu_int4_scan.scan_int4(b_delete_partial_2.pointer(), part_size);
 
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_delete_sizes, DELETE_COUNTERS_SIZE);
 

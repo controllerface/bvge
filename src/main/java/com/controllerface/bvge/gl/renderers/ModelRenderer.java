@@ -48,9 +48,10 @@ public class ModelRenderer extends GameSystem
     private final int[] texture_slots = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     private final GPUProgram p_mesh_query = new MeshQuery();
-    private final GPUProgram p_scan_int2_array = new ScanInt2Array();
-    private final GPUProgram p_scan_int_array = new ScanIntArray();
     private final GPUProgram p_scan_int_array_out = new ScanIntArrayOut();
+
+    private GPUScanScalarIntOut gpu_int_scan_out;
+    private GPUScanVectorInt2 gpu_int2_scan;
 
     private int vao;
     private int ebo;
@@ -85,15 +86,6 @@ public class ModelRenderer extends GameSystem
     private GPUKernel k_calculate_batch_offsets;
     private GPUKernel k_transfer_detail_data;
     private GPUKernel k_transfer_render_data;
-    private GPUKernel k_scan_int_single_block;
-    private GPUKernel k_scan_int_multi_block;
-    private GPUKernel k_complete_int_multi_block;
-    private GPUKernel k_scan_int2_single_block;
-    private GPUKernel k_scan_int2_multi_block;
-    private GPUKernel k_complete_int2_multi_block;
-    private GPUKernel k_scan_int_single_block_out;
-    private GPUKernel k_scan_int_multi_block_out;
-    private GPUKernel k_complete_int_multi_block_out;
 
     private final int[] model_ids;
     private final String shader_file;
@@ -114,7 +106,6 @@ public class ModelRenderer extends GameSystem
 
         Model[] models = new Model[model_ids.length];
 
-        // todo: sum and validate texture count here
         for (int i = 0; i < model_ids.length; i++)
         {
             var model = ModelRegistry.get_model_by_index(model_ids[i]);
@@ -184,9 +175,10 @@ public class ModelRenderer extends GameSystem
         ptr_mesh_transfer  = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, ELEMENT_BUFFER_SIZE * 2);
 
         p_mesh_query.init();
-        p_scan_int_array.init();
         p_scan_int_array_out.init();
-        p_scan_int2_array.init();
+
+        gpu_int2_scan    = new GPUScanVectorInt2(GPGPU.ptr_render_queue);
+        gpu_int_scan_out = new GPUScanScalarIntOut(GPGPU.ptr_render_queue);
 
         long k_ptr_count_instances = p_mesh_query.kernel_ptr(Kernel.count_mesh_instances);
         k_count_mesh_instances = new CountMeshInstances_k(GPGPU.ptr_render_queue, k_ptr_count_instances)
@@ -244,27 +236,6 @@ public class ModelRenderer extends GameSystem
             .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT_VERTEX_REFERENCE))
             .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.buffer(BufferType.VERTEX_UV_TABLE))
             .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.buffer(BufferType.VERTEX_TEXTURE_UV));
-
-        long k_ptr_scan_int_array_single = p_scan_int_array.kernel_ptr(Kernel.scan_int_single_block);
-        long k_ptr_scan_int_array_multi = p_scan_int_array.kernel_ptr(Kernel.scan_int_multi_block);
-        long k_ptr_scan_int_array_comp = p_scan_int_array.kernel_ptr(Kernel.complete_int_multi_block);
-        k_scan_int_single_block = new ScanIntSingleBlock_k(GPGPU.ptr_render_queue, k_ptr_scan_int_array_single);
-        k_scan_int_multi_block = new ScanIntMultiBlock_k(GPGPU.ptr_render_queue, k_ptr_scan_int_array_multi);
-        k_complete_int_multi_block = new CompleteIntMultiBlock_k(GPGPU.ptr_render_queue, k_ptr_scan_int_array_comp);
-
-        long k_ptr_scan_int2_array_single = p_scan_int2_array.kernel_ptr(Kernel.scan_int2_single_block);
-        long k_ptr_scan_int2_array_multi = p_scan_int2_array.kernel_ptr(Kernel.scan_int2_multi_block);
-        long k_ptr_scan_int2_array_comp = p_scan_int2_array.kernel_ptr(Kernel.complete_int2_multi_block);
-        k_scan_int2_single_block = new ScanInt2SingleBlock_k(GPGPU.ptr_render_queue, k_ptr_scan_int2_array_single);
-        k_scan_int2_multi_block = new ScanInt2MultiBlock_k(GPGPU.ptr_render_queue, k_ptr_scan_int2_array_multi);
-        k_complete_int2_multi_block = new CompleteInt2MultiBlock_k(GPGPU.ptr_render_queue, k_ptr_scan_int2_array_comp);
-
-        long k_ptr_scan_int_array_out_single = p_scan_int_array_out.kernel_ptr(Kernel.scan_int_single_block_out);
-        long k_ptr_scan_int_array_out_multi = p_scan_int_array_out.kernel_ptr(Kernel.scan_int_multi_block_out);
-        long k_ptr_scan_int_array_out_comp = p_scan_int_array_out.kernel_ptr(Kernel.complete_int_multi_block_out);
-        k_scan_int_single_block_out = new ScanIntSingleBlockOut_k(GPGPU.ptr_render_queue, k_ptr_scan_int_array_out_single);
-        k_scan_int_multi_block_out = new ScanIntMultiBlockOut_k(GPGPU.ptr_render_queue, k_ptr_scan_int_array_out_multi);
-        k_complete_int_multi_block_out = new CompleteIntMultiBlockOut_k(GPGPU.ptr_render_queue, k_ptr_scan_int_array_out_comp);
     }
 
     private record BatchData( int[] raw_offsets, int total_instances, long mesh_details_ptr, long mesh_texture_ptr) { }
@@ -288,7 +259,7 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_count_meshes", String.valueOf(e));
         }
 
-        scan_int_out(ptr_counters, ptr_offsets, mesh_count);
+        gpu_int_scan_out.scan_int_out(ptr_counters, ptr_offsets, mesh_count);
 
         int total_instances = GPGPU.cl_read_svm_int(GPGPU.ptr_render_queue, svm_total);
         if (total_instances == 0)
@@ -414,7 +385,7 @@ public class ModelRenderer extends GameSystem
                 Editor.queue_event("render_detail_transfer", String.valueOf(e));
             }
 
-            scan_int2(ptr_mesh_transfer, count);
+            gpu_int2_scan.scan_int2(ptr_mesh_transfer, count);
 
             st = Editor.ACTIVE ? System.nanoTime() : 0;
 
@@ -469,190 +440,6 @@ public class ModelRenderer extends GameSystem
         }
     }
 
-    private void scan_int(long data_ptr, int n)
-    {
-        long s = Editor.ACTIVE ? System.nanoTime() : 0;
-
-        int k = GPGPU.work_group_count(n);
-        if (k == 1)
-        {
-            scan_single_block_int(data_ptr, n);
-        }
-        else
-        {
-            scan_multi_block_int(data_ptr, n, k);
-        }
-
-        if (Editor.ACTIVE)
-        {
-            long e = System.nanoTime() - s;
-            Editor.queue_event("render_model_scan_int", String.valueOf(e));
-        }
-    }
-
-    private void scan_int_out(long data_ptr, long o_data_ptr, int n)
-    {
-        long s = Editor.ACTIVE ? System.nanoTime() : 0;
-
-        int k = GPGPU.work_group_count(n);
-        if (k == 1)
-        {
-            scan_single_block_int_out(data_ptr, o_data_ptr, n);
-        }
-        else
-        {
-            scan_multi_block_int_out(data_ptr, o_data_ptr, n, k);
-        }
-
-        if (Editor.ACTIVE)
-        {
-            long e = System.nanoTime() - s;
-            Editor.queue_event("render_model_scan_int_out", String.valueOf(e));
-        }
-    }
-
-    private void scan_int2(long data_ptr, int n)
-    {
-        long s = Editor.ACTIVE ? System.nanoTime() : 0;
-
-        int k = GPGPU.work_group_count(n);
-        if (k == 1)
-        {
-            scan_single_block_int2(data_ptr, n);
-        }
-        else
-        {
-            scan_multi_block_int2(data_ptr, n, k);
-        }
-
-        if (Editor.ACTIVE)
-        {
-            long e = System.nanoTime() - s;
-            Editor.queue_event("render_model_scan_int2", String.valueOf(e));
-        }
-    }
-
-    private void scan_single_block_int(long data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
-
-        k_scan_int_single_block
-            .ptr_arg(ScanIntSingleBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanIntSingleBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanIntSingleBlock_k.Args.n, n)
-            .call(GPGPU.local_work_default, GPGPU.local_work_default);
-    }
-
-    private void scan_multi_block_int(long data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
-        long gx = k * GPGPU.max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
-
-        var part_data = GPGPU.cl_new_buffer(part_buf_size);
-
-        k_scan_int_multi_block
-            .ptr_arg(ScanIntMultiBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanIntMultiBlock_k.Args.part, part_data)
-            .set_arg(ScanIntMultiBlock_k.Args.n, n)
-            .call(global_work_size, GPGPU.local_work_default);
-
-        scan_int(part_data, part_size);
-
-        k_complete_int_multi_block
-            .ptr_arg(CompleteIntMultiBlock_k.Args.data, data_ptr)
-            .loc_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteIntMultiBlock_k.Args.part, part_data)
-            .set_arg(CompleteIntMultiBlock_k.Args.n, n)
-            .call(global_work_size, GPGPU.local_work_default);
-
-        GPGPU.cl_release_buffer(part_data);
-    }
-
-    private void scan_single_block_int_out(long data_ptr, long o_data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
-
-        k_scan_int_single_block_out
-            .ptr_arg(ScanIntSingleBlockOut_k.Args.input, data_ptr)
-            .ptr_arg(ScanIntSingleBlockOut_k.Args.output, o_data_ptr)
-            .loc_arg(ScanIntSingleBlockOut_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanIntSingleBlockOut_k.Args.n, n)
-            .call(GPGPU.local_work_default, GPGPU.local_work_default);
-    }
-
-    private void scan_multi_block_int_out(long data_ptr, long o_data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
-        long gx = k * GPGPU.max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
-        var part_data = GPGPU.cl_new_buffer(part_buf_size);
-
-        k_scan_int_multi_block_out
-            .ptr_arg(ScanIntMultiBlockOut_k.Args.input, data_ptr)
-            .ptr_arg(ScanIntMultiBlockOut_k.Args.output, o_data_ptr)
-            .loc_arg(ScanIntMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanIntMultiBlockOut_k.Args.part, part_data)
-            .set_arg(ScanIntMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, GPGPU.local_work_default);
-
-        scan_int(part_data, part_size);
-
-        k_complete_int_multi_block_out
-            .ptr_arg(CompleteIntMultiBlockOut_k.Args.output, o_data_ptr)
-            .loc_arg(CompleteIntMultiBlockOut_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteIntMultiBlockOut_k.Args.part, part_data)
-            .set_arg(CompleteIntMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, GPGPU.local_work_default);
-
-        GPGPU.cl_release_buffer(part_data);
-    }
-
-    private void scan_single_block_int2(long data_ptr, int n)
-    {
-        long local_buffer_size = CLSize.cl_int2 * GPGPU.max_scan_block_size;
-
-        k_scan_int2_single_block
-            .ptr_arg(ScanInt2SingleBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanInt2SingleBlock_k.Args.buffer, local_buffer_size)
-            .set_arg(ScanInt2SingleBlock_k.Args.n, n)
-            .call(GPGPU.local_work_default, GPGPU.local_work_default);
-    }
-
-    private void scan_multi_block_int2(long data_ptr, int n, int k)
-    {
-        long local_buffer_size = CLSize.cl_int2 * GPGPU.max_scan_block_size;
-        long gx = k * GPGPU.max_scan_block_size;
-        long[] global_work_size = arg_long(gx);
-        int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int2 * ((long) part_size));
-
-        var part_data = GPGPU.cl_new_buffer(part_buf_size);
-
-        k_scan_int2_multi_block
-            .ptr_arg(ScanInt2MultiBlock_k.Args.data, data_ptr)
-            .loc_arg(ScanInt2MultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanInt2MultiBlock_k.Args.part, part_data)
-            .set_arg(ScanInt2MultiBlock_k.Args.n, n)
-            .call(global_work_size, GPGPU.local_work_default);
-
-        scan_int2(part_data, part_size);
-
-        k_complete_int2_multi_block
-            .ptr_arg(CompleteInt2MultiBlock_k.Args.data, data_ptr)
-            .loc_arg(CompleteInt2MultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteInt2MultiBlock_k.Args.part, part_data)
-            .set_arg(CompleteInt2MultiBlock_k.Args.n, n)
-            .call(global_work_size, GPGPU.local_work_default);
-
-        GPGPU.cl_release_buffer(part_data);
-    }
-
     @Override
     public void shutdown()
     {
@@ -663,6 +450,9 @@ public class ModelRenderer extends GameSystem
         glDeleteBuffers(vbo_texture_uv);
         glDeleteBuffers(vbo_color);
         glDeleteBuffers(vbo_texture_slot);
+
+        gpu_int_scan_out.destroy();
+        gpu_int2_scan.destroy();
 
         shader.destroy();
         p_mesh_query.destroy();
