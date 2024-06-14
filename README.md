@@ -20,4 +20,4 @@ Tech Stack
 - 3D
 - Re-usable engine
 
-![alt text](https://github.com/controllerface/bvge/blob/world-gen/src/main/resources/img/screenshot1.png)
+![alt text](https://github.com/controllerface/bvge/blob/main/src/main/resources/img/screenshot1.png)
