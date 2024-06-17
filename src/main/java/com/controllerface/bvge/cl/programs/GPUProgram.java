@@ -2,9 +2,7 @@ package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
-import com.controllerface.bvge.cl.kernels.CreateEntity_k;
-import com.controllerface.bvge.cl.kernels.CreatePoint_k;
-import com.controllerface.bvge.cl.kernels.Kernel;
+import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.animation.AnimationSettings;
 import com.controllerface.bvge.animation.AnimationState;
 import com.controllerface.bvge.substances.Liquid;
@@ -42,13 +40,6 @@ public abstract class GPUProgram
     protected static String const_control_flags            = read_src("constants/control_flags.cl");
     protected static String const_hit_thresholds           = read_src("constants/hit_thresholds.cl");
     protected static String const_identity_matrix          = read_src("constants/identity_matrix.cl");
-
-    protected static String const_liquid_lookup_table      = Liquid.cl_lookup_table();
-    protected static String const_animation_lookup_table   = AnimationSettings.cl_lookup_table();
-    protected static String const_animation_states         = AnimationState.cl_constants();
-
-    protected static String kernel_create_point            = CreatePoint_k.cl_kernel();
-    protected static String kernel_create_entity           = CreateEntity_k.cl_kernel();
 
     /**
      * Helper functions. Program implementations can use these functions to build out a program,

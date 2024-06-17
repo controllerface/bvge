@@ -2,8 +2,8 @@ package com.controllerface.bvge.ecs.systems.sectors;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.buffers.BufferGroup;
-import com.controllerface.bvge.cl.buffers.BufferType;
 import com.controllerface.bvge.cl.kernels.*;
+import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 
 import static com.controllerface.bvge.cl.CLUtils.*;

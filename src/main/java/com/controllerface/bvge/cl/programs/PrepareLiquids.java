@@ -2,13 +2,14 @@ package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.kernels.Kernel;
+import com.controllerface.bvge.substances.Liquid;
 
 public class PrepareLiquids extends GPUProgram
 {
     @Override
     public GPUProgram init()
     {
-        src.add(const_liquid_lookup_table);
+        src.add(Liquid.cl_lookup_table());
         src.add(const_hit_thresholds);
         src.add(CLUtils.read_src("programs/prepare_liquids.cl"));
 

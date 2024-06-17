@@ -5,6 +5,7 @@ import com.controllerface.bvge.cl.buffers.PersistentBuffer;
 import com.controllerface.bvge.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.cl.kernels.*;
+import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.ScanDeletes;

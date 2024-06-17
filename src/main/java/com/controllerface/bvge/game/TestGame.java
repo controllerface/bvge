@@ -8,6 +8,7 @@ import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.sectors.Sector;
 import com.controllerface.bvge.ecs.systems.sectors.WorldLoader;
 import com.controllerface.bvge.ecs.systems.sectors.WorldUnloader;
+import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.geometry.MeshRegistry;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.renderers.*;
@@ -34,6 +35,7 @@ public class TestGame extends GameMode
 
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
     private final Queue<PhysicsEntityBatch> spawn_queue;
+    private final PlayerInventory player_inventory;
 
     private enum RenderType
     {
@@ -70,6 +72,7 @@ public class TestGame extends GameMode
 
         this.blanking_system = blanking_system;
         this.spawn_queue = new LinkedBlockingDeque<>();
+        this.player_inventory = new PlayerInventory();
         this.sector_cache = Caffeine.newBuilder()
             .expireAfterAccess(Duration.of(1, ChronoUnit.HOURS))
             .build();
@@ -93,7 +96,7 @@ public class TestGame extends GameMode
     {
         ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, spawn_queue));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid));
-        ecs.register_system(new WorldUnloader(ecs, sector_cache, spawn_queue));
+        ecs.register_system(new WorldUnloader(ecs, sector_cache, spawn_queue, player_inventory));
         ecs.register_system(new CameraTracking(ecs, uniformGrid));
 
         ecs.register_system(blanking_system);
@@ -144,8 +147,14 @@ public class TestGame extends GameMode
     }
 
     @Override
-    public void start() { }
+    public void start()
+    {
+
+    }
 
     @Override
-    public void update(float dt) { }
+    public void update(float dt)
+    {
+
+    }
 }

@@ -1,8 +1,6 @@
 package com.controllerface.bvge.cl;
 
-import com.controllerface.bvge.cl.kernels.CreatePoint_k;
 import org.joml.Matrix4f;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -35,7 +33,7 @@ public class CLUtils
         }
     }
 
-    public static <E extends Enum<E>> String generate_crud_kernel_header(int t_offset, String kernel_name, Class<E> enum_class, Map<Enum<?>, String> type_map)
+    public static <E extends Enum<E>> String crud_kernel(int t_offset, String kernel_name, Class<E> enum_class, Map<Enum<?>, String> type_map)
     {
         var buffer = new StringBuilder();
         buffer.append("__kernel void ").append(kernel_name);

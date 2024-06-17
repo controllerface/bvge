@@ -3,6 +3,7 @@ package com.controllerface.bvge.ecs.systems.sectors;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.geometry.*;
 import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
@@ -24,13 +25,15 @@ public class WorldUnloader extends GameSystem
     private final BlockingQueue<Float> next_dt                    = new ArrayBlockingQueue<>(1);
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
     private final Queue<PhysicsEntityBatch> spawn_queue;
+    private final PlayerInventory player_inventory;
     private final Thread task_thread;
 
-    public WorldUnloader(ECS ecs, Cache<Sector, PhysicsEntityBatch> sector_cache, Queue<PhysicsEntityBatch> spawn_queue)
+    public WorldUnloader(ECS ecs, Cache<Sector, PhysicsEntityBatch> sector_cache, Queue<PhysicsEntityBatch> spawn_queue, PlayerInventory player_inventory)
     {
         super(ecs);
         this.sector_cache = sector_cache;
         this.spawn_queue = spawn_queue;
+        this.player_inventory = player_inventory;
         this.task_thread = Thread.ofVirtual().start(new SectorUnloadTask());
         boolean ok = this.next_dt.offer(-1f);
         assert ok : "unable to start SectorLoader";
@@ -326,9 +329,10 @@ public class WorldUnloader extends GameSystem
         if (collected_count > 0)
         {
             GPGPU.core_memory.unload_collected(raw_collected, collected_count);
-            //System.out.println("debug1: " + Arrays.toString(raw_collected.uv_offsets));
-            //System.out.println("debug2: " + Arrays.toString(raw_collected.flags));
-            System.out.println("debug3: " + Arrays.toString(raw_collected.types));
+            for (int i = 0; i < collected_count; i++)
+            {
+                player_inventory.collect_substance(raw_collected.types[i], 1);
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-package com.controllerface.bvge.cl.kernels;
+package com.controllerface.bvge.cl.kernels.crud;
 
 import org.junit.jupiter.api.Test;
 
