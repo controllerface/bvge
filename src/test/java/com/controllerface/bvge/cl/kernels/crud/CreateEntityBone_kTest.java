@@ -9,6 +9,6 @@ class CreateEntityBone_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateEntityBone_k.cl_kernel());
+        System.out.println(CreateEntityBone_k.kernel_source);
     }
 }

@@ -9,6 +9,6 @@ class CreateKeyFrame_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateKeyFrame_k.cl_kernel());
+        System.out.println(CreateKeyFrame_k.kernel_source);
     }
 }

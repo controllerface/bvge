@@ -1,5 +1,7 @@
 package com.controllerface.bvge.cl;
 
+import com.controllerface.bvge.cl.kernels.Kernel;
+import com.controllerface.bvge.cl.kernels.crud.KernelArg;
 import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -10,7 +12,6 @@ import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -33,22 +34,28 @@ public class CLUtils
         }
     }
 
-    public static <E extends Enum<E>> String crud_kernel(int t_offset, String kernel_name, Class<E> enum_class, Map<Enum<?>, String> type_map)
+    public static <E extends Enum<E> & KernelArg> String crud_k_src(Kernel kernel, Class<E> enum_class)
     {
+        int target_index = Arrays.stream(enum_class.getEnumConstants())
+            .filter(e -> e.name().equals("target"))
+            .map(Enum::ordinal)
+            .findAny().orElseThrow();
         var buffer = new StringBuilder();
-        buffer.append("__kernel void ").append(kernel_name);
+        buffer.append("__kernel void ").append(kernel.name());
         var kernel_args = Arrays.stream(enum_class.getEnumConstants())
-            .map(arg -> type_map.get(arg) + " " + arg.name())
+            .map(arg -> String.join(" ", arg.cl_type(), arg.name()))
             .collect(Collectors.joining(",\n\t","(",")\n"));
         buffer.append(kernel_args);
         buffer.append("{\n");
         E[] args = enum_class.getEnumConstants();
-        for (int i = 0; i < t_offset; i++)
+        for (int i = 0; i < target_index; i++)
         {
+            int t = i + target_index + 1;
             buffer.append("\t")
                 .append(args[i].name())
                 .append("[target] = ")
-                .append(args[i+t_offset+1]).append(";\n");
+                .append(args[t])
+                .append(";\n");
         }
         buffer.append("}\n\n");
         return buffer.toString();

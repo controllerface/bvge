@@ -9,6 +9,6 @@ class CreateVertexRef_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateVertexRef_k.cl_kernel());
+        System.out.println(CreateVertexRef_k.kernel_source);
     }
 }

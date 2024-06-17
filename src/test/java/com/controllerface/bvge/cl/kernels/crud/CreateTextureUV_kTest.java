@@ -9,6 +9,6 @@ class CreateTextureUV_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateTextureUV_k.cl_kernel());
+        System.out.println(CreateTextureUV_k.kernel_source);
     }
 }

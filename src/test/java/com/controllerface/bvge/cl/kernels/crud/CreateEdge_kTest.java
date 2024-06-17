@@ -7,6 +7,6 @@ class CreateEdge_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateEdge_k.cl_kernel());
+        System.out.println(CreateEdge_k.kernel_source);
     }
 }

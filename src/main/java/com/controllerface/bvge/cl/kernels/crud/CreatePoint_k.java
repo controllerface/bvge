@@ -4,59 +4,35 @@ import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 public class CreatePoint_k extends GPUKernel
 {
-    private static final String kernel_name = Kernel.create_point.name();
-    private static String kernel_source = "";
+    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_point, Args.class);
 
-    public enum Args
+    public enum Args implements KernelArg
     {
-        points("__global float4 *"),
-        point_vertex_references("__global int *"),
-        point_hull_indices("__global int *"),
-        point_hit_counts("__global short *"),
-        point_flags("__global int *"),
-        point_bone_tables("__global int4 *"),
-        target("int"),
-        new_point("float4"),
-        new_point_vertex_reference("int"),
-        new_point_hull_index("int"),
-        new_point_hit_count("short"),
-        new_point_flags("int"),
-        new_point_bone_table("int4"),
+        points                     (Type.float4_buffer),
+        point_vertex_references    (Type.int_buffer),
+        point_hull_indices         (Type.int_buffer),
+        point_hit_counts           (Type.short_buffer),
+        point_flags                (Type.int_buffer),
+        point_bone_tables          (Type.int4_buffer),
+        target                     (Type.int_arg),
+        new_point                  (Type.float4_arg),
+        new_point_vertex_reference (Type.int_arg),
+        new_point_hull_index       (Type.int_arg),
+        new_point_hit_count        (Type.short_arg),
+        new_point_flags            (Type.int_arg),
+        new_point_bone_table       (Type.int4_arg),
 
         ;
 
-        private static final Map<Enum<?>, String> type_map = new HashMap<>();
         private final String cl_type;
-
-        static
-        {
-            Arrays.stream(values())
-                .forEach(arg -> type_map.put(arg, arg.cl_type));
-        }
-
-        Args(String clType)
-        {
-            cl_type = clType;
-        }
+        Args(String clType) { cl_type = clType; }
+        public String cl_type() { return cl_type; }
     }
 
     public CreatePoint_k(long command_queue_ptr, long kernel_ptr)
     {
         super(command_queue_ptr, kernel_ptr);
-    }
-
-    public static String cl_kernel()
-    {
-        if (kernel_source.isEmpty())
-        {
-            kernel_source = CLUtils.crud_kernel(Args.target.ordinal(), kernel_name, Args.class, Args.type_map);
-        }
-        return kernel_source;
     }
 }

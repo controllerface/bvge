@@ -4,53 +4,29 @@ import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 public class CreateEntityBone_k extends GPUKernel
 {
-    private static final String kernel_name = Kernel.create_entity_bone.name();
-    private static String kernel_source = "";
+    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_entity_bone, Args.class);
 
-    public enum Args
+    public enum Args implements KernelArg
     {
-        entity_bones("__global float16 *"),
-        entity_bone_reference_ids("__global int *"),
-        entity_bone_parent_ids("__global int *"),
-        target("int"),
-        new_armature_bone("float16"),
-        new_armature_bone_reference("int"),
-        new_armature_bone_parent_id("int"),
+        entity_bones                (Type.float16_buffer),
+        entity_bone_reference_ids   (Type.int_buffer),
+        entity_bone_parent_ids      (Type.int_buffer),
+        target                      (Type.int_arg),
+        new_armature_bone           (Type.float16_arg),
+        new_armature_bone_reference (Type.int_arg),
+        new_armature_bone_parent_id (Type.int_arg),
 
         ;
 
-        private static final Map<Enum<?>, String> type_map = new HashMap<>();
         private final String cl_type;
-
-        static
-        {
-            Arrays.stream(values())
-                .forEach(arg -> type_map.put(arg, arg.cl_type));
-        }
-
-        Args(String clType)
-        {
-            cl_type = clType;
-        }
+        Args(String clType) { cl_type = clType; }
+        public String cl_type() { return cl_type; }
     }
 
     public CreateEntityBone_k(long command_queue_ptr, long kernel_ptr)
     {
         super(command_queue_ptr, kernel_ptr);
-    }
-
-    public static String cl_kernel()
-    {
-        if (kernel_source.isEmpty())
-        {
-            kernel_source = CLUtils.crud_kernel(Args.target.ordinal(), kernel_name, Args.class, Args.type_map);
-        }
-        return kernel_source;
     }
 }

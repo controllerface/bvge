@@ -9,6 +9,6 @@ class CreateBoneBindPose_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateBoneBindPose_k.cl_kernel());
+        System.out.println(CreateBoneBindPose_k.kernel_source);
     }
 }

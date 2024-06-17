@@ -9,6 +9,6 @@ class CreateBoneRef_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateBoneRef_k.cl_kernel());
+        System.out.println(CreateBoneRef_k.kernel_source);
     }
 }

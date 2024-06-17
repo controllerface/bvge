@@ -9,6 +9,6 @@ class CreateMeshReference_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateMeshReference_k.cl_kernel());
+        System.out.println(CreateMeshReference_k.kernel_source);
     }
 }

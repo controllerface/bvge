@@ -9,6 +9,6 @@ class CreateAnimationTimings_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateAnimationTimings_k.cl_kernel());
+        System.out.println(CreateAnimationTimings_k.kernel_source);
     }
 }

@@ -9,6 +9,6 @@ class CreateBoneChannel_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateBoneChannel_k.cl_kernel());
+        System.out.println(CreateBoneChannel_k.kernel_source);
     }
 }

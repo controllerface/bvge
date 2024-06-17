@@ -9,6 +9,6 @@ class CreateMeshFace_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateMeshFace_k.cl_kernel());
+        System.out.println(CreateMeshFace_k.kernel_source);
     }
 }

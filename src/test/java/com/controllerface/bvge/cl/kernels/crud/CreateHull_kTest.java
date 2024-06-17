@@ -7,6 +7,6 @@ class CreateHull_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(CreateHull_k.cl_kernel());
+        System.out.println(CreateHull_k.kernel_source);
     }
 }

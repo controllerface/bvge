@@ -9,6 +9,6 @@ class SetBoneChannelTable_kTest
     @Test
     public void generate_kernel()
     {
-        System.out.println(SetBoneChannelTable_k.cl_kernel());
+        System.out.println(SetBoneChannelTable_k.kernel_source);
     }
 }
