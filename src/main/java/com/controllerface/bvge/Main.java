@@ -3,14 +3,6 @@ package com.controllerface.bvge;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.window.Window;
-import org.lwjgl.system.Configuration;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 public class Main
 {

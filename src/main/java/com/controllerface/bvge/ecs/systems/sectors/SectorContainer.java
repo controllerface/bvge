@@ -32,6 +32,7 @@ public interface SectorContainer
                    int root_hull,
                    int model_id,
                    int model_transform_id,
+                   int type,
                    int flags);
     int new_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id);
     int new_armature_bone(int bone_reference, int bone_parent_id, float[] bone_data);

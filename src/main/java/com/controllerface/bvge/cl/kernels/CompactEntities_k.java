@@ -11,6 +11,7 @@ public class CompactEntities_k extends GPUKernel
         entity_root_hulls,
         entity_model_indices,
         entity_model_transforms,
+        entity_types,
         entity_flags,
         entity_animation_indices,
         entity_animation_elapsed,

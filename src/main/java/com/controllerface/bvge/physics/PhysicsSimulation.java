@@ -1342,8 +1342,8 @@ public class PhysicsSimulation extends GameSystem
         {
             clFinish(GPGPU.ptr_render_queue);
             long phys_time = last_phys_time.take();
-            GPGPU.core_memory.await_sector();
-            GPGPU.core_memory.reset_sector();
+            GPGPU.core_memory.await_world_barrier();
+            GPGPU.core_memory.release_world_barrier();
             clFinish(GPGPU.ptr_sector_queue);
             process_world_buffer();
             GPGPU.core_memory.swap_egress_buffers();

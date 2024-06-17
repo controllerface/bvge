@@ -6,8 +6,8 @@ import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.sectors.Sector;
-import com.controllerface.bvge.ecs.systems.sectors.SectorLoader;
-import com.controllerface.bvge.ecs.systems.sectors.SectorUnloader;
+import com.controllerface.bvge.ecs.systems.sectors.WorldLoader;
+import com.controllerface.bvge.ecs.systems.sectors.WorldUnloader;
 import com.controllerface.bvge.geometry.MeshRegistry;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.renderers.*;
@@ -22,9 +22,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
@@ -94,9 +91,9 @@ public class TestGame extends GameMode
 
     private void load_systems()
     {
-        ecs.register_system(new SectorLoader(ecs, uniformGrid, sector_cache, spawn_queue));
+        ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, spawn_queue));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid));
-        ecs.register_system(new SectorUnloader(ecs, sector_cache, spawn_queue));
+        ecs.register_system(new WorldUnloader(ecs, sector_cache, spawn_queue));
         ecs.register_system(new CameraTracking(ecs, uniformGrid));
 
         ecs.register_system(blanking_system);

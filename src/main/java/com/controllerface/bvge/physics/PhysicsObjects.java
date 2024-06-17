@@ -10,6 +10,7 @@ import com.controllerface.bvge.geometry.UnloadedEntity;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
+import com.controllerface.bvge.substances.SubstanceTypeIndex;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -42,7 +43,7 @@ public class PhysicsObjects
 
     public static int particle(SectorContainer world, float x, float y, float size,
                                float mass, float friction, float restitution, int range_link,
-                               int flags, int point_flags, int model_id, int uv_variant)
+                               int flags, int point_flags, int model_id, int uv_variant, int type)
     {
         int next_entity_id = world.next_entity();
         int next_hull_index = world.next_hull();
@@ -93,21 +94,24 @@ public class PhysicsObjects
             hull_id,
             model_id,
             range_link,
+            type,
             0);
     }
 
     public static int liquid_particle(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid)
     {
-        return particle(world, x, y, size, mass, friction, restitution, 0, flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number);
+        int type = SubstanceTypeIndex.to_type_index(particle_fluid);
+        return particle(world, x, y, size, mass, friction, restitution, 0, flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number, type);
     }
 
     public static int circle_cursor(SectorContainer world, float x, float y, float size, int range_link)
     {
-        return particle(world, x, y, size, 0.0f, 0.0f, 0.0f, range_link, HullFlags.IS_CURSOR._int, 0, CURSOR, 0);
+        return particle(world, x, y, size, 0.0f, 0.0f, 0.0f, range_link, HullFlags.IS_CURSOR._int, 0, CURSOR, 0,-1);
     }
 
     public static int tri(SectorContainer world, float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Solid shard_mineral)
     {
+        int type = SubstanceTypeIndex.to_type_index(shard_mineral);
         int next_entity_id = world.next_entity();
         int next_hull_index = world.next_hull();
 
@@ -174,12 +178,14 @@ public class PhysicsObjects
             hull_id,
             model_id,
             0,
+            type,
             0);
     }
 
     public static int block(SectorContainer world, float x, float y, float size, int global_hull_flags, float mass, float friction, float restitution, int model_id, Solid block_mineral,
                             int[] hits)
     {
+        int type = SubstanceTypeIndex.to_type_index(block_mineral);
         int next_entity_id = world.next_entity();
         int next_hull_index = world.next_hull();
 
@@ -254,6 +260,7 @@ public class PhysicsObjects
             hull_id,
             model_id,
             0,
+            type,
             0);
     }
 
@@ -398,9 +405,6 @@ public class PhysicsObjects
             for (Vertex next_vertex : new_interior_hull)
             {
                 var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
-
-                int n = random.nextInt(100, 4000);
-
                 var bone_names = next_vertex.bone_names();
                 int[] bone_ids = new int[4];
                 for (int i = 0; i < bone_ids.length; i++)
@@ -539,6 +543,7 @@ public class PhysicsObjects
             hull_table, bone_table,
             mass, idle_animation_id, 0.0f,
             root_hull_id, model_index, model.root_transform_index(),
+            -1,
             flags);
         result[1] = root_hull_id;
         return result;
@@ -617,7 +622,7 @@ public class PhysicsObjects
         int[] eb_tbl = make_table(eb_ids);
         world.new_entity(entity.x(), entity.y(), entity.z(), entity.w(),
             eh_tbl, eb_tbl, entity.mass(), entity.anim_index_x(), entity.anim_elapsed_x(),
-            eh_ids[entity.root_hull()], entity.model_id(), entity.model_transform_id(), entity.flags());
+            eh_ids[entity.root_hull()], entity.model_id(), entity.model_transform_id(), entity.type(), entity.flags());
     }
 
     private static int find_bone_index(Map<String, Integer> bone_map, String[] bone_names, int index)

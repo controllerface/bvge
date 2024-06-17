@@ -5,6 +5,6 @@ public record UnloadedEntity(float x, float y, float z, float w,
                              short motion_x, short motion_y,
                              int anim_index_x, int anim_index_y,
                              int model_id, int model_transform_id,
-                             float mass, int root_hull, int flags,
+                             float mass, int root_hull, int type, int flags,
                              UnloadedHull[] hulls,
                              UnloadedEntityBone[] bones) { }

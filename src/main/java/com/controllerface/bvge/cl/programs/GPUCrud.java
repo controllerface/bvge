@@ -11,6 +11,8 @@ public class GPUCrud extends GPUProgram
         src.add(const_entity_flags);
         src.add(const_hull_flags);
         src.add(func_rotate_point);
+        src.add(kernel_create_point);
+        src.add(kernel_create_entity);
         src.add(CLUtils.read_src("programs/gpu_crud.cl"));
 
         make_program();

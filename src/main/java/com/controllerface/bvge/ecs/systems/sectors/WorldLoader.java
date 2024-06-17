@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class SectorLoader extends GameSystem
+public class WorldLoader extends GameSystem
 {
     private final WorldType world                = new EarthLikeWorld();
     private final Set<Sector> old_loaded_sectors = new HashSet<>();
@@ -31,7 +31,7 @@ public class SectorLoader extends GameSystem
 
     private record SectorBounds(float outer_x_origin, float outer_y_origin, float outer_x_corner, float outer_y_corner) { }
 
-    public SectorLoader(ECS ecs, UniformGrid uniformGrid, Cache<Sector, PhysicsEntityBatch> sector_cache_in, Queue<PhysicsEntityBatch> spawn_queue_in)
+    public WorldLoader(ECS ecs, UniformGrid uniformGrid, Cache<Sector, PhysicsEntityBatch> sector_cache_in, Queue<PhysicsEntityBatch> spawn_queue_in)
     {
         super(ecs);
         this.uniformGrid = uniformGrid;
@@ -50,6 +50,7 @@ public class SectorLoader extends GameSystem
                 try
                 {
                     load_sectors(next_sector_bounds.take());
+                    GPGPU.core_memory.await_world_barrier();
                 }
                 catch (InterruptedException e)
                 {
@@ -108,11 +109,8 @@ public class SectorLoader extends GameSystem
         PhysicsEntityBatch batch;
         while ((batch = spawn_queue.poll()) != null)
         {
-            //System.out.println("spawning: " + batch + " sz: " + batch.blocks.size());
             GPGPU.core_memory.load_entity_batch(batch);
         }
-
-        GPGPU.core_memory.await_sector();
     }
 
     @Override

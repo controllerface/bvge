@@ -177,6 +177,11 @@ public class SectorGroup extends BufferGroup
         set_buffer(ENTITY, new_buffer(cl_float4, entity_init));
 
         /* int
+         * x: unique entity type id
+         */
+        set_buffer(ENTITY_TYPE, new_buffer(cl_int, entity_init));
+
+        /* int
          * x: entity flags (bit-field)
          */
         set_buffer(ENTITY_FLAG, new_buffer(cl_int, entity_init));
@@ -293,6 +298,7 @@ public class SectorGroup extends BufferGroup
         buffer(ENTITY_MOTION_STATE).ensure_capacity(entity_capacity);
         buffer(ENTITY_ANIM_INDEX).ensure_capacity(entity_capacity);
         buffer(ENTITY).ensure_capacity(entity_capacity);
+        buffer(ENTITY_TYPE).ensure_capacity(entity_capacity);
         buffer(ENTITY_FLAG).ensure_capacity(entity_capacity);
         buffer(ENTITY_ROOT_HULL).ensure_capacity(entity_capacity);
         buffer(ENTITY_MODEL_ID).ensure_capacity(entity_capacity);

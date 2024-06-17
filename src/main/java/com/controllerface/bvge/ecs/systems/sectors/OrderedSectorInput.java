@@ -100,6 +100,7 @@ public class OrderedSectorInput implements SectorContainer
             .buf_arg(MergeEntity_k.Args.entity_root_hulls_in, sector_group.buffer(BufferType.ENTITY_ROOT_HULL))
             .buf_arg(MergeEntity_k.Args.entity_model_indices_in, sector_group.buffer(BufferType.ENTITY_MODEL_ID))
             .buf_arg(MergeEntity_k.Args.entity_model_transforms_in, sector_group.buffer(BufferType.ENTITY_TRANSFORM_ID))
+            .buf_arg(MergeEntity_k.Args.entity_types_in, sector_group.buffer(BufferType.ENTITY_TYPE))
             .buf_arg(MergeEntity_k.Args.entity_flags_in, sector_group.buffer(BufferType.ENTITY_FLAG))
             .buf_arg(MergeEntity_k.Args.entities_out, core_memory.buffer(BufferType.ENTITY))
             .buf_arg(MergeEntity_k.Args.entity_animation_elapsed_out, core_memory.buffer(BufferType.ENTITY_ANIM_ELAPSED))
@@ -111,6 +112,7 @@ public class OrderedSectorInput implements SectorContainer
             .buf_arg(MergeEntity_k.Args.entity_root_hulls_out, core_memory.buffer(BufferType.ENTITY_ROOT_HULL))
             .buf_arg(MergeEntity_k.Args.entity_model_indices_out, core_memory.buffer(BufferType.ENTITY_MODEL_ID))
             .buf_arg(MergeEntity_k.Args.entity_model_transforms_out, core_memory.buffer(BufferType.ENTITY_TRANSFORM_ID))
+            .buf_arg(MergeEntity_k.Args.entity_types_out, core_memory.buffer(BufferType.ENTITY_TYPE))
             .buf_arg(MergeEntity_k.Args.entity_flags_out, core_memory.buffer(BufferType.ENTITY_FLAG));
 
         long k_ptr_merge_hull_bone = this.p_gpu_crud.kernel_ptr(Kernel.merge_hull_bone);
@@ -226,9 +228,9 @@ public class OrderedSectorInput implements SectorContainer
     }
 
     @Override
-    public int new_entity(float x, float y, float z, float w, int[] hull_table, int[] bone_table, float mass, int anim_index, float anim_time, int root_hull, int model_id, int model_transform_id, int flags)
+    public int new_entity(float x, float y, float z, float w, int[] hull_table, int[] bone_table, float mass, int anim_index, float anim_time, int root_hull, int model_id, int model_transform_id, int type, int flags)
     {
-        return sector_input.create_entity(x, y, z, w, hull_table, bone_table, mass, anim_index, anim_time, root_hull, model_id, model_transform_id, flags);
+        return sector_input.create_entity(x, y, z, w, hull_table, bone_table, mass, anim_index, anim_time, root_hull, model_id, model_transform_id, type, flags);
     }
 
     @Override

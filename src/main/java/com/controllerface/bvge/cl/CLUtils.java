@@ -1,5 +1,6 @@
 package com.controllerface.bvge.cl;
 
+import com.controllerface.bvge.cl.kernels.CreatePoint_k;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
@@ -9,8 +10,11 @@ import org.lwjgl.system.MemoryUtil;
 import java.io.IOException;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.lwjgl.opencl.CL12.*;
 import static org.lwjgl.opencl.CL12GL.clEnqueueAcquireGLObjects;
@@ -29,6 +33,27 @@ public class CLUtils
         {
             throw new RuntimeException(e);
         }
+    }
+
+    public static <E extends Enum<E>> String generate_crud_kernel_header(int t_offset, String kernel_name, Class<E> enum_class, Map<Enum<?>, String> type_map)
+    {
+        var buffer = new StringBuilder();
+        buffer.append("__kernel void ").append(kernel_name);
+        var kernel_args = Arrays.stream(enum_class.getEnumConstants())
+            .map(arg -> type_map.get(arg) + " " + arg.name())
+            .collect(Collectors.joining(",\n\t","(",")\n"));
+        buffer.append(kernel_args);
+        buffer.append("{\n");
+        E[] args = enum_class.getEnumConstants();
+        for (int i = 0; i < t_offset; i++)
+        {
+            buffer.append("\t")
+                .append(args[i].name())
+                .append("[target] = ")
+                .append(args[i+t_offset+1]).append(";\n");
+        }
+        buffer.append("}\n\n");
+        return buffer.toString();
     }
 
     public static long cl_p(long context_ptr, long device_id_ptr, String ... src)

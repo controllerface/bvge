@@ -69,6 +69,7 @@ public class SectorInput
             .buf_arg(CreateEntity_k.Args.entity_root_hulls,             this.sector_group.buffer(ENTITY_ROOT_HULL))
             .buf_arg(CreateEntity_k.Args.entity_model_indices,          this.sector_group.buffer(ENTITY_MODEL_ID))
             .buf_arg(CreateEntity_k.Args.entity_model_transforms,       this.sector_group.buffer(ENTITY_TRANSFORM_ID))
+            .buf_arg(CreateEntity_k.Args.entity_types,                  this.sector_group.buffer(ENTITY_TYPE))
             .buf_arg(CreateEntity_k.Args.entity_flags,                  this.sector_group.buffer(ENTITY_FLAG))
             .buf_arg(CreateEntity_k.Args.entity_hull_tables,            this.sector_group.buffer(ENTITY_HULL_TABLE))
             .buf_arg(CreateEntity_k.Args.entity_bone_tables,            this.sector_group.buffer(ENTITY_BONE_TABLE))
@@ -175,10 +176,20 @@ public class SectorInput
         return hull_index++;
     }
 
-    public int create_entity(float x, float y, float z, float w, int[] hull_table, int[] bone_table, float mass, int anim_index, float anim_time, int root_hull, int model_id, int model_transform_id, int flags)
+    public int create_entity(float x, float y, float z, float w,
+                             int[] hull_table, int[] bone_table,
+                             float mass,
+                             int anim_index,
+                             float anim_time,
+                             int root_hull,
+                             int model_id,
+                             int model_transform_id,
+                             int type,
+                             int flags)
     {
         int capacity = entity_index + 1;
         sector_group.buffer(ENTITY).ensure_capacity(capacity);
+        sector_group.buffer(ENTITY_TYPE).ensure_capacity(capacity);
         sector_group.buffer(ENTITY_FLAG).ensure_capacity(capacity);
         sector_group.buffer(ENTITY_ROOT_HULL).ensure_capacity(capacity);
         sector_group.buffer(ENTITY_MODEL_ID).ensure_capacity(capacity);
@@ -196,6 +207,7 @@ public class SectorInput
             .set_arg(CreateEntity_k.Args.new_entity_root_hull, root_hull)
             .set_arg(CreateEntity_k.Args.new_entity_model_id, model_id)
             .set_arg(CreateEntity_k.Args.new_entity_model_transform, model_transform_id)
+            .set_arg(CreateEntity_k.Args.new_entity_type, type)
             .set_arg(CreateEntity_k.Args.new_entity_flags, flags)
             .set_arg(CreateEntity_k.Args.new_entity_hull_table, hull_table)
             .set_arg(CreateEntity_k.Args.new_entity_bone_table, bone_table)

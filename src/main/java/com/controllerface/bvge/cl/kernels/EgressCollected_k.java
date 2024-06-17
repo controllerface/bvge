@@ -5,11 +5,13 @@ public class EgressCollected_k extends GPUKernel
     public enum Args
     {
         entity_flags,
+        entity_types,
         entity_hull_tables,
         hull_flags,
         hull_uv_offsets,
         uv_offsets,
         flags,
+        types,
         counter,
     }
 

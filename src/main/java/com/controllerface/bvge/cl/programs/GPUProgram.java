@@ -2,6 +2,8 @@ package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
+import com.controllerface.bvge.cl.kernels.CreateEntity_k;
+import com.controllerface.bvge.cl.kernels.CreatePoint_k;
 import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.animation.AnimationSettings;
 import com.controllerface.bvge.animation.AnimationState;
@@ -44,6 +46,9 @@ public abstract class GPUProgram
     protected static String const_liquid_lookup_table      = Liquid.cl_lookup_table();
     protected static String const_animation_lookup_table   = AnimationSettings.cl_lookup_table();
     protected static String const_animation_states         = AnimationState.cl_constants();
+
+    protected static String kernel_create_point            = CreatePoint_k.cl_kernel();
+    protected static String kernel_create_entity           = CreateEntity_k.cl_kernel();
 
     /**
      * Helper functions. Program implementations can use these functions to build out a program,

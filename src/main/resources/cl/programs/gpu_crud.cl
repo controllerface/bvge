@@ -6,28 +6,6 @@ are designed to operate on a single target object.
 
 // create functions
 
-__kernel void create_point(__global float4 *points,
-                           __global int *point_vertex_references,
-                           __global int *point_hull_indices,
-                           __global short *point_hit_counts,
-                           __global int *point_flags,
-                           __global int4 *point_bone_tables,
-                           int target,
-                           float4 new_point,
-                           int new_point_vertex_reference,
-                           int new_point_hull_index,
-                           short new_point_hit_count,
-                           int new_point_flags,
-                           int4 new_bone_table)
-{
-    points[target]                  = new_point; 
-    point_vertex_references[target] = new_point_vertex_reference; 
-    point_hull_indices[target]      = new_point_hull_index; 
-    point_flags[target]             = new_point_flags; 
-    point_bone_tables[target]             = new_bone_table; 
-    point_hit_counts[target]        = new_point_hit_count;
-}
-
 __kernel void create_edge(__global int2 *edges,
                           __global float *edge_lengths,
                           __global int *edge_flags,
@@ -89,43 +67,6 @@ __kernel void create_texture_uv(__global float2 *texture_uvs,
                                 float2 new_texture_uv)
 {
     texture_uvs[target] = new_texture_uv; 
-}
-
-__kernel void create_entity(__global float4 *entities,
-                            __global float2 *entity_animation_elapsed,
-                            __global short2 *entity_motion_states,
-                            __global int2 *entity_animation_indices,
-                            __global int2 *entity_hull_tables,
-                            __global int2 *entity_bone_tables,
-                            __global float *entity_masses,
-                            __global int *entity_root_hulls,
-                            __global int *entity_model_indices,
-                            __global int *entity_model_transforms,
-                            __global int *entity_flags,
-                            int target,
-                            float4 new_entity,
-                            float2 new_entity_animation_time,
-                            short2 new_entity_motion_state,
-                            int2 new_entity_animation_index,
-                            int2 new_entity_hull_table,
-                            int2 new_entity_bone_table,
-                            float new_entity_mass,
-                            int new_entity_root_hull,
-                            int new_entity_model_id,
-                            int new_entity_model_transform,
-                            int new_entity_flags)
-{
-    entities[target]                 = new_entity; 
-    entity_root_hulls[target]        = new_entity_root_hull; 
-    entity_model_indices[target]     = new_entity_model_id; 
-    entity_model_transforms[target]  = new_entity_model_transform; 
-    entity_flags[target]             = new_entity_flags; 
-    entity_hull_tables[target]       = new_entity_hull_table;
-    entity_bone_tables[target]       = new_entity_bone_table; 
-    entity_masses[target]            = new_entity_mass;
-    entity_animation_indices[target] = new_entity_animation_index; 
-    entity_animation_elapsed[target] = new_entity_animation_time;
-    entity_motion_states[target]     = new_entity_motion_state;
 }
 
 __kernel void create_vertex_reference(__global float2 *vertex_references,
@@ -419,6 +360,7 @@ __kernel void merge_entity(__global float4 *entities_in,
                             __global int *entity_root_hulls_in,
                             __global int *entity_model_indices_in,
                             __global int *entity_model_transforms_in,
+                            __global int *entity_types_in,
                             __global int *entity_flags_in,
                             __global float4 *entities_out,
                             __global float2 *entity_animation_elapsed_out,
@@ -430,6 +372,7 @@ __kernel void merge_entity(__global float4 *entities_in,
                             __global int *entity_root_hulls_out,
                             __global int *entity_model_indices_out,
                             __global int *entity_model_transforms_out,
+                            __global int *entity_types_out,
                             __global int *entity_flags_out,
                             int entity_offset,
                             int hull_offset,
@@ -448,6 +391,7 @@ __kernel void merge_entity(__global float4 *entities_in,
     entity_root_hulls_out[target_entity]        = entity_root_hulls_in[current_entity] + hull_offset;
     entity_model_indices_out[target_entity]     = entity_model_indices_in[current_entity];
     entity_model_transforms_out[target_entity]  = entity_model_transforms_in[current_entity];
+    entity_types_out[target_entity]             = entity_types_in[current_entity];
     entity_flags_out[target_entity]             = entity_flags_in[current_entity];
 }
 
@@ -520,15 +464,18 @@ __kernel void count_egress_entities(__global int *entity_flags,
 }
 
 __kernel void egress_collected(__global int *entity_flags,
+                               __global int *entity_types,
                                __global int2 *entity_hull_tables,
                                __global int *hull_flags,
                                __global int *hull_uv_offsets,
                                __global int *uv_offsets,
                                __global int *flags,
+                               __global int *types,
                                __global int *counter)
 {
     int current_entity = get_global_id(0);
     int e_flags = entity_flags[current_entity];
+    int e_type = entity_types[current_entity];
     bool collected = (e_flags & COLLECTED) !=0;
     if (collected)
     {
@@ -538,6 +485,7 @@ __kernel void egress_collected(__global int *entity_flags,
 
         int entity_id_offset = atomic_inc(&counter[0]); 
         flags[entity_id_offset] = hull_0_flags;
+        types[entity_id_offset] = e_type;
         uv_offsets[entity_id_offset] = uv_offset;
     }
 }
@@ -620,6 +568,7 @@ __kernel void egress_entities(__global float4 *points_in,
                               __global int *entity_root_hulls_in,
                               __global int *entity_model_indices_in,
                               __global int *entity_model_transforms_in,
+                              __global int *entity_types_in,
                               __global int *entity_flags_in,
                               __global float16 *hull_bones_in,
                               __global int *hull_bind_pose_indicies_in,
@@ -659,6 +608,7 @@ __kernel void egress_entities(__global float4 *points_in,
                               __global int *entity_root_hulls_out,
                               __global int *entity_model_indices_out,
                               __global int *entity_model_transforms_out,
+                              __global int *entity_types_out,
                               __global int *entity_flags_out,
                               __global float16 *hull_bones_out,
                               __global int *hull_bind_pose_indicies_out,
@@ -682,6 +632,7 @@ __kernel void egress_entities(__global float4 *points_in,
         int entity_root_hull            = entity_root_hulls_in[current_entity];
         int entity_model_id             = entity_model_indices_in[current_entity];
         int entity_model_transform_id   = entity_model_transforms_in[current_entity];
+        int entity_type                 = entity_types_in[current_entity];
         int entity_flag                 = entity_flags_in[current_entity];
         int2 entity_anim_index          = entity_animation_indices_in[current_entity];
         float2 entity_anim_time         = entity_animation_elapsed_in[current_entity];
@@ -879,6 +830,7 @@ __kernel void egress_entities(__global float4 *points_in,
         entity_root_hulls_out[entity_id_offset]        = entity_root_hull;
         entity_model_indices_out[entity_id_offset]     = entity_model_id;
         entity_model_transforms_out[entity_id_offset]  = entity_model_transform_id;
+        entity_types_out[entity_id_offset]             = entity_type;
         entity_flags_out[entity_id_offset]             = entity_flag;
         entity_animation_indices_out[entity_id_offset] = entity_anim_index;
         entity_animation_elapsed_out[entity_id_offset] = entity_anim_time;

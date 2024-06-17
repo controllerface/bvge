@@ -78,6 +78,7 @@ public class UnorderedSectorGroup extends SectorGroup
             int entity_vec2 = entity_capacity * 2;
             int entity_vec4 = entity_capacity * 4;
             buffer(ENTITY).transfer_out_float(raw.entity,                                    cl_float, entity_vec4);
+            buffer(ENTITY_TYPE).transfer_out_int(raw.entity_type,                            cl_int,   entity_capacity);
             buffer(ENTITY_FLAG).transfer_out_int(raw.entity_flag,                            cl_int,   entity_capacity);
             buffer(ENTITY_ROOT_HULL).transfer_out_int(raw.entity_root_hull,                  cl_int,   entity_capacity);
             buffer(ENTITY_MODEL_ID).transfer_out_int(raw.entity_model_id,                    cl_int,   entity_capacity);
@@ -122,6 +123,7 @@ public class UnorderedSectorGroup extends SectorGroup
         public float[] entity_anim_elapsed = new float[0];
         public short[] entity_motion_state = new short[0];
         public int[] entity_anim_index = new int[0];
+        public int[] entity_type = new int[0];
         public int[] entity_flag = new int[0];
         public int[] entity_root_hull = new int[0];
         public int[] entity_model_id = new int[0];
@@ -161,6 +163,7 @@ public class UnorderedSectorGroup extends SectorGroup
             entity_motion_state = ensure_short(entity_motion_state,      entity_vec2);
             entity_anim_index = ensure_int(entity_anim_index,          entity_vec2);
             entity_flag = ensure_int(entity_flag,                entity_capacity);
+            entity_type = ensure_int(entity_type,                entity_capacity);
             entity_root_hull = ensure_int(entity_root_hull,           entity_capacity);
             entity_model_id = ensure_int(entity_model_id,            entity_capacity);
             entity_model_transform = ensure_int(entity_model_transform,     entity_capacity);

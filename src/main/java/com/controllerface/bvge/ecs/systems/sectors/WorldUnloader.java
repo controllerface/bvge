@@ -14,7 +14,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class SectorUnloader extends GameSystem
+public class WorldUnloader extends GameSystem
 {
     private final UnorderedSectorGroup.Raw raw_sectors    = new UnorderedSectorGroup.Raw();
     private final BrokenObjectBuffer.Raw raw_broken       = new BrokenObjectBuffer.Raw();
@@ -26,7 +26,7 @@ public class SectorUnloader extends GameSystem
     private final Queue<PhysicsEntityBatch> spawn_queue;
     private final Thread task_thread;
 
-    public SectorUnloader(ECS ecs, Cache<Sector, PhysicsEntityBatch> sector_cache, Queue<PhysicsEntityBatch> spawn_queue)
+    public WorldUnloader(ECS ecs, Cache<Sector, PhysicsEntityBatch> sector_cache, Queue<PhysicsEntityBatch> spawn_queue)
     {
         super(ecs);
         this.sector_cache = sector_cache;
@@ -45,7 +45,15 @@ public class SectorUnloader extends GameSystem
             {
                 try
                 {
-                    unload_sectors(next_dt.take());
+                    float dt = next_dt.take();
+                    if ((dt != -1f))
+                    {
+                        int[] last_counts = GPGPU.core_memory.last_egress_counts();
+                        unload_sectors(last_counts);
+                        unload_broken(last_counts);
+                        unload_collected(last_counts);
+                    }
+                    GPGPU.core_memory.await_world_barrier();
                 }
                 catch (InterruptedException e)
                 {
@@ -55,10 +63,9 @@ public class SectorUnloader extends GameSystem
         }
     }
 
-    private void unload_sectors(float dt)
+    private void unload_sectors(int[] last_counts)
     {
-        int[] last_counts = GPGPU.core_memory.last_egress_counts();
-        int entity_count = (dt == -1f)  ? 0 : last_counts[0];
+        int entity_count = last_counts[0];
         if (entity_count > 0)
         {
             GPGPU.core_memory.unload_sectors(raw_sectors, last_counts);
@@ -86,6 +93,7 @@ public class SectorUnloader extends GameSystem
                 var entity_model_transform = raw_sectors.entity_model_transform[entity_offset];
                 var entity_mass            = raw_sectors.entity_mass[entity_offset];
                 var entity_root_hull       = raw_sectors.entity_root_hull[entity_offset];
+                var entity_type            = raw_sectors.entity_type[entity_offset];
                 var entity_flag            = raw_sectors.entity_flag[entity_offset];
                 var entity_bone_table_x    = raw_sectors.entity_bone_table[entity_2_x];
                 var entity_bone_table_y    = raw_sectors.entity_bone_table[entity_2_y];
@@ -249,7 +257,8 @@ public class SectorUnloader extends GameSystem
                     entity_motion_state_x, entity_motion_state_y,
                     entity_anim_index_x, entity_anim_index_y,
                     entity_model_id, entity_model_transform,
-                    entity_mass, adjusted_root_hull, entity_flag,
+                    entity_mass, adjusted_root_hull,
+                    entity_type, entity_flag,
                     entity_hulls, entity_bones);
 
                 batch.new_entity(unloaded_entity);
@@ -260,11 +269,15 @@ public class SectorUnloader extends GameSystem
             }
             running_batches.clear();
         }
+    }
 
-        if (last_counts[6] > 0)
+    private void unload_broken(int[] last_counts)
+    {
+        int broken_count = last_counts[6];
+        if (broken_count > 0)
         {
             var batch = new PhysicsEntityBatch();
-            GPGPU.core_memory.unload_broken(raw_broken, last_counts[6]);
+            GPGPU.core_memory.unload_broken(raw_broken, broken_count);
             int offset_2 = 0;
             int offset_1 = 0;
             for (int uv_offset : raw_broken.uv_offsets)
@@ -304,13 +317,19 @@ public class SectorUnloader extends GameSystem
             }
             spawn_queue.offer(batch);
         }
-        if (last_counts[7] > 0)
+    }
+
+
+    private void unload_collected(int[] last_counts)
+    {
+        int collected_count = last_counts[7];
+        if (collected_count > 0)
         {
-            GPGPU.core_memory.unload_collected(raw_collected, last_counts[7]);
-            System.out.println("debug1: " + Arrays.toString(raw_collected.uv_offsets));
-            System.out.println("debug2: " + Arrays.toString(raw_collected.flags));
+            GPGPU.core_memory.unload_collected(raw_collected, collected_count);
+            //System.out.println("debug1: " + Arrays.toString(raw_collected.uv_offsets));
+            //System.out.println("debug2: " + Arrays.toString(raw_collected.flags));
+            System.out.println("debug3: " + Arrays.toString(raw_collected.types));
         }
-        GPGPU.core_memory.await_sector();
     }
 
     @Override

@@ -349,6 +349,7 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
                                __global int *entity_root_hulls,
                                __global int *entity_model_indices,
                                __global int *entity_model_transforms,
+                               __global int *entity_types,
                                __global int *entity_flags,
                                __global int2 *entity_animation_indices,
                                __global float2 *entity_animation_elapsed,
@@ -390,6 +391,7 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
     int entity_root_hull            = entity_root_hulls[gid];
     int entity_model_id             = entity_model_indices[gid];
     int entity_model_transform_id   = entity_model_transforms[gid];
+    int entity_type                 = entity_types[gid];
     int entity_flag                 = entity_flags[gid];
     int2 hull_table                 = entity_entity_hull_tables[gid];
     int2 bone_table                 = entity_bone_tables[gid];
@@ -422,18 +424,19 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
     new_bone_table.y -= drop.bone_bind_count;
 
     // store updated data at the new index
-    entities[new_entity_index]                 = entity;
-    entity_masses[new_entity_index]            = entity_mass;
-    entity_root_hulls[new_entity_index]        = new_entity_root_hull;
-    entity_model_indices[new_entity_index]     = entity_model_id;
-    entity_model_transforms[new_entity_index]  = entity_model_transform_id;
-    entity_flags[new_entity_index]             = entity_flag;
-    entity_entity_hull_tables[new_entity_index]       = new_hull_table;
-    entity_bone_tables[new_entity_index]       = new_bone_table;
-    entity_animation_indices[new_entity_index] = anim_index;
-    entity_animation_elapsed[new_entity_index] = anim_time;
-    entity_motion_states[new_entity_index]     = anim_states;
-    entity_animation_blend[new_entity_index]   = anim_blend;
+    entities[new_entity_index]                  = entity;
+    entity_masses[new_entity_index]             = entity_mass;
+    entity_root_hulls[new_entity_index]         = new_entity_root_hull;
+    entity_model_indices[new_entity_index]      = entity_model_id;
+    entity_model_transforms[new_entity_index]   = entity_model_transform_id;
+    entity_types[new_entity_index]              = entity_type;
+    entity_flags[new_entity_index]              = entity_flag;
+    entity_entity_hull_tables[new_entity_index] = new_hull_table;
+    entity_bone_tables[new_entity_index]        = new_bone_table;
+    entity_animation_indices[new_entity_index]  = anim_index;
+    entity_animation_elapsed[new_entity_index]  = anim_time;
+    entity_motion_states[new_entity_index]      = anim_states;
+    entity_animation_blend[new_entity_index]    = anim_blend;
 
     int entity_bone_count = bone_table.y - bone_table.x + 1;
     for (int i = 0; i < entity_bone_count; i++)

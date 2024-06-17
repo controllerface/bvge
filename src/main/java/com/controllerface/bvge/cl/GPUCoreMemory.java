@@ -352,7 +352,7 @@ public class GPUCoreMemory implements SectorContainer
      * Each iteration, the sector loader waits on this barrier once it is done loading sectors, and then the
      * main loop does the same, tripping the barrier, which it then immediately resets.
      */
-    private final CyclicBarrier sector_barrier = new CyclicBarrier(3);
+    private final CyclicBarrier world_barrier = new CyclicBarrier(3);
 
     private final GPUScanVectorInt2 gpu_int2_scan;
     private final GPUScanVectorInt4 gpu_int4_scan;
@@ -545,6 +545,7 @@ public class GPUCoreMemory implements SectorContainer
             .buf_arg(CompactEntities_k.Args.entity_root_hulls, sector_group.buffer(ENTITY_ROOT_HULL))
             .buf_arg(CompactEntities_k.Args.entity_model_indices, sector_group.buffer(ENTITY_MODEL_ID))
             .buf_arg(CompactEntities_k.Args.entity_model_transforms, sector_group.buffer(ENTITY_TRANSFORM_ID))
+            .buf_arg(CompactEntities_k.Args.entity_types, sector_group.buffer(ENTITY_TYPE))
             .buf_arg(CompactEntities_k.Args.entity_flags, sector_group.buffer(ENTITY_FLAG))
             .buf_arg(CompactEntities_k.Args.entity_animation_indices, sector_group.buffer(ENTITY_ANIM_INDEX))
             .buf_arg(CompactEntities_k.Args.entity_animation_elapsed, sector_group.buffer(ENTITY_ANIM_ELAPSED))
@@ -652,7 +653,8 @@ public class GPUCoreMemory implements SectorContainer
                  BROKEN_UV_OFFSETS,
                  BROKEN_MODEL_IDS,
                  COLLECTED_UV_OFFSETS,
-                 COLLECTED_FLAG -> null;
+                 COLLECTED_FLAG,
+                 COLLECTED_TYPE -> null;
 
             case ANIM_FRAME_TIME               -> b_anim_frame_time;
             case ANIM_KEY_FRAME                -> b_anim_key_frame;
@@ -733,6 +735,7 @@ public class GPUCoreMemory implements SectorContainer
                  ENTITY_MASS,
                  ENTITY_HULL_TABLE,
                  ENTITY_BONE_TABLE,
+                 ENTITY_TYPE,
                  ENTITY_FLAG,
                  ENTITY_BONE_PARENT_ID,
                  ENTITY_BONE_REFERENCE_ID,
@@ -850,14 +853,14 @@ public class GPUCoreMemory implements SectorContainer
         collected_object_buffer.flip();
     }
 
-    public void reset_sector()
+    public void release_world_barrier()
     {
-        sector_barrier.reset();
+        world_barrier.reset();
     }
 
-    public void await_sector()
+    public void await_world_barrier()
     {
-        try { sector_barrier.await(); }
+        try { world_barrier.await(); }
         catch (InterruptedException _) { }
         catch (BrokenBarrierException e)
         {
@@ -1137,12 +1140,13 @@ public class GPUCoreMemory implements SectorContainer
                           int root_hull,
                           int model_id,
                           int model_transform_id,
+                          int type,
                           int flags)
     {
         int capacity = sector_input.entity_index() + 1;
         b_entity_accel.ensure_capacity(capacity);
         b_entity_anim_blend.ensure_capacity(capacity);
-        return sector_input.create_entity(x, y, z, w, hull_table, bone_table, mass, anim_index, anim_time, root_hull, model_id, model_transform_id, flags);
+        return sector_input.create_entity(x, y, z, w, hull_table, bone_table, mass, anim_index, anim_time, root_hull, model_id, model_transform_id, type, flags);
     }
 
     public int new_vertex_reference(float x, float y, float[] weights, int[] uv_table)
