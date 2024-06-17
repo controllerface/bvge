@@ -7,9 +7,9 @@ import static com.controllerface.bvge.cl.buffers.BufferType.*;
 
 public class SectorGroup extends BufferGroup
 {
-    public SectorGroup(long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public SectorGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(ptr_queue);
+        super(name, ptr_queue);
 
         //#region Point Buffers
 

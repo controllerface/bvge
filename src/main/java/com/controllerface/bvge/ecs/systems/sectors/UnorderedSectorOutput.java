@@ -22,11 +22,11 @@ public class UnorderedSectorOutput
     private final long ptr_egress_sizes;
     private final UnorderedSectorGroup sector_group;
 
-    public UnorderedSectorOutput(long ptr_queue, GPUCoreMemory core_memory)
+    public UnorderedSectorOutput(String name, long ptr_queue, GPUCoreMemory core_memory)
     {
         this.ptr_queue         = ptr_queue;
         this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(cl_int * 6);
-        this.sector_group = new UnorderedSectorGroup(this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_group = new UnorderedSectorGroup(name, this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         p_gpu_crud.init();
 
         long k_ptr_egress_candidates = p_gpu_crud.kernel_ptr(Kernel.egress_entities);

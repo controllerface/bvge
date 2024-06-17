@@ -8,12 +8,11 @@ import java.util.Map;
 
 public class PlayerInventory
 {
-    private Map<Solid, Integer> solid_counts = new EnumMap<>(Solid.class);
+    private final Map<Solid, Integer> solid_counts = new EnumMap<>(Solid.class);
 
     public void collect_substance(int type_index, int quantity)
     {
         var type = SubstanceTypeIndex.from_type_index(type_index);
-
         switch (type)
         {
             case Solid s ->
@@ -22,7 +21,8 @@ public class PlayerInventory
                 int current = solid_counts.computeIfAbsent(s, (_) -> 0);
                 solid_counts.put(s, current + quantity);
             }
-            default -> throw new IllegalStateException("Unexpected value: " + type);
+            case null -> throw new NullPointerException("Unknown type index: " + type_index);
+            default   -> throw new IllegalStateException("Unexpected type: " + type);
         }
     }
 }

@@ -29,13 +29,13 @@ public class CollectedObjectBuffer
 
     private final long ptr_egress_size;
 
-    public CollectedObjectBuffer(long ptr_queue, GPUCoreMemory core_memory)
+    public CollectedObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
     {
         this.p_gpu_crud.init();
         this.ptr_queue  = ptr_queue;
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
-        collected_group = new BasicBufferGroup(ptr_queue);
+        collected_group = new BasicBufferGroup(name, ptr_queue);
         collected_group.set_buffer(BufferType.COLLECTED_UV_OFFSETS, collected_group.new_buffer(CLSize.cl_int, 100));
         collected_group.set_buffer(BufferType.COLLECTED_FLAG,  collected_group.new_buffer(CLSize.cl_int, 100));
         collected_group.set_buffer(BufferType.COLLECTED_TYPE,  collected_group.new_buffer(CLSize.cl_int, 100));
@@ -74,8 +74,9 @@ public class CollectedObjectBuffer
 
     public void destroy()
     {
-        GPGPU.cl_release_buffer(ptr_egress_size);
         p_gpu_crud.destroy();
+        collected_group.destroy();
+        GPGPU.cl_release_buffer(ptr_egress_size);
     }
 
     public static class Raw

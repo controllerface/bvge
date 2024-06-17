@@ -32,7 +32,7 @@ public class OrderedSectorInput implements SectorContainer
     {
         this.ptr_queue  = ptr_queue;
         this.p_gpu_crud = new GPUCrud().init();
-        this.sector_group = new SectorGroup(this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_group = new SectorGroup("Incoming Sector" ,this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.sector_input = new SectorInput(this.ptr_queue, this.p_gpu_crud, this.sector_group);
 
         long k_ptr_merge_point = this.p_gpu_crud.kernel_ptr(Kernel.merge_point);

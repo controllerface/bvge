@@ -5,9 +5,9 @@ import static com.controllerface.bvge.cl.buffers.BufferType.*;
 
 public class UnorderedSectorGroup extends SectorGroup
 {
-    public UnorderedSectorGroup(long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public UnorderedSectorGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(ptr_queue, entity_init, hull_init, edge_init, point_init);
+        super(name, ptr_queue, entity_init, hull_init, edge_init, point_init);
     }
 
     public void unload_sectors(Raw raw, int[] counts)

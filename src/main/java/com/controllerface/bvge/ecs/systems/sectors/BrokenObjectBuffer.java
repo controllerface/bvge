@@ -27,13 +27,13 @@ public class BrokenObjectBuffer
 
     private final long ptr_egress_size;
 
-    public BrokenObjectBuffer(long ptr_queue, GPUCoreMemory core_memory)
+    public BrokenObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
     {
         this.p_gpu_crud.init();
         this.ptr_queue  = ptr_queue;
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
-        broken_group = new BasicBufferGroup(ptr_queue);
+        broken_group = new BasicBufferGroup(name, ptr_queue);
         broken_group.set_buffer(BufferType.BROKEN_POSITIONS,  broken_group.new_buffer(CLSize.cl_float2, 100));
         broken_group.set_buffer(BufferType.BROKEN_UV_OFFSETS, broken_group.new_buffer(CLSize.cl_int, 100));
         broken_group.set_buffer(BufferType.BROKEN_MODEL_IDS,  broken_group.new_buffer(CLSize.cl_int, 100));
@@ -100,5 +100,12 @@ public class BrokenObjectBuffer
                 ? input
                 : new int[required_capacity];
         }
+    }
+
+    public void destroy()
+    {
+        p_gpu_crud.destroy();
+        broken_group.destroy();
+        GPGPU.cl_release_buffer(ptr_egress_size);
     }
 }

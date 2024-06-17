@@ -431,7 +431,7 @@ public class GPUCoreMemory implements SectorContainer
         p_gpu_crud.init();
         p_scan_deletes.init();
 
-        this.sector_group = new SectorGroup(GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_group = new SectorGroup("Core Sectors",GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.sector_input = new SectorInput(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.sector_group);
 
         long k_ptr_create_texture_uv = p_gpu_crud.kernel_ptr(Kernel.create_texture_uv);
@@ -633,12 +633,12 @@ public class GPUCoreMemory implements SectorContainer
             .buf_arg(CountEgressEntities_k.Args.hull_bone_tables, sector_group.buffer(HULL_BONE_TABLE))
             .ptr_arg(CountEgressEntities_k.Args.counters, ptr_egress_sizes);
 
-        var outgoing_a  = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
-        var outgoing_b  = new UnorderedSectorOutput(GPGPU.ptr_sector_queue, this);
-        var broken_a    = new BrokenObjectBuffer(GPGPU.ptr_sector_queue, this);
-        var broken_b    = new BrokenObjectBuffer(GPGPU.ptr_sector_queue, this);
-        var collected_a = new CollectedObjectBuffer(GPGPU.ptr_sector_queue, this);
-        var collected_b = new CollectedObjectBuffer(GPGPU.ptr_sector_queue, this);
+        var outgoing_a  = new UnorderedSectorOutput("Outgoing Sector A",GPGPU.ptr_sector_queue, this);
+        var outgoing_b  = new UnorderedSectorOutput("Outgoing Sector B", GPGPU.ptr_sector_queue, this);
+        var broken_a    = new BrokenObjectBuffer("Broken Object A", GPGPU.ptr_sector_queue, this);
+        var broken_b    = new BrokenObjectBuffer("Broken Object B", GPGPU.ptr_sector_queue, this);
+        var collected_a = new CollectedObjectBuffer("Collected Object A", GPGPU.ptr_sector_queue, this);
+        var collected_b = new CollectedObjectBuffer("Collected Object B", GPGPU.ptr_sector_queue, this);
 
         this.incoming_sector_buffer  = new OrderedSectorInput(GPGPU.ptr_sector_queue, this);
         this.outgoing_sector_buffer  = new DoubleBuffer<>(outgoing_a, outgoing_b);
@@ -1419,6 +1419,10 @@ public class GPUCoreMemory implements SectorContainer
         incoming_sector_buffer.destroy();
         outgoing_sector_buffer.front().destroy();
         outgoing_sector_buffer.back().destroy();
+        broken_object_buffer.front().destroy();
+        broken_object_buffer.back().destroy();
+        collected_object_buffer.front().destroy();
+        collected_object_buffer.back().destroy();
 
         p_gpu_crud.destroy();
         p_scan_deletes.destroy();

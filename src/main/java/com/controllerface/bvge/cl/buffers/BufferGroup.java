@@ -5,11 +5,13 @@ import java.util.Map;
 
 public abstract class BufferGroup
 {
+    private final String name;
     protected final long ptr_queue;
     protected Map<BufferType, ResizableBuffer> buffers = new EnumMap<>(BufferType.class);
 
-    public BufferGroup(long ptr_queue)
+    public BufferGroup(String name, long ptr_queue)
     {
+        this.name = name;
         this.ptr_queue = ptr_queue;
     }
 
@@ -36,6 +38,6 @@ public abstract class BufferGroup
             total[0]+= v.debug_data();
             v.release();
         });
-        System.out.println("Buffer Group Memory Usage: MB " + ((float) total[0] / 1024f / 1024f));
+        System.out.println("Buffer Group [" + name + "] Memory Usage: MB " + ((float) total[0] / 1024f / 1024f));
     }
 }
