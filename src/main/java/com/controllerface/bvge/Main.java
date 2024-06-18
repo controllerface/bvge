@@ -3,6 +3,8 @@ package com.controllerface.bvge;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.window.Window;
+import org.lwjgl.system.Configuration;
+import org.lwjgl.util.freetype.FreeType;
 
 public class Main
 {
@@ -26,6 +28,7 @@ public class Main
 
         //Configuration.DEBUG.set(true);
         //Configuration.DISABLE_CHECKS.set(true);
+        Configuration.HARFBUZZ_LIBRARY_NAME.set(FreeType.getLibrary());
         Window window = Window.get();
         window.init();
 

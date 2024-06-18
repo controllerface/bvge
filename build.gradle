@@ -36,6 +36,8 @@ dependencies {
     implementation "org.lwjgl:lwjgl-opencl"
     implementation "org.lwjgl:lwjgl-stb"
     implementation "org.lwjgl:lwjgl-jemalloc"
+    implementation "org.lwjgl:lwjgl-freetype"
+    implementation "org.lwjgl:lwjgl-harfbuzz"
     runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
@@ -43,6 +45,8 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-jemalloc::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-freetype::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-harfbuzz::$lwjglNatives"
     implementation "org.joml:joml:${jomlVersion}"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
