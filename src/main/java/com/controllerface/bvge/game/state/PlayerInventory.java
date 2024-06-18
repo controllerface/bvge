@@ -3,12 +3,13 @@ package com.controllerface.bvge.game.state;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.substances.SubstanceTypeIndex;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
 public class PlayerInventory
 {
-    private final Map<Solid, Integer> solid_counts = new EnumMap<>(Solid.class);
+    private final Map<Solid, Integer> solid_counts = Collections.synchronizedMap(new EnumMap<>(Solid.class));
 
     public void collect_substance(int type_index, int quantity)
     {

@@ -22,73 +22,73 @@ public class UnorderedSectorGroup extends SectorGroup
         if (hull_bone_capacity > 0)
         {
             int hull_bone_vec16 = hull_bone_capacity * 16;
-            buffer(HULL_BONE).transfer_out_float(raw.hull_bone,                              cl_float, hull_bone_vec16);
-            buffer(HULL_BONE_BIND_POSE).transfer_out_int(raw.hull_bone_bind_pose_id,         cl_int,   hull_bone_capacity);
-            buffer(HULL_BONE_INV_BIND_POSE).transfer_out_int(raw.hull_bone_inv_bind_pose_id, cl_int,   hull_bone_capacity);
+            get_buffer(HULL_BONE).transfer_out_float(raw.hull_bone,                              cl_float, hull_bone_vec16);
+            get_buffer(HULL_BONE_BIND_POSE).transfer_out_int(raw.hull_bone_bind_pose_id,         cl_int,   hull_bone_capacity);
+            get_buffer(HULL_BONE_INV_BIND_POSE).transfer_out_int(raw.hull_bone_inv_bind_pose_id, cl_int,   hull_bone_capacity);
         }
 
         if (entity_bone_capacity > 0)
         {
             int entity_bone_vec16 = entity_bone_capacity * 16;
-            buffer(ENTITY_BONE).transfer_out_float(raw.entity_bone,                          cl_float, entity_bone_vec16);
-            buffer(ENTITY_BONE_REFERENCE_ID).transfer_out_int(raw.entity_bone_reference_id,  cl_int,   entity_bone_capacity);
-            buffer(ENTITY_BONE_PARENT_ID).transfer_out_int(raw.entity_bone_parent_id,        cl_int,   entity_bone_capacity);
+            get_buffer(ENTITY_BONE).transfer_out_float(raw.entity_bone,                          cl_float, entity_bone_vec16);
+            get_buffer(ENTITY_BONE_REFERENCE_ID).transfer_out_int(raw.entity_bone_reference_id,  cl_int,   entity_bone_capacity);
+            get_buffer(ENTITY_BONE_PARENT_ID).transfer_out_int(raw.entity_bone_parent_id,        cl_int,   entity_bone_capacity);
         }
 
         if (edge_capacity > 0)
         {
             int edge_vec2 = edge_capacity * 2;
-            buffer(EDGE).transfer_out_int(raw.edge,                                          cl_int,   edge_vec2);
-            buffer(EDGE_LENGTH).transfer_out_float(raw.edge_length,                          cl_float, edge_capacity);
-            buffer(EDGE_FLAG).transfer_out_int(raw.edge_flag,                                cl_int,   edge_capacity);
+            get_buffer(EDGE).transfer_out_int(raw.edge,                                          cl_int,   edge_vec2);
+            get_buffer(EDGE_LENGTH).transfer_out_float(raw.edge_length,                          cl_float, edge_capacity);
+            get_buffer(EDGE_FLAG).transfer_out_int(raw.edge_flag,                                cl_int,   edge_capacity);
         }
 
         if (point_capacity > 0)
         {
             int point_vec4 = point_capacity * 4;
-            buffer(POINT).transfer_out_float(raw.point,                                      cl_float, point_vec4);
-            buffer(POINT_VERTEX_REFERENCE).transfer_out_int(raw.point_vertex_reference,      cl_int,   point_capacity);
-            buffer(POINT_HULL_INDEX).transfer_out_int(raw.point_hull_index,                  cl_int,   point_capacity);
-            buffer(POINT_HIT_COUNT).transfer_out_short(raw.point_hit_count,                  cl_short, point_capacity);
-            buffer(POINT_BONE_TABLE).transfer_out_int(raw.point_bone_table,                  cl_int,   point_vec4);
-            buffer(POINT_FLAG).transfer_out_int(raw.point_flag,                              cl_int,   point_capacity);
+            get_buffer(POINT).transfer_out_float(raw.point,                                      cl_float, point_vec4);
+            get_buffer(POINT_VERTEX_REFERENCE).transfer_out_int(raw.point_vertex_reference,      cl_int,   point_capacity);
+            get_buffer(POINT_HULL_INDEX).transfer_out_int(raw.point_hull_index,                  cl_int,   point_capacity);
+            get_buffer(POINT_HIT_COUNT).transfer_out_short(raw.point_hit_count,                  cl_short, point_capacity);
+            get_buffer(POINT_BONE_TABLE).transfer_out_int(raw.point_bone_table,                  cl_int,   point_vec4);
+            get_buffer(POINT_FLAG).transfer_out_int(raw.point_flag,                              cl_int,   point_capacity);
         }
 
         if (hull_capacity > 0)
         {
             int hull_vec2 = hull_capacity * 2;
             int hull_vec4 = hull_capacity * 4;
-            buffer(HULL).transfer_out_float(raw.hull,                                        cl_float, hull_vec4);
-            buffer(HULL_SCALE).transfer_out_float(raw.hull_scale,                            cl_float, hull_vec2);
-            buffer(HULL_MESH_ID).transfer_out_int(raw.hull_mesh_id,                          cl_int,   hull_capacity);
-            buffer(HULL_UV_OFFSET).transfer_out_int(raw.hull_uv_offset,                      cl_int,   hull_capacity);
-            buffer(HULL_ROTATION).transfer_out_float(raw.hull_rotation,                      cl_float, hull_vec2);
-            buffer(HULL_INTEGRITY).transfer_out_int(raw.hull_integrity,                      cl_int,   hull_capacity);
-            buffer(HULL_POINT_TABLE).transfer_out_int(raw.hull_point_table,                  cl_int,   hull_vec2);
-            buffer(HULL_EDGE_TABLE).transfer_out_int(raw.hull_edge_table,                    cl_int,   hull_vec2);
-            buffer(HULL_FLAG).transfer_out_int(raw.hull_flag,                                cl_int,   hull_capacity);
-            buffer(HULL_BONE_TABLE).transfer_out_int(raw.hull_bone_table,                    cl_int,   hull_vec2);
-            buffer(HULL_ENTITY_ID).transfer_out_int(raw.hull_entity_id,                      cl_int,   hull_capacity);
-            buffer(HULL_FRICTION).transfer_out_float(raw.hull_friction,                      cl_float, hull_capacity);
-            buffer(HULL_RESTITUTION).transfer_out_float(raw.hull_restitution,                cl_float, hull_capacity);
+            get_buffer(HULL).transfer_out_float(raw.hull,                                        cl_float, hull_vec4);
+            get_buffer(HULL_SCALE).transfer_out_float(raw.hull_scale,                            cl_float, hull_vec2);
+            get_buffer(HULL_MESH_ID).transfer_out_int(raw.hull_mesh_id,                          cl_int,   hull_capacity);
+            get_buffer(HULL_UV_OFFSET).transfer_out_int(raw.hull_uv_offset,                      cl_int,   hull_capacity);
+            get_buffer(HULL_ROTATION).transfer_out_float(raw.hull_rotation,                      cl_float, hull_vec2);
+            get_buffer(HULL_INTEGRITY).transfer_out_int(raw.hull_integrity,                      cl_int,   hull_capacity);
+            get_buffer(HULL_POINT_TABLE).transfer_out_int(raw.hull_point_table,                  cl_int,   hull_vec2);
+            get_buffer(HULL_EDGE_TABLE).transfer_out_int(raw.hull_edge_table,                    cl_int,   hull_vec2);
+            get_buffer(HULL_FLAG).transfer_out_int(raw.hull_flag,                                cl_int,   hull_capacity);
+            get_buffer(HULL_BONE_TABLE).transfer_out_int(raw.hull_bone_table,                    cl_int,   hull_vec2);
+            get_buffer(HULL_ENTITY_ID).transfer_out_int(raw.hull_entity_id,                      cl_int,   hull_capacity);
+            get_buffer(HULL_FRICTION).transfer_out_float(raw.hull_friction,                      cl_float, hull_capacity);
+            get_buffer(HULL_RESTITUTION).transfer_out_float(raw.hull_restitution,                cl_float, hull_capacity);
         }
 
         if (entity_capacity > 0)
         {
             int entity_vec2 = entity_capacity * 2;
             int entity_vec4 = entity_capacity * 4;
-            buffer(ENTITY).transfer_out_float(raw.entity,                                    cl_float, entity_vec4);
-            buffer(ENTITY_TYPE).transfer_out_int(raw.entity_type,                            cl_int,   entity_capacity);
-            buffer(ENTITY_FLAG).transfer_out_int(raw.entity_flag,                            cl_int,   entity_capacity);
-            buffer(ENTITY_ROOT_HULL).transfer_out_int(raw.entity_root_hull,                  cl_int,   entity_capacity);
-            buffer(ENTITY_MODEL_ID).transfer_out_int(raw.entity_model_id,                    cl_int,   entity_capacity);
-            buffer(ENTITY_TRANSFORM_ID).transfer_out_int(raw.entity_model_transform,         cl_int,   entity_capacity);
-            buffer(ENTITY_MASS).transfer_out_float(raw.entity_mass,                          cl_float, entity_capacity);
-            buffer(ENTITY_ANIM_INDEX).transfer_out_int(raw.entity_anim_index,                cl_int,   entity_vec2);
-            buffer(ENTITY_ANIM_ELAPSED).transfer_out_float(raw.entity_anim_elapsed,          cl_float, entity_vec2);
-            buffer(ENTITY_MOTION_STATE).transfer_out_short(raw.entity_motion_state,          cl_short, entity_vec2);
-            buffer(ENTITY_HULL_TABLE).transfer_out_int(raw.entity_hull_table,                cl_int,   entity_vec2);
-            buffer(ENTITY_BONE_TABLE).transfer_out_int(raw.entity_bone_table,                cl_int,   entity_vec2);
+            get_buffer(ENTITY).transfer_out_float(raw.entity,                                    cl_float, entity_vec4);
+            get_buffer(ENTITY_TYPE).transfer_out_int(raw.entity_type,                            cl_int,   entity_capacity);
+            get_buffer(ENTITY_FLAG).transfer_out_int(raw.entity_flag,                            cl_int,   entity_capacity);
+            get_buffer(ENTITY_ROOT_HULL).transfer_out_int(raw.entity_root_hull,                  cl_int,   entity_capacity);
+            get_buffer(ENTITY_MODEL_ID).transfer_out_int(raw.entity_model_id,                    cl_int,   entity_capacity);
+            get_buffer(ENTITY_TRANSFORM_ID).transfer_out_int(raw.entity_model_transform,         cl_int,   entity_capacity);
+            get_buffer(ENTITY_MASS).transfer_out_float(raw.entity_mass,                          cl_float, entity_capacity);
+            get_buffer(ENTITY_ANIM_INDEX).transfer_out_int(raw.entity_anim_index,                cl_int,   entity_vec2);
+            get_buffer(ENTITY_ANIM_ELAPSED).transfer_out_float(raw.entity_anim_elapsed,          cl_float, entity_vec2);
+            get_buffer(ENTITY_MOTION_STATE).transfer_out_short(raw.entity_motion_state,          cl_short, entity_vec2);
+            get_buffer(ENTITY_HULL_TABLE).transfer_out_int(raw.entity_hull_table,                cl_int,   entity_vec2);
+            get_buffer(ENTITY_BONE_TABLE).transfer_out_int(raw.entity_bone_table,                cl_int,   entity_vec2);
         }
     }
 

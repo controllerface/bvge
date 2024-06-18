@@ -1338,18 +1338,49 @@ public class PhysicsSimulation extends GameSystem
     @Override
     public void tick(float dt)
     {
+        /*
+         * Synchronization Notes:
+         *     This method relies on a number of threads co-ordinating with each other to ensure data
+         *     integrity and system stability. Because of the importance of getting this right, the
+         *     changes in thread state are documented inline with a "STATE:" and "QUEUE:" prefixed
+         *     "shorthand" comments. State comments describe the state of certain threads just before,
+         *     or just after calls that affect them. Queue comments describe tasks that are assumed to
+         *     be complete, though it is helpful to know that a queue being "finished" only guarantees
+         *     work "in-flight" has completed before returning, it does not guarantee some thread will
+         *     not queue more work afterward. Putting it more directly, the GPU command queues associated
+         *     with specific tasks are asynchronous with the CPU tasks that use them. Before entering
+         *     the try block, it should be assumed that all relevant threads may still be running.
+         */
         try
         {
-            clFinish(GPGPU.ptr_render_queue);
-            long phys_time = last_phys_time.take();
-            GPGPU.core_memory.await_world_barrier();
-            GPGPU.core_memory.release_world_barrier();
-            clFinish(GPGPU.ptr_sector_queue);
+            clFinish(GPGPU.ptr_render_queue);           // QUEUE: render complete
+
+            long phys_time = last_phys_time.take();     // STATE: main      -> block on   : `phys_time`
+                                                        // STATE: main      -> unblock
+                                                        // STATE: physics   -> block on   : `dt`
+                                                        // STATE: ingress   -> blocked on : `world_barrier`
+                                                        // STATE: egress    -> blocked on : `world_barrier`
+                                                        // STATE: inventory -> blocked on : `world_barrier`
+
+            GPGPU.core_memory.await_world_barrier();    // STATE: main      -> block on   : `world_barrier`
+                                                        // STATE: main      -> unblock
+                                                        // STATE: ingress   -> unblock
+                                                        // STATE: egress    -> unblock
+                                                        // STATE: inventory -> unblock
+
+            GPGPU.core_memory.release_world_barrier();  // STATE: ingress   -> block on   : `dt`
+                                                        // STATE: egress    -> block on   : `dt`
+                                                        // STATE: inventory -> block on   : `dt`
+
+            clFinish(GPGPU.ptr_sector_queue);           // QUEUE: previous sector processing complete
+
             process_world_buffer();
-            GPGPU.core_memory.swap_egress_buffers();
-            GPGPU.core_memory.mirror_buffers_ex();
-            clFinish(GPGPU.ptr_compute_queue);
-            next_phys_time.put(dt);
+            GPGPU.core_memory.flip_egress_buffers();
+            GPGPU.core_memory.mirror_render_buffers();
+
+            clFinish(GPGPU.ptr_compute_queue);          // QUEUE: current sector processing complete
+
+            next_phys_time.put(dt);                     // STATE: physics   -> unblock
 
             if (Editor.ACTIVE)
             {

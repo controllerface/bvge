@@ -47,6 +47,8 @@ public class Window
     private final ECS ecs = new ECS();
     private final Camera camera;
 
+    private boolean closing = false;
+
     private Window()
     {
         this.width = 1920;
@@ -75,10 +77,17 @@ public class Window
         return Window.INSTANCE;
     }
 
+    public boolean is_closing()
+    {
+        return closing;
+    }
+
     public void run()
     {
         glfwShowWindow(glfwWindow);
         loop();
+
+        closing = true;
 
         ecs.shutdown();
 

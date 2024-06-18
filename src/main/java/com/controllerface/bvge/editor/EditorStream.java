@@ -50,7 +50,7 @@ public class EditorStream
             {
                 Thread.currentThread().interrupt();
                 server.end_stream(this);
-                System.out.println("EventSource terminated");
+                System.err.println("EventSource terminated");
             }
         });
     }

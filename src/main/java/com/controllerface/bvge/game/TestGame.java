@@ -5,6 +5,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.ecs.systems.sectors.InventorySystem;
 import com.controllerface.bvge.ecs.systems.sectors.Sector;
 import com.controllerface.bvge.ecs.systems.sectors.WorldLoader;
 import com.controllerface.bvge.ecs.systems.sectors.WorldUnloader;
@@ -22,7 +23,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.stb.STBImageWrite;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.freetype.FT_Bitmap;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FT_GlyphSlot;
@@ -37,7 +37,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
 import static org.lwjgl.util.freetype.FreeType.*;
 import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
-import static org.lwjgl.util.harfbuzz.HarfBuzz.hb_blob_destroy;
 
 public class TestGame extends GameMode
 {
@@ -108,9 +107,9 @@ public class TestGame extends GameMode
     {
         ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, spawn_queue));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid));
-        ecs.register_system(new WorldUnloader(ecs, sector_cache, spawn_queue, player_inventory));
+        ecs.register_system(new WorldUnloader(ecs, sector_cache, spawn_queue));
         ecs.register_system(new CameraTracking(ecs, uniformGrid));
-
+        ecs.register_system(new InventorySystem(ecs, player_inventory));
         ecs.register_system(blanking_system);
 
         ecs.register_system(new BackgroundRenderer(ecs));
@@ -221,8 +220,7 @@ public class TestGame extends GameMode
     }
 
 
-    @Override
-    public void start()
+    private void test_text_render()
     {
         long ftLibrary = initFreeType();
         FT_Face ftFace = loadFontFace(ftLibrary, font_file);
@@ -259,6 +257,12 @@ public class TestGame extends GameMode
         hb_buffer_destroy(buffer);
         hb_font_destroy(font);
         hb_face_destroy(face);
+    }
+
+    @Override
+    public void start()
+    {
+        //test_text_render();
     }
 
     @Override

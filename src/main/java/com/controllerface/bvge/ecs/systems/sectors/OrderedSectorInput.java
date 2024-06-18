@@ -32,17 +32,17 @@ public class OrderedSectorInput implements SectorContainer
     {
         this.ptr_queue  = ptr_queue;
         this.p_gpu_crud = new GPUCrud().init();
-        this.sector_group = new SectorGroup("Incoming Sector" ,this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_group = new SectorGroup("Sector Ingress" ,this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.sector_input = new SectorInput(this.ptr_queue, this.p_gpu_crud, this.sector_group);
 
         long k_ptr_merge_point = this.p_gpu_crud.kernel_ptr(Kernel.merge_point);
         k_merge_point = new MergePoint_k(this.ptr_queue, k_ptr_merge_point)
-            .buf_arg(MergePoint_k.Args.points_in, sector_group.buffer(BufferType.POINT))
-            .buf_arg(MergePoint_k.Args.point_vertex_references_in, sector_group.buffer(BufferType.POINT_VERTEX_REFERENCE))
-            .buf_arg(MergePoint_k.Args.point_hull_indices_in, sector_group.buffer(BufferType.POINT_HULL_INDEX))
-            .buf_arg(MergePoint_k.Args.point_hit_counts_in, sector_group.buffer(BufferType.POINT_HIT_COUNT))
-            .buf_arg(MergePoint_k.Args.point_flags_in, sector_group.buffer(BufferType.POINT_FLAG))
-            .buf_arg(MergePoint_k.Args.point_bone_tables_in, sector_group.buffer(BufferType.POINT_BONE_TABLE))
+            .buf_arg(MergePoint_k.Args.points_in, sector_group.get_buffer(BufferType.POINT))
+            .buf_arg(MergePoint_k.Args.point_vertex_references_in, sector_group.get_buffer(BufferType.POINT_VERTEX_REFERENCE))
+            .buf_arg(MergePoint_k.Args.point_hull_indices_in, sector_group.get_buffer(BufferType.POINT_HULL_INDEX))
+            .buf_arg(MergePoint_k.Args.point_hit_counts_in, sector_group.get_buffer(BufferType.POINT_HIT_COUNT))
+            .buf_arg(MergePoint_k.Args.point_flags_in, sector_group.get_buffer(BufferType.POINT_FLAG))
+            .buf_arg(MergePoint_k.Args.point_bone_tables_in, sector_group.get_buffer(BufferType.POINT_BONE_TABLE))
             .buf_arg(MergePoint_k.Args.points_out, core_memory.buffer(BufferType.POINT))
             .buf_arg(MergePoint_k.Args.point_vertex_references_out, core_memory.buffer(BufferType.POINT_VERTEX_REFERENCE))
             .buf_arg(MergePoint_k.Args.point_hull_indices_out, core_memory.buffer(BufferType.POINT_HULL_INDEX))
@@ -52,28 +52,28 @@ public class OrderedSectorInput implements SectorContainer
 
         long k_ptr_merge_edge = this.p_gpu_crud.kernel_ptr(Kernel.merge_edge);
         k_merge_edge = new MergeEdge_k(this.ptr_queue, k_ptr_merge_edge)
-            .buf_arg(MergeEdge_k.Args.edges_in, sector_group.buffer(BufferType.EDGE))
-            .buf_arg(MergeEdge_k.Args.edge_lengths_in, sector_group.buffer(BufferType.EDGE_LENGTH))
-            .buf_arg(MergeEdge_k.Args.edge_flags_in, sector_group.buffer(BufferType.EDGE_FLAG))
+            .buf_arg(MergeEdge_k.Args.edges_in, sector_group.get_buffer(BufferType.EDGE))
+            .buf_arg(MergeEdge_k.Args.edge_lengths_in, sector_group.get_buffer(BufferType.EDGE_LENGTH))
+            .buf_arg(MergeEdge_k.Args.edge_flags_in, sector_group.get_buffer(BufferType.EDGE_FLAG))
             .buf_arg(MergeEdge_k.Args.edges_out, core_memory.buffer(BufferType.EDGE))
             .buf_arg(MergeEdge_k.Args.edge_lengths_out, core_memory.buffer(BufferType.EDGE_LENGTH))
             .buf_arg(MergeEdge_k.Args.edge_flags_out, core_memory.buffer(BufferType.EDGE_FLAG));
 
         long k_ptr_merge_hull = this.p_gpu_crud.kernel_ptr(Kernel.merge_hull);
         k_merge_hull = new MergeHull_k(this.ptr_queue, k_ptr_merge_hull)
-            .buf_arg(MergeHull_k.Args.hulls_in, sector_group.buffer(BufferType.HULL))
-            .buf_arg(MergeHull_k.Args.hull_scales_in, sector_group.buffer(BufferType.HULL_SCALE))
-            .buf_arg(MergeHull_k.Args.hull_rotations_in, sector_group.buffer(BufferType.HULL_ROTATION))
-            .buf_arg(MergeHull_k.Args.hull_frictions_in, sector_group.buffer(BufferType.HULL_FRICTION))
-            .buf_arg(MergeHull_k.Args.hull_restitutions_in, sector_group.buffer(BufferType.HULL_RESTITUTION))
-            .buf_arg(MergeHull_k.Args.hull_point_tables_in, sector_group.buffer(BufferType.HULL_POINT_TABLE))
-            .buf_arg(MergeHull_k.Args.hull_edge_tables_in, sector_group.buffer(BufferType.HULL_EDGE_TABLE))
-            .buf_arg(MergeHull_k.Args.hull_bone_tables_in, sector_group.buffer(BufferType.HULL_BONE_TABLE))
-            .buf_arg(MergeHull_k.Args.hull_entity_ids_in, sector_group.buffer(BufferType.HULL_ENTITY_ID))
-            .buf_arg(MergeHull_k.Args.hull_flags_in, sector_group.buffer(BufferType.HULL_FLAG))
-            .buf_arg(MergeHull_k.Args.hull_mesh_ids_in, sector_group.buffer(BufferType.HULL_MESH_ID))
-            .buf_arg(MergeHull_k.Args.hull_uv_offsets_in, sector_group.buffer(BufferType.HULL_UV_OFFSET))
-            .buf_arg(MergeHull_k.Args.hull_integrity_in, sector_group.buffer(BufferType.HULL_INTEGRITY))
+            .buf_arg(MergeHull_k.Args.hulls_in, sector_group.get_buffer(BufferType.HULL))
+            .buf_arg(MergeHull_k.Args.hull_scales_in, sector_group.get_buffer(BufferType.HULL_SCALE))
+            .buf_arg(MergeHull_k.Args.hull_rotations_in, sector_group.get_buffer(BufferType.HULL_ROTATION))
+            .buf_arg(MergeHull_k.Args.hull_frictions_in, sector_group.get_buffer(BufferType.HULL_FRICTION))
+            .buf_arg(MergeHull_k.Args.hull_restitutions_in, sector_group.get_buffer(BufferType.HULL_RESTITUTION))
+            .buf_arg(MergeHull_k.Args.hull_point_tables_in, sector_group.get_buffer(BufferType.HULL_POINT_TABLE))
+            .buf_arg(MergeHull_k.Args.hull_edge_tables_in, sector_group.get_buffer(BufferType.HULL_EDGE_TABLE))
+            .buf_arg(MergeHull_k.Args.hull_bone_tables_in, sector_group.get_buffer(BufferType.HULL_BONE_TABLE))
+            .buf_arg(MergeHull_k.Args.hull_entity_ids_in, sector_group.get_buffer(BufferType.HULL_ENTITY_ID))
+            .buf_arg(MergeHull_k.Args.hull_flags_in, sector_group.get_buffer(BufferType.HULL_FLAG))
+            .buf_arg(MergeHull_k.Args.hull_mesh_ids_in, sector_group.get_buffer(BufferType.HULL_MESH_ID))
+            .buf_arg(MergeHull_k.Args.hull_uv_offsets_in, sector_group.get_buffer(BufferType.HULL_UV_OFFSET))
+            .buf_arg(MergeHull_k.Args.hull_integrity_in, sector_group.get_buffer(BufferType.HULL_INTEGRITY))
             .buf_arg(MergeHull_k.Args.hulls_out, core_memory.buffer(BufferType.HULL))
             .buf_arg(MergeHull_k.Args.hull_scales_out, core_memory.buffer(BufferType.HULL_SCALE))
             .buf_arg(MergeHull_k.Args.hull_rotations_out, core_memory.buffer(BufferType.HULL_ROTATION))
@@ -90,18 +90,18 @@ public class OrderedSectorInput implements SectorContainer
 
         long k_ptr_merge_entity = this.p_gpu_crud.kernel_ptr(Kernel.merge_entity);
         k_merge_entity = new MergeEntity_k(this.ptr_queue, k_ptr_merge_entity)
-            .buf_arg(MergeEntity_k.Args.entities_in, sector_group.buffer(BufferType.ENTITY))
-            .buf_arg(MergeEntity_k.Args.entity_animation_elapsed_in, sector_group.buffer(BufferType.ENTITY_ANIM_ELAPSED))
-            .buf_arg(MergeEntity_k.Args.entity_motion_states_in, sector_group.buffer(BufferType.ENTITY_MOTION_STATE))
-            .buf_arg(MergeEntity_k.Args.entity_animation_indices_in, sector_group.buffer(BufferType.ENTITY_ANIM_INDEX))
-            .buf_arg(MergeEntity_k.Args.entity_hull_tables_in, sector_group.buffer(BufferType.ENTITY_HULL_TABLE))
-            .buf_arg(MergeEntity_k.Args.entity_bone_tables_in, sector_group.buffer(BufferType.ENTITY_BONE_TABLE))
-            .buf_arg(MergeEntity_k.Args.entity_masses_in, sector_group.buffer(BufferType.ENTITY_MASS))
-            .buf_arg(MergeEntity_k.Args.entity_root_hulls_in, sector_group.buffer(BufferType.ENTITY_ROOT_HULL))
-            .buf_arg(MergeEntity_k.Args.entity_model_indices_in, sector_group.buffer(BufferType.ENTITY_MODEL_ID))
-            .buf_arg(MergeEntity_k.Args.entity_model_transforms_in, sector_group.buffer(BufferType.ENTITY_TRANSFORM_ID))
-            .buf_arg(MergeEntity_k.Args.entity_types_in, sector_group.buffer(BufferType.ENTITY_TYPE))
-            .buf_arg(MergeEntity_k.Args.entity_flags_in, sector_group.buffer(BufferType.ENTITY_FLAG))
+            .buf_arg(MergeEntity_k.Args.entities_in, sector_group.get_buffer(BufferType.ENTITY))
+            .buf_arg(MergeEntity_k.Args.entity_animation_elapsed_in, sector_group.get_buffer(BufferType.ENTITY_ANIM_ELAPSED))
+            .buf_arg(MergeEntity_k.Args.entity_motion_states_in, sector_group.get_buffer(BufferType.ENTITY_MOTION_STATE))
+            .buf_arg(MergeEntity_k.Args.entity_animation_indices_in, sector_group.get_buffer(BufferType.ENTITY_ANIM_INDEX))
+            .buf_arg(MergeEntity_k.Args.entity_hull_tables_in, sector_group.get_buffer(BufferType.ENTITY_HULL_TABLE))
+            .buf_arg(MergeEntity_k.Args.entity_bone_tables_in, sector_group.get_buffer(BufferType.ENTITY_BONE_TABLE))
+            .buf_arg(MergeEntity_k.Args.entity_masses_in, sector_group.get_buffer(BufferType.ENTITY_MASS))
+            .buf_arg(MergeEntity_k.Args.entity_root_hulls_in, sector_group.get_buffer(BufferType.ENTITY_ROOT_HULL))
+            .buf_arg(MergeEntity_k.Args.entity_model_indices_in, sector_group.get_buffer(BufferType.ENTITY_MODEL_ID))
+            .buf_arg(MergeEntity_k.Args.entity_model_transforms_in, sector_group.get_buffer(BufferType.ENTITY_TRANSFORM_ID))
+            .buf_arg(MergeEntity_k.Args.entity_types_in, sector_group.get_buffer(BufferType.ENTITY_TYPE))
+            .buf_arg(MergeEntity_k.Args.entity_flags_in, sector_group.get_buffer(BufferType.ENTITY_FLAG))
             .buf_arg(MergeEntity_k.Args.entities_out, core_memory.buffer(BufferType.ENTITY))
             .buf_arg(MergeEntity_k.Args.entity_animation_elapsed_out, core_memory.buffer(BufferType.ENTITY_ANIM_ELAPSED))
             .buf_arg(MergeEntity_k.Args.entity_motion_states_out, core_memory.buffer(BufferType.ENTITY_MOTION_STATE))
@@ -117,18 +117,18 @@ public class OrderedSectorInput implements SectorContainer
 
         long k_ptr_merge_hull_bone = this.p_gpu_crud.kernel_ptr(Kernel.merge_hull_bone);
         k_merge_hull_bone = new MergeHullBone_k(this.ptr_queue, k_ptr_merge_hull_bone)
-            .buf_arg(MergeHullBone_k.Args.hull_bones_in, sector_group.buffer(BufferType.HULL_BONE))
-            .buf_arg(MergeHullBone_k.Args.hull_bind_pose_indicies_in, sector_group.buffer(BufferType.HULL_BONE_BIND_POSE))
-            .buf_arg(MergeHullBone_k.Args.hull_inv_bind_pose_indicies_in, sector_group.buffer(BufferType.HULL_BONE_INV_BIND_POSE))
+            .buf_arg(MergeHullBone_k.Args.hull_bones_in, sector_group.get_buffer(BufferType.HULL_BONE))
+            .buf_arg(MergeHullBone_k.Args.hull_bind_pose_indicies_in, sector_group.get_buffer(BufferType.HULL_BONE_BIND_POSE))
+            .buf_arg(MergeHullBone_k.Args.hull_inv_bind_pose_indicies_in, sector_group.get_buffer(BufferType.HULL_BONE_INV_BIND_POSE))
             .buf_arg(MergeHullBone_k.Args.hull_bones_out, core_memory.buffer(BufferType.HULL_BONE))
             .buf_arg(MergeHullBone_k.Args.hull_bind_pose_indicies_out, core_memory.buffer(BufferType.HULL_BONE_BIND_POSE))
             .buf_arg(MergeHullBone_k.Args.hull_inv_bind_pose_indicies_out, core_memory.buffer(BufferType.HULL_BONE_INV_BIND_POSE));
 
         long k_ptr_merge_entity_bone = this.p_gpu_crud.kernel_ptr(Kernel.merge_entity_bone);
         k_merge_entity_bone = new MergeEntityBone_k(this.ptr_queue, k_ptr_merge_entity_bone)
-            .buf_arg(MergeEntityBone_k.Args.armature_bones_in, sector_group.buffer(BufferType.ENTITY_BONE))
-            .buf_arg(MergeEntityBone_k.Args.armature_bone_reference_ids_in, sector_group.buffer(BufferType.ENTITY_BONE_REFERENCE_ID))
-            .buf_arg(MergeEntityBone_k.Args.armature_bone_parent_ids_in, sector_group.buffer(BufferType.ENTITY_BONE_PARENT_ID))
+            .buf_arg(MergeEntityBone_k.Args.armature_bones_in, sector_group.get_buffer(BufferType.ENTITY_BONE))
+            .buf_arg(MergeEntityBone_k.Args.armature_bone_reference_ids_in, sector_group.get_buffer(BufferType.ENTITY_BONE_REFERENCE_ID))
+            .buf_arg(MergeEntityBone_k.Args.armature_bone_parent_ids_in, sector_group.get_buffer(BufferType.ENTITY_BONE_PARENT_ID))
             .buf_arg(MergeEntityBone_k.Args.armature_bones_out, core_memory.buffer(BufferType.ENTITY_BONE))
             .buf_arg(MergeEntityBone_k.Args.armature_bone_reference_ids_out, core_memory.buffer(BufferType.ENTITY_BONE_REFERENCE_ID))
             .buf_arg(MergeEntityBone_k.Args.armature_bone_parent_ids_out, core_memory.buffer(BufferType.ENTITY_BONE_PARENT_ID));

@@ -19,15 +19,8 @@ import java.util.function.Predicate;
 
 public class EditorServer
 {
-    private final int port;
-    private final long EVENT_INTERVAL = Duration.ofMillis(500).toMillis();
-    private ServerSocket server_socket;
-    private Thread incoming;
-    private Thread outgoing;
-
     private static final byte[] EOL_BYTES = new byte[]{'\r', '\n'};
     private static final byte[] EOM_BYTES = new byte[]{'\r', '\n', '\r', '\n'};
-
     private static final byte[] _404 = ("""
         HTTP/1.1 404 Not Found\r
         Content-Length:9\r
@@ -35,8 +28,14 @@ public class EditorServer
         \r
         Not Found""").getBytes(StandardCharsets.UTF_8);
 
+    private final int port;
+    private final long EVENT_INTERVAL = Duration.ofMillis(500).toMillis();
     private final List<EditorStream> streams = new CopyOnWriteArrayList<>();
     private final Map<String, String> stat_events = new ConcurrentHashMap<>();
+
+    private ServerSocket server_socket;
+    private Thread incoming;
+    private Thread outgoing;
 
     @FunctionalInterface
     private interface EndpointHandler
@@ -116,7 +115,7 @@ public class EditorServer
         }
         catch (IOException ioException)
         {
-            System.out.println("Error writing to response stream");
+            System.err.println("Error writing to response stream");
         }
     }
 
@@ -216,7 +215,7 @@ public class EditorServer
         }
         catch (SocketException se)
         {
-            System.out.println("EditorServer terminated");
+            System.err.println("EditorServer terminated");
         }
         catch (IOException e)
         {
