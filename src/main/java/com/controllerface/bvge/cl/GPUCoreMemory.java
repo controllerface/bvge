@@ -48,9 +48,10 @@ public class GPUCoreMemory implements SectorContainer
     private final GPUKernel k_compact_points;
     private final GPUKernel k_complete_deletes_multi_block_out;
     private final GPUKernel k_count_egress_entities;
-    private final GPUKernel k_read_position;
     private final GPUKernel k_scan_deletes_multi_block_out;
     private final GPUKernel k_scan_deletes_single_block_out;
+
+    private final GPUKernel k_read_position;
     private final GPUKernel k_set_bone_channel_table;
     private final GPUKernel k_update_accel;
     private final GPUKernel k_update_mouse_position;
@@ -156,22 +157,27 @@ public class GPUCoreMemory implements SectorContainer
 
         // read methods
 
+        // todo: move into sector input class
         long k_ptr_read_position = p_gpu_crud.kernel_ptr(Kernel.read_position);
         k_read_position = new ReadPosition_k(GPGPU.ptr_compute_queue, k_ptr_read_position)
             .buf_arg(ReadPosition_k.Args.entities, sector_group.get_buffer(ENTITY));
 
         // update methods
 
+        // todo: move into sector input class
         long k_ptr_update_accel = p_gpu_crud.kernel_ptr(Kernel.update_accel);
         k_update_accel = new UpdateAccel_k(GPGPU.ptr_compute_queue, k_ptr_update_accel)
             .buf_arg(UpdateAccel_k.Args.entity_accel, sector_group.get_buffer(ENTITY_ACCEL));
 
+        // todo: move into sector input class
         long k_ptr_update_mouse_position = p_gpu_crud.kernel_ptr(Kernel.update_mouse_position);
         k_update_mouse_position = new UpdateMousePosition_k(GPGPU.ptr_compute_queue, k_ptr_update_mouse_position)
             .buf_arg(UpdateMousePosition_k.Args.entity_root_hulls, sector_group.get_buffer(ENTITY_ROOT_HULL))
             .buf_arg(UpdateMousePosition_k.Args.hull_point_tables, sector_group.get_buffer(HULL_POINT_TABLE))
             .buf_arg(UpdateMousePosition_k.Args.points, sector_group.get_buffer(POINT));
 
+
+        // todo: move into reference input class
         long k_ptr_set_bone_channel_table = p_gpu_crud.kernel_ptr(Kernel.set_bone_channel_table);
         k_set_bone_channel_table = new SetBoneChannelTable_k(GPGPU.ptr_compute_queue, k_ptr_set_bone_channel_table)
             .buf_arg(SetBoneChannelTable_k.Args.bone_channel_tables, reference_group.get_buffer(BONE_ANIM_CHANNEL_TABLE));
@@ -743,7 +749,6 @@ public class GPUCoreMemory implements SectorContainer
         return reference_input.new_bone_bind_pose(bone_data);
     }
 
-
     public int new_bone_reference(float[] bone_data)
     {
         return reference_input.new_bone_reference(bone_data);
@@ -809,17 +814,8 @@ public class GPUCoreMemory implements SectorContainer
         return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int, EGRESS_COUNTERS);
     }
 
-    private int init_skip_count = 0;
-    private int init_skip_max = 10;
-
     public void delete_and_compact()
     {
-        if (init_skip_count < init_skip_max)
-        {
-            init_skip_count++;
-            return;
-        }
-
         b_delete_1.ensure_capacity(sector_input.entity_index());
         b_delete_2.ensure_capacity(sector_input.entity_index());
 
