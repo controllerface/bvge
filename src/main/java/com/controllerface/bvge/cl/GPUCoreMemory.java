@@ -1,9 +1,6 @@
 package com.controllerface.bvge.cl;
 
-import com.controllerface.bvge.cl.buffers.BufferType;
-import com.controllerface.bvge.cl.buffers.PersistentBuffer;
-import com.controllerface.bvge.cl.buffers.ResizableBuffer;
-import com.controllerface.bvge.cl.buffers.TransientBuffer;
+import com.controllerface.bvge.cl.buffers.*;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
@@ -97,36 +94,6 @@ public class GPUCoreMemory implements SectorContainer
     private final ResizableBuffer b_delete_2;
     private final ResizableBuffer b_delete_partial_1;
     private final ResizableBuffer b_delete_partial_2;
-
-    //#endregion
-
-    //#region Mirror Buffers
-
-    /**
-     * Mirror buffers are configured only for certain core buffers, and are used solely for rendering purposes.
-     * Between physics simulation ticks, rendering threads use the mirror buffers to render the state of the objects
-     * while the physics thread is busy calculating the data for the next frame.
-     */
-    private final ResizableBuffer mb_entity;
-    private final ResizableBuffer mb_entity_flag;
-    private final ResizableBuffer mb_entity_model_id;
-    private final ResizableBuffer mb_entity_root_hull;
-    private final ResizableBuffer mb_edge;
-    private final ResizableBuffer mb_edge_flag;
-    private final ResizableBuffer mb_hull;
-    private final ResizableBuffer mb_hull_aabb;
-    private final ResizableBuffer mb_hull_flag;
-    private final ResizableBuffer mb_hull_entity_id;
-    private final ResizableBuffer mb_hull_mesh_id;
-    private final ResizableBuffer mb_hull_uv_offset;
-    private final ResizableBuffer mb_hull_integrity;
-    private final ResizableBuffer mb_hull_point_table;
-    private final ResizableBuffer mb_hull_rotation;
-    private final ResizableBuffer mb_hull_scale;
-    private final ResizableBuffer mb_mirror_point;
-    private final ResizableBuffer mb_point_anti_gravity;
-    private final ResizableBuffer mb_point_hit_count;
-    private final ResizableBuffer mb_point_vertex_reference;
 
     //#endregion
 
@@ -349,6 +316,7 @@ public class GPUCoreMemory implements SectorContainer
     private final DoubleBuffer<CollectedObjectBuffer> object_egress_buffer;
     private final SectorGroup sector_group;
     private final SectorInput sector_input;
+    private final MirrorBufferGroup mirror_group;
 
     /**
      * This barrier is used to facilitate co-operation between the sector loading thread and the main loop.
@@ -408,33 +376,12 @@ public class GPUCoreMemory implements SectorContainer
         b_vertex_uv_table            = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
         b_vertex_weight              = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float4);
 
-        // mirrors
-        mb_entity                    = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float4, ENTITY_INIT);
-        mb_entity_flag               = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, ENTITY_INIT);
-        mb_entity_model_id           = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, ENTITY_INIT);
-        mb_entity_root_hull          = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, ENTITY_INIT);
-        mb_edge                      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2, EDGE_INIT);
-        mb_edge_flag                 = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, EDGE_INIT);
-        mb_hull                      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float4, HULL_INIT);
-        mb_hull_aabb                 = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float4, HULL_INIT);
-        mb_hull_flag                 = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, HULL_INIT);
-        mb_hull_entity_id            = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, HULL_INIT);
-        mb_hull_mesh_id              = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, HULL_INIT);
-        mb_hull_uv_offset            = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, HULL_INIT);
-        mb_hull_integrity            = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, HULL_INIT);
-        mb_hull_point_table          = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2, HULL_INIT);
-        mb_hull_rotation             = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float2, HULL_INIT);
-        mb_hull_scale                = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float2, HULL_INIT);
-        mb_point_hit_count           = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_short, POINT_INIT);
-        mb_point_anti_gravity        = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float, POINT_INIT);
-        mb_mirror_point              = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float4, POINT_INIT);
-        mb_point_vertex_reference    = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, POINT_INIT);
-
         p_gpu_crud.init();
         p_scan_deletes.init();
 
         this.sector_group = new SectorGroup("Live Sectors",GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.sector_input = new SectorInput(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.sector_group);
+        this.mirror_group = new MirrorBufferGroup("Render Mirror", GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
 
         long k_ptr_create_texture_uv = p_gpu_crud.kernel_ptr(Kernel.create_texture_uv);
         k_create_texture_uv = new CreateTextureUV_k(GPGPU.ptr_compute_queue, k_ptr_create_texture_uv)
@@ -685,26 +632,26 @@ public class GPUCoreMemory implements SectorContainer
             case VERTEX_UV_TABLE               -> b_vertex_uv_table;
             case VERTEX_WEIGHT                 -> b_vertex_weight;
 
-            case MIRROR_EDGE                   -> mb_edge;
-            case MIRROR_HULL                   -> mb_hull;
-            case MIRROR_ENTITY                 -> mb_entity;
-            case MIRROR_ENTITY_FLAG            -> mb_entity_flag;
-            case MIRROR_POINT                  -> mb_mirror_point;
-            case MIRROR_ENTITY_MODEL_ID        -> mb_entity_model_id;
-            case MIRROR_ENTITY_ROOT_HULL       -> mb_entity_root_hull;
-            case MIRROR_EDGE_FLAG              -> mb_edge_flag;
-            case MIRROR_HULL_AABB              -> mb_hull_aabb;
-            case MIRROR_HULL_ENTITY_ID         -> mb_hull_entity_id;
-            case MIRROR_HULL_FLAG              -> mb_hull_flag;
-            case MIRROR_HULL_MESH_ID           -> mb_hull_mesh_id;
-            case MIRROR_HULL_UV_OFFSET         -> mb_hull_uv_offset;
-            case MIRROR_HULL_INTEGRITY         -> mb_hull_integrity;
-            case MIRROR_HULL_POINT_TABLE       -> mb_hull_point_table;
-            case MIRROR_HULL_ROTATION          -> mb_hull_rotation;
-            case MIRROR_HULL_SCALE             -> mb_hull_scale;
-            case MIRROR_POINT_ANTI_GRAV        -> mb_point_anti_gravity;
-            case MIRROR_POINT_HIT_COUNT        -> mb_point_hit_count;
-            case MIRROR_POINT_VERTEX_REFERENCE -> mb_point_vertex_reference;
+            case MIRROR_EDGE,
+                 MIRROR_HULL,
+                 MIRROR_ENTITY,
+                 MIRROR_ENTITY_FLAG,
+                 MIRROR_POINT,
+                 MIRROR_ENTITY_MODEL_ID,
+                 MIRROR_ENTITY_ROOT_HULL,
+                 MIRROR_EDGE_FLAG,
+                 MIRROR_HULL_AABB,
+                 MIRROR_HULL_ENTITY_ID,
+                 MIRROR_HULL_FLAG,
+                 MIRROR_HULL_MESH_ID,
+                 MIRROR_HULL_UV_OFFSET,
+                 MIRROR_HULL_INTEGRITY,
+                 MIRROR_HULL_POINT_TABLE,
+                 MIRROR_HULL_ROTATION,
+                 MIRROR_HULL_SCALE,
+                 MIRROR_POINT_ANTI_GRAV,
+                 MIRROR_POINT_HIT_COUNT,
+                 MIRROR_POINT_VERTEX_REFERENCE -> mirror_group.get_buffer(bufferType);
 
             // remaining buffer types delegated to core sector input buffer
             case ENTITY,
@@ -751,26 +698,7 @@ public class GPUCoreMemory implements SectorContainer
 
     public void mirror_render_buffers()
     {
-        mb_entity.mirror(sector_group.get_buffer(ENTITY));
-        mb_entity_flag.mirror(sector_group.get_buffer(ENTITY_FLAG));
-        mb_entity_model_id.mirror(sector_group.get_buffer(ENTITY_MODEL_ID));
-        mb_entity_root_hull.mirror(sector_group.get_buffer(ENTITY_ROOT_HULL));
-        mb_edge.mirror(sector_group.get_buffer(EDGE));
-        mb_edge_flag.mirror(sector_group.get_buffer(EDGE_FLAG));
-        mb_hull.mirror(sector_group.get_buffer(HULL));
-        mb_hull_aabb.mirror(b_hull_aabb);
-        mb_hull_entity_id.mirror(sector_group.get_buffer(HULL_ENTITY_ID));
-        mb_hull_flag.mirror(sector_group.get_buffer(HULL_FLAG));
-        mb_hull_mesh_id.mirror(sector_group.get_buffer(HULL_MESH_ID));
-        mb_hull_uv_offset.mirror(sector_group.get_buffer(HULL_UV_OFFSET));
-        mb_hull_integrity.mirror(sector_group.get_buffer(HULL_INTEGRITY));
-        mb_hull_point_table.mirror(sector_group.get_buffer(HULL_POINT_TABLE));
-        mb_hull_rotation.mirror(sector_group.get_buffer(HULL_ROTATION));
-        mb_hull_scale.mirror(sector_group.get_buffer(HULL_SCALE));
-        mb_point_hit_count.mirror(sector_group.get_buffer(POINT_HIT_COUNT));
-        mb_point_anti_gravity.mirror(b_point_anti_gravity);
-        mb_mirror_point.mirror(sector_group.get_buffer(POINT));
-        mb_point_vertex_reference.mirror(sector_group.get_buffer(POINT_VERTEX_REFERENCE));
+        mirror_group.mirror(sector_group, b_hull_aabb, b_point_anti_gravity);
 
         last_edge_index     = sector_input.edge_index();
         last_entity_index   = sector_input.entity_index();
@@ -1428,6 +1356,7 @@ public class GPUCoreMemory implements SectorContainer
         broken_egress_buffer.back().destroy();
         object_egress_buffer.front().destroy();
         object_egress_buffer.back().destroy();
+        mirror_group.destroy();
 
         p_gpu_crud.destroy();
         p_scan_deletes.destroy();
