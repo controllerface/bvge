@@ -25,11 +25,10 @@ import static org.lwjgl.opencl.CL10.clFinish;
 
 public class GPUCoreMemory implements SectorContainer
 {
-    private static final long ENTITY_INIT = 10_000L;
-    private static final long HULL_INIT = 10_000L;
-    private static final long EDGE_INIT = 24_000L;
-    private static final long POINT_INIT = 50_000L;
-
+    private static final long ENTITY_INIT   = 10_000L;
+    private static final long HULL_INIT     = 10_000L;
+    private static final long EDGE_INIT     = 24_000L;
+    private static final long POINT_INIT    = 50_000L;
     private static final long DELETE_1_INIT = 10_000L;
     private static final long DELETE_2_INIT = 20_000L;
 
@@ -316,7 +315,7 @@ public class GPUCoreMemory implements SectorContainer
     private final DoubleBuffer<CollectedObjectBuffer> object_egress_buffer;
     private final SectorGroup sector_group;
     private final SectorInput sector_input;
-    private final MirrorBufferGroup mirror_group;
+    private final MirrorGroup mirror_group;
 
     /**
      * This barrier is used to facilitate co-operation between the sector loading thread and the main loop.
@@ -379,9 +378,9 @@ public class GPUCoreMemory implements SectorContainer
         p_gpu_crud.init();
         p_scan_deletes.init();
 
-        this.sector_group = new SectorGroup("Live Sectors",GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_group = new SectorGroup("Live Sectors", GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.sector_input = new SectorInput(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.sector_group);
-        this.mirror_group = new MirrorBufferGroup("Render Mirror", GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.mirror_group = new MirrorGroup("Render Mirror", GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
 
         long k_ptr_create_texture_uv = p_gpu_crud.kernel_ptr(Kernel.create_texture_uv);
         k_create_texture_uv = new CreateTextureUV_k(GPGPU.ptr_compute_queue, k_ptr_create_texture_uv)

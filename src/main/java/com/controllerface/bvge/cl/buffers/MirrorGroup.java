@@ -9,9 +9,9 @@ import static com.controllerface.bvge.cl.buffers.BufferType.*;
  * Between physics simulation ticks, rendering threads use the mirror buffers to render the state of the objects
  * while the physics thread is busy calculating the data for the next frame.
  */
-public class MirrorBufferGroup extends BufferGroup
+public class MirrorGroup extends BufferGroup
 {
-    public MirrorBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public MirrorGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
         super(name, ptr_queue);
 
