@@ -100,24 +100,6 @@ public class GPUCoreMemory implements SectorContainer
 
     //#region Animation Data Buffers
 
-    /** int2
-     * x: position channel start index
-     * y: position channel end index
-     */
-    private final ResizableBuffer b_anim_bone_pos_channel;
-
-    /** int2
-     * x: rotation channel start index
-     * y: rotation channel end index
-     */
-    private final ResizableBuffer b_anim_bone_rot_channel;
-
-    /** int2
-     * x: scaling channel start index
-     * y: scaling channel end index
-     */
-    private final ResizableBuffer b_anim_bone_scl_channel;
-
     /** float
      * x: key frame timestamp
      */
@@ -140,11 +122,6 @@ public class GPUCoreMemory implements SectorContainer
      * x: animation tick rate (FPS)
      */
     private final ResizableBuffer b_anim_tick_rate;
-
-    /** int
-     * x: animation timing index
-     */
-    private final ResizableBuffer b_anim_timing_index;
 
     //#endregion
 
@@ -263,6 +240,7 @@ public class GPUCoreMemory implements SectorContainer
     private final SectorGroup sector_group;
     private final SectorInput sector_input;
     private final MirrorGroup mirror_group;
+    private final ReferenceGroup reference_group;
 
     /**
      * This barrier is used to facilitate co-operation between the sector loading thread and the main loop.
@@ -296,14 +274,10 @@ public class GPUCoreMemory implements SectorContainer
         b_delete_partial_2           = new TransientBuffer(GPGPU.ptr_compute_queue, cl_int4, DELETE_2_INIT);
 
         // persistent buffers
-        b_anim_bone_pos_channel      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
-        b_anim_bone_rot_channel      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
-        b_anim_bone_scl_channel      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
         b_anim_frame_time            = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float);
         b_anim_key_frame             = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float4);
         b_anim_duration              = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float);
         b_anim_tick_rate             = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float);
-        b_anim_timing_index          = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int);
         b_bone_anim_channel_table    = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
         b_bone_bind_pose             = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float16);
         b_bone_reference             = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float16);
@@ -322,6 +296,8 @@ public class GPUCoreMemory implements SectorContainer
         this.sector_group = new SectorGroup("Live Sectors", GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.sector_input = new SectorInput(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.sector_group);
         this.mirror_group = new MirrorGroup("Render Mirror", GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.reference_group = new ReferenceGroup("Reference Data", GPGPU.ptr_compute_queue);
+
 
         long k_ptr_create_texture_uv = p_gpu_crud.kernel_ptr(Kernel.create_texture_uv);
         k_create_texture_uv = new CreateTextureUV_k(GPGPU.ptr_compute_queue, k_ptr_create_texture_uv)
@@ -348,10 +324,10 @@ public class GPUCoreMemory implements SectorContainer
 
         long k_ptr_create_bone_channel = p_gpu_crud.kernel_ptr(Kernel.create_bone_channel);
         k_create_bone_channel = new CreateBoneChannel_k(GPGPU.ptr_compute_queue, k_ptr_create_bone_channel)
-            .buf_arg(CreateBoneChannel_k.Args.animation_timing_indices, b_anim_timing_index)
-            .buf_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, b_anim_bone_pos_channel)
-            .buf_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, b_anim_bone_rot_channel)
-            .buf_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, b_anim_bone_scl_channel);
+            .buf_arg(CreateBoneChannel_k.Args.animation_timing_indices, reference_group.get_buffer(ANIM_TIMING_INDEX))
+            .buf_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, reference_group.get_buffer(ANIM_POS_CHANNEL))
+            .buf_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, reference_group.get_buffer(ANIM_ROT_CHANNEL))
+            .buf_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, reference_group.get_buffer(ANIM_SCL_CHANNEL));
 
         long k_ptr_create_model_transform = p_gpu_crud.kernel_ptr(Kernel.create_model_transform);
         k_create_model_transform = new CreateModelTransform_k(GPGPU.ptr_compute_queue, k_ptr_create_model_transform)
@@ -548,12 +524,8 @@ public class GPUCoreMemory implements SectorContainer
 
             case ANIM_FRAME_TIME               -> b_anim_frame_time;
             case ANIM_KEY_FRAME                -> b_anim_key_frame;
-            case ANIM_POS_CHANNEL              -> b_anim_bone_pos_channel;
-            case ANIM_ROT_CHANNEL              -> b_anim_bone_rot_channel;
-            case ANIM_SCL_CHANNEL              -> b_anim_bone_scl_channel;
             case ANIM_DURATION                 -> b_anim_duration;
             case ANIM_TICK_RATE                -> b_anim_tick_rate;
-            case ANIM_TIMING_INDEX             -> b_anim_timing_index;
             case BONE_ANIM_TABLE               -> b_bone_anim_channel_table;
             case BONE_BIND_POSE                -> b_bone_bind_pose;
             case BONE_REFERENCE                -> b_bone_reference;
@@ -566,14 +538,18 @@ public class GPUCoreMemory implements SectorContainer
             case VERTEX_UV_TABLE               -> b_vertex_uv_table;
             case VERTEX_WEIGHT                 -> b_vertex_weight;
 
-            case MIRROR_EDGE,
-                 MIRROR_HULL,
-                 MIRROR_ENTITY,
-                 MIRROR_ENTITY_FLAG,
-                 MIRROR_POINT,
-                 MIRROR_ENTITY_MODEL_ID,
-                 MIRROR_ENTITY_ROOT_HULL,
+            case ANIM_POS_CHANNEL,
+                 ANIM_ROT_CHANNEL,
+                 ANIM_SCL_CHANNEL,
+                 ANIM_TIMING_INDEX -> reference_group.get_buffer(bufferType);
+
+            case MIRROR_POINT,
+                 MIRROR_POINT_ANTI_GRAV,
+                 MIRROR_POINT_HIT_COUNT,
+                 MIRROR_POINT_VERTEX_REFERENCE,
+                 MIRROR_EDGE,
                  MIRROR_EDGE_FLAG,
+                 MIRROR_HULL,
                  MIRROR_HULL_AABB,
                  MIRROR_HULL_ENTITY_ID,
                  MIRROR_HULL_FLAG,
@@ -583,9 +559,10 @@ public class GPUCoreMemory implements SectorContainer
                  MIRROR_HULL_POINT_TABLE,
                  MIRROR_HULL_ROTATION,
                  MIRROR_HULL_SCALE,
-                 MIRROR_POINT_ANTI_GRAV,
-                 MIRROR_POINT_HIT_COUNT,
-                 MIRROR_POINT_VERTEX_REFERENCE -> mirror_group.get_buffer(bufferType);
+                 MIRROR_ENTITY,
+                 MIRROR_ENTITY_FLAG,
+                 MIRROR_ENTITY_MODEL_ID,
+                 MIRROR_ENTITY_ROOT_HULL -> mirror_group.get_buffer(bufferType);
 
             // remaining buffer types delegated to core sector input buffer
             case POINT,
@@ -890,10 +867,7 @@ public class GPUCoreMemory implements SectorContainer
     public int new_bone_channel(int anim_timing_index, int[] pos_table, int[] rot_table, int[] scl_table)
     {
         int capacity = bone_channel_index + 1;
-        b_anim_timing_index.ensure_capacity(capacity);
-        b_anim_bone_pos_channel.ensure_capacity(capacity);
-        b_anim_bone_rot_channel.ensure_capacity(capacity);
-        b_anim_bone_scl_channel.ensure_capacity(capacity);
+        reference_group.ensure_bone_channel(capacity);
 
         k_create_bone_channel
             .set_arg(CreateBoneChannel_k.Args.target, bone_channel_index)
@@ -1310,12 +1284,8 @@ public class GPUCoreMemory implements SectorContainer
         b_mesh_face.release();
         b_anim_key_frame.release();
         b_anim_frame_time.release();
-        b_anim_bone_pos_channel.release();
-        b_anim_bone_rot_channel.release();
-        b_anim_bone_scl_channel.release();
         b_anim_duration.release();
         b_anim_tick_rate.release();
-        b_anim_timing_index.release();
 
         debug();
 
@@ -1350,12 +1320,8 @@ public class GPUCoreMemory implements SectorContainer
         total += b_mesh_face.debug_data();
         total += b_anim_key_frame.debug_data();
         total += b_anim_frame_time.debug_data();
-        total += b_anim_bone_pos_channel.debug_data();
-        total += b_anim_bone_rot_channel.debug_data();
-        total += b_anim_bone_scl_channel.debug_data();
         total += b_anim_duration.debug_data();
         total += b_anim_tick_rate.debug_data();
-        total += b_anim_timing_index.debug_data();
 
         //System.out.println("---------------------------");
         System.out.println("Core Memory Usage: MB " + ((float) total / 1024f / 1024f));

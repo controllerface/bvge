@@ -22,9 +22,19 @@ public abstract class BufferGroup
     }
 
     // todo: throw error if buffer type already set
+    public void set_buffer(BufferType bufferType, int size)
+    {
+        buffers.put(bufferType, new_buffer(size));
+    }
+
     public void set_buffer(BufferType bufferType, int size, long initial_capacity)
     {
         buffers.put(bufferType, new_buffer(size, initial_capacity));
+    }
+
+    private ResizableBuffer new_buffer(int size)
+    {
+        return new PersistentBuffer(this.ptr_queue, size);
     }
 
     private ResizableBuffer new_buffer(int size, long initial_capacity)

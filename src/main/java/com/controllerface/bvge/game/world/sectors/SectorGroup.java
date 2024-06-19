@@ -245,13 +245,13 @@ public class SectorGroup extends BufferGroup
          */
         set_buffer(ENTITY_MASS, cl_float, entity_init);
 
-        /** float2
+        /* float2
          * x: current x acceleration
          * y: current y acceleration
          */
         set_buffer(ENTITY_ACCEL, cl_float2, entity_init);
 
-        /** float2
+        /* float2
          * x: the initial time of the current blend operation
          * y: the remaining time of the current blend operation
          */
