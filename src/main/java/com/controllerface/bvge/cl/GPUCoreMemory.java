@@ -98,41 +98,6 @@ public class GPUCoreMemory implements SectorContainer
 
     // external buffers
 
-    //#region Point Buffers
-
-    /** float
-     * x: anti-gravity magnitude for each point
-     */
-    private final ResizableBuffer b_point_anti_gravity;
-
-    //#endregion
-
-    //#region Hull Buffers
-
-    /** float4
-     * x: corner x position
-     * y: corner y position
-     * z: width
-     * w: height
-     */
-    private final ResizableBuffer b_hull_aabb;
-
-    /** int4
-     * x: minimum x key index
-     * y: maximum x key index
-     * z: minimum y key index
-     * w: maximum y key index
-     */
-    private final ResizableBuffer b_hull_aabb_index;
-
-    /** int2
-     * x: key bank offset
-     * y: key bank size
-     */
-    private final ResizableBuffer b_hull_aabb_key;
-
-    //#endregion
-
     //#region Entity Buffers
 
     /** float2
@@ -351,10 +316,6 @@ public class GPUCoreMemory implements SectorContainer
         // persistent buffers
         b_entity_accel               = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float2, ENTITY_INIT);
         b_entity_anim_blend          = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float2, ENTITY_INIT);
-        b_hull_aabb                  = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float4, HULL_INIT);
-        b_hull_aabb_index            = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int4, HULL_INIT);
-        b_hull_aabb_key              = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2, HULL_INIT);
-        b_point_anti_gravity         = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float, POINT_INIT);
         b_anim_bone_pos_channel      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
         b_anim_bone_rot_channel      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
         b_anim_bone_scl_channel      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
@@ -534,9 +495,9 @@ public class GPUCoreMemory implements SectorContainer
             .buf_arg(CompactHulls_k.Args.hull_flags, sector_group.get_buffer(HULL_FLAG))
             .buf_arg(CompactHulls_k.Args.hull_point_tables, sector_group.get_buffer(HULL_POINT_TABLE))
             .buf_arg(CompactHulls_k.Args.hull_edge_tables, sector_group.get_buffer(HULL_EDGE_TABLE))
-            .buf_arg(CompactHulls_k.Args.bounds, b_hull_aabb)
-            .buf_arg(CompactHulls_k.Args.bounds_index_data, b_hull_aabb_index)
-            .buf_arg(CompactHulls_k.Args.bounds_bank_data, b_hull_aabb_key);
+            .buf_arg(CompactHulls_k.Args.bounds, sector_group.get_buffer(HULL_AABB))
+            .buf_arg(CompactHulls_k.Args.bounds_index_data, sector_group.get_buffer(HULL_AABB_INDEX))
+            .buf_arg(CompactHulls_k.Args.bounds_bank_data, sector_group.get_buffer(HULL_AABB_KEY_TABLE));
 
         long k_ptr_compact_edges = p_scan_deletes.kernel_ptr(Kernel.compact_edges);
         k_compact_edges = new CompactEdges_k(GPGPU.ptr_compute_queue, k_ptr_compact_edges)
@@ -549,7 +510,7 @@ public class GPUCoreMemory implements SectorContainer
         k_compact_points = new CompactPoints_k(GPGPU.ptr_compute_queue, k_ptr_compact_points)
             .buf_arg(CompactPoints_k.Args.point_shift, b_point_shift)
             .buf_arg(CompactPoints_k.Args.points, sector_group.get_buffer(POINT))
-            .buf_arg(CompactPoints_k.Args.anti_gravity, b_point_anti_gravity)
+            .buf_arg(CompactPoints_k.Args.anti_gravity, sector_group.get_buffer(POINT_ANTI_GRAV))
             .buf_arg(CompactPoints_k.Args.point_vertex_references, sector_group.get_buffer(POINT_VERTEX_REFERENCE))
             .buf_arg(CompactPoints_k.Args.point_hull_indices, sector_group.get_buffer(POINT_HULL_INDEX))
             .buf_arg(CompactPoints_k.Args.point_flags, sector_group.get_buffer(POINT_FLAG))
@@ -618,14 +579,14 @@ public class GPUCoreMemory implements SectorContainer
             case BONE_ANIM_TABLE               -> b_bone_anim_channel_table;
             case BONE_BIND_POSE                -> b_bone_bind_pose;
             case BONE_REFERENCE                -> b_bone_reference;
-            case HULL_AABB                     -> b_hull_aabb;
-            case HULL_AABB_INDEX               -> b_hull_aabb_index;
-            case HULL_AABB_KEY_TABLE           -> b_hull_aabb_key;
+//            case HULL_AABB                     -> b_hull_aabb;
+//            case HULL_AABB_INDEX               -> b_hull_aabb_index;
+//            case HULL_AABB_KEY_TABLE           -> b_hull_aabb_key;
             case MESH_FACE                     -> b_mesh_face;
             case MESH_VERTEX_TABLE             -> b_mesh_vertex_table;
             case MESH_FACE_TABLE               -> b_mesh_face_table;
             case MODEL_TRANSFORM               -> b_model_transform;
-            case POINT_ANTI_GRAV               -> b_point_anti_gravity;
+//            case POINT_ANTI_GRAV               -> b_point_anti_gravity;
             case VERTEX_REFERENCE              -> b_vertex_reference;
             case VERTEX_TEXTURE_UV             -> b_vertex_texture_uv;
             case VERTEX_UV_TABLE               -> b_vertex_uv_table;
@@ -653,12 +614,14 @@ public class GPUCoreMemory implements SectorContainer
                  MIRROR_POINT_VERTEX_REFERENCE -> mirror_group.get_buffer(bufferType);
 
             // remaining buffer types delegated to core sector input buffer
-            case ENTITY,
+            case POINT,
                  POINT_HIT_COUNT,
                  POINT_FLAG,
                  POINT_HULL_INDEX,
                  POINT_VERTEX_REFERENCE,
-                 POINT_BONE_TABLE, POINT,
+                 POINT_BONE_TABLE,
+                 POINT_ANTI_GRAV,
+                 HULL,
                  HULL_ROTATION,
                  HULL_UV_OFFSET,
                  HULL_MESH_ID,
@@ -674,10 +637,13 @@ public class GPUCoreMemory implements SectorContainer
                  HULL_ENTITY_ID,
                  HULL_BONE,
                  HULL_SCALE,
-                 HULL,
+                 HULL_AABB,
+                 HULL_AABB_INDEX,
+                 HULL_AABB_KEY_TABLE,
+                 EDGE,
                  EDGE_LENGTH,
                  EDGE_FLAG,
-                 EDGE,
+                 ENTITY,
                  ENTITY_TRANSFORM_ID,
                  ENTITY_ROOT_HULL,
                  ENTITY_MODEL_ID,
@@ -697,7 +663,7 @@ public class GPUCoreMemory implements SectorContainer
 
     public void mirror_render_buffers()
     {
-        mirror_group.mirror(sector_group, b_hull_aabb, b_point_anti_gravity);
+        mirror_group.mirror(sector_group);
 
         last_edge_index     = sector_input.edge_index();
         last_entity_index   = sector_input.entity_index();
@@ -920,10 +886,6 @@ public class GPUCoreMemory implements SectorContainer
         int hull_bone_capacity     = hull_bone_count + next_hull_bone();
         int armature_bone_capacity = armature_bone_count + next_armature_bone();
 
-        b_point_anti_gravity.ensure_capacity(point_capacity);
-        b_hull_aabb.ensure_capacity(hull_capacity);
-        b_hull_aabb_index.ensure_capacity(hull_capacity);
-        b_hull_aabb_key.ensure_capacity(hull_capacity);
         b_entity_accel.ensure_capacity(entity_capacity);
         b_entity_anim_blend.ensure_capacity(entity_capacity);
 
@@ -1008,7 +970,6 @@ public class GPUCoreMemory implements SectorContainer
     @Override
     public int new_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int hit_count, int flags)
     {
-        b_point_anti_gravity.ensure_capacity(sector_input.point_index() + 1);
         return sector_input.create_point(position, bone_ids, vertex_index, hull_index, hit_count, flags);
     }
 
@@ -1027,9 +988,6 @@ public class GPUCoreMemory implements SectorContainer
                         int flags)
     {
         int capacity = sector_input.hull_index() + 1;
-        b_hull_aabb.ensure_capacity(capacity);
-        b_hull_aabb_index.ensure_capacity(capacity);
-        b_hull_aabb_key.ensure_capacity(capacity);
         return sector_input.create_hull(mesh_id, position, scale, rotation, point_table, edge_table, bone_table, friction, restitution, entity_id, uv_offset, flags);
     }
 
@@ -1368,10 +1326,6 @@ public class GPUCoreMemory implements SectorContainer
         b_delete_2.release();
         b_delete_partial_1.release();
         b_delete_partial_2.release();
-        b_hull_aabb.release();
-        b_hull_aabb_index.release();
-        b_hull_aabb_key.release();
-        b_point_anti_gravity.release();
         b_vertex_reference.release();
         b_vertex_weight.release();
         b_vertex_texture_uv.release();
@@ -1414,10 +1368,6 @@ public class GPUCoreMemory implements SectorContainer
         total += b_delete_2.debug_data();
         total += b_delete_partial_1.debug_data();
         total += b_delete_partial_2.debug_data();
-        total += b_hull_aabb.debug_data();
-        total += b_hull_aabb_index.debug_data();
-        total += b_hull_aabb_key.debug_data();
-        total += b_point_anti_gravity.debug_data();
         total += b_vertex_reference.debug_data();
         total += b_vertex_weight.debug_data();
         total += b_vertex_texture_uv.debug_data();

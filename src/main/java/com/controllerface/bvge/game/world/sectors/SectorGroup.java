@@ -49,6 +49,11 @@ public class SectorGroup extends BufferGroup
          */
         set_buffer(POINT_HIT_COUNT, cl_short, point_init);
 
+        /* float
+         * x: anti-gravity magnitude for each point
+         */
+        set_buffer(POINT_ANTI_GRAV, cl_float, point_init);
+
         //#endregion
 
         //#region Edge Buffers
@@ -145,6 +150,28 @@ public class SectorGroup extends BufferGroup
          * x: the integrity (i.e. health) of the hull
          */
         set_buffer(HULL_INTEGRITY, cl_int, hull_init);
+
+        /* float4
+         * x: corner x position
+         * y: corner y position
+         * z: width
+         * w: height
+         */
+        set_buffer(HULL_AABB, cl_float4, hull_init);
+
+        /* int4
+         * x: minimum x key index
+         * y: maximum x key index
+         * z: minimum y key index
+         * w: maximum y key index
+         */
+        set_buffer(HULL_AABB_INDEX, cl_int4, hull_init);
+
+        /* int2
+         * x: key bank offset
+         * y: key bank size
+         */
+        set_buffer(HULL_AABB_KEY_TABLE, cl_int2, hull_init);
 
         //#endregion
 
@@ -279,6 +306,7 @@ public class SectorGroup extends BufferGroup
         get_buffer(POINT_BONE_TABLE).ensure_capacity(point_capacity);
         get_buffer(POINT_HIT_COUNT).ensure_capacity(point_capacity);
         get_buffer(POINT_FLAG).ensure_capacity(point_capacity);
+        get_buffer(POINT_ANTI_GRAV).ensure_capacity(point_capacity);
 
         get_buffer(HULL).ensure_capacity(hull_capacity);
         get_buffer(HULL_SCALE).ensure_capacity(hull_capacity);
@@ -293,6 +321,9 @@ public class SectorGroup extends BufferGroup
         get_buffer(HULL_UV_OFFSET).ensure_capacity(hull_capacity);
         get_buffer(HULL_ROTATION).ensure_capacity(hull_capacity);
         get_buffer(HULL_INTEGRITY).ensure_capacity(hull_capacity);
+        get_buffer(HULL_AABB).ensure_capacity(hull_capacity);
+        get_buffer(HULL_AABB_INDEX).ensure_capacity(hull_capacity);
+        get_buffer(HULL_AABB_KEY_TABLE).ensure_capacity(hull_capacity);
 
         get_buffer(ENTITY).ensure_capacity(entity_capacity);
         get_buffer(ENTITY_ANIM_ELAPSED).ensure_capacity(entity_capacity);

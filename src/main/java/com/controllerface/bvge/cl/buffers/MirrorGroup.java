@@ -37,7 +37,7 @@ public class MirrorGroup extends BufferGroup
         set_buffer(MIRROR_POINT_VERTEX_REFERENCE, cl_int,    point_init);
     }
 
-    public void mirror(BufferGroup sector_group, ResizableBuffer b_hull_aabb, ResizableBuffer b_point_anti_gravity)
+    public void mirror(BufferGroup sector_group)
     {
         get_buffer(MIRROR_ENTITY).mirror(sector_group.get_buffer(ENTITY));
         get_buffer(MIRROR_ENTITY_FLAG).mirror(sector_group.get_buffer(ENTITY_FLAG));
@@ -46,7 +46,7 @@ public class MirrorGroup extends BufferGroup
         get_buffer(MIRROR_EDGE).mirror(sector_group.get_buffer(EDGE));
         get_buffer(MIRROR_EDGE_FLAG).mirror(sector_group.get_buffer(EDGE_FLAG));
         get_buffer(MIRROR_HULL).mirror(sector_group.get_buffer(HULL));
-        get_buffer(MIRROR_HULL_AABB).mirror(b_hull_aabb);
+        get_buffer(MIRROR_HULL_AABB).mirror(sector_group.get_buffer(HULL_AABB));
         get_buffer(MIRROR_HULL_FLAG).mirror(sector_group.get_buffer(HULL_FLAG));
         get_buffer(MIRROR_HULL_ENTITY_ID).mirror(sector_group.get_buffer(HULL_ENTITY_ID));
         get_buffer(MIRROR_HULL_MESH_ID).mirror(sector_group.get_buffer(HULL_MESH_ID));
@@ -57,7 +57,7 @@ public class MirrorGroup extends BufferGroup
         get_buffer(MIRROR_HULL_SCALE).mirror(sector_group.get_buffer(HULL_SCALE));
         get_buffer(MIRROR_POINT).mirror(sector_group.get_buffer(POINT));
         get_buffer(MIRROR_POINT_HIT_COUNT).mirror(sector_group.get_buffer(POINT_HIT_COUNT));
-        get_buffer(MIRROR_POINT_ANTI_GRAV).mirror(b_point_anti_gravity);
+        get_buffer(MIRROR_POINT_ANTI_GRAV).mirror(sector_group.get_buffer(POINT_ANTI_GRAV));
         get_buffer(MIRROR_POINT_VERTEX_REFERENCE).mirror(sector_group.get_buffer(POINT_VERTEX_REFERENCE));
     }
 }

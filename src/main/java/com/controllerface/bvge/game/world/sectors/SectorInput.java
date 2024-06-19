@@ -100,6 +100,7 @@ public class SectorInput
         sector_group.get_buffer(POINT_FLAG).ensure_capacity(capacity);
         sector_group.get_buffer(POINT_HIT_COUNT).ensure_capacity(capacity);
         sector_group.get_buffer(POINT_BONE_TABLE).ensure_capacity(capacity);
+        sector_group.get_buffer(POINT_ANTI_GRAV).ensure_capacity(capacity);
 
         var new_point = position.length == 2
             ? arg_float4(position[0], position[1], position[0], position[1])
@@ -151,6 +152,9 @@ public class SectorInput
         sector_group.get_buffer(HULL_ENTITY_ID).ensure_capacity(capacity);
         sector_group.get_buffer(HULL_FRICTION).ensure_capacity(capacity);
         sector_group.get_buffer(HULL_RESTITUTION).ensure_capacity(capacity);
+        sector_group.get_buffer(HULL_AABB).ensure_capacity(capacity);
+        sector_group.get_buffer(HULL_AABB_INDEX).ensure_capacity(capacity);
+        sector_group.get_buffer(HULL_AABB_KEY_TABLE).ensure_capacity(capacity);
 
         var new_hull = position.length == 2
             ? arg_float4(position[0], position[1], position[0], position[1])
