@@ -20,13 +20,13 @@ public class UnorderedSectorOutput
     private final GPUKernel k_egress_entities;
     private final long ptr_queue;
     private final long ptr_egress_sizes;
-    private final UnorderedSectorGroup sector_group;
+    private final UnorderedSectorBufferGroup sector_group;
 
     public UnorderedSectorOutput(String name, long ptr_queue, GPUCoreMemory core_memory)
     {
         this.ptr_queue         = ptr_queue;
         this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(cl_int * 6);
-        this.sector_group = new UnorderedSectorGroup(name, this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_group = new UnorderedSectorBufferGroup(name, this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         p_gpu_crud.init();
 
         long k_ptr_egress_candidates = p_gpu_crud.kernel_ptr(Kernel.egress_entities);
@@ -127,7 +127,7 @@ public class UnorderedSectorOutput
         k_egress_entities.call(arg_long(entity_count));
     }
 
-    public void unload(UnorderedSectorGroup.Raw raw_sectors, int[] counts)
+    public void unload(UnorderedSectorBufferGroup.Raw raw_sectors, int[] counts)
     {
         sector_group.unload_sectors(raw_sectors, counts);
     }

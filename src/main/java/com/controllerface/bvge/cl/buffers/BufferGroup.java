@@ -21,9 +21,12 @@ public abstract class BufferGroup
         return buffers.get(bufferType);
     }
 
-    // todo: throw error if buffer type already set
     public void set_buffer(BufferType bufferType, int size)
     {
+        if (buffers.containsKey(bufferType))
+        {
+            throw new RuntimeException("Buffer type: " + bufferType + " already exists in: " + name);
+        }
         buffers.put(bufferType, new_buffer(size));
     }
 

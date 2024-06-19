@@ -2,7 +2,7 @@ package com.controllerface.bvge.game.world.sectors;
 
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.buffers.BufferType;
-import com.controllerface.bvge.cl.buffers.SectorGroup;
+import com.controllerface.bvge.cl.buffers.SectorBufferGroup;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
@@ -26,15 +26,15 @@ public class OrderedSectorInput implements SectorContainer
     private final GPUKernel k_merge_entity_bone;
 
     private final long ptr_queue;
-    private final SectorGroup sector_group;
-    private final SectorInput sector_input;
+    private final SectorBufferGroup sector_group;
+    private final SectorController sector_input;
 
     public OrderedSectorInput(long ptr_queue, GPUCoreMemory core_memory)
     {
         this.ptr_queue  = ptr_queue;
         this.p_gpu_crud = new GPUCrud().init();
-        this.sector_group = new SectorGroup("Sector Ingress" ,this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        this.sector_input = new SectorInput(this.ptr_queue, this.p_gpu_crud, this.sector_group);
+        this.sector_group = new SectorBufferGroup("Sector Ingress" ,this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_input = new SectorController(this.ptr_queue, this.p_gpu_crud, this.sector_group);
 
         long k_ptr_merge_point = this.p_gpu_crud.kernel_ptr(Kernel.merge_point);
         k_merge_point = new MergePoint_k(this.ptr_queue, k_ptr_merge_point)

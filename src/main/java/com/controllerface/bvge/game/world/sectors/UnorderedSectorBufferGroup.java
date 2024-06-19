@@ -1,13 +1,13 @@
 package com.controllerface.bvge.game.world.sectors;
 
-import com.controllerface.bvge.cl.buffers.SectorGroup;
+import com.controllerface.bvge.cl.buffers.SectorBufferGroup;
 
 import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.buffers.BufferType.*;
 
-public class UnorderedSectorGroup extends SectorGroup
+public class UnorderedSectorBufferGroup extends SectorBufferGroup
 {
-    public UnorderedSectorGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public UnorderedSectorBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
         super(name, ptr_queue, entity_init, hull_init, edge_init, point_init);
     }
@@ -160,18 +160,18 @@ public class UnorderedSectorGroup extends SectorGroup
             int hull_bone_vec16   = hull_bone_capacity   * 16;
             int entity_bone_vec16 = entity_bone_capacity * 16;
 
-            entity = ensure_float(entity,                   entity_vec4);
-            entity_anim_elapsed = ensure_float(entity_anim_elapsed,      entity_vec2);
-            entity_motion_state = ensure_short(entity_motion_state,      entity_vec2);
-            entity_anim_index = ensure_int(entity_anim_index,          entity_vec2);
-            entity_flag = ensure_int(entity_flag,                entity_capacity);
-            entity_type = ensure_int(entity_type,                entity_capacity);
-            entity_root_hull = ensure_int(entity_root_hull,           entity_capacity);
-            entity_model_id = ensure_int(entity_model_id,            entity_capacity);
-            entity_model_transform = ensure_int(entity_model_transform,     entity_capacity);
-            entity_hull_table = ensure_int(entity_hull_table,          entity_vec2);
-            entity_bone_table = ensure_int(entity_bone_table,          entity_vec2);
-            entity_mass = ensure_float(entity_mass,              entity_capacity);
+            entity = ensure_float(entity,                               entity_vec4);
+            entity_anim_elapsed = ensure_float(entity_anim_elapsed,     entity_vec2);
+            entity_motion_state = ensure_short(entity_motion_state,     entity_vec2);
+            entity_anim_index = ensure_int(entity_anim_index,           entity_vec2);
+            entity_flag = ensure_int(entity_flag,                       entity_capacity);
+            entity_type = ensure_int(entity_type,                       entity_capacity);
+            entity_root_hull = ensure_int(entity_root_hull,             entity_capacity);
+            entity_model_id = ensure_int(entity_model_id,               entity_capacity);
+            entity_model_transform = ensure_int(entity_model_transform, entity_capacity);
+            entity_hull_table = ensure_int(entity_hull_table,           entity_vec2);
+            entity_bone_table = ensure_int(entity_bone_table,           entity_vec2);
+            entity_mass = ensure_float(entity_mass,                     entity_capacity);
 
             hull = ensure_float(hull,                     hull_vec4);
             hull_scale = ensure_float(hull_scale,               hull_vec2);
