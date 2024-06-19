@@ -245,6 +245,18 @@ public class SectorGroup extends BufferGroup
          */
         set_buffer(ENTITY_MASS, cl_float, entity_init);
 
+        /** float2
+         * x: current x acceleration
+         * y: current y acceleration
+         */
+        set_buffer(ENTITY_ACCEL, cl_float2, entity_init);
+
+        /** float2
+         * x: the initial time of the current blend operation
+         * y: the remaining time of the current blend operation
+         */
+        set_buffer(ENTITY_ANIM_BLEND, cl_float2, entity_init);
+
         //#endregion
 
         //#region Hull Bone Buffers
@@ -337,5 +349,7 @@ public class SectorGroup extends BufferGroup
         get_buffer(ENTITY_HULL_TABLE).ensure_capacity(entity_capacity);
         get_buffer(ENTITY_BONE_TABLE).ensure_capacity(entity_capacity);
         get_buffer(ENTITY_MASS).ensure_capacity(entity_capacity);
+        get_buffer(ENTITY_ACCEL).ensure_capacity(entity_capacity);
+        get_buffer(ENTITY_ANIM_BLEND).ensure_capacity(entity_capacity);
     }
 }

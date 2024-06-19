@@ -204,6 +204,8 @@ public class SectorInput
         sector_group.get_buffer(ENTITY_MOTION_STATE).ensure_capacity(capacity);
         sector_group.get_buffer(ENTITY_HULL_TABLE).ensure_capacity(capacity);
         sector_group.get_buffer(ENTITY_BONE_TABLE).ensure_capacity(capacity);
+        sector_group.get_buffer(ENTITY_ACCEL).ensure_capacity(capacity);
+        sector_group.get_buffer(ENTITY_ANIM_BLEND).ensure_capacity(capacity);
 
         k_create_entity
             .set_arg(CreateEntity_k.Args.target, entity_index)

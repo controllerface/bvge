@@ -96,24 +96,6 @@ public class GPUCoreMemory implements SectorContainer
 
     //#endregion
 
-    // external buffers
-
-    //#region Entity Buffers
-
-    /** float2
-     * x: current x acceleration
-     * y: current y acceleration
-     */
-    private final ResizableBuffer b_entity_accel;
-
-    /** float2
-     * x: the initial time of the current blend operation
-     * y: the remaining time of the current blend operation
-     */
-    private final ResizableBuffer b_entity_anim_blend;
-
-    //#endregion
-
     // reference buffers
 
     //#region Animation Data Buffers
@@ -314,8 +296,6 @@ public class GPUCoreMemory implements SectorContainer
         b_delete_partial_2           = new TransientBuffer(GPGPU.ptr_compute_queue, cl_int4, DELETE_2_INIT);
 
         // persistent buffers
-        b_entity_accel               = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float2, ENTITY_INIT);
-        b_entity_anim_blend          = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float2, ENTITY_INIT);
         b_anim_bone_pos_channel      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
         b_anim_bone_rot_channel      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
         b_anim_bone_scl_channel      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int2);
@@ -401,7 +381,7 @@ public class GPUCoreMemory implements SectorContainer
 
         long k_ptr_update_accel = p_gpu_crud.kernel_ptr(Kernel.update_accel);
         k_update_accel = new UpdateAccel_k(GPGPU.ptr_compute_queue, k_ptr_update_accel)
-            .buf_arg(UpdateAccel_k.Args.entity_accel, b_entity_accel);
+            .buf_arg(UpdateAccel_k.Args.entity_accel, sector_group.get_buffer(ENTITY_ACCEL));
 
         long k_ptr_update_mouse_position = p_gpu_crud.kernel_ptr(Kernel.update_mouse_position);
         k_update_mouse_position = new UpdateMousePosition_k(GPGPU.ptr_compute_queue, k_ptr_update_mouse_position)
@@ -459,7 +439,7 @@ public class GPUCoreMemory implements SectorContainer
             .buf_arg(CompactEntities_k.Args.entity_flags, sector_group.get_buffer(ENTITY_FLAG))
             .buf_arg(CompactEntities_k.Args.entity_animation_indices, sector_group.get_buffer(ENTITY_ANIM_INDEX))
             .buf_arg(CompactEntities_k.Args.entity_animation_elapsed, sector_group.get_buffer(ENTITY_ANIM_ELAPSED))
-            .buf_arg(CompactEntities_k.Args.entity_animation_blend, b_entity_anim_blend)
+            .buf_arg(CompactEntities_k.Args.entity_animation_blend, sector_group.get_buffer(ENTITY_ANIM_BLEND))
             .buf_arg(CompactEntities_k.Args.entity_motion_states, sector_group.get_buffer(ENTITY_MOTION_STATE))
             .buf_arg(CompactEntities_k.Args.entity_entity_hull_tables, sector_group.get_buffer(ENTITY_HULL_TABLE))
             .buf_arg(CompactEntities_k.Args.entity_bone_tables, sector_group.get_buffer(ENTITY_BONE_TABLE))
@@ -574,19 +554,13 @@ public class GPUCoreMemory implements SectorContainer
             case ANIM_DURATION                 -> b_anim_duration;
             case ANIM_TICK_RATE                -> b_anim_tick_rate;
             case ANIM_TIMING_INDEX             -> b_anim_timing_index;
-            case ENTITY_ACCEL                  -> b_entity_accel;
-            case ENTITY_ANIM_BLEND             -> b_entity_anim_blend;
             case BONE_ANIM_TABLE               -> b_bone_anim_channel_table;
             case BONE_BIND_POSE                -> b_bone_bind_pose;
             case BONE_REFERENCE                -> b_bone_reference;
-//            case HULL_AABB                     -> b_hull_aabb;
-//            case HULL_AABB_INDEX               -> b_hull_aabb_index;
-//            case HULL_AABB_KEY_TABLE           -> b_hull_aabb_key;
             case MESH_FACE                     -> b_mesh_face;
             case MESH_VERTEX_TABLE             -> b_mesh_vertex_table;
             case MESH_FACE_TABLE               -> b_mesh_face_table;
             case MODEL_TRANSFORM               -> b_model_transform;
-//            case POINT_ANTI_GRAV               -> b_point_anti_gravity;
             case VERTEX_REFERENCE              -> b_vertex_reference;
             case VERTEX_TEXTURE_UV             -> b_vertex_texture_uv;
             case VERTEX_UV_TABLE               -> b_vertex_uv_table;
@@ -657,6 +631,8 @@ public class GPUCoreMemory implements SectorContainer
                  ENTITY_BONE,
                  ENTITY_ANIM_INDEX,
                  ENTITY_MOTION_STATE,
+                 ENTITY_ACCEL,
+                 ENTITY_ANIM_BLEND,
                  ENTITY_ANIM_ELAPSED -> sector_group.get_buffer(bufferType);
         };
     }
@@ -886,9 +862,6 @@ public class GPUCoreMemory implements SectorContainer
         int hull_bone_capacity     = hull_bone_count + next_hull_bone();
         int armature_bone_capacity = armature_bone_count + next_armature_bone();
 
-        b_entity_accel.ensure_capacity(entity_capacity);
-        b_entity_anim_blend.ensure_capacity(entity_capacity);
-
         sector_group.ensure_capacity(point_capacity, edge_capacity, hull_capacity, entity_capacity, hull_bone_capacity, armature_bone_capacity);
 
         clFinish(GPGPU.ptr_compute_queue);
@@ -1034,8 +1007,6 @@ public class GPUCoreMemory implements SectorContainer
                           int flags)
     {
         int capacity = sector_input.entity_index() + 1;
-        b_entity_accel.ensure_capacity(capacity);
-        b_entity_anim_blend.ensure_capacity(capacity);
         return sector_input.create_entity(x, y, z, w, hull_table, bone_table, mass, anim_index, anim_time, root_hull, model_id, model_transform_id, type, flags);
     }
 
@@ -1345,8 +1316,6 @@ public class GPUCoreMemory implements SectorContainer
         b_anim_duration.release();
         b_anim_tick_rate.release();
         b_anim_timing_index.release();
-        b_entity_accel.release();
-        b_entity_anim_blend.release();
 
         debug();
 
@@ -1387,8 +1356,6 @@ public class GPUCoreMemory implements SectorContainer
         total += b_anim_duration.debug_data();
         total += b_anim_tick_rate.debug_data();
         total += b_anim_timing_index.debug_data();
-        total += b_entity_accel.debug_data();
-        total += b_entity_anim_blend.debug_data();
 
         //System.out.println("---------------------------");
         System.out.println("Core Memory Usage: MB " + ((float) total / 1024f / 1024f));
