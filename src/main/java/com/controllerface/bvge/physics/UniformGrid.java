@@ -1,6 +1,6 @@
 package com.controllerface.bvge.physics;
 
-import com.controllerface.bvge.ecs.systems.sectors.Sector;
+import com.controllerface.bvge.game.world.sectors.Sector;
 import org.joml.Vector2f;
 
 import java.util.HashSet;

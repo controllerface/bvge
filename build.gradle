@@ -12,9 +12,9 @@ ext {
 group 'com.controllerface'
 version '1.0-SNAPSHOT'
 
-compileJava {
-    options.compilerArgs << '--enable-preview'
-}
+//compileJava {
+//    options.compilerArgs << '--enable-preview'
+//}
 
 java {
     toolchain {
@@ -24,6 +24,7 @@ java {
 
 repositories {
     mavenCentral()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
 
 dependencies {

@@ -1,4 +1,4 @@
-package com.controllerface.bvge.ecs.systems.sectors;
+package com.controllerface.bvge.game.world.sectors;
 
 import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.GPGPU;

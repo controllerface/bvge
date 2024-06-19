@@ -1,4 +1,4 @@
-package com.controllerface.bvge.ecs.systems.sectors;
+package com.controllerface.bvge.game.world.sectors;
 
 import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.buffers.BufferType.*;

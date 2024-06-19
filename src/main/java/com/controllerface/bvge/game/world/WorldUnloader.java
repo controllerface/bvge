@@ -1,8 +1,11 @@
-package com.controllerface.bvge.ecs.systems.sectors;
+package com.controllerface.bvge.game.world;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.game.world.sectors.BrokenObjectBuffer;
+import com.controllerface.bvge.game.world.sectors.Sector;
+import com.controllerface.bvge.game.world.sectors.UnorderedSectorGroup;
 import com.controllerface.bvge.geometry.*;
 import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;

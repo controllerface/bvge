@@ -1,20 +1,10 @@
-package com.controllerface.bvge.ecs.systems.sectors;
+package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.game.world.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.game.state.PlayerInventory;
-import com.controllerface.bvge.geometry.*;
-import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
-import com.controllerface.bvge.physics.PhysicsEntityBatch;
-import com.controllerface.bvge.physics.UniformGrid;
-import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.util.Constants;
-import com.github.benmanes.caffeine.cache.Cache;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
