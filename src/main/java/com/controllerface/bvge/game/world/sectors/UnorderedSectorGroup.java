@@ -1,5 +1,7 @@
 package com.controllerface.bvge.game.world.sectors;
 
+import com.controllerface.bvge.cl.buffers.SectorGroup;
+
 import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.buffers.BufferType.*;
 

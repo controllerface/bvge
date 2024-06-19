@@ -1,6 +1,4 @@
-package com.controllerface.bvge.game.world.sectors;
-
-import com.controllerface.bvge.cl.buffers.BufferGroup;
+package com.controllerface.bvge.cl.buffers;
 
 import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.buffers.BufferType.*;
@@ -298,20 +296,23 @@ public class SectorGroup extends BufferGroup
         //#endregion
     }
 
-    public void ensure_capacity(int point_capacity, int edge_capacity, int hull_capacity, int entity_capacity, int hull_bone_capacity, int entity_bone_capacity)
+    public void ensure_capacity_all(int point_capacity,
+                                    int edge_capacity,
+                                    int hull_capacity,
+                                    int entity_capacity,
+                                    int hull_bone_capacity,
+                                    int entity_bone_capacity)
     {
-        get_buffer(HULL_BONE).ensure_capacity(hull_bone_capacity);
-        get_buffer(HULL_BONE_BIND_POSE).ensure_capacity(hull_bone_capacity);
-        get_buffer(HULL_BONE_INV_BIND_POSE).ensure_capacity(hull_bone_capacity);
+        ensure_point_capacity(point_capacity);
+        ensure_edge_capacity(edge_capacity);
+        ensure_hull_capacity(hull_capacity);
+        ensure_entity_capacity(entity_capacity);
+        ensure_hull_bone_capacity(hull_bone_capacity);
+        ensure_entity_bone_capacity(entity_bone_capacity);
+    }
 
-        get_buffer(ENTITY_BONE).ensure_capacity(entity_bone_capacity);
-        get_buffer(ENTITY_BONE_REFERENCE_ID).ensure_capacity(entity_bone_capacity);
-        get_buffer(ENTITY_BONE_PARENT_ID).ensure_capacity(entity_bone_capacity);
-
-        get_buffer(EDGE).ensure_capacity(edge_capacity);
-        get_buffer(EDGE_LENGTH).ensure_capacity(edge_capacity);
-        get_buffer(EDGE_FLAG).ensure_capacity(edge_capacity);
-
+    public void ensure_point_capacity(int point_capacity)
+    {
         get_buffer(POINT).ensure_capacity(point_capacity);
         get_buffer(POINT_VERTEX_REFERENCE).ensure_capacity(point_capacity);
         get_buffer(POINT_HULL_INDEX).ensure_capacity(point_capacity);
@@ -319,7 +320,17 @@ public class SectorGroup extends BufferGroup
         get_buffer(POINT_HIT_COUNT).ensure_capacity(point_capacity);
         get_buffer(POINT_FLAG).ensure_capacity(point_capacity);
         get_buffer(POINT_ANTI_GRAV).ensure_capacity(point_capacity);
+    }
 
+    public void ensure_edge_capacity(int edge_capacity)
+    {
+        get_buffer(EDGE).ensure_capacity(edge_capacity);
+        get_buffer(EDGE_LENGTH).ensure_capacity(edge_capacity);
+        get_buffer(EDGE_FLAG).ensure_capacity(edge_capacity);
+    }
+
+    public void ensure_hull_capacity(int hull_capacity)
+    {
         get_buffer(HULL).ensure_capacity(hull_capacity);
         get_buffer(HULL_SCALE).ensure_capacity(hull_capacity);
         get_buffer(HULL_POINT_TABLE).ensure_capacity(hull_capacity);
@@ -336,7 +347,10 @@ public class SectorGroup extends BufferGroup
         get_buffer(HULL_AABB).ensure_capacity(hull_capacity);
         get_buffer(HULL_AABB_INDEX).ensure_capacity(hull_capacity);
         get_buffer(HULL_AABB_KEY_TABLE).ensure_capacity(hull_capacity);
+    }
 
+    public void ensure_entity_capacity(int entity_capacity)
+    {
         get_buffer(ENTITY).ensure_capacity(entity_capacity);
         get_buffer(ENTITY_ANIM_ELAPSED).ensure_capacity(entity_capacity);
         get_buffer(ENTITY_MOTION_STATE).ensure_capacity(entity_capacity);
@@ -351,5 +365,19 @@ public class SectorGroup extends BufferGroup
         get_buffer(ENTITY_MASS).ensure_capacity(entity_capacity);
         get_buffer(ENTITY_ACCEL).ensure_capacity(entity_capacity);
         get_buffer(ENTITY_ANIM_BLEND).ensure_capacity(entity_capacity);
+    }
+
+    public void ensure_hull_bone_capacity(int hull_bone_capacity)
+    {
+        get_buffer(HULL_BONE).ensure_capacity(hull_bone_capacity);
+        get_buffer(HULL_BONE_BIND_POSE).ensure_capacity(hull_bone_capacity);
+        get_buffer(HULL_BONE_INV_BIND_POSE).ensure_capacity(hull_bone_capacity);
+    }
+
+    public void ensure_entity_bone_capacity(int entity_bone_capacity)
+    {
+        get_buffer(ENTITY_BONE).ensure_capacity(entity_bone_capacity);
+        get_buffer(ENTITY_BONE_REFERENCE_ID).ensure_capacity(entity_bone_capacity);
+        get_buffer(ENTITY_BONE_PARENT_ID).ensure_capacity(entity_bone_capacity);
     }
 }

@@ -123,7 +123,7 @@ public class UnorderedSectorOutput
         int edge_capacity          = egress_counts[3];
         int hull_bone_capacity     = egress_counts[4];
         int entity_bone_capacity   = egress_counts[5];
-        sector_group.ensure_capacity(point_capacity, edge_capacity, hull_capacity, entity_capacity, hull_bone_capacity, entity_bone_capacity);
+        sector_group.ensure_capacity_all(point_capacity, edge_capacity, hull_capacity, entity_capacity, hull_bone_capacity, entity_bone_capacity);
         k_egress_entities.call(arg_long(entity_count));
     }
 

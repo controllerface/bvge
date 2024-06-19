@@ -2,6 +2,7 @@ package com.controllerface.bvge.game.world.sectors;
 
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.buffers.BufferType;
+import com.controllerface.bvge.cl.buffers.SectorGroup;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
@@ -242,7 +243,7 @@ public class OrderedSectorInput implements SectorContainer
     @Override
     public int new_armature_bone(int bone_reference, int bone_parent_id, float[] bone_data)
     {
-        return sector_input.create_armature_bone(bone_reference, bone_parent_id, bone_data);
+        return sector_input.create_entity_bone(bone_reference, bone_parent_id, bone_data);
     }
 
     @Override

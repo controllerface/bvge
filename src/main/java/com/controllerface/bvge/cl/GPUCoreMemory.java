@@ -48,16 +48,6 @@ public class GPUCoreMemory implements SectorContainer
     private final GPUKernel k_compact_points;
     private final GPUKernel k_complete_deletes_multi_block_out;
     private final GPUKernel k_count_egress_entities;
-    private final GPUKernel k_create_animation_timings;
-    private final GPUKernel k_create_bone_bind_pose;
-    private final GPUKernel k_create_bone_channel;
-    private final GPUKernel k_create_bone_reference;
-    private final GPUKernel k_create_keyframe;
-    private final GPUKernel k_create_mesh_face;
-    private final GPUKernel k_create_mesh_reference;
-    private final GPUKernel k_create_model_transform;
-    private final GPUKernel k_create_texture_uv;
-    private final GPUKernel k_create_vertex_reference;
     private final GPUKernel k_read_position;
     private final GPUKernel k_scan_deletes_multi_block_out;
     private final GPUKernel k_scan_deletes_single_block_out;
@@ -101,17 +91,6 @@ public class GPUCoreMemory implements SectorContainer
     private final long ptr_delete_sizes;
     private final long ptr_egress_sizes;
 
-    private int vertex_ref_index      = 0;
-    private int bone_bind_index       = 0;
-    private int bone_ref_index        = 0;
-    private int model_transform_index = 0;
-    private int mesh_index            = 0;
-    private int face_index            = 0;
-    private int uv_index              = 0;
-    private int keyframe_index        = 0;
-    private int bone_channel_index    = 0;
-    private int animation_index       = 0;
-
     /**
      * When data is stored in the mirror buffer, the index values of the core memory buffers are cached
      * here, so they can be referenced by rendering tasks, which are using a mirror buffer that may
@@ -133,6 +112,7 @@ public class GPUCoreMemory implements SectorContainer
     private final SectorInput sector_input;
     private final MirrorGroup mirror_group;
     private final ReferenceGroup reference_group;
+    private final ReferenceInput reference_input;
 
     /**
      * This barrier is used to facilitate co-operation between the sector loading thread and the main loop.
@@ -172,55 +152,7 @@ public class GPUCoreMemory implements SectorContainer
         this.sector_input = new SectorInput(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.sector_group);
         this.mirror_group = new MirrorGroup("Render Mirror", GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.reference_group = new ReferenceGroup("Reference Data", GPGPU.ptr_compute_queue);
-
-
-        long k_ptr_create_texture_uv = p_gpu_crud.kernel_ptr(Kernel.create_texture_uv);
-        k_create_texture_uv = new CreateTextureUV_k(GPGPU.ptr_compute_queue, k_ptr_create_texture_uv)
-            .buf_arg(CreateTextureUV_k.Args.texture_uvs, reference_group.get_buffer(VERTEX_TEXTURE_UV));
-
-        long k_ptr_create_keyframe = p_gpu_crud.kernel_ptr(Kernel.create_keyframe);
-        k_create_keyframe = new CreateKeyFrame_k(GPGPU.ptr_compute_queue, k_ptr_create_keyframe)
-            .buf_arg(CreateKeyFrame_k.Args.key_frames, reference_group.get_buffer(ANIM_KEY_FRAME))
-            .buf_arg(CreateKeyFrame_k.Args.frame_times, reference_group.get_buffer(ANIM_FRAME_TIME));
-
-        long k_ptr_create_vertex_reference = p_gpu_crud.kernel_ptr(Kernel.create_vertex_reference);
-        k_create_vertex_reference = new CreateVertexRef_k(GPGPU.ptr_compute_queue, k_ptr_create_vertex_reference)
-            .buf_arg(CreateVertexRef_k.Args.vertex_references, reference_group.get_buffer(VERTEX_REFERENCE))
-            .buf_arg(CreateVertexRef_k.Args.vertex_weights, reference_group.get_buffer(VERTEX_WEIGHT))
-            .buf_arg(CreateVertexRef_k.Args.uv_tables, reference_group.get_buffer(VERTEX_UV_TABLE));
-
-        long k_ptr_create_bone_bind_pose = p_gpu_crud.kernel_ptr(Kernel.create_bone_bind_pose);
-        k_create_bone_bind_pose = new CreateBoneBindPose_k(GPGPU.ptr_compute_queue, k_ptr_create_bone_bind_pose)
-            .buf_arg(CreateBoneBindPose_k.Args.bone_bind_poses, reference_group.get_buffer(BONE_BIND_POSE));
-
-        long k_ptr_create_bone_reference = p_gpu_crud.kernel_ptr(Kernel.create_bone_reference);
-        k_create_bone_reference = new CreateBoneRef_k(GPGPU.ptr_compute_queue, k_ptr_create_bone_reference)
-            .buf_arg(CreateBoneRef_k.Args.bone_references, reference_group.get_buffer(BONE_REFERENCE));
-
-        long k_ptr_create_bone_channel = p_gpu_crud.kernel_ptr(Kernel.create_bone_channel);
-        k_create_bone_channel = new CreateBoneChannel_k(GPGPU.ptr_compute_queue, k_ptr_create_bone_channel)
-            .buf_arg(CreateBoneChannel_k.Args.animation_timing_indices, reference_group.get_buffer(ANIM_TIMING_INDEX))
-            .buf_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, reference_group.get_buffer(ANIM_POS_CHANNEL))
-            .buf_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, reference_group.get_buffer(ANIM_ROT_CHANNEL))
-            .buf_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, reference_group.get_buffer(ANIM_SCL_CHANNEL));
-
-        long k_ptr_create_model_transform = p_gpu_crud.kernel_ptr(Kernel.create_model_transform);
-        k_create_model_transform = new CreateModelTransform_k(GPGPU.ptr_compute_queue, k_ptr_create_model_transform)
-            .buf_arg(CreateModelTransform_k.Args.model_transforms, reference_group.get_buffer(MODEL_TRANSFORM));
-
-        long k_ptr_create_mesh_reference = p_gpu_crud.kernel_ptr(Kernel.create_mesh_reference);
-        k_create_mesh_reference = new CreateMeshReference_k(GPGPU.ptr_compute_queue, k_ptr_create_mesh_reference)
-            .buf_arg(CreateMeshReference_k.Args.mesh_vertex_tables, reference_group.get_buffer(MESH_VERTEX_TABLE))
-            .buf_arg(CreateMeshReference_k.Args.mesh_face_tables, reference_group.get_buffer(MESH_FACE_TABLE));
-
-        long k_ptr_create_mesh_face = p_gpu_crud.kernel_ptr(Kernel.create_mesh_face);
-        k_create_mesh_face = new CreateMeshFace_k(GPGPU.ptr_compute_queue, k_ptr_create_mesh_face)
-            .buf_arg(CreateMeshFace_k.Args.mesh_faces, reference_group.get_buffer(MESH_FACE));
-
-        long k_ptr_create_animation_timings = p_gpu_crud.kernel_ptr(Kernel.create_animation_timings);
-        k_create_animation_timings = new CreateAnimationTimings_k(GPGPU.ptr_compute_queue, k_ptr_create_animation_timings)
-            .buf_arg(CreateAnimationTimings_k.Args.animation_durations, reference_group.get_buffer(ANIM_DURATION))
-            .buf_arg(CreateAnimationTimings_k.Args.animation_tick_rates, reference_group.get_buffer(ANIM_TICK_RATE));
+        this.reference_input = new ReferenceInput(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.reference_group);
 
         // read methods
 
@@ -501,7 +433,7 @@ public class GPUCoreMemory implements SectorContainer
 
     public int next_mesh()
     {
-        return mesh_index;
+        return reference_input.mesh_index();
     }
 
     @Override
@@ -712,7 +644,12 @@ public class GPUCoreMemory implements SectorContainer
         int hull_bone_capacity     = hull_bone_count + next_hull_bone();
         int armature_bone_capacity = armature_bone_count + next_armature_bone();
 
-        sector_group.ensure_capacity(point_capacity, edge_capacity, hull_capacity, entity_capacity, hull_bone_capacity, armature_bone_capacity);
+        sector_group.ensure_capacity_all(point_capacity,
+                edge_capacity,
+                hull_capacity,
+                entity_capacity,
+                hull_bone_capacity,
+                armature_bone_capacity);
 
         clFinish(GPGPU.ptr_compute_queue);
         sector_ingress_buffer.merge_into_parent(this);
@@ -723,60 +660,22 @@ public class GPUCoreMemory implements SectorContainer
 
     public int new_animation_timings(float duration, float tick_rate)
     {
-        int capacity = animation_index + 1;
-
-        reference_group.ensure_animation_timings(capacity);
-
-        k_create_animation_timings
-            .set_arg(CreateAnimationTimings_k.Args.target, animation_index)
-            .set_arg(CreateAnimationTimings_k.Args.new_animation_duration, duration)
-            .set_arg(CreateAnimationTimings_k.Args.new_animation_tick_rate, tick_rate)
-            .call(GPGPU.global_single_size);
-
-        return animation_index++;
+        return reference_input.new_animation_timings(duration, tick_rate);
     }
 
     public int new_bone_channel(int anim_timing_index, int[] pos_table, int[] rot_table, int[] scl_table)
     {
-        int capacity = bone_channel_index + 1;
-        reference_group.ensure_bone_channel(capacity);
-
-        k_create_bone_channel
-            .set_arg(CreateBoneChannel_k.Args.target, bone_channel_index)
-            .set_arg(CreateBoneChannel_k.Args.new_animation_timing_index, anim_timing_index)
-            .set_arg(CreateBoneChannel_k.Args.new_bone_pos_channel_table, pos_table)
-            .set_arg(CreateBoneChannel_k.Args.new_bone_rot_channel_table, rot_table)
-            .set_arg(CreateBoneChannel_k.Args.new_bone_scl_channel_table, scl_table)
-            .call(GPGPU.global_single_size);
-
-        return bone_channel_index++;
+        return reference_input.new_bone_channel(anim_timing_index, pos_table, rot_table, scl_table);
     }
 
     public int new_keyframe(float[] frame, float time)
     {
-        int capacity = keyframe_index + 1;
-        reference_group.ensure_keyframe(capacity);
-
-        k_create_keyframe
-            .set_arg(CreateKeyFrame_k.Args.target, keyframe_index)
-            .set_arg(CreateKeyFrame_k.Args.new_keyframe, frame)
-            .set_arg(CreateKeyFrame_k.Args.new_frame_time, time)
-            .call(GPGPU.global_single_size);
-
-        return keyframe_index++;
+        return reference_input.new_keyframe(frame, time);
     }
 
     public int new_texture_uv(float u, float v)
     {
-        int capacity = uv_index + 1;
-        reference_group.ensure_vertex_texture_uv(capacity);
-
-        k_create_texture_uv
-            .set_arg(CreateTextureUV_k.Args.target, uv_index)
-            .set_arg(CreateTextureUV_k.Args.new_texture_uv, arg_float2(u, v))
-            .call(GPGPU.global_single_size);
-
-        return uv_index++;
+        return reference_input.new_texture_uv(u, v);
     }
 
     @Override
@@ -810,29 +709,12 @@ public class GPUCoreMemory implements SectorContainer
 
     public int new_mesh_reference(int[] vertex_table, int[] face_table)
     {
-        int capacity = mesh_index + 1;
-        reference_group.ensure_mesh(capacity);
-
-        k_create_mesh_reference
-            .set_arg(CreateMeshReference_k.Args.target, mesh_index)
-            .set_arg(CreateMeshReference_k.Args.new_mesh_vertex_table, vertex_table)
-            .set_arg(CreateMeshReference_k.Args.new_mesh_face_table, face_table)
-            .call(GPGPU.global_single_size);
-
-        return mesh_index++;
+        return reference_input.new_mesh_reference(vertex_table, face_table);
     }
 
     public int new_mesh_face(int[] face)
     {
-        int capacity = face_index + 1;
-        reference_group.ensure_mesh_face(capacity);
-
-        k_create_mesh_face
-            .set_arg(CreateMeshFace_k.Args.target, face_index)
-            .set_arg(CreateMeshFace_k.Args.new_mesh_face, face)
-            .call(GPGPU.global_single_size);
-
-        return face_index++;
+        return reference_input.new_mesh_face(face);
     }
 
     @Override
@@ -853,44 +735,18 @@ public class GPUCoreMemory implements SectorContainer
 
     public int new_vertex_reference(float x, float y, float[] weights, int[] uv_table)
     {
-        int capacity = vertex_ref_index + 1;
-        reference_group.ensure_vertex_reference(capacity);
-
-        k_create_vertex_reference
-            .set_arg(CreateVertexRef_k.Args.target, vertex_ref_index)
-            .set_arg(CreateVertexRef_k.Args.new_vertex_reference, arg_float2(x, y))
-            .set_arg(CreateVertexRef_k.Args.new_vertex_weights, weights)
-            .set_arg(CreateVertexRef_k.Args.new_uv_table, uv_table)
-            .call(GPGPU.global_single_size);
-
-        return vertex_ref_index++;
+        return reference_input.new_vertex_reference(x, y, weights, uv_table);
     }
 
     public int new_bone_bind_pose(float[] bone_data)
     {
-        int capacity = bone_bind_index + 1;
-        reference_group.ensure_bind_pose(capacity);
-
-        k_create_bone_bind_pose
-            .set_arg(CreateBoneBindPose_k.Args.target,bone_bind_index)
-            .set_arg(CreateBoneBindPose_k.Args.new_bone_bind_pose, bone_data)
-            .call(GPGPU.global_single_size);
-
-        return bone_bind_index++;
+        return reference_input.new_bone_bind_pose(bone_data);
     }
 
 
     public int new_bone_reference(float[] bone_data)
     {
-        int capacity = bone_ref_index + 1;
-        reference_group.ensure_bone_reference(capacity);
-
-        k_create_bone_reference
-            .set_arg(CreateBoneRef_k.Args.target, bone_ref_index)
-            .set_arg(CreateBoneRef_k.Args.new_bone_reference, bone_data)
-            .call(GPGPU.global_single_size);
-
-        return bone_ref_index++;
+        return reference_input.new_bone_reference(bone_data);
     }
 
     @Override
@@ -902,20 +758,12 @@ public class GPUCoreMemory implements SectorContainer
     @Override
     public int new_armature_bone(int bone_reference, int bone_parent_id, float[] bone_data)
     {
-        return sector_input.create_armature_bone(bone_reference, bone_parent_id, bone_data);
+        return sector_input.create_entity_bone(bone_reference, bone_parent_id, bone_data);
     }
 
     public int new_model_transform(float[] transform_data)
     {
-        int capacity = model_transform_index + 1;
-        reference_group.ensure_model_transform(capacity);
-
-        k_create_model_transform
-            .set_arg(CreateModelTransform_k.Args.target, model_transform_index)
-            .set_arg(CreateModelTransform_k.Args.new_model_transform, transform_data)
-            .call(GPGPU.global_single_size);
-
-        return model_transform_index++;
+        return reference_input.new_model_transform(transform_data);
     }
 
     public void set_bone_channel_table(int bind_pose_target, int[] channel_table)

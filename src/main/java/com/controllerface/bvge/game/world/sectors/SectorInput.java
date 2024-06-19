@@ -1,7 +1,7 @@
 package com.controllerface.bvge.game.world.sectors;
 
 import com.controllerface.bvge.cl.GPGPU;
-import com.controllerface.bvge.cl.buffers.BufferGroup;
+import com.controllerface.bvge.cl.buffers.SectorGroup;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
@@ -12,7 +12,7 @@ import static com.controllerface.bvge.cl.buffers.BufferType.*;
 
 public class SectorInput
 {
-    private final BufferGroup sector_group;
+    private final SectorGroup sector_group;
 
     private final GPUKernel k_create_point;
     private final GPUKernel k_create_edge;
@@ -28,7 +28,7 @@ public class SectorInput
     private int hull_bone_index   = 0;
     private int entity_bone_index = 0;
 
-    public SectorInput(long ptr_queue, GPUProgram p_gpu_crud, BufferGroup sector_group)
+    public SectorInput(long ptr_queue, GPUProgram p_gpu_crud, SectorGroup sector_group)
     {
         this.sector_group = sector_group;
 
@@ -94,13 +94,7 @@ public class SectorInput
     public int create_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int hit_count, int flags)
     {
         int capacity = point_index + 1;
-        sector_group.get_buffer(POINT).ensure_capacity(capacity);
-        sector_group.get_buffer(POINT_VERTEX_REFERENCE).ensure_capacity(capacity);
-        sector_group.get_buffer(POINT_HULL_INDEX).ensure_capacity(capacity);
-        sector_group.get_buffer(POINT_FLAG).ensure_capacity(capacity);
-        sector_group.get_buffer(POINT_HIT_COUNT).ensure_capacity(capacity);
-        sector_group.get_buffer(POINT_BONE_TABLE).ensure_capacity(capacity);
-        sector_group.get_buffer(POINT_ANTI_GRAV).ensure_capacity(capacity);
+        sector_group.ensure_point_capacity(capacity);
 
         var new_point = position.length == 2
             ? arg_float4(position[0], position[1], position[0], position[1])
@@ -121,10 +115,8 @@ public class SectorInput
 
     public int create_edge(int p1, int p2, float l, int flags)
     {
-        int required_capacity = edge_index + 1;
-        sector_group.get_buffer(EDGE).ensure_capacity(required_capacity);
-        sector_group.get_buffer(EDGE_LENGTH).ensure_capacity(required_capacity);
-        sector_group.get_buffer(EDGE_FLAG).ensure_capacity(required_capacity);
+        int capacity = edge_index + 1;
+        sector_group.ensure_edge_capacity(capacity);
 
         k_create_edge
             .set_arg(CreateEdge_k.Args.target, edge_index)
@@ -139,22 +131,7 @@ public class SectorInput
     public int create_hull(int mesh_id, float[] position, float[] scale, float[] rotation, int[] point_table, int[] edge_table, int[] bone_table, float friction, float restitution, int entity_id, int uv_offset, int flags)
     {
         int capacity = hull_index + 1;
-        sector_group.get_buffer(HULL).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_SCALE).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_MESH_ID).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_UV_OFFSET).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_ROTATION).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_INTEGRITY).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_POINT_TABLE).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_EDGE_TABLE).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_FLAG).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_BONE_TABLE).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_ENTITY_ID).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_FRICTION).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_RESTITUTION).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_AABB).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_AABB_INDEX).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_AABB_KEY_TABLE).ensure_capacity(capacity);
+        sector_group.ensure_hull_capacity(capacity);
 
         var new_hull = position.length == 2
             ? arg_float4(position[0], position[1], position[0], position[1])
@@ -192,20 +169,7 @@ public class SectorInput
                              int flags)
     {
         int capacity = entity_index + 1;
-        sector_group.get_buffer(ENTITY).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_TYPE).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_FLAG).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_ROOT_HULL).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_MODEL_ID).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_TRANSFORM_ID).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_MASS).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_ANIM_INDEX).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_ANIM_ELAPSED).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_MOTION_STATE).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_HULL_TABLE).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_BONE_TABLE).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_ACCEL).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_ANIM_BLEND).ensure_capacity(capacity);
+        sector_group.ensure_entity_capacity(capacity);
 
         k_create_entity
             .set_arg(CreateEntity_k.Args.target, entity_index)
@@ -229,9 +193,7 @@ public class SectorInput
     public int create_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id)
     {
         int capacity = hull_bone_index + 1;
-        sector_group.get_buffer(HULL_BONE).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_BONE_BIND_POSE).ensure_capacity(capacity);
-        sector_group.get_buffer(HULL_BONE_INV_BIND_POSE).ensure_capacity(capacity);
+        sector_group.ensure_hull_bone_capacity(capacity);
 
         k_create_hull_bone
             .set_arg(CreateHullBone_k.Args.target, hull_bone_index)
@@ -243,12 +205,10 @@ public class SectorInput
         return hull_bone_index++;
     }
 
-    public int create_armature_bone(int bone_reference, int bone_parent_id, float[] bone_data)
+    public int create_entity_bone(int bone_reference, int bone_parent_id, float[] bone_data)
     {
         int capacity = entity_bone_index + 1;
-        sector_group.get_buffer(ENTITY_BONE).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_BONE_REFERENCE_ID).ensure_capacity(capacity);
-        sector_group.get_buffer(ENTITY_BONE_PARENT_ID).ensure_capacity(capacity);
+        sector_group.ensure_entity_bone_capacity(capacity);
 
         k_create_entity_bone
             .set_arg(CreateEntityBone_k.Args.target, entity_bone_index)
