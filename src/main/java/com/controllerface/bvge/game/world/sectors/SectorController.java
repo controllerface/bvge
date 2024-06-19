@@ -6,14 +6,17 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 
-import static com.controllerface.bvge.cl.CLSize.cl_float;
-import static com.controllerface.bvge.cl.CLSize.cl_float2;
+import static com.controllerface.bvge.cl.CLSize.*;
+import static com.controllerface.bvge.cl.CLSize.cl_int;
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_short2;
 import static com.controllerface.bvge.cl.buffers.BufferType.*;
 
 public class SectorController
 {
+    private static final int EGRESS_COUNTERS = 8;
+    private static final int EGRESS_COUNTERS_SIZE = cl_int * EGRESS_COUNTERS;
+
     private final SectorBufferGroup sector_buffers;
 
     private final GPUKernel k_create_point;
@@ -25,6 +28,7 @@ public class SectorController
     private final GPUKernel k_read_position;
     private final GPUKernel k_update_accel;
     private final GPUKernel k_update_mouse_position;
+    private final GPUKernel k_count_egress_entities;
 
     private int point_index       = 0;
     private int edge_index        = 0;
@@ -33,16 +37,20 @@ public class SectorController
     private int hull_bone_index   = 0;
     private int entity_bone_index = 0;
 
+    private final long ptr_egress_sizes;
     private final long ptr_position_buffer;
+    private final long ptr_queue;
 
     public SectorController(long ptr_queue, GPUProgram p_gpu_crud, SectorBufferGroup sector_buffers)
     {
+        this.ptr_queue = ptr_queue;
         this.sector_buffers = sector_buffers;
 
         ptr_position_buffer = GPGPU.cl_new_pinned_buffer(cl_float2);
+        ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(EGRESS_COUNTERS_SIZE);
 
         long k_ptr_create_point = p_gpu_crud.kernel_ptr(Kernel.create_point);
-        k_create_point = new CreatePoint_k(ptr_queue, k_ptr_create_point)
+        k_create_point = new CreatePoint_k(this.ptr_queue, k_ptr_create_point)
             .buf_arg(CreatePoint_k.Args.points,                         this.sector_buffers.get_buffer(POINT))
             .buf_arg(CreatePoint_k.Args.point_vertex_references,        this.sector_buffers.get_buffer(POINT_VERTEX_REFERENCE))
             .buf_arg(CreatePoint_k.Args.point_hull_indices,             this.sector_buffers.get_buffer(POINT_HULL_INDEX))
@@ -51,13 +59,13 @@ public class SectorController
             .buf_arg(CreatePoint_k.Args.point_bone_tables,              this.sector_buffers.get_buffer(POINT_BONE_TABLE));
 
         long k_ptr_create_edge = p_gpu_crud.kernel_ptr(Kernel.create_edge);
-        k_create_edge = new CreateEdge_k(ptr_queue, k_ptr_create_edge)
+        k_create_edge = new CreateEdge_k(this.ptr_queue, k_ptr_create_edge)
             .buf_arg(CreateEdge_k.Args.edges,                           this.sector_buffers.get_buffer(EDGE))
             .buf_arg(CreateEdge_k.Args.edge_lengths,                    this.sector_buffers.get_buffer(EDGE_LENGTH))
             .buf_arg(CreateEdge_k.Args.edge_flags,                      this.sector_buffers.get_buffer(EDGE_FLAG));
 
         long k_ptr_create_hull = p_gpu_crud.kernel_ptr(Kernel.create_hull);
-        k_create_hull = new CreateHull_k(ptr_queue, k_ptr_create_hull)
+        k_create_hull = new CreateHull_k(this.ptr_queue, k_ptr_create_hull)
             .buf_arg(CreateHull_k.Args.hulls,                           this.sector_buffers.get_buffer(HULL))
             .buf_arg(CreateHull_k.Args.hull_scales,                     this.sector_buffers.get_buffer(HULL_SCALE))
             .buf_arg(CreateHull_k.Args.hull_rotations,                  this.sector_buffers.get_buffer(HULL_ROTATION))
@@ -73,7 +81,7 @@ public class SectorController
             .buf_arg(CreateHull_k.Args.hull_integrity,                  this.sector_buffers.get_buffer(HULL_INTEGRITY));
 
         long k_ptr_create_entity = p_gpu_crud.kernel_ptr(Kernel.create_entity);
-        k_create_entity = new CreateEntity_k(ptr_queue, k_ptr_create_entity)
+        k_create_entity = new CreateEntity_k(this.ptr_queue, k_ptr_create_entity)
             .buf_arg(CreateEntity_k.Args.entities,                      this.sector_buffers.get_buffer(ENTITY))
             .buf_arg(CreateEntity_k.Args.entity_root_hulls,             this.sector_buffers.get_buffer(ENTITY_ROOT_HULL))
             .buf_arg(CreateEntity_k.Args.entity_model_indices,          this.sector_buffers.get_buffer(ENTITY_MODEL_ID))
@@ -88,30 +96,41 @@ public class SectorController
             .buf_arg(CreateEntity_k.Args.entity_motion_states,          this.sector_buffers.get_buffer(ENTITY_MOTION_STATE));
 
         long k_ptr_create_hull_bone = p_gpu_crud.kernel_ptr(Kernel.create_hull_bone);
-        k_create_hull_bone = new CreateHullBone_k(ptr_queue, k_ptr_create_hull_bone)
+        k_create_hull_bone = new CreateHullBone_k(this.ptr_queue, k_ptr_create_hull_bone)
             .buf_arg(CreateHullBone_k.Args.hull_bones,                  this.sector_buffers.get_buffer(HULL_BONE))
             .buf_arg(CreateHullBone_k.Args.hull_bind_pose_indicies,     this.sector_buffers.get_buffer(HULL_BONE_BIND_POSE))
             .buf_arg(CreateHullBone_k.Args.hull_inv_bind_pose_indicies, this.sector_buffers.get_buffer(HULL_BONE_INV_BIND_POSE));
 
         long k_ptr_create_entity_bone = p_gpu_crud.kernel_ptr(Kernel.create_entity_bone);
-        k_create_entity_bone = new CreateEntityBone_k(ptr_queue, k_ptr_create_entity_bone)
+        k_create_entity_bone = new CreateEntityBone_k(this.ptr_queue, k_ptr_create_entity_bone)
             .buf_arg(CreateEntityBone_k.Args.entity_bones,              this.sector_buffers.get_buffer(ENTITY_BONE))
             .buf_arg(CreateEntityBone_k.Args.entity_bone_reference_ids, this.sector_buffers.get_buffer(ENTITY_BONE_REFERENCE_ID))
             .buf_arg(CreateEntityBone_k.Args.entity_bone_parent_ids,    this.sector_buffers.get_buffer(ENTITY_BONE_PARENT_ID));
 
         long k_ptr_read_position = p_gpu_crud.kernel_ptr(Kernel.read_position);
-        k_read_position = new ReadPosition_k(ptr_queue, k_ptr_read_position)
+        k_read_position = new ReadPosition_k(this.ptr_queue, k_ptr_read_position)
             .buf_arg(ReadPosition_k.Args.entities,                      this.sector_buffers.get_buffer(ENTITY));
 
         long k_ptr_update_accel = p_gpu_crud.kernel_ptr(Kernel.update_accel);
-        k_update_accel = new UpdateAccel_k(ptr_queue, k_ptr_update_accel)
+        k_update_accel = new UpdateAccel_k(this.ptr_queue, k_ptr_update_accel)
             .buf_arg(UpdateAccel_k.Args.entity_accel,                   this.sector_buffers.get_buffer(ENTITY_ACCEL));
 
         long k_ptr_update_mouse_position = p_gpu_crud.kernel_ptr(Kernel.update_mouse_position);
-        k_update_mouse_position = new UpdateMousePosition_k(ptr_queue, k_ptr_update_mouse_position)
+        k_update_mouse_position = new UpdateMousePosition_k(this.ptr_queue, k_ptr_update_mouse_position)
             .buf_arg(UpdateMousePosition_k.Args.entity_root_hulls,      this.sector_buffers.get_buffer(ENTITY_ROOT_HULL))
             .buf_arg(UpdateMousePosition_k.Args.hull_point_tables,      this.sector_buffers.get_buffer(HULL_POINT_TABLE))
             .buf_arg(UpdateMousePosition_k.Args.points,                 this.sector_buffers.get_buffer(POINT));
+
+        long k_ptr_count_egress_candidates = p_gpu_crud.kernel_ptr(Kernel.count_egress_entities);
+        k_count_egress_entities = new CountEgressEntities_k(this.ptr_queue, k_ptr_count_egress_candidates)
+            .buf_arg(CountEgressEntities_k.Args.entity_flags,           this.sector_buffers.get_buffer(ENTITY_FLAG))
+            .buf_arg(CountEgressEntities_k.Args.entity_hull_tables,     this.sector_buffers.get_buffer(ENTITY_HULL_TABLE))
+            .buf_arg(CountEgressEntities_k.Args.entity_bone_tables,     this.sector_buffers.get_buffer(ENTITY_BONE_TABLE))
+            .buf_arg(CountEgressEntities_k.Args.hull_flags,             this.sector_buffers.get_buffer(HULL_FLAG))
+            .buf_arg(CountEgressEntities_k.Args.hull_point_tables,      this.sector_buffers.get_buffer(HULL_POINT_TABLE))
+            .buf_arg(CountEgressEntities_k.Args.hull_edge_tables,       this.sector_buffers.get_buffer(HULL_EDGE_TABLE))
+            .buf_arg(CountEgressEntities_k.Args.hull_bone_tables,       this.sector_buffers.get_buffer(HULL_BONE_TABLE))
+            .ptr_arg(CountEgressEntities_k.Args.counters, ptr_egress_sizes);
     }
 
     public int create_point(float[] position,
@@ -342,18 +361,26 @@ public class SectorController
 
     public float[] read_position(int entity_index)
     {
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_position_buffer, cl_float2);
+        GPGPU.cl_zero_buffer(this.ptr_queue, ptr_position_buffer, cl_float2);
 
         k_read_position
             .ptr_arg(ReadPosition_k.Args.output, ptr_position_buffer)
             .set_arg(ReadPosition_k.Args.target, entity_index)
             .call(GPGPU.global_single_size);
 
-        return GPGPU.cl_read_pinned_float_buffer(GPGPU.ptr_compute_queue, ptr_position_buffer, cl_float, 2);
+        return GPGPU.cl_read_pinned_float_buffer(this.ptr_queue, ptr_position_buffer, cl_float, 2);
+    }
+
+    public int[] count_egress_entities()
+    {
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, EGRESS_COUNTERS_SIZE);
+        k_count_egress_entities.call(arg_long(entity_index()));
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int, EGRESS_COUNTERS);
     }
 
     public void destroy()
     {
         GPGPU.cl_release_buffer(ptr_position_buffer);
+        GPGPU.cl_release_buffer(ptr_egress_sizes);
     }
 }
