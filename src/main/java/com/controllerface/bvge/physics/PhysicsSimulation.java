@@ -446,7 +446,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimateEntities_k.Args.entity_flags,                GPGPU.core_memory.buffer(BufferType.ENTITY_FLAG))
             .buf_arg(AnimateEntities_k.Args.armature_bone_reference_ids, GPGPU.core_memory.buffer(BufferType.ENTITY_BONE_REFERENCE_ID))
             .buf_arg(AnimateEntities_k.Args.armature_bone_parent_ids,    GPGPU.core_memory.buffer(BufferType.ENTITY_BONE_PARENT_ID))
-            .buf_arg(AnimateEntities_k.Args.bone_channel_tables,         GPGPU.core_memory.buffer(BufferType.BONE_ANIM_TABLE))
+            .buf_arg(AnimateEntities_k.Args.bone_channel_tables,         GPGPU.core_memory.buffer(BufferType.BONE_ANIM_CHANNEL_TABLE))
             .buf_arg(AnimateEntities_k.Args.bone_pos_channel_tables,     GPGPU.core_memory.buffer(BufferType.ANIM_POS_CHANNEL))
             .buf_arg(AnimateEntities_k.Args.bone_rot_channel_tables,     GPGPU.core_memory.buffer(BufferType.ANIM_ROT_CHANNEL))
             .buf_arg(AnimateEntities_k.Args.bone_scl_channel_tables,     GPGPU.core_memory.buffer(BufferType.ANIM_SCL_CHANNEL))
