@@ -43,10 +43,10 @@ public class GPUCoreMemory implements SectorContainer
      * differ in contents. Using these cached index values allows physics and rendering tasks to run
      * concurrently without interfering with each other.
      */
-    private int last_hull_index       = 0;
-    private int last_point_index      = 0;
-    private int last_edge_index       = 0;
-    private int last_entity_index     = 0;
+    private int last_hull_index   = 0;
+    private int last_point_index  = 0;
+    private int last_edge_index   = 0;
+    private int last_entity_index = 0;
 
     private final int[] next_egress_counts = new int[8];
     private final int[] last_egress_counts = new int[8];
@@ -197,10 +197,10 @@ public class GPUCoreMemory implements SectorContainer
     {
         mirror_buffers.mirror(sector_buffers);
 
-        last_edge_index     = sector_controller.edge_index();
-        last_entity_index   = sector_controller.entity_index();
-        last_hull_index     = sector_controller.hull_index();
-        last_point_index    = sector_controller.point_index();
+        last_edge_index   = sector_controller.edge_index();
+        last_entity_index = sector_controller.entity_index();
+        last_hull_index   = sector_controller.hull_index();
+        last_point_index  = sector_controller.point_index();
     }
 
     // index methods
@@ -308,12 +308,30 @@ public class GPUCoreMemory implements SectorContainer
         {
             if (block.dynamic())
             {
-                PhysicsObjects.base_block(sector_ingress_buffer, block.x(), block.y(), block.size(), block.mass(), block.friction(), block.restitution(), block.flags(), block.material(), block.hits());
+                PhysicsObjects.base_block(sector_ingress_buffer,
+                    block.x(),
+                    block.y(),
+                    block.size(),
+                    block.mass(),
+                    block.friction(),
+                    block.restitution(),
+                    block.flags(),
+                    block.material(),
+                    block.hits());
             }
             else
             {
                 int flags = block.flags() | Constants.HullFlags.IS_STATIC._int;
-                PhysicsObjects.base_block(sector_ingress_buffer, block.x(), block.y(), block.size(), block.mass(), block.friction(), block.restitution(), flags, block.material(), block.hits());
+                PhysicsObjects.base_block(sector_ingress_buffer,
+                    block.x(),
+                    block.y(),
+                    block.size(),
+                    block.mass(),
+                    block.friction(),
+                    block.restitution(),
+                    flags,
+                    block.material(),
+                    block.hits());
             }
         }
         for (var shard : batch.shards)
@@ -326,11 +344,29 @@ public class GPUCoreMemory implements SectorContainer
 
             int shard_flags = shard.flags();
 
-            PhysicsObjects.tri(sector_ingress_buffer, shard.x(), shard.y(), shard.size(), shard_flags, shard.mass(), shard.friction(), shard.restitution(), id, shard.material());
+            PhysicsObjects.tri(sector_ingress_buffer,
+                shard.x(),
+                shard.y(),
+                shard.size(),
+                shard_flags,
+                shard.mass(),
+                shard.friction(),
+                shard.restitution(),
+                id,
+                shard.material());
         }
         for (var liquid : batch.liquids)
         {
-            PhysicsObjects.liquid_particle(sector_ingress_buffer, liquid.x(), liquid.y(), liquid.size(), liquid.mass(), liquid.friction(), liquid.restitution(), liquid.flags(), liquid.point_flags(), liquid.particle_fluid());
+            PhysicsObjects.liquid_particle(sector_ingress_buffer,
+                liquid.x(),
+                liquid.y(),
+                liquid.size(),
+                liquid.mass(),
+                liquid.friction(),
+                liquid.restitution(),
+                liquid.flags(),
+                liquid.point_flags(),
+                liquid.particle_fluid());
         }
     }
 
@@ -533,7 +569,18 @@ public class GPUCoreMemory implements SectorContainer
                         int uv_offset,
                         int flags)
     {
-        return sector_controller.create_hull(mesh_id, position, scale, rotation, point_table, edge_table, bone_table, friction, restitution, entity_id, uv_offset, flags);
+        return sector_controller.create_hull(mesh_id,
+            position,
+            scale,
+            rotation,
+            point_table,
+            edge_table,
+            bone_table,
+            friction,
+            restitution,
+            entity_id,
+            uv_offset,
+            flags);
     }
 
     @Override
@@ -555,7 +602,17 @@ public class GPUCoreMemory implements SectorContainer
                           int type,
                           int flags)
     {
-        return sector_controller.create_entity(x, y, z, w, hull_table, bone_table, mass, anim_index, anim_time, root_hull, model_id, model_transform_id, type, flags);
+        return sector_controller.create_entity(x, y, z, w,
+            hull_table,
+            bone_table,
+            mass,
+            anim_index,
+            anim_time,
+            root_hull,
+            model_id,
+            model_transform_id,
+            type,
+            flags);
     }
 
     @Override

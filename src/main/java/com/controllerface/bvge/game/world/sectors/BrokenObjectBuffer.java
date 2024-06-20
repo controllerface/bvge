@@ -17,19 +17,15 @@ import static com.controllerface.bvge.cl.buffers.BufferType.*;
 
 public class BrokenObjectBuffer
 {
-    private final GPUProgram p_gpu_crud = new GPUCrud();
-
+    private final GPUProgram p_gpu_crud;
     private final GPUKernel k_egress_broken;
-
     private final BufferGroup broken_group;
-
     private final long ptr_queue;
-
     private final long ptr_egress_size;
 
     public BrokenObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
     {
-        this.p_gpu_crud.init();
+        this.p_gpu_crud = new GPUCrud().init();
         this.ptr_queue  = ptr_queue;
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
