@@ -254,13 +254,6 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(IntegrateEntities_k.Args.entity_accel,      GPGPU.core_memory.buffer(BufferType.ENTITY_ACCEL))
             .buf_arg(IntegrateEntities_k.Args.hull_flags,        GPGPU.core_memory.buffer(BufferType.HULL_FLAG));
 
-        long k_ptr_scan_bounds_single_block    = p_scan_key_bank.kernel_ptr(Kernel.scan_bounds_single_block);
-        long k_ptr_scan_bounds_multi_block     = p_scan_key_bank.kernel_ptr(Kernel.scan_bounds_multi_block);
-        long k_ptr_complete_bounds_multi_block = p_scan_key_bank.kernel_ptr(Kernel.complete_bounds_multi_block);
-        k_scan_bounds_single_block    = new ScanBoundsSingleBlock_k(GPGPU.ptr_compute_queue, k_ptr_scan_bounds_single_block);
-        k_scan_bounds_multi_block     = new ScanBoundsMultiBlock_k(GPGPU.ptr_compute_queue, k_ptr_scan_bounds_multi_block);
-        k_complete_bounds_multi_block = new CompleteBoundsMultiBlock_k(GPGPU.ptr_compute_queue, k_ptr_complete_bounds_multi_block);
-
         long k_ptr_generate_keys = p_generate_keys.kernel_ptr(Kernel.generate_keys);
         k_generate_keys = new GenerateKeys_k(GPGPU.ptr_compute_queue, k_ptr_generate_keys)
             .buf_arg(GenerateKeys_k.Args.key_bank, b_key_bank)
@@ -294,13 +287,6 @@ public class PhysicsSimulation extends GameSystem
             .ptr_arg(CountCandidates_k.Args.key_counts,       ptr_counts_data)
             .set_arg(CountCandidates_k.Args.x_subdivisions,   uniform_grid.x_subdivisions)
             .set_arg(CountCandidates_k.Args.key_count_length, uniform_grid.directory_length);
-
-        long k_ptr_scan_candidates_single_block_out    = p_scan_key_candidates.kernel_ptr(Kernel.scan_candidates_single_block_out);
-        long k_ptr_scan_candidates_multi_block_out     = p_scan_key_candidates.kernel_ptr(Kernel.scan_candidates_multi_block_out);
-        long k_ptr_complete_candidates_multi_block_out = p_scan_key_candidates.kernel_ptr(Kernel.complete_candidates_multi_block_out);
-        k_scan_candidates_single_block_out    = new ScanCandidatesSingleBlockOut_k(GPGPU.ptr_compute_queue, k_ptr_scan_candidates_single_block_out);
-        k_scan_candidates_multi_block_out     = new ScanCandidatesMultiBlockOut_k(GPGPU.ptr_compute_queue, k_ptr_scan_candidates_multi_block_out);
-        k_complete_candidates_multi_block_out = new CompleteCandidatesMultiBlockOut_k(GPGPU.ptr_compute_queue, k_ptr_complete_candidates_multi_block_out);
 
         long k_ptr_aabb_collide = p_aabb_collide.kernel_ptr(Kernel.aabb_collide);
         k_aabb_collide = new AABBCollide_k(GPGPU.ptr_compute_queue, k_ptr_aabb_collide)
@@ -446,6 +432,20 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(ResolveConstraints_k.Args.point,            GPGPU.core_memory.buffer(BufferType.POINT))
             .buf_arg(ResolveConstraints_k.Args.edges,            GPGPU.core_memory.buffer(BufferType.EDGE))
             .buf_arg(ResolveConstraints_k.Args.edge_lengths,     GPGPU.core_memory.buffer(BufferType.EDGE_LENGTH));
+        
+        long k_ptr_scan_bounds_single_block    = p_scan_key_bank.kernel_ptr(Kernel.scan_bounds_single_block);
+        long k_ptr_scan_bounds_multi_block     = p_scan_key_bank.kernel_ptr(Kernel.scan_bounds_multi_block);
+        long k_ptr_complete_bounds_multi_block = p_scan_key_bank.kernel_ptr(Kernel.complete_bounds_multi_block);
+        k_scan_bounds_single_block    = new ScanBoundsSingleBlock_k(GPGPU.ptr_compute_queue, k_ptr_scan_bounds_single_block);
+        k_scan_bounds_multi_block     = new ScanBoundsMultiBlock_k(GPGPU.ptr_compute_queue, k_ptr_scan_bounds_multi_block);
+        k_complete_bounds_multi_block = new CompleteBoundsMultiBlock_k(GPGPU.ptr_compute_queue, k_ptr_complete_bounds_multi_block);
+
+        long k_ptr_scan_candidates_single_block_out    = p_scan_key_candidates.kernel_ptr(Kernel.scan_candidates_single_block_out);
+        long k_ptr_scan_candidates_multi_block_out     = p_scan_key_candidates.kernel_ptr(Kernel.scan_candidates_multi_block_out);
+        long k_ptr_complete_candidates_multi_block_out = p_scan_key_candidates.kernel_ptr(Kernel.complete_candidates_multi_block_out);
+        k_scan_candidates_single_block_out    = new ScanCandidatesSingleBlockOut_k(GPGPU.ptr_compute_queue, k_ptr_scan_candidates_single_block_out);
+        k_scan_candidates_multi_block_out     = new ScanCandidatesMultiBlockOut_k(GPGPU.ptr_compute_queue, k_ptr_scan_candidates_multi_block_out);
+        k_complete_candidates_multi_block_out = new CompleteCandidatesMultiBlockOut_k(GPGPU.ptr_compute_queue, k_ptr_complete_candidates_multi_block_out);
     }
 
     //#region Input & Integration
