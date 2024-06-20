@@ -2,11 +2,14 @@ package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.game.state.PlayerInventory;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class InventorySystem extends GameSystem
 {
@@ -14,6 +17,8 @@ public class InventorySystem extends GameSystem
     private final BlockingQueue<Float> next_dt = new ArrayBlockingQueue<>(1);
     private final PlayerInventory player_inventory;
     private final Thread task_thread;
+
+    private final static Logger LOGGER = Logger.getLogger(InventorySystem.class.getName());
 
     public InventorySystem(ECS ecs, PlayerInventory player_inventory)
     {
@@ -57,6 +62,10 @@ public class InventorySystem extends GameSystem
             GPGPU.core_memory.unload_collected(raw_collected, collected_count);
             for (int i = 0; i < collected_count; i++)
             {
+                int qty = 1; // todo: pull from world, possibly player stat mods
+                int type = raw_collected.types[i];
+                LOGGER.log(Level.FINE, type + ":" + qty);
+                if (Editor.ACTIVE) Editor.inventory(type, qty);
                 player_inventory.collect_substance(raw_collected.types[i], 1);
             }
         }

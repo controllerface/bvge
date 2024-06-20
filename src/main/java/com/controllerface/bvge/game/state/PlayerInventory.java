@@ -18,7 +18,6 @@ public class PlayerInventory
         {
             case Solid s ->
             {
-                System.out.println("collected solid: " + s);
                 int current = solid_counts.computeIfAbsent(s, (_) -> 0);
                 solid_counts.put(s, current + quantity);
             }

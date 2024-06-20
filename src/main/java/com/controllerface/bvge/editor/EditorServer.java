@@ -3,6 +3,7 @@ package com.controllerface.bvge.editor;
 import com.controllerface.bvge.editor.http.Header;
 import com.controllerface.bvge.editor.http.Request;
 import com.controllerface.bvge.editor.http.RequestLine;
+import com.controllerface.bvge.substances.SubstanceTypeIndex;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class EditorServer
 {
@@ -36,6 +38,8 @@ public class EditorServer
     private ServerSocket server_socket;
     private Thread incoming;
     private Thread outgoing;
+
+    private static final Map<Integer, Integer> inventory = Collections.synchronizedMap(new HashMap<>());
 
     @FunctionalInterface
     private interface EndpointHandler
@@ -231,8 +235,15 @@ public class EditorServer
             {
                 //noinspection BusyWait
                 Thread.sleep(EVENT_INTERVAL);
+
                 stat_events.forEach((name, value) ->
                     streams.forEach(stream -> stream.queue_event(name, value)));
+
+                var inventory_event = inventory.entrySet().stream()
+                    .map(e -> "\"" + SubstanceTypeIndex.from_type_index(e.getKey()) + "\" : " + e.getValue())
+                    .collect(Collectors.joining(", ","{","}"));
+
+                streams.forEach(stream -> stream.queue_event("inventory", inventory_event));
             }
             catch (Exception _)
             {
@@ -244,6 +255,12 @@ public class EditorServer
     public void queue_stat_event(String name, String value)
     {
         stat_events.put(name, value);
+    }
+
+    public void inventory(int id, int qty)
+    {
+        int current = inventory.computeIfAbsent(id, (_) -> 0);
+        inventory.put(id, current + qty);
     }
 
     public void add_stream(EditorStream stream)

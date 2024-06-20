@@ -19,7 +19,7 @@ import java.util.concurrent.*;
 
 public class WorldUnloader extends GameSystem
 {
-    private final UnorderedSectorBufferGroup.Raw raw_sectors            = new UnorderedSectorBufferGroup.Raw();
+    private final UnorderedSectorBufferGroup.Raw raw_sectors      = new UnorderedSectorBufferGroup.Raw();
     private final BrokenObjectBuffer.Raw raw_broken               = new BrokenObjectBuffer.Raw();
     private final Map<Sector, PhysicsEntityBatch> running_batches = new HashMap<>();
     private final BlockingQueue<Float> next_dt                    = new ArrayBlockingQueue<>(1);
@@ -280,6 +280,8 @@ public class WorldUnloader extends GameSystem
             int offset_1 = 0;
             for (int uv_offset : raw_broken.uv_offsets)
             {
+                if (uv_offset == -1) break;
+
                 float x = raw_broken.positions[offset_2++];
                 float y = raw_broken.positions[offset_2++];
 
@@ -313,6 +315,9 @@ public class WorldUnloader extends GameSystem
                     batch.new_shard(true, false, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
                 }
             }
+
+            // this is required to ensure broken objects from previous frames aren't processed
+            Arrays.fill(raw_broken.uv_offsets, -1);
             spawn_queue.offer(batch);
         }
     }
