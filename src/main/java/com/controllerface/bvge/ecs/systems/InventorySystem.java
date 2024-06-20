@@ -62,7 +62,7 @@ public class InventorySystem extends GameSystem
             GPGPU.core_memory.unload_collected(raw_collected, collected_count);
             for (int i = 0; i < collected_count; i++)
             {
-                int qty = 1; // todo: pull from world, possibly player stat mods
+                int qty = 1; // todo: pull from world, possibly account for player stat mods
                 int type = raw_collected.types[i];
                 LOGGER.log(Level.FINE, type + ":" + qty);
                 if (Editor.ACTIVE) Editor.inventory(type, qty);
