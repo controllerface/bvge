@@ -251,7 +251,7 @@ public class EarthLikeWorld implements WorldType
 
             float mn_below = noise.GetNoise(block_x, block_y - 1);
             boolean underside = mn_below < block_range_floor && mn_below > shard_range_floor;
-            if (underside) batch.new_shard(true, false, world_x_block, world_y_block, sz_solid, flags,.1f, 0.0f, 0.005f, ANDESITE);
+            if (underside) batch.new_shard(true, false, world_x_block, world_y_block, sz_solid, 0, flags,.1f, 0.0f, 0.005f, ANDESITE);
             else
             {
                 int[] hits;
@@ -317,12 +317,12 @@ public class EarthLikeWorld implements WorldType
                     hits = new int[]{ h1, h2, h3, h4 };
                 }
 
-                if (layer == 0 && (shard || flip_shard)) batch.new_shard(false, flip_shard, world_x_block, world_y_block,  sz_solid,
+                if (layer == 0 && (shard || flip_shard)) batch.new_shard(false, flip_shard, world_x_block, world_y_block,  sz_solid, 0,
                     Constants.HullFlags.IS_STATIC._int | Constants.HullFlags.OUT_OF_BOUNDS._int,
                     .1f, 0.05f, 0.005f, solid);
                 else
 
-                    batch.new_block(false, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f,
+                    batch.new_block(false, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, 0,
                         Constants.HullFlags.IS_STATIC._int | Constants.HullFlags.OUT_OF_BOUNDS._int, solid, hits);
             }
         }
@@ -333,11 +333,11 @@ public class EarthLikeWorld implements WorldType
                 ? Constants.PointFlags.FLOW_LEFT.bits
                 : 0;
             flip = !flip;
-            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, -0.000001f, hull_flags, point_flags, Liquid.FRESHWATER);
+            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, -0.000001f, 0, hull_flags, point_flags, Liquid.FRESHWATER);
         }
         else if (n < shard_range_floor)
         {
-            batch.new_shard(true, false, world_x_block, world_y_block,  sz_solid, Constants.HullFlags.OUT_OF_BOUNDS._int,.1f, 0.00f, 0.005f, Solid.BASALT);
+            batch.new_shard(true, false, world_x_block, world_y_block,  sz_solid, 0, Constants.HullFlags.OUT_OF_BOUNDS._int,.1f, 0.00f, 0.005f, Solid.BASALT);
         }
     }
 }

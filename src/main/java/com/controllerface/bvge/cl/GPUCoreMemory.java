@@ -313,13 +313,13 @@ public class GPUCoreMemory implements SectorContainer
                     block.mass(),
                     block.friction(),
                     block.restitution(),
-                    block.flags(),
+                    block.hull_flags(),
                     block.material(),
                     block.hits());
             }
             else
             {
-                int flags = block.flags() | Constants.HullFlags.IS_STATIC._int;
+                int flags = block.hull_flags() | Constants.HullFlags.IS_STATIC._int;
                 PhysicsObjects.base_block(sector_ingress_buffer,
                     block.x(),
                     block.y(),
@@ -340,7 +340,7 @@ public class GPUCoreMemory implements SectorContainer
                     ? L_SHARD_INDEX
                     : R_SHARD_INDEX;
 
-            int shard_flags = shard.flags();
+            int shard_flags = shard.hull_flags();
 
             PhysicsObjects.tri(sector_ingress_buffer,
                 shard.x(),
@@ -354,7 +354,7 @@ public class GPUCoreMemory implements SectorContainer
                 id,
                 shard.material());
         }
-        for (var liquid : batch.liquids)
+        for (var liquid : batch.fluids)
         {
             PhysicsObjects.liquid_particle(sector_ingress_buffer,
                 liquid.x(),
@@ -363,7 +363,7 @@ public class GPUCoreMemory implements SectorContainer
                 liquid.mass(),
                 liquid.friction(),
                 liquid.restitution(),
-                liquid.flags(),
+                liquid.hull_flags(),
                 liquid.point_flags(),
                 liquid.particle_fluid());
         }
