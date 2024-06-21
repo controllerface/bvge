@@ -16,58 +16,137 @@ public class AnimationSettings
             case IDLE -> switch (to)
             {
                 case IDLE, UNKNOWN -> 0.0f;
-                case WALKING, LAND_HARD, FALLING_SLOW, LAND_SOFT, SWIM_UP, SWIM_DOWN, FALLING_FAST, JUMPING, RUNNING, IN_AIR -> 0.4f;
-                case PUNCH, RECOIL -> 0.1f;
+                case WALKING,
+                     LAND_HARD,
+                     FALLING_SLOW,
+                     LAND_SOFT,
+                     SWIM_UP,
+                     SWIM_DOWN,
+                     FALLING_FAST,
+                     JUMPING,
+                     RUNNING,
+                     IN_AIR -> 0.4f;
+                case PUNCH,
+                     RECOIL -> 0.1f;
             };
 
             case WALKING -> switch (to)
             {
                 case WALKING, UNKNOWN -> 0.0f;
-                case IDLE, LAND_HARD, FALLING_SLOW, LAND_SOFT, SWIM_UP, SWIM_DOWN, FALLING_FAST, JUMPING, RUNNING, IN_AIR -> 0.2f;
-                case PUNCH, RECOIL -> 0.1f;
+                case IDLE,
+                     LAND_HARD,
+                     FALLING_SLOW,
+                     LAND_SOFT,
+                     SWIM_UP,
+                     SWIM_DOWN,
+                     FALLING_FAST,
+                     JUMPING,
+                     RUNNING,
+                     IN_AIR -> 0.2f;
+                case PUNCH,
+                     RECOIL -> 0.1f;
             };
 
             case FALLING_FAST -> switch (to)
             {
                 case FALLING_FAST, UNKNOWN -> 0.0f;
-                case WALKING, LAND_HARD, FALLING_SLOW, LAND_SOFT, SWIM_UP, SWIM_DOWN, IDLE, JUMPING, RUNNING, IN_AIR -> 0.2f;
-                case PUNCH, RECOIL -> 0.1f;
+                case WALKING,
+                     LAND_HARD,
+                     FALLING_SLOW,
+                     LAND_SOFT,
+                     SWIM_UP,
+                     SWIM_DOWN,
+                     IDLE,
+                     JUMPING,
+                     RUNNING,
+                     IN_AIR -> 0.2f;
+                case PUNCH,
+                     RECOIL -> 0.1f;
             };
 
             case IN_AIR -> switch (to)
             {
                 case IN_AIR, UNKNOWN -> 0.0f;
-                case WALKING, FALLING_SLOW, FALLING_FAST, LAND_SOFT, SWIM_UP, SWIM_DOWN, IDLE, JUMPING, RUNNING, LAND_HARD -> 0.2f;
-                case PUNCH, RECOIL -> 0.1f;
+                case WALKING,
+                     FALLING_SLOW,
+                     FALLING_FAST,
+                     LAND_SOFT,
+                     SWIM_UP,
+                     SWIM_DOWN,
+                     IDLE,
+                     JUMPING,
+                     RUNNING,
+                     LAND_HARD -> 0.2f;
+                case PUNCH,
+                     RECOIL -> 0.1f;
             };
 
             case FALLING_SLOW -> switch (to)
             {
                 case FALLING_SLOW, UNKNOWN -> 0.0f;
-                case WALKING, LAND_HARD, FALLING_FAST, LAND_SOFT, SWIM_UP, SWIM_DOWN, IDLE, JUMPING, RUNNING, IN_AIR -> 0.2f;
-                case PUNCH, RECOIL -> 0.1f;
+                case WALKING,
+                     LAND_HARD,
+                     FALLING_FAST,
+                     LAND_SOFT,
+                     SWIM_UP,
+                     SWIM_DOWN,
+                     IDLE,
+                     JUMPING,
+                     RUNNING,
+                     IN_AIR -> 0.2f;
+                case PUNCH,
+                     RECOIL -> 0.1f;
             };
 
             case SWIM_UP -> switch (to)
             {
                 case SWIM_UP, UNKNOWN -> 0.0f;
-                case WALKING, LAND_HARD, FALLING_SLOW, LAND_SOFT, SWIM_DOWN, FALLING_FAST, IDLE, JUMPING, RUNNING, IN_AIR -> 0.2f;
-                case PUNCH, RECOIL -> 0.1f;
+                case WALKING,
+                     LAND_HARD,
+                     FALLING_SLOW,
+                     LAND_SOFT,
+                     SWIM_DOWN,
+                     FALLING_FAST,
+                     IDLE,
+                     JUMPING,
+                     RUNNING,
+                     IN_AIR -> 0.2f;
+                case PUNCH,
+                     RECOIL -> 0.1f;
             };
 
             case SWIM_DOWN -> switch (to)
             {
                 case SWIM_DOWN, UNKNOWN -> 0.0f;
-                case WALKING, LAND_HARD, FALLING_SLOW, LAND_SOFT, SWIM_UP, FALLING_FAST, IDLE, JUMPING, RUNNING, IN_AIR -> 0.2f;
-                case PUNCH, RECOIL -> 0.1f;
+                case WALKING,
+                     LAND_HARD,
+                     FALLING_SLOW,
+                     LAND_SOFT,
+                     SWIM_UP,
+                     FALLING_FAST,
+                     IDLE,
+                     JUMPING,
+                     RUNNING,
+                     IN_AIR -> 0.2f;
+                case PUNCH,
+                     RECOIL -> 0.1f;
             };
 
             case PUNCH -> switch (to)
             {
                 case PUNCH, UNKNOWN -> 0.0F;
-                case IDLE, WALKING, JUMPING -> 0.3F;
-                case RUNNING, RECOIL, IN_AIR, LAND_HARD, LAND_SOFT, SWIM_UP, SWIM_DOWN -> 0.2F;
-                case FALLING_FAST, FALLING_SLOW -> 0.5F;
+                case IDLE,
+                     WALKING,
+                     JUMPING -> 0.3F;
+                case RUNNING,
+                     RECOIL,
+                     IN_AIR,
+                     LAND_HARD,
+                     LAND_SOFT,
+                     SWIM_UP,
+                     SWIM_DOWN -> 0.2F;
+                case FALLING_FAST,
+                     FALLING_SLOW -> 0.5F;
             };
 
             case RUNNING -> switch (to)

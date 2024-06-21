@@ -14,6 +14,8 @@ public class SubstanceTypeIndex
         register_substance(Liquid.class);
     }
 
+    // TODO: expand this class out to manage yields
+
     public static <E extends Enum<E>> void register_substance(Class<E> enumClass)
     {
         Collections.addAll(offsets, enumClass.getEnumConstants());
