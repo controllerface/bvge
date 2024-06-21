@@ -296,6 +296,7 @@ __kernel void egress_collected(__global int *entity_flags,
 
 __kernel void egress_broken(__global float4 *entities, 
                             __global int *entity_flags,
+                            __global int *entity_types,
                             __global int2 *entity_hull_tables,
                             __global int *entity_model_ids,
                             __global float4 *hulls, 
@@ -326,7 +327,7 @@ __kernel void egress_broken(__global float4 *entities,
             float4 hull = hulls[current_hull];
             int uv_offset = hull_uv_offsets[current_hull];
             int entity_id_offset = atomic_inc(&counter[0]); 
-            positions[entity_id_offset] = hull.xy;
+            positions[entity_id_offset] = entity.xy;
             uv_offsets[entity_id_offset] = uv_offset;
             model_ids[entity_id_offset] = entity_model_id;
         }

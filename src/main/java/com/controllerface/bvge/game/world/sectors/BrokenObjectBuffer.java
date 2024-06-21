@@ -38,6 +38,7 @@ public class BrokenObjectBuffer
         k_egress_broken = new EgressBroken_k(this.ptr_queue, k_ptr_egress_broken)
             .buf_arg(EgressBroken_k.Args.entities, core_memory.buffer(ENTITY))
             .buf_arg(EgressBroken_k.Args.entity_flags, core_memory.buffer(ENTITY_FLAG))
+            .buf_arg(EgressBroken_k.Args.entity_types, core_memory.buffer(ENTITY_TYPE))
             .buf_arg(EgressBroken_k.Args.entity_hull_tables, core_memory.buffer(ENTITY_HULL_TABLE))
             .buf_arg(EgressBroken_k.Args.entity_model_ids, core_memory.buffer(ENTITY_MODEL_ID))
             .buf_arg(EgressBroken_k.Args.hulls, core_memory.buffer(HULL))
