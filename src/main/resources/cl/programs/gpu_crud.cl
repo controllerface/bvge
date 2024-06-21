@@ -280,11 +280,6 @@ __kernel void count_egress_entities(__global int *entity_flags,
 
 __kernel void egress_collected(__global int *entity_flags,
                                __global int *entity_types,
-                               __global int2 *entity_hull_tables,
-                               __global int *hull_flags,
-                               __global int *hull_uv_offsets,
-                               __global int *uv_offsets,
-                               __global int *flags,
                                __global int *types,
                                __global int *counter)
 {
@@ -294,14 +289,8 @@ __kernel void egress_collected(__global int *entity_flags,
     bool collected = (e_flags & COLLECTED) !=0;
     if (collected)
     {
-        int2 hull_table = entity_hull_tables[current_entity];
-        int hull_0_flags = hull_flags[hull_table.x];
-        int uv_offset = hull_uv_offsets[hull_table.x];
-
         int entity_id_offset = atomic_inc(&counter[0]); 
-        flags[entity_id_offset] = hull_0_flags;
         types[entity_id_offset] = e_type;
-        uv_offsets[entity_id_offset] = uv_offset;
     }
 }
 

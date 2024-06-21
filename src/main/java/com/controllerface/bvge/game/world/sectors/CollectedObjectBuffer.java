@@ -30,19 +30,12 @@ public class CollectedObjectBuffer
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
         collected_group = new BasicBufferGroup(name, ptr_queue);
-        collected_group.set_buffer(BufferType.COLLECTED_UV_OFFSETS, CLSize.cl_int, 100);
-        collected_group.set_buffer(BufferType.COLLECTED_FLAG,  CLSize.cl_int, 100);
         collected_group.set_buffer(BufferType.COLLECTED_TYPE,  CLSize.cl_int, 100);
 
         long k_ptr_egress_collected = this.p_gpu_crud.kernel_ptr(Kernel.egress_collected);
         k_egress_collected = new EgressCollected_k(this.ptr_queue, k_ptr_egress_collected)
             .buf_arg(EgressCollected_k.Args.entity_flags, core_memory.buffer(BufferType.ENTITY_FLAG))
             .buf_arg(EgressCollected_k.Args.entity_types, core_memory.buffer(BufferType.ENTITY_TYPE))
-            .buf_arg(EgressCollected_k.Args.entity_hull_tables, core_memory.buffer(BufferType.ENTITY_HULL_TABLE))
-            .buf_arg(EgressCollected_k.Args.hull_flags, core_memory.buffer(BufferType.HULL_FLAG))
-            .buf_arg(EgressCollected_k.Args.hull_uv_offsets, core_memory.buffer(BufferType.HULL_UV_OFFSET))
-            .buf_arg(EgressCollected_k.Args.uv_offsets, collected_group.get_buffer(BufferType.COLLECTED_UV_OFFSETS))
-            .buf_arg(EgressCollected_k.Args.flags, collected_group.get_buffer(BufferType.COLLECTED_FLAG))
             .buf_arg(EgressCollected_k.Args.types, collected_group.get_buffer(BufferType.COLLECTED_TYPE))
             .ptr_arg(EgressCollected_k.Args.counter, ptr_egress_size);
     }
@@ -50,8 +43,6 @@ public class CollectedObjectBuffer
     public void egress(int entity_count, int egress_count)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
-        collected_group.get_buffer(BufferType.COLLECTED_UV_OFFSETS).ensure_capacity(egress_count);
-        collected_group.get_buffer(BufferType.COLLECTED_FLAG).ensure_capacity(egress_count);
         collected_group.get_buffer(BufferType.COLLECTED_TYPE).ensure_capacity(egress_count);
         k_egress_collected.call(arg_long(entity_count));
     }
@@ -60,8 +51,6 @@ public class CollectedObjectBuffer
     {
         if (count > 0)
         {
-            collected_group.get_buffer(BufferType.COLLECTED_UV_OFFSETS).transfer_out_int(raw.uv_offsets, cl_int, count);
-            collected_group.get_buffer(BufferType.COLLECTED_FLAG).transfer_out_int(raw.flags, cl_int, count);
             collected_group.get_buffer(BufferType.COLLECTED_TYPE).transfer_out_int(raw.types, cl_int, count);
         }
     }
@@ -75,14 +64,10 @@ public class CollectedObjectBuffer
 
     public static class Raw
     {
-        public int[] uv_offsets = new int[0];
-        public int[] flags = new int[0];
         public int[] types = new int[0];
 
         public void ensure_space(int count)
         {
-            uv_offsets = ensure_int(uv_offsets, count);
-            flags      = ensure_int(flags, count);
             types      = ensure_int(types, count);
         }
 

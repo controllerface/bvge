@@ -99,8 +99,6 @@ public class GPUCoreMemory implements SectorContainer
             case BROKEN_POSITIONS,
                  BROKEN_UV_OFFSETS,
                  BROKEN_MODEL_IDS,
-                 COLLECTED_UV_OFFSETS,
-                 COLLECTED_FLAG,
                  COLLECTED_TYPE -> null;
 
             case ANIM_POS_CHANNEL,
