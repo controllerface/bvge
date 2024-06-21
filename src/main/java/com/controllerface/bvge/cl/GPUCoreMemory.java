@@ -346,6 +346,7 @@ public class GPUCoreMemory implements SectorContainer
                 shard.x(),
                 shard.y(),
                 shard.size(),
+                0,
                 shard_flags,
                 shard.mass(),
                 shard.friction(),

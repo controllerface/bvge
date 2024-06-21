@@ -11,6 +11,7 @@ import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.substances.Solid;
+import com.controllerface.bvge.substances.SubstanceTools;
 import com.controllerface.bvge.util.Constants;
 import com.github.benmanes.caffeine.cache.Cache;
 
@@ -99,8 +100,15 @@ public class WorldUnloader extends GameSystem
                 var entity_hull_table_x    = raw_sectors.entity_hull_table[entity_2_x];
                 var entity_hull_table_y    = raw_sectors.entity_hull_table[entity_2_y];
 
-                var entity_bones = new UnloadedEntityBone[entity_bone_table_y - entity_bone_table_x + 1];
+                int entity_bone_table_length = entity_bone_table_y - entity_bone_table_x + 1;
+                var entity_bones = new UnloadedEntityBone[entity_bone_table_length];
                 var entity_hulls = new UnloadedHull[entity_hull_table_y - entity_hull_table_x + 1];
+
+                if (entity_bone_table_length > 0)
+                {
+                    System.out.println("unexpected bone table size: " + entity_bone_table_length);
+                    throw new RuntimeException("unexpected bone table size: " + entity_bone_table_length);
+                }
 
                 int entity_bone_count = 0;
                 for (int entity_bone_offset = entity_bone_table_x; entity_bone_offset <= entity_bone_table_y; entity_bone_offset++)
@@ -278,41 +286,44 @@ public class WorldUnloader extends GameSystem
             GPGPU.core_memory.unload_broken(raw_broken, broken_count);
             int offset_2 = 0;
             int offset_1 = 0;
-            for (int uv_offset : raw_broken.uv_offsets)
+            for (int type : raw_broken.uv_offsets)
             {
-                if (uv_offset == -1) break;
+                if (type == -1) break;
 
                 float x = raw_broken.positions[offset_2++];
                 float y = raw_broken.positions[offset_2++];
-
                 float m = raw_broken.model_ids[offset_1++];
 
-                var solid = Solid.values()[uv_offset];
-                float sz = UniformGrid.BLOCK_SIZE / 2;
-                float offset = (sz / 2) - 2f ;
+                var substance = SubstanceTools.from_type_index(type);
+                
+                if (substance instanceof Solid solid)
+                {
+                    float sz = UniformGrid.BLOCK_SIZE / 2;
+                    float offset = (sz / 2) - 2f;
 
-                if (m == ModelRegistry.BASE_BLOCK_INDEX)
-                {
-                    batch.new_block(true, x - offset, y - offset, sz, 90, 0,0, Constants.HullFlags.COLLECTABLE._int, solid, new int[4]);
-                    batch.new_block(true, x - offset, y + offset, sz, 90, 0,0, Constants.HullFlags.COLLECTABLE._int, solid, new int[4]);
-                    batch.new_block(true, x + offset, y - offset, sz, 90, 0,0, Constants.HullFlags.COLLECTABLE._int, solid, new int[4]);
-                    //batch.new_block(true, x + offset, y + offset, sz, 90, 0,0, 0, solid, new int[4]);
-                }
-                else if (m == ModelRegistry.L_SHARD_INDEX)
-                {
-                    batch.new_shard(false, false, x - offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
-                    batch.new_shard(false, true, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
-                }
-                else if (m == ModelRegistry.R_SHARD_INDEX)
-                {
-                    batch.new_shard(false, true, x - offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
-                    batch.new_shard(false, false, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
-                }
-                else if (m == ModelRegistry.BASE_SPIKE_INDEX)
-                {
-                    batch.new_shard(true, false, x - offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
-                    batch.new_shard(true, false, x + offset, y - offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
-                    batch.new_shard(true, false, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30,0, 0, solid);
+                    if (m == ModelRegistry.BASE_BLOCK_INDEX)
+                    {
+                        batch.new_block(true, x - offset, y - offset, sz, 90, 0, 0, Constants.HullFlags.COLLECTABLE._int, solid, new int[4]);
+                        batch.new_block(true, x - offset, y + offset, sz, 90, 0, 0, Constants.HullFlags.COLLECTABLE._int, solid, new int[4]);
+                        batch.new_block(true, x + offset, y - offset, sz, 90, 0, 0, Constants.HullFlags.COLLECTABLE._int, solid, new int[4]);
+                        //batch.new_block(true, x + offset, y + offset, sz, 90, 0,0, 0, solid, new int[4]);
+                    }
+                    else if (m == ModelRegistry.L_SHARD_INDEX)
+                    {
+                        batch.new_shard(false, false, x - offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30, 0, 0, solid);
+                        batch.new_shard(false, true, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30, 0, 0, solid);
+                    }
+                    else if (m == ModelRegistry.R_SHARD_INDEX)
+                    {
+                        batch.new_shard(false, true, x - offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30, 0, 0, solid);
+                        batch.new_shard(false, false, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30, 0, 0, solid);
+                    }
+                    else if (m == ModelRegistry.BASE_SPIKE_INDEX)
+                    {
+                        batch.new_shard(true, false, x - offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30, 0, 0, solid);
+                        batch.new_shard(true, false, x + offset, y - offset, sz, Constants.HullFlags.COLLECTABLE._int, 30, 0, 0, solid);
+                        batch.new_shard(true, false, x + offset, y + offset, sz, Constants.HullFlags.COLLECTABLE._int, 30, 0, 0, solid);
+                    }
                 }
             }
 

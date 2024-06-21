@@ -41,9 +41,20 @@ public class PhysicsObjects
         return Vector2f.distance(a[0], a[1], b[0], b[1]);
     }
 
-    public static int particle(SectorContainer world, float x, float y, float size,
-                               float mass, float friction, float restitution, int range_link,
-                               int flags, int point_flags, int model_id, int uv_variant, int type)
+    public static int particle(SectorContainer world,
+                               float x,
+                               float y,
+                               float size,
+                               float mass,
+                               float friction,
+                               float restitution,
+                               int range_link,
+                               int entity_flags,
+                               int global_hull_flags,
+                               int point_flags,
+                               int model_id,
+                               int uv_variant,
+                               int type)
     {
         int next_entity_id = world.next_entity();
         int next_hull_index = world.next_hull();
@@ -70,7 +81,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = flags | HullFlags.IS_CIRCLE._int | HullFlags.NO_BONES._int;
+        int hull_flags = global_hull_flags | HullFlags.IS_CIRCLE._int | HullFlags.NO_BONES._int;
         int hull_id = world.new_hull(mesh.mesh_id(),
             position,
             scale,
@@ -95,21 +106,44 @@ public class PhysicsObjects
             model_id,
             range_link,
             type,
-            0);
+            entity_flags);
     }
 
-    public static int liquid_particle(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid)
+    public static int liquid_particle(SectorContainer world,
+                                      float x,
+                                      float y,
+                                      float size,
+                                      float mass,
+                                      float friction,
+                                      float restitution,
+                                      int hull_flags,
+                                      int point_flags,
+                                      Liquid particle_fluid)
     {
         int type = SubstanceTools.to_type_index(particle_fluid);
-        return particle(world, x, y, size, mass, friction, restitution, 0, flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number, type);
+        return particle(world, x, y, size, mass, friction, restitution, 0, 0, hull_flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number, type);
     }
 
-    public static int circle_cursor(SectorContainer world, float x, float y, float size, int range_link)
+    public static int circle_cursor(SectorContainer world,
+                                    float x,
+                                    float y,
+                                    float size,
+                                    int range_link)
     {
-        return particle(world, x, y, size, 0.0f, 0.0f, 0.0f, range_link, HullFlags.IS_CURSOR._int, 0, CURSOR, 0,-1);
+        return particle(world, x, y, size, 0.0f, 0.0f, 0.0f, range_link, 0,  HullFlags.IS_CURSOR._int, 0, CURSOR, 0,-1);
     }
 
-    public static int tri(SectorContainer world, float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Solid shard_mineral)
+    public static int tri(SectorContainer world,
+                          float x,
+                          float y,
+                          float size,
+                          int entity_flags,
+                          int global_hull_flags,
+                          float mass,
+                          float friction,
+                          float restitution,
+                          int model_id,
+                          Solid shard_mineral)
     {
         int type = SubstanceTools.to_type_index(shard_mineral);
         int next_entity_id = world.next_entity();
@@ -155,7 +189,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = flags | HullFlags.IS_POLYGON._int | HullFlags.NO_BONES._int;
+        int hull_flags = global_hull_flags | HullFlags.IS_POLYGON._int | HullFlags.NO_BONES._int;
         int hull_id = world.new_hull(mesh.mesh_id(),
             position,
             scale,
@@ -179,10 +213,19 @@ public class PhysicsObjects
             model_id,
             0,
             type,
-            0);
+            entity_flags);
     }
 
-    public static int block(SectorContainer world, float x, float y, float size, int global_hull_flags, float mass, float friction, float restitution, int model_id, Solid block_mineral,
+    public static int block(SectorContainer world,
+                            float x,
+                            float y,
+                            float size,
+                            int entity_flags,
+                            int global_hull_flags,
+                            float mass,
+                            float friction,
+                            float restitution,
+                            int model_id, Solid block_mineral,
                             int[] hits)
     {
         int type = SubstanceTools.to_type_index(block_mineral);
@@ -205,8 +248,6 @@ public class PhysicsObjects
         var p2 = CLUtils.arg_float2(v2.x(), v2.y());
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
         var p4 = CLUtils.arg_float2(v4.x(), v4.y());
-
-
 
         var p1_index = world.new_point(p1, EMPTY_POINT_BONE_TABLE, v1.index(), next_hull_index, hits[0],0);
         var p2_index = world.new_point(p2, EMPTY_POINT_BONE_TABLE, v2.index(), next_hull_index, hits[1],0);
@@ -261,13 +302,13 @@ public class PhysicsObjects
             model_id,
             0,
             type,
-            0);
+            entity_flags);
     }
 
 
-    public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, Solid block_material, int[] hits)
+    public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int hull_flags, Solid block_material, int[] hits)
     {
-        return block(world, x, y, size, flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
+        return block(world, x, y, size, 0,hull_flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
     }
 
     private static final Random random = new Random();
