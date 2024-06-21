@@ -286,7 +286,7 @@ public class WorldUnloader extends GameSystem
             GPGPU.core_memory.unload_broken(raw_broken, broken_count);
             int offset_2 = 0;
             int offset_1 = 0;
-            for (int type : raw_broken.uv_offsets)
+            for (int type : raw_broken.entity_types)
             {
                 if (type == -1) break;
 
@@ -328,7 +328,7 @@ public class WorldUnloader extends GameSystem
             }
 
             // this is required to ensure broken objects from previous frames aren't processed
-            Arrays.fill(raw_broken.uv_offsets, -1);
+            Arrays.fill(raw_broken.entity_types, -1);
             spawn_queue.offer(batch);
         }
     }

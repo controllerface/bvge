@@ -97,7 +97,7 @@ public class GPUCoreMemory implements SectorContainer
         return switch (bufferType)
         {
             case BROKEN_POSITIONS,
-                 BROKEN_UV_OFFSETS,
+                 BROKEN_ENTITY_TYPES,
                  BROKEN_MODEL_IDS,
                  COLLECTED_TYPE -> null;
 

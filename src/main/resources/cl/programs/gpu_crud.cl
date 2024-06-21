@@ -297,13 +297,9 @@ __kernel void egress_collected(__global int *entity_flags,
 __kernel void egress_broken(__global float4 *entities, 
                             __global int *entity_flags,
                             __global int *entity_types,
-                            __global int2 *entity_hull_tables,
                             __global int *entity_model_ids,
-                            __global float4 *hulls, 
-                            __global int *hull_flags,
-                            __global int *hull_uv_offsets,
                             __global float2 *positions,
-                            __global int *uv_offsets,
+                            __global int *types,
                             __global int *model_ids,
                             __global int *counter)
 {
@@ -313,15 +309,13 @@ __kernel void egress_broken(__global float4 *entities,
     bool broken = (flags & BROKEN) !=0;
     if (broken)
     {
-        int2 hull_table = entity_hull_tables[current_entity];
         float4 entity = entities[current_entity];
         int entity_model_id = entity_model_ids[current_entity];
-        int hull_0_flags = hull_flags[hull_table.x];
         bool collectable = (flags & COLLECTABLE) !=0;
         if (collectable) return;
         int entity_id_offset = atomic_inc(&counter[0]); 
         positions[entity_id_offset] = entity.xy;
-        uv_offsets[entity_id_offset] = type;
+        types[entity_id_offset] = type;
         model_ids[entity_id_offset] = entity_model_id;
     }
 }
