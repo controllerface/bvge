@@ -237,7 +237,7 @@ __kernel void count_egress_entities(__global int *entity_flags,
         int2 hull_table = entity_hull_tables[current_entity];
         int hull_0_flags = hull_flags[hull_table.x];
         int hull_count  = hull_table.y - hull_table.x + 1;
-        bool collectable = (hull_0_flags & COLLECTABLE) !=0;
+        bool collectable = (flags & COLLECTABLE) !=0;
         flags = (flags | DELETED);
         entity_flags[current_entity] = flags;
         if (collectable) return;
@@ -317,7 +317,7 @@ __kernel void egress_broken(__global float4 *entities,
         float4 entity = entities[current_entity];
         int entity_model_id = entity_model_ids[current_entity];
         int hull_0_flags = hull_flags[hull_table.x];
-        bool collectable = (hull_0_flags & COLLECTABLE) !=0;
+        bool collectable = (flags & COLLECTABLE) !=0;
         if (collectable) return;
         int entity_id_offset = atomic_inc(&counter[0]); 
         positions[entity_id_offset] = entity.xy;

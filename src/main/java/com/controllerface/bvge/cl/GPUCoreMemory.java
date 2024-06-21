@@ -313,6 +313,7 @@ public class GPUCoreMemory implements SectorContainer
                     block.mass(),
                     block.friction(),
                     block.restitution(),
+                    block.entity_flags(),
                     block.hull_flags(),
                     block.material(),
                     block.hits());
@@ -327,6 +328,7 @@ public class GPUCoreMemory implements SectorContainer
                     block.mass(),
                     block.friction(),
                     block.restitution(),
+                    block.entity_flags(),
                     flags,
                     block.material(),
                     block.hits());
@@ -346,7 +348,7 @@ public class GPUCoreMemory implements SectorContainer
                 shard.x(),
                 shard.y(),
                 shard.size(),
-                0,
+                shard.entity_flags(),
                 shard_flags,
                 shard.mass(),
                 shard.friction(),
@@ -363,6 +365,7 @@ public class GPUCoreMemory implements SectorContainer
                 liquid.mass(),
                 liquid.friction(),
                 liquid.restitution(),
+                liquid.entity_flags(),
                 liquid.hull_flags(),
                 liquid.point_flags(),
                 liquid.particle_fluid());

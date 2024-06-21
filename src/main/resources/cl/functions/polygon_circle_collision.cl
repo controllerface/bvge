@@ -129,12 +129,13 @@ inline void polygon_circle_collision(int polygon_id,
         if (cursor_owner_entity_id == edge_entity_id) return; //prevent selecting/hitting yourself
 
         int cursor_owner_entity_flags = entity_flags[cursor_owner_entity_id];
+        int edge_entity_flags = entity_flags[edge_entity_id];
         bool atk = (cursor_owner_entity_flags & ATTACKING) !=0;
         bool collect = (cursor_owner_entity_flags & CAN_COLLECT) !=0;
         float center_distance = fast_distance(cursor_owner.xy, hull_e.xy);
         bool hit = point_polygon_containment(polygon_id, hull_v.xy, hull_edge_tables, points, edges, edge_flags);
         bool in_range = center_distance <= 192.0f;
-        bool collectable = (edge_hull_flags & COLLECTABLE) !=0;
+        bool collectable = (edge_entity_flags & COLLECTABLE) !=0;
         edge_hull_flags |= CURSOR_OVER;           
         if (in_range) edge_hull_flags |= IN_RANGE;
         if (hit) edge_hull_flags |= CURSOR_HIT;

@@ -116,12 +116,13 @@ public class PhysicsObjects
                                       float mass,
                                       float friction,
                                       float restitution,
+                                      int entity_flags,
                                       int hull_flags,
                                       int point_flags,
                                       Liquid particle_fluid)
     {
         int type = SubstanceTools.to_type_index(particle_fluid);
-        return particle(world, x, y, size, mass, friction, restitution, 0, 0, hull_flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number, type);
+        return particle(world, x, y, size, mass, friction, restitution, 0, entity_flags, hull_flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number, type);
     }
 
     public static int circle_cursor(SectorContainer world,
@@ -306,9 +307,9 @@ public class PhysicsObjects
     }
 
 
-    public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int hull_flags, Solid block_material, int[] hits)
+    public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int entity_flags, int hull_flags, Solid block_material, int[] hits)
     {
-        return block(world, x, y, size, 0,hull_flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
+        return block(world, x, y, size, entity_flags,hull_flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
     }
 
     private static final Random random = new Random();

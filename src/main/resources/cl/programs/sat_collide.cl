@@ -434,7 +434,7 @@ __kernel void move_entities(__global float4 *hulls,
 
     int hull_flags_0 = hull_flags[start];
     bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
-    bool collectable = (hull_flags_0 & COLLECTABLE) != 0;
+    bool collectable = (flags & COLLECTABLE) != 0;
 
     int hull_0_integrity = hull_integrity[start];
     bool single_hull = hull_count == 1;
