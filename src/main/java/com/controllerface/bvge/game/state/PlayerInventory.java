@@ -1,7 +1,7 @@
 package com.controllerface.bvge.game.state;
 
 import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.substances.SubstanceTypeIndex;
+import com.controllerface.bvge.substances.SubstanceTools;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -13,7 +13,7 @@ public class PlayerInventory
 
     public void collect_substance(int type_index, int quantity)
     {
-        var type = SubstanceTypeIndex.from_type_index(type_index);
+        var type = SubstanceTools.from_type_index(type_index);
         switch (type)
         {
             case Solid s ->

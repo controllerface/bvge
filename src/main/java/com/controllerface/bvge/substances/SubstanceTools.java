@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SubstanceTypeIndex
+public class SubstanceTools
 {
     private static final List<Enum<?>> offsets = new ArrayList<>();
 

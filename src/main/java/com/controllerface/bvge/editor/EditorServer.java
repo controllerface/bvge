@@ -3,7 +3,7 @@ package com.controllerface.bvge.editor;
 import com.controllerface.bvge.editor.http.Header;
 import com.controllerface.bvge.editor.http.Request;
 import com.controllerface.bvge.editor.http.RequestLine;
-import com.controllerface.bvge.substances.SubstanceTypeIndex;
+import com.controllerface.bvge.substances.SubstanceTools;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -240,7 +240,7 @@ public class EditorServer
                     streams.forEach(stream -> stream.queue_event(name, value)));
 
                 var inventory_event = inventory.entrySet().stream()
-                    .map(e -> "\"" + SubstanceTypeIndex.from_type_index(e.getKey()) + "\" : " + e.getValue())
+                    .map(e -> "\"" + SubstanceTools.from_type_index(e.getKey()) + "\" : " + e.getValue())
                     .collect(Collectors.joining(", ","{","}"));
 
                 streams.forEach(stream -> stream.queue_event("inventory", inventory_event));

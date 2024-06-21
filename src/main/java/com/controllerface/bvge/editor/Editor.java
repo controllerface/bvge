@@ -1,20 +1,11 @@
 package com.controllerface.bvge.editor;
 
-import com.controllerface.bvge.substances.Solid;
-
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-
 public class Editor
 {
     private static final int DEFAULT_PORT = 9000;
     private static EditorServer server;
 
     public static final boolean ACTIVE = true;
-
-
 
     public static void init()
     {

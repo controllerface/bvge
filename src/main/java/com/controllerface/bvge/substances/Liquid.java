@@ -20,36 +20,21 @@ public enum Liquid
 
     ;
 
+    private static final int slot_count = 4;
     public final Vector4f color;
-    public final byte liquid_number;
+    public final int liquid_number;
     public final Compound[] compounds;
     private static String lookup_table = "";
-
-    Liquid(Vector4f color, Compound[] compounds)
+    
+    Liquid(Vector4f color, Compound ... compounds)
     {
+        assert compounds != null : "Null element list";
+        assert compounds.length <= slot_count;
         this.color = color;
-        this.liquid_number = (byte) this.ordinal();
-        this.compounds = compounds;
-    }
-
-    Liquid(Vector4f color, Compound compound_1)
-    {
-        this(color, new Compound[]{compound_1, NOTHING, NOTHING, NOTHING});
-    }
-
-    Liquid(Vector4f color, Compound compound_1, Compound compound_2)
-    {
-        this(color, new Compound[]{compound_1, compound_2, NOTHING, NOTHING});
-    }
-
-    Liquid(Vector4f color, Compound compound_1, Compound compound_2, Compound compound_3)
-    {
-        this(color, new Compound[]{compound_1, compound_2, compound_3, NOTHING});
-    }
-
-    Liquid(Vector4f color, Compound compound_1, Compound compound_2, Compound compound_3, Compound compound_4)
-    {
-        this(color, new Compound[]{compound_1, compound_2, compound_3, compound_4});
+        var _compounds = new Compound[]{ Compound.NOTHING, Compound.NOTHING, Compound.NOTHING, Compound.NOTHING };
+        System.arraycopy(compounds, 0, _compounds, 0, compounds.length);
+        this.liquid_number = this.ordinal();
+        this.compounds = _compounds;
     }
 
     /**

@@ -10,7 +10,7 @@ import com.controllerface.bvge.geometry.UnloadedEntity;
 import com.controllerface.bvge.geometry.Vertex;
 import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.substances.SubstanceTypeIndex;
+import com.controllerface.bvge.substances.SubstanceTools;
 import com.controllerface.bvge.util.MathEX;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -100,7 +100,7 @@ public class PhysicsObjects
 
     public static int liquid_particle(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int flags, int point_flags, Liquid particle_fluid)
     {
-        int type = SubstanceTypeIndex.to_type_index(particle_fluid);
+        int type = SubstanceTools.to_type_index(particle_fluid);
         return particle(world, x, y, size, mass, friction, restitution, 0, flags, point_flags, CIRCLE_PARTICLE, particle_fluid.liquid_number, type);
     }
 
@@ -111,7 +111,7 @@ public class PhysicsObjects
 
     public static int tri(SectorContainer world, float x, float y, float size, int flags, float mass, float friction, float restitution, int model_id, Solid shard_mineral)
     {
-        int type = SubstanceTypeIndex.to_type_index(shard_mineral);
+        int type = SubstanceTools.to_type_index(shard_mineral);
         int next_entity_id = world.next_entity();
         int next_hull_index = world.next_hull();
 
@@ -185,7 +185,7 @@ public class PhysicsObjects
     public static int block(SectorContainer world, float x, float y, float size, int global_hull_flags, float mass, float friction, float restitution, int model_id, Solid block_mineral,
                             int[] hits)
     {
-        int type = SubstanceTypeIndex.to_type_index(block_mineral);
+        int type = SubstanceTools.to_type_index(block_mineral);
         int next_entity_id = world.next_entity();
         int next_hull_index = world.next_hull();
 
