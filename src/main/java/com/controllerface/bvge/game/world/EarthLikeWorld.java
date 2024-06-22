@@ -207,6 +207,7 @@ public class EarthLikeWorld implements WorldType
                 float world_y_block = world_y + (UniformGrid.BLOCK_SIZE / 2f);
 
                 //if (world_y > 0.0f) continue;
+                // todo: write logic for "above ground"
 
                 underground(batch, world_x_block, world_y_block, world_y);
             }
@@ -293,10 +294,10 @@ public class EarthLikeWorld implements WorldType
                     int block_bleft  = map_to_block(n_bleft,  block_range_floor, (float)block_pallette.length);
                     int block_bright = map_to_block(n_bright, block_range_floor, (float)block_pallette.length);
 
-                    h1 = 0;//random.nextInt(100, 1000);
-                    h2 = 0;//random.nextInt(100, 1000);
-                    h3 = 0;//random.nextInt(100, 1000);
-                    h4 = 0;//random.nextInt(100, 1000);
+                    h1 = 0;
+                    h2 = 0;
+                    h3 = 0;
+                    h4 = 0;
 
                     h1 += block == block_below  ? 0 : 500;
                     h1 += block == block_left   ? 0 : 500;
@@ -322,7 +323,7 @@ public class EarthLikeWorld implements WorldType
                     .1f, 0.05f, 0.005f, solid);
                 else
 
-                    batch.new_block(false, world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, 0,
+                    batch.new_block(world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, 0,
                         Constants.HullFlags.IS_STATIC._int | Constants.HullFlags.OUT_OF_BOUNDS._int, solid, hits);
             }
         }

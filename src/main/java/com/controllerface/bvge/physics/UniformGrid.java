@@ -63,11 +63,16 @@ public class UniformGrid
         height = inner_height + perimeter_height;
         outer_width = width + outer_perimeter_width;
         outer_height = height + outer_perimeter_height;
-        x_subdivisions = 200;
-        y_subdivisions = 100;
+
+        int px = (int)(width / 32.0f);
+        int py = (int)(height / 32.0f);
+
+        x_subdivisions = px;
+        y_subdivisions = py;
         directory_length = x_subdivisions * y_subdivisions;
         x_spacing = width / x_subdivisions;
         y_spacing = height / y_subdivisions;
+        System.out.println("spacing: " + x_spacing + " : " + y_spacing);
     }
 
     public void update_sector_metrics(Set<Sector> loaded_sectors, float sector_origin_x, float sector_origin_y, float sector_width, float sector_height)

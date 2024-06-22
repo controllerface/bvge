@@ -395,6 +395,7 @@ __kernel void integrate_entities(__global float4 *entities,
         entity.zw = prv;
     }
 
+
     bool sector_in = is_cursor || is_point_in_bounds(pos, sector_x, sector_y, sector_w, sector_h);
 
     _entity_flags = !sector_in 

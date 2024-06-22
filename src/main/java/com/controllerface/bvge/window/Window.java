@@ -357,7 +357,7 @@ public class Window
         int fps;
         int frameCount = 0;
 
-        while (!glfwWindowShouldClose(glfwWindow))
+        while (!glfwWindowShouldClose(glfwWindow) && dt < 5.0f)
         {
             glfwPollEvents();
 
@@ -389,6 +389,10 @@ public class Window
                     Editor.queue_event("fps", String.valueOf(fps));
                 }
             }
+        }
+        if (dt > 5.0f)
+        {
+            System.err.println("excessive frame time: " + dt);
         }
     }
 

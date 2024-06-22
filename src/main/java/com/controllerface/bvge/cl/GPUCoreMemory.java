@@ -8,7 +8,6 @@ import com.controllerface.bvge.game.world.sectors.*;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
-import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -304,35 +303,17 @@ public class GPUCoreMemory implements SectorContainer
         }
         for (var block : batch.blocks)
         {
-            if (block.dynamic())
-            {
-                PhysicsObjects.base_block(sector_ingress_buffer,
-                    block.x(),
-                    block.y(),
-                    block.size(),
-                    block.mass(),
-                    block.friction(),
-                    block.restitution(),
-                    block.entity_flags(),
-                    block.hull_flags(),
-                    block.material(),
-                    block.hits());
-            }
-            else
-            {
-                int flags = block.hull_flags() | Constants.HullFlags.IS_STATIC._int;
-                PhysicsObjects.base_block(sector_ingress_buffer,
-                    block.x(),
-                    block.y(),
-                    block.size(),
-                    block.mass(),
-                    block.friction(),
-                    block.restitution(),
-                    block.entity_flags(),
-                    flags,
-                    block.material(),
-                    block.hits());
-            }
+            PhysicsObjects.base_block(sector_ingress_buffer,
+                block.x(),
+                block.y(),
+                block.size(),
+                block.mass(),
+                block.friction(),
+                block.restitution(),
+                block.entity_flags(),
+                block.hull_flags(),
+                block.material(),
+                block.hits());
         }
         for (var shard : batch.shards)
         {

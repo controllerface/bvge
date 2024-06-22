@@ -265,7 +265,6 @@ __kernel void count_egress_entities(__global int *entity_flags,
             hull_bone_count += hull_bone_table.y - hull_bone_table.x + 1;
         }
 
-
         atomic_inc(&counters[0]); 
         atomic_add(&counters[1], hull_count);
         atomic_add(&counters[2], point_count);

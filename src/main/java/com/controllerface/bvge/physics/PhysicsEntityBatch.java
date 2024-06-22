@@ -9,7 +9,7 @@ import java.util.List;
 
 public class PhysicsEntityBatch
 {
-    public record Block(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, int entity_flags, int hull_flags, Solid material, int[] hits) { }
+    public record Block(float x, float y, float size, float mass, float friction, float restitution, int entity_flags, int hull_flags, Solid material, int[] hits) { }
     public record Shard(boolean spike, boolean flip, float x, float y, float size, int entity_flags, int hull_flags, float mass, float friction, float restitution, Solid material) { }
     public record Fluid(float x, float y, float size, float mass, float friction, float restitution, int entity_flags, int hull_flags, int point_flags, com.controllerface.bvge.substances.Liquid particle_fluid) { }
 
@@ -21,9 +21,9 @@ public class PhysicsEntityBatch
 
     public PhysicsEntityBatch() {}
 
-    public void new_block(boolean dynamic, float x, float y, float size, float mass, float friction, float restitution, int entity_flags, int hull_flags, Solid block_material, int[] hits)
+    public void new_block(float x, float y, float size, float mass, float friction, float restitution, int entity_flags, int hull_flags, Solid block_material, int[] hits)
     {
-        blocks.add(new Block(dynamic, x, y, size, mass, friction, restitution, entity_flags, hull_flags, block_material, hits));
+        blocks.add(new Block(x, y, size, mass, friction, restitution, entity_flags, hull_flags, block_material, hits));
     }
 
     public void new_shard(boolean spike, boolean flip, float x, float y, float size, int entity_flags, int hull_flags, float mass, float friction, float restitution, Solid material)

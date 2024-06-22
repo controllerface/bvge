@@ -164,9 +164,9 @@ public class PhysicsObjects
         var p2 = CLUtils.arg_float2(v2.x(), v2.y());
         var p3 = CLUtils.arg_float2(v3.x(), v3.y());
 
-        int h1 = random.nextInt(100, 1000);
-        int h2 = random.nextInt(100, 1000);
-        int h3 = random.nextInt(100, 4000);
+        int h1 = 0;
+        int h2 = 0;
+        int h3 = 0;
 
         var p1_index = world.new_point(p1, EMPTY_POINT_BONE_TABLE, v1.index(), next_hull_index, h1,0);
         var p2_index = world.new_point(p2, EMPTY_POINT_BONE_TABLE, v2.index(), next_hull_index, h2,0);

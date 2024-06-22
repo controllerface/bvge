@@ -104,7 +104,7 @@ public class WorldUnloader extends GameSystem
                 var entity_bones = new UnloadedEntityBone[entity_bone_table_length];
                 var entity_hulls = new UnloadedHull[entity_hull_table_y - entity_hull_table_x + 1];
 
-                if (entity_bone_table_length > 0)
+                if (entity_bone_table_length > 0 && raw_sectors.entity_bone.length == 0)
                 {
                     System.out.println("unexpected bone table size: " + entity_bone_table_length);
                     throw new RuntimeException("unexpected bone table size: " + entity_bone_table_length);
@@ -303,9 +303,9 @@ public class WorldUnloader extends GameSystem
 
                     if (m == ModelRegistry.BASE_BLOCK_INDEX)
                     {
-                        batch.new_block(true, x - offset, y - offset, sz, 90, 0, 0, Constants.EntityFlags.COLLECTABLE.bits, 0, solid, new int[4]);
-                        batch.new_block(true, x - offset, y + offset, sz, 90, 0, 0, Constants.EntityFlags.COLLECTABLE.bits, 0, solid, new int[4]);
-                        batch.new_block(true, x + offset, y - offset, sz, 90, 0, 0, Constants.EntityFlags.COLLECTABLE.bits, 0, solid, new int[4]);
+                        batch.new_block(x - offset, y - offset, sz, 90, 0, 0, Constants.EntityFlags.COLLECTABLE.bits, 0, solid, new int[4]);
+                        batch.new_block(x - offset, y + offset, sz, 90, 0, 0, Constants.EntityFlags.COLLECTABLE.bits, 0, solid, new int[4]);
+                        batch.new_block(x + offset, y - offset, sz, 90, 0, 0, Constants.EntityFlags.COLLECTABLE.bits, 0, solid, new int[4]);
                         //batch.new_block(true, x + offset, y + offset, sz, 90, 0,0, 0, solid, new int[4]);
                     }
                     else if (m == ModelRegistry.L_SHARD_INDEX)

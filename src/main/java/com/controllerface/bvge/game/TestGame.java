@@ -103,12 +103,12 @@ public class TestGame extends GameMode
         ecs.attach_component(player, Component.LinearForce, new LinearForce(1600));
     }
 
-    private void load_systems()
+    private void load_systems(float x, float y)
     {
         ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, spawn_queue));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid));
         ecs.register_system(new WorldUnloader(ecs, sector_cache, spawn_queue));
-        ecs.register_system(new CameraTracking(ecs, uniformGrid));
+        ecs.register_system(new CameraTracking(ecs, uniformGrid, x, y));
         ecs.register_system(new InventorySystem(ecs, player_inventory));
         ecs.register_system(blanking_system);
 
@@ -156,8 +156,11 @@ public class TestGame extends GameMode
     @Override
     public void load()
     {
-        gen_player(1.2f, -250, 0);
-        load_systems();
+        float player_size = 1f;
+        float player_spawn_x = -250;
+        float player_spawn_y = 0;
+        gen_player(player_size, player_spawn_x, player_spawn_y);
+        load_systems(player_spawn_x, player_spawn_y);
     }
 
 
