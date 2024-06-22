@@ -217,6 +217,13 @@ public class EarthLikeWorld implements WorldType
     {
         if (world_y > 500.0) return;
 
+        int[] hits;
+        int h1 = random.nextInt(1000, 2000);
+        int h2 = random.nextInt(1000, 2000);
+        int h3 = random.nextInt(1000, 2000);
+        int h4 = random.nextInt(1000, 2000);
+        hits = new int[]{ h1, h2, h3, h4 };
+
         float block_x = world_x_block / UniformGrid.BLOCK_SIZE;
         float block_y = world_y / UniformGrid.BLOCK_SIZE;
         float n = noise.GetNoise(block_x, block_y);
@@ -224,11 +231,8 @@ public class EarthLikeWorld implements WorldType
         int block = map_to_block(n, block_range_floor, (float)block_pallette.length);
         var solid = block_pallette[block];
         boolean bs_or_ws = solid != SCHIST;
-        int flag = world_y > 250.0f  || bs_or_ws
-            ? Constants.HullFlags.IS_STATIC._int
-            : 0;
         batch.new_block(world_x_block, world_y_block, UniformGrid.BLOCK_SIZE, 90f, 0.03f, 0.0003f, 0,
-            flag | Constants.HullFlags.OUT_OF_BOUNDS._int, solid, new int[4]);
+            Constants.HullFlags.IS_STATIC._int | Constants.HullFlags.OUT_OF_BOUNDS._int, solid, hits);
     }
 
     private void underground(PhysicsEntityBatch batch, float world_x_block, float world_y_block, float world_y)
