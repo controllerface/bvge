@@ -11,7 +11,7 @@ import com.controllerface.bvge.util.MathEX;
 
 import java.util.Random;
 
-import static com.controllerface.bvge.substances.Solid.ANDESITE;
+import static com.controllerface.bvge.substances.Solid.*;
 
 public class EarthLikeWorld implements WorldType
 {
@@ -20,9 +20,9 @@ public class EarthLikeWorld implements WorldType
     private final FastNoiseLite noise3 = new FastNoiseLite();
     private final Random random = new Random();
 
-    private static final float block_range_floor = -0.03f;
-    private static final float water_range_floor = -0.2f;
-    private static final float shard_range_floor = -0.15f;
+    private static final float block_range_floor = -0.3f;
+    private static final float shard_range_floor = -0.35f;
+    private static final float water_range_floor = -0.4f;
 
     private int map_to_block(float n, float floor, float length)
     {
@@ -206,13 +206,29 @@ public class EarthLikeWorld implements WorldType
                 float world_y = (y * UniformGrid.BLOCK_SIZE) + y_offset;
                 float world_y_block = world_y + (UniformGrid.BLOCK_SIZE / 2f);
 
-                //if (world_y > 0.0f) continue;
-                // todo: write logic for "above ground"
-
-                underground(batch, world_x_block, world_y_block, world_y);
+                if (world_y > 0.0f) surface(batch, world_x_block, world_y_block, world_y, x, y);
+                else underground(batch, world_x_block, world_y_block, world_y);
             }
         }
         return batch;
+    }
+
+    private void surface(PhysicsEntityBatch batch, float world_x_block, float world_y_block, float world_y, int x, int y)
+    {
+        if (world_y > 500.0) return;
+
+        float block_x = world_x_block / UniformGrid.BLOCK_SIZE;
+        float block_y = world_y / UniformGrid.BLOCK_SIZE;
+        float n = noise.GetNoise(block_x, block_y);
+        if (n < 0) n *= -1;
+        int block = map_to_block(n, block_range_floor, (float)block_pallette.length);
+        var solid = block_pallette[block];
+        boolean bs_or_ws = solid != SCHIST;
+        int flag = world_y > 250.0f  || bs_or_ws
+            ? Constants.HullFlags.IS_STATIC._int
+            : 0;
+        batch.new_block(world_x_block, world_y_block, UniformGrid.BLOCK_SIZE, 90f, 0.03f, 0.0003f, 0,
+            flag | Constants.HullFlags.OUT_OF_BOUNDS._int, solid, new int[4]);
     }
 
     private void underground(PhysicsEntityBatch batch, float world_x_block, float world_y_block, float world_y)
