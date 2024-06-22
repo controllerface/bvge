@@ -253,7 +253,7 @@ public class WorldUnloader extends GameSystem
                 }
 
                 // todo: sector objects can probably be cached since they are immutable records
-                var raw_sector = UniformGridRenderer.get_sector_for_point(entity_x, entity_y);
+                var raw_sector = UniformGrid.get_sector_for_point(entity_x, entity_y);
                 var sec = new Sector(raw_sector[0], raw_sector[1]);
                 var batch = running_batches.computeIfAbsent(sec, (_) -> new PhysicsEntityBatch());
                 int adjusted_root_hull = entity_root_hull - entity_hull_table_x;

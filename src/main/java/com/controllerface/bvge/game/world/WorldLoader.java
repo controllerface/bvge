@@ -61,8 +61,8 @@ public class WorldLoader extends GameSystem
 
     private void load_sectors(SectorBounds sector_bounds)
     {
-        var sector_0_key = UniformGridRenderer.get_sector_for_point(sector_bounds.outer_x_origin, sector_bounds.outer_y_origin);
-        var sector_2_key = UniformGridRenderer.get_sector_for_point(sector_bounds.outer_x_corner, sector_bounds.outer_y_corner);
+        var sector_0_key = UniformGrid.get_sector_for_point(sector_bounds.outer_x_origin, sector_bounds.outer_y_origin);
+        var sector_2_key = UniformGrid.get_sector_for_point(sector_bounds.outer_x_corner, sector_bounds.outer_y_corner);
 
         float sector_0_origin_x = (float) sector_0_key[0] * UniformGrid.SECTOR_SIZE;
         float sector_0_origin_y = (float) sector_0_key[1] * UniformGrid.SECTOR_SIZE;
