@@ -3,6 +3,7 @@ package com.controllerface.bvge.editor;
 import com.controllerface.bvge.editor.http.Header;
 import com.controllerface.bvge.editor.http.Request;
 import com.controllerface.bvge.editor.http.RequestLine;
+import com.controllerface.bvge.substances.SubstanceTools;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,18 +17,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class EditorServer
 {
-    private final int port;
-    private final long EVENT_INTERVAL = Duration.ofMillis(500).toMillis();
-    private ServerSocket server_socket;
-    private Thread incoming;
-    private Thread outgoing;
-
     private static final byte[] EOL_BYTES = new byte[]{'\r', '\n'};
     private static final byte[] EOM_BYTES = new byte[]{'\r', '\n', '\r', '\n'};
-
     private static final byte[] _404 = ("""
         HTTP/1.1 404 Not Found\r
         Content-Length:9\r
@@ -35,8 +30,16 @@ public class EditorServer
         \r
         Not Found""").getBytes(StandardCharsets.UTF_8);
 
+    private final int port;
+    private final long EVENT_INTERVAL = Duration.ofMillis(500).toMillis();
     private final List<EditorStream> streams = new CopyOnWriteArrayList<>();
     private final Map<String, String> stat_events = new ConcurrentHashMap<>();
+
+    private ServerSocket server_socket;
+    private Thread incoming;
+    private Thread outgoing;
+
+    private static final Map<Integer, Integer> inventory = Collections.synchronizedMap(new HashMap<>());
 
     @FunctionalInterface
     private interface EndpointHandler
@@ -116,7 +119,7 @@ public class EditorServer
         }
         catch (IOException ioException)
         {
-            System.out.println("Error writing to response stream");
+            System.err.println("Error writing to response stream");
         }
     }
 
@@ -216,7 +219,7 @@ public class EditorServer
         }
         catch (SocketException se)
         {
-            System.out.println("EditorServer terminated");
+            System.err.println("EditorServer terminated");
         }
         catch (IOException e)
         {
@@ -232,8 +235,15 @@ public class EditorServer
             {
                 //noinspection BusyWait
                 Thread.sleep(EVENT_INTERVAL);
+
                 stat_events.forEach((name, value) ->
                     streams.forEach(stream -> stream.queue_event(name, value)));
+
+                var inventory_event = inventory.entrySet().stream()
+                    .map(e -> "\"" + SubstanceTools.from_type_index(e.getKey()) + "\" : " + e.getValue())
+                    .collect(Collectors.joining(", ","{","}"));
+
+                streams.forEach(stream -> stream.queue_event("inventory", inventory_event));
             }
             catch (Exception _)
             {
@@ -245,6 +255,12 @@ public class EditorServer
     public void queue_stat_event(String name, String value)
     {
         stat_events.put(name, value);
+    }
+
+    public void inventory(int id, int qty)
+    {
+        int current = inventory.computeIfAbsent(id, (_) -> 0);
+        inventory.put(id, current + qty);
     }
 
     public void add_stream(EditorStream stream)

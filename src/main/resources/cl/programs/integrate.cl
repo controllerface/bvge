@@ -395,14 +395,11 @@ __kernel void integrate_entities(__global float4 *entities,
         entity.zw = prv;
     }
 
-    bool sector_in = is_point_in_bounds(pos, sector_x, sector_y, sector_w, sector_h);
 
-    _entity_flags = sector_in 
-        ? _entity_flags & ~SECTOR_OUT
-        : _entity_flags | SECTOR_OUT; 
+    bool sector_in = is_cursor || is_point_in_bounds(pos, sector_x, sector_y, sector_w, sector_h);
 
-    _entity_flags = is_cursor 
-        ? _entity_flags & ~SECTOR_OUT
+    _entity_flags = !sector_in 
+        ? _entity_flags | SECTOR_OUT
         : _entity_flags; 
 
     entities[current_entity] = entity;

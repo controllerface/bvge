@@ -47,6 +47,8 @@ public class Window
     private final ECS ecs = new ECS();
     private final Camera camera;
 
+    private boolean closing = false;
+
     private Window()
     {
         this.width = 1920;
@@ -75,10 +77,17 @@ public class Window
         return Window.INSTANCE;
     }
 
+    public boolean is_closing()
+    {
+        return closing;
+    }
+
     public void run()
     {
         glfwShowWindow(glfwWindow);
         loop();
+
+        closing = true;
 
         ecs.shutdown();
 
@@ -348,7 +357,7 @@ public class Window
         int fps;
         int frameCount = 0;
 
-        while (!glfwWindowShouldClose(glfwWindow))
+        while (!glfwWindowShouldClose(glfwWindow) && dt < 5.0f)
         {
             glfwPollEvents();
 
@@ -380,6 +389,10 @@ public class Window
                     Editor.queue_event("fps", String.valueOf(fps));
                 }
             }
+        }
+        if (dt > 5.0f)
+        {
+            System.err.println("excessive frame time: " + dt);
         }
     }
 

@@ -20,7 +20,6 @@ import static org.lwjgl.opengl.GL45C.*;
 public class UniformGridRenderer extends GameSystem
 {
     private static final int VERTICES_PER_BOX = 4;
-
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int COLOR_ATTRIBUTE = 1;
 
@@ -79,19 +78,6 @@ public class UniformGridRenderer extends GameSystem
             && a1 < y + h
             && a1 + a3 > y;
     }
-
-    // calculates a spatial index cell for a given point
-    public static int[] get_sector_for_point(float px, float py)
-    {
-        int[] out = new int[2];
-        int index_x = (int) Math.floor(px / UniformGrid.SECTOR_SIZE);
-        int index_y = (int) Math.floor(py / UniformGrid.SECTOR_SIZE);
-        out[0] = index_x;
-        out[1] = index_y;
-        return out;
-    }
-
-
 
     private int[] write_rect(GridBounds rect, float[] vertex_buffer, float[] color_buffer, int vertex_index, int color_index)
     {
@@ -172,10 +158,10 @@ public class UniformGridRenderer extends GameSystem
         var sector_bounds_p3 = new GridPoint(s_xo, s_yo + uniformGrid.sector_height(), 0.9f, 0.5f, 0.5f, 0.5f);
         var sector_bounds    = new GridBounds(sector_bounds_p0, sector_bounds_p1, sector_bounds_p2, sector_bounds_p3);
 
-        var sector_0_key = get_sector_for_point(outer_bounds.p0.x, outer_bounds.p0.y);
-        var sector_1_key = get_sector_for_point(outer_bounds.p1.x, outer_bounds.p1.y);
-        var sector_2_key = get_sector_for_point(outer_bounds.p2.x, outer_bounds.p2.y);
-        var sector_3_key = get_sector_for_point(outer_bounds.p3.x, outer_bounds.p3.y);
+        var sector_0_key = UniformGrid.get_sector_for_point(outer_bounds.p0.x, outer_bounds.p0.y);
+        var sector_1_key = UniformGrid.get_sector_for_point(outer_bounds.p1.x, outer_bounds.p1.y);
+        var sector_2_key = UniformGrid.get_sector_for_point(outer_bounds.p2.x, outer_bounds.p2.y);
+        var sector_3_key = UniformGrid.get_sector_for_point(outer_bounds.p3.x, outer_bounds.p3.y);
 
         float sector_0_origin_x = (float)sector_0_key[0] * sector_size;
         float sector_0_origin_y = (float)sector_0_key[1] * sector_size;
@@ -256,7 +242,7 @@ public class UniformGridRenderer extends GameSystem
             controlPoints = Component.ControlPoints.coerce(component);
         }
 
-        var sec = UniformGridRenderer.get_sector_for_point(controlPoints.get_world_target().x, controlPoints.get_world_target().y);
+        var sec = UniformGrid.get_sector_for_point(controlPoints.get_world_target().x, controlPoints.get_world_target().y);
 
         float offset_x = sec[0] * UniformGrid.BLOCK_COUNT;
         float offset_y = sec[1] * UniformGrid.BLOCK_COUNT;

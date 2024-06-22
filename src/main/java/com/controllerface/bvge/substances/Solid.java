@@ -40,32 +40,17 @@ public enum Solid
 
     ;
 
+    private static final int slot_count = 4;
     public final int mineral_number;
     public final Compound[] compounds;
 
-    Solid(Compound[] compounds)
+    Solid(Compound ... compounds)
     {
+        assert compounds != null : "Null element list";
+        assert compounds.length <= slot_count;
+        var _compounds = new Compound[]{ Compound.NOTHING, Compound.NOTHING, Compound.NOTHING, Compound.NOTHING };
+        System.arraycopy(compounds, 0, _compounds, 0, compounds.length);
         this.mineral_number = this.ordinal();
-        this.compounds = compounds;
-    }
-
-    Solid(Compound compound_1)
-    {
-        this(new Compound[]{compound_1, Compound.NOTHING, Compound.NOTHING, Compound.NOTHING});
-    }
-
-    Solid(Compound compound_1, Compound compound_2)
-    {
-        this(new Compound[]{compound_1, compound_2, Compound.NOTHING, Compound.NOTHING});
-    }
-
-    Solid(Compound compound_1, Compound compound_2, Compound compound_3)
-    {
-        this(new Compound[]{compound_1, compound_2,compound_3, Compound.NOTHING});
-    }
-
-    Solid(Compound compound_1, Compound compound_2, Compound compound_3, Compound compound_4)
-    {
-        this(new Compound[]{compound_1, compound_2, compound_3, compound_4});
+        this.compounds = _compounds;
     }
 }

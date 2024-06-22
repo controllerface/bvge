@@ -1,7 +1,8 @@
 package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.cl.kernels.Kernel;
+import com.controllerface.bvge.cl.kernels.*;
+import com.controllerface.bvge.cl.kernels.crud.*;
 
 public class GPUCrud extends GPUProgram
 {
@@ -11,8 +12,23 @@ public class GPUCrud extends GPUProgram
         src.add(const_entity_flags);
         src.add(const_hull_flags);
         src.add(func_rotate_point);
-        src.add(kernel_create_point);
-        src.add(kernel_create_entity);
+        src.add(CreatePoint_k.kernel_source);
+        src.add(CreateEdge_k.kernel_source);
+        src.add(CreateHull_k.kernel_source);
+        src.add(CreateEntity_k.kernel_source);
+        src.add(CreateBoneChannel_k.kernel_source);
+        src.add(CreateAnimationTimings_k.kernel_source);
+        src.add(CreateKeyFrame_k.kernel_source);
+        src.add(CreateTextureUV_k.kernel_source);
+        src.add(CreateVertexRef_k.kernel_source);
+        src.add(CreateModelTransform_k.kernel_source);
+        src.add(CreateBoneBindPose_k.kernel_source);
+        src.add(CreateBoneRef_k.kernel_source);
+        src.add(CreateHullBone_k.kernel_source);
+        src.add(CreateEntityBone_k.kernel_source);
+        src.add(CreateMeshReference_k.kernel_source);
+        src.add(CreateMeshFace_k.kernel_source);
+        src.add(SetBoneChannelTable_k.kernel_source);
         src.add(CLUtils.read_src("programs/gpu_crud.cl"));
 
         make_program();

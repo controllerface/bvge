@@ -123,18 +123,19 @@ inline void polygon_circle_collision(int polygon_id,
     bool cursor_v = (vert_hull_flags & IS_CURSOR) !=0;
     if (cursor_v)
     {
-        int owner_id = entity_model_transforms[vert_entity_id];
-        float4 owner = hulls[owner_id];
-        int owner_entity_id = hull_entity_ids[owner_id];        
-        if (owner_entity_id == edge_entity_id) return; //prevent selecting/hitting yourself
+        int cursor_owner_id = entity_model_transforms[vert_entity_id];
+        float4 cursor_owner = hulls[cursor_owner_id];
+        int cursor_owner_entity_id = hull_entity_ids[cursor_owner_id];        
+        if (cursor_owner_entity_id == edge_entity_id) return; //prevent selecting/hitting yourself
 
-        int owner_entity_flags = entity_flags[owner_entity_id];
-        bool atk = (owner_entity_flags & ATTACKING) !=0;
-        bool collect = (owner_entity_flags & CAN_COLLECT) !=0;
-        float center_distance = fast_distance(owner.xy, hull_e.xy);
+        int cursor_owner_entity_flags = entity_flags[cursor_owner_entity_id];
+        int edge_entity_flags = entity_flags[edge_entity_id];
+        bool atk = (cursor_owner_entity_flags & ATTACKING) !=0;
+        bool collect = (cursor_owner_entity_flags & CAN_COLLECT) !=0;
+        float center_distance = fast_distance(cursor_owner.xy, hull_e.xy);
         bool hit = point_polygon_containment(polygon_id, hull_v.xy, hull_edge_tables, points, edges, edge_flags);
         bool in_range = center_distance <= 192.0f;
-        bool collectable = (edge_hull_flags & COLLECTABLE) !=0;
+        bool collectable = (edge_entity_flags & COLLECTABLE) !=0;
         edge_hull_flags |= CURSOR_OVER;           
         if (in_range) edge_hull_flags |= IN_RANGE;
         if (hit) edge_hull_flags |= CURSOR_HIT;

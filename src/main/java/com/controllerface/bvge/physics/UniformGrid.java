@@ -1,6 +1,6 @@
 package com.controllerface.bvge.physics;
 
-import com.controllerface.bvge.ecs.systems.sectors.Sector;
+import com.controllerface.bvge.game.world.sectors.Sector;
 import org.joml.Vector2f;
 
 import java.util.HashSet;
@@ -63,11 +63,23 @@ public class UniformGrid
         height = inner_height + perimeter_height;
         outer_width = width + outer_perimeter_width;
         outer_height = height + outer_perimeter_height;
-        x_subdivisions = 200;
-        y_subdivisions = 100;
+        int approx_x_spacing = (int)(width / 32.0f);
+        int approx_y_spacing = (int)(height / 32.0f);
+        x_subdivisions = approx_x_spacing;
+        y_subdivisions = approx_y_spacing;
         directory_length = x_subdivisions * y_subdivisions;
         x_spacing = width / x_subdivisions;
         y_spacing = height / y_subdivisions;
+    }
+
+    public static int[] get_sector_for_point(float px, float py)
+    {
+        int[] out = new int[2];
+        int index_x = (int) Math.floor(px / UniformGrid.SECTOR_SIZE);
+        int index_y = (int) Math.floor(py / UniformGrid.SECTOR_SIZE);
+        out[0] = index_x;
+        out[1] = index_y;
+        return out;
     }
 
     public void update_sector_metrics(Set<Sector> loaded_sectors, float sector_origin_x, float sector_origin_y, float sector_width, float sector_height)
@@ -77,7 +89,7 @@ public class UniformGrid
         this.sector_origin_x = sector_origin_x;
         this.sector_origin_y = sector_origin_y;
         this.sector_width    = sector_width;
-        this.sector_height    = sector_height;
+        this.sector_height   = sector_height;
     }
 
     public void updateOrigin(float x_origin, float y_origin, float x_player, float y_player)

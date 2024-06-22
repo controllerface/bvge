@@ -19,12 +19,29 @@ public class CameraTracking extends GameSystem
     private final float x_offset;
     private final float y_offset;
 
-    public CameraTracking(ECS ecs, UniformGrid uniformGrid)
+    public CameraTracking(ECS ecs, UniformGrid uniformGrid, float init_x, float init_y)
     {
         super(ecs);
         this.uniformGrid = uniformGrid;
         x_offset = uniformGrid.width / 2;
         y_offset = uniformGrid.height / 2;
+        update_position(init_x, init_y);
+    }
+
+    private void update_position(float x, float y)
+    {
+        var camera = Window.get().camera();
+        var width = (float)Window.get().width() * camera.get_zoom();
+        var height = (float)Window.get().height() * camera.get_zoom();
+        var dx = Window.get().width() - uniformGrid.width;
+        var dy = Window.get().height() - uniformGrid.height;
+        var new_x = (x - width / 2);
+        var new_y = (y - height / 2);
+        var new_origin_x = (x - width / camera.get_zoom()) + (x_offset + dx);
+        var new_origin_y = (y - height / camera.get_zoom()) + (y_offset + dy);
+        camera.position.x = new_x;
+        camera.position.y = new_y;
+        uniformGrid.updateOrigin(new_origin_x, new_origin_y, x, y);
     }
 
     @Override
@@ -38,17 +55,6 @@ public class CameraTracking extends GameSystem
         float[] pos = GPGPU.core_memory.read_position(entity_id.index());
         float pos_x = pos[0];
         float pos_y = pos[1];
-        var camera = Window.get().camera();
-        var width = (float)Window.get().width() * camera.get_zoom();
-        var height = (float)Window.get().height() * camera.get_zoom();
-        var dx = Window.get().width() - uniformGrid.width;
-        var dy = Window.get().height() - uniformGrid.height;
-        var new_x = (pos_x - width / 2);
-        var new_y = (pos_y - height / 2);
-        var new_origin_x = (pos_x - width / camera.get_zoom()) + (x_offset + dx);
-        var new_origin_y = (pos_y - height / camera.get_zoom()) + (y_offset + dy);
-        camera.position.x = new_x;
-        camera.position.y = new_y;
-        uniformGrid.updateOrigin(new_origin_x, new_origin_y, pos_x, pos_y);
+        update_position(pos_x, pos_y);
     }
 }

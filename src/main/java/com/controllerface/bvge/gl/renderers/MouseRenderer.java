@@ -15,6 +15,7 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Shader;
+import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.window.Window;
 
@@ -147,13 +148,11 @@ public class MouseRenderer extends GameSystem
         control_points.get_world_target().set(world_x, world_y);
         float[] mouse_loc = { world_x, world_y, -1.0f, 15.0f };
 
-
         if (Editor.ACTIVE)
         {
-            var sector = UniformGridRenderer.get_sector_for_point(world_x, world_y);
+            var sector = UniformGrid.get_sector_for_point(world_x, world_y);
             Editor.queue_event("mouse_sector", sector[0] + ":" + sector[1]);
         }
-
 
         glBindVertexArray(vao);
 

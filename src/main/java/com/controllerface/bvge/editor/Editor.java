@@ -31,4 +31,12 @@ public class Editor
             server.queue_stat_event(name, data);
         }
     }
+
+    public static void inventory(int id, int qty)
+    {
+        if (ACTIVE)
+        {
+            server.inventory(id, qty);
+        }
+    }
 }

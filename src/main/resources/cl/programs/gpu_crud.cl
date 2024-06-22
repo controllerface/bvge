@@ -4,191 +4,6 @@ to query and update objects stored on the GPU. Unlike most kernels, these functi
 are designed to operate on a single target object. 
  */
 
-// create functions
-
-__kernel void create_edge(__global int2 *edges,
-                          __global float *edge_lengths,
-                          __global int *edge_flags,
-                          int target,
-                          int2 new_edge,
-                          float new_edge_length,
-                          int new_edge_flag)
-{
-    edges[target]        = new_edge; 
-    edge_lengths[target] = new_edge_length; 
-    edge_flags[target]   = new_edge_flag; 
-}
-
-__kernel void create_bone_channel(__global int *animation_timing_indices,
-                                  __global int2 *bone_pos_channel_tables,
-                                  __global int2 *bone_rot_channel_tables,
-                                  __global int2 *bone_scl_channel_tables,
-                                  int target,
-                                  int new_animation_timing_index,
-                                  int2 new_bone_pos_channel_table,
-                                  int2 new_bone_rot_channel_table,
-                                  int2 new_bone_scl_channel_table)
-{
-    animation_timing_indices[target] = new_animation_timing_index;
-    bone_pos_channel_tables[target]  = new_bone_pos_channel_table;
-    bone_rot_channel_tables[target]  = new_bone_rot_channel_table;
-    bone_scl_channel_tables[target]  = new_bone_scl_channel_table;
-}
-
-__kernel void set_bone_channel_table(__global int2 *bone_channel_tables,
-                                     int target,
-                                     int2 new_bone_channel_table)
-{
-    bone_channel_tables[target] = new_bone_channel_table;
-}
-
-__kernel void create_animation_timings(__global float *animation_durations,
-                                       __global float *animation_tick_rates,
-                                       int target,
-                                       float new_animation_duration,
-                                       float new_animation_tick_rate)
-{
-    animation_durations[target]  = new_animation_duration;
-    animation_tick_rates[target] = new_animation_tick_rate;
-}
-
-__kernel void create_keyframe(__global float4 *key_frames,
-                              __global float *frame_times,
-                              int target,
-                              float4 new_keyframe,
-                              float new_frame_time)
-{
-    key_frames[target]  = new_keyframe;
-    frame_times[target] = new_frame_time;
-}
-
-__kernel void create_texture_uv(__global float2 *texture_uvs,
-                                int target,
-                                float2 new_texture_uv)
-{
-    texture_uvs[target] = new_texture_uv; 
-}
-
-__kernel void create_vertex_reference(__global float2 *vertex_references,
-                                      __global float4 *vertex_weights,
-                                      __global int2 *uv_tables,
-                                      int target,
-                                      float2 new_vertex_reference,
-                                      float4 new_vertex_weights,
-                                      int2 new_uv_table)
-{
-    vertex_references[target] = new_vertex_reference; 
-    vertex_weights[target]    = new_vertex_weights; 
-    uv_tables[target]         = new_uv_table;
-}
-
-__kernel void create_model_transform(__global float16 *model_transforms,
-                                     int target,
-                                     float16 new_model_transform)
-{
-    model_transforms[target] = new_model_transform; 
-}
-
-__kernel void create_bone_bind_pose(__global float16 *bone_bind_poses,
-                                    int target,
-                                    float16 new_bone_bind_pose)
-{
-    bone_bind_poses[target] = new_bone_bind_pose; 
-}
-
-__kernel void create_bone_reference(__global float16 *bone_references,
-                                    int target,
-                                    float16 new_bone_reference)
-{
-    bone_references[target] = new_bone_reference; 
-}
-
-__kernel void create_hull_bone(__global float16 *hull_bones,
-                               __global int *hull_bind_pose_indicies,
-                               __global int *hull_inv_bind_pose_indicies,
-                               int target,
-                               float16 new_hull_bone,
-                               int new_hull_bind_pose_id,
-                               int new_hull_inv_bind_pose_id)
-{
-    hull_bones[target]                  = new_hull_bone; 
-    hull_bind_pose_indicies[target]     = new_hull_bind_pose_id; 
-    hull_inv_bind_pose_indicies[target] = new_hull_inv_bind_pose_id; 
-}
-
-__kernel void create_entity_bone(__global float16 *entity_bones,
-                                   __global int *entity_bone_reference_ids,
-                                   __global int *entity_bone_parent_ids,
-                                   int target,
-                                   float16 new_entity_bone,
-                                   int new_entity_bone_reference,
-                                   int new_entity_bone_parent_id)
-{
-    entity_bones[target]              = new_entity_bone; 
-    entity_bone_reference_ids[target] = new_entity_bone_reference;
-    entity_bone_parent_ids[target]    = new_entity_bone_parent_id;
-}
-
-__kernel void create_mesh_reference(__global int2 *mesh_vertex_tables,
-                                    __global int2 *mesh_face_tables,
-                                    int target,
-                                    int2 new_mesh_vertex_table,
-                                    int2 new_mesh_face_table)
-{
-    mesh_vertex_tables[target] = new_mesh_vertex_table;
-    mesh_face_tables[target]   = new_mesh_face_table;
-}
-
-__kernel void create_mesh_face(__global int4 *mesh_faces,
-                               int target,
-                               int4 new_mesh_face)
-{
-    mesh_faces[target] = new_mesh_face;
-}
-
-__kernel void create_hull(__global float4 *hulls,
-                          __global float2 *hull_scales,
-                          __global float2 *hull_rotations,
-                          __global float *hull_frictions,
-                          __global float *hull_restitutions,
-                          __global int2 *hull_point_tables,
-                          __global int2 *hull_edge_tables,
-                          __global int2 *bone_tables,
-                          __global int *hull_entity_ids,
-                          __global int *hull_flags,
-                          __global int *hull_mesh_ids,
-                          __global int *hull_uv_offsets,
-                          __global int *hull_integrity,
-                          int target,
-                          float4 new_hull,
-                          float2 new_hull_scale,
-                          float2 new_rotation,
-                          float new_friction,
-                          float new_restitution,
-                          int2 new_point_table,
-                          int2 new_edge_table,
-                          int2 new_bone_table,
-                          int entity_id_offset,
-                          int new_flags,
-                          int new_hull_mesh_id,
-                          int new_hull_uv_offset,
-                          int new_hull_integrity)
-{
-    hulls[target]             = new_hull; 
-    hull_scales[target]       = new_hull_scale; 
-    hull_rotations[target]    = new_rotation; 
-    hull_frictions[target]    = new_friction;
-    hull_restitutions[target] = new_restitution; 
-    hull_point_tables[target] = new_point_table;
-    hull_edge_tables[target]  = new_edge_table;
-    bone_tables[target]       = new_bone_table; 
-    hull_entity_ids[target]   = entity_id_offset; 
-    hull_flags[target]        = new_flags; 
-    hull_mesh_ids[target]     = new_hull_mesh_id;
-    hull_uv_offsets[target]   = new_hull_uv_offset;
-    hull_integrity[target]    = new_hull_integrity;
-}
-
 // read functions
 
 __kernel void read_position(__global float4 *entities,
@@ -342,7 +157,7 @@ __kernel void merge_hull(__global float4 *hulls_in,
     hull_restitutions_out[target_hull] = hull_restitutions_in[current_hull];
     hull_point_tables_out[target_hull] = hull_point_tables_in[current_hull] + (int2)(point_offset);
     hull_edge_tables_out[target_hull]  = hull_edge_tables_in[current_hull] + (int2)(edge_offset);
-    hull_bone_tables_out[target_hull]       = hull_bone_tables_in[current_hull] + (int2)(hull_bone_offset);
+    hull_bone_tables_out[target_hull]  = hull_bone_tables_in[current_hull] + (int2)(hull_bone_offset);
     hull_entity_ids_out[target_hull]   = hull_entity_ids_in[current_hull] + entity_offset;
     hull_flags_out[target_hull]        = hull_flags_in[current_hull];
     hull_mesh_ids_out[target_hull]     = hull_mesh_ids_in[current_hull];
@@ -422,7 +237,7 @@ __kernel void count_egress_entities(__global int *entity_flags,
         int2 hull_table = entity_hull_tables[current_entity];
         int hull_0_flags = hull_flags[hull_table.x];
         int hull_count  = hull_table.y - hull_table.x + 1;
-        bool collectable = (hull_0_flags & COLLECTABLE) !=0;
+        bool collectable = (flags & COLLECTABLE) !=0;
         flags = (flags | DELETED);
         entity_flags[current_entity] = flags;
         if (collectable) return;
@@ -450,7 +265,6 @@ __kernel void count_egress_entities(__global int *entity_flags,
             hull_bone_count += hull_bone_table.y - hull_bone_table.x + 1;
         }
 
-
         atomic_inc(&counters[0]); 
         atomic_add(&counters[1], hull_count);
         atomic_add(&counters[2], point_count);
@@ -465,11 +279,6 @@ __kernel void count_egress_entities(__global int *entity_flags,
 
 __kernel void egress_collected(__global int *entity_flags,
                                __global int *entity_types,
-                               __global int2 *entity_hull_tables,
-                               __global int *hull_flags,
-                               __global int *hull_uv_offsets,
-                               __global int *uv_offsets,
-                               __global int *flags,
                                __global int *types,
                                __global int *counter)
 {
@@ -479,53 +288,34 @@ __kernel void egress_collected(__global int *entity_flags,
     bool collected = (e_flags & COLLECTED) !=0;
     if (collected)
     {
-        int2 hull_table = entity_hull_tables[current_entity];
-        int hull_0_flags = hull_flags[hull_table.x];
-        int uv_offset = hull_uv_offsets[hull_table.x];
-
         int entity_id_offset = atomic_inc(&counter[0]); 
-        flags[entity_id_offset] = hull_0_flags;
         types[entity_id_offset] = e_type;
-        uv_offsets[entity_id_offset] = uv_offset;
     }
 }
 
 __kernel void egress_broken(__global float4 *entities, 
                             __global int *entity_flags,
-                            __global int2 *entity_hull_tables,
+                            __global int *entity_types,
                             __global int *entity_model_ids,
-                            __global float4 *hulls, 
-                            __global int *hull_flags,
-                            __global int *hull_uv_offsets,
                             __global float2 *positions,
-                            __global int *uv_offsets,
+                            __global int *types,
                             __global int *model_ids,
                             __global int *counter)
 {
     int current_entity = get_global_id(0);
-
     int flags   = entity_flags[current_entity];
+    int type    = entity_types[current_entity];
     bool broken = (flags & BROKEN) !=0;
     if (broken)
     {
-        int2 hull_table = entity_hull_tables[current_entity];
-        int hull_count  = hull_table.y - hull_table.x + 1;
         float4 entity = entities[current_entity];
         int entity_model_id = entity_model_ids[current_entity];
-
-        int hull_0_flags = hull_flags[hull_table.x];
-        bool collectable = (hull_0_flags & COLLECTABLE) !=0;
+        bool collectable = (flags & COLLECTABLE) !=0;
         if (collectable) return;
-
-        for (int current_hull = hull_table.x; current_hull <= hull_table.y; current_hull++)
-        {
-            float4 hull = hulls[current_hull];
-            int uv_offset = hull_uv_offsets[current_hull];
-            int entity_id_offset = atomic_inc(&counter[0]); 
-            positions[entity_id_offset] = hull.xy;
-            uv_offsets[entity_id_offset] = uv_offset;
-            model_ids[entity_id_offset] = entity_model_id;
-        }
+        int entity_id_offset = atomic_inc(&counter[0]); 
+        positions[entity_id_offset] = entity.xy;
+        types[entity_id_offset] = type;
+        model_ids[entity_id_offset] = entity_model_id;
     }
 }
 

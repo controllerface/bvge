@@ -18,6 +18,12 @@ function handle_event(event)
     target.textContent = event.data;
 }
 
+function handle_inventory(event)
+{
+    let inventory = document.getElementById('inventory');
+    inventory.textContent = event.data;
+}
+
 var event_source = new EventSource("/events");
 event_source.addEventListener('dt', handle_event);
 event_source.addEventListener('fps', handle_event);
@@ -69,3 +75,4 @@ event_source.addEventListener('render_model_scan_int2', handle_event);
 event_source.addEventListener('render_cl_cycle', handle_event);
 event_source.addEventListener('cl_read_svm_int', handle_event);
 event_source.addEventListener('mouse_sector', handle_event);
+event_source.addEventListener('inventory', handle_inventory);
