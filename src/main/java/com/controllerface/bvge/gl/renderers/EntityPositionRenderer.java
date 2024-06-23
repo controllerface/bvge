@@ -1,7 +1,7 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
-import com.controllerface.bvge.cl.buffers.CoreBufferType;
+import com.controllerface.bvge.cl.buffers.MirrorBufferType;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.kernels.PrepareEntities_k;
@@ -58,7 +58,7 @@ public class EntityPositionRenderer extends GameSystem
         long k_ptr_prepare_entities = p_prepare_entities.kernel_ptr(Kernel.prepare_entities);
         k_prepare_entities = new PrepareEntities_k(GPGPU.ptr_render_queue, k_ptr_prepare_entities)
             .ptr_arg(PrepareEntities_k.Args.vertex_vbo, ptr_vbo_vertex)
-            .buf_arg(PrepareEntities_k.Args.points, GPGPU.core_memory.get_buffer(CoreBufferType.MIRROR_ENTITY));
+            .buf_arg(PrepareEntities_k.Args.points, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_ENTITY));
     }
 
     @Override

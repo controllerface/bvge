@@ -1,7 +1,7 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
-import com.controllerface.bvge.cl.buffers.CoreBufferType;
+import com.controllerface.bvge.cl.buffers.MirrorBufferType;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.kernels.PreparePoints_k;
@@ -72,8 +72,8 @@ public class PointRenderer extends GameSystem
         prepare_points_k = new PreparePoints_k(GPGPU.ptr_render_queue, ptr)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
             .ptr_arg(PreparePoints_k.Args.color_vbo, color_vbo_ptr)
-            .buf_arg(PreparePoints_k.Args.anti_gravity, GPGPU.core_memory.get_buffer(CoreBufferType.MIRROR_POINT_ANTI_GRAV))
-            .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.get_buffer(CoreBufferType.MIRROR_POINT));
+            .buf_arg(PreparePoints_k.Args.anti_gravity, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT_ANTI_GRAV))
+            .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT));
     }
 
     @Override

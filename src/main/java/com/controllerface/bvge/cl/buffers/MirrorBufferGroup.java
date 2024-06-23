@@ -3,17 +3,18 @@ package com.controllerface.bvge.cl.buffers;
 import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.CLSize.cl_int;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
+import static com.controllerface.bvge.cl.buffers.MirrorBufferType.*;
 
 /**
  * Mirror buffers are configured only for certain core buffers, and are used solely for rendering purposes.
  * Between physics simulation ticks, rendering threads use the mirror buffers to render the state of the objects
  * while the physics thread is busy calculating the data for the next frame.
  */
-public class MirrorBufferGroup extends BufferGroup<CoreBufferType>
+public class MirrorBufferGroup extends BufferGroup<MirrorBufferType>
 {
     public MirrorBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(CoreBufferType.class, name, ptr_queue);
+        super(MirrorBufferType.class, name, ptr_queue);
 
         set_buffer(MIRROR_ENTITY,                 cl_float4, entity_init);
         set_buffer(MIRROR_ENTITY_FLAG,            cl_int,    entity_init);

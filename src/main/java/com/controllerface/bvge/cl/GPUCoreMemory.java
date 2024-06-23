@@ -91,6 +91,11 @@ public class GPUCoreMemory implements SectorContainer
         this.object_egress_buffer  = new DoubleBuffer<>(object_egress_a, object_egress_b);
     }
 
+    public ResizableBuffer get_buffer(MirrorBufferType mirrorBufferType)
+    {
+        return mirror_buffers.get_buffer(mirrorBufferType);
+    }
+
     public ResizableBuffer get_buffer(CoreBufferType coreBufferType)
     {
         return switch (coreBufferType)
@@ -120,26 +125,26 @@ public class GPUCoreMemory implements SectorContainer
                  ANIM_KEY_FRAME,
                  ANIM_FRAME_TIME -> reference_buffers.get_buffer(coreBufferType);
 
-            case MIRROR_POINT,
-                 MIRROR_POINT_ANTI_GRAV,
-                 MIRROR_POINT_HIT_COUNT,
-                 MIRROR_POINT_VERTEX_REFERENCE,
-                 MIRROR_EDGE,
-                 MIRROR_EDGE_FLAG,
-                 MIRROR_HULL,
-                 MIRROR_HULL_AABB,
-                 MIRROR_HULL_ENTITY_ID,
-                 MIRROR_HULL_FLAG,
-                 MIRROR_HULL_MESH_ID,
-                 MIRROR_HULL_UV_OFFSET,
-                 MIRROR_HULL_INTEGRITY,
-                 MIRROR_HULL_POINT_TABLE,
-                 MIRROR_HULL_ROTATION,
-                 MIRROR_HULL_SCALE,
-                 MIRROR_ENTITY,
-                 MIRROR_ENTITY_FLAG,
-                 MIRROR_ENTITY_MODEL_ID,
-                 MIRROR_ENTITY_ROOT_HULL -> mirror_buffers.get_buffer(coreBufferType);
+//            case MIRROR_POINT,
+//                 MIRROR_POINT_ANTI_GRAV,
+//                 MIRROR_POINT_HIT_COUNT,
+//                 MIRROR_POINT_VERTEX_REFERENCE,
+//                 MIRROR_EDGE,
+//                 MIRROR_EDGE_FLAG,
+//                 MIRROR_HULL,
+//                 MIRROR_HULL_AABB,
+//                 MIRROR_HULL_ENTITY_ID,
+//                 MIRROR_HULL_FLAG,
+//                 MIRROR_HULL_MESH_ID,
+//                 MIRROR_HULL_UV_OFFSET,
+//                 MIRROR_HULL_INTEGRITY,
+//                 MIRROR_HULL_POINT_TABLE,
+//                 MIRROR_HULL_ROTATION,
+//                 MIRROR_HULL_SCALE,
+//                 MIRROR_ENTITY,
+//                 MIRROR_ENTITY_FLAG,
+//                 MIRROR_ENTITY_MODEL_ID,
+//                 MIRROR_ENTITY_ROOT_HULL -> mirror_buffers.get_buffer(coreBufferType);
 
             case POINT,
                  POINT_HIT_COUNT,
