@@ -9,7 +9,7 @@ import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
  * Between physics simulation ticks, rendering threads use the mirror buffers to render the state of the objects
  * while the physics thread is busy calculating the data for the next frame.
  */
-public class MirrorBufferGroup extends BufferGroup
+public class MirrorBufferGroup extends BufferGroup<CoreBufferType>
 {
     public MirrorBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
@@ -37,7 +37,7 @@ public class MirrorBufferGroup extends BufferGroup
         set_buffer(MIRROR_POINT_VERTEX_REFERENCE, cl_int,    point_init);
     }
 
-    public void mirror(BufferGroup sector_group)
+    public void mirror(BufferGroup<CoreBufferType> sector_group)
     {
         get_buffer(MIRROR_ENTITY).mirror(sector_group.get_buffer(ENTITY));
         get_buffer(MIRROR_ENTITY_FLAG).mirror(sector_group.get_buffer(ENTITY_FLAG));

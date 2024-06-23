@@ -3,7 +3,7 @@ package com.controllerface.bvge.cl.buffers;
 import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
-public class SectorBufferGroup extends BufferGroup
+public class SectorBufferGroup extends BufferGroup<CoreBufferType>
 {
     public SectorBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {

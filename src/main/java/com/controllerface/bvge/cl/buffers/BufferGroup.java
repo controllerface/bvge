@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
-public abstract class BufferGroup<E extends Enum<E> & BufferCategory> implements BufferSet<E>
+public abstract class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
 {
     private final String name;
     protected final long ptr_queue;
@@ -28,25 +28,25 @@ public abstract class BufferGroup<E extends Enum<E> & BufferCategory> implements
     }
 
     @Override
-    public ResizableBuffer get_buffer(E coreBufferType)
+    public ResizableBuffer get_buffer(E bufferType)
     {
-        return buffers.get(coreBufferType);
+        return buffers.get(bufferType);
     }
 
     @Override
-    public void set_buffer(E coreBufferType, int size)
+    public void set_buffer(E bufferType, int size)
     {
-        if (buffers.containsKey(coreBufferType))
+        if (buffers.containsKey(bufferType))
         {
-            throw new RuntimeException("Buffer type: " + coreBufferType + " already exists in: " + name);
+            throw new RuntimeException("Buffer type: " + bufferType + " already exists in: " + name);
         }
-        buffers.put(coreBufferType, new_buffer(size));
+        buffers.put(bufferType, new_buffer(size));
     }
 
     @Override
-    public void set_buffer(E coreBufferType, int size, long initial_capacity)
+    public void set_buffer(E bufferType, int size, long initial_capacity)
     {
-        buffers.put(coreBufferType, new_buffer(size, initial_capacity));
+        buffers.put(bufferType, new_buffer(size, initial_capacity));
     }
 
     @Override

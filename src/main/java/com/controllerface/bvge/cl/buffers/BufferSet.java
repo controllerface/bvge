@@ -1,6 +1,6 @@
 package com.controllerface.bvge.cl.buffers;
 
-public interface BufferSet<E extends Enum<E> & BufferCategory>
+public interface BufferSet<E extends Enum<E> & BufferType>
 {
     ResizableBuffer get_buffer(E bufferType);
     void set_buffer(E bufferType, int size);

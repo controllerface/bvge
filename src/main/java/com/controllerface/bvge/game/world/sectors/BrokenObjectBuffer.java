@@ -6,6 +6,7 @@ import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUCoreMemory;
 import com.controllerface.bvge.cl.buffers.BasicBufferGroup;
 import com.controllerface.bvge.cl.buffers.BufferGroup;
+import com.controllerface.bvge.cl.buffers.CoreBufferType;
 import com.controllerface.bvge.cl.kernels.EgressBroken_k;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
@@ -19,7 +20,7 @@ public class BrokenObjectBuffer
 {
     private final GPUProgram p_gpu_crud;
     private final GPUKernel k_egress_broken;
-    private final BufferGroup broken_group;
+    private final BufferGroup<CoreBufferType> broken_group;
     private final long ptr_queue;
     private final long ptr_egress_size;
 

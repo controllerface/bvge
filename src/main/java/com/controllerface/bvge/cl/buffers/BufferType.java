@@ -1,5 +1,5 @@
 package com.controllerface.bvge.cl.buffers;
 
-public interface BufferCategory
+public interface BufferType
 {
 }

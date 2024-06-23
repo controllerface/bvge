@@ -19,7 +19,7 @@ public class CollectedObjectBuffer
 {
     private final GPUProgram p_gpu_crud = new GPUCrud();
     private final GPUKernel k_egress_collected;
-    private final BufferGroup collected_group;
+    private final BufferGroup<CoreBufferType> collected_group;
     private final long ptr_queue;
     private final long ptr_egress_size;
 
