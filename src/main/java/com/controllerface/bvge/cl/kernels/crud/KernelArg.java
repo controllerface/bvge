@@ -4,9 +4,9 @@ public interface KernelArg
 {
     class Type
     {
-        private static final String BUFFER_PREFIX = "__global";
-        private static final String BUFFER_SUFFIX = "*";
-        private static final String SPACE         = " ";
+        public static final String BUFFER_PREFIX = "__global";
+        public static final String BUFFER_SUFFIX = "*";
+        public static final String SPACE         = " ";
 
         public static String arg_short   = "short";
         public static String arg_short2  = "short2";

@@ -46,6 +46,8 @@ public class CLUtils
      */
     public static <E extends Enum<E> & KernelArg> String crud_create_k_src(Kernel kernel, Class<E> args_enum)
     {
+        E[] arguments = args_enum.getEnumConstants();
+
         /*
         By convention, all Create* kernels define an argument named `target` which is used to determine the
         target position within the GPU buffer where the object being created will be stored. if missing,
@@ -65,7 +67,6 @@ public class CLUtils
 
         buffer.append(parameters);
         buffer.append("{\n");
-        E[] arguments = args_enum.getEnumConstants();
         for (int name_index = 0; name_index < target_index; name_index++)
         {
             int value_index = name_index + target_index + 1;
@@ -78,6 +79,56 @@ public class CLUtils
                 .append(value)
                 .append(";\n");
         }
+        buffer.append("}\n\n");
+        return buffer.toString();
+    }
+
+    public static <E extends Enum<E> & KernelArg> String compact_k_src(Kernel kernel, Class<E> args_enum)
+    {
+        E[] arguments = args_enum.getEnumConstants();
+
+        var buffer = new StringBuilder("__kernel void ").append(kernel.name());
+
+        var parameters = Arrays.stream(args_enum.getEnumConstants())
+            .map(arg -> String.join(" ", arg.cl_type(), arg.name()))
+            .collect(Collectors.joining(",\n\t","(",")\n"));
+
+        buffer.append(parameters);
+        buffer.append("{\n");
+        buffer.append("\tint current = get_global_id(0);\n");
+        buffer.append("\tint shift = ").append(arguments[0].name()).append("[current];\n");
+
+        for (int arg_index = 1; arg_index < arguments.length; arg_index++)
+        {
+            var arg = arguments[arg_index];
+            var type = arg.cl_type()
+                .replace(KernelArg.Type.BUFFER_PREFIX, "")
+                .replace(KernelArg.Type.BUFFER_SUFFIX, "")
+                .trim();
+            var _name        = "_" + arg.name();
+            buffer.append("\t")
+                .append(type).append(" ")
+                .append(_name).append(" = ")
+                .append(arg.name()).append("[current]")
+                .append(";\n");
+        }
+        buffer.append("\tbarrier(CLK_GLOBAL_MEM_FENCE);\n");
+        buffer.append("\tif (shift > 0)\n");
+        buffer.append("\t{\n");
+        buffer.append("\t\tint new_index = current - shift;\n");
+
+        for (int arg_index = 1; arg_index < arguments.length; arg_index++)
+        {
+            var arg = arguments[arg_index];
+            var _name        = "_" + arg.name();
+            buffer.append("\t\t")
+                .append(arg.name()).append("[new_index]")
+                .append(" = ")
+                .append(_name)
+                .append(";\n");
+        }
+
+        buffer.append("\t}\n");
         buffer.append("}\n\n");
         return buffer.toString();
     }

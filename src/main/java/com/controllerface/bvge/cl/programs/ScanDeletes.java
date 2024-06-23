@@ -2,6 +2,8 @@ package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.kernels.Kernel;
+import com.controllerface.bvge.cl.kernels.compact.*;
+import com.controllerface.bvge.cl.kernels.crud.SetBoneChannelTable_k;
 
 public class ScanDeletes extends GPUProgram
 {
@@ -11,6 +13,11 @@ public class ScanDeletes extends GPUProgram
         src.add(const_entity_flags);
         src.add(const_hull_flags);
         src.add(func_exclusive_scan);
+        src.add(CompactPoints_k.kernel_source);
+        src.add(CompactEdges_k.kernel_source);
+        src.add(CompactHulls_k.kernel_source);
+        src.add(CompactHullBones_k.kernel_source);
+        src.add(CompactEntityBones_k.kernel_source);
         src.add(CLUtils.read_src("programs/scan_deletes.cl"));
 
         make_program();

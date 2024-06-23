@@ -7,6 +7,7 @@ import com.controllerface.bvge.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.cl.buffers.SectorBufferGroup;
 import com.controllerface.bvge.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.cl.kernels.*;
+import com.controllerface.bvge.cl.kernels.compact.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.ScanDeletes;
 
@@ -201,10 +202,10 @@ public class SectorCompactor
 
         long k_ptr_compact_armature_bones = p_scan_deletes.kernel_ptr(Kernel.compact_entity_bones);
         k_compact_armature_bones = new CompactEntityBones_k(ptr_queue, k_ptr_compact_armature_bones)
-            .buf_arg(CompactEntityBones_k.Args.armature_bone_shift, b_entity_bone_shift)
-            .buf_arg(CompactEntityBones_k.Args.armature_bones, sector_buffers.get_buffer(ENTITY_BONE))
-            .buf_arg(CompactEntityBones_k.Args.armature_bone_reference_ids, sector_buffers.get_buffer(ENTITY_BONE_REFERENCE_ID))
-            .buf_arg(CompactEntityBones_k.Args.armature_bone_parent_ids, sector_buffers.get_buffer(ENTITY_BONE_PARENT_ID));
+            .buf_arg(CompactEntityBones_k.Args.entity_bone_shift, b_entity_bone_shift)
+            .buf_arg(CompactEntityBones_k.Args.entity_bones, sector_buffers.get_buffer(ENTITY_BONE))
+            .buf_arg(CompactEntityBones_k.Args.entity_bone_reference_ids, sector_buffers.get_buffer(ENTITY_BONE_REFERENCE_ID))
+            .buf_arg(CompactEntityBones_k.Args.entity_bone_parent_ids, sector_buffers.get_buffer(ENTITY_BONE_PARENT_ID));
     }
 
     private void linearize_kernel(GPUKernel kernel, int object_count)

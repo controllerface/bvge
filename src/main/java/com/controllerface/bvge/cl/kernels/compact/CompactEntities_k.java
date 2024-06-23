@@ -1,4 +1,6 @@
-package com.controllerface.bvge.cl.kernels;
+package com.controllerface.bvge.cl.kernels.compact;
+
+import com.controllerface.bvge.cl.kernels.GPUKernel;
 
 public class CompactEntities_k extends GPUKernel
 {

@@ -519,26 +519,26 @@ __kernel void move_entities(__global float4 *hulls,
         : flags & ~BROKEN;
 
 
-    // float threshold = 10.0f;
-    // float2 vel = (entity.xy - entity.zw) / dt;
+    float threshold = 10.0f;
+    float2 vel = (entity.xy - entity.zw) / dt;
 
-    // motion_state.x = (vel.y < -threshold) 
-    //     ? motion_state.x + 1 
-    //     : 0;
+    motion_state.x = (vel.y < -threshold) 
+        ? motion_state.x + 1 
+        : 0;
 
-    // motion_state.y = (vel.y > threshold) 
-    //     ? motion_state.y + 1 
-    //     : 0;
+    motion_state.y = (vel.y > threshold) 
+        ? motion_state.y + 1 
+        : 0;
 
-    // motion_state.x = motion_state.x > 1000 
-    //     ? 1000 
-    //     : motion_state.x;
+    motion_state.x = motion_state.x > 1000 
+        ? 1000 
+        : motion_state.x;
 
-    // motion_state.y = motion_state.y > 1000 
-    //     ? 1000 
-    //     : motion_state.y;
+    motion_state.y = motion_state.y > 1000 
+        ? 1000 
+        : motion_state.y;
 
-    // entity_motion_states[current_entity] = motion_state;
+    entity_motion_states[current_entity] = motion_state;
     hull_flags[start] = hull_flags_0;
     entities[current_entity] = entity;
     entity_flags[current_entity] = flags;
