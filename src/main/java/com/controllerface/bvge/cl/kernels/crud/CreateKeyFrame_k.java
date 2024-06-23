@@ -6,15 +6,15 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateKeyFrame_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_keyframe, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_keyframe, Args.class);
 
     public enum Args implements KernelArg
     {
-        key_frames     (Type.float4_buffer),
-        frame_times    (Type.float_buffer),
-        target         (Type.int_arg),
-        new_keyframe   (Type.float4_arg),
-        new_frame_time (Type.float_arg),
+        key_frames     (Type.buffer_float4),
+        frame_times    (Type.buffer_float),
+        target         (Type.arg_int),
+        new_keyframe   (Type.arg_float4),
+        new_frame_time (Type.arg_float),
 
         ;
 

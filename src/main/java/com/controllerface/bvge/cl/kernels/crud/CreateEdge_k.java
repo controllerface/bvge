@@ -6,17 +6,17 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateEdge_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_edge, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_edge, Args.class);
 
     public enum Args implements KernelArg
     {
-        edges           (Type.int2_buffer),
-        edge_lengths    (Type.float_buffer),
-        edge_flags      (Type.int_buffer),
-        target          (Type.int_arg),
-        new_edge        (Type.int2_arg),
-        new_edge_length (Type.float_arg),
-        new_edge_flag   (Type.int_arg),
+        edges           (Type.buffer_int2),
+        edge_lengths    (Type.buffer_float),
+        edge_flags      (Type.buffer_int),
+        target          (Type.arg_int),
+        new_edge        (Type.arg_int2),
+        new_edge_length (Type.arg_float),
+        new_edge_flag   (Type.arg_int),
 
         ;
 

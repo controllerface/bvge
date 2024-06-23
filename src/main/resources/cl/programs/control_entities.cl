@@ -232,7 +232,7 @@ __kernel void handle_movement(__global float4 *entities,
             : 1.0f;
 
     current_budget = can_jump && !mv_jump
-        ? 10 
+        ? 10 // todo: this should be a player stat, it is their jump height
         : current_budget;
 
     InputState input;

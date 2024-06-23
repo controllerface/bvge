@@ -6,15 +6,15 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateAnimationTimings_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_animation_timings, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_animation_timings, Args.class);
 
     public enum Args implements KernelArg
     {
-        animation_durations     (Type.float_buffer),
-        animation_tick_rates    (Type.float_buffer),
-        target                  (Type.int_arg),
-        new_animation_duration  (Type.float_arg),
-        new_animation_tick_rate (Type.float_arg),
+        animation_durations     (Type.buffer_float),
+        animation_tick_rates    (Type.buffer_float),
+        target                  (Type.arg_int),
+        new_animation_duration  (Type.arg_float),
+        new_animation_tick_rate (Type.arg_float),
 
         ;
 

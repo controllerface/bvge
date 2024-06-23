@@ -6,13 +6,13 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateTextureUV_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_texture_uv, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_texture_uv, Args.class);
 
     public enum Args implements KernelArg
     {
-        texture_uvs    (Type.float2_buffer),
-        target         (Type.int_arg),
-        new_texture_uv (Type.float2_arg),
+        texture_uvs    (Type.buffer_float2),
+        target         (Type.arg_int),
+        new_texture_uv (Type.arg_float2),
 
         ;
 

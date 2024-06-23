@@ -16,6 +16,7 @@ uniform mat4 uVP;
 
 void main()
 {
+    // todo: replcae this with specular map texture
     float s_buf = 0.1;
     if (v_tex_coords.x == 0.0 && v_tex_coords.y == 0.03125) s_buf = 0.5;
     if (v_tex_coords.x == 0.03125 && v_tex_coords.y == 0.03125) s_buf = 0.5;
@@ -47,6 +48,28 @@ uniform sampler2D uTextures[3];
 uniform vec2 uMouse;
 uniform vec2 uCamera;
 
+float calculateAmbientLight(float y) 
+{
+    const float minLight = 0.01;
+    const float maxLight = 0.4;
+    float lightValue;
+
+    if (y < 0.0) 
+    {
+        lightValue = minLight;
+    } 
+    else if (y >= 500.0) 
+    {
+        lightValue = maxLight;
+    } 
+    else 
+    {
+        lightValue = mix(minLight, maxLight, y / 500.0);
+    }
+    return lightValue;
+}
+
+
 void main()
 {
     // diffuse
@@ -73,7 +96,8 @@ void main()
     vec3 specular = specular_strength * spec * light_color * attenuation;
 
     // Ambient light
-    vec3 ambient = vec3(0.06, 0.02, 0.04);
+    float l = calculateAmbientLight(FragPos.y);
+    vec3 ambient = vec3(l, l, l);
 
     vec3 lighting = ambient + diffuse + specular;
 

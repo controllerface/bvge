@@ -6,13 +6,13 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class SetBoneChannelTable_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.set_bone_channel_table, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.set_bone_channel_table, Args.class);
 
     public enum Args implements KernelArg
     {
-        bone_channel_tables    (Type.int2_buffer),
-        target                 (Type.int_arg),
-        new_bone_channel_table (Type.int2_arg),
+        bone_channel_tables    (Type.buffer_int2),
+        target                 (Type.arg_int),
+        new_bone_channel_table (Type.arg_int2),
 
         ;
 

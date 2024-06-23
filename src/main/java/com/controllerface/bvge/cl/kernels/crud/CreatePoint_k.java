@@ -6,23 +6,23 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreatePoint_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_point, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_point, Args.class);
 
     public enum Args implements KernelArg
     {
-        points                     (Type.float4_buffer),
-        point_vertex_references    (Type.int_buffer),
-        point_hull_indices         (Type.int_buffer),
-        point_hit_counts           (Type.short_buffer),
-        point_flags                (Type.int_buffer),
-        point_bone_tables          (Type.int4_buffer),
-        target                     (Type.int_arg),
-        new_point                  (Type.float4_arg),
-        new_point_vertex_reference (Type.int_arg),
-        new_point_hull_index       (Type.int_arg),
-        new_point_hit_count        (Type.short_arg),
-        new_point_flags            (Type.int_arg),
-        new_point_bone_table       (Type.int4_arg),
+        points                     (Type.buffer_float4),
+        point_vertex_references    (Type.buffer_int),
+        point_hull_indices         (Type.buffer_int),
+        point_hit_counts           (Type.buffer_short),
+        point_flags                (Type.buffer_int),
+        point_bone_tables          (Type.buffer_int4),
+        target                     (Type.arg_int),
+        new_point                  (Type.arg_float4),
+        new_point_vertex_reference (Type.arg_int),
+        new_point_hull_index       (Type.arg_int),
+        new_point_hit_count        (Type.arg_short),
+        new_point_flags            (Type.arg_int),
+        new_point_bone_table       (Type.arg_int4),
 
         ;
 

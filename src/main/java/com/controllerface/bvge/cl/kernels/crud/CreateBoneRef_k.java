@@ -6,13 +6,13 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateBoneRef_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_bone_reference, Args.class);;
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_bone_reference, Args.class);;
 
     public enum Args implements KernelArg
     {
-        bone_references    (Type.float16_buffer),
-        target             (Type.int_arg),
-        new_bone_reference (Type.float16_arg),
+        bone_references    (Type.buffer_float16),
+        target             (Type.arg_int),
+        new_bone_reference (Type.arg_float16),
 
         ;
 

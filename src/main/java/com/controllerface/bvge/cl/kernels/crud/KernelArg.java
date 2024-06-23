@@ -4,25 +4,29 @@ public interface KernelArg
 {
     class Type
     {
-        public static String short_arg   = "short";
-        public static String short2_arg  = "short2";
-        public static String int_arg     = "int";
-        public static String int2_arg    = "int2";
-        public static String int4_arg    = "int4";
-        public static String float_arg   = "float";
-        public static String float2_arg  = "float2";
-        public static String float4_arg  = "float4";
-        public static String float16_arg = "float16";
+        private static final String BUFFER_PREFIX = "__global";
+        private static final String BUFFER_SUFFIX = "*";
+        private static final String SPACE         = " ";
 
-        public static String short_buffer   = "__global short *";
-        public static String short2_buffer  = "__global short2 *";
-        public static String int_buffer     = "__global int *";
-        public static String int2_buffer    = "__global int2 *";
-        public static String int4_buffer    = "__global int4 *";
-        public static String float_buffer   = "__global float *";
-        public static String float2_buffer  = "__global float2 *";
-        public static String float4_buffer  = "__global float4 *";
-        public static String float16_buffer = "__global float16 *";
+        public static String arg_short   = "short";
+        public static String arg_short2  = "short2";
+        public static String arg_int     = "int";
+        public static String arg_int2    = "int2";
+        public static String arg_int4    = "int4";
+        public static String arg_float   = "float";
+        public static String arg_float2  = "float2";
+        public static String arg_float4  = "float4";
+        public static String arg_float16 = "float16";
+
+        public static String buffer_short   = String.join(SPACE, BUFFER_PREFIX, arg_short,   BUFFER_SUFFIX);
+        public static String buffer_short2  = String.join(SPACE, BUFFER_PREFIX, arg_short2,  BUFFER_SUFFIX);
+        public static String buffer_int     = String.join(SPACE, BUFFER_PREFIX, arg_int,     BUFFER_SUFFIX);
+        public static String buffer_int2    = String.join(SPACE, BUFFER_PREFIX, arg_int2,    BUFFER_SUFFIX);
+        public static String buffer_int4    = String.join(SPACE, BUFFER_PREFIX, arg_int4,    BUFFER_SUFFIX);
+        public static String buffer_float   = String.join(SPACE, BUFFER_PREFIX, arg_float,   BUFFER_SUFFIX);
+        public static String buffer_float2  = String.join(SPACE, BUFFER_PREFIX, arg_float2,  BUFFER_SUFFIX);
+        public static String buffer_float4  = String.join(SPACE, BUFFER_PREFIX, arg_float4,  BUFFER_SUFFIX);
+        public static String buffer_float16 = String.join(SPACE, BUFFER_PREFIX, arg_float16, BUFFER_SUFFIX);
     }
 
     String cl_type();

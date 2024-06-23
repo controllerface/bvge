@@ -5,9 +5,9 @@ public class CompactHullBones_k extends GPUKernel
     public enum Args
     {
         hull_bone_shift,
-        bone_instances,
-        hull_bind_pose_indicies,
-        hull_inv_bind_pose_indicies,
+        hull_bones,
+        hull_bind_pose_indices,
+        hull_inv_bind_pose_indices,
     }
 
     public CompactHullBones_k(long command_queue_ptr, long kernel_ptr)

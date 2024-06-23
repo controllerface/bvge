@@ -6,13 +6,13 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateBoneBindPose_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_bone_bind_pose, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_bone_bind_pose, Args.class);
 
     public enum Args implements KernelArg
     {
-        bone_bind_poses    (Type.float16_buffer),
-        target             (Type.int_arg),
-        new_bone_bind_pose (Type.float16_arg),
+        bone_bind_poses    (Type.buffer_float16),
+        target             (Type.arg_int),
+        new_bone_bind_pose (Type.arg_float16),
 
         ;
 

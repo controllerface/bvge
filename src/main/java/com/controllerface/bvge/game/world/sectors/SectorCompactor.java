@@ -39,7 +39,7 @@ public class SectorCompactor
      * bone shift buffer. Points, edges, and hulls work the same way.
      */
 
-    private final ResizableBuffer b_armature_bone_shift;
+    private final ResizableBuffer b_entity_bone_shift;
     private final ResizableBuffer b_hull_bone_shift;
     private final ResizableBuffer b_edge_shift;
     private final ResizableBuffer b_hull_shift;
@@ -84,7 +84,7 @@ public class SectorCompactor
         b_edge_shift                 = new TransientBuffer(ptr_queue, cl_int, edge_init);
         b_point_shift                = new TransientBuffer(ptr_queue, cl_int, point_init);
         b_hull_bone_shift            = new TransientBuffer(ptr_queue, cl_int, hull_init);
-        b_armature_bone_shift        = new TransientBuffer(ptr_queue, cl_int, entity_init);
+        b_entity_bone_shift = new TransientBuffer(ptr_queue, cl_int, entity_init);
         b_delete_1                   = new TransientBuffer(ptr_queue, cl_int2, delete_init);
         b_delete_2                   = new TransientBuffer(ptr_queue, cl_int4, delete_init);
         b_delete_partial_1           = new TransientBuffer(ptr_queue, cl_int2, delete_init);
@@ -152,7 +152,7 @@ public class SectorCompactor
             .buf_arg(CompactEntities_k.Args.point_shift, b_point_shift)
             .buf_arg(CompactEntities_k.Args.edge_shift, b_edge_shift)
             .buf_arg(CompactEntities_k.Args.hull_shift, b_hull_shift)
-            .buf_arg(CompactEntities_k.Args.entity_bone_shift, b_armature_bone_shift);
+            .buf_arg(CompactEntities_k.Args.entity_bone_shift, b_entity_bone_shift);
 
         long k_ptr_compact_hulls = p_scan_deletes.kernel_ptr(Kernel.compact_hulls);
         k_compact_hulls = new CompactHulls_k(ptr_queue, k_ptr_compact_hulls)
@@ -170,9 +170,9 @@ public class SectorCompactor
             .buf_arg(CompactHulls_k.Args.hull_flags, sector_buffers.get_buffer(HULL_FLAG))
             .buf_arg(CompactHulls_k.Args.hull_point_tables, sector_buffers.get_buffer(HULL_POINT_TABLE))
             .buf_arg(CompactHulls_k.Args.hull_edge_tables, sector_buffers.get_buffer(HULL_EDGE_TABLE))
-            .buf_arg(CompactHulls_k.Args.bounds, sector_buffers.get_buffer(HULL_AABB))
-            .buf_arg(CompactHulls_k.Args.bounds_index_data, sector_buffers.get_buffer(HULL_AABB_INDEX))
-            .buf_arg(CompactHulls_k.Args.bounds_bank_data, sector_buffers.get_buffer(HULL_AABB_KEY_TABLE));
+            .buf_arg(CompactHulls_k.Args.hull_aabb, sector_buffers.get_buffer(HULL_AABB))
+            .buf_arg(CompactHulls_k.Args.hull_aabb_index, sector_buffers.get_buffer(HULL_AABB_INDEX))
+            .buf_arg(CompactHulls_k.Args.hull_aabb_key_table, sector_buffers.get_buffer(HULL_AABB_KEY_TABLE));
 
         long k_ptr_compact_edges = p_scan_deletes.kernel_ptr(Kernel.compact_edges);
         k_compact_edges = new CompactEdges_k(ptr_queue, k_ptr_compact_edges)
@@ -195,16 +195,16 @@ public class SectorCompactor
         long k_ptr_compact_hull_bones = p_scan_deletes.kernel_ptr(Kernel.compact_hull_bones);
         k_compact_hull_bones = new CompactHullBones_k(ptr_queue, k_ptr_compact_hull_bones)
             .buf_arg(CompactHullBones_k.Args.hull_bone_shift, b_hull_bone_shift)
-            .buf_arg(CompactHullBones_k.Args.bone_instances, sector_buffers.get_buffer(HULL_BONE))
-            .buf_arg(CompactHullBones_k.Args.hull_bind_pose_indicies, sector_buffers.get_buffer(HULL_BONE_BIND_POSE))
-            .buf_arg(CompactHullBones_k.Args.hull_inv_bind_pose_indicies, sector_buffers.get_buffer(HULL_BONE_INV_BIND_POSE));
+            .buf_arg(CompactHullBones_k.Args.hull_bones, sector_buffers.get_buffer(HULL_BONE))
+            .buf_arg(CompactHullBones_k.Args.hull_bind_pose_indices, sector_buffers.get_buffer(HULL_BONE_BIND_POSE))
+            .buf_arg(CompactHullBones_k.Args.hull_inv_bind_pose_indices, sector_buffers.get_buffer(HULL_BONE_INV_BIND_POSE));
 
-        long k_ptr_compact_armature_bones = p_scan_deletes.kernel_ptr(Kernel.compact_armature_bones);
-        k_compact_armature_bones = new CompactArmatureBones_k(ptr_queue, k_ptr_compact_armature_bones)
-            .buf_arg(CompactArmatureBones_k.Args.armature_bone_shift, b_armature_bone_shift)
-            .buf_arg(CompactArmatureBones_k.Args.armature_bones, sector_buffers.get_buffer(ENTITY_BONE))
-            .buf_arg(CompactArmatureBones_k.Args.armature_bone_reference_ids, sector_buffers.get_buffer(ENTITY_BONE_REFERENCE_ID))
-            .buf_arg(CompactArmatureBones_k.Args.armature_bone_parent_ids, sector_buffers.get_buffer(ENTITY_BONE_PARENT_ID));
+        long k_ptr_compact_armature_bones = p_scan_deletes.kernel_ptr(Kernel.compact_entity_bones);
+        k_compact_armature_bones = new CompactEntityBones_k(ptr_queue, k_ptr_compact_armature_bones)
+            .buf_arg(CompactEntityBones_k.Args.armature_bone_shift, b_entity_bone_shift)
+            .buf_arg(CompactEntityBones_k.Args.armature_bones, sector_buffers.get_buffer(ENTITY_BONE))
+            .buf_arg(CompactEntityBones_k.Args.armature_bone_reference_ids, sector_buffers.get_buffer(ENTITY_BONE_REFERENCE_ID))
+            .buf_arg(CompactEntityBones_k.Args.armature_bone_parent_ids, sector_buffers.get_buffer(ENTITY_BONE_PARENT_ID));
     }
 
     private void linearize_kernel(GPUKernel kernel, int object_count)
@@ -305,13 +305,13 @@ public class SectorCompactor
         b_edge_shift.ensure_capacity(controller.edge_index());
         b_point_shift.ensure_capacity(controller.point_index());
         b_hull_bone_shift.ensure_capacity(controller.hull_bone_index());
-        b_armature_bone_shift.ensure_capacity(controller.entity_bone_index());
+        b_entity_bone_shift.ensure_capacity(controller.entity_bone_index());
 
         b_hull_shift.clear();
         b_edge_shift.clear();
         b_point_shift.clear();
         b_hull_bone_shift.clear();
-        b_armature_bone_shift.clear();
+        b_entity_bone_shift.clear();
 
         k_compact_entities
             .ptr_arg(CompactEntities_k.Args.buffer_in_1, b_delete_1.pointer())
@@ -340,7 +340,7 @@ public class SectorCompactor
         gpu_int2_scan.destroy();
         gpu_int4_scan.destroy();
 
-        b_armature_bone_shift.release();
+        b_entity_bone_shift.release();
         b_hull_bone_shift.release();
         b_edge_shift.release();
         b_hull_shift.release();
@@ -350,7 +350,7 @@ public class SectorCompactor
         b_delete_partial_1.release();
         b_delete_partial_2.release();
 
-        long usage = b_armature_bone_shift.debug_data()
+        long usage = b_entity_bone_shift.debug_data()
             + b_hull_bone_shift.debug_data()
             + b_edge_shift.debug_data()
             + b_hull_shift.debug_data()

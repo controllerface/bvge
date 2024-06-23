@@ -6,19 +6,19 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateBoneChannel_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_bone_channel, Args.class);;
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_bone_channel, Args.class);;
 
     public enum Args implements KernelArg
     {
-        animation_timing_indices   (Type.int_buffer),
-        bone_pos_channel_tables    (Type.int2_buffer),
-        bone_rot_channel_tables    (Type.int2_buffer),
-        bone_scl_channel_tables    (Type.int2_buffer),
-        target                     (Type.int_arg),
-        new_animation_timing_index (Type.int_arg),
-        new_bone_pos_channel_table (Type.int2_arg),
-        new_bone_rot_channel_table (Type.int2_arg),
-        new_bone_scl_channel_table (Type.int2_arg),
+        animation_timing_indices   (Type.buffer_int),
+        bone_pos_channel_tables    (Type.buffer_int2),
+        bone_rot_channel_tables    (Type.buffer_int2),
+        bone_scl_channel_tables    (Type.buffer_int2),
+        target                     (Type.arg_int),
+        new_animation_timing_index (Type.arg_int),
+        new_bone_pos_channel_table (Type.arg_int2),
+        new_bone_rot_channel_table (Type.arg_int2),
+        new_bone_scl_channel_table (Type.arg_int2),
 
         ;
 

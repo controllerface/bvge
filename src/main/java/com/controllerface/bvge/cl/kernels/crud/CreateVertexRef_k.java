@@ -6,17 +6,17 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateVertexRef_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_vertex_reference, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_vertex_reference, Args.class);
 
     public enum Args implements KernelArg
     {
-        vertex_references    (Type.float2_buffer),
-        vertex_weights       (Type.float4_buffer),
-        uv_tables            (Type.int2_buffer),
-        target               (Type.int_arg),
-        new_vertex_reference (Type.float2_arg),
-        new_vertex_weights   (Type.float4_arg),
-        new_uv_table         (Type.int2_arg),
+        vertex_references    (Type.buffer_float2),
+        vertex_weights       (Type.buffer_float4),
+        uv_tables            (Type.buffer_int2),
+        target               (Type.arg_int),
+        new_vertex_reference (Type.arg_float2),
+        new_vertex_weights   (Type.arg_float4),
+        new_uv_table         (Type.arg_int2),
 
         ;
 

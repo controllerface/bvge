@@ -6,35 +6,35 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateEntity_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_entity, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_entity, Args.class);
 
     public enum Args implements KernelArg
     {
-        entities                   (Type.float4_buffer),
-        entity_animation_elapsed   (Type.float2_buffer),
-        entity_motion_states       (Type.short2_buffer),
-        entity_animation_indices   (Type.int2_buffer),
-        entity_hull_tables         (Type.int2_buffer),
-        entity_bone_tables         (Type.int2_buffer),
-        entity_masses              (Type.float_buffer),
-        entity_root_hulls          (Type.int_buffer),
-        entity_model_indices       (Type.int_buffer),
-        entity_model_transforms    (Type.int_buffer),
-        entity_types               (Type.int_buffer),
-        entity_flags               (Type.int_buffer),
-        target                     (Type.int_arg),
-        new_entity                 (Type.float4_arg),
-        new_entity_animation_time  (Type.float2_arg),
-        new_entity_animation_state (Type.short2_arg),
-        new_entity_animation_index (Type.int2_arg),
-        new_entity_hull_table      (Type.int2_arg),
-        new_entity_bone_table      (Type.int2_arg),
-        new_entity_mass            (Type.float_arg),
-        new_entity_root_hull       (Type.int_arg),
-        new_entity_model_id        (Type.int_arg),
-        new_entity_model_transform (Type.int_arg),
-        new_entity_type            (Type.int_arg),
-        new_entity_flags           (Type.int_arg),
+        entities                   (Type.buffer_float4),
+        entity_animation_elapsed   (Type.buffer_float2),
+        entity_motion_states       (Type.buffer_short2),
+        entity_animation_indices   (Type.buffer_int2),
+        entity_hull_tables         (Type.buffer_int2),
+        entity_bone_tables         (Type.buffer_int2),
+        entity_masses              (Type.buffer_float),
+        entity_root_hulls          (Type.buffer_int),
+        entity_model_indices       (Type.buffer_int),
+        entity_model_transforms    (Type.buffer_int),
+        entity_types               (Type.buffer_int),
+        entity_flags               (Type.buffer_int),
+        target                     (Type.arg_int),
+        new_entity                 (Type.arg_float4),
+        new_entity_animation_time  (Type.arg_float2),
+        new_entity_animation_state (Type.arg_short2),
+        new_entity_animation_index (Type.arg_int2),
+        new_entity_hull_table      (Type.arg_int2),
+        new_entity_bone_table      (Type.arg_int2),
+        new_entity_mass            (Type.arg_float),
+        new_entity_root_hull       (Type.arg_int),
+        new_entity_model_id        (Type.arg_int),
+        new_entity_model_transform (Type.arg_int),
+        new_entity_type            (Type.arg_int),
+        new_entity_flags           (Type.arg_int),
 
         ;
 

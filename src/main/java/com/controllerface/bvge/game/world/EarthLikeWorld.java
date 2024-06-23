@@ -206,7 +206,7 @@ public class EarthLikeWorld implements WorldType
                 float world_y = (y * UniformGrid.BLOCK_SIZE) + y_offset;
                 float world_y_block = world_y + (UniformGrid.BLOCK_SIZE / 2f);
 
-                if (world_y > 0.0f) surface(batch, world_x_block, world_y_block, world_y, x, y);
+                if (world_y >= 0.0f) surface(batch, world_x_block, world_y_block, world_y, x, y);
                 else underground(batch, world_x_block, world_y_block, world_y);
             }
         }
@@ -354,7 +354,7 @@ public class EarthLikeWorld implements WorldType
                 ? Constants.PointFlags.FLOW_LEFT.bits
                 : 0;
             flip = !flip;
-            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, -0.000001f, 0, hull_flags, point_flags, Liquid.FRESHWATER);
+            batch.new_liquid(world_x_block, world_y_block,  sz_liquid, .1f, 0.0f, -0.000001f, 0, hull_flags, point_flags, Liquid.WATER);
         }
         else if (n < shard_range_floor)
         {

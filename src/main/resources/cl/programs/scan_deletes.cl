@@ -365,7 +365,7 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
                                __global int *point_hull_indices,
                                __global int4 *bone_tables,
                                __global int *entity_bone_parent_ids,
-                               __global int *hull_bind_pose_indicies,
+                               __global int *hull_bind_pose_indices,
                                __global int2 *edges,
                                __global int *hull_bone_shift,
                                __global int *point_shift,
@@ -515,9 +515,9 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
         for (int l = 0; l < hull_bone_count; l++)
         {
             int current_bone = hull_bone_table.x + l;
-            int hull_bind_pose_index = hull_bind_pose_indicies[current_bone];
+            int hull_bind_pose_index = hull_bind_pose_indices[current_bone];
             hull_bind_pose_index -= drop.bone_bind_count;
-            hull_bind_pose_indicies[current_bone] = hull_bind_pose_index;
+            hull_bind_pose_indices[current_bone] = hull_bind_pose_index;
             hull_bone_shift[current_bone] = drop.bone_count;
         }
     }
@@ -537,27 +537,27 @@ __kernel void compact_hulls(__global int *hull_shift,
                             __global int *hull_flags,
                             __global int2 *hull_point_tables,
                             __global int2 *hull_edge_tables,
-                            __global float4 *bounds,
-                            __global int4 *bounds_index_data,
-                            __global int2 *bounds_bank_data)
+                            __global float4 *hull_aabb,
+                            __global int4 *hull_aabb_index,
+                            __global int2 *hull_aabb_key_table)
 {
     int current_hull = get_global_id(0);
     int shift = hull_shift[current_hull];
-    float4 hull = hulls[current_hull];
-    float2 hull_scale = hull_scales[current_hull];
-    float2 rotation = hull_rotations[current_hull];
-    float friction = hull_frictions[current_hull];
-    float restitution = hull_restitutions[current_hull];
-    int integrity = hull_integrity[current_hull];
-    int2 bone_table = hull_bone_tables[current_hull];
-    int entity_id = hull_entity_ids[current_hull];
-    int hull_flag = hull_flags[current_hull];
-    int2 point_table = hull_point_tables[current_hull];
-    int2 edge_table = hull_edge_tables[current_hull];
-    float4 bound = bounds[current_hull];
-    int4 bounds_index = bounds_index_data[current_hull];
-    int2 bounds_bank = bounds_bank_data[current_hull];
-    int hull_mesh_id = hull_mesh_ids[current_hull];
+    float4 hull        = hulls[current_hull];
+    float2 hull_scale  = hull_scales[current_hull];
+    float2 rotation    = hull_rotations[current_hull];
+    float friction     = hull_frictions[current_hull];
+    float restitution  = hull_restitutions[current_hull];
+    int integrity      = hull_integrity[current_hull];
+    int2 bone_table    = hull_bone_tables[current_hull];
+    int entity_id      = hull_entity_ids[current_hull];
+    int hull_flag      = hull_flags[current_hull];
+    int2 point_table   = hull_point_tables[current_hull];
+    int2 edge_table    = hull_edge_tables[current_hull];
+    float4 bound       = hull_aabb[current_hull];
+    int4 bounds_index  = hull_aabb_index[current_hull];
+    int2 bounds_bank   = hull_aabb_key_table[current_hull];
+    int hull_mesh_id   = hull_mesh_ids[current_hull];
     int hull_uv_offset = hull_uv_offsets[current_hull];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
@@ -575,9 +575,9 @@ __kernel void compact_hulls(__global int *hull_shift,
         hull_flags[new_hull_index] = hull_flag;
         hull_point_tables[new_hull_index] = point_table;
         hull_edge_tables[new_hull_index] = edge_table;
-        bounds[new_hull_index] = bound;
-        bounds_index_data[new_hull_index] = bounds_index;
-        bounds_bank_data[new_hull_index] = bounds_bank;
+        hull_aabb[new_hull_index] = bound;
+        hull_aabb_index[new_hull_index] = bounds_index;
+        hull_aabb_key_table[new_hull_index] = bounds_bank;
         hull_mesh_ids[new_hull_index] = hull_mesh_id;
         hull_uv_offsets[new_hull_index] = hull_uv_offset;
     }
@@ -636,42 +636,42 @@ __kernel void compact_points(__global int *point_shift,
 }
 
 __kernel void compact_hull_bones(__global int *hull_bone_shift,
-                                 __global float16 *bone_instances,
-                                 __global int *hull_bind_pose_indicies,
-                                 __global int *hull_inv_bind_pose_indicies)
+                                 __global float16 *hull_bones,
+                                 __global int *hull_bind_pose_indices,
+                                 __global int *hull_inv_bind_pose_indices)
 {
     int current_bone = get_global_id(0);
     int shift = hull_bone_shift[current_bone];
-    float16 instance = bone_instances[current_bone];
-    int bind_pose_id = hull_bind_pose_indicies[current_bone];
-    int inv_bind_pose_id = hull_inv_bind_pose_indicies[current_bone];
+    float16 instance = hull_bones[current_bone];
+    int bind_pose_id = hull_bind_pose_indices[current_bone];
+    int inv_bind_pose_id = hull_inv_bind_pose_indices[current_bone];
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_bone_index = current_bone - shift;
-        bone_instances[new_bone_index] = instance;
-        hull_bind_pose_indicies[new_bone_index] = bind_pose_id;
-        hull_inv_bind_pose_indicies[new_bone_index] = inv_bind_pose_id;
+        hull_bones[new_bone_index] = instance;
+        hull_bind_pose_indices[new_bone_index] = bind_pose_id;
+        hull_inv_bind_pose_indices[new_bone_index] = inv_bind_pose_id;
     }
 }
 
-__kernel void compact_armature_bones(__global int *entity_bone_shift,
-                                     __global float16 *armature_bones,
-                                     __global int *armature_bone_reference_ids,
+__kernel void compact_entity_bones(__global int *entity_bone_shift,
+                                     __global float16 *entity_bones,
+                                     __global int *entity_bone_reference_ids,
                                      __global int *entity_bone_parent_ids)
 {
     int current_armature_bone = get_global_id(0);
     int shift = entity_bone_shift[current_armature_bone];
-    float16 armature_bone = armature_bones[current_armature_bone];    
-    int bone_reference = armature_bone_reference_ids[current_armature_bone];
+    float16 armature_bone = entity_bones[current_armature_bone];    
+    int bone_reference = entity_bone_reference_ids[current_armature_bone];
     int bone_parent_id = entity_bone_parent_ids[current_armature_bone];
 
     barrier(CLK_GLOBAL_MEM_FENCE);
     if (shift > 0)
     {
         int new_bone_index = current_armature_bone - shift;
-        armature_bones[new_bone_index] = armature_bone;
-        armature_bone_reference_ids[new_bone_index] = bone_reference;
+        entity_bones[new_bone_index] = armature_bone;
+        entity_bone_reference_ids[new_bone_index] = bone_reference;
         entity_bone_parent_ids[new_bone_index] = bone_parent_id;
     }
 }

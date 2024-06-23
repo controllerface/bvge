@@ -34,27 +34,48 @@ public class CLUtils
         }
     }
 
-    public static <E extends Enum<E> & KernelArg> String crud_k_src(Kernel kernel, Class<E> enum_class)
+    /**
+     * Generates source code for an Open CL kernel that can be called to create an object specified
+     * by the arguments enum supplied as input. Run any of the tests in the following package to see
+     * example kernel output: {@link com.controllerface.bvge.cl.kernels.crud}
+     *
+     * @param kernel {@linkplain Kernel} enum class identifying the name of the kernel to generate
+     * @param args_enum {@linkplain KernelArg} enum class defining the order set of argument to the kernel
+     * @return a String containing the generated kernel source
+     * @param <E> Type argument restricting the ar
+     */
+    public static <E extends Enum<E> & KernelArg> String crud_create_k_src(Kernel kernel, Class<E> args_enum)
     {
-        int target_index = Arrays.stream(enum_class.getEnumConstants())
-            .filter(e -> e.name().equals("target"))
+        /*
+        By convention, all Create* kernels define an argument named `target` which is used to determine the
+        target position within the GPU buffer where the object being created will be stored. if missing,
+        it is considered a critical failure.
+         */
+        int target_index = Arrays.stream(args_enum.getEnumConstants())
+            .filter(arg -> arg.name().equals("target"))
             .map(Enum::ordinal)
-            .findAny().orElseThrow();
-        var buffer = new StringBuilder();
-        buffer.append("__kernel void ").append(kernel.name());
-        var kernel_args = Arrays.stream(enum_class.getEnumConstants())
+            .findAny()
+            .orElseThrow();
+
+        var buffer = new StringBuilder("__kernel void ").append(kernel.name());
+
+        var parameters = Arrays.stream(args_enum.getEnumConstants())
             .map(arg -> String.join(" ", arg.cl_type(), arg.name()))
             .collect(Collectors.joining(",\n\t","(",")\n"));
-        buffer.append(kernel_args);
+
+        buffer.append(parameters);
         buffer.append("{\n");
-        E[] args = enum_class.getEnumConstants();
-        for (int i = 0; i < target_index; i++)
+        E[] arguments = args_enum.getEnumConstants();
+        for (int name_index = 0; name_index < target_index; name_index++)
         {
-            int t = i + target_index + 1;
+            int value_index = name_index + target_index + 1;
+            var name        = arguments[name_index].name();
+            var value       = arguments[value_index];
+
             buffer.append("\t")
-                .append(args[i].name())
+                .append(name)
                 .append("[target] = ")
-                .append(args[t])
+                .append(value)
                 .append(";\n");
         }
         buffer.append("}\n\n");

@@ -39,8 +39,6 @@ public class ModelRegistry
 
     private static final Map<Integer, Model> loaded_models = new HashMap<>();
 
-    private static final BlockAtlas BLOCK_ATLAS = new BlockAtlas();
-
     private static final int DEFAULT_MODEL_LOAD_FLAGS =
         aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_FixInfacingNormals;
 

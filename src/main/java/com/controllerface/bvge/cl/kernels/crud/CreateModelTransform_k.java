@@ -6,13 +6,13 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 
 public class CreateModelTransform_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_k_src(Kernel.create_model_transform, Args.class);
+    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_model_transform, Args.class);
 
     public enum Args implements KernelArg
     {
-        model_transforms    (Type.float16_buffer),
-        target              (Type.int_arg),
-        new_model_transform (Type.float16_arg),
+        model_transforms    (Type.buffer_float16),
+        target              (Type.arg_int),
+        new_model_transform (Type.arg_float16),
 
         ;
 

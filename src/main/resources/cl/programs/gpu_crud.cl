@@ -60,6 +60,7 @@ __kernel void merge_point(__global float4 *points_in,
 {
     int current_point = get_global_id(0);
     int target_point = current_point + point_offset;
+    
     points_out[target_point]                  = points_in[current_point]; 
     point_vertex_references_out[target_point] = point_vertex_references_in[current_point]; 
     point_hull_indices_out[target_point]      = point_hull_indices_in[current_point] + hull_offset; 
