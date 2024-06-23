@@ -347,6 +347,8 @@ public class Window
         return camera;
     }
 
+    private static final float MAX_DT = 100.0f;
+
     // this is the main game loop
     public void loop()
     {
@@ -357,7 +359,7 @@ public class Window
         int fps;
         int frameCount = 0;
 
-        while (!glfwWindowShouldClose(glfwWindow) && dt < 5.0f)
+        while (!glfwWindowShouldClose(glfwWindow) && dt < MAX_DT)
         {
             glfwPollEvents();
 
@@ -390,7 +392,7 @@ public class Window
                 }
             }
         }
-        if (dt > 5.0f)
+        if (dt >= MAX_DT)
         {
             System.err.println("excessive frame time: " + dt);
         }
