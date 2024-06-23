@@ -53,7 +53,7 @@ public class GPUCoreMemory implements SectorContainer
     private final DoubleBuffer<UnorderedSectorOutput> sector_egress_buffer;
     private final DoubleBuffer<BrokenObjectBuffer> broken_egress_buffer;
     private final DoubleBuffer<CollectedObjectBuffer> object_egress_buffer;
-    private final SectorBufferGroup sector_buffers;
+    private final CoreBufferGroup sector_buffers;
     private final SectorController sector_controller;
     private final MirrorBufferGroup mirror_buffers;
     private final ReferenceBufferGroup reference_buffers;
@@ -71,7 +71,7 @@ public class GPUCoreMemory implements SectorContainer
     {
         p_gpu_crud.init();
 
-        this.sector_buffers       = new SectorBufferGroup(BUF_NAME_SECTOR, GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_buffers       = new CoreBufferGroup(BUF_NAME_SECTOR, GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.sector_controller    = new SectorController(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.sector_buffers);
         this.mirror_buffers       = new MirrorBufferGroup(BUF_NAME_RENDER, GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.reference_buffers    = new ReferenceBufferGroup(BUF_NAME_REFERENCE, GPGPU.ptr_compute_queue);
@@ -91,6 +91,11 @@ public class GPUCoreMemory implements SectorContainer
         this.object_egress_buffer  = new DoubleBuffer<>(object_egress_a, object_egress_b);
     }
 
+    public ResizableBuffer get_buffer(ReferenceBufferType referenceBufferType)
+    {
+        return reference_buffers.get_buffer(referenceBufferType);
+    }
+
     public ResizableBuffer get_buffer(MirrorBufferType mirrorBufferType)
     {
         return mirror_buffers.get_buffer(mirrorBufferType);
@@ -98,101 +103,7 @@ public class GPUCoreMemory implements SectorContainer
 
     public ResizableBuffer get_buffer(CoreBufferType coreBufferType)
     {
-        return switch (coreBufferType)
-        {
-            case BROKEN_POSITIONS,
-                 BROKEN_ENTITY_TYPES,
-                 BROKEN_MODEL_IDS,
-                 COLLECTED_TYPE -> null;
-
-            case ANIM_POS_CHANNEL,
-                 ANIM_ROT_CHANNEL,
-                 ANIM_SCL_CHANNEL,
-                 VERTEX_REFERENCE,
-                 VERTEX_UV_TABLE,
-                 VERTEX_WEIGHT,
-                 VERTEX_TEXTURE_UV,
-                 MODEL_TRANSFORM,
-                 ANIM_TIMING_INDEX,
-                 MESH_VERTEX_TABLE,
-                 MESH_FACE_TABLE,
-                 MESH_FACE,
-                 BONE_REFERENCE,
-                 BONE_ANIM_CHANNEL_TABLE,
-                 BONE_BIND_POSE,
-                 ANIM_DURATION,
-                 ANIM_TICK_RATE,
-                 ANIM_KEY_FRAME,
-                 ANIM_FRAME_TIME -> reference_buffers.get_buffer(coreBufferType);
-
-//            case MIRROR_POINT,
-//                 MIRROR_POINT_ANTI_GRAV,
-//                 MIRROR_POINT_HIT_COUNT,
-//                 MIRROR_POINT_VERTEX_REFERENCE,
-//                 MIRROR_EDGE,
-//                 MIRROR_EDGE_FLAG,
-//                 MIRROR_HULL,
-//                 MIRROR_HULL_AABB,
-//                 MIRROR_HULL_ENTITY_ID,
-//                 MIRROR_HULL_FLAG,
-//                 MIRROR_HULL_MESH_ID,
-//                 MIRROR_HULL_UV_OFFSET,
-//                 MIRROR_HULL_INTEGRITY,
-//                 MIRROR_HULL_POINT_TABLE,
-//                 MIRROR_HULL_ROTATION,
-//                 MIRROR_HULL_SCALE,
-//                 MIRROR_ENTITY,
-//                 MIRROR_ENTITY_FLAG,
-//                 MIRROR_ENTITY_MODEL_ID,
-//                 MIRROR_ENTITY_ROOT_HULL -> mirror_buffers.get_buffer(coreBufferType);
-
-            case POINT,
-                 POINT_HIT_COUNT,
-                 POINT_FLAG,
-                 POINT_HULL_INDEX,
-                 POINT_VERTEX_REFERENCE,
-                 POINT_BONE_TABLE,
-                 POINT_ANTI_GRAV,
-                 HULL,
-                 HULL_ROTATION,
-                 HULL_UV_OFFSET,
-                 HULL_MESH_ID,
-                 HULL_RESTITUTION,
-                 HULL_INTEGRITY,
-                 HULL_FRICTION,
-                 HULL_FLAG,
-                 HULL_EDGE_TABLE,
-                 HULL_POINT_TABLE,
-                 HULL_BONE_INV_BIND_POSE,
-                 HULL_BONE_BIND_POSE,
-                 HULL_BONE_TABLE,
-                 HULL_ENTITY_ID,
-                 HULL_BONE,
-                 HULL_SCALE,
-                 HULL_AABB,
-                 HULL_AABB_INDEX,
-                 HULL_AABB_KEY_TABLE,
-                 EDGE,
-                 EDGE_LENGTH,
-                 EDGE_FLAG,
-                 ENTITY,
-                 ENTITY_TRANSFORM_ID,
-                 ENTITY_ROOT_HULL,
-                 ENTITY_MODEL_ID,
-                 ENTITY_MASS,
-                 ENTITY_HULL_TABLE,
-                 ENTITY_BONE_TABLE,
-                 ENTITY_TYPE,
-                 ENTITY_FLAG,
-                 ENTITY_BONE_PARENT_ID,
-                 ENTITY_BONE_REFERENCE_ID,
-                 ENTITY_BONE,
-                 ENTITY_ANIM_INDEX,
-                 ENTITY_MOTION_STATE,
-                 ENTITY_ACCEL,
-                 ENTITY_ANIM_BLEND,
-                 ENTITY_ANIM_ELAPSED -> sector_buffers.get_buffer(coreBufferType);
-        };
+        return sector_buffers.get_buffer(coreBufferType);
     }
 
     public void mirror_render_buffers()
@@ -204,8 +115,6 @@ public class GPUCoreMemory implements SectorContainer
         last_hull_index   = sector_controller.hull_index();
         last_point_index  = sector_controller.point_index();
     }
-
-    // index methods
 
     public int next_mesh()
     {
@@ -410,7 +319,7 @@ public class GPUCoreMemory implements SectorContainer
         clFinish(GPGPU.ptr_sector_queue);
     }
 
-    public void unload_sectors(UnorderedSectorBufferGroup.Raw raw, int[] egress_counts)
+    public void unload_sectors(UnorderedCoreBufferGroup.Raw raw, int[] egress_counts)
     {
         raw.ensure_space(egress_counts);
         sector_egress_buffer.back().unload(raw, egress_counts);

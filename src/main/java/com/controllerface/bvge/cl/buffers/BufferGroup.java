@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
-public abstract class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
+public class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
 {
     private final String name;
     protected final long ptr_queue;

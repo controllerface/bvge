@@ -3,6 +3,7 @@ package com.controllerface.bvge.gl.renderers;
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.buffers.CoreBufferType;
 import com.controllerface.bvge.cl.buffers.MirrorBufferType;
+import com.controllerface.bvge.cl.buffers.ReferenceBufferType;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
@@ -197,8 +198,8 @@ public class ModelRenderer extends GameSystem
             .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
             .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_MESH_ID))
             .buf_arg(WriteMeshDetails_k.Args.hull_flags, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_FLAG))
-            .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(CoreBufferType.MESH_VERTEX_TABLE))
-            .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(CoreBufferType.MESH_FACE_TABLE));
+            .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
+            .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE));
 
         long k_ptr_count_batches = p_mesh_query.kernel_ptr(Kernel.count_mesh_batches);
         k_count_mesh_batches = new CountMeshBatches_k(GPGPU.ptr_render_queue, k_ptr_count_batches)
@@ -228,14 +229,14 @@ public class ModelRenderer extends GameSystem
             .buf_arg(TransferRenderData_k.Args.hull_uv_offsets, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_UV_OFFSET))
             .buf_arg(TransferRenderData_k.Args.hull_integrity, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_INTEGRITY))
             .buf_arg(TransferRenderData_k.Args.entity_flags, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_ENTITY_FLAG))
-            .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(CoreBufferType.MESH_VERTEX_TABLE))
-            .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(CoreBufferType.MESH_FACE_TABLE))
-            .buf_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.core_memory.get_buffer(CoreBufferType.MESH_FACE))
+            .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
+            .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE))
+            .buf_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE))
             .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT))
             .buf_arg(TransferRenderData_k.Args.point_hit_counts, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT_HIT_COUNT))
             .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT_VERTEX_REFERENCE))
-            .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.get_buffer(CoreBufferType.VERTEX_UV_TABLE))
-            .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.get_buffer(CoreBufferType.VERTEX_TEXTURE_UV));
+            .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.VERTEX_UV_TABLE))
+            .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.get_buffer(ReferenceBufferType.VERTEX_TEXTURE_UV));
     }
 
     private record BatchData( int[] raw_offsets, int total_instances, long mesh_details_ptr, long mesh_texture_ptr) { }

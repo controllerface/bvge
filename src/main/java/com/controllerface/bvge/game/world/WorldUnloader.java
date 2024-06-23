@@ -5,9 +5,8 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.game.world.sectors.BrokenObjectBuffer;
 import com.controllerface.bvge.game.world.sectors.Sector;
-import com.controllerface.bvge.game.world.sectors.UnorderedSectorBufferGroup;
+import com.controllerface.bvge.game.world.sectors.UnorderedCoreBufferGroup;
 import com.controllerface.bvge.geometry.*;
-import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.substances.Solid;
@@ -20,7 +19,7 @@ import java.util.concurrent.*;
 
 public class WorldUnloader extends GameSystem
 {
-    private final UnorderedSectorBufferGroup.Raw raw_sectors      = new UnorderedSectorBufferGroup.Raw();
+    private final UnorderedCoreBufferGroup.Raw raw_sectors      = new UnorderedCoreBufferGroup.Raw();
     private final BrokenObjectBuffer.Raw raw_broken               = new BrokenObjectBuffer.Raw();
     private final Map<Sector, PhysicsEntityBatch> running_batches = new HashMap<>();
     private final BlockingQueue<Float> next_dt                    = new ArrayBlockingQueue<>(1);

@@ -1,13 +1,13 @@
 package com.controllerface.bvge.game.world.sectors;
 
-import com.controllerface.bvge.cl.buffers.SectorBufferGroup;
+import com.controllerface.bvge.cl.buffers.CoreBufferGroup;
 
 import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
-public class UnorderedSectorBufferGroup extends SectorBufferGroup
+public class UnorderedCoreBufferGroup extends CoreBufferGroup
 {
-    public UnorderedSectorBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public UnorderedCoreBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
         super(name, ptr_queue, entity_init, hull_init, edge_init, point_init);
     }

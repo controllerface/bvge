@@ -4,9 +4,8 @@ import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUCoreMemory;
-import com.controllerface.bvge.cl.buffers.BasicBufferGroup;
 import com.controllerface.bvge.cl.buffers.BufferGroup;
-import com.controllerface.bvge.cl.buffers.CoreBufferType;
+import com.controllerface.bvge.cl.buffers.BufferType;
 import com.controllerface.bvge.cl.kernels.EgressBroken_k;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
@@ -20,9 +19,16 @@ public class BrokenObjectBuffer
 {
     private final GPUProgram p_gpu_crud;
     private final GPUKernel k_egress_broken;
-    private final BufferGroup<CoreBufferType> broken_group;
+    private final BufferGroup<BrokenBuffer> broken_group;
     private final long ptr_queue;
     private final long ptr_egress_size;
+
+    private enum BrokenBuffer implements BufferType
+    {
+        BROKEN_POSITIONS,
+        BROKEN_ENTITY_TYPES,
+        BROKEN_MODEL_IDS,
+    }
 
     public BrokenObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
     {
@@ -30,10 +36,10 @@ public class BrokenObjectBuffer
         this.ptr_queue  = ptr_queue;
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
-        broken_group = new BasicBufferGroup(name, ptr_queue);
-        broken_group.set_buffer(BROKEN_POSITIONS,  CLSize.cl_float2, 100);
-        broken_group.set_buffer(BROKEN_ENTITY_TYPES, CLSize.cl_int, 100);
-        broken_group.set_buffer(BROKEN_MODEL_IDS,  CLSize.cl_int, 100);
+        broken_group = new BufferGroup<>(BrokenBuffer.class, name, ptr_queue);
+        broken_group.set_buffer(BrokenBuffer.BROKEN_POSITIONS,  CLSize.cl_float2, 100);
+        broken_group.set_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES, CLSize.cl_int, 100);
+        broken_group.set_buffer(BrokenBuffer.BROKEN_MODEL_IDS,  CLSize.cl_int, 100);
 
         long k_ptr_egress_broken = this.p_gpu_crud.kernel_ptr(Kernel.egress_broken);
         k_egress_broken = new EgressBroken_k(this.ptr_queue, k_ptr_egress_broken)
@@ -41,18 +47,18 @@ public class BrokenObjectBuffer
             .buf_arg(EgressBroken_k.Args.entity_flags, core_memory.get_buffer(ENTITY_FLAG))
             .buf_arg(EgressBroken_k.Args.entity_types, core_memory.get_buffer(ENTITY_TYPE))
             .buf_arg(EgressBroken_k.Args.entity_model_ids, core_memory.get_buffer(ENTITY_MODEL_ID))
-            .buf_arg(EgressBroken_k.Args.positions, broken_group.get_buffer(BROKEN_POSITIONS))
-            .buf_arg(EgressBroken_k.Args.types, broken_group.get_buffer(BROKEN_ENTITY_TYPES))
-            .buf_arg(EgressBroken_k.Args.model_ids, broken_group.get_buffer(BROKEN_MODEL_IDS))
+            .buf_arg(EgressBroken_k.Args.positions, broken_group.get_buffer(BrokenBuffer.BROKEN_POSITIONS))
+            .buf_arg(EgressBroken_k.Args.types, broken_group.get_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES))
+            .buf_arg(EgressBroken_k.Args.model_ids, broken_group.get_buffer(BrokenBuffer.BROKEN_MODEL_IDS))
             .ptr_arg(EgressBroken_k.Args.counter, ptr_egress_size);
     }
 
     public void egress(int entity_count, int egress_count)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
-        broken_group.get_buffer(BROKEN_POSITIONS).ensure_capacity(egress_count);
-        broken_group.get_buffer(BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);
-        broken_group.get_buffer(BROKEN_MODEL_IDS).ensure_capacity(egress_count);
+        broken_group.get_buffer(BrokenBuffer.BROKEN_POSITIONS).ensure_capacity(egress_count);
+        broken_group.get_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);
+        broken_group.get_buffer(BrokenBuffer.BROKEN_MODEL_IDS).ensure_capacity(egress_count);
         k_egress_broken.call(CLUtils.arg_long(entity_count));
     }
 
@@ -61,9 +67,9 @@ public class BrokenObjectBuffer
         if (count > 0)
         {
             int count_vec2 = count * 2;
-            broken_group.get_buffer(BROKEN_POSITIONS).transfer_out_float(raw.positions, cl_float, count_vec2);
-            broken_group.get_buffer(BROKEN_ENTITY_TYPES).transfer_out_int(raw.entity_types, cl_int, count);
-            broken_group.get_buffer(BROKEN_MODEL_IDS).transfer_out_int(raw.model_ids, cl_int, count);
+            broken_group.get_buffer(BrokenBuffer.BROKEN_POSITIONS).transfer_out_float(raw.positions, cl_float, count_vec2);
+            broken_group.get_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).transfer_out_int(raw.entity_types, cl_int, count);
+            broken_group.get_buffer(BrokenBuffer.BROKEN_MODEL_IDS).transfer_out_int(raw.model_ids, cl_int, count);
         }
     }
 

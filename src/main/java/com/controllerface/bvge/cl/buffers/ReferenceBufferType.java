@@ -1,0 +1,24 @@
+package com.controllerface.bvge.cl.buffers;
+
+public enum ReferenceBufferType implements BufferType
+{
+    ANIM_POS_CHANNEL,
+    ANIM_ROT_CHANNEL,
+    ANIM_SCL_CHANNEL,
+    VERTEX_REFERENCE,
+    VERTEX_UV_TABLE,
+    VERTEX_WEIGHT,
+    VERTEX_TEXTURE_UV,
+    MODEL_TRANSFORM,
+    ANIM_TIMING_INDEX,
+    MESH_VERTEX_TABLE,
+    MESH_FACE_TABLE,
+    MESH_FACE,
+    BONE_REFERENCE,
+    BONE_ANIM_CHANNEL_TABLE,
+    BONE_BIND_POSE,
+    ANIM_DURATION,
+    ANIM_TICK_RATE,
+    ANIM_KEY_FRAME,
+    ANIM_FRAME_TIME,
+}

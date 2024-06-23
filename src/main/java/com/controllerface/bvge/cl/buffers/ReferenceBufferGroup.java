@@ -1,13 +1,13 @@
 package com.controllerface.bvge.cl.buffers;
 
 import static com.controllerface.bvge.cl.CLSize.*;
-import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
+import static com.controllerface.bvge.cl.buffers.ReferenceBufferType.*;
 
-public class ReferenceBufferGroup extends BufferGroup<CoreBufferType>
+public class ReferenceBufferGroup extends BufferGroup<ReferenceBufferType>
 {
     public ReferenceBufferGroup(String name, long ptr_queue)
     {
-        super(CoreBufferType.class, name, ptr_queue);
+        super(ReferenceBufferType.class, name, ptr_queue);
 
         // bone animation channels
 

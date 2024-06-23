@@ -160,11 +160,6 @@ public class GPGPU
         return device;
     }
 
-    private static void init_memory()
-    {
-        core_memory = new GPUCoreMemory();
-    }
-
     //#endregion
 
     //#region Utility Methods
@@ -565,8 +560,7 @@ public class GPGPU
 
         //OpenCLUtils.debugDeviceDetails(device_ids);
 
-        // create memory buffers
-        init_memory();
+        core_memory = new GPUCoreMemory();
     }
 
     public static void destroy()

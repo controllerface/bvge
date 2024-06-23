@@ -3,8 +3,8 @@ package com.controllerface.bvge.game.world.sectors;
 import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUCoreMemory;
-import com.controllerface.bvge.cl.buffers.BasicBufferGroup;
 import com.controllerface.bvge.cl.buffers.BufferGroup;
+import com.controllerface.bvge.cl.buffers.BufferType;
 import com.controllerface.bvge.cl.buffers.CoreBufferType;
 import com.controllerface.bvge.cl.kernels.EgressCollected_k;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
@@ -19,9 +19,14 @@ public class CollectedObjectBuffer
 {
     private final GPUProgram p_gpu_crud = new GPUCrud();
     private final GPUKernel k_egress_collected;
-    private final BufferGroup<CoreBufferType> collected_group;
+    private final BufferGroup<Collected> collected_group;
     private final long ptr_queue;
     private final long ptr_egress_size;
+
+    private enum Collected implements BufferType
+    {
+        TYPES
+    }
 
     public CollectedObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
     {
@@ -29,21 +34,21 @@ public class CollectedObjectBuffer
         this.ptr_queue  = ptr_queue;
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
-        collected_group = new BasicBufferGroup(name, ptr_queue);
-        collected_group.set_buffer(CoreBufferType.COLLECTED_TYPE,  CLSize.cl_int, 100);
+        collected_group = new BufferGroup<>(Collected.class, name, ptr_queue);
+        collected_group.set_buffer(Collected.TYPES,  CLSize.cl_int, 100);
 
         long k_ptr_egress_collected = this.p_gpu_crud.kernel_ptr(Kernel.egress_collected);
         k_egress_collected = new EgressCollected_k(this.ptr_queue, k_ptr_egress_collected)
             .buf_arg(EgressCollected_k.Args.entity_flags, core_memory.get_buffer(CoreBufferType.ENTITY_FLAG))
             .buf_arg(EgressCollected_k.Args.entity_types, core_memory.get_buffer(CoreBufferType.ENTITY_TYPE))
-            .buf_arg(EgressCollected_k.Args.types, collected_group.get_buffer(CoreBufferType.COLLECTED_TYPE))
+            .buf_arg(EgressCollected_k.Args.types, collected_group.get_buffer(Collected.TYPES))
             .ptr_arg(EgressCollected_k.Args.counter, ptr_egress_size);
     }
 
     public void egress(int entity_count, int egress_count)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
-        collected_group.get_buffer(CoreBufferType.COLLECTED_TYPE).ensure_capacity(egress_count);
+        collected_group.get_buffer(Collected.TYPES).ensure_capacity(egress_count);
         k_egress_collected.call(arg_long(entity_count));
     }
 
@@ -51,7 +56,7 @@ public class CollectedObjectBuffer
     {
         if (count > 0)
         {
-            collected_group.get_buffer(CoreBufferType.COLLECTED_TYPE).transfer_out_int(raw.types, cl_int, count);
+            collected_group.get_buffer(Collected.TYPES).transfer_out_int(raw.types, cl_int, count);
         }
     }
 

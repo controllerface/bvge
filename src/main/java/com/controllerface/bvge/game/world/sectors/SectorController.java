@@ -1,7 +1,7 @@
 package com.controllerface.bvge.game.world.sectors;
 
 import com.controllerface.bvge.cl.GPGPU;
-import com.controllerface.bvge.cl.buffers.SectorBufferGroup;
+import com.controllerface.bvge.cl.buffers.CoreBufferGroup;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
@@ -17,7 +17,7 @@ public class SectorController
     private static final int EGRESS_COUNTERS = 8;
     private static final int EGRESS_COUNTERS_SIZE = cl_int * EGRESS_COUNTERS;
 
-    private final SectorBufferGroup sector_buffers;
+    private final CoreBufferGroup sector_buffers;
 
     private final GPUKernel k_create_point;
     private final GPUKernel k_create_edge;
@@ -41,7 +41,7 @@ public class SectorController
     private final long ptr_position_buffer;
     private final long ptr_queue;
 
-    public SectorController(long ptr_queue, GPUProgram p_gpu_crud, SectorBufferGroup sector_buffers)
+    public SectorController(long ptr_queue, GPUProgram p_gpu_crud, CoreBufferGroup sector_buffers)
     {
         this.ptr_queue = ptr_queue;
         this.sector_buffers = sector_buffers;

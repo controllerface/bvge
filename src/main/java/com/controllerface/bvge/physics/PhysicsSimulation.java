@@ -1,10 +1,7 @@
 package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.cl.*;
-import com.controllerface.bvge.cl.buffers.CoreBufferType;
-import com.controllerface.bvge.cl.buffers.PersistentBuffer;
-import com.controllerface.bvge.cl.buffers.ResizableBuffer;
-import com.controllerface.bvge.cl.buffers.TransientBuffer;
+import com.controllerface.bvge.cl.buffers.*;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
@@ -382,22 +379,22 @@ public class PhysicsSimulation extends GameSystem
         long k_ptr_animate_entities = p_animate_hulls.kernel_ptr(Kernel.animate_entities);
         k_animate_entities = new AnimateEntities_k(GPGPU.ptr_compute_queue, k_ptr_animate_entities)
             .buf_arg(AnimateEntities_k.Args.armature_bones,              GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_BONE))
-            .buf_arg(AnimateEntities_k.Args.bone_bind_poses,             GPGPU.core_memory.get_buffer(CoreBufferType.BONE_BIND_POSE))
-            .buf_arg(AnimateEntities_k.Args.model_transforms,            GPGPU.core_memory.get_buffer(CoreBufferType.MODEL_TRANSFORM))
+            .buf_arg(AnimateEntities_k.Args.bone_bind_poses,             GPGPU.core_memory.get_buffer(ReferenceBufferType.BONE_BIND_POSE))
+            .buf_arg(AnimateEntities_k.Args.model_transforms,            GPGPU.core_memory.get_buffer(ReferenceBufferType.MODEL_TRANSFORM))
             .buf_arg(AnimateEntities_k.Args.entity_flags,                GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_FLAG))
             .buf_arg(AnimateEntities_k.Args.armature_bone_reference_ids, GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_BONE_REFERENCE_ID))
             .buf_arg(AnimateEntities_k.Args.armature_bone_parent_ids,    GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_BONE_PARENT_ID))
-            .buf_arg(AnimateEntities_k.Args.bone_channel_tables,         GPGPU.core_memory.get_buffer(CoreBufferType.BONE_ANIM_CHANNEL_TABLE))
-            .buf_arg(AnimateEntities_k.Args.bone_pos_channel_tables,     GPGPU.core_memory.get_buffer(CoreBufferType.ANIM_POS_CHANNEL))
-            .buf_arg(AnimateEntities_k.Args.bone_rot_channel_tables,     GPGPU.core_memory.get_buffer(CoreBufferType.ANIM_ROT_CHANNEL))
-            .buf_arg(AnimateEntities_k.Args.bone_scl_channel_tables,     GPGPU.core_memory.get_buffer(CoreBufferType.ANIM_SCL_CHANNEL))
+            .buf_arg(AnimateEntities_k.Args.bone_channel_tables,         GPGPU.core_memory.get_buffer(ReferenceBufferType.BONE_ANIM_CHANNEL_TABLE))
+            .buf_arg(AnimateEntities_k.Args.bone_pos_channel_tables,     GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_POS_CHANNEL))
+            .buf_arg(AnimateEntities_k.Args.bone_rot_channel_tables,     GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_ROT_CHANNEL))
+            .buf_arg(AnimateEntities_k.Args.bone_scl_channel_tables,     GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_SCL_CHANNEL))
             .buf_arg(AnimateEntities_k.Args.entity_model_transforms,     GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_TRANSFORM_ID))
             .buf_arg(AnimateEntities_k.Args.entity_bone_tables,          GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_BONE_TABLE))
-            .buf_arg(AnimateEntities_k.Args.key_frames,                  GPGPU.core_memory.get_buffer(CoreBufferType.ANIM_KEY_FRAME))
-            .buf_arg(AnimateEntities_k.Args.frame_times,                 GPGPU.core_memory.get_buffer(CoreBufferType.ANIM_FRAME_TIME))
-            .buf_arg(AnimateEntities_k.Args.animation_timing_indices,    GPGPU.core_memory.get_buffer(CoreBufferType.ANIM_TIMING_INDEX))
-            .buf_arg(AnimateEntities_k.Args.animation_durations,         GPGPU.core_memory.get_buffer(CoreBufferType.ANIM_DURATION))
-            .buf_arg(AnimateEntities_k.Args.animation_tick_rates,        GPGPU.core_memory.get_buffer(CoreBufferType.ANIM_TICK_RATE))
+            .buf_arg(AnimateEntities_k.Args.key_frames,                  GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_KEY_FRAME))
+            .buf_arg(AnimateEntities_k.Args.frame_times,                 GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_FRAME_TIME))
+            .buf_arg(AnimateEntities_k.Args.animation_timing_indices,    GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_TIMING_INDEX))
+            .buf_arg(AnimateEntities_k.Args.animation_durations,         GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_DURATION))
+            .buf_arg(AnimateEntities_k.Args.animation_tick_rates,        GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_TICK_RATE))
             .buf_arg(AnimateEntities_k.Args.entity_animation_indices,    GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_INDEX))
             .buf_arg(AnimateEntities_k.Args.entity_animation_elapsed,    GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_ELAPSED))
             .buf_arg(AnimateEntities_k.Args.entity_animation_blend,      GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_BLEND));
@@ -405,7 +402,7 @@ public class PhysicsSimulation extends GameSystem
         long k_ptr_animate_bones = p_animate_hulls.kernel_ptr(Kernel.animate_bones);
         k_animate_bones = new AnimateBones_k(GPGPU.ptr_compute_queue, k_ptr_animate_bones)
             .buf_arg(AnimateBones_k.Args.bones,                       GPGPU.core_memory.get_buffer(CoreBufferType.HULL_BONE))
-            .buf_arg(AnimateBones_k.Args.bone_references,             GPGPU.core_memory.get_buffer(CoreBufferType.BONE_REFERENCE))
+            .buf_arg(AnimateBones_k.Args.bone_references,             GPGPU.core_memory.get_buffer(ReferenceBufferType.BONE_REFERENCE))
             .buf_arg(AnimateBones_k.Args.armature_bones,              GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_BONE))
             .buf_arg(AnimateBones_k.Args.hull_bind_pose_indicies,     GPGPU.core_memory.get_buffer(CoreBufferType.HULL_BONE_BIND_POSE))
             .buf_arg(AnimateBones_k.Args.hull_inv_bind_pose_indicies, GPGPU.core_memory.get_buffer(CoreBufferType.HULL_BONE_INV_BIND_POSE));
@@ -419,9 +416,9 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimatePoints_k.Args.point_vertex_references, GPGPU.core_memory.get_buffer(CoreBufferType.POINT_VERTEX_REFERENCE))
             .buf_arg(AnimatePoints_k.Args.point_hull_indices,      GPGPU.core_memory.get_buffer(CoreBufferType.POINT_HULL_INDEX))
             .buf_arg(AnimatePoints_k.Args.bone_tables,             GPGPU.core_memory.get_buffer(CoreBufferType.POINT_BONE_TABLE))
-            .buf_arg(AnimatePoints_k.Args.vertex_weights,          GPGPU.core_memory.get_buffer(CoreBufferType.VERTEX_WEIGHT))
+            .buf_arg(AnimatePoints_k.Args.vertex_weights,          GPGPU.core_memory.get_buffer(ReferenceBufferType.VERTEX_WEIGHT))
             .buf_arg(AnimatePoints_k.Args.entities,                GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY))
-            .buf_arg(AnimatePoints_k.Args.vertex_references,       GPGPU.core_memory.get_buffer(CoreBufferType.VERTEX_REFERENCE))
+            .buf_arg(AnimatePoints_k.Args.vertex_references,       GPGPU.core_memory.get_buffer(ReferenceBufferType.VERTEX_REFERENCE))
             .buf_arg(AnimatePoints_k.Args.bones,                   GPGPU.core_memory.get_buffer(CoreBufferType.HULL_BONE));
 
         long k_ptr_resolve_constraints = p_resolve_constraints.kernel_ptr(Kernel.resolve_constraints);

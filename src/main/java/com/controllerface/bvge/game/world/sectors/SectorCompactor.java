@@ -4,7 +4,7 @@ import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUScanVectorInt2;
 import com.controllerface.bvge.cl.GPUScanVectorInt4;
 import com.controllerface.bvge.cl.buffers.ResizableBuffer;
-import com.controllerface.bvge.cl.buffers.SectorBufferGroup;
+import com.controllerface.bvge.cl.buffers.CoreBufferGroup;
 import com.controllerface.bvge.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.kernels.compact.*;
@@ -67,7 +67,7 @@ public class SectorCompactor
 
     public SectorCompactor(long ptr_queue,
                            SectorController controller,
-                           SectorBufferGroup sector_buffers,
+                           CoreBufferGroup sector_buffers,
                            long entity_init,
                            long hull_init,
                            long edge_init,
