@@ -73,9 +73,9 @@ public class EdgeRenderer extends GameSystem
         k_prepare_edges = new PrepareEdges_k(GPGPU.ptr_render_queue, k_ptr_prepare_edges)
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)
-            .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT))
-            .buf_arg(PrepareEdges_k.Args.edges, GPGPU.core_memory.buffer(BufferType.MIRROR_EDGE))
-            .buf_arg(PrepareEdges_k.Args.edge_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_EDGE_FLAG));
+            .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.get_buffer(BufferType.MIRROR_POINT))
+            .buf_arg(PrepareEdges_k.Args.edges, GPGPU.core_memory.get_buffer(BufferType.MIRROR_EDGE))
+            .buf_arg(PrepareEdges_k.Args.edge_flags, GPGPU.core_memory.get_buffer(BufferType.MIRROR_EDGE_FLAG));
     }
 
     @Override

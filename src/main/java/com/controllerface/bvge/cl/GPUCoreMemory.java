@@ -91,7 +91,7 @@ public class GPUCoreMemory implements SectorContainer
         this.object_egress_buffer  = new DoubleBuffer<>(object_egress_a, object_egress_b);
     }
 
-    public ResizableBuffer buffer(BufferType bufferType)
+    public ResizableBuffer get_buffer(BufferType bufferType)
     {
         return switch (bufferType)
         {

@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
-public abstract class BufferGroup
+public abstract class BufferGroup implements BufferSet<BufferType>
 {
     private final String name;
     protected final long ptr_queue;
@@ -14,25 +14,6 @@ public abstract class BufferGroup
     {
         this.name = name;
         this.ptr_queue = ptr_queue;
-    }
-
-    public ResizableBuffer get_buffer(BufferType bufferType)
-    {
-        return buffers.get(bufferType);
-    }
-
-    public void set_buffer(BufferType bufferType, int size)
-    {
-        if (buffers.containsKey(bufferType))
-        {
-            throw new RuntimeException("Buffer type: " + bufferType + " already exists in: " + name);
-        }
-        buffers.put(bufferType, new_buffer(size));
-    }
-
-    public void set_buffer(BufferType bufferType, int size, long initial_capacity)
-    {
-        buffers.put(bufferType, new_buffer(size, initial_capacity));
     }
 
     private ResizableBuffer new_buffer(int size)
@@ -45,6 +26,29 @@ public abstract class BufferGroup
         return new PersistentBuffer(this.ptr_queue, size, initial_capacity);
     }
 
+    @Override
+    public ResizableBuffer get_buffer(BufferType bufferType)
+    {
+        return buffers.get(bufferType);
+    }
+
+    @Override
+    public void set_buffer(BufferType bufferType, int size)
+    {
+        if (buffers.containsKey(bufferType))
+        {
+            throw new RuntimeException("Buffer type: " + bufferType + " already exists in: " + name);
+        }
+        buffers.put(bufferType, new_buffer(size));
+    }
+
+    @Override
+    public void set_buffer(BufferType bufferType, int size, long initial_capacity)
+    {
+        buffers.put(bufferType, new_buffer(size, initial_capacity));
+    }
+
+    @Override
     public void destroy()
     {
         long[] total = new long[1];

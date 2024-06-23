@@ -72,8 +72,8 @@ public class PointRenderer extends GameSystem
         prepare_points_k = new PreparePoints_k(GPGPU.ptr_render_queue, ptr)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
             .ptr_arg(PreparePoints_k.Args.color_vbo, color_vbo_ptr)
-            .buf_arg(PreparePoints_k.Args.anti_gravity, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT_ANTI_GRAV))
-            .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT));
+            .buf_arg(PreparePoints_k.Args.anti_gravity, GPGPU.core_memory.get_buffer(BufferType.MIRROR_POINT_ANTI_GRAV))
+            .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.get_buffer(BufferType.MIRROR_POINT));
     }
 
     @Override

@@ -36,10 +36,10 @@ public class BrokenObjectBuffer
 
         long k_ptr_egress_broken = this.p_gpu_crud.kernel_ptr(Kernel.egress_broken);
         k_egress_broken = new EgressBroken_k(this.ptr_queue, k_ptr_egress_broken)
-            .buf_arg(EgressBroken_k.Args.entities, core_memory.buffer(ENTITY))
-            .buf_arg(EgressBroken_k.Args.entity_flags, core_memory.buffer(ENTITY_FLAG))
-            .buf_arg(EgressBroken_k.Args.entity_types, core_memory.buffer(ENTITY_TYPE))
-            .buf_arg(EgressBroken_k.Args.entity_model_ids, core_memory.buffer(ENTITY_MODEL_ID))
+            .buf_arg(EgressBroken_k.Args.entities, core_memory.get_buffer(ENTITY))
+            .buf_arg(EgressBroken_k.Args.entity_flags, core_memory.get_buffer(ENTITY_FLAG))
+            .buf_arg(EgressBroken_k.Args.entity_types, core_memory.get_buffer(ENTITY_TYPE))
+            .buf_arg(EgressBroken_k.Args.entity_model_ids, core_memory.get_buffer(ENTITY_MODEL_ID))
             .buf_arg(EgressBroken_k.Args.positions, broken_group.get_buffer(BROKEN_POSITIONS))
             .buf_arg(EgressBroken_k.Args.types, broken_group.get_buffer(BROKEN_ENTITY_TYPES))
             .buf_arg(EgressBroken_k.Args.model_ids, broken_group.get_buffer(BROKEN_MODEL_IDS))

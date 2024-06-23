@@ -71,7 +71,7 @@ public class ModelRenderer extends GameSystem
     private long ptr_counters;
     private long ptr_offsets;
     private long ptr_mesh_transfer;
-    private ByteBuffer svm_total;
+    private long svm_total;
 
     private int[] raw_query;
     private int mesh_count;
@@ -168,7 +168,7 @@ public class ModelRenderer extends GameSystem
         ptr_uv_buffer      = GPGPU.share_memory(vbo_texture_uv);
         ptr_color_buffer   = GPGPU.share_memory(vbo_color);
         ptr_slot_buffer    = GPGPU.share_memory(vbo_texture_slot);
-        svm_total          = GPGPU.cl_new_svm_int();
+        svm_total          = GPGPU.cl_new_pinned_int();
         ptr_query          = GPGPU.new_mutable_buffer(raw_query);
         ptr_counters       = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, mesh_size);
         ptr_offsets        = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, mesh_size);
@@ -186,8 +186,8 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(CountMeshInstances_k.Args.query, ptr_query)
             .ptr_arg(CountMeshInstances_k.Args.total, svm_total)
             .set_arg(CountMeshInstances_k.Args.count, mesh_count)
-            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_MESH_ID))
-            .buf_arg(CountMeshInstances_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_FLAG));
+            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_MESH_ID))
+            .buf_arg(CountMeshInstances_k.Args.hull_flags, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_FLAG));
 
         long k_ptr_write_details = p_mesh_query.kernel_ptr(Kernel.write_mesh_details);
         k_write_mesh_details = new WriteMeshDetails_k(GPGPU.ptr_render_queue, k_ptr_write_details)
@@ -195,10 +195,10 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(WriteMeshDetails_k.Args.query, ptr_query)
             .ptr_arg(WriteMeshDetails_k.Args.offsets, ptr_offsets)
             .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
-            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_MESH_ID))
-            .buf_arg(WriteMeshDetails_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_FLAG))
-            .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.buffer(BufferType.MESH_VERTEX_TABLE))
-            .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.buffer(BufferType.MESH_FACE_TABLE));
+            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_MESH_ID))
+            .buf_arg(WriteMeshDetails_k.Args.hull_flags, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_FLAG))
+            .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(BufferType.MESH_VERTEX_TABLE))
+            .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(BufferType.MESH_FACE_TABLE));
 
         long k_ptr_count_batches = p_mesh_query.kernel_ptr(Kernel.count_mesh_batches);
         k_count_mesh_batches = new CountMeshBatches_k(GPGPU.ptr_render_queue, k_ptr_count_batches)
@@ -221,21 +221,21 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(TransferRenderData_k.Args.color_buffer, ptr_color_buffer)
             .ptr_arg(TransferRenderData_k.Args.slot_buffer, ptr_slot_buffer)
             .ptr_arg(TransferRenderData_k.Args.mesh_transfer, ptr_mesh_transfer)
-            .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_POINT_TABLE))
-            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_MESH_ID))
-            .buf_arg(TransferRenderData_k.Args.hull_entity_ids, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_ENTITY_ID))
-            .buf_arg(TransferRenderData_k.Args.hull_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_FLAG))
-            .buf_arg(TransferRenderData_k.Args.hull_uv_offsets, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_UV_OFFSET))
-            .buf_arg(TransferRenderData_k.Args.hull_integrity, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_INTEGRITY))
-            .buf_arg(TransferRenderData_k.Args.entity_flags, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_FLAG))
-            .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPGPU.core_memory.buffer(BufferType.MESH_VERTEX_TABLE))
-            .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.buffer(BufferType.MESH_FACE_TABLE))
-            .buf_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.core_memory.buffer(BufferType.MESH_FACE))
-            .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT))
-            .buf_arg(TransferRenderData_k.Args.point_hit_counts, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT_HIT_COUNT))
-            .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.buffer(BufferType.MIRROR_POINT_VERTEX_REFERENCE))
-            .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.buffer(BufferType.VERTEX_UV_TABLE))
-            .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.buffer(BufferType.VERTEX_TEXTURE_UV));
+            .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_POINT_TABLE))
+            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_MESH_ID))
+            .buf_arg(TransferRenderData_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_ENTITY_ID))
+            .buf_arg(TransferRenderData_k.Args.hull_flags, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_FLAG))
+            .buf_arg(TransferRenderData_k.Args.hull_uv_offsets, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_UV_OFFSET))
+            .buf_arg(TransferRenderData_k.Args.hull_integrity, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_INTEGRITY))
+            .buf_arg(TransferRenderData_k.Args.entity_flags, GPGPU.core_memory.get_buffer(BufferType.MIRROR_ENTITY_FLAG))
+            .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(BufferType.MESH_VERTEX_TABLE))
+            .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(BufferType.MESH_FACE_TABLE))
+            .buf_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.core_memory.get_buffer(BufferType.MESH_FACE))
+            .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.get_buffer(BufferType.MIRROR_POINT))
+            .buf_arg(TransferRenderData_k.Args.point_hit_counts, GPGPU.core_memory.get_buffer(BufferType.MIRROR_POINT_HIT_COUNT))
+            .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.get_buffer(BufferType.MIRROR_POINT_VERTEX_REFERENCE))
+            .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.get_buffer(BufferType.VERTEX_UV_TABLE))
+            .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.get_buffer(BufferType.VERTEX_TEXTURE_UV));
     }
 
     private record BatchData( int[] raw_offsets, int total_instances, long mesh_details_ptr, long mesh_texture_ptr) { }
@@ -261,7 +261,7 @@ public class ModelRenderer extends GameSystem
 
         gpu_int_scan_out.scan_int_out(ptr_counters, ptr_offsets, mesh_count);
 
-        int total_instances = GPGPU.cl_read_svm_int(GPGPU.ptr_render_queue, svm_total);
+        int total_instances = GPGPU.cl_read_pinned_int(GPGPU.ptr_render_queue, svm_total);
         if (total_instances == 0)
         {
             return null;
@@ -299,7 +299,7 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_count_batches", String.valueOf(e));
         }
 
-        int total_batches = GPGPU.cl_read_svm_int(GPGPU.ptr_render_queue, svm_total);
+        int total_batches = GPGPU.cl_read_pinned_int(GPGPU.ptr_render_queue, svm_total);
         if (Editor.ACTIVE)
         {
             Editor.queue_event("render_batch_count", String.valueOf(total_batches));

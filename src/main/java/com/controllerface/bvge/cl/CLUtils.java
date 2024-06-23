@@ -35,14 +35,14 @@ public class CLUtils
     }
 
     /**
-     * Generates source code for an Open CL kernel that can be called to create an object specified
-     * by the arguments enum supplied as input. Run any of the tests in the following package to see
+     * Generates source code for an Open CL kernel that can be called to create or update an object
+     * using the specified arguments as input. Run any of the tests in the following package to see
      * example kernel output: {@link com.controllerface.bvge.cl.kernels.crud}
      *
      * @param kernel {@linkplain Kernel} enum class identifying the name of the kernel to generate
-     * @param args_enum {@linkplain KernelArg} enum class defining the order set of argument to the kernel
+     * @param args_enum {@linkplain KernelArg} enum class defining the ordered set of argument to the kernel
      * @return a String containing the generated kernel source
-     * @param <E> Type argument restricting the ar
+     * @param <E> Type argument restricting the args_enum implementation
      */
     public static <E extends Enum<E> & KernelArg> String crud_create_k_src(Kernel kernel, Class<E> args_enum)
     {
@@ -59,78 +59,88 @@ public class CLUtils
             .findAny()
             .orElseThrow();
 
-        var buffer = new StringBuilder("__kernel void ").append(kernel.name());
+        var src = new StringBuilder("__kernel void ").append(kernel.name());
 
         var parameters = Arrays.stream(args_enum.getEnumConstants())
             .map(arg -> String.join(" ", arg.cl_type(), arg.name()))
             .collect(Collectors.joining(",\n\t","(",")\n"));
 
-        buffer.append(parameters);
-        buffer.append("{\n");
+        src.append(parameters);
+        src.append("{\n");
         for (int name_index = 0; name_index < target_index; name_index++)
         {
             int value_index = name_index + target_index + 1;
             var name        = arguments[name_index].name();
             var value       = arguments[value_index];
 
-            buffer.append("\t")
+            src.append("\t")
                 .append(name)
                 .append("[target] = ")
                 .append(value)
                 .append(";\n");
         }
-        buffer.append("}\n\n");
-        return buffer.toString();
+        src.append("}\n\n");
+        return src.toString();
     }
 
+    /**
+     * Generates source code for an Open CL kernel that can be called to compact the buffers used
+     * for logical objects. Run any of the tests in the following package to see example kernel
+     * output: {@link com.controllerface.bvge.cl.kernels.compact}
+     *
+     * @param kernel {@linkplain Kernel} enum class identifying the name of the kernel to generate
+     * @param args_enum {@linkplain KernelArg} enum class defining the ordered set of arguments to the kernel
+     * @return a String containing the generated kernel source
+     * @param <E> Type argument restricting the args_enum implementation
+     */
     public static <E extends Enum<E> & KernelArg> String compact_k_src(Kernel kernel, Class<E> args_enum)
     {
         E[] arguments = args_enum.getEnumConstants();
 
-        var buffer = new StringBuilder("__kernel void ").append(kernel.name());
+        var src = new StringBuilder("__kernel void ").append(kernel.name());
 
         var parameters = Arrays.stream(args_enum.getEnumConstants())
             .map(arg -> String.join(" ", arg.cl_type(), arg.name()))
             .collect(Collectors.joining(",\n\t","(",")\n"));
 
-        buffer.append(parameters);
-        buffer.append("{\n");
-        buffer.append("\tint current = get_global_id(0);\n");
-        buffer.append("\tint shift = ").append(arguments[0].name()).append("[current];\n");
+        src.append(parameters);
+        src.append("{\n");
+        src.append("\tint current = get_global_id(0);\n");
+        src.append("\tint shift = ").append(arguments[0].name()).append("[current];\n");
 
         for (int arg_index = 1; arg_index < arguments.length; arg_index++)
         {
-            var arg = arguments[arg_index];
+            var arg  = arguments[arg_index];
             var type = arg.cl_type()
                 .replace(KernelArg.Type.BUFFER_PREFIX, "")
                 .replace(KernelArg.Type.BUFFER_SUFFIX, "")
                 .trim();
-            var _name        = "_" + arg.name();
-            buffer.append("\t")
+            var _name = "_" + arg.name();
+            src.append("\t")
                 .append(type).append(" ")
                 .append(_name).append(" = ")
                 .append(arg.name()).append("[current]")
                 .append(";\n");
         }
-        buffer.append("\tbarrier(CLK_GLOBAL_MEM_FENCE);\n");
-        buffer.append("\tif (shift > 0)\n");
-        buffer.append("\t{\n");
-        buffer.append("\t\tint new_index = current - shift;\n");
+        src.append("\tbarrier(CLK_GLOBAL_MEM_FENCE);\n");
+        src.append("\tif (shift > 0)\n");
+        src.append("\t{\n");
+        src.append("\t\tint new_index = current - shift;\n");
 
         for (int arg_index = 1; arg_index < arguments.length; arg_index++)
         {
-            var arg = arguments[arg_index];
-            var _name        = "_" + arg.name();
-            buffer.append("\t\t")
+            var arg   = arguments[arg_index];
+            var _name = "_" + arg.name();
+            src.append("\t\t")
                 .append(arg.name()).append("[new_index]")
                 .append(" = ")
                 .append(_name)
                 .append(";\n");
         }
 
-        buffer.append("\t}\n");
-        buffer.append("}\n\n");
-        return buffer.toString();
+        src.append("\t}\n");
+        src.append("}\n\n");
+        return src.toString();
     }
 
     public static long cl_p(long context_ptr, long device_id_ptr, String ... src)

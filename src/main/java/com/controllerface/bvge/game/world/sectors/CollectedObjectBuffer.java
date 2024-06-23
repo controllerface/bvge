@@ -34,8 +34,8 @@ public class CollectedObjectBuffer
 
         long k_ptr_egress_collected = this.p_gpu_crud.kernel_ptr(Kernel.egress_collected);
         k_egress_collected = new EgressCollected_k(this.ptr_queue, k_ptr_egress_collected)
-            .buf_arg(EgressCollected_k.Args.entity_flags, core_memory.buffer(BufferType.ENTITY_FLAG))
-            .buf_arg(EgressCollected_k.Args.entity_types, core_memory.buffer(BufferType.ENTITY_TYPE))
+            .buf_arg(EgressCollected_k.Args.entity_flags, core_memory.get_buffer(BufferType.ENTITY_FLAG))
+            .buf_arg(EgressCollected_k.Args.entity_types, core_memory.get_buffer(BufferType.ENTITY_TYPE))
             .buf_arg(EgressCollected_k.Args.types, collected_group.get_buffer(BufferType.COLLECTED_TYPE))
             .ptr_arg(EgressCollected_k.Args.counter, ptr_egress_size);
     }

@@ -46,7 +46,7 @@ public class MouseRenderer extends GameSystem
     private int vao;
     private int vbo_transforms;
     private long ptr_vbo_transforms;
-    private ByteBuffer svm_atomic_counter;
+    private long svm_atomic_counter;
 
     private HullIndexData cursor_hulls;
 
@@ -71,23 +71,23 @@ public class MouseRenderer extends GameSystem
         prepare_transforms.init();
         root_hull_filter.init();
         ptr_vbo_transforms = GPGPU.share_memory(vbo_transforms);
-        svm_atomic_counter = GPGPU.cl_new_svm_int();
+        svm_atomic_counter = GPGPU.cl_new_pinned_int();
 
         long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
         k_prepare_transforms = (new PrepareTransforms_k(GPGPU.ptr_render_queue, ptr))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transforms)
-            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL))
-            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_SCALE))
-            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.buffer(BufferType.MIRROR_HULL_ROTATION));
+            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL))
+            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_SCALE))
+            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(BufferType.MIRROR_HULL_ROTATION));
 
         long root_hull_filter_ptr = root_hull_filter.kernel_ptr(Kernel.root_hull_filter);
         k_root_hull_filter = new RootHullFilter_k(GPGPU.ptr_render_queue, root_hull_filter_ptr)
-            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
+            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(BufferType.MIRROR_ENTITY_ROOT_HULL))
+            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
 
         long root_hull_count_ptr =  root_hull_filter.kernel_ptr(Kernel.root_hull_count);
         k_root_hull_count = new RootHullCount_k(GPGPU.ptr_render_queue, root_hull_count_ptr)
-            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
+            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(BufferType.MIRROR_ENTITY_MODEL_ID));
     }
 
     public HullIndexData hull_filter(long queue_ptr, int model_id)
@@ -99,7 +99,7 @@ public class MouseRenderer extends GameSystem
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .call(arg_long(GPGPU.core_memory.next_entity()));
 
-        int final_count =  GPGPU.cl_read_svm_int(queue_ptr, svm_atomic_counter);
+        int final_count =  GPGPU.cl_read_pinned_int(queue_ptr, svm_atomic_counter);
 
         if (final_count == 0)
         {
