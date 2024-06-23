@@ -91,9 +91,9 @@ public class GPUCoreMemory implements SectorContainer
         this.object_egress_buffer  = new DoubleBuffer<>(object_egress_a, object_egress_b);
     }
 
-    public ResizableBuffer get_buffer(BufferType bufferType)
+    public ResizableBuffer get_buffer(CoreBufferType coreBufferType)
     {
-        return switch (bufferType)
+        return switch (coreBufferType)
         {
             case BROKEN_POSITIONS,
                  BROKEN_ENTITY_TYPES,
@@ -118,7 +118,7 @@ public class GPUCoreMemory implements SectorContainer
                  ANIM_DURATION,
                  ANIM_TICK_RATE,
                  ANIM_KEY_FRAME,
-                 ANIM_FRAME_TIME -> reference_buffers.get_buffer(bufferType);
+                 ANIM_FRAME_TIME -> reference_buffers.get_buffer(coreBufferType);
 
             case MIRROR_POINT,
                  MIRROR_POINT_ANTI_GRAV,
@@ -139,7 +139,7 @@ public class GPUCoreMemory implements SectorContainer
                  MIRROR_ENTITY,
                  MIRROR_ENTITY_FLAG,
                  MIRROR_ENTITY_MODEL_ID,
-                 MIRROR_ENTITY_ROOT_HULL -> mirror_buffers.get_buffer(bufferType);
+                 MIRROR_ENTITY_ROOT_HULL -> mirror_buffers.get_buffer(coreBufferType);
 
             case POINT,
                  POINT_HIT_COUNT,
@@ -186,7 +186,7 @@ public class GPUCoreMemory implements SectorContainer
                  ENTITY_MOTION_STATE,
                  ENTITY_ACCEL,
                  ENTITY_ANIM_BLEND,
-                 ENTITY_ANIM_ELAPSED -> sector_buffers.get_buffer(bufferType);
+                 ENTITY_ANIM_ELAPSED -> sector_buffers.get_buffer(coreBufferType);
         };
     }
 

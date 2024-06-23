@@ -13,7 +13,7 @@ import com.controllerface.bvge.cl.programs.ScanDeletes;
 
 import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
-import static com.controllerface.bvge.cl.buffers.BufferType.*;
+import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
 public class SectorCompactor
 {

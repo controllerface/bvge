@@ -3,7 +3,7 @@ package com.controllerface.bvge.game.world.sectors;
 import com.controllerface.bvge.cl.buffers.SectorBufferGroup;
 
 import static com.controllerface.bvge.cl.CLSize.*;
-import static com.controllerface.bvge.cl.buffers.BufferType.*;
+import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
 public class UnorderedSectorBufferGroup extends SectorBufferGroup
 {

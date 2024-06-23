@@ -4,14 +4,15 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 
-public abstract class BufferGroup implements BufferSet<BufferType>
+public abstract class BufferGroup<E extends Enum<E> & BufferCategory> implements BufferSet<E>
 {
     private final String name;
     protected final long ptr_queue;
-    protected Map<BufferType, ResizableBuffer> buffers = Collections.synchronizedMap(new EnumMap<>(BufferType.class));
+    protected Map<E, ResizableBuffer> buffers;
 
-    public BufferGroup(String name, long ptr_queue)
+    public BufferGroup(Class<E> type, String name, long ptr_queue)
     {
+        this.buffers = Collections.synchronizedMap(new EnumMap<>(type));
         this.name = name;
         this.ptr_queue = ptr_queue;
     }
@@ -27,25 +28,25 @@ public abstract class BufferGroup implements BufferSet<BufferType>
     }
 
     @Override
-    public ResizableBuffer get_buffer(BufferType bufferType)
+    public ResizableBuffer get_buffer(E coreBufferType)
     {
-        return buffers.get(bufferType);
+        return buffers.get(coreBufferType);
     }
 
     @Override
-    public void set_buffer(BufferType bufferType, int size)
+    public void set_buffer(E coreBufferType, int size)
     {
-        if (buffers.containsKey(bufferType))
+        if (buffers.containsKey(coreBufferType))
         {
-            throw new RuntimeException("Buffer type: " + bufferType + " already exists in: " + name);
+            throw new RuntimeException("Buffer type: " + coreBufferType + " already exists in: " + name);
         }
-        buffers.put(bufferType, new_buffer(size));
+        buffers.put(coreBufferType, new_buffer(size));
     }
 
     @Override
-    public void set_buffer(BufferType bufferType, int size, long initial_capacity)
+    public void set_buffer(E coreBufferType, int size, long initial_capacity)
     {
-        buffers.put(bufferType, new_buffer(size, initial_capacity));
+        buffers.put(coreBufferType, new_buffer(size, initial_capacity));
     }
 
     @Override

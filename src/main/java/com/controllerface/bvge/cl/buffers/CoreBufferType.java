@@ -1,6 +1,6 @@
 package com.controllerface.bvge.cl.buffers;
 
-public enum BufferType implements BufferCategory
+public enum CoreBufferType implements BufferCategory
 {
     ANIM_FRAME_TIME,
     ANIM_KEY_FRAME,

@@ -10,7 +10,7 @@ import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.CLSize.cl_int;
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_short2;
-import static com.controllerface.bvge.cl.buffers.BufferType.*;
+import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
 public class SectorController
 {

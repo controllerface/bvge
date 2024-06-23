@@ -4,6 +4,6 @@ public class BasicBufferGroup extends BufferGroup
 {
     public BasicBufferGroup(String name, long ptr_queue)
     {
-        super(name, ptr_queue);
+        super(CoreBufferType.class, name, ptr_queue);
     }
 }

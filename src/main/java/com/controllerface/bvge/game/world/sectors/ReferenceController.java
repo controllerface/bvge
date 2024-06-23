@@ -8,8 +8,8 @@ import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_float2;
-import static com.controllerface.bvge.cl.buffers.BufferType.*;
-import static com.controllerface.bvge.cl.buffers.BufferType.ANIM_TICK_RATE;
+import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
+import static com.controllerface.bvge.cl.buffers.CoreBufferType.ANIM_TICK_RATE;
 
 public class ReferenceController
 {
