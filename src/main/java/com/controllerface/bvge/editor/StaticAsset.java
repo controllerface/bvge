@@ -30,6 +30,8 @@ public class StaticAsset
             "js",   "text/javascript"
         );
 
+    public static final Map<String, StaticAsset> static_assets = make_static_assets();
+
     private StaticAsset(String location, String mimetype)
     {
         this.location = location;
@@ -146,6 +148,4 @@ public class StaticAsset
         // todo: inform server of failure to serve, if any
         static_assets.get(request.uri()).writeTo(client_connection);
     }
-
-    public static final Map<String, StaticAsset> static_assets = make_static_assets();
 }

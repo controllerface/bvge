@@ -5,9 +5,12 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.util.freetype.FT_Bitmap;
+import org.lwjgl.util.freetype.FT_GlyphSlot;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.Objects;
 
@@ -44,6 +47,32 @@ public class Texture implements Destoryable
         channels = -1;
     }
 
+    public Texture(FT_Bitmap bitmap)
+    {
+        int width = bitmap.width();
+        int height = bitmap.rows();
+        ByteBuffer buffer = bitmap.buffer(width * height);
+
+        ByteBuffer image = ByteBuffer.allocateDirect(width * height).order(ByteOrder.nativeOrder());
+
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                var pixel = buffer.get((row * bitmap.pitch()) + col);
+                image.put((row * width) + col, pixel);
+            }
+        }
+
+        this.filepath = "generated";
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        texId = glCreateTextures(GL_TEXTURE_2D);
+        glTextureParameteri(texId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(texId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureStorage2D(texId, 1, GL_RED, bitmap.width(), bitmap.rows());
+        glTextureSubImage2D(texId, 0,0,0, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
+    }
+
     public Texture(int width, int height)
     {
         this.filepath = "generated";
@@ -58,6 +87,7 @@ public class Texture implements Destoryable
     {
         this.filepath = raw_texture.mFilename().dataString();
 
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
         texId = glCreateTextures(GL_TEXTURE_2D);
         glTextureParameteri(texId, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTextureParameteri(texId, GL_TEXTURE_WRAP_T, GL_REPEAT);

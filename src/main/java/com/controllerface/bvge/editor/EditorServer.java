@@ -147,6 +147,7 @@ public class EditorServer
         int next;
         var input_buffer = new ByteArrayOutputStream();
         byte[] eom_buffer = new byte[4];
+        boolean EOL;
         boolean EOM = false;
         boolean error = false;
         var line = (RequestLine) null;
@@ -158,8 +159,8 @@ public class EditorServer
             eom_buffer[1] = eom_buffer[2];
             eom_buffer[2] = eom_buffer[3];
             eom_buffer[3] = (byte) next;
+            EOL = Arrays.compare(EOL_BYTES, 0, EOL_BYTES.length, eom_buffer, 2, eom_buffer.length) == 0;
             EOM = Arrays.compare(EOM_BYTES, eom_buffer) == 0;
-            var EOL = Arrays.compare(EOL_BYTES, 0, EOL_BYTES.length, eom_buffer, 2, eom_buffer.length) == 0;
             if (!EOM && EOL)
             {
                 var raw_header = input_buffer.toString(StandardCharsets.UTF_8);

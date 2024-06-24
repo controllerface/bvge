@@ -121,8 +121,7 @@ public class TestGame extends GameMode
             ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
         }
 
-        //ecs.register_system(new HUDRenderer(ecs));
-
+        ecs.register_system(new HUDRenderer(ecs));
 
         // debug renderers
 
@@ -166,101 +165,7 @@ public class TestGame extends GameMode
 
     // WORKING AREA BELOW
 
-    private static FT_Face loadFontFace(long ftLibrary, String fontPath)
-    {
-        try (MemoryStack stack = MemoryStack.stackPush())
-        {
-            PointerBuffer pp = stack.mallocPointer(1);
-            int error = FT_New_Face(ftLibrary, fontPath, 0, pp);
-            if (error != 0)
-            {
-                System.err.println("FT_New_Face error: " + error);
-                return null;
-            }
-            return FT_Face.create(pp.get(0));
-        }
-    }
 
-    private static long initFreeType() {
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            PointerBuffer pp = stack.mallocPointer(1);
-            if (FT_Init_FreeType(pp) != 0) {
-                throw new RuntimeException("Could not initialize FreeType library");
-            }
-            return pp.get(0);
-        }
-    }
-
-    private final String font_file = "C:\\Users\\Stephen\\IdeaProjects\\bvge\\src\\main\\resources\\font\\Inconsolata-Light.ttf";
-
-    private static int gcount = 0;
-
-    private static void drawGlyph(FT_Face ftFace, int glyphID, int x, int y) {
-        if (FT_Load_Glyph(ftFace, glyphID, FT_LOAD_DEFAULT) != 0) {
-            throw new RuntimeException("Could not load glyph");
-        }
-
-        FT_GlyphSlot glyph = ftFace.glyph();
-        if (FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL) != 0) {
-            throw new RuntimeException("Could not render glyph");
-        }
-
-        FT_Bitmap bitmap = glyph.bitmap();
-        int width = bitmap.width();
-        int height = bitmap.rows();
-        ByteBuffer buffer = bitmap.buffer(width * height);
-
-        ByteBuffer image = ByteBuffer.allocateDirect(width * height).order(ByteOrder.nativeOrder());
-
-        for (int row = 0; row < height; row++) {
-            for (int col = 0; col < width; col++) {
-                var xxx = buffer.get((row * bitmap.pitch()) + col);
-                image.put((row * width) + col, xxx);
-            }
-        }
-
-        STBImageWrite.stbi_write_png((gcount++) + "test.png", width, height, 1, image, width);
-    }
-
-
-    private void test_text_render()
-    {
-        long ftLibrary = initFreeType();
-        FT_Face ftFace = loadFontFace(ftLibrary, font_file);
-        FT_Set_Char_Size(ftFace, 64, 0, 1920, 0);
-        var text = "hello there";
-
-        var buffer = hb_buffer_create();
-        hb_buffer_add_utf8(buffer, text, 0, text.length());
-        hb_buffer_set_direction(buffer, HB_DIRECTION_LTR);
-        hb_buffer_set_script(buffer, HB_SCRIPT_LATIN);
-        hb_buffer_set_language(buffer, hb_language_from_string("en"));
-
-        var font = hb_ft_font_create_referenced(ftFace.address());
-        var face = hb_ft_face_create_referenced(ftFace.address());
-
-        hb_shape(font, buffer, null);
-        var glyph_info = hb_buffer_get_glyph_infos(buffer);
-        var glyph_pos = hb_buffer_get_glyph_positions(buffer);
-        int glyphCount = hb_buffer_get_length(buffer);
-        int cursor_x = 0;
-        int cursor_y = 0;
-        for (int i = 0; i < glyphCount; i++)
-        {
-            var glyphid = glyph_info.get(i).codepoint();
-            var x_offset = glyph_pos.get(i).x_offset();
-            var y_offset = glyph_pos.get(i).y_offset();
-            var x_advance = glyph_pos.get(i).x_advance();
-            var y_advance = glyph_pos.get(i).y_advance();
-            // render here?
-            drawGlyph(ftFace, glyphid, cursor_x + x_offset, cursor_y + y_offset);
-            cursor_x += x_advance;
-            cursor_y += y_advance;
-        }
-        hb_buffer_destroy(buffer);
-        hb_font_destroy(font);
-        hb_face_destroy(face);
-    }
 
     @Override
     public void start()
