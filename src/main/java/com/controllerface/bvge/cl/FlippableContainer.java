@@ -1,21 +1,18 @@
 package com.controllerface.bvge.cl;
 
-class DoubleBuffer<T>
+import com.controllerface.bvge.cl.buffers.Destoryable;
+
+class FlippableContainer<T extends Destoryable> implements Destoryable
 {
     private final T front;
     private final T back;
 
     private boolean flipped = false;
 
-    DoubleBuffer(T front, T back)
+    FlippableContainer(T front, T back)
     {
         this.front = front;
         this.back = back;
-    }
-
-    public static <T> DoubleBuffer<T> from(T front, T back)
-    {
-        return new DoubleBuffer<>(front, back);
     }
 
     public void flip()
@@ -35,5 +32,12 @@ class DoubleBuffer<T>
         return flipped
             ? front
             : back;
+    }
+
+    @Override
+    public void destroy()
+    {
+        front.destroy();
+        back.destroy();
     }
 }

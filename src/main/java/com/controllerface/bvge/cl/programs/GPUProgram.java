@@ -2,6 +2,7 @@ package com.controllerface.bvge.cl.programs;
 
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
+import com.controllerface.bvge.cl.buffers.Destoryable;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.animation.AnimationSettings;
 import com.controllerface.bvge.animation.AnimationState;
@@ -27,7 +28,7 @@ import static org.lwjgl.opencl.CL12.clReleaseProgram;
  * before calling the kernel. Afterward, any values that were defined as output variables can
  * be transferred back out to the CPU.
  */
-public abstract class GPUProgram
+public abstract class GPUProgram implements Destoryable
 {
     /**
      * Constant values that can be used within kernels. There is a general expectation that the CPU

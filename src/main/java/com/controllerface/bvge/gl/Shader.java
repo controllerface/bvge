@@ -1,11 +1,12 @@
 package com.controllerface.bvge.gl;
 
+import com.controllerface.bvge.cl.buffers.Destoryable;
 import org.joml.*;
 import org.lwjgl.system.MemoryStack;
 
 import static org.lwjgl.opengl.GL20.*;
 
-public abstract class Shader
+public abstract class Shader implements Destoryable
 {
     protected int shader_program_id;
 

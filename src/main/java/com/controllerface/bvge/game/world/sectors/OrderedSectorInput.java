@@ -3,13 +3,14 @@ package com.controllerface.bvge.game.world.sectors;
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.buffers.CoreBufferType;
 import com.controllerface.bvge.cl.buffers.CoreBufferGroup;
+import com.controllerface.bvge.cl.buffers.Destoryable;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
 
-public class OrderedSectorInput implements SectorContainer
+public class OrderedSectorInput implements SectorContainer, Destoryable
 {
     private static final long ENTITY_INIT = 1_000L;
     private static final long HULL_INIT   = 1_000L;

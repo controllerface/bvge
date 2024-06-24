@@ -1,5 +1,6 @@
 package com.controllerface.bvge.gl;
 
+import com.controllerface.bvge.cl.buffers.Destoryable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.system.MemoryStack;
@@ -27,7 +28,7 @@ import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static org.lwjgl.opengl.GL45C.*;
 import static org.lwjgl.stb.STBImage.*;
 
-public class Texture
+public class Texture implements Destoryable
 {
     private String filepath;
     private int texId;

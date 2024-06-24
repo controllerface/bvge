@@ -16,7 +16,7 @@ import java.util.concurrent.CyclicBarrier;
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
 import static org.lwjgl.opencl.CL10.clFinish;
 
-public class GPUCoreMemory implements SectorContainer
+public class GPUCoreMemory implements SectorContainer, Destoryable
 {
     private static final String BUF_NAME_SECTOR          = "Live Sectors";
     private static final String BUF_NAME_RENDER          = "Render Mirror";
@@ -50,9 +50,9 @@ public class GPUCoreMemory implements SectorContainer
     private final int[] next_egress_counts = new int[8];
     private final int[] last_egress_counts = new int[8];
     private final OrderedSectorInput sector_ingress_buffer;
-    private final DoubleBuffer<UnorderedSectorOutput> sector_egress_buffer;
-    private final DoubleBuffer<BrokenObjectBuffer> broken_egress_buffer;
-    private final DoubleBuffer<CollectedObjectBuffer> object_egress_buffer;
+    private final FlippableContainer<UnorderedSectorOutput> sector_egress_buffer;
+    private final FlippableContainer<BrokenObjectBuffer> broken_egress_buffer;
+    private final FlippableContainer<CollectedObjectBuffer> object_egress_buffer;
     private final CoreBufferGroup sector_buffers;
     private final SectorController sector_controller;
     private final MirrorBufferGroup mirror_buffers;
@@ -86,9 +86,9 @@ public class GPUCoreMemory implements SectorContainer
         var object_egress_b = new CollectedObjectBuffer(BUF_NAME_OBJECT_EGRESS_B, GPGPU.ptr_sector_queue, this);
 
         this.sector_ingress_buffer = new OrderedSectorInput(GPGPU.ptr_sector_queue, this);
-        this.sector_egress_buffer  = new DoubleBuffer<>(sector_egress_a, sector_egress_b);
-        this.broken_egress_buffer  = new DoubleBuffer<>(broken_egress_a, broken_egress_b);
-        this.object_egress_buffer  = new DoubleBuffer<>(object_egress_a, object_egress_b);
+        this.sector_egress_buffer  = new FlippableContainer<>(sector_egress_a, sector_egress_b);
+        this.broken_egress_buffer  = new FlippableContainer<>(broken_egress_a, broken_egress_b);
+        this.object_egress_buffer  = new FlippableContainer<>(object_egress_a, object_egress_b);
     }
 
     public ResizableBuffer get_buffer(ReferenceBufferType referenceBufferType)
@@ -524,12 +524,9 @@ public class GPUCoreMemory implements SectorContainer
         sector_buffers.destroy();
         sector_controller.destroy();
         sector_ingress_buffer.destroy();
-        sector_egress_buffer.front().destroy();
-        sector_egress_buffer.back().destroy();
-        broken_egress_buffer.front().destroy();
-        broken_egress_buffer.back().destroy();
-        object_egress_buffer.front().destroy();
-        object_egress_buffer.back().destroy();
+        sector_egress_buffer.destroy();
+        broken_egress_buffer.destroy();
+        object_egress_buffer.destroy();
         mirror_buffers.destroy();
         reference_buffers.destroy();
         p_gpu_crud.destroy();

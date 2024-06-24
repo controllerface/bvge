@@ -2,6 +2,7 @@ package com.controllerface.bvge.game.world.sectors;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.buffers.CoreBufferGroup;
+import com.controllerface.bvge.cl.buffers.Destoryable;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
@@ -12,7 +13,7 @@ import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_short2;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
-public class SectorController
+public class SectorController implements Destoryable
 {
     private static final int EGRESS_COUNTERS = 8;
     private static final int EGRESS_COUNTERS_SIZE = cl_int * EGRESS_COUNTERS;
