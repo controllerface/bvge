@@ -13,7 +13,7 @@ import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_short2;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
-public class SectorController implements Destoryable
+public class SectorController implements SectorContainer, Destoryable
 {
     private static final int EGRESS_COUNTERS = 8;
     private static final int EGRESS_COUNTERS_SIZE = cl_int * EGRESS_COUNTERS;
@@ -134,181 +134,6 @@ public class SectorController implements Destoryable
             .ptr_arg(CountEgressEntities_k.Args.counters, ptr_egress_sizes);
     }
 
-    public int create_point(float[] position,
-                            int[] bone_ids,
-                            int vertex_index,
-                            int hull_index,
-                            int hit_count,
-                            int flags)
-    {
-        int capacity = point_index + 1;
-        sector_buffers.ensure_point_capacity(capacity);
-
-        var new_point = position.length == 2
-            ? arg_float4(position[0], position[1], position[0], position[1])
-            : position;
-
-        k_create_point
-            .set_arg(CreatePoint_k.Args.target, point_index)
-            .set_arg(CreatePoint_k.Args.new_point, new_point)
-            .set_arg(CreatePoint_k.Args.new_point_vertex_reference, vertex_index)
-            .set_arg(CreatePoint_k.Args.new_point_hull_index, hull_index)
-            .set_arg(CreatePoint_k.Args.new_point_hit_count, (short) hit_count)
-            .set_arg(CreatePoint_k.Args.new_point_flags, flags)
-            .set_arg(CreatePoint_k.Args.new_point_bone_table, bone_ids)
-            .call(GPGPU.global_single_size);
-
-        return point_index++;
-    }
-
-    public int create_edge(int p1, int p2, float l, int flags)
-    {
-        int capacity = edge_index + 1;
-        sector_buffers.ensure_edge_capacity(capacity);
-
-        k_create_edge
-            .set_arg(CreateEdge_k.Args.target, edge_index)
-            .set_arg(CreateEdge_k.Args.new_edge, arg_int2(p1, p2))
-            .set_arg(CreateEdge_k.Args.new_edge_length, l)
-            .set_arg(CreateEdge_k.Args.new_edge_flag, flags)
-            .call(GPGPU.global_single_size);
-
-        return edge_index++;
-    }
-
-    public int create_hull(int mesh_id,
-                           float[] position,
-                           float[] scale,
-                           float[] rotation,
-                           int[] point_table,
-                           int[] edge_table,
-                           int[] bone_table,
-                           float friction,
-                           float restitution,
-                           int entity_id,
-                           int uv_offset,
-                           int flags)
-    {
-        int capacity = hull_index + 1;
-        sector_buffers.ensure_hull_capacity(capacity);
-
-        var new_hull = position.length == 2
-            ? arg_float4(position[0], position[1], position[0], position[1])
-            : position;
-
-        k_create_hull
-            .set_arg(CreateHull_k.Args.target, hull_index)
-            .set_arg(CreateHull_k.Args.new_hull, new_hull)
-            .set_arg(CreateHull_k.Args.new_hull_scale, scale)
-            .set_arg(CreateHull_k.Args.new_rotation, rotation)
-            .set_arg(CreateHull_k.Args.new_friction, friction)
-            .set_arg(CreateHull_k.Args.new_restitution, restitution)
-            .set_arg(CreateHull_k.Args.new_point_table, point_table)
-            .set_arg(CreateHull_k.Args.new_edge_table, edge_table)
-            .set_arg(CreateHull_k.Args.new_bone_table, bone_table)
-            .set_arg(CreateHull_k.Args.new_entity_id, entity_id)
-            .set_arg(CreateHull_k.Args.new_flags, flags)
-            .set_arg(CreateHull_k.Args.new_hull_mesh_id, mesh_id)
-            .set_arg(CreateHull_k.Args.new_hull_uv_offset, uv_offset)
-            .set_arg(CreateHull_k.Args.new_hull_integrity, 100)
-            .call(GPGPU.global_single_size);
-
-        return hull_index++;
-    }
-
-    public int create_entity(float x, float y, float z, float w,
-                             int[] hull_table, int[] bone_table,
-                             float mass,
-                             int anim_index,
-                             float anim_time,
-                             int root_hull,
-                             int model_id,
-                             int model_transform_id,
-                             int type,
-                             int flags)
-    {
-        int capacity = entity_index + 1;
-        sector_buffers.ensure_entity_capacity(capacity);
-
-        k_create_entity
-            .set_arg(CreateEntity_k.Args.target, entity_index)
-            .set_arg(CreateEntity_k.Args.new_entity, arg_float4(x, y, z, w))
-            .set_arg(CreateEntity_k.Args.new_entity_root_hull, root_hull)
-            .set_arg(CreateEntity_k.Args.new_entity_model_id, model_id)
-            .set_arg(CreateEntity_k.Args.new_entity_model_transform, model_transform_id)
-            .set_arg(CreateEntity_k.Args.new_entity_type, type)
-            .set_arg(CreateEntity_k.Args.new_entity_flags, flags)
-            .set_arg(CreateEntity_k.Args.new_entity_hull_table, hull_table)
-            .set_arg(CreateEntity_k.Args.new_entity_bone_table, bone_table)
-            .set_arg(CreateEntity_k.Args.new_entity_mass, mass)
-            .set_arg(CreateEntity_k.Args.new_entity_animation_index, arg_int2(anim_index, -1))
-            .set_arg(CreateEntity_k.Args.new_entity_animation_time, arg_float2(anim_time, 0.0f)) // todo: maybe remove these zero init ones
-            .set_arg(CreateEntity_k.Args.new_entity_animation_state, arg_short2((short) 0, (short) 0))
-            .call(GPGPU.global_single_size);
-
-        return entity_index++;
-    }
-
-    public int create_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id)
-    {
-        int capacity = hull_bone_index + 1;
-        sector_buffers.ensure_hull_bone_capacity(capacity);
-
-        k_create_hull_bone
-            .set_arg(CreateHullBone_k.Args.target, hull_bone_index)
-            .set_arg(CreateHullBone_k.Args.new_hull_bone, bone_data)
-            .set_arg(CreateHullBone_k.Args.new_hull_bind_pose_id, bind_pose_id)
-            .set_arg(CreateHullBone_k.Args.new_hull_inv_bind_pose_id, inv_bind_pose_id)
-            .call(GPGPU.global_single_size);
-
-        return hull_bone_index++;
-    }
-
-    public int create_entity_bone(int bone_reference, int bone_parent_id, float[] bone_data)
-    {
-        int capacity = entity_bone_index + 1;
-        sector_buffers.ensure_entity_bone_capacity(capacity);
-
-        k_create_entity_bone
-            .set_arg(CreateEntityBone_k.Args.target, entity_bone_index)
-            .set_arg(CreateEntityBone_k.Args.new_armature_bone, bone_data)
-            .set_arg(CreateEntityBone_k.Args.new_armature_bone_reference, bone_reference)
-            .set_arg(CreateEntityBone_k.Args.new_armature_bone_parent_id, bone_parent_id)
-            .call(GPGPU.global_single_size);
-
-        return entity_bone_index++;
-    }
-
-    public int point_index()
-    {
-        return point_index;
-    }
-
-    public int edge_index()
-    {
-        return edge_index;
-    }
-
-    public int hull_index()
-    {
-        return hull_index;
-    }
-
-    public int entity_index()
-    {
-        return entity_index;
-    }
-
-    public int hull_bone_index()
-    {
-        return hull_bone_index;
-    }
-
-    public int entity_bone_index()
-    {
-        return entity_bone_index;
-    }
-
     public void reset()
     {
         point_index       = 0;
@@ -352,14 +177,6 @@ public class SectorController implements Destoryable
             .call(GPGPU.global_single_size);
     }
 
-    public void update_position(int entity_index, float x, float y)
-    {
-        k_update_mouse_position
-            .set_arg(UpdateMousePosition_k.Args.target, entity_index)
-            .set_arg(UpdateMousePosition_k.Args.new_value, arg_float2(x, y))
-            .call(GPGPU.global_single_size);
-    }
-
     public float[] read_position(int entity_index)
     {
         GPGPU.cl_zero_buffer(this.ptr_queue, ptr_position_buffer, cl_float2);
@@ -375,10 +192,206 @@ public class SectorController implements Destoryable
     public int[] count_egress_entities()
     {
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, EGRESS_COUNTERS_SIZE);
-        k_count_egress_entities.call(arg_long(entity_index()));
+        k_count_egress_entities.call(arg_long(next_entity()));
         return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int, EGRESS_COUNTERS);
     }
 
+    public void update_position(int entity_index, float x, float y)
+    {
+        k_update_mouse_position
+            .set_arg(UpdateMousePosition_k.Args.target, entity_index)
+            .set_arg(UpdateMousePosition_k.Args.new_value, arg_float2(x, y))
+            .call(GPGPU.global_single_size);
+    }
+
+    @Override
+    public int create_point(float[] position,
+                            int[] bone_ids,
+                            int vertex_index,
+                            int hull_index,
+                            int hit_count,
+                            int flags)
+    {
+        int capacity = point_index + 1;
+        sector_buffers.ensure_point_capacity(capacity);
+
+        var new_point = position.length == 2
+            ? arg_float4(position[0], position[1], position[0], position[1])
+            : position;
+
+        k_create_point
+            .set_arg(CreatePoint_k.Args.target, point_index)
+            .set_arg(CreatePoint_k.Args.new_point, new_point)
+            .set_arg(CreatePoint_k.Args.new_point_vertex_reference, vertex_index)
+            .set_arg(CreatePoint_k.Args.new_point_hull_index, hull_index)
+            .set_arg(CreatePoint_k.Args.new_point_hit_count, (short) hit_count)
+            .set_arg(CreatePoint_k.Args.new_point_flags, flags)
+            .set_arg(CreatePoint_k.Args.new_point_bone_table, bone_ids)
+            .call(GPGPU.global_single_size);
+
+        return point_index++;
+    }
+
+    @Override
+    public int create_edge(int p1, int p2, float l, int flags)
+    {
+        int capacity = edge_index + 1;
+        sector_buffers.ensure_edge_capacity(capacity);
+
+        k_create_edge
+            .set_arg(CreateEdge_k.Args.target, edge_index)
+            .set_arg(CreateEdge_k.Args.new_edge, arg_int2(p1, p2))
+            .set_arg(CreateEdge_k.Args.new_edge_length, l)
+            .set_arg(CreateEdge_k.Args.new_edge_flag, flags)
+            .call(GPGPU.global_single_size);
+
+        return edge_index++;
+    }
+
+    @Override
+    public int create_hull(int mesh_id,
+                           float[] position,
+                           float[] scale,
+                           float[] rotation,
+                           int[] point_table,
+                           int[] edge_table,
+                           int[] bone_table,
+                           float friction,
+                           float restitution,
+                           int entity_id,
+                           int uv_offset,
+                           int flags)
+    {
+        int capacity = hull_index + 1;
+        sector_buffers.ensure_hull_capacity(capacity);
+
+        var new_hull = position.length == 2
+            ? arg_float4(position[0], position[1], position[0], position[1])
+            : position;
+
+        k_create_hull
+            .set_arg(CreateHull_k.Args.target, hull_index)
+            .set_arg(CreateHull_k.Args.new_hull, new_hull)
+            .set_arg(CreateHull_k.Args.new_hull_scale, scale)
+            .set_arg(CreateHull_k.Args.new_rotation, rotation)
+            .set_arg(CreateHull_k.Args.new_friction, friction)
+            .set_arg(CreateHull_k.Args.new_restitution, restitution)
+            .set_arg(CreateHull_k.Args.new_point_table, point_table)
+            .set_arg(CreateHull_k.Args.new_edge_table, edge_table)
+            .set_arg(CreateHull_k.Args.new_bone_table, bone_table)
+            .set_arg(CreateHull_k.Args.new_entity_id, entity_id)
+            .set_arg(CreateHull_k.Args.new_flags, flags)
+            .set_arg(CreateHull_k.Args.new_hull_mesh_id, mesh_id)
+            .set_arg(CreateHull_k.Args.new_hull_uv_offset, uv_offset)
+            .set_arg(CreateHull_k.Args.new_hull_integrity, 100)
+            .call(GPGPU.global_single_size);
+
+        return hull_index++;
+    }
+
+    @Override
+    public int create_entity(float x, float y, float z, float w,
+                             int[] hull_table, int[] bone_table,
+                             float mass,
+                             int anim_index,
+                             float anim_time,
+                             int root_hull,
+                             int model_id,
+                             int model_transform_id,
+                             int type,
+                             int flags)
+    {
+        int capacity = entity_index + 1;
+        sector_buffers.ensure_entity_capacity(capacity);
+
+        k_create_entity
+            .set_arg(CreateEntity_k.Args.target, entity_index)
+            .set_arg(CreateEntity_k.Args.new_entity, arg_float4(x, y, z, w))
+            .set_arg(CreateEntity_k.Args.new_entity_root_hull, root_hull)
+            .set_arg(CreateEntity_k.Args.new_entity_model_id, model_id)
+            .set_arg(CreateEntity_k.Args.new_entity_model_transform, model_transform_id)
+            .set_arg(CreateEntity_k.Args.new_entity_type, type)
+            .set_arg(CreateEntity_k.Args.new_entity_flags, flags)
+            .set_arg(CreateEntity_k.Args.new_entity_hull_table, hull_table)
+            .set_arg(CreateEntity_k.Args.new_entity_bone_table, bone_table)
+            .set_arg(CreateEntity_k.Args.new_entity_mass, mass)
+            .set_arg(CreateEntity_k.Args.new_entity_animation_index, arg_int2(anim_index, -1))
+            .set_arg(CreateEntity_k.Args.new_entity_animation_time, arg_float2(anim_time, 0.0f)) // todo: maybe remove these zero init ones
+            .set_arg(CreateEntity_k.Args.new_entity_animation_state, arg_short2((short) 0, (short) 0))
+            .call(GPGPU.global_single_size);
+
+        return entity_index++;
+    }
+
+    @Override
+    public int create_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id)
+    {
+        int capacity = hull_bone_index + 1;
+        sector_buffers.ensure_hull_bone_capacity(capacity);
+
+        k_create_hull_bone
+            .set_arg(CreateHullBone_k.Args.target, hull_bone_index)
+            .set_arg(CreateHullBone_k.Args.new_hull_bone, bone_data)
+            .set_arg(CreateHullBone_k.Args.new_hull_bind_pose_id, bind_pose_id)
+            .set_arg(CreateHullBone_k.Args.new_hull_inv_bind_pose_id, inv_bind_pose_id)
+            .call(GPGPU.global_single_size);
+
+        return hull_bone_index++;
+    }
+
+    @Override
+    public int create_entity_bone(int bone_reference, int bone_parent_id, float[] bone_data)
+    {
+        int capacity = entity_bone_index + 1;
+        sector_buffers.ensure_entity_bone_capacity(capacity);
+
+        k_create_entity_bone
+            .set_arg(CreateEntityBone_k.Args.target, entity_bone_index)
+            .set_arg(CreateEntityBone_k.Args.new_armature_bone, bone_data)
+            .set_arg(CreateEntityBone_k.Args.new_armature_bone_reference, bone_reference)
+            .set_arg(CreateEntityBone_k.Args.new_armature_bone_parent_id, bone_parent_id)
+            .call(GPGPU.global_single_size);
+
+        return entity_bone_index++;
+    }
+
+    @Override
+    public int next_point()
+    {
+        return point_index;
+    }
+
+    @Override
+    public int next_edge()
+    {
+        return edge_index;
+    }
+
+    @Override
+    public int next_hull()
+    {
+        return hull_index;
+    }
+
+    @Override
+    public int next_entity()
+    {
+        return entity_index;
+    }
+
+    @Override
+    public int next_hull_bone()
+    {
+        return hull_bone_index;
+    }
+
+    @Override
+    public int next_armature_bone()
+    {
+        return entity_bone_index;
+    }
+
+    @Override
     public void destroy()
     {
         GPGPU.cl_release_buffer(ptr_position_buffer);

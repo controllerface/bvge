@@ -52,7 +52,7 @@ public class CameraTracking extends GameSystem
         EntityIndex entity_id = Component.EntityId.forEntity(ecs, focusTarget.getKey());
         if (entity_id == null) return;
 
-        float[] pos = GPGPU.core_memory.read_position(entity_id.index());
+        float[] pos = GPGPU.core_memory.read_entity_position(entity_id.index());
         float pos_x = pos[0];
         float pos_y = pos[1];
         update_position(pos_x, pos_y);

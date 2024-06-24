@@ -293,21 +293,21 @@ public class SectorCompactor implements Destoryable
 
     public void delete_and_compact()
     {
-        b_delete_1.ensure_capacity(controller.entity_index());
-        b_delete_2.ensure_capacity(controller.entity_index());
+        b_delete_1.ensure_capacity(controller.next_entity());
+        b_delete_2.ensure_capacity(controller.next_entity());
 
-        int[] shift_counts = scan_deletes(b_delete_1.pointer(), b_delete_2.pointer(), controller.entity_index());
+        int[] shift_counts = scan_deletes(b_delete_1.pointer(), b_delete_2.pointer(), controller.next_entity());
 
         if (shift_counts[4] == 0)
         {
             return;
         }
 
-        b_hull_shift.ensure_capacity(controller.hull_index());
-        b_edge_shift.ensure_capacity(controller.edge_index());
-        b_point_shift.ensure_capacity(controller.point_index());
-        b_hull_bone_shift.ensure_capacity(controller.hull_bone_index());
-        b_entity_bone_shift.ensure_capacity(controller.entity_bone_index());
+        b_hull_shift.ensure_capacity(controller.next_hull());
+        b_edge_shift.ensure_capacity(controller.next_edge());
+        b_point_shift.ensure_capacity(controller.next_point());
+        b_hull_bone_shift.ensure_capacity(controller.next_hull_bone());
+        b_entity_bone_shift.ensure_capacity(controller.next_armature_bone());
 
         b_hull_shift.clear();
         b_edge_shift.clear();
@@ -319,16 +319,15 @@ public class SectorCompactor implements Destoryable
             .ptr_arg(CompactEntities_k.Args.buffer_in_1, b_delete_1.pointer())
             .ptr_arg(CompactEntities_k.Args.buffer_in_2, b_delete_2.pointer());
 
-        linearize_kernel(k_compact_entities, controller.entity_index());
-        linearize_kernel(k_compact_hull_bones, controller.hull_bone_index());
-        linearize_kernel(k_compact_points, controller.point_index());
-        linearize_kernel(k_compact_edges, controller.edge_index());
-        linearize_kernel(k_compact_hulls, controller.hull_index());
-        linearize_kernel(k_compact_armature_bones, controller.entity_bone_index());
+        linearize_kernel(k_compact_entities, controller.next_entity());
+        linearize_kernel(k_compact_hull_bones, controller.next_hull_bone());
+        linearize_kernel(k_compact_points, controller.next_point());
+        linearize_kernel(k_compact_edges, controller.next_edge());
+        linearize_kernel(k_compact_hulls, controller.next_hull());
+        linearize_kernel(k_compact_armature_bones, controller.next_armature_bone());
 
         compact_buffers(shift_counts);
     }
-
 
     private void compact_buffers(int[] shift_counts)
     {

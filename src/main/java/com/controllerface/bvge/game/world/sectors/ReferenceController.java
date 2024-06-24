@@ -10,7 +10,7 @@ import com.controllerface.bvge.cl.programs.GPUProgram;
 import static com.controllerface.bvge.cl.CLUtils.arg_float2;
 import static com.controllerface.bvge.cl.buffers.ReferenceBufferType.*;
 
-public class ReferenceController
+public class ReferenceController implements ReferenceContainer
 {
     private final ReferenceBufferGroup reference_buffers;
 
@@ -94,11 +94,13 @@ public class ReferenceController
             .buf_arg(SetBoneChannelTable_k.Args.bone_channel_tables,         this.reference_buffers.get_buffer(BONE_ANIM_CHANNEL_TABLE));
     }
 
-    public int mesh_index()
+    @Override
+    public int next_mesh()
     {
         return mesh_index;
     }
 
+    @Override
     public int new_vertex_reference(float x, float y, float[] weights, int[] uv_table)
     {
         int capacity = vertex_ref_index + 1;
@@ -114,6 +116,7 @@ public class ReferenceController
         return vertex_ref_index++;
     }
 
+    @Override
     public int new_bone_bind_pose(float[] bone_data)
     {
         int capacity = bone_bind_index + 1;
@@ -127,6 +130,7 @@ public class ReferenceController
         return bone_bind_index++;
     }
 
+    @Override
     public int new_bone_reference(float[] bone_data)
     {
         int capacity = bone_ref_index + 1;
@@ -140,6 +144,7 @@ public class ReferenceController
         return bone_ref_index++;
     }
 
+    @Override
     public int new_animation_timings(float duration, float tick_rate)
     {
         int capacity = animation_index + 1;
@@ -155,6 +160,7 @@ public class ReferenceController
         return animation_index++;
     }
 
+    @Override
     public int new_bone_channel(int anim_timing_index, int[] pos_table, int[] rot_table, int[] scl_table)
     {
         int capacity = bone_channel_index + 1;
@@ -171,6 +177,7 @@ public class ReferenceController
         return bone_channel_index++;
     }
 
+    @Override
     public int new_keyframe(float[] frame, float time)
     {
         int capacity = keyframe_index + 1;
@@ -185,6 +192,7 @@ public class ReferenceController
         return keyframe_index++;
     }
 
+    @Override
     public int new_texture_uv(float u, float v)
     {
         int capacity = uv_index + 1;
@@ -198,6 +206,7 @@ public class ReferenceController
         return uv_index++;
     }
 
+    @Override
     public int new_mesh_reference(int[] vertex_table, int[] face_table)
     {
         int capacity = mesh_index + 1;
@@ -212,6 +221,7 @@ public class ReferenceController
         return mesh_index++;
     }
 
+    @Override
     public int new_mesh_face(int[] face)
     {
         int capacity = face_index + 1;
@@ -225,6 +235,7 @@ public class ReferenceController
         return face_index++;
     }
 
+    @Override
     public int new_model_transform(float[] transform_data)
     {
         int capacity = model_transform_index + 1;
@@ -238,6 +249,7 @@ public class ReferenceController
         return model_transform_index++;
     }
 
+    @Override
     public void set_bone_channel_table(int bind_pose_target, int[] channel_table)
     {
         k_set_bone_channel_table

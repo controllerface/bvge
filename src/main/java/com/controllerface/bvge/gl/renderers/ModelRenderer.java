@@ -250,7 +250,7 @@ public class ModelRenderer extends GameSystem
         GPGPU.cl_zero_buffer(GPGPU.ptr_render_queue, svm_total, CLSize.cl_int);
         GPGPU.cl_zero_buffer(GPGPU.ptr_render_queue, ptr_mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
 
-        long[] hull_count = arg_long(GPGPU.core_memory.next_hull());
+        long[] hull_count = arg_long(GPGPU.core_memory.sector_container().next_hull());
 
         long si = Editor.ACTIVE ? System.nanoTime() : 0;
         k_count_mesh_instances.call(hull_count);

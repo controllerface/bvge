@@ -169,7 +169,7 @@ public class LiquidRenderer extends GameSystem
         k_root_hull_count
             .ptr_arg(RootHullCount_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.next_entity()));
+            .call(arg_long(GPGPU.core_memory.sector_container().next_entity()));
 
         int final_count = GPGPU.cl_read_pinned_int(queue_ptr, svm_atomic_counter);
 
@@ -187,7 +187,7 @@ public class LiquidRenderer extends GameSystem
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.next_entity()));
+            .call(arg_long(GPGPU.core_memory.sector_container().next_entity()));
 
         return new HullIndexData(hulls_out, final_count);
     }

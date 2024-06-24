@@ -134,41 +134,41 @@ public class OrderedSectorInput implements SectorContainer, Destoryable
             .buf_arg(MergeEntityBone_k.Args.armature_bone_parent_ids_out, core_memory.get_buffer(CoreBufferType.ENTITY_BONE_PARENT_ID));
     }
 
-    public void merge_into_parent(SectorContainer parent)
+    public void merge_into(SectorContainer target_container)
     {
-        if (controller.point_index() > 0) k_merge_point
-            .set_arg(MergePoint_k.Args.point_offset, parent.next_point())
-            .set_arg(MergePoint_k.Args.bone_offset,  parent.next_hull_bone())
-            .set_arg(MergePoint_k.Args.hull_offset,  parent.next_hull())
-            .call(arg_long(controller.point_index()));
+        if (controller.next_point() > 0) k_merge_point
+            .set_arg(MergePoint_k.Args.point_offset, target_container.next_point())
+            .set_arg(MergePoint_k.Args.bone_offset,  target_container.next_hull_bone())
+            .set_arg(MergePoint_k.Args.hull_offset,  target_container.next_hull())
+            .call(arg_long(controller.next_point()));
 
-        if (controller.edge_index() > 0) k_merge_edge
-            .set_arg(MergeEdge_k.Args.edge_offset,  parent.next_edge())
-            .set_arg(MergeEdge_k.Args.point_offset, parent.next_point())
-            .call(arg_long(controller.edge_index()));
+        if (controller.next_edge() > 0) k_merge_edge
+            .set_arg(MergeEdge_k.Args.edge_offset,  target_container.next_edge())
+            .set_arg(MergeEdge_k.Args.point_offset, target_container.next_point())
+            .call(arg_long(controller.next_edge()));
 
-        if (controller.hull_index() > 0) k_merge_hull
-            .set_arg(MergeHull_k.Args.hull_offset,      parent.next_hull())
-            .set_arg(MergeHull_k.Args.point_offset,     parent.next_point())
-            .set_arg(MergeHull_k.Args.edge_offset,      parent.next_edge())
-            .set_arg(MergeHull_k.Args.entity_offset,    parent.next_entity())
-            .set_arg(MergeHull_k.Args.hull_bone_offset, parent.next_hull_bone())
-            .call(arg_long(controller.hull_index()));
+        if (controller.next_hull() > 0) k_merge_hull
+            .set_arg(MergeHull_k.Args.hull_offset,      target_container.next_hull())
+            .set_arg(MergeHull_k.Args.point_offset,     target_container.next_point())
+            .set_arg(MergeHull_k.Args.edge_offset,      target_container.next_edge())
+            .set_arg(MergeHull_k.Args.entity_offset,    target_container.next_entity())
+            .set_arg(MergeHull_k.Args.hull_bone_offset, target_container.next_hull_bone())
+            .call(arg_long(controller.next_hull()));
 
-        if (controller.entity_index() > 0) k_merge_entity
-            .set_arg(MergeEntity_k.Args.entity_offset,        parent.next_entity())
-            .set_arg(MergeEntity_k.Args.hull_offset,          parent.next_hull())
-            .set_arg(MergeEntity_k.Args.armature_bone_offset, parent.next_armature_bone())
-            .call(arg_long(controller.entity_index()));
+        if (controller.next_entity() > 0) k_merge_entity
+            .set_arg(MergeEntity_k.Args.entity_offset,        target_container.next_entity())
+            .set_arg(MergeEntity_k.Args.hull_offset,          target_container.next_hull())
+            .set_arg(MergeEntity_k.Args.armature_bone_offset, target_container.next_armature_bone())
+            .call(arg_long(controller.next_entity()));
 
-        if (controller.hull_bone_index() > 0) k_merge_hull_bone
-            .set_arg(MergeHullBone_k.Args.hull_bone_offset,     parent.next_hull_bone())
-            .set_arg(MergeHullBone_k.Args.armature_bone_offset, parent.next_armature_bone())
-            .call(arg_long(controller.hull_bone_index()));
+        if (controller.next_hull_bone() > 0) k_merge_hull_bone
+            .set_arg(MergeHullBone_k.Args.hull_bone_offset,     target_container.next_hull_bone())
+            .set_arg(MergeHullBone_k.Args.armature_bone_offset, target_container.next_armature_bone())
+            .call(arg_long(controller.next_hull_bone()));
 
-        if (controller.entity_bone_index() > 0) k_merge_entity_bone
-            .set_arg(MergeEntityBone_k.Args.armature_bone_offset, parent.next_armature_bone())
-            .call(arg_long(controller.entity_bone_index()));
+        if (controller.next_armature_bone() > 0) k_merge_entity_bone
+            .set_arg(MergeEntityBone_k.Args.armature_bone_offset, target_container.next_armature_bone())
+            .call(arg_long(controller.next_armature_bone()));
 
         controller.reset();
     }
@@ -176,71 +176,71 @@ public class OrderedSectorInput implements SectorContainer, Destoryable
     @Override
     public int next_point()
     {
-        return controller.point_index();
+        return controller.next_point();
     }
 
     @Override
     public int next_edge()
     {
-        return controller.edge_index();
+        return controller.next_edge();
     }
 
     @Override
     public int next_hull()
     {
-        return controller.hull_index();
+        return controller.next_hull();
     }
 
     @Override
     public int next_entity()
     {
-        return controller.entity_index();
+        return controller.next_entity();
     }
 
     @Override
     public int next_hull_bone()
     {
-        return controller.hull_bone_index();
+        return controller.next_hull_bone();
     }
 
     @Override
     public int next_armature_bone()
     {
-        return controller.entity_bone_index();
+        return controller.next_armature_bone();
     }
 
     @Override
-    public int new_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int hit_count, int flags)
+    public int create_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int hit_count, int flags)
     {
         return controller.create_point(position, bone_ids, vertex_index, hull_index, hit_count, flags);
     }
 
     @Override
-    public int new_edge(int p1, int p2, float l, int flags)
+    public int create_edge(int p1, int p2, float l, int flags)
     {
         return controller.create_edge(p1, p2, l, flags);
     }
 
     @Override
-    public int new_hull(int mesh_id, float[] position, float[] scale, float[] rotation, int[] point_table, int[] edge_table, int[] bone_table, float friction, float restitution, int entity_id, int uv_offset, int flags)
+    public int create_hull(int mesh_id, float[] position, float[] scale, float[] rotation, int[] point_table, int[] edge_table, int[] bone_table, float friction, float restitution, int entity_id, int uv_offset, int flags)
     {
         return controller.create_hull(mesh_id, position, scale, rotation, point_table, edge_table, bone_table, friction, restitution, entity_id, uv_offset, flags);
     }
 
     @Override
-    public int new_entity(float x, float y, float z, float w, int[] hull_table, int[] bone_table, float mass, int anim_index, float anim_time, int root_hull, int model_id, int model_transform_id, int type, int flags)
+    public int create_entity(float x, float y, float z, float w, int[] hull_table, int[] bone_table, float mass, int anim_index, float anim_time, int root_hull, int model_id, int model_transform_id, int type, int flags)
     {
         return controller.create_entity(x, y, z, w, hull_table, bone_table, mass, anim_index, anim_time, root_hull, model_id, model_transform_id, type, flags);
     }
 
     @Override
-    public int new_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id)
+    public int create_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id)
     {
         return controller.create_hull_bone(bone_data, bind_pose_id, inv_bind_pose_id);
     }
 
     @Override
-    public int new_armature_bone(int bone_reference, int bone_parent_id, float[] bone_data)
+    public int create_entity_bone(int bone_reference, int bone_parent_id, float[] bone_data)
     {
         return controller.create_entity_bone(bone_reference, bone_parent_id, bone_data);
     }

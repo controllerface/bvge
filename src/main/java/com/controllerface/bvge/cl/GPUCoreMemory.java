@@ -16,7 +16,7 @@ import java.util.concurrent.CyclicBarrier;
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
 import static org.lwjgl.opencl.CL10.clFinish;
 
-public class GPUCoreMemory implements SectorContainer, Destoryable
+public class GPUCoreMemory implements Destoryable
 {
     private static final String BUF_NAME_SECTOR          = "Live Sectors";
     private static final String BUF_NAME_RENDER          = "Render Mirror";
@@ -91,6 +91,38 @@ public class GPUCoreMemory implements SectorContainer, Destoryable
         this.object_egress_buffer  = new FlippableContainer<>(object_egress_a, object_egress_b);
     }
 
+    public int last_point()
+    {
+        return last_point_index;
+    }
+
+    public int last_entity()
+    {
+        return last_entity_index;
+    }
+
+    public int last_hull()
+    {
+        return last_hull_index;
+    }
+
+    public int last_edge()
+    {
+        return last_edge_index;
+    }
+
+    public SectorContainer sector_container()
+    {
+        return sector_controller;
+    }
+
+    public ReferenceContainer reference_container()
+    {
+        return reference_controller;
+    }
+
+
+
     public ResizableBuffer get_buffer(ReferenceBufferType referenceBufferType)
     {
         return reference_buffers.get_buffer(referenceBufferType);
@@ -110,71 +142,10 @@ public class GPUCoreMemory implements SectorContainer, Destoryable
     {
         mirror_buffers.mirror(sector_buffers);
 
-        last_edge_index   = sector_controller.edge_index();
-        last_entity_index = sector_controller.entity_index();
-        last_hull_index   = sector_controller.hull_index();
-        last_point_index  = sector_controller.point_index();
-    }
-
-    public int next_mesh()
-    {
-        return reference_controller.mesh_index();
-    }
-
-    @Override
-    public int next_entity()
-    {
-        return sector_controller.entity_index();
-    }
-
-    @Override
-    public int next_hull()
-    {
-        return sector_controller.hull_index();
-    }
-
-    @Override
-    public int next_point()
-    {
-        return sector_controller.point_index();
-    }
-
-    @Override
-    public int next_edge()
-    {
-        return sector_controller.edge_index();
-    }
-
-    @Override
-    public int next_hull_bone()
-    {
-        return sector_controller.hull_bone_index();
-    }
-
-    @Override
-    public int next_armature_bone()
-    {
-        return sector_controller.entity_bone_index();
-    }
-
-    public int last_point()
-    {
-        return last_point_index;
-    }
-
-    public int last_entity()
-    {
-        return last_entity_index;
-    }
-
-    public int last_hull()
-    {
-        return last_hull_index;
-    }
-
-    public int last_edge()
-    {
-        return last_edge_index;
+        last_edge_index   = sector_controller.next_edge();
+        last_entity_index = sector_controller.next_entity();
+        last_hull_index   = sector_controller.next_hull();
+        last_point_index  = sector_controller.next_point();
     }
 
     public void flip_egress_buffers()
@@ -292,15 +263,15 @@ public class GPUCoreMemory implements SectorContainer, Destoryable
         clFinish(GPGPU.ptr_compute_queue);
         if (next_egress_counts[0] > 0)
         {
-            sector_egress_buffer.front().egress(sector_controller.entity_index(), next_egress_counts);
+            sector_egress_buffer.front().egress(sector_controller.next_entity(), next_egress_counts);
         }
         if (next_egress_counts[6] > 0)
         {
-            broken_egress_buffer.front().egress(sector_controller.entity_index(), next_egress_counts[6]);
+            broken_egress_buffer.front().egress(sector_controller.next_entity(), next_egress_counts[6]);
         }
         if (next_egress_counts[7] > 0)
         {
-            object_egress_buffer.front().egress(sector_controller.entity_index(), next_egress_counts[6]);
+            object_egress_buffer.front().egress(sector_controller.next_entity(), next_egress_counts[6]);
         }
         clFinish(GPGPU.ptr_sector_queue);
     }
@@ -344,12 +315,12 @@ public class GPUCoreMemory implements SectorContainer, Destoryable
 
         if (total == 0) return;
 
-        int point_capacity         = point_count + next_point();
-        int edge_capacity          = edge_count + next_edge();
-        int hull_capacity          = hull_count + next_hull();
-        int entity_capacity        = entity_count + next_entity();
-        int hull_bone_capacity     = hull_bone_count + next_hull_bone();
-        int armature_bone_capacity = armature_bone_count + next_armature_bone();
+        int point_capacity         = point_count + sector_controller.next_point();
+        int edge_capacity          = edge_count + sector_controller.next_edge();
+        int hull_capacity          = hull_count + sector_controller.next_hull();
+        int entity_capacity        = entity_count + sector_controller.next_entity();
+        int hull_bone_capacity     = hull_bone_count + sector_controller.next_hull_bone();
+        int armature_bone_capacity = armature_bone_count + sector_controller.next_armature_bone();
 
         sector_buffers.ensure_capacity_all(point_capacity,
                 edge_capacity,
@@ -359,73 +330,18 @@ public class GPUCoreMemory implements SectorContainer, Destoryable
                 armature_bone_capacity);
 
         clFinish(GPGPU.ptr_compute_queue);
-        sector_ingress_buffer.merge_into_parent(this);
+        sector_ingress_buffer.merge_into(this.sector_controller);
         clFinish(GPGPU.ptr_sector_queue);
 
         sector_controller.expand(point_count, edge_count, hull_count, entity_count, hull_bone_count, armature_bone_count);
     }
 
-    public int new_animation_timings(float duration, float tick_rate)
-    {
-        return reference_controller.new_animation_timings(duration, tick_rate);
-    }
-
-    public int new_bone_channel(int anim_timing_index, int[] pos_table, int[] rot_table, int[] scl_table)
-    {
-        return reference_controller.new_bone_channel(anim_timing_index, pos_table, rot_table, scl_table);
-    }
-
-    public int new_keyframe(float[] frame, float time)
-    {
-        return reference_controller.new_keyframe(frame, time);
-    }
-
-    public int new_texture_uv(float u, float v)
-    {
-        return reference_controller.new_texture_uv(u, v);
-    }
-
-    public int new_mesh_reference(int[] vertex_table, int[] face_table)
-    {
-        return reference_controller.new_mesh_reference(vertex_table, face_table);
-    }
-
-    public int new_mesh_face(int[] face)
-    {
-        return reference_controller.new_mesh_face(face);
-    }
-
-    public int new_vertex_reference(float x, float y, float[] weights, int[] uv_table)
-    {
-        return reference_controller.new_vertex_reference(x, y, weights, uv_table);
-    }
-
-    public int new_bone_bind_pose(float[] bone_data)
-    {
-        return reference_controller.new_bone_bind_pose(bone_data);
-    }
-
-    public int new_bone_reference(float[] bone_data)
-    {
-        return reference_controller.new_bone_reference(bone_data);
-    }
-
-    public int new_model_transform(float[] transform_data)
-    {
-        return reference_controller.new_model_transform(transform_data);
-    }
-
-    public void set_bone_channel_table(int bind_pose_target, int[] channel_table)
-    {
-        reference_controller.set_bone_channel_table(bind_pose_target, channel_table);
-    }
-
-    public void update_position(int entity_index, float x, float y)
+    public void update_entity_position(int entity_index, float x, float y)
     {
         sector_controller.update_position(entity_index, x, y);
     }
 
-    public float[] read_position(int entity_index)
+    public float[] read_entity_position(int entity_index)
     {
         return sector_controller.read_position(entity_index);
     }
@@ -438,84 +354,6 @@ public class GPUCoreMemory implements SectorContainer, Destoryable
     public void delete_and_compact()
     {
         sector_compactor.delete_and_compact();
-    }
-
-    @Override
-    public int new_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int hit_count, int flags)
-    {
-        return sector_controller.create_point(position, bone_ids, vertex_index, hull_index, hit_count, flags);
-    }
-
-    @Override
-    public int new_edge(int p1, int p2, float l, int flags)
-    {
-        return sector_controller.create_edge(p1, p2, l, flags);
-    }
-
-    @Override
-    public int new_hull(int mesh_id,
-                        float[] position,
-                        float[] scale,
-                        float[] rotation,
-                        int[] point_table,
-                        int[] edge_table,
-                        int[] bone_table,
-                        float friction,
-                        float restitution,
-                        int entity_id,
-                        int uv_offset,
-                        int flags)
-    {
-        return sector_controller.create_hull(mesh_id,
-            position,
-            scale,
-            rotation,
-            point_table,
-            edge_table,
-            bone_table,
-            friction,
-            restitution,
-            entity_id,
-            uv_offset,
-            flags);
-    }
-
-    @Override
-    public int new_hull_bone(float[] bone_data, int bind_pose_id, int inv_bind_pose_id)
-    {
-        return sector_controller.create_hull_bone(bone_data, bind_pose_id, inv_bind_pose_id);
-    }
-
-    @Override
-    public int new_entity(float x, float y, float z, float w,
-                          int[] hull_table,
-                          int[] bone_table,
-                          float mass,
-                          int anim_index,
-                          float anim_time,
-                          int root_hull,
-                          int model_id,
-                          int model_transform_id,
-                          int type,
-                          int flags)
-    {
-        return sector_controller.create_entity(x, y, z, w,
-            hull_table,
-            bone_table,
-            mass,
-            anim_index,
-            anim_time,
-            root_hull,
-            model_id,
-            model_transform_id,
-            type,
-            flags);
-    }
-
-    @Override
-    public int new_armature_bone(int bone_reference, int bone_parent_id, float[] bone_data)
-    {
-        return sector_controller.create_entity_bone(bone_reference, bone_parent_id, bone_data);
     }
 
     @Override

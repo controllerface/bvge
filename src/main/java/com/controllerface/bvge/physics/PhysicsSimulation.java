@@ -476,11 +476,11 @@ public class PhysicsSimulation extends GameSystem
 
         k_integrate
             .ptr_arg(Integrate_k.Args.args, arg_mem_ptr)
-            .call(arg_long(GPGPU.core_memory.next_hull()));
+            .call(arg_long(GPGPU.core_memory.sector_container().next_hull()));
 
         k_integrate_entities
             .ptr_arg(IntegrateEntities_k.Args.args, arg_mem_ptr)
-            .call(arg_long(GPGPU.core_memory.next_entity()));
+            .call(arg_long(GPGPU.core_memory.sector_container().next_entity()));
 
         GPGPU.cl_release_buffer(arg_mem_ptr);
 
@@ -516,6 +516,7 @@ public class PhysicsSimulation extends GameSystem
             Objects.requireNonNull(controlPoints);
             Objects.requireNonNull(entity_id);
             Objects.requireNonNull(force);
+            Objects.requireNonNull(cursor_entity_id);
 
             int flags = 0;
 
@@ -555,7 +556,7 @@ public class PhysicsSimulation extends GameSystem
             var camera = Window.get().camera();
             float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position.x;
             float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position.y;
-            GPGPU.core_memory.update_position(cursor_entity_id.index(), world_x, world_y);
+            GPGPU.core_memory.update_entity_position(cursor_entity_id.index(), world_x, world_y);
 
             target_count++;
         }
@@ -571,7 +572,7 @@ public class PhysicsSimulation extends GameSystem
     private void calculate_bank_offsets()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        int bank_size = scan_key_bounds(GPGPU.core_memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE).pointer(), GPGPU.core_memory.next_hull());
+        int bank_size = scan_key_bounds(GPGPU.core_memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE).pointer(), GPGPU.core_memory.sector_container().next_hull());
         uniform_grid.resizeBank(bank_size);
         if (Editor.ACTIVE)
         {
@@ -678,7 +679,7 @@ public class PhysicsSimulation extends GameSystem
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_counts_data, grid_buffer_size);
         k_generate_keys
             .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
-            .call(arg_long(GPGPU.core_memory.next_hull()));
+            .call(arg_long(GPGPU.core_memory.sector_container().next_hull()));
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -691,7 +692,7 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
         b_key_map.ensure_capacity(uniform_grid.getKey_map_size());
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_counts_data, grid_buffer_size);
-        k_build_key_map.call(arg_long(GPGPU.core_memory.next_hull()));
+        k_build_key_map.call(arg_long(GPGPU.core_memory.sector_container().next_hull()));
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -702,7 +703,7 @@ public class PhysicsSimulation extends GameSystem
     private void locate_in_bounds()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        int hull_count = GPGPU.core_memory.next_hull();
+        int hull_count = GPGPU.core_memory.sector_container().next_hull();
         b_in_bounds.ensure_capacity(hull_count);
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
 
@@ -869,8 +870,8 @@ public class PhysicsSimulation extends GameSystem
         b_reactions_in.ensure_capacity(max_point_count);
         b_reactions_out.ensure_capacity(max_point_count);
         b_reaction_index.ensure_capacity(max_point_count);
-        b_point_reaction_counts.ensure_capacity(GPGPU.core_memory.next_point());
-        b_point_reaction_offsets.ensure_capacity(GPGPU.core_memory.next_point());
+        b_point_reaction_counts.ensure_capacity(GPGPU.core_memory.sector_container().next_point());
+        b_point_reaction_offsets.ensure_capacity(GPGPU.core_memory.sector_container().next_point());
         k_sat_collide.call(global_work_size);
         reaction_count = GPGPU.cl_read_pinned_int(GPGPU.ptr_compute_queue, svm_atomic_counter);
         if (Editor.ACTIVE)
@@ -883,7 +884,7 @@ public class PhysicsSimulation extends GameSystem
     private void scan_reactions()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        gpu_int_scan_out.scan_int_out(b_point_reaction_counts.pointer(), b_point_reaction_offsets.pointer(), GPGPU.core_memory.next_point());
+        gpu_int_scan_out.scan_int_out(b_point_reaction_counts.pointer(), b_point_reaction_offsets.pointer(), GPGPU.core_memory.sector_container().next_point());
         b_point_reaction_counts.clear();
         if (Editor.ACTIVE)
         {
@@ -906,7 +907,7 @@ public class PhysicsSimulation extends GameSystem
     private void apply_reactions()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        k_apply_reactions.call(arg_long(GPGPU.core_memory.next_point()));
+        k_apply_reactions.call(arg_long(GPGPU.core_memory.sector_container().next_point()));
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -922,7 +923,7 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
         k_animate_entities
             .set_arg(AnimateEntities_k.Args.delta_time, dt)
-            .call(arg_long(GPGPU.core_memory.next_entity()));
+            .call(arg_long(GPGPU.core_memory.sector_container().next_entity()));
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -933,7 +934,7 @@ public class PhysicsSimulation extends GameSystem
     private void animate_bones()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        k_animate_bones.call(arg_long(GPGPU.core_memory.next_hull_bone()));
+        k_animate_bones.call(arg_long(GPGPU.core_memory.sector_container().next_hull_bone()));
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -944,7 +945,7 @@ public class PhysicsSimulation extends GameSystem
     private void animate_points()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        k_animate_points.call(arg_long(GPGPU.core_memory.next_point()));
+        k_animate_points.call(arg_long(GPGPU.core_memory.sector_container().next_point()));
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -969,7 +970,7 @@ public class PhysicsSimulation extends GameSystem
 
             k_resolve_constraints
                 .set_arg(ResolveConstraints_k.Args.process_all, n)
-                .call(arg_long(GPGPU.core_memory.next_hull()));
+                .call(arg_long(GPGPU.core_memory.sector_container().next_hull()));
         }
         if (Editor.ACTIVE)
         {
@@ -981,7 +982,7 @@ public class PhysicsSimulation extends GameSystem
     private void resolve_entities()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        k_move_entities.call(arg_long(GPGPU.core_memory.next_entity()));
+        k_move_entities.call(arg_long(GPGPU.core_memory.sector_container().next_entity()));
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -992,7 +993,7 @@ public class PhysicsSimulation extends GameSystem
     private void resolve_hulls()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
-        k_move_hulls.call(arg_long(GPGPU.core_memory.next_hull()));
+        k_move_hulls.call(arg_long(GPGPU.core_memory.sector_container().next_hull()));
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
