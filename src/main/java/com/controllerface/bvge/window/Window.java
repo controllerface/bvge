@@ -162,7 +162,7 @@ public class Window
         }
 
         glfwMakeContextCurrent(glfwWindow);
-        glfwSwapInterval(1); // v-sync
+        //glfwSwapInterval(1); // v-sync
 
         // note: this must be called or nothing will work
         GL.createCapabilities();
@@ -174,19 +174,8 @@ public class Window
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         //glDepthRange(0.0, 1.0);
 
-
         // Create and bind the default framebuffer (typically 0)
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-//// Create and attach a depth buffer to the default framebuffer
-//        int p = glGenRenderbuffers();
-//        glBindRenderbuffer(GL_RENDERBUFFER, p);
-//        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, this.width, this.height); // Specify depth buffer dimensions
-//        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, p);
-//
-
-
-
 
         glViewport(0, 0, this.width, this.height);
 
@@ -278,10 +267,8 @@ public class Window
         int b = int_buffer2.get(1);
         System.out.println("point size range: " +a+" - "+b);
 
-
         MemoryUtil.memFree(int_buffer);
         MemoryUtil.memFree(int_buffer2);
-
 
         System.out.println("LWJGL version: " + Version.getVersion());
 

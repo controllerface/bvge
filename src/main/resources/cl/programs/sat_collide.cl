@@ -431,7 +431,6 @@ __kernel void move_entities(__global float4 *hulls,
     int hull_count = end - start + 1;
     short2 motion_state = entity_motion_states[current_entity];
 
-
     int hull_flags_0 = hull_flags[start];
     bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
     bool collectable = (flags & COLLECTABLE) != 0;
@@ -517,7 +516,6 @@ __kernel void move_entities(__global float4 *hulls,
     flags = destroy
         ? flags | BROKEN
         : flags & ~BROKEN;
-
 
     float threshold = 10.0f;
     float2 vel = (entity.xy - entity.zw) / dt;

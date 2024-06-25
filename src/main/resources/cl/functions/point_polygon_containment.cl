@@ -1,5 +1,5 @@
 /**
-Handles collision between one polygonal hull and one circular hull
+Handles collision between one polygonal hull and a single point
  */
 inline bool point_polygon_containment(int polygon_id, 
                                      float2 test_point,
