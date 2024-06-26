@@ -30,8 +30,8 @@ typedef struct
 
 OutputState init_output(int current_state)
 {
-    OutputState o = { false, false, false, 0.0f, current_state, 0.0f, 0, 0, 0.0f };
-    return o;
+    OutputState output = { false, false, false, 0.0f, current_state, 0.0f, 0, 0, 0.0f };
+    return output;
 }
 
 OutputState idle_state(InputState input)

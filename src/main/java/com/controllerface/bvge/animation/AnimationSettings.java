@@ -117,7 +117,7 @@ public class AnimationSettings
 
             case SWIM_DOWN -> switch (to)
             {
-                case SWIM_DOWN, UNKNOWN -> 0.2f;
+                case SWIM_DOWN, UNKNOWN -> 0.0f;
                 case WALKING,
                      LAND_HARD,
                      FALLING_SLOW,
@@ -134,19 +134,19 @@ public class AnimationSettings
 
             case PUNCH -> switch (to)
             {
-                case PUNCH, UNKNOWN -> 0.0F;
+                case PUNCH, UNKNOWN -> 0.0f;
                 case IDLE,
                      WALKING,
-                     JUMPING -> 0.3F;
+                     JUMPING -> 0.3f;
                 case RUNNING,
                      RECOIL,
                      IN_AIR,
                      LAND_HARD,
                      LAND_SOFT,
                      SWIM_UP,
-                     SWIM_DOWN -> 0.2F;
+                     SWIM_DOWN -> 0.2f;
                 case FALLING_FAST,
-                     FALLING_SLOW -> 0.5F;
+                     FALLING_SLOW -> 0.5f;
             };
 
             case RUNNING -> switch (to)

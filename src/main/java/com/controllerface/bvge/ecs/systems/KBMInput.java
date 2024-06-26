@@ -45,22 +45,22 @@ public class KBMInput extends GameSystem
         // test camera moving code
         if (key_down[GLFW_KEY_LEFT])
         {
-            Window.get().camera().position.x -= 5;
+            Window.get().camera().position().x -= 5;
         }
 
         if (key_down[GLFW_KEY_RIGHT])
         {
-            Window.get().camera().position.x += 5;
+            Window.get().camera().position().x += 5;
         }
 
         if (key_down[GLFW_KEY_UP])
         {
-            Window.get().camera().position.y += 5;
+            Window.get().camera().position().y += 5;
         }
 
         if (key_down[GLFW_KEY_DOWN])
         {
-            Window.get().camera().position.y -= 5;
+            Window.get().camera().position().y -= 5;
         }
 
         if (key_down[GLFW_KEY_COMMA])

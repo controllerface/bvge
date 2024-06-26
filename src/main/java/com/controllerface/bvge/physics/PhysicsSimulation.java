@@ -554,8 +554,8 @@ public class PhysicsSimulation extends GameSystem
                 .call(GPGPU.global_single_size);
 
             var camera = Window.get().camera();
-            float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position.x;
-            float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position.y;
+            float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position().x;
+            float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position().y;
             GPGPU.core_memory.update_entity_position(cursor_entity_id.index(), world_x, world_y);
 
             target_count++;

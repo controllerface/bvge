@@ -6,56 +6,75 @@ import org.joml.Vector3f;
 
 public class Camera
 {
-    private final Matrix4f projectionMatrix;
-    private final Matrix4f viewMatrix;
-    private final Matrix4f uVP;
-    public Vector2f position;
-    public Vector2f projectionSize = new Vector2f(1, 1);
-
     private static final float MAX_ZOOM = 2f;
     private static final float MIN_ZOOM = .5f;
 
+    private final Vector2f position;
+    private final Vector2f projection_size = new Vector2f(1, 1);
+    private final Matrix4f projection_matrix;
+    private final Matrix4f view_matrix;
+    private final Matrix4f uVP;
+
     private float zoom = 2f;
 
-    int width, height;
+    int width;
+    int height;
 
     public Camera(Vector2f position, int height, int width)
     {
-        this.height = height;
-        this.width = width;
+        this.height   = height;
+        this.width    = width;
         this.position = position;
-        this.projectionMatrix = new Matrix4f();
-        this.viewMatrix = new Matrix4f();
-        this.uVP = new Matrix4f();
-        adjustProjection(this.height, this.width);
+
+        this.projection_matrix = new Matrix4f();
+        this.view_matrix = new Matrix4f();
+        this.uVP              = new Matrix4f();
+
+        adjust_projection(this.height, this.width);
     }
 
-    public void adjustProjection(int height, int width)
+    public Vector2f position()
+    {
+        return position;
+    }
+
+    public Vector2f projection_size()
+    {
+        return projection_size;
+    }
+
+    public void adjust_position(float x, float y)
+    {
+        position.x = x;
+        position.y = y;
+    }
+
+    public void adjust_projection(int height, int width)
     {
         this.height = height;
         this.width =  width;
 
-        projectionMatrix.identity();
+        projection_matrix.identity();
 
-        projectionMatrix.ortho(0.0f,
-            projectionSize.x * zoom,
+        projection_matrix.ortho(0.0f,
+            projection_size.x * zoom,
             0.0f,
-            projectionSize.y * zoom,
+            projection_size.y * zoom,
             -6.0f,
             6.0f);
 
-        projectionMatrix.mul(getViewMatrix(), uVP);
+        projection_matrix.mul(get_view_matrix(), uVP);
     }
 
-    public Matrix4f getViewMatrix()
+    private Matrix4f get_view_matrix()
     {
         var cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
         var cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
-        this.viewMatrix.identity();
+        this.view_matrix.identity();
         var eye = new Vector3f(position.x, position.y, 0.0f);
         var center = cameraFront.add(position.x, position.y, 0.0f);
-        this.viewMatrix.lookAt(eye, center, cameraUp);
-        return this.viewMatrix;
+        this.view_matrix.lookAt(eye, center, cameraUp);
+        return this.view_matrix;
     }
 
     /**

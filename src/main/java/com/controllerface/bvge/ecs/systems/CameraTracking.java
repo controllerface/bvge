@@ -39,8 +39,7 @@ public class CameraTracking extends GameSystem
         var new_y = (y - height / 2);
         var new_origin_x = (x - width / camera.get_zoom()) + (x_offset + dx);
         var new_origin_y = (y - height / camera.get_zoom()) + (y_offset + dy);
-        camera.position.x = new_x;
-        camera.position.y = new_y;
+        camera.adjust_position(new_x, new_y);
         uniformGrid.updateOrigin(new_origin_x, new_origin_y, x, y);
     }
 

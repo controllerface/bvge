@@ -105,7 +105,7 @@ public class Window
     {
         glClearColor(r, g, b, a);
         //glClear(GL_COLOR_BUFFER_BIT);
-        camera.adjustProjection(this.height, this.width);
+        camera.adjust_projection(this.height, this.width);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
@@ -319,8 +319,8 @@ public class Window
         currentGameMode.load();
         currentGameMode.start();
 
-        camera.projectionSize.x = this.width;
-        camera.projectionSize.y = this.height;
+        camera.projection_size().x = this.width;
+        camera.projection_size().y = this.height;
 
         // order of system registry is important, systems run in the order they are added
         var inputSystem = new KBMInput(ecs);

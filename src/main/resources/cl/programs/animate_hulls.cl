@@ -36,12 +36,6 @@ inline KeyFramePair find_keyframe_pair(__global float4 *key_frames,
     return result;
 }
 
-
-
-
-
-
-
 TransformBuffer get_node_transform_x(__global int2 *bone_channel_tables,
                            __global int2 *bone_pos_channel_tables,
                            __global int2 *bone_rot_channel_tables,
@@ -81,12 +75,6 @@ TransformBuffer get_node_transform_x(__global int2 *bone_channel_tables,
     current_transform.scl = scl_final;
     return current_transform;
 }
-
-
-
-
-
-
 
 float16 get_node_transform(__global float16 *bone_bind_poses,
                            __global int2 *bone_channel_tables,

@@ -142,8 +142,8 @@ public class MouseRenderer extends GameSystem
         Objects.requireNonNull(control_points);
 
         var camera = Window.get().camera();
-        float world_x = control_points.get_screen_target().x * camera.get_zoom() + camera.position.x;
-        float world_y = (Window.get().height() - control_points.get_screen_target().y) * camera.get_zoom() + camera.position.y;
+        float world_x = control_points.get_screen_target().x * camera.get_zoom() + camera.position().x;
+        float world_y = (Window.get().height() - control_points.get_screen_target().y) * camera.get_zoom() + camera.position().y;
         control_points.get_world_target().set(world_x, world_y);
         float[] mouse_loc = { world_x, world_y, -1.0f, 15.0f };
 
