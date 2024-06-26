@@ -5,8 +5,6 @@ layout (location = 1) in vec2 v_tex_coords;
 
 out vec2 f_tex_coords;
 
-uniform mat4 uVP;
-
 void main()
 {
     f_tex_coords = v_tex_coords;

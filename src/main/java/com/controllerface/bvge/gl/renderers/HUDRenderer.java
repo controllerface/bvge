@@ -2,8 +2,10 @@ package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
+import com.controllerface.bvge.util.Assets;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.freetype.FT_Face;
@@ -13,9 +15,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static org.lwjgl.opengl.GL15C.glDeleteBuffers;
+import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL30C.glDeleteVertexArrays;
-import static org.lwjgl.opengl.GL45C.glCreateVertexArrays;
+import static org.lwjgl.opengl.GL45C.*;
 import static org.lwjgl.util.freetype.FreeType.*;
 import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
@@ -27,9 +31,10 @@ public class HUDRenderer extends GameSystem
     private final int[] texture_slots = {0};
 
     private int vao;
-    private int position_vbo;
-    private int uv_vbo;
+    private int vbo_position;
+    private int vbo_uvs;
 
+    private Texture texture;
     private Shader shader;
 
     private final String font_file = "C:\\Users\\Stephen\\IdeaProjects\\bvge\\src\\main\\resources\\font\\Inconsolata-Light.ttf";
@@ -52,25 +57,73 @@ public class HUDRenderer extends GameSystem
         init_GL();
     }
 
+    private static float[] convertToNDC(int pixelX, int pixelY, int screenWidth, int screenHeight)
+    {
+        float ndcX = 2.0f * pixelX / screenWidth - 1.0f;
+        float ndcY = 1.0f - 2.0f * pixelY / screenHeight;
+        return new float[]{ndcX, ndcY};
+    }
+
     private void init_GL()
     {
+        float[] uvs = new float[]
+            {
+                0.0f, 0.0f,
+                1.0f, 0.0f,
+                1.0f, 1.0f,
+                0.0f, 0.0f,
+                1.0f, 1.0f,
+                0.0f, 1.0f,
+            };
+
+        texture = new Texture();
+        texture.init("/img/cave_fg.png");
+        shader = Assets.load_shader("text_shader.glsl");
+        shader.uploadIntArray("uTextures", texture_slots);
+        vao = glCreateVertexArrays();
+        vbo_position = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * 6);
+        vbo_uvs = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);
+        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
+        glEnableVertexArrayAttrib(vao, UV_ATTRIBUTE);
+
         long ft_library = initFreeType();
         for (var character : character_set)
         {
             render_character(ft_library, character);
         }
+        FT_Done_FreeType(ft_library);
     }
 
     @Override
     public void tick(float dt)
     {
+        float[] vertices = new float[]
+            {
+                -0.1f, -0.1f,
+                 0.1f, -0.1f,
+                 0.1f,  0.1f,
+                -0.1f, -0.1f,
+                 0.1f,  0.1f,
+                -0.1f,  0.1f,
+            };
 
+        glBindVertexArray(vao);
+        shader.use();
+        texture.bind(0);
+
+        glNamedBufferSubData(vbo_position, VECTOR_FLOAT_2D_SIZE * 6, vertices);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+        shader.detach();
     }
 
     @Override
     public void shutdown()
     {
-
+        glDeleteVertexArrays(vao);
+        glDeleteBuffers(vbo_position);
+        glDeleteBuffers(vbo_uvs);
+        shader.destroy();
     }
 
     private static FT_Face loadFontFace(long ftLibrary, String fontPath)
@@ -153,5 +206,6 @@ public class HUDRenderer extends GameSystem
         hb_buffer_destroy(buffer);
         hb_font_destroy(font);
         hb_face_destroy(face);
+        FT_Done_Face(ft_face);
     }
 }

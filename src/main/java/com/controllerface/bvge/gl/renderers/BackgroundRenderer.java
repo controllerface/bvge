@@ -39,14 +39,22 @@ public class BackgroundRenderer extends GameSystem
     {
         float[] vertices = new float[]
             {
-                -1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,
-                -1.0f, -1.0f, 1.0f,  1.0f, -1.0f, 1.0f,
+                -1.0f, -1.0f,
+                 1.0f, -1.0f,
+                 1.0f,  1.0f,
+                -1.0f, -1.0f,
+                 1.0f,  1.0f,
+                -1.0f,  1.0f,
             };
 
         float[] uvs = new float[]
             {
-                0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+                0.0f, 0.0f,
+                1.0f, 0.0f,
+                1.0f, 1.0f,
+                0.0f, 0.0f,
+                1.0f, 1.0f,
+                0.0f, 1.0f,
             };
 
         texture = new Texture();
@@ -67,7 +75,6 @@ public class BackgroundRenderer extends GameSystem
         glBindVertexArray(vao);
         shader.use();
         texture.bind(0);
-        shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
         shader.detach();

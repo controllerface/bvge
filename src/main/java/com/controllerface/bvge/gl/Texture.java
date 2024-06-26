@@ -3,6 +3,7 @@ package com.controllerface.bvge.gl;
 import com.controllerface.bvge.cl.buffers.Destoryable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
+import org.lwjgl.stb.STBImageWrite;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.freetype.FT_Bitmap;
@@ -53,7 +54,7 @@ public class Texture implements Destoryable
         int height = bitmap.rows();
         ByteBuffer buffer = bitmap.buffer(width * height);
 
-        ByteBuffer image = ByteBuffer.allocateDirect(width * height).order(ByteOrder.nativeOrder());
+        var image = MemoryUtil.memAlloc(width * height).order(ByteOrder.nativeOrder());
 
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
@@ -70,12 +71,15 @@ public class Texture implements Destoryable
         glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTextureStorage2D(texId, 1, GL_RED, bitmap.width(), bitmap.rows());
-        glTextureSubImage2D(texId, 0,0,0, width, height, GL_RGB, GL_UNSIGNED_BYTE, image);
+        glTextureSubImage2D(texId, 0,0,0, width, height, GL_RGB, GL_RED, image);
+
+        MemoryUtil.memFree(image);
     }
 
     public Texture(int width, int height)
     {
         this.filepath = "generated";
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
         texId = glCreateTextures(GL_TEXTURE_2D);
         glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -141,6 +145,7 @@ public class Texture implements Destoryable
         this.filepath = resource_path;
 
         texId = glGenTextures();
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
         glBindTexture(GL_TEXTURE_2D, texId);
 
         // repeat image

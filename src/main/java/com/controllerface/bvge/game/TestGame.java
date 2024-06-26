@@ -113,6 +113,7 @@ public class TestGame extends GameMode
         ecs.register_system(blanking_system);
 
         ecs.register_system(new BackgroundRenderer(ecs));
+        //ecs.register_system(new HUDRenderer(ecs));
         ecs.register_system(new MouseRenderer(ecs));
 
         if (ACTIVE_RENDERERS.contains(RenderType.GAME))
@@ -121,7 +122,7 @@ public class TestGame extends GameMode
             ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
         }
 
-        ecs.register_system(new HUDRenderer(ecs));
+        ecs.register_system(new ForegroundRenderer(ecs));
 
         // debug renderers
 

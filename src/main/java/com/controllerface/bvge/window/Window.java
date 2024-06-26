@@ -104,7 +104,6 @@ public class Window
     private void window_upkeep()
     {
         glClearColor(r, g, b, a);
-        //glClear(GL_COLOR_BUFFER_BIT);
         camera.adjust_projection(this.height, this.width);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
