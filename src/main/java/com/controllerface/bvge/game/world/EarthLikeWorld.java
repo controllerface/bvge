@@ -358,7 +358,7 @@ public class EarthLikeWorld implements WorldType
         }
         else if (n < shard_range_floor)
         {
-            batch.new_shard(true, false, world_x_block, world_y_block,  sz_solid, 0, Constants.HullFlags.OUT_OF_BOUNDS._int,.1f, 0.00f, 0.005f, Solid.BASALT);
+            batch.new_shard(true, false, world_x_block, world_y_block,  sz_solid, 0, Constants.HullFlags.OUT_OF_BOUNDS._int,50f, 0.00f, 0.005f, Solid.BASALT);
         }
     }
 }
