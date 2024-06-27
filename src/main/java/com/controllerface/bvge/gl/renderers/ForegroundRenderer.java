@@ -116,13 +116,10 @@ public class ForegroundRenderer extends GameSystem
                 -0.1f,  0.1f,
             };
 
-        //glEnable(GL_CULL_FACE);
-        //glEnable(GL_BLEND);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glBindVertexArray(vao);
         shader.use();
         //texture.bind(0);
-        character_map.get("A").texture.bind(0);
+        character_map.get("X").texture.bind(0);
 
         glNamedBufferSubData(position_vbo, 0, vertices);
 
@@ -130,10 +127,6 @@ public class ForegroundRenderer extends GameSystem
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
         shader.detach();
-
-        //glDisable(GL_CULL_FACE);
-        //glDisable(GL_BLEND);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     }
 
     @Override
