@@ -13,6 +13,7 @@ public class Camera
     private final Vector2f projection_size = new Vector2f(1, 1);
     private final Matrix4f projection_matrix;
     private final Matrix4f view_matrix;
+    private final Matrix4f screen_matrix;
     private final Matrix4f uVP;
 
     private float zoom = 2f;
@@ -27,8 +28,9 @@ public class Camera
         this.position = position;
 
         this.projection_matrix = new Matrix4f();
-        this.view_matrix = new Matrix4f();
-        this.uVP              = new Matrix4f();
+        this.view_matrix       = new Matrix4f();
+        this.screen_matrix     = new Matrix4f();
+        this.uVP               = new Matrix4f();
 
         adjust_projection(this.height, this.width);
     }
@@ -54,6 +56,9 @@ public class Camera
         this.height = height;
         this.width =  width;
 
+        screen_matrix.identity();
+        screen_matrix.ortho(0.0f, width, 0.0f, height, -6.0f, 6.0f);
+
         projection_matrix.identity();
 
         projection_matrix.ortho(0.0f,
@@ -75,6 +80,11 @@ public class Camera
         var center = cameraFront.add(position.x, position.y, 0.0f);
         this.view_matrix.lookAt(eye, center, cameraUp);
         return this.view_matrix;
+    }
+
+    public Matrix4f get_screen_matrix()
+    {
+        return screen_matrix;
     }
 
     /**

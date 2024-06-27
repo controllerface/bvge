@@ -55,11 +55,13 @@ public class Texture implements Destoryable
 
         ByteBuffer buffer = bitmap.buffer(width * height);
         var image = MemoryUtil.memAlloc(width * height).order(ByteOrder.nativeOrder());
-        for (int row = 0; row < height; row++) {
-            for (int col = 0; col < width; col++) {
-                int flipped_row = height - row - 1;
-                var pixel = buffer.get((row * bitmap.pitch()) + col);
-                image.put((flipped_row * width) + col, pixel);
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                int flipped_row = height - y - 1; // flip Y here, so it isn't required inside rendering calls
+                var pixel = buffer.get((y * bitmap.pitch()) + x);
+                image.put((flipped_row * width) + x, pixel);
             }
         }
 
@@ -70,8 +72,8 @@ public class Texture implements Destoryable
         glTextureParameteri(texId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureStorage2D(texId, 1, GL_RGB8, bitmap.width(), bitmap.rows());
-        glTextureSubImage2D(texId, 0,0,0, width, height, GL_RED, GL_UNSIGNED_BYTE, image);
+        glTextureStorage2D(texId, 1, GL_R8, bitmap.width(), bitmap.rows());
+        glTextureSubImage2D(texId, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, image);
 
         MemoryUtil.memFree(image);
     }
@@ -84,7 +86,7 @@ public class Texture implements Destoryable
         glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTextureStorage2D(texId, 1, GL_RGB8, width, height);
-        glTextureSubImage2D(texId, 0,0,0, width, height, GL_RGB, GL_UNSIGNED_BYTE, 0);
+        glTextureSubImage2D(texId, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, 0);
     }
 
     public void init(AITexture raw_texture)
@@ -114,25 +116,25 @@ public class Texture implements Destoryable
                 this.height = height.get(0);
                 this.channels = channels.get(0);
 
-            if (channels.get(0) == 3)
-            {
-                glTextureStorage2D(texId, 1, GL_RGB8, width.get(0), height.get(0));
-                glTextureSubImage2D(texId, 0,0,0, width.get(0), height.get(0), GL_RGB, GL_UNSIGNED_BYTE, image);
-            }
-            else if (channels.get(0) == 4)
-            {
-                glTextureStorage2D(texId, 1, GL_RGBA8, width.get(0), height.get(0));
-                glTextureSubImage2D(texId, 0,0,0, width.get(0), height.get(0), GL_RGBA, GL_UNSIGNED_BYTE, image);
+                if (channels.get(0) == 3)
+                {
+                    glTextureStorage2D(texId, 1, GL_RGB8, width.get(0), height.get(0));
+                    glTextureSubImage2D(texId, 0, 0, 0, width.get(0), height.get(0), GL_RGB, GL_UNSIGNED_BYTE, image);
+                }
+                else if (channels.get(0) == 4)
+                {
+                    glTextureStorage2D(texId, 1, GL_RGBA8, width.get(0), height.get(0));
+                    glTextureSubImage2D(texId, 0, 0, 0, width.get(0), height.get(0), GL_RGBA, GL_UNSIGNED_BYTE, image);
+                }
+                else
+                {
+                    assert false : "Unexpected channel count" + channels.get(0);
+                }
             }
             else
             {
-                assert false : "Unexpected channel count" + channels.get(0);
+                assert false : "Error: couldn't load image: " + this.filepath;
             }
-        }
-        else
-        {
-            assert false : "Error: couldn't load image: " + this.filepath;
-        }
 
             // do this or it will leak memory
             stbi_image_free(image);
@@ -164,12 +166,15 @@ public class Texture implements Destoryable
 
         ByteBuffer buf;
         var stream = Texture.class.getResourceAsStream(resource_path);
-        try {
+        try
+        {
             var bytes = stream.readAllBytes();
             buf = MemoryUtil.memAlloc(bytes.length);
             buf.put(bytes);
             buf.flip();
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             throw new RuntimeException(e);
         }
         ByteBuffer image = stbi_load_from_memory(buf, width, height, channels, 0);

@@ -4,25 +4,20 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Shader;
-import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.freetype.FT_Face;
-import org.lwjgl.util.freetype.FT_GlyphSlot;
+import com.controllerface.bvge.window.Window;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
-import static org.lwjgl.opengl.GL15C.glDeleteBuffers;
+import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL30C.glDeleteVertexArrays;
 import static org.lwjgl.opengl.GL45C.*;
-import static org.lwjgl.util.freetype.FreeType.*;
-import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
+/**
+ * Renders physics edge constraints. All defined edges are rendered as lines.
+ */
 public class HUDRenderer extends GameSystem
 {
     private static final int POSITION_ATTRIBUTE = 0;
@@ -31,15 +26,14 @@ public class HUDRenderer extends GameSystem
     private final int[] texture_slots = {0};
 
     private int vao;
-    private int vbo_position;
-    private int vbo_uvs;
+    private int position_vbo;
+    private int uv_vbo;
 
-    private Texture texture;
     private Shader shader;
 
-    private final String font_file = "C:\\Users\\Stephen\\IdeaProjects\\bvge\\src\\main\\resources\\font\\Inconsolata-Light.ttf";
+    private final Map<Character, GLUtils.RenderableGlyph> character_map = new HashMap<>();
 
-    private record Character(Texture texture, int[] size, int[] bearing, long advance) {}
+    private final String font_file = "C:\\Users\\Stephen\\IdeaProjects\\bvge\\src\\main\\resources\\font\\Inconsolata-Light.ttf";
 
     private static final String[] character_set =
         {
@@ -49,19 +43,10 @@ public class HUDRenderer extends GameSystem
             "{", "}", "|", ";", ":", "'", ",", "<", ".", ">", "/", "?", "~", "`", " ", "\\", "\""
         };
 
-    private final Map<String, Character> character_map = new HashMap<>();
-
     public HUDRenderer(ECS ecs)
     {
         super(ecs);
         init_GL();
-    }
-
-    private static float[] convertToNDC(int pixelX, int pixelY, int screenWidth, int screenHeight)
-    {
-        float ndcX = 2.0f * pixelX / screenWidth - 1.0f;
-        float ndcY = 1.0f - 2.0f * pixelY / screenHeight;
-        return new float[]{ndcX, ndcY};
     }
 
     private void init_GL()
@@ -76,43 +61,57 @@ public class HUDRenderer extends GameSystem
                 0.0f, 1.0f,
             };
 
-        texture = new Texture();
-        texture.init("/img/cave_fg.png");
         shader = Assets.load_shader("text_shader.glsl");
         shader.uploadIntArray("uTextures", texture_slots);
         vao = glCreateVertexArrays();
-        vbo_position = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * 6);
-        vbo_uvs = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);
+        position_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * 6);
+        uv_vbo = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_ATTRIBUTE);
 
-        long ft_library = initFreeType();
-        for (var character : character_set)
+        GLUtils.build_character_map(font_file, character_set, character_map);
+    }
+
+    private void render_text(String text, float x, float y, float scale)
+    {
+        for (var character : text.toCharArray())
         {
-            render_character(ft_library, character);
+            var glyph = character_map.get(character);
+
+            float w = glyph.size()[0] * scale;
+            float h = glyph.size()[1] * scale;
+            float x1_pos = x + glyph.bearing()[0] * scale;
+            float y1_pos = y - (glyph.size()[1] - glyph.bearing()[1]) * scale;
+            float x2_pos = x1_pos + w;
+            float y2_pos = y1_pos + h;
+
+            float[] vertices = new float[]
+                {
+                    x1_pos, y1_pos,
+                    x2_pos, y1_pos,
+                    x2_pos, y2_pos,
+
+                    x1_pos, y1_pos,
+                    x2_pos, y2_pos,
+                    x1_pos, y2_pos,
+                };
+
+            glyph.texture().bind(0);
+            glNamedBufferSubData(position_vbo, 0, vertices);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            x += (glyph.advance() >> 6) * scale;
         }
-        FT_Done_FreeType(ft_library);
     }
 
     @Override
     public void tick(float dt)
     {
-        float[] vertices = new float[]
-            {
-                -0.1f, -0.1f,
-                 0.1f, -0.1f,
-                 0.1f,  0.1f,
-                -0.1f, -0.1f,
-                 0.1f,  0.1f,
-                -0.1f,  0.1f,
-            };
-
         glBindVertexArray(vao);
         shader.use();
-        texture.bind(0);
+        shader.uploadMat4f("projection", Window.get().camera().get_screen_matrix());
 
-        glNamedBufferSubData(vbo_position, VECTOR_FLOAT_2D_SIZE * 6, vertices);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        render_text("BVGE Prototype 2024.6.0", 100, 100, 1f);
+
         glBindVertexArray(0);
         shader.detach();
     }
@@ -121,91 +120,8 @@ public class HUDRenderer extends GameSystem
     public void shutdown()
     {
         glDeleteVertexArrays(vao);
-        glDeleteBuffers(vbo_position);
-        glDeleteBuffers(vbo_uvs);
+        glDeleteBuffers(position_vbo);
+        glDeleteBuffers(uv_vbo);
         shader.destroy();
-    }
-
-    private static FT_Face loadFontFace(long ftLibrary, String fontPath)
-    {
-        try (MemoryStack stack = MemoryStack.stackPush())
-        {
-            PointerBuffer pp = stack.mallocPointer(1);
-            int error = FT_New_Face(ftLibrary, fontPath, 0, pp);
-            if (error != 0)
-            {
-                System.err.println("FT_New_Face error: " + error);
-                return null;
-            }
-            return FT_Face.create(pp.get(0));
-        }
-    }
-
-    private static long initFreeType()
-    {
-        try (MemoryStack stack = MemoryStack.stackPush())
-        {
-            PointerBuffer pp = stack.mallocPointer(1);
-            if (FT_Init_FreeType(pp) != 0)
-            {
-                throw new RuntimeException("Could not initialize FreeType library");
-            }
-            return pp.get(0);
-        }
-    }
-
-    private FT_GlyphSlot render_glyph(FT_Face ftFace, int glyphID)
-    {
-        if (FT_Load_Glyph(ftFace, glyphID, FT_LOAD_DEFAULT) != 0)
-        {
-            throw new RuntimeException("Could not load glyph");
-        }
-
-        FT_GlyphSlot glyph = ftFace.glyph();
-        if (FT_Render_Glyph(glyph, FT_RENDER_MODE_NORMAL) != 0)
-        {
-            throw new RuntimeException("Could not render glyph");
-        }
-
-        return glyph;
-    }
-
-    private void render_character(long ft_library, String character_string)
-    {
-        FT_Face ft_face = loadFontFace(ft_library, font_file);
-        Objects.requireNonNull(ft_face);
-        FT_Set_Pixel_Sizes(ft_face, 0, 48);
-
-        var buffer = hb_buffer_create();
-        hb_buffer_add_utf8(buffer, character_string, 0, character_string.length());
-        hb_buffer_set_direction(buffer, HB_DIRECTION_LTR);
-        hb_buffer_set_script(buffer, HB_SCRIPT_LATIN);
-        hb_buffer_set_language(buffer, hb_language_from_string("en"));
-
-        var font = hb_ft_font_create_referenced(ft_face.address());
-        var face = hb_ft_face_create_referenced(ft_face.address());
-
-        hb_shape(font, buffer, null);
-        var glyph_info = hb_buffer_get_glyph_infos(buffer);
-
-        int glyphCount = hb_buffer_get_length(buffer);
-        if (glyphCount != 1 || glyph_info == null)
-        {
-            throw new RuntimeException("Glyph count incorrect: " + glyphCount);
-        }
-        var glyph_id = glyph_info.get(0).codepoint();
-        var glyph = render_glyph(ft_face, glyph_id);
-        var bm = glyph.bitmap();
-        var glyph_texture = new Texture(bm);
-        var size = new int[]{bm.width(), bm.rows()};
-        var bearing = new int[]{glyph.bitmap_left(), glyph.bitmap_top()};
-        var advance = glyph.advance();
-        var character = new Character(glyph_texture, size, bearing, advance.x());
-        character_map.put(character_string, character);
-
-        hb_buffer_destroy(buffer);
-        hb_font_destroy(font);
-        hb_face_destroy(face);
-        FT_Done_Face(ft_face);
     }
 }

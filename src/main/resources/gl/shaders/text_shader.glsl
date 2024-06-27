@@ -5,10 +5,12 @@ layout (location = 1) in vec2 v_tex_coords;
 
 out vec2 f_tex_coords;
 
+uniform mat4 projection;
+
 void main()
 {
+    gl_Position = projection * vec4(v_position, 5.0, 1.0);
     f_tex_coords = v_tex_coords;
-    gl_Position =  vec4(v_position, -.99, 1.0);
 }
 
 #type fragment

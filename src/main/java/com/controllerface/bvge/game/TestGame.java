@@ -20,23 +20,13 @@ import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Constants;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.stb.STBImageWrite;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.freetype.FT_Bitmap;
-import org.lwjgl.util.freetype.FT_Face;
-import org.lwjgl.util.freetype.FT_GlyphSlot;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
-import static org.lwjgl.util.freetype.FreeType.*;
-import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
 public class TestGame extends GameMode
 {
@@ -122,7 +112,7 @@ public class TestGame extends GameMode
             ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
         }
 
-        ecs.register_system(new ForegroundRenderer(ecs));
+        ecs.register_system(new HUDRenderer(ecs));
 
         // debug renderers
 
