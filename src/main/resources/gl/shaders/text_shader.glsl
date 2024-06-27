@@ -22,9 +22,9 @@ uniform sampler2D uTextures[1];
 
 void main()
 {
-    //color = texture(uTextures[0], f_tex_coords);
-    vec3 textColor = vec3(1.0, 0.0, 0.0);
+    // color = texture(uTextures[0], f_tex_coords);
 
+    vec3 textColor = vec3(0.0, 0.0, 1.0);
     vec4 sampled = vec4(1.0, 1.0, 1.0, texture(uTextures[0], f_tex_coords).r);
     color = vec4(textColor, 1.0) * sampled;
 }

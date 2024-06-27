@@ -52,14 +52,14 @@ public class Texture implements Destoryable
     {
         int width = bitmap.width();
         int height = bitmap.rows();
+
         ByteBuffer buffer = bitmap.buffer(width * height);
-
         var image = MemoryUtil.memAlloc(width * height).order(ByteOrder.nativeOrder());
-
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
+                int flipped_row = height - row - 1;
                 var pixel = buffer.get((row * bitmap.pitch()) + col);
-                image.put((row * width) + col, pixel);
+                image.put((flipped_row * width) + col, pixel);
             }
         }
 
@@ -70,8 +70,8 @@ public class Texture implements Destoryable
         glTextureParameteri(texId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureStorage2D(texId, 1, GL_RED, bitmap.width(), bitmap.rows());
-        glTextureSubImage2D(texId, 0,0,0, width, height, GL_RGB, GL_RED, image);
+        glTextureStorage2D(texId, 1, GL_RGB8, bitmap.width(), bitmap.rows());
+        glTextureSubImage2D(texId, 0,0,0, width, height, GL_RED, GL_UNSIGNED_BYTE, image);
 
         MemoryUtil.memFree(image);
     }
@@ -172,10 +172,8 @@ public class Texture implements Destoryable
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        // todo: load from resource instead of disk
-        //ByteBuffer image = stbi_load(resource_path, width, height, channels, 0);
         ByteBuffer image = stbi_load_from_memory(buf, width, height, channels, 0);
-
+        MemoryUtil.memFree(buf);
 
         if (image != null)
         {

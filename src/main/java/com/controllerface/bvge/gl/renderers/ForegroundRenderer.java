@@ -45,7 +45,7 @@ public class ForegroundRenderer extends GameSystem
 
     private final Map<String, Character> character_map = new HashMap<>();
 
-    private final String font_file = "C:\\Users\\Stephen\\IdeaProjects\\bvge\\src\\main\\resources\\font\\Inconsolata-Light.ttf";
+    private final String font_file = "C:\\Users\\contr\\IdeaProjects\\bvge\\src\\main\\resources\\font\\Inconsolata-Light.ttf";
 
     private static final String[] character_set =
         {
@@ -122,7 +122,7 @@ public class ForegroundRenderer extends GameSystem
         glBindVertexArray(vao);
         shader.use();
         //texture.bind(0);
-        character_map.get("!").texture.bind(0);
+        character_map.get("A").texture.bind(0);
 
         glNamedBufferSubData(position_vbo, 0, vertices);
 
@@ -227,6 +227,6 @@ public class ForegroundRenderer extends GameSystem
         hb_buffer_destroy(buffer);
         hb_font_destroy(font);
         hb_face_destroy(face);
-        FT_Done_Face(ft_face);
+        //FT_Done_Face(ft_face);
     }
 }
