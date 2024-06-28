@@ -71,7 +71,7 @@ public class UniformGridRenderer extends GameSystem
 
     private record GridData(float[] vertices, float[] colors) { }
 
-    private boolean inside_inner(float a0, float a1, float a2, float a3, float x, float y, float w, float h)
+    private boolean within_inner_grid(float a0, float a1, float a2, float a3, float x, float y, float w, float h)
     {
         return a0 < x + w
             && a0 + a2 > x
@@ -299,7 +299,7 @@ public class UniformGridRenderer extends GameSystem
             {
                 float current_y = y * uniformGrid.y_spacing + y_offset;
 
-                boolean inside_inner = inside_inner(current_x, current_y,
+                boolean inside_inner = within_inner_grid(current_x, current_y,
                     uniformGrid.x_spacing,
                     uniformGrid.y_spacing,
                     inner_x_offset,

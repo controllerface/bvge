@@ -23,9 +23,6 @@ import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL45C.*;
 
-/**
- * Renders physics edge constraints. All defined edges are rendered as lines.
- */
 public class EdgeRenderer extends GameSystem
 {
     private static final int DATA_POINTS_PER_EDGE = 2;

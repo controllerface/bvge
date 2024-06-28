@@ -15,9 +15,6 @@ import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL45C.*;
 
-/**
- * Renders physics edge constraints. All defined edges are rendered as lines.
- */
 public class HUDRenderer extends GameSystem
 {
     private static final int POSITION_ATTRIBUTE = 0;
@@ -53,18 +50,16 @@ public class HUDRenderer extends GameSystem
     {
         float[] uvs = new float[]
             {
-                0.0f, 0.0f,
                 1.0f, 0.0f,
                 1.0f, 1.0f,
                 0.0f, 0.0f,
-                1.0f, 1.0f,
                 0.0f, 1.0f,
             };
 
         shader = Assets.load_shader("text_shader.glsl");
         shader.uploadIntArray("uTextures", texture_slots);
         vao = glCreateVertexArrays();
-        position_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * 6);
+        position_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * 4);
         uv_vbo = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_ATTRIBUTE);
@@ -87,18 +82,15 @@ public class HUDRenderer extends GameSystem
 
             float[] vertices = new float[]
                 {
-                    x1_pos, y1_pos,
                     x2_pos, y1_pos,
                     x2_pos, y2_pos,
-
                     x1_pos, y1_pos,
-                    x2_pos, y2_pos,
                     x1_pos, y2_pos,
                 };
 
             glyph.texture().bind(0);
             glNamedBufferSubData(position_vbo, 0, vertices);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             x += (glyph.advance() >> 6) * scale;
         }
     }
