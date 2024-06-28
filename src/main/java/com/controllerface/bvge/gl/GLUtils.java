@@ -29,6 +29,15 @@ public class GLUtils
     private static final int DEFAULT_OFFSET = 0;
     private static final int DEFAULT_STRIDE = 0;
 
+    public static final String[] character_set =
+        {
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+            "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "=", "+", "[", "]",
+            "{", "}", "|", ";", ":", "'", ",", "<", ".", ">", "/", "?", "~", "`", " ", "\\", "\""
+        };
+
+
     public record RenderableGlyph(int texture_id, int[] size, int[] bearing, long advance) { }
 
     public static int new_buffer_float(int vao,
@@ -301,6 +310,11 @@ public class GLUtils
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTextureSubImage3D(tex_id, 0, 0, 0, tex_slot, width, height, 1, GL_RED, GL_UNSIGNED_BYTE, image);
         MemoryUtil.memFree(image);
+    }
+
+    public static Texture build_character_map_ex(int texture_size, String font_file, Map<Character, RenderableGlyph> character_map)
+    {
+        return build_character_map_ex(texture_size, font_file, character_set, character_map);
     }
 
     public static Texture build_character_map_ex(int texture_size, String font_file, String[] character_set, Map<Character, RenderableGlyph> character_map)

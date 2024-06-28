@@ -35,14 +35,6 @@ public class HUDRenderer extends GameSystem
 
     private final String font_file = "C:\\Users\\Stephen\\IdeaProjects\\bvge\\src\\main\\resources\\font\\Inconsolata-Light.ttf";
 
-    private static final String[] character_set =
-        {
-            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-            "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "=", "+", "[", "]",
-            "{", "}", "|", ";", ":", "'", ",", "<", ".", ">", "/", "?", "~", "`", " ", "\\", "\""
-        };
-
     public HUDRenderer(ECS ecs)
     {
         super(ecs);
@@ -62,7 +54,7 @@ public class HUDRenderer extends GameSystem
         glEnableVertexArrayAttrib(vao, UV_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, ID_ATTRIBUTE);
 
-        texture = GLUtils.build_character_map_ex(TEXTURE_SIZE, font_file, character_set, character_map_ex);
+        texture = GLUtils.build_character_map_ex(TEXTURE_SIZE, font_file, character_map_ex);
     }
 
     private void render_text(String text, float x, float y, float scale)
@@ -74,23 +66,22 @@ public class HUDRenderer extends GameSystem
 
             float w = glyph.size()[0] * scale;
             float h = glyph.size()[1] * scale;
-            float x1_pos = x + glyph.bearing()[0] * scale;
-            float y1_pos = y - (glyph.size()[1] - glyph.bearing()[1]) * scale;
-            float x2_pos = x1_pos + w;
-            float y2_pos = y1_pos + h;
-
-            float[] vertices = new float[]
-                {
-                    x2_pos, y1_pos,
-                    x2_pos, y2_pos,
-                    x1_pos, y1_pos,
-                    x1_pos, y2_pos,
-                };
-
+            float x1 = x + glyph.bearing()[0] * scale;
+            float y1 = y - (glyph.size()[1] - glyph.bearing()[1]) * scale;
+            float x2 = x1 + w;
+            float y2 = y1 + h;
             float u1 = 0.0f;
             float v1 = 0.0f;
             float u2 = (float) glyph.size()[0] / TEXTURE_SIZE;
             float v2 = (float) glyph.size()[1] / TEXTURE_SIZE;
+
+            float[] vertices = new float[]
+                {
+                    x2, y1,
+                    x2, y2,
+                    x1, y1,
+                    x1, y2,
+                };
 
             float[] uvs = new float[]
                 {
