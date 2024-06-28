@@ -38,8 +38,6 @@ public class GLUtils
         };
 
 
-    public record RenderableGlyph(int texture_id, int[] size, int[] bearing, long advance) { }
-
     public static int new_buffer_float(int vao,
                                        int bind_index,
                                        int buffer_size)
@@ -312,12 +310,12 @@ public class GLUtils
         MemoryUtil.memFree(image);
     }
 
-    public static Texture build_character_map_ex(int texture_size, String font_file, Map<Character, RenderableGlyph> character_map)
+    public static Texture build_character_map(int texture_size, String font_file, Map<Character, TextGlyph> character_map)
     {
-        return build_character_map_ex(texture_size, font_file, character_set, character_map);
+        return build_character_map(texture_size, font_file, character_set, character_map);
     }
 
-    public static Texture build_character_map_ex(int texture_size, String font_file, String[] character_set, Map<Character, RenderableGlyph> character_map)
+    public static Texture build_character_map(int texture_size, String font_file, String[] character_set, Map<Character, TextGlyph> character_map)
     {
         long ft_library = initFreeType();
         FT_Face ft_face = loadFontFace(ft_library, font_file);
@@ -353,7 +351,7 @@ public class GLUtils
             var size = new int[]{bm.width(), bm.rows()};
             var bearing = new int[]{glyph.bitmap_left(), glyph.bitmap_top()};
             var advance = glyph.advance();
-            var character = new RenderableGlyph(text_slot, size, bearing, advance.x());
+            var character = new TextGlyph(text_slot, size, bearing, advance.x());
             character_map.put(character_string.charAt(0), character);
             hb_buffer_destroy(buffer);
         }

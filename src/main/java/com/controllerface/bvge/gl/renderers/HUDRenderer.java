@@ -3,6 +3,7 @@ package com.controllerface.bvge.gl.renderers;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.gl.GLUtils;
+import com.controllerface.bvge.gl.TextGlyph;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
@@ -13,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.controllerface.bvge.util.Constants.Rendering.*;
-import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL45C.*;
 
@@ -38,7 +38,7 @@ public class HUDRenderer extends GameSystem
     private Texture texture;
     private Shader shader;
 
-    private final Map<Character, GLUtils.RenderableGlyph> character_map_ex = new HashMap<>();
+    private final Map<Character, TextGlyph> character_map_ex = new HashMap<>();
 
     private final String font_file = "C:\\Users\\Stephen\\IdeaProjects\\bvge\\src\\main\\resources\\font\\Inconsolata-Light.ttf";
 
@@ -77,7 +77,7 @@ public class HUDRenderer extends GameSystem
 
         cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
         glNamedBufferSubData(cbo, 0, raw_cmd);
-        texture = GLUtils.build_character_map_ex(TEXTURE_SIZE, font_file, character_map_ex);
+        texture = GLUtils.build_character_map(TEXTURE_SIZE, font_file, character_map_ex);
     }
 
     private boolean dirty = true;
