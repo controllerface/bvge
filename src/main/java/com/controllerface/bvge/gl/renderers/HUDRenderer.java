@@ -24,7 +24,6 @@ public class HUDRenderer extends GameSystem
 
     private static final int COMMAND_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES * 4;
 
-
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int UV_ATTRIBUTE = 1;
     private static final int ID_ATTRIBUTE = 2;
@@ -39,13 +38,19 @@ public class HUDRenderer extends GameSystem
     private Shader shader;
 
     private final Map<Character, TextGlyph> character_map_ex = new HashMap<>();
-
-    private final String font_file = "/font/Inconsolata-Light.ttf";
-
-    private final float[] raw_pos = new float[VECTOR_2D_LENGTH * VERTICES_PER_LETTER * MAX_BATCH_SIZE];
-    private final float[] raw_uvs = new float[VECTOR_2D_LENGTH * VERTICES_PER_LETTER * MAX_BATCH_SIZE];
-    private final float[] raw_ids = new float[VERTICES_PER_LETTER * MAX_BATCH_SIZE];
     private final int[] raw_cmd = new int[VERTICES_PER_LETTER * MAX_BATCH_SIZE];
+
+    private enum DockEdge
+    {
+        TOP,
+        BOTTOM,
+        LEFT,
+        RIGHT
+    }
+
+    private record TextContainer(DockEdge edge, String message, float x, float y, float size){ }
+
+    private Map<String, TextContainer> text_boxes = new HashMap<>();
 
     public HUDRenderer(ECS ecs)
     {
@@ -64,6 +69,9 @@ public class HUDRenderer extends GameSystem
 
     private void init_GL()
     {
+        //text_boxes.put("debug", new TextContainer("BVGE Prototype 2024.6.0", 100, 100, .75f));
+        //text_boxes.put("debug2", new TextContainer("Test", 100, 100, .75f));
+
         shader = Assets.load_shader("text_shader.glsl");
         shader.uploadInt("uTexture", 0);
         vao = glCreateVertexArrays();
@@ -77,7 +85,7 @@ public class HUDRenderer extends GameSystem
 
         cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
         glNamedBufferSubData(cbo, 0, raw_cmd);
-        texture = GLUtils.build_character_map(TEXTURE_SIZE, font_file, character_map_ex);
+        texture = GLUtils.build_character_map(TEXTURE_SIZE, "/font/Inconsolata-Light.ttf", character_map_ex);
     }
 
     private boolean dirty = true;
@@ -88,6 +96,11 @@ public class HUDRenderer extends GameSystem
         int uv_offset = 0;
         int id_offset = 0;
         char[] chars = text.toCharArray();
+
+        var p_buf = glMapNamedBuffer(position_vbo, GL_WRITE_ONLY).asFloatBuffer();
+        var u_buf = glMapNamedBuffer(uv_vbo, GL_WRITE_ONLY).asFloatBuffer();
+        var i_buf = glMapNamedBuffer(id_vbo, GL_WRITE_ONLY).asFloatBuffer();
+
         for (var character : chars)
         {
             var glyph = character_map_ex.get(character);
@@ -103,35 +116,36 @@ public class HUDRenderer extends GameSystem
             float u2 = (float) glyph.size()[0] / TEXTURE_SIZE;
             float v2 = (float) glyph.size()[1] / TEXTURE_SIZE;
 
-            raw_pos[pos_offset++] = x2;
-            raw_pos[pos_offset++] = y1;
-            raw_pos[pos_offset++] = x2;
-            raw_pos[pos_offset++] = y2;
-            raw_pos[pos_offset++] = x1;
-            raw_pos[pos_offset++] = y1;
-            raw_pos[pos_offset++] = x1;
-            raw_pos[pos_offset++] = y2;
+            p_buf.put(pos_offset++, x2);
+            p_buf.put(pos_offset++, y1);
+            p_buf.put(pos_offset++, x2);
+            p_buf.put(pos_offset++, y2);
+            p_buf.put(pos_offset++, x1);
+            p_buf.put(pos_offset++, y1);
+            p_buf.put(pos_offset++, x1);
+            p_buf.put(pos_offset++, y2);
 
-            raw_uvs[uv_offset++] = u2;
-            raw_uvs[uv_offset++] = v1;
-            raw_uvs[uv_offset++] = u2;
-            raw_uvs[uv_offset++] = v2;
-            raw_uvs[uv_offset++] = u1;
-            raw_uvs[uv_offset++] = v1;
-            raw_uvs[uv_offset++] = u1;
-            raw_uvs[uv_offset++] = v2;
+            u_buf.put(uv_offset++, u2);
+            u_buf.put(uv_offset++, v1);
+            u_buf.put(uv_offset++, u2);
+            u_buf.put(uv_offset++, v2);
+            u_buf.put(uv_offset++, u1);
+            u_buf.put(uv_offset++, v1);
+            u_buf.put(uv_offset++, u1);
+            u_buf.put(uv_offset++, v2);
 
-            raw_ids[id_offset++] = glyph.texture_id();
-            raw_ids[id_offset++] = glyph.texture_id();
-            raw_ids[id_offset++] = glyph.texture_id();
-            raw_ids[id_offset++] = glyph.texture_id();
+            i_buf.put(id_offset++, glyph.texture_id());
+            i_buf.put(id_offset++, glyph.texture_id());
+            i_buf.put(id_offset++, glyph.texture_id());
+            i_buf.put(id_offset++, glyph.texture_id());
 
             x += (glyph.advance() >> 6) * scale;
         }
 
-        glNamedBufferSubData(position_vbo, 0, raw_pos);
-        glNamedBufferSubData(uv_vbo, 0, raw_uvs);
-        glNamedBufferSubData(id_vbo, 0, raw_ids);
+        glUnmapNamedBuffer(position_vbo);
+        glUnmapNamedBuffer(uv_vbo);
+        glUnmapNamedBuffer(id_vbo);
+
         dirty = false;
     }
 
