@@ -7,6 +7,7 @@ import org.lwjgl.util.freetype.FT_Bitmap;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FT_GlyphSlot;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Map;
@@ -20,6 +21,7 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
 import static org.lwjgl.opengl.GL45C.*;
+import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 import static org.lwjgl.util.freetype.FreeType.*;
 import static org.lwjgl.util.freetype.FreeType.FT_Done_FreeType;
 import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
@@ -246,16 +248,38 @@ public class GLUtils
 
     private static FT_Face loadFontFace(long ftLibrary, String fontPath)
     {
+        ByteBuffer buf = null;
         try (MemoryStack stack = MemoryStack.stackPush())
         {
             PointerBuffer pp = stack.mallocPointer(1);
-            int error = FT_New_Face(ftLibrary, fontPath, 0, pp);
+
+            var stream = GLUtils.class.getResourceAsStream(fontPath);
+            try
+            {
+                var bytes = stream.readAllBytes();
+                buf = MemoryUtil.memAlloc(bytes.length);
+                buf.put(bytes);
+                buf.flip();
+            }
+            catch (IOException e)
+            {
+                throw new RuntimeException(e);
+            }
+            int error = FT_New_Memory_Face(ftLibrary, buf, 0, pp);
+
             if (error != 0)
             {
                 System.err.println("FT_New_Face error: " + error);
                 return null;
             }
             return FT_Face.create(pp.get(0));
+        }
+        finally
+        {
+            if (buf != null)
+            {
+                MemoryUtil.memFree(buf);
+            }
         }
     }
 

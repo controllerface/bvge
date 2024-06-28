@@ -40,7 +40,7 @@ public class HUDRenderer extends GameSystem
 
     private final Map<Character, TextGlyph> character_map_ex = new HashMap<>();
 
-    private final String font_file = "C:\\Users\\Stephen\\IdeaProjects\\bvge\\src\\main\\resources\\font\\Inconsolata-Light.ttf";
+    private final String font_file = "/font/Inconsolata-Light.ttf";
 
     private final float[] raw_pos = new float[VECTOR_2D_LENGTH * VERTICES_PER_LETTER * MAX_BATCH_SIZE];
     private final float[] raw_uvs = new float[VECTOR_2D_LENGTH * VERTICES_PER_LETTER * MAX_BATCH_SIZE];
