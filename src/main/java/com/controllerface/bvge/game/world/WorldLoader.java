@@ -18,6 +18,8 @@ import java.util.concurrent.BlockingQueue;
 
 public class WorldLoader extends GameSystem
 {
+    private final int MAX_SECTOR_LOAD_PER_TICK = 1;
+
     private final WorldType world                = new EarthLikeWorld();
     private final Set<Sector> old_loaded_sectors = new HashSet<>();
     private final Set<Sector> new_loaded_sectors = new HashSet<>();
@@ -74,6 +76,7 @@ public class WorldLoader extends GameSystem
         old_loaded_sectors.addAll(new_loaded_sectors);
         new_loaded_sectors.clear();
 
+        int load_count = 0;
         for (int sx = sector_0_key[0]; sx <= sector_2_key[0]; sx++)
         {
             for (int sy = sector_0_key[1]; sy <= sector_2_key[1]; sy++)
@@ -82,13 +85,16 @@ public class WorldLoader extends GameSystem
                 if (old_loaded_sectors.contains(sector))
                 {
                     new_loaded_sectors.add(sector);
-                    var _ = sector_cache.getIfPresent(sector);
+                    var _ = sector_cache.getIfPresent(sector); // keep sector live in cache by accessing it
                 }
                 else
                 {
-                    new_loaded_sectors.add(sector);
-                    var sector_batch = sector_cache.get(sector, world::generate_sector);
-                    GPGPU.core_memory.load_entity_batch(sector_batch);
+                    if (load_count++ < MAX_SECTOR_LOAD_PER_TICK)
+                    {
+                        new_loaded_sectors.add(sector);
+                        var sector_batch = sector_cache.get(sector, world::generate_sector);
+                        GPGPU.core_memory.load_entity_batch(sector_batch);
+                    }
                 }
             }
         }
