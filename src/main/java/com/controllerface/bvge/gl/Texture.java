@@ -3,15 +3,11 @@ package com.controllerface.bvge.gl;
 import com.controllerface.bvge.cl.buffers.Destoryable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
-import org.lwjgl.stb.STBImageWrite;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.util.freetype.FT_Bitmap;
-import org.lwjgl.util.freetype.FT_GlyphSlot;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.Objects;
 
@@ -35,58 +31,34 @@ import static org.lwjgl.stb.STBImage.*;
 public class Texture implements Destoryable
 {
     private String filepath;
-    private int texId;
+    private int tex_id;
     private int width;
     private int height;
     private int channels;
 
     public Texture()
     {
-        texId = -1;
+        tex_id = -1;
         width = -1;
         height = -1;
         channels = -1;
-    }
-
-    public Texture(FT_Bitmap bitmap)
-    {
-        int width = bitmap.width();
-        int height = bitmap.rows();
-
-        ByteBuffer buffer = bitmap.buffer(width * height);
-        var image = MemoryUtil.memAlloc(width * height).order(ByteOrder.nativeOrder());
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                int flipped_row = height - y - 1; // flip Y here, so it isn't required inside rendering calls
-                var pixel = buffer.get((y * bitmap.pitch()) + x);
-                image.put((flipped_row * width) + x, pixel);
-            }
-        }
-
-        this.filepath = "generated";
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        texId = glCreateTextures(GL_TEXTURE_2D);
-        glTextureParameteri(texId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTextureParameteri(texId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureStorage2D(texId, 1, GL_R8, bitmap.width(), bitmap.rows());
-        glTextureSubImage2D(texId, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, image);
-
-        MemoryUtil.memFree(image);
     }
 
     public Texture(int width, int height)
     {
         this.filepath = "generated";
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-        texId = glCreateTextures(GL_TEXTURE_2D);
-        glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureStorage2D(texId, 1, GL_RGB8, width, height);
-        glTextureSubImage2D(texId, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, 0);
+        tex_id = glCreateTextures(GL_TEXTURE_2D);
+        glTextureParameteri(tex_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(tex_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureStorage2D(tex_id, 1, GL_RGB8, width, height);
+        glTextureSubImage2D(tex_id, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    }
+
+    public void init_array()
+    {
+        this.filepath = "generated";
+        this.tex_id = glCreateTextures(GL_TEXTURE_2D_ARRAY);
     }
 
     public void init(AITexture raw_texture)
@@ -94,11 +66,11 @@ public class Texture implements Destoryable
         this.filepath = raw_texture.mFilename().dataString();
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-        texId = glCreateTextures(GL_TEXTURE_2D);
-        glTextureParameteri(texId, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTextureParameteri(texId, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTextureParameteri(texId, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTextureParameteri(texId, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        tex_id = glCreateTextures(GL_TEXTURE_2D);
+        glTextureParameteri(tex_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(tex_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTextureParameteri(tex_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureParameteri(tex_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         try (var stack = MemoryStack.stackPush())
         {
@@ -118,13 +90,13 @@ public class Texture implements Destoryable
 
                 if (channels.get(0) == 3)
                 {
-                    glTextureStorage2D(texId, 1, GL_RGB8, width.get(0), height.get(0));
-                    glTextureSubImage2D(texId, 0, 0, 0, width.get(0), height.get(0), GL_RGB, GL_UNSIGNED_BYTE, image);
+                    glTextureStorage2D(tex_id, 1, GL_RGB8, width.get(0), height.get(0));
+                    glTextureSubImage2D(tex_id, 0, 0, 0, width.get(0), height.get(0), GL_RGB, GL_UNSIGNED_BYTE, image);
                 }
                 else if (channels.get(0) == 4)
                 {
-                    glTextureStorage2D(texId, 1, GL_RGBA8, width.get(0), height.get(0));
-                    glTextureSubImage2D(texId, 0, 0, 0, width.get(0), height.get(0), GL_RGBA, GL_UNSIGNED_BYTE, image);
+                    glTextureStorage2D(tex_id, 1, GL_RGBA8, width.get(0), height.get(0));
+                    glTextureSubImage2D(tex_id, 0, 0, 0, width.get(0), height.get(0), GL_RGBA, GL_UNSIGNED_BYTE, image);
                 }
                 else
                 {
@@ -146,9 +118,9 @@ public class Texture implements Destoryable
     {
         this.filepath = resource_path;
 
-        texId = glGenTextures();
+        tex_id = glGenTextures();
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-        glBindTexture(GL_TEXTURE_2D, texId);
+        glBindTexture(GL_TEXTURE_2D, tex_id);
 
         // repeat image
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -218,17 +190,17 @@ public class Texture implements Destoryable
      */
     public void bind(int texture_slot)
     {
-        glBindTextureUnit(texture_slot, texId);
+        glBindTextureUnit(texture_slot, tex_id);
     }
 
-    public int getTexId()
+    public int getTex_id()
     {
-        return texId;
+        return tex_id;
     }
 
     public void destroy()
     {
-        glDeleteTextures(texId);
+        glDeleteTextures(tex_id);
     }
 
     @Override
@@ -245,7 +217,7 @@ public class Texture implements Destoryable
 
         Texture texture = (Texture) o;
 
-        if (texId != texture.texId)
+        if (tex_id != texture.tex_id)
         {
             return false;
         }
@@ -270,7 +242,7 @@ public class Texture implements Destoryable
         int result = filepath != null
             ? filepath.hashCode()
             : 0;
-        result = 31 * result + texId;
+        result = 31 * result + tex_id;
         result = 31 * result + width;
         result = 31 * result + height;
         result = 31 * result + channels;

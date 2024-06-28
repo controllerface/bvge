@@ -16,7 +16,7 @@ public class FrameBuffer
 
         // create texture/ attach to buffer
         this.texture = new Texture(width, height);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this.texture.getTexId(), 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this.texture.getTex_id(), 0);
 
         // create render buffer
         int rboId = glGenRenderbuffers();
@@ -48,6 +48,6 @@ public class FrameBuffer
 
     public int getTextureId()
     {
-        return texture.getTexId();
+        return texture.getTex_id();
     }
 }

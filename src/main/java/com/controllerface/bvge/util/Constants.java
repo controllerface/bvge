@@ -14,6 +14,8 @@ public class Constants
         public static final int VECTOR_FLOAT_2D_SIZE = VECTOR_2D_LENGTH * Float.BYTES;
         public static final int VECTOR_4D_LENGTH = 4; // x, y, z, w
         public static final int VECTOR_FLOAT_4D_SIZE = VECTOR_4D_LENGTH * Float.BYTES;
+        public static final int MATRIX_4_LENGTH = 4; // 4x4 matrix
+        public static final int MATRIX_FLOAT_4_SIZE = MATRIX_4_LENGTH * Float.BYTES;
     }
 
     public enum HullFlags
