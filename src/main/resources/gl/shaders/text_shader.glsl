@@ -20,12 +20,12 @@ in vec2 f_tex_coords;
 
 out vec4 color;
 
-uniform sampler2D uTextures[1];
+uniform sampler2D uTexture;
 
 void main()
 {
     vec3 textColor = vec3(0.0, 0.0, 1.0);
-    float r = texture(uTextures[0], f_tex_coords).r;
+    float r = texture(uTexture, f_tex_coords).r;
     vec4 sampled = vec4(1.0, 1.0, 1.0, r);
     if (r > 0) color = vec4(textColor, 1.0) * sampled;
     else discard;

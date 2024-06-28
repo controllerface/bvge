@@ -18,9 +18,9 @@ in vec2 f_tex_coords;
 
 out vec4 color;
 
-uniform sampler2D uTextures[1];
+uniform sampler2D uTexture;
 
 void main()
 {
-    color = texture(uTextures[0], f_tex_coords);
+    color = texture(uTexture, f_tex_coords);
 }

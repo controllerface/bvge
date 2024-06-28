@@ -17,8 +17,6 @@ public class BackgroundRenderer extends GameSystem
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int UV_ATTRIBUTE = 1;
 
-    private final int[] texture_slots = { 0 };
-
     private int vao;
     private int position_vbo;
     private int uv_vbo;
@@ -57,7 +55,7 @@ public class BackgroundRenderer extends GameSystem
         texture = new Texture();
         texture.init("/img/cave_bg.png");
         shader = Assets.load_shader("bg_shader.glsl");
-        shader.uploadIntArray("uTextures", texture_slots);
+        shader.uploadInt("uTexture", 0);
         vao = glCreateVertexArrays();
         position_vbo = GLUtils.fill_buffer_vec2(vao, POSITION_ATTRIBUTE, vertices);
         uv_vbo = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);
