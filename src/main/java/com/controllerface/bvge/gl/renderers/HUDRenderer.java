@@ -8,10 +8,11 @@ import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
+import com.controllerface.bvge.window.EventType;
 import com.controllerface.bvge.window.Window;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.controllerface.bvge.util.Constants.Rendering.*;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
@@ -37,24 +38,32 @@ public class HUDRenderer extends GameSystem
     private Texture texture;
     private Shader shader;
 
-    private final Map<Character, TextGlyph> character_map_ex = new HashMap<>();
+    private final Map<Character, TextGlyph> character_map = new HashMap<>();
     private final int[] raw_cmd = new int[VERTICES_PER_LETTER * MAX_BATCH_SIZE];
 
-    private enum DockEdge
+    private final Map<String, TextContainer> text_boxes = new HashMap<>();
+
+    private final Queue<EventType> event_queue = new ConcurrentLinkedQueue<>();
+
+    private enum SnapPosition
     {
+        NONE,
         TOP,
         BOTTOM,
         LEFT,
-        RIGHT
+        RIGHT,
+        TOP_LEFT,
+        TOP_RIGHT,
+        BOTTOM_LEFT,
+        BOTTOM_RIGHT,
     }
 
-    private record TextContainer(DockEdge edge, String message, float x, float y, float size){ }
-
-    private Map<String, TextContainer> text_boxes = new HashMap<>();
+    private record TextContainer(SnapPosition snap, String message, float x, float y, float scale) { }
 
     public HUDRenderer(ECS ecs)
     {
         super(ecs);
+        Window.get().event_bus().register(event_queue, EventType.WINDOW_RESIZE);
         int cmd_offset = 0;
         for (int i = 0; i < Constants.Rendering.MAX_BATCH_SIZE; i++)
         {
@@ -69,8 +78,17 @@ public class HUDRenderer extends GameSystem
 
     private void init_GL()
     {
-        //text_boxes.put("debug", new TextContainer("BVGE Prototype 2024.6.0", 100, 100, .75f));
-        //text_boxes.put("debug2", new TextContainer("Test", 100, 100, .75f));
+        text_boxes.put("debug", new TextContainer(SnapPosition.BOTTOM_LEFT,
+            "BVGE Prototype 2024.6.0", 100, 100, .75f));
+
+        text_boxes.put("debug2", new TextContainer(SnapPosition.TOP_RIGHT,
+            "BVGE Prototype", 100, 100, .75f));
+
+        text_boxes.put("debug3", new TextContainer(SnapPosition.BOTTOM_RIGHT,
+            "BVGE Prototype", 100, 100, .75f));
+
+        text_boxes.put("debug5", new TextContainer(SnapPosition.TOP_LEFT,
+            "BVGE Prototype", 100, 100, .75f));
 
         shader = Assets.load_shader("text_shader.glsl");
         shader.uploadInt("uTexture", 0);
@@ -85,61 +103,101 @@ public class HUDRenderer extends GameSystem
 
         cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
         glNamedBufferSubData(cbo, 0, raw_cmd);
-        texture = GLUtils.build_character_map(TEXTURE_SIZE, "/font/Inconsolata-Light.ttf", character_map_ex);
+        texture = GLUtils.build_character_map(TEXTURE_SIZE, "/font/Inconsolata-Light.ttf", character_map);
     }
 
     private boolean dirty = true;
 
-    private void transfer_hud_data(String text, float x, float y, float scale)
+    private int current_glyph_count = 0;
+
+    private float measure_text_width(String text, float scale)
     {
+        float width = 0.0f;
+        for (var character : text.toCharArray())
+        {
+            var glyph = character_map.get(character);
+            width += (glyph.advance() >> 6) * scale;
+        }
+        return width;
+    }
+
+    private void rebuild_hud()
+    {
+        System.out.println("rebuilding HUD");
         int pos_offset = 0;
         int uv_offset = 0;
         int id_offset = 0;
-        char[] chars = text.toCharArray();
 
-        var p_buf = glMapNamedBuffer(position_vbo, GL_WRITE_ONLY).asFloatBuffer();
-        var u_buf = glMapNamedBuffer(uv_vbo, GL_WRITE_ONLY).asFloatBuffer();
-        var i_buf = glMapNamedBuffer(id_vbo, GL_WRITE_ONLY).asFloatBuffer();
+        var pos_buf = Objects.requireNonNull(glMapNamedBuffer(position_vbo, GL_WRITE_ONLY)).asFloatBuffer();
+        var uv_buf = Objects.requireNonNull(glMapNamedBuffer(uv_vbo, GL_WRITE_ONLY)).asFloatBuffer();
+        var id_buf = Objects.requireNonNull(glMapNamedBuffer(id_vbo, GL_WRITE_ONLY)).asFloatBuffer();
 
-        for (var character : chars)
+        for (var text_box : text_boxes.values())
         {
-            var glyph = character_map_ex.get(character);
+            char[] chars = text_box.message().toCharArray();
+            float x      = text_box.x();
+            float y      = text_box.y();;
+            float scale  = text_box.scale();
 
-            float w = glyph.size()[0] * scale;
-            float h = glyph.size()[1] * scale;
-            float x1 = x + glyph.bearing()[0] * scale;
-            float y1 = y - (glyph.size()[1] - glyph.bearing()[1]) * scale;
-            float x2 = x1 + w;
-            float y2 = y1 + h;
-            float u1 = 0.0f;
-            float v1 = 0.0f;
-            float u2 = (float) glyph.size()[0] / TEXTURE_SIZE;
-            float v2 = (float) glyph.size()[1] / TEXTURE_SIZE;
+            float window_width  = Window.get().width();
+            float window_height = Window.get().height();
 
-            p_buf.put(pos_offset++, x2);
-            p_buf.put(pos_offset++, y1);
-            p_buf.put(pos_offset++, x2);
-            p_buf.put(pos_offset++, y2);
-            p_buf.put(pos_offset++, x1);
-            p_buf.put(pos_offset++, y1);
-            p_buf.put(pos_offset++, x1);
-            p_buf.put(pos_offset++, y2);
+            float width = measure_text_width(text_box.message(), scale);
+            float height = character_map.get('H').size()[1] * scale;
 
-            u_buf.put(uv_offset++, u2);
-            u_buf.put(uv_offset++, v1);
-            u_buf.put(uv_offset++, u2);
-            u_buf.put(uv_offset++, v2);
-            u_buf.put(uv_offset++, u1);
-            u_buf.put(uv_offset++, v1);
-            u_buf.put(uv_offset++, u1);
-            u_buf.put(uv_offset++, v2);
+            switch (text_box.snap())
+            {
+                case NONE, BOTTOM, LEFT, BOTTOM_LEFT -> { }
+                case TOP, TOP_LEFT -> y = window_height - height - y;
+                case RIGHT, BOTTOM_RIGHT -> x = window_width - width - x;
+                case TOP_RIGHT ->
+                {
+                    y = window_height - height - y;
+                    x = window_width - width - x;
+                }
+            }
 
-            i_buf.put(id_offset++, glyph.texture_id());
-            i_buf.put(id_offset++, glyph.texture_id());
-            i_buf.put(id_offset++, glyph.texture_id());
-            i_buf.put(id_offset++, glyph.texture_id());
+            for (var character : chars)
+            {
+                var glyph = character_map.get(character);
+                current_glyph_count++;
 
-            x += (glyph.advance() >> 6) * scale;
+                float w = glyph.size()[0] * scale;
+                float h = glyph.size()[1] * scale;
+                float x1 = x + glyph.bearing()[0] * scale;
+                float y1 = y - (glyph.size()[1] - glyph.bearing()[1]) * scale;
+                float x2 = x1 + w;
+                float y2 = y1 + h;
+                float u1 = 0.0f;
+                float v1 = 0.0f;
+                float u2 = (float) glyph.size()[0] / TEXTURE_SIZE;
+                float v2 = (float) glyph.size()[1] / TEXTURE_SIZE;
+
+                pos_buf.put(pos_offset++, x2);
+                pos_buf.put(pos_offset++, y1);
+                pos_buf.put(pos_offset++, x2);
+                pos_buf.put(pos_offset++, y2);
+                pos_buf.put(pos_offset++, x1);
+                pos_buf.put(pos_offset++, y1);
+                pos_buf.put(pos_offset++, x1);
+                pos_buf.put(pos_offset++, y2);
+
+                uv_buf.put(uv_offset++, u2);
+                uv_buf.put(uv_offset++, v1);
+                uv_buf.put(uv_offset++, u2);
+                uv_buf.put(uv_offset++, v2);
+                uv_buf.put(uv_offset++, u1);
+                uv_buf.put(uv_offset++, v1);
+                uv_buf.put(uv_offset++, u1);
+                uv_buf.put(uv_offset++, v2);
+
+                id_buf.put(id_offset++, glyph.texture_id());
+                id_buf.put(id_offset++, glyph.texture_id());
+                id_buf.put(id_offset++, glyph.texture_id());
+                id_buf.put(id_offset++, glyph.texture_id());
+
+                x += (glyph.advance() >> 6) * scale;
+            }
         }
 
         glUnmapNamedBuffer(position_vbo);
@@ -149,23 +207,27 @@ public class HUDRenderer extends GameSystem
         dirty = false;
     }
 
-    private void render_text(String text, float x, float y, float scale)
+    private void render_hud()
     {
-        if (dirty) transfer_hud_data(text, x, y, scale);
-        glMultiDrawArraysIndirect(GL_TRIANGLE_STRIP, 0, text.length(), 0);
+        if (dirty) rebuild_hud();
+        glMultiDrawArraysIndirect(GL_TRIANGLE_STRIP, 0, current_glyph_count, 0);
     }
 
     @Override
     public void tick(float dt)
     {
+        EventType next_event;
+        while ((next_event = event_queue.poll())!= null)
+        {
+            if (next_event == EventType.WINDOW_RESIZE) dirty = true;
+        }
+
         glBindVertexArray(vao);
         shader.use();
         shader.uploadMat4f("projection", Window.get().camera().get_screen_matrix());
         texture.bind(0);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
-
-        render_text("BVGE Prototype 2024.6.0", 100, 100, .75f);
-
+        render_hud();
         glBindVertexArray(0);
         shader.detach();
     }

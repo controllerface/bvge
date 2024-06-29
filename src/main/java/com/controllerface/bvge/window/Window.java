@@ -10,6 +10,7 @@ import org.joml.Vector2f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
+import org.lwjgl.glfw.GLFWWindowContentScaleCallbackI;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryUtil;
@@ -33,9 +34,9 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  */
 public class Window
 {
-    int width;
-    int height;
-    String title;
+    private int width;
+    private int height;
+    private final String title;
 
     private static Window INSTANCE = null;
 
@@ -49,8 +50,12 @@ public class Window
 
     private boolean closing = false;
 
+    private final EventBus event_bus;
+
     private Window()
     {
+        this.event_bus = new EventBus();
+
         this.width = 1920;
         this.height = 1080;
         this.title = "BVGE Test";
@@ -75,6 +80,11 @@ public class Window
             Window.INSTANCE = new Window();
         }
         return Window.INSTANCE;
+    }
+
+    public EventBus event_bus()
+    {
+        return event_bus;
     }
 
     public boolean is_closing()
@@ -136,6 +146,9 @@ public class Window
 //        this.width = w[0];
 //        this.height = h[0];
 
+
+
+
         var video_mode = glfwGetVideoMode(primary_monitor);
         if (video_mode != null)
         {
@@ -153,12 +166,21 @@ public class Window
         {
             get().width = newWidth;
             get().height = newHeight;
+            System.out.println("size: x="+newWidth+" y="+newHeight);
+            event_bus.report_event(EventType.WINDOW_RESIZE);
         };
 
         try (var window_cb = glfwSetWindowSizeCallback(glfwWindow, size_callback))
         {
             assert window_cb != null;
         }
+
+        GLFWWindowContentScaleCallbackI scale_callback = (win, newScaleX, newScaleY) ->
+        {
+            System.out.println("scale: x="+newScaleX+" y="+newScaleY);
+        };
+
+        glfwSetWindowContentScaleCallback(glfwWindow, scale_callback);
 
         glfwMakeContextCurrent(glfwWindow);
         //glfwSwapInterval(1); // v-sync
