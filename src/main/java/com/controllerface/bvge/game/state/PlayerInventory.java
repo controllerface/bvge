@@ -25,4 +25,9 @@ public class PlayerInventory
             default   -> throw new IllegalStateException("Unexpected type: " + type);
         }
     }
+
+    public Map<Solid, Integer> solid_counts()
+    {
+        return solid_counts;
+    }
 }

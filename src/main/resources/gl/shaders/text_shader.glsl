@@ -5,7 +5,7 @@ layout (location = 1) in vec2 v_tex_coords;
 layout (location = 2) in float v_tex_id;
 
 out vec2 f_tex_coords;
-out float f_tex_id;
+flat out float f_tex_id;
 
 uniform mat4 projection;
 
@@ -20,7 +20,7 @@ void main()
 #version 450 core
 
 in vec2 f_tex_coords;
-in float f_tex_id;
+flat in float f_tex_id;
 
 out vec4 color;
 

@@ -103,7 +103,6 @@ public class TestGame extends GameMode
         ecs.register_system(blanking_system);
 
         ecs.register_system(new BackgroundRenderer(ecs));
-        //ecs.register_system(new HUDRenderer(ecs));
         ecs.register_system(new MouseRenderer(ecs));
 
         if (ACTIVE_RENDERERS.contains(RenderType.GAME))
@@ -112,7 +111,7 @@ public class TestGame extends GameMode
             ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
         }
 
-        ecs.register_system(new HUDRenderer(ecs));
+        ecs.register_system(new HUDRenderer(ecs, player_inventory));
 
         // debug renderers
 
@@ -153,20 +152,9 @@ public class TestGame extends GameMode
         load_systems(player_spawn_x, player_spawn_y);
     }
 
-
-    // WORKING AREA BELOW
-
-
+    @Override
+    public void start() { }
 
     @Override
-    public void start()
-    {
-        //test_text_render();
-    }
-
-    @Override
-    public void update(float dt)
-    {
-
-    }
+    public void update(float dt) { }
 }

@@ -5,6 +5,8 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.game.state.PlayerInventory;
+import com.controllerface.bvge.window.EventType;
+import com.controllerface.bvge.window.Window;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -68,6 +70,7 @@ public class InventorySystem extends GameSystem
                 if (Editor.ACTIVE) Editor.inventory(type, qty);
                 player_inventory.collect_substance(raw_collected.types[i], 1);
             }
+            Window.get().event_bus().report_event(EventType.INVENTORY);
         }
     }
 

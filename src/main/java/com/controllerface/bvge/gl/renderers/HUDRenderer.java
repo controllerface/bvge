@@ -2,10 +2,12 @@ package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.TextGlyph;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.Texture;
+import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.EventType;
@@ -20,6 +22,9 @@ import static org.lwjgl.opengl.GL45C.*;
 
 public class HUDRenderer extends GameSystem
 {
+    private static final int SOLID_LABEL_Y_OFFSET = 100;
+    private static final float INVENTORY_TEXT_SCALE = .4f;
+
     private static final int TEXTURE_SIZE = 64;
     private static final int VERTICES_PER_LETTER = 4;
 
@@ -37,13 +42,18 @@ public class HUDRenderer extends GameSystem
 
     private Texture texture;
     private Shader shader;
+    private final PlayerInventory player_inventory;
 
     private final Map<Character, TextGlyph> character_map = new HashMap<>();
     private final int[] raw_cmd = new int[VERTICES_PER_LETTER * MAX_BATCH_SIZE];
 
     private final Map<String, TextContainer> text_boxes = new HashMap<>();
+    private final Map<Solid, TextContainer> solid_labels = new HashMap<>();
+    private int solid_count = 0;
 
     private final Queue<EventType> event_queue = new ConcurrentLinkedQueue<>();
+
+    private float max_char_height = 0;
 
     private enum SnapPosition
     {
@@ -60,10 +70,11 @@ public class HUDRenderer extends GameSystem
 
     private record TextContainer(SnapPosition snap, String message, float x, float y, float scale) { }
 
-    public HUDRenderer(ECS ecs)
+    public HUDRenderer(ECS ecs, PlayerInventory player_inventory)
     {
         super(ecs);
-        Window.get().event_bus().register(event_queue, EventType.WINDOW_RESIZE);
+        this.player_inventory = player_inventory;
+        Window.get().event_bus().register(event_queue, EventType.WINDOW_RESIZE, EventType.INVENTORY);
         int cmd_offset = 0;
         for (int i = 0; i < Constants.Rendering.MAX_BATCH_SIZE; i++)
         {
@@ -82,35 +93,37 @@ public class HUDRenderer extends GameSystem
             "BVGE Prototype 2024.6.0", 100, 100, .75f));
 
         text_boxes.put("debug2", new TextContainer(SnapPosition.TOP_RIGHT,
-            "BVGE Prototype", 100, 100, .75f));
+            "Top Right", 100, 100, .75f));
 
         text_boxes.put("debug3", new TextContainer(SnapPosition.BOTTOM_RIGHT,
-            "BVGE Prototype", 100, 100, .75f));
-
-        text_boxes.put("debug5", new TextContainer(SnapPosition.TOP_LEFT,
-            "BVGE Prototype", 100, 100, .75f));
+            "Bottom Right", 100, 100, .75f));
 
         shader = Assets.load_shader("text_shader.glsl");
         shader.uploadInt("uTexture", 0);
         vao = glCreateVertexArrays();
         position_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
         uv_vbo = GLUtils.new_buffer_vec2(vao, UV_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
-        id_vbo = GLUtils.new_buffer_float(vao, ID_ATTRIBUTE, SCALAR_FLOAT_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
+        id_vbo = GLUtils.new_buffer_float(vao, ID_ATTRIBUTE, SCALAR_FLOAT_SIZE * MAX_BATCH_SIZE);
 
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, ID_ATTRIBUTE);
+        glVertexArrayBindingDivisor(vao, ID_ATTRIBUTE, 1);
 
         cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
         glNamedBufferSubData(cbo, 0, raw_cmd);
         texture = GLUtils.build_character_map(TEXTURE_SIZE, "/font/Inconsolata-Light.ttf", character_map);
+        for (var character : character_map.values())
+        {
+            max_char_height = Math.max(max_char_height, character.size()[1]);
+        }
     }
 
     private boolean dirty = true;
 
     private int current_glyph_count = 0;
 
-    private float measure_text_width(String text, float scale)
+    private float calculate_text_width(String text, float scale)
     {
         float width = 0.0f;
         for (var character : text.toCharArray())
@@ -121,18 +134,38 @@ public class HUDRenderer extends GameSystem
         return width;
     }
 
+    private void rebuild_inventory()
+    {
+        solid_labels.clear();
+        solid_count = 0;
+        for (var count : player_inventory.solid_counts().entrySet())
+        {
+            if (count.getValue() > 0)
+            {
+                var s = count.getKey();
+                var msg = s.name() + " : " + count.getValue();
+                var offset = SOLID_LABEL_Y_OFFSET + (solid_count++ * (max_char_height * INVENTORY_TEXT_SCALE));
+                solid_labels.put(count.getKey(), new TextContainer(SnapPosition.TOP_LEFT, msg, 100, offset, INVENTORY_TEXT_SCALE));
+            }
+        }
+    }
+
     private void rebuild_hud()
     {
-        System.out.println("rebuilding HUD");
+        rebuild_inventory();
         int pos_offset = 0;
         int uv_offset = 0;
         int id_offset = 0;
 
         var pos_buf = Objects.requireNonNull(glMapNamedBuffer(position_vbo, GL_WRITE_ONLY)).asFloatBuffer();
-        var uv_buf = Objects.requireNonNull(glMapNamedBuffer(uv_vbo, GL_WRITE_ONLY)).asFloatBuffer();
-        var id_buf = Objects.requireNonNull(glMapNamedBuffer(id_vbo, GL_WRITE_ONLY)).asFloatBuffer();
+        var uv_buf  = Objects.requireNonNull(glMapNamedBuffer(uv_vbo, GL_WRITE_ONLY)).asFloatBuffer();
+        var id_buf  = Objects.requireNonNull(glMapNamedBuffer(id_vbo, GL_WRITE_ONLY)).asFloatBuffer();
 
-        for (var text_box : text_boxes.values())
+        var text_containers = new ArrayList<TextContainer>();
+        text_containers.addAll(text_boxes.values());
+        text_containers.addAll(solid_labels.values());
+
+        for (var text_box : text_containers)
         {
             char[] chars = text_box.message().toCharArray();
             float x      = text_box.x();
@@ -142,8 +175,8 @@ public class HUDRenderer extends GameSystem
             float window_width  = Window.get().width();
             float window_height = Window.get().height();
 
-            float width = measure_text_width(text_box.message(), scale);
-            float height = character_map.get('H').size()[1] * scale;
+            float width = calculate_text_width(text_box.message(), scale);
+            float height = max_char_height * scale;
 
             switch (text_box.snap())
             {
@@ -192,9 +225,6 @@ public class HUDRenderer extends GameSystem
                 uv_buf.put(uv_offset++, v2);
 
                 id_buf.put(id_offset++, glyph.texture_id());
-                id_buf.put(id_offset++, glyph.texture_id());
-                id_buf.put(id_offset++, glyph.texture_id());
-                id_buf.put(id_offset++, glyph.texture_id());
 
                 x += (glyph.advance() >> 6) * scale;
             }
@@ -217,9 +247,13 @@ public class HUDRenderer extends GameSystem
     public void tick(float dt)
     {
         EventType next_event;
-        while ((next_event = event_queue.poll())!= null)
+        while ((next_event = event_queue.poll()) != null)
         {
-            if (next_event == EventType.WINDOW_RESIZE) dirty = true;
+            if (next_event == EventType.WINDOW_RESIZE
+                || next_event == EventType.INVENTORY)
+            {
+                dirty = true;
+            }
         }
 
         glBindVertexArray(vao);
