@@ -168,7 +168,6 @@ public class Window
         {
             get().width = newWidth;
             get().height = newHeight;
-            System.out.println("size: x="+newWidth+" y="+newHeight);
             event_bus.report_event(EventType.WINDOW_RESIZE);
         };
 
@@ -176,13 +175,6 @@ public class Window
         {
             assert window_cb != null;
         }
-
-        GLFWWindowContentScaleCallbackI scale_callback = (win, newScaleX, newScaleY) ->
-        {
-            System.out.println("scale: x="+newScaleX+" y="+newScaleY);
-        };
-
-        glfwSetWindowContentScaleCallback(glfwWindow, scale_callback);
 
         glfwMakeContextCurrent(glfwWindow);
         //glfwSwapInterval(1); // v-sync
