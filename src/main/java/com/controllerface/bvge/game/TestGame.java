@@ -35,7 +35,8 @@ public class TestGame extends GameMode
     private final int GRID_HEIGHT = 2160;
 
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
-    private final Queue<PhysicsEntityBatch> spawn_queue;
+    private final Queue<PhysicsEntityBatch> load_queue;
+    private final Queue<Sector> unload_queue;
     private final PlayerInventory player_inventory;
 
     private enum RenderType
@@ -72,7 +73,8 @@ public class TestGame extends GameMode
         ModelRegistry.init();
 
         this.blanking_system = blanking_system;
-        this.spawn_queue = new LinkedBlockingDeque<>();
+        this.load_queue = new LinkedBlockingDeque<>();
+        this.unload_queue = new LinkedBlockingDeque<>();
         this.player_inventory = new PlayerInventory();
         this.sector_cache = Caffeine.newBuilder()
             .expireAfterAccess(Duration.of(1, ChronoUnit.HOURS))
@@ -95,9 +97,9 @@ public class TestGame extends GameMode
 
     private void load_systems(float x, float y)
     {
-        ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, spawn_queue));
+        ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, load_queue, unload_queue));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid));
-        ecs.register_system(new WorldUnloader(ecs, sector_cache, spawn_queue));
+        ecs.register_system(new WorldUnloader(ecs, sector_cache, load_queue, unload_queue));
         ecs.register_system(new CameraTracking(ecs, uniformGrid, x, y));
         ecs.register_system(new InventorySystem(ecs, player_inventory));
         ecs.register_system(blanking_system);

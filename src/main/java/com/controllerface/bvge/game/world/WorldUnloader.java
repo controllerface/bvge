@@ -19,19 +19,21 @@ import java.util.concurrent.*;
 
 public class WorldUnloader extends GameSystem
 {
-    private final UnorderedCoreBufferGroup.Raw raw_sectors      = new UnorderedCoreBufferGroup.Raw();
+    private final UnorderedCoreBufferGroup.Raw raw_sectors        = new UnorderedCoreBufferGroup.Raw();
     private final BrokenObjectBuffer.Raw raw_broken               = new BrokenObjectBuffer.Raw();
     private final Map<Sector, PhysicsEntityBatch> running_batches = new HashMap<>();
     private final BlockingQueue<Float> next_dt                    = new ArrayBlockingQueue<>(1);
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
-    private final Queue<PhysicsEntityBatch> spawn_queue;
+    private final Queue<PhysicsEntityBatch> load_queue;
+    private final Queue<Sector> unload_queue;
     private final Thread task_thread;
 
-    public WorldUnloader(ECS ecs, Cache<Sector, PhysicsEntityBatch> sector_cache, Queue<PhysicsEntityBatch> spawn_queue)
+    public WorldUnloader(ECS ecs, Cache<Sector, PhysicsEntityBatch> sector_cache, Queue<PhysicsEntityBatch> load_queue, Queue<Sector> unload_queue)
     {
         super(ecs);
         this.sector_cache = sector_cache;
-        this.spawn_queue = spawn_queue;
+        this.load_queue = load_queue;
+        this.unload_queue = unload_queue;
         this.task_thread = Thread.ofVirtual().start(new SectorUnloadTask());
         boolean ok = this.next_dt.offer(-1f);
         assert ok : "unable to start SectorLoader";
@@ -254,7 +256,8 @@ public class WorldUnloader extends GameSystem
                 // todo: sector objects can probably be cached since they are immutable records
                 var raw_sector = UniformGrid.get_sector_for_point(entity_x, entity_y);
                 var sec = new Sector(raw_sector[0], raw_sector[1]);
-                var batch = running_batches.computeIfAbsent(sec, (_) -> new PhysicsEntityBatch());
+                var batch = running_batches.get(sec);
+                Objects.requireNonNull(batch);
                 int adjusted_root_hull = entity_root_hull - entity_hull_table_x;
 
                 var unloaded_entity = new UnloadedEntity(entity_x, entity_y, entity_z, entity_w,
@@ -329,13 +332,19 @@ public class WorldUnloader extends GameSystem
 
             // this is required to ensure broken objects from previous frames aren't processed
             Arrays.fill(raw_broken.entity_types, -1);
-            spawn_queue.offer(batch);
+            load_queue.offer(batch);
         }
     }
 
     @Override
     public void tick(float dt)
     {
+        Sector unloading;
+        while ((unloading = unload_queue.poll()) != null)
+        {
+            running_batches.put(unloading, new PhysicsEntityBatch());
+        }
+
         boolean ok = next_dt.offer(dt);
         assert ok : "unable to cycle SectorLoader";
     }

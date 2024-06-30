@@ -5,7 +5,6 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.game.world.sectors.Sector;
 import com.controllerface.bvge.editor.Editor;
-import com.controllerface.bvge.gl.renderers.UniformGridRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -23,19 +22,21 @@ public class WorldLoader extends GameSystem
     private final Set<Sector> new_loaded_sectors = new HashSet<>();
     private final UniformGrid uniformGrid;
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
-    private final Queue<PhysicsEntityBatch> spawn_queue;
+    private final Queue<PhysicsEntityBatch> load_queue;
+    private final Queue<Sector> unload_queue;
     private final Thread task_thread;
 
     private final BlockingQueue<SectorBounds> next_sector_bounds = new ArrayBlockingQueue<>(1);
 
     private record SectorBounds(float outer_x_origin, float outer_y_origin, float outer_x_corner, float outer_y_corner) { }
 
-    public WorldLoader(ECS ecs, UniformGrid uniformGrid, Cache<Sector, PhysicsEntityBatch> sector_cache_in, Queue<PhysicsEntityBatch> spawn_queue_in)
+    public WorldLoader(ECS ecs, UniformGrid uniformGrid, Cache<Sector, PhysicsEntityBatch> sector_cache_in, Queue<PhysicsEntityBatch> load_queue, Queue<Sector> unload_queue)
     {
         super(ecs);
         this.uniformGrid = uniformGrid;
         this.sector_cache = sector_cache_in;
-        this.spawn_queue = spawn_queue_in;
+        this.load_queue = load_queue;
+        this.unload_queue = unload_queue;
         this.task_thread = Thread.ofVirtual().start(new SectorLoadTask());
     }
 
@@ -93,12 +94,20 @@ public class WorldLoader extends GameSystem
             }
         }
 
+        for (var sector : old_loaded_sectors)
+        {
+            if (!new_loaded_sectors.contains(sector))
+            {
+                unload_queue.add(sector);
+            }
+        }
+
         uniformGrid.update_sector_metrics(new_loaded_sectors, sector_0_origin_x, sector_0_origin_y,
             Math.abs(sector_0_origin_x - (sector_2_origin_x + UniformGrid.SECTOR_SIZE)),
             Math.abs(sector_0_origin_y - (sector_2_origin_y + UniformGrid.SECTOR_SIZE)));
 
         PhysicsEntityBatch batch;
-        while ((batch = spawn_queue.poll()) != null)
+        while ((batch = load_queue.poll()) != null)
         {
             GPGPU.core_memory.load_entity_batch(batch);
         }
