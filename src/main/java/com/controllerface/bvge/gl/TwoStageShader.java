@@ -95,6 +95,9 @@ public class TwoStageShader extends Shader
 
         // link and check step
         shader_program_id = glCreateProgram();
+        shader_ids.add(vertexID);
+        shader_ids.add(fragmentID);
+
         glAttachShader(shader_program_id, vertexID);
         glAttachShader(shader_program_id, fragmentID);
         glLinkProgram(shader_program_id);

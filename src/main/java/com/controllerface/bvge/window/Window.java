@@ -13,6 +13,7 @@ import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWWindowContentScaleCallbackI;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GLUtil;
 import org.lwjgl.system.MemoryUtil;
 
 import javax.imageio.ImageIO;
@@ -135,6 +136,8 @@ public class Window
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+
 
         var primary_monitor = glfwGetPrimaryMonitor();
 
@@ -181,6 +184,9 @@ public class Window
 
         // note: this must be called or nothing will work
         GL.createCapabilities();
+
+        var debugProc = GLUtil.setupDebugMessageCallback();
+        assert debugProc != null : "debugger process could not be created";
 
         glEnable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);

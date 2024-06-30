@@ -104,15 +104,14 @@ public class TestGame extends GameMode
 
         ecs.register_system(new BackgroundRenderer(ecs));
         ecs.register_system(new MouseRenderer(ecs));
+        ecs.register_system(new HUDRenderer(ecs, player_inventory));
 
         if (ACTIVE_RENDERERS.contains(RenderType.GAME))
         {
             ecs.register_system(new ModelRenderer(ecs, uniformGrid, PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX));
             ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
         }
-
-        ecs.register_system(new HUDRenderer(ecs, player_inventory));
-
+        
         // debug renderers
 
         if (ACTIVE_RENDERERS.contains(RenderType.HULLS))

@@ -22,7 +22,7 @@ import static org.lwjgl.opengl.GL45C.*;
 
 public class HUDRenderer extends GameSystem
 {
-    private static final int SOLID_LABEL_Y_OFFSET = 100;
+    private static final int SOLID_LABEL_Y_OFFSET = 150;
     private static final float INVENTORY_TEXT_SCALE = .5f;
 
     private static final int TEXTURE_SIZE = 64;
@@ -117,8 +117,11 @@ public class HUDRenderer extends GameSystem
         text_boxes.put("debug3", new TextContainer(SnapPosition.BOTTOM_RIGHT,
             "Bottom Right", 100, 100, .75f));
 
+        text_boxes.put("inventory", new TextContainer(SnapPosition.TOP_LEFT,
+            "Inventory:", 100, 100, .75f));
+
         shader = Assets.load_shader("text_shader.glsl");
-        shader.uploadInt("uTexture", 0);
+
         vao = glCreateVertexArrays();
         position_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
         uv_vbo = GLUtils.new_buffer_vec2(vao, UV_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
@@ -180,6 +183,7 @@ public class HUDRenderer extends GameSystem
     private void rebuild_hud()
     {
         rebuild_inventory();
+        current_glyph_count = 0;
         int pos_offset = 0;
         int uv_offset = 0;
         int id_offset = 0;
@@ -276,6 +280,9 @@ public class HUDRenderer extends GameSystem
         EventType next_event;
         while ((next_event = event_queue.poll()) != null)
         {
+            // todo: eventually, the HUD can be split into static and dynamic sections, and there could be a different dirty
+            //  flag for each section, or the entire HUD. This will help make it more responsive as only the sections that
+            //  change can be updated. It will require designating certain positions in the buffer
             if (next_event == EventType.WINDOW_RESIZE
                 || next_event == EventType.INVENTORY)
             {
@@ -285,6 +292,7 @@ public class HUDRenderer extends GameSystem
 
         glBindVertexArray(vao);
         shader.use();
+        shader.uploadInt("uTexture", 0);
         shader.uploadMat4f("projection", Window.get().camera().get_screen_matrix());
         texture.bind(0);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);

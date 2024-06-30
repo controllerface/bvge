@@ -1,14 +1,20 @@
 package com.controllerface.bvge.gl;
 
 import com.controllerface.bvge.cl.buffers.Destoryable;
+import org.checkerframework.checker.units.qual.A;
 import org.joml.*;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.system.MemoryStack;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.opengl.GL20.*;
 
 public abstract class Shader implements Destoryable
 {
     protected int shader_program_id;
+    protected List<Integer> shader_ids = new ArrayList<>();
 
     public abstract void compile();
 
@@ -98,6 +104,7 @@ public abstract class Shader implements Destoryable
 
     public void destroy()
     {
-        glDeleteShader(shader_program_id);
+        shader_ids.forEach(GL20::glDeleteShader);
+        glDeleteProgram(shader_program_id);
     }
 }

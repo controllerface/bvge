@@ -103,6 +103,9 @@ public class ThreeStageShader extends Shader
         int geometry_id = compile_shader(GL_GEOMETRY_SHADER, geometry_source);
         int fragment_id = compile_shader(GL_FRAGMENT_SHADER, fragment_source);
         shader_program_id = link_shader(vertex_id, geometry_id, fragment_id);
+        shader_ids.add(vertex_id);
+        shader_ids.add(geometry_id);
+        shader_ids.add(fragment_id);
     }
 
     public void use()
