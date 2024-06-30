@@ -2,6 +2,9 @@ package com.controllerface.bvge.util;
 
 public class Constants
 {
+    public static final String PLAYER_ID = "player";
+
+
     // todo: experiment with this, maybe make it configurable
     private static final int BUFFER_BASE_SIZE = 256;
     private static final int BUFFER_MULTIPLIER = 4;

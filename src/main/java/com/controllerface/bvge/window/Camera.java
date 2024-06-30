@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 
 public class Camera
 {
-    private static final float MAX_ZOOM = 2f;
+    private static final float MAX_ZOOM = 1.5f;
     private static final float MIN_ZOOM = .5f;
 
     private final Vector2f position;
@@ -16,7 +16,7 @@ public class Camera
     private final Matrix4f screen_matrix;
     private final Matrix4f uVP;
 
-    private float zoom = 2f;
+    private float zoom = MAX_ZOOM;
 
     int width;
     int height;

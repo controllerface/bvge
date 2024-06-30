@@ -93,14 +93,6 @@ public class WorldLoader extends GameSystem
             }
         }
 
-        old_loaded_sectors.forEach(sector->
-        {
-            if (!new_loaded_sectors.contains(sector))
-            {
-                sector_cache.put(sector, new PhysicsEntityBatch());
-            }
-        });
-
         uniformGrid.update_sector_metrics(new_loaded_sectors, sector_0_origin_x, sector_0_origin_y,
             Math.abs(sector_0_origin_x - (sector_2_origin_x + UniformGrid.SECTOR_SIZE)),
             Math.abs(sector_0_origin_y - (sector_2_origin_y + UniformGrid.SECTOR_SIZE)));

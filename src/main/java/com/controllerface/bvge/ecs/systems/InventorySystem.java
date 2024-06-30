@@ -94,7 +94,16 @@ public class InventorySystem extends GameSystem
             if (next_event == EventType.NEXT_ITEM
                 || next_event == EventType.PREV_ITEM)
             {
-                //todo: spawn object if possible and notify HUD of which object is being placed and how many can be spawned
+
+                // if nothing is currently selected, start from the top/bottom of the
+                // inventory and find the next solid that has enough material to spawn
+
+                // if something is selected
+
+                // if no materials are available, return.
+
+                // for the selected object
+
                 System.out.println("event: " + next_event);
             }
         }
