@@ -112,13 +112,13 @@ public class HUDRenderer extends GameSystem
             "BVGE Prototype 2024.6.0", 100, 100, .75f));
 
         text_boxes.put("debug2", new TextContainer(SnapPosition.TOP_RIGHT,
-            "Top Right", 100, 100, .75f));
+            "Placing", 100, 100, .75f));
 
-        text_boxes.put("debug3", new TextContainer(SnapPosition.BOTTOM_RIGHT,
-            "Bottom Right", 100, 100, .75f));
+        text_boxes.put("placing", new TextContainer(SnapPosition.TOP_RIGHT,
+            "none", 100, 150, .75f));
 
         text_boxes.put("inventory", new TextContainer(SnapPosition.TOP_LEFT,
-            "Inventory:", 100, 100, .75f));
+            "Inventory", 100, 100, .75f));
 
         shader = Assets.load_shader("text_shader.glsl");
 

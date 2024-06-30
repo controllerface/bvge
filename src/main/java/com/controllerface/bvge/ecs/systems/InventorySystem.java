@@ -2,14 +2,21 @@ package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ControlPoints;
+import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.window.EventType;
 import com.controllerface.bvge.window.Window;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,6 +28,7 @@ public class InventorySystem extends GameSystem
     private final Thread task_thread;
 
     private final static Logger LOGGER = Logger.getLogger(InventorySystem.class.getName());
+    private final Queue<EventType> event_queue = new ConcurrentLinkedQueue<>();
 
     public InventorySystem(ECS ecs, PlayerInventory player_inventory)
     {
@@ -29,6 +37,7 @@ public class InventorySystem extends GameSystem
         this.task_thread = Thread.ofVirtual().start(new SectorUnloadTask());
         boolean ok = this.next_dt.offer(-1f);
         assert ok : "unable to start SectorLoader";
+        Window.get().event_bus().register(event_queue, EventType.NEXT_ITEM, EventType.PREV_ITEM);
     }
 
     private class SectorUnloadTask implements Runnable
@@ -79,6 +88,17 @@ public class InventorySystem extends GameSystem
     {
         boolean ok = next_dt.offer(dt);
         assert ok : "unable to cycle SectorLoader";
+        EventType next_event;
+        while ((next_event = event_queue.poll()) != null)
+        {
+            if (next_event == EventType.NEXT_ITEM
+                || next_event == EventType.PREV_ITEM)
+            {
+                //todo: spawn object if possible and notify HUD of which object is being placed and how many can be spawned
+                System.out.println("event: " + next_event);
+            }
+        }
+
     }
 
     @Override

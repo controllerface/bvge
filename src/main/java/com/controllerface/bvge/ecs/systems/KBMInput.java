@@ -4,6 +4,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.components.GameComponent;
+import com.controllerface.bvge.window.EventType;
 import com.controllerface.bvge.window.Window;
 
 import java.util.Map;
@@ -20,6 +21,9 @@ public class KBMInput extends GameSystem
     private double yPos;
     private double lastX;
     private double lastY;
+
+    private boolean shift;
+    private boolean control;
 
     double scrollX, scrollY;
 
@@ -42,36 +46,8 @@ public class KBMInput extends GameSystem
             controlPoints.get_screen_target().set(xPos, yPos);
         }
 
-        // test camera moving code
-        if (key_down[GLFW_KEY_LEFT])
-        {
-            Window.get().camera().position().x -= 5;
-        }
-
-        if (key_down[GLFW_KEY_RIGHT])
-        {
-            Window.get().camera().position().x += 5;
-        }
-
-        if (key_down[GLFW_KEY_UP])
-        {
-            Window.get().camera().position().y += 5;
-        }
-
-        if (key_down[GLFW_KEY_DOWN])
-        {
-            Window.get().camera().position().y -= 5;
-        }
-
-        if (key_down[GLFW_KEY_COMMA])
-        {
-            Window.get().camera().add_zoom(.5f);
-        }
-
-        if (key_down[GLFW_KEY_PERIOD])
-        {
-            Window.get().camera().add_zoom(-.5f);
-        }
+        shift = key_down[GLFW_KEY_LEFT_SHIFT];
+        control = key_down[GLFW_KEY_LEFT_CONTROL];
     }
 
     public void keyCallback(long window, int key, int scancode, int action, int mods)
@@ -97,8 +73,23 @@ public class KBMInput extends GameSystem
     {
         scrollX = xOffset;
         scrollY = yOffset;
-        float x = yOffset < 0 ? 0.5f : -0.5f;
-        Window.get().camera().add_zoom(x);
+        boolean down = yOffset < 0;
+        float amount = down
+            ? 0.5f
+            : -0.5f;
+
+        if (shift && control)
+        {
+
+            Window.get().camera().add_zoom(amount);
+        }
+        else if (control)
+        {
+            var event = down
+                ? EventType.NEXT_ITEM
+                : EventType.PREV_ITEM;
+            Window.get().event_bus().report_event(event);
+        }
     }
 
     public void mouseButtonCallback(long window, int button, int action, int mods)
