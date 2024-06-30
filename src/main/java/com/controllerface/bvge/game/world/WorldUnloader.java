@@ -300,6 +300,7 @@ public class WorldUnloader extends GameSystem
                     float sz = UniformGrid.BLOCK_SIZE / 2;
                     float offset = (sz / 2) - 2f;
 
+                    // todo: friction and restitution values from broken object should be forwarded to the spawned object
                     if (m == ModelRegistry.BASE_BLOCK_INDEX)
                     {
                         batch.new_block(x - offset, y - offset, sz, 90, 0, 0, Constants.EntityFlags.COLLECTABLE.bits, 0, solid, new int[4]);

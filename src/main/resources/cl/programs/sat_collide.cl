@@ -332,24 +332,13 @@ __kernel void apply_reactions(__global float8 *reactions,
         ? flags | HIT_FLOOR
         : flags;
 
-    float ag_min = hit_count <= HIT_LOW_THRESHOLD 
-        ? 0.5f
-        : hit_count <= HIT_LOW_MID_THRESHOLD
-        ? 0.7f
-        : hit_count <= HIT_MID_THRESHOLD 
-        ? 0.8f
-        : hit_count <= HIT_HIGH_MID_THRESHOLD 
-        ? 0.9f
-        : 1.0f;
-
-
     // todo: anti-grav can take into account slope of colliding edge, if any. right now, only relative object direction is considered.
 
     // if anti-gravity would be negative, it means the heading is more in the direction of gravity 
     // than it is against it, so we clamp to 0.
     ag = ag <= 0.0f 
         ? 0.0f 
-        : max(ag, ag_min);
+        : 1.0f;
 
     base_velocity = point.xy - point.zw;
     int _point_flags = point_flags[current_point];
@@ -473,17 +462,17 @@ __kernel void move_entities(__global float4 *hulls,
 
     int block_check = HIT_TOP_THRESHOLD;
 
-    bool go_static = hit_floor  
-        && !hit_water 
-        && !collectable 
-        && is_block 
-        && total_hits >= block_check;
+    // bool go_static = hit_floor  
+    //     && !hit_water 
+    //     && !collectable 
+    //     && is_block 
+    //     && total_hits >= block_check;
 
     bool destroy = single_hull && hull_0_integrity <= 0;
     
-    hull_flags_0 = go_static 
-        ? hull_flags_0 | IS_STATIC
-        : hull_flags_0;
+    // hull_flags_0 = go_static 
+    //     ? hull_flags_0 | IS_STATIC
+    //     : hull_flags_0;
     
     entity.w = hit_floor 
         ? entity.y 

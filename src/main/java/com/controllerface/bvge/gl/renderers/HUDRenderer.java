@@ -23,7 +23,7 @@ import static org.lwjgl.opengl.GL45C.*;
 public class HUDRenderer extends GameSystem
 {
     private static final int SOLID_LABEL_Y_OFFSET = 100;
-    private static final float INVENTORY_TEXT_SCALE = .4f;
+    private static final float INVENTORY_TEXT_SCALE = .5f;
 
     private static final int TEXTURE_SIZE = 64;
     private static final int VERTICES_PER_LETTER = 4;
@@ -54,6 +54,7 @@ public class HUDRenderer extends GameSystem
     private final Queue<EventType> event_queue = new ConcurrentLinkedQueue<>();
 
     private float max_char_height = 0;
+    private int max_label_chars = 0;
 
     private enum SnapPosition
     {
@@ -75,6 +76,13 @@ public class HUDRenderer extends GameSystem
         super(ecs);
         this.player_inventory = player_inventory;
         Window.get().event_bus().register(event_queue, EventType.WINDOW_RESIZE, EventType.INVENTORY);
+        build_cmd();
+        init_GL();
+        gather_text_metrics();
+    }
+
+    private void build_cmd()
+    {
         int cmd_offset = 0;
         for (int i = 0; i < Constants.Rendering.MAX_BATCH_SIZE; i++)
         {
@@ -84,7 +92,18 @@ public class HUDRenderer extends GameSystem
             raw_cmd[cmd_offset++] = index;
             raw_cmd[cmd_offset++] = i;
         }
-        init_GL();
+    }
+
+    private void gather_text_metrics()
+    {
+        for (var character : character_map.values())
+        {
+            max_char_height = Math.max(max_char_height, character.size()[1]);
+        }
+        for (var solid : Solid.values())
+        {
+            max_label_chars = Math.max(max_label_chars, solid.name().length());
+        }
     }
 
     private void init_GL()
@@ -113,10 +132,6 @@ public class HUDRenderer extends GameSystem
         cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
         glNamedBufferSubData(cbo, 0, raw_cmd);
         texture = GLUtils.build_character_map(TEXTURE_SIZE, "/font/Inconsolata-Light.ttf", character_map);
-        for (var character : character_map.values())
-        {
-            max_char_height = Math.max(max_char_height, character.size()[1]);
-        }
     }
 
     private boolean dirty = true;
@@ -134,6 +149,18 @@ public class HUDRenderer extends GameSystem
         return width;
     }
 
+    private String pad_label(String label)
+    {
+        if (label.length() == max_label_chars) return label;
+        int padding = max_label_chars - label.length();
+        var buffer = new StringBuilder(label);
+        for (int i = 0; i < padding; i++)
+        {
+            buffer.append(" ");
+        }
+        return buffer.toString();
+    }
+
     private void rebuild_inventory()
     {
         solid_labels.clear();
@@ -143,7 +170,7 @@ public class HUDRenderer extends GameSystem
             if (count.getValue() > 0)
             {
                 var s = count.getKey();
-                var msg = s.name() + " : " + count.getValue();
+                var msg = pad_label(s.name()) + " : " + count.getValue();
                 var offset = SOLID_LABEL_Y_OFFSET + (solid_count++ * (max_char_height * INVENTORY_TEXT_SCALE));
                 solid_labels.put(count.getKey(), new TextContainer(SnapPosition.TOP_LEFT, msg, 100, offset, INVENTORY_TEXT_SCALE));
             }
