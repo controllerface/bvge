@@ -10,7 +10,7 @@ import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
-import com.controllerface.bvge.window.EventType;
+import com.controllerface.bvge.window.EventBus;
 import com.controllerface.bvge.window.Window;
 
 import java.util.*;
@@ -49,9 +49,15 @@ public class HUDRenderer extends GameSystem
 
     private final Map<String, TextContainer> text_boxes = new HashMap<>();
     private final Map<Solid, TextContainer> solid_labels = new HashMap<>();
-    private int solid_count = 0;
 
-    private final Queue<EventType> event_queue = new ConcurrentLinkedQueue<>();
+    private final Queue<EventBus.Event> event_queue = new ConcurrentLinkedQueue<>();
+
+    private final EventBus.EventType[] subscribed_types = new EventBus.EventType[]
+        {
+            EventBus.EventType.WINDOW_RESIZE,
+            EventBus.EventType.INVENTORY,
+            EventBus.EventType.PLACING_ITEM,
+        };
 
     private float max_char_height = 0;
     private int max_label_chars = 0;
@@ -75,7 +81,7 @@ public class HUDRenderer extends GameSystem
     {
         super(ecs);
         this.player_inventory = player_inventory;
-        Window.get().event_bus().register(event_queue, EventType.WINDOW_RESIZE, EventType.INVENTORY);
+        Window.get().event_bus().register(event_queue, subscribed_types);
         build_cmd();
         init_GL();
         gather_text_metrics();
@@ -167,7 +173,7 @@ public class HUDRenderer extends GameSystem
     private void rebuild_inventory()
     {
         solid_labels.clear();
-        solid_count = 0;
+        int solid_count = 0;
         for (var count : player_inventory.solid_counts().entrySet())
         {
             if (count.getValue() > 0)
@@ -182,6 +188,10 @@ public class HUDRenderer extends GameSystem
 
     private void rebuild_hud()
     {
+        // todo: in the future, the count of glyphs and possibly other objects will need to
+        //  be calculated up front, and then checked against the current buffer size. If
+        //  the buffer is not large enough, it will need to be expanded. This should work
+        //  similarly to the CL buffers that have size ensuring methods.
         rebuild_inventory();
         current_glyph_count = 0;
         int pos_offset = 0;
@@ -277,15 +287,22 @@ public class HUDRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        EventType next_event;
+        EventBus.Event next_event;
         while ((next_event = event_queue.poll()) != null)
         {
             // todo: eventually, the HUD can be split into static and dynamic sections, and there could be a different dirty
             //  flag for each section, or the entire HUD. This will help make it more responsive as only the sections that
             //  change can be updated. It will require designating certain positions in the buffer
-            if (next_event == EventType.WINDOW_RESIZE
-                || next_event == EventType.INVENTORY)
+            if (next_event.type() == EventBus.EventType.WINDOW_RESIZE
+                || next_event.type() == EventBus.EventType.INVENTORY)
             {
+                dirty = true;
+            }
+            if (next_event instanceof EventBus.MessageEvent(EventBus.EventType _, String message))
+            {
+                var current = text_boxes.get("placing");
+                var next = new TextContainer(current.snap, message, current.x, current.y, current.scale);
+                text_boxes.put("placing", next);
                 dirty = true;
             }
         }

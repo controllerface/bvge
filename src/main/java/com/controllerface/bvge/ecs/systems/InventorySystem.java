@@ -2,23 +2,21 @@ package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.components.ControlPoints;
-import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.game.state.PlayerInventory;
-import com.controllerface.bvge.window.EventType;
+import com.controllerface.bvge.substances.Solid;
+import com.controllerface.bvge.window.EventBus;
 import com.controllerface.bvge.window.Window;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static com.controllerface.bvge.window.EventBus.*;
 
 public class InventorySystem extends GameSystem
 {
@@ -28,7 +26,9 @@ public class InventorySystem extends GameSystem
     private final Thread task_thread;
 
     private final static Logger LOGGER = Logger.getLogger(InventorySystem.class.getName());
-    private final Queue<EventType> event_queue = new ConcurrentLinkedQueue<>();
+    private final Queue<Event> event_queue = new ConcurrentLinkedQueue<>();
+
+    private Solid current_block = null;
 
     public InventorySystem(ECS ecs, PlayerInventory player_inventory)
     {
@@ -76,11 +76,51 @@ public class InventorySystem extends GameSystem
                 int qty = 1; // todo: pull from world, possibly account for player stat mods
                 int type = raw_collected.types[i];
                 LOGGER.log(Level.FINE, type + ":" + qty);
-                if (Editor.ACTIVE) Editor.inventory(type, qty);
+                if (Editor.ACTIVE)
+                {
+                    Editor.inventory(type, qty);
+                }
                 player_inventory.collect_substance(raw_collected.types[i], 1);
             }
-            Window.get().event_bus().report_event(EventType.INVENTORY);
+            Window.get().event_bus().report_event(new WindowEvent(EventType.INVENTORY));
         }
+    }
+
+
+    private Solid findNextItem(Solid currentItem)
+    {
+        List<Solid> solids = new ArrayList<>(player_inventory.solid_counts().keySet());
+        int startIndex = (currentItem == null)
+            ? -1
+            : solids.indexOf(currentItem);
+
+        for (int i = startIndex + 1; i < solids.size(); i++)
+        {
+            Solid solid = solids.get(i);
+            if (player_inventory.solid_counts().get(solid) > 0)
+            {
+                return solid;
+            }
+        }
+        return null;
+    }
+
+    private Solid findPrevItem(Solid currentItem)
+    {
+        List<Solid> solids = new ArrayList<>(player_inventory.solid_counts().keySet());
+        int startIndex = (currentItem == null)
+            ? solids.size()
+            : solids.indexOf(currentItem);
+
+        for (int i = startIndex - 1; i >= 0; i--)
+        {
+            Solid solid = solids.get(i);
+            if (player_inventory.solid_counts().get(solid) > 0)
+            {
+                return solid;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -88,24 +128,25 @@ public class InventorySystem extends GameSystem
     {
         boolean ok = next_dt.offer(dt);
         assert ok : "unable to cycle SectorLoader";
-        EventType next_event;
+        Event next_event;
+        var last_block = current_block;
         while ((next_event = event_queue.poll()) != null)
         {
-            if (next_event == EventType.NEXT_ITEM
-                || next_event == EventType.PREV_ITEM)
+            System.out.println("event: " + next_event);
+            if (next_event.type() == EventType.NEXT_ITEM)
             {
-
-                // if nothing is currently selected, start from the top/bottom of the
-                // inventory and find the next solid that has enough material to spawn
-
-                // if no materials are available, return.
-
-                // if something is selected, despawn the "ghost" object representing it
-
-                // for the selected object
-
-                System.out.println("event: " + next_event);
+                current_block = findNextItem(current_block);
             }
+            if (next_event.type() == EventType.PREV_ITEM)
+            {
+                current_block = findPrevItem(current_block);
+            }
+            System.out.println("current: " + current_block);
+        }
+        if (last_block != current_block)
+        {
+            var name = current_block == null ? "none" : current_block.name();
+            Window.get().event_bus().report_event(msg(EventType.PLACING_ITEM, name));
         }
     }
 

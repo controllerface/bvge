@@ -10,7 +10,6 @@ import org.joml.Vector2f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
-import org.lwjgl.glfw.GLFWWindowContentScaleCallbackI;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLUtil;
@@ -171,7 +170,7 @@ public class Window
         {
             get().width = newWidth;
             get().height = newHeight;
-            event_bus.report_event(EventType.WINDOW_RESIZE);
+            event_bus.report_event(new EventBus.WindowEvent(EventBus.EventType.WINDOW_RESIZE));
         };
 
         try (var window_cb = glfwSetWindowSizeCallback(glfwWindow, size_callback))

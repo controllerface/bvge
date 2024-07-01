@@ -3,6 +3,7 @@ package com.controllerface.bvge.cl;
 import com.controllerface.bvge.cl.buffers.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.SectorContainer;
 import com.controllerface.bvge.game.world.sectors.*;
 import com.controllerface.bvge.geometry.ModelRegistry;
@@ -295,8 +296,10 @@ public class GPUCoreMemory implements Destoryable
         clFinish(GPGPU.ptr_sector_queue);
     }
 
-    public void transfer_world_input()
+    public void transfer_ingress_buffer()
     {
+        long sd = Editor.ACTIVE ? System.nanoTime() : 0;
+
         int point_count         = sector_ingress_buffer.next_point();
         int edge_count          = sector_ingress_buffer.next_edge();
         int hull_count          = sector_ingress_buffer.next_hull();
@@ -332,6 +335,12 @@ public class GPUCoreMemory implements Destoryable
         clFinish(GPGPU.ptr_sector_queue);
 
         sector_controller.expand(point_count, edge_count, hull_count, entity_count, hull_bone_count, armature_bone_count);
+
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - sd;
+            Editor.queue_event("sector_load", String.valueOf(e));
+        }
     }
 
     public void update_entity_position(int entity_index, float x, float y)

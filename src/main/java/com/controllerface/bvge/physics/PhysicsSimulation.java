@@ -1151,17 +1151,6 @@ public class PhysicsSimulation extends GameSystem
         apply_reactions();
     }
 
-    private void process_world_buffer()
-    {
-        long sd = Editor.ACTIVE ? System.nanoTime() : 0;
-        GPGPU.core_memory.transfer_world_input();
-        if (Editor.ACTIVE)
-        {
-            long e = System.nanoTime() - sd;
-            Editor.queue_event("sector_load", String.valueOf(e));
-        }
-    }
-
     private void simulate(float dt)
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
@@ -1316,18 +1305,20 @@ public class PhysicsSimulation extends GameSystem
                                                         // STATE: inventory -> blocked on : `world_barrier`
 
             GPGPU.core_memory.await_world_barrier();    // STATE: main      -> block on   : `world_barrier`
-                                                        // STATE: main      -> unblock
-                                                        // STATE: ingress   -> unblock
-                                                        // STATE: egress    -> unblock
-                                                        // STATE: inventory -> unblock
-
-            GPGPU.core_memory.release_world_barrier();  // STATE: ingress   -> block on   : `dt`
+            GPGPU.core_memory.release_world_barrier();  // STATE: main      -> unblock
+                                                        // STATE: ingress   -> block on   : `dt`
                                                         // STATE: egress    -> block on   : `dt`
                                                         // STATE: inventory -> block on   : `dt`
 
             clFinish(GPGPU.ptr_sector_queue);           // QUEUE: previous sector processing complete
 
-            process_world_buffer();
+            /*
+            * At this point, all important threads are blocked, and all relevant queues are idle.
+            * Now, any data that needs to transfer between ingress/egress/render buffers is moved.
+            * Any work that occurs here should be as fast as possible, avoid adding excess latency.
+            * */
+
+            GPGPU.core_memory.transfer_ingress_buffer();
             GPGPU.core_memory.flip_egress_buffers();
             GPGPU.core_memory.mirror_render_buffers();
 
