@@ -55,8 +55,8 @@ public class HUDRenderer extends GameSystem
     private final EventBus.EventType[] subscribed_types = new EventBus.EventType[]
         {
             EventBus.EventType.WINDOW_RESIZE,
-            EventBus.EventType.INVENTORY,
-            EventBus.EventType.PLACING_ITEM,
+            EventBus.EventType.ITEM_CHANGE,
+            EventBus.EventType.ITEM_PLACING,
         };
 
     private float max_char_height = 0;
@@ -294,7 +294,7 @@ public class HUDRenderer extends GameSystem
             //  flag for each section, or the entire HUD. This will help make it more responsive as only the sections that
             //  change can be updated. It will require designating certain positions in the buffer
             if (next_event.type() == EventBus.EventType.WINDOW_RESIZE
-                || next_event.type() == EventBus.EventType.INVENTORY)
+                || next_event.type() == EventBus.EventType.ITEM_CHANGE)
             {
                 dirty = true;
             }

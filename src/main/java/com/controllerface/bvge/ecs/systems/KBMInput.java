@@ -88,7 +88,9 @@ public class KBMInput extends GameSystem
             var event = down
                 ? EventBus.EventType.NEXT_ITEM
                 : EventBus.EventType.PREV_ITEM;
-            Window.get().event_bus().report_event(new EventBus.WindowEvent(event));
+
+            Window.get().event_bus()
+                .report_event(EventBus.input(event));
         }
     }
 

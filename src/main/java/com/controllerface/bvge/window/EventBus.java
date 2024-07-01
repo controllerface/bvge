@@ -6,22 +6,39 @@ public class EventBus
 {
     private final Map<EventType, List<Queue<Event>>> subscribers = Collections.synchronizedMap(new HashMap<>());
 
+    public interface Event { EventType type(); }
+    public record WindowEvent(EventType type) implements Event { }
+    public record InventoryEvent(EventType type) implements Event { }
+    public record InputEvent(EventType type) implements Event { }
+    public record MessageEvent(EventType type, String message) implements Event { }
+
     public enum EventType
     {
         WINDOW_RESIZE,
-        INVENTORY,
+        ITEM_CHANGE,
         NEXT_ITEM,
         PREV_ITEM,
-        PLACING_ITEM,
+        ITEM_PLACING,
     }
 
-    public interface Event { EventType type(); }
-    public record WindowEvent(EventType type) implements Event { };
-    public record MessageEvent(EventType type, String message) implements Event { };
-
-    public static MessageEvent msg(EventType type, String message)
+    public static MessageEvent message(EventType type, String message)
     {
         return new MessageEvent(type, message);
+    }
+
+    public static WindowEvent window(EventType type)
+    {
+        return new WindowEvent(type);
+    }
+
+    public static InventoryEvent inventory(EventType type)
+    {
+        return new InventoryEvent(type);
+    }
+
+    public static InputEvent input(EventType type)
+    {
+        return new InputEvent(type);
     }
 
     public void register(Queue<Event> sink, EventType ... types)

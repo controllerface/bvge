@@ -16,8 +16,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.controllerface.bvge.window.EventBus.*;
-
 public class InventorySystem extends GameSystem
 {
     private final CollectedObjectBuffer.Raw raw_collected = new CollectedObjectBuffer.Raw();
@@ -26,7 +24,7 @@ public class InventorySystem extends GameSystem
     private final Thread task_thread;
 
     private final static Logger LOGGER = Logger.getLogger(InventorySystem.class.getName());
-    private final Queue<Event> event_queue = new ConcurrentLinkedQueue<>();
+    private final Queue<EventBus.Event> event_queue = new ConcurrentLinkedQueue<>();
 
     private Solid current_block = null;
 
@@ -37,7 +35,7 @@ public class InventorySystem extends GameSystem
         this.task_thread = Thread.ofVirtual().start(new SectorUnloadTask());
         boolean ok = this.next_dt.offer(-1f);
         assert ok : "unable to start SectorLoader";
-        Window.get().event_bus().register(event_queue, EventType.NEXT_ITEM, EventType.PREV_ITEM);
+        Window.get().event_bus().register(event_queue, EventBus.EventType.NEXT_ITEM, EventBus.EventType.PREV_ITEM);
     }
 
     private class SectorUnloadTask implements Runnable
@@ -82,7 +80,7 @@ public class InventorySystem extends GameSystem
                 }
                 player_inventory.collect_substance(raw_collected.types[i], 1);
             }
-            Window.get().event_bus().report_event(new WindowEvent(EventType.INVENTORY));
+            Window.get().event_bus().report_event(EventBus.inventory(EventBus.EventType.ITEM_CHANGE));
         }
     }
 
@@ -128,16 +126,16 @@ public class InventorySystem extends GameSystem
     {
         boolean ok = next_dt.offer(dt);
         assert ok : "unable to cycle SectorLoader";
-        Event next_event;
         var last_block = current_block;
+        EventBus.Event next_event;
         while ((next_event = event_queue.poll()) != null)
         {
             System.out.println("event: " + next_event);
-            if (next_event.type() == EventType.NEXT_ITEM)
+            if (next_event.type() == EventBus.EventType.NEXT_ITEM)
             {
                 current_block = findNextItem(current_block);
             }
-            if (next_event.type() == EventType.PREV_ITEM)
+            if (next_event.type() == EventBus.EventType.PREV_ITEM)
             {
                 current_block = findPrevItem(current_block);
             }
@@ -146,7 +144,9 @@ public class InventorySystem extends GameSystem
         if (last_block != current_block)
         {
             var name = current_block == null ? "none" : current_block.name();
-            Window.get().event_bus().report_event(msg(EventType.PLACING_ITEM, name));
+
+            Window.get().event_bus()
+                .report_event(EventBus.message(EventBus.EventType.ITEM_PLACING, name));
         }
     }
 

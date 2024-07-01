@@ -170,7 +170,7 @@ public class Window
         {
             get().width = newWidth;
             get().height = newHeight;
-            event_bus.report_event(new EventBus.WindowEvent(EventBus.EventType.WINDOW_RESIZE));
+            event_bus.report_event(EventBus.window(EventBus.EventType.WINDOW_RESIZE));
         };
 
         try (var window_cb = glfwSetWindowSizeCallback(glfwWindow, size_callback))
