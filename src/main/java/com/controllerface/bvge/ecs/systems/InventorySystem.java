@@ -98,16 +98,15 @@ public class InventorySystem extends GameSystem
                 // if nothing is currently selected, start from the top/bottom of the
                 // inventory and find the next solid that has enough material to spawn
 
-                // if something is selected
-
                 // if no materials are available, return.
+
+                // if something is selected, despawn the "ghost" object representing it
 
                 // for the selected object
 
                 System.out.println("event: " + next_event);
             }
         }
-
     }
 
     @Override

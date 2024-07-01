@@ -121,8 +121,6 @@ public class GPUCoreMemory implements Destoryable
         return reference_controller;
     }
 
-
-
     public ResizableBuffer get_buffer(ReferenceBufferType referenceBufferType)
     {
         return reference_buffers.get_buffer(referenceBufferType);
