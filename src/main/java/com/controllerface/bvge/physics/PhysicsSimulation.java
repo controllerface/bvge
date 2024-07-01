@@ -1318,9 +1318,9 @@ public class PhysicsSimulation extends GameSystem
             * Any work that occurs here should be as fast as possible, avoid adding excess latency.
             * */
 
-            GPGPU.core_memory.transfer_ingress_buffer();
-            GPGPU.core_memory.flip_egress_buffers();
-            GPGPU.core_memory.mirror_render_buffers();
+            GPGPU.core_memory.swap_ingress_buffers();
+            GPGPU.core_memory.swap_egress_buffers();
+            GPGPU.core_memory.swap_render_buffers();
 
             clFinish(GPGPU.ptr_compute_queue);          // QUEUE: current sector processing complete
 

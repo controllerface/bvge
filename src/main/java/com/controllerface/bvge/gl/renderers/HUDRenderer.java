@@ -10,8 +10,9 @@ import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
-import com.controllerface.bvge.window.EventBus;
+import com.controllerface.bvge.window.events.Event;
 import com.controllerface.bvge.window.Window;
+import com.controllerface.bvge.window.events.EventType;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -50,13 +51,13 @@ public class HUDRenderer extends GameSystem
     private final Map<String, TextContainer> text_boxes = new HashMap<>();
     private final Map<Solid, TextContainer> solid_labels = new HashMap<>();
 
-    private final Queue<EventBus.Event> event_queue = new ConcurrentLinkedQueue<>();
+    private final Queue<Event> event_queue = new ConcurrentLinkedQueue<>();
 
-    private final EventBus.EventType[] subscribed_types = new EventBus.EventType[]
+    private final EventType[] subscribed_types = new EventType[]
         {
-            EventBus.EventType.WINDOW_RESIZE,
-            EventBus.EventType.ITEM_CHANGE,
-            EventBus.EventType.ITEM_PLACING,
+            EventType.WINDOW_RESIZE,
+            EventType.ITEM_CHANGE,
+            EventType.ITEM_PLACING,
         };
 
     private float max_char_height = 0;
@@ -287,18 +288,18 @@ public class HUDRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        EventBus.Event next_event;
+        Event next_event;
         while ((next_event = event_queue.poll()) != null)
         {
             // todo: eventually, the HUD can be split into static and dynamic sections, and there could be a different dirty
             //  flag for each section, or the entire HUD. This will help make it more responsive as only the sections that
             //  change can be updated. It will require designating certain positions in the buffer
-            if (next_event.type() == EventBus.EventType.WINDOW_RESIZE
-                || next_event.type() == EventBus.EventType.ITEM_CHANGE)
+            if (next_event.type() == EventType.WINDOW_RESIZE
+                || next_event.type() == EventType.ITEM_CHANGE)
             {
                 dirty = true;
             }
-            if (next_event instanceof EventBus.MessageEvent(EventBus.EventType _, String message))
+            if (next_event instanceof Event.Message(var _, var message))
             {
                 var current = text_boxes.get("placing");
                 var next = new TextContainer(current.snap, message, current.x, current.y, current.scale);

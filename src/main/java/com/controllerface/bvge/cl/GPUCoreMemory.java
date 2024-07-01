@@ -137,7 +137,7 @@ public class GPUCoreMemory implements Destoryable
         return sector_buffers.get_buffer(coreBufferType);
     }
 
-    public void mirror_render_buffers()
+    public void swap_render_buffers()
     {
         mirror_buffers.mirror(sector_buffers);
 
@@ -147,7 +147,7 @@ public class GPUCoreMemory implements Destoryable
         last_point_index  = sector_controller.next_point();
     }
 
-    public void flip_egress_buffers()
+    public void swap_egress_buffers()
     {
         last_egress_counts[0] = next_egress_counts[0];
         last_egress_counts[1] = next_egress_counts[1];
@@ -296,7 +296,7 @@ public class GPUCoreMemory implements Destoryable
         clFinish(GPGPU.ptr_sector_queue);
     }
 
-    public void transfer_ingress_buffer()
+    public void swap_ingress_buffers()
     {
         long sd = Editor.ACTIVE ? System.nanoTime() : 0;
 
