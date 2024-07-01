@@ -121,7 +121,7 @@ public class HUDRenderer extends GameSystem
             "Placing", 100, 100, .75f));
 
         text_boxes.put("placing", new TextContainer(SnapPosition.TOP_RIGHT,
-            "none", 100, 150, .75f));
+            "-", 100, 150, .75f));
 
         text_boxes.put("inventory", new TextContainer(SnapPosition.TOP_LEFT,
             "Inventory", 100, 100, .75f));

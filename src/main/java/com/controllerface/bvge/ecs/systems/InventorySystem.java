@@ -130,7 +130,6 @@ public class InventorySystem extends GameSystem
         EventBus.Event next_event;
         while ((next_event = event_queue.poll()) != null)
         {
-            System.out.println("event: " + next_event);
             if (next_event.type() == EventBus.EventType.NEXT_ITEM)
             {
                 current_block = findNextItem(current_block);
@@ -139,11 +138,10 @@ public class InventorySystem extends GameSystem
             {
                 current_block = findPrevItem(current_block);
             }
-            System.out.println("current: " + current_block);
         }
         if (last_block != current_block)
         {
-            var name = current_block == null ? "none" : current_block.name();
+            var name = current_block == null ? "-" : current_block.name();
 
             Window.get().event_bus()
                 .report_event(EventBus.message(EventBus.EventType.ITEM_PLACING, name));
