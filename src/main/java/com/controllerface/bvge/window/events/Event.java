@@ -17,28 +17,13 @@ public sealed interface Event permits
         ITEM_PLACING,
     }
 
-    record Input(Type type) implements Event {}
-    record Inventory(Type type) implements Event {}
-    record Message(Type type, String message) implements Event {}
-    record Window(Type type) implements Event {}
+    record Input(Type type)                           implements Event {}
+    record Inventory(Type type)                       implements Event {}
+    record Message(Type type, String message)         implements Event {}
+    record Window(Type type)                          implements Event {}
 
-    static Input input(Type type)
-    {
-        return new Input(type);
-    }
-
-    static Inventory inventory(Type type)
-    {
-        return new Inventory(type);
-    }
-
-    static Message message(Type type, String message)
-    {
-        return new Message(type, message);
-    }
-
-    static Window window(Type type)
-    {
-        return new Window(type);
-    }
+    static Input input(Type type)                     { return new Input(type); }
+    static Inventory inventory(Type type)             { return new Inventory(type); }
+    static Message message(Type type, String message) { return new Message(type, message); }
+    static Window window(Type type)                   { return new Window(type); }
 }

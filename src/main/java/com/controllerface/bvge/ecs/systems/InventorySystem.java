@@ -2,10 +2,13 @@ package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.substances.Solid;
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.events.Event;
 import com.controllerface.bvge.window.Window;
 
@@ -126,26 +129,51 @@ public class InventorySystem extends GameSystem
     {
         boolean ok = next_dt.offer(dt);
         assert ok : "unable to cycle SectorLoader";
-        var last_block = current_block;
         Event next_event;
+        Event evt = null;
+
+        Solid next_block = null;
+
         while ((next_event = event_queue.poll()) != null)
         {
-            if (next_event.type() == Event.Type.NEXT_ITEM)
-            {
-                current_block = findNextItem(current_block);
-            }
-            if (next_event.type() == Event.Type.PREV_ITEM)
-            {
-                current_block = findPrevItem(current_block);
-            }
+            evt = next_event;
         }
-        if (last_block != current_block)
-        {
-            var name = current_block == null ? "-" : current_block.name();
 
-            Window.get().event_bus()
-                .report_event(Event.message(Event.Type.ITEM_PLACING, name));
+        if (evt == null) return;
+
+        System.out.println("Event debug: " + evt);
+
+        if (evt.type() == Event.Type.NEXT_ITEM)
+        {
+            next_block = findNextItem(current_block);
         }
+        if (evt.type() == Event.Type.PREV_ITEM)
+        {
+            next_block = findPrevItem(current_block);
+        }
+
+        if (next_block == current_block) return;
+
+//        if (current_block != null)
+//        {
+//            var ghost_id = ecs.get_component_for(Constants.PLAYER_ID, Component.PlacingId);
+//            assert ghost_id != null : "unexpected null component: block placing de-spawn";
+//
+//            EntityIndex id = Component.PlacingId.coerce(ghost_id);
+//            assert id != null : "unexpected null entity index: block placing de-spawn";
+//
+//            Window.get().event_bus().report_event(Event.despawn(Event.Type.DESPAWN_BLOCK, id.index()));
+//        }
+//
+//        if (next_block != null)
+//        {
+//            Window.get().event_bus().report_event(Event.spawn(Event.Type.SPAWN_BLOCK, next_block));
+//        }
+
+        var name = next_block == null ? "-" : next_block.name();
+        Window.get().event_bus().report_event(Event.message(Event.Type.ITEM_PLACING, name));
+
+        current_block = next_block;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.controllerface.bvge;
 
 import com.controllerface.bvge.cl.GPGPU;
+import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.window.Window;
 import org.lwjgl.system.Configuration;
@@ -36,8 +37,9 @@ public class Main
         //Configuration.DEBUG.set(true);
         //Configuration.DISABLE_CHECKS.set(true);
         Configuration.HARFBUZZ_LIBRARY_NAME.set(FreeType.getLibrary());
+        ECS ecs = new ECS();
         Window window = Window.get();
-        window.init();
+        window.init(ecs);
 
         GPGPU.init();
         Editor.init();
@@ -55,6 +57,7 @@ public class Main
         {
             Editor.destroy();
             GPGPU.destroy();
+            ecs.shutdown();
         }
     }
 }

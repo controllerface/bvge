@@ -47,7 +47,7 @@ public class Window
     public float r, g, b, a;
 
     private static GameMode currentGameMode;
-    private final ECS ecs = new ECS();
+    private ECS ecs;
     private final Camera camera;
 
     private boolean closing = false;
@@ -67,11 +67,6 @@ public class Window
         this.r = 0.1f;
         this.g = 0.1f;
         this.b = 0.1f;
-
-//        this.r = 0.0f;
-//        this.g = 0.0f;
-//        this.b = 0.0f;
-
         this.a = 1;
     }
 
@@ -101,8 +96,6 @@ public class Window
 
         closing = true;
 
-        ecs.shutdown();
-
         glfwFreeCallbacks(glfwWindow);
         glfwDestroyWindow(glfwWindow);
 
@@ -120,8 +113,9 @@ public class Window
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    public void init()
+    public void init(ECS ecs)
     {
+        this.ecs = ecs;
         GLFWErrorCallback.createPrint(System.err).set();
 
         if (!glfwInit())

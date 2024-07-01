@@ -11,7 +11,7 @@ public class ECS
 {
     private long count = 0;
     private final List<GameSystem> systems = new ArrayList<>();
-    private final Map<Component, Map<String, GameComponent>> components = new HashMap<>();
+    private final Map<Component, Map<String, GameComponent>> components = Collections.synchronizedMap(new HashMap<>());
     private final Set<String> entities = ConcurrentHashMap.newKeySet();
 
     public ECS()
@@ -49,6 +49,11 @@ public class ECS
     public void attach_component(String id, Component type, GameComponent component)
     {
         components.get(type).put(id, component);
+    }
+
+    public void detach_component(String id, Component type)
+    {
+        components.get(type).remove(id);
     }
 
     public GameComponent get_component_for(String id, Component type)

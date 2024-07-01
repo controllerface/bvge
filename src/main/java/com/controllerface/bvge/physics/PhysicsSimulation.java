@@ -506,12 +506,13 @@ public class PhysicsSimulation extends GameSystem
         int target_count = 0;
         for (Map.Entry<String, GameComponent> entry : components.entrySet())
         {
-            String entity_name           = entry.getKey();
-            GameComponent component      = entry.getValue();
-            ControlPoints controlPoints  = Component.ControlPoints.coerce(component);
-            EntityIndex entity_id        = Component.EntityId.forEntity(ecs, entity_name);
-            EntityIndex cursor_entity_id = Component.CursorId.forEntity(ecs, entity_name);
-            LinearForce force            = Component.LinearForce.forEntity(ecs, entity_name);
+            String entity_name            = entry.getKey();
+            GameComponent component       = entry.getValue();
+            ControlPoints controlPoints   = Component.ControlPoints.coerce(component);
+            EntityIndex entity_id         = Component.EntityId.forEntity(ecs, entity_name);
+            EntityIndex cursor_entity_id  = Component.CursorId.forEntity(ecs, entity_name);
+            EntityIndex placing_entity_id = Component.PlacingId.forEntity(ecs, entity_name);
+            LinearForce force             = Component.LinearForce.forEntity(ecs, entity_name);
 
             Objects.requireNonNull(controlPoints);
             Objects.requireNonNull(entity_id);
@@ -557,6 +558,11 @@ public class PhysicsSimulation extends GameSystem
             float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position().x;
             float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position().y;
             GPGPU.core_memory.update_entity_position(cursor_entity_id.index(), world_x, world_y);
+
+            if (placing_entity_id != null)
+            {
+                GPGPU.core_memory.update_entity_position(placing_entity_id.index(), world_x, world_y);
+            }
 
             target_count++;
         }
