@@ -8,7 +8,6 @@ import com.controllerface.bvge.game.GameMode;
 import com.controllerface.bvge.game.TestGame;
 import com.controllerface.bvge.window.events.Event;
 import com.controllerface.bvge.window.events.EventBus;
-import com.controllerface.bvge.window.events.EventType;
 import org.joml.Vector2f;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -173,7 +172,7 @@ public class Window
         {
             get().width = newWidth;
             get().height = newHeight;
-            event_bus.report_event(Event.window(EventType.WINDOW_RESIZE));
+            event_bus.report_event(Event.window(Event.Type.WINDOW_RESIZE));
         };
 
         try (var window_cb = glfwSetWindowSizeCallback(glfwWindow, size_callback))

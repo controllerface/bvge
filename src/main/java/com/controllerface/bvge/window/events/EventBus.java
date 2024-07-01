@@ -4,9 +4,9 @@ import java.util.*;
 
 public class EventBus
 {
-    private final Map<EventType, List<Queue<Event>>> subscribers = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Event.Type, List<Queue<Event>>> subscribers = Collections.synchronizedMap(new HashMap<>());
 
-    public void register(Queue<Event> sink, EventType ... types)
+    public void register(Queue<Event> sink, Event.Type... types)
     {
         if (types.length == 0) return;
 

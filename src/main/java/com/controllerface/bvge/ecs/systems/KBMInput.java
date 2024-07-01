@@ -5,9 +5,7 @@ import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.window.events.Event;
-import com.controllerface.bvge.window.events.EventBus;
 import com.controllerface.bvge.window.Window;
-import com.controllerface.bvge.window.events.EventType;
 
 import java.util.Map;
 
@@ -87,12 +85,11 @@ public class KBMInput extends GameSystem
         }
         else if (control)
         {
-            var event = down
-                ? EventType.NEXT_ITEM
-                : EventType.PREV_ITEM;
+            var type = down
+                ? Event.Type.NEXT_ITEM
+                : Event.Type.PREV_ITEM;
 
-            Window.get().event_bus()
-                .report_event(Event.input(event));
+            Window.get().event_bus().report_event(Event.input(type));
         }
     }
 

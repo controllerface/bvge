@@ -12,7 +12,6 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.events.Event;
 import com.controllerface.bvge.window.Window;
-import com.controllerface.bvge.window.events.EventType;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -53,11 +52,11 @@ public class HUDRenderer extends GameSystem
 
     private final Queue<Event> event_queue = new ConcurrentLinkedQueue<>();
 
-    private final EventType[] subscribed_types = new EventType[]
+    private final Event.Type[] subscribed_types = new Event.Type[]
         {
-            EventType.WINDOW_RESIZE,
-            EventType.ITEM_CHANGE,
-            EventType.ITEM_PLACING,
+            Event.Type.WINDOW_RESIZE,
+            Event.Type.ITEM_CHANGE,
+            Event.Type.ITEM_PLACING,
         };
 
     private float max_char_height = 0;
@@ -294,8 +293,8 @@ public class HUDRenderer extends GameSystem
             // todo: eventually, the HUD can be split into static and dynamic sections, and there could be a different dirty
             //  flag for each section, or the entire HUD. This will help make it more responsive as only the sections that
             //  change can be updated. It will require designating certain positions in the buffer
-            if (next_event.type() == EventType.WINDOW_RESIZE
-                || next_event.type() == EventType.ITEM_CHANGE)
+            if (next_event.type() == Event.Type.WINDOW_RESIZE
+                || next_event.type() == Event.Type.ITEM_CHANGE)
             {
                 dirty = true;
             }

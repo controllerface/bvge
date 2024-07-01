@@ -7,9 +7,7 @@ import com.controllerface.bvge.game.world.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.window.events.Event;
-import com.controllerface.bvge.window.events.EventBus;
 import com.controllerface.bvge.window.Window;
-import com.controllerface.bvge.window.events.EventType;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -37,7 +35,7 @@ public class InventorySystem extends GameSystem
         this.task_thread = Thread.ofVirtual().start(new SectorUnloadTask());
         boolean ok = this.next_dt.offer(-1f);
         assert ok : "unable to start SectorLoader";
-        Window.get().event_bus().register(event_queue, EventType.NEXT_ITEM, EventType.PREV_ITEM);
+        Window.get().event_bus().register(event_queue, Event.Type.NEXT_ITEM, Event.Type.PREV_ITEM);
     }
 
     private class SectorUnloadTask implements Runnable
@@ -82,7 +80,7 @@ public class InventorySystem extends GameSystem
                 }
                 player_inventory.collect_substance(raw_collected.types[i], 1);
             }
-            Window.get().event_bus().report_event(Event.inventory(EventType.ITEM_CHANGE));
+            Window.get().event_bus().report_event(Event.inventory(Event.Type.ITEM_CHANGE));
         }
     }
 
@@ -132,11 +130,11 @@ public class InventorySystem extends GameSystem
         Event next_event;
         while ((next_event = event_queue.poll()) != null)
         {
-            if (next_event.type() == EventType.NEXT_ITEM)
+            if (next_event.type() == Event.Type.NEXT_ITEM)
             {
                 current_block = findNextItem(current_block);
             }
-            if (next_event.type() == EventType.PREV_ITEM)
+            if (next_event.type() == Event.Type.PREV_ITEM)
             {
                 current_block = findPrevItem(current_block);
             }
@@ -146,7 +144,7 @@ public class InventorySystem extends GameSystem
             var name = current_block == null ? "-" : current_block.name();
 
             Window.get().event_bus()
-                .report_event(Event.message(EventType.ITEM_PLACING, name));
+                .report_event(Event.message(Event.Type.ITEM_PLACING, name));
         }
     }
 

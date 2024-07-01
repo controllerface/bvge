@@ -6,29 +6,38 @@ public sealed interface Event permits
     Event.Message,
     Event.Window
 {
-    EventType type();
+    Type type();
 
-    record Input(EventType type) implements Event {}
-    record Inventory(EventType type) implements Event {}
-    record Message(EventType type, String message) implements Event {}
-    record Window(EventType type) implements Event {}
+    enum Type
+    {
+        WINDOW_RESIZE,
+        ITEM_CHANGE,
+        NEXT_ITEM,
+        PREV_ITEM,
+        ITEM_PLACING,
+    }
 
-    static Input input(EventType type)
+    record Input(Type type) implements Event {}
+    record Inventory(Type type) implements Event {}
+    record Message(Type type, String message) implements Event {}
+    record Window(Type type) implements Event {}
+
+    static Input input(Type type)
     {
         return new Input(type);
     }
 
-    static Inventory inventory(EventType type)
+    static Inventory inventory(Type type)
     {
         return new Inventory(type);
     }
 
-    static Message message(EventType type, String message)
+    static Message message(Type type, String message)
     {
         return new Message(type, message);
     }
 
-    static Window window(EventType type)
+    static Window window(Type type)
     {
         return new Window(type);
     }
