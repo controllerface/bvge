@@ -6,6 +6,8 @@ public class WriteMeshDetails_k extends GPUKernel
     {
         hull_mesh_ids,
         hull_flags,
+        hull_entity_ids,
+        entity_flags,
         mesh_vertex_tables,
         mesh_face_tables,
         counters,

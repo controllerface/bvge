@@ -41,7 +41,7 @@ public class Main
         Window window = Window.get();
         window.init(ecs);
 
-        GPGPU.init();
+        GPGPU.init(ecs);
         Editor.init();
 
         window.init_game_mode();

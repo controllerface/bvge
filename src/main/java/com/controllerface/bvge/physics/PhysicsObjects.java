@@ -81,7 +81,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = global_hull_flags | HullFlags.IS_CIRCLE._int | HullFlags.NO_BONES._int;
+        int hull_flags = global_hull_flags | HullFlags.IS_CIRCLE.bits | HullFlags.NO_BONES.bits;
         int hull_id = world.create_hull(mesh.mesh_id(),
             position,
             scale,
@@ -131,7 +131,7 @@ public class PhysicsObjects
                                     float size,
                                     int range_link)
     {
-        return particle(world, x, y, size, 0.0f, 0.0f, 0.0f, range_link, 0,  HullFlags.IS_CURSOR._int, 0, CURSOR, 0,-1);
+        return particle(world, x, y, size, 0.0f, 0.0f, 0.0f, range_link, 0,  HullFlags.IS_CURSOR.bits, 0, CURSOR, 0,-1);
     }
 
     public static int tri(SectorContainer world,
@@ -190,7 +190,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = global_hull_flags | HullFlags.IS_POLYGON._int | HullFlags.NO_BONES._int;
+        int hull_flags = global_hull_flags | HullFlags.IS_POLYGON.bits | HullFlags.NO_BONES.bits;
         int hull_id = world.create_hull(mesh.mesh_id(),
             position,
             scale,
@@ -279,7 +279,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = global_hull_flags | HullFlags.IS_POLYGON._int;
+        int hull_flags = global_hull_flags | HullFlags.IS_POLYGON.bits;
         int hull_id = world.create_hull(mesh.mesh_id(),
             position,
             scale,
@@ -309,7 +309,12 @@ public class PhysicsObjects
 
     public static int base_block(SectorContainer world, float x, float y, float size, float mass, float friction, float restitution, int entity_flags, int hull_flags, Solid block_material, int[] hits)
     {
-        return block(world, x, y, size, entity_flags,hull_flags | HullFlags.IS_BLOCK._int | HullFlags.NO_BONES._int, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
+        return block(world, x, y, size, entity_flags,hull_flags | HullFlags.IS_BLOCK.bits | HullFlags.NO_BONES.bits, mass, friction, restitution, BASE_BLOCK_INDEX, block_material, hits);
+    }
+
+    public static int block_cursor(SectorContainer world, float x, float y)
+    {
+        return base_block(world, x, y, 32f, 0, 0, 0, 0, HullFlags.GHOST_HULL.bits, Solid.ANDESITE, new int[4]);
     }
 
     private static final Random random = new Random();
@@ -364,22 +369,22 @@ public class PhysicsObjects
 
             if (hull_mesh.name().toLowerCase().contains("hand"))
             {
-                local_hull_flags |= HullFlags.IS_HAND._int;
+                local_hull_flags |= HullFlags.IS_HAND.bits;
             }
 
             if (hull_mesh.name().toLowerCase().contains("foot"))
             {
-                local_hull_flags |= HullFlags.IS_FOOT._int;
+                local_hull_flags |= HullFlags.IS_FOOT.bits;
             }
 
             if (hull_mesh.name().toLowerCase().contains(".r"))
             {
-                local_hull_flags |= HullFlags.SIDE_R._int;
+                local_hull_flags |= HullFlags.SIDE_R.bits;
             }
 
             if (hull_mesh.name().toLowerCase().contains(".l"))
             {
-                local_hull_flags |= HullFlags.SIDE_L._int;
+                local_hull_flags |= HullFlags.SIDE_L.bits;
             }
 
             // The hull is generated based on the mesh, so it's initial position and rotation
@@ -538,7 +543,7 @@ public class PhysicsObjects
             var scale = CLUtils.arg_float2(size, size);
             var rotation = CLUtils.arg_float2(0, angle);
 
-            int flag_bits = HullFlags.IS_POLYGON._int | local_hull_flags;
+            int flag_bits = HullFlags.IS_POLYGON.bits | local_hull_flags;
             int[] bone_table = CLUtils.arg_int2(start_hull_bone, end_hull_bone);
             int hull_id = world.create_hull(hull_mesh.mesh_id(),
                 position,

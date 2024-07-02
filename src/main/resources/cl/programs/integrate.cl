@@ -62,15 +62,16 @@ __kernel void integrate(__global float4 *hulls,
     int start = point_table.x;
     int end   = point_table.y;
 
-    bool is_cursor = (hull_1_flags & IS_CURSOR) !=0;
-    bool is_static = (hull_1_flags & IS_STATIC) !=0;
-    bool is_circle = (hull_1_flags & IS_CIRCLE) !=0;
-    bool no_bones = (hull_1_flags & NO_BONES) !=0;
-    bool in_liquid = (hull_1_flags & IN_LIQUID) !=0;
-    bool is_liquid = (hull_1_flags & IS_LIQUID) !=0;
-    bool touch_alike = (hull_1_flags & TOUCH_ALIKE) !=0;
+    bool is_cursor     = (hull_1_flags & IS_CURSOR) !=0;
+    bool is_ghost      = (hull_1_flags & GHOST_HULL) !=0;
+    bool is_static     = (hull_1_flags & IS_STATIC) !=0;
+    bool is_circle     = (hull_1_flags & IS_CIRCLE) !=0;
+    bool no_bones      = (hull_1_flags & NO_BONES) !=0;
+    bool in_liquid     = (hull_1_flags & IN_LIQUID) !=0;
+    bool is_liquid     = (hull_1_flags & IS_LIQUID) !=0;
+    bool touch_alike   = (hull_1_flags & TOUCH_ALIKE) !=0;
     bool out_of_bounds = (hull_1_flags & OUT_OF_BOUNDS) !=0;
-    bool in_perimiter = (hull_1_flags & IN_PERIMETER) !=0;
+    bool in_perimiter  = (hull_1_flags & IN_PERIMETER) !=0;
 
     // wipe all ephemeral flags
     hull_1_flags &= ~OUT_OF_BOUNDS;
@@ -164,7 +165,7 @@ __kernel void integrate(__global float4 *hulls,
         // prv.y = s_y ? pos.y - sign_y * y_threshold : prv.y;
 
 
-        if (!is_static && !out_of_bounds && !is_cursor)
+        if (!is_static && !out_of_bounds && !is_cursor && !is_ghost)
         {
             int _point_flags = point_flags[i];
             bool flow_left = (_point_flags & FLOW_LEFT) != 0;
@@ -305,7 +306,7 @@ __kernel void integrate(__global float4 *hulls,
     else
     {
         bounds_bank.y = 0;
-        if (!is_cursor)
+        if (!is_cursor && !is_ghost)
         {
             hull_1_flags |= OUT_OF_BOUNDS;
         }
@@ -358,8 +359,9 @@ __kernel void integrate_entities(__global float4 *entities,
     int root_hull_flags = hull_flags[root_hull];
 
     bool is_static = (root_hull_flags & IS_STATIC) !=0;
-    bool no_bones = (root_hull_flags & NO_BONES) !=0;
+    bool no_bones  = (root_hull_flags & NO_BONES) !=0;
     bool is_cursor = (root_hull_flags & IS_CURSOR) !=0;
+    bool is_ghost  = (root_hull_flags & GHOST_HULL) !=0;
 
     //gravity = (float2)(0.0f);
 
@@ -395,7 +397,7 @@ __kernel void integrate_entities(__global float4 *entities,
         entity.zw = prv;
     }
 
-    bool sector_in = is_cursor || is_point_in_bounds(pos, sector_x, sector_y, sector_w, sector_h);
+    bool sector_in = is_cursor || is_ghost || is_point_in_bounds(pos, sector_x, sector_y, sector_w, sector_h);
 
     _entity_flags = !sector_in 
         ? _entity_flags | SECTOR_OUT

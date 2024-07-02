@@ -121,6 +121,10 @@ inline void polygon_circle_collision(int polygon_id,
 
     // cursor collision causes early exit
     bool cursor_v = (vert_hull_flags & IS_CURSOR) !=0;
+    bool ghost_e = (edge_hull_flags & GHOST_HULL) !=0;
+
+    if (cursor_v && ghost_e) return;
+
     if (cursor_v)
     {
         int cursor_owner_id = entity_model_transforms[vert_entity_id];

@@ -6,6 +6,8 @@ public class CountMeshInstances_k extends GPUKernel
     {
         hull_mesh_ids,
         hull_flags,
+        hull_entity_ids,
+        entity_flags,
         counters,
         query,
         total,

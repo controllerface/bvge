@@ -28,6 +28,8 @@ public class SectorController implements SectorContainer, Destoryable
     private final GPUKernel k_create_entity_bone;
     private final GPUKernel k_read_position;
     private final GPUKernel k_update_accel;
+    private final GPUKernel k_update_select_block;
+    private final GPUKernel k_clear_select_block;
     private final GPUKernel k_update_mouse_position;
     private final GPUKernel k_count_egress_entities;
 
@@ -132,6 +134,17 @@ public class SectorController implements SectorContainer, Destoryable
             .buf_arg(CountEgressEntities_k.Args.hull_edge_tables,       this.sector_buffers.get_buffer(HULL_EDGE_TABLE))
             .buf_arg(CountEgressEntities_k.Args.hull_bone_tables,       this.sector_buffers.get_buffer(HULL_BONE_TABLE))
             .ptr_arg(CountEgressEntities_k.Args.counters, ptr_egress_sizes);
+
+
+        long k_ptr_update_select_block = p_gpu_crud.kernel_ptr(Kernel.update_select_block);
+        k_update_select_block = new UpdateSelectBlock_k(this.ptr_queue, k_ptr_update_select_block)
+            .buf_arg(UpdateSelectBlock_k.Args.entity_flags,             this.sector_buffers.get_buffer(ENTITY_FLAG))
+            .buf_arg(UpdateSelectBlock_k.Args.hull_uv_offsets,          this.sector_buffers.get_buffer(HULL_UV_OFFSET))
+            .buf_arg(UpdateSelectBlock_k.Args.entity_hull_tables,       this.sector_buffers.get_buffer(ENTITY_HULL_TABLE));
+
+        long k_ptr_clear_select_block = p_gpu_crud.kernel_ptr(Kernel.clear_select_block);
+        k_clear_select_block = new ClearSelectBlock_k(this.ptr_queue, k_ptr_clear_select_block)
+            .buf_arg(ClearSelectBlock_k.Args.entity_flags,             this.sector_buffers.get_buffer(ENTITY_FLAG));
     }
 
     public void reset()
@@ -201,6 +214,21 @@ public class SectorController implements SectorContainer, Destoryable
         k_update_mouse_position
             .set_arg(UpdateMousePosition_k.Args.target, entity_index)
             .set_arg(UpdateMousePosition_k.Args.new_value, arg_float2(x, y))
+            .call(GPGPU.global_single_size);
+    }
+
+    public void update_select_block(int entity_index, int new_uv)
+    {
+        k_update_select_block
+            .set_arg(UpdateSelectBlock_k.Args.target, entity_index)
+            .set_arg(UpdateSelectBlock_k.Args.new_value, new_uv)
+            .call(GPGPU.global_single_size);
+    }
+
+    public void clear_select_block(int entity_index)
+    {
+        k_clear_select_block
+            .set_arg(ClearSelectBlock_k.Args.target, entity_index)
             .call(GPGPU.global_single_size);
     }
 

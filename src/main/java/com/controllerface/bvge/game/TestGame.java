@@ -87,9 +87,11 @@ public class TestGame extends GameMode
         var player = ecs.register_entity(Constants.PLAYER_ID);
         var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory.sector_container(), PLAYER_MODEL_INDEX, x, y, size, 100.5f, 0.05f, 0, 0, Constants.EntityFlags.CAN_COLLECT.bits);
         var cursor_id = PhysicsObjects.circle_cursor(GPGPU.core_memory.sector_container(), 0, 0, 10, entity_id[1]);
+        var block_cursor = PhysicsObjects.block_cursor(GPGPU.core_memory.sector_container(), x, y);
 
         ecs.attach_component(player, Component.EntityId, new EntityIndex(entity_id[0]));
         ecs.attach_component(player, Component.CursorId, new EntityIndex(cursor_id));
+        ecs.attach_component(player, Component.BlockPlacerId, new EntityIndex(block_cursor));
         ecs.attach_component(player, Component.ControlPoints, new ControlPoints());
         ecs.attach_component(player, Component.CameraFocus, new CameraFocus());
         ecs.attach_component(player, Component.LinearForce, new LinearForce(1600));

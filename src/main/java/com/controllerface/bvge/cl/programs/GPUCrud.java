@@ -64,6 +64,8 @@ public class GPUCrud extends GPUProgram
         load_kernel(Kernel.set_bone_channel_table);
         load_kernel(Kernel.update_accel);
         load_kernel(Kernel.update_mouse_position);
+        load_kernel(Kernel.update_select_block);
+        load_kernel(Kernel.clear_select_block);
 
         return this;
     }

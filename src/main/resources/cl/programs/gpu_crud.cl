@@ -42,6 +42,23 @@ __kernel void update_mouse_position(__global int *entity_root_hulls,
     points[t.x].xy = new_value;
 }
 
+__kernel void update_select_block(__global int *entity_flags,
+                                  __global int *hull_uv_offsets,
+                                  __global int2 *entity_hull_tables,
+                                  int target,
+                                  int new_value)
+{
+    entity_flags[target] |= GHOST_ACTIVE;
+    int2 hull_table = entity_hull_tables[target];
+    hull_uv_offsets[hull_table.x] = new_value;
+}
+
+__kernel void clear_select_block(__global int *entity_flags,
+                                  int target)
+{
+    entity_flags[target] &= ~GHOST_ACTIVE;
+}
+
 __kernel void merge_point(__global float4 *points_in,
                           __global int *point_vertex_references_in,
                           __global int *point_hull_indices_in,

@@ -511,7 +511,7 @@ public class PhysicsSimulation extends GameSystem
             ControlPoints controlPoints   = Component.ControlPoints.coerce(component);
             EntityIndex entity_id         = Component.EntityId.forEntity(ecs, entity_name);
             EntityIndex cursor_entity_id  = Component.CursorId.forEntity(ecs, entity_name);
-            EntityIndex placing_entity_id = Component.PlacingId.forEntity(ecs, entity_name);
+            EntityIndex placing_entity_id = Component.BlockPlacerId.forEntity(ecs, entity_name);
             LinearForce force             = Component.LinearForce.forEntity(ecs, entity_name);
 
             Objects.requireNonNull(controlPoints);

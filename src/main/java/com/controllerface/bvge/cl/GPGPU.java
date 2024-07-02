@@ -1,5 +1,6 @@
 package com.controllerface.bvge.cl;
 
+import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.editor.Editor;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -488,7 +489,7 @@ public class GPGPU
         clSVMFree(ptr_context, mem_ptr);
     }
 
-    public static void init()
+    public static void init(ECS ecs)
     {
         ptr_device_id = init_device();
 
@@ -560,7 +561,7 @@ public class GPGPU
 
         //OpenCLUtils.debugDeviceDetails(device_ids);
 
-        core_memory = new GPUCoreMemory();
+        core_memory = new GPUCoreMemory(ecs);
     }
 
     public static void destroy()

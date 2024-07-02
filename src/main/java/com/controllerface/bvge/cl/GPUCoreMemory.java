@@ -10,6 +10,7 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.SectorContainer;
 import com.controllerface.bvge.game.world.sectors.*;
 import com.controllerface.bvge.geometry.ModelRegistry;
+import com.controllerface.bvge.gl.renderers.HUDRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Constants;
@@ -74,9 +75,14 @@ public class GPUCoreMemory implements Destoryable
      * main loop does the same, tripping the barrier, which it then immediately resets.
      */
     private final CyclicBarrier world_barrier = new CyclicBarrier(4);
+    private final Queue<Event> event_queue = new ConcurrentLinkedQueue<>();
+    private final ECS ecs;
 
-    public GPUCoreMemory()
+    public GPUCoreMemory(ECS ecs)
     {
+        this.ecs = ecs;
+        Window.get().event_bus().register(event_queue, Event.Type.SELECT_BLOCK, Event.Type.DESELECT_BLOCK);
+
         p_gpu_crud.init();
 
         this.sector_buffers       = new CoreBufferGroup(BUF_NAME_SECTOR, GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
@@ -306,6 +312,30 @@ public class GPUCoreMemory implements Destoryable
     public void swap_ingress_buffers()
     {
         long sd = Editor.ACTIVE ? System.nanoTime() : 0;
+
+        Event next_event;
+        while ((next_event = event_queue.poll()) != null)
+        {
+            EntityIndex block_id = Component.BlockPlacerId.forEntity(ecs, Constants.PLAYER_ID);
+            assert block_id != null : "null block selector id";
+            if (next_event instanceof Event.DeselectBlock)
+            {
+                System.out.println("deselect: " + block_id);
+                sector_controller.clear_select_block(block_id.index());
+            }
+            if (next_event instanceof Event.SelectBlock(var _, var solid))
+            {
+                System.out.println("select: " + solid + " id: " + block_id);
+                sector_controller.update_select_block(block_id.index(), solid.mineral_number);
+            }
+        }
+
+
+
+
+
+
+
 
         int point_count         = sector_ingress_buffer.next_point();
         int edge_count          = sector_ingress_buffer.next_edge();

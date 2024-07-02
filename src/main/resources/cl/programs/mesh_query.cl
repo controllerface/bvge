@@ -1,5 +1,7 @@
 __kernel void count_mesh_instances(__global int *hull_mesh_ids,
                                    __global int *hull_flags,
+                                   __global int *hull_entity_ids,
+                                   __global int *entity_flags,
                                    __global int *counters,
                                    __global int2 *query,
                                    __global int *total,
@@ -8,9 +10,14 @@ __kernel void count_mesh_instances(__global int *hull_mesh_ids,
     int hull_id = get_global_id(0);
     int mesh_id = hull_mesh_ids[hull_id];
     int hull_flag = hull_flags[hull_id];
+    int entity_id = hull_entity_ids[hull_id];
+    int entity_flag = entity_flags[entity_id];
     bool out_of_bounds = (hull_flag & OUT_OF_BOUNDS) !=0;
     bool in_perimeter = (hull_flag & IN_PERIMETER) !=0;
-    if (out_of_bounds || in_perimeter) return;
+    bool is_ghost = (hull_flag & GHOST_HULL) !=0;
+    bool is_active = (entity_flag & GHOST_ACTIVE) !=0;
+    bool skip_ghost = is_ghost && !is_active;
+    if (out_of_bounds || in_perimeter || skip_ghost) return;
 
     for (int i = 0; i < count; i++)
     {
@@ -25,6 +32,8 @@ __kernel void count_mesh_instances(__global int *hull_mesh_ids,
 
 __kernel void write_mesh_details(__global int *hull_mesh_ids,
                                  __global int *hull_flags,
+                                 __global int *hull_entity_ids,
+                                 __global int *entity_flags,
                                  __global int2 *mesh_vertex_tables,
                                  __global int2 *mesh_face_tables,
                                  __global int *counters, 
@@ -37,9 +46,14 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
     int hull_id = get_global_id(0);
     int mesh_id = hull_mesh_ids[hull_id];
     int hull_flag = hull_flags[hull_id];
+    int entity_id = hull_entity_ids[hull_id];
+    int entity_flag = entity_flags[entity_id];
     bool out_of_bounds = (hull_flag & OUT_OF_BOUNDS) !=0;
     bool in_perimeter = (hull_flag & IN_PERIMETER) !=0;
-    if (out_of_bounds || in_perimeter) return;
+    bool is_ghost = (hull_flag & GHOST_HULL) !=0;
+    bool is_active = (entity_flag & GHOST_ACTIVE) !=0;
+    bool skip_ghost = is_ghost && !is_active;
+    if (out_of_bounds || in_perimeter || skip_ghost) return;
 
     for (int i = 0; i < count; i++)
     {
@@ -58,7 +72,6 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
             int id = offset + bank;
             mesh_details[id] = out;
             mesh_texture[id] = q.y;
-            //printf("debug in tex:%d mesh:%d", q.y, mesh_id);
         }
     }
 }
@@ -214,8 +227,6 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float4 pos = (float4)(point.xy, side_z, 1.0f);
         int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
 
-        //float xxx = is_static ? col - 0.07f : col;
-
         float aaa = integrity > 100 
             ? 0.0f 
             : 1.0f - map((float) integrity, 0.0f, 100.0f, 0.0f, 1.0f);
@@ -238,7 +249,6 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         uv_buffer[ref_offset] = uv;
         color_buffer[ref_offset] = (float4)((col + rrr) * aaa, (col + ggg) * aaa, (col + bbb - ggg * 3) * aaa, 1.0f);
         slot_buffer[ref_offset] = (float)texture;
-        //if (texture == 3) printf("debug out tex:%d mesh:%d", texture, mesh_id);
     }
 
     int start_face = mesh_face_table.x;

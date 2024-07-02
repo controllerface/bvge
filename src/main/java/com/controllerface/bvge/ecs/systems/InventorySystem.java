@@ -2,13 +2,10 @@ package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.events.Event;
 import com.controllerface.bvge.window.Window;
 
@@ -141,8 +138,6 @@ public class InventorySystem extends GameSystem
 
         if (evt == null) return;
 
-        System.out.println("Event debug: " + evt);
-
         if (evt.type() == Event.Type.NEXT_ITEM)
         {
             next_block = findNextItem(current_block);
@@ -174,6 +169,12 @@ public class InventorySystem extends GameSystem
         Window.get().event_bus().report_event(Event.message(Event.Type.ITEM_PLACING, name));
 
         current_block = next_block;
+
+        var event = current_block == null
+            ? Event.endBlock()
+            : Event.startBlock(current_block);
+
+        Window.get().event_bus().report_event(event);
     }
 
     @Override
