@@ -47,9 +47,9 @@ public class EarthLikeWorld implements WorldType
 
     private Solid[] block_pallette = new Solid[]
         {
-            Solid.MUDSTONE,
-            Solid.MUDSTONE,
-            Solid.CLAYSTONE,
+            GRANITE,
+            GRANITE,
+            LIMESTONE,
             Solid.SCHIST,
             Solid.WHITESCHIST,
             Solid.GREENSCHIST,
@@ -230,7 +230,6 @@ public class EarthLikeWorld implements WorldType
         if (n < 0) n *= -1;
         int block = map_to_block(n, block_range_floor, (float)block_pallette.length);
         var solid = block_pallette[block];
-        boolean bs_or_ws = solid != SCHIST;
         batch.new_block(world_x_block, world_y_block, UniformGrid.BLOCK_SIZE, 90f, 0.03f, 0.0003f, 0,
             Constants.HullFlags.IS_STATIC.bits | Constants.HullFlags.OUT_OF_BOUNDS.bits, solid, hits);
     }
@@ -252,7 +251,7 @@ public class EarthLikeWorld implements WorldType
         {
             int block = map_to_block(n, block_range_floor, (float)block_pallette.length);
             var solid = block_pallette[block];
-            if (solid != Solid.MUDSTONE && solid != Solid.CLAYSTONE)
+            if (solid != LIMESTONE && solid != GRANITE)
             {
                 layer = 1;
                 float n2 = Math.abs(noise2.GetNoise(block_x_2, block_y));

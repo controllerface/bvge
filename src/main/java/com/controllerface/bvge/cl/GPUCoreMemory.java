@@ -320,12 +320,10 @@ public class GPUCoreMemory implements Destoryable
             assert block_id != null : "null block selector id";
             if (next_event instanceof Event.DeselectBlock)
             {
-                System.out.println("deselect: " + block_id);
                 sector_controller.clear_select_block(block_id.index());
             }
             if (next_event instanceof Event.SelectBlock(var _, var solid))
             {
-                System.out.println("select: " + solid + " id: " + block_id);
                 sector_controller.update_select_block(block_id.index(), solid.mineral_number);
             }
         }
