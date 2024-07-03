@@ -54,13 +54,20 @@ public class BackgroundRenderer extends GameSystem
 
         texture = new Texture();
         texture.init("/img/cave_bg.png");
-        shader = Assets.load_shader("bg_shader.glsl");
-        shader.uploadInt("uTexture", 0);
         vao = glCreateVertexArrays();
-        position_vbo = GLUtils.fill_buffer_vec2(vao, POSITION_ATTRIBUTE, vertices);
-        uv_vbo = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);
+
+        // these "old style" calls prevent the shader from being re-compiled on first use. Not really
+        // needed tbh, but remove a perf warning message from debug output, so leaving in for now to
+        // reduce noise while debugging.
+        glEnableVertexAttribArray(POSITION_ATTRIBUTE);
+        glEnableVertexAttribArray(UV_ATTRIBUTE);
+
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_ATTRIBUTE);
+        shader = Assets.load_shader("bg_shader.glsl");
+        shader.uploadInt("uTexture", 0);
+        position_vbo = GLUtils.fill_buffer_vec2(vao, POSITION_ATTRIBUTE, vertices);
+        uv_vbo = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);
     }
 
 
