@@ -10,7 +10,6 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import java.util.Map;
 import java.util.Objects;
 
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
@@ -235,11 +234,11 @@ public class UniformGridRenderer extends GameSystem
         vertex_index += out[0];
         color_index  += out[1];
 
-        ControlPoints control_points = Component.ControlPoints.forEntity(ecs, Constants.PLAYER_ID);
-        assert control_points != null : "Component was null";
-        Objects.requireNonNull(control_points);
+        InputState player_input = Component.PlayerInput.forEntity(ecs, Constants.PLAYER_ID);
+        assert player_input != null : "Component was null";
+        Objects.requireNonNull(player_input);
 
-        var sec = UniformGrid.get_sector_for_point(control_points.get_world_target().x, control_points.get_world_target().y);
+        var sec = UniformGrid.get_sector_for_point(player_input.get_world_target().x, player_input.get_world_target().y);
 
         float offset_x = sec[0] * UniformGrid.BLOCK_COUNT;
         float offset_y = sec[1] * UniformGrid.BLOCK_COUNT;

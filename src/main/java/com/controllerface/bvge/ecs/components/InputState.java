@@ -7,10 +7,8 @@ import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class ControlPoints implements GameComponent
+public class InputState implements GameComponent
 {
-    private boolean disabled = false;
-
     private static final Map<InputBinding, Integer> input_bindings = new EnumMap<>(InputBinding.class);
     private static final Map<InputBinding, Boolean> input_states = new EnumMap<>(InputBinding.class);
 
@@ -56,11 +54,6 @@ public class ControlPoints implements GameComponent
     public Map<InputBinding, Boolean> input_states()
     {
         return input_states;
-    }
-
-    public boolean is_disabled()
-    {
-        return disabled;
     }
 
     public Vector2f get_screen_target()

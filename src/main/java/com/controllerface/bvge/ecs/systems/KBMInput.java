@@ -2,13 +2,10 @@ package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.components.ControlPoints;
-import com.controllerface.bvge.ecs.components.GameComponent;
+import com.controllerface.bvge.ecs.components.InputState;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.events.Event;
 import com.controllerface.bvge.window.Window;
-
-import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -36,11 +33,10 @@ public class KBMInput extends GameSystem
     @Override
     public void tick(float dt)
     {
-        ControlPoints controlPoints = Component.ControlPoints.forEntity(ecs, Constants.PLAYER_ID);
-        assert controlPoints != null : "Component was null";
-        if (controlPoints.is_disabled()) return;
-        controlPoints.update_input_states(key_down, mouse_down);
-        controlPoints.get_screen_target().set(xPos, yPos);
+        InputState inputState = Component.PlayerInput.forEntity(ecs, Constants.PLAYER_ID);
+        assert inputState != null : "Component was null";
+        inputState.update_input_states(key_down, mouse_down);
+        inputState.get_screen_target().set(xPos, yPos);
         shift = key_down[GLFW_KEY_LEFT_SHIFT];
         control = key_down[GLFW_KEY_LEFT_CONTROL];
     }

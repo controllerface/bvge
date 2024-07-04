@@ -8,8 +8,7 @@ import com.controllerface.bvge.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.cl.programs.RootHullFilter;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.components.ControlPoints;
-import com.controllerface.bvge.ecs.components.GameComponent;
+import com.controllerface.bvge.ecs.components.InputState;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
@@ -20,7 +19,6 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import java.util.Map;
 import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
@@ -131,14 +129,14 @@ public class MouseRenderer extends GameSystem
 
         if (cursor_hulls.count() == 0) return;
 
-        ControlPoints control_points = Component.ControlPoints.forEntity(ecs, Constants.PLAYER_ID);
-        assert control_points != null : "Component was null";
-        Objects.requireNonNull(control_points);
+        InputState player_input = Component.PlayerInput.forEntity(ecs, Constants.PLAYER_ID);
+        assert player_input != null : "Component was null";
+        Objects.requireNonNull(player_input);
 
         var camera = Window.get().camera();
-        float world_x = control_points.get_screen_target().x * camera.get_zoom() + camera.position().x;
-        float world_y = (Window.get().height() - control_points.get_screen_target().y) * camera.get_zoom() + camera.position().y;
-        control_points.get_world_target().set(world_x, world_y);
+        float world_x = player_input.get_screen_target().x * camera.get_zoom() + camera.position().x;
+        float world_y = (Window.get().height() - player_input.get_screen_target().y) * camera.get_zoom() + camera.position().y;
+        player_input.get_world_target().set(world_x, world_y);
         float[] mouse_loc = { world_x, world_y, -1.0f, 15.0f };
 
         if (Editor.ACTIVE)

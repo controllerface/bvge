@@ -149,22 +149,6 @@ public class InventorySystem extends GameSystem
 
         if (next_block == current_block) return;
 
-//        if (current_block != null)
-//        {
-//            var ghost_id = ecs.get_component_for(Constants.PLAYER_ID, Component.PlacingId);
-//            assert ghost_id != null : "unexpected null component: block placing de-spawn";
-//
-//            EntityIndex id = Component.PlacingId.coerce(ghost_id);
-//            assert id != null : "unexpected null entity index: block placing de-spawn";
-//
-//            Window.get().event_bus().report_event(Event.despawn(Event.Type.DESPAWN_BLOCK, id.index()));
-//        }
-//
-//        if (next_block != null)
-//        {
-//            Window.get().event_bus().report_event(Event.spawn(Event.Type.SPAWN_BLOCK, next_block));
-//        }
-
         var name = next_block == null ? "-" : next_block.name();
         Window.get().event_bus().report_event(Event.message(Event.Type.ITEM_PLACING, name));
 

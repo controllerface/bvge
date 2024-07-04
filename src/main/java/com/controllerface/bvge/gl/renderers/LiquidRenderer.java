@@ -8,8 +8,7 @@ import com.controllerface.bvge.cl.programs.PrepareLiquids;
 import com.controllerface.bvge.cl.programs.RootHullFilter;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
-import com.controllerface.bvge.ecs.components.ControlPoints;
-import com.controllerface.bvge.ecs.components.GameComponent;
+import com.controllerface.bvge.ecs.components.InputState;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
@@ -20,7 +19,6 @@ import com.controllerface.bvge.util.Assets;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import java.util.Map;
 import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
@@ -127,12 +125,12 @@ public class LiquidRenderer extends GameSystem
         glBindVertexArray(vao);
         shader.use();
 
-        ControlPoints control_points = Component.ControlPoints.forEntity(ecs, Constants.PLAYER_ID);
-        assert control_points != null : "Component was null";
-        Objects.requireNonNull(control_points);
+        InputState player_input = Component.PlayerInput.forEntity(ecs, Constants.PLAYER_ID);
+        assert player_input != null : "Component was null";
+        Objects.requireNonNull(player_input);
 
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
-        shader.uploadvec2f("uMouse", control_points.get_world_target());
+        shader.uploadvec2f("uMouse", player_input.get_world_target());
         shader.uploadvec2f("uCamera", uniformGrid.getWorld_position());
 
         int offset = 0;

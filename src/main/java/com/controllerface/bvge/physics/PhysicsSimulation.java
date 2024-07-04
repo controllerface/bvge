@@ -11,7 +11,6 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
@@ -499,15 +498,13 @@ public class PhysicsSimulation extends GameSystem
 
     private void update_controllable_entities()
     {
-        //  todo: When mobs are added, they will likely need their own loop.
-
-        ControlPoints controlPoints   = Component.ControlPoints.forEntity(ecs, Constants.PLAYER_ID);
+        InputState inputState = Component.PlayerInput.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex entity_id         = Component.EntityId.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex mouse_cursor      = Component.MouseCursorId.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex block_cursor      = Component.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
         LinearForce force             = Component.LinearForce.forEntity(ecs, Constants.PLAYER_ID);
 
-        Objects.requireNonNull(controlPoints);
+        Objects.requireNonNull(inputState);
         Objects.requireNonNull(entity_id);
         Objects.requireNonNull(mouse_cursor);
         Objects.requireNonNull(block_cursor);
@@ -515,7 +512,7 @@ public class PhysicsSimulation extends GameSystem
 
         int flags = 0;
 
-        var inputStates = controlPoints.input_states();
+        var inputStates = inputState.input_states();
         for (var binding : InputBinding.values())
         {
             var on = inputStates.get(binding);
@@ -541,7 +538,7 @@ public class PhysicsSimulation extends GameSystem
         }
 
         k_set_control_points
-            .set_arg(SetControlPoints_k.Args.target, entity_id.index()) // todo: probably don't nee this in 2 args
+            .set_arg(SetControlPoints_k.Args.target, entity_id.index()) // todo: probably don't need this in 2 args
             .set_arg(SetControlPoints_k.Args.new_flags, flags)
             .set_arg(SetControlPoints_k.Args.new_index, entity_id.index())
             .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
@@ -549,8 +546,8 @@ public class PhysicsSimulation extends GameSystem
             .call(GPGPU.global_single_size);
 
         var camera = Window.get().camera();
-        float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position().x;
-        float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position().y;
+        float world_x = inputState.get_screen_target().x * camera.get_zoom() + camera.position().x;
+        float world_y = (Window.get().height() - inputState.get_screen_target().y) * camera.get_zoom() + camera.position().y;
         GPGPU.core_memory.update_entity_position(mouse_cursor.index(), world_x, world_y);
 
         // todo: don't bother if block cursor is inactive.
