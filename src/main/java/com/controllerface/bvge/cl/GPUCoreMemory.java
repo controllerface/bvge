@@ -10,7 +10,6 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.SectorContainer;
 import com.controllerface.bvge.game.world.sectors.*;
 import com.controllerface.bvge.geometry.ModelRegistry;
-import com.controllerface.bvge.gl.renderers.HUDRenderer;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Constants;
@@ -316,15 +315,15 @@ public class GPUCoreMemory implements Destoryable
         Event next_event;
         while ((next_event = event_queue.poll()) != null)
         {
-            EntityIndex block_id = Component.BlockPlacerId.forEntity(ecs, Constants.PLAYER_ID);
-            assert block_id != null : "null block selector id";
+            EntityIndex block_cursor = Component.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
+            assert block_cursor != null : "null block selector id";
             if (next_event instanceof Event.DeselectBlock)
             {
-                sector_controller.clear_select_block(block_id.index());
+                sector_controller.clear_block_cursor(block_cursor.index());
             }
             if (next_event instanceof Event.SelectBlock(var _, var solid))
             {
-                sector_controller.update_select_block(block_id.index(), solid.mineral_number);
+                sector_controller.update_block_cursor(block_cursor.index(), solid.mineral_number);
             }
         }
 

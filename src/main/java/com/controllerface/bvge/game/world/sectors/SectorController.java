@@ -217,7 +217,7 @@ public class SectorController implements SectorContainer, Destoryable
             .call(GPGPU.global_single_size);
     }
 
-    public void update_select_block(int entity_index, int new_uv)
+    public void update_block_cursor(int entity_index, int new_uv)
     {
         k_update_select_block
             .set_arg(UpdateSelectBlock_k.Args.target, entity_index)
@@ -225,7 +225,7 @@ public class SectorController implements SectorContainer, Destoryable
             .call(GPGPU.global_single_size);
     }
 
-    public void clear_select_block(int entity_index)
+    public void clear_block_cursor(int entity_index)
     {
         k_clear_select_block
             .set_arg(ClearSelectBlock_k.Args.target, entity_index)

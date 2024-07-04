@@ -6,8 +6,8 @@ public enum Component
 {
     ControlPoints(ControlPoints.class),
     EntityId(EntityIndex.class),
-    CursorId(EntityIndex.class),
-    BlockPlacerId(EntityIndex.class),
+    MouseCursorId(EntityIndex.class),
+    BlockCursorId(EntityIndex.class),
     LinearForce(LinearForce.class),
     CameraFocus(CameraFocus.class),
 

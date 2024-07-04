@@ -494,7 +494,9 @@ public class PhysicsSimulation extends GameSystem
     private void update_controllable_entities()
     {
         // todo: index and magnitudes only need to be set once, but may need some
-        //  checks or logic to ensure characters don't get deleted
+        //  checks or logic to ensure characters don't get deleted. Also, probably
+        //  don't need to actually loop here and just get the player data directly.
+        //  When mobs are added, they will likely need their own loop.
         var components = ecs.get_components(Component.ControlPoints);
 
         b_control_point_flags.ensure_capacity(components.size());
@@ -510,14 +512,15 @@ public class PhysicsSimulation extends GameSystem
             GameComponent component       = entry.getValue();
             ControlPoints controlPoints   = Component.ControlPoints.coerce(component);
             EntityIndex entity_id         = Component.EntityId.forEntity(ecs, entity_name);
-            EntityIndex cursor_entity_id  = Component.CursorId.forEntity(ecs, entity_name);
-            EntityIndex placing_entity_id = Component.BlockPlacerId.forEntity(ecs, entity_name);
+            EntityIndex mouse_cursor      = Component.MouseCursorId.forEntity(ecs, entity_name);
+            EntityIndex block_cursor      = Component.BlockCursorId.forEntity(ecs, entity_name);
             LinearForce force             = Component.LinearForce.forEntity(ecs, entity_name);
 
             Objects.requireNonNull(controlPoints);
             Objects.requireNonNull(entity_id);
+            Objects.requireNonNull(mouse_cursor);
+            Objects.requireNonNull(block_cursor);
             Objects.requireNonNull(force);
-            Objects.requireNonNull(cursor_entity_id);
 
             int flags = 0;
 
@@ -557,12 +560,12 @@ public class PhysicsSimulation extends GameSystem
             var camera = Window.get().camera();
             float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position().x;
             float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position().y;
-            GPGPU.core_memory.update_entity_position(cursor_entity_id.index(), world_x, world_y);
-
-            if (placing_entity_id != null)
-            {
-                GPGPU.core_memory.update_entity_position(placing_entity_id.index(), world_x, world_y);
-            }
+            GPGPU.core_memory.update_entity_position(mouse_cursor.index(), world_x, world_y);
+            // todo: don't bother if block cursor is inactive.
+            //  when block cursor becomes active, reset position to player entity x,y.
+            //  it should then move toward the mouse instead of being pinned to it,
+            //  so it shouldn't end up inside other geometry
+            GPGPU.core_memory.update_entity_position(block_cursor.index(), world_x, world_y);
 
             target_count++;
         }
