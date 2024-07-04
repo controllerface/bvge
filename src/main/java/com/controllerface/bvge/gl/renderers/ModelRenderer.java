@@ -352,15 +352,7 @@ public class ModelRenderer extends GameSystem
             textures[i].bind(i);
         }
 
-        var control_components = ecs.get_components(Component.ControlPoints);
-        ControlPoints control_points = null;
-        // todo: remove loop, get player data directly
-        for (Map.Entry<String, GameComponent> entry : control_components.entrySet())
-        {
-            GameComponent component = entry.getValue();
-            control_points = Component.ControlPoints.coerce(component);
-        }
-
+        ControlPoints control_points = Component.ControlPoints.forEntity(ecs, Constants.PLAYER_ID);
         assert control_points != null : "Component was null";
         Objects.requireNonNull(control_points);
 

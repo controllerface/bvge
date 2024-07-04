@@ -17,6 +17,7 @@ import com.controllerface.bvge.gl.GLUtils;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
 import java.util.Map;
@@ -130,15 +131,7 @@ public class MouseRenderer extends GameSystem
 
         if (cursor_hulls.count() == 0) return;
 
-        var control_components = ecs.get_components(Component.ControlPoints);
-        ControlPoints control_points = null;
-        // todo: remove loop, get player data directly
-        for (Map.Entry<String, GameComponent> entry : control_components.entrySet())
-        {
-            GameComponent component = entry.getValue();
-            control_points = Component.ControlPoints.coerce(component);
-        }
-
+        ControlPoints control_points = Component.ControlPoints.forEntity(ecs, Constants.PLAYER_ID);
         assert control_points != null : "Component was null";
         Objects.requireNonNull(control_points);
 

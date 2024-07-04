@@ -191,6 +191,12 @@ public class PhysicsSimulation extends GameSystem
         b_control_point_linear_mag   = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float, 1);
         b_control_point_jump_mag     = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float, 1);
 
+        b_control_point_flags.ensure_capacity(1);
+        b_control_point_indices.ensure_capacity(1);
+        b_control_point_tick_budgets.ensure_capacity(1);
+        b_control_point_linear_mag.ensure_capacity(1);
+        b_control_point_jump_mag.ensure_capacity(1);
+
         p_control_entities.init();
         p_integrate.init();
         p_scan_key_bank.init();
@@ -493,86 +499,68 @@ public class PhysicsSimulation extends GameSystem
 
     private void update_controllable_entities()
     {
-        // todo: index and magnitudes only need to be set once, but may need some
-        //  checks or logic to ensure characters don't get deleted. Also, probably
-        //  don't need to actually loop here and just get the player data directly.
-        //  When mobs are added, they will likely need their own loop.
-        var components = ecs.get_components(Component.ControlPoints);
+        //  todo: When mobs are added, they will likely need their own loop.
 
-        b_control_point_flags.ensure_capacity(components.size());
-        b_control_point_indices.ensure_capacity(components.size());
-        b_control_point_tick_budgets.ensure_capacity(components.size());
-        b_control_point_linear_mag.ensure_capacity(components.size());
-        b_control_point_jump_mag.ensure_capacity(components.size());
+        ControlPoints controlPoints   = Component.ControlPoints.forEntity(ecs, Constants.PLAYER_ID);
+        EntityIndex entity_id         = Component.EntityId.forEntity(ecs, Constants.PLAYER_ID);
+        EntityIndex mouse_cursor      = Component.MouseCursorId.forEntity(ecs, Constants.PLAYER_ID);
+        EntityIndex block_cursor      = Component.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
+        LinearForce force             = Component.LinearForce.forEntity(ecs, Constants.PLAYER_ID);
 
-        int target_count = 0;
-        // todo: remove loop, get player data directly
-        for (Map.Entry<String, GameComponent> entry : components.entrySet())
+        Objects.requireNonNull(controlPoints);
+        Objects.requireNonNull(entity_id);
+        Objects.requireNonNull(mouse_cursor);
+        Objects.requireNonNull(block_cursor);
+        Objects.requireNonNull(force);
+
+        int flags = 0;
+
+        var inputStates = controlPoints.input_states();
+        for (var binding : InputBinding.values())
         {
-            String entity_name            = entry.getKey();
-            GameComponent component       = entry.getValue();
-            ControlPoints controlPoints   = Component.ControlPoints.coerce(component);
-            EntityIndex entity_id         = Component.EntityId.forEntity(ecs, entity_name);
-            EntityIndex mouse_cursor      = Component.MouseCursorId.forEntity(ecs, entity_name);
-            EntityIndex block_cursor      = Component.BlockCursorId.forEntity(ecs, entity_name);
-            LinearForce force             = Component.LinearForce.forEntity(ecs, entity_name);
-
-            Objects.requireNonNull(controlPoints);
-            Objects.requireNonNull(entity_id);
-            Objects.requireNonNull(mouse_cursor);
-            Objects.requireNonNull(block_cursor);
-            Objects.requireNonNull(force);
-
-            int flags = 0;
-
-            var inputStates = controlPoints.input_states();
-            for (var binding : InputBinding.values())
+            var on = inputStates.get(binding);
+            if (on == null) continue;
+            if (on)
             {
-                var on = inputStates.get(binding);
-                if (on == null) continue;
-                if (on)
+                int flag = switch (binding)
                 {
-                    int flag = switch (binding)
-                    {
-                        case MOVE_UP         -> Constants.ControlFlags.UP.bits;
-                        case MOVE_DOWN       -> Constants.ControlFlags.DOWN.bits;
-                        case MOVE_LEFT       -> Constants.ControlFlags.LEFT.bits;
-                        case MOVE_RIGHT      -> Constants.ControlFlags.RIGHT.bits;
-                        case JUMP            -> Constants.ControlFlags.JUMP.bits;
-                        case RUN             -> Constants.ControlFlags.RUN.bits;
-                        case MOUSE_PRIMARY   -> Constants.ControlFlags.MOUSE1.bits;
-                        case MOUSE_SECONDARY -> Constants.ControlFlags.MOUSE2.bits;
-                        case MOUSE_MIDDLE,
-                             MOUSE_BACK,
-                             MOUSE_FORWARD   -> 0;
-                    };
-                    flags |= flag;
-                }
+                    case MOVE_UP         -> Constants.ControlFlags.UP.bits;
+                    case MOVE_DOWN       -> Constants.ControlFlags.DOWN.bits;
+                    case MOVE_LEFT       -> Constants.ControlFlags.LEFT.bits;
+                    case MOVE_RIGHT      -> Constants.ControlFlags.RIGHT.bits;
+                    case JUMP            -> Constants.ControlFlags.JUMP.bits;
+                    case RUN             -> Constants.ControlFlags.RUN.bits;
+                    case MOUSE_PRIMARY   -> Constants.ControlFlags.MOUSE1.bits;
+                    case MOUSE_SECONDARY -> Constants.ControlFlags.MOUSE2.bits;
+                    case MOUSE_MIDDLE,
+                         MOUSE_BACK,
+                         MOUSE_FORWARD   -> 0;
+                };
+                flags |= flag;
             }
-
-            k_set_control_points
-                .set_arg(SetControlPoints_k.Args.target, target_count)
-                .set_arg(SetControlPoints_k.Args.new_flags, flags)
-                .set_arg(SetControlPoints_k.Args.new_index, entity_id.index())
-                .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
-                .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
-                .call(GPGPU.global_single_size);
-
-            var camera = Window.get().camera();
-            float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position().x;
-            float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position().y;
-            GPGPU.core_memory.update_entity_position(mouse_cursor.index(), world_x, world_y);
-            // todo: don't bother if block cursor is inactive.
-            //  when block cursor becomes active, reset position to player entity x,y.
-            //  it should then move toward the mouse instead of being pinned to it,
-            //  so it shouldn't end up inside other geometry
-            GPGPU.core_memory.update_entity_position(block_cursor.index(), world_x, world_y);
-
-            target_count++;
         }
 
+        k_set_control_points
+            .set_arg(SetControlPoints_k.Args.target, entity_id.index()) // todo: probably don't nee this in 2 args
+            .set_arg(SetControlPoints_k.Args.new_flags, flags)
+            .set_arg(SetControlPoints_k.Args.new_index, entity_id.index())
+            .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
+            .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
+            .call(GPGPU.global_single_size);
+
+        var camera = Window.get().camera();
+        float world_x = controlPoints.get_screen_target().x * camera.get_zoom() + camera.position().x;
+        float world_y = (Window.get().height() - controlPoints.get_screen_target().y) * camera.get_zoom() + camera.position().y;
+        GPGPU.core_memory.update_entity_position(mouse_cursor.index(), world_x, world_y);
+
+        // todo: don't bother if block cursor is inactive.
+        //  when block cursor becomes active, reset position to player entity x,y.
+        //  it should then move toward the mouse instead of being pinned to it,
+        //  so it shouldn't end up inside other geometry
+        GPGPU.core_memory.update_entity_position(block_cursor.index(), world_x, world_y);
+
         k_handle_movement.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)
-            .call(arg_long(target_count));
+            .call(GPGPU.global_single_size);
     }
 
     //#endregion

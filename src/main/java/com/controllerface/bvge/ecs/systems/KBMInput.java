@@ -4,6 +4,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.ecs.components.ControlPoints;
 import com.controllerface.bvge.ecs.components.GameComponent;
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.events.Event;
 import com.controllerface.bvge.window.Window;
 
@@ -35,18 +36,11 @@ public class KBMInput extends GameSystem
     @Override
     public void tick(float dt)
     {
-        var controllables = ecs.get_components(Component.ControlPoints);
-        // todo: remove loop, get player data directly
-        for (Map.Entry<String, GameComponent> entry : controllables.entrySet())
-        {
-            GameComponent component = entry.getValue();
-            ControlPoints controlPoints = Component.ControlPoints.coerce(component);
-            assert controlPoints != null : "Component was null";
-            if (controlPoints.is_disabled()) continue;
-            controlPoints.update_input_states(key_down, mouse_down);
-            controlPoints.get_screen_target().set(xPos, yPos);
-        }
-
+        ControlPoints controlPoints = Component.ControlPoints.forEntity(ecs, Constants.PLAYER_ID);
+        assert controlPoints != null : "Component was null";
+        if (controlPoints.is_disabled()) return;
+        controlPoints.update_input_states(key_down, mouse_down);
+        controlPoints.get_screen_target().set(xPos, yPos);
         shift = key_down[GLFW_KEY_LEFT_SHIFT];
         control = key_down[GLFW_KEY_LEFT_CONTROL];
     }
