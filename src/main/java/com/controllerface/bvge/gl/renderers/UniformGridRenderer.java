@@ -236,6 +236,7 @@ public class UniformGridRenderer extends GameSystem
 
         var components = ecs.get_components(Component.ControlPoints);
         ControlPoints controlPoints = null;
+        // todo: remove loop, get player data directly
         for (Map.Entry<String, GameComponent> entry : components.entrySet())
         {
             GameComponent component = entry.getValue();

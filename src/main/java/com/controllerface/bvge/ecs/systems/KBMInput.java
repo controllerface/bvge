@@ -36,6 +36,7 @@ public class KBMInput extends GameSystem
     public void tick(float dt)
     {
         var controllables = ecs.get_components(Component.ControlPoints);
+        // todo: remove loop, get player data directly
         for (Map.Entry<String, GameComponent> entry : controllables.entrySet())
         {
             GameComponent component = entry.getValue();

@@ -506,6 +506,7 @@ public class PhysicsSimulation extends GameSystem
         b_control_point_jump_mag.ensure_capacity(components.size());
 
         int target_count = 0;
+        // todo: remove loop, get player data directly
         for (Map.Entry<String, GameComponent> entry : components.entrySet())
         {
             String entity_name            = entry.getKey();

@@ -129,6 +129,7 @@ public class LiquidRenderer extends GameSystem
 
         var control_components = ecs.get_components(Component.ControlPoints);
         ControlPoints control_points = null;
+        // todo: remove loop, get player data directly
         for (Map.Entry<String, GameComponent> entry : control_components.entrySet())
         {
             GameComponent component = entry.getValue();
