@@ -4,12 +4,11 @@ import com.controllerface.bvge.ecs.ECS;
 
 public enum Component
 {
-    PlayerInput(InputState.class),
-    EntityId(EntityIndex.class),
-    MouseCursorId(EntityIndex.class),
-    BlockCursorId(EntityIndex.class),
-    LinearForce(LinearForce.class),
-    CameraFocus(CameraFocus.class),
+    EntityId      (EntityIndex.class),
+    MouseCursorId (EntityIndex.class),
+    BlockCursorId (EntityIndex.class),
+    LinearForce   (LinearForce.class),
+    InputState    (InputState.class),
 
     ;
 
@@ -20,7 +19,7 @@ public enum Component
         _class = aClass;
     }
 
-    public <T extends GameComponent> T coerce(Object componentClass)
+    private <T extends GameComponent> T coerce(Object componentClass)
     {
         assert componentClass != null : "Attempted to coerce null component";
         if (_class.isAssignableFrom(componentClass.getClass()))

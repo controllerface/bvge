@@ -11,9 +11,5 @@ public abstract class GameMode
         this.ecs = ecs;
     }
 
-    abstract public void start();
-
-    abstract public void update(float dt);
-
-    abstract public void load();
+    abstract public void init();
 }

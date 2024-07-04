@@ -498,7 +498,7 @@ public class PhysicsSimulation extends GameSystem
 
     private void update_controllable_entities()
     {
-        InputState inputState = Component.PlayerInput.forEntity(ecs, Constants.PLAYER_ID);
+        InputState inputState = Component.InputState.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex entity_id         = Component.EntityId.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex mouse_cursor      = Component.MouseCursorId.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex block_cursor      = Component.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);

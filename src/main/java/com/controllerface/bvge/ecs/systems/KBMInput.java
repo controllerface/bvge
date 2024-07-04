@@ -33,7 +33,7 @@ public class KBMInput extends GameSystem
     @Override
     public void tick(float dt)
     {
-        InputState inputState = Component.PlayerInput.forEntity(ecs, Constants.PLAYER_ID);
+        InputState inputState = Component.InputState.forEntity(ecs, Constants.PLAYER_ID);
         assert inputState != null : "Component was null";
         inputState.update_input_states(key_down, mouse_down);
         inputState.get_screen_target().set(xPos, yPos);

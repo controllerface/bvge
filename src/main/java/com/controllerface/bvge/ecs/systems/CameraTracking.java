@@ -5,7 +5,10 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.ecs.components.Component;
 import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
+
+import java.util.Objects;
 
 /**
  * A simple system that ensures the game camera tracks the player. This class has an implicit assumption that
@@ -46,12 +49,8 @@ public class CameraTracking extends GameSystem
     @Override
     public void tick(float dt)
     {
-        // todo: just get the player target directly, this is more convoluted
-        var focusTargets = ecs.get_components(Component.CameraFocus);
-        var focusTarget = focusTargets.entrySet().stream().findAny().orElseThrow();
-        EntityIndex entity_id = Component.EntityId.forEntity(ecs, focusTarget.getKey());
-        if (entity_id == null) return;
-
+        EntityIndex entity_id = Component.EntityId.forEntity(ecs, Constants.PLAYER_ID);
+        Objects.requireNonNull(entity_id);
         float[] pos = GPGPU.core_memory.read_entity_position(entity_id.index());
         float pos_x = pos[0];
         float pos_y = pos[1];

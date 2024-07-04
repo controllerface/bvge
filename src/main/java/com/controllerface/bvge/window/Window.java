@@ -16,7 +16,6 @@ import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL43C;
 import org.lwjgl.opengl.GLDebugMessageCallback;
-import org.lwjgl.opengl.GLUtil;
 import org.lwjgl.system.APIUtil;
 import org.lwjgl.system.MemoryUtil;
 
@@ -349,8 +348,7 @@ public class Window
     {
         var blanking_system = new BlankSystem(null);
         currentGameMode = new TestGame(ecs, blanking_system);
-        currentGameMode.load();
-        currentGameMode.start();
+        currentGameMode.init();
 
         camera.projection_size().x = this.width;
         camera.projection_size().y = this.height;
@@ -385,7 +383,6 @@ public class Window
 
             if (dt >= 0)
             {
-                currentGameMode.update(dt);
                 ecs.tick(dt);
                 glfwSwapBuffers(glfwWindow);
             }

@@ -58,10 +58,6 @@ public class TestGame extends GameMode
 //            ,RenderType.GRID
         );
 
-//    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-//        EnumSet.of(RenderType.HULLS);
-
-    //private final UniformGrid uniformGrid = new UniformGrid(Window.get().width(), Window.get().height());
     private final UniformGrid uniformGrid = new UniformGrid(GRID_WIDTH, GRID_HEIGHT);
 
 
@@ -85,16 +81,22 @@ public class TestGame extends GameMode
     private void gen_player(float size, float x, float y)
     {
         var player = ecs.register_entity(Constants.PLAYER_ID);
-        var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory.sector_container(), PLAYER_MODEL_INDEX, x, y, size, 100.5f, 0.05f, 0, 0, Constants.EntityFlags.CAN_COLLECT.bits);
-        var cursor_id = PhysicsObjects.circle_cursor(GPGPU.core_memory.sector_container(), 0, 0, 10, entity_id[1]);
+
+        var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory.sector_container(),
+                PLAYER_MODEL_INDEX, x, y, size,
+                100.5f, 0.05f, 0, 0,
+                Constants.EntityFlags.CAN_COLLECT.bits);
+
+        var cursor_id = PhysicsObjects.circle_cursor(GPGPU.core_memory.sector_container(),
+                0, 0, 10, entity_id[1]);
+
         var block_cursor = PhysicsObjects.block_cursor(GPGPU.core_memory.sector_container(), x, y);
 
-        ecs.attach_component(player, Component.EntityId, new EntityIndex(entity_id[0]));
+        ecs.attach_component(player, Component.EntityId,      new EntityIndex(entity_id[0]));
         ecs.attach_component(player, Component.MouseCursorId, new EntityIndex(cursor_id));
         ecs.attach_component(player, Component.BlockCursorId, new EntityIndex(block_cursor));
-        ecs.attach_component(player, Component.PlayerInput, new InputState());
-        ecs.attach_component(player, Component.CameraFocus, new CameraFocus());
-        ecs.attach_component(player, Component.LinearForce, new LinearForce(1600));
+        ecs.attach_component(player, Component.LinearForce,   new LinearForce(1600));
+        ecs.attach_component(player, Component.InputState,    new InputState());
     }
 
     private void load_systems(float x, float y)
@@ -112,7 +114,8 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.GAME))
         {
-            ecs.register_system(new ModelRenderer(ecs, uniformGrid, PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX));
+            ecs.register_system(new ModelRenderer(ecs, uniformGrid,
+                    PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX));
             ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
         }
         
@@ -146,7 +149,7 @@ public class TestGame extends GameMode
     }
 
     @Override
-    public void load()
+    public void init()
     {
         float player_size = 1f;
         float player_spawn_x = -250;
@@ -154,10 +157,4 @@ public class TestGame extends GameMode
         gen_player(player_size, player_spawn_x, player_spawn_y);
         load_systems(player_spawn_x, player_spawn_y);
     }
-
-    @Override
-    public void start() { }
-
-    @Override
-    public void update(float dt) { }
 }

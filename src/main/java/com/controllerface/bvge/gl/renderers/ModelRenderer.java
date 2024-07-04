@@ -349,7 +349,7 @@ public class ModelRenderer extends GameSystem
             textures[i].bind(i);
         }
 
-        InputState player_input = Component.PlayerInput.forEntity(ecs, Constants.PLAYER_ID);
+        InputState player_input = Component.InputState.forEntity(ecs, Constants.PLAYER_ID);
         assert player_input != null : "Component was null";
         Objects.requireNonNull(player_input);
 
