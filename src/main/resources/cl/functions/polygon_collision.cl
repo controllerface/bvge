@@ -23,7 +23,6 @@ inline void polygon_collision(int hull_1_id,
                               __global int *counter,
                               float dt)
 {
-
     float4 hull_1 = hulls[hull_1_id];
     float4 hull_2 = hulls[hull_2_id];
 
@@ -41,6 +40,13 @@ inline void polygon_collision(int hull_1_id,
     int hull_2_flags = hull_flags[hull_2_id];
     bool b1_is_block = (hull_1_flags & IS_BLOCK) !=0;
     bool b2_is_block = (hull_2_flags & IS_BLOCK) !=0;
+    bool b1_is_ghost = (hull_1_flags & GHOST_HULL) !=0;
+    bool b2_is_ghost = (hull_2_flags & GHOST_HULL) !=0;
+    bool b1_is_active = (entity_flags[hull_entity_ids[hull_1_id]] & GHOST_ACTIVE) !=0;
+    bool b2_is_active = (entity_flags[hull_entity_ids[hull_2_id]] & GHOST_ACTIVE) !=0;
+
+    if (b1_is_ghost && !b1_is_active) return;
+    if (b2_is_ghost && !b2_is_active) return;
 
     float min_distance = FLT_MAX;
 
@@ -208,6 +214,9 @@ inline void polygon_collision(int hull_1_id,
     float vert_magnitude = native_divide(edge_hull_mass, total_mass);
     float edge_magnitude = native_divide(vert_hull_mass, total_mass);
 
+    bool ghost_vert = (vert_hull_flags & GHOST_HULL) !=0;
+    bool ghost_edge = (edge_hull_flags & GHOST_HULL) !=0;
+
     bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
     bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
 
@@ -281,7 +290,9 @@ inline void polygon_collision(int hull_1_id,
     float2 edge_1_restitution = restituion_coefficient * dot(edge_1_applied_vel, collision_invert) * collision_invert;
     float2 edge_2_restitution = restituion_coefficient * dot(edge_2_applied_vel, collision_invert) * collision_invert;
 
-    if (!static_vert)
+    // todo: optimize; when opposing object is ghost, don't bother calculating collision data
+
+    if (!static_vert && !ghost_edge)
     {
         int point_index = atomic_inc(&counter[0]);
         float8 vertex_reactions = (float8)(vertex_collision, vert_hull_opposing, vertex_friction, vertex_restitution);
@@ -289,7 +300,7 @@ inline void polygon_collision(int hull_1_id,
         reaction_index[point_index] = vert_index;
         atomic_inc(&reaction_counts[vert_index]);
     }
-    if (!static_edge)
+    if (!static_edge && !ghost_vert)
     {
         int edge_1_reaction_index = atomic_inc(&counter[0]);
         int edge_2_reaction_index = atomic_inc(&counter[0]);

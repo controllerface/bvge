@@ -14,7 +14,10 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL43C;
+import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.opengl.GLUtil;
+import org.lwjgl.system.APIUtil;
 import org.lwjgl.system.MemoryUtil;
 
 import javax.imageio.ImageIO;
@@ -177,10 +180,24 @@ public class Window
         glfwMakeContextCurrent(glfwWindow);
         //glfwSwapInterval(1); // v-sync
 
-        // note: this must be called or nothing will work
+        // note: this must be called to set up all the C API function pointers
         GL.createCapabilities();
 
-        var debugProc = GLUtil.setupDebugMessageCallback();
+        var debugProc = GLDebugMessageCallback.create((source, type, id, severity, length, message, userParam) -> {
+            if (severity != 33387) {
+                StringBuilder sb = new StringBuilder(300);
+                sb.append("OpenGL debug message\n");
+                sb.append("\tID 0x").append(Integer.toHexString(id).toUpperCase()).append("\n");
+                sb.append("\tSource: ").append(getDebugSource(source)).append("\n");
+                sb.append("\tType: ").append(getDebugType(type)).append("\n");
+                sb.append("\tSeverity: ").append(getDebugSeverity(severity)).append("\n");
+                sb.append("\tMessage: ").append(GLDebugMessageCallback.getMessage(length, message)).append("\n");
+                System.err.println(sb);
+            }
+        });
+        GL43C.glDebugMessageCallback(debugProc, 0L);
+
+        //var debugProc = GLUtil.setupDebugMessageCallback();
         assert debugProc != null : "debugger process could not be created";
 
         glEnable(GL_BLEND);
@@ -409,5 +426,60 @@ public class Window
     public int height()
     {
         return height;
+    }
+
+    private static String getDebugSource(int source) {
+        switch (source) {
+            case 33350:
+                return "API";
+            case 33351:
+                return "WINDOW SYSTEM";
+            case 33352:
+                return "SHADER COMPILER";
+            case 33353:
+                return "THIRD PARTY";
+            case 33354:
+                return "APPLICATION";
+            case 33355:
+                return "OTHER";
+            default:
+                return APIUtil.apiUnknownToken(source);
+        }
+    }
+
+    private static String getDebugType(int type) {
+        switch (type) {
+            case 33356:
+                return "ERROR";
+            case 33357:
+                return "DEPRECATED BEHAVIOR";
+            case 33358:
+                return "UNDEFINED BEHAVIOR";
+            case 33359:
+                return "PORTABILITY";
+            case 33360:
+                return "PERFORMANCE";
+            case 33361:
+                return "OTHER";
+            case 33384:
+                return "MARKER";
+            default:
+                return APIUtil.apiUnknownToken(type);
+        }
+    }
+
+    private static String getDebugSeverity(int severity) {
+        switch (severity) {
+            case 33387:
+                return "NOTIFICATION";
+            case 37190:
+                return "HIGH";
+            case 37191:
+                return "MEDIUM";
+            case 37192:
+                return "LOW";
+            default:
+                return APIUtil.apiUnknownToken(severity);
+        }
     }
 }

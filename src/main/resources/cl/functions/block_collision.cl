@@ -197,6 +197,10 @@ inline void block_collision(int hull_1_id,
 
     bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
     bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
+
+    bool ghost_vert = (vert_hull_flags & GHOST_HULL) !=0;
+    bool ghost_edge = (edge_hull_flags & GHOST_HULL) !=0;
+
     bool block_vert = (vert_hull_flags & IS_BLOCK) !=0;
     bool block_edge = (edge_hull_flags & IS_BLOCK) !=0;
 
@@ -328,7 +332,7 @@ inline void block_collision(int hull_1_id,
     float2 edge_1_restitution = restituion_coefficient * dot(edge_1_applied_vel, collision_invert) * collision_invert;
     float2 edge_2_restitution = restituion_coefficient * dot(edge_2_applied_vel, collision_invert) * collision_invert;
 
-    if (!static_vert)
+    if (!static_vert && !ghost_edge)
     {
         int point_index = atomic_inc(&counter[0]);
         float8 vertex_reactions = (float8)(vertex_collision, vert_hull_opposing, vertex_friction, vertex_restitution);
@@ -344,7 +348,7 @@ inline void block_collision(int hull_1_id,
             atomic_inc(&reaction_counts[vertex_ex_index]);
         }
     }
-    if (!static_edge)
+    if (!static_edge && !ghost_vert)
     {
         int edge_1_reaction_index = atomic_inc(&counter[0]);
         int edge_2_reaction_index = atomic_inc(&counter[0]);
