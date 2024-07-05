@@ -587,7 +587,7 @@ public class PhysicsSimulation extends GameSystem
                 && !input_state.mouse_latched())
         {
             input_state.latch_mouse();
-            // todo: allow non-static placement using key-combo or something
+            // todo: allow non-static placement using key-combo or mode switch of some kind
             int resource_count = player_inventory.solid_counts().get(block_cursor.block());
             if (resource_count >= 4)
             {
@@ -602,6 +602,10 @@ public class PhysicsSimulation extends GameSystem
             Window.get().event_bus().emit_event(Event.inventory(Event.Type.ITEM_CHANGE));
             if (resource_count < 4)
             {
+                // todo: may be better moving the finer details into the inventory system
+                //  and just emit a new event to let it know that the count has gone below
+                //  the threshold. may also want to encode the threshold somewhere so
+                //  it isn't hard-coded, and could be subject to player buffs (maybe?)
                 block_cursor.set_block(null);
                 Window.get().event_bus().emit_event(Event.select_block(null));
                 Window.get().event_bus().emit_event(Event.message(Event.Type.ITEM_PLACING, "-"));
