@@ -646,7 +646,38 @@ __kernel void egress_entities(__global float4 *points_in,
     }
 }
 
+__kernel void place_block(__global float4 *entities,
+                          __global int2 *entity_hull_tables,
+                          __global float4 *hulls,
+                          __global int2 *hull_point_tables,
+                          __global float2 *hull_rotations,
+                          __global float4 *points,
+                          int src,
+                          int dest)
+{
+    entities[dest] = entities[src];
+    
+    int hull_id_src = entity_hull_tables[src].x;
+    int hull_id_dest = entity_hull_tables[dest].x;
 
+    hulls[hull_id_dest] = hulls[hull_id_src];
+    hull_rotations[hull_id_dest] = hull_rotations[hull_id_src];
+    
+    int p0_id_src = hull_point_tables[hull_id_src].x;
+    int p1_id_src = p0_id_src + 1;
+    int p2_id_src = p0_id_src + 2;
+    int p3_id_src = p0_id_src + 3;
+
+    int p0_id_dest = hull_point_tables[hull_id_dest].x;
+    int p1_id_dest = p0_id_dest + 1;
+    int p2_id_dest = p0_id_dest + 2;
+    int p3_id_dest = p0_id_dest + 3;
+
+    points[p0_id_dest] = points[p0_id_src];
+    points[p1_id_dest] = points[p1_id_src];
+    points[p2_id_dest] = points[p2_id_src];
+    points[p3_id_dest] = points[p3_id_src];
+}
 
 
 // todo: implement for armature

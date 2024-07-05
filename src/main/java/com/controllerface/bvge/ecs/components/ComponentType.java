@@ -4,6 +4,7 @@ import com.controllerface.bvge.ecs.ECS;
 
 public enum ComponentType
 {
+    Position      (Position.class),
     EntityId      (EntityIndex.class),
     MouseCursorId (EntityIndex.class),
     BlockCursorId (EntityIndex.class),

@@ -30,6 +30,7 @@ public class SectorController implements SectorContainer, Destoryable
     private final GPUKernel k_update_accel;
     private final GPUKernel k_update_select_block;
     private final GPUKernel k_clear_select_block;
+    private final GPUKernel k_place_block;
     private final GPUKernel k_update_mouse_position;
     private final GPUKernel k_count_egress_entities;
 
@@ -145,6 +146,15 @@ public class SectorController implements SectorContainer, Destoryable
         long k_ptr_clear_select_block = p_gpu_crud.kernel_ptr(Kernel.clear_select_block);
         k_clear_select_block = new ClearSelectBlock_k(this.ptr_queue, k_ptr_clear_select_block)
             .buf_arg(ClearSelectBlock_k.Args.entity_flags,             this.sector_buffers.get_buffer(ENTITY_FLAG));
+
+        long k_ptr_place_block = p_gpu_crud.kernel_ptr(Kernel.place_block);
+        k_place_block = new PlaceBlock_k(this.ptr_queue, k_ptr_place_block)
+                .buf_arg(PlaceBlock_k.Args.entities, this.sector_buffers.get_buffer(ENTITY))
+                .buf_arg(PlaceBlock_k.Args.entity_hull_tables, this.sector_buffers.get_buffer(ENTITY_HULL_TABLE))
+                .buf_arg(PlaceBlock_k.Args.hulls, this.sector_buffers.get_buffer(HULL))
+                .buf_arg(PlaceBlock_k.Args.hull_point_tables, this.sector_buffers.get_buffer(HULL_POINT_TABLE))
+                .buf_arg(PlaceBlock_k.Args.hull_rotations, this.sector_buffers.get_buffer(HULL_ROTATION))
+                .buf_arg(PlaceBlock_k.Args.points, this.sector_buffers.get_buffer(POINT));
     }
 
     public void reset()
@@ -229,6 +239,14 @@ public class SectorController implements SectorContainer, Destoryable
     {
         k_clear_select_block
             .set_arg(ClearSelectBlock_k.Args.target, entity_index)
+            .call(GPGPU.global_single_size);
+    }
+
+    public void place_block(int src, int dest)
+    {
+        k_place_block
+            .set_arg(PlaceBlock_k.Args.src, src)
+            .set_arg(PlaceBlock_k.Args.dest, dest)
             .call(GPGPU.global_single_size);
     }
 

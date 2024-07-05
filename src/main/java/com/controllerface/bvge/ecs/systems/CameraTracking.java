@@ -4,6 +4,7 @@ import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.ecs.components.ComponentType;
+import com.controllerface.bvge.ecs.components.Position;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
@@ -55,5 +56,6 @@ public class CameraTracking extends GameSystem
         float pos_x = pos[0];
         float pos_y = pos[1];
         update_position(pos_x, pos_y);
+        ecs.attach_component(Constants.PLAYER_ID, ComponentType.Position, new Position(pos_x, pos_y));
     }
 }

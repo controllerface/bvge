@@ -92,6 +92,7 @@ public class TestGame extends GameMode
 
         var block_cursor = PhysicsObjects.block_cursor(GPGPU.core_memory.sector_container(), x, y);
 
+        ecs.attach_component(player, ComponentType.Position,      new Position(x, y));
         ecs.attach_component(player, ComponentType.EntityId,      new EntityIndex(entity_id[0]));
         ecs.attach_component(player, ComponentType.MouseCursorId, new EntityIndex(cursor_id));
         ecs.attach_component(player, ComponentType.BlockCursorId, new EntityIndex(block_cursor));

@@ -505,12 +505,14 @@ public class PhysicsSimulation extends GameSystem
     private void update_controllable_entities()
     {
         EntityIndex entity_id        = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
+        Position position            = ComponentType.Position.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex mouse_cursor_id  = ComponentType.MouseCursorId.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex block_cursor_id  = ComponentType.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
         LinearForce force            = ComponentType.LinearForce.forEntity(ecs, Constants.PLAYER_ID);
         InputState input_state       = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
         BlockCursor block_cursor     = ComponentType.BlockCursor.forEntity(ecs, Constants.PLAYER_ID);
 
+        Objects.requireNonNull(position);
         Objects.requireNonNull(entity_id);
         Objects.requireNonNull(mouse_cursor_id);
         Objects.requireNonNull(block_cursor_id);
@@ -566,16 +568,31 @@ public class PhysicsSimulation extends GameSystem
         //  when block cursor becomes active, reset position to player entity x,y.
         //  it should then move toward the mouse instead of being pinned to it,
         //  so it shouldn't end up inside other geometry
-        if (block_cursor.is_active()) GPGPU.core_memory.update_entity_position(block_cursor_id.index(), world_x, world_y);
+        float x_pos;
+        float y_pos;
+        if (block_cursor.is_active())
+        {
+            x_pos = world_x;
+            y_pos = world_y;
+        }
+        else
+        {
+            x_pos = position.x();
+            y_pos = position.y();
+        }
+
+        GPGPU.core_memory.update_entity_position(block_cursor_id.index(), x_pos, y_pos);
+
         if (input_state.inputs().get(InputBinding.MOUSE_PRIMARY)
                 && block_cursor.is_active()
                 && !mouse_latch)
         {
             System.out.println("place block: " + block_cursor.block());
-            int x = PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
+            int new_block_id = PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
                     world_x, world_y, 32, 90, 0.0f, 0.0f,
                     0, Constants.HullFlags.IS_STATIC.bits,
                     block_cursor.block(), new int[4]);
+            GPGPU.core_memory.place_block(block_cursor_id.index(), new_block_id);
             // todo: write kernel to move spawned block to exact block cursor position.
             //  should overwrite with all pertinent data, like rotation, etc. but not
             //  AABB and other non-visual data.
