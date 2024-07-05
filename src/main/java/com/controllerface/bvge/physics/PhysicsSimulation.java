@@ -500,8 +500,6 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
-    private boolean mouse_latch = false;
-
     private void update_controllable_entities()
     {
         EntityIndex entity_id        = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
@@ -522,7 +520,7 @@ public class PhysicsSimulation extends GameSystem
 
         if (!input_state.inputs().get(InputBinding.MOUSE_PRIMARY))
         {
-            mouse_latch = false;
+            input_state.unlatch_mouse();
         }
 
         int flags = 0;
@@ -585,7 +583,7 @@ public class PhysicsSimulation extends GameSystem
 
         if (input_state.inputs().get(InputBinding.MOUSE_PRIMARY)
                 && block_cursor.is_active()
-                && !mouse_latch)
+                && !input_state.mouse_latched())
         {
             System.out.println("place block: " + block_cursor.block());
             int new_block_id = PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
@@ -596,7 +594,7 @@ public class PhysicsSimulation extends GameSystem
             // todo: write kernel to move spawned block to exact block cursor position.
             //  should overwrite with all pertinent data, like rotation, etc. but not
             //  AABB and other non-visual data.
-            mouse_latch = true;
+            input_state.latch_mouse();
         }
 
         k_handle_movement.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)

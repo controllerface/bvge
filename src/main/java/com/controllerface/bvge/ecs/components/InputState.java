@@ -12,6 +12,8 @@ public class InputState implements GameComponent
     private static final Map<InputBinding, Integer> input_bindings = new EnumMap<>(InputBinding.class);
     private static final Map<InputBinding, Boolean> input_states = new EnumMap<>(InputBinding.class);
 
+    private boolean mouse_latch = false;
+
     // todo: make this non-static and configurable
     static
     {
@@ -54,6 +56,21 @@ public class InputState implements GameComponent
     public Map<InputBinding, Boolean> inputs()
     {
         return input_states;
+    }
+
+    public boolean mouse_latched()
+    {
+        return mouse_latch;
+    }
+
+    public void latch_mouse()
+    {
+        this.mouse_latch = true;
+    }
+
+    public void unlatch_mouse()
+    {
+        this.mouse_latch = false;
     }
 
     public Vector2f get_screen_target()
