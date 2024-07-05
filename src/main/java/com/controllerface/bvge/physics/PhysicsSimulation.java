@@ -11,6 +11,7 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
+import com.controllerface.bvge.window.events.Event;
 
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -585,16 +586,26 @@ public class PhysicsSimulation extends GameSystem
                 && block_cursor.is_active()
                 && !input_state.mouse_latched())
         {
-            System.out.println("place block: " + block_cursor.block());
-            int new_block_id = PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
-                    world_x, world_y, 32, 90, 0.0f, 0.0f,
-                    0, Constants.HullFlags.IS_STATIC.bits,
-                    block_cursor.block(), new int[4]);
-            GPGPU.core_memory.place_block(block_cursor_id.index(), new_block_id);
-            // todo: write kernel to move spawned block to exact block cursor position.
-            //  should overwrite with all pertinent data, like rotation, etc. but not
-            //  AABB and other non-visual data.
             input_state.latch_mouse();
+            // todo: allow non-static placement using key-combo or something
+            int resource_count = player_inventory.solid_counts().get(block_cursor.block());
+            if (resource_count >= 4)
+            {
+                resource_count -= 4;
+                player_inventory.solid_counts().put(block_cursor.block(), resource_count);
+                int new_block_id = PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
+                        world_x, world_y, 32, 90, 0.0f, 0.0f,
+                        0, Constants.HullFlags.IS_STATIC.bits,
+                        block_cursor.block(), new int[4]);
+                GPGPU.core_memory.place_block(block_cursor_id.index(), new_block_id);
+            }
+            Window.get().event_bus().emit_event(Event.inventory(Event.Type.ITEM_CHANGE));
+            if (resource_count < 4)
+            {
+                block_cursor.set_block(null);
+                Window.get().event_bus().emit_event(Event.select_block(null));
+                Window.get().event_bus().emit_event(Event.message(Event.Type.ITEM_PLACING, "-"));
+            }
         }
 
         k_handle_movement.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)

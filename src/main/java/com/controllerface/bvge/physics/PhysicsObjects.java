@@ -368,10 +368,10 @@ public class PhysicsObjects
             int next_hull = world.next_hull();
             var hull_mesh = meshes[mesh_index];
 
-            if (hull_mesh.name().toLowerCase().contains("head"))
-            {
-                head_hull_id = next_hull;
-            }
+//            if (hull_mesh.name().toLowerCase().contains("head"))
+//            {
+//                head_hull_id = next_hull;
+//            }
 
             if (hull_mesh.name().toLowerCase().contains("hand"))
             {

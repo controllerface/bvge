@@ -98,7 +98,7 @@ public class InventorySystem extends GameSystem
         for (int i = startIndex + 1; i < solids.size(); i++)
         {
             Solid solid = solids.get(i);
-            if (player_inventory.solid_counts().get(solid) > 0)
+            if (player_inventory.solid_counts().get(solid) >= 4)
             {
                 return solid;
             }
@@ -116,7 +116,7 @@ public class InventorySystem extends GameSystem
         for (int i = startIndex - 1; i >= 0; i--)
         {
             Solid solid = solids.get(i);
-            if (player_inventory.solid_counts().get(solid) > 0)
+            if (player_inventory.solid_counts().get(solid) >= 4)
             {
                 return solid;
             }
