@@ -6,6 +6,11 @@ public class BlockCursor implements GameComponent
 {
     private Solid block = null;
 
+    public Solid block()
+    {
+        return block;
+    }
+
     public boolean is_active()
     {
         return block != null;

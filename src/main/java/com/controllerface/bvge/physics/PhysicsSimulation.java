@@ -8,6 +8,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 
@@ -133,6 +134,8 @@ public class PhysicsSimulation extends GameSystem
     private final GPUScanScalarInt gpu_int_scan;
     private final GPUScanScalarIntOut gpu_int_scan_out;
 
+    private final PlayerInventory player_inventory;
+
     private final Thread physics_simulation = Thread.ofVirtual().name("Physics-Simulation").start(() ->
     {
         try { last_phys_time.put(0L); }
@@ -157,10 +160,11 @@ public class PhysicsSimulation extends GameSystem
 
     //#endregion
 
-    public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid)
+    public PhysicsSimulation(ECS ecs, UniformGrid uniform_grid, PlayerInventory player_inventory)
     {
         super(ecs);
         this.uniform_grid = uniform_grid;
+        this.player_inventory = player_inventory;
         gpu_int_scan     = new GPUScanScalarInt(GPGPU.ptr_compute_queue);
         gpu_int_scan_out = new GPUScanScalarIntOut(GPGPU.ptr_compute_queue, gpu_int_scan);
 
@@ -496,6 +500,8 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
+    private boolean mouse_latch = false;
+
     private void update_controllable_entities()
     {
         EntityIndex entity_id        = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
@@ -512,12 +518,16 @@ public class PhysicsSimulation extends GameSystem
         Objects.requireNonNull(input_state);
         Objects.requireNonNull(block_cursor);
 
+        if (!input_state.inputs().get(InputBinding.MOUSE_PRIMARY))
+        {
+            mouse_latch = false;
+        }
+
         int flags = 0;
 
         for (var binding : InputBinding.values())
         {
             var on = input_state.inputs().get(binding);
-            if (on == null) continue;
             if (on)
             {
                 int flag = switch (binding)
@@ -528,7 +538,7 @@ public class PhysicsSimulation extends GameSystem
                     case MOVE_RIGHT      -> Constants.ControlFlags.RIGHT.bits;
                     case JUMP            -> Constants.ControlFlags.JUMP.bits;
                     case RUN             -> Constants.ControlFlags.RUN.bits;
-                    case MOUSE_PRIMARY   -> Constants.ControlFlags.MOUSE1.bits;
+                    case MOUSE_PRIMARY   -> block_cursor.is_active() ? 0 : Constants.ControlFlags.MOUSE1.bits;
                     case MOUSE_SECONDARY -> Constants.ControlFlags.MOUSE2.bits;
                     case MOUSE_MIDDLE,
                          MOUSE_BACK,
@@ -539,7 +549,7 @@ public class PhysicsSimulation extends GameSystem
         }
 
         k_set_control_points
-            .set_arg(SetControlPoints_k.Args.target, entity_id.index()) // todo: probably don't need this in 2 args
+            .set_arg(SetControlPoints_k.Args.target, 0)
             .set_arg(SetControlPoints_k.Args.new_flags, flags)
             .set_arg(SetControlPoints_k.Args.new_index, entity_id.index())
             .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
@@ -557,6 +567,20 @@ public class PhysicsSimulation extends GameSystem
         //  it should then move toward the mouse instead of being pinned to it,
         //  so it shouldn't end up inside other geometry
         if (block_cursor.is_active()) GPGPU.core_memory.update_entity_position(block_cursor_id.index(), world_x, world_y);
+        if (input_state.inputs().get(InputBinding.MOUSE_PRIMARY)
+                && block_cursor.is_active()
+                && !mouse_latch)
+        {
+            System.out.println("place block: " + block_cursor.block());
+            int x = PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
+                    world_x, world_y, 32, 90, 0.0f, 0.0f,
+                    0, Constants.HullFlags.IS_STATIC.bits,
+                    block_cursor.block(), new int[4]);
+            // todo: write kernel to move spawned block to exact block cursor position.
+            //  should overwrite with all pertinent data, like rotation, etc. but not
+            //  AABB and other non-visual data.
+            mouse_latch = true;
+        }
 
         k_handle_movement.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)
             .call(GPGPU.global_single_size);

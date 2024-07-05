@@ -103,7 +103,7 @@ public class TestGame extends GameMode
     private void load_systems(float x, float y)
     {
         ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, load_queue, unload_queue));
-        ecs.register_system(new PhysicsSimulation(ecs, uniformGrid));
+        ecs.register_system(new PhysicsSimulation(ecs, uniformGrid, player_inventory));
         ecs.register_system(new WorldUnloader(ecs, sector_cache, load_queue, unload_queue));
         ecs.register_system(new CameraTracking(ecs, uniformGrid, x, y));
         ecs.register_system(new InventorySystem(ecs, player_inventory));

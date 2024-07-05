@@ -332,6 +332,7 @@ public class PhysicsObjects
 
         // we need to track which hull is the root hull for this model
         int root_hull_id = -1;
+        int head_hull_id = -1;
 
         var meshes = model.meshes();
         int first_hull = -1;
@@ -366,6 +367,11 @@ public class PhysicsObjects
             int local_hull_flags = 0;
             int next_hull = world.next_hull();
             var hull_mesh = meshes[mesh_index];
+
+            if (hull_mesh.name().toLowerCase().contains("head"))
+            {
+                head_hull_id = next_hull;
+            }
 
             if (hull_mesh.name().toLowerCase().contains("hand"))
             {
@@ -586,13 +592,14 @@ public class PhysicsObjects
         int idle_animation_id = AnimationState.IDLE.ordinal();
 
         int[] result = new int[2];
+        int rh = head_hull_id == -1 ? root_hull_id : head_hull_id;
         result[0] = world.create_entity(x, y, x, y,
             hull_table, bone_table,
             mass, idle_animation_id, 0.0f,
-            root_hull_id, model_index, model.root_transform_index(),
+            rh, model_index, model.root_transform_index(),
             -1,
             flags);
-        result[1] = root_hull_id;
+        result[1] = rh;
         return result;
     }
 
