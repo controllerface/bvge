@@ -16,7 +16,7 @@ public class EventBus
         }
     }
 
-    public void report_event(Event event)
+    public void emit_event(Event event)
     {
         var sinks = subscribers.get(event.type());
         if (sinks != null)

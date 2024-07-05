@@ -498,24 +498,25 @@ public class PhysicsSimulation extends GameSystem
 
     private void update_controllable_entities()
     {
-        InputState inputState = Component.InputState.forEntity(ecs, Constants.PLAYER_ID);
-        EntityIndex entity_id         = Component.EntityId.forEntity(ecs, Constants.PLAYER_ID);
-        EntityIndex mouse_cursor      = Component.MouseCursorId.forEntity(ecs, Constants.PLAYER_ID);
-        EntityIndex block_cursor      = Component.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
-        LinearForce force             = Component.LinearForce.forEntity(ecs, Constants.PLAYER_ID);
+        EntityIndex entity_id        = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
+        EntityIndex mouse_cursor_id  = ComponentType.MouseCursorId.forEntity(ecs, Constants.PLAYER_ID);
+        EntityIndex block_cursor_id  = ComponentType.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
+        LinearForce force            = ComponentType.LinearForce.forEntity(ecs, Constants.PLAYER_ID);
+        InputState input_state       = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
+        BlockCursor block_cursor     = ComponentType.BlockCursor.forEntity(ecs, Constants.PLAYER_ID);
 
-        Objects.requireNonNull(inputState);
         Objects.requireNonNull(entity_id);
-        Objects.requireNonNull(mouse_cursor);
-        Objects.requireNonNull(block_cursor);
+        Objects.requireNonNull(mouse_cursor_id);
+        Objects.requireNonNull(block_cursor_id);
         Objects.requireNonNull(force);
+        Objects.requireNonNull(input_state);
+        Objects.requireNonNull(block_cursor);
 
         int flags = 0;
 
-        var inputStates = inputState.input_states();
         for (var binding : InputBinding.values())
         {
-            var on = inputStates.get(binding);
+            var on = input_state.inputs().get(binding);
             if (on == null) continue;
             if (on)
             {
@@ -546,15 +547,16 @@ public class PhysicsSimulation extends GameSystem
             .call(GPGPU.global_single_size);
 
         var camera = Window.get().camera();
-        float world_x = inputState.get_screen_target().x * camera.get_zoom() + camera.position().x;
-        float world_y = (Window.get().height() - inputState.get_screen_target().y) * camera.get_zoom() + camera.position().y;
-        GPGPU.core_memory.update_entity_position(mouse_cursor.index(), world_x, world_y);
+        float world_x = input_state.get_screen_target().x * camera.get_zoom() + camera.position().x;
+        float world_y = (Window.get().height() - input_state.get_screen_target().y) * camera.get_zoom() + camera.position().y;
+        GPGPU.core_memory.update_entity_position(mouse_cursor_id.index(), world_x, world_y);
 
+        //System.out.println("debug: " + block_cursor.is_active());
         // todo: don't bother if block cursor is inactive.
         //  when block cursor becomes active, reset position to player entity x,y.
         //  it should then move toward the mouse instead of being pinned to it,
         //  so it shouldn't end up inside other geometry
-        GPGPU.core_memory.update_entity_position(block_cursor.index(), world_x, world_y);
+        if (block_cursor.is_active()) GPGPU.core_memory.update_entity_position(block_cursor_id.index(), world_x, world_y);
 
         k_handle_movement.set_arg(HandleMovement_k.Args.dt, FIXED_TIME_STEP)
             .call(GPGPU.global_single_size);

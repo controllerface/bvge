@@ -44,7 +44,7 @@ flat in int f_tex_slot;
 
 out vec4 color;
 
-uniform sampler2D uTextures[3];
+uniform sampler2D uTextures[16];
 uniform vec2 uMouse;
 uniform vec2 uCamera;
 

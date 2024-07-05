@@ -1,7 +1,7 @@
 package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.ecs.components.InputState;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.events.Event;
@@ -33,9 +33,9 @@ public class KBMInput extends GameSystem
     @Override
     public void tick(float dt)
     {
-        InputState inputState = Component.InputState.forEntity(ecs, Constants.PLAYER_ID);
+        InputState inputState = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
         assert inputState != null : "Component was null";
-        inputState.update_input_states(key_down, mouse_down);
+        inputState.update_inputs(key_down, mouse_down);
         inputState.get_screen_target().set(xPos, yPos);
         shift = key_down[GLFW_KEY_LEFT_SHIFT];
         control = key_down[GLFW_KEY_LEFT_CONTROL];
@@ -80,7 +80,7 @@ public class KBMInput extends GameSystem
                 ? Event.Type.NEXT_ITEM
                 : Event.Type.PREV_ITEM;
 
-            Window.get().event_bus().report_event(Event.input(type));
+            Window.get().event_bus().emit_event(Event.input(type));
         }
     }
 

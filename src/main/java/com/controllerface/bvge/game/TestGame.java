@@ -92,11 +92,12 @@ public class TestGame extends GameMode
 
         var block_cursor = PhysicsObjects.block_cursor(GPGPU.core_memory.sector_container(), x, y);
 
-        ecs.attach_component(player, Component.EntityId,      new EntityIndex(entity_id[0]));
-        ecs.attach_component(player, Component.MouseCursorId, new EntityIndex(cursor_id));
-        ecs.attach_component(player, Component.BlockCursorId, new EntityIndex(block_cursor));
-        ecs.attach_component(player, Component.LinearForce,   new LinearForce(1600));
-        ecs.attach_component(player, Component.InputState,    new InputState());
+        ecs.attach_component(player, ComponentType.EntityId,      new EntityIndex(entity_id[0]));
+        ecs.attach_component(player, ComponentType.MouseCursorId, new EntityIndex(cursor_id));
+        ecs.attach_component(player, ComponentType.BlockCursorId, new EntityIndex(block_cursor));
+        ecs.attach_component(player, ComponentType.LinearForce,   new LinearForce(1600));
+        ecs.attach_component(player, ComponentType.InputState,    new InputState());
+        ecs.attach_component(player, ComponentType.BlockCursor,   new BlockCursor());
     }
 
     private void load_systems(float x, float y)

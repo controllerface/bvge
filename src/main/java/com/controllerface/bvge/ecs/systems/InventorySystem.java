@@ -2,10 +2,13 @@ package com.controllerface.bvge.ecs.systems;
 
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.components.BlockCursor;
+import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.substances.Solid;
+import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.events.Event;
 import com.controllerface.bvge.window.Window;
 
@@ -80,7 +83,7 @@ public class InventorySystem extends GameSystem
                 }
                 player_inventory.collect_substance(raw_collected.types[i], 1);
             }
-            Window.get().event_bus().report_event(Event.inventory(Event.Type.ITEM_CHANGE));
+            Window.get().event_bus().emit_event(Event.inventory(Event.Type.ITEM_CHANGE));
         }
     }
 
@@ -150,15 +153,15 @@ public class InventorySystem extends GameSystem
         if (next_block == current_block) return;
 
         var name = next_block == null ? "-" : next_block.name();
-        Window.get().event_bus().report_event(Event.message(Event.Type.ITEM_PLACING, name));
+        Window.get().event_bus().emit_event(Event.message(Event.Type.ITEM_PLACING, name));
 
         current_block = next_block;
 
-        var event = current_block == null
-            ? Event.endBlock()
-            : Event.startBlock(current_block);
+        Window.get().event_bus().emit_event(Event.select_block(current_block));
 
-        Window.get().event_bus().report_event(event);
+        BlockCursor block_cursor = ComponentType.BlockCursor.forEntity(ecs, Constants.PLAYER_ID);
+        Objects.requireNonNull(block_cursor);
+        block_cursor.set_block(current_block);
     }
 
     @Override

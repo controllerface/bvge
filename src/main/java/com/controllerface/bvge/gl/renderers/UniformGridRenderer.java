@@ -234,7 +234,7 @@ public class UniformGridRenderer extends GameSystem
         vertex_index += out[0];
         color_index  += out[1];
 
-        InputState player_input = Component.InputState.forEntity(ecs, Constants.PLAYER_ID);
+        InputState player_input = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
         assert player_input != null : "Component was null";
         Objects.requireNonNull(player_input);
 

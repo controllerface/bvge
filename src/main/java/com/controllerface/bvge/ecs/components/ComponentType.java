@@ -2,19 +2,20 @@ package com.controllerface.bvge.ecs.components;
 
 import com.controllerface.bvge.ecs.ECS;
 
-public enum Component
+public enum ComponentType
 {
     EntityId      (EntityIndex.class),
     MouseCursorId (EntityIndex.class),
     BlockCursorId (EntityIndex.class),
     LinearForce   (LinearForce.class),
     InputState    (InputState.class),
+    BlockCursor   (BlockCursor.class),
 
     ;
 
     private final Class<? extends GameComponent> _class;
 
-    Component(Class<? extends GameComponent> aClass)
+    ComponentType(Class<? extends GameComponent> aClass)
     {
         _class = aClass;
     }

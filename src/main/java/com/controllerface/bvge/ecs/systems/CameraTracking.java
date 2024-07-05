@@ -3,7 +3,7 @@ package com.controllerface.bvge.ecs.systems;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.EntityIndex;
-import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
@@ -49,7 +49,7 @@ public class CameraTracking extends GameSystem
     @Override
     public void tick(float dt)
     {
-        EntityIndex entity_id = Component.EntityId.forEntity(ecs, Constants.PLAYER_ID);
+        EntityIndex entity_id = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
         Objects.requireNonNull(entity_id);
         float[] pos = GPGPU.core_memory.read_entity_position(entity_id.index());
         float pos_x = pos[0];

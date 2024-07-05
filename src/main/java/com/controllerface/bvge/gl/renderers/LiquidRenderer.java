@@ -7,7 +7,7 @@ import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.PrepareLiquids;
 import com.controllerface.bvge.cl.programs.RootHullFilter;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.ecs.components.InputState;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
@@ -125,7 +125,7 @@ public class LiquidRenderer extends GameSystem
         glBindVertexArray(vao);
         shader.use();
 
-        InputState player_input = Component.InputState.forEntity(ecs, Constants.PLAYER_ID);
+        InputState player_input = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
         assert player_input != null : "Component was null";
         Objects.requireNonNull(player_input);
 

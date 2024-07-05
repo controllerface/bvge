@@ -39,7 +39,7 @@ public class InputState implements GameComponent
     private final Vector2f screen_target = new Vector2f();
     private final Vector2f world_target = new Vector2f();
 
-    public void update_input_states(boolean[] key_down, boolean[] mouse_down)
+    public void update_inputs(boolean[] key_down, boolean[] mouse_down)
     {
         for (var binding : InputBinding.values())
         {
@@ -51,7 +51,7 @@ public class InputState implements GameComponent
         }
     }
 
-    public Map<InputBinding, Boolean> input_states()
+    public Map<InputBinding, Boolean> inputs()
     {
         return input_states;
     }

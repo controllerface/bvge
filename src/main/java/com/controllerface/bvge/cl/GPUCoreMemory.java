@@ -4,7 +4,7 @@ import com.controllerface.bvge.cl.buffers.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.world.sectors.SectorContainer;
@@ -80,7 +80,7 @@ public class GPUCoreMemory implements Destoryable
     public GPUCoreMemory(ECS ecs)
     {
         this.ecs = ecs;
-        Window.get().event_bus().register(event_queue, Event.Type.SELECT_BLOCK, Event.Type.DESELECT_BLOCK);
+        Window.get().event_bus().register(event_queue, Event.Type.SELECT_BLOCK);
 
         p_gpu_crud.init();
 
@@ -315,24 +315,14 @@ public class GPUCoreMemory implements Destoryable
         Event next_event;
         while ((next_event = event_queue.poll()) != null)
         {
-            EntityIndex block_cursor = Component.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
+            EntityIndex block_cursor = ComponentType.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
             assert block_cursor != null : "null block selector id";
-            if (next_event instanceof Event.DeselectBlock)
-            {
-                sector_controller.clear_block_cursor(block_cursor.index());
-            }
             if (next_event instanceof Event.SelectBlock(var _, var solid))
             {
-                sector_controller.update_block_cursor(block_cursor.index(), solid.mineral_number);
+                if (solid == null) sector_controller.clear_block_cursor(block_cursor.index());
+                else sector_controller.update_block_cursor(block_cursor.index(), solid.mineral_number);
             }
         }
-
-
-
-
-
-
-
 
         int point_count         = sector_ingress_buffer.next_point();
         int edge_count          = sector_ingress_buffer.next_edge();

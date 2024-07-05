@@ -1,6 +1,6 @@
 package com.controllerface.bvge.ecs;
 
-import com.controllerface.bvge.ecs.components.Component;
+import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.ecs.components.GameComponent;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 
@@ -11,22 +11,22 @@ public class ECS
 {
     private long count = 0;
     private final List<GameSystem> systems = new ArrayList<>();
-    private final Map<Component, Map<String, GameComponent>> components = Collections.synchronizedMap(new HashMap<>());
+    private final Map<ComponentType, Map<String, GameComponent>> components = Collections.synchronizedMap(new HashMap<>());
     private final Set<String> entities = ConcurrentHashMap.newKeySet();
 
     public ECS()
     {
         // register all standard components at creation time. This is necessary to ensure all the
         // base components can be used before systems or entities reference them
-        for (Component component : Component.values())
+        for (ComponentType componentType : ComponentType.values())
         {
-            register_component(component);
+            register_component_type(componentType);
         }
     }
 
-    private void register_component(Component component)
+    private void register_component_type(ComponentType componentType)
     {
-        components.put(component, new HashMap<>());
+        components.put(componentType, new HashMap<>());
     }
 
     public String register_entity(String id)
@@ -46,17 +46,17 @@ public class ECS
         systems.add(system);
     }
 
-    public void attach_component(String id, Component type, GameComponent component)
+    public void attach_component(String id, ComponentType type, GameComponent component)
     {
         components.get(type).put(id, component);
     }
 
-    public void detach_component(String id, Component type)
+    public void detach_component(String id, ComponentType type)
     {
         components.get(type).remove(id);
     }
 
-    public GameComponent get_component_for(String id, Component type)
+    public GameComponent get_component_for(String id, ComponentType type)
     {
         return components.get(type).get(id);
     }
@@ -67,7 +67,7 @@ public class ECS
      * @param type the type of component map to retrieve
      * @return the components map for the given component type. may be empty
      */
-    public Map<String, GameComponent> get_components(Component type)
+    public Map<String, GameComponent> get_components(ComponentType type)
     {
         return components.get(type);
     }
