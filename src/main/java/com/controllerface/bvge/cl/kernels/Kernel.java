@@ -91,6 +91,7 @@ public enum Kernel
     transfer_render_data,
     update_accel,
     update_mouse_position,
+    update_block_position,
     write_mesh_details,
 
     update_select_block,

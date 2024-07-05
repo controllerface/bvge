@@ -36,10 +36,30 @@ __kernel void update_mouse_position(__global int *entity_root_hulls,
                                     int target,
                                     float2 new_value)
 {
-    int h  = entity_root_hulls[target];
-    int2 t = hull_point_tables[h];
+    int root_hull  = entity_root_hulls[target];
+    int2 point_table = hull_point_tables[root_hull];
+    points[point_table.x].xy = new_value;
+}
 
-    points[t.x].xy = new_value;
+__kernel void update_block_position(__global float4 *entities,
+                                    __global int *entity_root_hulls,
+                                    __global int2 *hull_point_tables,
+                                    __global float4 *points,
+                                    int target,
+                                    float2 new_value)
+{
+    float2 center = entities[target].xy;
+    int root_hull  = entity_root_hulls[target];
+    int2 point_table = hull_point_tables[root_hull];
+    float2 p1 = points[point_table.x].xy - center;
+    float2 p2 = points[point_table.x + 1].xy - center;
+    float2 p3 = points[point_table.x + 2].xy - center;
+    float2 p4 = points[point_table.x + 3].xy - center;
+
+    points[point_table.x].xy = new_value + p1;
+    points[point_table.x + 1].xy = new_value + p2;
+    points[point_table.x + 2].xy = new_value + p3;
+    points[point_table.x + 3].xy = new_value + p4;
 }
 
 __kernel void update_select_block(__global int *entity_flags,
@@ -682,15 +702,15 @@ __kernel void place_block(__global float4 *entities,
 
 // todo: implement for armature
 __kernel void rotate_hull(__global float4 *hulls,
-                          __global int4 *element_tables,
+                          __global int2 *hull_point_tables,
                           __global float4 *points,
                           int target,
                           float angle)
 {
     float4 hull        = hulls[target];
-    int4 element_table = element_tables[target];
-    int start          = element_table.x;
-    int end            = element_table.y;
+    int2 point_table   = hull_point_tables[target];
+    int start          = point_table.x;
+    int end            = point_table.y;
     float2 origin      = (float2)(hull.x, hull.y);
     for (int i = start; i <= end; i++)
     {

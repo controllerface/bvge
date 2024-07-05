@@ -367,9 +367,14 @@ public class GPUCoreMemory implements Destoryable
         }
     }
 
-    public void update_entity_position(int entity_index, float x, float y)
+    public void update_mouse_position(int entity_index, float x, float y)
     {
-        sector_controller.update_position(entity_index, x, y);
+        sector_controller.update_mouse_position(entity_index, x, y);
+    }
+
+    public void update_block_position(int entity_index, float x, float y)
+    {
+        sector_controller.update_block_position(entity_index, x, y);
     }
 
     public void place_block(int src, int dest)

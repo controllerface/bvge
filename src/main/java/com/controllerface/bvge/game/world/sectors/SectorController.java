@@ -32,6 +32,7 @@ public class SectorController implements SectorContainer, Destoryable
     private final GPUKernel k_clear_select_block;
     private final GPUKernel k_place_block;
     private final GPUKernel k_update_mouse_position;
+    private final GPUKernel k_update_block_position;
     private final GPUKernel k_count_egress_entities;
 
     private int point_index       = 0;
@@ -124,6 +125,13 @@ public class SectorController implements SectorContainer, Destoryable
             .buf_arg(UpdateMousePosition_k.Args.entity_root_hulls,      this.sector_buffers.get_buffer(ENTITY_ROOT_HULL))
             .buf_arg(UpdateMousePosition_k.Args.hull_point_tables,      this.sector_buffers.get_buffer(HULL_POINT_TABLE))
             .buf_arg(UpdateMousePosition_k.Args.points,                 this.sector_buffers.get_buffer(POINT));
+
+        long k_ptr_update_block_position = p_gpu_crud.kernel_ptr(Kernel.update_block_position);
+        k_update_block_position = new UpdateBlockPosition_k(this.ptr_queue, k_ptr_update_block_position)
+            .buf_arg(UpdateBlockPosition_k.Args.entities,               this.sector_buffers.get_buffer(ENTITY))
+            .buf_arg(UpdateBlockPosition_k.Args.entity_root_hulls,      this.sector_buffers.get_buffer(ENTITY_ROOT_HULL))
+            .buf_arg(UpdateBlockPosition_k.Args.hull_point_tables,      this.sector_buffers.get_buffer(HULL_POINT_TABLE))
+            .buf_arg(UpdateBlockPosition_k.Args.points,                 this.sector_buffers.get_buffer(POINT));
 
         long k_ptr_count_egress_candidates = p_gpu_crud.kernel_ptr(Kernel.count_egress_entities);
         k_count_egress_entities = new CountEgressEntities_k(this.ptr_queue, k_ptr_count_egress_candidates)
@@ -219,12 +227,20 @@ public class SectorController implements SectorContainer, Destoryable
         return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int, EGRESS_COUNTERS);
     }
 
-    public void update_position(int entity_index, float x, float y)
+    public void update_mouse_position(int entity_index, float x, float y)
     {
         k_update_mouse_position
             .set_arg(UpdateMousePosition_k.Args.target, entity_index)
             .set_arg(UpdateMousePosition_k.Args.new_value, arg_float2(x, y))
             .call(GPGPU.global_single_size);
+    }
+
+    public void update_block_position(int entity_index, float x, float y)
+    {
+        k_update_block_position
+                .set_arg(UpdateBlockPosition_k.Args.target, entity_index)
+                .set_arg(UpdateBlockPosition_k.Args.new_value, arg_float2(x, y))
+                .call(GPGPU.global_single_size);
     }
 
     public void update_block_cursor(int entity_index, int new_uv)

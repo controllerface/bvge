@@ -518,7 +518,7 @@ public class GPGPU
         // At runtime, local buffers are used to perform prefix scan operations.
         // It is vital that the max scan block size does not exceed the maximum
         // local buffer size of the GPU. In order to ensure this doesn't happen,
-        // the following logic halves the effective max workgroup size, if needed
+        // the following logic halves the effective max workgroup size if needed
         // to ensure that at runtime, the amount of local buffer storage requested
         // does not meet or exceed the local memory size.
         /*

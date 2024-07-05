@@ -501,6 +501,9 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
+    // todo: it may make sense to relocate this logic to s different class, though it ay be tricky
+    //  to do so. It is required that this is run only in the physics loop so the memory buffers
+    //  are handled safely, but it is not directly physics related.
     private void update_controllable_entities()
     {
         EntityIndex entity_id        = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
@@ -522,6 +525,7 @@ public class PhysicsSimulation extends GameSystem
         if (!input_state.inputs().get(InputBinding.MOUSE_PRIMARY))
         {
             input_state.unlatch_mouse();
+            block_cursor.set_require_unlatch(false);
         }
 
         int flags = 0;
@@ -539,7 +543,12 @@ public class PhysicsSimulation extends GameSystem
                     case MOVE_RIGHT      -> Constants.ControlFlags.RIGHT.bits;
                     case JUMP            -> Constants.ControlFlags.JUMP.bits;
                     case RUN             -> Constants.ControlFlags.RUN.bits;
-                    case MOUSE_PRIMARY   -> block_cursor.is_active() ? 0 : Constants.ControlFlags.MOUSE1.bits;
+                    case MOUSE_PRIMARY   ->
+                    {
+                        if (block_cursor.is_active()
+                            || (block_cursor.requires_unlatch() && input_state.mouse_latched())) yield 0;
+                        else yield Constants.ControlFlags.MOUSE1.bits;
+                    }
                     case MOUSE_SECONDARY -> Constants.ControlFlags.MOUSE2.bits;
                     case MOUSE_MIDDLE,
                          MOUSE_BACK,
@@ -560,13 +569,8 @@ public class PhysicsSimulation extends GameSystem
         var camera = Window.get().camera();
         float world_x = input_state.get_screen_target().x * camera.get_zoom() + camera.position().x;
         float world_y = (Window.get().height() - input_state.get_screen_target().y) * camera.get_zoom() + camera.position().y;
-        GPGPU.core_memory.update_entity_position(mouse_cursor_id.index(), world_x, world_y);
+        GPGPU.core_memory.update_mouse_position(mouse_cursor_id.index(), world_x, world_y);
 
-        //System.out.println("debug: " + block_cursor.is_active());
-        // todo: don't bother if block cursor is inactive.
-        //  when block cursor becomes active, reset position to player entity x,y.
-        //  it should then move toward the mouse instead of being pinned to it,
-        //  so it shouldn't end up inside other geometry
         float x_pos;
         float y_pos;
         if (block_cursor.is_active())
@@ -580,7 +584,7 @@ public class PhysicsSimulation extends GameSystem
             y_pos = position.y();
         }
 
-        GPGPU.core_memory.update_entity_position(block_cursor_id.index(), x_pos, y_pos);
+        GPGPU.core_memory.update_block_position(block_cursor_id.index(), x_pos, y_pos);
 
         if (input_state.inputs().get(InputBinding.MOUSE_PRIMARY)
                 && block_cursor.is_active()
@@ -607,6 +611,7 @@ public class PhysicsSimulation extends GameSystem
                 //  the threshold. may also want to encode the threshold somewhere so
                 //  it isn't hard-coded, and could be subject to player buffs (maybe?)
                 block_cursor.set_block(null);
+                block_cursor.set_require_unlatch(true);
                 Window.get().event_bus().emit_event(Event.select_block(null));
                 Window.get().event_bus().emit_event(Event.message(Event.Type.ITEM_PLACING, "-"));
             }
