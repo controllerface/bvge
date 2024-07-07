@@ -8,7 +8,8 @@ public enum ComponentType
     EntityId      (EntityIndex.class),
     MouseCursorId (EntityIndex.class),
     BlockCursorId (EntityIndex.class),
-    LinearForce   (LinearForce.class),
+    MovementForce (FloatValue.class),
+    JumpForce     (FloatValue.class),
     InputState    (InputState.class),
     BlockCursor   (BlockCursor.class),
 

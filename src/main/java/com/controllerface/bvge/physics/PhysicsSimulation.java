@@ -195,12 +195,6 @@ public class PhysicsSimulation extends GameSystem
         b_control_point_linear_mag   = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float, 1);
         b_control_point_jump_mag     = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float, 1);
 
-        b_control_point_flags.ensure_capacity(1);
-        b_control_point_indices.ensure_capacity(1);
-        b_control_point_tick_budgets.ensure_capacity(1);
-        b_control_point_linear_mag.ensure_capacity(1);
-        b_control_point_jump_mag.ensure_capacity(1);
-
         p_control_entities.init();
         p_integrate.init();
         p_scan_key_bank.init();
@@ -501,16 +495,17 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
-    // todo: it may make sense to relocate this logic to s different class, though it ay be tricky
+    // todo: it may make sense to relocate this logic to a different class, though it may be tricky
     //  to do so. It is required that this is run only in the physics loop so the memory buffers
     //  are handled safely, but it is not directly physics related.
-    private void update_controllable_entities()
+    private void update_player_state()
     {
         EntityIndex entity_id        = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
         Position position            = ComponentType.Position.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex mouse_cursor_id  = ComponentType.MouseCursorId.forEntity(ecs, Constants.PLAYER_ID);
         EntityIndex block_cursor_id  = ComponentType.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
-        LinearForce force            = ComponentType.LinearForce.forEntity(ecs, Constants.PLAYER_ID);
+        FloatValue move_force        = ComponentType.MovementForce.forEntity(ecs, Constants.PLAYER_ID);
+        FloatValue jump_force        = ComponentType.JumpForce.forEntity(ecs, Constants.PLAYER_ID);
         InputState input_state       = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
         BlockCursor block_cursor     = ComponentType.BlockCursor.forEntity(ecs, Constants.PLAYER_ID);
 
@@ -518,7 +513,8 @@ public class PhysicsSimulation extends GameSystem
         Objects.requireNonNull(entity_id);
         Objects.requireNonNull(mouse_cursor_id);
         Objects.requireNonNull(block_cursor_id);
-        Objects.requireNonNull(force);
+        Objects.requireNonNull(move_force);
+        Objects.requireNonNull(jump_force);
         Objects.requireNonNull(input_state);
         Objects.requireNonNull(block_cursor);
 
@@ -558,12 +554,14 @@ public class PhysicsSimulation extends GameSystem
             }
         }
 
+        // todo: probably don't need to use buffers at all for this kernel, should just pass
+        //  args directly as this is only used for the player entity.
         k_set_control_points
             .set_arg(SetControlPoints_k.Args.target, 0)
             .set_arg(SetControlPoints_k.Args.new_flags, flags)
             .set_arg(SetControlPoints_k.Args.new_index, entity_id.index())
-            .set_arg(SetControlPoints_k.Args.new_jump_mag, GRAVITY_MAGNITUDE * 550)
-            .set_arg(SetControlPoints_k.Args.new_linear_mag, force.magnitude())
+            .set_arg(SetControlPoints_k.Args.new_jump_mag, jump_force.magnitude())
+            .set_arg(SetControlPoints_k.Args.new_move_mag, move_force.magnitude())
             .call(GPGPU.global_single_size);
 
         var camera = Window.get().camera();
@@ -1242,7 +1240,7 @@ public class PhysicsSimulation extends GameSystem
 
                     // Before the GPU begins the step cycle, player input is handled and the memory structures
                     // in the GPU are updated with the proper values.
-                    update_controllable_entities();
+                    update_player_state();
 
                     // perform one tick of the simulation
                     this.tick_simulation();

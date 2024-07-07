@@ -171,17 +171,17 @@ OutputState punch_state(InputState input)
 
 __kernel void set_control_points(__global int *control_flags,
                                  __global int *indices,
-                                 __global float *linear_mag,
+                                 __global float *move_mag,
                                  __global float *jump_mag,
                                  int target,
                                  int new_flags, 
                                  int new_index, 
-                                 float new_linear_mag, 
+                                 float new_move_mag, 
                                  float new_jump_mag)
 {
     control_flags[target] = new_flags;
     indices[target] = new_index;
-    linear_mag[target] = new_linear_mag;
+    move_mag[target] = new_move_mag;
     jump_mag[target] = new_jump_mag;
 }
 

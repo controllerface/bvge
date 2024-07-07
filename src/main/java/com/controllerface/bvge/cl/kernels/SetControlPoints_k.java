@@ -11,7 +11,7 @@ public class SetControlPoints_k extends GPUKernel
         target,
         new_flags,
         new_index,
-        new_linear_mag,
+        new_move_mag,
         new_jump_mag,
     }
 

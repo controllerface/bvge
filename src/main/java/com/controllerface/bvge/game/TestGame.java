@@ -96,7 +96,8 @@ public class TestGame extends GameMode
         ecs.attach_component(player, ComponentType.EntityId,      new EntityIndex(entity_id[0]));
         ecs.attach_component(player, ComponentType.MouseCursorId, new EntityIndex(cursor_id));
         ecs.attach_component(player, ComponentType.BlockCursorId, new EntityIndex(block_cursor));
-        ecs.attach_component(player, ComponentType.LinearForce,   new LinearForce(1600));
+        ecs.attach_component(player, ComponentType.MovementForce, new FloatValue(1600));
+        ecs.attach_component(player, ComponentType.JumpForce,     new FloatValue(9.8f * 10 * 550));
         ecs.attach_component(player, ComponentType.InputState,    new InputState());
         ecs.attach_component(player, ComponentType.BlockCursor,   new BlockCursor());
     }
