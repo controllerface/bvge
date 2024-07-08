@@ -11,11 +11,14 @@ import java.nio.IntBuffer;
 import java.util.List;
 
 import static com.controllerface.bvge.cl.CLUtils.*;
+import static org.lwjgl.opencl.AMDDeviceAttributeQuery.CL_DEVICE_WAVEFRONT_WIDTH_AMD;
 import static org.lwjgl.opencl.CL12.*;
 import static org.lwjgl.opencl.CL12GL.clCreateFromGLBuffer;
 import static org.lwjgl.opencl.CL20.*;
+import static org.lwjgl.opencl.CL30.CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT;
 import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
 import static org.lwjgl.opencl.KHRGLSharing.CL_WGL_HDC_KHR;
+import static org.lwjgl.opencl.NVDeviceAttributeQuery.CL_DEVICE_WARP_SIZE_NV;
 import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
 import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 
@@ -530,13 +533,25 @@ public class GPGPU
          */
         long max_local_buffer_size = get_device_long(ptr_device_id, CL_DEVICE_LOCAL_MEM_SIZE);
         long current_max_group_size = get_device_long(ptr_device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+        long compute_unit_count = get_device_long(ptr_device_id, CL_DEVICE_MAX_COMPUTE_UNITS);
+        long wavefront_width = get_device_long(ptr_device_id, CL_DEVICE_WAVEFRONT_WIDTH_AMD);
+        long warp_width = get_device_long(ptr_device_id, CL_DEVICE_WARP_SIZE_NV);
         long current_max_block_size = current_max_group_size * 2;
 
         long max_mem = get_device_long(ptr_device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
         long sz_char = get_device_long(ptr_device_id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR);
         long sz_flt = get_device_long(ptr_device_id, CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT);
+        boolean non_uniform = get_device_boolean(ptr_device_id, CL_DEVICE_HOST_UNIFIED_MEMORY);
 
-        System.out.println("max mem: " + max_mem);
+        System.out.println("CL_DEVICE_MAX_COMPUTE_UNITS: " + compute_unit_count);
+        System.out.println("CL_DEVICE_WAVEFRONT_WIDTH_AMD: " + wavefront_width);
+        System.out.println("CL_DEVICE_WARP_SIZE_NV: " + warp_width);
+
+        System.out.println("CL_DEVICE_LOCAL_MEM_SIZE: " + max_local_buffer_size);
+        System.out.println("CL_DEVICE_MAX_WORK_GROUP_SIZE: " + current_max_group_size);
+        System.out.println("CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT: " + non_uniform);
+
+        System.out.println("CL_DEVICE_MAX_MEM_ALLOC_SIZE: " + max_mem);
         System.out.println("preferred float: " + sz_flt);
         System.out.println("preferred char: " + sz_char);
 
@@ -554,6 +569,9 @@ public class GPGPU
         }
 
         assert current_max_group_size > 0 : "Invalid Group Size";
+
+        System.out.println("final local mem max: " + max_local_buffer_size);
+        System.out.println("calculated size cap: " + size_cap);
 
         max_work_group_size = current_max_group_size;
         max_scan_block_size = current_max_block_size;

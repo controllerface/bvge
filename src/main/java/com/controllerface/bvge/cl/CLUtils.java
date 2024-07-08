@@ -335,13 +335,32 @@ public class CLUtils
         clGetDeviceInfo(device_ptr, param_code, (long[]) null, size_buffer);
         long size = size_buffer.get();
         var value_buffer = MemoryUtil.memAlloc((int)size);
-        clGetDeviceInfo(device_ptr, param_code, value_buffer, null);
+        int r = clGetDeviceInfo(device_ptr, param_code, value_buffer, null);
+        if (r != CL_SUCCESS)
+        {
+            System.out.println("debug error:" + r);
+        }
         var result = size == 4
             ? value_buffer.getInt(0)
             : value_buffer.getLong(0);
         MemoryUtil.memFree(size_buffer);
         MemoryUtil.memFree(value_buffer);
         return result;
+    }
+
+
+    public static boolean get_device_boolean(long device_ptr, int param_code)
+    {
+        var size_buffer = MemoryUtil.memAllocPointer(1);
+        clGetDeviceInfo(device_ptr, param_code, (long[]) null, size_buffer);
+        long size = size_buffer.get();
+        var value_buffer = MemoryUtil.memAlloc((int)size);
+        clGetDeviceInfo(device_ptr, param_code, value_buffer, null);
+        var result = value_buffer.get();
+
+        MemoryUtil.memFree(size_buffer);
+        MemoryUtil.memFree(value_buffer);
+        return result == 1;
     }
 
     private static void log_build_error(long program, long device_id_ptr)

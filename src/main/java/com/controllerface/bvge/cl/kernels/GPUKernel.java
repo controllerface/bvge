@@ -1,6 +1,7 @@
 package com.controllerface.bvge.cl.kernels;
 
 import com.controllerface.bvge.cl.CLUtils;
+import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.buffers.ResizableBuffer;
 import org.lwjgl.system.MemoryStack;
 
