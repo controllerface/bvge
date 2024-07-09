@@ -18,7 +18,8 @@ public class AABBCollide_k extends GPUKernel
         used,
         counter,
         x_subdivisions,
-        key_count_length;
+        key_count_length,
+        max_index,
     }
 
     public AABBCollide_k(long command_queue_ptr, long kernel_ptr)

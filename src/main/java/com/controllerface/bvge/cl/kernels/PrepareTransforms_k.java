@@ -9,7 +9,8 @@ public class PrepareTransforms_k extends GPUKernel
         hull_rotations,
         indices,
         transforms_out,
-        offset;
+        offset,
+        max_hull,
     }
 
     public PrepareTransforms_k(long command_queue_ptr, long kernel_ptr)

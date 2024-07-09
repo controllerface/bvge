@@ -35,9 +35,11 @@ __kernel void sat_collide(__global int2 *candidates,
                           __global int *point_reactions,
                           __global float *masses,
                           __global int *counter,
-                          float dt)
+                          float dt,
+                          int max_index)
 {
     int gid = get_global_id(0);
+    if (gid >= max_index) return;
     
     int2 current_pair = candidates[gid];
     int b1_id = current_pair.x;
@@ -162,9 +164,12 @@ __kernel void sort_reactions(__global float8 *reactions_in,
                              __global float8 *reactions_out,
                              __global int *reaction_index,
                              __global int *point_reactions,
-                             __global int *point_offsets)
+                             __global int *point_offsets,
+                             int max_index)
 {
     int gid = get_global_id(0);
+    if (gid >= max_index) return;
+
     float8 reaction = reactions_in[gid];
     int index = reaction_index[gid];
     int reaction_offset = point_offsets[index];
@@ -194,13 +199,16 @@ __kernel void apply_reactions(__global float8 *reactions,
                               __global int *point_reactions,
                               __global int *point_offsets,
                               __global int *point_hull_indices,
-                              __global int *hull_flags)
+                              __global int *hull_flags,
+                              int max_point)
 {
     // todo: actual gravity vector should be provided, when it can change this should also be changable
     //  right now it is a static direction. note that magnitude of gravity is not important, only direction
     float2 g = (float2)(0.0f, -1.0f);
 
     int current_point = get_global_id(0);
+    if (current_point >= max_point) return;
+
     int reaction_count = point_reactions[current_point];
     int flags = point_flags[current_point];
     short hit_count = point_hit_counts[current_point];
@@ -362,9 +370,11 @@ __kernel void apply_reactions(__global float8 *reactions,
 
 __kernel void move_hulls(__global float4 *hulls,
                          __global int2 *hull_point_tables,
-                         __global float4 *points)
+                         __global float4 *points,
+                         int max_hull)
 {
     int current_hull = get_global_id(0);
+    if (current_hull >= max_hull) return;
     int2 point_table = hull_point_tables[current_hull];
     float4 hull = hulls[current_hull];
     hull.zw = hull.xy;
@@ -409,9 +419,11 @@ __kernel void move_entities(__global float4 *hulls,
                             __global int *point_flags,
                             __global short *point_hit_counts,
                             __global float4 *points,
-                            float dt)
+                            float dt,
+                            int max_entity)
 {
     int current_entity = get_global_id(0);
+    if (current_entity >= max_entity) return;
     float4 entity = entities[current_entity];
     int flags = entity_flags[current_entity];
     int2 hull_table = hull_tables[current_entity];

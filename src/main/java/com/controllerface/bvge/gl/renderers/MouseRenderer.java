@@ -74,6 +74,8 @@ public class MouseRenderer extends GameSystem
         long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
         k_prepare_transforms = (new PrepareTransforms_k(GPGPU.ptr_render_queue, ptr))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transforms)
+            .set_arg(PrepareTransforms_k.Args.max_hull, 1)
+            .set_arg(PrepareTransforms_k.Args.offset, 0)
             .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL))
             .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_SCALE))
             .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_ROTATION));
@@ -156,10 +158,9 @@ public class MouseRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         k_prepare_transforms
-                .share_mem(ptr_vbo_transforms)
-                .ptr_arg(PrepareTransforms_k.Args.indices, cursor_hulls.indices())
-                .set_arg(PrepareTransforms_k.Args.offset, 0)
-                .call_task();
+            .share_mem(ptr_vbo_transforms)
+            .ptr_arg(PrepareTransforms_k.Args.indices, cursor_hulls.indices())
+            .call_task();
 
         glNamedBufferSubData(vbo_transforms, VECTOR_FLOAT_4D_SIZE, mouse_loc);
         glDrawArrays(GL_POINTS, 0, 2);

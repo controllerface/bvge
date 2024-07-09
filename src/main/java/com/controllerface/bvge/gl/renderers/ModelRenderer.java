@@ -251,10 +251,14 @@ public class ModelRenderer extends GameSystem
         GPGPU.cl_zero_buffer(GPGPU.ptr_render_queue, svm_total, CLSize.cl_int);
         GPGPU.cl_zero_buffer(GPGPU.ptr_render_queue, ptr_mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
 
-        long[] hull_count = arg_long(GPGPU.core_memory.sector_container().next_hull());
+        int hull_count = GPGPU.core_memory.sector_container().next_hull();
+        int hull_size = GPGPU.calculate_preferred_global_size(hull_count);
+        long[] hull_global_size = arg_long(hull_size);
 
         long si = Editor.ACTIVE ? System.nanoTime() : 0;
-        k_count_mesh_instances.call(hull_count);
+        k_count_mesh_instances
+            .set_arg(CountMeshInstances_k.Args.max_hull, hull_count)
+            .call(hull_global_size, GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;
@@ -283,7 +287,8 @@ public class ModelRenderer extends GameSystem
         k_write_mesh_details
             .ptr_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
             .ptr_arg(WriteMeshDetails_k.Args.mesh_texture, mesh_texture_ptr)
-            .call(hull_count);
+            .set_arg(WriteMeshDetails_k.Args.max_hull, hull_count)
+            .call(hull_global_size, GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;
@@ -366,13 +371,15 @@ public class ModelRenderer extends GameSystem
             int count = next_batch == batch_data.raw_offsets.length
                 ? batch_data.total_instances - offset
                 : batch_data.raw_offsets[next_batch] - offset;
-
+            int count_size = GPGPU.calculate_preferred_global_size(count);
+            long[] count_global_size = arg_long(count_size);
             long st = Editor.ACTIVE ? System.nanoTime() : 0;
 
             k_transfer_detail_data
                 .ptr_arg(TransferDetailData_k.Args.mesh_details, batch_data.mesh_details_ptr)
                 .set_arg(TransferDetailData_k.Args.offset, offset)
-                .call(arg_long(count));
+                .set_arg(TransferDetailData_k.Args.max_mesh, count)
+                .call(count_global_size, GPGPU.preferred_work_size);
 
             if (Editor.ACTIVE)
             {
@@ -394,7 +401,8 @@ public class ModelRenderer extends GameSystem
                 .ptr_arg(TransferRenderData_k.Args.mesh_details, batch_data.mesh_details_ptr)
                 .ptr_arg(TransferRenderData_k.Args.mesh_texture, batch_data.mesh_texture_ptr)
                 .set_arg(TransferRenderData_k.Args.offset, offset)
-                .call(arg_long(count));
+                .set_arg(TransferRenderData_k.Args.max_index, count)
+                .call(count_global_size, GPGPU.preferred_work_size);
 
             if (Editor.ACTIVE)
             {

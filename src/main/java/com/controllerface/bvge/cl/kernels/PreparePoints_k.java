@@ -8,7 +8,8 @@ public class PreparePoints_k extends GPUKernel
         anti_gravity,
         vertex_vbo,
         color_vbo,
-        offset;
+        offset,
+        max_point,
     }
 
     public PreparePoints_k(long command_queue_ptr, long kernel_ptr)

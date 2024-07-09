@@ -8,9 +8,11 @@ __kernel void build_key_map(__global int4 *bounds_index_data,
                             __global int *key_offsets,
                             __global int *key_counts,
                             int x_subdivisions,
-                            int key_count_length)
+                            int key_count_length,
+                            int max_hull)
 {
     int current_hull = get_global_id(0);
+    if (current_hull >= max_hull) return;
     int4 bounds_index = bounds_index_data[current_hull];
     int2 bounds_bank = bounds_bank_data[current_hull];
 

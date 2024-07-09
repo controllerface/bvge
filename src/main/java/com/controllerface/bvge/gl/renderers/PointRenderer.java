@@ -39,7 +39,7 @@ public class PointRenderer extends GameSystem
     private long color_vbo_ptr;
 
     private Shader shader;
-    private GPUKernel prepare_points_k;
+    private GPUKernel k_prepare_points;
 
     public PointRenderer(ECS ecs)
     {
@@ -66,7 +66,7 @@ public class PointRenderer extends GameSystem
         prepare_points.init();
 
         long ptr = prepare_points.kernel_ptr(Kernel.prepare_points);
-        prepare_points_k = new PreparePoints_k(GPGPU.ptr_render_queue, ptr)
+        k_prepare_points = new PreparePoints_k(GPGPU.ptr_render_queue, ptr)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
             .ptr_arg(PreparePoints_k.Args.color_vbo, color_vbo_ptr)
             .buf_arg(PreparePoints_k.Args.anti_gravity, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT_ANTI_GRAV))
@@ -88,12 +88,13 @@ public class PointRenderer extends GameSystem
         for (int remaining = GPGPU.core_memory.last_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-
-            prepare_points_k
+            int count_size = GPGPU.calculate_preferred_global_size(count);
+            k_prepare_points
                 .share_mem(vertex_vbo_ptr)
                 .share_mem(color_vbo_ptr)
                 .set_arg(PreparePoints_k.Args.offset, offset)
-                .call(arg_long(count));
+                .set_arg(PreparePoints_k.Args.max_point, count)
+                .call(arg_long(count_size), GPGPU.preferred_work_size);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

@@ -15,9 +15,11 @@ __kernel void aabb_collide(__global float4 *bounds,
                            __global int *used,
                            __global int *counter,
                            int x_subdivisions,
-                           int key_count_length)
+                           int key_count_length,
+                           int max_index)
 {
     int gid = get_global_id(0);
+    if (gid >= max_index) return;
     int index = candidates[gid].x;
     int size = candidates[gid].y;
     int match_offset = match_offsets[gid];

@@ -145,9 +145,12 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                __global int2 *entity_animation_indices,
                                __global float2 *entity_animation_elapsed,
                                __global float2 *entity_animation_blend,
-                               float delta_time)
+                               float delta_time,
+                               int max_entity)
 {
     int current_entity = get_global_id(0);
+    if (current_entity >= max_entity) return;
+
     int2 bone_table = entity_bone_tables[current_entity];
     int entity_transform_id = entity_model_transforms[current_entity];
     int flags = entity_flags[current_entity];
@@ -215,9 +218,11 @@ __kernel void animate_bones(__global float16 *bones,
                             __global float16 *bone_references,
                             __global float16 *armature_bones,
                             __global int *hull_bind_pose_indicies,
-                            __global int *hull_inv_bind_pose_indicies)
+                            __global int *hull_inv_bind_pose_indicies,
+                            int max_hull_bone)
 {
     int current_bone = get_global_id(0);
+    if (current_bone >= max_hull_bone) return;
     int bind_pose_id = hull_bind_pose_indicies[current_bone];
     int inv_bind_pose_id = hull_inv_bind_pose_indicies[current_bone];
     float16 bone_reference = bone_references[inv_bind_pose_id];
@@ -236,21 +241,23 @@ __kernel void animate_points(__global float4 *points,
                              __global float4 *vertex_weights,
                              __global float4 *entities,
                              __global float2 *vertex_references,
-                             __global float16 *bones)
+                             __global float16 *bones,
+                             int max_point)
 {
 
-    int gid = get_global_id(0);
-    float4 point = points[gid];
+    int current_point = get_global_id(0);
+    if (current_point >= max_point) return;
+    float4 point = points[current_point];
 
-    int point_vertex_reference = point_vertex_references[gid];
-    int point_hull_index = point_hull_indices[gid];
+    int point_vertex_reference = point_vertex_references[current_point];
+    int point_hull_index = point_hull_indices[current_point];
     
     int hull_flag = hull_flags[point_hull_index];
     int hull_entity_id = hull_entity_ids[point_hull_index];
     bool no_bones = (hull_flag & NO_BONES) !=0;
     if (no_bones) return;
 
-    int4 bone_table = bone_tables[gid];
+    int4 bone_table = bone_tables[current_point];
 
     float2 reference_vertex = vertex_references[point_vertex_reference];
     float4 reference_weights = vertex_weights[point_vertex_reference];
@@ -278,5 +285,5 @@ __kernel void animate_points(__global float4 *points,
     un_padded += entity.xy;
     point.x = un_padded.x;
     point.y = un_padded.y;
-    points[gid] = point;
+    points[current_point] = point;
 }

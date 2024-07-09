@@ -4,9 +4,11 @@ Locates objects that are in bounds of the spatial partition
  */
 __kernel void locate_in_bounds(__global int2 *bounds_bank_data,
                                __global int *in_bounds,
-                               __global int *counter)
+                               __global int *counter,
+                               int max_bound)
 {
     int gid = get_global_id(0);
+    if (gid >= max_bound) return;
     int2 bounds_bank = bounds_bank_data[gid];
     bool is_in_bounds = bounds_bank.y > 0;
     if (is_in_bounds)
@@ -25,9 +27,11 @@ __kernel void count_candidates(__global int2 *bounds_bank_data,
                                __global int *key_counts,
                                __global int2 *candidates,
                                int x_subdivisions,
-                               int key_count_length)
+                               int key_count_length, 
+                               int max_index)
 {
     int gid = get_global_id(0);
+    if (gid >= max_index) return;
     int index = in_bounds[gid];
     int2 bounds_bank = bounds_bank_data[index];
     int spatial_index = bounds_bank.x * 2;
@@ -61,9 +65,11 @@ __kernel void finalize_candidates(__global int2 *input_candidates,
                                   __global int *matches,
                                   __global int *used,
                                   __global int *counter,
-                                  __global int2 *final_candidates)
+                                  __global int2 *final_candidates,
+                                  int max_index)
 {
     int gid = get_global_id(0);
+    if (gid >= max_index) return;
     int index = input_candidates[gid].x;
     int size = used[gid];
     int offset = match_offsets[gid];

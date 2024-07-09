@@ -12,7 +12,8 @@ __kernel void prepare_liquids(__global float4 *hull_positions,
                               __global int *indices,
                               __global float4 *transforms_out,
                               __global float4 *colors_out,
-                              int offset)
+                              int offset,
+                              int max_hull)
 {
     int gid = get_global_id(0);
     int offset_gid = gid + offset;

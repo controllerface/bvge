@@ -6,14 +6,16 @@ __kernel void resolve_constraints(__global int2 *hull_edge_tables,
                                   __global float4 *points,
                                   __global int2 *edges,
                                   __global float *edge_lengths,
-                                  int process_all)
+                                  int process_all,
+                                  int max_hull)
 {
-    int gid = get_global_id(0);
-    
+    int current_hull = get_global_id(0);
+    if (current_hull >= max_hull) return;
+
     // the element table contains the relevant pointers into the edge buffer, and
     // the bounding box is used to check if the edges should be processed.
-    int2 edge_table = hull_edge_tables[gid];
-    int2 bounds_bank = bounds_bank_data[gid];
+    int2 edge_table = hull_edge_tables[current_hull];
+    int2 bounds_bank = bounds_bank_data[current_hull];
 
     // extract the bank size from the boundary. Hulls with empty banks are out of bounds
     int bank_size = bounds_bank.y;

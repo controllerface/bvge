@@ -6,7 +6,8 @@ public class LocateInBounds_k extends GPUKernel
     {
         bounds_bank_data,
         in_bounds,
-        counter;
+        counter,
+        max_bound,
     }
 
     public LocateInBounds_k(long command_queue_ptr, long kernel_ptr)

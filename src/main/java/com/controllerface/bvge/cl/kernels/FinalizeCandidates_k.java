@@ -9,7 +9,8 @@ public class FinalizeCandidates_k extends GPUKernel
         matches,
         used,
         counter,
-        final_candidates;
+        final_candidates,
+        max_index,
     }
 
     public FinalizeCandidates_k(long command_queue_ptr, long kernel_ptr)

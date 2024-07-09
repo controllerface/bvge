@@ -5,9 +5,11 @@ __kernel void count_mesh_instances(__global int *hull_mesh_ids,
                                    __global int *counters,
                                    __global int2 *query,
                                    __global int *total,
-                                   int count)
+                                   int count,
+                                   int max_hull)
 {
     int hull_id = get_global_id(0);
+    if (hull_id >= max_hull) return;
     int mesh_id = hull_mesh_ids[hull_id];
     int hull_flag = hull_flags[hull_id];
     int entity_id = hull_entity_ids[hull_id];
@@ -41,9 +43,11 @@ __kernel void write_mesh_details(__global int *hull_mesh_ids,
                                  __global int *offsets,
                                  __global int4 *mesh_details,
                                  __global int *mesh_texture,
-                                 int count)
+                                 int count,
+                                 int max_hull)
 {
     int hull_id = get_global_id(0);
+    if (hull_id >= max_hull) return;
     int mesh_id = hull_mesh_ids[hull_id];
     int hull_flag = hull_flags[hull_id];
     int entity_id = hull_entity_ids[hull_id];
@@ -119,9 +123,11 @@ __kernel void calculate_batch_offsets(__global int *mesh_offsets,
 
 __kernel void transfer_detail_data(__global int4 *mesh_details, 
                                    __global int2 *mesh_transfer,
-                                   int offset)
+                                   int offset,
+                                   int max_mesh)
 {
     int t_index = get_global_id(0);
+    if (t_index >= max_mesh) return;
     int d_index = t_index + offset;
     int2 details = mesh_details[d_index].xy;
     mesh_transfer[t_index] = details;
@@ -157,9 +163,11 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
                                    __global int4 *mesh_details,
                                    __global int *mesh_texture,
                                    __global int2 *mesh_transfer,
-                                   int offset)
+                                   int offset,
+                                   int max_index)
 {
     int t_index = get_global_id(0);
+    if (t_index >= max_index) return;
     int d_index = t_index + offset;
     int c_index = t_index * 5;
     int4 details = mesh_details[d_index];

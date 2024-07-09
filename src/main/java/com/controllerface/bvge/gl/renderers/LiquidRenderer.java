@@ -137,13 +137,14 @@ public class LiquidRenderer extends GameSystem
         for (int remaining = circle_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-
+            int count_size = GPGPU.calculate_preferred_global_size(count);
             k_prepare_liquids
                 .share_mem(ptr_vbo_transform)
                 .share_mem(ptr_vbo_color)
                 .ptr_arg(PrepareLiquids_k.Args.indices, circle_hulls.indices())
                 .set_arg(PrepareLiquids_k.Args.offset, offset)
-                .call(arg_long(count));
+                .set_arg(PrepareLiquids_k.Args.max_hull, count)
+                .call(arg_long(count_size), GPGPU.preferred_work_size);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

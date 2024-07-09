@@ -86,12 +86,13 @@ public class EdgeRenderer extends GameSystem
         for (int remaining = GPGPU.core_memory.last_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-
+            int count_size = GPGPU.calculate_preferred_global_size(count);
             k_prepare_edges
                 .share_mem(ptr_vbo_edge)
                 .share_mem(ptr_vbo_flag)
                 .set_arg(PrepareEdges_k.Args.offset, offset)
-                .call(arg_long(count));
+                .set_arg(PrepareEdges_k.Args.max_edge, count)
+                .call(arg_long(count_size), GPGPU.preferred_work_size);
 
             glDrawArrays(GL_LINES, 0, count * 2);
             offset += count;

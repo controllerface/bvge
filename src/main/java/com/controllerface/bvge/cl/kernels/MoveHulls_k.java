@@ -6,7 +6,8 @@ public class MoveHulls_k extends GPUKernel
     {
         hulls,
         hull_point_tables,
-        points
+        points,
+        max_hull,
     }
 
     public MoveHulls_k(long command_queue_ptr, long kernel_ptr)

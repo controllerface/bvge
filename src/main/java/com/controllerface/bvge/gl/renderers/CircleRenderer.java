@@ -140,12 +140,13 @@ public class CircleRenderer extends GameSystem
         for (int remaining = circle_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-
+            int count_size = GPGPU.calculate_preferred_global_size(count);
             k_prepare_transforms
                 .share_mem(ptr_vbo_transform)
                 .ptr_arg(PrepareTransforms_k.Args.indices, circle_hulls.indices())
                 .set_arg(PrepareTransforms_k.Args.offset, offset)
-                .call(arg_long(count));
+                .set_arg(PrepareTransforms_k.Args.max_hull, count)
+                .call(arg_long(count_size), GPGPU.preferred_work_size);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

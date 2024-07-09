@@ -73,11 +73,12 @@ public class EntityPositionRenderer extends GameSystem
         for (int remaining = GPGPU.core_memory.last_entity(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-
+            int count_size = GPGPU.calculate_preferred_global_size(count);
             k_prepare_entities
                 .share_mem(ptr_vbo_vertex)
                 .set_arg(PrepareEntities_k.Args.offset, offset)
-                .call(arg_long(count));
+                .set_arg(PrepareEntities_k.Args.max_entity, count)
+                .call(arg_long(count_size), GPGPU.preferred_work_size);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

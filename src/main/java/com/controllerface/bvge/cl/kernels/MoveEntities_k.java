@@ -16,6 +16,7 @@ public class MoveEntities_k extends GPUKernel
         point_hit_counts,
         points,
         dt,
+        max_entity,
     }
 
     public MoveEntities_k(long command_queue_ptr, long kernel_ptr)

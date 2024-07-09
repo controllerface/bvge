@@ -11,7 +11,8 @@ public class CountMeshInstances_k extends GPUKernel
         counters,
         query,
         total,
-        count;
+        count,
+        max_hull,
     }
 
     public CountMeshInstances_k(long command_queue_ptr, long kernel_ptr)

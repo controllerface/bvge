@@ -6,7 +6,8 @@ public class TransferDetailData_k extends GPUKernel
     {
         mesh_details,
         mesh_transfer,
-        offset;
+        offset,
+        max_mesh,
     }
 
     public TransferDetailData_k(long command_queue_ptr, long kernel_ptr)

@@ -10,7 +10,8 @@ public class BuildKeyMap_k extends GPUKernel
         key_offsets,
         key_counts,
         x_subdivisions,
-        key_count_length;
+        key_count_length,
+        max_hull,
     }
 
     public BuildKeyMap_k(long command_queue_ptr, long kernel_ptr)

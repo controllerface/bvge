@@ -144,11 +144,6 @@ public abstract class GPUKernel
         call(GPGPU.global_single_size, GPGPU.global_single_size);
     }
 
-    public void call(long[] global_work_size)
-    {
-        call(global_work_size, null);
-    }
-
     public void call(long[] global_work_size, long[] local_work_size)
     {
         call(global_work_size, local_work_size, null);

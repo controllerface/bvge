@@ -15,7 +15,8 @@ public class WriteMeshDetails_k extends GPUKernel
         offsets,
         mesh_details,
         mesh_texture,
-        count;
+        count,
+        max_hull,
     }
 
     public WriteMeshDetails_k(long command_queue_ptr, long kernel_ptr)

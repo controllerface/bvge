@@ -9,7 +9,8 @@ public class PrepareEdges_k extends GPUKernel
         edge_flags,
         vertex_vbo,
         flag_vbo,
-        offset;
+        offset,
+        max_edge,
     }
 
     public PrepareEdges_k(long command_queue_ptr, long kernel_ptr)

@@ -8,7 +8,8 @@ public class SortReactions_k extends GPUKernel
         reactions_out,
         reaction_index,
         point_reactions,
-        point_offsets;
+        point_offsets,
+        max_index,
     }
 
     public SortReactions_k(long command_queue_ptr, long kernel_ptr)

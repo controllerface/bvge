@@ -14,7 +14,8 @@ public class AnimatePoints_k extends GPUKernel
         vertex_weights,
         entities,
         vertex_references,
-        bones;
+        bones,
+        max_point,
     }
 
     public AnimatePoints_k(long command_queue_ptr, long kernel_ptr)

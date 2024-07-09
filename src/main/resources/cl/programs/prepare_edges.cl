@@ -3,9 +3,11 @@ __kernel void prepare_edges(__global float4 *points,
                             __global int *edge_flags,
                             __global float4 *vertex_vbo,
                             __global float2 *flag_vbo,
-                            int offset)
+                            int offset,
+                            int max_edge)
 {
     int gid = get_global_id(0);
+    if (gid >= max_edge) return;
     int edge_id = gid + offset;
     
     int2 edge = edges[edge_id];

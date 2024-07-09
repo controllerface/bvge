@@ -26,6 +26,7 @@ public class SatCollide_k extends GPUKernel
         masses,
         counter,
         dt,
+        max_index,
     }
 
     public SatCollide_k(long command_queue_ptr, long kernel_ptr)

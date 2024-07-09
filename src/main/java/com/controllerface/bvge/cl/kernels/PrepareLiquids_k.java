@@ -13,7 +13,8 @@ public class PrepareLiquids_k extends GPUKernel
         indices,
         transforms_out,
         colors_out,
-        offset;
+        offset,
+        max_hull,
     }
 
     public PrepareLiquids_k(long command_queue_ptr, long kernel_ptr)

@@ -771,11 +771,15 @@ public class PhysicsSimulation extends GameSystem
             return;
         }
 
+        int hull_count = GPGPU.core_memory.sector_container().next_hull();
+        int hull_size  = GPGPU.calculate_preferred_global_size(hull_count);
+
         b_key_bank.ensure_capacity(uniform_grid.get_key_bank_size());
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_counts_data, grid_buffer_size);
         k_generate_keys
             .set_arg(GenerateKeys_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
-            .call(arg_long(GPGPU.core_memory.sector_container().next_hull()));
+            .set_arg(GenerateKeys_k.Args.max_hull, hull_count)
+            .call(arg_long(hull_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -789,8 +793,12 @@ public class PhysicsSimulation extends GameSystem
             ? System.nanoTime()
             : 0;
         b_key_map.ensure_capacity(uniform_grid.getKey_map_size());
+        int hull_count = GPGPU.core_memory.sector_container().next_hull();
+        int hull_size  = GPGPU.calculate_preferred_global_size(hull_count);
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_counts_data, grid_buffer_size);
-        k_build_key_map.call(arg_long(GPGPU.core_memory.sector_container().next_hull()));
+        k_build_key_map
+            .set_arg(BuildKeyMap_k.Args.max_hull, hull_count)
+            .call(arg_long(hull_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -804,12 +812,14 @@ public class PhysicsSimulation extends GameSystem
             ? System.nanoTime()
             : 0;
         int hull_count = GPGPU.core_memory.sector_container().next_hull();
+        int hull_size  = GPGPU.calculate_preferred_global_size(hull_count);
         b_in_bounds.ensure_capacity(hull_count);
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
 
         k_locate_in_bounds
             .ptr_arg(LocateInBounds_k.Args.counter, svm_atomic_counter)
-            .call(arg_long(hull_count));
+            .set_arg(LocateInBounds_k.Args.max_bound, hull_count)
+            .call(arg_long(hull_size), GPGPU.preferred_work_size);
 
         candidate_buffer_count = GPGPU.cl_read_pinned_int(GPGPU.ptr_compute_queue, svm_atomic_counter);
         if (Editor.ACTIVE)
@@ -824,8 +834,11 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
+        int candidate_size = GPGPU.calculate_preferred_global_size((int)candidate_buffer_count);
         b_candidate_counts.ensure_capacity(candidate_buffer_count);
-        k_count_candidates.call(arg_long(candidate_buffer_count));
+        k_count_candidates
+            .set_arg(CountCandidates_k.Args.max_index, (int)candidate_buffer_count)
+            .call(arg_long(candidate_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -918,10 +931,13 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
+        int candidate_size = GPGPU.calculate_preferred_global_size((int)candidate_buffer_count);
         b_matches.ensure_capacity(match_buffer_count);
         b_matches_used.ensure_capacity(candidate_buffer_count);
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
-        k_aabb_collide.call(arg_long(candidate_buffer_count));
+        k_aabb_collide
+            .set_arg(AABBCollide_k.Args.max_index, (int)candidate_buffer_count)
+            .call(arg_long(candidate_size), GPGPU.preferred_work_size);
         candidate_count = GPGPU.cl_read_pinned_int(GPGPU.ptr_compute_queue, svm_atomic_counter);
         if (Editor.ACTIVE)
         {
@@ -949,9 +965,12 @@ public class PhysicsSimulation extends GameSystem
 
         candidate_buffer_size = buffer_size;
 
+        int candidate_size = GPGPU.calculate_preferred_global_size((int)candidate_buffer_count);
+
         k_finalize_candidates
             .ptr_arg(FinalizeCandidates_k.Args.counter, counter_ptr)
-            .call(arg_long(candidate_buffer_count));
+            .set_arg(FinalizeCandidates_k.Args.max_index, (int)candidate_buffer_count)
+            .call(arg_long(candidate_size), GPGPU.preferred_work_size);
 
         GPGPU.cl_release_buffer(counter_ptr);
         if (Editor.ACTIVE)
@@ -970,7 +989,7 @@ public class PhysicsSimulation extends GameSystem
             ? System.nanoTime()
             : 0;
         int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
-        long[] global_work_size = new long[]{candidate_pair_size};
+        int candidate_size = GPGPU.calculate_preferred_global_size(candidate_pair_size);
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
 
         long max_point_count = candidate_buffer_size
@@ -982,7 +1001,9 @@ public class PhysicsSimulation extends GameSystem
         b_reaction_index.ensure_capacity(max_point_count);
         b_point_reaction_counts.ensure_capacity(GPGPU.core_memory.sector_container().next_point());
         b_point_reaction_offsets.ensure_capacity(GPGPU.core_memory.sector_container().next_point());
-        k_sat_collide.call(global_work_size);
+        k_sat_collide
+            .set_arg(SatCollide_k.Args.max_index, candidate_pair_size)
+            .call(arg_long(candidate_size), GPGPU.preferred_work_size);
         reaction_count = GPGPU.cl_read_pinned_int(GPGPU.ptr_compute_queue, svm_atomic_counter);
         if (Editor.ACTIVE)
         {
@@ -1010,7 +1031,10 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
-        k_sort_reactions.call(arg_long(reaction_count));
+        int reaction_size = GPGPU.calculate_preferred_global_size((int)reaction_count);
+        k_sort_reactions
+            .set_arg(SortReactions_k.Args.max_index, (int)reaction_count)
+            .call(arg_long(reaction_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -1023,7 +1047,11 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
-        k_apply_reactions.call(arg_long(GPGPU.core_memory.sector_container().next_point()));
+        int point_count = GPGPU.core_memory.sector_container().next_point();
+        int point_size  = GPGPU.calculate_preferred_global_size(point_count);
+        k_apply_reactions
+            .set_arg(ApplyReactions_k.Args.max_point, point_count)
+            .call(arg_long(point_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -1039,9 +1067,12 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
+        int entity_count = GPGPU.core_memory.sector_container().next_entity();
+        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
         k_animate_entities
             .set_arg(AnimateEntities_k.Args.delta_time, dt)
-            .call(arg_long(GPGPU.core_memory.sector_container().next_entity()));
+            .set_arg(AnimateEntities_k.Args.max_entity, entity_count)
+            .call(arg_long(entity_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -1054,7 +1085,11 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
-        k_animate_bones.call(arg_long(GPGPU.core_memory.sector_container().next_hull_bone()));
+        int hull_bone_count = GPGPU.core_memory.sector_container().next_hull_bone();
+        int hull_bone_size  = GPGPU.calculate_preferred_global_size(hull_bone_count);
+        k_animate_bones
+            .set_arg(AnimateBones_k.Args.max_hull_bone, hull_bone_count)
+            .call(arg_long(hull_bone_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -1067,7 +1102,11 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
-        k_animate_points.call(arg_long(GPGPU.core_memory.sector_container().next_point()));
+        int point_count = GPGPU.core_memory.sector_container().next_point();
+        int point_size  = GPGPU.calculate_preferred_global_size(point_count);
+        k_animate_points
+            .set_arg(AnimatePoints_k.Args.max_point, point_count)
+            .call(arg_long(point_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -1085,6 +1124,10 @@ public class PhysicsSimulation extends GameSystem
             ? System.nanoTime()
             : 0;
         boolean last_step;
+        int hull_count = GPGPU.core_memory.sector_container().next_hull();
+        int hull_size = GPGPU.calculate_preferred_global_size(hull_count);
+        long[] hull_global_size = arg_long(hull_size);
+
         for (int i = 0; i < steps; i++)
         {
             last_step = i == steps - 1;
@@ -1094,7 +1137,8 @@ public class PhysicsSimulation extends GameSystem
 
             k_resolve_constraints
                 .set_arg(ResolveConstraints_k.Args.process_all, n)
-                .call(arg_long(GPGPU.core_memory.sector_container().next_hull()));
+                .set_arg(ResolveConstraints_k.Args.max_hull, hull_count)
+                .call(hull_global_size, GPGPU.preferred_work_size);
         }
         if (Editor.ACTIVE)
         {
@@ -1108,7 +1152,11 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
-        k_move_entities.call(arg_long(GPGPU.core_memory.sector_container().next_entity()));
+        int entity_count = GPGPU.core_memory.sector_container().next_entity();
+        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
+        k_move_entities
+            .set_arg(MoveEntities_k.Args.max_entity, entity_count)
+            .call(arg_long(entity_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -1121,7 +1169,11 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
-        k_move_hulls.call(arg_long(GPGPU.core_memory.sector_container().next_hull()));
+        int hull_count = GPGPU.core_memory.sector_container().next_hull();
+        int hull_size  = GPGPU.calculate_preferred_global_size(hull_count);
+        k_move_hulls
+            .set_arg(MoveHulls_k.Args.max_hull, hull_count)
+            .call(arg_long(hull_size), GPGPU.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;

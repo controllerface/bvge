@@ -24,7 +24,8 @@ public class AnimateEntities_k extends GPUKernel
         entity_animation_indices,
         entity_animation_elapsed,
         entity_animation_blend,
-        delta_time;
+        delta_time,
+        max_entity,
     }
 
     public AnimateEntities_k(long command_queue_ptr, long kernel_ptr)

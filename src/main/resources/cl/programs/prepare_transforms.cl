@@ -3,9 +3,11 @@ __kernel void prepare_transforms(__global float4 *hull_positions,
                                  __global float2 *hull_rotations,
                                  __global int *indices,
                                  __global float4 *transforms_out,
-                                 int offset)
+                                 int offset,
+                                 int max_hull)
 {
     int gid = get_global_id(0);
+    if (gid >= max_hull) return;
     int offset_gid = gid + offset;
     int index = indices[offset_gid];
     

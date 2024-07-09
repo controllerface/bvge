@@ -6,7 +6,8 @@ public class PrepareEntities_k extends GPUKernel
     {
         points,
         vertex_vbo,
-        offset;
+        offset,
+        max_entity,
     }
 
     public PrepareEntities_k(long command_queue_ptr, long kernel_ptr)
