@@ -35,6 +35,7 @@ public class MergeHull_k extends GPUKernel
         entity_offset,
         edge_offset,
         point_offset,
+        max_hull,
     }
 
     public MergeHull_k(long command_queue_ptr, long kernel_ptr)

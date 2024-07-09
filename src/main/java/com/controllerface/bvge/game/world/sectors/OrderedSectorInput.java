@@ -136,39 +136,59 @@ public class OrderedSectorInput implements SectorContainer, Destoryable
 
     public void merge_into(SectorContainer target_container)
     {
-        if (controller.next_point() > 0) k_merge_point
+        int point_count       = controller.next_point();
+        int edge_count        = controller.next_edge();
+        int hull_count        = controller.next_hull();
+        int entity_count      = controller.next_entity();
+        int hull_bone_count   = controller.next_hull_bone();
+        int entity_bone_count = controller.next_entity_bone();
+
+        int point_size       = GPGPU.calculate_preferred_global_size(point_count);
+        int edge_size        = GPGPU.calculate_preferred_global_size(edge_count);
+        int hull_size        = GPGPU.calculate_preferred_global_size(hull_count);
+        int entity_size      = GPGPU.calculate_preferred_global_size(entity_count);
+        int hull_bone_size   = GPGPU.calculate_preferred_global_size(hull_bone_count);
+        int entity_bone_size = GPGPU.calculate_preferred_global_size(entity_bone_count);
+
+        if (point_count > 0) k_merge_point
             .set_arg(MergePoint_k.Args.point_offset, target_container.next_point())
             .set_arg(MergePoint_k.Args.bone_offset,  target_container.next_hull_bone())
             .set_arg(MergePoint_k.Args.hull_offset,  target_container.next_hull())
-            .call(arg_long(controller.next_point()));
+            .set_arg(MergePoint_k.Args.max_point,    point_count)
+            .call(arg_long(point_size), GPGPU.preferred_work_size);
 
-        if (controller.next_edge() > 0) k_merge_edge
+        if (edge_count > 0) k_merge_edge
             .set_arg(MergeEdge_k.Args.edge_offset,  target_container.next_edge())
             .set_arg(MergeEdge_k.Args.point_offset, target_container.next_point())
-            .call(arg_long(controller.next_edge()));
+            .set_arg(MergeEdge_k.Args.max_edge,     edge_count)
+            .call(arg_long(edge_size), GPGPU.preferred_work_size);
 
-        if (controller.next_hull() > 0) k_merge_hull
+        if (hull_count > 0) k_merge_hull
             .set_arg(MergeHull_k.Args.hull_offset,      target_container.next_hull())
             .set_arg(MergeHull_k.Args.point_offset,     target_container.next_point())
             .set_arg(MergeHull_k.Args.edge_offset,      target_container.next_edge())
             .set_arg(MergeHull_k.Args.entity_offset,    target_container.next_entity())
             .set_arg(MergeHull_k.Args.hull_bone_offset, target_container.next_hull_bone())
-            .call(arg_long(controller.next_hull()));
+            .set_arg(MergeHull_k.Args.max_hull,         hull_count)
+            .call(arg_long(hull_size), GPGPU.preferred_work_size);
 
-        if (controller.next_entity() > 0) k_merge_entity
+        if (entity_count > 0) k_merge_entity
             .set_arg(MergeEntity_k.Args.entity_offset,        target_container.next_entity())
             .set_arg(MergeEntity_k.Args.hull_offset,          target_container.next_hull())
-            .set_arg(MergeEntity_k.Args.armature_bone_offset, target_container.next_armature_bone())
-            .call(arg_long(controller.next_entity()));
+            .set_arg(MergeEntity_k.Args.armature_bone_offset, target_container.next_entity_bone())
+            .set_arg(MergeEntity_k.Args.max_entity,           edge_count)
+            .call(arg_long(entity_size), GPGPU.preferred_work_size);
 
-        if (controller.next_hull_bone() > 0) k_merge_hull_bone
+        if (hull_bone_count > 0) k_merge_hull_bone
             .set_arg(MergeHullBone_k.Args.hull_bone_offset,     target_container.next_hull_bone())
-            .set_arg(MergeHullBone_k.Args.armature_bone_offset, target_container.next_armature_bone())
-            .call(arg_long(controller.next_hull_bone()));
+            .set_arg(MergeHullBone_k.Args.armature_bone_offset, target_container.next_entity_bone())
+            .set_arg(MergeHullBone_k.Args.max_hull_bone,        hull_bone_count)
+            .call(arg_long(hull_bone_size), GPGPU.preferred_work_size);
 
-        if (controller.next_armature_bone() > 0) k_merge_entity_bone
-            .set_arg(MergeEntityBone_k.Args.armature_bone_offset, target_container.next_armature_bone())
-            .call(arg_long(controller.next_armature_bone()));
+        if (entity_bone_count > 0) k_merge_entity_bone
+            .set_arg(MergeEntityBone_k.Args.armature_bone_offset, target_container.next_entity_bone())
+            .set_arg(MergeEntityBone_k.Args.max_entity_bone,      entity_bone_count)
+            .call(arg_long(entity_bone_size), GPGPU.preferred_work_size);
 
         controller.reset();
     }
@@ -204,9 +224,9 @@ public class OrderedSectorInput implements SectorContainer, Destoryable
     }
 
     @Override
-    public int next_armature_bone()
+    public int next_entity_bone()
     {
-        return controller.next_armature_bone();
+        return controller.next_entity_bone();
     }
 
     @Override

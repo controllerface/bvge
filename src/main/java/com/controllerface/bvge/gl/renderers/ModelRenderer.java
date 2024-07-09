@@ -294,7 +294,7 @@ public class ModelRenderer extends GameSystem
         k_count_mesh_batches
             .ptr_arg(CountMeshBatches_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CountMeshBatches_k.Args.count, total_instances)
-            .call(GPGPU.global_single_size);
+            .call_task();
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;
@@ -315,7 +315,7 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offset_ptr)
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CalculateBatchOffsets_k.Args.count, total_instances)
-            .call(GPGPU.global_single_size);
+            .call_task();
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;

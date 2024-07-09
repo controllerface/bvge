@@ -12,6 +12,7 @@ public class CountEgressEntities_k extends GPUKernel
         hull_edge_tables,
         hull_bone_tables,
         counters,
+        max_entity,
     }
 
     public CountEgressEntities_k(long command_queue_ptr, long kernel_ptr)

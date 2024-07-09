@@ -6,7 +6,8 @@ public class RootHullCount_k extends GPUKernel
     {
         entity_model_indices,
         counter,
-        model_id;
+        model_id,
+        max_entity,
     }
 
     public RootHullCount_k(long command_queue_ptr, long kernel_ptr)

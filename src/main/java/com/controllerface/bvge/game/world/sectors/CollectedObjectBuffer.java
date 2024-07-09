@@ -50,7 +50,10 @@ public class CollectedObjectBuffer implements Destoryable
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
         collected_group.get_buffer(Collected.TYPES).ensure_capacity(egress_count);
-        k_egress_collected.call(arg_long(entity_count));
+        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
+        k_egress_collected
+            .set_arg(EgressCollected_k.Args.max_entity, entity_count)
+            .call(arg_long(entity_size), GPGPU.preferred_work_size);
     }
 
     public void unload(CollectedObjectBuffer.Raw raw, int count)

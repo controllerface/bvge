@@ -205,7 +205,7 @@ public class SectorController implements SectorContainer, Destoryable
         k_update_accel
             .set_arg(UpdateAccel_k.Args.target, entity_index)
             .set_arg(UpdateAccel_k.Args.new_value, arg_float2(acc_x, acc_y))
-            .call(GPGPU.global_single_size);
+            .call_task();
     }
 
     public float[] read_position(int entity_index)
@@ -215,7 +215,7 @@ public class SectorController implements SectorContainer, Destoryable
         k_read_position
             .ptr_arg(ReadPosition_k.Args.output, ptr_position_buffer)
             .set_arg(ReadPosition_k.Args.target, entity_index)
-            .call(GPGPU.global_single_size);
+            .call_task();
 
         return GPGPU.cl_read_pinned_float_buffer(this.ptr_queue, ptr_position_buffer, cl_float, 2);
     }
@@ -223,7 +223,11 @@ public class SectorController implements SectorContainer, Destoryable
     public int[] count_egress_entities()
     {
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, EGRESS_COUNTERS_SIZE);
-        k_count_egress_entities.call(arg_long(next_entity()));
+        int entity_count = next_entity();
+        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
+        k_count_egress_entities
+            .set_arg(CountEgressEntities_k.Args.max_entity, entity_count)
+            .call(arg_long(entity_size), GPGPU.preferred_work_size);
         return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int, EGRESS_COUNTERS);
     }
 
@@ -232,7 +236,7 @@ public class SectorController implements SectorContainer, Destoryable
         k_update_mouse_position
             .set_arg(UpdateMousePosition_k.Args.target, entity_index)
             .set_arg(UpdateMousePosition_k.Args.new_value, arg_float2(x, y))
-            .call(GPGPU.global_single_size);
+            .call_task();
     }
 
     public void update_block_position(int entity_index, float x, float y)
@@ -240,7 +244,7 @@ public class SectorController implements SectorContainer, Destoryable
         k_update_block_position
                 .set_arg(UpdateBlockPosition_k.Args.target, entity_index)
                 .set_arg(UpdateBlockPosition_k.Args.new_value, arg_float2(x, y))
-                .call(GPGPU.global_single_size);
+                .call_task();
     }
 
     public void update_block_cursor(int entity_index, int new_uv)
@@ -248,14 +252,14 @@ public class SectorController implements SectorContainer, Destoryable
         k_update_select_block
             .set_arg(UpdateSelectBlock_k.Args.target, entity_index)
             .set_arg(UpdateSelectBlock_k.Args.new_value, new_uv)
-            .call(GPGPU.global_single_size);
+            .call_task();
     }
 
     public void clear_block_cursor(int entity_index)
     {
         k_clear_select_block
             .set_arg(ClearSelectBlock_k.Args.target, entity_index)
-            .call(GPGPU.global_single_size);
+            .call_task();
     }
 
     public void place_block(int src, int dest)
@@ -263,7 +267,7 @@ public class SectorController implements SectorContainer, Destoryable
         k_place_block
             .set_arg(PlaceBlock_k.Args.src, src)
             .set_arg(PlaceBlock_k.Args.dest, dest)
-            .call(GPGPU.global_single_size);
+            .call_task();
     }
 
     @Override
@@ -289,7 +293,7 @@ public class SectorController implements SectorContainer, Destoryable
             .set_arg(CreatePoint_k.Args.new_point_hit_count, (short) hit_count)
             .set_arg(CreatePoint_k.Args.new_point_flags, flags)
             .set_arg(CreatePoint_k.Args.new_point_bone_table, bone_ids)
-            .call(GPGPU.global_single_size);
+            .call_task();
 
         return point_index++;
     }
@@ -305,7 +309,7 @@ public class SectorController implements SectorContainer, Destoryable
             .set_arg(CreateEdge_k.Args.new_edge, arg_int2(p1, p2))
             .set_arg(CreateEdge_k.Args.new_edge_length, l)
             .set_arg(CreateEdge_k.Args.new_edge_flag, flags)
-            .call(GPGPU.global_single_size);
+            .call_task();
 
         return edge_index++;
     }
@@ -346,7 +350,7 @@ public class SectorController implements SectorContainer, Destoryable
             .set_arg(CreateHull_k.Args.new_hull_mesh_id, mesh_id)
             .set_arg(CreateHull_k.Args.new_hull_uv_offset, uv_offset)
             .set_arg(CreateHull_k.Args.new_hull_integrity, 100)
-            .call(GPGPU.global_single_size);
+            .call_task();
 
         return hull_index++;
     }
@@ -380,7 +384,7 @@ public class SectorController implements SectorContainer, Destoryable
             .set_arg(CreateEntity_k.Args.new_entity_animation_index, arg_int2(anim_index, -1))
             .set_arg(CreateEntity_k.Args.new_entity_animation_time, arg_float2(anim_time, 0.0f)) // todo: maybe remove these zero init ones
             .set_arg(CreateEntity_k.Args.new_entity_animation_state, arg_short2((short) 0, (short) 0))
-            .call(GPGPU.global_single_size);
+            .call_task();
 
         return entity_index++;
     }
@@ -396,7 +400,7 @@ public class SectorController implements SectorContainer, Destoryable
             .set_arg(CreateHullBone_k.Args.new_hull_bone, bone_data)
             .set_arg(CreateHullBone_k.Args.new_hull_bind_pose_id, bind_pose_id)
             .set_arg(CreateHullBone_k.Args.new_hull_inv_bind_pose_id, inv_bind_pose_id)
-            .call(GPGPU.global_single_size);
+            .call_task();
 
         return hull_bone_index++;
     }
@@ -412,7 +416,7 @@ public class SectorController implements SectorContainer, Destoryable
             .set_arg(CreateEntityBone_k.Args.new_armature_bone, bone_data)
             .set_arg(CreateEntityBone_k.Args.new_armature_bone_reference, bone_reference)
             .set_arg(CreateEntityBone_k.Args.new_armature_bone_parent_id, bone_parent_id)
-            .call(GPGPU.global_single_size);
+            .call_task();
 
         return entity_bone_index++;
     }
@@ -448,7 +452,7 @@ public class SectorController implements SectorContainer, Destoryable
     }
 
     @Override
-    public int next_armature_bone()
+    public int next_entity_bone()
     {
         return entity_bone_index;
     }

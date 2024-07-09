@@ -160,6 +160,12 @@ public class CLUtils
         return clCreateKernel(program_ptr, kernel_name, (IntBuffer) null);
     }
 
+
+    public static int[] arg_int(int arg)
+    {
+        return new int[]{ arg };
+    }
+
     public static long[] arg_long(long arg)
     {
         return new long[]{ arg };
@@ -339,6 +345,7 @@ public class CLUtils
         if (r != CL_SUCCESS)
         {
             System.out.println("debug error:" + r);
+            return -1;
         }
         var result = size == 4
             ? value_buffer.getInt(0)

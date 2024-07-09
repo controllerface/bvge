@@ -19,6 +19,7 @@ public class MergePoint_k extends GPUKernel
         point_offset,
         bone_offset,
         hull_offset,
+        max_point,
     }
 
     public MergePoint_k(long command_queue_ptr, long kernel_ptr)

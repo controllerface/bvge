@@ -329,7 +329,7 @@ public class GPUCoreMemory implements Destoryable
         int hull_count          = sector_ingress_buffer.next_hull();
         int entity_count        = sector_ingress_buffer.next_entity();
         int hull_bone_count     = sector_ingress_buffer.next_hull_bone();
-        int armature_bone_count = sector_ingress_buffer.next_armature_bone();
+        int armature_bone_count = sector_ingress_buffer.next_entity_bone();
 
         int total = point_count
             + edge_count
@@ -345,7 +345,7 @@ public class GPUCoreMemory implements Destoryable
         int hull_capacity          = hull_count + sector_controller.next_hull();
         int entity_capacity        = entity_count + sector_controller.next_entity();
         int hull_bone_capacity     = hull_bone_count + sector_controller.next_hull_bone();
-        int armature_bone_capacity = armature_bone_count + sector_controller.next_armature_bone();
+        int armature_bone_capacity = armature_bone_count + sector_controller.next_entity_bone();
 
         sector_buffers.ensure_capacity_all(point_capacity,
                 edge_capacity,

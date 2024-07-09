@@ -8,6 +8,7 @@ public class EgressCollected_k extends GPUKernel
         entity_types,
         types,
         counter,
+        max_entity,
     }
 
     public EgressCollected_k(long command_queue_ptr, long kernel_ptr)

@@ -93,9 +93,13 @@ __kernel void merge_point(__global float4 *points_in,
                           __global int4 *point_bone_tables_out,
                           int point_offset,
                           int bone_offset,
-                          int hull_offset)
+                          int hull_offset,
+                          int max_point)
 {
     int current_point = get_global_id(0);
+
+    if (current_point >= max_point) return;
+
     int target_point = current_point + point_offset;
     
     points_out[target_point]                  = points_in[current_point]; 
@@ -113,9 +117,11 @@ __kernel void merge_edge(__global int2 *edges_in,
                           __global float *edge_lengths_out,
                           __global int *edge_flags_out,
                           int edge_offset,
-                          int point_offset)
+                          int point_offset,
+                          int max_edge)
 {
     int current_edge = get_global_id(0);
+    if (current_edge >= max_edge) return;
     int target_edge = current_edge + edge_offset;
     edges_out[target_edge]        = edges_in[current_edge] + (int2)(point_offset); 
     edge_lengths_out[target_edge] = edge_lengths_in[current_edge]; 
@@ -129,9 +135,11 @@ __kernel void merge_hull_bone(__global float16 *hull_bones_in,
                                __global int *hull_bind_pose_indicies_out,
                                __global int *hull_inv_bind_pose_indicies_out,
                                int hull_bone_offset,
-                               int armature_bone_offset)
+                               int armature_bone_offset,
+                               int max_hull_bone)
 {
     int current_hull_bone = get_global_id(0);
+    if (current_hull_bone >= max_hull_bone) return;
     int target_hull_bone = current_hull_bone + hull_bone_offset;
     hull_bones_out[target_hull_bone]                  = hull_bones_in[current_hull_bone]; 
     hull_bind_pose_indicies_out[target_hull_bone]     = hull_bind_pose_indicies_in[current_hull_bone] + armature_bone_offset; 
@@ -144,9 +152,11 @@ __kernel void merge_entity_bone(__global float16 *entity_bones_in,
                                    __global float16 *entity_bones_out,
                                    __global int *entity_bone_reference_ids_out,
                                    __global int *entity_bone_parent_ids_out,
-                                   int entity_bone_offset)
+                                   int entity_bone_offset,
+                                   int max_entity_bone)
 {
     int current_entity_bone = get_global_id(0);
+    if (current_entity_bone >= max_entity_bone) return;
     int target_entity_bone = current_entity_bone + entity_bone_offset;
     entity_bones_out[target_entity_bone]              = entity_bones_in[current_entity_bone]; 
     entity_bone_reference_ids_out[target_entity_bone] = entity_bone_reference_ids_in[current_entity_bone];
@@ -183,9 +193,11 @@ __kernel void merge_hull(__global float4 *hulls_in,
                           int hull_bone_offset,
                           int entity_offset,
                           int edge_offset,
-                          int point_offset)
+                          int point_offset,
+                          int max_hull)
 {
     int current_hull = get_global_id(0);
+    if (current_hull >= max_hull) return;
     int target_hull = current_hull + hull_offset;
     
     hulls_out[target_hull]             = hulls_in[current_hull];
@@ -229,9 +241,11 @@ __kernel void merge_entity(__global float4 *entities_in,
                             __global int *entity_flags_out,
                             int entity_offset,
                             int hull_offset,
-                            int armature_bone_offset)
+                            int armature_bone_offset,
+                            int max_entity)
 {
     int current_entity = get_global_id(0);
+    if (current_entity >= max_entity) return;
     int target_entity = current_entity + entity_offset;
 
     entities_out[target_entity]                 = entities_in[current_entity];
@@ -255,10 +269,11 @@ __kernel void count_egress_entities(__global int *entity_flags,
                                     __global int2 *hull_point_tables,
                                     __global int2 *hull_edge_tables,
                                     __global int2 *hull_bone_tables,
-                                    __global int *counters)
+                                    __global int *counters,
+                                    int max_entity)
 {
     int current_entity = get_global_id(0);
-
+    if (current_entity >= max_entity) return;
     int flags       = entity_flags[current_entity];
     bool sector_out = (flags & SECTOR_OUT) !=0;
     bool broken     = (flags & BROKEN) !=0;
@@ -318,9 +333,13 @@ __kernel void count_egress_entities(__global int *entity_flags,
 __kernel void egress_collected(__global int *entity_flags,
                                __global int *entity_types,
                                __global int *types,
-                               __global int *counter)
+                               __global int *counter, 
+                               int max_entity)
 {
     int current_entity = get_global_id(0);
+    
+    if (current_entity >= max_entity) return;
+
     int e_flags = entity_flags[current_entity];
     int e_type = entity_types[current_entity];
     bool collected = (e_flags & COLLECTED) !=0;
@@ -338,9 +357,13 @@ __kernel void egress_broken(__global float4 *entities,
                             __global float2 *positions,
                             __global int *types,
                             __global int *model_ids,
-                            __global int *counter)
+                            __global int *counter, 
+                            int max_entity)
 {
     int current_entity = get_global_id(0);
+
+    if (current_entity >= max_entity) return;
+
     int flags   = entity_flags[current_entity];
     int type    = entity_types[current_entity];
     bool broken = (flags & BROKEN) !=0;
@@ -444,10 +467,11 @@ __kernel void egress_entities(__global float4 *points_in,
                               __global float16 *armature_bones_out,
                               __global int *armature_bone_reference_ids_out,
                               __global int *armature_bone_parent_ids_out,
-                              __global int *counters)
+                              __global int *counters, 
+                              int max_entity)
 {
     int current_entity = get_global_id(0);
-
+    if (current_entity >= max_entity) return;
     int flags       = entity_flags_in[current_entity];
     bool sector_out = (flags & SECTOR_OUT) !=0;
 

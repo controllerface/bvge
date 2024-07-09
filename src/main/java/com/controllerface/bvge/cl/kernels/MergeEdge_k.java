@@ -12,6 +12,7 @@ public class MergeEdge_k extends GPUKernel
         edge_flags_out,
         edge_offset,
         point_offset,
+        max_edge,
     }
 
     public MergeEdge_k(long command_queue_ptr, long kernel_ptr)

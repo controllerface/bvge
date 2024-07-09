@@ -16,6 +16,8 @@ import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 import org.lwjgl.system.MemoryUtil;
 
+import java.nio.IntBuffer;
+
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_2D_LENGTH;
 import static org.lwjgl.opengl.GL11C.GL_LINE_LOOP;
@@ -85,18 +87,21 @@ public class BoundingBoxRenderer extends GameSystem
         for (int remaining = GPGPU.core_memory.last_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            var offsets = MemoryUtil.memAllocInt(count).put(this.offsets, 0, count).flip();
-            var counts = MemoryUtil.memAllocInt(count).put(this.counts, 0, count).flip();
+            int count_size = GPGPU.calculate_preferred_global_size(count);
+
+            // todo: see if a uniform can be set that sets a max_count, and vertices can bail if beyond max
+            int[] o_ = new int[count];
+            int[] c_ = new int[count];
+            System.arraycopy(this.offsets, 0, o_, 0, count);
+            System.arraycopy(this.counts, 0, c_, 0, count);
 
             k_prepare_bounds
                 .share_mem(ptr_vbo_position)
                 .set_arg(PrepareBounds_k.Args.offset, offset)
-                .call(arg_long(count));
+                .set_arg(PrepareBounds_k.Args.max_bound, count)
+                .call(arg_long(count_size), GPGPU.preferred_work_size);
 
-            glMultiDrawArrays(GL_LINE_LOOP, offsets, counts);
-
-            MemoryUtil.memFree(offsets);
-            MemoryUtil.memFree(counts);
+            glMultiDrawArrays(GL_LINE_LOOP, o_, c_);
 
             offset += count;
         }

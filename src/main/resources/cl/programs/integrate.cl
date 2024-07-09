@@ -26,9 +26,12 @@ __kernel void integrate(__global float4 *hulls,
                         __global int *hull_flags,
                         __global int *hull_entity_ids,
                         __global float *anti_gravity,
-                        __global float *args)
+                        __global float *args, 
+                        int max_hull)
 {
     int current_hull = get_global_id(0);
+
+    if (current_hull >= max_hull) return;
 
     float dt             = args[0];
     float2 gravity       = (float2)(args[1], args[2]);
@@ -339,9 +342,12 @@ __kernel void integrate_entities(__global float4 *entities,
                                   __global int *entity_root_hulls,
                                   __global float2 *entity_accel,
                                   __global int *hull_flags,
-                                  __global float *args)
+                                  __global float *args, 
+                                  int max_entity)
 {
     int current_entity = get_global_id(0);
+
+    if (current_entity >= max_entity) return;
 
     float dt = args[0];
     float2 gravity = (float2)(args[1], args[2]);

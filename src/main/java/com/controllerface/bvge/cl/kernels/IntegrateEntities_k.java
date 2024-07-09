@@ -10,6 +10,7 @@ public class IntegrateEntities_k extends GPUKernel
         entity_accel,
         hull_flags,
         args,
+        max_entity,
     }
 
     public IntegrateEntities_k(long command_queue_ptr, long kernel_ptr)

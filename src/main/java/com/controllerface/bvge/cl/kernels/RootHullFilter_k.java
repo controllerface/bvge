@@ -8,7 +8,8 @@ public class RootHullFilter_k extends GPUKernel
         entity_model_indices,
         hulls_out,
         counter,
-        model_id;
+        model_id,
+        max_entity,
     }
 
     public RootHullFilter_k(long command_queue_ptr, long kernel_ptr)

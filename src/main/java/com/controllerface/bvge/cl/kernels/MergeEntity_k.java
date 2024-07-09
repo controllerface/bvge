@@ -31,6 +31,7 @@ public class MergeEntity_k extends GPUKernel
         entity_offset,
         hull_offset,
         armature_bone_offset,
+        max_entity,
     }
 
     public MergeEntity_k(long command_queue_ptr, long kernel_ptr)

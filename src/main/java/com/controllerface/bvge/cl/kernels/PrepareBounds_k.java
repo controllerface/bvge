@@ -6,7 +6,8 @@ public class PrepareBounds_k extends GPUKernel
     {
         bounds,
         vbo,
-        offset;
+        offset,
+        max_bound,
     }
 
     public PrepareBounds_k(long command_queue_ptr, long kernel_ptr)

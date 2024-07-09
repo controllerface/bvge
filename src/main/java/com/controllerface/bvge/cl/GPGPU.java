@@ -15,7 +15,6 @@ import static org.lwjgl.opencl.AMDDeviceAttributeQuery.CL_DEVICE_WAVEFRONT_WIDTH
 import static org.lwjgl.opencl.CL12.*;
 import static org.lwjgl.opencl.CL12GL.clCreateFromGLBuffer;
 import static org.lwjgl.opencl.CL20.*;
-import static org.lwjgl.opencl.CL30.CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT;
 import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
 import static org.lwjgl.opencl.KHRGLSharing.CL_WGL_HDC_KHR;
 import static org.lwjgl.opencl.NVDeviceAttributeQuery.CL_DEVICE_WARP_SIZE_NV;
@@ -55,6 +54,9 @@ public class GPGPU
      * Used for the prefix scan kernels and their variants.
      */
     public static long max_scan_block_size = 0;
+
+    public static long[] preferred_work_size = arg_long(0);
+    public static int preferred_work_size_int = 0;
 
     /**
      * The max group size formatted as a single element array, making it simpler to use for Open Cl calls.
@@ -492,6 +494,16 @@ public class GPGPU
         clSVMFree(ptr_context, mem_ptr);
     }
 
+    public static int calculate_preferred_global_size(int globalWorkSize)
+    {
+        int remainder = globalWorkSize % preferred_work_size_int;
+        if (remainder != 0)
+        {
+            globalWorkSize += (preferred_work_size_int - remainder);
+        }
+        return globalWorkSize;
+    }
+
     public static void init(ECS ecs)
     {
         ptr_device_id = init_device();
@@ -536,6 +548,15 @@ public class GPGPU
         long compute_unit_count = get_device_long(ptr_device_id, CL_DEVICE_MAX_COMPUTE_UNITS);
         long wavefront_width = get_device_long(ptr_device_id, CL_DEVICE_WAVEFRONT_WIDTH_AMD);
         long warp_width = get_device_long(ptr_device_id, CL_DEVICE_WARP_SIZE_NV);
+
+        preferred_work_size = arg_long(wavefront_width != -1
+            ? wavefront_width
+            : warp_width != -1
+                ? warp_width
+                : 32);
+
+        preferred_work_size_int = (int)preferred_work_size[0];
+
         long current_max_block_size = current_max_group_size * 2;
 
         long max_mem = get_device_long(ptr_device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE);

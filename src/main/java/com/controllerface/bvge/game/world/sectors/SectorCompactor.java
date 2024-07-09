@@ -307,7 +307,7 @@ public class SectorCompactor implements Destoryable
         b_edge_shift.ensure_capacity(controller.next_edge());
         b_point_shift.ensure_capacity(controller.next_point());
         b_hull_bone_shift.ensure_capacity(controller.next_hull_bone());
-        b_entity_bone_shift.ensure_capacity(controller.next_armature_bone());
+        b_entity_bone_shift.ensure_capacity(controller.next_entity_bone());
 
         b_hull_shift.clear();
         b_edge_shift.clear();
@@ -324,7 +324,7 @@ public class SectorCompactor implements Destoryable
         linearize_kernel(k_compact_points, controller.next_point());
         linearize_kernel(k_compact_edges, controller.next_edge());
         linearize_kernel(k_compact_hulls, controller.next_hull());
-        linearize_kernel(k_compact_armature_bones, controller.next_armature_bone());
+        linearize_kernel(k_compact_armature_bones, controller.next_entity_bone());
 
         compact_buffers(shift_counts);
     }

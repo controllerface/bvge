@@ -18,7 +18,8 @@ public class Integrate_k extends GPUKernel
         hull_flags,
         hull_entity_ids,
         anti_gravity,
-        args;
+        args,
+        max_hull,
     }
 
     public Integrate_k(long command_queue_ptr, long kernel_ptr)

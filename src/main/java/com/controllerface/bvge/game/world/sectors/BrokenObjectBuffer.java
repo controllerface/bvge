@@ -57,10 +57,13 @@ public class BrokenObjectBuffer implements Destoryable
     public void egress(int entity_count, int egress_count)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
+        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
         broken_group.get_buffer(BrokenBuffer.BROKEN_POSITIONS).ensure_capacity(egress_count);
         broken_group.get_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);
         broken_group.get_buffer(BrokenBuffer.BROKEN_MODEL_IDS).ensure_capacity(egress_count);
-        k_egress_broken.call(CLUtils.arg_long(entity_count));
+        k_egress_broken
+            .set_arg(EgressBroken_k.Args.max_entity, entity_count)
+            .call(CLUtils.arg_long(entity_size), GPGPU.preferred_work_size);
     }
 
     public void unload(BrokenObjectBuffer.Raw raw, int count)

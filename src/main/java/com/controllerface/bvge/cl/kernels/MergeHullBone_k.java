@@ -12,6 +12,7 @@ public class MergeHullBone_k extends GPUKernel
         hull_inv_bind_pose_indicies_out,
         hull_bone_offset,
         armature_bone_offset,
+        max_hull_bone,
     }
 
     public MergeHullBone_k(long command_queue_ptr, long kernel_ptr)

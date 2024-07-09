@@ -26,16 +26,16 @@ public class ReferenceController implements ReferenceContainer
     private final GPUKernel k_create_vertex_reference;
     private final GPUKernel k_set_bone_channel_table;
 
-    private int vertex_ref_index      = 0;
-    private int bone_bind_index       = 0;
-    private int bone_ref_index        = 0;
+    private int vertex_ref_index = 0;
+    private int bone_bind_index = 0;
+    private int bone_ref_index = 0;
     private int model_transform_index = 0;
-    private int mesh_index            = 0;
-    private int face_index            = 0;
-    private int uv_index              = 0;
-    private int keyframe_index        = 0;
-    private int bone_channel_index    = 0;
-    private int animation_index       = 0;
+    private int mesh_index = 0;
+    private int face_index = 0;
+    private int uv_index = 0;
+    private int keyframe_index = 0;
+    private int bone_channel_index = 0;
+    private int animation_index = 0;
 
     public ReferenceController(long ptr_queue, GPUProgram p_gpu_crud, ReferenceBufferGroup reference_buffers)
     {
@@ -43,55 +43,55 @@ public class ReferenceController implements ReferenceContainer
 
         long k_ptr_create_texture_uv = p_gpu_crud.kernel_ptr(Kernel.create_texture_uv);
         k_create_texture_uv = new CreateTextureUV_k(ptr_queue, k_ptr_create_texture_uv)
-                .buf_arg(CreateTextureUV_k.Args.texture_uvs,                 this.reference_buffers.get_buffer(VERTEX_TEXTURE_UV));
+            .buf_arg(CreateTextureUV_k.Args.texture_uvs, this.reference_buffers.get_buffer(VERTEX_TEXTURE_UV));
 
         long k_ptr_create_keyframe = p_gpu_crud.kernel_ptr(Kernel.create_keyframe);
         k_create_keyframe = new CreateKeyFrame_k(ptr_queue, k_ptr_create_keyframe)
-                .buf_arg(CreateKeyFrame_k.Args.key_frames,                   this.reference_buffers.get_buffer(ANIM_KEY_FRAME))
-                .buf_arg(CreateKeyFrame_k.Args.frame_times,                  this.reference_buffers.get_buffer(ANIM_FRAME_TIME));
+            .buf_arg(CreateKeyFrame_k.Args.key_frames, this.reference_buffers.get_buffer(ANIM_KEY_FRAME))
+            .buf_arg(CreateKeyFrame_k.Args.frame_times, this.reference_buffers.get_buffer(ANIM_FRAME_TIME));
 
         long k_ptr_create_vertex_reference = p_gpu_crud.kernel_ptr(Kernel.create_vertex_reference);
         k_create_vertex_reference = new CreateVertexRef_k(ptr_queue, k_ptr_create_vertex_reference)
-                .buf_arg(CreateVertexRef_k.Args.vertex_references,           this.reference_buffers.get_buffer(VERTEX_REFERENCE))
-                .buf_arg(CreateVertexRef_k.Args.vertex_weights,              this.reference_buffers.get_buffer(VERTEX_WEIGHT))
-                .buf_arg(CreateVertexRef_k.Args.uv_tables,                   this.reference_buffers.get_buffer(VERTEX_UV_TABLE));
+            .buf_arg(CreateVertexRef_k.Args.vertex_references, this.reference_buffers.get_buffer(VERTEX_REFERENCE))
+            .buf_arg(CreateVertexRef_k.Args.vertex_weights, this.reference_buffers.get_buffer(VERTEX_WEIGHT))
+            .buf_arg(CreateVertexRef_k.Args.uv_tables, this.reference_buffers.get_buffer(VERTEX_UV_TABLE));
 
         long k_ptr_create_bone_bind_pose = p_gpu_crud.kernel_ptr(Kernel.create_bone_bind_pose);
         k_create_bone_bind_pose = new CreateBoneBindPose_k(ptr_queue, k_ptr_create_bone_bind_pose)
-                .buf_arg(CreateBoneBindPose_k.Args.bone_bind_poses,          this.reference_buffers.get_buffer(BONE_BIND_POSE));
+            .buf_arg(CreateBoneBindPose_k.Args.bone_bind_poses, this.reference_buffers.get_buffer(BONE_BIND_POSE));
 
         long k_ptr_create_bone_reference = p_gpu_crud.kernel_ptr(Kernel.create_bone_reference);
         k_create_bone_reference = new CreateBoneRef_k(ptr_queue, k_ptr_create_bone_reference)
-                .buf_arg(CreateBoneRef_k.Args.bone_references,               this.reference_buffers.get_buffer(BONE_REFERENCE));
+            .buf_arg(CreateBoneRef_k.Args.bone_references, this.reference_buffers.get_buffer(BONE_REFERENCE));
 
         long k_ptr_create_bone_channel = p_gpu_crud.kernel_ptr(Kernel.create_bone_channel);
         k_create_bone_channel = new CreateBoneChannel_k(ptr_queue, k_ptr_create_bone_channel)
-                .buf_arg(CreateBoneChannel_k.Args.animation_timing_indices,  this.reference_buffers.get_buffer(ANIM_TIMING_INDEX))
-                .buf_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables,   this.reference_buffers.get_buffer(ANIM_POS_CHANNEL))
-                .buf_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables,   this.reference_buffers.get_buffer(ANIM_ROT_CHANNEL))
-                .buf_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables,   this.reference_buffers.get_buffer(ANIM_SCL_CHANNEL));
+            .buf_arg(CreateBoneChannel_k.Args.animation_timing_indices, this.reference_buffers.get_buffer(ANIM_TIMING_INDEX))
+            .buf_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, this.reference_buffers.get_buffer(ANIM_POS_CHANNEL))
+            .buf_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, this.reference_buffers.get_buffer(ANIM_ROT_CHANNEL))
+            .buf_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, this.reference_buffers.get_buffer(ANIM_SCL_CHANNEL));
 
         long k_ptr_create_model_transform = p_gpu_crud.kernel_ptr(Kernel.create_model_transform);
         k_create_model_transform = new CreateModelTransform_k(ptr_queue, k_ptr_create_model_transform)
-                .buf_arg(CreateModelTransform_k.Args.model_transforms,       this.reference_buffers.get_buffer(MODEL_TRANSFORM));
+            .buf_arg(CreateModelTransform_k.Args.model_transforms, this.reference_buffers.get_buffer(MODEL_TRANSFORM));
 
         long k_ptr_create_mesh_reference = p_gpu_crud.kernel_ptr(Kernel.create_mesh_reference);
         k_create_mesh_reference = new CreateMeshReference_k(ptr_queue, k_ptr_create_mesh_reference)
-                .buf_arg(CreateMeshReference_k.Args.mesh_vertex_tables,      this.reference_buffers.get_buffer(MESH_VERTEX_TABLE))
-                .buf_arg(CreateMeshReference_k.Args.mesh_face_tables,        this.reference_buffers.get_buffer(MESH_FACE_TABLE));
+            .buf_arg(CreateMeshReference_k.Args.mesh_vertex_tables, this.reference_buffers.get_buffer(MESH_VERTEX_TABLE))
+            .buf_arg(CreateMeshReference_k.Args.mesh_face_tables, this.reference_buffers.get_buffer(MESH_FACE_TABLE));
 
         long k_ptr_create_mesh_face = p_gpu_crud.kernel_ptr(Kernel.create_mesh_face);
         k_create_mesh_face = new CreateMeshFace_k(ptr_queue, k_ptr_create_mesh_face)
-                .buf_arg(CreateMeshFace_k.Args.mesh_faces,                   this.reference_buffers.get_buffer(MESH_FACE));
+            .buf_arg(CreateMeshFace_k.Args.mesh_faces, this.reference_buffers.get_buffer(MESH_FACE));
 
         long k_ptr_create_animation_timings = p_gpu_crud.kernel_ptr(Kernel.create_animation_timings);
         k_create_animation_timings = new CreateAnimationTimings_k(ptr_queue, k_ptr_create_animation_timings)
-                .buf_arg(CreateAnimationTimings_k.Args.animation_durations,  this.reference_buffers.get_buffer(ANIM_DURATION))
-                .buf_arg(CreateAnimationTimings_k.Args.animation_tick_rates, this.reference_buffers.get_buffer(ANIM_TICK_RATE));
+            .buf_arg(CreateAnimationTimings_k.Args.animation_durations, this.reference_buffers.get_buffer(ANIM_DURATION))
+            .buf_arg(CreateAnimationTimings_k.Args.animation_tick_rates, this.reference_buffers.get_buffer(ANIM_TICK_RATE));
 
         long k_ptr_set_bone_channel_table = p_gpu_crud.kernel_ptr(Kernel.set_bone_channel_table);
         k_set_bone_channel_table = new SetBoneChannelTable_k(ptr_queue, k_ptr_set_bone_channel_table)
-            .buf_arg(SetBoneChannelTable_k.Args.bone_channel_tables,         this.reference_buffers.get_buffer(BONE_ANIM_CHANNEL_TABLE));
+            .buf_arg(SetBoneChannelTable_k.Args.bone_channel_tables, this.reference_buffers.get_buffer(BONE_ANIM_CHANNEL_TABLE));
     }
 
     @Override
@@ -107,11 +107,11 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_vertex_reference(capacity);
 
         k_create_vertex_reference
-                .set_arg(CreateVertexRef_k.Args.target, vertex_ref_index)
-                .set_arg(CreateVertexRef_k.Args.new_vertex_reference, arg_float2(x, y))
-                .set_arg(CreateVertexRef_k.Args.new_vertex_weights, weights)
-                .set_arg(CreateVertexRef_k.Args.new_uv_table, uv_table)
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateVertexRef_k.Args.target, vertex_ref_index)
+            .set_arg(CreateVertexRef_k.Args.new_vertex_reference, arg_float2(x, y))
+            .set_arg(CreateVertexRef_k.Args.new_vertex_weights, weights)
+            .set_arg(CreateVertexRef_k.Args.new_uv_table, uv_table)
+            .call_task();
 
         return vertex_ref_index++;
     }
@@ -123,9 +123,9 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_bind_pose(capacity);
 
         k_create_bone_bind_pose
-                .set_arg(CreateBoneBindPose_k.Args.target,bone_bind_index)
-                .set_arg(CreateBoneBindPose_k.Args.new_bone_bind_pose, bone_data)
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateBoneBindPose_k.Args.target, bone_bind_index)
+            .set_arg(CreateBoneBindPose_k.Args.new_bone_bind_pose, bone_data)
+            .call_task();
 
         return bone_bind_index++;
     }
@@ -137,9 +137,9 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_bone_reference(capacity);
 
         k_create_bone_reference
-                .set_arg(CreateBoneRef_k.Args.target, bone_ref_index)
-                .set_arg(CreateBoneRef_k.Args.new_bone_reference, bone_data)
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateBoneRef_k.Args.target, bone_ref_index)
+            .set_arg(CreateBoneRef_k.Args.new_bone_reference, bone_data)
+            .call_task();
 
         return bone_ref_index++;
     }
@@ -152,10 +152,10 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_animation_timings(capacity);
 
         k_create_animation_timings
-                .set_arg(CreateAnimationTimings_k.Args.target, animation_index)
-                .set_arg(CreateAnimationTimings_k.Args.new_animation_duration, duration)
-                .set_arg(CreateAnimationTimings_k.Args.new_animation_tick_rate, tick_rate)
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateAnimationTimings_k.Args.target, animation_index)
+            .set_arg(CreateAnimationTimings_k.Args.new_animation_duration, duration)
+            .set_arg(CreateAnimationTimings_k.Args.new_animation_tick_rate, tick_rate)
+            .call_task();
 
         return animation_index++;
     }
@@ -167,12 +167,12 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_bone_channel(capacity);
 
         k_create_bone_channel
-                .set_arg(CreateBoneChannel_k.Args.target, bone_channel_index)
-                .set_arg(CreateBoneChannel_k.Args.new_animation_timing_index, anim_timing_index)
-                .set_arg(CreateBoneChannel_k.Args.new_bone_pos_channel_table, pos_table)
-                .set_arg(CreateBoneChannel_k.Args.new_bone_rot_channel_table, rot_table)
-                .set_arg(CreateBoneChannel_k.Args.new_bone_scl_channel_table, scl_table)
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateBoneChannel_k.Args.target, bone_channel_index)
+            .set_arg(CreateBoneChannel_k.Args.new_animation_timing_index, anim_timing_index)
+            .set_arg(CreateBoneChannel_k.Args.new_bone_pos_channel_table, pos_table)
+            .set_arg(CreateBoneChannel_k.Args.new_bone_rot_channel_table, rot_table)
+            .set_arg(CreateBoneChannel_k.Args.new_bone_scl_channel_table, scl_table)
+            .call_task();
 
         return bone_channel_index++;
     }
@@ -184,10 +184,10 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_keyframe(capacity);
 
         k_create_keyframe
-                .set_arg(CreateKeyFrame_k.Args.target, keyframe_index)
-                .set_arg(CreateKeyFrame_k.Args.new_keyframe, frame)
-                .set_arg(CreateKeyFrame_k.Args.new_frame_time, time)
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateKeyFrame_k.Args.target, keyframe_index)
+            .set_arg(CreateKeyFrame_k.Args.new_keyframe, frame)
+            .set_arg(CreateKeyFrame_k.Args.new_frame_time, time)
+            .call_task();
 
         return keyframe_index++;
     }
@@ -199,9 +199,9 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_vertex_texture_uv(capacity);
 
         k_create_texture_uv
-                .set_arg(CreateTextureUV_k.Args.target, uv_index)
-                .set_arg(CreateTextureUV_k.Args.new_texture_uv, arg_float2(u, v))
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateTextureUV_k.Args.target, uv_index)
+            .set_arg(CreateTextureUV_k.Args.new_texture_uv, arg_float2(u, v))
+            .call_task();
 
         return uv_index++;
     }
@@ -213,10 +213,10 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_mesh(capacity);
 
         k_create_mesh_reference
-                .set_arg(CreateMeshReference_k.Args.target, mesh_index)
-                .set_arg(CreateMeshReference_k.Args.new_mesh_vertex_table, vertex_table)
-                .set_arg(CreateMeshReference_k.Args.new_mesh_face_table, face_table)
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateMeshReference_k.Args.target, mesh_index)
+            .set_arg(CreateMeshReference_k.Args.new_mesh_vertex_table, vertex_table)
+            .set_arg(CreateMeshReference_k.Args.new_mesh_face_table, face_table)
+            .call_task();
 
         return mesh_index++;
     }
@@ -228,9 +228,9 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_mesh_face(capacity);
 
         k_create_mesh_face
-                .set_arg(CreateMeshFace_k.Args.target, face_index)
-                .set_arg(CreateMeshFace_k.Args.new_mesh_face, face)
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateMeshFace_k.Args.target, face_index)
+            .set_arg(CreateMeshFace_k.Args.new_mesh_face, face)
+            .call_task();
 
         return face_index++;
     }
@@ -242,9 +242,9 @@ public class ReferenceController implements ReferenceContainer
         reference_buffers.ensure_model_transform(capacity);
 
         k_create_model_transform
-                .set_arg(CreateModelTransform_k.Args.target, model_transform_index)
-                .set_arg(CreateModelTransform_k.Args.new_model_transform, transform_data)
-                .call(GPGPU.global_single_size);
+            .set_arg(CreateModelTransform_k.Args.target, model_transform_index)
+            .set_arg(CreateModelTransform_k.Args.new_model_transform, transform_data)
+            .call_task();
 
         return model_transform_index++;
     }
@@ -255,6 +255,6 @@ public class ReferenceController implements ReferenceContainer
         k_set_bone_channel_table
             .set_arg(SetBoneChannelTable_k.Args.target, bind_pose_target)
             .set_arg(SetBoneChannelTable_k.Args.new_bone_channel_table, channel_table)
-            .call(GPGPU.global_single_size);
+            .call_task();
     }
 }

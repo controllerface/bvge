@@ -12,7 +12,7 @@ public interface SectorContainer
 
     int next_hull_bone();
 
-    int next_armature_bone();
+    int next_entity_bone();
 
     int create_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int hit_count, int flags);
 

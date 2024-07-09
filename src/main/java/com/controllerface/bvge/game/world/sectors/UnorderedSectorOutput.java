@@ -124,8 +124,11 @@ public class UnorderedSectorOutput implements Destoryable
         int edge_capacity          = egress_counts[3];
         int hull_bone_capacity     = egress_counts[4];
         int entity_bone_capacity   = egress_counts[5];
+        int entity_size = GPGPU.calculate_preferred_global_size(entity_count);
         sector_buffers.ensure_capacity_all(point_capacity, edge_capacity, hull_capacity, entity_capacity, hull_bone_capacity, entity_bone_capacity);
-        k_egress_entities.call(arg_long(entity_count));
+        k_egress_entities
+            .set_arg(EgressEntities_k.Args.max_entity, entity_count)
+            .call(arg_long(entity_size), GPGPU.preferred_work_size);
     }
 
     public void unload(UnorderedCoreBufferGroup.Raw raw_sectors, int[] counts)

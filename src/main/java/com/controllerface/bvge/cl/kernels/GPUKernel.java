@@ -139,6 +139,11 @@ public abstract class GPUKernel
         return this;
     }
 
+    public void call_task()
+    {
+        call(GPGPU.global_single_size, GPGPU.global_single_size);
+    }
+
     public void call(long[] global_work_size)
     {
         call(global_work_size, null);

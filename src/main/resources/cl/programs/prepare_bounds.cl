@@ -1,8 +1,10 @@
 __kernel void prepare_bounds(__global float4 *bounds, 
                              __global float2 *vbo,
-                             int offset)
+                             int offset,
+                             int max_bound)
 {
     int gid        = get_global_id(0);
+    if (gid >= max_bound) return;
     int bounds_id  = gid + offset;
     int vbo_offset = gid * 4;
     

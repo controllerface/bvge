@@ -85,6 +85,7 @@ public class EgressEntities_k extends GPUKernel
         armature_bone_reference_ids_out,
         armature_bone_parent_ids_out,
         counters,
+        max_entity,
     }
 
     public EgressEntities_k(long command_queue_ptr, long kernel_ptr)

@@ -92,10 +92,14 @@ public class MouseRenderer extends GameSystem
     {
         GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLSize.cl_int);
 
+        int entity_count = GPGPU.core_memory.sector_container().next_entity();
+        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
+
         k_root_hull_count
             .ptr_arg(RootHullCount_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.sector_container().next_entity()));
+            .set_arg(RootHullCount_k.Args.max_entity, entity_count)
+            .call(arg_long(entity_size), GPGPU.preferred_work_size);
 
         int final_count =  GPGPU.cl_read_pinned_int(queue_ptr, svm_atomic_counter);
 
@@ -113,7 +117,8 @@ public class MouseRenderer extends GameSystem
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .ptr_arg(RootHullFilter_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .call(arg_long(GPGPU.core_memory.sector_container().next_entity()));
+            .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
+            .call(arg_long(entity_size), GPGPU.preferred_work_size);
 
         return new HullIndexData(hulls_out, final_count);
     }
@@ -154,7 +159,7 @@ public class MouseRenderer extends GameSystem
                 .share_mem(ptr_vbo_transforms)
                 .ptr_arg(PrepareTransforms_k.Args.indices, cursor_hulls.indices())
                 .set_arg(PrepareTransforms_k.Args.offset, 0)
-                .call(arg_long(1));
+                .call_task();
 
         glNamedBufferSubData(vbo_transforms, VECTOR_FLOAT_4D_SIZE, mouse_loc);
         glDrawArrays(GL_POINTS, 0, 2);

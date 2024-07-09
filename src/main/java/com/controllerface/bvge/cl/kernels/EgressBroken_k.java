@@ -12,6 +12,7 @@ public class EgressBroken_k extends GPUKernel
         types,
         model_ids,
         counter,
+        max_entity,
     }
 
     public EgressBroken_k(long command_queue_ptr, long kernel_ptr)
