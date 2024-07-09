@@ -51,11 +51,14 @@ public class CameraTracking extends GameSystem
     public void tick(float dt)
     {
         EntityIndex entity_id = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
+        Position entity_pos = ComponentType.Position.forEntity(ecs, Constants.PLAYER_ID);
         Objects.requireNonNull(entity_id);
+        Objects.requireNonNull(entity_pos);
         float[] pos = GPGPU.core_memory.read_entity_position(entity_id.index());
         float pos_x = pos[0];
         float pos_y = pos[1];
         update_position(pos_x, pos_y);
-        ecs.attach_component(Constants.PLAYER_ID, ComponentType.Position, new Position(pos_x, pos_y));
+        entity_pos.x = pos_x;
+        entity_pos.y = pos_y;
     }
 }

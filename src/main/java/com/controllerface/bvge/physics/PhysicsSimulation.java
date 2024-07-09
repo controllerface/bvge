@@ -495,6 +495,16 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
+    private float[] snap(float x, float y)
+    {
+        float offset = UniformGrid.BLOCK_SIZE / 2.0f;
+        float _x = (float) (Math.floor(x / UniformGrid.BLOCK_SIZE) * UniformGrid.BLOCK_SIZE);
+        float _y = (float) (Math.floor(y / UniformGrid.BLOCK_SIZE) * UniformGrid.BLOCK_SIZE);
+        _x += offset;
+        _y += offset;
+        return new float[]{_x, _y};
+    }
+
     // todo: it may make sense to relocate this logic to a different class, though it may be tricky
     //  to do so. It is required that this is run only in the physics loop so the memory buffers
     //  are handled safely, but it is not directly physics related.
@@ -578,11 +588,12 @@ public class PhysicsSimulation extends GameSystem
         }
         else
         {
-            x_pos = position.x();
-            y_pos = position.y();
+            x_pos = position.x;
+            y_pos = position.y;
         }
 
-        GPGPU.core_memory.update_block_position(block_cursor_id.index(), x_pos, y_pos);
+        float[] sn = snap(x_pos, y_pos);
+        GPGPU.core_memory.update_block_position(block_cursor_id.index(), sn[0], sn[1]);
 
         if (input_state.inputs().get(InputBinding.MOUSE_PRIMARY)
                 && block_cursor.is_active()

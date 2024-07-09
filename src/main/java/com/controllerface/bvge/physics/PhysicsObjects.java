@@ -104,7 +104,7 @@ public class PhysicsObjects
             -1f,
             hull_id,
             model_id,
-            range_link,
+            range_link, // todo: abusing model transform for this since it is not used on particles. May want to revisit this later
             type,
             entity_flags);
     }
