@@ -101,7 +101,7 @@ public class MouseRenderer extends GameSystem
             .ptr_arg(RootHullCount_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .set_arg(RootHullCount_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_count), null);
 
         int final_count =  GPGPU.cl_read_pinned_int(queue_ptr, svm_atomic_counter);
 
@@ -120,7 +120,7 @@ public class MouseRenderer extends GameSystem
             .ptr_arg(RootHullFilter_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_count), null);
 
         return new HullIndexData(hulls_out, final_count);
     }

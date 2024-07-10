@@ -144,7 +144,7 @@ public class LiquidRenderer extends GameSystem
                 .ptr_arg(PrepareLiquids_k.Args.indices, circle_hulls.indices())
                 .set_arg(PrepareLiquids_k.Args.offset, offset)
                 .set_arg(PrepareLiquids_k.Args.max_hull, count)
-                .call(arg_long(count_size), GPGPU.preferred_work_size);
+                .call(arg_long(count), null);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;
@@ -165,7 +165,7 @@ public class LiquidRenderer extends GameSystem
             .ptr_arg(RootHullCount_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .set_arg(RootHullCount_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_count), null);
 
         int final_count = GPGPU.cl_read_pinned_int(queue_ptr, svm_atomic_counter);
 
@@ -184,7 +184,7 @@ public class LiquidRenderer extends GameSystem
             .ptr_arg(RootHullFilter_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_count), null);
 
         return new HullIndexData(hulls_out, final_count);
     }
