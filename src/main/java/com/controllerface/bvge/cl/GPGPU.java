@@ -434,26 +434,22 @@ public class GPGPU
 
     public static int cl_read_pinned_int(long queue_ptr, long pinned_ptr)
     {
-        try(var stack = MemoryStack.stackPush())
-        {
-            var event = stack.mallocPointer(1);
-            var out = clEnqueueMapBuffer(queue_ptr,
-                pinned_ptr,
-                true,
-                CL_MAP_READ,
-                0,
-                CLSize.cl_int,
-                null,
-                event,
-                (IntBuffer) null,
-                null);
+        var out = clEnqueueMapBuffer(queue_ptr,
+            pinned_ptr,
+            true,
+            CL_MAP_READ,
+            0,
+            CLSize.cl_int,
+            null,
+            null,
+            (IntBuffer) null,
+            null);
 
-            assert out != null;
+        assert out != null;
 
-            int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-            clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, event, null);
-            return result;
-        }
+        int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+        clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+        return result;
     }
 
     public static void cl_transfer_buffer(long queue_ptr, long src_ptr, long dst_ptr, long size)
