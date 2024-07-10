@@ -16,6 +16,8 @@ __kernel void prepare_liquids(__global float4 *hull_positions,
                               int max_hull)
 {
     int gid = get_global_id(0);
+    if (gid >= max_hull) return;
+    
     int offset_gid = gid + offset;
     int current_hull = indices[offset_gid];
     
