@@ -2,6 +2,7 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.editor.Editor;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -35,7 +36,14 @@ public class GPGPU
     /**
      * A convenience object, used when clearing out buffers to fill them with zeroes
      */
-    private static final ByteBuffer ZERO_PATTERN_BUFFER = MemoryUtil.memCalloc(1);
+    private static final ByteBuffer ZERO_PATTERN_BUFFER = BufferUtils.createByteBuffer(4);
+    private static final ByteBuffer NEGATIVE_ONE_PATTERN_BUFFER = BufferUtils.createByteBuffer(4).order(ByteOrder.nativeOrder());
+
+    static
+    {
+        ZERO_PATTERN_BUFFER.putInt(0,0);
+        NEGATIVE_ONE_PATTERN_BUFFER.putInt(0, -1);
+    }
 
     //#endregion
 
@@ -229,9 +237,15 @@ public class GPGPU
             null);
     }
 
-    public static void cl_zero_buffer(long queue_ptr, ByteBuffer buffer_ptr, long buffer_size)
+    public static void cl_negative_one_buffer(long queue_ptr, long buffer_ptr, long buffer_size)
     {
-        clEnqueueSVMMemFill(queue_ptr, buffer_ptr, ZERO_PATTERN_BUFFER, null, null);
+        clEnqueueFillBuffer(queue_ptr,
+            buffer_ptr,
+            NEGATIVE_ONE_PATTERN_BUFFER,
+            0,
+            buffer_size,
+            null,
+            null);
     }
 
     public static long cl_new_pinned_buffer(long size)
@@ -611,7 +625,6 @@ public class GPGPU
         clReleaseCommandQueue(ptr_render_queue);
         clReleaseCommandQueue(ptr_sector_queue);
         clReleaseContext(ptr_context);
-        MemoryUtil.memFree(ZERO_PATTERN_BUFFER);
     }
 
     //#endregion

@@ -1,4 +1,6 @@
-package com.controllerface.bvge.cl.kernels;
+package com.controllerface.bvge.cl.kernels.egress;
+
+import com.controllerface.bvge.cl.kernels.GPUKernel;
 
 public class EgressCollected_k extends GPUKernel
 {

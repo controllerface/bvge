@@ -1,4 +1,6 @@
-package com.controllerface.bvge.cl.kernels;
+package com.controllerface.bvge.cl.kernels.egress;
+
+import com.controllerface.bvge.cl.kernels.GPUKernel;
 
 public class EgressEntities_k extends GPUKernel
 {
@@ -41,9 +43,9 @@ public class EgressEntities_k extends GPUKernel
         hull_bones_in,
         hull_bind_pose_indicies_in,
         hull_inv_bind_pose_indicies_in,
-        armature_bones_in,
-        armature_bone_reference_ids_in,
-        armature_bone_parent_ids_in,
+        entity_bones_in,
+        entity_bone_reference_ids_in,
+        entity_bone_parent_ids_in,
         points_out,
         point_vertex_references_out,
         point_hull_indices_out,
@@ -81,9 +83,9 @@ public class EgressEntities_k extends GPUKernel
         hull_bones_out,
         hull_bind_pose_indicies_out,
         hull_inv_bind_pose_indicies_out,
-        armature_bones_out,
-        armature_bone_reference_ids_out,
-        armature_bone_parent_ids_out,
+        entity_bones_out,
+        entity_bone_reference_ids_out,
+        entity_bone_parent_ids_out,
         counters,
         max_entity,
     }

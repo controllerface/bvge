@@ -91,8 +91,8 @@ public class GPUCoreMemory implements Destoryable
         this.reference_controller = new ReferenceController(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.reference_buffers);
         this.sector_compactor     = new SectorCompactor(GPGPU.ptr_compute_queue, sector_controller, sector_buffers, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT, DELETE_1_INIT);
 
-        var sector_egress_a = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_A, GPGPU.ptr_sector_queue, this);
-        var sector_egress_b = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_B, GPGPU.ptr_sector_queue, this);
+        var sector_egress_a = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_A, GPGPU.ptr_sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        var sector_egress_b = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_B, GPGPU.ptr_sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         var broken_egress_a = new BrokenObjectBuffer(BUF_NAME_BROKEN_EGRESS_A, GPGPU.ptr_sector_queue, this);
         var broken_egress_b = new BrokenObjectBuffer(BUF_NAME_BROKEN_EGRESS_B, GPGPU.ptr_sector_queue, this);
         var object_egress_a = new CollectedObjectBuffer(BUF_NAME_OBJECT_EGRESS_A, GPGPU.ptr_sector_queue, this);

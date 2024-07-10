@@ -424,9 +424,9 @@ __kernel void egress_entities(__global float4 *points_in,
                               __global float16 *hull_bones_in,
                               __global int *hull_bind_pose_indicies_in,
                               __global int *hull_inv_bind_pose_indicies_in,
-                              __global float16 *armature_bones_in,
-                              __global int *armature_bone_reference_ids_in,
-                              __global int *armature_bone_parent_ids_in,
+                              __global float16 *entity_bones_in,
+                              __global int *entity_bone_reference_ids_in,
+                              __global int *entity_bone_parent_ids_in,
                               __global float4 *points_out,
                               __global int *point_vertex_references_out,
                               __global int *point_hull_indices_out,
@@ -464,9 +464,9 @@ __kernel void egress_entities(__global float4 *points_in,
                               __global float16 *hull_bones_out,
                               __global int *hull_bind_pose_indicies_out,
                               __global int *hull_inv_bind_pose_indicies_out,
-                              __global float16 *armature_bones_out,
-                              __global int *armature_bone_reference_ids_out,
-                              __global int *armature_bone_parent_ids_out,
+                              __global float16 *entity_bones_out,
+                              __global int *entity_bone_reference_ids_out,
+                              __global int *entity_bone_parent_ids_out,
                               __global int *counters, 
                               int max_entity)
 {
@@ -477,18 +477,9 @@ __kernel void egress_entities(__global float4 *points_in,
 
     if (sector_out)
     {
-        float4 entity                   = entities_in[current_entity];
-        float entity_mass               = entity_masses_in[current_entity];
         int2 entity_hull_table          = entity_hull_tables_in[current_entity];
         int2 entity_bone_table          = entity_bone_tables_in[current_entity];
         int entity_root_hull            = entity_root_hulls_in[current_entity];
-        int entity_model_id             = entity_model_indices_in[current_entity];
-        int entity_model_transform_id   = entity_model_transforms_in[current_entity];
-        int entity_type                 = entity_types_in[current_entity];
-        int entity_flag                 = entity_flags_in[current_entity];
-        int2 entity_anim_index          = entity_animation_indices_in[current_entity];
-        float2 entity_anim_time         = entity_animation_elapsed_in[current_entity];
-        short2 entity_anim_states       = entity_motion_states_in[current_entity];
 
         int root_hull_offset           = entity_root_hull - entity_hull_table.x;
         int initial_entity_bone_offset = entity_bone_table.x;
@@ -510,61 +501,73 @@ __kernel void egress_entities(__global float4 *points_in,
             hull_bone_count += hull_bone_table.y - hull_bone_table.x + 1;
         }
 
-        int entity_id_offset = atomic_inc(&counters[0]); 
-        int hull_offset      = atomic_add(&counters[1], hull_count);
-        int point_offset     = atomic_add(&counters[2], point_count);
+        int entity_id_offset   = atomic_inc(&counters[0]); 
+        int hull_offset        = atomic_add(&counters[1], hull_count);
+        int point_offset       = atomic_add(&counters[2], point_count);
+        int edge_offset        = atomic_add(&counters[3], edge_count);
+        int hull_bone_offset   = atomic_add(&counters[4], hull_bone_count);
+        int entity_bone_offset = atomic_add(&counters[5], entity_bone_count);
 
-        int edge_offset = edge_count == 0 
-            ? 0 
-            : atomic_add(&counters[3], edge_count);
-            
-        int hull_bone_offset = hull_bone_count == 0 
-            ? 0 
-            : atomic_add(&counters[4], hull_bone_count);
+        entities_out[entity_id_offset]                 = entities_in[current_entity];
+        entity_masses_out[entity_id_offset]            = entity_masses_in[current_entity];
+        entity_model_indices_out[entity_id_offset]     = entity_model_indices_in[current_entity];
+        entity_model_transforms_out[entity_id_offset]  = entity_model_transforms_in[current_entity];
+        entity_types_out[entity_id_offset]             = entity_types_in[current_entity];
+        entity_flags_out[entity_id_offset]             = entity_flags_in[current_entity] & ~(SECTOR_OUT | DELETED);
+        entity_animation_indices_out[entity_id_offset] = entity_animation_indices_in[current_entity];
+        entity_animation_elapsed_out[entity_id_offset] = entity_animation_elapsed_in[current_entity];
+        entity_motion_states_out[entity_id_offset]     = entity_motion_states_in[current_entity];
+        entity_hull_tables_out[entity_id_offset]       = (int2)(hull_offset, hull_offset + hull_count - 1);
+        entity_bone_tables_out[entity_id_offset]       = (int2)(entity_bone_offset, entity_bone_offset + entity_bone_count - 1);
+        entity_root_hulls_out[entity_id_offset]        = hull_offset + root_hull_offset;
 
-        int entity_bone_offset = entity_bone_count == 0 
-            ? 0 
-            : atomic_add(&counters[5], entity_bone_count);
-        
-        int hull_offset_count        = 0;
+
+
+
+        // todo: write into shift buffers like the delete kernels, then call for the individual objects
+        //  and have those kernels shift over instead of doing everything in one big kernel like this
+
+
+
         int point_offset_count       = 0;
         int edge_offset_count        = 0;
         int hull_bone_offset_count   = 0;
-        int entity_bone_offset_count = 0;
 
         for (int current_entity_bone = entity_bone_table.x; current_entity_bone <= entity_bone_table.y; current_entity_bone++)
         {
-            int new_entity_bone_id = entity_bone_offset + entity_bone_offset_count++;
+            int new_entity_bone_id = entity_bone_offset + current_entity_bone - entity_bone_table.x;
 
-            float16 armature_bone = armature_bones_in[current_entity_bone];    
-            int bone_reference    = armature_bone_reference_ids_in[current_entity_bone];
-            int bone_parent_id    = armature_bone_parent_ids_in[current_entity_bone];
+            float16 armature_bone = entity_bones_in[current_entity_bone];    
+            int bone_reference    = entity_bone_reference_ids_in[current_entity_bone];
+            int bone_parent_id    = entity_bone_parent_ids_in[current_entity_bone];
 
             int parent_offset = bone_parent_id - initial_entity_bone_offset;
             int new_parent_id = bone_parent_id == -1 ? -1 : entity_bone_offset + parent_offset;
 
-            armature_bones_out[new_entity_bone_id]              = armature_bone;   
-            armature_bone_reference_ids_out[new_entity_bone_id] = bone_reference;
-            armature_bone_parent_ids_out[new_entity_bone_id]    = new_parent_id;
+            entity_bones_out[new_entity_bone_id]              = armature_bone;   
+            entity_bone_reference_ids_out[new_entity_bone_id] = bone_reference;
+            entity_bone_parent_ids_out[new_entity_bone_id]    = new_parent_id;
         }
 
         for (int current_hull = entity_hull_table.x; current_hull <= entity_hull_table.y; current_hull++)
         {
-            int new_hull_id = hull_offset + hull_offset_count++;
+            int new_hull_id = hull_offset + current_hull - entity_hull_table.x;
 
-            float4 hull            = hulls_in[current_hull];
-            float2 hull_scale      = hull_scales_in[current_hull];
-            float2 hull_rotation   = hull_rotations_in[current_hull];
-            float hull_friction    = hull_frictions_in[current_hull];
-            float hull_restitution = hull_restitutions_in[current_hull];
-            int hull_integrity     = hull_integrity_in[current_hull];
-            int2 hull_bone_table   = hull_bone_tables_in[current_hull];
-            int hull_entity_id     = hull_entity_ids_in[current_hull];
-            int hull_flag          = hull_flags_in[current_hull];
+            hulls_out[new_hull_id]             = hulls_in[current_hull];
+            hull_scales_out[new_hull_id]       = hull_scales_in[current_hull];
+            hull_rotations_out[new_hull_id]    = hull_rotations_in[current_hull];
+            hull_frictions_out[new_hull_id]    = hull_frictions_in[current_hull];
+            hull_restitutions_out[new_hull_id] = hull_restitutions_in[current_hull];
+            hull_integrity_out[new_hull_id]    = hull_integrity_in[current_hull];
+            hull_entity_ids_out[new_hull_id]   = hull_entity_ids_in[current_hull];
+            hull_flags_out[new_hull_id]        = hull_flags_in[current_hull];
+            hull_mesh_ids_out[new_hull_id]     = hull_mesh_ids_in[current_hull];
+            hull_uv_offsets_out[new_hull_id]   = hull_uv_offsets_in[current_hull];
+
+
             int2 hull_point_table  = hull_point_tables_in[current_hull];
             int2 hull_edge_table   = hull_edge_tables_in[current_hull];
-            int hull_mesh_id       = hull_mesh_ids_in[current_hull];
-            int hull_uv_offset     = hull_uv_offsets_in[current_hull];
+            int2 hull_bone_table   = hull_bone_tables_in[current_hull];
 
             int initial_hull_point_offset = hull_point_table.x;
             int initial_hull_bone_offset  = hull_bone_table.x;
@@ -650,44 +653,141 @@ __kernel void egress_entities(__global float4 *points_in,
             hull_bone_table.x  = next_hull_bone_table_x;
             hull_bone_table.y  = hull_bone_offset + hull_bone_offset_count - 1;
 
-            hulls_out[new_hull_id]             = hull;
-            hull_scales_out[new_hull_id]       = hull_scale;
-            hull_rotations_out[new_hull_id]    = hull_rotation;
-            hull_frictions_out[new_hull_id]    = hull_friction;
-            hull_restitutions_out[new_hull_id] = hull_restitution;
-            hull_integrity_out[new_hull_id]    = hull_integrity;
-            hull_bone_tables_out[new_hull_id]  = hull_bone_table;
-            hull_entity_ids_out[new_hull_id]   = entity_id_offset;
-            hull_flags_out[new_hull_id]        = hull_flag;
             hull_point_tables_out[new_hull_id] = hull_point_table;
             hull_edge_tables_out[new_hull_id]  = hull_edge_table;
-            hull_mesh_ids_out[new_hull_id]     = hull_mesh_id;
-            hull_uv_offsets_out[new_hull_id]   = hull_uv_offset;
+            hull_bone_tables_out[new_hull_id]  = hull_bone_table;
         }
-
-        // adjust entity values
-        entity_hull_table.x = hull_offset;
-        entity_hull_table.y = hull_offset + hull_offset_count - 1;
-        entity_bone_table.x = entity_bone_offset;
-        entity_bone_table.y = entity_bone_offset + entity_bone_offset_count - 1;
-        entity_root_hull    = hull_offset + root_hull_offset;
-        entity_flag         &= ~SECTOR_OUT;
-        entity_flag         &= ~DELETED;
-
-        // write out entity data
-        entities_out[entity_id_offset]                 = entity;
-        entity_masses_out[entity_id_offset]            = entity_mass;
-        entity_hull_tables_out[entity_id_offset]       = entity_hull_table;
-        entity_bone_tables_out[entity_id_offset]       = entity_bone_table;
-        entity_root_hulls_out[entity_id_offset]        = entity_root_hull;
-        entity_model_indices_out[entity_id_offset]     = entity_model_id;
-        entity_model_transforms_out[entity_id_offset]  = entity_model_transform_id;
-        entity_types_out[entity_id_offset]             = entity_type;
-        entity_flags_out[entity_id_offset]             = entity_flag;
-        entity_animation_indices_out[entity_id_offset] = entity_anim_index;
-        entity_animation_elapsed_out[entity_id_offset] = entity_anim_time;
-        entity_motion_states_out[entity_id_offset]     = entity_anim_states;
     }
+}
+
+__kernel void egress_points(__global float4 *points_in,
+                            __global int *point_vertex_references_in,
+                            __global int *point_hull_indices_in,
+                            __global short *point_hit_counts_in,
+                            __global int *point_flags_in,
+                            __global int4 *point_bone_tables_in,
+                            __global float4 *points_out,
+                            __global int *point_vertex_references_out,
+                            __global int *point_hull_indices_out,
+                            __global short *point_hit_counts_out,
+                            __global int *point_flags_out,
+                            __global int4 *point_bone_tables_out,
+                            __global int *new_points,
+                            int max_point)
+{
+    int current_point = get_global_id(0);
+    if (current_point >= max_point) return;
+    int new_point = new_points[current_point];
+    if (new_point == -1) return;
+    points_out[new_point]                  = points_in[current_point];
+    point_vertex_references_out[new_point] = point_vertex_references_in[current_point];
+    point_hull_indices_out[new_point]      = point_hull_indices_in[current_point];
+    point_flags_out[new_point]             = point_flags_in[current_point];
+    point_hit_counts_out[new_point]        = point_hit_counts_in[current_point];
+    point_bone_tables_out[new_point]       = point_bone_tables_in[current_point];
+}
+
+__kernel void egress_edges(__global int2 *edges_in,
+                           __global float *edge_lengths_in,
+                           __global int *edge_flags_in,
+                           __global int2 *edges_out,
+                           __global float *edge_lengths_out,
+                           __global int *edge_flags_out,
+                           __global int *new_edges,
+                           int max_edge)
+{
+    int current_edge = get_global_id(0);
+    if (current_edge >= max_edge) return;
+    int new_edge = new_edges[current_edge];
+    if (new_edge == -1) return;
+    edges_out[new_edge]        = edges_in[current_edge];
+    edge_lengths_out[new_edge] = edge_lengths_in[current_edge];
+    edge_flags_out[new_edge]   = edge_flags_in[current_edge];
+}
+
+__kernel void egress_hulls(__global float4 *hulls_in,
+                           __global float2 *hull_scales_in,
+                           __global float2 *hull_rotations_in,
+                           __global float *hull_frictions_in,
+                           __global float *hull_restitutions_in,
+                           __global int2 *hull_point_tables_in,
+                           __global int2 *hull_edge_tables_in,
+                           __global int2 *hull_bone_tables_in,
+                           __global int *hull_entity_ids_in,
+                           __global int *hull_flags_in,
+                           __global int *hull_mesh_ids_in,
+                           __global int *hull_uv_offsets_in,
+                           __global int *hull_integrity_in,
+                           __global float4 *hulls_out,
+                           __global float2 *hull_scales_out,
+                           __global float2 *hull_rotations_out,
+                           __global float *hull_frictions_out,
+                           __global float *hull_restitutions_out,
+                           __global int2 *hull_point_tables_out,
+                           __global int2 *hull_edge_tables_out,
+                           __global int2 *hull_bone_tables_out,
+                           __global int *hull_entity_ids_out,
+                           __global int *hull_flags_out,
+                           __global int *hull_mesh_ids_out,
+                           __global int *hull_uv_offsets_out,
+                           __global int *hull_integrity_out,
+                           __global int *new_hulls,
+                           int max_hull)
+{
+    int current_hull = get_global_id(0);
+    if (current_hull >= max_hull) return;
+    int new_hull = new_hulls[current_hull];
+    if (new_hull == -1) return;
+
+    hulls_out[new_hull]             = hulls_in[current_hull];
+    hull_scales_out[new_hull]       = hull_scales_in[current_hull];
+    hull_rotations_out[new_hull]    = hull_rotations_in[current_hull];
+    hull_frictions_out[new_hull]    = hull_frictions_in[current_hull];
+    hull_restitutions_out[new_hull] = hull_restitutions_in[current_hull];
+    hull_point_tables_out[new_hull] = hull_point_tables_in[current_hull];
+    hull_edge_tables_out[new_hull]  = hull_edge_tables_in[current_hull];
+    hull_bone_tables_out[new_hull]  = hull_bone_tables_in[current_hull];
+    hull_entity_ids_out[new_hull]   = hull_entity_ids_in[current_hull];
+    hull_flags_out[new_hull]        = hull_flags_in[current_hull];
+    hull_mesh_ids_out[new_hull]     = hull_mesh_ids_in[current_hull];
+    hull_uv_offsets_out[new_hull]   = hull_uv_offsets_in[current_hull];
+    hull_integrity_out[new_hull]    = hull_integrity_in[current_hull];
+}
+
+__kernel void egress_hull_bones(__global float16 *hull_bones_in,
+                                __global int *hull_bind_pose_indicies_in,
+                                __global int *hull_inv_bind_pose_indicies_in,
+                                __global float16 *hull_bones_out,
+                                __global int *hull_bind_pose_indicies_out,
+                                __global int *hull_inv_bind_pose_indicies_out,
+                                __global int *new_hull_bones,
+                                int max_hull_bone)
+{
+    int current_hull_bone = get_global_id(0);
+    if (current_hull_bone >= max_hull_bone) return;
+    int new_hull_bone = new_hull_bones[current_hull_bone];
+    if (new_hull_bone == -1) return;
+    hull_bones_out[new_hull_bone]                  = hull_bones_in[current_hull_bone];
+    hull_bind_pose_indicies_out[new_hull_bone]     = hull_bind_pose_indicies_in[current_hull_bone];
+    hull_inv_bind_pose_indicies_out[new_hull_bone] = hull_inv_bind_pose_indicies_in[current_hull_bone];
+}
+
+__kernel void egress_entity_bones(__global float16 *entity_bones_in,
+                                  __global int *entity_bone_reference_ids_in,
+                                  __global int *entity_bone_parent_ids_in,
+                                  __global float16 *entity_bones_out,
+                                  __global int *entity_bone_reference_ids_out,
+                                  __global int *entity_bone_parent_ids_out,
+                                  __global int *new_entity_bones,
+                                  int max_entity_bone)
+{
+    int current_entity_bone = get_global_id(0);
+    if (current_entity_bone >= max_entity_bone) return;
+    int new_entity_bone = new_entity_bones[current_entity_bone];
+    if (new_entity_bone == -1) return;    
+    entity_bones_out[new_entity_bone]              = entity_bones_in[current_entity_bone];   ;
+    entity_bone_reference_ids_out[new_entity_bone] = entity_bone_reference_ids_in[current_entity_bone];
+    entity_bone_parent_ids_out[new_entity_bone]    = entity_bone_parent_ids_in[current_entity_bone];
 }
 
 __kernel void place_block(__global float4 *entities,

@@ -7,7 +7,7 @@ import com.controllerface.bvge.cl.GPUCoreMemory;
 import com.controllerface.bvge.cl.buffers.BufferGroup;
 import com.controllerface.bvge.cl.buffers.BufferType;
 import com.controllerface.bvge.cl.buffers.Destoryable;
-import com.controllerface.bvge.cl.kernels.EgressBroken_k;
+import com.controllerface.bvge.cl.kernels.egress.EgressBroken_k;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.programs.GPUCrud;

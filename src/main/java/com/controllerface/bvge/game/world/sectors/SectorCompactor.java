@@ -86,7 +86,7 @@ public class SectorCompactor implements Destoryable
         b_edge_shift                 = new TransientBuffer(ptr_queue, cl_int, edge_init);
         b_point_shift                = new TransientBuffer(ptr_queue, cl_int, point_init);
         b_hull_bone_shift            = new TransientBuffer(ptr_queue, cl_int, hull_init);
-        b_entity_bone_shift = new TransientBuffer(ptr_queue, cl_int, entity_init);
+        b_entity_bone_shift          = new TransientBuffer(ptr_queue, cl_int, entity_init);
         b_delete_1                   = new TransientBuffer(ptr_queue, cl_int2, delete_init);
         b_delete_2                   = new TransientBuffer(ptr_queue, cl_int4, delete_init);
         b_delete_partial_1           = new TransientBuffer(ptr_queue, cl_int2, delete_init);

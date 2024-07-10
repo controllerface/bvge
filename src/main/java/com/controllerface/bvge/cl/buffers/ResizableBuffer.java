@@ -58,6 +58,11 @@ public abstract class ResizableBuffer
         GPGPU.cl_zero_buffer(this.queue_pointer, this.buffer_pointer, this.byte_capacity);
     }
 
+    public void clear_negative()
+    {
+        GPGPU.cl_negative_one_buffer(this.queue_pointer, this.buffer_pointer, this.byte_capacity);
+    }
+
     public void release()
     {
         GPGPU.cl_release_buffer(this.buffer_pointer);
