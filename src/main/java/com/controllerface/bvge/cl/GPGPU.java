@@ -180,109 +180,148 @@ public class GPGPU
 
     public static void cl_read_int_buffer(long queue_ptr, long src_ptr, int[] dst)
     {
-        clEnqueueReadBuffer(queue_ptr,
+        int result = clEnqueueReadBuffer(queue_ptr,
             src_ptr,
             true,
             0,
             dst,
             null,
             null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on int buffer read : " + result);
+            throw new RuntimeException("Error on int buffer read : " + result);
+        }
     }
 
     public static void cl_read_float_buffer(long queue_ptr, long src_ptr, float[] dst)
     {
-        clEnqueueReadBuffer(queue_ptr,
+        int result = clEnqueueReadBuffer(queue_ptr,
             src_ptr,
             true,
             0,
             dst,
             null,
             null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on float buffer read : " + result);
+            throw new RuntimeException("Error on float buffer read : " + result);
+        }
     }
 
     public static void cl_read_short_buffer(long queue_ptr, long src_ptr, short[] dst)
     {
-        clEnqueueReadBuffer(queue_ptr,
+        int result = clEnqueueReadBuffer(queue_ptr,
             src_ptr,
             true,
             0,
             dst,
             null,
             null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on short buffer read : " + result);
+            throw new RuntimeException("Error on short buffer read : " + result);
+        }
     }
 
     public static long cl_new_buffer(long size)
     {
-        return clCreateBuffer(ptr_context, FLAGS_WRITE_GPU, size, null);
+        try (var stack = MemoryStack.stackPush())
+        {
+            var status = stack.mallocInt(1);
+            long ptr = clCreateBuffer(ptr_context, FLAGS_WRITE_GPU, size, status);
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on new buffer creation : " + result);
+                throw new RuntimeException("Error on new buffer creation : " + result);
+            }
+            return ptr;
+        }
     }
 
     public static long cl_new_int_arg_buffer(int[] src)
     {
-        return clCreateBuffer(ptr_context, FLAGS_WRITE_CPU_COPY, src, null);
+        int[] status = new int[1];
+        long ptr = clCreateBuffer(ptr_context, FLAGS_WRITE_CPU_COPY, src, status);
+        int result = status[0];
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on new int arg buffer creation : " + result);
+            throw new RuntimeException("Error on new int arg buffer creation : " + result);
+        }
+        return ptr;
     }
 
     public static long cl_new_cpu_copy_buffer(float[] src)
     {
-        return clCreateBuffer(ptr_context, FLAGS_READ_CPU_COPY, src, null);
+        int[] status = new int[1];
+        long ptr = clCreateBuffer(ptr_context, FLAGS_READ_CPU_COPY, src, status);
+        int result = status[0];
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on new cpu copy buffer creation : " + result);
+            throw new RuntimeException("Error on new cpu copy buffer creation : " + result);
+        }
+        return ptr;
     }
 
     public static void cl_zero_buffer(long queue_ptr, long buffer_ptr, long buffer_size)
     {
-        clEnqueueFillBuffer(queue_ptr,
+        int result = clEnqueueFillBuffer(queue_ptr,
             buffer_ptr,
             ZERO_PATTERN_BUFFER,
             0,
             buffer_size,
             null,
             null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on filling buffer with 0 int value: " + result);
+            throw new RuntimeException("Error on filling buffer with 0 int value: " + result);
+        }
     }
 
     public static void cl_negative_one_buffer(long queue_ptr, long buffer_ptr, long buffer_size)
     {
-        clEnqueueFillBuffer(queue_ptr,
+        int result = clEnqueueFillBuffer(queue_ptr,
             buffer_ptr,
             NEGATIVE_ONE_PATTERN_BUFFER,
             0,
             buffer_size,
             null,
             null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on filling buffer with -1 int value: " + result);
+            throw new RuntimeException("Error on filling buffer with -1 int value: " + result);
+        }
     }
 
     public static long cl_new_pinned_buffer(long size)
     {
-        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        return clCreateBuffer(ptr_context, flags, size, null);
+        try (var stack = MemoryStack.stackPush())
+        {
+            var status = stack.mallocInt(1);
+            long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+            long ptr = clCreateBuffer(ptr_context, flags, size, status);
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on creating new pinned int buffer: " + result);
+                throw new RuntimeException("Error on creating new pinned int buffer: " + result);
+            }
+            return ptr;
+        }
     }
 
     public static void cl_map_read_int_buffer(long queue_ptr, long pinned_ptr, long size, int count, int[] output)
     {
-        var out = clEnqueueMapBuffer(queue_ptr,
-            pinned_ptr,
-            true,
-            CL_MAP_READ,
-            0,
-            size * (long)count,
-            null,
-            null,
-            (IntBuffer) null,
-            null);
-
-        assert out != null;
-
-        var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
-        for (int i = 0; i < count; i++)
-        {
-            output[i] = int_buffer.get(i);
-        }
-        clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
-    }
-
-    public static void cl_map_read_float_buffer(long queue_ptr, long pinned_ptr, long size, int count, float[] output)
-    {
         try (var stack = MemoryStack.stackPush())
         {
-            var ib = stack.mallocInt(1);
-
+            var status = stack.mallocInt(1);
             var out = clEnqueueMapBuffer(queue_ptr,
                 pinned_ptr,
                 true,
@@ -291,16 +330,53 @@ public class GPGPU
                 size * (long) count,
                 null,
                 null,
-                ib,
+                status,
+                null);
+
+            assert out != null;
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on int array map: " + result);
+                throw new RuntimeException("Error on int array map: " + result);
+            }
+            var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+            for (int i = 0; i < count; i++)
+            {
+                output[i] = int_buffer.get(i);
+            }
+            result = clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on int array unmap: " + result);
+                throw new RuntimeException("Error on int array unmap: " + result);
+            }
+        }
+    }
+
+    public static void cl_map_read_float_buffer(long queue_ptr, long pinned_ptr, long size, int count, float[] output)
+    {
+        try (var stack = MemoryStack.stackPush())
+        {
+            var status = stack.mallocInt(1);
+            var out = clEnqueueMapBuffer(queue_ptr,
+                pinned_ptr,
+                true,
+                CL_MAP_READ,
+                0,
+                size * (long) count,
+                null,
+                null,
+                status,
                 null);
 
             assert out != null;
 
-            int r = ib.get(0);
-
-            if (r != CL_SUCCESS)
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
             {
-                System.out.println("error: " + r);
+                System.out.println("Error on float array map: " + result);
+                throw new RuntimeException("Error on float array map: " + result);
             }
 
             var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
@@ -308,99 +384,167 @@ public class GPGPU
             {
                 output[i] = float_buffer.get(i);
             }
-            clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+            result = clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on float array map: " + result);
+                throw new RuntimeException("Error on float array map: " + result);
+            }
         }
     }
 
     public static void cl_map_read_short_buffer(long queue_ptr, long pinned_ptr, long size, int count, short[] output)
     {
-        var out = clEnqueueMapBuffer(queue_ptr,
-            pinned_ptr,
-            true,
-            CL_MAP_READ,
-            0,
-            size * (long)count,
-            null,
-            null,
-            (IntBuffer) null,
-            null);
-
-        assert out != null;
-
-        var short_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
-        for (int i = 0; i < count; i++)
+        try (var stack = MemoryStack.stackPush())
         {
-            output[i] = short_buffer.get(i);
+            var status = stack.mallocInt(1);
+            var out = clEnqueueMapBuffer(queue_ptr,
+                pinned_ptr,
+                true,
+                CL_MAP_READ,
+                0,
+                size * (long) count,
+                null,
+                null,
+                status,
+                null);
+
+            assert out != null;
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on short array map: " + result);
+                throw new RuntimeException("Error on short array map: " + result);
+            }
+            var short_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+            for (int i = 0; i < count; i++)
+            {
+                output[i] = short_buffer.get(i);
+            }
+            result = clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on short array unmap: " + result);
+                throw new RuntimeException("Error on short array unmap: " + result);
+            }
         }
-        clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
     }
 
     public static int[] cl_read_pinned_int_buffer(long queue_ptr, long pinned_ptr, long size, int count)
     {
-        var out = clEnqueueMapBuffer(queue_ptr,
-            pinned_ptr,
-            true,
-            CL_MAP_READ,
-            0,
-            size * (long)count,
-            null,
-            null,
-            (IntBuffer) null,
-            null);
-
-        assert out != null;
-
-        int[] result = new int[count];
-        var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
-        for (int i = 0; i < count; i++)
+        try (var stack = MemoryStack.stackPush())
         {
-            result[i] = int_buffer.get(i);
+            var status = stack.mallocInt(1);
+            var out = clEnqueueMapBuffer(queue_ptr,
+                pinned_ptr,
+                true,
+                CL_MAP_READ,
+                0,
+                size * (long) count,
+                null,
+                null,
+                status,
+                null);
+
+            assert out != null;
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on pinned int array map: " + result);
+                throw new RuntimeException("Error on pinned int array map: " + result);
+            }
+            int[] value = new int[count];
+            var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+            for (int i = 0; i < count; i++)
+            {
+                value[i] = int_buffer.get(i);
+            }
+            result = clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on pinned int array unmap: " + result);
+                throw new RuntimeException("Error on pinned int array unmap: " + result);
+            }
+            return value;
         }
-        clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
-        return result;
     }
 
     public static float[] cl_read_pinned_float_buffer(long queue_ptr, long pinned_ptr, long size, int count)
     {
-        var out = clEnqueueMapBuffer(queue_ptr,
-            pinned_ptr,
-            true,
-            CL_MAP_READ,
-            0,
-            size * (long)count,
-            null,
-            null,
-            (IntBuffer) null,
-            null);
-
-        assert out != null;
-
-        float[] result = new float[count];
-        var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
-        for (int i = 0; i < count; i++)
+        try(var stack = MemoryStack.stackPush())
         {
-            result[i] = float_buffer.get(i);
+            var status = stack.mallocInt(1);
+            var out = clEnqueueMapBuffer(queue_ptr,
+                pinned_ptr,
+                true,
+                CL_MAP_READ,
+                0,
+                size * (long) count,
+                null,
+                null,
+                status,
+                null);
+
+            assert out != null;
+
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on pinned float array map: " + result);
+                throw new RuntimeException("Error on pinned float array map: " + result);
+            }
+            float[] value = new float[count];
+            var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+            for (int i = 0; i < count; i++)
+            {
+                value[i] = float_buffer.get(i);
+            }
+            result = clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on pinned float array unmap: " + result);
+                throw new RuntimeException("Error on pinned float array unmap: " + result);
+            }
+            return value;
         }
-        clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
-        return result;
     }
 
     public static long cl_new_pinned_int()
     {
-        long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-        return clCreateBuffer(ptr_context, flags, CLSize.cl_int, null);
+        try (var stack = MemoryStack.stackPush())
+        {
+            var status = stack.mallocInt(1);
+            long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+            long ptr = clCreateBuffer(ptr_context, flags, CLSize.cl_int, status);
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on new pinned int creation: " + result);
+                throw new RuntimeException("Error on new pinned int creation: " + result);
+            }
+            return ptr;
+        }
     }
 
     public static long cl_new_unpinned_int()
     {
-        long flags = CL_MEM_HOST_READ_ONLY;
-        return clCreateBuffer(ptr_context, flags, CLSize.cl_int, null);
+        try (var stack = MemoryStack.stackPush())
+        {
+            var status = stack.mallocInt(1);
+            long ptr = clCreateBuffer(ptr_context, CL_MEM_HOST_READ_ONLY, CLSize.cl_int, status);
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on new unpinned int creation: " + result);
+                throw new RuntimeException("Error on new unpinned int creation: " + result);
+            }
+            return ptr;
+        }
     }
 
     public static ByteBuffer cl_new_svm_int()
     {
-        long flags = CL_MEM_READ_WRITE;
-        return clSVMAlloc(ptr_context, flags, CLSize.cl_int, 0);
+        return clSVMAlloc(ptr_context, CL_MEM_READ_WRITE, CLSize.cl_int, 0);
     }
 
     public static int cl_read_svm_int(long queue_ptr, ByteBuffer svm_buffer)
@@ -409,11 +553,16 @@ public class GPGPU
         int result = clEnqueueSVMMap(queue_ptr, true, CL_MAP_READ, svm_buffer, null, null);
         if (result != CL_SUCCESS)
         {
-            System.out.println("Error on scm buffer creation: " + result);
-            throw new RuntimeException("Error on scm buffer creation: " + result);
+            System.out.println("Error on svm buffer map: " + result);
+            throw new RuntimeException("Error on svm buffer map: " + result);
         }
         int v = svm_buffer.getInt(0);
-        clEnqueueSVMUnmap(queue_ptr, svm_buffer, null, null);
+        result = clEnqueueSVMUnmap(queue_ptr, svm_buffer, null, null);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on svm buffer unmap: " + result);
+            throw new RuntimeException("Error on svm buffer unmap: " + result);
+        }
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -424,32 +573,53 @@ public class GPGPU
 
     public static int cl_read_unpinned_int(long queue_ptr, long pinned_ptr)
     {
-        try(var stack = MemoryStack.stackPush())
+        try (var stack = MemoryStack.stackPush())
         {
             var pb = stack.mallocInt(1);
-            clEnqueueReadBuffer(queue_ptr, pinned_ptr, true, 0, pb, null, null);
+            int result = clEnqueueReadBuffer(queue_ptr, pinned_ptr, true, 0, pb, null, null);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on int read: " + result);
+                throw new RuntimeException("Error on int read: " + result);
+            }
             return pb.get(0);
         }
     }
 
     public static int cl_read_pinned_int(long queue_ptr, long pinned_ptr)
     {
-        var out = clEnqueueMapBuffer(queue_ptr,
-            pinned_ptr,
-            true,
-            CL_MAP_READ,
-            0,
-            CLSize.cl_int,
-            null,
-            null,
-            (IntBuffer) null,
-            null);
+        try (var stack = MemoryStack.stackPush())
+        {
+            var status = stack.mallocInt(1);
+            var out = clEnqueueMapBuffer(queue_ptr,
+                pinned_ptr,
+                true,
+                CL_MAP_READ,
+                0,
+                CLSize.cl_int,
+                null,
+                null,
+                status,
+                null);
 
-        assert out != null;
+            assert out != null;
 
-        int result = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
-        clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
-        return result;
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on pinned int map: " + result);
+                throw new RuntimeException("Error on pinned int map: " + result);
+            }
+
+            int value = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+            result = clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on pinned int unmap: " + result);
+                throw new RuntimeException("Error on pinned int unmap: " + result);
+            }
+            return value;
+        }
     }
 
     public static void cl_transfer_buffer(long queue_ptr, long src_ptr, long dst_ptr, long size)
@@ -473,7 +643,18 @@ public class GPGPU
 
     public static long share_memory(int vboID)
     {
-        return clCreateFromGLBuffer(ptr_context, FLAGS_WRITE_GPU, vboID, (IntBuffer) null);
+        try (var stack = MemoryStack.stackPush())
+        {
+            var status = stack.mallocInt(1);
+            long ptr = clCreateFromGLBuffer(ptr_context, FLAGS_WRITE_GPU, vboID, status);
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on GL memory share: " + result);
+                throw new RuntimeException("Error on GL memory share: " + result);
+            }
+            return ptr;
+        }
     }
 
     //#endregion
@@ -488,7 +669,15 @@ public class GPGPU
 
     public static long new_mutable_buffer(int[] src)
     {
-        return clCreateBuffer(ptr_context, FLAGS_READ_CPU_COPY, src, null);
+        int[] status = new int[1];
+        long ptr = clCreateBuffer(ptr_context, FLAGS_READ_CPU_COPY, src, status);
+        int result = status[0];
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on mutable buffer creation: " + result);
+            throw new RuntimeException("Error on mutable buffer creation: " + result);
+        }
+        return ptr;
     }
 
     public static long new_empty_buffer(long queue_ptr, long size)
@@ -500,7 +689,12 @@ public class GPGPU
 
     public static void cl_release_buffer(long mem_ptr)
     {
-        clReleaseMemObject(mem_ptr);
+        int result = clReleaseMemObject(mem_ptr);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on buffer release: " + result);
+            throw new RuntimeException("Error on buffer release: " + result);
+        }
     }
 
     public static void cl_release_buffer(ByteBuffer mem_ptr)

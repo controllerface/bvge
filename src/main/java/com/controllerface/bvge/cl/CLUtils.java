@@ -149,15 +149,27 @@ public class CLUtils
         int result = clBuildProgram(program, device_id_ptr,  "-cl-denorms-are-zero -cl-mad-enable -cl-fast-relaxed-math", null, 0);
         if (result != CL_SUCCESS)
         {
-            System.err.println("program build error: " + result);
+            System.err.println("Error on program creation : " + result);
             log_build_error(program, device_id_ptr);
+            throw new RuntimeException("Error on program creation : " + result);
         }
         return program;
     }
 
     public static long cl_k(long program_ptr, String kernel_name)
     {
-        return clCreateKernel(program_ptr, kernel_name, (IntBuffer) null);
+        try (var stack = MemoryStack.stackPush())
+        {
+            var status = stack.mallocInt(1);
+            long ptr = clCreateKernel(program_ptr, kernel_name, status);
+            int result = status.get(0);
+            if (result != CL_SUCCESS)
+            {
+                System.out.println("Error on kernel creation : " + result);
+                throw new RuntimeException("Error on kernel creation : " + result);
+            }
+            return ptr;
+        }
     }
 
 
@@ -254,7 +266,7 @@ public class CLUtils
             var global_work_ptr = int_to_buffer(mem_stack, global_work_size);
             var local_work_ptr = int_to_buffer(mem_stack, local_work_size);
 
-            int r = clEnqueueNDRangeKernel(command_queue_ptr,
+            int result = clEnqueueNDRangeKernel(command_queue_ptr,
                 kernel_ptr,
                 1,
                 global_offset_ptr,
@@ -263,9 +275,10 @@ public class CLUtils
                 null,
                 null);
 
-            if (r != CL_SUCCESS)
+            if (result != CL_SUCCESS)
             {
-                System.out.println("WTF!");
+                System.out.println("Error on kernel call : " + result);
+                throw new RuntimeException("Error on kernel call : " + result);
             }
         }
     }
@@ -286,10 +299,11 @@ public class CLUtils
         try (var mem_stack = MemoryStack.stackPush())
         {
             var buffer = mem_to_buffer(mem_stack, mem);
-            int r = clEnqueueAcquireGLObjects(command_queue_ptr, buffer, null, null);
-            if (r != CL_SUCCESS)
+            int result = clEnqueueAcquireGLObjects(command_queue_ptr, buffer, null, null);
+            if (result != CL_SUCCESS)
             {
-                System.out.println("error: " + r);
+                System.out.println("Error on GL memory acquire : " + result);
+                throw new RuntimeException("Error on GL memory acquire : " + result);
             }
         }
     }
@@ -299,10 +313,11 @@ public class CLUtils
         try (var mem_stack = MemoryStack.stackPush())
         {
             var buffer = mem_to_buffer(mem_stack, mem);
-            int r = clEnqueueReleaseGLObjects(command_queue_ptr, buffer, null, null);
-            if (r != CL_SUCCESS)
+            int result = clEnqueueReleaseGLObjects(command_queue_ptr, buffer, null, null);
+            if (result != CL_SUCCESS)
             {
-                System.out.println("error: " + r);
+                System.out.println("Error on GL memory release : " + result);
+                throw new RuntimeException("Error on GL memory release : " + result);
             }
         }
     }
