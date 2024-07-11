@@ -41,7 +41,7 @@ OutputState idle_state(InputState input)
     if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
     if (input.motion_state.x > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
-    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    if (input.motion_state.y > 150) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
     return output;
 }
 
@@ -53,7 +53,7 @@ OutputState walking_state(InputState input)
     if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
     if (input.motion_state.x > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
-    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    if (input.motion_state.y > 150) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
     return output;
 }
 
@@ -65,7 +65,7 @@ OutputState running_state(InputState input)
     if (input.is_click_1) output.next_state = PUNCH;
     if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
     if (input.motion_state.x > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
-    if (input.motion_state.y > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+    if (input.motion_state.y > 150) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
     return output;
 }
 
@@ -364,21 +364,4 @@ __kernel void handle_movement(__global float4 *entities,
     entity_animation_blend[current_index]   = current_blend;
     entity_animation_elapsed[current_index] = current_time;
     entity_animation_indices[current_index] = anim_index;
-}
-
-__kernel void query_hovered(__global int *hull_flags,
-                            __global int *hull_ids,
-                            __global int *count)
-{
-    int current_hull = get_global_id(0);
-    int flags = hull_flags[current_hull];
-    bool is_hovered = (flags & CURSOR_OVER) !=0;
-    if (is_hovered)
-    {
-        int next = atomic_inc(&count[0]);
-        if (next < 10)
-        {
-            hull_ids[next] = current_hull;
-        }
-    }
 }
