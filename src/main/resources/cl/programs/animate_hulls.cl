@@ -129,8 +129,8 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                __global float16 *bone_bind_poses,
                                __global float16 *model_transforms,
                                __global int *entity_flags,
-                               __global int *armature_bone_reference_ids,
-                               __global int *armature_bone_parent_ids,
+                               __global int *entity_bone_reference_ids,
+                               __global int *entity_bone_parent_ids,
                                __global int2 *bone_channel_tables,
                                __global int2 *bone_pos_channel_tables,
                                __global int2 *bone_rot_channel_tables,
@@ -178,8 +178,8 @@ __kernel void animate_entities(__global float16 *armature_bones,
     for (int i = 0; i < armature_bone_count; i++)
     {
         int current_bone_bind = bone_table.x + i;
-        int bone_reference_id = armature_bone_reference_ids[current_bone_bind];
-        int bone_parent_id = armature_bone_parent_ids[current_bone_bind];
+        int bone_reference_id = entity_bone_reference_ids[current_bone_bind];
+        int bone_parent_id = entity_bone_parent_ids[current_bone_bind];
 
         float16 parent_transform = bone_parent_id == -1 
             ? model_transform 
