@@ -1,7 +1,7 @@
 /**
 Handles collision between two polygonal hulls
  */
-inline void block_collision(int hull_1_id, 
+void block_collision(int hull_1_id, 
                             int hull_2_id,
                             __global float4 *hulls,
                             __global float *hull_frictions,
@@ -21,17 +21,14 @@ inline void block_collision(int hull_1_id,
                             __global int *counter,
                             float dt)
 {
-    float4 hull_1 = hulls[hull_1_id];
-    float4 hull_2 = hulls[hull_2_id];
+
 
     int2 hull_1_point_table = hull_point_tables[hull_1_id];
     int2 hull_1_edge_table = hull_edge_tables[hull_1_id];
     int2 hull_2_point_table = hull_point_tables[hull_2_id];
     int2 hull_2_edge_table = hull_edge_tables[hull_2_id];
 
-	int hull_1_point_count = hull_1_point_table.y - hull_1_point_table.x + 1;
 	int hull_1_edge_count  = hull_1_edge_table.y - hull_1_edge_table.x + 1;
-	int hull_2_point_count = hull_2_point_table.y - hull_2_point_table.x + 1;
 	int hull_2_edge_count  = hull_2_edge_table.y - hull_2_edge_table.x + 1;
 
     float min_distance = FLT_MAX;
@@ -40,7 +37,6 @@ inline void block_collision(int hull_1_id,
     int edge_hull_id = -1;
     int edge_index_a = -1;
     int edge_index_b = -1;
-    int vert_index   = -1;
     
     bool invert_hull_order = false;
     
@@ -49,9 +45,10 @@ inline void block_collision(int hull_1_id,
 
     // hull 1
     int p1 = 0;
+    int point_index = 0;    
 
     __attribute__((opencl_unroll_hint(2)))
-    for (int point_index = 0; point_index < hull_1_edge_count; point_index++)
+    for (point_index = 0; point_index < hull_1_edge_count; point_index++)
     {
         int edge_index = hull_1_edge_table.x + point_index;
         int2 edge = edges[edge_index];
@@ -103,8 +100,9 @@ inline void block_collision(int hull_1_id,
 
     p1 = 0;
 
+
     __attribute__((opencl_unroll_hint(2)))
-    for (int point_index = 0; point_index < hull_2_edge_count; point_index++)
+    for (point_index = 0; point_index < hull_2_edge_count; point_index++)
     {
         int edge_index = hull_2_edge_table.x + point_index;
         int2 edge = edges[edge_index];
@@ -169,8 +167,12 @@ inline void block_collision(int hull_1_id,
         : collision_normal;
 
     float3 final_proj = project_polygon(points, point_flags, vertex_table, collision_normal);
-    vert_index = final_proj.z;
+    int vert_index = final_proj.z;
     min_distance = native_divide(min_distance, fast_length(collision_normal));
+
+
+    float4 hull_1 = hulls[hull_1_id];
+    float4 hull_2 = hulls[hull_2_id];
 
     // collision reaction and opposing direction calculation
     float2 vert_hull_opposing = vert_hull_id == hull_1_id 

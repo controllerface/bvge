@@ -1,7 +1,7 @@
 /**
 Handles collision between one polygonal hull and one circular hull
  */
-inline void polygon_circle_collision(int polygon_id, 
+void polygon_circle_collision(int polygon_id, 
                                      int circle_id,
                                      __global int *entity_model_transforms,
                                      __global int *entity_flags,

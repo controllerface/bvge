@@ -1,7 +1,7 @@
 /**
 Handles collision between two polygonal hulls
  */
-inline void polygon_collision(int hull_1_id, 
+void polygon_collision(int hull_1_id, 
                               int hull_2_id,
                               __global int *entity_flags,
                               __global float4 *hulls,

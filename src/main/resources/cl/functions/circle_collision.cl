@@ -1,7 +1,7 @@
 /**
 Handles collision between two circular hulls
  */
-inline void circle_collision(int hull_1_id, 
+void circle_collision(int hull_1_id, 
                              int hull_2_id,
                              __global float4 *hulls,
                              __global float2 *hull_scales,

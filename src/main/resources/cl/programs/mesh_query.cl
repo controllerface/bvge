@@ -174,7 +174,7 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
     int texture = mesh_texture[d_index];
     int2 transfer = mesh_transfer[t_index];
 
-    command_buffer[c_index] = details.y;
+    command_buffer[c_index]     = details.y;
     command_buffer[c_index + 1] = 1;
     command_buffer[c_index + 2] = transfer.y;
     command_buffer[c_index + 3] = transfer.x;
@@ -213,27 +213,23 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
             ? l_layer 
             : mappedValue; 
 
-    int start_point = point_table.x;
-    int end_point = point_table.y;
+    int loop_index = 0;
+
     __attribute__((opencl_unroll_hint(4)))
-    for (int point_id = start_point; point_id <= end_point; point_id++)
+    for (loop_index = point_table.x; loop_index <= point_table.y; loop_index++)
     {
-        float4 point = points[point_id];
-        int hit_counts = point_hit_counts[point_id];
+        int point_vertex_reference = point_vertex_references[loop_index];
+        int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
+        vertex_buffer[ref_offset] = (float4)(points[loop_index].xy, side_z, 1.0f);
+        uv_buffer[ref_offset] = texture_uvs[uv_tables[point_vertex_reference].x + uv_offset];
+
+        int hit_counts = point_hit_counts[loop_index];
 
         float hit_color = map((float) hit_counts, 0, HIT_TOP_THRESHOLD, 0.0f, 0.5f);
 
         float col = hit_counts <= HIT_LOW_THRESHOLD 
             ? 1.0f 
             : 1 - hit_color;
-
-        int point_vertex_reference = point_vertex_references[point_id];
-        int2 uv_table = uv_tables[point_vertex_reference];
-        int uv_count = uv_table.y - uv_table.x + 1;
-        int uv_index =  uv_table.x + uv_offset;
-        float2 uv = texture_uvs[uv_index];
-        float4 pos = (float4)(point.xy, side_z, 1.0f);
-        int ref_offset = point_vertex_reference - mesh_vertex_table.x + transfer.x;
 
         float aaa = integrity > 100 
             ? 0.0f 
@@ -252,29 +248,17 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float ggg = cursor_hit && in_range
             ? 1.0f 
             : 0.0f;
-
-        vertex_buffer[ref_offset] = pos;
-        uv_buffer[ref_offset] = uv;
         color_buffer[ref_offset] = (float4)((col + rrr) * aaa, (col + ggg) * aaa, (col + bbb - ggg * 3) * aaa, 1.0f);
         slot_buffer[ref_offset] = (float)texture;
     }
 
-    int start_face = mesh_face_table.x;
-    int end_face = mesh_face_table.y;
     __attribute__((opencl_unroll_hint(2)))
-    for (int face_id = start_face; face_id <= end_face; face_id++)
+    for (loop_index = mesh_face_table.x; loop_index <= mesh_face_table.y; loop_index++)
     {
-        int4 face = mesh_faces[face_id];
-        int base_offset = face_id - start_face;
-        int inner_offset = base_offset * 3;
-        int o1 = inner_offset + transfer.y;
-        int o2 = o1 + 1;
-        int o3 = o1 + 2;
-        int p1 =  face.x;
-        int p2 =  face.y;
-        int p3 =  face.z;
-        element_buffer[o1] = p1;
-        element_buffer[o2] = p2;
-        element_buffer[o3] = p3;
+        int4 face = mesh_faces[loop_index];
+        int o1 = (loop_index - mesh_face_table.x) * 3 + transfer.y;
+        element_buffer[o1] = face.x;
+        element_buffer[o1 + 1] = face.y;
+        element_buffer[o1 + 2] = face.z;
     }
 }

@@ -2,7 +2,7 @@
 Sweep variants for scanning a scalar int buffer 
  */
 
-inline void upsweep(__local int *buffer, int m) 
+void upsweep(__local int *buffer, int m) 
 {
     // the local ID for this thread
     int local_id = get_local_id(0);
@@ -33,7 +33,7 @@ inline void upsweep(__local int *buffer, int m)
     }
 }
 
-inline void downsweep(__local int *buffer, int m)
+void downsweep(__local int *buffer, int m)
 {
     // the local  ID for this thread
     int local_id = get_local_id(0);
@@ -66,7 +66,7 @@ inline void downsweep(__local int *buffer, int m)
 Sweep variants for scanning an int2 vector buffer 
  */
 
-inline void upsweep_vec2(__local int2 *buffer2, int m) 
+void upsweep_vec2(__local int2 *buffer2, int m) 
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;
@@ -87,7 +87,7 @@ inline void upsweep_vec2(__local int2 *buffer2, int m)
     }
 }
 
-inline void downsweep_vec2(__local int2 *buffer2, int m)
+void downsweep_vec2(__local int2 *buffer2, int m)
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;
@@ -115,7 +115,7 @@ inline void downsweep_vec2(__local int2 *buffer2, int m)
 Sweep variants for scanning an int4 vector buffer 
  */
 
-inline void upsweep_vec4(__local int4 *buffer2, int m) 
+void upsweep_vec4(__local int4 *buffer2, int m) 
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;
@@ -136,7 +136,7 @@ inline void upsweep_vec4(__local int4 *buffer2, int m)
     }
 }
 
-inline void downsweep_vec4(__local int4 *buffer2, int m)
+void downsweep_vec4(__local int4 *buffer2, int m)
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;
@@ -164,7 +164,7 @@ inline void downsweep_vec4(__local int4 *buffer2, int m)
 Sweep variants for scanning one int2 vector and one int4 vector buffer simultaneously 
  */
 
-inline void upsweep_ex(__local int2 *buffer, __local int4 *buffer2, int m) 
+void upsweep_ex(__local int2 *buffer, __local int4 *buffer2, int m) 
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;
@@ -186,7 +186,7 @@ inline void upsweep_ex(__local int2 *buffer, __local int4 *buffer2, int m)
     }
 }
 
-inline void downsweep_ex(__local int2 *buffer, __local int4 *buffer2, int m)
+void downsweep_ex(__local int2 *buffer, __local int4 *buffer2, int m)
 {
     int local_id = get_local_id(0);
     int b_index = (local_id * 2) + 1;
