@@ -20,7 +20,7 @@ public class EarthLikeWorld implements WorldType
     private final FastNoiseLite noise3 = new FastNoiseLite();
     private final Random random = new Random();
 
-    private static final float block_range_floor = -0.3f;
+    private static final float block_range_floor = -0.1f;
     private static final float shard_range_floor = -0.35f;
     private static final float water_range_floor = -0.4f;
 
