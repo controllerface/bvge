@@ -37,7 +37,7 @@ public class BrokenObjectBuffer implements Destoryable
         this.ptr_queue  = ptr_queue;
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
-        broken_group = new BufferGroup<>(BrokenBuffer.class, name, ptr_queue);
+        broken_group = new BufferGroup<>(BrokenBuffer.class, name, ptr_queue, true);
         broken_group.set_buffer(BrokenBuffer.BROKEN_POSITIONS,  CLSize.cl_float2, 100);
         broken_group.set_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES, CLSize.cl_int, 100);
         broken_group.set_buffer(BrokenBuffer.BROKEN_MODEL_IDS,  CLSize.cl_int, 100);

@@ -14,7 +14,7 @@ public class MirrorBufferGroup extends BufferGroup<MirrorBufferType>
 {
     public MirrorBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(MirrorBufferType.class, name, ptr_queue);
+        super(MirrorBufferType.class, name, ptr_queue, true);
 
         set_buffer(MIRROR_ENTITY,                 cl_float4, entity_init);
         set_buffer(MIRROR_ENTITY_FLAG,            cl_int,    entity_init);

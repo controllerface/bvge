@@ -35,7 +35,7 @@ public class CollectedObjectBuffer implements Destoryable
         this.ptr_queue  = ptr_queue;
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
-        collected_group = new BufferGroup<>(Collected.class, name, ptr_queue);
+        collected_group = new BufferGroup<>(Collected.class, name, ptr_queue, true);
         collected_group.set_buffer(Collected.TYPES,  CLSize.cl_int, 100);
 
         long k_ptr_egress_collected = this.p_gpu_crud.kernel_ptr(Kernel.egress_collected);

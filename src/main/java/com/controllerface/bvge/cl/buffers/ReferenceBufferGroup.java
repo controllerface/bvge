@@ -7,7 +7,7 @@ public class ReferenceBufferGroup extends BufferGroup<ReferenceBufferType>
 {
     public ReferenceBufferGroup(String name, long ptr_queue)
     {
-        super(ReferenceBufferType.class, name, ptr_queue);
+        super(ReferenceBufferType.class, name, ptr_queue, true);
 
         // bone animation channels
 
