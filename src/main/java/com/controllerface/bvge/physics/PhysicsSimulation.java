@@ -12,7 +12,6 @@ import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 import com.controllerface.bvge.window.events.Event;
-import org.checkerframework.checker.units.qual.K;
 
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -80,7 +79,7 @@ public class PhysicsSimulation extends GameSystem
     private final GPUKernel k_integrate;
     private final GPUKernel k_integrate_entities;
     private final GPUKernel k_calculate_hull_aabb;
-    private final GPUKernel k_calculate_point_aabb;
+    private final GPUKernel k_calculate_edge_aabb;
     private final GPUKernel k_locate_in_bounds;
     private final GPUKernel k_move_entities;
     private final GPUKernel k_move_hulls;
@@ -291,12 +290,13 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(CalculateHullAABB_k.Args.bounds_bank_data,  GPGPU.core_memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE))
             .buf_arg(CalculateHullAABB_k.Args.hull_flags,        GPGPU.core_memory.get_buffer(CoreBufferType.HULL_FLAG));
 
-        long k_ptr_calculate_point_aabb = p_integrate.kernel_ptr(Kernel.calculate_point_aabb);
-        k_calculate_point_aabb = new CalculatePointAABB_k(GPGPU.ptr_compute_queue, k_ptr_calculate_point_aabb)
-            .buf_arg(CalculatePointAABB_k.Args.points,               GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
-            .buf_arg(CalculatePointAABB_k.Args.point_aabb,           GPGPU.core_memory.get_buffer(CoreBufferType.POINT_AABB))
-            .buf_arg(CalculatePointAABB_k.Args.point_aabb_index,     GPGPU.core_memory.get_buffer(CoreBufferType.POINT_AABB_INDEX))
-            .buf_arg(CalculatePointAABB_k.Args.point_aabb_key_table, GPGPU.core_memory.get_buffer(CoreBufferType.POINT_AABB_KEY_TABLE));
+        long k_ptr_calculate_edge_aabb = p_integrate.kernel_ptr(Kernel.calculate_edge_aabb);
+        k_calculate_edge_aabb = new CalculateEdgeAABB_k(GPGPU.ptr_compute_queue, k_ptr_calculate_edge_aabb)
+            .buf_arg(CalculateEdgeAABB_k.Args.edges,               GPGPU.core_memory.get_buffer(CoreBufferType.EDGE))
+            .buf_arg(CalculateEdgeAABB_k.Args.points,              GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
+            .buf_arg(CalculateEdgeAABB_k.Args.edge_aabb,           GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_AABB))
+            .buf_arg(CalculateEdgeAABB_k.Args.edge_aabb_index,     GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_AABB_INDEX))
+            .buf_arg(CalculateEdgeAABB_k.Args.edge_aabb_key_table, GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_AABB_KEY_TABLE));
 
         long k_ptr_build_key_bank = p_build_key_bank.kernel_ptr(Kernel.build_key_bank);
         k_build_key_bank = new BuildKeyBank_k(GPGPU.ptr_compute_queue, k_ptr_build_key_bank)
@@ -563,18 +563,18 @@ public class PhysicsSimulation extends GameSystem
         int hull_count = GPGPU.core_memory.sector_container().next_hull();
         int hull_size = GPGPU.calculate_preferred_global_size(hull_count);
 
-        int point_count = GPGPU.core_memory.sector_container().next_point();
-        int point_size = GPGPU.calculate_preferred_global_size(point_count);
+        int edge_count = GPGPU.core_memory.sector_container().next_edge();
+        int edge_size = GPGPU.calculate_preferred_global_size(edge_count);
 
         k_calculate_hull_aabb
             .ptr_arg(CalculateHullAABB_k.Args.args, arg_mem_ptr)
             .set_arg(CalculateHullAABB_k.Args.max_hull, hull_count)
             .call(arg_long(hull_size), GPGPU.preferred_work_size);
 
-        k_calculate_point_aabb
-            .ptr_arg(CalculatePointAABB_k.Args.args, arg_mem_ptr)
-            .set_arg(CalculatePointAABB_k.Args.max_point, point_count)
-            .call(arg_long(point_size), GPGPU.preferred_work_size);
+        k_calculate_edge_aabb
+            .ptr_arg(CalculateEdgeAABB_k.Args.args, arg_mem_ptr)
+            .set_arg(CalculateEdgeAABB_k.Args.max_edge, edge_count)
+            .call(arg_long(edge_size), GPGPU.preferred_work_size);
 
         GPGPU.cl_release_buffer(arg_mem_ptr);
 
@@ -1332,7 +1332,7 @@ public class PhysicsSimulation extends GameSystem
         // The first task before checking boundaries is to calculate the bank offsets for this frame. These offsets
         // determine how much space in the key bank is allocated to each possible collision candidate. The amount of
         // space varies based on the size and orientation of the object within the uniform grid.
-        calculate_bank_offsets(); // todo: need to account for point-line offsets as well
+        calculate_bank_offsets();
 
         // As a fail-safe, if the total bank size is zero, it means there's no tracked objects, so simply return.
         // This condition is unlikely to occur accept when the simulation is first starting up.
@@ -1344,7 +1344,7 @@ public class PhysicsSimulation extends GameSystem
         // Once we know there are some objects to track, we can generate the keys needed to further process
         // the tracked objects. This call generates the keys for each object, and stores them in the global
         // key bank. Hull bounds tables are updated with the correct offsets and counts as needed.
-        build_key_bank(); // todo: need to account for point-line offsets as well
+        build_key_bank();
 
         // After keys are generated, the next step is to calculate the space needed for the key map. This is
         // a similar process to calculating the bank offsets. The buffer is zeroed before use to clear out
@@ -1354,12 +1354,12 @@ public class PhysicsSimulation extends GameSystem
 
         // Now, the keymap itself is built. This is the structure that provides the ability to query
         // objects within the uniform grid structure.
-        build_key_map(uniform_grid); // todo: need to account for point-line offsets as well
+        build_key_map(uniform_grid);
 
         // Hulls are now filtered to ensure that only objects that are within the uniform grid boundary
         // are considered for collisions. In this step, the maximum size of the match table is calculated
         // as well, which is needed in subsequent steps.
-        locate_in_bounds(); // todo: need to account for point-line offsets as well
+        locate_in_bounds();
 
         // In the first pass, the number of total possible candidates is calculated for each hull. This is
         // necessary to correctly determine how much of the table each hull will require.

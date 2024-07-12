@@ -69,7 +69,7 @@ public class BoundingBoxRendererEX extends GameSystem
         long k_ptr_prepare_bounds = p_prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
         k_prepare_bounds = new PrepareBounds_k(GPGPU.ptr_render_queue, k_ptr_prepare_bounds)
             .ptr_arg(PrepareBounds_k.Args.vbo, ptr_vbo_position)
-            .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT_AABB));
+            .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_EDGE_AABB));
     }
 
     @Override
@@ -81,7 +81,7 @@ public class BoundingBoxRendererEX extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         int offset = 0;
-        for (int remaining = GPGPU.core_memory.last_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPGPU.core_memory.last_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             int count_size = GPGPU.calculate_preferred_global_size(count);

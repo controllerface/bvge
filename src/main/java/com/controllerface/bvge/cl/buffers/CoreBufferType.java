@@ -22,6 +22,9 @@ public enum CoreBufferType implements BufferType
     EDGE,
     EDGE_FLAG,
     EDGE_LENGTH,
+    EDGE_AABB,
+    EDGE_AABB_INDEX,
+    EDGE_AABB_KEY_TABLE,
     HULL,
     HULL_SCALE,
     HULL_AABB,
@@ -48,7 +51,4 @@ public enum CoreBufferType implements BufferType
     POINT_HIT_COUNT,
     POINT_HULL_INDEX,
     POINT_VERTEX_REFERENCE,
-    POINT_AABB,
-    POINT_AABB_INDEX,
-    POINT_AABB_KEY_TABLE,
 }

@@ -181,7 +181,10 @@ public class SectorCompactor implements Destoryable
             .buf_arg(CompactEdges_k.Args.edge_shift, b_edge_shift)
             .buf_arg(CompactEdges_k.Args.edges, sector_buffers.get_buffer(EDGE))
             .buf_arg(CompactEdges_k.Args.edge_lengths, sector_buffers.get_buffer(EDGE_LENGTH))
-            .buf_arg(CompactEdges_k.Args.edge_flags, sector_buffers.get_buffer(EDGE_FLAG));
+            .buf_arg(CompactEdges_k.Args.edge_flags, sector_buffers.get_buffer(EDGE_FLAG))
+            .buf_arg(CompactEdges_k.Args.edge_aabb, sector_buffers.get_buffer(EDGE_AABB))
+            .buf_arg(CompactEdges_k.Args.edge_aabb_index, sector_buffers.get_buffer(EDGE_AABB_INDEX))
+            .buf_arg(CompactEdges_k.Args.edge_aabb_key_table, sector_buffers.get_buffer(EDGE_AABB_KEY_TABLE));
 
         long k_ptr_compact_points = p_scan_deletes.kernel_ptr(Kernel.compact_points);
         k_compact_points = new CompactPoints_k(ptr_queue, k_ptr_compact_points)
@@ -192,9 +195,6 @@ public class SectorCompactor implements Destoryable
             .buf_arg(CompactPoints_k.Args.point_hull_indices, sector_buffers.get_buffer(POINT_HULL_INDEX))
             .buf_arg(CompactPoints_k.Args.point_flags, sector_buffers.get_buffer(POINT_FLAG))
             .buf_arg(CompactPoints_k.Args.point_hit_counts, sector_buffers.get_buffer(POINT_HIT_COUNT))
-            .buf_arg(CompactPoints_k.Args.point_aabb, sector_buffers.get_buffer(POINT_AABB))
-            .buf_arg(CompactPoints_k.Args.point_aabb_index, sector_buffers.get_buffer(POINT_AABB_INDEX))
-            .buf_arg(CompactPoints_k.Args.point_aabb_key_table, sector_buffers.get_buffer(POINT_AABB_KEY_TABLE))
             .buf_arg(CompactPoints_k.Args.bone_tables, sector_buffers.get_buffer(POINT_BONE_TABLE));
 
         long k_ptr_compact_hull_bones = p_scan_deletes.kernel_ptr(Kernel.compact_hull_bones);

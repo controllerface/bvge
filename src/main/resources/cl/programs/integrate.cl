@@ -482,16 +482,17 @@ __kernel void calculate_hull_aabb(__global float4 *hulls,
     bounds_bank_data[current_hull] = bounds_bank;
 }
 
-__kernel void calculate_point_aabb(__global float4 *points,
-                                   __global float4 *point_aabb,
-                                   __global int4 *point_aabb_index,
-                                   __global int2 *point_aabb_key_table,
+__kernel void calculate_edge_aabb(__global int2 *edges,
+                                   __global float4 *points,
+                                   __global float4 *edge_aabb,
+                                   __global int4 *edge_aabb_index,
+                                   __global int2 *edge_aabb_key_table,
                                    __global float *args,
-                                   int max_point)
+                                   int max_edge)
 {
-    int current_point = get_global_id(0);
+    int current_edge = get_global_id(0);
 
-    if (current_point >= max_point) return;
+    if (current_edge >= max_edge) return;
 
     float x_spacing      = args[0];
     float y_spacing      = args[1];
@@ -504,9 +505,11 @@ __kernel void calculate_point_aabb(__global float4 *points,
     float inner_width    = args[8];
     float inner_height   = args[9];
         
-    float4 point = points[current_point];
-    int4 bounds_index = point_aabb_index[current_point];
-    int2 bounds_bank = point_aabb_key_table[current_point];
+    int2 edge = edges[current_edge];
+    float4 point1 = points[edge.x];
+    float4 point2 = points[edge.y];
+    int4 bounds_index = edge_aabb_index[current_edge];
+    int2 bounds_bank = edge_aabb_key_table[current_edge];
 
 	float x_sum = 0;
 	float y_sum = 0;
@@ -521,49 +524,83 @@ __kernel void calculate_point_aabb(__global float4 *points,
 	float min_y = FLT_MAX;
 	float max_y = FLT_MIN;
 
-    // update center sum
-    x_sum += point.x;
-    y_sum += point.y;
-
     // update min/max values for bounding box
-    if (point.x > max_x || !max_x_set)
+    if (point1.x > max_x || !max_x_set)
     {
-        max_x = point.x;
+        max_x = point1.x;
         max_x_set = true;
     }
-    if (point.x < min_x || !min_x_set)
+    if (point1.x < min_x || !min_x_set)
     {
-        min_x = point.x;
+        min_x = point1.x;
         min_x_set = true;
     }
-    if (point.y > max_y || !max_y_set)
+    if (point1.y > max_y || !max_y_set)
     {
-        max_y = point.y;
+        max_y = point1.y;
         max_y_set = true;
     }
-    if (point.y < min_y || !min_y_set)
+    if (point1.y < min_y || !min_y_set)
     {
-        min_y = point.y;
+        min_y = point1.y;
         min_y_set = true;
     }
 
+    if (point2.x > max_x)
+    {
+        max_x = point2.x;
+    }
+    if (point2.x < min_x)
+    {
+        min_x = point2.x;
+    }
+    if (point2.y > max_y)
+    {
+        max_y = point2.y;
+    }
+    if (point2.y < min_y)
+    {
+        min_y = point2.y;
+    }
+
     // also include previous position data for the bounding box, to account for possible CCD correction
-    if (point.z > max_x)
+    if (point1.z > max_x)
     {
-        max_x = point.z;
+        max_x = point1.z;
     }
-    if (point.z < min_x)
+    if (point1.z < min_x)
     {
-        min_x = point.z;
+        min_x = point1.z;
     }
-    if (point.w > max_y)
+    if (point1.w > max_y)
     {
-        max_y = point.w;
+        max_y = point1.w;
     }
-    if (point.w < min_y)
+    if (point1.w < min_y)
     {
-        min_y = point.w;
+        min_y = point1.w;
     }
+    if (point2.z > max_x)
+    {
+        max_x = point2.z;
+    }
+    if (point2.z < min_x)
+    {
+        min_x = point2.z;
+    }
+    if (point2.w > max_y)
+    {
+        max_y = point2.w;
+    }
+    if (point2.w < min_y)
+    {
+        min_y = point2.w;
+    }
+
+	min_x -= .5f;
+	max_x += .5f;
+	min_y -= .5f;
+	max_y += .5f;
 
     // calculate bounding box
     float4 bounding_box = (float4)(0.0f);
@@ -609,7 +646,7 @@ __kernel void calculate_point_aabb(__global float4 *points,
         bounds_bank.y = 0;
     }
 
-    point_aabb[current_point]           = bounding_box;
-    point_aabb_index[current_point]     = bounds_index;
-    point_aabb_key_table[current_point] = bounds_bank;
+    edge_aabb[current_edge]           = bounding_box;
+    edge_aabb_index[current_edge]     = bounds_index;
+    edge_aabb_key_table[current_edge] = bounds_bank;
 }

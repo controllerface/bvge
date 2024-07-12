@@ -54,7 +54,7 @@ public enum Kernel
     build_key_bank,
     integrate,
     calculate_hull_aabb,
-    calculate_point_aabb,
+    calculate_edge_aabb,
     integrate_entities,
     locate_in_bounds,
     merge_point,
