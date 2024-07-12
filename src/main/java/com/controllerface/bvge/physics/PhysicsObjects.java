@@ -217,6 +217,84 @@ public class PhysicsObjects
             entity_flags);
     }
 
+    public static int test_line(SectorContainer world,
+                                float x,
+                                float y,
+                                float size,
+                                int entity_flags,
+                                int global_hull_flags,
+                                float mass,
+                                float friction,
+                                float restitution,
+                                int model_id,
+                                Solid shard_mineral)
+    {
+        int type = SubstanceTools.to_type_index(shard_mineral);
+        int next_entity_id = world.next_entity();
+        int next_hull_index = world.next_hull();
+
+        var mesh = ModelRegistry.get_model_by_index(model_id).meshes()[0];
+
+        var hull = mesh.vertices();
+        hull = scale_hull(hull, size);
+        hull = translate_hull(hull, x, y);
+
+        var v1 = hull[0];
+        var v2 = hull[1];
+
+        var p1 = CLUtils.arg_float2(v1.x(), v1.y());
+        var p2 = CLUtils.arg_float2(v2.x(), v2.y());
+
+        int h1 = 0;
+        int h2 = 0;
+
+        var p1_index = world.create_point(p1, EMPTY_POINT_BONE_TABLE, v1.index(), next_hull_index, h1,0);
+        var p2_index = world.create_point(p2, EMPTY_POINT_BONE_TABLE, v2.index(), next_hull_index, h2,0);
+
+        MathEX.centroid(vector_buffer, p1, p2);
+        var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+        var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+
+        var angle = MathEX.angle_between_lines(l1, l2);
+
+        var start_edge = world.create_edge(p1_index, p2_index, edgeDistance(p2, p1), 0);
+        var end_edge = start_edge;
+
+        var point_table = CLUtils.arg_int2(p1_index, p2_index);
+        var edge_table = CLUtils.arg_int2(start_edge, end_edge);
+        var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
+        var scale = CLUtils.arg_float2(size, size);
+        var rotation = CLUtils.arg_float2(0, angle);
+
+        // there is only one hull, so it is the main hull ID by default
+        int[] bone_table = CLUtils.arg_int2(0, -1);
+        int hull_flags = global_hull_flags | HullFlags.NO_BONES.bits;
+        int hull_id = world.create_hull(mesh.mesh_id(),
+            position,
+            scale,
+            rotation,
+            point_table,
+            edge_table,
+            bone_table,
+            friction,
+            restitution,
+            next_entity_id,
+            shard_mineral.mineral_number,
+            hull_flags);
+        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        return world.create_entity(x, y, x, y,
+            hull_table,
+            bone_table,
+            mass,
+            -1,
+            -1f,
+            hull_id,
+            model_id,
+            0,
+            type,
+            entity_flags);
+    }
+
     public static int block(SectorContainer world,
                             float x,
                             float y,

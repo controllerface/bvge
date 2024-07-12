@@ -23,6 +23,8 @@ public class Integrate extends GPUProgram
 
         load_kernel(Kernel.integrate);
         load_kernel(Kernel.integrate_entities);
+        load_kernel(Kernel.calculate_hull_aabb);
+        load_kernel(Kernel.calculate_point_aabb);
 
         return this;
     }

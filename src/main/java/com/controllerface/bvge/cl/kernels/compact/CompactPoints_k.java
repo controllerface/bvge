@@ -19,6 +19,9 @@ public class CompactPoints_k extends GPUKernel
         point_flags             (Type.buffer_int),
         point_hit_counts        (Type.buffer_short),
         bone_tables             (Type.buffer_int4),
+        point_aabb           (Type.buffer_float4),
+        point_aabb_index     (Type.buffer_int4),
+        point_aabb_key_table (Type.buffer_int2),
 
         ;
 

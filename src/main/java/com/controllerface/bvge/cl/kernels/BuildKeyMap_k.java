@@ -4,8 +4,8 @@ public class BuildKeyMap_k extends GPUKernel
 {
     public enum Args
     {
-        bounds_index_data,
-        bounds_bank_data,
+        hull_aabb_index,
+        hull_aabb_key_table,
         key_map,
         key_offsets,
         key_counts,

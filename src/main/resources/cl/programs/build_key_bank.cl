@@ -2,19 +2,19 @@
 /**
 Generates the spatial index keys for each object and stores them in the key bank.
  */
-__kernel void generate_keys(__global int4 *bounds_index_data,
-                            __global int2 *bounds_bank_data,
-                            __global int *key_bank,
-                            __global int *key_counts,
-                            int x_subdivisions,
-                            int key_bank_length,
-                            int key_count_length, 
-                            int max_hull)
+__kernel void build_key_bank(__global int4 *hull_aabb_index,
+                             __global int2 *hull_aabb_key_table,
+                             __global int *key_bank,
+                             __global int *key_counts,
+                             int x_subdivisions,
+                             int key_bank_length,
+                             int key_count_length, 
+                             int max_hull)
 {
     int current_hull = get_global_id(0);
     if (current_hull >= max_hull) return;
-    int4 bounds_index = bounds_index_data[current_hull];
-    int2 bounds_bank = bounds_bank_data[current_hull];
+    int4 bounds_index = hull_aabb_index[current_hull];
+    int2 bounds_bank = hull_aabb_key_table[current_hull];
 
     int offset = bounds_bank.x * 2;
 

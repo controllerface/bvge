@@ -16,6 +16,7 @@ public class MeshRegistry
     public static final int R_SHARD_MESH = next_mesh_index.getAndIncrement();
     public static final int L_SHARD_MESH = next_mesh_index.getAndIncrement();
     public static final int SPIKE_MESH = next_mesh_index.getAndIncrement();
+    public static final int LINE_MESH = next_mesh_index.getAndIncrement();
     public static final int BLOCK_MESH = next_mesh_index.getAndIncrement();
 
     private static final Map<Integer, Mesh> loaded_meshes = new HashMap<>();
@@ -45,18 +46,17 @@ public class MeshRegistry
             -0.5f,  0.5f, // top
         };
 
-//    private static final float[] SPIKE =  new float[]
-//        {
-//            -0.5f, -0.5f, // bottom left
-//             0.5f, -0.5f, // bottom right
-//             0.0f,  0.366f, // top
-//        };
-
     private static final float[] SPIKE =  new float[]
         {
             0.5f, 0.5f, // bottom left
             -0.5f, 0.5f, // bottom right
             0.0f,  -0.366f, // top
+        };
+
+    private static final float[] LINE =  new float[]
+        {
+            -0.5f, -0.5f, // bottom left
+            0.5f,  0.5f, // top
         };
 
     public static void init()
@@ -65,6 +65,7 @@ public class MeshRegistry
         register_mesh(R_SHARD_MESH, generate_shard_mesh(R_SHARD, "r_shard"));
         register_mesh(L_SHARD_MESH, generate_shard_mesh(L_SHARD, "l_shard"));
         register_mesh(SPIKE_MESH, generate_spike_mesh());
+        register_mesh(LINE_MESH, generate_line_mesh());
         register_mesh(BLOCK_MESH, generate_block_mesh());
     }
 
@@ -178,5 +179,20 @@ public class MeshRegistry
         int mesh_id      = GPGPU.core_memory.reference_container().new_mesh_reference(vert_table, face_table);
 
         return new Mesh("spike", mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
+    }
+
+    private static Mesh generate_line_mesh()
+    {
+        var vert_ref_id1 = GPGPU.core_memory.reference_container().new_vertex_reference(LINE[0], LINE[1], new float[4], new int[2]);
+        var vert_ref_id2 = GPGPU.core_memory.reference_container().new_vertex_reference(LINE[2], LINE[3], new float[4], new int[2]);
+        var vertices = new Vertex[]
+            {
+                new Vertex(vert_ref_id1, LINE[0], LINE[1], Collections.emptyList(), new String[0], new float[0]),
+                new Vertex(vert_ref_id2, LINE[2], LINE[3], Collections.emptyList(), new String[0], new float[0])
+            };
+        var faces = new Face[]{ new Face(-1,0, 0, 0) };
+        var hull = new int[]{ 0 };
+
+        return new Mesh("line", -1, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 }

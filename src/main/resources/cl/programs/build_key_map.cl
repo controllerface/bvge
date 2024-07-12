@@ -2,8 +2,8 @@
 /**
 Generates the entries within spatial key map for each hull's bounding box.
  */
-__kernel void build_key_map(__global int4 *bounds_index_data,
-                            __global int2 *bounds_bank_data,
+__kernel void build_key_map(__global int4 *hull_aabb_index,
+                            __global int2 *hull_aabb_key_table,
                             __global int *key_map,
                             __global int *key_offsets,
                             __global int *key_counts,
@@ -13,8 +13,8 @@ __kernel void build_key_map(__global int4 *bounds_index_data,
 {
     int current_hull = get_global_id(0);
     if (current_hull >= max_hull) return;
-    int4 bounds_index = bounds_index_data[current_hull];
-    int2 bounds_bank = bounds_bank_data[current_hull];
+    int4 bounds_index = hull_aabb_index[current_hull];
+    int2 bounds_bank  = hull_aabb_key_table[current_hull];
 
     int min_x = bounds_bank.y == 0 ? INT_MAX : bounds_index.x;
     int max_x = bounds_index.y;

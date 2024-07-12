@@ -23,7 +23,7 @@ public class MirrorBufferGroup extends BufferGroup<MirrorBufferType>
         set_buffer(MIRROR_EDGE,                   cl_int2,   edge_init);
         set_buffer(MIRROR_EDGE_FLAG,              cl_int,    edge_init);
         set_buffer(MIRROR_HULL,                   cl_float4, hull_init);
-        set_buffer(MIRROR_HULL_AABB,              cl_int4, hull_init);
+        set_buffer(MIRROR_HULL_AABB,              cl_int4,   hull_init);
         set_buffer(MIRROR_HULL_FLAG,              cl_int,    hull_init);
         set_buffer(MIRROR_HULL_ENTITY_ID,         cl_int,    hull_init);
         set_buffer(MIRROR_HULL_MESH_ID,           cl_int,    hull_init);
@@ -33,6 +33,7 @@ public class MirrorBufferGroup extends BufferGroup<MirrorBufferType>
         set_buffer(MIRROR_HULL_ROTATION,          cl_float2, hull_init);
         set_buffer(MIRROR_HULL_SCALE,             cl_float2, hull_init);
         set_buffer(MIRROR_POINT,                  cl_float4, point_init);
+        set_buffer(MIRROR_POINT_AABB,             cl_int4,   point_init);
         set_buffer(MIRROR_POINT_HIT_COUNT,        cl_short,  point_init);
         set_buffer(MIRROR_POINT_ANTI_GRAV,        cl_float,  point_init);
         set_buffer(MIRROR_POINT_VERTEX_REFERENCE, cl_int,    point_init);
@@ -57,6 +58,7 @@ public class MirrorBufferGroup extends BufferGroup<MirrorBufferType>
         get_buffer(MIRROR_HULL_ROTATION).mirror(sector_group.get_buffer(HULL_ROTATION));
         get_buffer(MIRROR_HULL_SCALE).mirror(sector_group.get_buffer(HULL_SCALE));
         get_buffer(MIRROR_POINT).mirror(sector_group.get_buffer(POINT));
+        get_buffer(MIRROR_POINT_AABB).mirror(sector_group.get_buffer(POINT_AABB));
         get_buffer(MIRROR_POINT_HIT_COUNT).mirror(sector_group.get_buffer(POINT_HIT_COUNT));
         get_buffer(MIRROR_POINT_ANTI_GRAV).mirror(sector_group.get_buffer(POINT_ANTI_GRAV));
         get_buffer(MIRROR_POINT_VERTEX_REFERENCE).mirror(sector_group.get_buffer(POINT_VERTEX_REFERENCE));

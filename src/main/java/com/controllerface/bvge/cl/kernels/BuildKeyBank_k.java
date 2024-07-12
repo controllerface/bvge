@@ -1,11 +1,11 @@
 package com.controllerface.bvge.cl.kernels;
 
-public class GenerateKeys_k extends GPUKernel
+public class BuildKeyBank_k extends GPUKernel
 {
     public enum Args
     {
-        bounds_index_data,
-        bounds_bank_data,
+        hull_aabb_index,
+        hull_aabb_key_table,
         key_bank,
         key_counts,
         x_subdivisions,
@@ -14,7 +14,7 @@ public class GenerateKeys_k extends GPUKernel
         max_hull,
     }
 
-    public GenerateKeys_k(long command_queue_ptr, long kernel_ptr)
+    public BuildKeyBank_k(long command_queue_ptr, long kernel_ptr)
     {
         super(command_queue_ptr, kernel_ptr);
     }

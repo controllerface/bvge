@@ -76,13 +76,13 @@ __kernel void aabb_collide(__global float4 *bounds,
             }
 
             // no collisions between hulls that are part of the same amrature
-            int candiate_flags = hull_flags[next];
             int candiate_entity_id = hull_entity_ids[next];
             if (candiate_entity_id == entity_id)
             {
                 continue;
             }
 
+            int candiate_flags = hull_flags[next];
             bool is_static_c = (candiate_flags & IS_STATIC) !=0;
 
             // no static/static collision permitted

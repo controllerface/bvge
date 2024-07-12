@@ -52,6 +52,28 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
          */
         set_buffer(POINT_ANTI_GRAV, cl_float, point_init);
 
+        /* float4
+         * x: corner x position
+         * y: corner y position
+         * z: width
+         * w: height
+         */
+        set_buffer(POINT_AABB, cl_float4, point_init);
+
+        /* int4
+         * x: minimum x key index
+         * y: maximum x key index
+         * z: minimum y key index
+         * w: maximum y key index
+         */
+        set_buffer(POINT_AABB_INDEX, cl_int4, point_init);
+
+        /* int2
+         * x: key bank offset
+         * y: key bank size
+         */
+        set_buffer(POINT_AABB_KEY_TABLE, cl_int2, point_init);
+
         //#endregion
 
         //#region Edge Buffers
@@ -320,6 +342,9 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
         get_buffer(POINT_HIT_COUNT).ensure_capacity(point_capacity);
         get_buffer(POINT_FLAG).ensure_capacity(point_capacity);
         get_buffer(POINT_ANTI_GRAV).ensure_capacity(point_capacity);
+        get_buffer(POINT_AABB).ensure_capacity(point_capacity);
+        get_buffer(POINT_AABB_INDEX).ensure_capacity(point_capacity);
+        get_buffer(POINT_AABB_KEY_TABLE).ensure_capacity(point_capacity);
     }
 
     public void ensure_edge_capacity(int edge_capacity)

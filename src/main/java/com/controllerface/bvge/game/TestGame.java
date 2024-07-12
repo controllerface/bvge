@@ -17,6 +17,7 @@ import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.Constants;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -133,6 +134,7 @@ public class TestGame extends GameMode
         if (ACTIVE_RENDERERS.contains(RenderType.BOUNDS))
         {
             ecs.register_system(new BoundingBoxRenderer(ecs));
+            ecs.register_system(new BoundingBoxRendererEX(ecs));
         }
 
         if (ACTIVE_RENDERERS.contains(RenderType.POINTS))
@@ -158,6 +160,10 @@ public class TestGame extends GameMode
         float player_spawn_x = -250;
         float player_spawn_y = 1500;
         gen_player(player_size, player_spawn_x, player_spawn_y);
+
+//        PhysicsObjects.test_line(GPGPU.core_memory.sector_container(),
+//            0, 600, 32, 0, 0, 10, 0, 0, LINE_PARTICLE, Solid.ANDESITE);
+
         load_systems(player_spawn_x, player_spawn_y);
     }
 }
