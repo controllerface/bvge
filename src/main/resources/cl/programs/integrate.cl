@@ -483,12 +483,13 @@ __kernel void calculate_hull_aabb(__global float4 *hulls,
 }
 
 __kernel void calculate_edge_aabb(__global int2 *edges,
-                                   __global float4 *points,
-                                   __global float4 *edge_aabb,
-                                   __global int4 *edge_aabb_index,
-                                   __global int2 *edge_aabb_key_table,
-                                   __global float *args,
-                                   int max_edge)
+                                  __global int *edge_flags,
+                                  __global float4 *points,
+                                  __global float4 *edge_aabb,
+                                  __global int4 *edge_aabb_index,
+                                  __global int2 *edge_aabb_key_table,
+                                  __global float *args,
+                                  int max_edge)
 {
     int current_edge = get_global_id(0);
 
@@ -630,7 +631,10 @@ __kernel void calculate_edge_aabb(__global int2 *edges,
 
     int4 k = getExtents(keys);
     bounds_index = k;
-    bool in_bounds = is_box_in_bounds(bounding_box, x_origin, y_origin, width, height);
+
+    bool interior =  edge_flags[current_edge] == 1;
+
+    bool in_bounds = !interior && is_box_in_bounds(bounding_box, x_origin, y_origin, width, height);
 
     if (in_bounds)
     {

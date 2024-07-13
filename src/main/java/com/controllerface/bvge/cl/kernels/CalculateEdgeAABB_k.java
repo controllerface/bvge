@@ -5,6 +5,7 @@ public class CalculateEdgeAABB_k extends GPUKernel
     public enum Args
     {
         edges,
+        edge_flags,
         points,
         edge_aabb,
         edge_aabb_index,

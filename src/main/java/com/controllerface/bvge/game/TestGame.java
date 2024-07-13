@@ -55,7 +55,7 @@ public class TestGame extends GameMode
 //            ,RenderType.HULLS
 //            ,RenderType.POINTS
 //            ,RenderType.ENTITIES
-            ,RenderType.BOUNDS
+//            ,RenderType.BOUNDS
 //            ,RenderType.GRID
         );
 
@@ -133,7 +133,7 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.BOUNDS))
         {
-            //ecs.register_system(new BoundingBoxRenderer(ecs));
+            ecs.register_system(new BoundingBoxRenderer(ecs));
             ecs.register_system(new BoundingBoxRendererEX(ecs));
         }
 

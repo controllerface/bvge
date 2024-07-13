@@ -9,6 +9,7 @@ public enum Kernel
     apply_reactions,
     build_key_map,
     calculate_batch_offsets,
+    ccd_collide,
     compact_entity_bones,
     compact_entities,
     compact_hull_bones,
