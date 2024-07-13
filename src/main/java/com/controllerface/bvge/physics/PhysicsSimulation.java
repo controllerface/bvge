@@ -1548,8 +1548,8 @@ public class PhysicsSimulation extends GameSystem
 
         var arg_mem_ptr = GPGPU.cl_new_cpu_copy_buffer(args);
         calculate_hull_aabb(arg_mem_ptr);
-        //calculate_edge_aabb(arg_mem_ptr);
-
+//        calculate_edge_aabb(arg_mem_ptr);
+//
 //        calculate_bank_offsets_ccd();
 //        if (uniform_grid.get_key_bank_size() >= 0)
 //        {

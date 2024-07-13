@@ -138,12 +138,12 @@ void polygon_circle_collision(int polygon_id,
         bool collect = (cursor_owner_entity_flags & CAN_COLLECT) !=0;
         float center_distance = fast_distance(cursor_owner.xy, hull_e.xy);
         bool hit = point_polygon_containment(polygon_id, hull_v.xy, hull_edge_tables, points, edges, edge_flags);
-        bool in_range = center_distance <= 160.0f; // todo: this should be a player stat, it is their hit range
+        bool in_range = true;//center_distance <= 160.0f; // todo: this should be a player stat, it is their hit range
         bool collectable = (edge_entity_flags & COLLECTABLE) !=0;
         edge_hull_flags |= CURSOR_OVER;           
         if (in_range) edge_hull_flags |= IN_RANGE;
         if (hit) edge_hull_flags |= CURSOR_HIT;
-        if (atk && in_range && hit) atomic_sub(&hull_integrity[edge_hull_id], 1); // hard-coded 1 damage
+        if (atk && in_range && hit) atomic_sub(&hull_integrity[edge_hull_id], 100); // hard-coded 1 damage
         if (in_range && collect && collectable) entity_flags[edge_entity_id] |= COLLECTED;
         hull_flags[edge_hull_id] = edge_hull_flags;
         return;
