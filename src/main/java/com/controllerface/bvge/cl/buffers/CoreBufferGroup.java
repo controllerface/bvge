@@ -52,6 +52,12 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
          */
         set_buffer(POINT_ANTI_GRAV, cl_float, point_init);
 
+        /* float
+         * x:
+         * y:
+         */
+        set_buffer(POINT_ANTI_TIME, cl_float, point_init);
+
         //#endregion
 
         //#region Edge Buffers
@@ -342,6 +348,7 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
         get_buffer(POINT_HIT_COUNT).ensure_capacity(point_capacity);
         get_buffer(POINT_FLAG).ensure_capacity(point_capacity);
         get_buffer(POINT_ANTI_GRAV).ensure_capacity(point_capacity);
+        get_buffer(POINT_ANTI_TIME).ensure_capacity(point_capacity);
     }
 
     public void ensure_edge_capacity(int edge_capacity)

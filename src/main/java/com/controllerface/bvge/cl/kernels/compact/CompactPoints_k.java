@@ -14,6 +14,7 @@ public class CompactPoints_k extends GPUKernel
         point_shift             (Type.buffer_int),
         points                  (Type.buffer_float4),
         anti_gravity            (Type.buffer_float),
+        anti_time               (Type.buffer_float2),
         point_vertex_references (Type.buffer_int),
         point_hull_indices      (Type.buffer_int),
         point_flags             (Type.buffer_int),

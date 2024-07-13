@@ -7,7 +7,7 @@ import org.joml.Vector3f;
 public class Camera
 {
     private static final float MAX_ZOOM = 1.5f;
-    private static final float MIN_ZOOM = .25f;
+    private static final float MIN_ZOOM = .5f;
 
     private final Vector2f position;
     private final Vector2f projection_size = new Vector2f(1, 1);

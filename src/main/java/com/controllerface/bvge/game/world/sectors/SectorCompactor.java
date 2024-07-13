@@ -191,6 +191,7 @@ public class SectorCompactor implements Destoryable
             .buf_arg(CompactPoints_k.Args.point_shift, b_point_shift)
             .buf_arg(CompactPoints_k.Args.points, sector_buffers.get_buffer(POINT))
             .buf_arg(CompactPoints_k.Args.anti_gravity, sector_buffers.get_buffer(POINT_ANTI_GRAV))
+            .buf_arg(CompactPoints_k.Args.anti_time, sector_buffers.get_buffer(POINT_ANTI_TIME))
             .buf_arg(CompactPoints_k.Args.point_vertex_references, sector_buffers.get_buffer(POINT_VERTEX_REFERENCE))
             .buf_arg(CompactPoints_k.Args.point_hull_indices, sector_buffers.get_buffer(POINT_HULL_INDEX))
             .buf_arg(CompactPoints_k.Args.point_flags, sector_buffers.get_buffer(POINT_FLAG))

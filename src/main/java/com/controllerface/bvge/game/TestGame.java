@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.Semaphore;
 
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
 
@@ -103,11 +104,24 @@ public class TestGame extends GameMode
         ecs.attach_component(player, ComponentType.BlockCursor,   new BlockCursor());
     }
 
+    private void gen_test_wall(int height, float x, float y)
+    {
+        float size = 1f;
+        float y_offset = 0;
+        for (int i = 0; i <= height; i++)
+        {
+            PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
+                x, y + y_offset, size, 100, 0, 0, 0, Constants.HullFlags.IS_STATIC.bits, Solid.OBSIDIAN, new int[4]);
+            y_offset+=size;
+        }
+    }
+
     private void load_systems(float x, float y)
     {
-        ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, load_queue, unload_queue));
+        var world_permits = new Semaphore(0);
+        ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, load_queue, unload_queue, world_permits));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid, player_inventory));
-        ecs.register_system(new WorldUnloader(ecs, sector_cache, load_queue, unload_queue));
+        ecs.register_system(new WorldUnloader(ecs, sector_cache, load_queue, unload_queue, world_permits));
         ecs.register_system(new CameraTracking(ecs, uniformGrid, x, y));
         ecs.register_system(new InventorySystem(ecs, player_inventory));
         ecs.register_system(blanking_system);
@@ -160,6 +174,7 @@ public class TestGame extends GameMode
         float player_spawn_x = -250;
         float player_spawn_y = 1500;
         gen_player(player_size, player_spawn_x, player_spawn_y);
+        //gen_test_wall(500, 0, 500);
 
 //        PhysicsObjects.test_line(GPGPU.core_memory.sector_container(),
 //            0, 600, 32, 0, 0, 10, 0, 0, LINE_PARTICLE, Solid.ANDESITE);

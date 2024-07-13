@@ -14,6 +14,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Semaphore;
 
 public class WorldLoader extends GameSystem
 {
@@ -25,18 +26,25 @@ public class WorldLoader extends GameSystem
     private final Queue<PhysicsEntityBatch> load_queue;
     private final Queue<Sector> unload_queue;
     private final Thread task_thread;
+    private final Semaphore world_permits;
 
     private final BlockingQueue<SectorBounds> next_sector_bounds = new ArrayBlockingQueue<>(1);
 
     private record SectorBounds(float outer_x_origin, float outer_y_origin, float outer_x_corner, float outer_y_corner) { }
 
-    public WorldLoader(ECS ecs, UniformGrid uniformGrid, Cache<Sector, PhysicsEntityBatch> sector_cache_in, Queue<PhysicsEntityBatch> load_queue, Queue<Sector> unload_queue)
+    public WorldLoader(ECS ecs,
+                       UniformGrid uniformGrid,
+                       Cache<Sector, PhysicsEntityBatch> sector_cache_in,
+                       Queue<PhysicsEntityBatch> load_queue,
+                       Queue<Sector> unload_queue,
+                       Semaphore world_permits)
     {
         super(ecs);
         this.uniformGrid = uniformGrid;
         this.sector_cache = sector_cache_in;
         this.load_queue = load_queue;
         this.unload_queue = unload_queue;
+        this.world_permits = world_permits;
         this.task_thread = Thread.ofVirtual().start(new SectorLoadTask());
     }
 
@@ -50,6 +58,7 @@ public class WorldLoader extends GameSystem
                 try
                 {
                     load_sectors(next_sector_bounds.take());
+                    world_permits.release(1);
                     GPGPU.core_memory.await_world_barrier();
                 }
                 catch (InterruptedException e)

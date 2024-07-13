@@ -68,8 +68,10 @@ public class PhysicsSimulation extends GameSystem
     private final GPUProgram p_animate_hulls = new AnimateHulls();
     private final GPUProgram p_resolve_constraints = new ResolveConstraints();
 
-    private final GPUKernel k_aabb_collide;
     private final GPUKernel k_ccd_collide;
+    private final GPUKernel k_ccd_react;
+    private final GPUKernel k_aabb_collide;
+    private final GPUKernel k_aabb_collide_edge;
     private final GPUKernel k_animate_bones;
     private final GPUKernel k_animate_entities;
     private final GPUKernel k_animate_points;
@@ -401,26 +403,39 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(AABBCollide_k.Args.key_count_length, uniform_grid.directory_length);
 
 
+        long k_ptr_aabb_collide_edge = p_aabb_collide.kernel_ptr(Kernel.aabb_collide_edge);
+        k_aabb_collide_edge = new AABBCollideEdge_k(GPGPU.ptr_compute_queue, k_ptr_aabb_collide_edge)
+            .buf_arg(AABBCollideEdge_k.Args.used,               match_buffers.get_buffer(PhysicsBuffer.MATCHES_USED))
+            .buf_arg(AABBCollideEdge_k.Args.matches,            match_buffers.get_buffer(PhysicsBuffer.MATCHES))
+            .buf_arg(AABBCollideEdge_k.Args.match_offsets,      candidate_buffers.get_buffer(PhysicsBuffer.CANDIDATE_OFFSETS))
+            .buf_arg(AABBCollideEdge_k.Args.candidates,         candidate_buffers.get_buffer(PhysicsBuffer.CANDIDATE_COUNTS))
+            .buf_arg(AABBCollideEdge_k.Args.key_map,            key_buffers.get_buffer(PhysicsBuffer.KEY_MAP))
+            .buf_arg(AABBCollideEdge_k.Args.key_bank,           key_buffers.get_buffer(PhysicsBuffer.KEY_BANK))
+            .buf_arg(AABBCollideEdge_k.Args.edges,              GPGPU.core_memory.get_buffer(CoreBufferType.EDGE))
+            .buf_arg(AABBCollideEdge_k.Args.points,             GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
+            .buf_arg(AABBCollideEdge_k.Args.bounds,             GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_AABB))
+            .buf_arg(AABBCollideEdge_k.Args.bounds_bank_data,   GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_AABB_KEY_TABLE))
+            .buf_arg(AABBCollideEdge_k.Args.hull_entity_ids,    GPGPU.core_memory.get_buffer(CoreBufferType.HULL_ENTITY_ID))
+            .buf_arg(AABBCollideEdge_k.Args.hull_flags,         GPGPU.core_memory.get_buffer(CoreBufferType.HULL_FLAG))
+            .buf_arg(AABBCollideEdge_k.Args.point_hull_indices, GPGPU.core_memory.get_buffer(CoreBufferType.POINT_HULL_INDEX))
+            .ptr_arg(AABBCollideEdge_k.Args.key_counts,         ptr_counts_data)
+            .ptr_arg(AABBCollideEdge_k.Args.key_offsets,        ptr_offsets_data)
+            .ptr_arg(AABBCollideEdge_k.Args.counter,            svm_atomic_counter)
+            .set_arg(AABBCollideEdge_k.Args.x_subdivisions,     uniform_grid.x_subdivisions)
+            .set_arg(AABBCollideEdge_k.Args.key_count_length,   uniform_grid.directory_length);
+
         long k_ptr_ccd_collide = p_ccd_collide.kernel_ptr(Kernel.ccd_collide);
         k_ccd_collide = new CCDCollide_k(GPGPU.ptr_compute_queue, k_ptr_ccd_collide)
-            .buf_arg(CCDCollide_k.Args.used,               match_buffers.get_buffer(PhysicsBuffer.MATCHES_USED))
-            .buf_arg(CCDCollide_k.Args.matches,            match_buffers.get_buffer(PhysicsBuffer.MATCHES))
-            .buf_arg(CCDCollide_k.Args.match_offsets,      candidate_buffers.get_buffer(PhysicsBuffer.CANDIDATE_OFFSETS))
-            .buf_arg(CCDCollide_k.Args.candidates,         candidate_buffers.get_buffer(PhysicsBuffer.CANDIDATE_COUNTS))
-            .buf_arg(CCDCollide_k.Args.key_map,            key_buffers.get_buffer(PhysicsBuffer.KEY_MAP))
-            .buf_arg(CCDCollide_k.Args.key_bank,           key_buffers.get_buffer(PhysicsBuffer.KEY_BANK))
-            .buf_arg(CCDCollide_k.Args.edges,              GPGPU.core_memory.get_buffer(CoreBufferType.EDGE))
-            .buf_arg(CCDCollide_k.Args.points,             GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
-            .buf_arg(CCDCollide_k.Args.bounds,             GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_AABB))
-            .buf_arg(CCDCollide_k.Args.bounds_bank_data,   GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_AABB_KEY_TABLE))
-            .buf_arg(CCDCollide_k.Args.hull_entity_ids,    GPGPU.core_memory.get_buffer(CoreBufferType.HULL_ENTITY_ID))
-            .buf_arg(CCDCollide_k.Args.hull_flags,         GPGPU.core_memory.get_buffer(CoreBufferType.HULL_FLAG))
-            .buf_arg(CCDCollide_k.Args.point_hull_indices, GPGPU.core_memory.get_buffer(CoreBufferType.POINT_HULL_INDEX))
-            .ptr_arg(CCDCollide_k.Args.key_counts,         ptr_counts_data)
-            .ptr_arg(CCDCollide_k.Args.key_offsets,        ptr_offsets_data)
-            .ptr_arg(CCDCollide_k.Args.counter,            svm_atomic_counter)
-            .set_arg(CCDCollide_k.Args.x_subdivisions,     uniform_grid.x_subdivisions)
-            .set_arg(CCDCollide_k.Args.key_count_length,   uniform_grid.directory_length);
+            .buf_arg(CCDCollide_k.Args.edges, GPGPU.core_memory.get_buffer(CoreBufferType.EDGE))
+            .buf_arg(CCDCollide_k.Args.points, GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
+            .buf_arg(CCDCollide_k.Args.point_anti_time, GPGPU.core_memory.get_buffer(CoreBufferType.POINT_ANTI_TIME))
+            .buf_arg(CCDCollide_k.Args.edge_flags, GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_FLAG))
+            .buf_arg(CCDCollide_k.Args.candidates, candidate_buffers.get_buffer(PhysicsBuffer.CANDIDATES));
+
+        long k_ptr_ccd_react = p_ccd_collide.kernel_ptr(Kernel.ccd_react);
+        k_ccd_react = new CCDReact_k(GPGPU.ptr_compute_queue, k_ptr_ccd_react)
+            .buf_arg(CCDReact_k.Args.points, GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
+            .buf_arg(CCDReact_k.Args.point_anti_time, GPGPU.core_memory.get_buffer(CoreBufferType.POINT_ANTI_TIME));
 
         long k_ptr_finalize_candidates = p_locate_in_bounds.kernel_ptr(Kernel.finalize_candidates);
         k_finalize_candidates = new FinalizeCandidates_k(GPGPU.ptr_compute_queue, k_ptr_finalize_candidates)
@@ -896,7 +911,7 @@ public class PhysicsSimulation extends GameSystem
         }
     }
 
-    private void ccd_collide()
+    private void aabb_collide_edge()
     {
         long s = Editor.ACTIVE
             ? System.nanoTime()
@@ -905,8 +920,8 @@ public class PhysicsSimulation extends GameSystem
         match_buffers.get_buffer(PhysicsBuffer.MATCHES).ensure_capacity(match_buffer_count);
         match_buffers.get_buffer(PhysicsBuffer.MATCHES_USED).ensure_capacity(candidate_buffer_count);
         GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
-        k_ccd_collide
-            .set_arg(CCDCollide_k.Args.max_index, (int) candidate_buffer_count)
+        k_aabb_collide_edge
+            .set_arg(AABBCollideEdge_k.Args.max_index, (int) candidate_buffer_count)
             .call(arg_long(candidate_size), GPGPU.preferred_work_size);
         candidate_count = GPGPU.cl_read_pinned_int(GPGPU.ptr_compute_queue, svm_atomic_counter);
         if (Editor.ACTIVE)
@@ -914,6 +929,36 @@ public class PhysicsSimulation extends GameSystem
             long e = System.nanoTime() - s;
             Editor.queue_event("phys_aabb_collide", String.valueOf(e));
         }
+    }
+
+    private void ccd_collide()
+    {
+        long s = Editor.ACTIVE
+            ? System.nanoTime()
+            : 0;
+        int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
+        if (candidate_pair_size == 0) return;
+
+        int candidate_size = GPGPU.calculate_preferred_global_size(candidate_pair_size);
+
+        k_ccd_collide
+            .set_arg(CCDCollide_k.Args.max_index, candidate_pair_size)
+            .call(arg_long(candidate_size), GPGPU.preferred_work_size);
+
+        if (Editor.ACTIVE)
+        {
+            long e = System.nanoTime() - s;
+            Editor.queue_event("phys_sat_collide", String.valueOf(e));
+        }
+    }
+
+    private void ccd_react()
+    {
+        int point_count = GPGPU.core_memory.sector_container().next_point();
+        int point_size = GPGPU.calculate_preferred_global_size(point_count);
+        k_ccd_react
+            .set_arg(CCDReact_k.Args.max_point, point_count)
+            .call(arg_long(point_size), GPGPU.preferred_work_size);
     }
 
     //#endregion
@@ -1503,22 +1548,26 @@ public class PhysicsSimulation extends GameSystem
 
         var arg_mem_ptr = GPGPU.cl_new_cpu_copy_buffer(args);
         calculate_hull_aabb(arg_mem_ptr);
-        calculate_edge_aabb(arg_mem_ptr);
+        //calculate_edge_aabb(arg_mem_ptr);
+
+//        calculate_bank_offsets_ccd();
+//        if (uniform_grid.get_key_bank_size() >= 0)
+//        {
+//            build_key_bank_ccd();
+//            GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_offsets_data, grid_buffer_size);
+//            gpu_int_scan_out.scan_int_out(ptr_counts_data, ptr_offsets_data, uniform_grid.directory_length);
+//            build_key_map_ccd(uniform_grid);
+//            locate_in_bounds_edge();
+//            calculate_match_candidates_ccd();
+//            calculate_match_offsets();
+//            aabb_collide_edge();
+//            finalize_candidates();
+//            ccd_collide();
+//            ccd_react();
+//            calculate_hull_aabb(arg_mem_ptr);
+//        }
         GPGPU.cl_release_buffer(arg_mem_ptr);
 
-        calculate_bank_offsets_ccd();
-        if (uniform_grid.get_key_bank_size() >= 0)
-        {
-            build_key_bank_ccd();
-            GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, ptr_offsets_data, grid_buffer_size);
-            gpu_int_scan_out.scan_int_out(ptr_counts_data, ptr_offsets_data, uniform_grid.directory_length);
-            build_key_map_ccd(uniform_grid);
-            locate_in_bounds_edge();
-            calculate_match_candidates_ccd();
-            calculate_match_offsets();
-            ccd_collide();
-            //finalize_candidates();
-        }
 
 
         /*

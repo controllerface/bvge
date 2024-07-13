@@ -46,6 +46,7 @@ public enum CoreBufferType implements BufferType
     HULL_ROTATION,
     POINT,
     POINT_ANTI_GRAV,
+    POINT_ANTI_TIME,
     POINT_BONE_TABLE,
     POINT_FLAG,
     POINT_HIT_COUNT,
