@@ -337,9 +337,10 @@ public class WorldUnloader extends GameSystem
                 }
             }
 
+            load_queue.offer(batch);
+
             // this is required to ensure broken objects from previous frames aren't processed
             Arrays.fill(raw_broken.entity_types, -1);
-            load_queue.offer(batch);
         }
     }
 

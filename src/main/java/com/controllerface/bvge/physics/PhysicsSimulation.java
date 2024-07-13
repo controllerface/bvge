@@ -1513,25 +1513,6 @@ public class PhysicsSimulation extends GameSystem
         integrate();
 
 
-
-
-        // TODO: CCD phase. Should occur before broad phase, "rewinding" entity positions that are found to be
-        //  colliding.
-
-        // step 1: calculate AABBs for point-lines
-
-        // step 2: run the key bank and map kernels
-
-        // step 3: run AABB check for point-lines
-
-        // step 4: run SAT for colliding point-lines
-
-        // step 5: take the max dt rewind per entity and apply to entity as a whole
-
-        // continue on with normal collision
-
-
-
         float[] args =
         {
             uniform_grid.x_spacing,
@@ -1548,6 +1529,10 @@ public class PhysicsSimulation extends GameSystem
 
         var arg_mem_ptr = GPGPU.cl_new_cpu_copy_buffer(args);
         calculate_hull_aabb(arg_mem_ptr);
+
+        // Commenting out CCD experiment code. It does function, but doesn't have the desired effect. Want to revisit
+        //  later and try some modifications to the logic once some other aspects of the simulation are improved.
+
 //        calculate_edge_aabb(arg_mem_ptr);
 //
 //        calculate_bank_offsets_ccd();
@@ -1566,6 +1551,7 @@ public class PhysicsSimulation extends GameSystem
 //            ccd_react();
 //            calculate_hull_aabb(arg_mem_ptr);
 //        }
+
         GPGPU.cl_release_buffer(arg_mem_ptr);
 
 
@@ -1855,17 +1841,17 @@ public class PhysicsSimulation extends GameSystem
             clFinish(GPGPU.ptr_render_queue);           // QUEUE: render complete
 
             long phys_time = last_phys_time.take();     // STATE: main      -> block on   : `phys_time`
-            // STATE: main      -> unblock
-            // STATE: physics   -> block on   : `dt`
-            // STATE: ingress   -> blocked on : `world_barrier`
-            // STATE: egress    -> blocked on : `world_barrier`
-            // STATE: inventory -> blocked on : `world_barrier`
+            //                                          // STATE: main      -> unblock
+            //                                          // STATE: physics   -> block on   : `dt`
+            //                                          // STATE: ingress   -> blocked on : `world_barrier`
+            //                                          // STATE: egress    -> blocked on : `world_barrier`
+            //                                          // STATE: inventory -> blocked on : `world_barrier`
 
             GPGPU.core_memory.await_world_barrier();    // STATE: main      -> block on   : `world_barrier`
             GPGPU.core_memory.release_world_barrier();  // STATE: main      -> unblock
-            // STATE: ingress   -> block on   : `dt`
-            // STATE: egress    -> block on   : `dt`
-            // STATE: inventory -> block on   : `dt`
+            //                                          // STATE: ingress   -> block on   : `dt`
+            //                                          // STATE: egress    -> block on   : `dt`
+            //                                          // STATE: inventory -> block on   : `dt`
 
             clFinish(GPGPU.ptr_sector_queue);           // QUEUE: previous sector processing complete
 
