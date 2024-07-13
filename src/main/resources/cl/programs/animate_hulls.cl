@@ -65,9 +65,9 @@ TransformBuffer get_node_transform_x(__global int2 *bone_channel_tables,
     KeyFramePair rot_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, rot_channel_table);
     KeyFramePair scl_pair = find_keyframe_pair(key_frames, frame_times, anim_time_ticks, scl_channel_table);
 
-    float4 pos_final = vector_lerp(pos_pair.frame_a, pos_pair.frame_b, pos_pair.lerp_factor);
+    float4 pos_final = float4_lerp(pos_pair.frame_a, pos_pair.frame_b, pos_pair.lerp_factor);
     float4 rot_final = quaternion_lerp(rot_pair.frame_a, rot_pair.frame_b, rot_pair.lerp_factor);
-    float4 scl_final = vector_lerp(scl_pair.frame_a, scl_pair.frame_b, scl_pair.lerp_factor);
+    float4 scl_final = float4_lerp(scl_pair.frame_a, scl_pair.frame_b, scl_pair.lerp_factor);
 
     TransformBuffer current_transform;
     current_transform.pos = pos_final;
@@ -114,9 +114,9 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
         ? current_blend.y / current_blend.x 
         : 0.0f;
 
-    float4 pos_final = vector_lerp(previous_transform.pos, current_transform.pos, blend_factor);
+    float4 pos_final = float4_lerp(previous_transform.pos, current_transform.pos, blend_factor);
     float4 rot_final = quaternion_lerp(previous_transform.rot, current_transform.rot, blend_factor);
-    float4 scl_final = vector_lerp(previous_transform.scl, current_transform.scl, blend_factor);
+    float4 scl_final = float4_lerp(previous_transform.scl, current_transform.scl, blend_factor);
 
     pos_matrix = translation_vector_to_matrix(pos_final);
     rot_matrix = rotation_quaternion_to_matrix(rot_final);

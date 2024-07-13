@@ -16,6 +16,8 @@ public class UniformGrid
     public final static int BLOCK_COUNT = 16;
     public final static float SECTOR_SIZE = BLOCK_SIZE * BLOCK_COUNT;
 
+    private final static float SPACING_DIVISOR = 256.0f;
+
     public final float perimeter_width;
     public final float perimeter_height;
     public final float outer_perimeter_width;
@@ -64,8 +66,8 @@ public class UniformGrid
         outer_width = width + outer_perimeter_width;
         outer_height = height + outer_perimeter_height;
 
-        int approx_x_spacing = (int)(width / 32.0f);
-        int approx_y_spacing = (int)(height / 32.0f);
+        int approx_x_spacing = (int)(width / SPACING_DIVISOR);
+        int approx_y_spacing = (int)(height / SPACING_DIVISOR);
         x_subdivisions = approx_x_spacing;
         y_subdivisions = approx_y_spacing;
         directory_length = x_subdivisions * y_subdivisions;

@@ -208,7 +208,6 @@ public class HUDRenderer extends GameSystem
 
         for (var text_box : text_containers)
         {
-            char[] chars = text_box.message().toCharArray();
             float x      = text_box.x();
             float y      = text_box.y();;
             float scale  = text_box.scale();
@@ -231,7 +230,7 @@ public class HUDRenderer extends GameSystem
                 }
             }
 
-            for (var character : chars)
+            for (var character : text_box.message().toCharArray())
             {
                 var glyph = character_map.get(character);
                 current_glyph_count++;
