@@ -63,7 +63,7 @@ public class GPUCoreMemory implements Destoryable
     private final FlippableContainer<CollectedObjectBuffer> object_egress_buffer;
     private final CoreBufferGroup sector_buffers;
     private final SectorController sector_controller;
-    private final MirrorBufferGroup mirror_buffers;
+    private final RenderBufferGroup render_buffers;
     private final ReferenceBufferGroup reference_buffers;
     private final ReferenceController reference_controller;
     private final SectorCompactor sector_compactor;
@@ -86,7 +86,7 @@ public class GPUCoreMemory implements Destoryable
 
         this.sector_buffers       = new CoreBufferGroup(BUF_NAME_SECTOR, GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.sector_controller    = new SectorController(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.sector_buffers);
-        this.mirror_buffers       = new MirrorBufferGroup(BUF_NAME_RENDER, GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.render_buffers       = new RenderBufferGroup(BUF_NAME_RENDER, GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.reference_buffers    = new ReferenceBufferGroup(BUF_NAME_REFERENCE, GPGPU.ptr_compute_queue);
         this.reference_controller = new ReferenceController(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.reference_buffers);
         this.sector_compactor     = new SectorCompactor(GPGPU.ptr_compute_queue, sector_controller, sector_buffers, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT, DELETE_1_INIT);
@@ -139,9 +139,9 @@ public class GPUCoreMemory implements Destoryable
         return reference_buffers.get_buffer(referenceBufferType);
     }
 
-    public ResizableBuffer get_buffer(MirrorBufferType mirrorBufferType)
+    public ResizableBuffer get_buffer(RenderBufferType renderBufferType)
     {
-        return mirror_buffers.get_buffer(mirrorBufferType);
+        return render_buffers.get_buffer(renderBufferType);
     }
 
     public ResizableBuffer get_buffer(CoreBufferType coreBufferType)
@@ -151,7 +151,7 @@ public class GPUCoreMemory implements Destoryable
 
     public void swap_render_buffers()
     {
-        mirror_buffers.mirror(sector_buffers);
+        render_buffers.copy_from(sector_buffers);
 
         last_edge_index   = sector_controller.next_edge();
         last_entity_index = sector_controller.next_entity();
@@ -406,7 +406,7 @@ public class GPUCoreMemory implements Destoryable
         sector_egress_buffer.destroy();
         broken_egress_buffer.destroy();
         object_egress_buffer.destroy();
-        mirror_buffers.destroy();
+        render_buffers.destroy();
         reference_buffers.destroy();
         p_gpu_crud.destroy();
     }

@@ -26,9 +26,15 @@ public class BrokenObjectBuffer implements Destoryable
 
     private enum BrokenBuffer implements BufferType
     {
-        BROKEN_POSITIONS,
-        BROKEN_ENTITY_TYPES,
-        BROKEN_MODEL_IDS,
+        BROKEN_POSITIONS(cl_float2),
+        BROKEN_ENTITY_TYPES(cl_int),
+        BROKEN_MODEL_IDS(cl_int),
+
+        ;
+
+        private final int item_size;
+        BrokenBuffer(int itemSize) { item_size = itemSize; }
+        @Override public int size() { return item_size; }
     }
 
     public BrokenObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
@@ -38,9 +44,9 @@ public class BrokenObjectBuffer implements Destoryable
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
         broken_group = new BufferGroup<>(BrokenBuffer.class, name, ptr_queue, true);
-        broken_group.set_buffer(BrokenBuffer.BROKEN_POSITIONS,  CLSize.cl_float2, 100);
-        broken_group.set_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES, CLSize.cl_int, 100);
-        broken_group.set_buffer(BrokenBuffer.BROKEN_MODEL_IDS,  CLSize.cl_int, 100);
+        broken_group.set_buffer(BrokenBuffer.BROKEN_POSITIONS,    100L);
+        broken_group.set_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES, 100L);
+        broken_group.set_buffer(BrokenBuffer.BROKEN_MODEL_IDS,    100L);
 
         long k_ptr_egress_broken = this.p_gpu_crud.kernel_ptr(Kernel.egress_broken);
         k_egress_broken = new EgressBroken_k(this.ptr_queue, k_ptr_egress_broken)

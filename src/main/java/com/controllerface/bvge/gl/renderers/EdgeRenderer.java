@@ -1,7 +1,7 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
-import com.controllerface.bvge.cl.buffers.MirrorBufferType;
+import com.controllerface.bvge.cl.buffers.RenderBufferType;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.kernels.PrepareEdges_k;
@@ -70,9 +70,9 @@ public class EdgeRenderer extends GameSystem
         k_prepare_edges = new PrepareEdges_k(GPGPU.ptr_render_queue, k_ptr_prepare_edges)
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)
-            .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT))
-            .buf_arg(PrepareEdges_k.Args.edges, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_EDGE))
-            .buf_arg(PrepareEdges_k.Args.edge_flags, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_EDGE_FLAG));
+            .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT))
+            .buf_arg(PrepareEdges_k.Args.edges, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_EDGE))
+            .buf_arg(PrepareEdges_k.Args.edge_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_EDGE_FLAG));
     }
 
     @Override

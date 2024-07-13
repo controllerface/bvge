@@ -19,16 +19,16 @@ public class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
         this.persistent = persistent;
     }
 
-    private ResizableBuffer new_buffer(int size)
+    private ResizableBuffer new_buffer(int item_size)
     {
-        return new PersistentBuffer(this.ptr_queue, size);
+        return new PersistentBuffer(this.ptr_queue, item_size);
     }
 
-    private ResizableBuffer new_buffer(int size, long initial_capacity)
+    private ResizableBuffer new_buffer(int item_size, long initial_capacity)
     {
         return persistent
-            ? new PersistentBuffer(this.ptr_queue, size, initial_capacity)
-            : new TransientBuffer(this.ptr_queue, size, initial_capacity);
+            ? new PersistentBuffer(this.ptr_queue, item_size, initial_capacity)
+            : new TransientBuffer(this.ptr_queue, item_size, initial_capacity);
     }
 
     @Override
@@ -38,19 +38,19 @@ public class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
     }
 
     @Override
-    public void set_buffer(E bufferType, int size)
+    public void set_buffer(E bufferType)
     {
         if (buffers.containsKey(bufferType))
         {
             throw new RuntimeException("Buffer type: " + bufferType + " already exists in: " + name);
         }
-        buffers.put(bufferType, new_buffer(size));
+        buffers.put(bufferType, new_buffer(bufferType.size()));
     }
 
     @Override
-    public void set_buffer(E bufferType, int size, long initial_capacity)
+    public void set_buffer(E bufferType, long initial_capacity)
     {
-        buffers.put(bufferType, new_buffer(size, initial_capacity));
+        buffers.put(bufferType, new_buffer(bufferType.size(), initial_capacity));
     }
 
     @Override

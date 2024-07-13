@@ -27,7 +27,7 @@ public abstract class ResizableBuffer
 
     abstract public void ensure_capacity(long total_item_capacity);
 
-    public void mirror(ResizableBuffer source)
+    public void copy_from(ResizableBuffer source)
     {
         throw new UnsupportedOperationException("this operation is not supported");
     }

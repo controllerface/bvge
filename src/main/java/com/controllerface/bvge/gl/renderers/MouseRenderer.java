@@ -1,7 +1,7 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
-import com.controllerface.bvge.cl.buffers.MirrorBufferType;
+import com.controllerface.bvge.cl.buffers.RenderBufferType;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.PrepareTransforms;
@@ -76,18 +76,18 @@ public class MouseRenderer extends GameSystem
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transforms)
             .set_arg(PrepareTransforms_k.Args.max_hull, 1)
             .set_arg(PrepareTransforms_k.Args.offset, 0)
-            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL))
-            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_SCALE))
-            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_ROTATION));
+            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
+            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
+            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
 
         long root_hull_filter_ptr = root_hull_filter.kernel_ptr(Kernel.root_hull_filter);
         k_root_hull_filter = new RootHullFilter_k(GPGPU.ptr_render_queue, root_hull_filter_ptr)
-            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_ENTITY_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_ENTITY_MODEL_ID));
+            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
+            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
 
         long root_hull_count_ptr =  root_hull_filter.kernel_ptr(Kernel.root_hull_count);
         k_root_hull_count = new RootHullCount_k(GPGPU.ptr_render_queue, root_hull_count_ptr)
-            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_ENTITY_MODEL_ID));
+            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
     }
 
     public HullIndexData hull_filter(long queue_ptr, int model_id)

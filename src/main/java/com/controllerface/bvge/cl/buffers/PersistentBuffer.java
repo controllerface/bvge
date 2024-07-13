@@ -39,7 +39,7 @@ public class PersistentBuffer extends ResizableBuffer
     }
 
     @Override
-    public void mirror(ResizableBuffer source)
+    public void copy_from(ResizableBuffer source)
     {
         release();
         this.byte_capacity = source.byte_capacity;

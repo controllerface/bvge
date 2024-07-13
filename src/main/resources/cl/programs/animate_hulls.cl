@@ -159,19 +159,19 @@ __kernel void animate_entities(__global float16 *armature_bones,
     float2 current_frame_time = entity_animation_elapsed[current_entity];
     float2 current_blend_time = entity_animation_blend[current_entity];
 
-    float a = ((flags & FACE_LEFT) != 0)
+    float dir = ((flags & FACE_LEFT) != 0)
         ? -1.0 
         : 1.0;
 
-    float16 x = (float16)
+    float16 facing = (float16)
     (
-        a, 0.0, 0.0, 0.0,
+        dir, 0.0, 0.0, 0.0,
         0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     );
 
-    model_transform = matrix_mul(x, model_transform);
+    model_transform = matrix_mul(facing, model_transform);
 
     // note that entities with no bones simply do nothing as the bone count will be zero
     int armature_bone_count = bone_table.y - bone_table.x + 1;
@@ -279,7 +279,7 @@ __kernel void animate_points(__global float4 *points,
     float4 after_bone = matrix_transform(test_bone, padded);
     float2 un_padded = after_bone.xy;
     
-    // this is effectively a model transform with just scale and position
+    // this is effectively dir model transform with just scale and position
     un_padded.x *= hull_scale.x;
     un_padded.y *= hull_scale.y;
     un_padded += entity.xy;

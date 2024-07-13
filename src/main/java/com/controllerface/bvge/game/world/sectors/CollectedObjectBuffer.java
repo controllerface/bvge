@@ -26,7 +26,13 @@ public class CollectedObjectBuffer implements Destoryable
 
     private enum Collected implements BufferType
     {
-        TYPES
+        TYPES(cl_int),
+
+        ;
+
+        private final int item_size;
+        Collected(int itemSize) { item_size = itemSize; }
+        @Override public int size() { return item_size; }
     }
 
     public CollectedObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
@@ -36,7 +42,7 @@ public class CollectedObjectBuffer implements Destoryable
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
         collected_group = new BufferGroup<>(Collected.class, name, ptr_queue, true);
-        collected_group.set_buffer(Collected.TYPES,  CLSize.cl_int, 100);
+        collected_group.set_buffer(Collected.TYPES, 100L);
 
         long k_ptr_egress_collected = this.p_gpu_crud.kernel_ptr(Kernel.egress_collected);
         k_egress_collected = new EgressCollected_k(this.ptr_queue, k_ptr_egress_collected)

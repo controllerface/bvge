@@ -1,7 +1,7 @@
 package com.controllerface.bvge.gl.renderers;
 
 import com.controllerface.bvge.cl.*;
-import com.controllerface.bvge.cl.buffers.MirrorBufferType;
+import com.controllerface.bvge.cl.buffers.RenderBufferType;
 import com.controllerface.bvge.cl.buffers.ReferenceBufferType;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
@@ -184,10 +184,10 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(CountMeshInstances_k.Args.query, ptr_query)
             .ptr_arg(CountMeshInstances_k.Args.total, svm_total)
             .set_arg(CountMeshInstances_k.Args.count, mesh_count)
-            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_MESH_ID))
-            .buf_arg(CountMeshInstances_k.Args.hull_flags, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_FLAG))
-            .buf_arg(CountMeshInstances_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_ENTITY_ID))
-            .buf_arg(CountMeshInstances_k.Args.entity_flags, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_ENTITY_FLAG));
+            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
+            .buf_arg(CountMeshInstances_k.Args.hull_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
+            .buf_arg(CountMeshInstances_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
+            .buf_arg(CountMeshInstances_k.Args.entity_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG));
 
         long k_ptr_write_details = p_mesh_query.kernel_ptr(Kernel.write_mesh_details);
         k_write_mesh_details = new WriteMeshDetails_k(GPGPU.ptr_render_queue, k_ptr_write_details)
@@ -195,10 +195,10 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(WriteMeshDetails_k.Args.query, ptr_query)
             .ptr_arg(WriteMeshDetails_k.Args.offsets, ptr_offsets)
             .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
-            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_MESH_ID))
-            .buf_arg(WriteMeshDetails_k.Args.hull_flags, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_FLAG))
-            .buf_arg(WriteMeshDetails_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_ENTITY_ID))
-            .buf_arg(WriteMeshDetails_k.Args.entity_flags, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_ENTITY_FLAG))
+            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
+            .buf_arg(WriteMeshDetails_k.Args.hull_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
+            .buf_arg(WriteMeshDetails_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
+            .buf_arg(WriteMeshDetails_k.Args.entity_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG))
             .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
             .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE));
 
@@ -223,19 +223,19 @@ public class ModelRenderer extends GameSystem
             .ptr_arg(TransferRenderData_k.Args.color_buffer, ptr_color_buffer)
             .ptr_arg(TransferRenderData_k.Args.slot_buffer, ptr_slot_buffer)
             .ptr_arg(TransferRenderData_k.Args.mesh_transfer, ptr_mesh_transfer)
-            .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_POINT_TABLE))
-            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_MESH_ID))
-            .buf_arg(TransferRenderData_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_ENTITY_ID))
-            .buf_arg(TransferRenderData_k.Args.hull_flags, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_FLAG))
-            .buf_arg(TransferRenderData_k.Args.hull_uv_offsets, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_UV_OFFSET))
-            .buf_arg(TransferRenderData_k.Args.hull_integrity, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_HULL_INTEGRITY))
-            .buf_arg(TransferRenderData_k.Args.entity_flags, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_ENTITY_FLAG))
+            .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_POINT_TABLE))
+            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
+            .buf_arg(TransferRenderData_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
+            .buf_arg(TransferRenderData_k.Args.hull_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
+            .buf_arg(TransferRenderData_k.Args.hull_uv_offsets, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_UV_OFFSET))
+            .buf_arg(TransferRenderData_k.Args.hull_integrity, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_INTEGRITY))
+            .buf_arg(TransferRenderData_k.Args.entity_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG))
             .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
             .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE))
             .buf_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE))
-            .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT))
-            .buf_arg(TransferRenderData_k.Args.point_hit_counts, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT_HIT_COUNT))
-            .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.get_buffer(MirrorBufferType.MIRROR_POINT_VERTEX_REFERENCE))
+            .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT))
+            .buf_arg(TransferRenderData_k.Args.point_hit_counts, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_HIT_COUNT))
+            .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_VERTEX_REFERENCE))
             .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.VERTEX_UV_TABLE))
             .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.get_buffer(ReferenceBufferType.VERTEX_TEXTURE_UV));
     }

@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
+import static com.controllerface.bvge.cl.CLSize.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static org.lwjgl.opencl.CL10.clFinish;
 
@@ -150,19 +151,25 @@ public class PhysicsSimulation extends GameSystem
 
     private enum PhysicsBuffer implements BufferType
     {
-        POINT_REACTION_COUNTS,
-        POINT_REACTION_OFFSETS,
-        REACTIONS_IN,
-        REACTIONS_OUT,
-        REACTION_INDEX,
-        KEY_MAP,
-        KEY_BANK,
-        IN_BOUNDS,
-        CANDIDATES,
-        CANDIDATE_COUNTS,
-        CANDIDATE_OFFSETS,
-        MATCHES,
-        MATCHES_USED,
+        POINT_REACTION_COUNTS  (cl_int),
+        POINT_REACTION_OFFSETS (cl_int),
+        REACTIONS_IN           (cl_float8),
+        REACTIONS_OUT          (cl_float8),
+        REACTION_INDEX         (cl_int),
+        KEY_MAP                (cl_int),
+        KEY_BANK               (cl_int),
+        IN_BOUNDS              (cl_int),
+        CANDIDATES             (cl_int2),
+        CANDIDATE_COUNTS       (cl_int2),
+        CANDIDATE_OFFSETS      (cl_int),
+        MATCHES                (cl_int),
+        MATCHES_USED           (cl_int),
+
+        ;
+
+        private final int item_size;
+        PhysicsBuffer(int itemSize) { item_size = itemSize; }
+        @Override public int size() { return item_size; }
     }
 
     private final Thread physics_simulation = Thread.ofVirtual().name("Physics-Simulation").start(() ->
@@ -203,36 +210,36 @@ public class PhysicsSimulation extends GameSystem
         gpu_int_scan = new GPUScanScalarInt(GPGPU.ptr_compute_queue);
         gpu_int_scan_out = new GPUScanScalarIntOut(GPGPU.ptr_compute_queue, gpu_int_scan);
 
-        grid_buffer_size = (long) CLSize.cl_int * this.uniform_grid.directory_length;
+        grid_buffer_size = (long) cl_int * this.uniform_grid.directory_length;
 
         svm_atomic_counter = GPGPU.cl_new_pinned_int();
         ptr_counts_data = GPGPU.cl_new_buffer(grid_buffer_size);
         ptr_offsets_data = GPGPU.cl_new_buffer(grid_buffer_size);
 
         reaction_buffers = new BufferGroup<>(PhysicsBuffer.class, REACTION_BUFFER_NAME, GPGPU.ptr_compute_queue, false);
-        reaction_buffers.set_buffer(PhysicsBuffer.POINT_REACTION_COUNTS, CLSize.cl_int, INIT_BUFFER_SIZE);
-        reaction_buffers.set_buffer(PhysicsBuffer.POINT_REACTION_OFFSETS, CLSize.cl_int, INIT_BUFFER_SIZE);
-        reaction_buffers.set_buffer(PhysicsBuffer.REACTIONS_IN, CLSize.cl_float8, INIT_BUFFER_SIZE);
-        reaction_buffers.set_buffer(PhysicsBuffer.REACTIONS_OUT, CLSize.cl_float8, INIT_BUFFER_SIZE);
-        reaction_buffers.set_buffer(PhysicsBuffer.REACTION_INDEX, CLSize.cl_int, INIT_BUFFER_SIZE);
+        reaction_buffers.set_buffer(PhysicsBuffer.POINT_REACTION_COUNTS, INIT_BUFFER_SIZE);
+        reaction_buffers.set_buffer(PhysicsBuffer.POINT_REACTION_OFFSETS, INIT_BUFFER_SIZE);
+        reaction_buffers.set_buffer(PhysicsBuffer.REACTIONS_IN, INIT_BUFFER_SIZE);
+        reaction_buffers.set_buffer(PhysicsBuffer.REACTIONS_OUT, INIT_BUFFER_SIZE);
+        reaction_buffers.set_buffer(PhysicsBuffer.REACTION_INDEX, INIT_BUFFER_SIZE);
 
         key_buffers = new BufferGroup<>(PhysicsBuffer.class, KEY_BANK_BUFFER_NAME, GPGPU.ptr_compute_queue, false);
-        key_buffers.set_buffer(PhysicsBuffer.KEY_MAP, CLSize.cl_int, INIT_BUFFER_SIZE);
-        key_buffers.set_buffer(PhysicsBuffer.KEY_BANK, CLSize.cl_int, INIT_BUFFER_SIZE);
+        key_buffers.set_buffer(PhysicsBuffer.KEY_MAP, INIT_BUFFER_SIZE);
+        key_buffers.set_buffer(PhysicsBuffer.KEY_BANK, INIT_BUFFER_SIZE);
 
         candidate_buffers = new BufferGroup<>(PhysicsBuffer.class, CANDIDATE_BUFFER_NAME, GPGPU.ptr_compute_queue, false);
-        candidate_buffers.set_buffer(PhysicsBuffer.IN_BOUNDS, CLSize.cl_int, INIT_BUFFER_SIZE);
-        candidate_buffers.set_buffer(PhysicsBuffer.CANDIDATES, CLSize.cl_int2, INIT_BUFFER_SIZE);
-        candidate_buffers.set_buffer(PhysicsBuffer.CANDIDATE_COUNTS, CLSize.cl_int2, INIT_BUFFER_SIZE);
-        candidate_buffers.set_buffer(PhysicsBuffer.CANDIDATE_OFFSETS, CLSize.cl_int, INIT_BUFFER_SIZE);
+        candidate_buffers.set_buffer(PhysicsBuffer.IN_BOUNDS, INIT_BUFFER_SIZE);
+        candidate_buffers.set_buffer(PhysicsBuffer.CANDIDATES, INIT_BUFFER_SIZE);
+        candidate_buffers.set_buffer(PhysicsBuffer.CANDIDATE_COUNTS, INIT_BUFFER_SIZE);
+        candidate_buffers.set_buffer(PhysicsBuffer.CANDIDATE_OFFSETS, INIT_BUFFER_SIZE);
 
         match_buffers = new BufferGroup<>(PhysicsBuffer.class, MATCH_BUFFER_NAME, GPGPU.ptr_compute_queue, false);
-        match_buffers.set_buffer(PhysicsBuffer.MATCHES, CLSize.cl_int, INIT_BUFFER_SIZE);
-        match_buffers.set_buffer(PhysicsBuffer.MATCHES_USED, CLSize.cl_int, INIT_BUFFER_SIZE);
+        match_buffers.set_buffer(PhysicsBuffer.MATCHES, INIT_BUFFER_SIZE);
+        match_buffers.set_buffer(PhysicsBuffer.MATCHES_USED, INIT_BUFFER_SIZE);
 
-        b_control_point_flags        = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int, 1);
-        b_control_point_indices      = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int, 1);
-        b_control_point_tick_budgets = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_int, 1);
+        b_control_point_flags        = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, 1);
+        b_control_point_indices      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, 1);
+        b_control_point_tick_budgets = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int, 1);
         b_control_point_linear_mag   = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float, 1);
         b_control_point_jump_mag     = new PersistentBuffer(GPGPU.ptr_compute_queue, CLSize.cl_float, 1);
 
@@ -879,7 +886,7 @@ public class PhysicsSimulation extends GameSystem
         int edge_count = GPGPU.core_memory.sector_container().next_edge();
         int edge_size = GPGPU.calculate_preferred_global_size(edge_count);
         candidate_buffers.get_buffer(PhysicsBuffer.IN_BOUNDS).ensure_capacity(edge_count);
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, cl_int);
 
         k_locate_in_bounds_edge
             .ptr_arg(LocateInBounds_k.Args.counter, svm_atomic_counter)
@@ -919,7 +926,7 @@ public class PhysicsSimulation extends GameSystem
         int candidate_size = GPGPU.calculate_preferred_global_size((int) candidate_buffer_count);
         match_buffers.get_buffer(PhysicsBuffer.MATCHES).ensure_capacity(match_buffer_count);
         match_buffers.get_buffer(PhysicsBuffer.MATCHES_USED).ensure_capacity(candidate_buffer_count);
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, cl_int);
         k_aabb_collide_edge
             .set_arg(AABBCollideEdge_k.Args.max_index, (int) candidate_buffer_count)
             .call(arg_long(candidate_size), GPGPU.preferred_work_size);
@@ -936,7 +943,7 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
-        int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
+        int candidate_pair_size = (int) candidate_buffer_size / cl_int2;
         if (candidate_pair_size == 0) return;
 
         int candidate_size = GPGPU.calculate_preferred_global_size(candidate_pair_size);
@@ -981,9 +988,9 @@ public class PhysicsSimulation extends GameSystem
 
     private int scan_bounds_single_block(long data_ptr, int n)
     {
-        long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
+        long local_buffer_size = cl_int * GPGPU.max_scan_block_size;
 
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, cl_int);
 
         k_scan_bounds_single_block
             .ptr_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, data_ptr)
@@ -1001,11 +1008,11 @@ public class PhysicsSimulation extends GameSystem
             ? System.nanoTime()
             : 0;
 
-        long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
+        long local_buffer_size = cl_int * GPGPU.max_scan_block_size;
         long gx = k * GPGPU.max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
+        long part_buf_size = ((long) cl_int * ((long) part_size));
         var p_data = GPGPU.cl_new_buffer(part_buf_size);
 
         k_scan_bounds_multi_block
@@ -1023,7 +1030,7 @@ public class PhysicsSimulation extends GameSystem
 
         gpu_int_scan.scan_int(p_data, part_size);
 
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, cl_int);
 
         s = Editor.ACTIVE
             ? System.nanoTime()
@@ -1124,7 +1131,7 @@ public class PhysicsSimulation extends GameSystem
         int hull_count = GPGPU.core_memory.sector_container().next_hull();
         int hull_size = GPGPU.calculate_preferred_global_size(hull_count);
         candidate_buffers.get_buffer(PhysicsBuffer.IN_BOUNDS).ensure_capacity(hull_count);
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, cl_int);
 
         k_locate_in_bounds
             .ptr_arg(LocateInBounds_k.Args.counter, svm_atomic_counter)
@@ -1158,9 +1165,9 @@ public class PhysicsSimulation extends GameSystem
 
     private int scan_single_block_candidates_out(long data_ptr, long o_data_ptr, int n)
     {
-        long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
+        long local_buffer_size = cl_int * GPGPU.max_scan_block_size;
 
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, cl_int);
 
         k_scan_candidates_single_block_out
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.input, data_ptr)
@@ -1175,12 +1182,12 @@ public class PhysicsSimulation extends GameSystem
 
     private int scan_multi_block_candidates_out(long data_ptr, long o_data_ptr, int n, int k)
     {
-        long local_buffer_size = CLSize.cl_int * GPGPU.max_scan_block_size;
+        long local_buffer_size = cl_int * GPGPU.max_scan_block_size;
 
         long gx = k * GPGPU.max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int * ((long) part_size));
+        long part_buf_size = ((long) cl_int * ((long) part_size));
         var p_data = GPGPU.cl_new_buffer(part_buf_size);
 
         k_scan_candidates_multi_block_out
@@ -1193,7 +1200,7 @@ public class PhysicsSimulation extends GameSystem
 
         gpu_int_scan.scan_int(p_data, part_size);
 
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, cl_int);
 
         k_complete_candidates_multi_block_out
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.input, data_ptr)
@@ -1246,7 +1253,7 @@ public class PhysicsSimulation extends GameSystem
         int candidate_size = GPGPU.calculate_preferred_global_size((int) candidate_buffer_count);
         match_buffers.get_buffer(PhysicsBuffer.MATCHES).ensure_capacity(match_buffer_count);
         match_buffers.get_buffer(PhysicsBuffer.MATCHES_USED).ensure_capacity(candidate_buffer_count);
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, cl_int);
         k_aabb_collide
             .set_arg(AABBCollide_k.Args.max_index, (int) candidate_buffer_count)
             .call(arg_long(candidate_size), GPGPU.preferred_work_size);
@@ -1268,7 +1275,7 @@ public class PhysicsSimulation extends GameSystem
             return;
         }
 
-        long buffer_size = (long) CLSize.cl_int2 * candidate_count;
+        long buffer_size = (long) cl_int2 * candidate_count;
 
         candidate_buffers.get_buffer(PhysicsBuffer.CANDIDATES).ensure_capacity(candidate_count);
 
@@ -1300,9 +1307,9 @@ public class PhysicsSimulation extends GameSystem
         long s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
-        int candidate_pair_size = (int) candidate_buffer_size / CLSize.cl_int2;
+        int candidate_pair_size = (int) candidate_buffer_size / cl_int2;
         int candidate_size = GPGPU.calculate_preferred_global_size(candidate_pair_size);
-        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_compute_queue, svm_atomic_counter, cl_int);
 
         long max_point_count = candidate_buffer_size
             * 2  // there are two bodies per collision pair
