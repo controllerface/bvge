@@ -118,10 +118,10 @@ public class TestGame extends GameMode
 
     private void load_systems(float x, float y)
     {
-        var world_permits = new Semaphore(0);
-        ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, load_queue, unload_queue, world_permits));
+        var world_permit = new Semaphore(0);
+        ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, load_queue, unload_queue, world_permit));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid, player_inventory));
-        ecs.register_system(new WorldUnloader(ecs, sector_cache, load_queue, unload_queue, world_permits));
+        ecs.register_system(new WorldUnloader(ecs, sector_cache, load_queue, unload_queue, world_permit));
         ecs.register_system(new CameraTracking(ecs, uniformGrid, x, y));
         ecs.register_system(new InventorySystem(ecs, player_inventory));
         ecs.register_system(blanking_system);

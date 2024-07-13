@@ -26,7 +26,7 @@ public class WorldLoader extends GameSystem
     private final Queue<PhysicsEntityBatch> load_queue;
     private final Queue<Sector> unload_queue;
     private final Thread task_thread;
-    private final Semaphore world_permits;
+    private final Semaphore world_permit;
 
     private final BlockingQueue<SectorBounds> next_sector_bounds = new ArrayBlockingQueue<>(1);
 
@@ -37,14 +37,14 @@ public class WorldLoader extends GameSystem
                        Cache<Sector, PhysicsEntityBatch> sector_cache_in,
                        Queue<PhysicsEntityBatch> load_queue,
                        Queue<Sector> unload_queue,
-                       Semaphore world_permits)
+                       Semaphore world_permit)
     {
         super(ecs);
         this.uniformGrid = uniformGrid;
         this.sector_cache = sector_cache_in;
         this.load_queue = load_queue;
         this.unload_queue = unload_queue;
-        this.world_permits = world_permits;
+        this.world_permit = world_permit;
         this.task_thread = Thread.ofVirtual().start(new SectorLoadTask());
     }
 
@@ -58,7 +58,7 @@ public class WorldLoader extends GameSystem
                 try
                 {
                     load_sectors(next_sector_bounds.take());
-                    world_permits.release(1);
+                    world_permit.release(1);
                     GPGPU.core_memory.await_world_barrier();
                 }
                 catch (InterruptedException e)

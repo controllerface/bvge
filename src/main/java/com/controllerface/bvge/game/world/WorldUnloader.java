@@ -27,19 +27,19 @@ public class WorldUnloader extends GameSystem
     private final Queue<PhysicsEntityBatch> load_queue;
     private final Queue<Sector> unload_queue;
     private final Thread task_thread;
-    private final Semaphore world_permits;
+    private final Semaphore world_permit;
 
     public WorldUnloader(ECS ecs,
                          Cache<Sector, PhysicsEntityBatch> sector_cache,
                          Queue<PhysicsEntityBatch> load_queue,
                          Queue<Sector> unload_queue,
-                         Semaphore world_permits)
+                         Semaphore world_permit)
     {
         super(ecs);
         this.sector_cache = sector_cache;
         this.load_queue = load_queue;
         this.unload_queue = unload_queue;
-        this.world_permits = world_permits;
+        this.world_permit = world_permit;
         this.task_thread = Thread.ofVirtual().start(new SectorUnloadTask());
         boolean ok = this.next_dt.offer(-1f);
         assert ok : "unable to start SectorLoader";
@@ -55,7 +55,7 @@ public class WorldUnloader extends GameSystem
                 try
                 {
                     float dt = next_dt.take();
-                    world_permits.acquire();
+                    world_permit.acquire();
                     if ((dt != -1f))
                     {
                         int[] last_counts = GPGPU.core_memory.last_egress_counts();
