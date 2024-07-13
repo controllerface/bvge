@@ -1,6 +1,5 @@
 package com.controllerface.bvge.game.world.sectors;
 
-import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUCoreMemory;
 import com.controllerface.bvge.cl.buffers.BufferGroup;
@@ -42,20 +41,20 @@ public class CollectedObjectBuffer implements Destoryable
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
         collected_group = new BufferGroup<>(Collected.class, name, ptr_queue, true);
-        collected_group.set_buffer(Collected.TYPES, 100L);
+        collected_group.init_buffer(Collected.TYPES, 100L);
 
         long k_ptr_egress_collected = this.p_gpu_crud.kernel_ptr(Kernel.egress_collected);
         k_egress_collected = new EgressCollected_k(this.ptr_queue, k_ptr_egress_collected)
             .buf_arg(EgressCollected_k.Args.entity_flags, core_memory.get_buffer(CoreBufferType.ENTITY_FLAG))
             .buf_arg(EgressCollected_k.Args.entity_types, core_memory.get_buffer(CoreBufferType.ENTITY_TYPE))
-            .buf_arg(EgressCollected_k.Args.types, collected_group.get_buffer(Collected.TYPES))
+            .buf_arg(EgressCollected_k.Args.types, collected_group.buffer(Collected.TYPES))
             .ptr_arg(EgressCollected_k.Args.counter, ptr_egress_size);
     }
 
     public void egress(int entity_count, int egress_count)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
-        collected_group.get_buffer(Collected.TYPES).ensure_capacity(egress_count);
+        collected_group.buffer(Collected.TYPES).ensure_capacity(egress_count);
         int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
         k_egress_collected
             .set_arg(EgressCollected_k.Args.max_entity, entity_count)
@@ -66,7 +65,7 @@ public class CollectedObjectBuffer implements Destoryable
     {
         if (count > 0)
         {
-            collected_group.get_buffer(Collected.TYPES).transfer_out_int(raw.types, cl_int, count);
+            collected_group.buffer(Collected.TYPES).transfer_out_int(raw.types, cl_int, count);
         }
     }
 

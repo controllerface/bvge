@@ -1,6 +1,5 @@
 package com.controllerface.bvge.game.world.sectors;
 
-import com.controllerface.bvge.cl.CLSize;
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUCoreMemory;
@@ -44,9 +43,9 @@ public class BrokenObjectBuffer implements Destoryable
         this.ptr_egress_size = GPGPU.cl_new_pinned_int();
 
         broken_group = new BufferGroup<>(BrokenBuffer.class, name, ptr_queue, true);
-        broken_group.set_buffer(BrokenBuffer.BROKEN_POSITIONS,    100L);
-        broken_group.set_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES, 100L);
-        broken_group.set_buffer(BrokenBuffer.BROKEN_MODEL_IDS,    100L);
+        broken_group.init_buffer(BrokenBuffer.BROKEN_POSITIONS,    100L);
+        broken_group.init_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES, 100L);
+        broken_group.init_buffer(BrokenBuffer.BROKEN_MODEL_IDS,    100L);
 
         long k_ptr_egress_broken = this.p_gpu_crud.kernel_ptr(Kernel.egress_broken);
         k_egress_broken = new EgressBroken_k(this.ptr_queue, k_ptr_egress_broken)
@@ -54,9 +53,9 @@ public class BrokenObjectBuffer implements Destoryable
             .buf_arg(EgressBroken_k.Args.entity_flags, core_memory.get_buffer(ENTITY_FLAG))
             .buf_arg(EgressBroken_k.Args.entity_types, core_memory.get_buffer(ENTITY_TYPE))
             .buf_arg(EgressBroken_k.Args.entity_model_ids, core_memory.get_buffer(ENTITY_MODEL_ID))
-            .buf_arg(EgressBroken_k.Args.positions, broken_group.get_buffer(BrokenBuffer.BROKEN_POSITIONS))
-            .buf_arg(EgressBroken_k.Args.types, broken_group.get_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES))
-            .buf_arg(EgressBroken_k.Args.model_ids, broken_group.get_buffer(BrokenBuffer.BROKEN_MODEL_IDS))
+            .buf_arg(EgressBroken_k.Args.positions, broken_group.buffer(BrokenBuffer.BROKEN_POSITIONS))
+            .buf_arg(EgressBroken_k.Args.types, broken_group.buffer(BrokenBuffer.BROKEN_ENTITY_TYPES))
+            .buf_arg(EgressBroken_k.Args.model_ids, broken_group.buffer(BrokenBuffer.BROKEN_MODEL_IDS))
             .ptr_arg(EgressBroken_k.Args.counter, ptr_egress_size);
     }
 
@@ -64,9 +63,9 @@ public class BrokenObjectBuffer implements Destoryable
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
         int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
-        broken_group.get_buffer(BrokenBuffer.BROKEN_POSITIONS).ensure_capacity(egress_count);
-        broken_group.get_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);
-        broken_group.get_buffer(BrokenBuffer.BROKEN_MODEL_IDS).ensure_capacity(egress_count);
+        broken_group.buffer(BrokenBuffer.BROKEN_POSITIONS).ensure_capacity(egress_count);
+        broken_group.buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);
+        broken_group.buffer(BrokenBuffer.BROKEN_MODEL_IDS).ensure_capacity(egress_count);
         k_egress_broken
             .set_arg(EgressBroken_k.Args.max_entity, entity_count)
             .call(CLUtils.arg_long(entity_size), GPGPU.preferred_work_size);
@@ -77,9 +76,9 @@ public class BrokenObjectBuffer implements Destoryable
         if (count > 0)
         {
             int count_vec2 = count * 2;
-            broken_group.get_buffer(BrokenBuffer.BROKEN_POSITIONS).transfer_out_float(raw.positions, cl_float, count_vec2);
-            broken_group.get_buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).transfer_out_int(raw.entity_types, cl_int, count);
-            broken_group.get_buffer(BrokenBuffer.BROKEN_MODEL_IDS).transfer_out_int(raw.model_ids, cl_int, count);
+            broken_group.buffer(BrokenBuffer.BROKEN_POSITIONS).transfer_out_float(raw.positions, cl_float, count_vec2);
+            broken_group.buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).transfer_out_int(raw.entity_types, cl_int, count);
+            broken_group.buffer(BrokenBuffer.BROKEN_MODEL_IDS).transfer_out_int(raw.model_ids, cl_int, count);
         }
     }
 

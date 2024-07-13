@@ -136,17 +136,17 @@ public class GPUCoreMemory implements Destoryable
 
     public ResizableBuffer get_buffer(ReferenceBufferType referenceBufferType)
     {
-        return reference_buffers.get_buffer(referenceBufferType);
+        return reference_buffers.buffer(referenceBufferType);
     }
 
     public ResizableBuffer get_buffer(RenderBufferType renderBufferType)
     {
-        return render_buffers.get_buffer(renderBufferType);
+        return render_buffers.buffer(renderBufferType);
     }
 
     public ResizableBuffer get_buffer(CoreBufferType coreBufferType)
     {
-        return sector_buffers.get_buffer(coreBufferType);
+        return sector_buffers.buffer(coreBufferType);
     }
 
     public void swap_render_buffers()

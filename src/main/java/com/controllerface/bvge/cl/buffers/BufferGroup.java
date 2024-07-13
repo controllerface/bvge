@@ -32,13 +32,13 @@ public class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
     }
 
     @Override
-    public ResizableBuffer get_buffer(E bufferType)
+    public ResizableBuffer buffer(E bufferType)
     {
         return buffers.get(bufferType);
     }
 
     @Override
-    public void set_buffer(E bufferType)
+    public void init_buffer(E bufferType)
     {
         if (buffers.containsKey(bufferType))
         {
@@ -48,7 +48,7 @@ public class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
     }
 
     @Override
-    public void set_buffer(E bufferType, long initial_capacity)
+    public void init_buffer(E bufferType, long initial_capacity)
     {
         buffers.put(bufferType, new_buffer(bufferType.size(), initial_capacity));
     }
