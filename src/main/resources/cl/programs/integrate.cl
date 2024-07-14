@@ -146,8 +146,14 @@ __kernel void integrate(__global int2 *hull_point_tables,
         prv.x = s_x ? pos.x - sign_x * x_threshold : prv.x;
         // prv.y = s_y ? pos.y - sign_y * y_threshold : prv.y;
 
+        if (is_cursor || is_ghost)
+        {
+            point.zw = point.xy;
+            points[i] = point;
+        }
 
-        if (!is_static && !out_of_bounds)// && !is_cursor)// && !is_ghost)
+
+        if (!is_static && !out_of_bounds && !is_cursor && !is_ghost)
         {
             int _point_flags = point_flags[i];
             bool flow_left = (_point_flags & FLOW_LEFT) != 0;

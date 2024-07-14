@@ -1,7 +1,5 @@
 package com.controllerface.bvge.cl.buffers;
 
-import com.controllerface.bvge.cl.CLData;
-
 import static com.controllerface.bvge.cl.CLData.*;
 
 public enum CoreBufferType implements BufferType

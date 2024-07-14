@@ -66,21 +66,20 @@ public class KBMInput extends GameSystem
         scrollY = yOffset;
         boolean down = yOffset < 0;
         float amount = down
-            ? 0.5f
-            : -0.5f;
+            ? 0.1f
+            : -0.1f;
 
-        if (shift && control)
-        {
-
-            Window.get().camera().add_zoom(amount);
-        }
-        else if (control)
+        if (shift)
         {
             var type = down
                 ? Event.Type.NEXT_ITEM
                 : Event.Type.PREV_ITEM;
 
             Window.get().event_bus().emit_event(Event.input(type));
+        }
+        else if (control)
+        {
+            Window.get().camera().add_zoom(amount);
         }
     }
 
