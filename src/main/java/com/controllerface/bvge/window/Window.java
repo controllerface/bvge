@@ -48,7 +48,7 @@ public class Window
 
     public float r, g, b, a;
 
-    private static GameMode currentGameMode;
+    private static GameMode game_mode;
     private ECS ecs;
     private final Camera camera;
 
@@ -347,8 +347,8 @@ public class Window
     public void init_game_mode()
     {
         var blanking_system = new BlankSystem(null);
-        currentGameMode = new TestGame(ecs, blanking_system);
-        currentGameMode.init();
+        game_mode = new TestGame(ecs, blanking_system);
+        game_mode.init();
 
         camera.projection_size().x = this.width;
         camera.projection_size().y = this.height;
@@ -409,6 +409,9 @@ public class Window
                 }
             }
         }
+
+        game_mode.destroy();
+
         if (dt >= MAX_DT)
         {
             System.err.println("excessive frame time: " + dt);

@@ -1,6 +1,6 @@
 package com.controllerface.bvge.cl.buffers;
 
-public interface Destoryable
+public interface Destroyable
 {
     void destroy();
 }

@@ -12,4 +12,6 @@ public abstract class GameMode
     }
 
     abstract public void init();
+
+    abstract public void destroy();
 }

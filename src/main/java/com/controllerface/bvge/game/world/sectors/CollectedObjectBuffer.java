@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.GPUCoreMemory;
 import com.controllerface.bvge.cl.buffers.BufferGroup;
 import com.controllerface.bvge.cl.buffers.BufferType;
 import com.controllerface.bvge.cl.buffers.CoreBufferType;
-import com.controllerface.bvge.cl.buffers.Destoryable;
+import com.controllerface.bvge.cl.buffers.Destroyable;
 import com.controllerface.bvge.cl.kernels.egress.EgressCollected_k;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
@@ -16,7 +16,7 @@ import static com.controllerface.bvge.cl.CLData.*;
 import static com.controllerface.bvge.cl.CLData.cl_int;
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 
-public class CollectedObjectBuffer implements Destoryable
+public class CollectedObjectBuffer implements Destroyable
 {
     private final GPUProgram p_gpu_crud = new GPUCrud();
     private final GPUKernel k_egress_collected;

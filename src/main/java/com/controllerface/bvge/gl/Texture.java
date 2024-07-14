@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gl;
 
-import com.controllerface.bvge.cl.buffers.Destoryable;
+import com.controllerface.bvge.cl.buffers.Destroyable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.system.MemoryStack;
@@ -21,14 +21,12 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
-import static org.lwjgl.opengl.GL11.glBindTexture;
 import static org.lwjgl.opengl.GL11.glGenTextures;
 import static org.lwjgl.opengl.GL11.glTexImage2D;
-import static org.lwjgl.opengl.GL11.glTexParameteri;
 import static org.lwjgl.opengl.GL45C.*;
 import static org.lwjgl.stb.STBImage.*;
 
-public class Texture implements Destoryable
+public class Texture implements Destroyable
 {
     private String filepath;
     private int tex_id;

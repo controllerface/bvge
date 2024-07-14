@@ -5,7 +5,7 @@ import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUCoreMemory;
 import com.controllerface.bvge.cl.buffers.BufferGroup;
 import com.controllerface.bvge.cl.buffers.BufferType;
-import com.controllerface.bvge.cl.buffers.Destoryable;
+import com.controllerface.bvge.cl.buffers.Destroyable;
 import com.controllerface.bvge.cl.kernels.egress.EgressBroken_k;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
@@ -15,7 +15,7 @@ import com.controllerface.bvge.cl.programs.GPUProgram;
 import static com.controllerface.bvge.cl.CLData.*;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
-public class BrokenObjectBuffer implements Destoryable
+public class BrokenObjectBuffer implements Destroyable
 {
     private final GPUProgram p_gpu_crud;
     private final GPUKernel k_egress_broken;

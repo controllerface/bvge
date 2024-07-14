@@ -1,6 +1,6 @@
 package com.controllerface.bvge.cl;
 
-import com.controllerface.bvge.cl.buffers.Destoryable;
+import com.controllerface.bvge.cl.buffers.Destroyable;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.ScanInt2Array;
@@ -8,7 +8,7 @@ import com.controllerface.bvge.editor.Editor;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 
-public class GPUScanVectorInt2 implements Destoryable
+public class GPUScanVectorInt2 implements Destroyable
 {
     private final GPUProgram p_scan_int2_array = new ScanInt2Array();
 

@@ -24,7 +24,7 @@ import java.util.concurrent.CyclicBarrier;
 import static com.controllerface.bvge.geometry.ModelRegistry.*;
 import static org.lwjgl.opencl.CL10.clFinish;
 
-public class GPUCoreMemory implements Destoryable
+public class GPUCoreMemory implements Destroyable
 {
     private static final String BUF_NAME_SECTOR          = "Live Sectors";
     private static final String BUF_NAME_RENDER          = "Render Mirror";

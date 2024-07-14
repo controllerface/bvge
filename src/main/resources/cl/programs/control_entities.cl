@@ -206,6 +206,7 @@ __kernel void handle_movement(__global float4 *entities,
     float current_linear_mag = linear_mag[current_control_set];
     float current_jump_mag   = jump_mag[current_control_set];
     int current_index        = indices[current_control_set];
+    
     float4 entity            = entities[current_index];
     float2 accel             = entity_accel[current_index];
     int arm_flag             = entity_flags[current_index];

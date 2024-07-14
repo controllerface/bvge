@@ -1,7 +1,7 @@
 package com.controllerface.bvge.game.world.sectors;
 
 import com.controllerface.bvge.cl.*;
-import com.controllerface.bvge.cl.buffers.Destoryable;
+import com.controllerface.bvge.cl.buffers.Destroyable;
 import com.controllerface.bvge.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.cl.kernels.*;
@@ -13,7 +13,7 @@ import static com.controllerface.bvge.cl.CLData.*;
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
-public class UnorderedSectorOutput implements Destoryable
+public class UnorderedSectorOutput implements Destroyable
 {
     private static final long ENTITY_INIT = 1_000L;
     private static final long HULL_INIT   = 1_000L;

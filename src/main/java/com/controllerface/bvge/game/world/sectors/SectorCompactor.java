@@ -3,7 +3,7 @@ package com.controllerface.bvge.game.world.sectors;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.GPUScanVectorInt2;
 import com.controllerface.bvge.cl.GPUScanVectorInt4;
-import com.controllerface.bvge.cl.buffers.Destoryable;
+import com.controllerface.bvge.cl.buffers.Destroyable;
 import com.controllerface.bvge.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.cl.buffers.CoreBufferGroup;
 import com.controllerface.bvge.cl.buffers.TransientBuffer;
@@ -16,7 +16,7 @@ import static com.controllerface.bvge.cl.CLData.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
-public class SectorCompactor implements Destoryable
+public class SectorCompactor implements Destroyable
 {
     private static final int DELETE_COUNTERS = 6;
     private static final int DELETE_COUNTERS_SIZE = cl_int.size() * DELETE_COUNTERS;

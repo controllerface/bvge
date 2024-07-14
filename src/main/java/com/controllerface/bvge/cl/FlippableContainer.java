@@ -1,8 +1,8 @@
 package com.controllerface.bvge.cl;
 
-import com.controllerface.bvge.cl.buffers.Destoryable;
+import com.controllerface.bvge.cl.buffers.Destroyable;
 
-class FlippableContainer<T extends Destoryable> implements Destoryable
+class FlippableContainer<T extends Destroyable> implements Destroyable
 {
     private final T front;
     private final T back;

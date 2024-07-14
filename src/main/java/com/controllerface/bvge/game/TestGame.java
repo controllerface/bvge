@@ -13,10 +13,7 @@ import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.geometry.MeshRegistry;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.renderers.*;
-import com.controllerface.bvge.physics.PhysicsEntityBatch;
-import com.controllerface.bvge.physics.PhysicsObjects;
-import com.controllerface.bvge.physics.PhysicsSimulation;
-import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.physics.*;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.Constants;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -40,6 +37,7 @@ public class TestGame extends GameMode
     private final Queue<PhysicsEntityBatch> load_queue;
     private final Queue<Sector> unload_queue;
     private final PlayerInventory player_inventory;
+    private PlayerController player_controller;
 
     private enum RenderType
     {
@@ -119,8 +117,10 @@ public class TestGame extends GameMode
     private void load_systems(float x, float y)
     {
         var world_permit = new Semaphore(0);
+        player_controller = new PlayerController(ecs, player_inventory);
+
         ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, load_queue, unload_queue, world_permit));
-        ecs.register_system(new PhysicsSimulation(ecs, uniformGrid, player_inventory));
+        ecs.register_system(new PhysicsSimulation(ecs, uniformGrid, player_controller));
         ecs.register_system(new WorldUnloader(ecs, sector_cache, load_queue, unload_queue, world_permit));
         ecs.register_system(new CameraTracking(ecs, uniformGrid, x, y));
         ecs.register_system(new InventorySystem(ecs, player_inventory));
@@ -132,6 +132,7 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.GAME))
         {
+
             ecs.register_system(new ModelRenderer(ecs, uniformGrid,
                     PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX));
             ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
@@ -180,5 +181,11 @@ public class TestGame extends GameMode
 //            0, 600, 32, 0, 0, 10, 0, 0, LINE_PARTICLE, Solid.ANDESITE);
 
         load_systems(player_spawn_x, player_spawn_y);
+    }
+
+    @Override
+    public void destroy()
+    {
+        player_controller.destroy();
     }
 }

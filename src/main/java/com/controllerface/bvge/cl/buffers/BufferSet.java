@@ -1,6 +1,6 @@
 package com.controllerface.bvge.cl.buffers;
 
-public interface BufferSet<E extends Enum<E> & BufferType> extends Destoryable
+public interface BufferSet<E extends Enum<E> & BufferType> extends Destroyable
 {
     ResizableBuffer buffer(E bufferType);
     void init_buffer(E bufferType);
