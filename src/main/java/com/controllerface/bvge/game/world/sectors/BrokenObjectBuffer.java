@@ -12,7 +12,7 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 
-import static com.controllerface.bvge.cl.CLSize.*;
+import static com.controllerface.bvge.cl.CLData.*;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
 public class BrokenObjectBuffer implements Destoryable
@@ -31,9 +31,9 @@ public class BrokenObjectBuffer implements Destoryable
 
         ;
 
-        private final int item_size;
-        BrokenBuffer(int itemSize) { item_size = itemSize; }
-        @Override public int size() { return item_size; }
+        private final CLType data_type;
+        BrokenBuffer(CLType itemSize) { data_type = itemSize; }
+        @Override public CLType data_type() { return data_type; }
     }
 
     public BrokenObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
@@ -61,7 +61,7 @@ public class BrokenObjectBuffer implements Destoryable
 
     public void egress(int entity_count, int egress_count)
     {
-        GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
+        GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int.size());
         int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
         broken_group.buffer(BrokenBuffer.BROKEN_POSITIONS).ensure_capacity(egress_count);
         broken_group.buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);
@@ -76,9 +76,9 @@ public class BrokenObjectBuffer implements Destoryable
         if (count > 0)
         {
             int count_vec2 = count * 2;
-            broken_group.buffer(BrokenBuffer.BROKEN_POSITIONS).transfer_out_float(raw.positions, cl_float, count_vec2);
-            broken_group.buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).transfer_out_int(raw.entity_types, cl_int, count);
-            broken_group.buffer(BrokenBuffer.BROKEN_MODEL_IDS).transfer_out_int(raw.model_ids, cl_int, count);
+            broken_group.buffer(BrokenBuffer.BROKEN_POSITIONS).transfer_out_float(raw.positions, cl_float.size(), count_vec2);
+            broken_group.buffer(BrokenBuffer.BROKEN_ENTITY_TYPES).transfer_out_int(raw.entity_types, cl_int.size(), count);
+            broken_group.buffer(BrokenBuffer.BROKEN_MODEL_IDS).transfer_out_int(raw.model_ids, cl_int.size(), count);
         }
     }
 

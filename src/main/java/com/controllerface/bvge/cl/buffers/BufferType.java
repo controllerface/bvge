@@ -1,5 +1,7 @@
 package com.controllerface.bvge.cl.buffers;
 
+import com.controllerface.bvge.cl.CLData;
+
 public interface BufferType
 {
     /**
@@ -8,5 +10,5 @@ public interface BufferType
      *
      * @return size in bytes of a single element of the specified buffer type
      */
-    int size();
+    CLData.CLType data_type();
 }

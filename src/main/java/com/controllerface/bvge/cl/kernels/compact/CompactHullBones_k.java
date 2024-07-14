@@ -5,16 +5,19 @@ import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.kernels.crud.KernelArg;
 
+import static com.controllerface.bvge.cl.CLData.cl_int;
+import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
+
 public class CompactHullBones_k extends GPUKernel
 {
     public static final String kernel_source = CLUtils.compact_k_src(Kernel.compact_hull_bones, Args.class);
 
     public enum Args implements KernelArg
     {
-        hull_bone_shift            (Type.buffer_int),
-        hull_bones                 (Type.buffer_float16),
-        hull_bind_pose_indices     (Type.buffer_int),
-        hull_inv_bind_pose_indices (Type.buffer_int),
+        hull_bone_shift            (cl_int.buffer_name()),
+        hull_bones                 (HULL_BONE.data_type().buffer_name()),
+        hull_bind_pose_indices     (HULL_BONE_BIND_POSE.data_type().buffer_name()),
+        hull_inv_bind_pose_indices (HULL_BONE_INV_BIND_POSE.data_type().buffer_name()),
 
         ;
 

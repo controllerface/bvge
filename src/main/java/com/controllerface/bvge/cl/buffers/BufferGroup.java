@@ -32,25 +32,25 @@ public class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
     }
 
     @Override
-    public ResizableBuffer buffer(E bufferType)
+    public ResizableBuffer buffer(E buffer_type)
     {
-        return buffers.get(bufferType);
+        return buffers.get(buffer_type);
     }
 
     @Override
-    public void init_buffer(E bufferType)
+    public void init_buffer(E buffer_type)
     {
-        if (buffers.containsKey(bufferType))
+        if (buffers.containsKey(buffer_type))
         {
-            throw new RuntimeException("Buffer type: " + bufferType + " already exists in: " + name);
+            throw new RuntimeException("Buffer type: " + buffer_type + " already exists in: " + name);
         }
-        buffers.put(bufferType, new_buffer(bufferType.size()));
+        buffers.put(buffer_type, new_buffer(buffer_type.data_type().size()));
     }
 
     @Override
-    public void init_buffer(E bufferType, long initial_capacity)
+    public void init_buffer(E buffer_type, long initial_capacity)
     {
-        buffers.put(bufferType, new_buffer(bufferType.size(), initial_capacity));
+        buffers.put(buffer_type, new_buffer(buffer_type.data_type().size(), initial_capacity));
     }
 
     @Override
@@ -59,7 +59,7 @@ public class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
         long[] total = new long[1];
         buffers.forEach((_, v) ->
         {
-            total[0]+= v.debug_data();
+            total[0] += v.debug_data();
             v.release();
         });
         System.out.println("BufferGroup [" + name + "] Memory Usage: MB " + String.format("%.4f", (float) total[0] / 1024f / 1024f));

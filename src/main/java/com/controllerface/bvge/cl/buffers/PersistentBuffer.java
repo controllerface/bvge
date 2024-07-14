@@ -1,7 +1,9 @@
 package com.controllerface.bvge.cl.buffers;
 
-import com.controllerface.bvge.cl.CLSize;
+import com.controllerface.bvge.cl.CLData;
 import com.controllerface.bvge.cl.GPGPU;
+
+import static com.controllerface.bvge.cl.CLData.*;
 
 public class PersistentBuffer extends ResizableBuffer
 {
@@ -25,7 +27,7 @@ public class PersistentBuffer extends ResizableBuffer
         while (this.byte_capacity < required_capacity)
         {
             // todo: define different expansion strategies for different buffer types
-            if (this.item_size == CLSize.cl_float16) this.byte_capacity += (long)this.item_size * 8192L;
+            if (this.item_size == cl_float16.size()) this.byte_capacity += (long)this.item_size * 8192L;
             else this.byte_capacity += (long)this.item_size * 32768L;
         }
 

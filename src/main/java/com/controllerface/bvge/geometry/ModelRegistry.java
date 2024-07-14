@@ -5,6 +5,7 @@ import com.controllerface.bvge.animation.BoneChannel;
 import com.controllerface.bvge.animation.BoneOffset;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.animation.AnimationState;
+import com.controllerface.bvge.ecs.systems.InventorySystem;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Assets;
@@ -21,12 +22,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.lwjgl.assimp.Assimp.*;
 
 public class ModelRegistry
 {
     private static final AtomicInteger next_model_index = new AtomicInteger(0);
+
+    private final static Logger LOGGER = Logger.getLogger(InventorySystem.class.getName());
 
     public static final int BASE_BLOCK_INDEX = next_model_index.getAndIncrement();
     public static final int CIRCLE_PARTICLE = next_model_index.getAndIncrement();
@@ -583,6 +588,7 @@ public class ModelRegistry
                     var raw_pos_key = pos_buffer.get(current_pos_key);
                     var pos_vector = raw_pos_key.mValue();
                     float[] frame_data = new float[]{ pos_vector.x(), pos_vector.y(), pos_vector.z(), 1.0f };
+                    LOGGER.log(Level.INFO,"DEBUG position key; index: " + current_pos_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
                     int next_pos_key = GPGPU.core_memory.reference_container().new_keyframe(frame_data, (float)raw_pos_key.mTime());
                     if (p_start == -1) p_start = next_pos_key;
                     p_end = next_pos_key;
@@ -593,6 +599,7 @@ public class ModelRegistry
                     var raw_rot_key = rot_buffer.get(current_rot_key);
                     var rot_quaternion = raw_rot_key.mValue();
                     float[] frame_data = new float[]{ rot_quaternion.x(), rot_quaternion.y(), rot_quaternion.z(), rot_quaternion.w() };
+                    LOGGER.log(Level.INFO,"DEBUG rotation key; index: " + current_rot_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
                     int next_rot_key = GPGPU.core_memory.reference_container().new_keyframe(frame_data, (float)raw_rot_key.mTime());
                     if (r_start == -1) r_start = next_rot_key;
                     r_end = next_rot_key;
@@ -603,13 +610,14 @@ public class ModelRegistry
                     var raw_scl_key = scl_buffer.get(current_scl_key);
                     var scale_vector = raw_scl_key.mValue();
                     float[] frame_data = new float[]{ scale_vector.x(), scale_vector.y(), scale_vector.z(), 1.0f };
+                    LOGGER.log(Level.INFO,"DEBUG scale key   ; index: " + current_scl_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
                     int next_scl_key = GPGPU.core_memory.reference_container().new_keyframe(frame_data, (float)raw_scl_key.mTime());
                     if (s_start == -1) s_start = next_scl_key;
                     s_end = next_scl_key;
                 }
 
                 var new_channel = new BoneChannel(anim_timing_id, p_start, p_end, r_start, r_end, s_start, s_end);
-                var channels = anim_map.computeIfAbsent(bind_pose_id, (_k) -> new BoneChannel[animation_count]);
+                var channels = anim_map.computeIfAbsent(bind_pose_id, (_) -> new BoneChannel[animation_count]);
                 channels[animation_index] = new_channel;
             }
             animation_index++;

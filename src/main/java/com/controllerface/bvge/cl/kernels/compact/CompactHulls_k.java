@@ -1,9 +1,13 @@
 package com.controllerface.bvge.cl.kernels.compact;
 
 import com.controllerface.bvge.cl.CLUtils;
+import com.controllerface.bvge.cl.buffers.CoreBufferType;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.kernels.crud.KernelArg;
+
+import static com.controllerface.bvge.cl.CLData.*;
+import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
 public class CompactHulls_k extends GPUKernel
 {
@@ -11,23 +15,23 @@ public class CompactHulls_k extends GPUKernel
 
     public enum Args implements KernelArg
     {
-        hull_shift          (Type.buffer_int),
-        hulls               (Type.buffer_float4),
-        hull_scales         (Type.buffer_float2),
-        hull_mesh_ids       (Type.buffer_int),
-        hull_uv_offsets     (Type.buffer_int),
-        hull_rotations      (Type.buffer_float2),
-        hull_frictions      (Type.buffer_float),
-        hull_restitutions   (Type.buffer_float),
-        hull_integrity      (Type.buffer_int),
-        hull_bone_tables    (Type.buffer_int2),
-        hull_entity_ids     (Type.buffer_int),
-        hull_flags          (Type.buffer_int),
-        hull_point_tables   (Type.buffer_int2),
-        hull_edge_tables    (Type.buffer_int2),
-        hull_aabb           (Type.buffer_float4),
-        hull_aabb_index     (Type.buffer_int4),
-        hull_aabb_key_table (Type.buffer_int2),
+        hull_shift          (cl_int.buffer_name()),
+        hulls               (HULL.data_type().buffer_name()),
+        hull_scales         (HULL_SCALE.data_type().buffer_name()),
+        hull_mesh_ids       (HULL_MESH_ID.data_type().buffer_name()),
+        hull_uv_offsets     (HULL_UV_OFFSET.data_type().buffer_name()),
+        hull_rotations      (HULL_ROTATION.data_type().buffer_name()),
+        hull_frictions      (HULL_FRICTION.data_type().buffer_name()),
+        hull_restitutions   (HULL_RESTITUTION.data_type().buffer_name()),
+        hull_integrity      (HULL_INTEGRITY.data_type().buffer_name()),
+        hull_bone_tables    (HULL_BONE_TABLE.data_type().buffer_name()),
+        hull_entity_ids     (HULL_ENTITY_ID.data_type().buffer_name()),
+        hull_flags          (HULL_FLAG.data_type().buffer_name()),
+        hull_point_tables   (HULL_POINT_TABLE.data_type().buffer_name()),
+        hull_edge_tables    (HULL_EDGE_TABLE.data_type().buffer_name()),
+        hull_aabb           (HULL_AABB.data_type().buffer_name()),
+        hull_aabb_index     (HULL_AABB_INDEX.data_type().buffer_name()),
+        hull_aabb_key_table (HULL_AABB_KEY_TABLE.data_type().buffer_name()),
 
         ;
 

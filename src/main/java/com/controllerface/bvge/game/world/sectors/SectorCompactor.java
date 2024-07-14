@@ -12,14 +12,14 @@ import com.controllerface.bvge.cl.kernels.compact.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.ScanDeletes;
 
-import static com.controllerface.bvge.cl.CLSize.*;
+import static com.controllerface.bvge.cl.CLData.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
 public class SectorCompactor implements Destoryable
 {
     private static final int DELETE_COUNTERS = 6;
-    private static final int DELETE_COUNTERS_SIZE = cl_int * DELETE_COUNTERS;
+    private static final int DELETE_COUNTERS_SIZE = cl_int.size() * DELETE_COUNTERS;
 
     private final GPUProgram p_scan_deletes;
 
@@ -82,15 +82,15 @@ public class SectorCompactor implements Destoryable
         this.controller = controller;
         ptr_delete_sizes    = GPGPU.cl_new_pinned_buffer(DELETE_COUNTERS_SIZE);
 
-        b_hull_shift                 = new TransientBuffer(ptr_queue, cl_int, hull_init);
-        b_edge_shift                 = new TransientBuffer(ptr_queue, cl_int, edge_init);
-        b_point_shift                = new TransientBuffer(ptr_queue, cl_int, point_init);
-        b_hull_bone_shift            = new TransientBuffer(ptr_queue, cl_int, hull_init);
-        b_entity_bone_shift          = new TransientBuffer(ptr_queue, cl_int, entity_init);
-        b_delete_1                   = new TransientBuffer(ptr_queue, cl_int2, delete_init);
-        b_delete_2                   = new TransientBuffer(ptr_queue, cl_int4, delete_init);
-        b_delete_partial_1           = new TransientBuffer(ptr_queue, cl_int2, delete_init);
-        b_delete_partial_2           = new TransientBuffer(ptr_queue, cl_int4, delete_init);
+        b_hull_shift                 = new TransientBuffer(ptr_queue, cl_int.size(),  hull_init);
+        b_edge_shift                 = new TransientBuffer(ptr_queue, cl_int.size(),  edge_init);
+        b_point_shift                = new TransientBuffer(ptr_queue, cl_int.size(),  point_init);
+        b_hull_bone_shift            = new TransientBuffer(ptr_queue, cl_int.size(),  hull_init);
+        b_entity_bone_shift          = new TransientBuffer(ptr_queue, cl_int.size(),  entity_init);
+        b_delete_1                   = new TransientBuffer(ptr_queue, cl_int2.size(), delete_init);
+        b_delete_2                   = new TransientBuffer(ptr_queue, cl_int4.size(), delete_init);
+        b_delete_partial_1           = new TransientBuffer(ptr_queue, cl_int2.size(), delete_init);
+        b_delete_partial_2           = new TransientBuffer(ptr_queue, cl_int4.size(), delete_init);
 
         long k_ptr_scan_deletes_single_block_out = p_scan_deletes.kernel_ptr(Kernel.scan_deletes_single_block_out);
         k_scan_deletes_single_block_out = new ScanDeletesSingleBlockOut_k(ptr_queue, k_ptr_scan_deletes_single_block_out)
@@ -229,8 +229,8 @@ public class SectorCompactor implements Destoryable
 
     private int[] scan_single_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n)
     {
-        long local_buffer_size = cl_int2 * GPGPU.max_scan_block_size;
-        long local_buffer_size2 = cl_int4 * GPGPU.max_scan_block_size;
+        long local_buffer_size = cl_int2.size() * GPGPU.max_scan_block_size;
+        long local_buffer_size2 = cl_int4.size() * GPGPU.max_scan_block_size;
 
         GPGPU.cl_zero_buffer(ptr_queue, ptr_delete_sizes, DELETE_COUNTERS_SIZE);
 
@@ -242,13 +242,13 @@ public class SectorCompactor implements Destoryable
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.local_work_default, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(ptr_queue, ptr_delete_sizes, cl_int, DELETE_COUNTERS);
+        return GPGPU.cl_read_pinned_int_buffer(ptr_queue, ptr_delete_sizes, cl_int.size(), DELETE_COUNTERS);
     }
 
     private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
     {
-        long local_buffer_size = cl_int2 * GPGPU.max_scan_block_size;
-        long local_buffer_size2 = cl_int4 * GPGPU.max_scan_block_size;
+        long local_buffer_size = cl_int2.size() * GPGPU.max_scan_block_size;
+        long local_buffer_size2 = cl_int4.size() * GPGPU.max_scan_block_size;
 
         long gx = k * GPGPU.max_scan_block_size;
         long[] global_work_size = arg_long(gx);
@@ -279,7 +279,7 @@ public class SectorCompactor implements Destoryable
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPGPU.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(ptr_queue, ptr_delete_sizes, cl_int, DELETE_COUNTERS);
+        return GPGPU.cl_read_pinned_int_buffer(ptr_queue, ptr_delete_sizes, cl_int.size(), DELETE_COUNTERS);
     }
 
     public int[] scan_deletes(long o1_data_ptr, long o2_data_ptr, int n)

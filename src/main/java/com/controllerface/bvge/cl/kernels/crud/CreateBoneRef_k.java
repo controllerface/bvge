@@ -4,15 +4,18 @@ import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 
+import static com.controllerface.bvge.cl.CLData.cl_float16;
+import static com.controllerface.bvge.cl.CLData.cl_int;
+
 public class CreateBoneRef_k extends GPUKernel
 {
     public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_bone_reference, Args.class);;
 
     public enum Args implements KernelArg
     {
-        bone_references    (Type.buffer_float16),
-        target             (Type.arg_int),
-        new_bone_reference (Type.arg_float16),
+        bone_references    (cl_float16.buffer_name()),
+        target             (cl_int.name()),
+        new_bone_reference (cl_float16.name()),
 
         ;
 

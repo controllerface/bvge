@@ -21,6 +21,7 @@ import com.controllerface.bvge.window.Window;
 
 import java.util.Objects;
 
+import static com.controllerface.bvge.cl.CLData.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.util.Constants.Rendering.MAX_BATCH_SIZE;
 import static com.controllerface.bvge.util.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
@@ -157,7 +158,7 @@ public class LiquidRenderer extends GameSystem
 
     private HullIndexData GL_hull_filter(long queue_ptr, int model_id)
     {
-        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, cl_int.size());
 
         int entity_count = GPGPU.core_memory.sector_container().next_entity();
         int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
@@ -175,10 +176,10 @@ public class LiquidRenderer extends GameSystem
             return new HullIndexData(-1, final_count);
         }
 
-        long final_buffer_size = (long) CLSize.cl_int * final_count;
+        long final_buffer_size = (long) cl_int.size() * final_count;
         var hulls_out = GPGPU.cl_new_buffer(final_buffer_size);
 
-        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, cl_int.size());
 
         k_root_hull_filter
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)

@@ -11,6 +11,7 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.List;
 
+import static com.controllerface.bvge.cl.CLData.*;
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static org.lwjgl.opencl.AMDDeviceAttributeQuery.CL_DEVICE_WAVEFRONT_WIDTH_AMD;
 import static org.lwjgl.opencl.CL12.*;
@@ -515,7 +516,7 @@ public class GPGPU
         {
             var status = stack.mallocInt(1);
             long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-            long ptr = clCreateBuffer(ptr_context, flags, CLSize.cl_int, status);
+            long ptr = clCreateBuffer(ptr_context, flags, cl_int.size(), status);
             int result = status.get(0);
             if (result != CL_SUCCESS)
             {
@@ -531,7 +532,7 @@ public class GPGPU
         try (var stack = MemoryStack.stackPush())
         {
             var status = stack.mallocInt(1);
-            long ptr = clCreateBuffer(ptr_context, CL_MEM_HOST_READ_ONLY, CLSize.cl_int, status);
+            long ptr = clCreateBuffer(ptr_context, CL_MEM_HOST_READ_ONLY, cl_int.size(), status);
             int result = status.get(0);
             if (result != CL_SUCCESS)
             {
@@ -544,7 +545,7 @@ public class GPGPU
 
     public static ByteBuffer cl_new_svm_int()
     {
-        return clSVMAlloc(ptr_context, CL_MEM_READ_WRITE, CLSize.cl_int, 0);
+        return clSVMAlloc(ptr_context, CL_MEM_READ_WRITE, cl_int.size(), 0);
     }
 
     public static int cl_read_svm_int(long queue_ptr, ByteBuffer svm_buffer)
@@ -596,7 +597,7 @@ public class GPGPU
                 true,
                 CL_MAP_READ,
                 0,
-                CLSize.cl_int,
+                cl_int.size(),
                 null,
                 null,
                 status,
@@ -784,16 +785,16 @@ public class GPGPU
         System.out.println("preferred float: " + sz_flt);
         System.out.println("preferred char: " + sz_char);
 
-        long int2_max = CLSize.cl_int2 * current_max_block_size;
-        long int4_max = CLSize.cl_int4 * current_max_block_size;
+        long int2_max = cl_int2.size() * current_max_block_size;
+        long int4_max = cl_int4.size() * current_max_block_size;
         long size_cap = int2_max + int4_max;
 
         while (size_cap >= max_local_buffer_size)
         {
             current_max_group_size /= 2;
             current_max_block_size = current_max_group_size * 2;
-            int2_max = CLSize.cl_int2 * current_max_block_size;
-            int4_max = CLSize.cl_int4 * current_max_block_size;
+            int2_max = cl_int2.size() * current_max_block_size;
+            int4_max = cl_int4.size() * current_max_block_size;
             size_cap = int2_max + int4_max;
         }
 

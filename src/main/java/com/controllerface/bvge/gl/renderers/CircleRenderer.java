@@ -86,7 +86,7 @@ public class CircleRenderer extends GameSystem
 
     public HullIndexData hull_filter(long queue_ptr, int model_id)
     {
-        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLData.cl_int.size());
 
         int entity_count = GPGPU.core_memory.sector_container().next_entity();
         int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
@@ -104,10 +104,10 @@ public class CircleRenderer extends GameSystem
             return new HullIndexData(-1, final_count);
         }
 
-        long final_buffer_size = (long) CLSize.cl_int * final_count;
+        long final_buffer_size = (long) CLData.cl_int.size() * final_count;
         var hulls_out = GPGPU.cl_new_buffer(final_buffer_size);
 
-        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLData.cl_int.size());
 
         k_root_hull_filter
             .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)

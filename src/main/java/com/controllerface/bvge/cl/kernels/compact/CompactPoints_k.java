@@ -5,21 +5,24 @@ import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.kernels.crud.KernelArg;
 
+import static com.controllerface.bvge.cl.CLData.*;
+import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
+
 public class CompactPoints_k extends GPUKernel
 {
     public static final String kernel_source = CLUtils.compact_k_src(Kernel.compact_points, Args.class);
 
     public enum Args implements KernelArg
     {
-        point_shift             (Type.buffer_int),
-        points                  (Type.buffer_float4),
-        anti_gravity            (Type.buffer_float),
-        anti_time               (Type.buffer_float),
-        point_vertex_references (Type.buffer_int),
-        point_hull_indices      (Type.buffer_int),
-        point_flags             (Type.buffer_int),
-        point_hit_counts        (Type.buffer_short),
-        bone_tables             (Type.buffer_int4),
+        point_shift             (cl_int.buffer_name()),
+        points                  (POINT.data_type().buffer_name()),
+        anti_gravity            (POINT_ANTI_GRAV.data_type().buffer_name()),
+        anti_time               (POINT_ANTI_TIME.data_type().buffer_name()),
+        point_vertex_references (POINT_VERTEX_REFERENCE.data_type().buffer_name()),
+        point_hull_indices      (POINT_HULL_INDEX.data_type().buffer_name()),
+        point_flags             (POINT_FLAG.data_type().buffer_name()),
+        point_hit_counts        (POINT_HIT_COUNT.data_type().buffer_name()),
+        bone_tables             (POINT_BONE_TABLE.data_type().buffer_name()),
 
         ;
 

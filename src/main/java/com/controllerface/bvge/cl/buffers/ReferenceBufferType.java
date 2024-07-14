@@ -1,6 +1,6 @@
 package com.controllerface.bvge.cl.buffers;
 
-import static com.controllerface.bvge.cl.CLSize.*;
+import static com.controllerface.bvge.cl.CLData.*;
 
 public enum ReferenceBufferType implements BufferType
 {
@@ -119,7 +119,7 @@ public enum ReferenceBufferType implements BufferType
 
     ;
 
-    private final int item_size;
-    ReferenceBufferType(int itemSize) { item_size = itemSize; }
-    @Override public int size() { return item_size; }
+    private final CLType item_size;
+    ReferenceBufferType(CLType itemSize) { item_size = itemSize; }
+    @Override public CLType data_type() { return item_size; }
 }

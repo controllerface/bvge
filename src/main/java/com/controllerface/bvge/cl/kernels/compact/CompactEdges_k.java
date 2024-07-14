@@ -5,19 +5,22 @@ import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.kernels.crud.KernelArg;
 
+import static com.controllerface.bvge.cl.CLData.*;
+import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
+
 public class CompactEdges_k extends GPUKernel
 {
     public static final String kernel_source = CLUtils.compact_k_src(Kernel.compact_edges, Args.class);
 
     public enum Args implements KernelArg
     {
-        edge_shift   (Type.buffer_int),
-        edges        (Type.buffer_int2),
-        edge_lengths (Type.buffer_float),
-        edge_flags   (Type.buffer_int),
-        edge_aabb           (Type.buffer_float4),
-        edge_aabb_index     (Type.buffer_int4),
-        edge_aabb_key_table (Type.buffer_int2),
+        edge_shift          (cl_int.buffer_name()),
+        edges               (EDGE.data_type().buffer_name()),
+        edge_lengths        (EDGE_LENGTH.data_type().buffer_name()),
+        edge_flags          (EDGE_FLAG.data_type().buffer_name()),
+        edge_aabb           (EDGE_AABB.data_type().buffer_name()),
+        edge_aabb_index     (EDGE_AABB_INDEX.data_type().buffer_name()),
+        edge_aabb_key_table (EDGE_AABB_KEY_TABLE.data_type().buffer_name()),
 
         ;
 

@@ -12,7 +12,8 @@ import com.controllerface.bvge.cl.kernels.Kernel;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 
-import static com.controllerface.bvge.cl.CLSize.cl_int;
+import static com.controllerface.bvge.cl.CLData.*;
+import static com.controllerface.bvge.cl.CLData.cl_int;
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
 
 public class CollectedObjectBuffer implements Destoryable
@@ -29,9 +30,9 @@ public class CollectedObjectBuffer implements Destoryable
 
         ;
 
-        private final int item_size;
-        Collected(int itemSize) { item_size = itemSize; }
-        @Override public int size() { return item_size; }
+        private final CLType data_type;
+        Collected(CLType itemSize) { data_type = itemSize; }
+        @Override public CLType data_type() { return data_type; }
     }
 
     public CollectedObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
@@ -53,7 +54,7 @@ public class CollectedObjectBuffer implements Destoryable
 
     public void egress(int entity_count, int egress_count)
     {
-        GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int);
+        GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int.size());
         collected_group.buffer(Collected.TYPES).ensure_capacity(egress_count);
         int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
         k_egress_collected
@@ -65,7 +66,7 @@ public class CollectedObjectBuffer implements Destoryable
     {
         if (count > 0)
         {
-            collected_group.buffer(Collected.TYPES).transfer_out_int(raw.types, cl_int, count);
+            collected_group.buffer(Collected.TYPES).transfer_out_int(raw.types, cl_int.size(), count);
         }
     }
 

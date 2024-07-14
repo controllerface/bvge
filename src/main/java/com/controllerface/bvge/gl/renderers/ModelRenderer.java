@@ -111,7 +111,7 @@ public class ModelRenderer extends GameSystem
             mesh_count += model.meshes().length;
         }
 
-        mesh_size = (long)mesh_count * CLSize.cl_int;
+        mesh_size = (long)mesh_count * CLData.cl_int.size();
         raw_query = new int[mesh_count * 2]; // int2
 
         var texture_buffer = new LinkedHashSet<Texture>();
@@ -248,7 +248,7 @@ public class ModelRenderer extends GameSystem
 
         GPGPU.cl_zero_buffer(GPGPU.ptr_render_queue, ptr_counters, mesh_size);
         GPGPU.cl_zero_buffer(GPGPU.ptr_render_queue, ptr_offsets, mesh_size);
-        GPGPU.cl_zero_buffer(GPGPU.ptr_render_queue, svm_total, CLSize.cl_int);
+        GPGPU.cl_zero_buffer(GPGPU.ptr_render_queue, svm_total, CLData.cl_int.size());
         GPGPU.cl_zero_buffer(GPGPU.ptr_render_queue, ptr_mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
 
         int hull_count = GPGPU.core_memory.sector_container().next_hull();
@@ -278,8 +278,8 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_instance_count", String.valueOf(total_instances));
         }
 
-        long details_size = (long)total_instances * CLSize.cl_int4;
-        long texture_size = (long)total_instances * CLSize.cl_int;
+        long details_size = (long)total_instances * CLData.cl_int4.size();
+        long texture_size = (long)total_instances * CLData.cl_int.size();
         var mesh_details_ptr = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, details_size);
         var mesh_texture_ptr = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, texture_size);
 
@@ -311,7 +311,7 @@ public class ModelRenderer extends GameSystem
         {
             Editor.queue_event("render_batch_count", String.valueOf(total_batches));
         }
-        long batch_index_size = (long) total_batches * CLSize.cl_int;
+        long batch_index_size = (long) total_batches * CLData.cl_int.size();
 
         var mesh_offset_ptr = GPGPU.cl_new_pinned_buffer(batch_index_size);
 
@@ -328,7 +328,7 @@ public class ModelRenderer extends GameSystem
         }
 
         si = Editor.ACTIVE ? System.nanoTime() : 0;
-        int[] raw_offsets = GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_render_queue, mesh_offset_ptr, CLSize.cl_int, total_batches);
+        int[] raw_offsets = GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_render_queue, mesh_offset_ptr, CLData.cl_int.size(), total_batches);
         GPGPU.cl_release_buffer(mesh_offset_ptr);
         if (Editor.ACTIVE)
         {

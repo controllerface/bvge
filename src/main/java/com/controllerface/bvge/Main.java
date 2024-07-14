@@ -26,6 +26,10 @@ public class Main
             var file_handler = new FileHandler(System.getProperty("user.dir") + File.separator + "test.log");
             var formatter = new SimpleFormatter();
             file_handler.setFormatter(formatter);
+            for (var handler : root.getHandlers())
+            {
+                root.removeHandler(handler);
+            }
             root.addHandler(file_handler);
             root.setLevel(Level.INFO);
         }

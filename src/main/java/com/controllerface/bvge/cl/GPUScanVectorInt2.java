@@ -4,7 +4,6 @@ import com.controllerface.bvge.cl.buffers.Destoryable;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.ScanInt2Array;
-import com.controllerface.bvge.cl.programs.ScanIntArray;
 import com.controllerface.bvge.editor.Editor;
 
 import static com.controllerface.bvge.cl.CLUtils.arg_long;
@@ -52,7 +51,7 @@ public class GPUScanVectorInt2 implements Destoryable
 
     private void scan_single_block_int2(long data_ptr, int n)
     {
-        long local_buffer_size = CLSize.cl_int2 * GPGPU.max_scan_block_size;
+        long local_buffer_size = CLData.cl_int2.size() * GPGPU.max_scan_block_size;
 
         k_scan_int2_single_block
             .ptr_arg(ScanInt2SingleBlock_k.Args.data, data_ptr)
@@ -63,11 +62,11 @@ public class GPUScanVectorInt2 implements Destoryable
 
     private void scan_multi_block_int2(long data_ptr, int n, int k)
     {
-        long local_buffer_size = CLSize.cl_int2 * GPGPU.max_scan_block_size;
+        long local_buffer_size = CLData.cl_int2.size() * GPGPU.max_scan_block_size;
         long gx = k * GPGPU.max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
-        long part_buf_size = ((long) CLSize.cl_int2 * ((long) part_size));
+        long part_buf_size = ((long) CLData.cl_int2.size() * ((long) part_size));
 
         var part_data = GPGPU.cl_new_buffer(part_buf_size);
 

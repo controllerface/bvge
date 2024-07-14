@@ -4,15 +4,18 @@ import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 
+import static com.controllerface.bvge.cl.CLData.cl_float2;
+import static com.controllerface.bvge.cl.CLData.cl_int;
+
 public class CreateTextureUV_k extends GPUKernel
 {
     public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_texture_uv, Args.class);
 
     public enum Args implements KernelArg
     {
-        texture_uvs    (Type.buffer_float2),
-        target         (Type.arg_int),
-        new_texture_uv (Type.arg_float2),
+        texture_uvs    (cl_float2.buffer_name()),
+        target         (cl_int.name()),
+        new_texture_uv (cl_float2.name()),
 
         ;
 

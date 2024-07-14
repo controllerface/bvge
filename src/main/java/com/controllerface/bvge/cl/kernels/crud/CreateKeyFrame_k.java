@@ -4,17 +4,19 @@ import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
 
+import static com.controllerface.bvge.cl.CLData.*;
+
 public class CreateKeyFrame_k extends GPUKernel
 {
     public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_keyframe, Args.class);
 
     public enum Args implements KernelArg
     {
-        key_frames     (Type.buffer_float4),
-        frame_times    (Type.buffer_float),
-        target         (Type.arg_int),
-        new_keyframe   (Type.arg_float4),
-        new_frame_time (Type.arg_float),
+        key_frames     (cl_float4.buffer_name()),
+        frame_times    (cl_float.buffer_name()),
+        target         (cl_int.name()),
+        new_keyframe   (cl_float4.name()),
+        new_frame_time (cl_float.name()),
 
         ;
 

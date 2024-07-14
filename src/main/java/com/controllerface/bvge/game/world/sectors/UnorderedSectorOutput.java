@@ -9,7 +9,7 @@ import com.controllerface.bvge.cl.kernels.egress.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 
-import static com.controllerface.bvge.cl.CLSize.*;
+import static com.controllerface.bvge.cl.CLData.*;
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 
@@ -48,15 +48,15 @@ public class UnorderedSectorOutput implements Destoryable
     {
         this.ptr_queue         = ptr_queue;
         this.core_memory       = core_memory;
-        this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(cl_int * 6);
+        this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(cl_int.size() * 6);
         this.sector_buffers    = new UnorderedCoreBufferGroup(name, this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.p_gpu_crud        = new GPUCrud().init();
 
-        b_hull_shift                 = new TransientBuffer(ptr_queue, cl_int, hull_init);
-        b_edge_shift                 = new TransientBuffer(ptr_queue, cl_int, edge_init);
-        b_point_shift                = new TransientBuffer(ptr_queue, cl_int, point_init);
-        b_hull_bone_shift            = new TransientBuffer(ptr_queue, cl_int, hull_init);
-        b_entity_bone_shift          = new TransientBuffer(ptr_queue, cl_int, entity_init);
+        b_hull_shift                 = new TransientBuffer(ptr_queue, cl_int.size(), hull_init);
+        b_edge_shift                 = new TransientBuffer(ptr_queue, cl_int.size(), edge_init);
+        b_point_shift                = new TransientBuffer(ptr_queue, cl_int.size(), point_init);
+        b_hull_bone_shift            = new TransientBuffer(ptr_queue, cl_int.size(), hull_init);
+        b_entity_bone_shift          = new TransientBuffer(ptr_queue, cl_int.size(), entity_init);
 
         long k_ptr_egress_entities = p_gpu_crud.kernel_ptr(Kernel.egress_entities);
         k_egress_entities = new EgressEntities_k(this.ptr_queue, k_ptr_egress_entities)
@@ -178,7 +178,7 @@ public class UnorderedSectorOutput implements Destoryable
 
     public void egress(int entity_count, int[] egress_counts)
     {
-        GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_sizes, cl_int * 6);
+        GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_sizes, cl_int.size() * 6);
         int entity_capacity        = egress_counts[0];
         int hull_capacity          = egress_counts[1];
         int point_capacity         = egress_counts[2];

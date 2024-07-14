@@ -7,8 +7,8 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 
-import static com.controllerface.bvge.cl.CLSize.*;
-import static com.controllerface.bvge.cl.CLSize.cl_int;
+import static com.controllerface.bvge.cl.CLData.*;
+import static com.controllerface.bvge.cl.CLData.cl_int;
 import static com.controllerface.bvge.cl.CLUtils.*;
 import static com.controllerface.bvge.cl.CLUtils.arg_short2;
 import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
@@ -16,7 +16,7 @@ import static com.controllerface.bvge.cl.buffers.CoreBufferType.*;
 public class SectorController implements SectorContainer, Destoryable
 {
     private static final int EGRESS_COUNTERS = 8;
-    private static final int EGRESS_COUNTERS_SIZE = cl_int * EGRESS_COUNTERS;
+    private static final int EGRESS_COUNTERS_SIZE = cl_int.size() * EGRESS_COUNTERS;
 
     private final CoreBufferGroup sector_buffers;
 
@@ -51,7 +51,7 @@ public class SectorController implements SectorContainer, Destoryable
         this.ptr_queue = ptr_queue;
         this.sector_buffers = sector_buffers;
 
-        ptr_position_buffer = GPGPU.cl_new_pinned_buffer(cl_float2);
+        ptr_position_buffer = GPGPU.cl_new_pinned_buffer(cl_float2.size());
         ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(EGRESS_COUNTERS_SIZE);
 
         long k_ptr_create_point = p_gpu_crud.kernel_ptr(Kernel.create_point);
@@ -210,14 +210,14 @@ public class SectorController implements SectorContainer, Destoryable
 
     public float[] read_position(int entity_index)
     {
-        GPGPU.cl_zero_buffer(this.ptr_queue, ptr_position_buffer, cl_float2);
+        GPGPU.cl_zero_buffer(this.ptr_queue, ptr_position_buffer, cl_float2.size());
 
         k_read_position
             .ptr_arg(ReadPosition_k.Args.output, ptr_position_buffer)
             .set_arg(ReadPosition_k.Args.target, entity_index)
             .call_task();
 
-        return GPGPU.cl_read_pinned_float_buffer(this.ptr_queue, ptr_position_buffer, cl_float, 2);
+        return GPGPU.cl_read_pinned_float_buffer(this.ptr_queue, ptr_position_buffer, cl_float.size(), 2);
     }
 
     public int[] count_egress_entities()
@@ -228,7 +228,7 @@ public class SectorController implements SectorContainer, Destoryable
         k_count_egress_entities
             .set_arg(CountEgressEntities_k.Args.max_entity, entity_count)
             .call(arg_long(entity_size), GPGPU.preferred_work_size);
-        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int, EGRESS_COUNTERS);
+        return GPGPU.cl_read_pinned_int_buffer(GPGPU.ptr_compute_queue, ptr_egress_sizes, cl_int.size(), EGRESS_COUNTERS);
     }
 
     public void update_mouse_position(int entity_index, float x, float y)
