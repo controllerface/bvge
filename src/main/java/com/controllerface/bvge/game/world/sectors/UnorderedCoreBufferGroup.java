@@ -86,7 +86,8 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
             buffer(ENTITY_MODEL_ID).transfer_out_int(raw.entity_model_id, cl_int.size(), entity_capacity);
             buffer(ENTITY_TRANSFORM_ID).transfer_out_int(raw.entity_model_transform, cl_int.size(), entity_capacity);
             buffer(ENTITY_MASS).transfer_out_float(raw.entity_mass, cl_float.size(), entity_capacity);
-            buffer(ENTITY_ANIM_INDEX).transfer_out_int(raw.entity_anim_index, cl_int.size(), entity_vec2);
+            buffer(ENTITY_ANIM_LAYER).transfer_out_int(raw.entity_anim_layers, cl_int.size(), entity_vec2);
+            buffer(ENTITY_ANIM_PREVIOUS).transfer_out_int(raw.entity_anim_previous, cl_int.size(), entity_vec2);
             buffer(ENTITY_ANIM_ELAPSED).transfer_out_float(raw.entity_anim_elapsed, cl_float.size(), entity_vec2);
             buffer(ENTITY_MOTION_STATE).transfer_out_short(raw.entity_motion_state, cl_short.size(), entity_vec2);
             buffer(ENTITY_HULL_TABLE).transfer_out_int(raw.entity_hull_table, cl_int.size(), entity_vec2);
@@ -124,7 +125,8 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
         public float[] entity = new float[0];
         public float[] entity_anim_elapsed = new float[0];
         public short[] entity_motion_state = new short[0];
-        public int[] entity_anim_index = new int[0];
+        public int[] entity_anim_layers = new int[0];
+        public int[] entity_anim_previous = new int[0];
         public int[] entity_type = new int[0];
         public int[] entity_flag = new int[0];
         public int[] entity_root_hull = new int[0];
@@ -163,7 +165,8 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
             entity = ensure_float(entity, entity_vec4);
             entity_anim_elapsed = ensure_float(entity_anim_elapsed, entity_vec2);
             entity_motion_state = ensure_short(entity_motion_state, entity_vec2);
-            entity_anim_index = ensure_int(entity_anim_index, entity_vec2);
+            entity_anim_layers = ensure_int(entity_anim_layers, entity_vec2);
+            entity_anim_previous = ensure_int(entity_anim_previous, entity_vec2);
             entity_flag = ensure_int(entity_flag, entity_capacity);
             entity_type = ensure_int(entity_type, entity_capacity);
             entity_root_hull = ensure_int(entity_root_hull, entity_capacity);

@@ -102,7 +102,8 @@ public class SectorController implements SectorContainer, Destroyable
             .buf_arg(CreateEntity_k.Args.entity_hull_tables,            this.sector_buffers.buffer(ENTITY_HULL_TABLE))
             .buf_arg(CreateEntity_k.Args.entity_bone_tables,            this.sector_buffers.buffer(ENTITY_BONE_TABLE))
             .buf_arg(CreateEntity_k.Args.entity_masses,                 this.sector_buffers.buffer(ENTITY_MASS))
-            .buf_arg(CreateEntity_k.Args.entity_animation_indices,      this.sector_buffers.buffer(ENTITY_ANIM_INDEX))
+            .buf_arg(CreateEntity_k.Args.entity_animation_layers,       this.sector_buffers.buffer(ENTITY_ANIM_LAYER))
+            .buf_arg(CreateEntity_k.Args.entity_animation_previous,     this.sector_buffers.buffer(ENTITY_ANIM_PREVIOUS))
             .buf_arg(CreateEntity_k.Args.entity_animation_elapsed,      this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
             .buf_arg(CreateEntity_k.Args.entity_motion_states,          this.sector_buffers.buffer(ENTITY_MOTION_STATE));
 
@@ -124,23 +125,25 @@ public class SectorController implements SectorContainer, Destroyable
 
         long k_ptr_read_entity_info = p_gpu_crud.kernel_ptr(Kernel.read_entity_info);
         k_read_entity_info = new ReadEntityInfo_k(this.ptr_queue, k_ptr_read_entity_info)
-            .buf_arg(ReadEntityInfo_k.Args.entities,                 this.sector_buffers.buffer(ENTITY))
-            .buf_arg(ReadEntityInfo_k.Args.entity_accel,             this.sector_buffers.buffer(ENTITY_ACCEL))
-            .buf_arg(ReadEntityInfo_k.Args.entity_motion_states,     this.sector_buffers.buffer(ENTITY_MOTION_STATE))
-            .buf_arg(ReadEntityInfo_k.Args.entity_flags,             this.sector_buffers.buffer(ENTITY_FLAG))
-            .buf_arg(ReadEntityInfo_k.Args.entity_animation_indices, this.sector_buffers.buffer(ENTITY_ANIM_INDEX))
-            .buf_arg(ReadEntityInfo_k.Args.entity_animation_elapsed, this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
-            .buf_arg(ReadEntityInfo_k.Args.entity_animation_blend,   this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
-            .ptr_arg(ReadEntityInfo_k.Args.output,                   ptr_info_buffer);
+            .buf_arg(ReadEntityInfo_k.Args.entities,                    this.sector_buffers.buffer(ENTITY))
+            .buf_arg(ReadEntityInfo_k.Args.entity_accel,                this.sector_buffers.buffer(ENTITY_ACCEL))
+            .buf_arg(ReadEntityInfo_k.Args.entity_motion_states,        this.sector_buffers.buffer(ENTITY_MOTION_STATE))
+            .buf_arg(ReadEntityInfo_k.Args.entity_flags,                this.sector_buffers.buffer(ENTITY_FLAG))
+            .buf_arg(ReadEntityInfo_k.Args.entity_animation_layers,     this.sector_buffers.buffer(ENTITY_ANIM_LAYER))
+            .buf_arg(ReadEntityInfo_k.Args.entity_animation_previous,   this.sector_buffers.buffer(ENTITY_ANIM_PREVIOUS))
+            .buf_arg(ReadEntityInfo_k.Args.entity_animation_elapsed,    this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
+            .buf_arg(ReadEntityInfo_k.Args.entity_animation_blend,      this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
+            .ptr_arg(ReadEntityInfo_k.Args.output,                      ptr_info_buffer);
 
         long k_ptr_write_entity_info = p_gpu_crud.kernel_ptr(Kernel.write_entity_info);
         k_write_entity_info = new WriteEntityInfo_k(this.ptr_queue, k_ptr_write_entity_info)
-            .buf_arg(WriteEntityInfo_k.Args.entity_accel,             this.sector_buffers.buffer(ENTITY_ACCEL))
-            .buf_arg(WriteEntityInfo_k.Args.entity_animation_elapsed, this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
-            .buf_arg(WriteEntityInfo_k.Args.entity_animation_blend,   this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
-            .buf_arg(WriteEntityInfo_k.Args.entity_motion_states,     this.sector_buffers.buffer(ENTITY_MOTION_STATE))
-            .buf_arg(WriteEntityInfo_k.Args.entity_animation_indices, this.sector_buffers.buffer(ENTITY_ANIM_INDEX))
-            .buf_arg(WriteEntityInfo_k.Args.entity_flags,             this.sector_buffers.buffer(ENTITY_FLAG));
+            .buf_arg(WriteEntityInfo_k.Args.entity_accel,               this.sector_buffers.buffer(ENTITY_ACCEL))
+            .buf_arg(WriteEntityInfo_k.Args.entity_animation_elapsed,   this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
+            .buf_arg(WriteEntityInfo_k.Args.entity_animation_blend,     this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
+            .buf_arg(WriteEntityInfo_k.Args.entity_motion_states,       this.sector_buffers.buffer(ENTITY_MOTION_STATE))
+            .buf_arg(WriteEntityInfo_k.Args.entity_animation_layers,    this.sector_buffers.buffer(ENTITY_ANIM_LAYER))
+            .buf_arg(WriteEntityInfo_k.Args.entity_animation_previous,  this.sector_buffers.buffer(ENTITY_ANIM_PREVIOUS))
+            .buf_arg(WriteEntityInfo_k.Args.entity_flags,               this.sector_buffers.buffer(ENTITY_FLAG));
 
 
         long k_ptr_update_accel = p_gpu_crud.kernel_ptr(Kernel.update_accel);
@@ -169,7 +172,7 @@ public class SectorController implements SectorContainer, Destroyable
             .buf_arg(CountEgressEntities_k.Args.hull_point_tables,      this.sector_buffers.buffer(HULL_POINT_TABLE))
             .buf_arg(CountEgressEntities_k.Args.hull_edge_tables,       this.sector_buffers.buffer(HULL_EDGE_TABLE))
             .buf_arg(CountEgressEntities_k.Args.hull_bone_tables,       this.sector_buffers.buffer(HULL_BONE_TABLE))
-            .ptr_arg(CountEgressEntities_k.Args.counters, ptr_egress_sizes);
+            .ptr_arg(CountEgressEntities_k.Args.counters,               ptr_egress_sizes);
 
 
         long k_ptr_update_select_block = p_gpu_crud.kernel_ptr(Kernel.update_select_block);
@@ -180,16 +183,16 @@ public class SectorController implements SectorContainer, Destroyable
 
         long k_ptr_clear_select_block = p_gpu_crud.kernel_ptr(Kernel.clear_select_block);
         k_clear_select_block = new ClearSelectBlock_k(this.ptr_queue, k_ptr_clear_select_block)
-            .buf_arg(ClearSelectBlock_k.Args.entity_flags,             this.sector_buffers.buffer(ENTITY_FLAG));
+            .buf_arg(ClearSelectBlock_k.Args.entity_flags,              this.sector_buffers.buffer(ENTITY_FLAG));
 
         long k_ptr_place_block = p_gpu_crud.kernel_ptr(Kernel.place_block);
         k_place_block = new PlaceBlock_k(this.ptr_queue, k_ptr_place_block)
-                .buf_arg(PlaceBlock_k.Args.entities, this.sector_buffers.buffer(ENTITY))
-                .buf_arg(PlaceBlock_k.Args.entity_hull_tables, this.sector_buffers.buffer(ENTITY_HULL_TABLE))
-                .buf_arg(PlaceBlock_k.Args.hulls, this.sector_buffers.buffer(HULL))
-                .buf_arg(PlaceBlock_k.Args.hull_point_tables, this.sector_buffers.buffer(HULL_POINT_TABLE))
-                .buf_arg(PlaceBlock_k.Args.hull_rotations, this.sector_buffers.buffer(HULL_ROTATION))
-                .buf_arg(PlaceBlock_k.Args.points, this.sector_buffers.buffer(POINT));
+                .buf_arg(PlaceBlock_k.Args.entities,                    this.sector_buffers.buffer(ENTITY))
+                .buf_arg(PlaceBlock_k.Args.entity_hull_tables,          this.sector_buffers.buffer(ENTITY_HULL_TABLE))
+                .buf_arg(PlaceBlock_k.Args.hulls,                       this.sector_buffers.buffer(HULL))
+                .buf_arg(PlaceBlock_k.Args.hull_point_tables,           this.sector_buffers.buffer(HULL_POINT_TABLE))
+                .buf_arg(PlaceBlock_k.Args.hull_rotations,              this.sector_buffers.buffer(HULL_ROTATION))
+                .buf_arg(PlaceBlock_k.Args.points,                      this.sector_buffers.buffer(POINT));
     }
 
     public void reset()
@@ -264,17 +267,19 @@ public class SectorController implements SectorContainer, Destroyable
                                   float[] current_time,
                                   float[] current_blend,
                                   short[] motion_state,
-                                  int[] anim_index,
+                                  int[] anim_layers,
+                                  int[] anim_previous,
                                   int arm_flag)
     {
         k_write_entity_info
-            .set_arg(WriteEntityInfo_k.Args.target, target)
-            .set_arg(WriteEntityInfo_k.Args.new_accel, accel)
-            .set_arg(WriteEntityInfo_k.Args.new_anim_elapsed, current_time)
-            .set_arg(WriteEntityInfo_k.Args.new_anim_blend, current_blend)
-            .set_arg(WriteEntityInfo_k.Args.new_motion_state, motion_state)
-            .set_arg(WriteEntityInfo_k.Args.new_anim_indices, anim_index)
-            .set_arg(WriteEntityInfo_k.Args.new_flags, arm_flag)
+            .set_arg(WriteEntityInfo_k.Args.target,            target)
+            .set_arg(WriteEntityInfo_k.Args.new_accel,         accel)
+            .set_arg(WriteEntityInfo_k.Args.new_anim_elapsed,  current_time)
+            .set_arg(WriteEntityInfo_k.Args.new_anim_blend,    current_blend)
+            .set_arg(WriteEntityInfo_k.Args.new_motion_state,  motion_state)
+            .set_arg(WriteEntityInfo_k.Args.new_anim_layers,   anim_layers)
+            .set_arg(WriteEntityInfo_k.Args.new_anim_previous, anim_previous)
+            .set_arg(WriteEntityInfo_k.Args.new_flags,         arm_flag)
             .call_task();
     }
 
@@ -429,19 +434,20 @@ public class SectorController implements SectorContainer, Destroyable
         sector_buffers.ensure_entity_capacity(capacity);
 
         k_create_entity
-            .set_arg(CreateEntity_k.Args.target, entity_index)
-            .set_arg(CreateEntity_k.Args.new_entity, arg_float4(x, y, z, w))
-            .set_arg(CreateEntity_k.Args.new_entity_root_hull, root_hull)
-            .set_arg(CreateEntity_k.Args.new_entity_model_id, model_id)
-            .set_arg(CreateEntity_k.Args.new_entity_model_transform, model_transform_id)
-            .set_arg(CreateEntity_k.Args.new_entity_type, type)
-            .set_arg(CreateEntity_k.Args.new_entity_flags, flags)
-            .set_arg(CreateEntity_k.Args.new_entity_hull_table, hull_table)
-            .set_arg(CreateEntity_k.Args.new_entity_bone_table, bone_table)
-            .set_arg(CreateEntity_k.Args.new_entity_mass, mass)
-            .set_arg(CreateEntity_k.Args.new_entity_animation_index, arg_int2(anim_index, -1))
-            .set_arg(CreateEntity_k.Args.new_entity_animation_time, arg_float2(anim_time, 0.0f)) // todo: maybe remove these zero init ones
-            .set_arg(CreateEntity_k.Args.new_entity_animation_state, arg_short2((short) 0, (short) 0))
+            .set_arg(CreateEntity_k.Args.target,                        entity_index)
+            .set_arg(CreateEntity_k.Args.new_entity,                    arg_float4(x, y, z, w))
+            .set_arg(CreateEntity_k.Args.new_entity_root_hull,          root_hull)
+            .set_arg(CreateEntity_k.Args.new_entity_model_id,           model_id)
+            .set_arg(CreateEntity_k.Args.new_entity_model_transform,    model_transform_id)
+            .set_arg(CreateEntity_k.Args.new_entity_type,               type)
+            .set_arg(CreateEntity_k.Args.new_entity_flags,              flags)
+            .set_arg(CreateEntity_k.Args.new_entity_hull_table,         hull_table)
+            .set_arg(CreateEntity_k.Args.new_entity_bone_table,         bone_table)
+            .set_arg(CreateEntity_k.Args.new_entity_mass,               mass)
+            .set_arg(CreateEntity_k.Args.new_entity_animation_layer,    arg_int2(anim_index, -1))
+            .set_arg(CreateEntity_k.Args.new_entity_animation_previous, arg_int2(-1, -1))
+            .set_arg(CreateEntity_k.Args.new_entity_animation_time,     arg_float2(anim_time, 0.0f)) // todo: maybe remove these zero init ones
+            .set_arg(CreateEntity_k.Args.new_entity_animation_state,    arg_short2((short) 0, (short) 0))
             .call_task();
 
         return entity_index++;

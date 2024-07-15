@@ -20,7 +20,8 @@ __kernel void read_entity_info(__global float4 *entities,
                               __global float2 *entity_accel,
                               __global short2 *entity_motion_states,
                               __global int *entity_flags,
-                              __global int2 *entity_animation_indices,
+                              __global int2 *entity_animation_layers,
+                              __global int2 *entity_animation_previous, // todo: actually read this out
                               __global float2 *entity_animation_elapsed,
                               __global float2 *entity_animation_blend,
                               __global float *output,
@@ -32,7 +33,7 @@ __kernel void read_entity_info(__global float4 *entities,
     float2 current_time      = entity_animation_elapsed[target];
     float2 current_blend     = entity_animation_blend[target];
     short2 motion_state      = entity_motion_states[target];
-    int2 anim_index          = entity_animation_indices[target];
+    int2 anim_index          = entity_animation_layers[target];
     int arm_flag             = entity_flags[target];
 
     // printf("debug out: [ex: %f ey: %f ez: %f ew: %f, acc.x: %f acc.y: %f, t.x: %f t.y: %f, blend.x: %f blend.y: %f, motion.x: %d motion.y: %d, anim.x: %d anim.x: %d, flag: %d]\n",
@@ -77,22 +78,25 @@ __kernel void write_entity_info(__global float2 *entity_accel,
                               __global float2 *entity_animation_elapsed,
                               __global float2 *entity_animation_blend,
                               __global short2 *entity_motion_states,
-                              __global int2 *entity_animation_indices,
+                              __global int2 *entity_animation_layers,
+                              __global int2 *entity_animation_previous,
                               __global int *entity_flags,
                               int target,
                               float2 new_accel,
                               float2 new_anim_elapsed,
                               float2 new_anim_blend,
                               short2 new_motion_state,
-                              int2 new_anim_indices,
+                              int2 new_anim_layers,
+                              int2 new_anim_previous,
                               int new_flags)
 {
-    entity_accel[target]             = new_accel;
-    entity_animation_elapsed[target] = new_anim_elapsed;
-    entity_animation_blend[target]   = new_anim_blend;
-    entity_motion_states[target]     = new_motion_state;
-    entity_animation_indices[target] = new_anim_indices;
-    entity_flags[target]             = new_flags;
+    entity_accel[target]              = new_accel;
+    entity_animation_elapsed[target]  = new_anim_elapsed;
+    entity_animation_blend[target]    = new_anim_blend;
+    entity_motion_states[target]      = new_motion_state;
+    entity_animation_layers[target]   = new_anim_layers;
+    entity_animation_previous[target] = new_anim_previous;
+    entity_flags[target]              = new_flags;
 }
 
 
@@ -310,7 +314,8 @@ __kernel void merge_hull(__global float4 *hulls_in,
 __kernel void merge_entity(__global float4 *entities_in,
                             __global float2 *entity_animation_elapsed_in,
                             __global short2 *entity_motion_states_in,
-                            __global int2 *entity_animation_indices_in,
+                            __global int2 *entity_animation_layers_in,
+                            __global int2 *entity_animation_previous_in,
                             __global int2 *entity_hull_tables_in,
                             __global int2 *entity_bone_tables_in,
                             __global float *entity_masses_in,
@@ -322,7 +327,8 @@ __kernel void merge_entity(__global float4 *entities_in,
                             __global float4 *entities_out,
                             __global float2 *entity_animation_elapsed_out,
                             __global short2 *entity_motion_states_out,
-                            __global int2 *entity_animation_indices_out,
+                            __global int2 *entity_animation_layers_out,
+                            __global int2 *entity_animation_previous_out,
                             __global int2 *entity_hull_tables_out,
                             __global int2 *entity_bone_tables_out,
                             __global float *entity_masses_out,
@@ -340,18 +346,19 @@ __kernel void merge_entity(__global float4 *entities_in,
     if (current_entity >= max_entity) return;
     int target_entity = current_entity + entity_offset;
 
-    entities_out[target_entity]                 = entities_in[current_entity];
-    entity_animation_elapsed_out[target_entity] = entity_animation_elapsed_in[current_entity];
-    entity_motion_states_out[target_entity]     = entity_motion_states_in[current_entity];
-    entity_animation_indices_out[target_entity] = entity_animation_indices_in[current_entity];
-    entity_hull_tables_out[target_entity]       = entity_hull_tables_in[current_entity] + (int2)(hull_offset);
-    entity_bone_tables_out[target_entity]       = entity_bone_tables_in[current_entity] + (int2)(armature_bone_offset);
-    entity_masses_out[target_entity]            = entity_masses_in[current_entity];
-    entity_root_hulls_out[target_entity]        = entity_root_hulls_in[current_entity] + hull_offset;
-    entity_model_indices_out[target_entity]     = entity_model_indices_in[current_entity];
-    entity_model_transforms_out[target_entity]  = entity_model_transforms_in[current_entity];
-    entity_types_out[target_entity]             = entity_types_in[current_entity];
-    entity_flags_out[target_entity]             = entity_flags_in[current_entity];
+    entities_out[target_entity]                  = entities_in[current_entity];
+    entity_animation_elapsed_out[target_entity]  = entity_animation_elapsed_in[current_entity];
+    entity_motion_states_out[target_entity]      = entity_motion_states_in[current_entity];
+    entity_animation_layers_out[target_entity]   = entity_animation_layers_in[current_entity];
+    entity_animation_previous_out[target_entity] = entity_animation_previous_in[current_entity];
+    entity_hull_tables_out[target_entity]        = entity_hull_tables_in[current_entity] + (int2)(hull_offset);
+    entity_bone_tables_out[target_entity]        = entity_bone_tables_in[current_entity] + (int2)(armature_bone_offset);
+    entity_masses_out[target_entity]             = entity_masses_in[current_entity];
+    entity_root_hulls_out[target_entity]         = entity_root_hulls_in[current_entity] + hull_offset;
+    entity_model_indices_out[target_entity]      = entity_model_indices_in[current_entity];
+    entity_model_transforms_out[target_entity]   = entity_model_transforms_in[current_entity];
+    entity_types_out[target_entity]              = entity_types_in[current_entity];
+    entity_flags_out[target_entity]              = entity_flags_in[current_entity];
 }
 
 __kernel void count_egress_entities(__global int *entity_flags,
@@ -491,7 +498,8 @@ __kernel void egress_entities(__global int *point_hull_indices_in,
                               __global float4 *entities_in,
                               __global float2 *entity_animation_elapsed_in,
                               __global short2 *entity_motion_states_in,
-                              __global int2 *entity_animation_indices_in,
+                              __global int2 *entity_animation_layers_in,
+                              __global int2 *entity_animation_previous_in,
                               __global int2 *entity_hull_tables_in,
                               __global int2 *entity_bone_tables_in,
                               __global float *entity_masses_in,
@@ -504,7 +512,8 @@ __kernel void egress_entities(__global int *point_hull_indices_in,
                               __global float4 *entities_out,
                               __global float2 *entity_animation_elapsed_out,
                               __global short2 *entity_motion_states_out,
-                              __global int2 *entity_animation_indices_out,
+                              __global int2 *entity_animation_layers_out,
+                              __global int2 *entity_animation_previous_out,
                               __global int2 *entity_hull_tables_out,
                               __global int2 *entity_bone_tables_out,
                               __global float *entity_masses_out,
@@ -561,18 +570,19 @@ __kernel void egress_entities(__global int *point_hull_indices_in,
         int hull_bone_offset   = atomic_add(&counters[4], hull_bone_count);
         int entity_bone_offset = atomic_add(&counters[5], entity_bone_count);
 
-        entities_out[entity_id_offset]                 = entities_in[current_entity];
-        entity_masses_out[entity_id_offset]            = entity_masses_in[current_entity];
-        entity_model_indices_out[entity_id_offset]     = entity_model_indices_in[current_entity];
-        entity_model_transforms_out[entity_id_offset]  = entity_model_transforms_in[current_entity];
-        entity_types_out[entity_id_offset]             = entity_types_in[current_entity];
-        entity_flags_out[entity_id_offset]             = entity_flags_in[current_entity] & ~(SECTOR_OUT | DELETED);
-        entity_animation_indices_out[entity_id_offset] = entity_animation_indices_in[current_entity];
-        entity_animation_elapsed_out[entity_id_offset] = entity_animation_elapsed_in[current_entity];
-        entity_motion_states_out[entity_id_offset]     = entity_motion_states_in[current_entity];
-        entity_hull_tables_out[entity_id_offset]       = (int2)(hull_offset, hull_offset + hull_count - 1);
-        entity_bone_tables_out[entity_id_offset]       = (int2)(entity_bone_offset, entity_bone_offset + entity_bone_count - 1);
-        entity_root_hulls_out[entity_id_offset]        = hull_offset + root_hull_offset;
+        entities_out[entity_id_offset]                  = entities_in[current_entity];
+        entity_masses_out[entity_id_offset]             = entity_masses_in[current_entity];
+        entity_model_indices_out[entity_id_offset]      = entity_model_indices_in[current_entity];
+        entity_model_transforms_out[entity_id_offset]   = entity_model_transforms_in[current_entity];
+        entity_types_out[entity_id_offset]              = entity_types_in[current_entity];
+        entity_flags_out[entity_id_offset]              = entity_flags_in[current_entity] & ~(SECTOR_OUT | DELETED);
+        entity_animation_layers_out[entity_id_offset]   = entity_animation_layers_in[current_entity];
+        entity_animation_previous_out[entity_id_offset] = entity_animation_previous_in[current_entity];
+        entity_animation_elapsed_out[entity_id_offset]  = entity_animation_elapsed_in[current_entity];
+        entity_motion_states_out[entity_id_offset]      = entity_motion_states_in[current_entity];
+        entity_hull_tables_out[entity_id_offset]        = (int2)(hull_offset, hull_offset + hull_count - 1);
+        entity_bone_tables_out[entity_id_offset]        = (int2)(entity_bone_offset, entity_bone_offset + entity_bone_count - 1);
+        entity_root_hulls_out[entity_id_offset]         = hull_offset + root_hull_offset;
 
 
 

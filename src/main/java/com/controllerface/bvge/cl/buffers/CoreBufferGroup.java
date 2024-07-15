@@ -56,20 +56,21 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
 
         //#region Entity Buffers
 
-        init_buffer(ENTITY_ANIM_ELAPSED, entity_init);
-        init_buffer(ENTITY_MOTION_STATE, entity_init);
-        init_buffer(ENTITY_ANIM_INDEX,   entity_init);
-        init_buffer(ENTITY,              entity_init);
-        init_buffer(ENTITY_TYPE,         entity_init);
-        init_buffer(ENTITY_FLAG,         entity_init);
-        init_buffer(ENTITY_ROOT_HULL,    entity_init);
-        init_buffer(ENTITY_MODEL_ID,     entity_init);
-        init_buffer(ENTITY_TRANSFORM_ID, entity_init);
-        init_buffer(ENTITY_HULL_TABLE,   entity_init);
-        init_buffer(ENTITY_BONE_TABLE,   entity_init);
-        init_buffer(ENTITY_MASS,         entity_init);
-        init_buffer(ENTITY_ACCEL,        entity_init);
-        init_buffer(ENTITY_ANIM_BLEND,   entity_init);
+        init_buffer(ENTITY_ANIM_ELAPSED,  entity_init);
+        init_buffer(ENTITY_MOTION_STATE,  entity_init);
+        init_buffer(ENTITY_ANIM_LAYER,    entity_init);
+        init_buffer(ENTITY_ANIM_PREVIOUS, entity_init);
+        init_buffer(ENTITY,               entity_init);
+        init_buffer(ENTITY_TYPE,          entity_init);
+        init_buffer(ENTITY_FLAG,          entity_init);
+        init_buffer(ENTITY_ROOT_HULL,     entity_init);
+        init_buffer(ENTITY_MODEL_ID,      entity_init);
+        init_buffer(ENTITY_TRANSFORM_ID,  entity_init);
+        init_buffer(ENTITY_HULL_TABLE,    entity_init);
+        init_buffer(ENTITY_BONE_TABLE,    entity_init);
+        init_buffer(ENTITY_MASS,          entity_init);
+        init_buffer(ENTITY_ACCEL,         entity_init);
+        init_buffer(ENTITY_ANIM_BLEND,    entity_init);
 
         //#endregion
 
@@ -152,7 +153,8 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
         buffer(ENTITY).ensure_capacity(entity_capacity);
         buffer(ENTITY_ANIM_ELAPSED).ensure_capacity(entity_capacity);
         buffer(ENTITY_MOTION_STATE).ensure_capacity(entity_capacity);
-        buffer(ENTITY_ANIM_INDEX).ensure_capacity(entity_capacity);
+        buffer(ENTITY_ANIM_LAYER).ensure_capacity(entity_capacity);
+        buffer(ENTITY_ANIM_PREVIOUS).ensure_capacity(entity_capacity);
         buffer(ENTITY_TYPE).ensure_capacity(entity_capacity);
         buffer(ENTITY_FLAG).ensure_capacity(entity_capacity);
         buffer(ENTITY_ROOT_HULL).ensure_capacity(entity_capacity);

@@ -398,7 +398,8 @@ public class GPUCoreMemory implements Destroyable
                                   float[] current_time,
                                   float[] current_blend,
                                   short[] motion_state,
-                                  int[] anim_index,
+                                  int[] anim_layers,
+                                  int[] anim_previous,
                                   int arm_flag)
     {
         sector_controller.write_entity_info(target,
@@ -406,7 +407,8 @@ public class GPUCoreMemory implements Destroyable
             current_time,
             current_blend,
             motion_state,
-            anim_index,
+            anim_layers,
+            anim_previous,
             arm_flag);
     }
 

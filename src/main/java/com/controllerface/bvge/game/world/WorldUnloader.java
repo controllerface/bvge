@@ -95,8 +95,10 @@ public class WorldUnloader extends GameSystem
                 var entity_anim_elapsed_y  = raw_sectors.entity_anim_elapsed[entity_2_y];
                 var entity_motion_state_x  = raw_sectors.entity_motion_state[entity_2_x];
                 var entity_motion_state_y  = raw_sectors.entity_motion_state[entity_2_y];
-                var entity_anim_index_x    = raw_sectors.entity_anim_index[entity_2_x];
-                var entity_anim_index_y    = raw_sectors.entity_anim_index[entity_2_y];
+                var entity_anim_layer_x    = raw_sectors.entity_anim_layers[entity_2_x];
+                var entity_anim_layer_y    = raw_sectors.entity_anim_layers[entity_2_y];
+                var entity_anim_prev_x     = raw_sectors.entity_anim_previous[entity_2_x];
+                var entity_anim_prev_y     = raw_sectors.entity_anim_previous[entity_2_y];
                 var entity_model_id        = raw_sectors.entity_model_id[entity_offset];
                 var entity_model_transform = raw_sectors.entity_model_transform[entity_offset];
                 var entity_mass            = raw_sectors.entity_mass[entity_offset];
@@ -270,7 +272,8 @@ public class WorldUnloader extends GameSystem
                 var unloaded_entity = new UnloadedEntity(entity_x, entity_y, entity_z, entity_w,
                     entity_anim_elapsed_x, entity_anim_elapsed_y,
                     entity_motion_state_x, entity_motion_state_y,
-                    entity_anim_index_x, entity_anim_index_y,
+                    entity_anim_layer_x, entity_anim_layer_y,
+                    entity_anim_prev_x, entity_anim_prev_y,
                     entity_model_id, entity_model_transform,
                     entity_mass, adjusted_root_hull,
                     entity_type, entity_flag,

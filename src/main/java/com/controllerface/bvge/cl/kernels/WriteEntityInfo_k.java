@@ -8,14 +8,16 @@ public class WriteEntityInfo_k extends GPUKernel
         entity_animation_elapsed,
         entity_animation_blend,
         entity_motion_states,
-        entity_animation_indices,
+        entity_animation_layers,
+        entity_animation_previous,
         entity_flags,
         target,
         new_accel,
         new_anim_elapsed,
         new_anim_blend,
         new_motion_state,
-        new_anim_indices,
+        new_anim_layers,
+        new_anim_previous,
         new_flags,
     }
 

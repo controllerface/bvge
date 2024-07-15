@@ -33,10 +33,16 @@ public enum CoreBufferType implements BufferType
     ENTITY_ANIM_ELAPSED         (cl_float2),
 
     /*
-     * x: the currently running animation index
-     * y: the previously running animation index
+     * x: the current layer 0 animation index
+     * y: the current layer 1 animation index
      */
-    ENTITY_ANIM_INDEX           (cl_int2),
+    ENTITY_ANIM_LAYER           (cl_int2),
+
+    /*
+     * x: the previous layer 0 animation index
+     * y: the previous layer 1 animation index
+     */
+    ENTITY_ANIM_PREVIOUS       (cl_int2),
 
     /*
      * x: number of ticks moving downward

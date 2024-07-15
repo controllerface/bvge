@@ -142,7 +142,8 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                __global int *animation_timing_indices,
                                __global float *animation_durations,
                                __global float *animation_tick_rates,
-                               __global int2 *entity_animation_indices,
+                               __global int2 *entity_animation_layers,
+                               __global int2 *entity_animation_previous, // todo: use this
                                __global float2 *entity_animation_elapsed,
                                __global float2 *entity_animation_blend,
                                float delta_time,
@@ -155,7 +156,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
     int entity_transform_id = entity_model_transforms[current_entity];
     int flags = entity_flags[current_entity];
     float16 model_transform = model_transforms[entity_transform_id];
-    int2 current_animation = entity_animation_indices[current_entity]; 
+    int2 current_animation = entity_animation_layers[current_entity]; 
     float2 current_frame_time = entity_animation_elapsed[current_entity];
     float2 current_blend_time = entity_animation_blend[current_entity];
 
@@ -210,7 +211,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
 
     current_frame_time += delta_time;    
     entity_animation_blend[current_entity] = current_blend_time;
-    entity_animation_indices[current_entity] = current_animation;
+    entity_animation_layers[current_entity] = current_animation;
     entity_animation_elapsed[current_entity] = current_frame_time;
 }
 

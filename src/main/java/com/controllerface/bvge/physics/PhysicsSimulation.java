@@ -5,15 +5,9 @@ import com.controllerface.bvge.cl.buffers.*;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
-import com.controllerface.bvge.game.state.PlayerInventory;
-import com.controllerface.bvge.util.Constants;
-import com.controllerface.bvge.window.Window;
-import com.controllerface.bvge.window.events.Event;
 
-import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
@@ -512,7 +506,8 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimateEntities_k.Args.animation_timing_indices,  GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_TIMING_INDEX))
             .buf_arg(AnimateEntities_k.Args.animation_durations,       GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_DURATION))
             .buf_arg(AnimateEntities_k.Args.animation_tick_rates,      GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_TICK_RATE))
-            .buf_arg(AnimateEntities_k.Args.entity_animation_indices,  GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_INDEX))
+            .buf_arg(AnimateEntities_k.Args.entity_animation_layers,   GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_LAYER))
+            .buf_arg(AnimateEntities_k.Args.entity_animation_previous, GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_PREVIOUS))
             .buf_arg(AnimateEntities_k.Args.entity_animation_elapsed,  GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_ELAPSED))
             .buf_arg(AnimateEntities_k.Args.entity_animation_blend,    GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_BLEND));
 

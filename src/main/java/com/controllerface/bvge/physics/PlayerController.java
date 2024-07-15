@@ -49,7 +49,8 @@ public class PlayerController implements Destroyable
     private final float[] current_time;
     private final float[] current_blend;
     private final short[] motion_state;
-    private final int[] anim_index;
+    private final int[] anim_layers;
+    private final int[] anim_previous;
     private int arm_flag;
     private int current_budget;
 
@@ -87,7 +88,8 @@ public class PlayerController implements Destroyable
         current_time     = new float[2];
         current_blend    = new float[2];
         motion_state     = new short[2];
-        anim_index       = new int[2];
+        anim_layers      = new int[2];
+        anim_previous    = new int[2];
         arm_flag         = 0;
         current_budget   = 0;
 
@@ -129,6 +131,7 @@ public class PlayerController implements Destroyable
             y_pos = position.y;
         }
 
+        // todo: allow non-static/un-snapped placement using key-combo or mode switch of some kind
         snap_block_cursor(x_pos, y_pos);
         GPGPU.core_memory.update_block_position(block_cursor_id.index(), block_cursor_pos[0], block_cursor_pos[1]);
 
@@ -137,7 +140,7 @@ public class PlayerController implements Destroyable
             && !player.mouse_latched())
         {
             player.latch_mouse();
-            // todo: allow non-static placement using key-combo or mode switch of some kind
+
             int resource_count = player_inventory.solid_counts().get(block_cursor.block());
             if (resource_count >= 4)
             {
@@ -149,13 +152,14 @@ public class PlayerController implements Destroyable
                     block_cursor.block(), new int[4]);
                 GPGPU.core_memory.place_block(block_cursor_id.index(), new_block_id);
             }
+
+            // todo: may be better moving the finer details into the inventory system
+            //  and just emit a new event to let it know that the count has gone below
+            //  the threshold. may also want to encode the threshold somewhere so
+            //  it isn't hard-coded, and could be subject to player buffs (maybe?)
             Window.get().event_bus().emit_event(Event.inventory(Event.Type.ITEM_CHANGE));
             if (resource_count < 4)
             {
-                // todo: may be better moving the finer details into the inventory system
-                //  and just emit a new event to let it know that the count has gone below
-                //  the threshold. may also want to encode the threshold somewhere so
-                //  it isn't hard-coded, and could be subject to player buffs (maybe?)
                 block_cursor.set_block(null);
                 block_cursor.set_require_unlatch(true);
                 Window.get().event_bus().emit_event(Event.select_block(null));
@@ -182,8 +186,8 @@ public class PlayerController implements Destroyable
         current_blend[1] = info[9];
         motion_state[0]  = (short)info[10];
         motion_state[1]  = (short)info[11];
-        anim_index[0]    = (int)info[12];
-        anim_index[1]    = (int)info[13];
+        anim_layers[0]    = (int)info[12];
+        anim_layers[1]    = (int)info[13];
         arm_flag         = (int)info[14];
 
         boolean can_jump   = (arm_flag & Constants.EntityFlags.CAN_JUMP.bits) !=0;
@@ -211,10 +215,10 @@ public class PlayerController implements Destroyable
         input.current_budget = current_budget;
         input.motion_state   = motion_state;
         input.current_time   = current_time[0];
-        input.anim_index     = anim_index[0];
+        input.anim_index     = anim_layers[0];
         input.jump_mag       = jump_force.magnitude();
 
-        var current_state = AnimationState.from_index(anim_index[0]);
+        var current_state = AnimationState.from_index(anim_layers[0]);
         var next_state    = AnimationState.process(input, output, current_state, player);
 
         // transition handling
@@ -223,14 +227,14 @@ public class PlayerController implements Destroyable
 
         if (blend)
         {
-            anim_index[1]    = anim_index[0];
+            anim_layers[1]    = anim_layers[0];
             current_time[1]  = current_time[0];
             current_time[0]  = 0.0f;
             current_blend[0] = AnimationState.blend_time(current_state, next_state);
             current_blend[1] = 0.0f;
         }
 
-        anim_index[0] = next_state.ordinal();
+        anim_layers[0] = next_state.ordinal();
 
         // jumping
 
@@ -291,7 +295,8 @@ public class PlayerController implements Destroyable
             current_time,
             current_blend,
             motion_state,
-            anim_index,
+            anim_layers,
+            anim_previous,
             arm_flag);
     }
 
