@@ -46,11 +46,11 @@ TransformBuffer get_node_transform_x(__global int2 *bone_channel_tables,
                            __global float4 *key_frames,
                            __global float *frame_times,
                            float current_time,
-                           int animation_index,
+                           int current_animation_layer,
                            int bone_id)
 {
     int2 channel_table = bone_channel_tables[bone_id];
-    int channel_index = channel_table.x + animation_index;
+    int channel_index = channel_table.x + current_animation_layer;
     int timing_index = animation_timing_indices[channel_index];
     int2 pos_channel_table = bone_pos_channel_tables[channel_index];
     int2 rot_channel_table = bone_rot_channel_tables[channel_index];
@@ -88,27 +88,28 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                            __global float *frame_times,
                            float2 current_time,
                            float2 current_blend,
-                           int2 animation_index,
+                           int2 current_animation_layer,
+                           int2 previous_animation_layer,
                            int bone_id)
 {
-    if (animation_index.x < 0) return bone_bind_poses[bone_id];
+    if (current_animation_layer.x < 0) return bone_bind_poses[bone_id];
 
     TransformBuffer current_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,
-                        key_frames, frame_times, current_time.x, animation_index.x, bone_id);
+                        key_frames, frame_times, current_time.x, current_animation_layer.x, bone_id);
 
     float16 pos_matrix = translation_vector_to_matrix(current_transform.pos);
     float16 rot_matrix = rotation_quaternion_to_matrix(current_transform.rot);
     float16 scl_matrix = scaling_vector_to_matrix(current_transform.scl);
 
-    bool no_blend = animation_index.y == -1; 
+    bool no_blend = previous_animation_layer.x == -1; 
     if (no_blend) return matrix_mul(matrix_mul(pos_matrix, rot_matrix), scl_matrix);
 
     TransformBuffer previous_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,
-                        key_frames, frame_times, current_time.y, animation_index.y, bone_id);
+                        key_frames, frame_times, current_time.y, previous_animation_layer.x, bone_id);
 
     float blend_factor = current_blend.x > 0 
         ? current_blend.y / current_blend.x 
@@ -156,7 +157,8 @@ __kernel void animate_entities(__global float16 *armature_bones,
     int entity_transform_id = entity_model_transforms[current_entity];
     int flags = entity_flags[current_entity];
     float16 model_transform = model_transforms[entity_transform_id];
-    int2 current_animation = entity_animation_layers[current_entity]; 
+    int2 current_animation_layers = entity_animation_layers[current_entity];
+    int2 previous_animation_layers = entity_animation_previous[current_entity]; 
     float2 current_frame_time = entity_animation_elapsed[current_entity];
     float2 current_blend_time = entity_animation_blend[current_entity];
 
@@ -198,20 +200,23 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                                     frame_times,
                                                     current_frame_time,
                                                     current_blend_time,
-                                                    current_animation,
+                                                    current_animation_layers,
+                                                    previous_animation_layers,
                                                     bone_reference_id);
 
         float16 global_transform = matrix_mul_affine(parent_transform, node_transform);
         armature_bones[current_bone_bind] = global_transform;
     }
     current_blend_time.y += delta_time;
-    current_animation.y = current_blend_time.y < current_blend_time.x 
-        ? current_animation.y
+
+    previous_animation_layers.x = current_blend_time.y < current_blend_time.x 
+        ? previous_animation_layers.x
         : -1; 
 
     current_frame_time += delta_time;    
     entity_animation_blend[current_entity] = current_blend_time;
-    entity_animation_layers[current_entity] = current_animation;
+    entity_animation_layers[current_entity] = current_animation_layers;
+    entity_animation_previous[current_entity] = previous_animation_layers;
     entity_animation_elapsed[current_entity] = current_frame_time;
 }
 

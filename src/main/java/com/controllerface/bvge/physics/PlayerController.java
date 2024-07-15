@@ -186,9 +186,11 @@ public class PlayerController implements Destroyable
         current_blend[1] = info[9];
         motion_state[0]  = (short)info[10];
         motion_state[1]  = (short)info[11];
-        anim_layers[0]    = (int)info[12];
-        anim_layers[1]    = (int)info[13];
-        arm_flag         = (int)info[14];
+        anim_layers[0]   = (int)info[12];
+        anim_layers[1]   = (int)info[13];
+        anim_previous[0] = (int)info[14];
+        anim_previous[1] = (int)info[15];
+        arm_flag         = (int)info[16];
 
         boolean can_jump   = (arm_flag & Constants.EntityFlags.CAN_JUMP.bits) !=0;
         boolean is_wet     = (arm_flag & Constants.EntityFlags.IS_WET.bits)   !=0;
@@ -227,7 +229,7 @@ public class PlayerController implements Destroyable
 
         if (blend)
         {
-            anim_layers[1]    = anim_layers[0];
+            anim_previous[0] = anim_layers[0];
             current_time[1]  = current_time[0];
             current_time[0]  = 0.0f;
             current_blend[0] = AnimationState.blend_time(current_state, next_state);

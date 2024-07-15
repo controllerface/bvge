@@ -41,6 +41,7 @@ public class Main
         //Configuration.DEBUG.set(true);
         //Configuration.DISABLE_CHECKS.set(true);
         Configuration.HARFBUZZ_LIBRARY_NAME.set(FreeType.getLibrary());
+        //Configuration.ASSIMP_LIBRARY_NAME.set("C:\\Users\\Stephen\\devtools\\dll\\assimp.dll");
         ECS ecs = new ECS();
         Window window = Window.get();
         window.init(ecs);

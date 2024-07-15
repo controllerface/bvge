@@ -21,7 +21,7 @@ __kernel void read_entity_info(__global float4 *entities,
                               __global short2 *entity_motion_states,
                               __global int *entity_flags,
                               __global int2 *entity_animation_layers,
-                              __global int2 *entity_animation_previous, // todo: actually read this out
+                              __global int2 *entity_animation_previous,
                               __global float2 *entity_animation_elapsed,
                               __global float2 *entity_animation_blend,
                               __global float *output,
@@ -33,7 +33,8 @@ __kernel void read_entity_info(__global float4 *entities,
     float2 current_time      = entity_animation_elapsed[target];
     float2 current_blend     = entity_animation_blend[target];
     short2 motion_state      = entity_motion_states[target];
-    int2 anim_index          = entity_animation_layers[target];
+    int2 anim_layers         = entity_animation_layers[target];
+    int2 anim_previous       = entity_animation_previous[target];
     int arm_flag             = entity_flags[target];
 
     // printf("debug out: [ex: %f ey: %f ez: %f ew: %f, acc.x: %f acc.y: %f, t.x: %f t.y: %f, blend.x: %f blend.y: %f, motion.x: %d motion.y: %d, anim.x: %d anim.x: %d, flag: %d]\n",
@@ -43,8 +44,8 @@ __kernel void read_entity_info(__global float4 *entities,
     //     current_blend.x, current_blend.y,
     //     motion_state.x,
     //     motion_state.x,
-    //     anim_index.x,
-    //     anim_index.x,
+    //     anim_layers.x,
+    //     anim_layers.x,
     //     arm_flag);
 
     output[0] = entity.x;
@@ -60,9 +61,11 @@ __kernel void read_entity_info(__global float4 *entities,
 
     output[10] = (float)motion_state.x;
     output[11] = (float)motion_state.y;
-    output[12] = (float)anim_index.x;
-    output[13] = (float)anim_index.y;
-    output[14] = (float)arm_flag;
+    output[12] = (float)anim_layers.x;
+    output[13] = (float)anim_layers.y;
+    output[14] = (float)anim_previous.x;
+    output[15] = (float)anim_previous.y;
+    output[16] = (float)arm_flag;
 }
 
 
@@ -86,7 +89,7 @@ __kernel void write_entity_info(__global float2 *entity_accel,
                               float2 new_anim_elapsed,
                               float2 new_anim_blend,
                               short2 new_motion_state,
-                              int2 new_anim_layers,
+                              int2 new_anim_layerss,
                               int2 new_anim_previous,
                               int new_flags)
 {
@@ -94,7 +97,7 @@ __kernel void write_entity_info(__global float2 *entity_accel,
     entity_animation_elapsed[target]  = new_anim_elapsed;
     entity_animation_blend[target]    = new_anim_blend;
     entity_motion_states[target]      = new_motion_state;
-    entity_animation_layers[target]   = new_anim_layers;
+    entity_animation_layers[target]   = new_anim_layerss;
     entity_animation_previous[target] = new_anim_previous;
     entity_flags[target]              = new_flags;
 }
@@ -583,14 +586,6 @@ __kernel void egress_entities(__global int *point_hull_indices_in,
         entity_hull_tables_out[entity_id_offset]        = (int2)(hull_offset, hull_offset + hull_count - 1);
         entity_bone_tables_out[entity_id_offset]        = (int2)(entity_bone_offset, entity_bone_offset + entity_bone_count - 1);
         entity_root_hulls_out[entity_id_offset]         = hull_offset + root_hull_offset;
-
-
-
-
-        // todo: write into shift buffers like the delete kernels, then call for the individual objects
-        //  and have those kernels shift over instead of doing everything in one big kernel like this
-
-
 
         int point_offset_count       = 0;
         int edge_offset_count        = 0;
