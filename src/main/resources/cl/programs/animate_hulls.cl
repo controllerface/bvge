@@ -90,9 +90,16 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                            float2 current_blend,
                            int2 current_animation_layer,
                            int2 previous_animation_layer,
-                           int bone_id)
+                           int bone_id,
+                           int layer_id)
 {
     if (current_animation_layer.x < 0) return bone_bind_poses[bone_id];
+
+    int indx = layer_id == 0 
+        ? current_animation_layer.x 
+        : current_animation_layer.y != -1 
+            ? current_animation_layer.y 
+            : current_animation_layer.x;
 
     TransformBuffer current_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
@@ -184,8 +191,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
         int current_bone_bind = bone_table.x + i;
         int bone_reference_id = entity_bone_reference_ids[current_bone_bind];
         int bone_parent_id = entity_bone_parent_ids[current_bone_bind];
-
-        printf("debug: bone_layer=%d", bone_layers[bone_reference_id]);
+        int bone_layer = bone_layers[bone_reference_id];
 
         float16 parent_transform = bone_parent_id == -1 
             ? model_transform 
@@ -205,7 +211,8 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                                     current_blend_time,
                                                     current_animation_layers,
                                                     previous_animation_layers,
-                                                    bone_reference_id);
+                                                    bone_reference_id,
+                                                    bone_layer);
 
         float16 global_transform = matrix_mul_affine(parent_transform, node_transform);
         armature_bones[current_bone_bind] = global_transform;
