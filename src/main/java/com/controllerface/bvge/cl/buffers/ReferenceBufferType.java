@@ -95,6 +95,11 @@ public enum ReferenceBufferType implements BufferType
     BONE_BIND_POSE          (cl_float16),
 
     /*
+     * x: animation layer preference of the aligned bone
+     */
+    BONE_LAYER              (cl_int),
+
+    /*
      * x: animation duration
      */
     ANIM_DURATION           (cl_float),

@@ -491,6 +491,7 @@ public class PhysicsSimulation extends GameSystem
         k_animate_entities = new AnimateEntities_k(GPGPU.ptr_compute_queue, k_ptr_animate_entities)
             .buf_arg(AnimateEntities_k.Args.armature_bones,            GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_BONE))
             .buf_arg(AnimateEntities_k.Args.bone_bind_poses,           GPGPU.core_memory.get_buffer(ReferenceBufferType.BONE_BIND_POSE))
+            .buf_arg(AnimateEntities_k.Args.bone_layers,               GPGPU.core_memory.get_buffer(ReferenceBufferType.BONE_LAYER))
             .buf_arg(AnimateEntities_k.Args.model_transforms,          GPGPU.core_memory.get_buffer(ReferenceBufferType.MODEL_TRANSFORM))
             .buf_arg(AnimateEntities_k.Args.entity_flags,              GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_FLAG))
             .buf_arg(AnimateEntities_k.Args.entity_bone_reference_ids, GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_BONE_REFERENCE_ID))

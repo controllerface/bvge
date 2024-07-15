@@ -14,8 +14,10 @@ public class CreateBoneBindPose_k extends GPUKernel
     public enum Args implements KernelArg
     {
         bone_bind_poses    (cl_float16.buffer_name()),
+        bone_layers        (cl_int.buffer_name()),
         target             (cl_int.name()),
         new_bone_bind_pose (cl_float16.name()),
+        new_bone_layer     (cl_int.name()),
 
         ;
 

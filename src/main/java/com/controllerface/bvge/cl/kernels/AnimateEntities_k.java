@@ -6,6 +6,7 @@ public class AnimateEntities_k extends GPUKernel
     {
         armature_bones,
         bone_bind_poses,
+        bone_layers,
         model_transforms,
         entity_flags,
         entity_bone_reference_ids,

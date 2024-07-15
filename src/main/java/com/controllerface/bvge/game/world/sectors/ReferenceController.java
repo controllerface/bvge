@@ -57,7 +57,8 @@ public class ReferenceController implements ReferenceContainer
 
         long k_ptr_create_bone_bind_pose = p_gpu_crud.kernel_ptr(Kernel.create_bone_bind_pose);
         k_create_bone_bind_pose = new CreateBoneBindPose_k(ptr_queue, k_ptr_create_bone_bind_pose)
-            .buf_arg(CreateBoneBindPose_k.Args.bone_bind_poses, this.reference_buffers.buffer(BONE_BIND_POSE));
+            .buf_arg(CreateBoneBindPose_k.Args.bone_bind_poses, this.reference_buffers.buffer(BONE_BIND_POSE))
+            .buf_arg(CreateBoneBindPose_k.Args.bone_layers, this.reference_buffers.buffer(BONE_LAYER));
 
         long k_ptr_create_bone_reference = p_gpu_crud.kernel_ptr(Kernel.create_bone_reference);
         k_create_bone_reference = new CreateBoneRef_k(ptr_queue, k_ptr_create_bone_reference)
@@ -116,7 +117,7 @@ public class ReferenceController implements ReferenceContainer
     }
 
     @Override
-    public int new_bone_bind_pose(float[] bone_data)
+    public int new_bone_bind_pose(float[] bone_data, int bone_layer)
     {
         int capacity = bone_bind_index + 1;
         reference_buffers.ensure_bind_pose(capacity);
@@ -124,6 +125,7 @@ public class ReferenceController implements ReferenceContainer
         k_create_bone_bind_pose
             .set_arg(CreateBoneBindPose_k.Args.target, bone_bind_index)
             .set_arg(CreateBoneBindPose_k.Args.new_bone_bind_pose, bone_data)
+            .set_arg(CreateBoneBindPose_k.Args.new_bone_layer, bone_layer)
             .call_task();
 
         return bone_bind_index++;

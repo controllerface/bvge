@@ -11,22 +11,22 @@ import static com.controllerface.bvge.ecs.components.InputBinding.*;
 public enum AnimationState
 {
     IDLE            (0),
-    WALKING         (1),
-    RUNNING         (1),
-    FALLING_FAST    (1),
-    RECOIL          (1),
-    JUMPING         (1),
-    IN_AIR          (1),
-    LAND_HARD       (1),
-    FALLING_SLOW    (1),
-    LAND_SOFT       (1),
-    SWIM_UP         (1),
-    SWIM_DOWN       (1),
-    PUNCH           (2),
+    WALKING         (0),
+    RUNNING         (0),
+    FALLING_FAST    (0),
+    RECOIL          (0),
+    JUMPING         (0),
+    IN_AIR          (0),
+    LAND_HARD       (0),
+    FALLING_SLOW    (0),
+    LAND_SOFT       (0),
+    SWIM_UP         (0),
+    SWIM_DOWN       (0),
+    PUNCH           (1),
     UNKNOWN         (0),
 
     ;
-    
+
     public final int layer;
 
     AnimationState(int layer)
@@ -44,6 +44,8 @@ public enum AnimationState
 
     public static AnimationState fuzzy_match(String animation_name)
     {
+        if (animation_name == null) return UNKNOWN;
+
         return Arrays.stream(values())
             .filter(state -> animation_name.toUpperCase().contains(state.name()))
             .findAny().orElse(UNKNOWN);

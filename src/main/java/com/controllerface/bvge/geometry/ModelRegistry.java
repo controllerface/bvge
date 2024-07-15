@@ -1,10 +1,7 @@
 package com.controllerface.bvge.geometry;
 
-import com.controllerface.bvge.animation.BoneBindPose;
-import com.controllerface.bvge.animation.BoneChannel;
-import com.controllerface.bvge.animation.BoneOffset;
+import com.controllerface.bvge.animation.*;
 import com.controllerface.bvge.cl.GPGPU;
-import com.controllerface.bvge.animation.AnimationState;
 import com.controllerface.bvge.ecs.systems.InventorySystem;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.physics.PhysicsObjects;
@@ -740,8 +737,9 @@ public class ModelRegistry
             System.out.println("debug: bone name="+ name);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
-            // todo: se bone layer preference when creating bond bose so it can be usd later
-            int bind_pose_id = GPGPU.core_memory.reference_container().new_bone_bind_pose(raw_matrix);
+            var bone_name = NamedBone.fuzzy_match(name);
+            System.out.println("debug: matched bone: " + bone_name);
+            int bind_pose_id = GPGPU.core_memory.reference_container().new_bone_bind_pose(raw_matrix, bone_name.layer);
             bind_name_map.put(name, bind_pose_id);
             bind_pose_map.put(bind_pose_id, bind_pose);
             transforms.put(name, global_transform);

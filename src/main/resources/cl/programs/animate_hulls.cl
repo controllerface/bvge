@@ -128,6 +128,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
 
 __kernel void animate_entities(__global float16 *armature_bones,
                                __global float16 *bone_bind_poses,
+                               __global int *bone_layers,
                                __global float16 *model_transforms,
                                __global int *entity_flags,
                                __global int *entity_bone_reference_ids,
@@ -183,6 +184,8 @@ __kernel void animate_entities(__global float16 *armature_bones,
         int current_bone_bind = bone_table.x + i;
         int bone_reference_id = entity_bone_reference_ids[current_bone_bind];
         int bone_parent_id = entity_bone_parent_ids[current_bone_bind];
+
+        printf("debug: bone_layer=%d", bone_layers[bone_reference_id]);
 
         float16 parent_transform = bone_parent_id == -1 
             ? model_transform 

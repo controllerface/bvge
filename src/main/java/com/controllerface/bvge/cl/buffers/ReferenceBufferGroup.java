@@ -28,6 +28,7 @@ public class ReferenceBufferGroup extends BufferGroup<ReferenceBufferType>
         // bind poses
 
         init_buffer(BONE_BIND_POSE);
+        init_buffer(BONE_LAYER);
         init_buffer(BONE_ANIM_CHANNEL_TABLE);
 
         // bone references
@@ -81,6 +82,7 @@ public class ReferenceBufferGroup extends BufferGroup<ReferenceBufferType>
     public void ensure_bind_pose(int capacity)
     {
         buffer(BONE_BIND_POSE).ensure_capacity(capacity);
+        buffer(BONE_LAYER).ensure_capacity(capacity);
         buffer(BONE_ANIM_CHANNEL_TABLE).ensure_capacity(capacity);
     }
 
