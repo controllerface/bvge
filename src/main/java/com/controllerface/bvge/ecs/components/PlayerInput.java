@@ -7,7 +7,7 @@ import java.util.Map;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class InputState implements GameComponent
+public class PlayerInput implements GameComponent
 {
     private static final Map<InputBinding, Integer> input_bindings = new EnumMap<>(InputBinding.class);
     private static final Map<InputBinding, Boolean> input_states = new EnumMap<>(InputBinding.class);
@@ -58,7 +58,7 @@ public class InputState implements GameComponent
         return input_states;
     }
 
-    public boolean is_set(InputBinding binding)
+    public boolean pressed(InputBinding binding)
     {
         return input_states.get(binding);
     }

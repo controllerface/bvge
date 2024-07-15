@@ -10,7 +10,7 @@ public enum ComponentType
     BlockCursorId (EntityIndex.class),
     MovementForce (FloatValue.class),
     JumpForce     (FloatValue.class),
-    InputState    (InputState.class),
+    InputState    (PlayerInput.class),
     BlockCursor   (BlockCursor.class),
 
     ;

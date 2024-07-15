@@ -8,7 +8,7 @@ import com.controllerface.bvge.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.cl.programs.RootHullFilter;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.ComponentType;
-import com.controllerface.bvge.ecs.components.InputState;
+import com.controllerface.bvge.ecs.components.PlayerInput;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.ModelRegistry;
@@ -136,7 +136,7 @@ public class MouseRenderer extends GameSystem
 
         if (cursor_hulls.count() == 0) return;
 
-        InputState player_input = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
+        PlayerInput player_input = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
         assert player_input != null : "Component was null";
         Objects.requireNonNull(player_input);
 

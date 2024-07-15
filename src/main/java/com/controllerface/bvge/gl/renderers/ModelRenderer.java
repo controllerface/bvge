@@ -7,7 +7,7 @@ import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.ComponentType;
-import com.controllerface.bvge.ecs.components.InputState;
+import com.controllerface.bvge.ecs.components.PlayerInput;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.geometry.Model;
@@ -354,7 +354,7 @@ public class ModelRenderer extends GameSystem
             textures[i].bind(i);
         }
 
-        InputState player_input = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
+        PlayerInput player_input = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
         assert player_input != null : "Component was null";
         Objects.requireNonNull(player_input);
 

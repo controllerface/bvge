@@ -109,7 +109,4 @@ public enum Kernel
     update_select_block,
     clear_select_block,
     place_block,
-
-    set_control_points,
-    handle_movement,
 }

@@ -472,7 +472,7 @@ public class GPGPU
 
     public static float[] cl_read_pinned_float_buffer(long queue_ptr, long pinned_ptr, long size, int count)
     {
-        try(var stack = MemoryStack.stackPush())
+        try (var stack = MemoryStack.stackPush())
         {
             var status = stack.mallocInt(1);
             var out = clEnqueueMapBuffer(queue_ptr,
