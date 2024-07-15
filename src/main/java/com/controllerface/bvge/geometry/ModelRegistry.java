@@ -522,32 +522,29 @@ public class ModelRegistry
         var raw_animation_count = aiScene.mNumAnimations();
         if (raw_animation_count < 1) return;
 
-        var anim_map = new HashMap<Integer, BoneChannel[]>();
-
-        var anim_buffer = aiScene.mAnimations();
-        int current_index = 0;
-
-        var anim_buf = new EnumMap<AnimationState, AIAnimation>(AnimationState.class);
+        var animations = aiScene.mAnimations();
+        var anim_bone_map = new HashMap<Integer, BoneChannel[]>();
+        var anim_state_map = new EnumMap<AnimationState, AIAnimation>(AnimationState.class);
 
         for (int animation_index = 0; animation_index < raw_animation_count; animation_index++)
         {
-            var raw_animation = AIAnimation.create(anim_buffer.get(animation_index));
+            var raw_animation = AIAnimation.create(animations.get(animation_index));
             var animation_name = raw_animation.mName().dataString();
             var animation_state = AnimationState.fuzzy_match(animation_name);
-            anim_buf.put(animation_state, raw_animation);
+            anim_state_map.put(animation_state, raw_animation);
         }
 
-        int animation_count = anim_buf.size();
+        int animation_count = anim_state_map.size();
 
         int animation_index = 0;
-        for (Map.Entry<AnimationState, AIAnimation> entry : anim_buf.entrySet())
+        for (Map.Entry<AnimationState, AIAnimation> entry : anim_state_map.entrySet())
         {
             var animation_state = entry.getKey();
             var raw_animation = entry.getValue();
 
             // store the timings so bone channels can use them
             int anim_timing_id = GPGPU.core_memory.reference_container().new_animation_timings((float)raw_animation.mDuration(), (float)raw_animation.mTicksPerSecond());
-            animation_map.put(animation_state, current_index++);
+            animation_map.put(animation_state, animation_index);
 
 //            System.out.println("anim" + raw_animation.mName().dataString()
 //                    + " state:" + animation_state
@@ -617,13 +614,13 @@ public class ModelRegistry
                 }
 
                 var new_channel = new BoneChannel(anim_timing_id, p_start, p_end, r_start, r_end, s_start, s_end);
-                var channels = anim_map.computeIfAbsent(bind_pose_id, (_) -> new BoneChannel[animation_count]);
+                var channels = anim_bone_map.computeIfAbsent(bind_pose_id, (_) -> new BoneChannel[animation_count]);
                 channels[animation_index] = new_channel;
             }
             animation_index++;
         }
 
-        anim_map.forEach((bind_pose_id, bone_channels) ->
+        anim_bone_map.forEach((bind_pose_id, bone_channels) ->
         {
             int c_start = -1;
             int c_end = -1;
@@ -740,8 +737,10 @@ public class ModelRegistry
 
         if (is_bone)
         {
+            System.out.println("debug: bone name="+ name);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
+            // todo: se bone layer preference when creating bond bose so it can be usd later
             int bind_pose_id = GPGPU.core_memory.reference_container().new_bone_bind_pose(raw_matrix);
             bind_name_map.put(name, bind_pose_id);
             bind_pose_map.put(bind_pose_id, bind_pose);

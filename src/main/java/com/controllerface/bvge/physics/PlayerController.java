@@ -220,6 +220,10 @@ public class PlayerController implements Destroyable
         input.anim_index     = anim_layers[0];
         input.jump_mag       = jump_force.magnitude();
 
+
+        // todo: states from different layers need different processing. Layer 0 should
+        //  always have some kind of idle animation, layer 1 any whole body animations,
+        //  layer 2 upper body only animations, and layer 3 empty for now.
         var current_state = AnimationState.from_index(anim_layers[0]);
         var next_state    = AnimationState.process(input, output, current_state, player);
 

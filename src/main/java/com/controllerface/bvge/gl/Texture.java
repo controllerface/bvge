@@ -123,9 +123,9 @@ public class Texture implements Destroyable
         glTextureParameteri(tex_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTextureParameteri(tex_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        IntBuffer width = BufferUtils.createIntBuffer(1);
-        IntBuffer height = BufferUtils.createIntBuffer(1);
-        IntBuffer channels = BufferUtils.createIntBuffer(1);
+        var width = BufferUtils.createIntBuffer(1);
+        var height = BufferUtils.createIntBuffer(1);
+        var channels = BufferUtils.createIntBuffer(1);
         stbi_set_flip_vertically_on_load(true);
 
         ByteBuffer buf;
@@ -141,7 +141,7 @@ public class Texture implements Destroyable
         {
             throw new RuntimeException(e);
         }
-        ByteBuffer image = stbi_load_from_memory(buf, width, height, channels, 0);
+        var image = stbi_load_from_memory(buf, width, height, channels, 0);
         MemoryUtil.memFree(buf);
 
         if (image != null)

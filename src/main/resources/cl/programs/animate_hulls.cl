@@ -144,7 +144,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                __global float *animation_durations,
                                __global float *animation_tick_rates,
                                __global int2 *entity_animation_layers,
-                               __global int2 *entity_animation_previous, // todo: use this
+                               __global int2 *entity_animation_previous,
                                __global float2 *entity_animation_elapsed,
                                __global float2 *entity_animation_blend,
                                float delta_time,

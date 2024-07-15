@@ -10,24 +10,29 @@ import static com.controllerface.bvge.ecs.components.InputBinding.*;
 
 public enum AnimationState
 {
-    IDLE,
-    WALKING,
-    RUNNING,
-    FALLING_FAST,
-    RECOIL,
-    JUMPING,
-    IN_AIR,
-    LAND_HARD,
-    FALLING_SLOW,
-    LAND_SOFT,
-    SWIM_UP,
-    SWIM_DOWN,
-    PUNCH,
-    UNKNOWN,
+    IDLE            (0),
+    WALKING         (1),
+    RUNNING         (1),
+    FALLING_FAST    (1),
+    RECOIL          (1),
+    JUMPING         (1),
+    IN_AIR          (1),
+    LAND_HARD       (1),
+    FALLING_SLOW    (1),
+    LAND_SOFT       (1),
+    SWIM_UP         (1),
+    SWIM_DOWN       (1),
+    PUNCH           (2),
+    UNKNOWN         (0),
 
     ;
+    
+    public final int layer;
 
-    private static String lookup_table = "";
+    AnimationState(int layer)
+    {
+        this.layer = layer;
+    }
 
 
     public static AnimationState from_index(int index)
@@ -42,25 +47,6 @@ public enum AnimationState
         return Arrays.stream(values())
             .filter(state -> animation_name.toUpperCase().contains(state.name()))
             .findAny().orElse(UNKNOWN);
-    }
-
-    public static String cl_constants()
-    {
-        if (lookup_table.isEmpty())
-        {
-            var buffer = new StringBuilder();
-            for (var state : values())
-            {
-                buffer.append("#define ")
-                    .append(state.name())
-                    .append(" ")
-                    .append(state.ordinal())
-                    .append("\n");
-            }
-            buffer.append("\n");
-            lookup_table = buffer.toString();
-        }
-        return lookup_table;
     }
 
     public static float blend_time(AnimationState from, AnimationState to)
