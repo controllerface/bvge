@@ -9,7 +9,7 @@ public class AnimationSettings
 
     private static String lookup_table = "";
 
-    private static float get_transition(AnimationState from, AnimationState to)
+    public static float get_transition(AnimationState from, AnimationState to)
     {
         return switch (from)
         {

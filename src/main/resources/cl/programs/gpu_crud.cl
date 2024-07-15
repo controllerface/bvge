@@ -16,6 +16,98 @@ __kernel void read_position(__global float4 *entities,
     output[1] = entity.y;
 }
 
+__kernel void read_entity_info(__global float4 *entities,
+                              __global float2 *entity_accel,
+                              __global short2 *entity_motion_states,
+                              __global int *entity_flags,
+                              __global int2 *entity_animation_indices,
+                              __global float2 *entity_animation_elapsed,
+                              __global float2 *entity_animation_blend,
+                              __global float *output,
+                              int target)
+{
+    
+    float4 entity            = entities[target];
+    float2 accel             = entity_accel[target];
+    float2 current_time      = entity_animation_elapsed[target];
+    float2 current_blend     = entity_animation_blend[target];
+    short2 motion_state      = entity_motion_states[target];
+    int2 anim_index          = entity_animation_indices[target];
+    int arm_flag             = entity_flags[target];
+
+    // printf("debug out: [ex: %f ey: %f ez: %f ew: %f, acc.x: %f acc.y: %f, t.x: %f t.y: %f, blend.x: %f blend.y: %f, motion.x: %d motion.y: %d, anim.x: %d anim.x: %d, flag: %d]\n",
+    //     entity.x, entity.y, entity.z, entity.w,
+    //     accel.x, accel.y,
+    //     current_time.x, current_time.y,
+    //     current_blend.x, current_blend.y,
+    //     motion_state.x,
+    //     motion_state.x,
+    //     anim_index.x,
+    //     anim_index.x,
+    //     arm_flag);
+
+    output[0] = entity.x;
+    output[1] = entity.y;
+    output[2] = entity.z;
+    output[3] = entity.w;
+    output[4] = accel.x;
+    output[5] = accel.y;
+    output[6] = current_time.x;
+    output[7] = current_time.y;
+    output[8] = current_blend.x;
+    output[9] = current_blend.y;
+
+    output[10] = (float)motion_state.x;
+    output[11] = (float)motion_state.y;
+    output[12] = (float)anim_index.x;
+    output[13] = (float)anim_index.y;
+    output[14] = (float)arm_flag;
+}
+
+
+
+
+
+
+
+
+
+
+__kernel void write_entity_info(__global float2 *entity_accel,
+                              __global float2 *entity_animation_elapsed,
+                              __global float2 *entity_animation_blend,
+                              __global short2 *entity_motion_states,
+                              __global int2 *entity_animation_indices,
+                              __global int *entity_flags,
+                              int target,
+                              float2 new_accel,
+                              float2 new_anim_elapsed,
+                              float2 new_anim_blend,
+                              short2 new_motion_state,
+                              int2 new_anim_indices,
+                              int new_flags)
+{
+    entity_accel[target]             = new_accel;
+    entity_animation_elapsed[target] = new_anim_elapsed;
+    entity_animation_blend[target]   = new_anim_blend;
+    entity_motion_states[target]     = new_motion_state;
+    entity_animation_indices[target] = new_anim_indices;
+    entity_flags[target]             = new_flags;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // update functions
 
 __kernel void update_accel(__global float2 *entity_accel,

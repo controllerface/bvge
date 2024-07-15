@@ -1,6 +1,7 @@
 package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.buffers.*;
+import com.controllerface.bvge.cl.kernels.WriteEntityInfo_k;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.ecs.ECS;
@@ -385,6 +386,28 @@ public class GPUCoreMemory implements Destroyable
     public float[] read_entity_position(int entity_index)
     {
         return sector_controller.read_position(entity_index);
+    }
+
+    public float[] read_entity_info(int entity_index)
+    {
+        return sector_controller.read_entity_info(entity_index);
+    }
+
+    public void write_entity_info(int target,
+                                  float[] accel,
+                                  float[] current_time,
+                                  float[] current_blend,
+                                  short[] motion_state,
+                                  int[] anim_index,
+                                  int arm_flag)
+    {
+        sector_controller.write_entity_info(target,
+            accel,
+            current_time,
+            current_blend,
+            motion_state,
+            anim_index,
+            arm_flag);
     }
 
     public int[] count_egress_entities()

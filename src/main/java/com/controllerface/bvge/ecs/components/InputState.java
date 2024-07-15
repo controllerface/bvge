@@ -58,6 +58,11 @@ public class InputState implements GameComponent
         return input_states;
     }
 
+    public boolean is_set(InputBinding binding)
+    {
+        return input_states.get(binding);
+    }
+
     public boolean mouse_latched()
     {
         return mouse_latch;

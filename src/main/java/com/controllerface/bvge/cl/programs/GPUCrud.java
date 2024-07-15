@@ -65,6 +65,8 @@ public class GPUCrud extends GPUProgram
         load_kernel(Kernel.merge_hull_bone);
         load_kernel(Kernel.merge_entity_bone);
         load_kernel(Kernel.read_position);
+        load_kernel(Kernel.read_entity_info);
+        load_kernel(Kernel.write_entity_info);
         load_kernel(Kernel.rotate_hull);
         load_kernel(Kernel.set_bone_channel_table);
         load_kernel(Kernel.update_accel);

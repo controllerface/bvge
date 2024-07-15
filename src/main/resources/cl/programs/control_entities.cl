@@ -17,20 +17,16 @@ typedef struct
 
 typedef struct
 {
-    bool blend;
     bool accel;
     bool attack;
-    float blend_time;
     int next_state;
-    float next_time;
-    int next_anim_index;
     int next_budget;
     float jump_amount;
 } OutputState;
 
 OutputState init_output(int current_state)
 {
-    OutputState output = { false, false, false, 0.0f, current_state, 0.0f, 0, 0, 0.0f };
+    OutputState output = { false, false, current_state, 0, 0.0f };
     return output;
 }
 
@@ -206,7 +202,7 @@ __kernel void handle_movement(__global float4 *entities,
     float current_linear_mag = linear_mag[current_control_set];
     float current_jump_mag   = jump_mag[current_control_set];
     int current_index        = indices[current_control_set];
-    
+
     float4 entity            = entities[current_index];
     float2 accel             = entity_accel[current_index];
     int arm_flag             = entity_flags[current_index];
@@ -361,6 +357,8 @@ __kernel void handle_movement(__global float4 *entities,
     arm_flag = is_click_2 
         ? arm_flag | CAN_COLLECT 
         : arm_flag & ~CAN_COLLECT; 
+
+    //printf("debug: current_blend= %f,%f\n", current_blend.x, current_blend.y);
 
     entity_accel[current_index]             = accel;
     entity_flags[current_index]             = arm_flag;

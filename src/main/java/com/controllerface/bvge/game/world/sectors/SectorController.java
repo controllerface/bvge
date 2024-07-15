@@ -18,6 +18,8 @@ public class SectorController implements SectorContainer, Destroyable
     private static final int EGRESS_COUNTERS = 8;
     private static final int EGRESS_COUNTERS_SIZE = cl_int.size() * EGRESS_COUNTERS;
 
+    private static final int INFO_WIDTH = 15;
+
     private final CoreBufferGroup sector_buffers;
 
     private final GPUKernel k_create_point;
@@ -27,6 +29,8 @@ public class SectorController implements SectorContainer, Destroyable
     private final GPUKernel k_create_hull_bone;
     private final GPUKernel k_create_entity_bone;
     private final GPUKernel k_read_position;
+    private final GPUKernel k_read_entity_info;
+    private final GPUKernel k_write_entity_info;
     private final GPUKernel k_update_accel;
     private final GPUKernel k_update_select_block;
     private final GPUKernel k_clear_select_block;
@@ -44,6 +48,7 @@ public class SectorController implements SectorContainer, Destroyable
 
     private final long ptr_egress_sizes;
     private final long ptr_position_buffer;
+    private final long ptr_info_buffer;
     private final long ptr_queue;
 
     public SectorController(long ptr_queue, GPUProgram p_gpu_crud, CoreBufferGroup sector_buffers)
@@ -52,6 +57,7 @@ public class SectorController implements SectorContainer, Destroyable
         this.sector_buffers = sector_buffers;
 
         ptr_position_buffer = GPGPU.cl_new_pinned_buffer(cl_float2.size());
+        ptr_info_buffer     = GPGPU.cl_new_pinned_buffer((long)cl_float.size() * INFO_WIDTH);
         ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(EGRESS_COUNTERS_SIZE);
 
         long k_ptr_create_point = p_gpu_crud.kernel_ptr(Kernel.create_point);
@@ -115,6 +121,27 @@ public class SectorController implements SectorContainer, Destroyable
         long k_ptr_read_position = p_gpu_crud.kernel_ptr(Kernel.read_position);
         k_read_position = new ReadPosition_k(this.ptr_queue, k_ptr_read_position)
             .buf_arg(ReadPosition_k.Args.entities,                      this.sector_buffers.buffer(ENTITY));
+
+        long k_ptr_read_entity_info = p_gpu_crud.kernel_ptr(Kernel.read_entity_info);
+        k_read_entity_info = new ReadEntityInfo_k(this.ptr_queue, k_ptr_read_entity_info)
+            .buf_arg(ReadEntityInfo_k.Args.entities,                 this.sector_buffers.buffer(ENTITY))
+            .buf_arg(ReadEntityInfo_k.Args.entity_accel,             this.sector_buffers.buffer(ENTITY_ACCEL))
+            .buf_arg(ReadEntityInfo_k.Args.entity_motion_states,     this.sector_buffers.buffer(ENTITY_MOTION_STATE))
+            .buf_arg(ReadEntityInfo_k.Args.entity_flags,             this.sector_buffers.buffer(ENTITY_FLAG))
+            .buf_arg(ReadEntityInfo_k.Args.entity_animation_indices, this.sector_buffers.buffer(ENTITY_ANIM_INDEX))
+            .buf_arg(ReadEntityInfo_k.Args.entity_animation_elapsed, this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
+            .buf_arg(ReadEntityInfo_k.Args.entity_animation_blend,   this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
+            .ptr_arg(ReadEntityInfo_k.Args.output,                   ptr_info_buffer);
+
+        long k_ptr_write_entity_info = p_gpu_crud.kernel_ptr(Kernel.write_entity_info);
+        k_write_entity_info = new WriteEntityInfo_k(this.ptr_queue, k_ptr_write_entity_info)
+            .buf_arg(WriteEntityInfo_k.Args.entity_accel,             this.sector_buffers.buffer(ENTITY_ACCEL))
+            .buf_arg(WriteEntityInfo_k.Args.entity_animation_elapsed, this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
+            .buf_arg(WriteEntityInfo_k.Args.entity_animation_blend,   this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
+            .buf_arg(WriteEntityInfo_k.Args.entity_motion_states,     this.sector_buffers.buffer(ENTITY_MOTION_STATE))
+            .buf_arg(WriteEntityInfo_k.Args.entity_animation_indices, this.sector_buffers.buffer(ENTITY_ANIM_INDEX))
+            .buf_arg(WriteEntityInfo_k.Args.entity_flags,             this.sector_buffers.buffer(ENTITY_FLAG));
+
 
         long k_ptr_update_accel = p_gpu_crud.kernel_ptr(Kernel.update_accel);
         k_update_accel = new UpdateAccel_k(this.ptr_queue, k_ptr_update_accel)
@@ -218,6 +245,37 @@ public class SectorController implements SectorContainer, Destroyable
             .call_task();
 
         return GPGPU.cl_read_pinned_float_buffer(this.ptr_queue, ptr_position_buffer, cl_float.size(), 2);
+    }
+
+    public float[] read_entity_info(int entity_index)
+    {
+        GPGPU.cl_zero_buffer(this.ptr_queue, ptr_info_buffer, cl_float2.size());
+
+        k_read_entity_info
+            .ptr_arg(ReadEntityInfo_k.Args.output, ptr_info_buffer)
+            .set_arg(ReadEntityInfo_k.Args.target, entity_index)
+            .call_task();
+
+        return GPGPU.cl_read_pinned_float_buffer(this.ptr_queue, ptr_info_buffer, cl_float.size(), INFO_WIDTH);
+    }
+
+    public void write_entity_info(int target,
+                                  float[] accel,
+                                  float[] current_time,
+                                  float[] current_blend,
+                                  short[] motion_state,
+                                  int[] anim_index,
+                                  int arm_flag)
+    {
+        k_write_entity_info
+            .set_arg(WriteEntityInfo_k.Args.target, target)
+            .set_arg(WriteEntityInfo_k.Args.new_accel, accel)
+            .set_arg(WriteEntityInfo_k.Args.new_anim_elapsed, current_time)
+            .set_arg(WriteEntityInfo_k.Args.new_anim_blend, current_blend)
+            .set_arg(WriteEntityInfo_k.Args.new_motion_state, motion_state)
+            .set_arg(WriteEntityInfo_k.Args.new_anim_indices, anim_index)
+            .set_arg(WriteEntityInfo_k.Args.new_flags, arm_flag)
+            .call_task();
     }
 
     public int[] count_egress_entities()

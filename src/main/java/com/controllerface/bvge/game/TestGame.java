@@ -100,6 +100,8 @@ public class TestGame extends GameMode
         ecs.attach_component(player, ComponentType.JumpForce,     new FloatValue(9.8f * 10 * 550));
         ecs.attach_component(player, ComponentType.InputState,    new InputState());
         ecs.attach_component(player, ComponentType.BlockCursor,   new BlockCursor());
+
+        player_controller = new PlayerController(ecs, player_inventory);
     }
 
     private void gen_test_wall(int height, float x, float y)
@@ -117,7 +119,7 @@ public class TestGame extends GameMode
     private void load_systems(float x, float y)
     {
         var world_permit = new Semaphore(0);
-        player_controller = new PlayerController(ecs, player_inventory);
+
 
         ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, load_queue, unload_queue, world_permit));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid, player_controller));

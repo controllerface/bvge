@@ -1,5 +1,7 @@
 package com.controllerface.bvge.physics;
 
+import com.controllerface.bvge.animation.AnimationSettings;
+import com.controllerface.bvge.animation.AnimationState;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.buffers.CoreBufferType;
 import com.controllerface.bvge.cl.buffers.Destroyable;
@@ -20,12 +22,13 @@ import com.controllerface.bvge.window.events.Event;
 
 import java.util.Objects;
 
+import static com.controllerface.bvge.animation.AnimationState.*;
 import static com.controllerface.bvge.cl.CLData.cl_float;
 import static com.controllerface.bvge.cl.CLData.cl_int;
+import static com.controllerface.bvge.util.Constants.EntityFlags.*;
 
 public class PlayerController implements Destroyable
 {
-    private final ECS ecs;
     private final PlayerInventory player_inventory;
 
     private final GPUProgram p_control_entities = new ControlEntities();
@@ -38,7 +41,7 @@ public class PlayerController implements Destroyable
     private final EntityIndex block_cursor_id;
     private final FloatValue move_force;
     private final FloatValue jump_force;
-    private final InputState input_state;
+    private final InputState inputs;
     private final BlockCursor block_cursor;
 
     private final ResizableBuffer b_control_point_flags;
@@ -47,9 +50,10 @@ public class PlayerController implements Destroyable
     private final ResizableBuffer b_control_point_jump_mag;
     private final ResizableBuffer b_control_point_tick_budgets;
 
+    private int current_budget = 0;
+
     public PlayerController(ECS ecs, PlayerInventory playerInventory)
     {
-        this.ecs = ecs;
         player_inventory = playerInventory;
 
         p_control_entities.init();
@@ -88,7 +92,7 @@ public class PlayerController implements Destroyable
         this.block_cursor_id = ComponentType.BlockCursorId.forEntity(ecs, Constants.PLAYER_ID);
         this.move_force      = ComponentType.MovementForce.forEntity(ecs, Constants.PLAYER_ID);
         this.jump_force      = ComponentType.JumpForce.forEntity(ecs, Constants.PLAYER_ID);
-        this.input_state     = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
+        this.inputs = ComponentType.InputState.forEntity(ecs, Constants.PLAYER_ID);
         this.block_cursor    = ComponentType.BlockCursor.forEntity(ecs, Constants.PLAYER_ID);
 
         Objects.requireNonNull(position);
@@ -97,7 +101,7 @@ public class PlayerController implements Destroyable
         Objects.requireNonNull(block_cursor_id);
         Objects.requireNonNull(move_force);
         Objects.requireNonNull(jump_force);
-        Objects.requireNonNull(input_state);
+        Objects.requireNonNull(inputs);
         Objects.requireNonNull(block_cursor);
     }
 
@@ -111,11 +115,11 @@ public class PlayerController implements Destroyable
         return new float[]{_x, _y};
     }
 
-    public void update_player_state()
+    private int handle_input_states()
     {
-        if (!input_state.inputs().get(InputBinding.MOUSE_PRIMARY))
+        if (!inputs.inputs().get(InputBinding.MOUSE_PRIMARY))
         {
-            input_state.unlatch_mouse();
+            inputs.unlatch_mouse();
             block_cursor.set_require_unlatch(false);
         }
 
@@ -123,7 +127,7 @@ public class PlayerController implements Destroyable
 
         for (var binding : InputBinding.values())
         {
-            var on = input_state.inputs().get(binding);
+            var on = inputs.inputs().get(binding);
             if (on)
             {
                 int flag = switch (binding)
@@ -137,7 +141,7 @@ public class PlayerController implements Destroyable
                     case MOUSE_PRIMARY ->
                     {
                         if (block_cursor.is_active()
-                            || (block_cursor.requires_unlatch() && input_state.mouse_latched()))
+                            || (block_cursor.requires_unlatch() && inputs.mouse_latched()))
                         {
                             yield 0;
                         }
@@ -166,8 +170,8 @@ public class PlayerController implements Destroyable
             .call_task();
 
         var camera = Window.get().camera();
-        float world_x = input_state.get_screen_target().x * camera.get_zoom() + camera.position().x;
-        float world_y = (Window.get().height() - input_state.get_screen_target().y) * camera.get_zoom() + camera.position().y;
+        float world_x = inputs.get_screen_target().x * camera.get_zoom() + camera.position().x;
+        float world_y = (Window.get().height() - inputs.get_screen_target().y) * camera.get_zoom() + camera.position().y;
         GPGPU.core_memory.update_mouse_position(mouse_cursor_id.index(), world_x, world_y);
 
         float x_pos;
@@ -186,11 +190,11 @@ public class PlayerController implements Destroyable
         float[] sn = snap(x_pos, y_pos);
         GPGPU.core_memory.update_block_position(block_cursor_id.index(), sn[0], sn[1]);
 
-        if (input_state.inputs().get(InputBinding.MOUSE_PRIMARY)
+        if (inputs.is_set(InputBinding.MOUSE_PRIMARY)
             && block_cursor.is_active()
-            && !input_state.mouse_latched())
+            && !inputs.mouse_latched())
         {
-            input_state.latch_mouse();
+            inputs.latch_mouse();
             // todo: allow non-static placement using key-combo or mode switch of some kind
             int resource_count = player_inventory.solid_counts().get(block_cursor.block());
             if (resource_count >= 4)
@@ -216,10 +220,389 @@ public class PlayerController implements Destroyable
                 Window.get().event_bus().emit_event(Event.message(Event.Type.ITEM_PLACING, "-"));
             }
         }
+        return flags;
+    }
 
+    private void old_way()
+    {
         k_handle_movement
             .set_arg(HandleMovement_k.Args.dt, PhysicsSimulation.FIXED_TIME_STEP)
             .call_task();
+    }
+
+
+
+
+
+
+
+
+    private static class InputData
+    {
+        boolean is_mv_l;
+        boolean is_mv_r;
+        boolean mv_jump;
+        boolean mv_run;
+        boolean can_jump;
+        boolean is_wet;
+        boolean is_click_1;
+        boolean is_click_2;
+        int current_budget;
+        short[] motion_state;
+        float current_time;
+        int anim_index;
+        float jump_mag;
+    }
+
+    private static class OutputData
+    {
+        boolean accel = false;
+        boolean attack = false;
+        AnimationState next_state;
+        int next_budget = 0;
+        float jump_amount = 0.0f;
+
+        OutputData(AnimationState init_state)
+        {
+            this.next_state = init_state;
+        }
+    }
+
+
+    OutputData init_output(AnimationState current_state)
+    {
+        return new OutputData(current_state);
+    }
+
+    OutputData idle_state(InputData input)
+    {
+        OutputData output = init_output(IDLE);
+        if (inputs.is_set(InputBinding.MOVE_LEFT) || inputs.is_set(InputBinding.MOVE_RIGHT))
+        {
+            output.next_state = input.mv_run ? RUNNING : WALKING;
+        }
+        if (inputs.is_set(InputBinding.MOUSE_PRIMARY))
+        {
+            output.next_state = PUNCH;
+        }
+        if (input.can_jump && current_budget > 0 && inputs.is_set(InputBinding.JUMP))
+        {
+            output.next_state = RECOIL;
+        }
+        if (input.motion_state[0] > 100)
+        {
+            output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+        }
+        if (input.motion_state[1] > 150)
+        {
+            output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+        }
+        return output;
+    }
+
+    OutputData walking_state(InputData input)
+    {
+        OutputData output = init_output(WALKING);
+        if (input.mv_run) output.next_state = RUNNING;
+        if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
+        if (input.is_click_1) output.next_state = PUNCH;
+        if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
+        if (input.motion_state[0] > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+        if (input.motion_state[1] > 150) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+        return output;
+    }
+
+    OutputData running_state(InputData input)
+    {
+        OutputData output = init_output(RUNNING);
+        if (!input.mv_run) output.next_state = WALKING;
+        if (!input.is_mv_l && !input.is_mv_r) output.next_state = IDLE;
+        if (input.is_click_1) output.next_state = PUNCH;
+        if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
+        if (input.motion_state[0] > 100) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+        if (input.motion_state[1] > 150) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+        return output;
+    }
+
+    OutputData falling_slow_state(InputData input)
+    {
+        OutputData output = init_output(FALLING_SLOW);
+        if (input.can_jump) output.next_state = input.motion_state[0] > 200
+            ? LAND_HARD
+            : LAND_SOFT;
+        if (input.motion_state[0] > 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_FAST;
+        if (input.motion_state[1] > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+        return output;
+    }
+
+    OutputData falling_fast_state(InputData input)
+    {
+        OutputData output = init_output(FALLING_FAST);
+        if (input.can_jump) output.next_state = input.motion_state[0] > 200
+            ? LAND_HARD
+            : LAND_SOFT;
+        if (input.is_wet) output.next_state = SWIM_DOWN;
+        if (input.motion_state[0] < 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+        if (input.motion_state[1] > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+        return output;
+    }
+
+    OutputData recoil_state(InputData input)
+    {
+        OutputData output = init_output(RECOIL);
+        if (input.current_time > 0.15f) output.next_state = JUMPING;
+        return output;
+    }
+
+    OutputData jumping_state(InputData input)
+    {
+        OutputData output = init_output(JUMPING);
+        output.accel = true;
+        output.next_budget = input.current_budget;
+        int tick_slice = input.current_budget > 0 ? 1 : 0;
+        output.next_budget -= tick_slice;
+        output.jump_amount = tick_slice == 1
+            ? input.mv_jump
+            ? input.jump_mag
+            : input.jump_mag / 2
+            : 0;
+        if (tick_slice == 0) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+        return output;
+    }
+
+    OutputData in_air_state(InputData input)
+    {
+        OutputData output = init_output(IN_AIR);
+        if (input.can_jump) output.next_state = input.motion_state[0] > 200
+            ? LAND_HARD
+            : LAND_SOFT;
+        if (input.motion_state[0] > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+        return output;
+    }
+
+    OutputData swim_up_state(InputData input)
+    {
+        OutputData output = init_output(SWIM_UP);
+        if (input.can_jump) output.next_state = input.motion_state[0] > 200
+            ? LAND_HARD
+            : LAND_SOFT;
+        if (input.motion_state[0] > 50) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+        return output;
+    }
+
+    OutputData swim_down_state(InputData input)
+    {
+        OutputData output = init_output(SWIM_DOWN);
+        if (input.can_jump) output.next_state = input.motion_state[0] > 200
+            ? LAND_HARD
+            : LAND_SOFT;
+        if (input.motion_state[0] > 200) output.next_state = input.is_wet ? SWIM_DOWN : FALLING_SLOW;
+        if (input.motion_state[1] > 50) output.next_state = input.is_wet ? SWIM_UP : IN_AIR;
+        return output;
+    }
+
+    OutputData land_soft_state(InputData input)
+    {
+        OutputData output = init_output(LAND_SOFT);
+        if (input.current_time > 0.08f) output.next_state = IDLE;
+        return output;
+    }
+
+    OutputData land_hard_state(InputData input)
+    {
+        OutputData output = init_output(LAND_HARD);
+        if (input.current_time > 0.22f) output.next_state = IDLE;
+        return output;
+    }
+
+    OutputData punch_state(InputData input)
+    {
+        OutputData output = init_output(PUNCH);
+        if (!input.is_click_1) output.next_state = (input.is_mv_l || input.is_mv_r) ? WALKING : IDLE;
+        if (input.can_jump && input.current_budget > 0 && input.mv_jump) output.next_state = RECOIL;
+        if (output.next_state == PUNCH) output.attack = true;
+        return output;
+    }
+
+
+
+
+    private void new_way(int flags)
+    {
+        var info = GPGPU.core_memory.read_entity_info(entity_id.index());
+
+        float current_linear_mag = move_force.magnitude();
+        float current_jump_mag   = jump_force.magnitude();
+
+        float[] entity        = new float[]{info[0], info[1], info[2], info[3]};
+        float[] accel         = new float[]{info[4], info[5]};
+        float[] current_time  = new float[]{info[6], info[7]};
+        float[] current_blend = new float[]{info[8], info[9]};
+        short[] motion_state  = new short[]{(short)info[10], (short)info[11]};
+        int[] anim_index      = new int[]{(int)info[12], (int)info[13]};
+        int arm_flag          = (int)info[14];
+
+        boolean is_mv_l    = (flags & Constants.ControlFlags.LEFT.bits)       !=0;
+        boolean is_mv_r    = (flags & Constants.ControlFlags.RIGHT.bits)      !=0;
+        boolean is_mv_u    = (flags & Constants.ControlFlags.UP.bits)         !=0;
+        boolean is_mv_d    = (flags & Constants.ControlFlags.DOWN.bits)       !=0;
+        boolean is_click_1 = (flags & Constants.ControlFlags.MOUSE1.bits)     !=0;
+        boolean is_click_2 = (flags & Constants.ControlFlags.MOUSE2.bits)     !=0;
+        boolean mv_jump    = (flags & Constants.ControlFlags.JUMP.bits)       !=0;
+        boolean mv_run     = (flags & Constants.ControlFlags.RUN.bits)        !=0;
+        boolean can_jump   = (arm_flag & Constants.EntityFlags.CAN_JUMP.bits) !=0;
+        boolean is_wet     = (arm_flag & Constants.EntityFlags.IS_WET.bits)   !=0;
+
+        float move_mod = is_wet
+            ? 0.5f
+            : mv_run
+                ? 2.0f
+                : 1.0f;
+
+        current_budget = can_jump && !mv_jump
+            ? 10 // todo: this should be a player stat, it is their jump height
+            : current_budget;
+
+        InputData input = new InputData();
+        input.is_mv_l        = is_mv_l;
+        input.is_mv_r        = is_mv_r;
+        input.mv_jump        = mv_jump;
+        input.mv_run         = mv_run;
+        input.can_jump       = can_jump;
+        input.is_wet         = is_wet;
+        input.is_click_1     = is_click_1;
+        input.is_click_2     = is_click_2;
+        input.current_budget = current_budget;
+        input.motion_state   = motion_state;
+        input.current_time   = current_time[0];
+        input.anim_index     = anim_index[0];
+        input.jump_mag       = current_jump_mag;
+
+        var current_state = AnimationState.from_index(anim_index[0]);
+        OutputData state_result = switch (current_state)
+        {
+            case IDLE         -> idle_state(input);
+            case WALKING      -> walking_state(input);
+            case RUNNING      -> running_state(input);
+            case FALLING_SLOW -> falling_slow_state(input);
+            case FALLING_FAST -> falling_fast_state(input);
+            case RECOIL       -> recoil_state(input);
+            case JUMPING      -> jumping_state(input);
+            case IN_AIR       -> in_air_state(input);
+            case SWIM_UP      -> swim_up_state(input);
+            case SWIM_DOWN    -> swim_down_state(input);
+            case LAND_SOFT    -> land_soft_state(input);
+            case LAND_HARD    -> land_hard_state(input);
+            case PUNCH        -> punch_state(input);
+            case UNKNOWN      -> new OutputData(UNKNOWN);
+        };
+
+        // transition handling
+
+        boolean blend = current_state != state_result.next_state;
+
+        current_time[1] = blend
+            ? current_time[0]
+            : current_time[1];
+
+        anim_index[1] = blend
+            ? anim_index[0]
+            : anim_index[1];
+
+        current_blend = blend
+            ? new float[]{ AnimationSettings.get_transition(current_state, state_result.next_state) , 0.0f }
+            : current_blend;
+
+        current_time[0] = blend
+            ? 0.0f
+            : current_time[0];
+
+        anim_index[0] = state_result.next_state.ordinal();
+
+        // jumping
+
+        accel[1] = state_result.accel
+            ? state_result.jump_amount
+            : accel[1];
+
+        current_budget = state_result.accel
+            ? state_result.next_budget
+            : current_budget;
+
+        // motion state
+
+        float threshold = 10.0f;
+        //float vel_x = (entity[0] - entity[2]) / PhysicsSimulation.FIXED_TIME_STEP;
+        float vel_y = (entity[1] - entity[3]) / PhysicsSimulation.FIXED_TIME_STEP;
+
+
+        motion_state[0] = (vel_y < -threshold)
+            ? (short)(motion_state[0] + 1)
+            : (short)0;
+
+        motion_state[1] = (vel_y > threshold)
+            ? (short)(motion_state[1] + 1)
+            : (short)0;
+
+        motion_state[0] = motion_state[0] > 1000
+            ? 1000
+            : motion_state[0];
+
+        motion_state[1] = motion_state[1] > 1000
+            ? 1000
+            : motion_state[1];
+
+        // acceleration
+
+        accel[0] = is_mv_l && !is_mv_r
+            ? -current_linear_mag * move_mod
+            : accel[0];
+
+        accel[0] = is_mv_r && !is_mv_l
+            ? current_linear_mag * move_mod
+            : accel[0];
+
+        accel[0] = !is_mv_r && !is_mv_l
+            ? 0.0f
+            : accel[0];
+
+        accel[1] = is_mv_u && is_wet
+            ? current_linear_mag * 1.5f
+            : accel[1];
+
+        accel[1] = is_mv_d && is_wet
+            ? -current_linear_mag
+            : accel[1];
+
+        // set flags
+
+        arm_flag = is_mv_l != is_mv_r
+            ? is_mv_l
+                ? arm_flag | FACE_LEFT.bits
+                : arm_flag & ~FACE_LEFT.bits
+            : arm_flag;
+
+        arm_flag = state_result.attack
+            ? arm_flag | ATTACKING.bits
+            : arm_flag & ~ATTACKING.bits;
+
+        arm_flag = is_click_2
+            ? arm_flag | CAN_COLLECT.bits
+            : arm_flag & ~CAN_COLLECT.bits;
+
+        GPGPU.core_memory.write_entity_info(entity_id.index(),
+            accel,
+            current_time,
+            current_blend,
+            motion_state,
+            anim_index,
+            arm_flag);
+    }
+
+    public void update_player_state()
+    {
+        var f = handle_input_states();
+        new_way(f);
     }
 
     public void destroy()

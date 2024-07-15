@@ -76,6 +76,8 @@ public enum Kernel
     prepare_liquids,
     prepare_transforms,
     read_position,
+    read_entity_info,
+    write_entity_info,
     resolve_constraints,
     root_hull_count,
     root_hull_filter,
