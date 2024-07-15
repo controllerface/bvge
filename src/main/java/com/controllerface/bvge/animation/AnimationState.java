@@ -23,6 +23,7 @@ public enum AnimationState
 
     private static String lookup_table = "";
 
+
     public static AnimationState from_index(int index)
     {
         return (index < 0 || index >= AnimationState.values().length)

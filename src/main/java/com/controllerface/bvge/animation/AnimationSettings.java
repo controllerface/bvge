@@ -9,13 +9,13 @@ public class AnimationSettings
 
     private static String lookup_table = "";
 
-    public static float get_transition(AnimationState from, AnimationState to)
+    public static float blend_time(AnimationState from, AnimationState to)
     {
         return switch (from)
         {
             case IDLE -> switch (to)
             {
-                case IDLE, UNKNOWN -> 0.2f;
+                case IDLE, UNKNOWN -> 0.0f;
                 case WALKING,
                      LAND_HARD,
                      FALLING_SLOW,
@@ -32,7 +32,7 @@ public class AnimationSettings
 
             case WALKING -> switch (to)
             {
-                case WALKING, UNKNOWN -> 0.2f;
+                case WALKING, UNKNOWN -> 0.0f;
                 case IDLE,
                      LAND_HARD,
                      FALLING_SLOW,
@@ -49,7 +49,7 @@ public class AnimationSettings
 
             case FALLING_FAST -> switch (to)
             {
-                case FALLING_FAST, UNKNOWN -> 0.2f;
+                case FALLING_FAST, UNKNOWN -> 0.0f;
                 case WALKING,
                      LAND_HARD,
                      FALLING_SLOW,
@@ -66,7 +66,7 @@ public class AnimationSettings
 
             case IN_AIR -> switch (to)
             {
-                case IN_AIR, UNKNOWN -> 0.2f;
+                case IN_AIR, UNKNOWN -> 0.0f;
                 case WALKING,
                      FALLING_SLOW,
                      FALLING_FAST,
@@ -83,7 +83,7 @@ public class AnimationSettings
 
             case FALLING_SLOW -> switch (to)
             {
-                case FALLING_SLOW, UNKNOWN -> 0.2f;
+                case FALLING_SLOW, UNKNOWN -> 0.0f;
                 case WALKING,
                      LAND_HARD,
                      FALLING_FAST,
@@ -100,7 +100,7 @@ public class AnimationSettings
 
             case SWIM_UP -> switch (to)
             {
-                case SWIM_UP, UNKNOWN -> 0.2f;
+                case SWIM_UP, UNKNOWN -> 0.0f;
                 case WALKING,
                      LAND_HARD,
                      FALLING_SLOW,
@@ -151,7 +151,7 @@ public class AnimationSettings
 
             case RUNNING -> switch (to)
             {
-                case RUNNING, UNKNOWN -> 0.2f;
+                case RUNNING, UNKNOWN -> 0.0f;
                 case LAND_HARD,
                      FALLING_SLOW,
                      LAND_SOFT,
@@ -167,7 +167,7 @@ public class AnimationSettings
 
             case JUMPING -> 0.5f;
             case RECOIL, LAND_HARD, LAND_SOFT -> 0.05f;
-            case UNKNOWN -> 0.2f;
+            case UNKNOWN -> 0.0f;
         };
     }
 
@@ -179,7 +179,7 @@ public class AnimationSettings
             EnumMap<AnimationState, Float> n = new EnumMap<>(AnimationState.class);
             for (var next_state :  AnimationState.values())
             {
-                n.put(next_state, get_transition(base_state, next_state));
+                n.put(next_state, blend_time(base_state, next_state));
             }
             m.put(base_state, n);
         }

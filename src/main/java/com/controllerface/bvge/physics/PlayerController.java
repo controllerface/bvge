@@ -510,7 +510,7 @@ public class PlayerController implements Destroyable
             : anim_index[1];
 
         current_blend = blend
-            ? new float[]{ AnimationSettings.get_transition(current_state, state_result.next_state) , 0.0f }
+            ? new float[]{ AnimationSettings.blend_time(current_state, state_result.next_state) , 0.0f }
             : current_blend;
 
         current_time[0] = blend
