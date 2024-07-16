@@ -27,10 +27,16 @@ public enum CoreBufferType implements BufferType
     ENTITY_ANIM_BLEND           (cl_float2),
 
     /*
-     * x: the last rendered timestamp of the current animation
-     * y: the last rendered timestamp of the previous animation
+     * x: the last rendered timestamp of the current layer 0 animation
+     * y: the last rendered timestamp of the current layer 1 animation
      */
     ENTITY_ANIM_TIME            (cl_float2),
+
+    /*
+     * x: the last rendered timestamp of the previous layer 0 animation
+     * y: the last rendered timestamp of the previous layer 1 animation
+     */
+    ENTITY_PREV_TIME            (cl_float2),
 
     /*
      * x: the current layer 0 animation index
@@ -42,7 +48,7 @@ public enum CoreBufferType implements BufferType
      * x: the previous layer 0 animation index
      * y: the previous layer 1 animation index
      */
-    ENTITY_ANIM_PREVIOUS       (cl_int2),
+    ENTITY_PREV_LAYER           (cl_int2),
 
     /*
      * x: number of ticks moving downward

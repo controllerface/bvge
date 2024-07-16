@@ -93,6 +93,8 @@ public class WorldUnloader extends GameSystem
                 var entity_w               = raw_sectors.entity[entity_4_w];
                 var entity_anim_time_x     = raw_sectors.entity_anim_time[entity_2_x];
                 var entity_anim_time_y     = raw_sectors.entity_anim_time[entity_2_y];
+                var entity_prev_time_x     = raw_sectors.entity_prev_time[entity_2_x];
+                var entity_prev_time_y     = raw_sectors.entity_prev_time[entity_2_y];
                 var entity_motion_state_x  = raw_sectors.entity_motion_state[entity_2_x];
                 var entity_motion_state_y  = raw_sectors.entity_motion_state[entity_2_y];
                 var entity_anim_layer_x    = raw_sectors.entity_anim_layers[entity_2_x];
@@ -271,6 +273,7 @@ public class WorldUnloader extends GameSystem
 
                 var unloaded_entity = new UnloadedEntity(entity_x, entity_y, entity_z, entity_w,
                     entity_anim_time_x, entity_anim_time_y,
+                    entity_prev_time_x, entity_prev_time_y,
                     entity_motion_state_x, entity_motion_state_y,
                     entity_anim_layer_x, entity_anim_layer_y,
                     entity_anim_prev_x, entity_anim_prev_y,

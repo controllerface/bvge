@@ -46,10 +46,11 @@ public class PlayerController implements Destroyable
     private final float[] entity;
     private final float[] accel;
     private final float[] current_time;
+    private final float[] prev_time;
     private final float[] current_blend;
     private final short[] motion_state;
     private final int[] anim_layers;
-    private final int[] anim_previous;
+    private final int[] prev_layers;
     private int arm_flag;
     private int current_budget;
 
@@ -89,10 +90,11 @@ public class PlayerController implements Destroyable
         entity           = new float[4];
         accel            = new float[2];
         current_time     = new float[2];
+        prev_time = new float[2];
         current_blend    = new float[2];
         motion_state     = new short[2];
         anim_layers      = new int[2];
-        anim_previous    = new int[2];
+        prev_layers = new int[2];
         arm_flag         = 0;
         current_budget   = 0;
 
@@ -173,9 +175,9 @@ public class PlayerController implements Destroyable
 
     public void update_player_state()
     {
-        System.out.println("debug: base   " + current_base_state);
-        System.out.println("debug: move   " + current_move_state);
-        System.out.println("debug: action " + current_action_state);
+//        System.out.println("debug: base   " + current_base_state);
+//        System.out.println("debug: move   " + current_move_state);
+//        System.out.println("debug: action " + current_action_state);
 
         handle_input_states();
 
@@ -189,15 +191,17 @@ public class PlayerController implements Destroyable
         accel[1]         = info[5];
         current_time[0]  = info[6];
         current_time[1]  = info[7];
-        current_blend[0] = info[8];
-        current_blend[1] = info[9];
-        motion_state[0]  = (short)info[10];
-        motion_state[1]  = (short)info[11];
-        anim_layers[0]   = (int)info[12];
-        anim_layers[1]   = (int)info[13];
-        anim_previous[0] = (int)info[14];
-        anim_previous[1] = (int)info[15];
-        arm_flag         = (int)info[16];
+        prev_time[0] = info[8];
+        prev_time[1] = info[9];
+        current_blend[0] = info[10];
+        current_blend[1] = info[11];
+        motion_state[0]  = (short)info[12];
+        motion_state[1]  = (short)info[13];
+        anim_layers[0]   = (int)info[14];
+        anim_layers[1]   = (int)info[15];
+        prev_layers[0] = (int)info[16];
+        prev_layers[1] = (int)info[17];
+        arm_flag         = (int)info[18];
 
         boolean can_jump   = (arm_flag & Constants.EntityFlags.CAN_JUMP.bits) !=0;
         boolean is_wet     = (arm_flag & Constants.EntityFlags.IS_WET.bits)   !=0;
@@ -233,13 +237,13 @@ public class PlayerController implements Destroyable
         //  always have some kind of idle animation, layer 1 any whole body animations,
         //  layer 2 upper body only animations, and layer 3 empty for now.
 
-        var next_base_state   = PlayerState.BaseState.process(input, output, current_base_state, player);
-        var next_move_state   = PlayerState.MovementState.process(input, output, current_move_state, player);
-        var next_action_state = PlayerState.ActionState.process(input, output, current_action_state, player);
-
-        boolean blend_base   = current_base_state != next_base_state;
-        boolean blend_move   = current_move_state != next_move_state;
-        boolean blend_action = current_action_state != next_action_state;
+//        var next_base_state   = PlayerState.BaseState.process(input, output, current_base_state, player);
+//        var next_move_state   = PlayerState.MovementState.process(input, output, current_move_state, player);
+//        var next_action_state = PlayerState.ActionState.process(input, output, current_action_state, player);
+//
+//        boolean blend_base   = current_base_state != next_base_state;
+//        boolean blend_move   = current_move_state != next_move_state;
+//        boolean blend_action = current_action_state != next_action_state;
 
         var current_state = AnimationState.from_index(anim_layers[0]);
         var next_state    = AnimationState.process(input, output, current_state, player);
@@ -250,8 +254,8 @@ public class PlayerController implements Destroyable
 
         if (blend)
         {
-            anim_previous[0] = anim_layers[0];
-            current_time[1]  = current_time[0];
+            prev_layers[0]   = anim_layers[0];
+            prev_time[0]     = current_time[0];
             current_time[0]  = 0.0f;
             current_blend[0] = AnimationState.blend_time(current_state, next_state);
             current_blend[1] = 0.0f;
@@ -316,10 +320,11 @@ public class PlayerController implements Destroyable
         GPGPU.core_memory.write_entity_info(entity_id.index(),
             accel,
             current_time,
+            prev_time,
             current_blend,
             motion_state,
             anim_layers,
-            anim_previous,
+            prev_layers,
             arm_flag);
 
         current_base_state   = PlayerState.BaseState.process(input, output, current_base_state, player);

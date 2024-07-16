@@ -19,7 +19,7 @@ public class SectorController implements SectorContainer, Destroyable
     private static final int EGRESS_COUNTERS = 8;
     private static final int EGRESS_COUNTERS_SIZE = cl_int.size() * EGRESS_COUNTERS;
 
-    private static final int INFO_WIDTH = 17;
+    private static final int INFO_WIDTH = 19;
 
     private final CoreBufferGroup sector_buffers;
 
@@ -104,8 +104,9 @@ public class SectorController implements SectorContainer, Destroyable
             .buf_arg(CreateEntity_k.Args.entity_bone_tables,            this.sector_buffers.buffer(ENTITY_BONE_TABLE))
             .buf_arg(CreateEntity_k.Args.entity_masses,                 this.sector_buffers.buffer(ENTITY_MASS))
             .buf_arg(CreateEntity_k.Args.entity_animation_layers,       this.sector_buffers.buffer(ENTITY_ANIM_LAYER))
-            .buf_arg(CreateEntity_k.Args.entity_animation_previous,     this.sector_buffers.buffer(ENTITY_ANIM_PREVIOUS))
-            .buf_arg(CreateEntity_k.Args.entity_animation_time,      this.sector_buffers.buffer(ENTITY_ANIM_TIME))
+            .buf_arg(CreateEntity_k.Args.entity_previous_layers,        this.sector_buffers.buffer(ENTITY_PREV_LAYER))
+            .buf_arg(CreateEntity_k.Args.entity_animation_time,         this.sector_buffers.buffer(ENTITY_ANIM_TIME))
+            .buf_arg(CreateEntity_k.Args.entity_previous_time,          this.sector_buffers.buffer(ENTITY_PREV_TIME))
             .buf_arg(CreateEntity_k.Args.entity_motion_states,          this.sector_buffers.buffer(ENTITY_MOTION_STATE));
 
         long k_ptr_create_hull_bone = p_gpu_crud.kernel_ptr(Kernel.create_hull_bone);
@@ -131,19 +132,21 @@ public class SectorController implements SectorContainer, Destroyable
             .buf_arg(ReadEntityInfo_k.Args.entity_motion_states,        this.sector_buffers.buffer(ENTITY_MOTION_STATE))
             .buf_arg(ReadEntityInfo_k.Args.entity_flags,                this.sector_buffers.buffer(ENTITY_FLAG))
             .buf_arg(ReadEntityInfo_k.Args.entity_animation_layers,     this.sector_buffers.buffer(ENTITY_ANIM_LAYER))
-            .buf_arg(ReadEntityInfo_k.Args.entity_animation_previous,   this.sector_buffers.buffer(ENTITY_ANIM_PREVIOUS))
-            .buf_arg(ReadEntityInfo_k.Args.entity_animation_time,    this.sector_buffers.buffer(ENTITY_ANIM_TIME))
+            .buf_arg(ReadEntityInfo_k.Args.entity_previous_layers,      this.sector_buffers.buffer(ENTITY_PREV_LAYER))
+            .buf_arg(ReadEntityInfo_k.Args.entity_animation_time,       this.sector_buffers.buffer(ENTITY_ANIM_TIME))
+            .buf_arg(ReadEntityInfo_k.Args.entity_previous_time,        this.sector_buffers.buffer(ENTITY_PREV_TIME))
             .buf_arg(ReadEntityInfo_k.Args.entity_animation_blend,      this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
             .ptr_arg(ReadEntityInfo_k.Args.output,                      ptr_info_buffer);
 
         long k_ptr_write_entity_info = p_gpu_crud.kernel_ptr(Kernel.write_entity_info);
         k_write_entity_info = new WriteEntityInfo_k(this.ptr_queue, k_ptr_write_entity_info)
             .buf_arg(WriteEntityInfo_k.Args.entity_accel,               this.sector_buffers.buffer(ENTITY_ACCEL))
-            .buf_arg(WriteEntityInfo_k.Args.entity_animation_time,   this.sector_buffers.buffer(ENTITY_ANIM_TIME))
+            .buf_arg(WriteEntityInfo_k.Args.entity_animation_time,      this.sector_buffers.buffer(ENTITY_ANIM_TIME))
+            .buf_arg(WriteEntityInfo_k.Args.entity_previous_time,       this.sector_buffers.buffer(ENTITY_PREV_TIME))
             .buf_arg(WriteEntityInfo_k.Args.entity_animation_blend,     this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
             .buf_arg(WriteEntityInfo_k.Args.entity_motion_states,       this.sector_buffers.buffer(ENTITY_MOTION_STATE))
             .buf_arg(WriteEntityInfo_k.Args.entity_animation_layers,    this.sector_buffers.buffer(ENTITY_ANIM_LAYER))
-            .buf_arg(WriteEntityInfo_k.Args.entity_animation_previous,  this.sector_buffers.buffer(ENTITY_ANIM_PREVIOUS))
+            .buf_arg(WriteEntityInfo_k.Args.entity_previous_layers,     this.sector_buffers.buffer(ENTITY_PREV_LAYER))
             .buf_arg(WriteEntityInfo_k.Args.entity_flags,               this.sector_buffers.buffer(ENTITY_FLAG));
 
 
@@ -266,6 +269,7 @@ public class SectorController implements SectorContainer, Destroyable
     public void write_entity_info(int target,
                                   float[] accel,
                                   float[] current_time,
+                                  float[] previous_time,
                                   float[] current_blend,
                                   short[] motion_state,
                                   int[] anim_layers,
@@ -275,7 +279,8 @@ public class SectorController implements SectorContainer, Destroyable
         k_write_entity_info
             .set_arg(WriteEntityInfo_k.Args.target,            target)
             .set_arg(WriteEntityInfo_k.Args.new_accel,         accel)
-            .set_arg(WriteEntityInfo_k.Args.new_anim_time,  current_time)
+            .set_arg(WriteEntityInfo_k.Args.new_anim_time,     current_time)
+            .set_arg(WriteEntityInfo_k.Args.new_prev_time,     previous_time)
             .set_arg(WriteEntityInfo_k.Args.new_anim_blend,    current_blend)
             .set_arg(WriteEntityInfo_k.Args.new_motion_state,  motion_state)
             .set_arg(WriteEntityInfo_k.Args.new_anim_layers,   anim_layers)
@@ -446,8 +451,9 @@ public class SectorController implements SectorContainer, Destroyable
             .set_arg(CreateEntity_k.Args.new_entity_bone_table,         bone_table)
             .set_arg(CreateEntity_k.Args.new_entity_mass,               mass)
             .set_arg(CreateEntity_k.Args.new_entity_animation_layer,    arg_int2(anim_index, -1))
-            .set_arg(CreateEntity_k.Args.new_entity_animation_previous, arg_int2(-1, -1))
-            .set_arg(CreateEntity_k.Args.new_entity_animation_time,     arg_float2(anim_time, 0.0f)) // todo: maybe remove these zero init ones
+            .set_arg(CreateEntity_k.Args.new_entity_previous_layer,     arg_int2(-1, -1))
+            .set_arg(CreateEntity_k.Args.new_entity_animation_time,     arg_float2(anim_time, 0.0f))
+            .set_arg(CreateEntity_k.Args.new_entity_previous_time,      arg_float2(0.0f, 0.0f))
             .set_arg(CreateEntity_k.Args.new_entity_animation_state,    arg_short2((short) 0, (short) 0))
             .call_task();
 

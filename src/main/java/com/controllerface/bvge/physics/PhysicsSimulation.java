@@ -513,8 +513,9 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(AnimateEntities_k.Args.animation_durations,       GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_DURATION))
             .buf_arg(AnimateEntities_k.Args.animation_tick_rates,      GPGPU.core_memory.get_buffer(ReferenceBufferType.ANIM_TICK_RATE))
             .buf_arg(AnimateEntities_k.Args.entity_animation_layers,   GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_LAYER))
-            .buf_arg(AnimateEntities_k.Args.entity_animation_previous, GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_PREVIOUS))
-            .buf_arg(AnimateEntities_k.Args.entity_animation_time,  GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_TIME))
+            .buf_arg(AnimateEntities_k.Args.entity_previous_layers,    GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_PREV_LAYER))
+            .buf_arg(AnimateEntities_k.Args.entity_animation_time,     GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_TIME))
+            .buf_arg(AnimateEntities_k.Args.entity_previous_time,      GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_PREV_TIME))
             .buf_arg(AnimateEntities_k.Args.entity_animation_blend,    GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_BLEND));
 
         long k_ptr_animate_bones = p_animate_hulls.kernel_ptr(Kernel.animate_bones);

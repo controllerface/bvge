@@ -87,6 +87,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                            __global float4 *key_frames,
                            __global float *frame_times,
                            float2 current_time,
+                           float2 previous_time,
                            float2 current_blend,
                            int2 current_animation_layer,
                            int2 previous_animation_layer,
@@ -116,7 +117,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     TransformBuffer previous_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,
-                        key_frames, frame_times, current_time.y, previous_animation_layer.x, bone_id);
+                        key_frames, frame_times, previous_time.y, previous_animation_layer.x, bone_id);
 
     float blend_factor = current_blend.x > 0 
         ? current_blend.y / current_blend.x 
@@ -152,8 +153,9 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                __global float *animation_durations,
                                __global float *animation_tick_rates,
                                __global int2 *entity_animation_layers,
-                               __global int2 *entity_animation_previous,
+                               __global int2 *entity_previous_layer,
                                __global float2 *entity_animation_time,
+                               __global float2 *entity_previous_time,
                                __global float2 *entity_animation_blend,
                                float delta_time,
                                int max_entity)
@@ -166,8 +168,9 @@ __kernel void animate_entities(__global float16 *armature_bones,
     int flags = entity_flags[current_entity];
     float16 model_transform = model_transforms[entity_transform_id];
     int2 current_animation_layers = entity_animation_layers[current_entity];
-    int2 previous_animation_layers = entity_animation_previous[current_entity]; 
+    int2 previous_animation_layers = entity_previous_layer[current_entity]; 
     float2 current_frame_time = entity_animation_time[current_entity];
+    float2 previous_frame_time = entity_previous_time[current_entity];
     float2 current_blend_time = entity_animation_blend[current_entity];
 
     float dir = ((flags & FACE_LEFT) != 0)
@@ -208,6 +211,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                                     key_frames,
                                                     frame_times,
                                                     current_frame_time,
+                                                    previous_frame_time,
                                                     current_blend_time,
                                                     current_animation_layers,
                                                     previous_animation_layers,
@@ -223,11 +227,16 @@ __kernel void animate_entities(__global float16 *armature_bones,
         ? previous_animation_layers.x
         : -1; 
 
-    current_frame_time += delta_time;    
-    entity_animation_blend[current_entity] = current_blend_time;
+
+    // todo: to both current and previous times
+    current_frame_time += delta_time;
+    previous_frame_time += delta_time;    
+
+    entity_animation_blend[current_entity]  = current_blend_time;
     entity_animation_layers[current_entity] = current_animation_layers;
-    entity_animation_previous[current_entity] = previous_animation_layers;
-    entity_animation_time[current_entity] = current_frame_time;
+    entity_previous_layer[current_entity]   = previous_animation_layers;
+    entity_animation_time[current_entity]   = current_frame_time;
+    entity_previous_time[current_entity]    = previous_frame_time;
 }
 
 __kernel void animate_bones(__global float16 *bones,
