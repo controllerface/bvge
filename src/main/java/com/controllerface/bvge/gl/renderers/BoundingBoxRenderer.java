@@ -4,7 +4,7 @@ import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.buffers.RenderBufferType;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
-import com.controllerface.bvge.cl.kernels.PrepareBounds_k;
+import com.controllerface.bvge.cl.kernels.rendering.PrepareBounds_k;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.PrepareBounds;
 import com.controllerface.bvge.ecs.ECS;

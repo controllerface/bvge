@@ -1,14 +1,13 @@
 package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.kernels.Kernel;
-import com.controllerface.bvge.cl.kernels.crud.KernelArg;
+import com.controllerface.bvge.cl.kernels.KernelArg;
 import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
-import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -21,6 +20,9 @@ import static org.lwjgl.opencl.CL12GL.clEnqueueReleaseGLObjects;
 
 public class CLUtils
 {
+    public static final String BUFFER_PREFIX = "__global";
+    public static final String BUFFER_SUFFIX = "*";
+
     public static String read_src(String file)
     {
         try (var stream = CLUtils.class.getResourceAsStream("/cl/" + file))
@@ -112,8 +114,8 @@ public class CLUtils
         {
             var arg  = arguments[arg_index];
             var type = arg.cl_type()
-                .replace(KernelArg.Type.BUFFER_PREFIX, "")
-                .replace(KernelArg.Type.BUFFER_SUFFIX, "")
+                .replace(BUFFER_PREFIX, "")
+                .replace(BUFFER_SUFFIX, "")
                 .trim();
             var _name = "_" + arg.name();
             src.append("\t")

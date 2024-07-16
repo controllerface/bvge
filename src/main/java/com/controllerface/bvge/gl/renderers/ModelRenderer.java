@@ -4,6 +4,8 @@ import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.buffers.RenderBufferType;
 import com.controllerface.bvge.cl.buffers.ReferenceBufferType;
 import com.controllerface.bvge.cl.kernels.*;
+import com.controllerface.bvge.cl.kernels.physics.CalculateBatchOffsets_k;
+import com.controllerface.bvge.cl.kernels.rendering.*;
 import com.controllerface.bvge.cl.programs.*;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.ComponentType;

@@ -1,7 +1,6 @@
 package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.buffers.*;
-import com.controllerface.bvge.cl.kernels.WriteEntityInfo_k;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.ecs.ECS;

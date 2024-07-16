@@ -105,7 +105,6 @@ public enum Kernel
     update_mouse_position,
     update_block_position,
     write_mesh_details,
-
     update_select_block,
     clear_select_block,
     place_block,

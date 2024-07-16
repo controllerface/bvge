@@ -2,6 +2,9 @@ package com.controllerface.bvge.cl;
 
 import com.controllerface.bvge.cl.buffers.Destroyable;
 import com.controllerface.bvge.cl.kernels.*;
+import com.controllerface.bvge.cl.kernels.scan.CompleteInt2MultiBlock_k;
+import com.controllerface.bvge.cl.kernels.scan.ScanInt2MultiBlock_k;
+import com.controllerface.bvge.cl.kernels.scan.ScanInt2SingleBlock_k;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.ScanInt2Array;
 import com.controllerface.bvge.editor.Editor;

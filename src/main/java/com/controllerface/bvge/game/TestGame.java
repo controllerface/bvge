@@ -6,6 +6,7 @@ import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.systems.CameraTracking;
 import com.controllerface.bvge.ecs.systems.GameSystem;
 import com.controllerface.bvge.ecs.systems.InventorySystem;
+import com.controllerface.bvge.game.state.PlayerController;
 import com.controllerface.bvge.game.world.sectors.Sector;
 import com.controllerface.bvge.game.world.WorldLoader;
 import com.controllerface.bvge.game.world.WorldUnloader;

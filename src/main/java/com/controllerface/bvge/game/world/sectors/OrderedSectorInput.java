@@ -5,6 +5,7 @@ import com.controllerface.bvge.cl.buffers.CoreBufferType;
 import com.controllerface.bvge.cl.buffers.CoreBufferGroup;
 import com.controllerface.bvge.cl.buffers.Destroyable;
 import com.controllerface.bvge.cl.kernels.*;
+import com.controllerface.bvge.cl.kernels.crud.*;
 import com.controllerface.bvge.cl.programs.GPUCrud;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 

@@ -5,6 +5,7 @@ import com.controllerface.bvge.cl.buffers.CoreBufferGroup;
 import com.controllerface.bvge.cl.buffers.Destroyable;
 import com.controllerface.bvge.cl.kernels.*;
 import com.controllerface.bvge.cl.kernels.crud.*;
+import com.controllerface.bvge.cl.kernels.egress.CountEgressEntities_k;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 
 import static com.controllerface.bvge.cl.CLData.*;

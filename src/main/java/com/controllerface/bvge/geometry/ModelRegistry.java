@@ -3,6 +3,7 @@ package com.controllerface.bvge.geometry;
 import com.controllerface.bvge.animation.*;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.ecs.systems.InventorySystem;
+import com.controllerface.bvge.game.state.AnimationState;
 import com.controllerface.bvge.gl.Texture;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Assets;

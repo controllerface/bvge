@@ -3,6 +3,7 @@ package com.controllerface.bvge.cl.kernels.crud;
 import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 import com.controllerface.bvge.cl.kernels.Kernel;
+import com.controllerface.bvge.cl.kernels.KernelArg;
 
 import static com.controllerface.bvge.cl.CLData.*;
 
