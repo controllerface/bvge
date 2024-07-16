@@ -54,9 +54,9 @@ public class PlayerController implements Destroyable
     private int arm_flag;
     private int current_budget;
 
-    private PlayerState.BaseState current_base_state     = PlayerState.BaseState.IDLE;
-    private PlayerState.MovementState current_move_state = PlayerState.MovementState.IDLE;
-    private PlayerState.ActionState current_action_state = PlayerState.ActionState.IDLE;
+    private BaseState current_base_state     = BaseState.IDLE;
+    private MovementState current_move_state = MovementState.IDLE;
+    private ActionState current_action_state = ActionState.IDLE;
 
     public PlayerController(ECS ecs, PlayerInventory playerInventory)
     {
@@ -199,8 +199,8 @@ public class PlayerController implements Destroyable
         motion_state[1]  = (short)info[13];
         anim_layers[0]   = (int)info[14];
         anim_layers[1]   = (int)info[15];
-        prev_layers[0] = (int)info[16];
-        prev_layers[1] = (int)info[17];
+        prev_layers[0]   = (int)info[16];
+        prev_layers[1]   = (int)info[17];
         arm_flag         = (int)info[18];
 
         boolean can_jump   = (arm_flag & Constants.EntityFlags.CAN_JUMP.bits) !=0;
@@ -237,31 +237,70 @@ public class PlayerController implements Destroyable
         //  always have some kind of idle animation, layer 1 any whole body animations,
         //  layer 2 upper body only animations, and layer 3 empty for now.
 
-//        var next_base_state   = PlayerState.BaseState.process(input, output, current_base_state, player);
-//        var next_move_state   = PlayerState.MovementState.process(input, output, current_move_state, player);
-//        var next_action_state = PlayerState.ActionState.process(input, output, current_action_state, player);
-//
-//        boolean blend_base   = current_base_state != next_base_state;
-//        boolean blend_move   = current_move_state != next_move_state;
-//        boolean blend_action = current_action_state != next_action_state;
+        var next_base_state   = BaseState.process(input, output, current_base_state, player);
+        var next_move_state   = MovementState.process(input, output, current_move_state, player);
+        var next_action_state = ActionState.process(input, output, current_action_state, player);
 
-        var current_state = AnimationState.from_index(anim_layers[0]);
-        var next_state    = AnimationState.process(input, output, current_state, player);
+        boolean blend_base   = current_base_state != next_base_state;
+        boolean blend_move   = current_move_state != next_move_state;
+        boolean blend_action = current_action_state != next_action_state;
 
-        // transition handling
-
-        boolean blend = current_state != next_state;
-
-        if (blend)
+        if (blend_base)
         {
             prev_layers[0]   = anim_layers[0];
             prev_time[0]     = current_time[0];
             current_time[0]  = 0.0f;
-            current_blend[0] = AnimationState.blend_time(current_state, next_state);
+
+//            current_blend[0] = BaseState.blend_time(current_base_state, next_base_state);
+//            current_blend[1] = 0.0f;
+        }
+
+        if (blend_move && next_move_state != MovementState.IDLE)
+        {
+            prev_layers[0]   = anim_layers[0];
+            prev_time[0]     = current_time[0];
+            current_time[0]  = 0.0f;
+
+            current_blend[0] = MovementState.blend_time(current_move_state, next_move_state);
             current_blend[1] = 0.0f;
         }
 
-        anim_layers[0] = next_state.ordinal();
+        if (blend_action)
+        {
+            prev_layers[1]   = anim_layers[1];
+            prev_time[1]     = current_time[1];
+            current_time[1]  = 0.0f;
+
+//            current_blend[0] = ActionState.blend_time(current_action_state, next_action_state);
+//            current_blend[1] = 0.0f;
+        }
+
+
+        current_base_state   = next_base_state;
+        current_move_state   = next_move_state;
+        current_action_state = next_action_state;
+
+        //var current_state = AnimationState.from_index(anim_layers[0]);
+        //var next_state    = AnimationState.process(input, output, current_state, player);
+
+        // transition handling
+
+        //boolean blend = current_state != next_state;
+
+//        if (blend)
+//        {
+//            prev_layers[0]   = anim_layers[0];
+//            prev_time[0]     = current_time[0];
+//            current_time[0]  = 0.0f;
+//            current_blend[0] = AnimationState.blend_time(current_state, next_state);
+//            current_blend[1] = 0.0f;
+//        }
+
+        anim_layers[0] = next_base_state.animation.ordinal();
+        if (next_move_state != MovementState.IDLE) anim_layers[0] = next_move_state.animation.ordinal();
+        anim_layers[1] = next_action_state == ActionState.IDLE
+            ? -1
+            : next_action_state.animation.ordinal();
 
         // jumping
 
@@ -327,9 +366,6 @@ public class PlayerController implements Destroyable
             prev_layers,
             arm_flag);
 
-        current_base_state   = PlayerState.BaseState.process(input, output, current_base_state, player);
-        current_move_state   = PlayerState.MovementState.process(input, output, current_move_state, player);
-        current_action_state = PlayerState.ActionState.process(input, output, current_action_state, player);
     }
 
     public void destroy()

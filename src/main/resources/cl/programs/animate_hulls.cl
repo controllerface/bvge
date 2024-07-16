@@ -102,10 +102,16 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
             ? current_animation_layer.y 
             : current_animation_layer.x;
 
+    float tx = layer_id == 0 
+        ? current_time.x 
+        : current_time.y != -1 
+            ? current_time.y 
+            : current_time.x;
+
     TransformBuffer current_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,
-                        key_frames, frame_times, current_time.x, current_animation_layer.x, bone_id);
+                        key_frames, frame_times, tx, indx, bone_id);
 
     float16 pos_matrix = translation_vector_to_matrix(current_transform.pos);
     float16 rot_matrix = rotation_quaternion_to_matrix(current_transform.rot);
@@ -114,10 +120,22 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     bool no_blend = previous_animation_layer.x == -1; 
     if (no_blend) return matrix_mul(matrix_mul(pos_matrix, rot_matrix), scl_matrix);
 
+    int indy = layer_id == 0 
+        ? previous_animation_layer.x 
+        : previous_animation_layer.y != -1 
+            ? previous_animation_layer.y 
+            : previous_animation_layer.x;
+
+    float ty = layer_id == 0 
+        ? previous_time.x 
+        : previous_time.y != -1 
+            ? previous_time.y 
+            : previous_time.x;
+
     TransformBuffer previous_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,
-                        key_frames, frame_times, previous_time.y, previous_animation_layer.x, bone_id);
+                        key_frames, frame_times, ty, indy, bone_id);
 
     float blend_factor = current_blend.x > 0 
         ? current_blend.y / current_blend.x 
