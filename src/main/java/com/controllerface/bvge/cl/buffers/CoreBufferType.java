@@ -24,7 +24,7 @@ public enum CoreBufferType implements BufferType
      * x: the initial time of the current blend operation
      * y: the remaining time of the current blend operation
      */
-    ENTITY_ANIM_BLEND           (cl_float2),
+    ENTITY_ANIM_BLEND           (cl_float8),
 
     /*
      * x: the last rendered timestamp of the current layer 0 animation

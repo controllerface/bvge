@@ -11,6 +11,7 @@ import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 import com.controllerface.bvge.window.events.Event;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLData.cl_float;
@@ -355,6 +356,8 @@ public class PlayerController implements Destroyable
         arm_flag = player.pressed(MOUSE_SECONDARY)
             ? arm_flag | CAN_COLLECT.bits
             : arm_flag & ~CAN_COLLECT.bits;
+
+        System.out.println("debug: current_blend[] = " + Arrays.toString(current_blend));
 
         GPGPU.core_memory.write_entity_info(entity_id.index(),
             accel,

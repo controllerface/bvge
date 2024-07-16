@@ -88,7 +88,7 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                            __global float *frame_times,
                            float2 current_time,
                            float2 previous_time,
-                           float2 current_blend,
+                           float8 current_blend,
                            int2 current_animation_layer,
                            int2 previous_animation_layer,
                            int bone_id,
@@ -174,7 +174,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                __global int2 *entity_previous_layer,
                                __global float2 *entity_animation_time,
                                __global float2 *entity_previous_time,
-                               __global float2 *entity_animation_blend,
+                               __global float8 *entity_animation_blend,
                                float delta_time,
                                int max_entity)
 {
@@ -189,7 +189,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
     int2 previous_animation_layers = entity_previous_layer[current_entity]; 
     float2 current_frame_time = entity_animation_time[current_entity];
     float2 previous_frame_time = entity_previous_time[current_entity];
-    float2 current_blend_time = entity_animation_blend[current_entity];
+    float8 current_blend_time = entity_animation_blend[current_entity];
 
     float dir = ((flags & FACE_LEFT) != 0)
         ? -1.0 

@@ -24,7 +24,7 @@ __kernel void read_entity_info(__global float4 *entities,
                               __global int2 *entity_previous_layers,
                               __global float2 *entity_animation_time,
                               __global float2 *entity_previous_time,
-                              __global float2 *entity_animation_blend,
+                              __global float8 *entity_animation_blend,
                               __global float *output,
                               int target)
 {
@@ -33,7 +33,7 @@ __kernel void read_entity_info(__global float4 *entities,
     float2 accel             = entity_accel[target];
     float2 current_time      = entity_animation_time[target];
     float2 previous_time     = entity_previous_time[target];
-    float2 current_blend     = entity_animation_blend[target];
+    float8 current_blend     = entity_animation_blend[target];
     short2 motion_state      = entity_motion_states[target];
     int2 anim_layers         = entity_animation_layers[target];
     int2 anim_previous       = entity_previous_layers[target];
@@ -72,7 +72,7 @@ __kernel void read_entity_info(__global float4 *entities,
 __kernel void write_entity_info(__global float2 *entity_accel,
                               __global float2 *entity_animation_time,
                                __global float2 *entity_previous_time,
-                              __global float2 *entity_animation_blend,
+                              __global float8 *entity_animation_blend,
                               __global short2 *entity_motion_states,
                               __global int2 *entity_animation_layers,
                               __global int2 *entity_previous_layers,
@@ -83,16 +83,16 @@ __kernel void write_entity_info(__global float2 *entity_accel,
                               float2 new_prev_time,
                               float2 new_anim_blend,
                               short2 new_motion_state,
-                              int2 new_anim_layerss,
+                              int2 new_anim_layers,
                               int2 new_anim_previous,
                               int new_flags)
 {
     entity_accel[target]              = new_accel;
     entity_animation_time[target]     = new_anim_time;
     entity_previous_time[target]      = new_prev_time;
-    entity_animation_blend[target]    = new_anim_blend;
+    entity_animation_blend[target]    = (float8)(new_anim_blend.x, new_anim_blend.y, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
     entity_motion_states[target]      = new_motion_state;
-    entity_animation_layers[target]   = new_anim_layerss;
+    entity_animation_layers[target]   = new_anim_layers;
     entity_previous_layers[target]    = new_anim_previous;
     entity_flags[target]              = new_flags;
 }

@@ -355,7 +355,7 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
                                __global int2 *entity_previous_layers,
                                __global float2 *entity_animation_time,
                                __global float2 *entity_previous_time,
-                               __global float2 *entity_animation_blend,
+                               __global float8 *entity_animation_blend,
                                __global short2 *entity_motion_states,
                                __global int2 *entity_entity_hull_tables,
                                __global int2 *entity_bone_tables,
@@ -401,7 +401,7 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
     int2 prev_layer                 = entity_previous_layers[gid];
     float2 anim_time                = entity_animation_time[gid];
     float2 prev_time                = entity_previous_time[gid];
-    float2 anim_blend               = entity_animation_blend[gid];
+    float8 anim_blend               = entity_animation_blend[gid];
     short2 anim_states              = entity_motion_states[gid];
     
     barrier(CLK_GLOBAL_MEM_FENCE);
