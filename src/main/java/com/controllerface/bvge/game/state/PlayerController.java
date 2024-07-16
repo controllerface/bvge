@@ -53,6 +53,10 @@ public class PlayerController implements Destroyable
     private int arm_flag;
     private int current_budget;
 
+    private PlayerState.BaseState current_base_state     = PlayerState.BaseState.IDLE;
+    private PlayerState.MovementState current_move_state = PlayerState.MovementState.IDLE;
+    private PlayerState.ActionState current_action_state = PlayerState.ActionState.IDLE;
+
     public PlayerController(ECS ecs, PlayerInventory playerInventory)
     {
         player_inventory = playerInventory;
@@ -169,6 +173,10 @@ public class PlayerController implements Destroyable
 
     public void update_player_state()
     {
+        System.out.println("debug: base   " + current_base_state);
+        System.out.println("debug: move   " + current_move_state);
+        System.out.println("debug: action " + current_action_state);
+
         handle_input_states();
 
         var info = GPGPU.core_memory.read_entity_info(entity_id.index());
@@ -220,9 +228,19 @@ public class PlayerController implements Destroyable
         input.jump_mag       = jump_force.magnitude();
 
 
+
         // todo: states from different layers need different processing. Layer 0 should
         //  always have some kind of idle animation, layer 1 any whole body animations,
         //  layer 2 upper body only animations, and layer 3 empty for now.
+
+        var next_base_state   = PlayerState.BaseState.process(input, output, current_base_state, player);
+        var next_move_state   = PlayerState.MovementState.process(input, output, current_move_state, player);
+        var next_action_state = PlayerState.ActionState.process(input, output, current_action_state, player);
+
+        boolean blend_base   = current_base_state != next_base_state;
+        boolean blend_move   = current_move_state != next_move_state;
+        boolean blend_action = current_action_state != next_action_state;
+
         var current_state = AnimationState.from_index(anim_layers[0]);
         var next_state    = AnimationState.process(input, output, current_state, player);
 
@@ -303,6 +321,10 @@ public class PlayerController implements Destroyable
             anim_layers,
             anim_previous,
             arm_flag);
+
+        current_base_state   = PlayerState.BaseState.process(input, output, current_base_state, player);
+        current_move_state   = PlayerState.MovementState.process(input, output, current_move_state, player);
+        current_action_state = PlayerState.ActionState.process(input, output, current_action_state, player);
     }
 
     public void destroy()

@@ -26,7 +26,7 @@ public class AnimateEntities_k extends GPUKernel
         animation_tick_rates,
         entity_animation_layers,
         entity_animation_previous,
-        entity_animation_elapsed,
+        entity_animation_time,
         entity_animation_blend,
         delta_time,
         max_entity,

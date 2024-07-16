@@ -10,15 +10,11 @@ package com.controllerface.bvge.cl;
  */
 public class CLData
 {
-    public static final String BUFFER_PREFIX = "__global";
-    public static final String BUFFER_SUFFIX = "*";
-    public static final String SPACE         = " ";
-
     public record CLType(int size, String name)
     {
         public String buffer_name()
         {
-            return String.join(SPACE, BUFFER_PREFIX, name(),   BUFFER_SUFFIX);
+            return String.join(" ", CLUtils.BUFFER_PREFIX, name(),  CLUtils.BUFFER_SUFFIX);
         }
     }
 

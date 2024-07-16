@@ -353,7 +353,7 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
                                __global int *entity_flags,
                                __global int2 *entity_animation_layers,
                                __global int2 *entity_animation_previous,
-                               __global float2 *entity_animation_elapsed,
+                               __global float2 *entity_animation_time,
                                __global float2 *entity_animation_blend,
                                __global short2 *entity_motion_states,
                                __global int2 *entity_entity_hull_tables,
@@ -398,7 +398,7 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
     int2 bone_table                 = entity_bone_tables[gid];
     int2 anim_layer                 = entity_animation_layers[gid];
     int2 anim_prev                  = entity_animation_previous[gid];
-    float2 anim_time                = entity_animation_elapsed[gid];
+    float2 anim_time                = entity_animation_time[gid];
     float2 anim_blend               = entity_animation_blend[gid];
     short2 anim_states              = entity_motion_states[gid];
     
@@ -437,7 +437,7 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
     entity_bone_tables[new_entity_index]        = new_bone_table;
     entity_animation_layers[new_entity_index]   = anim_layer;
     entity_animation_previous[new_entity_index] = anim_prev;
-    entity_animation_elapsed[new_entity_index]  = anim_time;
+    entity_animation_time[new_entity_index]  = anim_time;
     entity_motion_states[new_entity_index]      = anim_states;
     entity_animation_blend[new_entity_index]    = anim_blend;
 

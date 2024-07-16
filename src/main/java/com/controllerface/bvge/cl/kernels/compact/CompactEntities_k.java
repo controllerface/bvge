@@ -17,7 +17,7 @@ public class CompactEntities_k extends GPUKernel
         entity_flags,
         entity_animation_layers,
         entity_animation_previous,
-        entity_animation_elapsed,
+        entity_animation_time,
         entity_animation_blend,
         entity_motion_states,
         entity_entity_hull_tables,

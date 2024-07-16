@@ -30,7 +30,7 @@ public enum CoreBufferType implements BufferType
      * x: the last rendered timestamp of the current animation
      * y: the last rendered timestamp of the previous animation
      */
-    ENTITY_ANIM_ELAPSED         (cl_float2),
+    ENTITY_ANIM_TIME            (cl_float2),
 
     /*
      * x: the current layer 0 animation index

@@ -105,7 +105,7 @@ public class SectorController implements SectorContainer, Destroyable
             .buf_arg(CreateEntity_k.Args.entity_masses,                 this.sector_buffers.buffer(ENTITY_MASS))
             .buf_arg(CreateEntity_k.Args.entity_animation_layers,       this.sector_buffers.buffer(ENTITY_ANIM_LAYER))
             .buf_arg(CreateEntity_k.Args.entity_animation_previous,     this.sector_buffers.buffer(ENTITY_ANIM_PREVIOUS))
-            .buf_arg(CreateEntity_k.Args.entity_animation_elapsed,      this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
+            .buf_arg(CreateEntity_k.Args.entity_animation_time,      this.sector_buffers.buffer(ENTITY_ANIM_TIME))
             .buf_arg(CreateEntity_k.Args.entity_motion_states,          this.sector_buffers.buffer(ENTITY_MOTION_STATE));
 
         long k_ptr_create_hull_bone = p_gpu_crud.kernel_ptr(Kernel.create_hull_bone);
@@ -132,14 +132,14 @@ public class SectorController implements SectorContainer, Destroyable
             .buf_arg(ReadEntityInfo_k.Args.entity_flags,                this.sector_buffers.buffer(ENTITY_FLAG))
             .buf_arg(ReadEntityInfo_k.Args.entity_animation_layers,     this.sector_buffers.buffer(ENTITY_ANIM_LAYER))
             .buf_arg(ReadEntityInfo_k.Args.entity_animation_previous,   this.sector_buffers.buffer(ENTITY_ANIM_PREVIOUS))
-            .buf_arg(ReadEntityInfo_k.Args.entity_animation_elapsed,    this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
+            .buf_arg(ReadEntityInfo_k.Args.entity_animation_time,    this.sector_buffers.buffer(ENTITY_ANIM_TIME))
             .buf_arg(ReadEntityInfo_k.Args.entity_animation_blend,      this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
             .ptr_arg(ReadEntityInfo_k.Args.output,                      ptr_info_buffer);
 
         long k_ptr_write_entity_info = p_gpu_crud.kernel_ptr(Kernel.write_entity_info);
         k_write_entity_info = new WriteEntityInfo_k(this.ptr_queue, k_ptr_write_entity_info)
             .buf_arg(WriteEntityInfo_k.Args.entity_accel,               this.sector_buffers.buffer(ENTITY_ACCEL))
-            .buf_arg(WriteEntityInfo_k.Args.entity_animation_elapsed,   this.sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
+            .buf_arg(WriteEntityInfo_k.Args.entity_animation_time,   this.sector_buffers.buffer(ENTITY_ANIM_TIME))
             .buf_arg(WriteEntityInfo_k.Args.entity_animation_blend,     this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
             .buf_arg(WriteEntityInfo_k.Args.entity_motion_states,       this.sector_buffers.buffer(ENTITY_MOTION_STATE))
             .buf_arg(WriteEntityInfo_k.Args.entity_animation_layers,    this.sector_buffers.buffer(ENTITY_ANIM_LAYER))
@@ -275,7 +275,7 @@ public class SectorController implements SectorContainer, Destroyable
         k_write_entity_info
             .set_arg(WriteEntityInfo_k.Args.target,            target)
             .set_arg(WriteEntityInfo_k.Args.new_accel,         accel)
-            .set_arg(WriteEntityInfo_k.Args.new_anim_elapsed,  current_time)
+            .set_arg(WriteEntityInfo_k.Args.new_anim_time,  current_time)
             .set_arg(WriteEntityInfo_k.Args.new_anim_blend,    current_blend)
             .set_arg(WriteEntityInfo_k.Args.new_motion_state,  motion_state)
             .set_arg(WriteEntityInfo_k.Args.new_anim_layers,   anim_layers)

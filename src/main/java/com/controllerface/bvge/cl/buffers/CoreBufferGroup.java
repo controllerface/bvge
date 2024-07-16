@@ -56,7 +56,7 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
 
         //#region Entity Buffers
 
-        init_buffer(ENTITY_ANIM_ELAPSED,  entity_init);
+        init_buffer(ENTITY_ANIM_TIME,     entity_init);
         init_buffer(ENTITY_MOTION_STATE,  entity_init);
         init_buffer(ENTITY_ANIM_LAYER,    entity_init);
         init_buffer(ENTITY_ANIM_PREVIOUS, entity_init);
@@ -151,7 +151,7 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
     public void ensure_entity_capacity(int entity_capacity)
     {
         buffer(ENTITY).ensure_capacity(entity_capacity);
-        buffer(ENTITY_ANIM_ELAPSED).ensure_capacity(entity_capacity);
+        buffer(ENTITY_ANIM_TIME).ensure_capacity(entity_capacity);
         buffer(ENTITY_MOTION_STATE).ensure_capacity(entity_capacity);
         buffer(ENTITY_ANIM_LAYER).ensure_capacity(entity_capacity);
         buffer(ENTITY_ANIM_PREVIOUS).ensure_capacity(entity_capacity);

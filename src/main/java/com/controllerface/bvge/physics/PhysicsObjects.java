@@ -760,7 +760,7 @@ public class PhysicsObjects
         int[] entity_bone_table = make_table(entity_bone_ids);
 
         world.create_entity(entity.x(), entity.y(), entity.z(), entity.w(),
-            entity_hull_table, entity_bone_table, entity.mass(), entity.anim_layer_x(), entity.anim_elapsed_x(),
+            entity_hull_table, entity_bone_table, entity.mass(), entity.anim_layer_x(), entity.anim_time_x(),
             entity_hull_ids[entity.root_hull()], entity.model_id(), entity.model_transform_id(), entity.type(), entity.flags());
     }
 

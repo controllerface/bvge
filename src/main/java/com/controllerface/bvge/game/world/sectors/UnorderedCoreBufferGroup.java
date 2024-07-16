@@ -88,7 +88,7 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
             buffer(ENTITY_MASS).transfer_out_float(raw.entity_mass, cl_float.size(), entity_capacity);
             buffer(ENTITY_ANIM_LAYER).transfer_out_int(raw.entity_anim_layers, cl_int.size(), entity_vec2);
             buffer(ENTITY_ANIM_PREVIOUS).transfer_out_int(raw.entity_anim_previous, cl_int.size(), entity_vec2);
-            buffer(ENTITY_ANIM_ELAPSED).transfer_out_float(raw.entity_anim_elapsed, cl_float.size(), entity_vec2);
+            buffer(ENTITY_ANIM_TIME).transfer_out_float(raw.entity_anim_time, cl_float.size(), entity_vec2);
             buffer(ENTITY_MOTION_STATE).transfer_out_short(raw.entity_motion_state, cl_short.size(), entity_vec2);
             buffer(ENTITY_HULL_TABLE).transfer_out_int(raw.entity_hull_table, cl_int.size(), entity_vec2);
             buffer(ENTITY_BONE_TABLE).transfer_out_int(raw.entity_bone_table, cl_int.size(), entity_vec2);
@@ -123,7 +123,7 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
         public int[] hull_integrity = new int[0];
 
         public float[] entity = new float[0];
-        public float[] entity_anim_elapsed = new float[0];
+        public float[] entity_anim_time = new float[0];
         public short[] entity_motion_state = new short[0];
         public int[] entity_anim_layers = new int[0];
         public int[] entity_anim_previous = new int[0];
@@ -163,7 +163,7 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
             int entity_bone_vec16 = entity_bone_capacity * 16;
 
             entity = ensure_float(entity, entity_vec4);
-            entity_anim_elapsed = ensure_float(entity_anim_elapsed, entity_vec2);
+            entity_anim_time = ensure_float(entity_anim_time, entity_vec2);
             entity_motion_state = ensure_short(entity_motion_state, entity_vec2);
             entity_anim_layers = ensure_int(entity_anim_layers, entity_vec2);
             entity_anim_previous = ensure_int(entity_anim_previous, entity_vec2);

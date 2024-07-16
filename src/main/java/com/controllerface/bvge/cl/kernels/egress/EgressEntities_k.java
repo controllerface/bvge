@@ -16,7 +16,7 @@ public class EgressEntities_k extends GPUKernel
         entity_bone_parent_ids_in,
 
         entities_in,
-        entity_animation_elapsed_in,
+        entity_animation_time_in,
         entity_motion_states_in,
         entity_animation_layers_in,
         entity_animation_previous_in,
@@ -30,7 +30,7 @@ public class EgressEntities_k extends GPUKernel
         entity_flags_in,
 
         entities_out,
-        entity_animation_elapsed_out,
+        entity_animation_time_out,
         entity_motion_states_out,
         entity_animation_layers_out,
         entity_animation_previous_out,

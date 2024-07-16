@@ -136,7 +136,7 @@ public class SectorCompactor implements Destroyable
             .buf_arg(CompactEntities_k.Args.entity_flags,               sector_buffers.buffer(ENTITY_FLAG))
             .buf_arg(CompactEntities_k.Args.entity_animation_layers,    sector_buffers.buffer(ENTITY_ANIM_LAYER))
             .buf_arg(CompactEntities_k.Args.entity_animation_previous,  sector_buffers.buffer(ENTITY_ANIM_PREVIOUS))
-            .buf_arg(CompactEntities_k.Args.entity_animation_elapsed,   sector_buffers.buffer(ENTITY_ANIM_ELAPSED))
+            .buf_arg(CompactEntities_k.Args.entity_animation_time,      sector_buffers.buffer(ENTITY_ANIM_TIME))
             .buf_arg(CompactEntities_k.Args.entity_animation_blend,     sector_buffers.buffer(ENTITY_ANIM_BLEND))
             .buf_arg(CompactEntities_k.Args.entity_motion_states,       sector_buffers.buffer(ENTITY_MOTION_STATE))
             .buf_arg(CompactEntities_k.Args.entity_entity_hull_tables,  sector_buffers.buffer(ENTITY_HULL_TABLE))

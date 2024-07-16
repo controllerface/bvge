@@ -7,7 +7,7 @@ public class MergeEntity_k extends GPUKernel
     public enum Args
     {
         entities_in,
-        entity_animation_elapsed_in,
+        entity_animation_time_in,
         entity_motion_states_in,
         entity_animation_layers_in,
         entity_animation_previous_in,
@@ -20,7 +20,7 @@ public class MergeEntity_k extends GPUKernel
         entity_types_in,
         entity_flags_in,
         entities_out,
-        entity_animation_elapsed_out,
+        entity_animation_time_out,
         entity_motion_states_out,
         entity_animation_layers_out,
         entity_animation_previous_out,

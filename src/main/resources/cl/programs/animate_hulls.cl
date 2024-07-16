@@ -153,7 +153,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                __global float *animation_tick_rates,
                                __global int2 *entity_animation_layers,
                                __global int2 *entity_animation_previous,
-                               __global float2 *entity_animation_elapsed,
+                               __global float2 *entity_animation_time,
                                __global float2 *entity_animation_blend,
                                float delta_time,
                                int max_entity)
@@ -167,7 +167,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
     float16 model_transform = model_transforms[entity_transform_id];
     int2 current_animation_layers = entity_animation_layers[current_entity];
     int2 previous_animation_layers = entity_animation_previous[current_entity]; 
-    float2 current_frame_time = entity_animation_elapsed[current_entity];
+    float2 current_frame_time = entity_animation_time[current_entity];
     float2 current_blend_time = entity_animation_blend[current_entity];
 
     float dir = ((flags & FACE_LEFT) != 0)
@@ -227,7 +227,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
     entity_animation_blend[current_entity] = current_blend_time;
     entity_animation_layers[current_entity] = current_animation_layers;
     entity_animation_previous[current_entity] = previous_animation_layers;
-    entity_animation_elapsed[current_entity] = current_frame_time;
+    entity_animation_time[current_entity] = current_frame_time;
 }
 
 __kernel void animate_bones(__global float16 *bones,

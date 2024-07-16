@@ -7,7 +7,7 @@ public class WriteEntityInfo_k extends GPUKernel
     public enum Args
     {
         entity_accel,
-        entity_animation_elapsed,
+        entity_animation_time,
         entity_animation_blend,
         entity_motion_states,
         entity_animation_layers,
@@ -15,7 +15,7 @@ public class WriteEntityInfo_k extends GPUKernel
         entity_flags,
         target,
         new_accel,
-        new_anim_elapsed,
+        new_anim_time,
         new_anim_blend,
         new_motion_state,
         new_anim_layers,

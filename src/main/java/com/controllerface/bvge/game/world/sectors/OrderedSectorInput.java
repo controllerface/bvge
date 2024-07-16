@@ -92,7 +92,7 @@ public class OrderedSectorInput implements SectorContainer, Destroyable
         long k_ptr_merge_entity = this.p_gpu_crud.kernel_ptr(Kernel.merge_entity);
         k_merge_entity = new MergeEntity_k(ptr_queue, k_ptr_merge_entity)
             .buf_arg(MergeEntity_k.Args.entities_in, buffers.buffer(CoreBufferType.ENTITY))
-            .buf_arg(MergeEntity_k.Args.entity_animation_elapsed_in, buffers.buffer(CoreBufferType.ENTITY_ANIM_ELAPSED))
+            .buf_arg(MergeEntity_k.Args.entity_animation_time_in, buffers.buffer(CoreBufferType.ENTITY_ANIM_TIME))
             .buf_arg(MergeEntity_k.Args.entity_motion_states_in, buffers.buffer(CoreBufferType.ENTITY_MOTION_STATE))
             .buf_arg(MergeEntity_k.Args.entity_animation_layers_in, buffers.buffer(CoreBufferType.ENTITY_ANIM_LAYER))
             .buf_arg(MergeEntity_k.Args.entity_animation_previous_in, buffers.buffer(CoreBufferType.ENTITY_ANIM_PREVIOUS))
@@ -105,7 +105,7 @@ public class OrderedSectorInput implements SectorContainer, Destroyable
             .buf_arg(MergeEntity_k.Args.entity_types_in, buffers.buffer(CoreBufferType.ENTITY_TYPE))
             .buf_arg(MergeEntity_k.Args.entity_flags_in, buffers.buffer(CoreBufferType.ENTITY_FLAG))
             .buf_arg(MergeEntity_k.Args.entities_out, core_memory.get_buffer(CoreBufferType.ENTITY))
-            .buf_arg(MergeEntity_k.Args.entity_animation_elapsed_out, core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_ELAPSED))
+            .buf_arg(MergeEntity_k.Args.entity_animation_time_out, core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_TIME))
             .buf_arg(MergeEntity_k.Args.entity_motion_states_out, core_memory.get_buffer(CoreBufferType.ENTITY_MOTION_STATE))
             .buf_arg(MergeEntity_k.Args.entity_animation_layers_out, core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_LAYER))
             .buf_arg(MergeEntity_k.Args.entity_animation_previous_out, core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_PREVIOUS))

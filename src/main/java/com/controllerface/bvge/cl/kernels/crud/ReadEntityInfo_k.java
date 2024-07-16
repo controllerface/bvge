@@ -12,7 +12,7 @@ public class ReadEntityInfo_k extends GPUKernel
         entity_flags,
         entity_animation_layers,
         entity_animation_previous,
-        entity_animation_elapsed,
+        entity_animation_time,
         entity_animation_blend,
         output,
         target,

@@ -14,7 +14,7 @@ public class CreateEntity_k extends GPUKernel
     public enum Args implements KernelArg
     {
         entities                        (cl_float4.buffer_name()),
-        entity_animation_elapsed        (cl_float2.buffer_name()),
+        entity_animation_time           (cl_float2.buffer_name()),
         entity_motion_states            (cl_short2.buffer_name()),
         entity_animation_layers         (cl_int2.buffer_name()),
         entity_animation_previous       (cl_int2.buffer_name()),
