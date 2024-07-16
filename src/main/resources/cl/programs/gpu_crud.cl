@@ -20,10 +20,10 @@ __kernel void read_entity_info(__global float4 *entities,
                               __global float2 *entity_accel,
                               __global short2 *entity_motion_states,
                               __global int *entity_flags,
-                              __global int2 *entity_animation_layers,
-                              __global int2 *entity_previous_layers,
-                              __global float2 *entity_animation_time,
-                              __global float2 *entity_previous_time,
+                              __global int4 *entity_animation_layers,
+                              __global int4 *entity_previous_layers,
+                              __global float4 *entity_animation_time,
+                              __global float4 *entity_previous_time,
                               __global float8 *entity_animation_blend,
                               __global float *output,
                               int target)
@@ -31,12 +31,12 @@ __kernel void read_entity_info(__global float4 *entities,
     
     float4 entity            = entities[target];
     float2 accel             = entity_accel[target];
-    float2 current_time      = entity_animation_time[target];
-    float2 previous_time     = entity_previous_time[target];
+    float4 current_time      = entity_animation_time[target];
+    float4 previous_time     = entity_previous_time[target];
     float8 current_blend     = entity_animation_blend[target];
     short2 motion_state      = entity_motion_states[target];
-    int2 anim_layers         = entity_animation_layers[target];
-    int2 anim_previous       = entity_previous_layers[target];
+    int4 anim_layers         = entity_animation_layers[target];
+    int4 anim_previous       = entity_previous_layers[target];
     int arm_flag             = entity_flags[target];
 
     output[0] = entity.x;
@@ -76,21 +76,21 @@ __kernel void read_entity_info(__global float4 *entities,
 
 
 __kernel void write_entity_info(__global float2 *entity_accel,
-                              __global float2 *entity_animation_time,
-                               __global float2 *entity_previous_time,
+                              __global float4 *entity_animation_time,
+                               __global float4 *entity_previous_time,
                               __global float8 *entity_animation_blend,
                               __global short2 *entity_motion_states,
-                              __global int2 *entity_animation_layers,
-                              __global int2 *entity_previous_layers,
+                              __global int4 *entity_animation_layers,
+                              __global int4 *entity_previous_layers,
                               __global int *entity_flags,
                               int target,
                               float2 new_accel,
-                              float2 new_anim_time,
-                              float2 new_prev_time,
+                              float4 new_anim_time,
+                              float4 new_prev_time,
                               float8 new_anim_blend,
                               short2 new_motion_state,
-                              int2 new_anim_layers,
-                              int2 new_anim_previous,
+                              int4 new_anim_layers,
+                              int4 new_anim_previous,
                               int new_flags)
 {
     entity_accel[target]              = new_accel;
@@ -316,11 +316,11 @@ __kernel void merge_hull(__global float4 *hulls_in,
 }
 
 __kernel void merge_entity(__global float4 *entities_in,
-                            __global float2 *entity_animation_time_in,
-                            __global float2 *entity_previous_time_in,
+                            __global float4 *entity_animation_time_in,
+                            __global float4 *entity_previous_time_in,
                             __global short2 *entity_motion_states_in,
-                            __global int2 *entity_animation_layers_in,
-                            __global int2 *entity_previous_layers_in,
+                            __global int4 *entity_animation_layers_in,
+                            __global int4 *entity_previous_layers_in,
                             __global int2 *entity_hull_tables_in,
                             __global int2 *entity_bone_tables_in,
                             __global float *entity_masses_in,
@@ -330,11 +330,11 @@ __kernel void merge_entity(__global float4 *entities_in,
                             __global int *entity_types_in,
                             __global int *entity_flags_in,
                             __global float4 *entities_out,
-                            __global float2 *entity_animation_time_out,
-                            __global float2 *entity_previous_time_out,
+                            __global float4 *entity_animation_time_out,
+                            __global float4 *entity_previous_time_out,
                             __global short2 *entity_motion_states_out,
-                            __global int2 *entity_animation_layers_out,
-                            __global int2 *entity_previous_layers_out,
+                            __global int4 *entity_animation_layers_out,
+                            __global int4 *entity_previous_layers_out,
                             __global int2 *entity_hull_tables_out,
                             __global int2 *entity_bone_tables_out,
                             __global float *entity_masses_out,
@@ -353,11 +353,11 @@ __kernel void merge_entity(__global float4 *entities_in,
     int target_entity = current_entity + entity_offset;
 
     entities_out[target_entity]                  = entities_in[current_entity];
-    entity_animation_time_out[target_entity]  = entity_animation_time_in[current_entity];
-    entity_previous_time_out[target_entity]  = entity_previous_time_in[current_entity];
+    entity_animation_time_out[target_entity]     = entity_animation_time_in[current_entity];
+    entity_previous_time_out[target_entity]      = entity_previous_time_in[current_entity];
     entity_motion_states_out[target_entity]      = entity_motion_states_in[current_entity];
     entity_animation_layers_out[target_entity]   = entity_animation_layers_in[current_entity];
-    entity_previous_layers_out[target_entity] = entity_previous_layers_in[current_entity];
+    entity_previous_layers_out[target_entity]    = entity_previous_layers_in[current_entity];
     entity_hull_tables_out[target_entity]        = entity_hull_tables_in[current_entity] + (int2)(hull_offset);
     entity_bone_tables_out[target_entity]        = entity_bone_tables_in[current_entity] + (int2)(armature_bone_offset);
     entity_masses_out[target_entity]             = entity_masses_in[current_entity];
@@ -503,11 +503,11 @@ __kernel void egress_entities(__global int *point_hull_indices_in,
                               __global int *entity_bone_parent_ids_in,
         
                               __global float4 *entities_in,
-                              __global float2 *entity_animation_time_in,
-                              __global float2 *entity_previous_time_in,
+                              __global float4 *entity_animation_time_in,
+                              __global float4 *entity_previous_time_in,
                               __global short2 *entity_motion_states_in,
-                              __global int2 *entity_animation_layers_in,
-                              __global int2 *entity_previous_layers_in,
+                              __global int4 *entity_animation_layers_in,
+                              __global int4 *entity_previous_layers_in,
                               __global int2 *entity_hull_tables_in,
                               __global int2 *entity_bone_tables_in,
                               __global float *entity_masses_in,
@@ -518,11 +518,11 @@ __kernel void egress_entities(__global int *point_hull_indices_in,
                               __global int *entity_flags_in,
 
                               __global float4 *entities_out,
-                              __global float2 *entity_animation_time_out,
-                              __global float2 *entity_previous_time_out,
+                              __global float4 *entity_animation_time_out,
+                              __global float4 *entity_previous_time_out,
                               __global short2 *entity_motion_states_out,
-                              __global int2 *entity_animation_layers_out,
-                              __global int2 *entity_previous_layers_out,
+                              __global int4 *entity_animation_layers_out,
+                              __global int4 *entity_previous_layers_out,
                               __global int2 *entity_hull_tables_out,
                               __global int2 *entity_bone_tables_out,
                               __global float *entity_masses_out,

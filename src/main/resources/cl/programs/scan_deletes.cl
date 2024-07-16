@@ -351,10 +351,10 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
                                __global int *entity_model_transforms,
                                __global int *entity_types,
                                __global int *entity_flags,
-                               __global int2 *entity_animation_layers,
-                               __global int2 *entity_previous_layers,
-                               __global float2 *entity_animation_time,
-                               __global float2 *entity_previous_time,
+                               __global int4 *entity_animation_layers,
+                               __global int4 *entity_previous_layers,
+                               __global float4 *entity_animation_time,
+                               __global float4 *entity_previous_time,
                                __global float8 *entity_animation_blend,
                                __global short2 *entity_motion_states,
                                __global int2 *entity_entity_hull_tables,
@@ -397,10 +397,10 @@ __kernel void compact_entities(__global int2 *buffer_in_1,
     int entity_flag                 = entity_flags[gid];
     int2 hull_table                 = entity_entity_hull_tables[gid];
     int2 bone_table                 = entity_bone_tables[gid];
-    int2 anim_layer                 = entity_animation_layers[gid];
-    int2 prev_layer                 = entity_previous_layers[gid];
-    float2 anim_time                = entity_animation_time[gid];
-    float2 prev_time                = entity_previous_time[gid];
+    int4 anim_layer                 = entity_animation_layers[gid];
+    int4 prev_layer                 = entity_previous_layers[gid];
+    float4 anim_time                = entity_animation_time[gid];
+    float4 prev_time                = entity_previous_time[gid];
     float8 anim_blend               = entity_animation_blend[gid];
     short2 anim_states              = entity_motion_states[gid];
     

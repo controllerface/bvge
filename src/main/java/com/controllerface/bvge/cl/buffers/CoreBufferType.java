@@ -29,26 +29,34 @@ public enum CoreBufferType implements BufferType
     /*
      * x: the last rendered timestamp of the current layer 0 animation
      * y: the last rendered timestamp of the current layer 1 animation
+     * z: the last rendered timestamp of the current layer 2 animation
+     * w: the last rendered timestamp of the current layer 3 animation
      */
-    ENTITY_ANIM_TIME            (cl_float2),
+    ENTITY_ANIM_TIME            (cl_float4),
 
     /*
      * x: the last rendered timestamp of the previous layer 0 animation
      * y: the last rendered timestamp of the previous layer 1 animation
+     * z: the last rendered timestamp of the previous layer 2 animation
+     * w: the last rendered timestamp of the previous layer 3 animation
      */
-    ENTITY_PREV_TIME            (cl_float2),
+    ENTITY_PREV_TIME            (cl_float4),
 
     /*
      * x: the current layer 0 animation index
      * y: the current layer 1 animation index
+     * z: the current layer 2 animation index
+     * w: the current layer 3 animation index
      */
-    ENTITY_ANIM_LAYER           (cl_int2),
+    ENTITY_ANIM_LAYER           (cl_int4),
 
     /*
      * x: the previous layer 0 animation index
      * y: the previous layer 1 animation index
+     * z: the previous layer 2 animation index
+     * w: the previous layer 3 animation index
      */
-    ENTITY_PREV_LAYER           (cl_int2),
+    ENTITY_PREV_LAYER           (cl_int4),
 
     /*
      * x: number of ticks moving downward

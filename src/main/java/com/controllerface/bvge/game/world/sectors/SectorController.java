@@ -450,10 +450,10 @@ public class SectorController implements SectorContainer, Destroyable
             .set_arg(CreateEntity_k.Args.new_entity_hull_table,         hull_table)
             .set_arg(CreateEntity_k.Args.new_entity_bone_table,         bone_table)
             .set_arg(CreateEntity_k.Args.new_entity_mass,               mass)
-            .set_arg(CreateEntity_k.Args.new_entity_animation_layer,    arg_int2(anim_index, -1))
-            .set_arg(CreateEntity_k.Args.new_entity_previous_layer,     arg_int2(-1, -1))
-            .set_arg(CreateEntity_k.Args.new_entity_animation_time,     arg_float2(anim_time, 0.0f))
-            .set_arg(CreateEntity_k.Args.new_entity_previous_time,      arg_float2(0.0f, 0.0f))
+            .set_arg(CreateEntity_k.Args.new_entity_animation_layer,    arg_int4(anim_index, -1, -1, -1))
+            .set_arg(CreateEntity_k.Args.new_entity_previous_layer,     arg_int4(-1, -1, -1, -1))
+            .set_arg(CreateEntity_k.Args.new_entity_animation_time,     arg_float4(anim_time, 0.0f, 0.0f, 0.0f))
+            .set_arg(CreateEntity_k.Args.new_entity_previous_time,      arg_float4(0.0f, 0.0f, 0.0f, 0.0f))
             .set_arg(CreateEntity_k.Args.new_entity_animation_state,    arg_short2((short) 0, (short) 0))
             .call_task();
 

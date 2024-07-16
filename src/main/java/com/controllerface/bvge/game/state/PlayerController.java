@@ -90,12 +90,12 @@ public class PlayerController implements Destroyable
         block_cursor_pos = new float[2];
         entity           = new float[4];
         accel            = new float[2];
-        current_time     = new float[2];
-        prev_time = new float[2];
+        current_time     = new float[4];
+        prev_time        = new float[4];
         current_blend    = new float[8];
         motion_state     = new short[2];
-        anim_layers      = new int[2];
-        prev_layers = new int[2];
+        anim_layers      = new int[4];
+        prev_layers      = new int[4];
         arm_flag         = 0;
         current_budget   = 0;
 

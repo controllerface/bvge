@@ -86,10 +86,10 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
             buffer(ENTITY_MODEL_ID).transfer_out_int(raw.entity_model_id, cl_int.size(), entity_capacity);
             buffer(ENTITY_TRANSFORM_ID).transfer_out_int(raw.entity_model_transform, cl_int.size(), entity_capacity);
             buffer(ENTITY_MASS).transfer_out_float(raw.entity_mass, cl_float.size(), entity_capacity);
-            buffer(ENTITY_ANIM_LAYER).transfer_out_int(raw.entity_anim_layers, cl_int.size(), entity_vec2);
-            buffer(ENTITY_PREV_LAYER).transfer_out_int(raw.entity_anim_previous, cl_int.size(), entity_vec2);
-            buffer(ENTITY_ANIM_TIME).transfer_out_float(raw.entity_anim_time, cl_float.size(), entity_vec2);
-            buffer(ENTITY_PREV_TIME).transfer_out_float(raw.entity_prev_time, cl_float.size(), entity_vec2);
+            buffer(ENTITY_ANIM_LAYER).transfer_out_int(raw.entity_anim_layers, cl_int.size(), entity_vec4);
+            buffer(ENTITY_PREV_LAYER).transfer_out_int(raw.entity_anim_previous, cl_int.size(), entity_vec4);
+            buffer(ENTITY_ANIM_TIME).transfer_out_float(raw.entity_anim_time, cl_float.size(), entity_vec4);
+            buffer(ENTITY_PREV_TIME).transfer_out_float(raw.entity_prev_time, cl_float.size(), entity_vec4);
             buffer(ENTITY_MOTION_STATE).transfer_out_short(raw.entity_motion_state, cl_short.size(), entity_vec2);
             buffer(ENTITY_HULL_TABLE).transfer_out_int(raw.entity_hull_table, cl_int.size(), entity_vec2);
             buffer(ENTITY_BONE_TABLE).transfer_out_int(raw.entity_bone_table, cl_int.size(), entity_vec2);
@@ -165,11 +165,11 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
             int entity_bone_vec16 = entity_bone_capacity * 16;
 
             entity = ensure_float(entity, entity_vec4);
-            entity_anim_time = ensure_float(entity_anim_time, entity_vec2);
-            entity_prev_time = ensure_float(entity_prev_time, entity_vec2);
+            entity_anim_time = ensure_float(entity_anim_time, entity_vec4);
+            entity_prev_time = ensure_float(entity_prev_time, entity_vec4);
             entity_motion_state = ensure_short(entity_motion_state, entity_vec2);
-            entity_anim_layers = ensure_int(entity_anim_layers, entity_vec2);
-            entity_anim_previous = ensure_int(entity_anim_previous, entity_vec2);
+            entity_anim_layers = ensure_int(entity_anim_layers, entity_vec4);
+            entity_anim_previous = ensure_int(entity_anim_previous, entity_vec4);
             entity_flag = ensure_int(entity_flag, entity_capacity);
             entity_type = ensure_int(entity_type, entity_capacity);
             entity_root_hull = ensure_int(entity_root_hull, entity_capacity);

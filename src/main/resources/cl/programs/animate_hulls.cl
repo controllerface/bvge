@@ -86,11 +86,11 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                            __global float *animation_tick_rates,
                            __global float4 *key_frames,
                            __global float *frame_times,
-                           float2 current_time,
-                           float2 previous_time,
+                           float4 current_time,
+                           float4 previous_time,
                            float8 current_blend,
-                           int2 current_animation_layer,
-                           int2 previous_animation_layer,
+                           int4 current_animation_layer,
+                           int4 previous_animation_layer,
                            int bone_id,
                            int layer_id)
 {
@@ -170,10 +170,10 @@ __kernel void animate_entities(__global float16 *armature_bones,
                                __global int *animation_timing_indices,
                                __global float *animation_durations,
                                __global float *animation_tick_rates,
-                               __global int2 *entity_animation_layers,
-                               __global int2 *entity_previous_layer,
-                               __global float2 *entity_animation_time,
-                               __global float2 *entity_previous_time,
+                               __global int4 *entity_animation_layers,
+                               __global int4 *entity_previous_layer,
+                               __global float4 *entity_animation_time,
+                               __global float4 *entity_previous_time,
                                __global float8 *entity_animation_blend,
                                float delta_time,
                                int max_entity)
@@ -185,10 +185,10 @@ __kernel void animate_entities(__global float16 *armature_bones,
     int entity_transform_id = entity_model_transforms[current_entity];
     int flags = entity_flags[current_entity];
     float16 model_transform = model_transforms[entity_transform_id];
-    int2 current_animation_layers = entity_animation_layers[current_entity];
-    int2 previous_animation_layers = entity_previous_layer[current_entity]; 
-    float2 current_frame_time = entity_animation_time[current_entity];
-    float2 previous_frame_time = entity_previous_time[current_entity];
+    int4 current_animation_layers = entity_animation_layers[current_entity];
+    int4 previous_animation_layers = entity_previous_layer[current_entity]; 
+    float4 current_frame_time = entity_animation_time[current_entity];
+    float4 previous_frame_time = entity_previous_time[current_entity];
     float8 current_blend_time = entity_animation_blend[current_entity];
 
     float dir = ((flags & FACE_LEFT) != 0)
@@ -246,8 +246,6 @@ __kernel void animate_entities(__global float16 *armature_bones,
     previous_frame_time += delta_time;    
 
     entity_animation_blend[current_entity]  = current_blend_time;
-    // entity_animation_layers[current_entity] = current_animation_layers;
-    // entity_previous_layer[current_entity]   = previous_animation_layers;
     entity_animation_time[current_entity]   = current_frame_time;
     entity_previous_time[current_entity]    = previous_frame_time;
 }
