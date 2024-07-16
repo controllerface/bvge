@@ -192,26 +192,31 @@ public class PlayerController implements Destroyable
         accel[1]         = info[5];
         current_time[0]  = info[6];
         current_time[1]  = info[7];
-        prev_time[0] = info[8];
-        prev_time[1] = info[9];
-
-        current_blend[0] = info[10];
-        current_blend[1] = info[11];
-        current_blend[2] = info[12];
-        current_blend[3] = info[13];
-        current_blend[4] = info[14];
-        current_blend[5] = info[15];
-        current_blend[6] = info[16];
-        current_blend[7] = info[17];
-
-
-        motion_state[0]  = (short)info[18];
-        motion_state[1]  = (short)info[19];
-        anim_layers[0]   = (int)info[20];
-        anim_layers[1]   = (int)info[21];
-        prev_layers[0]   = (int)info[22];
-        prev_layers[1]   = (int)info[23];
-        arm_flag         = (int)info[24];
+        current_time[2]  = info[8];
+        current_time[3]  = info[9];
+        prev_time[0]     = info[10];
+        prev_time[1]     = info[11];
+        prev_time[2]     = info[12];
+        prev_time[3]     = info[13];
+        current_blend[0] = info[14];
+        current_blend[1] = info[15];
+        current_blend[2] = info[16];
+        current_blend[3] = info[17];
+        current_blend[4] = info[18];
+        current_blend[5] = info[19];
+        current_blend[6] = info[20];
+        current_blend[7] = info[21];
+        motion_state[0]  = (short)info[22];
+        motion_state[1]  = (short)info[23];
+        anim_layers[0]   = (int)info[24];
+        anim_layers[1]   = (int)info[25];
+        anim_layers[2]   = (int)info[26];
+        anim_layers[3]   = (int)info[27];
+        prev_layers[0]   = (int)info[28];
+        prev_layers[1]   = (int)info[28];
+        prev_layers[2]   = (int)info[30];
+        prev_layers[3]   = (int)info[31];
+        arm_flag         = (int)info[32];
 
         boolean can_jump   = (arm_flag & Constants.EntityFlags.CAN_JUMP.bits) !=0;
         boolean is_wet     = (arm_flag & Constants.EntityFlags.IS_WET.bits)   !=0;

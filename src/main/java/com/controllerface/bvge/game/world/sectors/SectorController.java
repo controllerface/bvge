@@ -19,7 +19,7 @@ public class SectorController implements SectorContainer, Destroyable
     private static final int EGRESS_COUNTERS = 8;
     private static final int EGRESS_COUNTERS_SIZE = cl_int.size() * EGRESS_COUNTERS;
 
-    private static final int INFO_WIDTH = 25;
+    private static final int INFO_WIDTH = 33;
 
     private final CoreBufferGroup sector_buffers;
 

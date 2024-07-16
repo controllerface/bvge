@@ -36,7 +36,7 @@ __kernel void read_entity_info(__global float4 *entities,
     float8 current_blend     = entity_animation_blend[target];
     short2 motion_state      = entity_motion_states[target];
     int4 anim_layers         = entity_animation_layers[target];
-    int4 anim_previous       = entity_previous_layers[target];
+    int4 prev_layers         = entity_previous_layers[target];
     int arm_flag             = entity_flags[target];
 
     output[0] = entity.x;
@@ -47,23 +47,31 @@ __kernel void read_entity_info(__global float4 *entities,
     output[5] = accel.y;
     output[6] = current_time.x;
     output[7] = current_time.y;
-    output[8] = previous_time.x;
-    output[9] = previous_time.y;
-    output[10] = current_blend.s0;
-    output[11] = current_blend.s1;
-    output[12] = current_blend.s2;
-    output[13] = current_blend.s3;
-    output[14] = current_blend.s4;
-    output[15] = current_blend.s5;
-    output[16] = current_blend.s6;
-    output[17] = current_blend.s7;
-    output[18] = (float)motion_state.x;
-    output[19] = (float)motion_state.y;
-    output[20] = (float)anim_layers.x;
-    output[21] = (float)anim_layers.y;
-    output[22] = (float)anim_previous.x;
-    output[23] = (float)anim_previous.y;
-    output[24] = (float)arm_flag;
+    output[8] = current_time.z;
+    output[9] = current_time.w;
+    output[10] = previous_time.x;
+    output[11] = previous_time.y;
+    output[12] = previous_time.z;
+    output[13] = previous_time.w;
+    output[14] = current_blend.s0;
+    output[15] = current_blend.s1;
+    output[16] = current_blend.s2;
+    output[17] = current_blend.s3;
+    output[18] = current_blend.s4;
+    output[19] = current_blend.s5;
+    output[20] = current_blend.s6;
+    output[21] = current_blend.s7;
+    output[22] = (float)motion_state.x;
+    output[23] = (float)motion_state.y;
+    output[24] = (float)anim_layers.x;
+    output[25] = (float)anim_layers.y;
+    output[26] = (float)anim_layers.z;
+    output[27] = (float)anim_layers.w;
+    output[28] = (float)prev_layers.x;
+    output[28] = (float)prev_layers.y;
+    output[30] = (float)prev_layers.z;
+    output[31] = (float)prev_layers.w;
+    output[32] = (float)arm_flag;
 }
 
 
