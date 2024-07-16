@@ -49,15 +49,21 @@ __kernel void read_entity_info(__global float4 *entities,
     output[7] = current_time.y;
     output[8] = previous_time.x;
     output[9] = previous_time.y;
-    output[10] = current_blend.x;
-    output[11] = current_blend.y;
-    output[12] = (float)motion_state.x;
-    output[13] = (float)motion_state.y;
-    output[14] = (float)anim_layers.x;
-    output[15] = (float)anim_layers.y;
-    output[16] = (float)anim_previous.x;
-    output[17] = (float)anim_previous.y;
-    output[18] = (float)arm_flag;
+    output[10] = current_blend.s0;
+    output[11] = current_blend.s1;
+    output[12] = current_blend.s2;
+    output[13] = current_blend.s3;
+    output[14] = current_blend.s4;
+    output[15] = current_blend.s5;
+    output[16] = current_blend.s6;
+    output[17] = current_blend.s7;
+    output[18] = (float)motion_state.x;
+    output[19] = (float)motion_state.y;
+    output[20] = (float)anim_layers.x;
+    output[21] = (float)anim_layers.y;
+    output[22] = (float)anim_previous.x;
+    output[23] = (float)anim_previous.y;
+    output[24] = (float)arm_flag;
 }
 
 
@@ -90,7 +96,7 @@ __kernel void write_entity_info(__global float2 *entity_accel,
     entity_accel[target]              = new_accel;
     entity_animation_time[target]     = new_anim_time;
     entity_previous_time[target]      = new_prev_time;
-    entity_animation_blend[target]    = (float8)(new_anim_blend.x, new_anim_blend.y, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    entity_animation_blend[target]    = new_anim_blend;
     entity_motion_states[target]      = new_motion_state;
     entity_animation_layers[target]   = new_anim_layers;
     entity_previous_layers[target]    = new_anim_previous;

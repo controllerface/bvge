@@ -239,20 +239,15 @@ __kernel void animate_entities(__global float16 *armature_bones,
         float16 global_transform = matrix_mul_affine(parent_transform, node_transform);
         armature_bones[current_bone_bind] = global_transform;
     }
+    // todo: update all blend times
     current_blend_time.y += delta_time;
 
-    previous_animation_layers.x = current_blend_time.y < current_blend_time.x 
-        ? previous_animation_layers.x
-        : -1; 
-
-
-    // todo: to both current and previous times
     current_frame_time += delta_time;
     previous_frame_time += delta_time;    
 
     entity_animation_blend[current_entity]  = current_blend_time;
-    entity_animation_layers[current_entity] = current_animation_layers;
-    entity_previous_layer[current_entity]   = previous_animation_layers;
+    // entity_animation_layers[current_entity] = current_animation_layers;
+    // entity_previous_layer[current_entity]   = previous_animation_layers;
     entity_animation_time[current_entity]   = current_frame_time;
     entity_previous_time[current_entity]    = previous_frame_time;
 }

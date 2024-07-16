@@ -194,15 +194,24 @@ public class PlayerController implements Destroyable
         current_time[1]  = info[7];
         prev_time[0] = info[8];
         prev_time[1] = info[9];
+
         current_blend[0] = info[10];
         current_blend[1] = info[11];
-        motion_state[0]  = (short)info[12];
-        motion_state[1]  = (short)info[13];
-        anim_layers[0]   = (int)info[14];
-        anim_layers[1]   = (int)info[15];
-        prev_layers[0]   = (int)info[16];
-        prev_layers[1]   = (int)info[17];
-        arm_flag         = (int)info[18];
+        current_blend[2] = info[12];
+        current_blend[3] = info[13];
+        current_blend[4] = info[14];
+        current_blend[5] = info[15];
+        current_blend[6] = info[16];
+        current_blend[7] = info[17];
+
+
+        motion_state[0]  = (short)info[18];
+        motion_state[1]  = (short)info[19];
+        anim_layers[0]   = (int)info[20];
+        anim_layers[1]   = (int)info[21];
+        prev_layers[0]   = (int)info[22];
+        prev_layers[1]   = (int)info[23];
+        arm_flag         = (int)info[24];
 
         boolean can_jump   = (arm_flag & Constants.EntityFlags.CAN_JUMP.bits) !=0;
         boolean is_wet     = (arm_flag & Constants.EntityFlags.IS_WET.bits)   !=0;
@@ -261,7 +270,6 @@ public class PlayerController implements Destroyable
             prev_layers[0]   = anim_layers[0];
             prev_time[0]     = current_time[0];
             current_time[0]  = 0.0f;
-
             current_blend[0] = MovementState.blend_time(current_move_state, next_move_state);
             current_blend[1] = 0.0f;
         }
@@ -271,11 +279,14 @@ public class PlayerController implements Destroyable
             prev_layers[1]   = anim_layers[1];
             prev_time[1]     = current_time[1];
             current_time[1]  = 0.0f;
-
-//            current_blend[0] = ActionState.blend_time(current_action_state, next_action_state);
-//            current_blend[1] = 0.0f;
+            current_blend[2] = ActionState.blend_time(current_action_state, next_action_state);
+            current_blend[3] = 0.0f;
         }
 
+        // when blending is done, unset the previous animation for the layer
+        prev_layers[0] = current_blend[1] < current_blend[0]
+            ? prev_layers[0]
+            : -1;
 
         current_base_state   = next_base_state;
         current_move_state   = next_move_state;
