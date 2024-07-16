@@ -4,16 +4,16 @@ import java.util.Arrays;
 
 public enum NamedBone
 {
-    PELVIS  (0),
-    TORSO   (1),
-    NECK    (1),
-    HEAD    (1),
-    BICEP   (1),
-    FOREARM (1),
-    HAND    (1),
-    THIGH   (0),
-    SHIN    (0),
-    FOOT    (0),
+    PELVIS  (1),
+    TORSO   (2),
+    NECK    (2),
+    HEAD    (2),
+    BICEP   (2),
+    FOREARM (2),
+    HAND    (2),
+    THIGH   (1),
+    SHIN    (1),
+    FOOT    (1),
 
     UNKNOWN(0),
 

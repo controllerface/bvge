@@ -5,7 +5,6 @@ import com.controllerface.bvge.physics.StateInput;
 import com.controllerface.bvge.physics.StateOutput;
 
 import static com.controllerface.bvge.ecs.components.InputBinding.*;
-import static com.controllerface.bvge.ecs.components.InputBinding.JUMP;
 
 public enum ActionState
 {

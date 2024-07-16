@@ -265,59 +265,58 @@ public class PlayerController implements Destroyable
             prev_layers[0]   = anim_layers[0];
             prev_time[0]     = current_time[0];
             current_time[0]  = 0.0f;
-
-//            current_blend[0] = BaseState.blend_time(current_base_state, next_base_state);
-//            current_blend[1] = 0.0f;
+            current_blend[0] = BaseState.blend_time(current_base_state, next_base_state);
+            current_blend[1] = 0.0f;
         }
 
-        if (blend_move && next_move_state != MovementState.IDLE)
+        if (blend_move)
         {
-            prev_layers[0]   = anim_layers[0];
-            prev_time[0]     = current_time[0];
-            current_time[0]  = 0.0f;
-            current_blend[0] = MovementState.blend_time(current_move_state, next_move_state);
-            current_blend[1] = 0.0f;
+            System.out.println("blend move: " + anim_layers[1]);
+
+            int p = anim_layers[1];
+            if (p == -1) p = anim_layers[0];
+
+            prev_layers[1]   = p;
+            prev_time[1]     = current_time[1];
+            current_time[1]  = 0.0f;
+            current_blend[2] = Math.min(MovementState.blend_time(current_move_state, next_move_state), 0.2f);
+            current_blend[3] = 0.0f;
         }
 
         if (blend_action)
         {
-            prev_layers[1]   = anim_layers[1];
-            prev_time[1]     = current_time[1];
-            current_time[1]  = 0.0f;
-            current_blend[2] = ActionState.blend_time(current_action_state, next_action_state);
-            current_blend[3] = 0.0f;
+            System.out.println("blend action: " + anim_layers[2]);
+
+            int p = anim_layers[2];
+            if (p == -1) p = anim_layers[1];
+            if (p == -1) p = anim_layers[0];
+
+            prev_layers[2]   = p;
+            prev_time[2]     = current_time[2];
+            current_time[2]  = 0.0f;
+            current_blend[4] = Math.min(ActionState.blend_time(current_action_state, next_action_state), 0.2f);
+            current_blend[5] = 0.0f;
         }
 
         // when blending is done, unset the previous animation for the layer
-        prev_layers[0] = current_blend[1] < current_blend[0]
-            ? prev_layers[0]
-            : -1;
-
-        current_base_state   = next_base_state;
-        current_move_state   = next_move_state;
-        current_action_state = next_action_state;
-
-        //var current_state = AnimationState.from_index(anim_layers[0]);
-        //var next_state    = AnimationState.process(input, output, current_state, player);
-
-        // transition handling
-
-        //boolean blend = current_state != next_state;
-
-//        if (blend)
-//        {
-//            prev_layers[0]   = anim_layers[0];
-//            prev_time[0]     = current_time[0];
-//            current_time[0]  = 0.0f;
-//            current_blend[0] = AnimationState.blend_time(current_state, next_state);
-//            current_blend[1] = 0.0f;
-//        }
+        if (current_blend[1] >= current_blend[0]) prev_layers[0] = -1;
+        if (current_blend[3] >= current_blend[2]) prev_layers[1] = -1;
+        if (current_blend[5] >= current_blend[4]) prev_layers[2] = -1;
+        if (current_blend[7] >= current_blend[6]) prev_layers[3] = -1;
 
         anim_layers[0] = next_base_state.animation.ordinal();
-        if (next_move_state != MovementState.IDLE) anim_layers[0] = next_move_state.animation.ordinal();
-        anim_layers[1] = next_action_state == ActionState.IDLE
-            ? -1
-            : next_action_state.animation.ordinal();
+        anim_layers[1] = next_move_state.animation.ordinal();
+        anim_layers[2] = next_action_state.animation.ordinal();
+        anim_layers[3] = -1;
+
+        if (prev_layers[1] == -1 && anim_layers[1] == 0) anim_layers[1] = -1;
+        if (prev_layers[2] == -1 && anim_layers[2] == 0) anim_layers[2] = -1;
+        //if (prev_layers[3] == -1 && anim_layers[3] == 0) anim_layers[3] = -1;
+
+//        if (next_move_state != MovementState.IDLE) anim_layers[0] = next_move_state.animation.ordinal();
+//        anim_layers[1] = next_action_state == ActionState.IDLE
+//            ? -1
+//            : next_action_state.animation.ordinal();
 
         // jumping
 
@@ -373,7 +372,9 @@ public class PlayerController implements Destroyable
             ? arm_flag | CAN_COLLECT.bits
             : arm_flag & ~CAN_COLLECT.bits;
 
-        System.out.println("debug: current_blend[] = " + Arrays.toString(current_blend));
+        //System.out.println("debug: anim_layers[] = " + Arrays.toString(anim_layers));
+        //System.out.println("debug: prev_layers[] = " + Arrays.toString(prev_layers));
+        //System.out.println("debug: current_blend[] = " + Arrays.toString(current_blend));
 
         GPGPU.core_memory.write_entity_info(entity_id.index(),
             accel,
@@ -385,6 +386,9 @@ public class PlayerController implements Destroyable
             prev_layers,
             arm_flag);
 
+        current_base_state   = next_base_state;
+        current_move_state   = next_move_state;
+        current_action_state = next_action_state;
     }
 
     public void destroy()
