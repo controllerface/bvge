@@ -11,13 +11,13 @@ import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
 import com.controllerface.bvge.window.events.Event;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 import static com.controllerface.bvge.cl.CLData.cl_float;
 import static com.controllerface.bvge.cl.CLData.cl_int;
 import static com.controllerface.bvge.ecs.components.InputBinding.*;
 import static com.controllerface.bvge.util.Constants.EntityFlags.*;
+import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 
 public class PlayerController implements Destroyable
 {
@@ -56,8 +56,8 @@ public class PlayerController implements Destroyable
     private int current_budget;
 
     private BaseState current_base_state     = BaseState.IDLE;
-    private MovementState current_move_state = MovementState.IDLE;
-    private ActionState current_action_state = ActionState.IDLE;
+    private MovementState current_move_state = MovementState.NONE;
+    private ActionState current_action_state = ActionState.NONE;
 
     public PlayerController(ECS ecs, PlayerInventory playerInventory)
     {
@@ -174,8 +174,17 @@ public class PlayerController implements Destroyable
         }
     }
 
+    boolean l1_idle = true;
+    boolean l2_idle = true;
+    boolean l3_idle = true;
+
+    boolean l1_empty = true;
+    boolean l2_empty = true;
+    boolean l3_empty = true;
+
     public void update_player_state()
     {
+        glfwPollEvents();
 //        System.out.println("debug: base   " + current_base_state);
 //        System.out.println("debug: move   " + current_move_state);
 //        System.out.println("debug: action " + current_action_state);
@@ -262,39 +271,43 @@ public class PlayerController implements Destroyable
 
         if (blend_base)
         {
-            prev_layers[0]   = anim_layers[0];
+            anim_layers[0]   = next_base_state.animation.ordinal();
+            prev_layers[0]   = current_base_state.animation.ordinal();
             prev_time[0]     = current_time[0];
             current_time[0]  = 0.0f;
-            current_blend[0] = BaseState.blend_time(current_base_state, next_base_state);
+            current_blend[0] = AnimationState.blend_time(current_base_state.animation, next_base_state.animation);
             current_blend[1] = 0.0f;
         }
 
         if (blend_move)
         {
-            System.out.println("blend move: " + anim_layers[1]);
-
-            int p = anim_layers[1];
-            if (p == -1) p = anim_layers[0];
-
-            prev_layers[1]   = p;
+            System.out.println("blend move: " + current_move_state + " to " + next_move_state);
+            if (next_move_state != MovementState.NONE)
+            {
+                l1_idle = false;
+                l1_empty = false;
+            }
+            anim_layers[1]   = next_move_state.animation.ordinal();
+            prev_layers[1]   = current_move_state.animation.ordinal();
             prev_time[1]     = current_time[1];
             current_time[1]  = 0.0f;
-            current_blend[2] = Math.min(MovementState.blend_time(current_move_state, next_move_state), 0.2f);
+            current_blend[2] = AnimationState.blend_time(current_move_state.animation, next_move_state.animation);
             current_blend[3] = 0.0f;
         }
 
         if (blend_action)
         {
-            System.out.println("blend action: " + anim_layers[2]);
-
-            int p = anim_layers[2];
-            if (p == -1) p = anim_layers[1];
-            if (p == -1) p = anim_layers[0];
-
-            prev_layers[2]   = p;
+            System.out.println("blend action: " + current_action_state + " to " + next_action_state);
+            if (next_action_state != ActionState.NONE)
+            {
+                l2_idle = false;
+                l2_empty = false;
+            }
+            anim_layers[2]   = next_action_state.animation.ordinal();
+            prev_layers[2]   = current_action_state.animation.ordinal();
             prev_time[2]     = current_time[2];
             current_time[2]  = 0.0f;
-            current_blend[4] = Math.min(ActionState.blend_time(current_action_state, next_action_state), 0.2f);
+            current_blend[4] = AnimationState.blend_time(current_action_state.animation, next_action_state.animation);
             current_blend[5] = 0.0f;
         }
 
@@ -304,14 +317,98 @@ public class PlayerController implements Destroyable
         if (current_blend[5] >= current_blend[4]) prev_layers[2] = -1;
         if (current_blend[7] >= current_blend[6]) prev_layers[3] = -1;
 
-        anim_layers[0] = next_base_state.animation.ordinal();
-        anim_layers[1] = next_move_state.animation.ordinal();
-        anim_layers[2] = next_action_state.animation.ordinal();
-        anim_layers[3] = -1;
+//        anim_layers[0] = next_base_state.animation.ordinal();
+//        anim_layers[1] = next_move_state.animation.ordinal();
+//        anim_layers[2] = next_action_state.animation.ordinal();
+        //anim_layers[3] = -1;
 
-        if (prev_layers[1] == -1 && anim_layers[1] == 0) anim_layers[1] = -1;
-        if (prev_layers[2] == -1 && anim_layers[2] == 0) anim_layers[2] = -1;
-        //if (prev_layers[3] == -1 && anim_layers[3] == 0) anim_layers[3] = -1;
+
+
+
+        if (prev_layers[1] == -1 && next_move_state == MovementState.NONE)
+        {
+            anim_layers[1] = -1;
+            if (!l1_idle)
+            {
+                //System.out.println("layer 2: fallback");
+                System.out.println("blend move: " + current_move_state + " to " + current_base_state);
+                anim_layers[1]   = current_base_state.animation.ordinal();
+                prev_layers[1]   = current_move_state.animation.ordinal();
+                prev_time[1]     = current_time[1];
+                current_time[1]  = current_time[0];
+                current_blend[2] = AnimationState.blend_time(current_move_state.animation, current_base_state.animation);
+                current_blend[3] = 0.0f;
+            }
+            l1_idle = true;
+        }
+
+        if (prev_layers[2] == -1 && next_action_state == ActionState.NONE)
+        {
+            anim_layers[2] = -1;
+            if (!l2_idle)
+            {
+                //System.out.println("layer 3: fallback");
+                System.out.println("blend action: " + current_action_state + " to " + current_move_state);
+                anim_layers[2]   = current_move_state.animation.ordinal();
+                prev_layers[2]   = current_action_state.animation.ordinal();
+                prev_time[2]     = current_time[2];
+                current_time[2]  = current_time[1];
+                current_blend[4] = AnimationState.blend_time(current_action_state.animation, current_move_state.animation);
+                current_blend[5] = 0.0f;
+            }
+            l2_idle = true;
+        }
+        if (prev_layers[3] == -1)// && anim_layers[3] == 0)
+        {
+            //System.out.println("layer 4: fallback");
+            anim_layers[3] = -1;
+        }
+
+
+
+        if (anim_layers[1] == -1)
+        {
+            //if (l1_idle && !l1_empty)
+            //{
+                //System.out.println("layer 2: fallback 2");
+                anim_layers[1] = anim_layers[0];
+                prev_layers[1] = prev_layers[0];
+                prev_time[1] = prev_time[0];
+                current_time[1] = current_time[0];
+                current_blend[2] = current_blend[0];
+                current_blend[3] = current_blend[1];
+                l1_empty = true;
+            //}
+        }
+
+        if (anim_layers[2] == -1)
+        {
+            //if (l2_idle && !l2_empty)
+            //{
+                //System.out.println("layer 3: fallback 2");
+                anim_layers[2] = anim_layers[1];
+                prev_layers[2] = prev_layers[1];
+                prev_time[2] = prev_time[1];
+                current_time[2] = current_time[1];
+                current_blend[4] = current_blend[2];
+                current_blend[5] = current_blend[3];
+                l2_empty = true;
+            //}
+        }
+
+        if (anim_layers[3] == -1)
+        {
+            //System.out.println("layer 4: fallback");
+            anim_layers[3]   = anim_layers[2] ;
+            prev_layers[3]   = prev_layers[2] ;
+            prev_time[3]     = prev_time[2] ;
+            current_time[3]  = current_time[2];
+            current_blend[6] = current_blend[4];
+            current_blend[7] = current_blend[5];
+        }
+
+
+
 
 //        if (next_move_state != MovementState.IDLE) anim_layers[0] = next_move_state.animation.ordinal();
 //        anim_layers[1] = next_action_state == ActionState.IDLE

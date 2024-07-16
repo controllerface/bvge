@@ -5,8 +5,8 @@ import com.controllerface.bvge.physics.StateOutput;
 public class PlayerState
 {
     private static BaseState base_state     = BaseState.IDLE;
-    private static ActionState action_state = ActionState.IDLE;
-    private static MovementState move_state = MovementState.IDLE;
+    private static ActionState action_state = ActionState.NONE;
+    private static MovementState move_state = MovementState.NONE;
 
     private static void init_output(StateOutput output)
     {

@@ -8,7 +8,7 @@ import static com.controllerface.bvge.ecs.components.InputBinding.*;
 
 public enum MovementState
 {
-    IDLE            (AnimationState.IDLE),
+    NONE            (AnimationState.IDLE),
     WALKING         (AnimationState.WALKING),
     RUNNING         (AnimationState.RUNNING),
     FALLING_FAST    (AnimationState.FALLING_FAST),
@@ -48,7 +48,7 @@ public enum MovementState
         var state = current_state;
         return switch (current_state)
         {
-            case IDLE ->
+            case NONE ->
             {
                 if (player.pressed(MOVE_LEFT) || player.pressed(MOVE_RIGHT))
                 {
@@ -83,7 +83,7 @@ public enum MovementState
                 }
                 if (!player.pressed(MOVE_LEFT) && !player.pressed(MOVE_RIGHT))
                 {
-                    state = IDLE;
+                    state = NONE;
                 }
                 if (input.can_jump && input.current_budget > 0 && player.pressed(JUMP))
                 {
@@ -112,7 +112,7 @@ public enum MovementState
                 }
                 if (!player.pressed(MOVE_LEFT) && !player.pressed(MOVE_RIGHT))
                 {
-                    state = IDLE;
+                    state = NONE;
                 }
                 if (input.can_jump && input.current_budget > 0 && player.pressed(JUMP))
                 {
@@ -179,8 +179,8 @@ public enum MovementState
                 output.next_budget -= jump_cost;
                 output.jump_amount = jump_cost == 1
                     ? player.pressed(JUMP)
-                    ? input.jump_mag
-                    : input.jump_mag / 2
+                        ? input.jump_mag
+                        : input.jump_mag / 2
                     : 0;
                 if (jump_cost == 0)
                 {
@@ -212,7 +212,13 @@ public enum MovementState
             {
                 if (input.current_time > 0.22f)
                 {
-                    state = IDLE;
+                    if (player.pressed(MOVE_LEFT) || player.pressed(MOVE_RIGHT))
+                    {
+                        state = player.pressed(RUN)
+                            ? RUNNING
+                            : WALKING;
+                    }
+                    else state = NONE;
                 }
                 yield state;
             }
@@ -242,9 +248,15 @@ public enum MovementState
 
             case LAND_SOFT ->
             {
-                if (input.current_time > 0.08f)
+                if (input.current_time > 0.40f)
                 {
-                    state = IDLE;
+                    if (player.pressed(MOVE_LEFT) || player.pressed(MOVE_RIGHT))
+                    {
+                        state = player.pressed(RUN)
+                            ? RUNNING
+                            : WALKING;
+                    }
+                    else state = NONE;
                 }
                 yield state;
             }
@@ -288,140 +300,6 @@ public enum MovementState
                 }
                 yield state;
             }
-        };
-    }
-
-    public static float blend_time(MovementState from, MovementState to)
-    {
-        return switch (from)
-        {
-            case IDLE -> switch (to)
-            {
-                case IDLE -> 0.0f;
-                case WALKING,
-                     LAND_HARD,
-                     FALLING_SLOW,
-                     LAND_SOFT,
-                     SWIM_UP,
-                     SWIM_DOWN,
-                     FALLING_FAST,
-                     JUMPING,
-                     RUNNING,
-                     IN_AIR -> 0.4f;
-                case RECOIL -> 0.1f;
-            };
-            case WALKING -> switch (to)
-            {
-                case WALKING -> 0.0f;
-                case IDLE,
-                     LAND_HARD,
-                     FALLING_SLOW,
-                     LAND_SOFT,
-                     SWIM_UP,
-                     SWIM_DOWN,
-                     FALLING_FAST,
-                     JUMPING,
-                     RUNNING,
-                     IN_AIR -> 0.2f;
-                case RECOIL -> 0.1f;
-            };
-            case RUNNING -> switch (to)
-            {
-                case RUNNING -> 0.0f;
-                case LAND_HARD,
-                     FALLING_SLOW,
-                     LAND_SOFT,
-                     SWIM_UP,
-                     SWIM_DOWN,
-                     FALLING_FAST,
-                     JUMPING,
-                     IN_AIR -> 0.2f;
-                case IDLE,
-                     WALKING -> 0.4f;
-                case RECOIL -> 0.1f;
-            };
-            case FALLING_FAST -> switch (to)
-            {
-                case FALLING_FAST -> 0.0f;
-                case WALKING,
-                     LAND_HARD,
-                     FALLING_SLOW,
-                     LAND_SOFT,
-                     SWIM_UP,
-                     SWIM_DOWN,
-                     IDLE,
-                     JUMPING,
-                     RUNNING,
-                     IN_AIR -> 0.2f;
-                case RECOIL -> 0.1f;
-            };
-
-            case IN_AIR -> switch (to)
-            {
-                case IN_AIR -> 0.0f;
-                case WALKING,
-                     FALLING_SLOW,
-                     FALLING_FAST,
-                     LAND_SOFT,
-                     SWIM_UP,
-                     SWIM_DOWN,
-                     IDLE,
-                     JUMPING,
-                     RUNNING,
-                     LAND_HARD -> 0.2f;
-                case RECOIL -> 0.1f;
-            };
-
-            case FALLING_SLOW -> switch (to)
-            {
-                case FALLING_SLOW -> 0.0f;
-                case WALKING,
-                     LAND_HARD,
-                     FALLING_FAST,
-                     LAND_SOFT,
-                     SWIM_UP,
-                     SWIM_DOWN,
-                     IDLE,
-                     JUMPING,
-                     RUNNING,
-                     IN_AIR -> 0.2f;
-                case RECOIL -> 0.1f;
-            };
-
-            case SWIM_UP -> switch (to)
-            {
-                case SWIM_UP -> 0.0f;
-                case WALKING,
-                     LAND_HARD,
-                     FALLING_SLOW,
-                     LAND_SOFT,
-                     SWIM_DOWN,
-                     FALLING_FAST,
-                     IDLE,
-                     JUMPING,
-                     RUNNING,
-                     IN_AIR -> 0.2f;
-                case RECOIL -> 0.1f;
-            };
-
-            case SWIM_DOWN -> switch (to)
-            {
-                case SWIM_DOWN -> 0.0f;
-                case WALKING,
-                     LAND_HARD,
-                     FALLING_SLOW,
-                     LAND_SOFT,
-                     SWIM_UP,
-                     FALLING_FAST,
-                     IDLE,
-                     JUMPING,
-                     RUNNING,
-                     IN_AIR -> 0.2f;
-                case RECOIL -> 0.1f;
-            };
-
-            case JUMPING -> 0.5f;
-            case RECOIL, LAND_HARD, LAND_SOFT -> 0.05f;
         };
     }
 }

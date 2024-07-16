@@ -208,7 +208,8 @@ public enum AnimationState
             };
 
             case JUMPING -> 0.5f;
-            case RECOIL, LAND_HARD, LAND_SOFT -> 0.05f;
+            case RECOIL -> 0.05f;
+            case LAND_HARD, LAND_SOFT -> 0.4f;
             case UNKNOWN -> 0.0f;
         };
     }

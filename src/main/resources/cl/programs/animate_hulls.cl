@@ -94,41 +94,17 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                            int bone_id,
                            int layer_id)
 {
-    if (current_animation_layer.x < 0) return bone_bind_poses[bone_id];
-
-    // int indx = layer_id == 0 
-    //     ? current_animation_layer.x 
-    //     : current_animation_layer.y != -1 
-    //         ? current_animation_layer.y 
-    //         : current_animation_layer.x;
-
     int index;
+    index = layer_id == 0 
+        ? current_animation_layer.x 
+        : layer_id == 1 
+        ? current_animation_layer.y
+        : layer_id == 2 
+        ? current_animation_layer.z 
+        : current_animation_layer.w; 
 
-    switch (layer_id)
-    {
-        default:
-        case 0:
-            index = current_animation_layer.x;
-            break;
-
-        case 1:
-            index = current_animation_layer.y;
-            index = index == -1 ? current_animation_layer.x : index;
-            break;
-
-        case 2:
-            index = current_animation_layer.z;
-            index = index == -1 ? current_animation_layer.y : index;
-            index = index == -1 ? current_animation_layer.x : index;
-            break;
-
-        case 3:
-            index = current_animation_layer.w;
-            index = index == -1 ? current_animation_layer.z : index;
-            index = index == -1 ? current_animation_layer.y : index;
-            index = index == -1 ? current_animation_layer.x : index;
-            break;
-    }
+    if (index == -1) printf("debug: %d", layer_id);
+    if (index < 0 ) return bone_bind_poses[bone_id];
 
     float time = layer_id == 0 
         ? current_time.x 
@@ -157,22 +133,9 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
         : layer_id == 2 
         ? previous_animation_layer.z 
         : previous_animation_layer.w; 
+
     bool no_blend = prev_id == -1; 
     if (no_blend) return matrix_mul(matrix_mul(pos_matrix, rot_matrix), scl_matrix);
-
-    
-
-    // int indy = layer_id == 0 
-    //     ? previous_animation_layer.x 
-    //     : previous_animation_layer.y != -1 
-    //         ? previous_animation_layer.y 
-    //         : previous_animation_layer.x;
-
-    // float ty = layer_id == 0 
-    //     ? previous_time.x 
-    //     : previous_time.y != -1 
-    //         ? previous_time.y 
-    //         : previous_time.x;
 
     float prev_time = layer_id == 0 
         ? previous_time.x 
@@ -188,10 +151,6 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,
                         key_frames, frame_times, prev_time, prev_id, bone_id);
-
-    // float blend_factor = current_blend.x > 0 
-    //     ? current_blend.y / current_blend.x 
-    //     : 0.0f;
 
     float blend_factor = layer_id == 0 
         ? current_blend.s1 / current_blend.s0 
@@ -308,6 +267,24 @@ __kernel void animate_entities(__global float16 *armature_bones,
     current_frame_time += delta_time;
     previous_frame_time += delta_time;    
 
+    // previous_animation_layers.x = current_blend_time.s1 < current_blend_time.s0 
+    //     ? previous_animation_layers.x
+    //     : -1; 
+
+    // previous_animation_layers.y = current_blend_time.s3 < current_blend_time.s2 
+    //     ? previous_animation_layers.y
+    //     : -1; 
+    
+    // previous_animation_layers.z = current_blend_time.s5 < current_blend_time.s4 
+    //     ? previous_animation_layers.z
+    //     : -1; 
+    
+    // previous_animation_layers.w = current_blend_time.s7 < current_blend_time.s6 
+    //     ? previous_animation_layers.w
+    //     : -1; 
+
+    //entity_previous_layer[current_entity]   = previous_animation_layers;
+    
     entity_animation_blend[current_entity]  = current_blend_time;
     entity_animation_time[current_entity]   = current_frame_time;
     entity_previous_time[current_entity]    = previous_frame_time;

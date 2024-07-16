@@ -27,15 +27,4 @@ public enum BaseState
             case IDLE -> IDLE;
         };
     }
-
-    public static float blend_time(BaseState from, BaseState to)
-    {
-        return switch (from)
-        {
-            case IDLE -> switch (to)
-            {
-                case IDLE -> 0.0f;
-            };
-        };
-    }
 }
