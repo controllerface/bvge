@@ -472,6 +472,11 @@ public class GPGPU
 
     public static float[] cl_read_pinned_float_buffer(long queue_ptr, long pinned_ptr, long size, int count)
     {
+        return cl_read_pinned_float_buffer(queue_ptr, pinned_ptr, size, count, new float[count]);
+    }
+
+    public static float[] cl_read_pinned_float_buffer(long queue_ptr, long pinned_ptr, long size, int count, float[] output)
+    {
         try (var stack = MemoryStack.stackPush())
         {
             var status = stack.mallocInt(1);
@@ -494,11 +499,11 @@ public class GPGPU
                 System.out.println("Error on pinned float array map: " + result);
                 throw new RuntimeException("Error on pinned float array map: " + result);
             }
-            float[] value = new float[count];
+
             var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
             for (int i = 0; i < count; i++)
             {
-                value[i] = float_buffer.get(i);
+                output[i] = float_buffer.get(i);
             }
             result = clEnqueueUnmapMemObject(queue_ptr, pinned_ptr, out, null, null);
             if (result != CL_SUCCESS)
@@ -506,7 +511,7 @@ public class GPGPU
                 System.out.println("Error on pinned float array unmap: " + result);
                 throw new RuntimeException("Error on pinned float array unmap: " + result);
             }
-            return value;
+            return output;
         }
     }
 

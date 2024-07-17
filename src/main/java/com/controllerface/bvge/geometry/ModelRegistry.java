@@ -656,6 +656,10 @@ public class ModelRegistry
         for (int tex_index = 0; tex_index < aiScene.mNumTextures(); tex_index++)
         {
             var raw_texture = AITexture.create(texture_buffer.get(tex_index));
+
+            // todo: add diffuse/normal/specular map name checks and tag/sort accordingly
+            //System.out.println("texture name: " + raw_texture.mFilename().dataString());
+
             textures.add(Assets.load_texture(raw_texture));
         }
     }

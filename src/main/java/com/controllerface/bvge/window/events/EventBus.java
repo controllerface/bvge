@@ -6,10 +6,8 @@ public class EventBus
 {
     private final Map<Event.Type, List<Queue<Event>>> subscribers = Collections.synchronizedMap(new HashMap<>());
 
-    public void register(Queue<Event> sink, Event.Type... types)
+    public void register(Queue<Event> sink, Event.Type ... types)
     {
-        if (types.length == 0) return;
-
         for (var type : types)
         {
             subscribers.computeIfAbsent(type, (_) -> new ArrayList<>()).add(sink);

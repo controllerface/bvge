@@ -19,7 +19,7 @@ public class SectorController implements SectorContainer, Destroyable
     private static final int EGRESS_COUNTERS = 8;
     private static final int EGRESS_COUNTERS_SIZE = cl_int.size() * EGRESS_COUNTERS;
 
-    private static final int INFO_WIDTH = 33;
+    public static final int ENTITY_INFO_WIDTH = 33;
 
     private final CoreBufferGroup sector_buffers;
 
@@ -58,7 +58,7 @@ public class SectorController implements SectorContainer, Destroyable
         this.sector_buffers = sector_buffers;
 
         ptr_position_buffer = GPGPU.cl_new_pinned_buffer(cl_float2.size());
-        ptr_info_buffer     = GPGPU.cl_new_pinned_buffer((long)cl_float.size() * INFO_WIDTH);
+        ptr_info_buffer     = GPGPU.cl_new_pinned_buffer((long)cl_float.size() * ENTITY_INFO_WIDTH);
         ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(EGRESS_COUNTERS_SIZE);
 
         long k_ptr_create_point = p_gpu_crud.kernel_ptr(Kernel.create_point);
@@ -254,7 +254,7 @@ public class SectorController implements SectorContainer, Destroyable
         return GPGPU.cl_read_pinned_float_buffer(this.ptr_queue, ptr_position_buffer, cl_float.size(), 2);
     }
 
-    public float[] read_entity_info(int entity_index)
+    public void read_entity_info(int entity_index, float[] output)
     {
         GPGPU.cl_zero_buffer(this.ptr_queue, ptr_info_buffer, cl_float2.size());
 
@@ -263,7 +263,7 @@ public class SectorController implements SectorContainer, Destroyable
             .set_arg(ReadEntityInfo_k.Args.target, entity_index)
             .call_task();
 
-        return GPGPU.cl_read_pinned_float_buffer(this.ptr_queue, ptr_info_buffer, cl_float.size(), INFO_WIDTH);
+        GPGPU.cl_read_pinned_float_buffer(this.ptr_queue, ptr_info_buffer, cl_float.size(), ENTITY_INFO_WIDTH, output);
     }
 
     public void write_entity_info(int target,
@@ -450,7 +450,7 @@ public class SectorController implements SectorContainer, Destroyable
             .set_arg(CreateEntity_k.Args.new_entity_hull_table,         hull_table)
             .set_arg(CreateEntity_k.Args.new_entity_bone_table,         bone_table)
             .set_arg(CreateEntity_k.Args.new_entity_mass,               mass)
-            .set_arg(CreateEntity_k.Args.new_entity_animation_layer,    arg_int4(anim_index, -1, -1, -1))
+            .set_arg(CreateEntity_k.Args.new_entity_animation_layer,    arg_int4(anim_index, 0,0,0))
             .set_arg(CreateEntity_k.Args.new_entity_previous_layer,     arg_int4(-1, -1, -1, -1))
             .set_arg(CreateEntity_k.Args.new_entity_animation_time,     arg_float4(anim_time, 0.0f, 0.0f, 0.0f))
             .set_arg(CreateEntity_k.Args.new_entity_previous_time,      arg_float4(0.0f, 0.0f, 0.0f, 0.0f))

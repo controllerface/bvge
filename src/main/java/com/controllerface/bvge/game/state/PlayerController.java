@@ -6,6 +6,7 @@ import com.controllerface.bvge.cl.buffers.PersistentBuffer;
 import com.controllerface.bvge.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
+import com.controllerface.bvge.game.world.sectors.SectorController;
 import com.controllerface.bvge.physics.*;
 import com.controllerface.bvge.util.Constants;
 import com.controllerface.bvge.window.Window;
@@ -17,20 +18,20 @@ import static com.controllerface.bvge.cl.CLData.cl_float;
 import static com.controllerface.bvge.cl.CLData.cl_int;
 import static com.controllerface.bvge.ecs.components.InputBinding.*;
 import static com.controllerface.bvge.util.Constants.EntityFlags.*;
-import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 
 public class PlayerController implements Destroyable
 {
     private static final float BLOCK_OFFSET = UniformGrid.BLOCK_SIZE / 2.0f;
+    private static final float MOTION_THRESHOLD = 10.0f;
 
     private final PlayerInventory player_inventory;
 
     private final EntityIndex entity_id;
-    private final Position position;
+    private final Position    position;
     private final EntityIndex mouse_cursor_id;
     private final EntityIndex block_cursor_id;
-    private final FloatValue move_force;
-    private final FloatValue jump_force;
+    private final FloatValue  move_force;
+    private final FloatValue  jump_force;
     private final PlayerInput player;
     private final BlockCursor block_cursor;
 
@@ -42,6 +43,9 @@ public class PlayerController implements Destroyable
 
     private final StateInput input;
     private final StateOutput output;
+
+    private final float[] entity_info_buffer = new float[SectorController.ENTITY_INFO_WIDTH];
+    private final int[] empty_block_hits = new int[4];
 
     private final float[] block_cursor_pos;
     private final float[] entity;
@@ -105,10 +109,8 @@ public class PlayerController implements Destroyable
 
     private void snap_block_cursor(float x, float y)
     {
-        float _x = (float) (Math.floor(x / UniformGrid.BLOCK_SIZE) * UniformGrid.BLOCK_SIZE);
-        float _y = (float) (Math.floor(y / UniformGrid.BLOCK_SIZE) * UniformGrid.BLOCK_SIZE);
-        block_cursor_pos[0] = _x + BLOCK_OFFSET;
-        block_cursor_pos[1] = _y + BLOCK_OFFSET;
+        block_cursor_pos[0] = (float) (Math.floor(x / UniformGrid.BLOCK_SIZE) * UniformGrid.BLOCK_SIZE) + BLOCK_OFFSET;
+        block_cursor_pos[1] = (float) (Math.floor(y / UniformGrid.BLOCK_SIZE) * UniformGrid.BLOCK_SIZE) + BLOCK_OFFSET;
     }
 
     private void handle_input_states()
@@ -119,9 +121,9 @@ public class PlayerController implements Destroyable
             block_cursor.set_require_unlatch(false);
         }
 
-        var camera = Window.get().camera();
-        float world_x = player.get_screen_target().x * camera.get_zoom() + camera.position().x;
-        float world_y = (Window.get().height() - player.get_screen_target().y) * camera.get_zoom() + camera.position().y;
+        float world_x = player.get_screen_target().x * Window.get().camera().get_zoom() + Window.get().camera().position().x;
+        float world_y = (Window.get().height() - player.get_screen_target().y) * Window.get().camera().get_zoom() + Window.get().camera().position().y;
+
         GPGPU.core_memory.update_mouse_position(mouse_cursor_id.index(), world_x, world_y);
 
         float x_pos;
@@ -155,14 +157,10 @@ public class PlayerController implements Destroyable
                 int new_block_id = PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
                     world_x, world_y, 32, 90, 0.0f, 0.0f,
                     0, Constants.HullFlags.IS_STATIC.bits,
-                    block_cursor.block(), new int[4]);
+                    block_cursor.block(), empty_block_hits);
                 GPGPU.core_memory.place_block(block_cursor_id.index(), new_block_id);
             }
 
-            // todo: may be better moving the finer details into the inventory system
-            //  and just emit a new event to let it know that the count has gone below
-            //  the threshold. may also want to encode the threshold somewhere so
-            //  it isn't hard-coded, and could be subject to player buffs (maybe?)
             Window.get().event_bus().emit_event(Event.inventory(Event.Type.ITEM_CHANGE));
             if (resource_count < 4)
             {
@@ -174,45 +172,48 @@ public class PlayerController implements Destroyable
         }
     }
 
+    private boolean action_layer_idle = true;
+    private boolean action_layer_empty = true;
+
     public void update_player_state()
     {
         handle_input_states();
 
-        var info = GPGPU.core_memory.read_entity_info(entity_id.index());
+        GPGPU.core_memory.read_entity_info(entity_id.index(), entity_info_buffer);
 
-        entity[0]        = info[0];
-        entity[1]        = info[1];
-        entity[2]        = info[2];
-        entity[3]        = info[3];
-        accel[0]         = info[4];
-        accel[1]         = info[5];
-        current_time[0]  = info[6];
-        current_time[1]  = info[7];
-        current_time[2]  = info[8];
-        current_time[3]  = info[9];
-        prev_time[0]     = info[10];
-        prev_time[1]     = info[11];
-        prev_time[2]     = info[12];
-        prev_time[3]     = info[13];
-        current_blend[0] = info[14];
-        current_blend[1] = info[15];
-        current_blend[2] = info[16];
-        current_blend[3] = info[17];
-        current_blend[4] = info[18];
-        current_blend[5] = info[19];
-        current_blend[6] = info[20];
-        current_blend[7] = info[21];
-        motion_state[0]  = (short)info[22];
-        motion_state[1]  = (short)info[23];
-        anim_layers[0]   = (int)info[24];
-        anim_layers[1]   = (int)info[25];
-        anim_layers[2]   = (int)info[26];
-        anim_layers[3]   = (int)info[27];
-        prev_layers[0]   = (int)info[28];
-        prev_layers[1]   = (int)info[28];
-        prev_layers[2]   = (int)info[30];
-        prev_layers[3]   = (int)info[31];
-        arm_flag         = (int)info[32];
+        entity[0]        = entity_info_buffer[0];
+        entity[1]        = entity_info_buffer[1];
+        entity[2]        = entity_info_buffer[2];
+        entity[3]        = entity_info_buffer[3];
+        accel[0]         = entity_info_buffer[4];
+        accel[1]         = entity_info_buffer[5];
+        current_time[0]  = entity_info_buffer[6];
+        current_time[1]  = entity_info_buffer[7];
+        current_time[2]  = entity_info_buffer[8];
+        current_time[3]  = entity_info_buffer[9];
+        prev_time[0]     = entity_info_buffer[10];
+        prev_time[1]     = entity_info_buffer[11];
+        prev_time[2]     = entity_info_buffer[12];
+        prev_time[3]     = entity_info_buffer[13];
+        current_blend[0] = entity_info_buffer[14];
+        current_blend[1] = entity_info_buffer[15];
+        current_blend[2] = entity_info_buffer[16];
+        current_blend[3] = entity_info_buffer[17];
+        current_blend[4] = entity_info_buffer[18];
+        current_blend[5] = entity_info_buffer[19];
+        current_blend[6] = entity_info_buffer[20];
+        current_blend[7] = entity_info_buffer[21];
+        motion_state[0]  = (short)entity_info_buffer[22];
+        motion_state[1]  = (short)entity_info_buffer[23];
+        anim_layers[0]   = (int)entity_info_buffer[24];
+        anim_layers[1]   = (int)entity_info_buffer[25];
+        anim_layers[2]   = (int)entity_info_buffer[26];
+        anim_layers[3]   = (int)entity_info_buffer[27];
+        prev_layers[0]   = (int)entity_info_buffer[28];
+        prev_layers[1]   = (int)entity_info_buffer[28];
+        prev_layers[2]   = (int)entity_info_buffer[30];
+        prev_layers[3]   = (int)entity_info_buffer[31];
+        arm_flag         = (int)entity_info_buffer[32];
 
         boolean can_jump   = (arm_flag & Constants.EntityFlags.CAN_JUMP.bits) !=0;
         boolean is_wet     = (arm_flag & Constants.EntityFlags.IS_WET.bits)   !=0;
@@ -241,12 +242,6 @@ public class PlayerController implements Destroyable
         input.current_time   = current_time[0];
         input.anim_index     = anim_layers[0];
         input.jump_mag       = jump_force.magnitude();
-
-
-
-        // todo: states from different layers need different processing. Layer 0 should
-        //  always have some kind of idle animation, layer 1 any whole body animations,
-        //  layer 2 upper body only animations, and layer 3 empty for now.
 
         var next_base_state   = BaseState.process(input, output, current_base_state, player);
         var next_move_state   = MovementState.process(input, output, current_move_state, player);
@@ -278,6 +273,7 @@ public class PlayerController implements Destroyable
 
             if (!blend_action && current_action_state == ActionState.NONE)
             {
+                System.out.println("opt-in 3: " + anim_layers[1] + " to: " +  prev_layers[1]);
                 anim_layers[2]   = anim_layers[1];
                 prev_layers[2]   = prev_layers[1];
                 prev_time[2]     = prev_time[1];
@@ -289,7 +285,8 @@ public class PlayerController implements Destroyable
 
         if (blend_action)
         {
-            //System.out.println("blend action: " + current_action_state + " to " + next_action_state);
+            System.out.println("blend 3: " + current_action_state + " to: " + next_action_state);
+            action_layer_empty = false;
             anim_layers[2] = next_action_state.animation.ordinal();
             prev_layers[2] = current_action_state.animation.ordinal();
             prev_time[2] = current_time[2];
@@ -301,38 +298,38 @@ public class PlayerController implements Destroyable
         // when blending is done, unset the previous animation for the layer
         if (current_blend[1] >= current_blend[0])
         {
-            if (prev_layers[0] != -1)
-            {
-                //System.out.println("blend end 1");
-            }
+            // layer zero does not need a fallback
             prev_layers[0] = -1;
         }
         if (current_blend[3] >= current_blend[2])
         {
             if (prev_layers[1] != -1)
             {
-                //System.out.println("blend end 2");
+                // todo: add layer 1 fallback
             }
             prev_layers[1] = -1;
         }
         if (current_blend[5] >= current_blend[4])
         {
-            boolean x = prev_layers[2] != -1;
-            //prev_layers[2] = -1;
-            if (x && current_action_state == ActionState.NONE && current_move_state != MovementState.REST)
+            // layer 2 fallback
+            if (!action_layer_empty && prev_layers[2] != -1 && current_action_state == ActionState.NONE && current_move_state != MovementState.REST)
             {
-                //System.out.println("blend end 3");
-                //if (!blend_action && current_action_state == ActionState.NONE)
-                //{
+                System.out.println("fallback 3: " + current_action_state + " to: " + current_move_state);
+                action_layer_idle = true;
                 anim_layers[2] = current_move_state.animation.ordinal();
                 prev_layers[2] = current_action_state.animation.ordinal();
                 prev_time[2] = current_time[2];
-                current_time[2] = 0.0f;
+                current_time[2] = current_time[1];
                 current_blend[4] = AnimationState.blend_time(current_action_state.animation, current_move_state.animation);
                 current_blend[5] = 0.0f;
-                //}
             }
-           prev_layers[2] = -1;
+
+            if (action_layer_idle) action_layer_empty = true;
+
+            if (!action_layer_idle) prev_layers[2] = -1;
+            action_layer_idle = false;
+
+            // todo: add layer 1 fallback
         }
         if (current_blend[7] >= current_blend[6])
         {
@@ -342,8 +339,6 @@ public class PlayerController implements Destroyable
             }
             prev_layers[3] = -1;
         }
-
-
 
 
         // jumping
@@ -356,14 +351,14 @@ public class PlayerController implements Destroyable
 
         // motion state
 
-        float threshold = 10.0f;
+
         float vel_y = (entity[1] - entity[3]) / PhysicsSimulation.FIXED_TIME_STEP;
 
-        motion_state[0] = (vel_y < -threshold)
+        motion_state[0] = (vel_y < -MOTION_THRESHOLD)
             ? (short)(motion_state[0] + 1)
             : (short)0;
 
-        motion_state[1] = (vel_y > threshold)
+        motion_state[1] = (vel_y > MOTION_THRESHOLD)
             ? (short)(motion_state[1] + 1)
             : (short)0;
 

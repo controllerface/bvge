@@ -97,7 +97,7 @@ public class TestGame extends GameMode
         ecs.attach_component(player, ComponentType.EntityId,      new EntityIndex(entity_id[0]));
         ecs.attach_component(player, ComponentType.MouseCursorId, new EntityIndex(cursor_id));
         ecs.attach_component(player, ComponentType.BlockCursorId, new EntityIndex(block_cursor));
-        ecs.attach_component(player, ComponentType.MovementForce, new FloatValue(1600));
+        ecs.attach_component(player, ComponentType.MovementForce, new FloatValue(1400));
         ecs.attach_component(player, ComponentType.JumpForce,     new FloatValue(9.8f * 10 * 550));
         ecs.attach_component(player, ComponentType.InputState,    new PlayerInput());
         ecs.attach_component(player, ComponentType.BlockCursor,   new BlockCursor());
@@ -135,7 +135,6 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.GAME))
         {
-
             ecs.register_system(new ModelRenderer(ecs, uniformGrid,
                     PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX));
             ecs.register_system(new LiquidRenderer(ecs, uniformGrid));

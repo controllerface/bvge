@@ -453,6 +453,9 @@ __kernel void move_entities(__global float4 *hulls,
         int2 point_table = hull_point_tables[n];
         bool no_bones = (hull_flag & NO_BONES) !=0;
         bool is_foot = (hull_flag & IS_FOOT) !=0;
+        bool is_hand = (hull_flag & IS_HAND) !=0;
+        bool is_head = (hull_flag & IS_HEAD) !=0;
+        bool is_root = start == n;
 
         _hull_flags |= hull_flag;
 
@@ -460,7 +463,7 @@ __kernel void move_entities(__global float4 *hulls,
 
         last_center = hull.xy;
         float2 diffa = last_center - hull.zw;
-        diff += diffa;
+        if (is_foot || is_hand || is_head || is_root) diff += diffa;
         int2 xa = consume_point_flags(point_flags, point_hit_counts, point_table);
         total_hits += xa.y;
         _point_flags = is_foot || is_block

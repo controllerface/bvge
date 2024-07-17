@@ -387,9 +387,9 @@ public class GPUCoreMemory implements Destroyable
         return sector_controller.read_position(entity_index);
     }
 
-    public float[] read_entity_info(int entity_index)
+    public void read_entity_info(int entity_index, float[] output)
     {
-        return sector_controller.read_entity_info(entity_index);
+        sector_controller.read_entity_info(entity_index, output);
     }
 
     public void write_entity_info(int target,

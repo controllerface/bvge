@@ -1541,6 +1541,12 @@ public class PhysicsSimulation extends GameSystem
         // Pre-Simulation Setup //
         //----------------------//
 
+        // Armatures and bones are animated once per time tick, after all simulation is done for this pass. The interplay between
+        // animation and edge constraints may leave points in slightly incorrect positions. Animating here ensures the rendering
+        // step always sees the objects exactly in their correct positions.
+        animate_entities(dt);
+        animate_bones();
+
         // An initial constraint solve pass is done before simulation to ensure edges are in their "safe"
         // convex shape. Animations may move points into positions where the geometry becomes concave,
         // so this call prevents collision errors due to non-convex shapes.
@@ -1645,11 +1651,6 @@ public class PhysicsSimulation extends GameSystem
             Editor.queue_event("phys_compact", String.valueOf(e));
         }
 
-        // Armatures and bones are animated once per time tick, after all simulation is done for this pass. The interplay between
-        // animation and edge constraints may leave points in slightly incorrect positions. Animating here ensures the rendering
-        // step always sees the objects exactly in their correct positions.
-        animate_entities(dt - dropped_time);
-        animate_bones();
         animate_points();
 
         if (Editor.ACTIVE)

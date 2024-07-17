@@ -114,8 +114,6 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
         ? current_time.z 
         : current_time.w; 
 
-
-
     TransformBuffer current_transform = get_node_transform_x(bone_channel_tables, 
                         bone_pos_channel_tables, bone_rot_channel_tables, bone_scl_channel_tables,
                         animation_timing_indices, animation_durations, animation_tick_rates,
@@ -124,7 +122,6 @@ float16 get_node_transform(__global float16 *bone_bind_poses,
     float16 pos_matrix = translation_vector_to_matrix(current_transform.pos);
     float16 rot_matrix = rotation_quaternion_to_matrix(current_transform.rot);
     float16 scl_matrix = scaling_vector_to_matrix(current_transform.scl);
-
 
     int prev_id = layer_id == 0 
         ? previous_animation_layer.x 
@@ -258,7 +255,7 @@ __kernel void animate_entities(__global float16 *armature_bones,
         float16 global_transform = matrix_mul_affine(parent_transform, node_transform);
         armature_bones[current_bone_bind] = global_transform;
     }
-    // todo: update all blend times
+
     current_blend_time.s1 += delta_time;
     current_blend_time.s3 += delta_time;
     current_blend_time.s5 += delta_time;
@@ -266,24 +263,6 @@ __kernel void animate_entities(__global float16 *armature_bones,
 
     current_frame_time += delta_time;
     previous_frame_time += delta_time;    
-
-    // previous_animation_layers.x = current_blend_time.s1 < current_blend_time.s0 
-    //     ? previous_animation_layers.x
-    //     : -1; 
-
-    // previous_animation_layers.y = current_blend_time.s3 < current_blend_time.s2 
-    //     ? previous_animation_layers.y
-    //     : -1; 
-    
-    // previous_animation_layers.z = current_blend_time.s5 < current_blend_time.s4 
-    //     ? previous_animation_layers.z
-    //     : -1; 
-    
-    // previous_animation_layers.w = current_blend_time.s7 < current_blend_time.s6 
-    //     ? previous_animation_layers.w
-    //     : -1; 
-
-    //entity_previous_layer[current_entity]   = previous_animation_layers;
     
     entity_animation_blend[current_entity]  = current_blend_time;
     entity_animation_time[current_entity]   = current_frame_time;
