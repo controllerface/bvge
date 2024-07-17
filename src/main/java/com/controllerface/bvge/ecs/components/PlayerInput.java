@@ -53,11 +53,6 @@ public class PlayerInput implements GameComponent
         }
     }
 
-    public Map<InputBinding, Boolean> inputs()
-    {
-        return input_states;
-    }
-
     public boolean pressed(InputBinding binding)
     {
         return input_states.get(binding);

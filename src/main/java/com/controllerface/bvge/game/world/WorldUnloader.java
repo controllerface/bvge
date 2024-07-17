@@ -55,7 +55,6 @@ public class WorldUnloader extends GameSystem
                 try
                 {
                     float dt = next_dt.take();
-                    world_permit.acquire();
                     if ((dt != -1f))
                     {
                         int[] last_counts = GPGPU.core_memory.last_egress_counts();
@@ -362,6 +361,14 @@ public class WorldUnloader extends GameSystem
     public void tick(float dt)
     {
         Sector unloading;
+        try
+        {
+            world_permit.acquire();
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
         while ((unloading = unload_queue.poll()) != null)
         {
             running_batches.put(unloading, new PhysicsEntityBatch());

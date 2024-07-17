@@ -6,7 +6,7 @@ public class PlayerState
 {
     private static BaseState base_state     = BaseState.IDLE;
     private static ActionState action_state = ActionState.NONE;
-    private static MovementState move_state = MovementState.NONE;
+    private static MovementState move_state = MovementState.REST;
 
     private static void init_output(StateOutput output)
     {

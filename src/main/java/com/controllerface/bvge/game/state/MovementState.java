@@ -8,7 +8,7 @@ import static com.controllerface.bvge.ecs.components.InputBinding.*;
 
 public enum MovementState
 {
-    NONE            (AnimationState.IDLE),
+    REST            (AnimationState.IDLE),
     WALKING         (AnimationState.WALKING),
     RUNNING         (AnimationState.RUNNING),
     FALLING_FAST    (AnimationState.FALLING_FAST),
@@ -48,7 +48,7 @@ public enum MovementState
         var state = current_state;
         return switch (current_state)
         {
-            case NONE ->
+            case REST ->
             {
                 if (player.pressed(MOVE_LEFT) || player.pressed(MOVE_RIGHT))
                 {
@@ -83,7 +83,7 @@ public enum MovementState
                 }
                 if (!player.pressed(MOVE_LEFT) && !player.pressed(MOVE_RIGHT))
                 {
-                    state = NONE;
+                    state = REST;
                 }
                 if (input.can_jump && input.current_budget > 0 && player.pressed(JUMP))
                 {
@@ -112,7 +112,7 @@ public enum MovementState
                 }
                 if (!player.pressed(MOVE_LEFT) && !player.pressed(MOVE_RIGHT))
                 {
-                    state = NONE;
+                    state = REST;
                 }
                 if (input.can_jump && input.current_budget > 0 && player.pressed(JUMP))
                 {
@@ -218,7 +218,7 @@ public enum MovementState
                             ? RUNNING
                             : WALKING;
                     }
-                    else state = NONE;
+                    else state = REST;
                 }
                 yield state;
             }
@@ -256,7 +256,7 @@ public enum MovementState
                             ? RUNNING
                             : WALKING;
                     }
-                    else state = NONE;
+                    else state = REST;
                 }
                 yield state;
             }
