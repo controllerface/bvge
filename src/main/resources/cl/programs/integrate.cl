@@ -169,7 +169,7 @@ __kernel void integrate(__global int2 *hull_point_tables,
             float2 diff = pos - prv;
 
             float g_x = touch_alike ? 0.01f : 0.0;
-            float g_y = 0.0f; //touch_alike ? 0.01f : 0.0;
+            float g_y = touch_alike ? 0.02f : 0.0;
 
             float2 w_acc = (is_liquid)
                 ? flow_left
