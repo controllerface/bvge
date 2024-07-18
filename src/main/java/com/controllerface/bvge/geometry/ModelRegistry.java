@@ -105,6 +105,39 @@ public class ModelRegistry
         // read scene data
         try (AIScene ai_scene = loadModelResource(model_path))
         {
+
+            var meta_data = ai_scene.mMetaData();
+            var raw_keys = meta_data.mKeys();
+            var raw_values =  meta_data.mValues();
+            for (int i = 0; i < meta_data.mNumProperties() ; i++)
+            {
+                var key = raw_keys.get(i);
+                System.out.println("key: " + key.dataString());
+                var val = raw_values.get();
+
+                switch (val.mType())
+                {
+
+                    case 5:
+                        var buff = val.mData(2048);
+                        int len = buff.getInt();
+                        buff.limit(buff.position() + len);
+                        var data =  StandardCharsets.UTF_8.decode(buff).toString();
+                        System.out.println("value: " + data);
+                        break;
+
+
+                    default:
+//                            System.out.println("Debug mat prop: type=" + raw_prop.mType()
+//                                    + " len=" + raw_prop.mDataLength()
+//                                    + " key=" + raw_prop.mKey().dataString());
+                        break;
+                }
+
+            }
+
+
+
             mesh_count = ai_scene.mNumMeshes();
             root_node = ai_scene.mRootNode();
             scene_node = process_node_hierarchy(root_node, null, node_map);
@@ -410,7 +443,11 @@ public class ModelRegistry
             // descendant of the armature, which is itself a child of the root scene node, which is
             // given the default name "RootNode".
             var match = meshes[mi].bone_offsets().stream()
-                .anyMatch(b->b.sceneNode().parent.parent.name.equalsIgnoreCase("RootNode"));
+                .anyMatch(b-> {
+                    var name = b.sceneNode().parent.name;
+                    System.out.println("debug parent name for: " + b.sceneNode().name + " parent=" + name);
+                    return name.equalsIgnoreCase("Armature");
+                });
 
             if (match)
             {
@@ -447,6 +484,7 @@ public class ModelRegistry
             {
                 var raw_prop = AIMaterialProperty.create(p_buf.get(j));
                 var prop_name = raw_prop.mKey().dataString();
+                System.out.println("material prop name: " + prop_name);
 
                 if (prop_name.startsWith("$clr."))
                 {
@@ -460,13 +498,13 @@ public class ModelRegistry
 //                            + " g=" + g
 //                            + " b=" + b);
                 }
-                else if (prop_name.startsWith("$mat."))
-                {
-                    float v = raw_prop.mData().asFloatBuffer().get(0);
-//                    System.out.println("Mat type=" + raw_prop.mType()
-//                            + " name=" + prop_name
-//                            + " v=" + v);
-                }
+//                else if (prop_name.startsWith("$mat."))
+//                {
+//                    float v = raw_prop.mData().asFloatBuffer().get(0);
+////                    System.out.println("Mat type=" + raw_prop.mType()
+////                            + " name=" + prop_name
+////                            + " v=" + v);
+//                }
                 else
                 {
                     switch (raw_prop.mType())
@@ -770,6 +808,7 @@ public class ModelRegistry
         loaded_models.put(L_SHARD_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.L_SHARD_MESH), texture));
         loaded_models.put(BASE_SPIKE_INDEX, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.SPIKE_MESH), texture));
 
-        PLAYER_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
+        //PLAYER_MODEL_INDEX = load_model("/models/humanoid_redux.fbx", "Humanoid2");
+        PLAYER_MODEL_INDEX = load_model("/models/humanoid.glb", "Humanoid2");
     }
 }

@@ -176,7 +176,7 @@ public class TestGame extends GameMode
     @Override
     public void init()
     {
-        float player_size = 1f;
+        float player_size = 100f;
         float player_spawn_x = -250;
         float player_spawn_y = 1500;
         gen_player(player_size, player_spawn_x, player_spawn_y);

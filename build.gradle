@@ -4,8 +4,8 @@ plugins {
 }
 
 ext {
-    lwjglVersion = '3.3.3'
-    //lwjglVersion = '3.3.4-SNAPSHOT'
+    //lwjglVersion = '3.3.3'
+    lwjglVersion = '3.3.4'
     jomlVersion = "1.10.5"
     lwjglNatives = "natives-windows"
 }
