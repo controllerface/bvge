@@ -73,6 +73,9 @@ public class TestGame extends GameMode
         this.load_queue = new LinkedBlockingDeque<>();
         this.unload_queue = new LinkedBlockingDeque<>();
         this.player_inventory = new PlayerInventory();
+
+        // todo: look into a custom weigher instead of a flat timeout. weight should be determined by proximity to
+        //  sectors nearest to the player.
         this.sector_cache = Caffeine.newBuilder()
             .expireAfterAccess(Duration.of(1, ChronoUnit.HOURS))
             .build();
@@ -135,8 +138,8 @@ public class TestGame extends GameMode
 
         if (ACTIVE_RENDERERS.contains(RenderType.GAME))
         {
-            ecs.register_system(new ModelRenderer(ecs, uniformGrid,
-                    PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX));
+            int[] model_ids = new int[]{ PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX };
+            ecs.register_system(new ModelRenderer(ecs, uniformGrid, model_ids));
             ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
         }
         

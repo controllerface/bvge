@@ -21,7 +21,7 @@ public class WorldUnloader extends GameSystem
 {
     private final UnorderedCoreBufferGroup.Raw raw_sectors        = new UnorderedCoreBufferGroup.Raw();
     private final BrokenObjectBuffer.Raw raw_broken               = new BrokenObjectBuffer.Raw();
-    private final Map<Sector, PhysicsEntityBatch> running_batches = Collections.synchronizedMap(new HashMap<>());
+    private final Map<Sector, PhysicsEntityBatch> running_batches = new HashMap<>();
     private final BlockingQueue<Float> next_dt                    = new ArrayBlockingQueue<>(1);
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
     private final Queue<PhysicsEntityBatch> load_queue;
@@ -275,6 +275,12 @@ public class WorldUnloader extends GameSystem
                 var raw_sector = UniformGrid.get_sector_for_point(entity_x, entity_y);
                 var sec = new Sector(raw_sector[0], raw_sector[1]);
                 var batch = running_batches.get(sec);
+                if (batch == null)
+                {
+                    batch = sector_cache.getIfPresent(sec);
+                    if (batch == null) throw new NullPointerException("batch for sector was null and not in cache: " + sec);
+                    running_batches.put(sec, batch);
+                }
                 Objects.requireNonNull(batch);
                 int adjusted_root_hull = entity_root_hull - entity_hull_table_x;
 
