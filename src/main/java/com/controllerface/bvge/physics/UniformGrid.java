@@ -16,7 +16,7 @@ public class UniformGrid
     public final static int BLOCK_COUNT = 16;
     public final static float SECTOR_SIZE = BLOCK_SIZE * BLOCK_COUNT;
 
-    private final static float SPACING_DIVISOR = 256.0f;
+    private final static float SPACING_DIVISOR = 128.0f;
 
     public final float perimeter_width;
     public final float perimeter_height;

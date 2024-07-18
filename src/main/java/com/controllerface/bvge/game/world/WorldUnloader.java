@@ -21,7 +21,7 @@ public class WorldUnloader extends GameSystem
 {
     private final UnorderedCoreBufferGroup.Raw raw_sectors        = new UnorderedCoreBufferGroup.Raw();
     private final BrokenObjectBuffer.Raw raw_broken               = new BrokenObjectBuffer.Raw();
-    private final Map<Sector, PhysicsEntityBatch> running_batches = new HashMap<>();
+    private final Map<Sector, PhysicsEntityBatch> running_batches = Collections.synchronizedMap(new HashMap<>());
     private final BlockingQueue<Float> next_dt                    = new ArrayBlockingQueue<>(1);
     private final Cache<Sector, PhysicsEntityBatch> sector_cache;
     private final Queue<PhysicsEntityBatch> load_queue;

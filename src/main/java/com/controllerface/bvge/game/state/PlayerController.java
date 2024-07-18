@@ -126,21 +126,8 @@ public class PlayerController implements Destroyable
 
         GPGPU.core_memory.update_mouse_position(mouse_cursor_id.index(), world_x, world_y);
 
-        float x_pos;
-        float y_pos;
-        if (block_cursor.is_active())
-        {
-            x_pos = world_x;
-            y_pos = world_y;
-        }
-        else
-        {
-            x_pos = position.x;
-            y_pos = position.y;
-        }
-
         // todo: allow non-static/un-snapped placement using key-combo or mode switch of some kind
-        snap_block_cursor(x_pos, y_pos);
+        snap_block_cursor(world_x, world_y);
         GPGPU.core_memory.update_block_position(block_cursor_id.index(), block_cursor_pos[0], block_cursor_pos[1]);
 
         if (player.pressed(MOUSE_PRIMARY)
@@ -273,7 +260,7 @@ public class PlayerController implements Destroyable
 
             if (!blend_action && current_action_state == ActionState.NONE)
             {
-                System.out.println("opt-in 3: " + anim_layers[1] + " to: " +  prev_layers[1]);
+                //System.out.println("opt-in 3: " + anim_layers[1] + " to: " +  prev_layers[1]);
                 anim_layers[2]   = anim_layers[1];
                 prev_layers[2]   = prev_layers[1];
                 prev_time[2]     = prev_time[1];
@@ -285,7 +272,7 @@ public class PlayerController implements Destroyable
 
         if (blend_action)
         {
-            System.out.println("blend 3: " + current_action_state + " to: " + next_action_state);
+            //System.out.println("blend 3: " + current_action_state + " to: " + next_action_state);
             action_layer_empty = false;
             anim_layers[2] = next_action_state.animation.ordinal();
             prev_layers[2] = current_action_state.animation.ordinal();

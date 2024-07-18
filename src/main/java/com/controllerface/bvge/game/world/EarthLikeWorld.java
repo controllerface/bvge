@@ -21,8 +21,8 @@ public class EarthLikeWorld implements WorldType
     private final Random random = new Random();
 
     private static final float block_range_floor = -0.1f;
-    private static final float shard_range_floor = -0.35f;
-    private static final float water_range_floor = -0.4f;
+    private static final float shard_range_floor = -0.14f;
+    private static final float water_range_floor = -0.15f;
 
     private int map_to_block(float n, float floor, float length)
     {
@@ -242,7 +242,7 @@ public class EarthLikeWorld implements WorldType
         float block_y_2 = world_y_block / (UniformGrid.BLOCK_SIZE * .1f);
 
         float sz_solid = UniformGrid.BLOCK_SIZE;
-        float sz_liquid = rando_float(UniformGrid.BLOCK_SIZE, .65f);
+        float sz_liquid = (float)UniformGrid.BLOCK_SIZE * .75f; //rando_float(UniformGrid.BLOCK_SIZE, .65f);
 
         float n = noise.GetNoise(block_x, block_y);
         boolean gen_block = n >= block_range_floor;

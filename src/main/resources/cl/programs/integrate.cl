@@ -181,6 +181,12 @@ __kernel void integrate(__global int2 *hull_point_tables,
 
             diff = w_acc + acc + i_acc + diff;
 
+            if (is_liquid) 
+            { 
+                diff.x = diff.x * 1.001; 
+                diff.y = diff.y * .996; 
+            }
+
             // add damping component
             diff.x = is_liquid 
                 ? diff.x

@@ -739,11 +739,9 @@ public class ModelRegistry
 
         if (is_bone)
         {
-            System.out.println("debug: bone name="+ name);
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
             var bone_name = NamedBone.fuzzy_match(name);
-            System.out.println("debug: matched bone: " + bone_name);
             int bind_pose_id = GPGPU.core_memory.reference_container().new_bone_bind_pose(raw_matrix, bone_name.layer);
             bind_name_map.put(name, bind_pose_id);
             bind_pose_map.put(bind_pose_id, bind_pose);
