@@ -160,6 +160,7 @@ __kernel void integrate(__global int2 *hull_point_tables,
             
             int hit_count = point_hit_counts[i];
             bool high_density = hit_count >= HIT_LOW_MID_THRESHOLD;
+            bool max_density = hit_count >= HIT_TOP_THRESHOLD;
             _point_flags = high_density 
                 ? _point_flags | HIGH_DENSITY 
                 : _point_flags & ~HIGH_DENSITY;
@@ -168,8 +169,23 @@ __kernel void integrate(__global int2 *hull_point_tables,
             // subtract prv from pos to get the difference this frame
             float2 diff = pos - prv;
 
-            float g_x = touch_alike ? 0.01f : 0.0;
-            float g_y = touch_alike ? 0.02f : 0.0;
+            float g_x = touch_alike 
+                ? high_density 
+                    ? 0.1f
+                    : max_density 
+                        ? 0.3f 
+                        : 0.0f
+                : 0.0;
+
+         float g_y = touch_alike 
+                ? high_density 
+                    ? 0.1f
+                    : max_density 
+                        ? 0.3f 
+                        : 0.0f
+                : 0.0;
+
+            //float g_y = touch_alike ? 0.02f : 0.0;
 
             float2 w_acc = (is_liquid)
                 ? flow_left
@@ -183,8 +199,8 @@ __kernel void integrate(__global int2 *hull_point_tables,
 
             if (is_liquid) 
             { 
-                diff.x = diff.x * 1.001; 
-                diff.y = diff.y * .996; 
+                diff.x = diff.x * 1.003; 
+                diff.y = diff.y * .992; 
             }
 
             // add damping component
