@@ -14,6 +14,8 @@ public class RootHullFilter extends GPUProgram
 
         load_kernel(Kernel.root_hull_count);
         load_kernel(Kernel.root_hull_filter);
+        load_kernel(Kernel.hull_count);
+        load_kernel(Kernel.hull_filter);
 
         return this;
     }

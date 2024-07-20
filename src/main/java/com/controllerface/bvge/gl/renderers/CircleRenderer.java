@@ -3,14 +3,13 @@ package com.controllerface.bvge.gl.renderers;
 import com.controllerface.bvge.cl.*;
 import com.controllerface.bvge.cl.buffers.RenderBufferType;
 import com.controllerface.bvge.cl.kernels.*;
-import com.controllerface.bvge.cl.kernels.rendering.PrepareTransforms_k;
-import com.controllerface.bvge.cl.kernels.rendering.RootHullCount_k;
-import com.controllerface.bvge.cl.kernels.rendering.RootHullFilter_k;
+import com.controllerface.bvge.cl.kernels.rendering.*;
 import com.controllerface.bvge.cl.programs.GPUProgram;
 import com.controllerface.bvge.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.cl.programs.RootHullFilter;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.systems.GameSystem;
+import com.controllerface.bvge.geometry.MeshRegistry;
 import com.controllerface.bvge.geometry.ModelRegistry;
 import com.controllerface.bvge.gl.Shader;
 import com.controllerface.bvge.gl.GLUtils;
@@ -77,28 +76,27 @@ public class CircleRenderer extends GameSystem
             .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
             .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
 
-        long k_ptr_root_hull_filter = p_root_hull_filter.kernel_ptr(Kernel.root_hull_filter);
-        k_root_hull_filter = new RootHullFilter_k(GPGPU.ptr_render_queue, k_ptr_root_hull_filter)
-            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
+        long k_ptr_root_hull_filter = p_root_hull_filter.kernel_ptr(Kernel.hull_filter);
+        k_root_hull_filter = new HullFilter_k(GPGPU.ptr_render_queue, k_ptr_root_hull_filter)
+            .buf_arg(HullFilter_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
 
-        long k_ptr_root_hull_count =  p_root_hull_filter.kernel_ptr(Kernel.root_hull_count);
-        k_root_hull_count = new RootHullCount_k(GPGPU.ptr_render_queue, k_ptr_root_hull_count)
-            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
+        long k_ptr_root_hull_count =  p_root_hull_filter.kernel_ptr(Kernel.hull_count);
+        k_root_hull_count = new HullCount_k(GPGPU.ptr_render_queue, k_ptr_root_hull_count)
+            .buf_arg(HullCount_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
     }
 
-    public HullIndexData hull_filter(long queue_ptr, int model_id)
+    public HullIndexData hull_filter(long queue_ptr, int mesh_id)
     {
         GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLData.cl_int.size());
 
-        int entity_count = GPGPU.core_memory.sector_container().next_entity();
-        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
+        int hull_count = GPGPU.core_memory.sector_container().next_hull();
+        int hull_size  = GPGPU.calculate_preferred_global_size(hull_count);
 
         k_root_hull_count
-            .ptr_arg(RootHullCount_k.Args.counter, svm_atomic_counter)
-            .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .set_arg(RootHullCount_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .ptr_arg(HullCount_k.Args.counter, svm_atomic_counter)
+            .set_arg(HullCount_k.Args.mesh_id, mesh_id)
+            .set_arg(HullCount_k.Args.max_hull, hull_count)
+            .call(arg_long(hull_size), GPGPU.preferred_work_size);
 
         int final_count = GPGPU.cl_read_pinned_int(queue_ptr, svm_atomic_counter);
 
@@ -113,11 +111,11 @@ public class CircleRenderer extends GameSystem
         GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CLData.cl_int.size());
 
         k_root_hull_filter
-            .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
-            .ptr_arg(RootHullFilter_k.Args.counter, svm_atomic_counter)
-            .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .ptr_arg(HullFilter_k.Args.hulls_out, hulls_out)
+            .ptr_arg(HullFilter_k.Args.counter, svm_atomic_counter)
+            .set_arg(HullFilter_k.Args.mesh_id, mesh_id)
+            .set_arg(HullFilter_k.Args.max_hull, hull_count)
+            .call(arg_long(hull_size), GPGPU.preferred_work_size);
 
         return new HullIndexData(hulls_out, final_count);
     }
@@ -130,7 +128,7 @@ public class CircleRenderer extends GameSystem
             GPGPU.cl_release_buffer(circle_hulls.indices());
         }
 
-        circle_hulls = hull_filter(GPGPU.ptr_render_queue, ModelRegistry.CIRCLE_PARTICLE);
+        circle_hulls = hull_filter(GPGPU.ptr_render_queue, MeshRegistry.CIRCLE_MESH);
 
         if (circle_hulls.count() == 0) return;
 

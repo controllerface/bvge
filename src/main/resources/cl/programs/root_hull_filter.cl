@@ -36,3 +36,38 @@ __kernel void root_hull_count(__global int *entity_model_indices,
         atomic_inc(&counter[0]);
     }
 }
+
+
+
+
+__kernel void hull_filter(__global int *hull_mesh_ids,
+                          __global int *hulls_out,
+                          __global int *counter,
+                          int target_mesh_id,
+                          int max_hull)
+{
+    int current_hull = get_global_id(0);
+    if (current_hull >= max_hull) return;
+    int mesh_id = hull_mesh_ids[current_hull];
+    if(mesh_id == target_mesh_id)
+    {
+        int i = atomic_inc(&counter[0]);
+        hulls_out[i] = current_hull;
+    }
+}
+
+
+__kernel void hull_count(__global int *hull_mesh_ids,
+                         __global int *counter,
+                         int target_mesh_id,
+                         int max_hull)
+{
+    int current_hull = get_global_id(0);
+    if (current_hull >= max_hull) return;
+    int mesh_id = hull_mesh_ids[current_hull];
+    if(mesh_id == target_mesh_id)
+    {
+        atomic_inc(&counter[0]);
+    }
+}
+

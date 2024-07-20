@@ -52,7 +52,7 @@ public class TestGame extends GameMode
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(RenderType.GAME
-//            ,RenderType.HULLS
+            ,RenderType.HULLS
 //            ,RenderType.POINTS
 //            ,RenderType.ENTITIES
 //            ,RenderType.BOUNDS

@@ -24,16 +24,16 @@ public class PhysicsSimulation extends GameSystem
 {
     //#region Constants
 
-    private static final float TARGET_FPS = 24.0f;
+    private static final float TARGET_FPS = 60.0f;
     private static final float TICK_RATE = 1.0f / TARGET_FPS;
-    private static final int TARGET_SUB_STEPS = 16;
-    private static final int MAX_SUB_STEPS = 16;
+    private static final int TARGET_SUB_STEPS = 6;
+    private static final int MAX_SUB_STEPS = 8;
     private static final int EDGE_STEPS = 8;
 
     public static final float FIXED_TIME_STEP = TICK_RATE / TARGET_SUB_STEPS;
 
     // todo: gravity should not be a constant but calculated based on proximity next to planets and other large bodies
-    private static final float GRAVITY_MAGNITUDE = 9.8f * 10;
+    private static final float GRAVITY_MAGNITUDE = 9.8f * 5;
     private static final float GRAVITY_X = 0;
     private static final float GRAVITY_Y = -GRAVITY_MAGNITUDE * TARGET_FPS;
 

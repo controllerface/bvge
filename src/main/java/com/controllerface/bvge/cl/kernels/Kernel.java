@@ -79,6 +79,8 @@ public enum Kernel
     read_entity_info,
     write_entity_info,
     resolve_constraints,
+    hull_count,
+    hull_filter,
     root_hull_count,
     root_hull_filter,
     rotate_hull,

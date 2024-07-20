@@ -12,7 +12,7 @@ public class MeshRegistry
 {
     private static final AtomicInteger next_mesh_index = new AtomicInteger(0);
 
-    public static final int CIRCLE_MESH = next_mesh_index.getAndIncrement();
+    public static final int CIRCLE_MESH = -1; //next_mesh_index.getAndIncrement();
     public static final int R_SHARD_MESH = next_mesh_index.getAndIncrement();
     public static final int L_SHARD_MESH = next_mesh_index.getAndIncrement();
     public static final int SPIKE_MESH = next_mesh_index.getAndIncrement();
@@ -123,7 +123,7 @@ public class MeshRegistry
         var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList(), new String[0], new float[0]) };
         var faces = new Face[]{ new Face(-1,0, 0, 0) };
         var hull = new int[]{ 0 };
-        return new Mesh("int_circle",-1, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
+        return new Mesh("int_circle", CIRCLE_MESH, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 
     /**
