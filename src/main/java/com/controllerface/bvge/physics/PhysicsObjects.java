@@ -395,8 +395,6 @@ public class PhysicsObjects
         return base_block(world, x, y, 32f, 0, 0, 0, 0, HullFlags.GHOST_HULL.bits, Solid.ANDESITE, new int[4]);
     }
 
-    private static final Random random = new Random();
-
     // todo: add support for boneless models, right now if a model with no bones is loaded, it will
     //  probably break/crash.
     public static int[] wrap_model(SectorContainer world, int model_index, float x, float y, float size, float mass, float friction, float restitution, int uv_offset, int flags)
@@ -412,7 +410,7 @@ public class PhysicsObjects
 
         // we need to track which hull is the root hull for this model
         int root_hull_id = -1;
-        int head_hull_id = -1;
+        int force_root_hull_id = -1;
 
         var meshes = model.meshes();
         int first_hull = -1;
@@ -447,6 +445,11 @@ public class PhysicsObjects
             int local_hull_flags = 0;
             int next_hull = world.next_hull();
             var hull_mesh = meshes[mesh_index];
+
+            if (hull_mesh.name().toLowerCase().contains("pelvis"))
+            {
+                force_root_hull_id = next_hull;
+            }
 
             if (hull_mesh.name().toLowerCase().contains("head"))
             {
@@ -569,6 +572,10 @@ public class PhysicsObjects
             }
 
 
+
+
+
+
             // todo: add a flag to force these edges to be generated in the case of non-animated entities
 
             // calculate interior edges
@@ -621,6 +628,11 @@ public class PhysicsObjects
 //            }
 
             // calculate centroid and reference angle
+
+
+
+
+
             MathEX.centroid(vector_buffer, new_hull);
             var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
             var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, new_hull[0].x(), new_hull[0].y());
@@ -675,7 +687,7 @@ public class PhysicsObjects
         int idle_animation_id = AnimationState.IDLE.ordinal();
 
         int[] result = new int[2];
-        int rh = head_hull_id == -1 ? root_hull_id : head_hull_id;
+        int rh = force_root_hull_id == -1 ? root_hull_id : force_root_hull_id;
         result[0] = world.create_entity(x, y, x, y,
             hull_table, bone_table,
             mass, idle_animation_id, 0.0f,

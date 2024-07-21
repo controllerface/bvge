@@ -177,7 +177,7 @@ __kernel void integrate(__global int2 *hull_point_tables,
                         : 0.0f
                 : 0.0;
 
-         float g_y = touch_alike 
+            float g_y = touch_alike 
                 ? high_density 
                     ? 0.1f
                     : max_density 

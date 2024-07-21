@@ -248,6 +248,8 @@ __kernel void transfer_render_data(__global int2 *hull_point_tables,
         float ggg = cursor_hit && in_range
             ? 1.0f 
             : 0.0f;
+
+        //if (cursor_hit) printf("debug: hit  over: %d  in_range: %d", cursor_over, in_range);
         color_buffer[ref_offset] = (float4)((col + rrr) * aaa, (col + ggg) * aaa, (col + bbb - ggg * 3) * aaa, 1.0f);
         slot_buffer[ref_offset] = (float)texture;
     }

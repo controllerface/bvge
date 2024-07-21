@@ -53,19 +53,19 @@ public class PhysicsSimulation extends GameSystem
 
     //#region GPU Programs & Kernels
 
-    private final GPUProgram p_integrate = new Integrate();
-    private final GPUProgram p_scan_key_bank = new ScanKeyBank();
-    private final GPUProgram p_build_key_bank = new BuildKeyBank();
-    private final GPUProgram p_build_key_bank_edge = new BuildKeyBank();
-    private final GPUProgram p_build_key_map = new BuildKeyMap();
-    private final GPUProgram p_build_key_map_edge = new BuildKeyMap();
-    private final GPUProgram p_locate_in_bounds = new LocateInBounds();
-    private final GPUProgram p_locate_in_bounds_edge = new LocateInBounds();
-    private final GPUProgram p_scan_key_candidates = new ScanKeyCandidates();
-    private final GPUProgram p_aabb_collide = new AabbCollide();
-    private final GPUProgram p_sat_collide = new SatCollide();
-    private final GPUProgram p_animate_hulls = new AnimateHulls();
-    private final GPUProgram p_resolve_constraints = new ResolveConstraints();
+    private final GPUProgram p_integrate                = new Integrate();
+    private final GPUProgram p_scan_key_bank            = new ScanKeyBank();
+    private final GPUProgram p_build_key_bank           = new BuildKeyBank();
+    private final GPUProgram p_build_key_bank_edge      = new BuildKeyBank();
+    private final GPUProgram p_build_key_map            = new BuildKeyMap();
+    private final GPUProgram p_build_key_map_edge       = new BuildKeyMap();
+    private final GPUProgram p_locate_in_bounds         = new LocateInBounds();
+    private final GPUProgram p_locate_in_bounds_edge    = new LocateInBounds();
+    private final GPUProgram p_scan_key_candidates      = new ScanKeyCandidates();
+    private final GPUProgram p_aabb_collide             = new AabbCollide();
+    private final GPUProgram p_sat_collide              = new SatCollide();
+    private final GPUProgram p_animate_hulls            = new AnimateHulls();
+    private final GPUProgram p_resolve_constraints      = new ResolveConstraints();
 
     private final GPUKernel k_aabb_collide;
     private final GPUKernel k_animate_bones;
@@ -125,8 +125,8 @@ public class PhysicsSimulation extends GameSystem
 
     //#region Thread & Sync
 
-    private final BlockingQueue<Float> next_phys_time = new SynchronousQueue<>();
-    private final BlockingQueue<Long> last_phys_time = new SynchronousQueue<>();
+    private final BlockingQueue<Float> next_phys_time   = new SynchronousQueue<>();
+    private final BlockingQueue<Long> last_phys_time    = new SynchronousQueue<>();
     private final GPUScanScalarInt gpu_int_scan;
     private final GPUScanScalarIntOut gpu_int_scan_out;
 
@@ -457,7 +457,8 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(ResolveConstraints_k.Args.bounds_bank_data, GPGPU.core_memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE))
             .buf_arg(ResolveConstraints_k.Args.point,            GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
             .buf_arg(ResolveConstraints_k.Args.edges,            GPGPU.core_memory.get_buffer(CoreBufferType.EDGE))
-            .buf_arg(ResolveConstraints_k.Args.edge_lengths,     GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_LENGTH));
+            .buf_arg(ResolveConstraints_k.Args.edge_lengths,     GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_LENGTH))
+            .buf_arg(ResolveConstraints_k.Args.edge_flags,       GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_FLAG));
 
         long k_ptr_scan_bounds_single_block = p_scan_key_bank.kernel_ptr(Kernel.scan_bounds_single_block);
         long k_ptr_scan_bounds_multi_block = p_scan_key_bank.kernel_ptr(Kernel.scan_bounds_multi_block);
