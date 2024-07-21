@@ -1,5 +1,8 @@
 package com.controllerface.bvge.util;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class Constants
 {
     public static final String PLAYER_ID = "player";
@@ -60,7 +63,7 @@ public class Constants
 
     public enum EdgeFlags
     {
-        IS_INTERIOR     (0b00000000000000000000000000000001),
+        E_INTERIOR(0b00000000000000000000000000000001),
 
         ;
 
@@ -74,7 +77,7 @@ public class Constants
 
     public enum PointFlags
     {
-        IS_INTERIOR     (0b00000000000000000000000000000001),
+        P_INTERIOR      (0b00000000000000000000000000000001),
         HIT_FLOOR       (0b00000000000000000000000000000010),
         HIT_WALL        (0b00000000000000000000000000000100),
         FLOW_LEFT       (0b00000000000000000000000000001000),
@@ -114,24 +117,31 @@ public class Constants
         }
     }
 
-    public enum ControlFlags
+    public static String hull_flags_src()
     {
-        LEFT   (0b00000000000000000000000000000001),
-        RIGHT  (0b00000000000000000000000000000010),
-        UP     (0b00000000000000000000000000000100),
-        DOWN   (0b00000000000000000000000000001000),
-        JUMP   (0b00000000000000000000000000010000),
-        MOUSE1 (0b00000000000000000000000000100000),
-        MOUSE2 (0b00000000000000000000000001000000),
-        RUN    (0b00000000000000000000000010000000),
+        return Arrays.stream(Constants.HullFlags.values())
+            .map(v->"#define " + v.name() + " 0b" + Integer.toBinaryString(v.bits))
+            .collect(Collectors.joining("\n", "", "\n"));
+    }
 
-        ;
+    public static String entity_flags_src()
+    {
+        return Arrays.stream(Constants.EntityFlags.values())
+            .map(v->"#define " + v.name() + " 0b" + Integer.toBinaryString(v.bits))
+            .collect(Collectors.joining("\n", "", "\n"));
+    }
 
-        public final int bits;
+    public static String point_flags_src()
+    {
+        return Arrays.stream(Constants.PointFlags.values())
+            .map(v->"#define " + v.name() + " 0b" + Integer.toBinaryString(v.bits))
+            .collect(Collectors.joining("\n", "", "\n"));
+    }
 
-        ControlFlags(int bits)
-        {
-            this.bits = bits;
-        }
+    public static String edge_flags_src()
+    {
+        return Arrays.stream(Constants.EdgeFlags.values())
+            .map(v->"#define " + v.name() + " 0b" + Integer.toBinaryString(v.bits))
+            .collect(Collectors.joining("\n", "", "\n"));
     }
 }

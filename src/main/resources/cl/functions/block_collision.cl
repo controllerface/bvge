@@ -55,7 +55,7 @@ void block_collision(int hull_1_id,
         int edge_flag = edge_flags[edge_index];
         
         // do not test interior edges
-        if (edge_flag == 1 || p1 >= 2) continue;
+        if ((edge_flag && E_INTERIOR) != 0 || p1 >= 2) continue;
         p1++;
 
         int a_index = edge.x;
@@ -109,7 +109,7 @@ void block_collision(int hull_1_id,
         int edge_flag = edge_flags[edge_index];
 
         // do not test interior edges
-        if (edge_flag == 1 || p1 >= 2) continue;
+        if ( (edge_flag && E_INTERIOR) != 0 || p1 >= 2) continue;
         p1++;
 
         int a_index = edge.x;

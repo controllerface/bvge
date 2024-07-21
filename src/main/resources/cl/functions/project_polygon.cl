@@ -23,7 +23,7 @@ inline float3 project_polygon(__global const float4 *points,
         int n = start + i;
         int point_flag = point_flags[n];
         
-        bool is_interior = (point_flag & IS_INTERIOR) !=0;
+        bool is_interior = (point_flag & P_INTERIOR) !=0;
         if (is_interior) continue;
 
         float2 v = points[n].xy;

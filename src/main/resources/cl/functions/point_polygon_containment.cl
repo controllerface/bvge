@@ -19,7 +19,7 @@ inline bool point_polygon_containment(int polygon_id,
         int edge_flag = edge_flags[edge_index];
         
         // do not test interior edges
-        if (edge_flag == 1) continue;
+        if ((edge_flag && E_INTERIOR) != 0) continue;
 
         int a_index = edge.x;
         int b_index = edge.y;

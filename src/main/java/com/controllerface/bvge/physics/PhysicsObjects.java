@@ -346,8 +346,8 @@ public class PhysicsObjects
         world.create_edge(p4_index, p1_index, edgeDistance(p1, p4), 0);
 
         // corner braces
-        world.create_edge(p1_index, p3_index, edgeDistance(p3, p1), EdgeFlags.IS_INTERIOR.bits);
-        var end_edge = world.create_edge(p2_index, p4_index, edgeDistance(p4, p2), EdgeFlags.IS_INTERIOR.bits);
+        world.create_edge(p1_index, p3_index, edgeDistance(p3, p1), EdgeFlags.E_INTERIOR.bits);
+        var end_edge = world.create_edge(p2_index, p4_index, edgeDistance(p4, p2), EdgeFlags.E_INTERIOR.bits);
 
         var point_table = CLUtils.arg_int2(p1_index, p4_index);
         var edge_table = CLUtils.arg_int2(start_edge, end_edge);
@@ -544,7 +544,7 @@ public class PhysicsObjects
                 {
                     bone_ids[i] = find_bone_index(bone_map, bone_names, i);
                 }
-                end_point = world.create_point(new_point, bone_ids, next_vertex.index(), next_hull, 0, PointFlags.IS_INTERIOR.bits);
+                end_point = world.create_point(new_point, bone_ids, next_vertex.index(), next_hull, 0, PointFlags.P_INTERIOR.bits);
             }
 
             // generate edges in memory for this object

@@ -4,6 +4,7 @@ import com.controllerface.bvge.cl.CLUtils;
 import com.controllerface.bvge.cl.GPGPU;
 import com.controllerface.bvge.cl.buffers.Destroyable;
 import com.controllerface.bvge.cl.kernels.*;
+import com.controllerface.bvge.util.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,10 +33,10 @@ public abstract class GPUProgram implements Destroyable
      * code will define matching constants for easy interoperability.
      * todo: generate the GPU code from the CPU constants instead of duplicating the code in both places
      */
-    protected static String const_entity_flags             = read_src("constants/entity_flags.cl");
-    protected static String const_hull_flags               = read_src("constants/hull_flags.cl");
-    protected static String const_point_flags              = read_src("constants/point_flags.cl");
-    protected static String const_control_flags            = read_src("constants/control_flags.cl");
+    protected static String const_entity_flags             = Constants.entity_flags_src();
+    protected static String const_hull_flags               = Constants.hull_flags_src();
+    protected static String const_point_flags              = Constants.point_flags_src();
+    protected static String const_edge_flags               = Constants.edge_flags_src();
     protected static String const_hit_thresholds           = read_src("constants/hit_thresholds.cl");
     protected static String const_identity_matrix          = read_src("constants/identity_matrix.cl");
 

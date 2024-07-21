@@ -62,7 +62,7 @@ void polygon_circle_collision(int polygon_id,
         int edge_flag = edge_flags[edge_index];
         
         // do not test interior edges
-        if (edge_flag == 1 || this_axis >= max_axis) continue;
+        if ((edge_flag && E_INTERIOR) != 0 || this_axis >= max_axis) continue;
         this_axis++;
 
         int a_index = edge.x;
