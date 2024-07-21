@@ -52,7 +52,7 @@ public class TestGame extends GameMode
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(RenderType.GAME
-            ,RenderType.HULLS
+//            ,RenderType.HULLS
 //            ,RenderType.POINTS
 //            ,RenderType.ENTITIES
 //            ,RenderType.BOUNDS
@@ -154,7 +154,6 @@ public class TestGame extends GameMode
         if (ACTIVE_RENDERERS.contains(RenderType.BOUNDS))
         {
             ecs.register_system(new BoundingBoxRenderer(ecs));
-            ecs.register_system(new BoundingBoxRendererEX(ecs));
         }
 
         if (ACTIVE_RENDERERS.contains(RenderType.POINTS))
@@ -176,7 +175,7 @@ public class TestGame extends GameMode
     @Override
     public void init()
     {
-        float player_size = 100f;
+        float player_size = 1f;
         float player_spawn_x = -250;
         float player_spawn_y = 1500;
         gen_player(player_size, player_spawn_x, player_spawn_y);

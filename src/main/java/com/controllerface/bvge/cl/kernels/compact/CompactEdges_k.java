@@ -18,9 +18,6 @@ public class CompactEdges_k extends GPUKernel
         edges               (EDGE.data_type().buffer_name()),
         edge_lengths        (EDGE_LENGTH.data_type().buffer_name()),
         edge_flags          (EDGE_FLAG.data_type().buffer_name()),
-        edge_aabb           (EDGE_AABB.data_type().buffer_name()),
-        edge_aabb_index     (EDGE_AABB_INDEX.data_type().buffer_name()),
-        edge_aabb_key_table (EDGE_AABB_KEY_TABLE.data_type().buffer_name()),
 
         ;
 

@@ -401,6 +401,8 @@ public class PhysicsObjects
     //  probably break/crash.
     public static int[] wrap_model(SectorContainer world, int model_index, float x, float y, float size, float mass, float friction, float restitution, int uv_offset, int flags)
     {
+        size *= 100;
+
         // we need to know the next entity ID before we create it, so it can be used for hulls
         // note: like all other memory accessing methods, this relies on single-threaded operation
         int next_entity_id = world.next_entity();
@@ -566,54 +568,57 @@ public class PhysicsObjects
                 edge_end = next_edge;
             }
 
+
+            // todo: add a flag to force these edges to be generated in the case of non-animated entities
+
             // calculate interior edges
 
-            // connect every other
-            if (new_hull.length > 4)
-            {
-                //pass 1
-                for (int p1_index = 0; p1_index < new_hull.length; p1_index++)
-                {
-                    int p2_index = p1_index + 2;
-                    if (p2_index > convex_buffer.size() - 1)
-                    {
-                        continue;
-                    }
-                    var p1 = convex_buffer.get(p1_index);
-                    var p2 = convex_buffer.get(p2_index);
-                    var distance = edgeDistance(p2, p1);
-                    edge_end = world.create_edge(convex_table[p1_index], convex_table[p2_index], distance, EdgeFlags.IS_INTERIOR.bits);
-                }
-            }
-
-            // pass 2
-            boolean odd_count = new_hull.length % 2 != 0;
-            int half_count = new_hull.length / 2;
-            int quarter_count = half_count / 2;
-            for (int p1_index = 0; p1_index < half_count; p1_index++)
-            {
-                int p2_index = p1_index + half_count;
-                var p1 = convex_buffer.get(p1_index);
-                var p2 = convex_buffer.get(p2_index);
-                var distance = edgeDistance(p2, p1);
-                edge_end = world.create_edge(convex_table[p1_index], convex_table[p2_index], distance, EdgeFlags.IS_INTERIOR.bits);
-
-                if (quarter_count > 1)
-                {
-                    int p3_index = p1_index + quarter_count;
-                    var p3 = convex_buffer.get(p3_index);
-                    var distance2 = edgeDistance(p3, p1);
-                    edge_end = world.create_edge(convex_table[p1_index], convex_table[p3_index], distance2, EdgeFlags.IS_INTERIOR.bits);
-                }
-            }
-            if (odd_count) // if there was an odd vertex at the end, connect it to the mid-point
-            {
-                int p2_index = convex_table.length - 1;
-                var p1 = convex_buffer.get(half_count + 1);
-                var p2 = convex_buffer.get(p2_index);
-                var distance = edgeDistance(p2, p1);
-                edge_end = world.create_edge(convex_table[half_count + 1], convex_table[p2_index], distance, EdgeFlags.IS_INTERIOR.bits);
-            }
+//            // connect every other
+//            if (new_hull.length > 4)
+//            {
+//                //pass 1
+//                for (int p1_index = 0; p1_index < new_hull.length; p1_index++)
+//                {
+//                    int p2_index = p1_index + 2;
+//                    if (p2_index > convex_buffer.size() - 1)
+//                    {
+//                        continue;
+//                    }
+//                    var p1 = convex_buffer.get(p1_index);
+//                    var p2 = convex_buffer.get(p2_index);
+//                    var distance = edgeDistance(p2, p1);
+//                    edge_end = world.create_edge(convex_table[p1_index], convex_table[p2_index], distance, EdgeFlags.IS_INTERIOR.bits);
+//                }
+//            }
+//
+//            // pass 2
+//            boolean odd_count = new_hull.length % 2 != 0;
+//            int half_count = new_hull.length / 2;
+//            int quarter_count = half_count / 2;
+//            for (int p1_index = 0; p1_index < half_count; p1_index++)
+//            {
+//                int p2_index = p1_index + half_count;
+//                var p1 = convex_buffer.get(p1_index);
+//                var p2 = convex_buffer.get(p2_index);
+//                var distance = edgeDistance(p2, p1);
+//                edge_end = world.create_edge(convex_table[p1_index], convex_table[p2_index], distance, EdgeFlags.IS_INTERIOR.bits);
+//
+//                if (quarter_count > 1)
+//                {
+//                    int p3_index = p1_index + quarter_count;
+//                    var p3 = convex_buffer.get(p3_index);
+//                    var distance2 = edgeDistance(p3, p1);
+//                    edge_end = world.create_edge(convex_table[p1_index], convex_table[p3_index], distance2, EdgeFlags.IS_INTERIOR.bits);
+//                }
+//            }
+//            if (odd_count) // if there was an odd vertex at the end, connect it to the mid-point
+//            {
+//                int p2_index = convex_table.length - 1;
+//                var p1 = convex_buffer.get(half_count + 1);
+//                var p2 = convex_buffer.get(p2_index);
+//                var distance = edgeDistance(p2, p1);
+//                edge_end = world.create_edge(convex_table[half_count + 1], convex_table[p2_index], distance, EdgeFlags.IS_INTERIOR.bits);
+//            }
 
             // calculate centroid and reference angle
             MathEX.centroid(vector_buffer, new_hull);

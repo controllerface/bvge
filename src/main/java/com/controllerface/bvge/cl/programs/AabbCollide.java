@@ -16,7 +16,6 @@ public class AabbCollide extends GPUProgram
         make_program();
 
         load_kernel(Kernel.aabb_collide);
-        load_kernel(Kernel.aabb_collide_edge);
 
         return this;
     }

@@ -236,7 +236,7 @@ void polygon_collision(int hull_1_id,
     float2 collision_vector = collision_normal * min_distance;
     float contact = edge_contact(edge_point_1.xy, edge_point_2.xy, vertex_point.xy, collision_vector);
     float inverse_contact = 1.0f - contact;
-    float edge_scale = native_divide(1.0f, (pown(contact, 2) + pown(inverse_contact, 2)));
+    float edge_scale = native_divide(1.0f, (contact * contact + inverse_contact * inverse_contact));
     float2 edge_1_collision = -collision_vector * (inverse_contact * edge_magnitude * edge_scale);
     float2 edge_2_collision = -collision_vector * (contact * edge_magnitude * edge_scale);
     float2 vertex_collision = collision_vector * vert_magnitude;

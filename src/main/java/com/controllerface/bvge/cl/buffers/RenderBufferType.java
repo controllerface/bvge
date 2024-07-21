@@ -10,7 +10,6 @@ public enum RenderBufferType implements BufferType
     RENDER_ENTITY_ROOT_HULL       (cl_int),
     RENDER_EDGE                   (cl_int2),
     RENDER_EDGE_FLAG              (cl_int),
-    RENDER_EDGE_AABB              (cl_int4),
     RENDER_HULL                   (cl_float4),
     RENDER_HULL_AABB              (cl_int4),
     RENDER_HULL_ENTITY_ID         (cl_int),

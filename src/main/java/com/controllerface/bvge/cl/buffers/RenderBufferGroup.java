@@ -20,7 +20,6 @@ public class RenderBufferGroup extends BufferGroup<RenderBufferType>
         init_buffer(RENDER_ENTITY_ROOT_HULL,       entity_init);
         init_buffer(RENDER_EDGE,                   edge_init);
         init_buffer(RENDER_EDGE_FLAG,              edge_init);
-        init_buffer(RENDER_EDGE_AABB,              point_init);
         init_buffer(RENDER_HULL,                   hull_init);
         init_buffer(RENDER_HULL_AABB,              hull_init);
         init_buffer(RENDER_HULL_ENTITY_ID,         hull_init);
@@ -45,7 +44,6 @@ public class RenderBufferGroup extends BufferGroup<RenderBufferType>
         buffer(RENDER_ENTITY_ROOT_HULL).copy_from(sector_group.buffer(ENTITY_ROOT_HULL));
         buffer(RENDER_EDGE).copy_from(sector_group.buffer(EDGE));
         buffer(RENDER_EDGE_FLAG).copy_from(sector_group.buffer(EDGE_FLAG));
-        buffer(RENDER_EDGE_AABB).copy_from(sector_group.buffer(EDGE_AABB));
         buffer(RENDER_HULL).copy_from(sector_group.buffer(HULL));
         buffer(RENDER_HULL_AABB).copy_from(sector_group.buffer(HULL_AABB));
         buffer(RENDER_HULL_FLAG).copy_from(sector_group.buffer(HULL_FLAG));

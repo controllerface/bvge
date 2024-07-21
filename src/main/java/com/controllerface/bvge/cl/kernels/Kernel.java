@@ -3,15 +3,12 @@ package com.controllerface.bvge.cl.kernels;
 public enum Kernel
 {
     aabb_collide,
-    aabb_collide_edge,
     animate_entities,
     animate_bones,
     animate_points,
     apply_reactions,
     build_key_map,
     calculate_batch_offsets,
-    ccd_collide,
-    ccd_react,
     compact_entity_bones,
     compact_entities,
     compact_hull_bones,
@@ -57,7 +54,6 @@ public enum Kernel
     build_key_bank,
     integrate,
     calculate_hull_aabb,
-    calculate_edge_aabb,
     integrate_entities,
     locate_in_bounds,
     merge_point,

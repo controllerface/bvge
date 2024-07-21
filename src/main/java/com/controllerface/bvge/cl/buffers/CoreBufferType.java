@@ -144,28 +144,6 @@ public enum CoreBufferType implements BufferType
      */
     EDGE_LENGTH                 (cl_float),
 
-    /*
-     * x: corner x position
-     * y: corner y position
-     * z: width
-     * w: height
-     */
-    EDGE_AABB                   (cl_float4),
-
-    /*
-     * x: minimum x key index
-     * y: maximum x key index
-     * z: minimum y key index
-     * w: maximum y key index
-     */
-    EDGE_AABB_INDEX             (cl_int4),
-
-    /*
-     * x: key bank offset
-     * y: key bank size
-     */
-    EDGE_AABB_KEY_TABLE         (cl_int2),
-
     //#endregion
 
     //#region Hull Buffers

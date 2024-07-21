@@ -9,7 +9,7 @@ uniform mat4 uVP;
 
 void main()
 {
-    fColor = vec4(0.0, aFlags, aFlags, 1.0);
+    fColor = vec4(0.0, aFlags * .2, aFlags * .2, 1.0);
     gl_Position = uVP * vec4(aPos, 5.0, 1.0);
 }
 
