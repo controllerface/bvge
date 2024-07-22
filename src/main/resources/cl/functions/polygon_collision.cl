@@ -214,6 +214,31 @@ void polygon_collision(int hull_1_id,
     float vert_magnitude = native_divide(edge_hull_mass, total_mass);
     float edge_magnitude = native_divide(vert_hull_mass, total_mass);
 
+
+
+    bool sensor_vert = (vert_hull_flags & IS_SENSOR) !=0;
+    bool sensor_edge = (edge_hull_flags & IS_SENSOR) !=0;
+
+    if (sensor_vert && sensor_edge) return;
+
+    if (sensor_vert || sensor_edge)
+    {
+        if (sensor_vert)
+        {
+            vert_hull_flags |= SENSOR_HIT;           
+            hull_flags[vert_hull_id] = vert_hull_flags;
+        }
+        else
+        {
+            edge_hull_flags |= SENSOR_HIT;           
+            hull_flags[edge_hull_id] = edge_hull_flags;
+        }
+
+        return;
+    }
+
+
+
     bool ghost_vert = (vert_hull_flags & GHOST_HULL) !=0;
     bool ghost_edge = (edge_hull_flags & GHOST_HULL) !=0;
 

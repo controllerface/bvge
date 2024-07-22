@@ -59,8 +59,6 @@ __kernel void sat_collide(__global int2 *candidates,
     int c_id = b1_is_circle ? b1_id : b2_id;
     int p_id = b1_is_circle ? b2_id : b1_id;
 
-    // todo: it will probably be more performant to have separate kernels for each collision type. There should
-    //  be a preliminary kernel that sorts the candidate pairs so they can be run on the right kernel
     if (b1_is_block && b2_is_block) 
     {
         block_collision(b1_id, b2_id, 
@@ -453,6 +451,9 @@ __kernel void move_entities(__global float4 *hulls,
         int2 point_table = hull_point_tables[n];
         bool no_bones = (hull_flag & NO_BONES) !=0;
         bool is_foot = (hull_flag & IS_FOOT) !=0;
+        bool is_sensor = (hull_flag & IS_SENSOR) !=0;
+
+        if (is_sensor) continue;
 
         _hull_flags |= hull_flag;
 

@@ -119,6 +119,15 @@ void polygon_circle_collision(int polygon_id,
     float4 hull_v = hulls[circle_id];
     float4 hull_e = hulls[polygon_id];
 
+    bool sensor_edge = (edge_hull_flags & IS_SENSOR) !=0;
+
+    if (sensor_edge)
+    {
+        edge_hull_flags |= SENSOR_HIT;           
+        hull_flags[edge_hull_id] = edge_hull_flags;
+        return;
+    }
+
     // cursor collision causes early exit
     bool cursor_v = (vert_hull_flags & IS_CURSOR) !=0;
     bool ghost_e = (edge_hull_flags & GHOST_HULL) !=0;

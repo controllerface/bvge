@@ -24,6 +24,7 @@ public enum RenderBufferType implements BufferType
     RENDER_POINT_ANTI_GRAV        (cl_float),
     RENDER_POINT_HIT_COUNT        (cl_short),
     RENDER_POINT_VERTEX_REFERENCE (cl_int),
+    RENDER_POINT_HULL_INDEX       (cl_int),
 
     ;
 

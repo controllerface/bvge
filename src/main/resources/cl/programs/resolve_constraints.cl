@@ -34,10 +34,43 @@ inline void resolve_length_constraint(__global float4 *points, __global int2 *ed
 } 
 
 
+inline void resolve_pin_constraint(__global float4 *hulls, __global float4 *points, __global int2 *edges, __global float *edge_lengths, __global int *edge_pins, int current_edge)
+{
+    int2 edge = edges[current_edge];
+    int pin = edge_pins[current_edge];
+
+    int p1_index = edge.x;
+    int p2_index = edge.y;
+    float constraint = edge_lengths[current_edge];
+
+    float4 p1 = points[p1_index];
+    float4 p2 = points[p2_index];
+
+    float4 h = hulls[pin];
+    //printf("debug: pin: %d  point p1:%d p2:%d  hull x:%f y: %f z:%f w: %f", pin, p1_index, p2_index, h.x, h.y, h.z, h.w);
+    p1.x = h.x;
+    p1.y = h.y;
+    p1.z = h.z;
+    p1.w = h.w;
+
+    p2.x = h.x;
+    p2.y = h.y - constraint;
+    p2.z = h.z;
+    p2.w = h.w - constraint;
+
+    //p2 = h;
+    // float4 b = h;vb          
+    // h.y+=constraint;
+    // h.w+=constraint;
+    points[p1_index] = p1;
+    points[p2_index] = p2;
+} 
+
 /**
 Resolves edge constraints used for Verlet integration.
  */
-__kernel void resolve_constraints(__global int2 *hull_edge_tables,
+__kernel void resolve_constraints(__global float4 *hulls,
+                                  __global int2 *hull_edge_tables,
                                   __global int2 *bounds_bank_data,
                                   __global float4 *points,
                                   __global int2 *edges,
@@ -58,7 +91,9 @@ __kernel void resolve_constraints(__global int2 *hull_edge_tables,
         {
             // todo: handle sensor edges with different logic
             int flags = edge_flags[current_edge];
-            resolve_length_constraint(points, edges, edge_lengths, current_edge);
+            bool is_pin = (flags & SENSOR_EDGE) != 0;
+            if (is_pin) resolve_pin_constraint(hulls, points, edges, edge_lengths, edge_pins, current_edge);
+            else resolve_length_constraint(points, edges, edge_lengths, current_edge);
         }
     }
 }

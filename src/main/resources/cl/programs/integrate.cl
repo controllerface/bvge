@@ -45,6 +45,7 @@ __kernel void integrate(__global int2 *hull_point_tables,
     int end   = point_table.y;
 
     bool is_cursor     = (hull_1_flags & IS_CURSOR) !=0;
+    bool is_sensor     = (hull_1_flags & IS_SENSOR) !=0;
     bool is_ghost      = (hull_1_flags & GHOST_HULL) !=0;
     bool is_static     = (hull_1_flags & IS_STATIC) !=0;
     bool is_circle     = (hull_1_flags & IS_CIRCLE) !=0;
@@ -63,6 +64,7 @@ __kernel void integrate(__global int2 *hull_point_tables,
     hull_1_flags &= ~CURSOR_OVER;
     hull_1_flags &= ~IN_RANGE;
     hull_1_flags &= ~CURSOR_HIT;
+    hull_1_flags &= ~SENSOR_HIT;
 
     gravity = in_liquid
         ? gravity * 1.5f
@@ -153,7 +155,7 @@ __kernel void integrate(__global int2 *hull_point_tables,
         }
 
 
-        if (!is_static && !out_of_bounds && !is_cursor && !is_ghost)
+        if (!is_static && !out_of_bounds && !is_cursor && !is_ghost && !is_sensor)
         {
             int _point_flags = point_flags[i];
             bool flow_left = (_point_flags & FLOW_LEFT) != 0;
@@ -350,6 +352,7 @@ __kernel void calculate_hull_aabb(__global float4 *hulls,
     int end   = point_table.y;
 
     bool is_cursor     = (hull_1_flags & IS_CURSOR) !=0;
+    bool is_sensor     = (hull_1_flags & IS_SENSOR) !=0;
     bool is_ghost      = (hull_1_flags & GHOST_HULL) !=0;
     bool is_circle     = (hull_1_flags & IS_CIRCLE) !=0;
     bool out_of_bounds = (hull_1_flags & OUT_OF_BOUNDS) !=0;
@@ -432,6 +435,14 @@ __kernel void calculate_hull_aabb(__global float4 *hulls,
         max_x = hull.x + hull_scale.y;
         min_y = hull.y - hull_scale.y;
         max_y = hull.y + hull_scale.y;
+    }
+
+    if (is_sensor)
+    {
+        min_x -= 0.5f;
+        min_y -= 0.5f;
+        max_x += 0.5f;
+        max_y += 0.5f;
     }
 
     // calculate bounding box

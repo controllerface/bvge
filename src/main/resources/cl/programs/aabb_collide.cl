@@ -90,7 +90,7 @@ __kernel void aabb_collide(__global float4 *bounds,
                 continue;
             }
 
-            // no sensor/sensor collision permitted
+            //no sensor/sensor collision permitted
             if (is_sensor && is_sensor_c)
             {
                 continue;

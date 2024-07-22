@@ -8,6 +8,7 @@ public class ResolveConstraints extends GPUProgram
     @Override
     public GPUProgram init()
     {
+        src.add(const_edge_flags);
         src.add(CLUtils.read_src("programs/resolve_constraints.cl"));
 
         make_program();

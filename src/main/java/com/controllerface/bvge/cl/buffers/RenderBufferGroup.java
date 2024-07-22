@@ -34,6 +34,7 @@ public class RenderBufferGroup extends BufferGroup<RenderBufferType>
         init_buffer(RENDER_POINT_ANTI_GRAV,        point_init);
         init_buffer(RENDER_POINT_HIT_COUNT,        point_init);
         init_buffer(RENDER_POINT_VERTEX_REFERENCE, point_init);
+        init_buffer(RENDER_POINT_HULL_INDEX,       point_init);
     }
 
     public void copy_from(BufferGroup<CoreBufferType> sector_group)
@@ -58,5 +59,6 @@ public class RenderBufferGroup extends BufferGroup<RenderBufferType>
         buffer(RENDER_POINT_HIT_COUNT).copy_from(sector_group.buffer(POINT_HIT_COUNT));
         buffer(RENDER_POINT_ANTI_GRAV).copy_from(sector_group.buffer(POINT_ANTI_GRAV));
         buffer(RENDER_POINT_VERTEX_REFERENCE).copy_from(sector_group.buffer(POINT_VERTEX_REFERENCE));
+        buffer(RENDER_POINT_HULL_INDEX).copy_from(sector_group.buffer(POINT_HULL_INDEX));
     }
 }

@@ -260,7 +260,7 @@ public class PhysicsObjects
 
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
-        int hull_flags = HullFlags.IS_SENSOR.bits | HullFlags.NO_BONES.bits;
+        int hull_flags = HullFlags.IS_POLYGON.bits | HullFlags.IS_SENSOR.bits | HullFlags.NO_BONES.bits;
         return world.create_hull(mesh.mesh_id(),
             position,
             scale,
@@ -425,6 +425,8 @@ public class PhysicsObjects
         int first_armature_bone = -1;
         int last_armature_bone = -1;
 
+        var foot_list = new ArrayList<Integer>();
+
         var armature_bone_map = new HashMap<String, Integer>();
         var armature_bone_parent_map = new HashMap<Integer, Integer>();
         for (Map.Entry<Integer, BoneBindPose> entry : model.bind_poses().entrySet())
@@ -471,6 +473,7 @@ public class PhysicsObjects
             if (hull_mesh.name().toLowerCase().contains("foot"))
             {
                 local_hull_flags |= HullFlags.IS_FOOT.bits;
+                foot_list.add(next_hull);
             }
 
             if (hull_mesh.name().toLowerCase().contains(".r"))
@@ -680,6 +683,17 @@ public class PhysicsObjects
             throw new IllegalStateException("There was no root hull determined. "
                 + "Check model data to ensure it is correct");
         }
+
+
+
+        // foot sensors
+        for (var foot : foot_list)
+        {
+            last_hull = sensor_hull(world, x, y, size, 16f, foot, next_entity_id);
+        }
+
+
+
 
         int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
         int[] bone_table = CLUtils.arg_int2(first_armature_bone, last_armature_bone);

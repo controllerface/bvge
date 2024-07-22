@@ -7,6 +7,8 @@ public class PrepareEdges_k extends GPUKernel
     public enum Args
     {
         points,
+        point_hull_indices,
+        hull_flags,
         edges,
         edge_flags,
         vertex_vbo,

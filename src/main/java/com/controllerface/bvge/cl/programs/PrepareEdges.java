@@ -8,6 +8,7 @@ public class PrepareEdges extends GPUProgram
     @Override
     public GPUProgram init()
     {
+        src.add(const_edge_flags);
         src.add(const_hull_flags);
         src.add(CLUtils.read_src("programs/prepare_edges.cl"));
 
