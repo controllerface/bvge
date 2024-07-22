@@ -74,7 +74,8 @@ public class SectorController implements SectorContainer, Destroyable
         k_create_edge = new CreateEdge_k(this.ptr_queue, k_ptr_create_edge)
             .buf_arg(CreateEdge_k.Args.edges,                           this.sector_buffers.buffer(EDGE))
             .buf_arg(CreateEdge_k.Args.edge_lengths,                    this.sector_buffers.buffer(EDGE_LENGTH))
-            .buf_arg(CreateEdge_k.Args.edge_flags,                      this.sector_buffers.buffer(EDGE_FLAG));
+            .buf_arg(CreateEdge_k.Args.edge_flags,                      this.sector_buffers.buffer(EDGE_FLAG))
+            .buf_arg(CreateEdge_k.Args.edge_pins,                       this.sector_buffers.buffer(EDGE_PIN));
 
         long k_ptr_create_hull = p_gpu_crud.kernel_ptr(Kernel.create_hull);
         k_create_hull = new CreateHull_k(this.ptr_queue, k_ptr_create_hull)
@@ -368,7 +369,7 @@ public class SectorController implements SectorContainer, Destroyable
     }
 
     @Override
-    public int create_edge(int p1, int p2, float l, int flags)
+    public int create_edge(int p1, int p2, float l, int flags, int edge_pin)
     {
         int capacity = edge_index + 1;
         sector_buffers.ensure_edge_capacity(capacity);
@@ -378,6 +379,7 @@ public class SectorController implements SectorContainer, Destroyable
             .set_arg(CreateEdge_k.Args.new_edge, arg_int2(p1, p2))
             .set_arg(CreateEdge_k.Args.new_edge_length, l)
             .set_arg(CreateEdge_k.Args.new_edge_flag, flags)
+            .set_arg(CreateEdge_k.Args.new_edge_pin, edge_pin)
             .call_task();
 
         return edge_index++;

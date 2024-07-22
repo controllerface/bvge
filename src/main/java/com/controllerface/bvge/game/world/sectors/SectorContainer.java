@@ -16,7 +16,7 @@ public interface SectorContainer
 
     int create_point(float[] position, int[] bone_ids, int vertex_index, int hull_index, int hit_count, int flags);
 
-    int create_edge(int p1, int p2, float l, int flags);
+    int create_edge(int p1, int p2, float l, int flags, int edge_pin);
 
     int create_hull(int mesh_id,
                     float[] position,

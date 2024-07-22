@@ -12,6 +12,7 @@ public class ResolveConstraints_k extends GPUKernel
         edges,
         edge_lengths,
         edge_flags,
+        edge_pins,
         process_all,
         max_hull,
     }

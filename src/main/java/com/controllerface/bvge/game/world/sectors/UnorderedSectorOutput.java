@@ -63,6 +63,7 @@ public class UnorderedSectorOutput implements Destroyable
             .buf_arg(EgressEntities_k.Args.point_hull_indices_in,           this.core_memory.get_buffer(POINT_HULL_INDEX))
             .buf_arg(EgressEntities_k.Args.point_bone_tables_in,            this.core_memory.get_buffer(POINT_BONE_TABLE))
             .buf_arg(EgressEntities_k.Args.edges_in,                        this.core_memory.get_buffer(EDGE))
+            .buf_arg(EgressEntities_k.Args.edge_pins_in,                    this.core_memory.get_buffer(EDGE_PIN))
             .buf_arg(EgressEntities_k.Args.hull_point_tables_in,            this.core_memory.get_buffer(HULL_POINT_TABLE))
             .buf_arg(EgressEntities_k.Args.hull_edge_tables_in,             this.core_memory.get_buffer(HULL_EDGE_TABLE))
             .buf_arg(EgressEntities_k.Args.hull_bone_tables_in,             this.core_memory.get_buffer(HULL_BONE_TABLE))
@@ -138,9 +139,11 @@ public class UnorderedSectorOutput implements Destroyable
             .buf_arg(EgressEdges_k.Args.edges_in,                        this.core_memory.get_buffer(EDGE))
             .buf_arg(EgressEdges_k.Args.edge_lengths_in,                 this.core_memory.get_buffer(EDGE_LENGTH))
             .buf_arg(EgressEdges_k.Args.edge_flags_in,                   this.core_memory.get_buffer(EDGE_FLAG))
+            .buf_arg(EgressEdges_k.Args.edge_pins_in,                    this.core_memory.get_buffer(EDGE_PIN))
             .buf_arg(EgressEdges_k.Args.edges_out,                       sector_buffers.buffer(EDGE))
             .buf_arg(EgressEdges_k.Args.edge_lengths_out,                sector_buffers.buffer(EDGE_LENGTH))
             .buf_arg(EgressEdges_k.Args.edge_flags_out,                  sector_buffers.buffer(EDGE_FLAG))
+            .buf_arg(EgressEdges_k.Args.edge_pins_out,                   sector_buffers.buffer(EDGE_PIN))
             .buf_arg(EgressEdges_k.Args.new_edges,                       b_edge_shift);
 
         long k_ptr_egress_points = p_gpu_crud.kernel_ptr(Kernel.egress_points);

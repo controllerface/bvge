@@ -9,9 +9,11 @@ public class EgressEdges_k extends GPUKernel
         edges_in,
         edge_lengths_in,
         edge_flags_in,
+        edge_pins_in,
         edges_out,
         edge_lengths_out,
         edge_flags_out,
+        edge_pins_out,
         new_edges,
         max_edge,
     }

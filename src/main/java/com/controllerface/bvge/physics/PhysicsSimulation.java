@@ -458,7 +458,8 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(ResolveConstraints_k.Args.point,            GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
             .buf_arg(ResolveConstraints_k.Args.edges,            GPGPU.core_memory.get_buffer(CoreBufferType.EDGE))
             .buf_arg(ResolveConstraints_k.Args.edge_lengths,     GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_LENGTH))
-            .buf_arg(ResolveConstraints_k.Args.edge_flags,       GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_FLAG));
+            .buf_arg(ResolveConstraints_k.Args.edge_flags,       GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_FLAG))
+            .buf_arg(ResolveConstraints_k.Args.edge_pins,        GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_PIN));
 
         long k_ptr_scan_bounds_single_block = p_scan_key_bank.kernel_ptr(Kernel.scan_bounds_single_block);
         long k_ptr_scan_bounds_multi_block = p_scan_key_bank.kernel_ptr(Kernel.scan_bounds_multi_block);

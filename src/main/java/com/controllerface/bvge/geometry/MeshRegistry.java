@@ -12,12 +12,12 @@ public class MeshRegistry
 {
     private static final AtomicInteger next_mesh_index = new AtomicInteger(0);
 
-    public static final int CIRCLE_MESH = -1; //next_mesh_index.getAndIncrement();
+    public static final int CIRCLE_MESH  = -1;
+    public static final int LINE_MESH    = -2;
     public static final int R_SHARD_MESH = next_mesh_index.getAndIncrement();
     public static final int L_SHARD_MESH = next_mesh_index.getAndIncrement();
-    public static final int SPIKE_MESH = next_mesh_index.getAndIncrement();
-    public static final int LINE_MESH = next_mesh_index.getAndIncrement();
-    public static final int BLOCK_MESH = next_mesh_index.getAndIncrement();
+    public static final int SPIKE_MESH   = next_mesh_index.getAndIncrement();
+    public static final int BLOCK_MESH   = next_mesh_index.getAndIncrement();
 
     private static final Map<Integer, Mesh> loaded_meshes = new HashMap<>();
     private static final Map<String, Integer> mesh_index_map = new HashMap<>();
@@ -193,6 +193,6 @@ public class MeshRegistry
         var faces = new Face[]{ new Face(-1,0, 0, 0) };
         var hull = new int[]{ 0 };
 
-        return new Mesh("line", -1, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
+        return new Mesh("line", LINE_MESH, vertices, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 }

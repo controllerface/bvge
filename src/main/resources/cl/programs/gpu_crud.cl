@@ -221,9 +221,11 @@ __kernel void merge_point(__global float4 *points_in,
 __kernel void merge_edge(__global int2 *edges_in,
                           __global float *edge_lengths_in,
                           __global int *edge_flags_in,
+                          __global int *edge_pins_in,
                           __global int2 *edges_out,
                           __global float *edge_lengths_out,
                           __global int *edge_flags_out,
+                          __global int *edge_pins_out,
                           int edge_offset,
                           int point_offset,
                           int max_edge)
@@ -234,6 +236,7 @@ __kernel void merge_edge(__global int2 *edges_in,
     edges_out[target_edge]        = edges_in[current_edge] + (int2)(point_offset); 
     edge_lengths_out[target_edge] = edge_lengths_in[current_edge]; 
     edge_flags_out[target_edge]   = edge_flags_in[current_edge]; 
+    edge_pins_out[target_edge]    = edge_pins_in[current_edge]; 
 }
 
 __kernel void merge_hull_bone(__global float16 *hull_bones_in,
@@ -504,6 +507,7 @@ their relative offsets are mapped back to an in-order format as they are spawned
 __kernel void egress_entities(__global int *point_hull_indices_in,
                               __global int4 *point_bone_tables_in,
                               __global int2 *edges_in,
+                              __global int *edge_pins_in,
                               __global int2 *hull_point_tables_in,
                               __global int2 *hull_edge_tables_in,
                               __global int2 *hull_bone_tables_in,
@@ -649,14 +653,17 @@ __kernel void egress_entities(__global int *point_hull_indices_in,
                 int new_edge_id = edge_offset + edge_offset_count++;
                 new_edges[current_edge] = new_edge_id;
 
-                int2 edge         = edges_in[current_edge];
+                int2 edge               = edges_in[current_edge];
                 int2 edge_point_offsets = (int2)(0.0f, 0.0f);
                 int2 new_edge_points    = (int2)(0.0f, 0.0f);
+                int new_edge_pin        = edge_pins_in[current_edge];
+                new_edge_pin  = new_edge_pin == -1 ? -1 : new_edge_pin - entity_root_hull;
                 edge_point_offsets.x = edge.x - initial_hull_point_offset;
                 edge_point_offsets.y = edge.y - initial_hull_point_offset;
                 new_edge_points.x = point_offset + edge_point_offsets.x;
                 new_edge_points.y = point_offset + edge_point_offsets.y;
                 edges_in[current_edge] = new_edge_points;
+                edge_pins_in[current_edge] = new_edge_pin;
             }
 
             for (int current_point = hull_point_table.x; current_point <= hull_point_table.y; current_point++)
@@ -727,9 +734,11 @@ __kernel void egress_points(__global float4 *points_in,
 __kernel void egress_edges(__global int2 *edges_in,
                            __global float *edge_lengths_in,
                            __global int *edge_flags_in,
+                           __global int *edge_pins_in,
                            __global int2 *edges_out,
                            __global float *edge_lengths_out,
                            __global int *edge_flags_out,
+                           __global int *edge_pins_out,
                            __global int *new_edges,
                            int max_edge)
 {
@@ -740,6 +749,7 @@ __kernel void egress_edges(__global int2 *edges_in,
     edges_out[new_edge]        = edges_in[current_edge];
     edge_lengths_out[new_edge] = edge_lengths_in[current_edge];
     edge_flags_out[new_edge]   = edge_flags_in[current_edge];
+    edge_pins_out[new_edge]    = edge_pins_in[current_edge];
 }
 
 __kernel void egress_hulls(__global float4 *hulls_in,

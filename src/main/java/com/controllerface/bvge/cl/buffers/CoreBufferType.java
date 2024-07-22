@@ -144,6 +144,11 @@ public enum CoreBufferType implements BufferType
      */
     EDGE_LENGTH                 (cl_float),
 
+    /*
+     * x: pinned hull, if present
+     */
+    EDGE_PIN                    (cl_int),
+
     //#endregion
 
     //#region Hull Buffers

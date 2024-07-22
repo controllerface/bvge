@@ -183,7 +183,8 @@ public class SectorCompactor implements Destroyable
             .buf_arg(CompactEdges_k.Args.edge_shift,            b_edge_shift)
             .buf_arg(CompactEdges_k.Args.edges,                 sector_buffers.buffer(EDGE))
             .buf_arg(CompactEdges_k.Args.edge_lengths,          sector_buffers.buffer(EDGE_LENGTH))
-            .buf_arg(CompactEdges_k.Args.edge_flags,            sector_buffers.buffer(EDGE_FLAG));
+            .buf_arg(CompactEdges_k.Args.edge_flags,            sector_buffers.buffer(EDGE_FLAG))
+            .buf_arg(CompactEdges_k.Args.edge_pins,             sector_buffers.buffer(EDGE_PIN));
 
         long k_ptr_compact_points = p_scan_deletes.kernel_ptr(Kernel.compact_points);
         k_compact_points = new CompactPoints_k(ptr_queue, k_ptr_compact_points)

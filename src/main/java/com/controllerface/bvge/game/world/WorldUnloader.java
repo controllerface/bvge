@@ -229,11 +229,12 @@ public class WorldUnloader extends GameSystem
                         var edge_p2     = raw_sectors.edge[edge_2_y];
                         var edge_length = raw_sectors.edge_length[edge_offset];
                         var edge_flags  = raw_sectors.edge_flag[edge_offset];
+                        var edge_pin    = raw_sectors.edge_pin[edge_offset];
 
                         edge_p1 = edge_p1 - hull_point_table_x;
                         edge_p2 = edge_p2 - hull_point_table_x;
 
-                        hull_edges[hull_edge_count++] = new UnloadedEdge(edge_p1, edge_p2, edge_length, edge_flags);
+                        hull_edges[hull_edge_count++] = new UnloadedEdge(edge_p1, edge_p2, edge_length, edge_flags, edge_pin);
                     }
 
                     int hull_bone_count = 0;

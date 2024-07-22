@@ -26,6 +26,7 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
         init_buffer(EDGE,                edge_init);
         init_buffer(EDGE_LENGTH,         edge_init);
         init_buffer(EDGE_FLAG,           edge_init);
+        init_buffer(EDGE_PIN,            edge_init);
 
         //#endregion
 
@@ -121,6 +122,7 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
         buffer(EDGE).ensure_capacity(edge_capacity);
         buffer(EDGE_LENGTH).ensure_capacity(edge_capacity);
         buffer(EDGE_FLAG).ensure_capacity(edge_capacity);
+        buffer(EDGE_PIN).ensure_capacity(edge_capacity);
     }
 
     public void ensure_hull_capacity(int hull_capacity)

@@ -43,6 +43,7 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
             buffer(EDGE).transfer_out_int(raw.edge, cl_int.size(), edge_vec2);
             buffer(EDGE_LENGTH).transfer_out_float(raw.edge_length, cl_float.size(), edge_capacity);
             buffer(EDGE_FLAG).transfer_out_int(raw.edge_flag, cl_int.size(), edge_capacity);
+            buffer(EDGE_PIN).transfer_out_int(raw.edge_pin, cl_int.size(), edge_capacity);
         }
 
         if (point_capacity > 0)
@@ -108,6 +109,7 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
         public int[] edge = new int[0];
         public int[] edge_flag = new int[0];
         public float[] edge_length = new float[0];
+        public int[] edge_pin = new int[0];
 
         public float[] hull = new float[0];
         public float[] hull_scale = new float[0];
@@ -203,6 +205,7 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
             edge = ensure_int(edge, edge_vec2);
             edge_flag = ensure_int(edge_flag, edge_capacity);
             edge_length = ensure_float(edge_length, edge_capacity);
+            edge_pin = ensure_int(edge_pin, edge_capacity);
 
             hull_bone = ensure_float(hull_bone, hull_bone_vec16);
             hull_bone_bind_pose_id = ensure_int(hull_bone_bind_pose_id, hull_bone_capacity);

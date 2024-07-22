@@ -53,12 +53,14 @@ public class OrderedSectorInput implements SectorContainer, Destroyable
 
         long k_ptr_merge_edge = this.p_gpu_crud.kernel_ptr(Kernel.merge_edge);
         k_merge_edge = new MergeEdge_k(ptr_queue, k_ptr_merge_edge)
-            .buf_arg(MergeEdge_k.Args.edges_in, buffers.buffer(CoreBufferType.EDGE))
-            .buf_arg(MergeEdge_k.Args.edge_lengths_in, buffers.buffer(CoreBufferType.EDGE_LENGTH))
-            .buf_arg(MergeEdge_k.Args.edge_flags_in, buffers.buffer(CoreBufferType.EDGE_FLAG))
-            .buf_arg(MergeEdge_k.Args.edges_out, core_memory.get_buffer(CoreBufferType.EDGE))
+            .buf_arg(MergeEdge_k.Args.edges_in,         buffers.buffer(CoreBufferType.EDGE))
+            .buf_arg(MergeEdge_k.Args.edge_lengths_in,  buffers.buffer(CoreBufferType.EDGE_LENGTH))
+            .buf_arg(MergeEdge_k.Args.edge_flags_in,    buffers.buffer(CoreBufferType.EDGE_FLAG))
+            .buf_arg(MergeEdge_k.Args.edge_pins_in,     buffers.buffer(CoreBufferType.EDGE_PIN))
+            .buf_arg(MergeEdge_k.Args.edges_out,        core_memory.get_buffer(CoreBufferType.EDGE))
             .buf_arg(MergeEdge_k.Args.edge_lengths_out, core_memory.get_buffer(CoreBufferType.EDGE_LENGTH))
-            .buf_arg(MergeEdge_k.Args.edge_flags_out, core_memory.get_buffer(CoreBufferType.EDGE_FLAG));
+            .buf_arg(MergeEdge_k.Args.edge_flags_out,   core_memory.get_buffer(CoreBufferType.EDGE_FLAG))
+            .buf_arg(MergeEdge_k.Args.edge_pins_out,    core_memory.get_buffer(CoreBufferType.EDGE_PIN));
 
         long k_ptr_merge_hull = this.p_gpu_crud.kernel_ptr(Kernel.merge_hull);
         k_merge_hull = new MergeHull_k(ptr_queue, k_ptr_merge_hull)
@@ -241,9 +243,9 @@ public class OrderedSectorInput implements SectorContainer, Destroyable
     }
 
     @Override
-    public int create_edge(int p1, int p2, float l, int flags)
+    public int create_edge(int p1, int p2, float l, int flags, int edge_pin)
     {
-        return controller.create_edge(p1, p2, l, flags);
+        return controller.create_edge(p1, p2, l, flags, edge_pin);
     }
 
     @Override

@@ -16,10 +16,12 @@ public class CreateEdge_k extends GPUKernel
         edges           (cl_int2.buffer_name()),
         edge_lengths    (cl_float.buffer_name()),
         edge_flags      (cl_int.buffer_name()),
+        edge_pins       (cl_int.buffer_name()),
         target          (cl_int.name()),
         new_edge        (cl_int2.name()),
         new_edge_length (cl_float.name()),
         new_edge_flag   (cl_int.name()),
+        new_edge_pin    (cl_int.name()),
 
         ;
 

@@ -9,6 +9,7 @@ public class EgressEntities_k extends GPUKernel
         point_hull_indices_in,
         point_bone_tables_in,
         edges_in,
+        edge_pins_in,
         hull_point_tables_in,
         hull_edge_tables_in,
         hull_bone_tables_in,

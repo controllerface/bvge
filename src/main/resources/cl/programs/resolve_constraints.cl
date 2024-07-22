@@ -43,6 +43,7 @@ __kernel void resolve_constraints(__global int2 *hull_edge_tables,
                                   __global int2 *edges,
                                   __global float *edge_lengths,
                                   __global int *edge_flags,
+                                  __global int *edge_pins,
                                   int process_all,
                                   int max_hull)
 {
