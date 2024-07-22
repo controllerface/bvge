@@ -433,6 +433,7 @@ __kernel void move_entities(__global float4 *hulls,
     int hull_flags_0 = hull_flags[start];
     bool is_block = (hull_flags_0 & IS_BLOCK) != 0;
     bool collectable = (flags & COLLECTABLE) != 0;
+    bool jumping = (flags & JUMPING) != 0;
 
     int hull_0_integrity = hull_integrity[start];
     bool single_hull = hull_count == 1;
@@ -442,6 +443,7 @@ __kernel void move_entities(__global float4 *hulls,
     int _hull_flags = 0;
     float2 last_center = (float2)(0.0f);
     bool had_bones = false;
+    bool had_touch = false;
     int total_hits = 0;
     for (int i = 0; i < hull_count; i++)
     {
@@ -453,7 +455,14 @@ __kernel void move_entities(__global float4 *hulls,
         bool is_foot = (hull_flag & IS_FOOT) !=0;
         bool is_sensor = (hull_flag & IS_SENSOR) !=0;
 
-        if (is_sensor) continue;
+        if (is_sensor)
+        {
+            bool istouch = (hull_flag & SENSOR_HIT) !=0;
+            had_touch = istouch 
+                ? true 
+                : had_touch;
+            continue;
+        } 
 
         _hull_flags |= hull_flag;
 
@@ -487,7 +496,7 @@ __kernel void move_entities(__global float4 *hulls,
     //     ? hull_flags_0 | IS_STATIC
     //     : hull_flags_0;
     
-    entity.w = hit_floor 
+    entity.w = !jumping && hit_floor && had_touch 
         ? entity.y 
         : entity.w;
 
@@ -507,7 +516,7 @@ __kernel void move_entities(__global float4 *hulls,
 
     entity.zw = entity.xy - initial_dist * adjusted_offset;
 
-    flags = hit_floor 
+    flags = had_touch 
         ? flags | CAN_JUMP
         : flags & ~CAN_JUMP;
 

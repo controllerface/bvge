@@ -365,8 +365,8 @@ public class PlayerController implements Destroyable
         if (!player.pressed(MOVE_RIGHT) && !player.pressed(MOVE_LEFT))  accel[0] = 0;
 
         // swim
-        if ( player.pressed(MOVE_UP) && is_wet)   accel[1] = move_force.magnitude() * 1.5f;
-        if ( player.pressed(MOVE_DOWN) && is_wet) accel[1] = -move_force.magnitude();
+        if (player.pressed(MOVE_UP) && is_wet)   accel[1] = move_force.magnitude() * 1.5f;
+        if (player.pressed(MOVE_DOWN) && is_wet) accel[1] = -move_force.magnitude();
 
         arm_flag = player.pressed(MOVE_LEFT) != player.pressed(MOVE_RIGHT)
             ? player.pressed(MOVE_LEFT)
@@ -382,9 +382,14 @@ public class PlayerController implements Destroyable
             ? arm_flag | CAN_COLLECT.bits
             : arm_flag & ~CAN_COLLECT.bits;
 
+        arm_flag = output.jumping
+            ? arm_flag | JUMPING.bits
+            : arm_flag & ~JUMPING.bits;
+
         //System.out.println("debug: anim_layers[] = " + Arrays.toString(anim_layers));
         //System.out.println("debug: prev_layers[] = " + Arrays.toString(prev_layers));
         //System.out.println("debug: current_blend[] = " + Arrays.toString(current_blend));
+
 
         //System.out.println("debug: base: " + current_base_state + " move: " + current_move_state + " action: " + current_action_state);
         if (anim_layers[0]==-1) anim_layers[0] =0;
