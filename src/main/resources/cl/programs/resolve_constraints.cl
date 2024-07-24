@@ -50,6 +50,7 @@ inline void resolve_pin_constraint(__global float4 *hulls,
     float4 h = e_pin 
         ? entities[edge_pins[current_edge]]
         : hulls[edge_pins[current_edge]];
+
     float4 b = h;
 
     b.y = e_pin 

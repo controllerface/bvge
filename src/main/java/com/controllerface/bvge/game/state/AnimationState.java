@@ -208,7 +208,7 @@ public enum AnimationState
             };
 
             case JUMPING -> 0.5f;
-            case RECOIL -> 0.05f;
+            case RECOIL -> 0.2f;
             case LAND_HARD, LAND_SOFT -> 0.4f;
             case UNKNOWN -> 0.0f;
         };
@@ -291,7 +291,7 @@ public enum AnimationState
                 output.jump_amount = jump_cost == 1
                     ? player.pressed(JUMP)
                         ? input.jump_mag
-                        : input.jump_mag / 2
+                        : 0
                     : 0;
                 if (jump_cost == 0) state = input.is_wet ? SWIM_UP : IN_AIR;
                 yield state;

@@ -245,8 +245,8 @@ void polygon_collision(int hull_1_id,
     bool ghost_vert = (vert_hull_flags & GHOST_HULL) !=0;
     bool ghost_edge = (edge_hull_flags & GHOST_HULL) !=0;
 
-    bool static_vert = (vert_hull_flags & IS_STATIC) !=0;
-    bool static_edge = (edge_hull_flags & IS_STATIC) !=0;
+    bool static_vert = e_sensor_edge || (vert_hull_flags & IS_STATIC) !=0;
+    bool static_edge = e_sensor_vert || (edge_hull_flags & IS_STATIC) !=0;
 
     bool any_static = (static_vert || static_edge);
 

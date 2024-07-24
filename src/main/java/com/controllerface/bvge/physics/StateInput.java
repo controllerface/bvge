@@ -10,4 +10,5 @@ public class StateInput
     public float current_time;
     public int anim_index;
     public float jump_mag;
+    public int max_jump_budget;
 }

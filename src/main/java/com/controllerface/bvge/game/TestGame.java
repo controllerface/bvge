@@ -52,9 +52,9 @@ public class TestGame extends GameMode
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(RenderType.GAME
-            ,RenderType.HULLS
+//            ,RenderType.HULLS
 //            ,RenderType.POINTS
-            ,RenderType.ENTITIES
+//            ,RenderType.ENTITIES
 //            ,RenderType.BOUNDS
 //            ,RenderType.GRID
         );
@@ -100,8 +100,8 @@ public class TestGame extends GameMode
         ecs.attach_component(player, ComponentType.EntityId,      new EntityIndex(entity_id[0]));
         ecs.attach_component(player, ComponentType.MouseCursorId, new EntityIndex(cursor_id));
         ecs.attach_component(player, ComponentType.BlockCursorId, new EntityIndex(block_cursor));
-        ecs.attach_component(player, ComponentType.MovementForce, new FloatValue(1400));
-        ecs.attach_component(player, ComponentType.JumpForce,     new FloatValue(9.8f * 5_000));
+        ecs.attach_component(player, ComponentType.MovementForce, new FloatValue(1000));
+        ecs.attach_component(player, ComponentType.JumpForce,     new FloatValue(9.8f * 1000));
         ecs.attach_component(player, ComponentType.InputState,    new PlayerInput());
         ecs.attach_component(player, ComponentType.BlockCursor,   new BlockCursor());
 

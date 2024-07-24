@@ -694,10 +694,10 @@ public class PhysicsObjects
         // foot sensors
         for (var foot : foot_list)
         {
-            last_hull = sensor_hull(world, x, y, size, 16f, foot, next_entity_id, false);
+            last_hull = sensor_hull(world, x, y, size, (float)UniformGrid.BLOCK_SIZE / 2, foot, next_entity_id, false);
         }
 
-        last_hull = sensor_hull(world, x, y, size, 32f, next_entity_id, next_entity_id, true);
+        last_hull = sensor_hull(world, x, y, size, (float)UniformGrid.BLOCK_SIZE * 1.5f, next_entity_id, next_entity_id, true);
 
 
 

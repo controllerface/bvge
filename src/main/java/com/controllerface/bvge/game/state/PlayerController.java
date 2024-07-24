@@ -159,6 +159,7 @@ public class PlayerController implements Destroyable
         }
     }
 
+    private int max_jump_budget = 50;
     private boolean action_layer_idle = true;
     private boolean action_layer_empty = true;
 
@@ -218,7 +219,7 @@ public class PlayerController implements Destroyable
                 : 1.0f;
 
         current_budget = can_jump && !player.pressed(JUMP)
-            ? 15 // todo: this should be a player stat, it is their jump height
+            ? max_jump_budget // todo: this should be a player stat, it is their jump height
             : current_budget;
 
         input.can_jump       = can_jump;
@@ -229,6 +230,7 @@ public class PlayerController implements Destroyable
         input.current_time   = current_time[0];
         input.anim_index     = anim_layers[0];
         input.jump_mag       = jump_force.magnitude();
+        input.max_jump_budget = max_jump_budget;
 
         var next_base_state   = BaseState.process(input, output, current_base_state, player);
         var next_move_state   = MovementState.process(input, output, current_move_state, player);
@@ -335,6 +337,7 @@ public class PlayerController implements Destroyable
             accel[1] = output.jump_amount;
             current_budget = output.next_budget;
         }
+        else accel[1] = 0.0f;
 
         // motion state
 

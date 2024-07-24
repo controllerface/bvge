@@ -342,7 +342,7 @@ public class EarthLikeWorld implements WorldType
                     .1f, 0.05f, 0.005f, solid);
                 else
 
-                    batch.new_block(world_x_block, world_y_block, sz_solid, 90f, 0.03f, 0.0003f, 0,
+                    batch.new_block(world_x_block, world_y_block, sz_solid, 90f, 0.5f, 0.0003f, 0,
                         Constants.HullFlags.IS_STATIC.bits | Constants.HullFlags.OUT_OF_BOUNDS.bits, solid, hits);
             }
         }

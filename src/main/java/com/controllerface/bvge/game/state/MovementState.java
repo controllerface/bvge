@@ -176,11 +176,14 @@ public enum MovementState
                 int jump_cost = input.current_budget > 0
                     ? 1
                     : 0;
+                int diff = (input.max_jump_budget - output.next_budget);
+                System.out.println("debug: budget diff: " + diff);
+                boolean min_hit = diff > 10;
                 output.next_budget -= jump_cost;
                 output.jump_amount = jump_cost == 1
                     ? player.pressed(JUMP)
                         ? input.jump_mag
-                        : input.jump_mag / 2
+                        : min_hit ? 0 : input.jump_mag
                     : 0;
                 if (jump_cost == 0)
                 {
