@@ -54,7 +54,7 @@ public class TestGame extends GameMode
         EnumSet.of(RenderType.GAME
             ,RenderType.HULLS
 //            ,RenderType.POINTS
-//            ,RenderType.ENTITIES
+            ,RenderType.ENTITIES
 //            ,RenderType.BOUNDS
 //            ,RenderType.GRID
         );
@@ -101,7 +101,7 @@ public class TestGame extends GameMode
         ecs.attach_component(player, ComponentType.MouseCursorId, new EntityIndex(cursor_id));
         ecs.attach_component(player, ComponentType.BlockCursorId, new EntityIndex(block_cursor));
         ecs.attach_component(player, ComponentType.MovementForce, new FloatValue(1400));
-        ecs.attach_component(player, ComponentType.JumpForce,     new FloatValue(9.8f * 10 * 550));
+        ecs.attach_component(player, ComponentType.JumpForce,     new FloatValue(9.8f * 5_000));
         ecs.attach_component(player, ComponentType.InputState,    new PlayerInput());
         ecs.attach_component(player, ComponentType.BlockCursor,   new BlockCursor());
 

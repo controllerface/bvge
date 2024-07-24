@@ -454,6 +454,7 @@ __kernel void move_entities(__global float4 *hulls,
         bool no_bones = (hull_flag & NO_BONES) !=0;
         bool is_foot = (hull_flag & IS_FOOT) !=0;
         bool is_sensor = (hull_flag & IS_SENSOR) !=0;
+        bool e_is_sensor = (hull_flag & ENTITY_SENSOR) !=0;
 
         if (is_sensor)
         {
@@ -461,7 +462,7 @@ __kernel void move_entities(__global float4 *hulls,
             had_touch = istouch 
                 ? true 
                 : had_touch;
-            continue;
+            if (!e_is_sensor) continue;
         } 
 
         _hull_flags |= hull_flag;

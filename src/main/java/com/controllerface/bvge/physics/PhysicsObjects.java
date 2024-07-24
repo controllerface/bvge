@@ -222,7 +222,8 @@ public class PhysicsObjects
                                    float size,
                                    float sensor_length,
                                    int pinned_hull,
-                                   int next_entity_id)
+                                   int next_entity_id,
+                                   boolean entity_sensor)
     {
         int next_hull_index = world.next_hull();
 
@@ -250,7 +251,10 @@ public class PhysicsObjects
 
         var angle = MathEX.angle_between_lines(l1, l2);
 
-        var start_edge = world.create_edge(p1_index, p2_index, sensor_length, EdgeFlags.SENSOR_EDGE.bits, pinned_hull);
+        var ef = EdgeFlags.SENSOR_EDGE.bits;
+        if (entity_sensor) ef |= EdgeFlags.E_SENSOR.bits;
+
+        var start_edge = world.create_edge(p1_index, p2_index, sensor_length, ef, pinned_hull);
 
         var point_table = CLUtils.arg_int2(p1_index, p2_index);
         var edge_table = CLUtils.arg_int2(start_edge, start_edge);
@@ -261,6 +265,7 @@ public class PhysicsObjects
         // there is only one hull, so it is the main hull ID by default
         int[] bone_table = CLUtils.arg_int2(0, -1);
         int hull_flags = HullFlags.IS_POLYGON.bits | HullFlags.IS_SENSOR.bits | HullFlags.NO_BONES.bits;
+        if (entity_sensor) hull_flags |= HullFlags.ENTITY_SENSOR.bits;
         return world.create_hull(mesh.mesh_id(),
             position,
             scale,
@@ -287,7 +292,7 @@ public class PhysicsObjects
     {
         int next_entity_id = world.next_entity();
 
-        int hull_id = sensor_hull(world, x, y, size, sensor_length, pinned_hull, next_entity_id);
+        int hull_id = sensor_hull(world, x, y, size, sensor_length, pinned_hull, next_entity_id, false);
         int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
         return world.create_entity(x, y, x, y,
             hull_table,
@@ -689,8 +694,10 @@ public class PhysicsObjects
         // foot sensors
         for (var foot : foot_list)
         {
-            last_hull = sensor_hull(world, x, y, size, 16f, foot, next_entity_id);
+            last_hull = sensor_hull(world, x, y, size, 16f, foot, next_entity_id, false);
         }
+
+        last_hull = sensor_hull(world, x, y, size, 32f, next_entity_id, next_entity_id, true);
 
 
 

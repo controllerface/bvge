@@ -7,6 +7,7 @@ public class ResolveConstraints_k extends GPUKernel
     public enum Args
     {
         hulls,
+        entities,
         hull_edge_tables,
         bounds_bank_data,
         point,

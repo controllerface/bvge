@@ -219,6 +219,9 @@ void polygon_collision(int hull_1_id,
     bool sensor_vert = (vert_hull_flags & IS_SENSOR) !=0;
     bool sensor_edge = (edge_hull_flags & IS_SENSOR) !=0;
 
+    bool e_sensor_vert = (vert_hull_flags & ENTITY_SENSOR) !=0;
+    bool e_sensor_edge = (edge_hull_flags & ENTITY_SENSOR) !=0;
+
     if (sensor_vert && sensor_edge) return;
 
     if (sensor_vert || sensor_edge)
@@ -234,7 +237,7 @@ void polygon_collision(int hull_1_id,
             hull_flags[edge_hull_id] = edge_hull_flags;
         }
 
-        return;
+        if (!e_sensor_vert && !e_sensor_edge) return;
     }
 
 
