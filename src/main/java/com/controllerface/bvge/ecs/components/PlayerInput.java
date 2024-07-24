@@ -55,7 +55,8 @@ public class PlayerInput implements GameComponent
 
     public boolean pressed(InputBinding binding)
     {
-        return input_states.get(binding);
+        Boolean value = input_states.get(binding);
+        return value != null && value;
     }
 
     public boolean mouse_latched()

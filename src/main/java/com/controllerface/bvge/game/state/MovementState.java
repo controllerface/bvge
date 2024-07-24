@@ -177,7 +177,6 @@ public enum MovementState
                     ? 1
                     : 0;
                 int diff = (input.max_jump_budget - output.next_budget);
-                System.out.println("debug: budget diff: " + diff);
                 boolean min_hit = diff > 10;
                 output.next_budget -= jump_cost;
                 output.jump_amount = jump_cost == 1

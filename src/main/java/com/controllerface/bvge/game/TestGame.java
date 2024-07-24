@@ -52,7 +52,7 @@ public class TestGame extends GameMode
 
     private static final EnumSet<RenderType> ACTIVE_RENDERERS =
         EnumSet.of(RenderType.GAME
-//            ,RenderType.HULLS
+            ,RenderType.HULLS
 //            ,RenderType.POINTS
 //            ,RenderType.ENTITIES
 //            ,RenderType.BOUNDS
@@ -180,10 +180,6 @@ public class TestGame extends GameMode
         float player_spawn_y = 1500;
         gen_player(player_size, player_spawn_x, player_spawn_y);
         //gen_test_wall(500, 0, 500);
-
-//        PhysicsObjects.test_line(GPGPU.core_memory.sector_container(),
-//            0, 600, 32, 0, 0, 10, 0, 0, LINE_PARTICLE, Solid.ANDESITE);
-
         load_systems(player_spawn_x, player_spawn_y);
     }
 
