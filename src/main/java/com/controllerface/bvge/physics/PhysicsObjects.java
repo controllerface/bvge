@@ -280,33 +280,6 @@ public class PhysicsObjects
             hull_flags);
     }
 
-    public static int sensor_line(SectorContainer world,
-                                  float x,
-                                  float y,
-                                  float size,
-                                  int entity_flags,
-                                  float mass,
-                                  int model_id,
-                                  float sensor_length,
-                                  int pinned_hull)
-    {
-        int next_entity_id = world.next_entity();
-
-        int hull_id = sensor_hull(world, x, y, size, sensor_length, pinned_hull, next_entity_id, false);
-        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
-        return world.create_entity(x, y, x, y,
-            hull_table,
-            CLUtils.arg_int2(0, -1),
-            mass,
-            -1,
-            -1f,
-            hull_id,
-            model_id,
-            0,
-            -1,
-            entity_flags);
-    }
-
     public static int block(SectorContainer world,
                             float x,
                             float y,

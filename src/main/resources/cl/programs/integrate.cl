@@ -46,6 +46,7 @@ __kernel void integrate(__global int2 *hull_point_tables,
 
     bool is_cursor     = (hull_1_flags & IS_CURSOR) !=0;
     bool is_sensor     = (hull_1_flags & IS_SENSOR) !=0;
+    bool is_e_sensor   = (hull_1_flags & ENTITY_SENSOR) !=0;
     bool is_ghost      = (hull_1_flags & GHOST_HULL) !=0;
     bool is_static     = (hull_1_flags & IS_STATIC) !=0;
     bool is_circle     = (hull_1_flags & IS_CIRCLE) !=0;
@@ -115,18 +116,6 @@ __kernel void integrate(__global int2 *hull_point_tables,
 
     for (int i = start; i <= end; i++)
     {
-
-        // float anti_grav_scale = 0;
-        // //for (int i = start; i <= end; i++)
-        // //{
-        //     float point_scale = anti_gravity[i];
-        //     anti_gravity[i] = 0;
-        //     anti_grav_scale = max(point_scale, anti_grav_scale);
-        // //}
-
-        // float2 anti_grav = generate_counter_vector(gravity, anti_grav_scale);
-        // float2 i_acc = anti_grav * dt_2;
-
         // get this point
         float4 point = points[i];
         
@@ -143,7 +132,6 @@ __kernel void integrate(__global int2 *hull_point_tables,
 
         float sign_x = vel.x < 0 ? -1 : 1;
         // float sign_y = vel.y < 0 ? -1 : 1;
-
 
         prv.x = s_x ? pos.x - sign_x * x_threshold : prv.x;
         // prv.y = s_y ? pos.y - sign_y * y_threshold : prv.y;
@@ -186,8 +174,6 @@ __kernel void integrate(__global int2 *hull_point_tables,
                         ? 0.3f 
                         : 0.0f
                 : 0.0;
-
-            //float g_y = touch_alike ? 0.02f : 0.0;
 
             float2 w_acc = (is_liquid)
                 ? flow_left
@@ -270,7 +256,7 @@ __kernel void integrate_entities(__global float4 *entities,
     //gravity = (float2)(0.0f);
 
     gravity = is_wet
-        ? gravity * 0.4f
+        ? gravity * 0.3f
         : gravity;
 
     float y_damping = is_wet

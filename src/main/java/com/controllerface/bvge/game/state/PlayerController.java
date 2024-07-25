@@ -368,7 +368,7 @@ public class PlayerController implements Destroyable
         if (!player.pressed(MOVE_RIGHT) && !player.pressed(MOVE_LEFT))  accel[0] = 0;
 
         // swim
-        if (player.pressed(MOVE_UP) && is_wet)   accel[1] = move_force.magnitude() * 1.5f;
+        if (player.pressed(MOVE_UP) && is_wet)   accel[1] = move_force.magnitude() * 2f;
         if (player.pressed(MOVE_DOWN) && is_wet) accel[1] = -move_force.magnitude();
 
         arm_flag = player.pressed(MOVE_LEFT) != player.pressed(MOVE_RIGHT)

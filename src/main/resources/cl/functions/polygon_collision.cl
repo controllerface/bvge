@@ -31,22 +31,14 @@ void polygon_collision(int hull_1_id,
     int2 hull_2_point_table = hull_point_tables[hull_2_id];
     int2 hull_2_edge_table = hull_edge_tables[hull_2_id];
 
-	int hull_1_point_count = hull_1_point_table.y - hull_1_point_table.x + 1;
 	int hull_1_edge_count  = hull_1_edge_table.y - hull_1_edge_table.x + 1;
-	int hull_2_point_count = hull_2_point_table.y - hull_2_point_table.x + 1;
 	int hull_2_edge_count  = hull_2_edge_table.y - hull_2_edge_table.x + 1;
 
     int hull_1_flags = hull_flags[hull_1_id];
     int hull_2_flags = hull_flags[hull_2_id];
-    bool b1_is_block = (hull_1_flags & IS_BLOCK) !=0;
-    bool b2_is_block = (hull_2_flags & IS_BLOCK) !=0;
-    bool b1_is_ghost = (hull_1_flags & GHOST_HULL) !=0;
-    bool b2_is_ghost = (hull_2_flags & GHOST_HULL) !=0;
-    bool b1_is_active = (entity_flags[hull_entity_ids[hull_1_id]] & GHOST_ACTIVE) !=0;
-    bool b2_is_active = (entity_flags[hull_entity_ids[hull_2_id]] & GHOST_ACTIVE) !=0;
 
-    if (b1_is_ghost && !b1_is_active) return;
-    if (b2_is_ghost && !b2_is_active) return;
+    if ((hull_1_flags & GHOST_HULL) !=0 && !((entity_flags[hull_entity_ids[hull_1_id]] & GHOST_ACTIVE) !=0)) return;
+    if ((hull_2_flags & GHOST_HULL) !=0 && !((entity_flags[hull_entity_ids[hull_2_id]] & GHOST_ACTIVE) !=0)) return;
 
     float min_distance = FLT_MAX;
 
@@ -66,7 +58,7 @@ void polygon_collision(int hull_1_id,
 
     // hull 1
 
-    max_axis = b1_is_block ? 2 : hull_1_edge_count;
+    max_axis = (hull_1_flags & IS_BLOCK) !=0 ? 2 : hull_1_edge_count;
     __attribute__((opencl_unroll_hint(2)))
     for (int point_index = 0; point_index < hull_1_edge_count; point_index++)
     {
@@ -119,7 +111,7 @@ void polygon_collision(int hull_1_id,
     this_axis = 0;
     
     // hull 2
-    max_axis = b2_is_block ? 2 : hull_1_edge_count;
+    max_axis = (hull_2_flags & IS_BLOCK) !=0 ? 2 : hull_1_edge_count;
     __attribute__((opencl_unroll_hint(2)))
     for (int point_index = 0; point_index < hull_2_edge_count; point_index++)
     {

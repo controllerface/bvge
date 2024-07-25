@@ -56,8 +56,14 @@ __kernel void sat_collide(__global int2 *candidates,
     bool b1_is_polygon = (hull_1_flags & IS_POLYGON) !=0;
     bool b2_is_polygon = (hull_2_flags & IS_POLYGON) !=0;
 
+    bool b1_is_sensor = (hull_1_flags & ENTITY_SENSOR) !=0;
+    bool b2_is_sensor = (hull_2_flags & ENTITY_SENSOR) !=0;
+
     int c_id = b1_is_circle ? b1_id : b2_id;
     int p_id = b1_is_circle ? b2_id : b1_id;
+
+    int e_id = b1_is_sensor ? b1_id : b2_id;
+    int s_id = b1_is_sensor ? b2_id : b1_id;
 
     if (b1_is_block && b2_is_block) 
     {
@@ -80,7 +86,7 @@ __kernel void sat_collide(__global int2 *candidates,
             counter,
             dt);
     }
-    else if (b1_is_polygon && b2_is_polygon) 
+    else if (b1_is_polygon && b2_is_polygon && !b1_is_sensor & !b2_is_sensor) 
     {
         polygon_collision(b1_id, b2_id, 
             entity_flags,
@@ -122,7 +128,23 @@ __kernel void sat_collide(__global int2 *candidates,
             counter,
             dt); 
     }
-    else 
+    else if ((b1_is_sensor || b2_is_sensor) && !b1_is_circle && !b2_is_circle)
+    {
+        polygon_sensor_collision(s_id, e_id, 
+                              hulls,
+                              points,
+                              edges,
+                              hull_point_tables,
+                              hull_edge_tables,
+                              edge_flags,
+                              hull_flags,
+                              counter,
+                              reactions,
+                              reaction_index,
+                              point_reactions,
+                              dt);
+    }
+    else
     {
         polygon_circle_collision(p_id, c_id, 
             entity_model_transforms,
