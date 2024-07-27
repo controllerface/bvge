@@ -467,6 +467,8 @@ __kernel void move_entities(__global float4 *hulls,
     bool had_bones = false;
     bool had_touch = false;
     int total_hits = 0;
+    int has_sensor = false;
+    float2 sensor_p1 = (float2)(0.0f);
     for (int i = 0; i < hull_count; i++)
     {
         int n = start + i;
@@ -485,6 +487,8 @@ __kernel void move_entities(__global float4 *hulls,
                 ? true 
                 : had_touch;
             if (!e_is_sensor) continue;
+            //has_sensor = true;
+            //sensor_p1 = points[point_table.x].xy;
         } 
 
         _hull_flags |= hull_flag;
@@ -529,6 +533,10 @@ __kernel void move_entities(__global float4 *hulls,
     entity.xy = had_bones 
         ? entity.xy + diff
         : last_center;
+
+    entity.xy = has_sensor 
+        ? sensor_p1 
+        : entity.xy;
 
     float2 adjusted_offset = entity.xy - initial_tail;
     float new_len = fast_length(adjusted_offset);

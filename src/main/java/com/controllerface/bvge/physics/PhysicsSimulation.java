@@ -137,29 +137,6 @@ public class PhysicsSimulation extends GameSystem
     private final BufferGroup<PhysicsBuffer> candidate_buffers;
     private final BufferGroup<PhysicsBuffer> match_buffers;
 
-    private enum PhysicsBuffer implements BufferType
-    {
-        POINT_REACTION_COUNTS  (cl_int),
-        POINT_REACTION_OFFSETS (cl_int),
-        REACTIONS_IN           (cl_float8),
-        REACTIONS_OUT          (cl_float8),
-        REACTION_INDEX         (cl_int),
-        KEY_MAP                (cl_int),
-        KEY_BANK               (cl_int),
-        IN_BOUNDS              (cl_int),
-        CANDIDATES             (cl_int2),
-        CANDIDATE_COUNTS       (cl_int2),
-        CANDIDATE_OFFSETS      (cl_int),
-        MATCHES                (cl_int),
-        MATCHES_USED           (cl_int),
-
-        ;
-
-        private final CLType item_size;
-        PhysicsBuffer(CLType itemSize) { item_size = itemSize; }
-        @Override public CLType data_type() { return item_size; }
-    }
-
     private final Thread physics_simulation = Thread.ofVirtual().name("Physics-Simulation").start(() ->
     {
         try
@@ -457,7 +434,7 @@ public class PhysicsSimulation extends GameSystem
             .buf_arg(ResolveConstraints_k.Args.entities,         GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY))
             .buf_arg(ResolveConstraints_k.Args.hull_edge_tables, GPGPU.core_memory.get_buffer(CoreBufferType.HULL_EDGE_TABLE))
             .buf_arg(ResolveConstraints_k.Args.bounds_bank_data, GPGPU.core_memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(ResolveConstraints_k.Args.point,            GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
+            .buf_arg(ResolveConstraints_k.Args.points,           GPGPU.core_memory.get_buffer(CoreBufferType.POINT))
             .buf_arg(ResolveConstraints_k.Args.edges,            GPGPU.core_memory.get_buffer(CoreBufferType.EDGE))
             .buf_arg(ResolveConstraints_k.Args.edge_lengths,     GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_LENGTH))
             .buf_arg(ResolveConstraints_k.Args.edge_flags,       GPGPU.core_memory.get_buffer(CoreBufferType.EDGE_FLAG))
@@ -1259,6 +1236,8 @@ public class PhysicsSimulation extends GameSystem
         // Pre-Simulation Setup //
         //----------------------//
 
+        // todo: run translate kernels to move locations into a local co-ordinate space
+
         // Armatures and bones are animated once per time tick, after all simulation is done for this pass. The interplay between
         // animation and edge constraints may leave points in slightly incorrect positions. Animating here ensures the rendering
         // step always sees the objects exactly in their correct positions.
@@ -1337,7 +1316,7 @@ public class PhysicsSimulation extends GameSystem
         // Post Simulation Cleanup //
         //-------------------------//
 
-        // TODO: read back mouse colliding objects here
+        // todo: run translate kernels to move locations back into the global co-ordinate space
 
         // zero out the acceleration buffer, so it is empty for the next frame
         GPGPU.core_memory.get_buffer(CoreBufferType.ENTITY_ACCEL).clear();

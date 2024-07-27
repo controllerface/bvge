@@ -93,23 +93,26 @@ void polygon_sensor_collision(int polygon_id,
 
     float4 polygon = hulls[polygon_id];
     float4 sensor  = hulls[sensor_id];
+    int2 point_table = hull_point_tables[sensor_id];
+    float4 point =  points[point_table.x];
 
     // get the sensor hull points and the polygon
-    bool hit = point_polygon_containment(polygon_id, sensor.xy, hull_edge_tables, points, edges, edge_flags);
+    bool hit = point_polygon_containment(polygon_id, point.xy, hull_edge_tables, points, edges, edge_flags);
 
     if (!hit) return;
 
     hull_flags[sensor_id] |= SENSOR_HIT;
 
     float2 vert_hull_opposing = polygon.xy - sensor.xy;
-    float displacement = calculateDisplacement(polygon_id, points[hull_point_tables[sensor_id].x].xy, hull_edge_tables, points, edges, edge_flags);
+
+    float displacement = calculateDisplacement(polygon_id, point.xy, hull_edge_tables, points, edges, edge_flags);
 
     int point_index = atomic_inc(&counter[0]);
     float8 vertex_reactions = (float8)((float2)(0.0f, displacement), vert_hull_opposing, (float2)(0.0f, 0.0f), (float2)(0.0f, 0.0f));
     reactions[point_index] = vertex_reactions;
-    reaction_index[point_index] = sensor_id;
-    atomic_inc(&reaction_counts[sensor_id]);
+    reaction_index[point_index] = point_table.x;
+    atomic_inc(&reaction_counts[point_table.x]);
 
-    //printf("debug: line=%d poly=%d hit=%f", sensor_id, polygon_id, displacement);
+    printf("debug: line=%d poly=%d hit=%f", sensor_id, polygon_id, displacement);
     // 
 }

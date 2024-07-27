@@ -51,7 +51,7 @@ uniform vec2 uCamera;
 float calculateAmbientLight(float y) 
 {
     const float minLight = 0.01;
-    const float maxLight = 0.4;
+    const float maxLight = 0.7;
     float lightValue;
 
     if (y < 0.0) 

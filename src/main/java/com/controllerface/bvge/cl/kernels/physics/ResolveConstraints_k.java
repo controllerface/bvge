@@ -10,7 +10,7 @@ public class ResolveConstraints_k extends GPUKernel
         entities,
         hull_edge_tables,
         bounds_bank_data,
-        point,
+        points,
         edges,
         edge_lengths,
         edge_flags,

@@ -33,34 +33,37 @@ inline void resolve_length_constraint(__global float4 *points, __global int2 *ed
     points[p2_index] = p2;
 } 
 
-
 inline void resolve_pin_constraint(__global float4 *hulls, 
-                                   __global float4 *entities,
                                    __global float4 *points, 
                                    __global int2 *edges, 
                                    __global float *edge_lengths, 
                                    __global int *edge_pins, 
-                                   int flags,
                                    int current_edge)
 {
     int2 edge = edges[current_edge];
     float constraint = edge_lengths[current_edge];
-    bool e_pin = (flags & E_SENSOR) != 0;
-
-    float4 h = e_pin 
-        ? entities[edge_pins[current_edge]]
-        : hulls[edge_pins[current_edge]];
-
+    float4 h = hulls[edge_pins[current_edge]];
     float4 b = h;
+    b.y = h.y - constraint;
+    b.w = h.w - constraint;
+    points[edge.x] = h;
+    points[edge.y] = b;
+} 
 
-    b.y = e_pin 
-        ? h.y + constraint
-        : h.y - constraint;
-
-    b.w = e_pin 
-        ? h.w + constraint
-        : h.w - constraint;
-
+inline void resolve_e_pin_constraint(__global float4 *entities,
+                                     __global float4 *points, 
+                                     __global int2 *edges, 
+                                     __global float *edge_lengths, 
+                                     __global int *edge_pins, 
+                                     int current_edge)
+{
+    int2 edge = edges[current_edge];
+    float constraint = edge_lengths[current_edge];
+    float4 h = entities[edge_pins[current_edge]];
+    float4 b = h;
+    b.y = h.y + constraint;
+    b.w = h.w + constraint;
+    //h.y -= 16;
     points[edge.x] = h;
     points[edge.y] = b;
 } 
@@ -92,7 +95,9 @@ __kernel void resolve_constraints(__global float4 *hulls,
             // todo: handle sensor edges with different logic
             int flags = edge_flags[current_edge];
             bool is_pin = (flags & SENSOR_EDGE) != 0;
-            if (is_pin) resolve_pin_constraint(hulls, entities, points, edges, edge_lengths, edge_pins, flags, current_edge);
+            bool e_pin = (flags & E_SENSOR) != 0;
+            if (e_pin) resolve_e_pin_constraint(entities, points, edges, edge_lengths, edge_pins, current_edge);
+            else if (is_pin) resolve_pin_constraint(hulls, points, edges, edge_lengths, edge_pins, current_edge);
             else resolve_length_constraint(points, edges, edge_lengths, current_edge);
         }
     }

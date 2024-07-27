@@ -50,8 +50,7 @@ public class TestGame extends GameMode
         GRID,       // uniform grid
     }
 
-    private static final EnumSet<RenderType> ACTIVE_RENDERERS =
-        EnumSet.of(RenderType.GAME
+    private static final EnumSet<RenderType> ACTIVE_RENDERERS = EnumSet.of(RenderType.GAME
             ,RenderType.HULLS
 //            ,RenderType.POINTS
 //            ,RenderType.ENTITIES
