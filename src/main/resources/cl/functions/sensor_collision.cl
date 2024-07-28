@@ -113,6 +113,5 @@ void polygon_sensor_collision(int polygon_id,
     reaction_index[point_index] = point_table.x;
     atomic_inc(&reaction_counts[point_table.x]);
 
-    printf("debug: line=%d poly=%d hit=%f", sensor_id, polygon_id, displacement);
-    // 
+    //printf("debug: line=%d poly=%d hit=%f", sensor_id, polygon_id, displacement); 
 }
