@@ -7,14 +7,14 @@ __kernel void locate_in_bounds(__global int2 *bounds_bank_data,
                                __global int *counter,
                                int max_bound)
 {
-    int gid = get_global_id(0);
-    if (gid >= max_bound) return;
-    int2 bounds_bank = bounds_bank_data[gid];
+    int current_hull = get_global_id(0);
+    if (current_hull >= max_bound) return;
+    int2 bounds_bank = bounds_bank_data[current_hull];
     bool is_in_bounds = bounds_bank.y > 0;
     if (is_in_bounds)
     {
         int i = atomic_inc(&counter[0]);
-        in_bounds[i] = gid;
+        in_bounds[i] = current_hull;
     }    
 }
 
@@ -30,9 +30,9 @@ __kernel void count_candidates(__global int2 *bounds_bank_data,
                                int key_count_length, 
                                int max_index)
 {
-    int gid = get_global_id(0);
-    if (gid >= max_index) return;
-    int index = in_bounds[gid];
+    int current_candidate = get_global_id(0);
+    if (current_candidate >= max_index) return;
+    int index = in_bounds[current_candidate];
     int2 bounds_bank = bounds_bank_data[index];
     int spatial_index = bounds_bank.x * 2;
     int spatial_length = bounds_bank.y;
@@ -52,8 +52,8 @@ __kernel void count_candidates(__global int2 *bounds_bank_data,
         int count = key_counts[key_index];
         size += count;
     }
-    candidates[gid].x = index;
-    candidates[gid].y = size;
+    candidates[current_candidate].x = index;
+    candidates[current_candidate].y = size;
 }
 
 /**
@@ -68,11 +68,11 @@ __kernel void finalize_candidates(__global int2 *input_candidates,
                                   __global int2 *final_candidates,
                                   int max_index)
 {
-    int gid = get_global_id(0);
-    if (gid >= max_index) return;
-    int index = input_candidates[gid].x;
-    int size = used[gid];
-    int offset = match_offsets[gid];
+    int current_candidate = get_global_id(0);
+    if (current_candidate >= max_index) return;
+    int index = input_candidates[current_candidate].x;
+    int size = used[current_candidate];
+    int offset = match_offsets[current_candidate];
     __attribute__((opencl_unroll_hint(8)))
     for (int i = offset; i < (offset + size); i++)
     {
