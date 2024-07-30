@@ -30,7 +30,7 @@ __kernel void integrate(__global int2 *hull_point_tables,
     float dt             = args[0];
     float2 gravity       = (float2)(args[1], args[2]);
     float damping        = args[3];
-
+    float2 origin        = (float2)(args[4], args[5]);
     
     float dt_2 = dt * dt;
     
@@ -121,7 +121,10 @@ __kernel void integrate(__global int2 *hull_point_tables,
         
         // get pos/prv vectors
         float2 pos = point.xy;
-        float2 prv = in_perimiter || out_of_bounds ? point.xy : point.zw;
+        float2 prv = in_perimiter || out_of_bounds ? pos : point.zw;
+
+        pos -= origin;
+        prv -= origin;
 
         float x_threshold = is_liquid ? 1.0f : 5.0f;
         float y_threshold = is_liquid ? 0.25f : 1.0f;
@@ -199,6 +202,9 @@ __kernel void integrate(__global int2 *hull_point_tables,
             // update pos
             pos = pos + diff;
 
+            pos += origin;
+            prv += origin;
+
             // finally, update the pos and prv in the object
             point.xy = pos;
             point.zw = prv;
@@ -223,11 +229,10 @@ __kernel void integrate_entities(__global float4 *entities,
 
     if (current_entity >= max_entity) return;
 
-    float dt = args[0];
+    float dt       = args[0];
     float2 gravity = (float2)(args[1], args[2]);
-    float damping = args[3];
-    float sector_x = args[4];
-    float sector_y = args[5];
+    float damping  = args[3];
+    float2 origin  = (float2)(args[4], args[5]);
     float sector_w = args[6];
     float sector_h = args[7];
 
@@ -263,6 +268,9 @@ __kernel void integrate_entities(__global float4 *entities,
 
     if (!is_static && !no_bones)
     {
+        pos -= origin;
+        prv -= origin;
+
         float2 diff = pos - prv;
         diff = acc + diff;
         diff.x *= damping;
@@ -273,11 +281,15 @@ __kernel void integrate_entities(__global float4 *entities,
 
         prv = pos;
         pos = pos + diff;
+
+        pos += origin;
+        prv += origin;
+
         entity.xy = pos;
         entity.zw = prv;
     }
 
-    bool sector_in = is_cursor || is_ghost || is_point_in_bounds(pos, sector_x, sector_y, sector_w, sector_h);
+    bool sector_in = is_cursor || is_ghost || is_point_in_bounds(pos, origin.x, origin.y, sector_w, sector_h);
 
     _entity_flags = !sector_in 
         ? _entity_flags | SECTOR_OUT

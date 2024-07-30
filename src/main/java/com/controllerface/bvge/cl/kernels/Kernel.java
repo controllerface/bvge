@@ -106,4 +106,7 @@ public enum Kernel
     update_select_block,
     clear_select_block,
     place_block,
+    shift_points,
+    shift_hulls,
+    shift_entities,
 }

@@ -16,7 +16,7 @@ public class Camera
     private final Matrix4f screen_matrix;
     private final Matrix4f uVP;
 
-    private float zoom = MAX_ZOOM;
+    private float zoom = 1;
 
     int width;
     int height;
