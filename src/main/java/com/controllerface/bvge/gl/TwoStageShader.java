@@ -8,123 +8,91 @@ import static org.lwjgl.opengl.GL20.*;
 
 public class TwoStageShader extends Shader
 {
-    private String vertexSource;
-    private String fragmentSource;
-    private boolean beingUsed = false;
+    private String vertex_source;
+    private String fragment_source;
 
     public TwoStageShader(String filePath)
     {
-        try
+        try (var resource = TwoStageShader.class.getResourceAsStream("/gl/shaders/" + filePath))
         {
-            // todo: clean this up a bit, make it lok more like the circle shader
-            var st= TwoStageShader.class.getResourceAsStream("/gl/shaders/" + filePath);
-            String source = new String(st.readAllBytes(), StandardCharsets.UTF_8);//new String(Files.readAllBytes(Paths.get(filePath)));
-            source = source.replaceAll("\\r\\n?", "\n");
-            String[] splits = source.split("(#type)( )+([a-zA-Z]+)");
+            var glsl_source = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
 
-            int index = source.indexOf("#type") + 6;
-            int eol = source.indexOf("\n", index);
-            String firstPattern = source.substring(index, eol).trim();
+            // normalize source so it works on all platforms
+            glsl_source = glsl_source.replaceAll("\\r\\n?", "\n");
 
-            index = source.indexOf("#type", eol) + 6;
-            eol = source.indexOf("\n", index);
-            String secondPattern = source.substring(index, eol).trim();
+            // split out each of the shader stages' source
+            String[] shader_stages = glsl_source.split("(#type)( )+([a-zA-Z]+)");
 
-            if (firstPattern.equals("vertex"))
-            {
-                vertexSource = splits[1];
-            }
-            else if (firstPattern.equals("fragment"))
-            {
-                fragmentSource = splits[1];
-            }
-            else
-            {
-                //throw new IOException("incorrect type:" + firstPattern);
-            }
+            int index = glsl_source.indexOf("#type") + 6;
+            int eol = glsl_source.indexOf("\n", index);
+            var type_1 = glsl_source.substring(index, eol).trim();
 
-            if (secondPattern.equals("vertex"))
-            {
-                vertexSource = splits[2];
-            }
-            else if (secondPattern.equals("fragment"))
-            {
-                fragmentSource = splits[2];
-            }
-            else
-            {
-                //throw new IOException("incorrect type:" + firstPattern);
-            }
+            index = glsl_source.indexOf("#type", eol) + 6;
+            eol = glsl_source.indexOf("\n", index);
+            var type_2 = glsl_source.substring(index, eol).trim();
+
+            setSource(type_1, shader_stages[1]);
+            setSource(type_2, shader_stages[2]);
         }
-        catch (IOException ioe)
+        catch (IOException | NullPointerException e)
         {
-            ioe.printStackTrace();
+            e.printStackTrace();
             assert false : "could not open file for shader" + filePath;
         }
     }
 
-    public void compile()
+    private void setSource(String pattern, String source)
     {
-        int vertexID, fragmentID;
+        switch (pattern)
+        {
+            case "vertex" -> vertex_source = source;
+            case "fragment" -> fragment_source = source;
+            default -> throw new RuntimeException("incorrect type:" + pattern);
+        }
+    }
 
-        // vertex shader
-        vertexID = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexID, vertexSource);
-        glCompileShader(vertexID);
-        int success = glGetShaderi(vertexID, GL_COMPILE_STATUS);
+    private int compile_shader(int shader_type, String source)
+    {
+        int shader_id = glCreateShader(shader_type);
+        glShaderSource(shader_id, source);
+        glCompileShader(shader_id);
+        int success = glGetShaderi(shader_id, GL_COMPILE_STATUS);
         if (success == GL_FALSE)
         {
-            int len = glGetShaderi(vertexID, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: vertex shader compilation failed");
-            System.out.println(glGetShaderInfoLog(vertexID, len));
+            int len = glGetShaderi(shader_id, GL_INFO_LOG_LENGTH);
+            System.out.println("ERROR: shader compilation failed for type: " + shader_type);
+            System.out.println(glGetShaderInfoLog(shader_id, len));
             assert false : "";
         }
+        return shader_id;
+    }
 
-        // fragment shader
-        fragmentID = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentID, fragmentSource);
-        glCompileShader(fragmentID);
-        success = glGetShaderi(fragmentID, GL_COMPILE_STATUS);
-        if (success == GL_FALSE)
-        {
-            int len = glGetShaderi(fragmentID, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: fragment shader compilation failed");
-            System.out.println(glGetShaderInfoLog(fragmentID, len));
-            assert false : "";
-        }
-
+    private int link_shader(int vertexID, int fragmentID)
+    {
         // link and check step
-        shader_program_id = glCreateProgram();
-        shader_ids.add(vertexID);
-        shader_ids.add(fragmentID);
-
-        glAttachShader(shader_program_id, vertexID);
-        glAttachShader(shader_program_id, fragmentID);
-        glLinkProgram(shader_program_id);
+        int shaderProgramId = glCreateProgram();
+        glAttachShader(shaderProgramId, vertexID);
+        glAttachShader(shaderProgramId, fragmentID);
+        glLinkProgram(shaderProgramId);
 
         // check error
-        success = glGetProgrami(shader_program_id, GL_LINK_STATUS);
+        int success = glGetProgrami(shaderProgramId, GL_LINK_STATUS);
         if (success == GL_FALSE)
         {
-            int len = glGetProgrami(shader_program_id, GL_INFO_LOG_LENGTH);
+            int len = glGetProgrami(shaderProgramId, GL_INFO_LOG_LENGTH);
             System.out.println("ERROR: shader linking failed");
-            System.out.println(glGetProgramInfoLog(shader_program_id, len));
+            System.out.println(glGetProgramInfoLog(shaderProgramId, len));
             assert false : "";
         }
+        return shaderProgramId;
     }
 
-    public void use()
+    public void compile()
     {
-        if (!beingUsed)
-        {
-            glUseProgram(shader_program_id);
-            beingUsed = true;
-        }
-    }
-
-    public void detach()
-    {
-        glUseProgram(0);
-        beingUsed = false;
+        int vertex_id = compile_shader(GL_VERTEX_SHADER, vertex_source);
+        int fragment_id = compile_shader(GL_FRAGMENT_SHADER, fragment_source);
+        shader_program_id = link_shader(vertex_id, fragment_id);
+        shader_ids.add(vertex_id);
+        shader_ids.add(fragment_id);
     }
 }

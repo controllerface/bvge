@@ -37,7 +37,7 @@ public class GPGPU
     /**
      * A convenience object, used when clearing out buffers to fill them with zeroes
      */
-    private static final ByteBuffer ZERO_PATTERN_BUFFER = BufferUtils.createByteBuffer(4);
+    private static final ByteBuffer ZERO_PATTERN_BUFFER = BufferUtils.createByteBuffer(4).order(ByteOrder.nativeOrder());
     private static final ByteBuffer NEGATIVE_ONE_PATTERN_BUFFER = BufferUtils.createByteBuffer(4).order(ByteOrder.nativeOrder());
 
     static
@@ -700,6 +700,16 @@ public class GPGPU
         {
             System.out.println("Error on buffer release: " + result);
             throw new RuntimeException("Error on buffer release: " + result);
+        }
+    }
+
+    public static void cl_release_kernel(long mem_ptr)
+    {
+        int result = clReleaseKernel(mem_ptr);
+        if (result != CL_SUCCESS)
+        {
+            System.out.println("Error on kernel release: " + result);
+            throw new RuntimeException("Error on kernel release: " + result);
         }
     }
 

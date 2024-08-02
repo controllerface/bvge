@@ -40,7 +40,7 @@ public class GPUCoreMemory implements Destroyable
     private static final long HULL_INIT     = 10_000L;
     private static final long EDGE_INIT     = 24_000L;
     private static final long POINT_INIT    = 50_000L;
-    private static final long DELETE_1_INIT = 10_000L;
+    private static final long DELETE_INIT   = 10_000L;
 
     private final GPUProgram p_gpu_crud = new GPUCrud();
 
@@ -89,7 +89,7 @@ public class GPUCoreMemory implements Destroyable
         this.render_buffers       = new RenderBufferGroup(BUF_NAME_RENDER, GPGPU.ptr_compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.reference_buffers    = new ReferenceBufferGroup(BUF_NAME_REFERENCE, GPGPU.ptr_compute_queue);
         this.reference_controller = new ReferenceController(GPGPU.ptr_compute_queue, this.p_gpu_crud, this.reference_buffers);
-        this.sector_compactor     = new SectorCompactor(GPGPU.ptr_compute_queue, sector_controller, sector_buffers, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT, DELETE_1_INIT);
+        this.sector_compactor     = new SectorCompactor(GPGPU.ptr_compute_queue, sector_controller, sector_buffers, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT, DELETE_INIT);
 
         var sector_egress_a = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_A, GPGPU.ptr_sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         var sector_egress_b = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_B, GPGPU.ptr_sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);

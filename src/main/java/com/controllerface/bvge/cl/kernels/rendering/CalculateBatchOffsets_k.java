@@ -1,4 +1,4 @@
-package com.controllerface.bvge.cl.kernels.physics;
+package com.controllerface.bvge.cl.kernels.rendering;
 
 import com.controllerface.bvge.cl.kernels.GPUKernel;
 

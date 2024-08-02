@@ -48,7 +48,7 @@ public class UnorderedSectorOutput implements Destroyable
     {
         this.ptr_queue         = ptr_queue;
         this.core_memory       = core_memory;
-        this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer(cl_int.size() * 6);
+        this.ptr_egress_sizes  = GPGPU.cl_new_pinned_buffer((long)cl_int.size() * 6);
         this.sector_buffers    = new UnorderedCoreBufferGroup(name, this.ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.p_gpu_crud        = new GPUCrud().init();
 
@@ -185,7 +185,7 @@ public class UnorderedSectorOutput implements Destroyable
 
     public void egress(int entity_count, int[] egress_counts)
     {
-        GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_sizes, cl_int.size() * 6);
+        GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_sizes, (long)cl_int.size() * 6);
         int entity_capacity        = egress_counts[0];
         int hull_capacity          = egress_counts[1];
         int point_capacity         = egress_counts[2];

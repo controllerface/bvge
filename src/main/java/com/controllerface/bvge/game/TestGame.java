@@ -55,7 +55,7 @@ public class TestGame extends GameMode
 //            ,RenderType.POINTS
 //            ,RenderType.ENTITIES
 //            ,RenderType.BOUNDS
-//            ,RenderType.GRID
+            ,RenderType.GRID
         );
 
     private final UniformGrid uniformGrid = new UniformGrid(GRID_WIDTH, GRID_HEIGHT);

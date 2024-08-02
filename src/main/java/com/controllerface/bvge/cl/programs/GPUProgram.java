@@ -62,7 +62,7 @@ public abstract class GPUProgram implements Destroyable
     protected static String func_matrix_transform          = read_src("functions/matrix_transform.cl");
     protected static String func_polygon_circle_collision  = read_src("functions/polygon_circle_collision.cl");
     protected static String func_polygon_collision         = read_src("functions/polygon_collision.cl");
-    protected static String func_sensor_collision  = read_src("functions/sensor_collision.cl");
+    protected static String func_sensor_collision          = read_src("functions/sensor_collision.cl");
     protected static String func_block_collision           = read_src("functions/block_collision.cl");
     protected static String func_polygon_distance          = read_src("functions/polygon_distance.cl");
     protected static String func_point_polygon_containment = read_src("functions/point_polygon_containment.cl");
@@ -130,7 +130,7 @@ public abstract class GPUProgram implements Destroyable
         clReleaseProgram(program_ptr);
         for (long kernel_ptr : kernels.values())
         {
-            GPGPU.cl_release_buffer(kernel_ptr);
+            GPGPU.cl_release_kernel(kernel_ptr);
         }
     }
 

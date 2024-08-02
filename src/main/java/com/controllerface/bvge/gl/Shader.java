@@ -14,12 +14,24 @@ public abstract class Shader implements Destroyable
 {
     protected int shader_program_id;
     protected List<Integer> shader_ids = new ArrayList<>();
+    protected boolean being_used = false;
 
     public abstract void compile();
 
-    public abstract void use();
+    public void use()
+    {
+        if (!being_used)
+        {
+            glUseProgram(shader_program_id);
+            being_used = true;
+        }
+    }
 
-    public abstract void detach();
+    public void detach()
+    {
+        glUseProgram(0);
+        being_used = false;
+    }
 
     public void uploadMat4f(String varname, Matrix4f mat4)
     {

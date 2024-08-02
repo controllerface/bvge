@@ -12,7 +12,6 @@ public class ThreeStageShader extends Shader
     private String vertex_source;
     private String fragment_source;
     private String geometry_source;
-    private boolean being_used = false;
 
     public ThreeStageShader(String filePath)
     {
@@ -106,20 +105,5 @@ public class ThreeStageShader extends Shader
         shader_ids.add(vertex_id);
         shader_ids.add(geometry_id);
         shader_ids.add(fragment_id);
-    }
-
-    public void use()
-    {
-        if (!being_used)
-        {
-            glUseProgram(shader_program_id);
-            being_used = true;
-        }
-    }
-
-    public void detach()
-    {
-        glUseProgram(0);
-        being_used = false;
     }
 }
