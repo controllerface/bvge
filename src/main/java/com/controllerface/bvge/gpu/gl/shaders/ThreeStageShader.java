@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl;
+package com.controllerface.bvge.gpu.gl.shaders;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -7,7 +7,7 @@ import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL32.GL_GEOMETRY_SHADER;
 
-public class ThreeStageShader extends Shader
+public class ThreeStageShader extends GL_Shader
 {
     private String vertex_source;
     private String fragment_source;

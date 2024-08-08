@@ -6,9 +6,11 @@ import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.state.PlayerInventory;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
-import com.controllerface.bvge.gpu.gl.Texture;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
+import com.controllerface.bvge.gpu.gl.textures.Texture;
 import com.controllerface.bvge.rendering.TextGlyph;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.Assets;
@@ -41,7 +43,7 @@ public class HUDRenderer extends GameSystem
     private int cbo;
 
     private Texture texture;
-    private Shader shader;
+    private GL_Shader shader;
     private final PlayerInventory player_inventory;
 
     private final Map<Character, TextGlyph> character_map = new HashMap<>();
@@ -126,7 +128,7 @@ public class HUDRenderer extends GameSystem
         text_boxes.put("inventory", new TextContainer(SnapPosition.TOP_LEFT,
             "Inventory", 100, 100, .75f));
 
-        shader = Assets.load_shader("text_shader.glsl");
+        shader = GPU.GL.new_shader("text_shader.glsl", GL_ShaderType.TWO_STAGE);
 
         vao = glCreateVertexArrays();
         position_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);

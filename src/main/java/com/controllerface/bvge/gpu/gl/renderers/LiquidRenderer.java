@@ -7,6 +7,7 @@ import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
@@ -17,7 +18,8 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareLiquids;
 import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
 import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
@@ -52,7 +54,7 @@ public class LiquidRenderer extends GameSystem
     private GPUKernel k_prepare_liquids;
     private GPUKernel k_root_hull_count;
     private GPUKernel k_root_hull_filter;
-    private Shader shader;
+    private GL_Shader shader;
 
     private int vao;
     private int vbo_transform;
@@ -74,7 +76,7 @@ public class LiquidRenderer extends GameSystem
 
     public void init_GL()
     {
-        shader = Assets.load_shader("water_shader.glsl");
+        shader = GPU.GL.new_shader("water_shader.glsl", GL_ShaderType.THREE_STAGE);
         vao = glCreateVertexArrays();
         vbo_transform = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
         vbo_color = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BUFFER_SIZE);

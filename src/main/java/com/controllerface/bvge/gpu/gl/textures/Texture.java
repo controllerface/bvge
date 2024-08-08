@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl;
+package com.controllerface.bvge.gpu.gl.textures;
 
 import com.controllerface.bvge.gpu.GPUResource;
 import org.lwjgl.BufferUtils;

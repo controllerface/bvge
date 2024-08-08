@@ -5,6 +5,10 @@ import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.events.EventBus;
 import com.controllerface.bvge.game.InputSystem;
 import com.controllerface.bvge.gpu.gl.GL_GraphicsController;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.ThreeStageShader;
+import com.controllerface.bvge.gpu.gl.shaders.TwoStageShader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
@@ -32,6 +36,17 @@ public class GPU
 
     public static class GL
     {
+        public static GL_Shader new_shader(String shader_file, GL_ShaderType shader_type)
+        {
+            GL_Shader shader = switch (shader_type)
+            {
+                case TWO_STAGE -> new TwoStageShader(shader_file);
+                case THREE_STAGE -> new ThreeStageShader(shader_file);
+            };
+            shader.compile();
+            return shader;
+        }
+
         public static GL_GraphicsController init_gl(String title, EventBus event_bus, InputSystem inputSystem)
         {
             GLFWErrorCallback.createPrint(System.err).set();

@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl;
+package com.controllerface.bvge.gpu.gl.shaders;
 
 import com.controllerface.bvge.gpu.GPUResource;
 import org.joml.*;
@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.lwjgl.opengl.GL20.*;
 
-public abstract class Shader implements GPUResource
+public abstract class GL_Shader implements GPUResource
 {
     protected int shader_program_id;
     protected List<Integer> shader_ids = new ArrayList<>();

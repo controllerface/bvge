@@ -4,7 +4,7 @@ import com.controllerface.bvge.core.MathEX;
 import com.controllerface.bvge.game.InventorySystem;
 import com.controllerface.bvge.game.state.AnimationState;
 import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.gpu.gl.Texture;
+import com.controllerface.bvge.gpu.gl.textures.Texture;
 import com.controllerface.bvge.models.SceneNode;
 import com.controllerface.bvge.models.bones.BoneBindPose;
 import com.controllerface.bvge.models.bones.BoneChannel;

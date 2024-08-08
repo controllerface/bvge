@@ -4,6 +4,7 @@ import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
@@ -11,7 +12,8 @@ import com.controllerface.bvge.gpu.cl.kernels.rendering.PreparePoints_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PreparePoints;
 import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.util.Assets;
 
@@ -38,7 +40,7 @@ public class PointRenderer extends GameSystem
     private long vertex_vbo_ptr;
     private long color_vbo_ptr;
 
-    private Shader shader;
+    private GL_Shader shader;
     private GPUKernel k_prepare_points;
 
     public PointRenderer(ECS ecs)
@@ -50,7 +52,7 @@ public class PointRenderer extends GameSystem
 
     private void init_GL()
     {
-        shader = Assets.load_shader("point_shader.glsl");
+        shader = GPU.GL.new_shader("point_shader.glsl", GL_ShaderType.TWO_STAGE);
         vao = glCreateVertexArrays();
         vertex_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, POSITION_BATCH_SIZE);
         color_vbo = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BATCH_SIZE);

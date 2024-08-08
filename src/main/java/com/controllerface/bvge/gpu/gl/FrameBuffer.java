@@ -1,5 +1,7 @@
 package com.controllerface.bvge.gpu.gl;
 
+import com.controllerface.bvge.gpu.gl.textures.Texture;
+
 import static org.lwjgl.opengl.GL11.GL_DEPTH_COMPONENT;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL30.*;

@@ -7,6 +7,7 @@ import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
@@ -18,7 +19,8 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
 import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
@@ -47,7 +49,7 @@ public class MouseRenderer extends GameSystem
     private GPUKernel k_prepare_transforms;
     private GPUKernel k_root_hull_filter;
     private GPUKernel k_root_hull_count;
-    private Shader shader;
+    private GL_Shader shader;
 
     private int vao;
     private int vbo_transforms;
@@ -65,7 +67,7 @@ public class MouseRenderer extends GameSystem
 
     public void init_GL()
     {
-        shader = Assets.load_shader("mouse_shader.glsl");
+        shader = GPU.GL.new_shader("mouse_shader.glsl", GL_ShaderType.THREE_STAGE);
         vao = glCreateVertexArrays();
         vbo_transforms = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, VECTOR_FLOAT_4D_SIZE * 2);
         glEnableVertexArrayAttrib(vao, TRANSFORM_ATTRIBUTE);

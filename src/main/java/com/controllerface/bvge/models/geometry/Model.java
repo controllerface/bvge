@@ -1,6 +1,6 @@
 package com.controllerface.bvge.models.geometry;
 
-import com.controllerface.bvge.gpu.gl.Texture;
+import com.controllerface.bvge.gpu.gl.textures.Texture;
 import com.controllerface.bvge.models.bones.BoneBindPose;
 import com.controllerface.bvge.models.bones.BoneOffset;
 import org.joml.Matrix4f;

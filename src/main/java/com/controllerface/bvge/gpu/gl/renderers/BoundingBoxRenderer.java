@@ -4,6 +4,7 @@ import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
@@ -11,7 +12,8 @@ import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareBounds_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareBounds;
 import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.util.Assets;
 
@@ -32,7 +34,7 @@ public class BoundingBoxRenderer extends GameSystem
 
     private final GPUProgram p_prepare_bounds = new PrepareBounds();
     private GPUKernel k_prepare_bounds;
-    private Shader shader;
+    private GL_Shader shader;
 
     private int vao;
     private int vbo_position;
@@ -55,7 +57,7 @@ public class BoundingBoxRenderer extends GameSystem
 
     private void init_GL()
     {
-        shader = Assets.load_shader("bounding_outline.glsl");
+        shader = GPU.GL.new_shader("bounding_outline.glsl", GL_ShaderType.TWO_STAGE);
         vao = glCreateVertexArrays();
         vbo_position = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);

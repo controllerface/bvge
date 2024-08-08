@@ -4,6 +4,7 @@ import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
@@ -15,7 +16,8 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
 import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.MeshRegistry;
 import com.controllerface.bvge.rendering.HullIndexData;
@@ -42,7 +44,7 @@ public class CircleRenderer extends GameSystem
     private GPUKernel k_prepare_transforms;
     private GPUKernel k_root_hull_filter;
     private GPUKernel k_root_hull_count;
-    private Shader shader;
+    private GL_Shader shader;
 
     private int vao;
     private int vbo_transform;
@@ -60,7 +62,7 @@ public class CircleRenderer extends GameSystem
 
     public void init_GL()
     {
-        shader = Assets.load_shader("circle_shader.glsl");
+        shader = GPU.GL.new_shader("circle_shader.glsl", GL_ShaderType.THREE_STAGE);
         vao = glCreateVertexArrays();
         vbo_transform = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
         glEnableVertexArrayAttrib(vao, TRANSFORM_ATTRIBUTE);

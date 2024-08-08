@@ -6,8 +6,10 @@ import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
 
@@ -36,7 +38,7 @@ public class UniformGridRenderer extends GameSystem
     private int point_vbo;
     private int color_vbo;
 
-    private Shader shader;
+    private GL_Shader shader;
 
     private record GridPoint(float x, float y, float r, float g, float b, float a) { }
     private record GridBounds(GridPoint p0, GridPoint p1, GridPoint p2, GridPoint p3) { }
@@ -63,7 +65,7 @@ public class UniformGridRenderer extends GameSystem
             count[i] = VERTICES_PER_BOX;
             next += VERTICES_PER_BOX;
         }
-        shader = Assets.load_shader("uniform_grid.glsl");
+        shader = GPU.GL.new_shader("uniform_grid.glsl", GL_ShaderType.TWO_STAGE);
         vao = glCreateVertexArrays();
         point_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, vertex_buffer_size);
         color_vbo = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, color_buffer_size);

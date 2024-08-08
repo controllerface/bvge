@@ -2,9 +2,11 @@ package com.controllerface.bvge.gpu.gl.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
-import com.controllerface.bvge.gpu.gl.Texture;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
+import com.controllerface.bvge.gpu.gl.textures.Texture;
 import com.controllerface.bvge.util.Assets;
 
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
@@ -21,7 +23,7 @@ public class BackgroundRenderer extends GameSystem
     private int uv_vbo;
 
     private Texture texture;
-    private Shader shader;
+    private GL_Shader shader;
 
     public BackgroundRenderer(ECS ecs)
     {
@@ -63,7 +65,7 @@ public class BackgroundRenderer extends GameSystem
 
         glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
         glEnableVertexArrayAttrib(vao, UV_ATTRIBUTE);
-        shader = Assets.load_shader("bg_shader.glsl");
+        shader = GPU.GL.new_shader("bg_shader.glsl", GL_ShaderType.TWO_STAGE);
         shader.uploadInt("uTexture", 0);
         position_vbo = GLUtils.fill_buffer_vec2(vao, POSITION_ATTRIBUTE, vertices);
         uv_vbo = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);

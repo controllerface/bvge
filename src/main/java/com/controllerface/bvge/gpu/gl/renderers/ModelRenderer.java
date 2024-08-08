@@ -7,6 +7,7 @@ import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.GPUScanScalarIntOut;
@@ -18,8 +19,9 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.MeshQuery;
 import com.controllerface.bvge.gpu.cl.programs.ScanIntArrayOut;
 import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
-import com.controllerface.bvge.gpu.gl.Texture;
+import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
+import com.controllerface.bvge.gpu.gl.textures.Texture;
 import com.controllerface.bvge.memory.types.ReferenceBufferType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.Model;
@@ -83,7 +85,7 @@ public class ModelRenderer extends GameSystem
     private long mesh_size;
 
     private Texture[] textures;
-    private Shader shader;
+    private GL_Shader shader;
 
     private GPUKernel k_count_mesh_instances;
     private GPUKernel k_write_mesh_details;
@@ -107,7 +109,7 @@ public class ModelRenderer extends GameSystem
 
     private void init_GL()
     {
-        shader = Assets.load_shader(shader_file);
+        shader = GPU.GL.new_shader(shader_file, GL_ShaderType.TWO_STAGE);
 
         Model[] models = new Model[model_ids.length];
 

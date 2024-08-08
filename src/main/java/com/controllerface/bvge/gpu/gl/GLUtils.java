@@ -1,5 +1,6 @@
 package com.controllerface.bvge.gpu.gl;
 
+import com.controllerface.bvge.gpu.gl.textures.Texture;
 import com.controllerface.bvge.rendering.TextGlyph;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
