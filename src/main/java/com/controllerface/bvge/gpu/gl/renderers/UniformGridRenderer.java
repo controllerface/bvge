@@ -8,6 +8,7 @@ import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.physics.UniformGrid;
@@ -33,7 +34,7 @@ public class UniformGridRenderer extends GameSystem
     private int vertex_buffer_size;
     private int color_buffer_size;
 
-    private int vao;
+    private GL_VertexArray vao;
     private int point_vbo;
     private int color_vbo;
 
@@ -65,11 +66,11 @@ public class UniformGridRenderer extends GameSystem
             next += VERTICES_PER_BOX;
         }
         shader = GPU.GL.new_shader("uniform_grid.glsl", GL_ShaderType.TWO_STAGE);
-        vao = glCreateVertexArrays();
-        point_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, vertex_buffer_size);
-        color_vbo = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, color_buffer_size);
-        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao, COLOR_ATTRIBUTE);
+        vao = GPU.GL.new_vao();
+        point_vbo = GLUtils.new_buffer_vec2(vao.gl_id(), POSITION_ATTRIBUTE, vertex_buffer_size);
+        color_vbo = GLUtils.new_buffer_vec4(vao.gl_id(), COLOR_ATTRIBUTE, color_buffer_size);
+        vao.enable_attribute(POSITION_ATTRIBUTE);
+        vao.enable_attribute(COLOR_ATTRIBUTE);
     }
 
     private record GridData(float[] vertices, float[] colors) { }
@@ -357,7 +358,7 @@ public class UniformGridRenderer extends GameSystem
     {
         GridData grid_data = load_grid_data();
 
-        glBindVertexArray(vao);
+        vao.bind();
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
@@ -365,7 +366,7 @@ public class UniformGridRenderer extends GameSystem
         glNamedBufferData(point_vbo, grid_data.vertices, GL_DYNAMIC_DRAW);
         glNamedBufferData(color_vbo, grid_data.colors, GL_DYNAMIC_DRAW);
         glMultiDrawArrays(GL_LINE_LOOP, first, count);
-        glBindVertexArray(0);
+        vao.unbind();
         shader.detach();
     }
 
@@ -373,7 +374,7 @@ public class UniformGridRenderer extends GameSystem
     public void shutdown()
     {
         shader.release();
-        glDeleteVertexArrays(vao);
+        vao.release();
         glDeleteBuffers(point_vbo);
     }
 }

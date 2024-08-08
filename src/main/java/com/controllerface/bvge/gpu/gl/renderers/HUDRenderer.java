@@ -8,6 +8,7 @@ import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
@@ -35,7 +36,7 @@ public class HUDRenderer extends GameSystem
     private static final int UV_ATTRIBUTE = 1;
     private static final int ID_ATTRIBUTE = 2;
 
-    private int vao;
+    private GL_VertexArray vao;
     private int position_vbo;
     private int uv_vbo;
     private int id_vbo;
@@ -129,19 +130,19 @@ public class HUDRenderer extends GameSystem
 
         shader = GPU.GL.new_shader("text_shader.glsl", GL_ShaderType.TWO_STAGE);
 
-        vao = glCreateVertexArrays();
-        position_vbo = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
-        uv_vbo = GLUtils.new_buffer_vec2(vao, UV_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
-        id_vbo = GLUtils.new_buffer_float(vao, ID_ATTRIBUTE, SCALAR_FLOAT_SIZE * MAX_BATCH_SIZE);
+        vao = GPU.GL.new_vao();
+        position_vbo = GLUtils.new_buffer_vec2(vao.gl_id(), POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
+        uv_vbo = GLUtils.new_buffer_vec2(vao.gl_id(), UV_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
+        id_vbo = GLUtils.new_buffer_float(vao.gl_id(), ID_ATTRIBUTE, SCALAR_FLOAT_SIZE * MAX_BATCH_SIZE);
 
-        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao, UV_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao, ID_ATTRIBUTE);
-        glVertexArrayBindingDivisor(vao, ID_ATTRIBUTE, 1);
+        vao.enable_attribute(POSITION_ATTRIBUTE);
+        vao.enable_attribute(UV_ATTRIBUTE);
+        vao.enable_attribute(ID_ATTRIBUTE);
+        vao.instance_attribute(ID_ATTRIBUTE, 1);
 
-        cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
+        cbo = GLUtils.dynamic_command_buffer(vao.gl_id(), COMMAND_BUFFER_SIZE);
         glNamedBufferSubData(cbo, 0, raw_cmd);
-        texture = GLUtils.build_character_map(TEXTURE_SIZE, "/font/Inconsolata-Light.ttf", character_map);
+        texture = GPU.GL.build_character_map(TEXTURE_SIZE, "/font/Inconsolata-Light.ttf", character_map);
     }
 
     private boolean dirty = true;
@@ -307,21 +308,21 @@ public class HUDRenderer extends GameSystem
             }
         }
 
-        glBindVertexArray(vao);
+        vao.bind();
         shader.use();
         shader.uploadInt("uTexture", 0);
         shader.uploadMat4f("projection", Window.get().camera().get_screen_matrix());
         texture.bind(0);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
         render_hud();
-        glBindVertexArray(0);
+        vao.unbind();
         shader.detach();
     }
 
     @Override
     public void shutdown()
     {
-        glDeleteVertexArrays(vao);
+        vao.release();
         glDeleteBuffers(position_vbo);
         glDeleteBuffers(uv_vbo);
         shader.release();

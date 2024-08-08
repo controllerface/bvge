@@ -12,6 +12,7 @@ import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEdges_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareEdges;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
@@ -38,7 +39,7 @@ public class EdgeRenderer extends GameSystem
     private GPUKernel k_prepare_edges;
     private GL_Shader shader;
 
-    private int vao;
+    private GL_VertexArray vao;
     private int vbo_edge;
     private int vbo_flag;
     private long ptr_vbo_edge;
@@ -54,11 +55,11 @@ public class EdgeRenderer extends GameSystem
     private void init_GL()
     {
         shader = GPU.GL.new_shader("object_outline.glsl", GL_ShaderType.TWO_STAGE);
-        vao = glCreateVertexArrays();
-        vbo_edge = GLUtils.new_buffer_vec2(vao, EDGE_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        vbo_flag = GLUtils.new_buffer_float(vao, FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
-        glEnableVertexArrayAttrib(vao, EDGE_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao, FLAG_ATTRIBUTE);
+        vao = GPU.GL.new_vao();
+        vbo_edge = GLUtils.new_buffer_vec2(vao.gl_id(), EDGE_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        vbo_flag = GLUtils.new_buffer_float(vao.gl_id(), FLAG_ATTRIBUTE, BATCH_FLAG_SIZE);
+        vao.enable_attribute(EDGE_ATTRIBUTE);
+        vao.enable_attribute(FLAG_ATTRIBUTE);
     }
 
     private void inti_CL()
@@ -81,7 +82,7 @@ public class EdgeRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        glBindVertexArray(vao);
+        vao.bind();
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
@@ -102,13 +103,13 @@ public class EdgeRenderer extends GameSystem
         }
 
         shader.detach();
-        glBindVertexArray(0);
+        vao.unbind();
     }
 
     @Override
     public void shutdown()
     {
-        glDeleteVertexArrays(vao);
+        vao.release();
         glDeleteBuffers(vbo_edge);
         glDeleteBuffers(vbo_flag);
         shader.release();

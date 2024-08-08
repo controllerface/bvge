@@ -16,6 +16,7 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
@@ -24,13 +25,9 @@ import com.controllerface.bvge.rendering.HullIndexData;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
 import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
-import static org.lwjgl.opengl.ARBDirectStateAccess.glCreateVertexArrays;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDeleteBuffers;
-import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL30C.glDeleteVertexArrays;
-import static org.lwjgl.opengl.GL45C.glEnableVertexArrayAttrib;
 
 public class CircleRenderer extends GameSystem
 {
@@ -45,7 +42,7 @@ public class CircleRenderer extends GameSystem
     private GPUKernel k_root_hull_count;
     private GL_Shader shader;
 
-    private int vao;
+    private GL_VertexArray vao;
     private int vbo_transform;
     private long ptr_vbo_transform;
     private long svm_atomic_counter;
@@ -62,9 +59,9 @@ public class CircleRenderer extends GameSystem
     public void init_GL()
     {
         shader = GPU.GL.new_shader("circle_shader.glsl", GL_ShaderType.THREE_STAGE);
-        vao = glCreateVertexArrays();
-        vbo_transform = GLUtils.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
-        glEnableVertexArrayAttrib(vao, TRANSFORM_ATTRIBUTE);
+        vao = GPU.GL.new_vao();
+        vbo_transform = GLUtils.new_buffer_vec4(vao.gl_id(), TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
+        vao.enable_attribute(TRANSFORM_ATTRIBUTE);
     }
 
     private void init_CL()
@@ -137,7 +134,7 @@ public class CircleRenderer extends GameSystem
 
         if (circle_hulls.count() == 0) return;
 
-        glBindVertexArray(vao);
+        vao.bind();
 
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
@@ -159,13 +156,13 @@ public class CircleRenderer extends GameSystem
         }
 
         shader.detach();
-        glBindVertexArray(0);
+        vao.unbind();
     }
 
     @Override
     public void shutdown()
     {
-        glDeleteVertexArrays(vao);
+        vao.release();
         glDeleteBuffers(vbo_transform);
         shader.release();
         p_prepare_transforms.release();

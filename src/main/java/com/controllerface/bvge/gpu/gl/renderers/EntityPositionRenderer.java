@@ -12,6 +12,7 @@ import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEntities_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareEntities;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
@@ -32,7 +33,7 @@ public class EntityPositionRenderer extends GameSystem
     private GPUKernel k_prepare_entities;
     private GL_Shader shader;
 
-    private int vao;
+    private GL_VertexArray vao;
     private int vbo_vertex;
     private long ptr_vbo_vertex;
 
@@ -46,9 +47,9 @@ public class EntityPositionRenderer extends GameSystem
     private void init_GL()
     {
         shader = GPU.GL.new_shader("entity_position_shader.glsl", GL_ShaderType.TWO_STAGE);
-        vao = glCreateVertexArrays();
-        vbo_vertex = GLUtils.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
-        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
+        vao = GPU.GL.new_vao();
+        vbo_vertex = GLUtils.new_buffer_vec2(vao.gl_id(), POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        vao.enable_attribute(POSITION_ATTRIBUTE);
     }
 
     private void init_CL()
@@ -65,7 +66,7 @@ public class EntityPositionRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        glBindVertexArray(vao);
+        vao.bind();
         glPointSize(3);
         shader.use();
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
@@ -86,13 +87,13 @@ public class EntityPositionRenderer extends GameSystem
         }
 
         shader.detach();
-        glBindVertexArray(0);
+        vao.unbind();
     }
 
     @Override
     public void shutdown()
     {
-        glDeleteVertexArrays(vao);
+        vao.release();
         glDeleteBuffers(vbo_vertex);
         shader.release();
         p_prepare_entities.release();

@@ -4,6 +4,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
@@ -17,7 +18,7 @@ public class BackgroundRenderer extends GameSystem
     private static final int POSITION_ATTRIBUTE = 0;
     private static final int UV_ATTRIBUTE = 1;
 
-    private int vao;
+    private GL_VertexArray vao;
     private int position_vbo;
     private int uv_vbo;
 
@@ -54,38 +55,33 @@ public class BackgroundRenderer extends GameSystem
 
         texture = new GL_Texture2D();
         texture.init("/img/cave_bg.png");
-        vao = glCreateVertexArrays();
+        vao = GPU.GL.new_vao();
 
-        // these "old style" calls prevent the shader from being re-compiled on first use. Not really
-        // needed tbh, but remove a perf warning message from debug output, so leaving in for now to
-        // reduce noise while debugging.
-        glEnableVertexAttribArray(POSITION_ATTRIBUTE);
-        glEnableVertexAttribArray(UV_ATTRIBUTE);
+        vao.enable_attribute(POSITION_ATTRIBUTE);
+        vao.enable_attribute(UV_ATTRIBUTE);
 
-        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao, UV_ATTRIBUTE);
         shader = GPU.GL.new_shader("bg_shader.glsl", GL_ShaderType.TWO_STAGE);
         shader.uploadInt("uTexture", 0);
-        position_vbo = GLUtils.fill_buffer_vec2(vao, POSITION_ATTRIBUTE, vertices);
-        uv_vbo = GLUtils.fill_buffer_vec2(vao, UV_ATTRIBUTE, uvs);
+        position_vbo = GLUtils.fill_buffer_vec2(vao.gl_id(), POSITION_ATTRIBUTE, vertices);
+        uv_vbo = GLUtils.fill_buffer_vec2(vao.gl_id(), UV_ATTRIBUTE, uvs);
     }
 
 
     @Override
     public void tick(float dt)
     {
-        glBindVertexArray(vao);
+        vao.bind();
         shader.use();
         texture.bind(0);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
+        vao.unbind();
         shader.detach();
     }
 
     @Override
     public void shutdown()
     {
-        glDeleteVertexArrays(vao);
+        vao.release();
         glDeleteBuffers(position_vbo);
         glDeleteBuffers(uv_vbo);
         shader.release();

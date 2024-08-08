@@ -19,6 +19,7 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.MeshQuery;
 import com.controllerface.bvge.gpu.cl.programs.ScanIntArrayOut;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
@@ -59,7 +60,7 @@ public class ModelRenderer extends GameSystem
     private GPUScanScalarIntOut gpu_int_scan_out;
     private GPUScanVectorInt2 gpu_int2_scan;
 
-    private int vao;
+    private GL_VertexArray vao;
     private int ebo;
     private int cbo;
     private int vbo_position;
@@ -151,19 +152,19 @@ public class ModelRenderer extends GameSystem
             textures[texture_index++] = texture;
         }
 
-        vao = glCreateVertexArrays();
-        ebo = GLUtils.dynamic_element_buffer(vao, ELEMENT_BUFFER_SIZE);
-        cbo = GLUtils.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
+        vao = GPU.GL.new_vao();
+        ebo = GLUtils.dynamic_element_buffer(vao.gl_id(), ELEMENT_BUFFER_SIZE);
+        cbo = GLUtils.dynamic_command_buffer(vao.gl_id(), COMMAND_BUFFER_SIZE);
 
-        vbo_position     = GLUtils.new_buffer_vec4(vao, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
-        vbo_texture_uv   = GLUtils.new_buffer_vec2(vao, UV_COORD_ATTRIBUTE, UV_BUFFER_SIZE);
-        vbo_color        = GLUtils.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BUFFER_SIZE);
-        vbo_texture_slot = GLUtils.new_buffer_float(vao, TEXTURE_ATTRIBUTE, TEXTURE_BUFFER_SIZE);
+        vbo_position     = GLUtils.new_buffer_vec4(vao.gl_id(), POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
+        vbo_texture_uv   = GLUtils.new_buffer_vec2(vao.gl_id(), UV_COORD_ATTRIBUTE, UV_BUFFER_SIZE);
+        vbo_color        = GLUtils.new_buffer_vec4(vao.gl_id(), COLOR_ATTRIBUTE, COLOR_BUFFER_SIZE);
+        vbo_texture_slot = GLUtils.new_buffer_float(vao.gl_id(), TEXTURE_ATTRIBUTE, TEXTURE_BUFFER_SIZE);
 
-        glEnableVertexArrayAttrib(vao, POSITION_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao, UV_COORD_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao, COLOR_ATTRIBUTE);
-        glEnableVertexArrayAttrib(vao, TEXTURE_ATTRIBUTE);
+        vao.enable_attribute(POSITION_ATTRIBUTE);
+        vao.enable_attribute(UV_COORD_ATTRIBUTE);
+        vao.enable_attribute(COLOR_ATTRIBUTE);
+        vao.enable_attribute(TEXTURE_ATTRIBUTE);
     }
 
     private void init_CL()
@@ -353,7 +354,7 @@ public class ModelRenderer extends GameSystem
 
     private void tick_GL(BatchData batch_data)
     {
-        glBindVertexArray(vao);
+        vao.bind();
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
 
         shader.use();
@@ -428,7 +429,7 @@ public class ModelRenderer extends GameSystem
         }
 
         shader.detach();
-        glBindVertexArray(0);
+        vao.unbind();
     }
 
     @Override
@@ -454,7 +455,7 @@ public class ModelRenderer extends GameSystem
     @Override
     public void shutdown()
     {
-        glDeleteVertexArrays(vao);
+        vao.release();
         glDeleteBuffers(cbo);
         glDeleteBuffers(ebo);
         glDeleteBuffers(vbo_position);
