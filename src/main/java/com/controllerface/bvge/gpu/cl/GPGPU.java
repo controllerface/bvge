@@ -830,7 +830,7 @@ public class GPGPU
 
     public static void destroy()
     {
-        core_memory.destroy();
+        core_memory.release();
 
         clReleaseCommandQueue(ptr_compute_queue);
         clReleaseCommandQueue(ptr_render_queue);

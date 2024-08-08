@@ -2,14 +2,14 @@ package com.controllerface.bvge.core;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
-import com.controllerface.bvge.game.InputSystem;
 import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.events.EventBus;
 import com.controllerface.bvge.game.GameMode;
+import com.controllerface.bvge.game.InputSystem;
 import com.controllerface.bvge.game.TestGame;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GL_GraphicsController;
 import com.controllerface.bvge.rendering.Camera;
-import com.controllerface.bvge.events.EventBus;
 import org.joml.Vector2f;
 
 import java.util.logging.Level;

@@ -1,17 +1,17 @@
 package com.controllerface.bvge.gpu.cl;
 
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
-import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
+import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
+import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.scan.CompleteInt4MultiBlock_k;
 import com.controllerface.bvge.gpu.cl.kernels.scan.ScanInt4MultiBlock_k;
 import com.controllerface.bvge.gpu.cl.kernels.scan.ScanInt4SingleBlock_k;
+import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.ScanInt4Array;
 
 import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 
-public class GPUScanVectorInt4 implements Destroyable
+public class GPUScanVectorInt4 implements GPUResource
 {
     private final GPUProgram p_scan_int4_array = new ScanInt4Array();
 
@@ -84,8 +84,8 @@ public class GPUScanVectorInt4 implements Destroyable
         GPGPU.cl_release_buffer(part_data);
     }
 
-    public void destroy()
+    public void release()
     {
-        p_scan_int4_array.destroy();
+        p_scan_int4_array.release();
     }
 }

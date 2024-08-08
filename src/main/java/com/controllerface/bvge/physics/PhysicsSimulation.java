@@ -1,5 +1,9 @@
 package com.controllerface.bvge.physics;
 
+import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.GameSystem;
+import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.game.state.PlayerController;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.GPUScanScalarInt;
 import com.controllerface.bvge.gpu.cl.GPUScanScalarIntOut;
@@ -11,10 +15,6 @@ import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.animation.AnimateBones_k;
 import com.controllerface.bvge.gpu.cl.kernels.animation.AnimateEntities_k;
 import com.controllerface.bvge.gpu.cl.kernels.animation.AnimatePoints_k;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
-import com.controllerface.bvge.editor.Editor;
-import com.controllerface.bvge.game.state.PlayerController;
 import com.controllerface.bvge.gpu.cl.kernels.physics.*;
 import com.controllerface.bvge.gpu.cl.programs.*;
 import com.controllerface.bvge.memory.types.CoreBufferType;
@@ -24,8 +24,8 @@ import com.controllerface.bvge.memory.types.ReferenceBufferType;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
 import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
 import static org.lwjgl.opencl.CL10.clFinish;
 
 public class PhysicsSimulation extends GameSystem
@@ -1446,27 +1446,27 @@ public class PhysicsSimulation extends GameSystem
             throw new RuntimeException(e);
         }
 
-        gpu_int_scan.destroy();
-        gpu_int_scan_out.destroy();
+        gpu_int_scan.release();
+        gpu_int_scan_out.release();
 
-        candidate_buffers.destroy();
-        key_buffers.destroy();
-        match_buffers.destroy();
-        reaction_buffers.destroy();
+        candidate_buffers.release();
+        key_buffers.release();
+        match_buffers.release();
+        reaction_buffers.release();
 
-        p_integrate.destroy();
-        p_scan_key_bank.destroy();
-        p_build_key_bank.destroy();
-        p_build_key_bank_edge.destroy();
-        p_build_key_map.destroy();
-        p_build_key_map_edge.destroy();
-        p_locate_in_bounds.destroy();
-        p_locate_in_bounds_edge.destroy();
-        p_scan_key_candidates.destroy();
-        p_aabb_collide.destroy();
-        p_sat_collide.destroy();
-        p_animate_hulls.destroy();
-        p_resolve_constraints.destroy();
+        p_integrate.release();
+        p_scan_key_bank.release();
+        p_build_key_bank.release();
+        p_build_key_bank_edge.release();
+        p_build_key_map.release();
+        p_build_key_map_edge.release();
+        p_locate_in_bounds.release();
+        p_locate_in_bounds_edge.release();
+        p_scan_key_candidates.release();
+        p_aabb_collide.release();
+        p_sat_collide.release();
+        p_animate_hulls.release();
+        p_resolve_constraints.release();
 
         debug();
 

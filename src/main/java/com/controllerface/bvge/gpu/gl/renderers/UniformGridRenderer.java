@@ -1,15 +1,15 @@
 package com.controllerface.bvge.gpu.gl.renderers;
 
+import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.ecs.GameSystem;
+import com.controllerface.bvge.ecs.components.ComponentType;
+import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
-import com.controllerface.bvge.gpu.gl.Shader;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.Shader;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
-import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.core.Window;
 
 import java.util.Objects;
 
@@ -371,7 +371,7 @@ public class UniformGridRenderer extends GameSystem
     @Override
     public void shutdown()
     {
-        shader.destroy();
+        shader.release();
         glDeleteVertexArrays(vao);
         glDeleteBuffers(point_vbo);
     }

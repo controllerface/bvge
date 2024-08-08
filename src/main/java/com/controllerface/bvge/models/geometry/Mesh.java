@@ -1,7 +1,7 @@
 package com.controllerface.bvge.models.geometry;
 
-import com.controllerface.bvge.models.bones.BoneOffset;
 import com.controllerface.bvge.models.SceneNode;
+import com.controllerface.bvge.models.bones.BoneOffset;
 
 import java.util.List;
 

@@ -1,8 +1,8 @@
 package com.controllerface.bvge.gpu.cl.kernels.crud;
 
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
+import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float16;

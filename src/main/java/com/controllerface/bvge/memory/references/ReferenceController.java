@@ -1,11 +1,11 @@
 package com.controllerface.bvge.memory.references;
 
-import com.controllerface.bvge.gpu.cl.kernels.crud.*;
-import com.controllerface.bvge.memory.groups.ReferenceBufferGroup;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.crud.*;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.memory.ReferenceContainer;
+import com.controllerface.bvge.memory.groups.ReferenceBufferGroup;
 
 import static com.controllerface.bvge.gpu.cl.CLUtils.arg_float2;
 import static com.controllerface.bvge.memory.types.ReferenceBufferType.*;

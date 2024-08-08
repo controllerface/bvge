@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gpu.gl;
 
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
+import com.controllerface.bvge.gpu.GPUResource;
 import org.joml.*;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.system.MemoryStack;
@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.lwjgl.opengl.GL20.*;
 
-public abstract class Shader implements Destroyable
+public abstract class Shader implements GPUResource
 {
     protected int shader_program_id;
     protected List<Integer> shader_ids = new ArrayList<>();
@@ -113,7 +113,7 @@ public abstract class Shader implements Destroyable
         glUniform1iv(varLocation, array);
     }
 
-    public void destroy()
+    public void release()
     {
         shader_ids.forEach(GL20::glDeleteShader);
         glDeleteProgram(shader_program_id);

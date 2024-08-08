@@ -1,21 +1,21 @@
 package com.controllerface.bvge.memory.sectors;
 
+import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
-import com.controllerface.bvge.memory.types.CoreBufferType;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
-import com.controllerface.bvge.gpu.cl.kernels.egress.EgressCollected_k;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.egress.EgressCollected_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUCrud;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.types.CollectedBufferType;
+import com.controllerface.bvge.memory.types.CoreBufferType;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
 import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
 
-public class CollectedObjectBuffer implements Destroyable
+public class CollectedObjectBuffer implements GPUResource
 {
     private final GPUProgram p_gpu_crud = new GPUCrud();
     private final GPUKernel k_egress_collected;
@@ -58,10 +58,10 @@ public class CollectedObjectBuffer implements Destroyable
         }
     }
 
-    public void destroy()
+    public void release()
     {
-        p_gpu_crud.destroy();
-        collected_group.destroy();
+        p_gpu_crud.release();
+        collected_group.release();
         GPGPU.cl_release_buffer(ptr_egress_size);
     }
 

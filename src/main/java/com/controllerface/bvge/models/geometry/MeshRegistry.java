@@ -1,8 +1,8 @@
 package com.controllerface.bvge.models.geometry;
 
-import com.controllerface.bvge.models.bones.BoneOffset;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.models.SceneNode;
+import com.controllerface.bvge.models.bones.BoneOffset;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import org.joml.Vector2f;
 

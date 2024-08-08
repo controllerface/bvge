@@ -1,9 +1,9 @@
 package com.controllerface.bvge.gpu.cl.kernels.crud;
 
-import com.controllerface.bvge.gpu.cl.CL_DataTypes;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.CLUtils;
+import com.controllerface.bvge.gpu.cl.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
+import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 
 public class CreateBoneRef_k extends GPUKernel

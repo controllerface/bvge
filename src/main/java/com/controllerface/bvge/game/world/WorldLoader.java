@@ -1,10 +1,10 @@
 package com.controllerface.bvge.game.world;
 
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
-import com.controllerface.bvge.memory.sectors.Sector;
 import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.memory.sectors.Sector;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.github.benmanes.caffeine.cache.Cache;

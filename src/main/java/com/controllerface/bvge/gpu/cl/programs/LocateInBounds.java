@@ -1,7 +1,7 @@
 package com.controllerface.bvge.gpu.cl.programs;
 
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.CLUtils;
+import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 
 public class LocateInBounds extends GPUProgram
 {

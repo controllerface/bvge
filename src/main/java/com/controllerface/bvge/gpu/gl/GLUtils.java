@@ -21,10 +21,13 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
+import static org.lwjgl.opengl.GL45C.GL_FLOAT;
+import static org.lwjgl.opengl.GL45C.GL_INT;
+import static org.lwjgl.opengl.GL45C.GL_RED;
+import static org.lwjgl.opengl.GL45C.GL_UNPACK_ALIGNMENT;
+import static org.lwjgl.opengl.GL45C.glPixelStorei;
 import static org.lwjgl.opengl.GL45C.*;
-import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 import static org.lwjgl.util.freetype.FreeType.*;
-import static org.lwjgl.util.freetype.FreeType.FT_Done_FreeType;
 import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
 
 public class GLUtils

@@ -1,7 +1,10 @@
 package com.controllerface.bvge.gpu.gl.renderers;
 
+import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
+import com.controllerface.bvge.events.Event;
+import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.Shader;
@@ -9,9 +12,6 @@ import com.controllerface.bvge.gpu.gl.Texture;
 import com.controllerface.bvge.rendering.TextGlyph;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.util.Assets;
-import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.events.Event;
-import com.controllerface.bvge.core.Window;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -323,6 +323,6 @@ public class HUDRenderer extends GameSystem
         glDeleteVertexArrays(vao);
         glDeleteBuffers(position_vbo);
         glDeleteBuffers(uv_vbo);
-        shader.destroy();
+        shader.release();
     }
 }

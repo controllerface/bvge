@@ -2,7 +2,7 @@ package com.controllerface.bvge.gpu.cl.buffers;
 
 import com.controllerface.bvge.gpu.cl.GPGPU;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
+import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float16;
 
 public class PersistentBuffer extends ResizableBuffer
 {

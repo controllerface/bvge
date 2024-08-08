@@ -1,12 +1,12 @@
 package com.controllerface.bvge.game.world;
 
+import com.controllerface.bvge.core.MathEX;
+import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.memory.sectors.Sector;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.core.MathEX;
 
 import java.util.Random;
 

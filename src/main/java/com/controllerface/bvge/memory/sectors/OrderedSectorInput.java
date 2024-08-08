@@ -1,20 +1,20 @@
 package com.controllerface.bvge.memory.sectors;
 
+import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.crud.*;
-import com.controllerface.bvge.memory.types.CoreBufferType;
-import com.controllerface.bvge.memory.groups.CoreBufferGroup;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
 import com.controllerface.bvge.gpu.cl.programs.GPUCrud;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.SectorContainer;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
+import com.controllerface.bvge.memory.types.CoreBufferType;
 
-import static com.controllerface.bvge.gpu.cl.CLUtils.*;
+import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 
-public class OrderedSectorInput implements SectorContainer, Destroyable
+public class OrderedSectorInput implements SectorContainer, GPUResource
 {
     private static final long ENTITY_INIT = 1_000L;
     private static final long HULL_INIT   = 1_000L;
@@ -276,10 +276,10 @@ public class OrderedSectorInput implements SectorContainer, Destroyable
     }
 
     @Override
-    public void destroy()
+    public void release()
     {
-        p_gpu_crud.destroy();
-        buffers.destroy();
-        controller.destroy();
+        p_gpu_crud.release();
+        buffers.release();
+        controller.release();
     }
 }

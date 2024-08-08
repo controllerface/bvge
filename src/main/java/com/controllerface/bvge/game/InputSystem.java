@@ -1,10 +1,10 @@
 package com.controllerface.bvge.game;
 
+import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.events.Event;
-import com.controllerface.bvge.core.Window;
 
 import static org.lwjgl.glfw.GLFW.*;
 

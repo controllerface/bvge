@@ -1,23 +1,23 @@
 package com.controllerface.bvge.gpu.gl.renderers;
 
-import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.core.Window;
+import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.GameSystem;
+import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PreparePoints_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PreparePoints;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
+import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.util.Assets;
-import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.core.Window;
 
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
+import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
@@ -110,8 +110,8 @@ public class PointRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vertex_vbo);
-        shader.destroy();
-        prepare_points.destroy();
+        shader.release();
+        prepare_points.release();
         GPGPU.cl_release_buffer(vertex_vbo_ptr);
     }
 }

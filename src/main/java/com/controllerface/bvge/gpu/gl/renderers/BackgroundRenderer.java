@@ -87,6 +87,6 @@ public class BackgroundRenderer extends GameSystem
         glDeleteVertexArrays(vao);
         glDeleteBuffers(position_vbo);
         glDeleteBuffers(uv_vbo);
-        shader.destroy();
+        shader.release();
     }
 }

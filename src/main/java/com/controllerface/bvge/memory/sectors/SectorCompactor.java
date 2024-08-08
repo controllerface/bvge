@@ -1,23 +1,23 @@
 package com.controllerface.bvge.memory.sectors;
 
+import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.GPUScanVectorInt2;
 import com.controllerface.bvge.gpu.cl.GPUScanVectorInt4;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
 import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
+import com.controllerface.bvge.gpu.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.compact.*;
-import com.controllerface.bvge.memory.groups.CoreBufferGroup;
-import com.controllerface.bvge.gpu.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.ScanDeletes;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
 import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
-public class SectorCompactor implements Destroyable
+public class SectorCompactor implements GPUResource
 {
     private static final int DELETE_COUNTERS = 6;
     private static final int DELETE_COUNTERS_SIZE = cl_int.size() * DELETE_COUNTERS;
@@ -339,12 +339,12 @@ public class SectorCompactor implements Destroyable
         controller.compact(shift_counts);
     }
 
-    public void destroy()
+    public void release()
     {
         GPGPU.cl_release_buffer(ptr_delete_sizes);
-        p_scan_deletes.destroy();
-        gpu_int2_scan.destroy();
-        gpu_int4_scan.destroy();
+        p_scan_deletes.release();
+        gpu_int2_scan.release();
+        gpu_int4_scan.release();
 
         b_entity_bone_shift.release();
         b_hull_bone_shift.release();

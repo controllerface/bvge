@@ -54,7 +54,7 @@ public class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
     }
 
     @Override
-    public void destroy()
+    public void release()
     {
         long[] total = new long[1];
         buffers.forEach((_, v) ->

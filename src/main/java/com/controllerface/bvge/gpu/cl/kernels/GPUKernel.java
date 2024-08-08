@@ -1,8 +1,8 @@
 package com.controllerface.bvge.gpu.cl.kernels;
 
-import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;

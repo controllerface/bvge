@@ -1,25 +1,29 @@
 package com.controllerface.bvge.game;
 
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.game.state.PlayerController;
-import com.controllerface.bvge.gpu.gl.renderers.*;
-import com.controllerface.bvge.memory.sectors.Sector;
+import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.game.world.WorldLoader;
 import com.controllerface.bvge.game.world.WorldUnloader;
-import com.controllerface.bvge.game.state.PlayerInventory;
+import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.gl.renderers.*;
+import com.controllerface.bvge.memory.sectors.Sector;
 import com.controllerface.bvge.models.geometry.MeshRegistry;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
-import com.controllerface.bvge.physics.*;
+import com.controllerface.bvge.physics.PhysicsEntityBatch;
+import com.controllerface.bvge.physics.PhysicsObjects;
+import com.controllerface.bvge.physics.PhysicsSimulation;
+import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.substances.Solid;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 
@@ -182,6 +186,6 @@ public class TestGame extends GameMode
     @Override
     public void destroy()
     {
-        player_controller.destroy();
+        player_controller.release();
     }
 }

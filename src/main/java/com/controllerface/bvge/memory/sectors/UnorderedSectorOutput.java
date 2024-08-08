@@ -1,7 +1,7 @@
 package com.controllerface.bvge.memory.sectors;
 
+import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
 import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
@@ -12,11 +12,11 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.groups.UnorderedCoreBufferGroup;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
-import static com.controllerface.bvge.gpu.cl.CLUtils.*;
+import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
-public class UnorderedSectorOutput implements Destroyable
+public class UnorderedSectorOutput implements GPUResource
 {
     private static final long ENTITY_INIT = 1_000L;
     private static final long HULL_INIT   = 1_000L;
@@ -253,10 +253,10 @@ public class UnorderedSectorOutput implements Destroyable
         sector_buffers.unload_sectors(raw_sectors, counts);
     }
 
-    public void destroy()
+    public void release()
     {
-        p_gpu_crud.destroy();
-        sector_buffers.destroy();
+        p_gpu_crud.release();
+        sector_buffers.release();
         GPGPU.cl_release_buffer(ptr_egress_sizes);
     }
 }

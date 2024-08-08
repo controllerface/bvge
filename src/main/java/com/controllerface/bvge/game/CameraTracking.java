@@ -1,13 +1,13 @@
 package com.controllerface.bvge.game;
 
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
-import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.ecs.components.ComponentType;
+import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.ecs.components.Position;
+import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.physics.UniformGrid;
-import com.controllerface.bvge.core.Window;
 
 import java.util.Objects;
 

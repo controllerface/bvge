@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gpu.gl;
 
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
+import com.controllerface.bvge.gpu.GPUResource;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.system.MemoryStack;
@@ -20,12 +20,15 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
-import static org.lwjgl.opengl.GL11.glGenTextures;
-import static org.lwjgl.opengl.GL11.glTexImage2D;
+import static org.lwjgl.opengl.GL45C.GL_RGB8;
+import static org.lwjgl.opengl.GL45C.GL_RGBA8;
+import static org.lwjgl.opengl.GL45C.GL_UNPACK_ALIGNMENT;
+import static org.lwjgl.opengl.GL45C.glDeleteTextures;
+import static org.lwjgl.opengl.GL45C.glPixelStorei;
 import static org.lwjgl.opengl.GL45C.*;
 import static org.lwjgl.stb.STBImage.*;
 
-public class Texture implements Destroyable
+public class Texture implements GPUResource
 {
     private String filepath;
     private int tex_id;
@@ -188,7 +191,7 @@ public class Texture implements Destroyable
         return tex_id;
     }
 
-    public void destroy()
+    public void release()
     {
         glDeleteTextures(tex_id);
     }

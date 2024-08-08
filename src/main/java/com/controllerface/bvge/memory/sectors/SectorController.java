@@ -1,22 +1,20 @@
 package com.controllerface.bvge.memory.sectors;
 
+import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.crud.*;
-import com.controllerface.bvge.memory.groups.CoreBufferGroup;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
 import com.controllerface.bvge.gpu.cl.kernels.egress.CountEgressEntities_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.memory.SectorContainer;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
 import static com.controllerface.bvge.gpu.cl.CLUtils.*;
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_short2;
+import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
-public class SectorController implements SectorContainer, Destroyable
+public class SectorController implements SectorContainer, GPUResource
 {
     private static final int EGRESS_COUNTERS = 8;
     private static final int EGRESS_COUNTERS_SIZE = cl_int.size() * EGRESS_COUNTERS;
@@ -533,7 +531,7 @@ public class SectorController implements SectorContainer, Destroyable
     }
 
     @Override
-    public void destroy()
+    public void release()
     {
         GPGPU.cl_release_buffer(ptr_position_buffer);
         GPGPU.cl_release_buffer(ptr_egress_sizes);

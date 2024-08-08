@@ -1,5 +1,12 @@
 package com.controllerface.bvge.gpu.gl.renderers;
 
+import com.controllerface.bvge.core.Window;
+import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.GameSystem;
+import com.controllerface.bvge.ecs.components.ComponentType;
+import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.cl.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.GPUScanScalarIntOut;
@@ -10,28 +17,21 @@ import com.controllerface.bvge.gpu.cl.kernels.rendering.*;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.MeshQuery;
 import com.controllerface.bvge.gpu.cl.programs.ScanIntArrayOut;
-import com.controllerface.bvge.memory.types.RenderBufferType;
+import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.gpu.gl.Texture;
 import com.controllerface.bvge.memory.types.ReferenceBufferType;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.ComponentType;
-import com.controllerface.bvge.game.PlayerInput;
-import com.controllerface.bvge.ecs.GameSystem;
-import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.Model;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
-import com.controllerface.bvge.gpu.gl.Shader;
-import com.controllerface.bvge.gpu.gl.GLUtils;
-import com.controllerface.bvge.gpu.gl.Texture;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.util.Assets;
-import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.core.Window;
 
 import java.util.LinkedHashSet;
 import java.util.Objects;
 
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.game.Constants.Rendering.*;
+import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 import static org.lwjgl.opengl.GL45C.*;
 
 public class ModelRenderer extends GameSystem
@@ -461,12 +461,12 @@ public class ModelRenderer extends GameSystem
         glDeleteBuffers(vbo_color);
         glDeleteBuffers(vbo_texture_slot);
 
-        gpu_int_scan_out.destroy();
-        gpu_int2_scan.destroy();
+        gpu_int_scan_out.release();
+        gpu_int2_scan.release();
 
-        shader.destroy();
-        p_mesh_query.destroy();
-        for (var t : textures){ t.destroy(); }
+        shader.release();
+        p_mesh_query.release();
+        for (var t : textures){ t.release(); }
         GPGPU.cl_release_buffer(ptr_element_buffer);
         GPGPU.cl_release_buffer(ptr_vertex_buffer);
         GPGPU.cl_release_buffer(ptr_command_buffer);

@@ -47,5 +47,5 @@ public interface SectorContainer
 
     int create_entity_bone(int bone_reference, int bone_parent_id, float[] bone_data);
 
-    void destroy();
+    void release();
 }

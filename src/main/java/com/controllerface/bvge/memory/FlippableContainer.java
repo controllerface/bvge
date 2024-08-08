@@ -1,8 +1,8 @@
 package com.controllerface.bvge.memory;
 
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
+import com.controllerface.bvge.gpu.GPUResource;
 
-public class FlippableContainer<T extends Destroyable> implements Destroyable
+public class FlippableContainer<T extends GPUResource> implements GPUResource
 {
     private final T front;
     private final T back;
@@ -35,9 +35,9 @@ public class FlippableContainer<T extends Destroyable> implements Destroyable
     }
 
     @Override
-    public void destroy()
+    public void release()
     {
-        front.destroy();
-        back.destroy();
+        front.release();
+        back.release();
     }
 }

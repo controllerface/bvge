@@ -1,22 +1,22 @@
 package com.controllerface.bvge.gpu.gl.renderers;
 
+import com.controllerface.bvge.core.Window;
+import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.GameSystem;
+import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareBounds_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareBounds;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
-import com.controllerface.bvge.gpu.gl.Shader;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.util.Assets;
-import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.core.Window;
 
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_2D_LENGTH;
+import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 import static org.lwjgl.opengl.GL11C.GL_LINE_LOOP;
 import static org.lwjgl.opengl.GL15C.glDeleteBuffers;
 import static org.lwjgl.opengl.GL15C.glMultiDrawArrays;
@@ -112,8 +112,8 @@ public class BoundingBoxRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo_position);
-        shader.destroy();
-        p_prepare_bounds.destroy();
+        shader.release();
+        p_prepare_bounds.release();
         GPGPU.cl_release_buffer(ptr_vbo_position);
     }
 }

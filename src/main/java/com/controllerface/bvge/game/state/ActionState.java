@@ -2,7 +2,7 @@ package com.controllerface.bvge.game.state;
 
 import com.controllerface.bvge.game.PlayerInput;
 
-import static com.controllerface.bvge.game.InputBinding.*;
+import static com.controllerface.bvge.game.InputBinding.MOUSE_PRIMARY;
 
 public enum ActionState
 {

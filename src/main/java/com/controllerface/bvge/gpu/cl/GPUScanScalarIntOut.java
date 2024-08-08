@@ -1,18 +1,18 @@
 package com.controllerface.bvge.gpu.cl;
 
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
-import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
+import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
+import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.scan.CompleteIntMultiBlockOut_k;
 import com.controllerface.bvge.gpu.cl.kernels.scan.ScanIntMultiBlockOut_k;
 import com.controllerface.bvge.gpu.cl.kernels.scan.ScanIntSingleBlockOut_k;
+import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.ScanIntArrayOut;
-import com.controllerface.bvge.editor.Editor;
 
 import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 
-public class GPUScanScalarIntOut implements Destroyable
+public class GPUScanScalarIntOut implements GPUResource
 {
     private final GPUProgram p_scan_int_array_out = new ScanIntArrayOut();
 
@@ -110,9 +110,9 @@ public class GPUScanScalarIntOut implements Destroyable
         GPGPU.cl_release_buffer(part_data);
     }
 
-    public void destroy()
+    public void release()
     {
-        p_scan_int_array_out.destroy();
-        if (own_int_scan) gpu_int_scan.destroy();
+        p_scan_int_array_out.release();
+        if (own_int_scan) gpu_int_scan.release();
     }
 }

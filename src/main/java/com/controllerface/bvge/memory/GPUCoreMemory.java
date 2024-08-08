@@ -1,14 +1,17 @@
 package com.controllerface.bvge.memory;
 
-import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
-import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
-import com.controllerface.bvge.gpu.cl.programs.GPUCrud;
-import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.events.Event;
+import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.gpu.GPUResource;
+import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
+import com.controllerface.bvge.gpu.cl.programs.GPUCrud;
+import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 import com.controllerface.bvge.memory.groups.ReferenceBufferGroup;
 import com.controllerface.bvge.memory.groups.RenderBufferGroup;
@@ -21,19 +24,17 @@ import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
-import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.core.Window;
-import com.controllerface.bvge.events.Event;
 
 import java.util.Queue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CyclicBarrier;
 
-import static com.controllerface.bvge.models.geometry.ModelRegistry.*;
+import static com.controllerface.bvge.models.geometry.ModelRegistry.L_SHARD_INDEX;
+import static com.controllerface.bvge.models.geometry.ModelRegistry.R_SHARD_INDEX;
 import static org.lwjgl.opencl.CL10.clFinish;
 
-public class GPUCoreMemory implements Destroyable
+public class GPUCoreMemory implements GPUResource
 {
     private static final String BUF_NAME_SECTOR          = "Live Sectors";
     private static final String BUF_NAME_RENDER          = "Render Mirror";
@@ -433,16 +434,16 @@ public class GPUCoreMemory implements Destroyable
     }
 
     @Override
-    public void destroy()
+    public void release()
     {
-        sector_buffers.destroy();
-        sector_controller.destroy();
-        sector_ingress_buffer.destroy();
-        sector_egress_buffer.destroy();
-        broken_egress_buffer.destroy();
-        object_egress_buffer.destroy();
-        render_buffers.destroy();
-        reference_buffers.destroy();
-        p_gpu_crud.destroy();
+        sector_buffers.release();
+        sector_controller.release();
+        sector_ingress_buffer.release();
+        sector_egress_buffer.release();
+        broken_egress_buffer.release();
+        object_egress_buffer.release();
+        render_buffers.release();
+        reference_buffers.release();
+        p_gpu_crud.release();
     }
 }

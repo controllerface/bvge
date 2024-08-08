@@ -1,8 +1,9 @@
 package com.controllerface.bvge.models.geometry;
 
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.core.MathEX;
 import com.controllerface.bvge.game.InventorySystem;
 import com.controllerface.bvge.game.state.AnimationState;
+import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.gl.Texture;
 import com.controllerface.bvge.models.SceneNode;
 import com.controllerface.bvge.models.bones.BoneBindPose;
@@ -11,7 +12,6 @@ import com.controllerface.bvge.models.bones.BoneOffset;
 import com.controllerface.bvge.models.bones.NamedBone;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.util.Assets;
-import com.controllerface.bvge.core.MathEX;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;

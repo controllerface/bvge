@@ -1,37 +1,37 @@
 package com.controllerface.bvge.gpu.gl.renderers;
 
+import com.controllerface.bvge.core.Window;
+import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.GameSystem;
+import com.controllerface.bvge.ecs.components.ComponentType;
+import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareLiquids_k;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.RootHullCount_k;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.RootHullFilter_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareLiquids;
 import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.components.ComponentType;
-import com.controllerface.bvge.game.PlayerInput;
-import com.controllerface.bvge.ecs.GameSystem;
-import com.controllerface.bvge.editor.Editor;
-import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.memory.types.RenderBufferType;
+import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.rendering.HullIndexData;
 import com.controllerface.bvge.util.Assets;
-import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.core.Window;
 
 import java.util.Objects;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
 import static com.controllerface.bvge.game.Constants.Rendering.MAX_BATCH_SIZE;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
+import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
 import static org.lwjgl.opengl.ARBDirectStateAccess.glCreateVertexArrays;
-import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDeleteBuffers;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
@@ -201,8 +201,8 @@ public class LiquidRenderer extends GameSystem
     {
         glDeleteVertexArrays(vao);
         glDeleteBuffers(vbo_transform);
-        shader.destroy();
-        p_prepare_liquids.destroy();
+        shader.release();
+        p_prepare_liquids.release();
         GPGPU.cl_release_buffer(ptr_vbo_transform);
     }
 }

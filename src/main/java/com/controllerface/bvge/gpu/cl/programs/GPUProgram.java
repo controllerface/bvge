@@ -1,9 +1,9 @@
 package com.controllerface.bvge.gpu.cl.programs;
 
+import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
-import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.cl.kernels.Kernel;
 
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import static org.lwjgl.opencl.CL12.clReleaseProgram;
  * before calling the kernel. Afterward, any values that were defined as output variables can
  * be transferred back out to the CPU.
  */
-public abstract class GPUProgram implements Destroyable
+public abstract class GPUProgram implements GPUResource
 {
     /**
      * Constant values that can be used within kernels. There is a general expectation that the CPU
@@ -125,7 +125,7 @@ public abstract class GPUProgram implements Destroyable
     /**
      * Release the resources associated with this program and the kernels that were loaded from it.
      */
-    public void destroy()
+    public void release()
     {
         clReleaseProgram(program_ptr);
         for (long kernel_ptr : kernels.values())

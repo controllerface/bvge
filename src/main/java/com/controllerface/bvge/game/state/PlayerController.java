@@ -1,26 +1,28 @@
 package com.controllerface.bvge.game.state;
 
-import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
-import com.controllerface.bvge.gpu.cl.buffers.PersistentBuffer;
-import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
+import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
-import com.controllerface.bvge.game.PlayerInput;
-import com.controllerface.bvge.memory.sectors.SectorController;
-import com.controllerface.bvge.physics.*;
-import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.events.Event;
+import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.game.PlayerInput;
+import com.controllerface.bvge.gpu.GPUResource;
+import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.PersistentBuffer;
+import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
+import com.controllerface.bvge.memory.sectors.SectorController;
+import com.controllerface.bvge.physics.PhysicsObjects;
+import com.controllerface.bvge.physics.PhysicsSimulation;
+import com.controllerface.bvge.physics.UniformGrid;
 
 import java.util.Objects;
 
+import static com.controllerface.bvge.game.Constants.EntityFlags.*;
+import static com.controllerface.bvge.game.InputBinding.*;
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float;
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
-import static com.controllerface.bvge.game.InputBinding.*;
-import static com.controllerface.bvge.game.Constants.EntityFlags.*;
 
-public class PlayerController implements Destroyable
+public class PlayerController implements GPUResource
 {
     private static final float BLOCK_OFFSET = UniformGrid.BLOCK_SIZE / 2.0f;
     private static final float MOTION_THRESHOLD = 10.0f;
@@ -416,7 +418,7 @@ public class PlayerController implements Destroyable
         current_action_state = next_action_state;
     }
 
-    public void destroy()
+    public void release()
     {
         b_control_point_flags.release();
         b_control_point_indices.release();

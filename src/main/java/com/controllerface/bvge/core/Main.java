@@ -1,8 +1,8 @@
 package com.controllerface.bvge.core;
 
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.gpu.cl.GPGPU;
 import org.lwjgl.Version;
 import org.lwjgl.system.Configuration;
 import org.lwjgl.util.freetype.FreeType;
