@@ -16,53 +16,44 @@ import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.rendering.TextGlyph;
 import com.controllerface.bvge.substances.Solid;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.controllerface.bvge.game.Constants.Rendering.*;
-import static org.lwjgl.opengl.GL45C.*;
+import static org.lwjgl.opengl.GL45C.GL_TRIANGLE_STRIP;
+import static org.lwjgl.opengl.GL45C.glMultiDrawArraysIndirect;
 
 public class HUDRenderer extends GameSystem
 {
-    private static final int SOLID_LABEL_Y_OFFSET = 150;
     private static final float INVENTORY_TEXT_SCALE = .5f;
-
+    private static final int COMMAND_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES * 4;
+    private static final int SOLID_LABEL_Y_OFFSET = 150;
     private static final int TEXTURE_SIZE = 64;
     private static final int VERTICES_PER_LETTER = 4;
-
-    private static final int COMMAND_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES * 4;
-
-    private static final int POSITION_ATTRIBUTE = 0;
+    private static final int XY_ATTRIBUTE = 0;
     private static final int UV_ATTRIBUTE = 1;
     private static final int ID_ATTRIBUTE = 2;
 
-    private GL_VertexArray vao;
-    private GL_VertexBuffer position_vbo;
-    private GL_VertexBuffer uv_vbo;
-    private GL_VertexBuffer id_vbo;
-    private GL_CommandBuffer cbo;
-
-    private GL_Texture2D texture;
-    private GL_Shader shader;
-    private final PlayerInventory player_inventory;
-
-    private final Map<Character, TextGlyph> character_map = new HashMap<>();
     private final int[] raw_cmd = new int[VERTICES_PER_LETTER * MAX_BATCH_SIZE];
-
+    private final PlayerInventory player_inventory;
+    private final Map<Character, TextGlyph> character_map = new HashMap<>();
     private final Map<String, TextContainer> text_boxes = new HashMap<>();
     private final Map<Solid, TextContainer> solid_labels = new HashMap<>();
-
     private final Queue<Event> event_queue = new ConcurrentLinkedQueue<>();
-
-    private final Event.Type[] subscribed_types = new Event.Type[]
-        {
-            Event.Type.WINDOW_RESIZE,
-            Event.Type.ITEM_CHANGE,
-            Event.Type.ITEM_PLACING,
-        };
 
     private float max_char_height = 0;
     private int max_label_chars = 0;
+
+    private GL_VertexArray vao;
+    private GL_VertexBuffer xy_vbo;
+    private GL_VertexBuffer uv_vbo;
+    private GL_VertexBuffer id_vbo;
+    private GL_CommandBuffer cbo;
+    private GL_Texture2D texture;
+    private GL_Shader shader;
 
     private enum SnapPosition
     {
@@ -83,7 +74,7 @@ public class HUDRenderer extends GameSystem
     {
         super(ecs);
         this.player_inventory = player_inventory;
-        Window.get().event_bus().register(event_queue, subscribed_types);
+        Window.get().event_bus().register(event_queue, Event.Type.WINDOW_RESIZE, Event.Type.ITEM_CHANGE, Event.Type.ITEM_PLACING);
         build_cmd();
         init_GL();
         gather_text_metrics();
@@ -131,11 +122,11 @@ public class HUDRenderer extends GameSystem
         shader = GPU.GL.new_shader("text_shader.glsl", GL_ShaderType.TWO_STAGE);
 
         vao = GPU.GL.new_vao();
-        position_vbo = GPU.GL.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
+        xy_vbo = GPU.GL.new_buffer_vec2(vao, XY_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
         uv_vbo = GPU.GL.new_buffer_vec2(vao, UV_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
         id_vbo = GPU.GL.new_buffer_float(vao, ID_ATTRIBUTE, SCALAR_FLOAT_SIZE * MAX_BATCH_SIZE);
 
-        vao.enable_attribute(POSITION_ATTRIBUTE);
+        vao.enable_attribute(XY_ATTRIBUTE);
         vao.enable_attribute(UV_ATTRIBUTE);
         vao.enable_attribute(ID_ATTRIBUTE);
         vao.instance_attribute(ID_ATTRIBUTE, 1);
@@ -200,9 +191,9 @@ public class HUDRenderer extends GameSystem
         int uv_offset = 0;
         int id_offset = 0;
 
-        var pos_buf = position_vbo.map_as_float_buffer();//Objects.requireNonNull(glMapNamedBuffer(position_vbo, GL_WRITE_ONLY)).asFloatBuffer();
-        var uv_buf  = uv_vbo.map_as_float_buffer();//Objects.requireNonNull(glMapNamedBuffer(uv_vbo, GL_WRITE_ONLY)).asFloatBuffer();
-        var id_buf  = id_vbo.map_as_float_buffer();//Objects.requireNonNull(glMapNamedBuffer(id_vbo, GL_WRITE_ONLY)).asFloatBuffer();
+        var pos_buf = xy_vbo.map_as_float_buffer();
+        var uv_buf  = uv_vbo.map_as_float_buffer();
+        var id_buf  = id_vbo.map_as_float_buffer();
 
         var text_containers = new ArrayList<TextContainer>();
         text_containers.addAll(text_boxes.values());
@@ -272,7 +263,7 @@ public class HUDRenderer extends GameSystem
             }
         }
 
-        position_vbo.unmap_buffer();
+        xy_vbo.unmap_buffer();
         uv_vbo.unmap_buffer();
         id_vbo.unmap_buffer();
 
@@ -323,9 +314,11 @@ public class HUDRenderer extends GameSystem
     public void shutdown()
     {
         vao.release();
-        position_vbo.release();
+        cbo.release();
+        xy_vbo.release();
         uv_vbo.release();
         id_vbo.release();
         shader.release();
+        texture.release();
     }
 }

@@ -4,15 +4,14 @@ import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
-import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
-import com.controllerface.bvge.gpu.cl.programs.scan.GPUScanVectorInt2;
-import com.controllerface.bvge.gpu.cl.programs.scan.GPUScanVectorInt4;
 import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.buffers.TransientBuffer;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.compact.*;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.gpu.cl.programs.scan.GPUScanVectorInt2;
+import com.controllerface.bvge.gpu.cl.programs.scan.GPUScanVectorInt4;
 import com.controllerface.bvge.gpu.cl.programs.scan.ScanDeletes;
 import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 

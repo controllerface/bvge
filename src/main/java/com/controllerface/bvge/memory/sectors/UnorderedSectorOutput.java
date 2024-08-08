@@ -8,10 +8,9 @@ import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.egress.*;
-import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.groups.UnorderedCoreBufferGroup;
 

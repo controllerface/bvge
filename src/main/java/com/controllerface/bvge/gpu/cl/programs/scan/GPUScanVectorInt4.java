@@ -2,11 +2,10 @@ package com.controllerface.bvge.gpu.cl.programs.scan;
 
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.scan.CompleteInt4MultiBlock_k;
 import com.controllerface.bvge.gpu.cl.kernels.scan.ScanInt4MultiBlock_k;
 import com.controllerface.bvge.gpu.cl.kernels.scan.ScanInt4SingleBlock_k;

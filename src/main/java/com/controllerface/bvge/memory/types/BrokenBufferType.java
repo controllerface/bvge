@@ -1,7 +1,7 @@
 package com.controllerface.bvge.memory.types;
 
-import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.buffers.BufferType;
+import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_float2;
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;

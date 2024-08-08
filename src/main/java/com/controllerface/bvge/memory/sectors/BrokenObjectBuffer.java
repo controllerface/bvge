@@ -7,10 +7,9 @@ import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.egress.EgressBroken_k;
-import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.types.BrokenBufferType;
 

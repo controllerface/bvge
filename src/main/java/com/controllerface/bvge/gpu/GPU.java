@@ -20,9 +20,9 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_ElementBuffer;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
+import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.shaders.ThreeStageShader;
 import com.controllerface.bvge.gpu.gl.shaders.TwoStageShader;
-import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.rendering.TextGlyph;
 import org.joml.Matrix4f;
@@ -65,6 +65,7 @@ import static org.lwjgl.opencl.CL10GL.*;
 import static org.lwjgl.opencl.CL11.CL_DEVICE_HOST_UNIFIED_MEMORY;
 import static org.lwjgl.opencl.CL12.CL_MEM_HOST_READ_ONLY;
 import static org.lwjgl.opencl.CL12.clEnqueueFillBuffer;
+import static org.lwjgl.opencl.CL20.*;
 import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
 import static org.lwjgl.opencl.KHRGLSharing.CL_WGL_HDC_KHR;
 import static org.lwjgl.opencl.NVDeviceAttributeQuery.CL_DEVICE_WARP_SIZE_NV;
@@ -74,7 +75,26 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
-import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL11C.GL_BLEND;
+import static org.lwjgl.opengl.GL11C.GL_DEPTH_TEST;
+import static org.lwjgl.opengl.GL11C.GL_FLOAT;
+import static org.lwjgl.opengl.GL11C.GL_LESS;
+import static org.lwjgl.opengl.GL11C.GL_MAX_TEXTURE_SIZE;
+import static org.lwjgl.opengl.GL11C.GL_ONE;
+import static org.lwjgl.opengl.GL11C.GL_ONE_MINUS_SRC_ALPHA;
+import static org.lwjgl.opengl.GL11C.GL_RED;
+import static org.lwjgl.opengl.GL11C.GL_RENDERER;
+import static org.lwjgl.opengl.GL11C.GL_UNPACK_ALIGNMENT;
+import static org.lwjgl.opengl.GL11C.GL_VENDOR;
+import static org.lwjgl.opengl.GL11C.GL_VERSION;
+import static org.lwjgl.opengl.GL11C.glBlendFunc;
+import static org.lwjgl.opengl.GL11C.glDepthFunc;
+import static org.lwjgl.opengl.GL11C.glDepthMask;
+import static org.lwjgl.opengl.GL11C.glEnable;
+import static org.lwjgl.opengl.GL11C.glGetIntegerv;
+import static org.lwjgl.opengl.GL11C.glGetString;
+import static org.lwjgl.opengl.GL11C.glPixelStorei;
+import static org.lwjgl.opengl.GL11C.glViewport;
 import static org.lwjgl.opengl.GL20C.*;
 import static org.lwjgl.opengl.GL30C.*;
 import static org.lwjgl.opengl.GL45C.*;
@@ -88,10 +108,31 @@ public class GPU
 {
     private static final Logger LOGGER = Logger.getLogger(GPU.class.getName());
 
+    static
+    {
+        LOGGER.setLevel(Level.FINE);
+    }
+
     public static class GL
     {
         private static final int DEFAULT_OFFSET = 0;
         private static final int DEFAULT_STRIDE = 0;
+
+        public static float[] screen_quad_vertices = new float[]
+            {
+                1.0f, -1.0f,
+                1.0f, 1.0f,
+                -1.0f, -1.0f,
+                -1.0f, 1.0f,
+            };
+
+        public static float[] screen_quad_uvs = new float[]
+            {
+                1.0f, 0.0f,
+                1.0f, 1.0f,
+                0.0f, 0.0f,
+                0.0f, 1.0f,
+            };
 
         public static final String[] character_set =
             {
@@ -845,8 +886,19 @@ public class GPU
             long sz_flt = get_device_long(device.ptr(), CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT);
             boolean non_uniform = get_device_boolean(device.ptr(), CL_DEVICE_HOST_UNIFIED_MEMORY);
 
+            long svm_caps = get_device_long(device.ptr(), CL_DEVICE_SVM_CAPABILITIES);
+
+            boolean svm_coarse_buffer = (svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) != 0;
+            boolean svm_fine_buffer = (svm_caps & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) != 0;
+            boolean svm_fine_system = (svm_caps & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM) != 0;
+            boolean svm_atomics = (svm_caps & CL_DEVICE_SVM_ATOMICS) != 0;
 
             LOGGER.log(Level.FINE, "------ OPEN CL Attributes ---------");
+
+            LOGGER.log(Level.FINE, "CL_DEVICE_SVM_COARSE_GRAIN_BUFFER enabled: " + svm_coarse_buffer);
+            LOGGER.log(Level.FINE, "CL_DEVICE_SVM_FINE_GRAIN_BUFFER enabled: " + svm_fine_buffer);
+            LOGGER.log(Level.FINE, "CL_DEVICE_SVM_FINE_GRAIN_SYSTEM enabled: " + svm_fine_system);
+            LOGGER.log(Level.FINE, "CL_DEVICE_SVM_ATOMICS enabled: " + svm_atomics);
 
             LOGGER.log(Level.FINE, "CL_DEVICE_MAX_COMPUTE_UNITS: " + compute_unit_count);
             LOGGER.log(Level.FINE, "CL_DEVICE_WAVEFRONT_WIDTH_AMD: " + wavefront_width);
@@ -1601,5 +1653,44 @@ public class GPU
         }
 
         //#endregion
+
+
+        //#region Misc
+
+        // todo: see if the SVM methods can be used again for counters and other smaller data objects.
+        //  initially they did seem to provide a modest performance benefit, but I removed usages just
+        //  because I had other issues to debug and wanted to narrow down possible causes, especially
+        //  on the lower-end hardware of my laptop.
+
+//        public static ByteBuffer cl_new_svm_int()
+//        {
+//            return clSVMAlloc(compute.context.ptr(), CL_MEM_READ_WRITE, CL_DataTypes.cl_int.size(), 0);
+//        }
+//
+//        public static int cl_read_svm_int(long queue_ptr, ByteBuffer svm_buffer)
+//        {
+//            long s = Editor.ACTIVE ? System.nanoTime() : 0;
+//            int result = clEnqueueSVMMap(queue_ptr, true, CL_MAP_READ, svm_buffer, null, null);
+//            if (result != CL_SUCCESS)
+//            {
+//                System.out.println("Error on svm buffer map: " + result);
+//                throw new RuntimeException("Error on svm buffer map: " + result);
+//            }
+//            int v = svm_buffer.getInt(0);
+//            result = clEnqueueSVMUnmap(queue_ptr, svm_buffer, null, null);
+//            if (result != CL_SUCCESS)
+//            {
+//                System.out.println("Error on svm buffer unmap: " + result);
+//                throw new RuntimeException("Error on svm buffer unmap: " + result);
+//            }
+//            if (Editor.ACTIVE)
+//            {
+//                long e = System.nanoTime() - s;
+//                Editor.queue_event("cl_read_svm_int", String.valueOf(e));
+//            }
+//            return v;
+//        }
+
+        //#ednregion
     }
 }

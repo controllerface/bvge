@@ -625,7 +625,7 @@ public class ModelRegistry
                     var raw_pos_key = pos_buffer.get(current_pos_key);
                     var pos_vector = raw_pos_key.mValue();
                     float[] frame_data = new float[]{ pos_vector.x(), pos_vector.y(), pos_vector.z(), 1.0f };
-                    LOGGER.log(Level.INFO,"DEBUG position key; index: " + current_pos_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
+                    LOGGER.log(Level.FINEST,"DEBUG position key; index: " + current_pos_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
                     int next_pos_key = GPGPU.core_memory.reference_container().new_keyframe(frame_data, (float)raw_pos_key.mTime());
                     if (p_start == -1) p_start = next_pos_key;
                     p_end = next_pos_key;
@@ -636,7 +636,7 @@ public class ModelRegistry
                     var raw_rot_key = rot_buffer.get(current_rot_key);
                     var rot_quaternion = raw_rot_key.mValue();
                     float[] frame_data = new float[]{ rot_quaternion.x(), rot_quaternion.y(), rot_quaternion.z(), rot_quaternion.w() };
-                    LOGGER.log(Level.INFO,"DEBUG rotation key; index: " + current_rot_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
+                    LOGGER.log(Level.FINEST,"DEBUG rotation key; index: " + current_rot_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
                     int next_rot_key = GPGPU.core_memory.reference_container().new_keyframe(frame_data, (float)raw_rot_key.mTime());
                     if (r_start == -1) r_start = next_rot_key;
                     r_end = next_rot_key;
@@ -647,7 +647,7 @@ public class ModelRegistry
                     var raw_scl_key = scl_buffer.get(current_scl_key);
                     var scale_vector = raw_scl_key.mValue();
                     float[] frame_data = new float[]{ scale_vector.x(), scale_vector.y(), scale_vector.z(), 1.0f };
-                    LOGGER.log(Level.INFO,"DEBUG scale key   ; index: " + current_scl_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
+                    LOGGER.log(Level.FINEST,"DEBUG scale key   ; index: " + current_scl_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
                     int next_scl_key = GPGPU.core_memory.reference_container().new_keyframe(frame_data, (float)raw_scl_key.mTime());
                     if (s_start == -1) s_start = next_scl_key;
                     s_end = next_scl_key;

@@ -17,7 +17,8 @@ import java.util.Objects;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
-import static org.lwjgl.opengl.GL45C.*;
+import static org.lwjgl.opengl.GL45C.GL_LINE_LOOP;
+import static org.lwjgl.opengl.GL45C.glMultiDrawArrays;
 
 public class UniformGridRenderer extends GameSystem
 {

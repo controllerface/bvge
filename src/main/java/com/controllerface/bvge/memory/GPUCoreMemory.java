@@ -8,10 +8,10 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.CL_ComputeController;
 import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
-import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 import com.controllerface.bvge.memory.groups.ReferenceBufferGroup;
 import com.controllerface.bvge.memory.groups.RenderBufferGroup;
@@ -32,7 +32,6 @@ import java.util.concurrent.CyclicBarrier;
 
 import static com.controllerface.bvge.models.geometry.ModelRegistry.L_SHARD_INDEX;
 import static com.controllerface.bvge.models.geometry.ModelRegistry.R_SHARD_INDEX;
-import static org.lwjgl.opencl.CL10.clFinish;
 
 public class GPUCoreMemory implements GPUResource
 {
@@ -86,29 +85,31 @@ public class GPUCoreMemory implements GPUResource
     private final CyclicBarrier world_barrier = new CyclicBarrier(4);
     private final Queue<Event> event_queue = new ConcurrentLinkedQueue<>();
     private final ECS ecs;
+    private final CL_ComputeController compute;
 
-    public GPUCoreMemory(ECS ecs)
+    public GPUCoreMemory(CL_ComputeController compute, ECS ecs)
     {
+        this.compute = compute;
         this.ecs = ecs;
         Window.get().event_bus().register(event_queue, Event.Type.SELECT_BLOCK);
 
         p_gpu_crud.init();
 
-        this.sector_buffers       = new CoreBufferGroup(BUF_NAME_SECTOR, GPGPU.compute.compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        this.sector_controller    = new SectorController(GPGPU.compute.compute_queue, this.p_gpu_crud, this.sector_buffers);
-        this.render_buffers       = new RenderBufferGroup(BUF_NAME_RENDER, GPGPU.compute.compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        this.reference_buffers    = new ReferenceBufferGroup(BUF_NAME_REFERENCE, GPGPU.compute.compute_queue);
-        this.reference_controller = new ReferenceController(GPGPU.compute.compute_queue, this.p_gpu_crud, this.reference_buffers);
-        this.sector_compactor     = new SectorCompactor(GPGPU.compute.compute_queue, sector_controller, sector_buffers, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT, DELETE_INIT);
+        this.sector_buffers       = new CoreBufferGroup(BUF_NAME_SECTOR, compute.compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_controller    = new SectorController(compute.compute_queue, this.p_gpu_crud, this.sector_buffers);
+        this.render_buffers       = new RenderBufferGroup(BUF_NAME_RENDER, compute.compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.reference_buffers    = new ReferenceBufferGroup(BUF_NAME_REFERENCE, compute.compute_queue);
+        this.reference_controller = new ReferenceController(compute.compute_queue, this.p_gpu_crud, this.reference_buffers);
+        this.sector_compactor     = new SectorCompactor(compute.compute_queue, sector_controller, sector_buffers, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT, DELETE_INIT);
 
-        var sector_egress_a = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_A, GPGPU.compute.sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        var sector_egress_b = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_B, GPGPU.compute.sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        var broken_egress_a = new BrokenObjectBuffer(BUF_NAME_BROKEN_EGRESS_A, GPGPU.compute.sector_queue, this);
-        var broken_egress_b = new BrokenObjectBuffer(BUF_NAME_BROKEN_EGRESS_B, GPGPU.compute.sector_queue, this);
-        var object_egress_a = new CollectedObjectBuffer(BUF_NAME_OBJECT_EGRESS_A, GPGPU.compute.sector_queue, this);
-        var object_egress_b = new CollectedObjectBuffer(BUF_NAME_OBJECT_EGRESS_B, GPGPU.compute.sector_queue, this);
+        var sector_egress_a = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_A, compute.sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        var sector_egress_b = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_B, compute.sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        var broken_egress_a = new BrokenObjectBuffer(BUF_NAME_BROKEN_EGRESS_A, compute.sector_queue, this);
+        var broken_egress_b = new BrokenObjectBuffer(BUF_NAME_BROKEN_EGRESS_B, compute.sector_queue, this);
+        var object_egress_a = new CollectedObjectBuffer(BUF_NAME_OBJECT_EGRESS_A, compute.sector_queue, this);
+        var object_egress_b = new CollectedObjectBuffer(BUF_NAME_OBJECT_EGRESS_B, compute.sector_queue, this);
 
-        this.sector_ingress_buffer = new OrderedSectorInput(GPGPU.compute.sector_queue, this);
+        this.sector_ingress_buffer = new OrderedSectorInput(compute.sector_queue, this);
         this.sector_egress_buffer  = new FlippableContainer<>(sector_egress_a, sector_egress_b);
         this.broken_egress_buffer  = new FlippableContainer<>(broken_egress_a, broken_egress_b);
         this.object_egress_buffer  = new FlippableContainer<>(object_egress_a, object_egress_b);
@@ -281,7 +282,7 @@ public class GPUCoreMemory implements GPUResource
 
         if (checksum == 0) return;
 
-        GPGPU.compute.compute_queue.finish();
+        compute.compute_queue.finish();
         if (next_egress_counts[0] > 0)
         {
             sector_egress_buffer.front().egress(sector_controller.next_entity(), next_egress_counts);
@@ -294,28 +295,28 @@ public class GPUCoreMemory implements GPUResource
         {
             object_egress_buffer.front().egress(sector_controller.next_entity(), next_egress_counts[6]);
         }
-        GPGPU.compute.sector_queue.finish();
+        compute.sector_queue.finish();
     }
 
     public void unload_collected(CollectedObjectBuffer.Raw raw, int count)
     {
         raw.ensure_space(count);
         object_egress_buffer.back().unload(raw, count);
-        GPGPU.compute.sector_queue.finish();
+        compute.sector_queue.finish();
     }
 
     public void unload_broken(BrokenObjectBuffer.Raw raw, int count)
     {
         raw.ensure_space(count);
         broken_egress_buffer.back().unload(raw, count);
-        GPGPU.compute.sector_queue.finish();
+        compute.sector_queue.finish();
     }
 
     public void unload_sectors(UnorderedCoreBufferGroup.Raw raw, int[] egress_counts)
     {
         raw.ensure_space(egress_counts);
         sector_egress_buffer.back().unload(raw, egress_counts);
-        GPGPU.compute.sector_queue.finish();
+        compute.sector_queue.finish();
     }
 
     public void swap_ingress_buffers()
@@ -364,9 +365,9 @@ public class GPUCoreMemory implements GPUResource
                 hull_bone_capacity,
                 armature_bone_capacity);
 
-        GPGPU.compute.compute_queue.finish();
+        compute.compute_queue.finish();
         sector_ingress_buffer.merge_into(this.sector_controller);
-        GPGPU.compute.sector_queue.finish();
+        compute.sector_queue.finish();
 
         sector_controller.expand(point_count, edge_count, hull_count, entity_count, hull_bone_count, armature_bone_count);
 
