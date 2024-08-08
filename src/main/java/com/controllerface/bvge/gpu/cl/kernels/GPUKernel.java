@@ -10,9 +10,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.controllerface.bvge.gpu.cl.CLUtils.k_call;
-import static org.lwjgl.opencl.CL12.clSetKernelArg;
-
 public abstract class GPUKernel
 {
     final CL_CommandQueue cmd_queue;
@@ -127,7 +124,7 @@ public abstract class GPUKernel
             GPU.CL.gl_acquire(cmd_queue, shared_memory_ptrs);
         }
 
-        k_call(cmd_queue.ptr(), kernel.ptr(), global_work_size, local_work_size, global_work_offset);
+        GPU.CL.kernel_call(cmd_queue, kernel, global_work_size, local_work_size, global_work_offset);
 
         if (!shared_memory_ptrs.isEmpty())
         {

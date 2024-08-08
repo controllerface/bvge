@@ -2,7 +2,6 @@ package com.controllerface.bvge.physics;
 
 import com.controllerface.bvge.core.MathEX;
 import com.controllerface.bvge.game.state.AnimationState;
-import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.memory.SectorContainer;
 import com.controllerface.bvge.models.bones.BoneBindPose;
 import com.controllerface.bvge.models.geometry.Mesh;

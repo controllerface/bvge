@@ -893,7 +893,7 @@ public class GPU
 
         //#endregion
 
-        //#region Kernel/Program Creation Methods
+        //#region Kernel/Program Methods
 
         public static CL_Program new_program(CL_Context context, CL_Device device, List<String> src_strings)
         {
@@ -923,6 +923,34 @@ public class GPU
             }
         }
 
+        public static void kernel_call(CL_CommandQueue command_queue,
+                                       CL_Kernel kernel,
+                                       long[] global_work_size,
+                                       long[] local_work_size,
+                                       long[] global_work_offset)
+        {
+
+            try (var mem_stack = MemoryStack.stackPush())
+            {
+                var global_offset_ptr = int_to_buffer(mem_stack, global_work_offset);
+                var global_work_ptr = int_to_buffer(mem_stack, global_work_size);
+                var local_work_ptr = int_to_buffer(mem_stack, local_work_size);
+
+                int result = clEnqueueNDRangeKernel(command_queue.ptr(),
+                    kernel.ptr(),
+                    1,
+                    global_offset_ptr,
+                    global_work_ptr,
+                    local_work_ptr,
+                    null,
+                    null);
+
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueNDRangeKernel(): " + result);
+                }
+            }
+        }
 
         //#endregion
 

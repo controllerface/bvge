@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gpu.cl.buffers;
 
-import com.controllerface.bvge.gpu.cl.CLUtils;
+import com.controllerface.bvge.gpu.GPU;
 
 /**
  * A utility class that has constants defined indicating the size (in bytes) of the most
@@ -16,7 +16,7 @@ public class CL_DataTypes
     {
         public String buffer_name()
         {
-            return String.join(" ", CLUtils.BUFFER_PREFIX, name(),  CLUtils.BUFFER_SUFFIX);
+            return String.join(" ", GPU.CL.BUFFER_PREFIX, name(),  GPU.CL.BUFFER_SUFFIX);
         }
     }
 
