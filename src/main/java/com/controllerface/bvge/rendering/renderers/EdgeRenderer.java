@@ -7,11 +7,10 @@ import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEdges_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareEdges;
-import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -20,11 +19,9 @@ import com.controllerface.bvge.memory.types.RenderBufferType;
 
 import static com.controllerface.bvge.game.Constants.Rendering.SCALAR_LENGTH;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_2D_LENGTH;
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL15C.GL_LINES;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
-import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL45C.*;
 
 public class EdgeRenderer extends GameSystem
 {
@@ -69,7 +66,7 @@ public class EdgeRenderer extends GameSystem
         ptr_vbo_edge = GPGPU.share_memory(vbo_edge.id());
         ptr_vbo_flag = GPGPU.share_memory(vbo_flag.id());
 
-        long k_ptr_prepare_edges = p_prepare_edges.kernel_ptr(Kernel.prepare_edges);
+        long k_ptr_prepare_edges = p_prepare_edges.kernel_ptr(KernelType.prepare_edges);
         k_prepare_edges = new PrepareEdges_k(GPGPU.ptr_render_queue, k_ptr_prepare_edges)
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)

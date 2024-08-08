@@ -7,11 +7,10 @@ import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEntities_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareEntities;
-import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -19,10 +18,9 @@ import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
-import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL45C.*;
 
 public class EntityPositionRenderer extends GameSystem
@@ -58,7 +56,7 @@ public class EntityPositionRenderer extends GameSystem
         p_prepare_entities.init();
         ptr_vbo_vertex = GPGPU.share_memory(vbo_vertex.id());
 
-        long k_ptr_prepare_entities = p_prepare_entities.kernel_ptr(Kernel.prepare_entities);
+        long k_ptr_prepare_entities = p_prepare_entities.kernel_ptr(KernelType.prepare_entities);
         k_prepare_entities = new PrepareEntities_k(GPGPU.ptr_render_queue, k_ptr_prepare_entities)
             .ptr_arg(PrepareEntities_k.Args.vertex_vbo, ptr_vbo_vertex)
             .buf_arg(PrepareEntities_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY));

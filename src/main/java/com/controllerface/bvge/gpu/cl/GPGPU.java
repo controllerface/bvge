@@ -13,6 +13,7 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.List;
 
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static com.controllerface.bvge.gpu.cl.CLUtils.*;
 import static org.lwjgl.opencl.AMDDeviceAttributeQuery.CL_DEVICE_WAVEFRONT_WIDTH_AMD;
 import static org.lwjgl.opencl.CL12.*;

@@ -7,11 +7,10 @@ import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PreparePoints_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PreparePoints;
-import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -20,10 +19,9 @@ import com.controllerface.bvge.memory.types.RenderBufferType;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
-import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 import static org.lwjgl.opengl.GL45C.*;
 
 public class PointRenderer extends GameSystem
@@ -68,7 +66,7 @@ public class PointRenderer extends GameSystem
 
         prepare_points.init();
 
-        long ptr = prepare_points.kernel_ptr(Kernel.prepare_points);
+        long ptr = prepare_points.kernel_ptr(KernelType.prepare_points);
         k_prepare_points = new PreparePoints_k(GPGPU.ptr_render_queue, ptr)
             .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
             .ptr_arg(PreparePoints_k.Args.color_vbo, color_vbo_ptr)

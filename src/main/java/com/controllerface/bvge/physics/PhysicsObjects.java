@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 import static com.controllerface.bvge.game.Constants.*;
+import static com.controllerface.bvge.gpu.GPU.CL.*;
 import static com.controllerface.bvge.models.geometry.ModelRegistry.*;
 
 /**
@@ -64,22 +65,22 @@ public class PhysicsObjects
         var vert = mesh.vertices()[0];
 
         // the model points are always zero so the * and + are for educational purposes
-        var p1 = CLUtils.arg_float2(vert.x() * size + x, vert.y() * size + y);
+        var p1 = arg_float2(vert.x() * size + x, vert.y() * size + y);
 
         // store the single point for the circle
         var p1_index = world.create_point(p1, EMPTY_POINT_BONE_TABLE, vert.index(), next_hull_index, 0, point_flags);
 
-        var l1 = CLUtils.arg_float4(x, y, x, y + 1);
-        var l2 = CLUtils.arg_float4(x, y, p1[0], p1[1]);
+        var l1 = arg_float4(x, y, x, y + 1);
+        var l2 = arg_float4(x, y, p1[0], p1[1]);
         var angle = MathEX.angle_between_lines(l1, l2);
-        var point_table = CLUtils.arg_int2(p1_index, p1_index);
-        var edge_table = CLUtils.arg_int2(0, -1);
-        var position = CLUtils.arg_float2(x, y);
-        var scale = CLUtils.arg_float2(size, size / 2.0f);
-        var rotation = CLUtils.arg_float2(0, angle);
+        var point_table = arg_int2(p1_index, p1_index);
+        var edge_table = arg_int2(0, -1);
+        var position = arg_float2(x, y);
+        var scale = arg_float2(size, size / 2.0f);
+        var rotation = arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int[] bone_table = CLUtils.arg_int2(0, -1);
+        int[] bone_table = arg_int2(0, -1);
         int hull_flags = global_hull_flags | HullFlags.IS_CIRCLE.bits | HullFlags.NO_BONES.bits;
         int hull_id = world.create_hull(mesh.mesh_id(),
             position,
@@ -93,7 +94,7 @@ public class PhysicsObjects
             next_entity_id,
             uv_variant,
             hull_flags);
-        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        int[] hull_table = arg_int2(hull_id, hull_id);
 
         return world.create_entity(x, y, x, y,
             hull_table,
@@ -159,9 +160,9 @@ public class PhysicsObjects
         var v2 = hull[1];
         var v3 = hull[2];
 
-        var p1 = CLUtils.arg_float2(v1.x(), v1.y());
-        var p2 = CLUtils.arg_float2(v2.x(), v2.y());
-        var p3 = CLUtils.arg_float2(v3.x(), v3.y());
+        var p1 = arg_float2(v1.x(), v1.y());
+        var p2 = arg_float2(v2.x(), v2.y());
+        var p3 = arg_float2(v3.x(), v3.y());
 
         int h1 = 0;
         int h2 = 0;
@@ -172,8 +173,8 @@ public class PhysicsObjects
         var p3_index = world.create_point(p3, EMPTY_POINT_BONE_TABLE, v3.index(), next_hull_index, h3, 0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3);
-        var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
-        var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+        var l1 = arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+        var l2 = arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
         var angle = MathEX.angle_between_lines(l1, l2);
 
@@ -181,14 +182,14 @@ public class PhysicsObjects
         world.create_edge(p2_index, p3_index, edgeDistance(p3, p2), 0, -1);
         var end_edge = world.create_edge(p3_index, p1_index, edgeDistance(p3, p1), 0, -1);
 
-        var point_table = CLUtils.arg_int2(p1_index, p3_index);
-        var edge_table = CLUtils.arg_int2(start_edge, end_edge);
-        var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
-        var scale = CLUtils.arg_float2(size, size);
-        var rotation = CLUtils.arg_float2(0, angle);
+        var point_table = arg_int2(p1_index, p3_index);
+        var edge_table = arg_int2(start_edge, end_edge);
+        var position = arg_float2(vector_buffer.x, vector_buffer.y);
+        var scale = arg_float2(size, size);
+        var rotation = arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int[] bone_table = CLUtils.arg_int2(0, -1);
+        int[] bone_table = arg_int2(0, -1);
         int hull_flags = global_hull_flags | HullFlags.IS_POLYGON.bits | HullFlags.NO_BONES.bits;
         int hull_id = world.create_hull(mesh.mesh_id(),
             position,
@@ -202,7 +203,7 @@ public class PhysicsObjects
             next_entity_id,
             shard_mineral.mineral_number,
             hull_flags);
-        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        int[] hull_table = arg_int2(hull_id, hull_id);
         return world.create_entity(x, y, x, y,
             hull_table,
             bone_table,
@@ -235,8 +236,8 @@ public class PhysicsObjects
         var v1 = hull[0];
         var v2 = hull[1];
 
-        var p1 = CLUtils.arg_float2(v1.x(), v1.y());
-        var p2 = CLUtils.arg_float2(v2.x(), v2.y());
+        var p1 = arg_float2(v1.x(), v1.y());
+        var p2 = arg_float2(v2.x(), v2.y());
 
         int h1 = 0;
         int h2 = 0;
@@ -245,8 +246,8 @@ public class PhysicsObjects
         var p2_index = world.create_point(p2, EMPTY_POINT_BONE_TABLE, v2.index(), next_hull_index, h2, 0);
 
         MathEX.centroid(vector_buffer, p1, p2);
-        var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
-        var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+        var l1 = arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+        var l2 = arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
         var angle = MathEX.angle_between_lines(l1, l2);
 
@@ -255,14 +256,14 @@ public class PhysicsObjects
 
         var start_edge = world.create_edge(p1_index, p2_index, sensor_length, ef, pinned_hull);
 
-        var point_table = CLUtils.arg_int2(p1_index, p2_index);
-        var edge_table = CLUtils.arg_int2(start_edge, start_edge);
-        var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
-        var scale = CLUtils.arg_float2(size, size);
-        var rotation = CLUtils.arg_float2(0, angle);
+        var point_table = arg_int2(p1_index, p2_index);
+        var edge_table = arg_int2(start_edge, start_edge);
+        var position = arg_float2(vector_buffer.x, vector_buffer.y);
+        var scale = arg_float2(size, size);
+        var rotation = arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int[] bone_table = CLUtils.arg_int2(0, -1);
+        int[] bone_table = arg_int2(0, -1);
         int hull_flags = HullFlags.IS_POLYGON.bits | HullFlags.IS_SENSOR.bits | HullFlags.NO_BONES.bits;
         if (entity_sensor) hull_flags |= HullFlags.ENTITY_SENSOR.bits;
         return world.create_hull(mesh.mesh_id(),
@@ -307,10 +308,10 @@ public class PhysicsObjects
         var v3 = hull[2];
         var v4 = hull[3];
 
-        var p1 = CLUtils.arg_float2(v1.x(), v1.y());
-        var p2 = CLUtils.arg_float2(v2.x(), v2.y());
-        var p3 = CLUtils.arg_float2(v3.x(), v3.y());
-        var p4 = CLUtils.arg_float2(v4.x(), v4.y());
+        var p1 = arg_float2(v1.x(), v1.y());
+        var p2 = arg_float2(v2.x(), v2.y());
+        var p3 = arg_float2(v3.x(), v3.y());
+        var p4 = arg_float2(v4.x(), v4.y());
 
         var p1_index = world.create_point(p1, EMPTY_POINT_BONE_TABLE, v1.index(), next_hull_index, hits[0], 0);
         var p2_index = world.create_point(p2, EMPTY_POINT_BONE_TABLE, v2.index(), next_hull_index, hits[1], 0);
@@ -318,8 +319,8 @@ public class PhysicsObjects
         var p4_index = world.create_point(p4, EMPTY_POINT_BONE_TABLE, v4.index(), next_hull_index, hits[3], 0);
 
         MathEX.centroid(vector_buffer, p1, p2, p3, p4);
-        var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
-        var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
+        var l1 = arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+        var l2 = arg_float4(vector_buffer.x, vector_buffer.y, p1[0], p1[1]);
 
         var angle = MathEX.angle_between_lines(l1, l2);
 
@@ -333,14 +334,14 @@ public class PhysicsObjects
         world.create_edge(p1_index, p3_index, edgeDistance(p3, p1), EdgeFlags.E_INTERIOR.bits, -1);
         var end_edge = world.create_edge(p2_index, p4_index, edgeDistance(p4, p2), EdgeFlags.E_INTERIOR.bits, -1);
 
-        var point_table = CLUtils.arg_int2(p1_index, p4_index);
-        var edge_table = CLUtils.arg_int2(start_edge, end_edge);
-        var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
-        var scale = CLUtils.arg_float2(size, size);
-        var rotation = CLUtils.arg_float2(0, angle);
+        var point_table = arg_int2(p1_index, p4_index);
+        var edge_table = arg_int2(start_edge, end_edge);
+        var position = arg_float2(vector_buffer.x, vector_buffer.y);
+        var scale = arg_float2(size, size);
+        var rotation = arg_float2(0, angle);
 
         // there is only one hull, so it is the main hull ID by default
-        int[] bone_table = CLUtils.arg_int2(0, -1);
+        int[] bone_table = arg_int2(0, -1);
         int hull_flags = global_hull_flags | HullFlags.IS_POLYGON.bits;
         int hull_id = world.create_hull(mesh.mesh_id(),
             position,
@@ -354,7 +355,7 @@ public class PhysicsObjects
             next_entity_id,
             block_mineral.mineral_number,
             hull_flags);
-        int[] hull_table = CLUtils.arg_int2(hull_id, hull_id);
+        int[] hull_table = arg_int2(hull_id, hull_id);
         return world.create_entity(x, y, x, y,
             hull_table,
             bone_table,
@@ -410,7 +411,7 @@ public class PhysicsObjects
         {
             var bind_pose_ref_id = entry.getKey();
             var bind_pose = entry.getValue();
-            var raw_matrix = CLUtils.arg_float16_matrix(bind_pose.transform());
+            var raw_matrix = arg_float16_matrix(bind_pose.transform());
             int bind_parent = bind_pose.parent() == -1
                 ? -1
                 : armature_bone_parent_map.get(bind_pose.parent());
@@ -480,7 +481,7 @@ public class PhysicsObjects
                 var bone_offset = hull_mesh.bone_offsets().get(bone_index);
                 var bone_bind_pose = model.bone_transforms().get(bone_offset.name());
                 var bone_transform = bone_bind_pose.mul(bone_offset.transform(), matrix_buffer);
-                var raw_matrix = CLUtils.arg_float16_matrix(bone_transform);
+                var raw_matrix = arg_float16_matrix(bone_transform);
                 var bind_pose_id = armature_bone_map.get(bone_offset.name());
                 int next_bone = world.create_hull_bone(raw_matrix, bind_pose_id, bone_offset.offset_ref_id());
                 bone_map.put(bone_offset.name(), next_bone);
@@ -503,7 +504,7 @@ public class PhysicsObjects
             for (int point_index = 0; point_index < new_hull.length; point_index++)
             {
                 var next_vertex = new_hull[point_index];
-                var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
+                var new_point = arg_float2(next_vertex.x(), next_vertex.y());
 
                 var bone_names = next_vertex.bone_names();
                 int[] bone_ids = new int[4];
@@ -527,7 +528,7 @@ public class PhysicsObjects
             // reference vertex ID, allowing them to be accessed in mesh-order when necessary
             for (Vertex next_vertex : new_interior_hull)
             {
-                var new_point = CLUtils.arg_float2(next_vertex.x(), next_vertex.y());
+                var new_point = arg_float2(next_vertex.x(), next_vertex.y());
                 var bone_names = next_vertex.bone_names();
                 int[] bone_ids = new int[4];
                 for (int i = 0; i < bone_ids.length; i++)
@@ -614,18 +615,18 @@ public class PhysicsObjects
 
 
             MathEX.centroid(vector_buffer, new_hull);
-            var l1 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
-            var l2 = CLUtils.arg_float4(vector_buffer.x, vector_buffer.y, new_hull[0].x(), new_hull[0].y());
+            var l1 = arg_float4(vector_buffer.x, vector_buffer.y, vector_buffer.x, vector_buffer.y + 1);
+            var l2 = arg_float4(vector_buffer.x, vector_buffer.y, new_hull[0].x(), new_hull[0].y());
             var angle = MathEX.angle_between_lines(l1, l2);
 
-            var point_table = CLUtils.arg_int2(start_point, end_point);
-            var edge_table = CLUtils.arg_int2(edge_start, edge_end);
-            var position = CLUtils.arg_float2(vector_buffer.x, vector_buffer.y);
-            var scale = CLUtils.arg_float2(size, size);
-            var rotation = CLUtils.arg_float2(0, angle);
+            var point_table = arg_int2(start_point, end_point);
+            var edge_table = arg_int2(edge_start, edge_end);
+            var position = arg_float2(vector_buffer.x, vector_buffer.y);
+            var scale = arg_float2(size, size);
+            var rotation = arg_float2(0, angle);
 
             int flag_bits = HullFlags.IS_POLYGON.bits | local_hull_flags;
-            int[] bone_table = CLUtils.arg_int2(start_hull_bone, end_hull_bone);
+            int[] bone_table = arg_int2(start_hull_bone, end_hull_bone);
             int hull_id = world.create_hull(hull_mesh.mesh_id(),
                 position,
                 scale,
@@ -674,8 +675,8 @@ public class PhysicsObjects
 
 
 
-        int[] hull_table = CLUtils.arg_int2(first_hull, last_hull);
-        int[] bone_table = CLUtils.arg_int2(first_armature_bone, last_armature_bone);
+        int[] hull_table = arg_int2(first_hull, last_hull);
+        int[] bone_table = arg_int2(first_armature_bone, last_armature_bone);
 
         int idle_animation_id = AnimationState.IDLE.ordinal();
 

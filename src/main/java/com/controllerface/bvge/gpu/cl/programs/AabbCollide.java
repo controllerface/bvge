@@ -1,7 +1,8 @@
 package com.controllerface.bvge.gpu.cl.programs;
 
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.CLUtils;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 
 public class AabbCollide extends GPUProgram
 {
@@ -11,11 +12,11 @@ public class AabbCollide extends GPUProgram
         src.add(const_hull_flags);
         src.add(func_do_bounds_intersect);
         src.add(func_calculate_key_index);
-        src.add(CLUtils.read_src("programs/aabb_collide.cl"));
+        src.add(GPU.CL.read_src("programs/aabb_collide.cl"));
 
         make_program();
 
-        load_kernel(Kernel.aabb_collide);
+        load_kernel(KernelType.aabb_collide);
 
         return this;
     }

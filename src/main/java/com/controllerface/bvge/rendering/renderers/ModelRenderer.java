@@ -13,12 +13,11 @@ import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.GPUScanScalarIntOut;
 import com.controllerface.bvge.gpu.cl.GPUScanVectorInt2;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.*;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.MeshQuery;
 import com.controllerface.bvge.gpu.cl.programs.ScanIntArrayOut;
-import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_CommandBuffer;
 import com.controllerface.bvge.gpu.gl.buffers.GL_ElementBuffer;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
@@ -36,7 +35,7 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 
 import static com.controllerface.bvge.game.Constants.Rendering.*;
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL45C.*;
 
 public class ModelRenderer extends GameSystem
@@ -190,7 +189,7 @@ public class ModelRenderer extends GameSystem
         gpu_int2_scan    = new GPUScanVectorInt2(GPGPU.ptr_render_queue);
         gpu_int_scan_out = new GPUScanScalarIntOut(GPGPU.ptr_render_queue);
 
-        long k_ptr_count_instances = p_mesh_query.kernel_ptr(Kernel.count_mesh_instances);
+        long k_ptr_count_instances = p_mesh_query.kernel_ptr(KernelType.count_mesh_instances);
         k_count_mesh_instances = new CountMeshInstances_k(GPGPU.ptr_render_queue, k_ptr_count_instances)
             .ptr_arg(CountMeshInstances_k.Args.counters, ptr_counters)
             .ptr_arg(CountMeshInstances_k.Args.query, ptr_query)
@@ -201,7 +200,7 @@ public class ModelRenderer extends GameSystem
             .buf_arg(CountMeshInstances_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
             .buf_arg(CountMeshInstances_k.Args.entity_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG));
 
-        long k_ptr_write_details = p_mesh_query.kernel_ptr(Kernel.write_mesh_details);
+        long k_ptr_write_details = p_mesh_query.kernel_ptr(KernelType.write_mesh_details);
         k_write_mesh_details = new WriteMeshDetails_k(GPGPU.ptr_render_queue, k_ptr_write_details)
             .ptr_arg(WriteMeshDetails_k.Args.counters, ptr_counters)
             .ptr_arg(WriteMeshDetails_k.Args.query, ptr_query)
@@ -214,19 +213,19 @@ public class ModelRenderer extends GameSystem
             .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
             .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE));
 
-        long k_ptr_count_batches = p_mesh_query.kernel_ptr(Kernel.count_mesh_batches);
+        long k_ptr_count_batches = p_mesh_query.kernel_ptr(KernelType.count_mesh_batches);
         k_count_mesh_batches = new CountMeshBatches_k(GPGPU.ptr_render_queue, k_ptr_count_batches)
             .ptr_arg(CountMeshBatches_k.Args.total, svm_total)
             .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
 
-        long k_ptr_calc_offsets = p_mesh_query.kernel_ptr(Kernel.calculate_batch_offsets);
+        long k_ptr_calc_offsets = p_mesh_query.kernel_ptr(KernelType.calculate_batch_offsets);
         k_calculate_batch_offsets = new CalculateBatchOffsets_k(GPGPU.ptr_render_queue, k_ptr_calc_offsets);
 
-        long k_ptr_transfer_detail = p_mesh_query.kernel_ptr(Kernel.transfer_detail_data);
+        long k_ptr_transfer_detail = p_mesh_query.kernel_ptr(KernelType.transfer_detail_data);
         k_transfer_detail_data = new TransferDetailData_k(GPGPU.ptr_render_queue, k_ptr_transfer_detail)
             .ptr_arg(TransferDetailData_k.Args.mesh_transfer, ptr_mesh_transfer);
 
-        long k_ptr_transfer_render = p_mesh_query.kernel_ptr(Kernel.transfer_render_data);
+        long k_ptr_transfer_render = p_mesh_query.kernel_ptr(KernelType.transfer_render_data);
         k_transfer_render_data = new TransferRenderData_k(GPGPU.ptr_render_queue, k_ptr_transfer_render)
             .ptr_arg(TransferRenderData_k.Args.command_buffer, ptr_command_buffer)
             .ptr_arg(TransferRenderData_k.Args.element_buffer, ptr_element_buffer)

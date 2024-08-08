@@ -3,14 +3,14 @@ package com.controllerface.bvge.memory.sectors;
 import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.crud.*;
 import com.controllerface.bvge.gpu.cl.kernels.egress.CountEgressEntities_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.memory.SectorContainer;
 import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
-import static com.controllerface.bvge.gpu.cl.CLUtils.*;
+import static com.controllerface.bvge.gpu.GPU.CL.*;
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
@@ -61,7 +61,7 @@ public class SectorController implements SectorContainer, GPUResource
         ptr_info_buffer     = GPGPU.cl_new_pinned_buffer((long)cl_float.size() * ENTITY_INFO_WIDTH);
         ptr_egress_sizes    = GPGPU.cl_new_pinned_buffer(EGRESS_COUNTERS_SIZE);
 
-        long k_ptr_create_point = p_gpu_crud.kernel_ptr(Kernel.create_point);
+        long k_ptr_create_point = p_gpu_crud.kernel_ptr(KernelType.create_point);
         k_create_point = new CreatePoint_k(this.ptr_queue, k_ptr_create_point)
             .buf_arg(CreatePoint_k.Args.points,                         this.sector_buffers.buffer(POINT))
             .buf_arg(CreatePoint_k.Args.point_vertex_references,        this.sector_buffers.buffer(POINT_VERTEX_REFERENCE))
@@ -70,14 +70,14 @@ public class SectorController implements SectorContainer, GPUResource
             .buf_arg(CreatePoint_k.Args.point_flags,                    this.sector_buffers.buffer(POINT_FLAG))
             .buf_arg(CreatePoint_k.Args.point_bone_tables,              this.sector_buffers.buffer(POINT_BONE_TABLE));
 
-        long k_ptr_create_edge = p_gpu_crud.kernel_ptr(Kernel.create_edge);
+        long k_ptr_create_edge = p_gpu_crud.kernel_ptr(KernelType.create_edge);
         k_create_edge = new CreateEdge_k(this.ptr_queue, k_ptr_create_edge)
             .buf_arg(CreateEdge_k.Args.edges,                           this.sector_buffers.buffer(EDGE))
             .buf_arg(CreateEdge_k.Args.edge_lengths,                    this.sector_buffers.buffer(EDGE_LENGTH))
             .buf_arg(CreateEdge_k.Args.edge_flags,                      this.sector_buffers.buffer(EDGE_FLAG))
             .buf_arg(CreateEdge_k.Args.edge_pins,                       this.sector_buffers.buffer(EDGE_PIN));
 
-        long k_ptr_create_hull = p_gpu_crud.kernel_ptr(Kernel.create_hull);
+        long k_ptr_create_hull = p_gpu_crud.kernel_ptr(KernelType.create_hull);
         k_create_hull = new CreateHull_k(this.ptr_queue, k_ptr_create_hull)
             .buf_arg(CreateHull_k.Args.hulls,                           this.sector_buffers.buffer(HULL))
             .buf_arg(CreateHull_k.Args.hull_scales,                     this.sector_buffers.buffer(HULL_SCALE))
@@ -93,7 +93,7 @@ public class SectorController implements SectorContainer, GPUResource
             .buf_arg(CreateHull_k.Args.hull_uv_offsets,                 this.sector_buffers.buffer(HULL_UV_OFFSET))
             .buf_arg(CreateHull_k.Args.hull_integrity,                  this.sector_buffers.buffer(HULL_INTEGRITY));
 
-        long k_ptr_create_entity = p_gpu_crud.kernel_ptr(Kernel.create_entity);
+        long k_ptr_create_entity = p_gpu_crud.kernel_ptr(KernelType.create_entity);
         k_create_entity = new CreateEntity_k(this.ptr_queue, k_ptr_create_entity)
             .buf_arg(CreateEntity_k.Args.entities,                      this.sector_buffers.buffer(ENTITY))
             .buf_arg(CreateEntity_k.Args.entity_root_hulls,             this.sector_buffers.buffer(ENTITY_ROOT_HULL))
@@ -110,23 +110,23 @@ public class SectorController implements SectorContainer, GPUResource
             .buf_arg(CreateEntity_k.Args.entity_previous_time,          this.sector_buffers.buffer(ENTITY_PREV_TIME))
             .buf_arg(CreateEntity_k.Args.entity_motion_states,          this.sector_buffers.buffer(ENTITY_MOTION_STATE));
 
-        long k_ptr_create_hull_bone = p_gpu_crud.kernel_ptr(Kernel.create_hull_bone);
+        long k_ptr_create_hull_bone = p_gpu_crud.kernel_ptr(KernelType.create_hull_bone);
         k_create_hull_bone = new CreateHullBone_k(this.ptr_queue, k_ptr_create_hull_bone)
             .buf_arg(CreateHullBone_k.Args.hull_bones,                  this.sector_buffers.buffer(HULL_BONE))
             .buf_arg(CreateHullBone_k.Args.hull_bind_pose_indicies,     this.sector_buffers.buffer(HULL_BONE_BIND_POSE))
             .buf_arg(CreateHullBone_k.Args.hull_inv_bind_pose_indicies, this.sector_buffers.buffer(HULL_BONE_INV_BIND_POSE));
 
-        long k_ptr_create_entity_bone = p_gpu_crud.kernel_ptr(Kernel.create_entity_bone);
+        long k_ptr_create_entity_bone = p_gpu_crud.kernel_ptr(KernelType.create_entity_bone);
         k_create_entity_bone = new CreateEntityBone_k(this.ptr_queue, k_ptr_create_entity_bone)
             .buf_arg(CreateEntityBone_k.Args.entity_bones,              this.sector_buffers.buffer(ENTITY_BONE))
             .buf_arg(CreateEntityBone_k.Args.entity_bone_reference_ids, this.sector_buffers.buffer(ENTITY_BONE_REFERENCE_ID))
             .buf_arg(CreateEntityBone_k.Args.entity_bone_parent_ids,    this.sector_buffers.buffer(ENTITY_BONE_PARENT_ID));
 
-        long k_ptr_read_position = p_gpu_crud.kernel_ptr(Kernel.read_position);
+        long k_ptr_read_position = p_gpu_crud.kernel_ptr(KernelType.read_position);
         k_read_position = new ReadPosition_k(this.ptr_queue, k_ptr_read_position)
             .buf_arg(ReadPosition_k.Args.entities,                      this.sector_buffers.buffer(ENTITY));
 
-        long k_ptr_read_entity_info = p_gpu_crud.kernel_ptr(Kernel.read_entity_info);
+        long k_ptr_read_entity_info = p_gpu_crud.kernel_ptr(KernelType.read_entity_info);
         k_read_entity_info = new ReadEntityInfo_k(this.ptr_queue, k_ptr_read_entity_info)
             .buf_arg(ReadEntityInfo_k.Args.entities,                    this.sector_buffers.buffer(ENTITY))
             .buf_arg(ReadEntityInfo_k.Args.entity_accel,                this.sector_buffers.buffer(ENTITY_ACCEL))
@@ -139,7 +139,7 @@ public class SectorController implements SectorContainer, GPUResource
             .buf_arg(ReadEntityInfo_k.Args.entity_animation_blend,      this.sector_buffers.buffer(ENTITY_ANIM_BLEND))
             .ptr_arg(ReadEntityInfo_k.Args.output,                      ptr_info_buffer);
 
-        long k_ptr_write_entity_info = p_gpu_crud.kernel_ptr(Kernel.write_entity_info);
+        long k_ptr_write_entity_info = p_gpu_crud.kernel_ptr(KernelType.write_entity_info);
         k_write_entity_info = new WriteEntityInfo_k(this.ptr_queue, k_ptr_write_entity_info)
             .buf_arg(WriteEntityInfo_k.Args.entity_accel,               this.sector_buffers.buffer(ENTITY_ACCEL))
             .buf_arg(WriteEntityInfo_k.Args.entity_animation_time,      this.sector_buffers.buffer(ENTITY_ANIM_TIME))
@@ -151,24 +151,24 @@ public class SectorController implements SectorContainer, GPUResource
             .buf_arg(WriteEntityInfo_k.Args.entity_flags,               this.sector_buffers.buffer(ENTITY_FLAG));
 
 
-        long k_ptr_update_accel = p_gpu_crud.kernel_ptr(Kernel.update_accel);
+        long k_ptr_update_accel = p_gpu_crud.kernel_ptr(KernelType.update_accel);
         k_update_accel = new UpdateAccel_k(this.ptr_queue, k_ptr_update_accel)
             .buf_arg(UpdateAccel_k.Args.entity_accel,                   this.sector_buffers.buffer(ENTITY_ACCEL));
 
-        long k_ptr_update_mouse_position = p_gpu_crud.kernel_ptr(Kernel.update_mouse_position);
+        long k_ptr_update_mouse_position = p_gpu_crud.kernel_ptr(KernelType.update_mouse_position);
         k_update_mouse_position = new UpdateMousePosition_k(this.ptr_queue, k_ptr_update_mouse_position)
             .buf_arg(UpdateMousePosition_k.Args.entity_root_hulls,      this.sector_buffers.buffer(ENTITY_ROOT_HULL))
             .buf_arg(UpdateMousePosition_k.Args.hull_point_tables,      this.sector_buffers.buffer(HULL_POINT_TABLE))
             .buf_arg(UpdateMousePosition_k.Args.points,                 this.sector_buffers.buffer(POINT));
 
-        long k_ptr_update_block_position = p_gpu_crud.kernel_ptr(Kernel.update_block_position);
+        long k_ptr_update_block_position = p_gpu_crud.kernel_ptr(KernelType.update_block_position);
         k_update_block_position = new UpdateBlockPosition_k(this.ptr_queue, k_ptr_update_block_position)
             .buf_arg(UpdateBlockPosition_k.Args.entities,               this.sector_buffers.buffer(ENTITY))
             .buf_arg(UpdateBlockPosition_k.Args.entity_root_hulls,      this.sector_buffers.buffer(ENTITY_ROOT_HULL))
             .buf_arg(UpdateBlockPosition_k.Args.hull_point_tables,      this.sector_buffers.buffer(HULL_POINT_TABLE))
             .buf_arg(UpdateBlockPosition_k.Args.points,                 this.sector_buffers.buffer(POINT));
 
-        long k_ptr_count_egress_candidates = p_gpu_crud.kernel_ptr(Kernel.count_egress_entities);
+        long k_ptr_count_egress_candidates = p_gpu_crud.kernel_ptr(KernelType.count_egress_entities);
         k_count_egress_entities = new CountEgressEntities_k(this.ptr_queue, k_ptr_count_egress_candidates)
             .buf_arg(CountEgressEntities_k.Args.entity_flags,           this.sector_buffers.buffer(ENTITY_FLAG))
             .buf_arg(CountEgressEntities_k.Args.entity_hull_tables,     this.sector_buffers.buffer(ENTITY_HULL_TABLE))
@@ -180,17 +180,17 @@ public class SectorController implements SectorContainer, GPUResource
             .ptr_arg(CountEgressEntities_k.Args.counters,               ptr_egress_sizes);
 
 
-        long k_ptr_update_select_block = p_gpu_crud.kernel_ptr(Kernel.update_select_block);
+        long k_ptr_update_select_block = p_gpu_crud.kernel_ptr(KernelType.update_select_block);
         k_update_select_block = new UpdateSelectBlock_k(this.ptr_queue, k_ptr_update_select_block)
             .buf_arg(UpdateSelectBlock_k.Args.entity_flags,             this.sector_buffers.buffer(ENTITY_FLAG))
             .buf_arg(UpdateSelectBlock_k.Args.hull_uv_offsets,          this.sector_buffers.buffer(HULL_UV_OFFSET))
             .buf_arg(UpdateSelectBlock_k.Args.entity_hull_tables,       this.sector_buffers.buffer(ENTITY_HULL_TABLE));
 
-        long k_ptr_clear_select_block = p_gpu_crud.kernel_ptr(Kernel.clear_select_block);
+        long k_ptr_clear_select_block = p_gpu_crud.kernel_ptr(KernelType.clear_select_block);
         k_clear_select_block = new ClearSelectBlock_k(this.ptr_queue, k_ptr_clear_select_block)
             .buf_arg(ClearSelectBlock_k.Args.entity_flags,              this.sector_buffers.buffer(ENTITY_FLAG));
 
-        long k_ptr_place_block = p_gpu_crud.kernel_ptr(Kernel.place_block);
+        long k_ptr_place_block = p_gpu_crud.kernel_ptr(KernelType.place_block);
         k_place_block = new PlaceBlock_k(this.ptr_queue, k_ptr_place_block)
                 .buf_arg(PlaceBlock_k.Args.entities,                    this.sector_buffers.buffer(ENTITY))
                 .buf_arg(PlaceBlock_k.Args.entity_hull_tables,          this.sector_buffers.buffer(ENTITY_HULL_TABLE))

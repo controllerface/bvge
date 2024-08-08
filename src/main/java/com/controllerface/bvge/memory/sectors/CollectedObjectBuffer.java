@@ -4,7 +4,7 @@ import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.egress.EgressCollected_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUCrud;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
@@ -12,7 +12,7 @@ import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.types.CollectedBufferType;
 import com.controllerface.bvge.memory.types.CoreBufferType;
 
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
 
 public class CollectedObjectBuffer implements GPUResource
@@ -32,7 +32,7 @@ public class CollectedObjectBuffer implements GPUResource
         collected_group = new BufferGroup<>(CollectedBufferType.class, name, ptr_queue, true);
         collected_group.init_buffer(CollectedBufferType.TYPES, 100L);
 
-        long k_ptr_egress_collected = this.p_gpu_crud.kernel_ptr(Kernel.egress_collected);
+        long k_ptr_egress_collected = this.p_gpu_crud.kernel_ptr(KernelType.egress_collected);
         k_egress_collected = new EgressCollected_k(this.ptr_queue, k_ptr_egress_collected)
             .buf_arg(EgressCollected_k.Args.entity_flags, core_memory.get_buffer(CoreBufferType.ENTITY_FLAG))
             .buf_arg(EgressCollected_k.Args.entity_types, core_memory.get_buffer(CoreBufferType.ENTITY_TYPE))

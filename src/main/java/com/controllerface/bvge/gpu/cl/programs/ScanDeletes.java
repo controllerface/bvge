@@ -1,7 +1,8 @@
 package com.controllerface.bvge.gpu.cl.programs;
 
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.CLUtils;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.compact.*;
 
 public class ScanDeletes extends GPUProgram
@@ -17,19 +18,19 @@ public class ScanDeletes extends GPUProgram
         src.add(CompactHulls_k.kernel_source);
         src.add(CompactHullBones_k.kernel_source);
         src.add(CompactEntityBones_k.kernel_source);
-        src.add(CLUtils.read_src("programs/scan_deletes.cl"));
+        src.add(GPU.CL.read_src("programs/scan_deletes.cl"));
 
         make_program();
 
-        load_kernel(Kernel.scan_deletes_single_block_out);
-        load_kernel(Kernel.scan_deletes_multi_block_out);
-        load_kernel(Kernel.complete_deletes_multi_block_out);
-        load_kernel(Kernel.compact_entities);
-        load_kernel(Kernel.compact_hulls);
-        load_kernel(Kernel.compact_edges);
-        load_kernel(Kernel.compact_points);
-        load_kernel(Kernel.compact_hull_bones);
-        load_kernel(Kernel.compact_entity_bones);
+        load_kernel(KernelType.scan_deletes_single_block_out);
+        load_kernel(KernelType.scan_deletes_multi_block_out);
+        load_kernel(KernelType.complete_deletes_multi_block_out);
+        load_kernel(KernelType.compact_entities);
+        load_kernel(KernelType.compact_hulls);
+        load_kernel(KernelType.compact_edges);
+        load_kernel(KernelType.compact_points);
+        load_kernel(KernelType.compact_hull_bones);
+        load_kernel(KernelType.compact_entity_bones);
 
         return this;
     }

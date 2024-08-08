@@ -4,6 +4,8 @@ import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.events.EventBus;
 import com.controllerface.bvge.game.InputSystem;
+import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.gl.GL_GraphicsController;
 import com.controllerface.bvge.gpu.gl.buffers.GL_CommandBuffer;
 import com.controllerface.bvge.gpu.gl.buffers.GL_ElementBuffer;
@@ -15,6 +17,7 @@ import com.controllerface.bvge.gpu.gl.shaders.TwoStageShader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.rendering.TextGlyph;
+import org.joml.Matrix4f;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -34,10 +37,13 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static com.controllerface.bvge.game.Constants.Rendering.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -612,6 +618,187 @@ public class GPU
                 case 37192 -> "LOW";
                 default -> APIUtil.apiUnknownToken(severity);
             };
+        }
+    }
+
+    public static class CL
+    {
+        public static final String BUFFER_PREFIX = "__global";
+        public static final String BUFFER_SUFFIX = "*";
+
+        public static short[] arg_short2(short x, short y)
+        {
+            return new short[]{x, y};
+        }
+
+        public static int[] arg_int2(int x, int y)
+        {
+            return new int[]{x, y};
+        }
+
+        public static int[] arg_int4(int x, int y, int z, int w)
+        {
+            return new int[]{x, y, z, w};
+        }
+
+        public static long[] arg_long(long arg)
+        {
+            return new long[]{arg};
+        }
+
+        public static float[] arg_float2(float x, float y)
+        {
+            return new float[]{x, y};
+        }
+
+        public static float[] arg_float4(float x, float y, float z, float w)
+        {
+            return new float[]{x, y, z, w};
+        }
+
+        public static float[] arg_float16(float s0, float s1, float s2, float s3,
+                                          float s4, float s5, float s6, float s7,
+                                          float s8, float s9, float sA, float sB,
+                                          float sC, float sD, float sE, float sF)
+        {
+            return new float[]
+                {
+                    s0, s1, s2, s3,
+                    s4, s5, s6, s7,
+                    s8, s9, sA, sB,
+                    sC, sD, sE, sF
+                };
+        }
+
+        public static float[] arg_float16_matrix(Matrix4f matrix)
+        {
+            return arg_float16(
+                matrix.m00(), matrix.m01(), matrix.m02(), matrix.m03(),
+                matrix.m10(), matrix.m11(), matrix.m12(), matrix.m13(),
+                matrix.m20(), matrix.m21(), matrix.m22(), matrix.m23(),
+                matrix.m30(), matrix.m31(), matrix.m32(), matrix.m33());
+        }
+
+        public static String read_src(String file)
+        {
+            try (var stream = GPU.class.getResourceAsStream("/cl/" + file))
+            {
+                byte[] bytes = Objects.requireNonNull(stream).readAllBytes();
+                return new String(bytes, StandardCharsets.UTF_8);
+            }
+            catch (NullPointerException | IOException e)
+            {
+                throw new RuntimeException("Could not load kernel source: " + file, e);
+            }
+        }
+
+        /**
+         * Generates source code for an Open CL kernel that can be called to create or update an object
+         * using the specified arguments as input. Run any of the tests in the following package to see
+         * example kernel output: {@link com.controllerface.bvge.gpu.cl.kernels.crud}
+         *
+         * @param kernel    {@linkplain KernelType} enum class identifying the name of the kernel to generate
+         * @param args_enum {@linkplain KernelArg} enum class defining the ordered set of argument to the kernel
+         * @param <E>       Type argument restricting the args_enum implementation
+         * @return a String containing the generated kernel source
+         */
+        public static <E extends Enum<E> & KernelArg> String crud_create_k_src(KernelType kernel, Class<E> args_enum)
+        {
+            E[] arguments = args_enum.getEnumConstants();
+
+        /*
+        By convention, all Create* kernels define an argument named `target` which is used to determine the
+        target position within the GPU buffer where the object being created will be stored. if missing,
+        it is considered a critical failure.
+         */
+            int target_index = Arrays.stream(args_enum.getEnumConstants())
+                .filter(arg -> arg.name().equals("target"))
+                .map(Enum::ordinal)
+                .findAny()
+                .orElseThrow();
+
+            var src = new StringBuilder("__kernel void ").append(kernel.name());
+
+            var parameters = Arrays.stream(args_enum.getEnumConstants())
+                .map(arg -> String.join(" ", arg.cl_type(), arg.name()))
+                .collect(Collectors.joining(",\n\t", "(", ")\n"));
+
+            src.append(parameters);
+            src.append("{\n");
+            for (int name_index = 0; name_index < target_index; name_index++)
+            {
+                int value_index = name_index + target_index + 1;
+                var name = arguments[name_index].name();
+                var value = arguments[value_index];
+
+                src.append("\t")
+                    .append(name)
+                    .append("[target] = ")
+                    .append(value)
+                    .append(";\n");
+            }
+            src.append("}\n\n");
+            return src.toString();
+        }
+
+        /**
+         * Generates source code for an Open CL kernel that can be called to compact the buffers used
+         * for logical objects. Run any of the tests in the following package to see example kernel
+         * output: {@link com.controllerface.bvge.gpu.cl.kernels.compact}
+         *
+         * @param kernel    {@linkplain KernelType} enum class identifying the name of the kernel to generate
+         * @param args_enum {@linkplain KernelArg} enum class defining the ordered set of arguments to the kernel
+         * @param <E>       Type argument restricting the args_enum implementation
+         * @return a String containing the generated kernel source
+         */
+        public static <E extends Enum<E> & KernelArg> String compact_k_src(KernelType kernel, Class<E> args_enum)
+        {
+            E[] arguments = args_enum.getEnumConstants();
+
+            var src = new StringBuilder("__kernel void ").append(kernel.name());
+
+            var parameters = Arrays.stream(args_enum.getEnumConstants())
+                .map(arg -> String.join(" ", arg.cl_type(), arg.name()))
+                .collect(Collectors.joining(",\n\t", "(", ")\n"));
+
+            src.append(parameters);
+            src.append("{\n");
+            src.append("\tint current = get_global_id(0);\n");
+            src.append("\tint shift = ").append(arguments[0].name()).append("[current];\n");
+
+            for (int arg_index = 1; arg_index < arguments.length; arg_index++)
+            {
+                var arg = arguments[arg_index];
+                var type = arg.cl_type()
+                    .replace(BUFFER_PREFIX, "")
+                    .replace(BUFFER_SUFFIX, "")
+                    .trim();
+                var _name = "_" + arg.name();
+                src.append("\t")
+                    .append(type).append(" ")
+                    .append(_name).append(" = ")
+                    .append(arg.name()).append("[current]")
+                    .append(";\n");
+            }
+            src.append("\tbarrier(CLK_GLOBAL_MEM_FENCE);\n");
+            src.append("\tif (shift > 0)\n");
+            src.append("\t{\n");
+            src.append("\t\tint new_index = current - shift;\n");
+
+            for (int arg_index = 1; arg_index < arguments.length; arg_index++)
+            {
+                var arg = arguments[arg_index];
+                var _name = "_" + arg.name();
+                src.append("\t\t")
+                    .append(arg.name()).append("[new_index]")
+                    .append(" = ")
+                    .append(_name)
+                    .append(";\n");
+            }
+
+            src.append("\t}\n");
+            src.append("}\n\n");
+            return src.toString();
         }
     }
 }

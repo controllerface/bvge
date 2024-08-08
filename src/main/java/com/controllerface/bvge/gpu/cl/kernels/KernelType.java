@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gpu.cl.kernels;
 
-public enum Kernel
+public enum KernelType
 {
     aabb_collide,
     animate_entities,

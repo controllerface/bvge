@@ -7,11 +7,10 @@ import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareBounds_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareBounds;
-import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -19,12 +18,9 @@ import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_2D_LENGTH;
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL11C.GL_LINE_LOOP;
-import static org.lwjgl.opengl.GL15C.glDeleteBuffers;
 import static org.lwjgl.opengl.GL15C.glMultiDrawArrays;
-import static org.lwjgl.opengl.GL30C.glBindVertexArray;
-import static org.lwjgl.opengl.GL45C.*;
 
 public class BoundingBoxRenderer extends GameSystem
 {
@@ -69,7 +65,7 @@ public class BoundingBoxRenderer extends GameSystem
         p_prepare_bounds.init();
         ptr_vbo_position = GPGPU.share_memory(vbo_position.id());
 
-        long k_ptr_prepare_bounds = p_prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
+        long k_ptr_prepare_bounds = p_prepare_bounds.kernel_ptr(KernelType.prepare_bounds);
         k_prepare_bounds = new PrepareBounds_k(GPGPU.ptr_render_queue, k_ptr_prepare_bounds)
             .ptr_arg(PrepareBounds_k.Args.vbo, ptr_vbo_position)
             .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_AABB));

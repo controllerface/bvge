@@ -1,15 +1,16 @@
 package com.controllerface.bvge.gpu.cl.kernels.crud;
 
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
 
 public class CreateHull_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_hull, Args.class);
+    public static final String kernel_source = GPU.CL.crud_create_k_src(KernelType.create_hull, Args.class);
 
     public enum Args implements KernelArg
     {

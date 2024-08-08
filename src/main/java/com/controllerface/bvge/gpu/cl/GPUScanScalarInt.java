@@ -3,14 +3,14 @@ package com.controllerface.bvge.gpu.cl;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.scan.CompleteIntMultiBlock_k;
 import com.controllerface.bvge.gpu.cl.kernels.scan.ScanIntMultiBlock_k;
 import com.controllerface.bvge.gpu.cl.kernels.scan.ScanIntSingleBlock_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.ScanIntArray;
 
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 
 public class GPUScanScalarInt implements GPUResource
 {
@@ -24,9 +24,9 @@ public class GPUScanScalarInt implements GPUResource
     {
         p_scan_int_array.init();
 
-        long k_ptr_scan_int_array_single = p_scan_int_array.kernel_ptr(Kernel.scan_int_single_block);
-        long k_ptr_scan_int_array_multi  = p_scan_int_array.kernel_ptr(Kernel.scan_int_multi_block);
-        long k_ptr_scan_int_array_comp   = p_scan_int_array.kernel_ptr(Kernel.complete_int_multi_block);
+        long k_ptr_scan_int_array_single = p_scan_int_array.kernel_ptr(KernelType.scan_int_single_block);
+        long k_ptr_scan_int_array_multi  = p_scan_int_array.kernel_ptr(KernelType.scan_int_multi_block);
+        long k_ptr_scan_int_array_comp   = p_scan_int_array.kernel_ptr(KernelType.complete_int_multi_block);
         k_scan_int_single_block          = new ScanIntSingleBlock_k(ptr_queue, k_ptr_scan_int_array_single);
         k_scan_int_multi_block           = new ScanIntMultiBlock_k(ptr_queue, k_ptr_scan_int_array_multi);
         k_complete_int_multi_block       = new CompleteIntMultiBlock_k(ptr_queue, k_ptr_scan_int_array_comp);

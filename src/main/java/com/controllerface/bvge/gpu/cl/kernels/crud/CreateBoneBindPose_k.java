@@ -1,8 +1,9 @@
 package com.controllerface.bvge.gpu.cl.kernels.crud;
 
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float16;
@@ -10,7 +11,7 @@ import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
 
 public class CreateBoneBindPose_k extends GPUKernel
 {
-    public static final String kernel_source = CLUtils.crud_create_k_src(Kernel.create_bone_bind_pose, Args.class);
+    public static final String kernel_source = GPU.CL.crud_create_k_src(KernelType.create_bone_bind_pose, Args.class);
 
     public enum Args implements KernelArg
     {

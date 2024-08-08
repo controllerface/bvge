@@ -8,14 +8,13 @@ import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.HullCount_k;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.HullFilter_k;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareTransforms_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
-import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -25,10 +24,9 @@ import com.controllerface.bvge.models.geometry.MeshRegistry;
 import com.controllerface.bvge.rendering.HullIndexData;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
-import static org.lwjgl.opengl.GL15C.glDeleteBuffers;
 
 public class CircleRenderer extends GameSystem
 {
@@ -72,18 +70,18 @@ public class CircleRenderer extends GameSystem
         ptr_vbo_transform = GPGPU.share_memory(vbo_transform.id());
         svm_atomic_counter = GPGPU.cl_new_pinned_int();
 
-        long k_ptr_prepare_transforms = p_prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
+        long k_ptr_prepare_transforms = p_prepare_transforms.kernel_ptr(KernelType.prepare_transforms);
         k_prepare_transforms = (new PrepareTransforms_k(GPGPU.ptr_render_queue, k_ptr_prepare_transforms))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transform)
             .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
             .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
             .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
 
-        long k_ptr_root_hull_filter = p_root_hull_filter.kernel_ptr(Kernel.hull_filter);
+        long k_ptr_root_hull_filter = p_root_hull_filter.kernel_ptr(KernelType.hull_filter);
         k_root_hull_filter = new HullFilter_k(GPGPU.ptr_render_queue, k_ptr_root_hull_filter)
             .buf_arg(HullFilter_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
 
-        long k_ptr_root_hull_count =  p_root_hull_filter.kernel_ptr(Kernel.hull_count);
+        long k_ptr_root_hull_count =  p_root_hull_filter.kernel_ptr(KernelType.hull_count);
         k_root_hull_count = new HullCount_k(GPGPU.ptr_render_queue, k_ptr_root_hull_count)
             .buf_arg(HullCount_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
     }

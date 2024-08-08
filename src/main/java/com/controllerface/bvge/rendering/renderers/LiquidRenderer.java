@@ -10,14 +10,13 @@ import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareLiquids_k;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.RootHullCount_k;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.RootHullFilter_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareLiquids;
 import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
-import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -31,11 +30,10 @@ import java.util.Objects;
 
 import static com.controllerface.bvge.game.Constants.Rendering.MAX_BATCH_SIZE;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
-import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
-import static org.lwjgl.opengl.GL15C.glDeleteBuffers;
 
 public class LiquidRenderer extends GameSystem
 {
@@ -89,7 +87,7 @@ public class LiquidRenderer extends GameSystem
         ptr_vbo_transform = GPGPU.share_memory(vbo_transform.id());
         ptr_vbo_color = GPGPU.share_memory(vbo_color.id());
 
-        long k_ptr_prepare_liquids = p_prepare_liquids.kernel_ptr(Kernel.prepare_liquids);
+        long k_ptr_prepare_liquids = p_prepare_liquids.kernel_ptr(KernelType.prepare_liquids);
         k_prepare_liquids = (new PrepareLiquids_k(GPGPU.ptr_render_queue, k_ptr_prepare_liquids))
             .ptr_arg(PrepareLiquids_k.Args.transforms_out, ptr_vbo_transform)
             .ptr_arg(PrepareLiquids_k.Args.colors_out, ptr_vbo_color)
@@ -100,12 +98,12 @@ public class LiquidRenderer extends GameSystem
             .buf_arg(PrepareLiquids_k.Args.hull_uv_offsets, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_UV_OFFSET))
             .buf_arg(PrepareLiquids_k.Args.point_hit_counts, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_HIT_COUNT));
 
-        long k_ptr_root_hull_filter = p_root_hull_filter.kernel_ptr(Kernel.root_hull_filter);
+        long k_ptr_root_hull_filter = p_root_hull_filter.kernel_ptr(KernelType.root_hull_filter);
         k_root_hull_filter = new RootHullFilter_k(GPGPU.ptr_render_queue, k_ptr_root_hull_filter)
             .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
             .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
 
-        long k_ptr_root_hull_count = p_root_hull_filter.kernel_ptr(Kernel.root_hull_count);
+        long k_ptr_root_hull_count = p_root_hull_filter.kernel_ptr(KernelType.root_hull_count);
         k_root_hull_count = new RootHullCount_k(GPGPU.ptr_render_queue, k_ptr_root_hull_count)
             .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
     }

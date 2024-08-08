@@ -1,17 +1,17 @@
 package com.controllerface.bvge.memory.sectors;
 
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
-import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.egress.EgressBroken_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUCrud;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.types.BrokenBufferType;
 
+import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float;
 import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
@@ -35,7 +35,7 @@ public class BrokenObjectBuffer implements GPUResource
         broken_group.init_buffer(BrokenBufferType.BROKEN_ENTITY_TYPES, 100L);
         broken_group.init_buffer(BrokenBufferType.BROKEN_MODEL_IDS,    100L);
 
-        long k_ptr_egress_broken = this.p_gpu_crud.kernel_ptr(Kernel.egress_broken);
+        long k_ptr_egress_broken = this.p_gpu_crud.kernel_ptr(KernelType.egress_broken);
         k_egress_broken = new EgressBroken_k(this.ptr_queue, k_ptr_egress_broken)
             .buf_arg(EgressBroken_k.Args.entities, core_memory.get_buffer(ENTITY))
             .buf_arg(EgressBroken_k.Args.entity_flags, core_memory.get_buffer(ENTITY_FLAG))
@@ -56,7 +56,7 @@ public class BrokenObjectBuffer implements GPUResource
         broken_group.buffer(BrokenBufferType.BROKEN_MODEL_IDS).ensure_capacity(egress_count);
         k_egress_broken
             .set_arg(EgressBroken_k.Args.max_entity, entity_count)
-            .call(CLUtils.arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_size), GPGPU.preferred_work_size);
     }
 
     public void unload(BrokenObjectBuffer.Raw raw, int count)

@@ -2,9 +2,15 @@ package com.controllerface.bvge.gpu.gl.shaders;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL20C.GL_INFO_LOG_LENGTH;
+import static org.lwjgl.opengl.GL20C.glGetProgramInfoLog;
+import static org.lwjgl.opengl.GL20C.glGetProgrami;
+import static org.lwjgl.opengl.GL20C.glGetShaderInfoLog;
+import static org.lwjgl.opengl.GL20C.glGetShaderi;
 import static org.lwjgl.opengl.GL32.GL_GEOMETRY_SHADER;
 
 public class ThreeStageShader extends GL_Shader
@@ -17,7 +23,8 @@ public class ThreeStageShader extends GL_Shader
     {
         try (var resource = ThreeStageShader.class.getResourceAsStream("/gl/shaders/" + filePath))
         {
-            var glsl_source = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
+            byte[] shader_data = Objects.requireNonNull(resource).readAllBytes();
+            var glsl_source = new String(shader_data, StandardCharsets.UTF_8);
 
             // normalize source so it works on all platforms
             glsl_source = glsl_source.replaceAll("\\r\\n?", "\n");
@@ -43,8 +50,7 @@ public class ThreeStageShader extends GL_Shader
         }
         catch (IOException | NullPointerException e)
         {
-            e.printStackTrace();
-            assert false : "could not open file for shader" + filePath;
+            throw new RuntimeException("Could not create shader: " + filePath, e);
         }
     }
 
@@ -68,9 +74,7 @@ public class ThreeStageShader extends GL_Shader
         if (success == GL_FALSE)
         {
             int len = glGetShaderi(shader_id, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: shader compilation failed for type: " + shader_type);
-            System.out.println(glGetShaderInfoLog(shader_id, len));
-            assert false : "";
+            throw new RuntimeException("Shader compilation failed for type: " + shader_type + "\n" + glGetShaderInfoLog(shader_id, len));
         }
         return shader_id;
     }
@@ -89,9 +93,7 @@ public class ThreeStageShader extends GL_Shader
         if (success == GL_FALSE)
         {
             int len = glGetProgrami(shaderProgramId, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: shader linking failed");
-            System.out.println(glGetProgramInfoLog(shaderProgramId, len));
-            assert false : "";
+            throw new RuntimeException("Shader linking failed: \n" + glGetProgramInfoLog(shaderProgramId, len));
         }
         return shaderProgramId;
     }
