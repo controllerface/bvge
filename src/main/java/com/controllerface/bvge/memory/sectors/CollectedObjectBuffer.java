@@ -35,8 +35,7 @@ public class CollectedObjectBuffer implements GPUResource
         collected_group = new BufferGroup<>(CollectedBufferType.class, name, cmd_queue, true);
         collected_group.init_buffer(CollectedBufferType.TYPES, 100L);
 
-        long k_ptr_egress_collected = this.p_gpu_crud.kernel_ptr(KernelType.egress_collected);
-        k_egress_collected = new EgressCollected_k(this.cmd_queue, k_ptr_egress_collected)
+        k_egress_collected = new EgressCollected_k(this.cmd_queue, this.p_gpu_crud)
             .buf_arg(EgressCollected_k.Args.entity_flags, core_memory.get_buffer(CoreBufferType.ENTITY_FLAG))
             .buf_arg(EgressCollected_k.Args.entity_types, core_memory.get_buffer(CoreBufferType.ENTITY_TYPE))
             .buf_arg(EgressCollected_k.Args.types, collected_group.buffer(CollectedBufferType.TYPES))

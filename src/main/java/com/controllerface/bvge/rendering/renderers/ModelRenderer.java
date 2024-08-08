@@ -190,8 +190,7 @@ public class ModelRenderer extends GameSystem
         gpu_int2_scan    = new GPUScanVectorInt2(GPGPU.compute.render_queue);
         gpu_int_scan_out = new GPUScanScalarIntOut(GPGPU.compute.render_queue);
 
-        long k_ptr_count_instances = p_mesh_query.kernel_ptr(KernelType.count_mesh_instances);
-        k_count_mesh_instances = new CountMeshInstances_k(GPGPU.compute.render_queue, k_ptr_count_instances)
+        k_count_mesh_instances = new CountMeshInstances_k(GPGPU.compute.render_queue, p_mesh_query)
             .buf_arg(CountMeshInstances_k.Args.counters, counter_buf)
             .buf_arg(CountMeshInstances_k.Args.query, query_buf)
             .buf_arg(CountMeshInstances_k.Args.total, total_buf)
@@ -201,8 +200,7 @@ public class ModelRenderer extends GameSystem
             .buf_arg(CountMeshInstances_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
             .buf_arg(CountMeshInstances_k.Args.entity_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG));
 
-        long k_ptr_write_details = p_mesh_query.kernel_ptr(KernelType.write_mesh_details);
-        k_write_mesh_details = new WriteMeshDetails_k(GPGPU.compute.render_queue, k_ptr_write_details)
+        k_write_mesh_details = new WriteMeshDetails_k(GPGPU.compute.render_queue, p_mesh_query)
             .buf_arg(WriteMeshDetails_k.Args.counters, counter_buf)
             .buf_arg(WriteMeshDetails_k.Args.query, query_buf)
             .buf_arg(WriteMeshDetails_k.Args.offsets, offset_buf)
@@ -214,20 +212,16 @@ public class ModelRenderer extends GameSystem
             .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
             .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE));
 
-        long k_ptr_count_batches = p_mesh_query.kernel_ptr(KernelType.count_mesh_batches);
-        k_count_mesh_batches = new CountMeshBatches_k(GPGPU.compute.render_queue, k_ptr_count_batches)
+        k_count_mesh_batches = new CountMeshBatches_k(GPGPU.compute.render_queue, p_mesh_query)
             .buf_arg(CountMeshBatches_k.Args.total, total_buf)
             .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
 
-        long k_ptr_calc_offsets = p_mesh_query.kernel_ptr(KernelType.calculate_batch_offsets);
-        k_calculate_batch_offsets = new CalculateBatchOffsets_k(GPGPU.compute.render_queue, k_ptr_calc_offsets);
+        k_calculate_batch_offsets = new CalculateBatchOffsets_k(GPGPU.compute.render_queue, p_mesh_query);
 
-        long k_ptr_transfer_detail = p_mesh_query.kernel_ptr(KernelType.transfer_detail_data);
-        k_transfer_detail_data = new TransferDetailData_k(GPGPU.compute.render_queue, k_ptr_transfer_detail)
+        k_transfer_detail_data = new TransferDetailData_k(GPGPU.compute.render_queue, p_mesh_query)
             .buf_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_buf);
 
-        long k_ptr_transfer_render = p_mesh_query.kernel_ptr(KernelType.transfer_render_data);
-        k_transfer_render_data = new TransferRenderData_k(GPGPU.compute.render_queue, k_ptr_transfer_render)
+        k_transfer_render_data = new TransferRenderData_k(GPGPU.compute.render_queue, p_mesh_query)
             .buf_arg(TransferRenderData_k.Args.command_buffer, command_buf)
             .buf_arg(TransferRenderData_k.Args.element_buffer, element_buf)
             .buf_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buf)

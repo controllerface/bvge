@@ -64,8 +64,7 @@ public class UnorderedSectorOutput implements GPUResource
         b_hull_bone_shift            = new TransientBuffer(cmd_queue, cl_int.size(), hull_init);
         b_entity_bone_shift          = new TransientBuffer(cmd_queue, cl_int.size(), entity_init);
 
-        long k_ptr_egress_entities = p_gpu_crud.kernel_ptr(KernelType.egress_entities);
-        k_egress_entities = new EgressEntities_k(this.cmd_queue, k_ptr_egress_entities)
+        k_egress_entities = new EgressEntities_k(this.cmd_queue, this.p_gpu_crud)
             .buf_arg(EgressEntities_k.Args.point_hull_indices_in,           this.core_memory.get_buffer(POINT_HULL_INDEX))
             .buf_arg(EgressEntities_k.Args.point_bone_tables_in,            this.core_memory.get_buffer(POINT_BONE_TABLE))
             .buf_arg(EgressEntities_k.Args.edges_in,                        this.core_memory.get_buffer(EDGE))
@@ -110,8 +109,7 @@ public class UnorderedSectorOutput implements GPUResource
             .buf_arg(EgressEntities_k.Args.new_entity_bones,                b_entity_bone_shift)
             .buf_arg(EgressEntities_k.Args.counters,                        egress_sizes_buf);
 
-        long k_ptr_egress_hulls = p_gpu_crud.kernel_ptr(KernelType.egress_hulls);
-        k_egress_hulls = new EgressHulls_k(this.cmd_queue, k_ptr_egress_hulls)
+        k_egress_hulls = new EgressHulls_k(this.cmd_queue, this.p_gpu_crud)
             .buf_arg(EgressHulls_k.Args.hulls_in,                        this.core_memory.get_buffer(HULL))
             .buf_arg(EgressHulls_k.Args.hull_scales_in,                  this.core_memory.get_buffer(HULL_SCALE))
             .buf_arg(EgressHulls_k.Args.hull_rotations_in,               this.core_memory.get_buffer(HULL_ROTATION))
@@ -140,8 +138,7 @@ public class UnorderedSectorOutput implements GPUResource
             .buf_arg(EgressHulls_k.Args.hull_integrity_out,              sector_buffers.buffer(HULL_INTEGRITY))
             .buf_arg(EgressHulls_k.Args.new_hulls,                       b_hull_shift);
 
-        long k_ptr_egress_edges = p_gpu_crud.kernel_ptr(KernelType.egress_edges);
-        k_egress_edges = new EgressEdges_k(this.cmd_queue, k_ptr_egress_edges)
+        k_egress_edges = new EgressEdges_k(this.cmd_queue, this.p_gpu_crud)
             .buf_arg(EgressEdges_k.Args.edges_in,                        this.core_memory.get_buffer(EDGE))
             .buf_arg(EgressEdges_k.Args.edge_lengths_in,                 this.core_memory.get_buffer(EDGE_LENGTH))
             .buf_arg(EgressEdges_k.Args.edge_flags_in,                   this.core_memory.get_buffer(EDGE_FLAG))
@@ -152,8 +149,7 @@ public class UnorderedSectorOutput implements GPUResource
             .buf_arg(EgressEdges_k.Args.edge_pins_out,                   sector_buffers.buffer(EDGE_PIN))
             .buf_arg(EgressEdges_k.Args.new_edges,                       b_edge_shift);
 
-        long k_ptr_egress_points = p_gpu_crud.kernel_ptr(KernelType.egress_points);
-        k_egress_points = new EgressPoints_k(this.cmd_queue, k_ptr_egress_points)
+        k_egress_points = new EgressPoints_k(this.cmd_queue, this.p_gpu_crud)
             .buf_arg(EgressPoints_k.Args.points_in,                       this.core_memory.get_buffer(POINT))
             .buf_arg(EgressPoints_k.Args.point_vertex_references_in,      this.core_memory.get_buffer(POINT_VERTEX_REFERENCE))
             .buf_arg(EgressPoints_k.Args.point_hull_indices_in,           this.core_memory.get_buffer(POINT_HULL_INDEX))
@@ -168,8 +164,7 @@ public class UnorderedSectorOutput implements GPUResource
             .buf_arg(EgressPoints_k.Args.point_bone_tables_out,           sector_buffers.buffer(POINT_BONE_TABLE))
             .buf_arg(EgressPoints_k.Args.new_points,                      b_point_shift);
 
-        long k_ptr_egress_hull_bones = p_gpu_crud.kernel_ptr(KernelType.egress_hull_bones);
-        k_egress_hull_bones = new EgressHullBones_k(this.cmd_queue, k_ptr_egress_hull_bones)
+        k_egress_hull_bones = new EgressHullBones_k(this.cmd_queue, this.p_gpu_crud)
             .buf_arg(EgressHullBones_k.Args.hull_bones_in,                   this.core_memory.get_buffer(HULL_BONE))
             .buf_arg(EgressHullBones_k.Args.hull_bind_pose_indicies_in,      this.core_memory.get_buffer(HULL_BONE_BIND_POSE))
             .buf_arg(EgressHullBones_k.Args.hull_inv_bind_pose_indicies_in,  this.core_memory.get_buffer(HULL_BONE_INV_BIND_POSE))
@@ -178,8 +173,7 @@ public class UnorderedSectorOutput implements GPUResource
             .buf_arg(EgressHullBones_k.Args.hull_inv_bind_pose_indicies_out, sector_buffers.buffer(HULL_BONE_INV_BIND_POSE))
             .buf_arg(EgressHullBones_k.Args.new_hull_bones,                  b_hull_bone_shift);
 
-        long k_ptr_egress_entity_bones = p_gpu_crud.kernel_ptr(KernelType.egress_entity_bones);
-        k_egress_entity_bones = new EgressEntityBones_k(this.cmd_queue, k_ptr_egress_entity_bones)
+        k_egress_entity_bones = new EgressEntityBones_k(this.cmd_queue, this.p_gpu_crud)
             .buf_arg(EgressEntityBones_k.Args.entity_bones_in,               this.core_memory.get_buffer(ENTITY_BONE))
             .buf_arg(EgressEntityBones_k.Args.entity_bone_reference_ids_in,  this.core_memory.get_buffer(ENTITY_BONE_REFERENCE_ID))
             .buf_arg(EgressEntityBones_k.Args.entity_bone_parent_ids_in,     this.core_memory.get_buffer(ENTITY_BONE_PARENT_ID))

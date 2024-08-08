@@ -38,8 +38,7 @@ public class BrokenObjectBuffer implements GPUResource
         broken_group.init_buffer(BrokenBufferType.BROKEN_ENTITY_TYPES, 100L);
         broken_group.init_buffer(BrokenBufferType.BROKEN_MODEL_IDS,    100L);
 
-        long k_ptr_egress_broken = this.p_gpu_crud.kernel_ptr(KernelType.egress_broken);
-        k_egress_broken = new EgressBroken_k(this.cmd_queue, k_ptr_egress_broken)
+        k_egress_broken = new EgressBroken_k(this.cmd_queue, this.p_gpu_crud)
             .buf_arg(EgressBroken_k.Args.entities, core_memory.get_buffer(ENTITY))
             .buf_arg(EgressBroken_k.Args.entity_flags, core_memory.get_buffer(ENTITY_FLAG))
             .buf_arg(EgressBroken_k.Args.entity_types, core_memory.get_buffer(ENTITY_TYPE))

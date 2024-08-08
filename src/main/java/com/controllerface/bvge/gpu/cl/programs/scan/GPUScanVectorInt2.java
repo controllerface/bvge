@@ -27,12 +27,9 @@ public class GPUScanVectorInt2 implements GPUResource
     {
         p_scan_int2_array.init();
 
-        long k_ptr_scan_int2_array_single = p_scan_int2_array.kernel_ptr(KernelType.scan_int2_single_block);
-        long k_ptr_scan_int2_array_multi = p_scan_int2_array.kernel_ptr(KernelType.scan_int2_multi_block);
-        long k_ptr_scan_int2_array_comp = p_scan_int2_array.kernel_ptr(KernelType.complete_int2_multi_block);
-        k_scan_int2_single_block = new ScanInt2SingleBlock_k(cmd_queue, k_ptr_scan_int2_array_single);
-        k_scan_int2_multi_block = new ScanInt2MultiBlock_k(cmd_queue, k_ptr_scan_int2_array_multi);
-        k_complete_int2_multi_block = new CompleteInt2MultiBlock_k(cmd_queue, k_ptr_scan_int2_array_comp);
+        k_scan_int2_single_block = new ScanInt2SingleBlock_k(cmd_queue, p_scan_int2_array);
+        k_scan_int2_multi_block = new ScanInt2MultiBlock_k(cmd_queue, p_scan_int2_array);
+        k_complete_int2_multi_block = new CompleteInt2MultiBlock_k(cmd_queue, p_scan_int2_array);
     }
 
     public void scan_int2(long data_ptr, int n)

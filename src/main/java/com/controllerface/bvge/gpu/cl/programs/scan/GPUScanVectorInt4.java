@@ -26,12 +26,9 @@ public class GPUScanVectorInt4 implements GPUResource
     {
         p_scan_int4_array.init();
 
-        long k_ptr_scan_int4_array_single = p_scan_int4_array.kernel_ptr(KernelType.scan_int4_single_block);
-        long k_ptr_scan_int4_array_multi = p_scan_int4_array.kernel_ptr(KernelType.scan_int4_multi_block);
-        long k_ptr_scan_int4_array_comp = p_scan_int4_array.kernel_ptr(KernelType.complete_int4_multi_block);
-        k_scan_int4_single_block = new ScanInt4SingleBlock_k(cmd_queue, k_ptr_scan_int4_array_single);
-        k_scan_int4_multi_block = new ScanInt4MultiBlock_k(cmd_queue, k_ptr_scan_int4_array_multi);
-        k_complete_int4_multi_block = new CompleteInt4MultiBlock_k(cmd_queue, k_ptr_scan_int4_array_comp);
+        k_scan_int4_single_block = new ScanInt4SingleBlock_k(cmd_queue, p_scan_int4_array);
+        k_scan_int4_multi_block = new ScanInt4MultiBlock_k(cmd_queue, p_scan_int4_array);
+        k_complete_int4_multi_block = new CompleteInt4MultiBlock_k(cmd_queue, p_scan_int4_array);
     }
 
     public void scan_int4(long data_ptr, int n)

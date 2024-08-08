@@ -33,12 +33,9 @@ public class GPUScanScalarIntOut implements GPUResource
         this.gpu_int_scan = gpu_int_scan;
         p_scan_int_array_out.init();
 
-        long k_ptr_scan_int_array_out_single = p_scan_int_array_out.kernel_ptr(KernelType.scan_int_single_block_out);
-        long k_ptr_scan_int_array_out_multi = p_scan_int_array_out.kernel_ptr(KernelType.scan_int_multi_block_out);
-        long k_ptr_scan_int_array_out_comp = p_scan_int_array_out.kernel_ptr(KernelType.complete_int_multi_block_out);
-        k_scan_int_single_block_out = new ScanIntSingleBlockOut_k(ptr_queue, k_ptr_scan_int_array_out_single);
-        k_scan_int_multi_block_out = new ScanIntMultiBlockOut_k(ptr_queue, k_ptr_scan_int_array_out_multi);
-        k_complete_int_multi_block_out = new CompleteIntMultiBlockOut_k(ptr_queue, k_ptr_scan_int_array_out_comp);
+        k_scan_int_single_block_out = new ScanIntSingleBlockOut_k(ptr_queue, p_scan_int_array_out);
+        k_scan_int_multi_block_out = new ScanIntMultiBlockOut_k(ptr_queue, p_scan_int_array_out);
+        k_complete_int_multi_block_out = new CompleteIntMultiBlockOut_k(ptr_queue, p_scan_int_array_out);
     }
 
     public GPUScanScalarIntOut(CL_CommandQueue cmd_queue, GPUScanScalarInt gpu_int_scan)

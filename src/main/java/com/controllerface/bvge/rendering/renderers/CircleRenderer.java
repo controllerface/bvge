@@ -72,19 +72,16 @@ public class CircleRenderer extends GameSystem
         ptr_vbo_transform = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_transform);
         atomic_counter    = GPU.CL.new_pinned_int(GPGPU.compute.context);
 
-        long k_ptr_prepare_transforms = p_prepare_transforms.kernel_ptr(KernelType.prepare_transforms);
-        k_prepare_transforms = (new PrepareTransforms_k(GPGPU.compute.render_queue, k_ptr_prepare_transforms))
+        k_prepare_transforms = (new PrepareTransforms_k(GPGPU.compute.render_queue, p_prepare_transforms))
             .buf_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transform)
             .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
             .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
             .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
 
-        long k_ptr_root_hull_filter = p_root_hull_filter.kernel_ptr(KernelType.hull_filter);
-        k_root_hull_filter = new HullFilter_k(GPGPU.compute.render_queue, k_ptr_root_hull_filter)
+        k_root_hull_filter = new HullFilter_k(GPGPU.compute.render_queue, p_root_hull_filter)
             .buf_arg(HullFilter_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
 
-        long k_ptr_root_hull_count =  p_root_hull_filter.kernel_ptr(KernelType.hull_count);
-        k_root_hull_count = new HullCount_k(GPGPU.compute.render_queue, k_ptr_root_hull_count)
+        k_root_hull_count = new HullCount_k(GPGPU.compute.render_queue, p_root_hull_filter)
             .buf_arg(HullCount_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
     }
 

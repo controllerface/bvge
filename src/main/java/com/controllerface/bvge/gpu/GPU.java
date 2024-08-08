@@ -10,6 +10,7 @@ import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.contexts.CL_Context;
 import com.controllerface.bvge.gpu.cl.devices.CL_Device;
+import com.controllerface.bvge.gpu.cl.kernels.CL_Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.CL_Program;
@@ -906,6 +907,22 @@ public class GPU
             }
             return new CL_Program(ptr);
         }
+
+        public static CL_Kernel new_kernel(CL_Program program, String kernel_name)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                long ptr = clCreateKernel(program.ptr(), kernel_name, status);
+                int result = status.get(0);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clCreateKernel(): " + result);
+                }
+                return new CL_Kernel(ptr);
+            }
+        }
+
 
         //#endregion
 

@@ -27,12 +27,9 @@ public class GPUScanScalarInt implements GPUResource
     {
         p_scan_int_array.init();
 
-        long k_ptr_scan_int_array_single = p_scan_int_array.kernel_ptr(KernelType.scan_int_single_block);
-        long k_ptr_scan_int_array_multi  = p_scan_int_array.kernel_ptr(KernelType.scan_int_multi_block);
-        long k_ptr_scan_int_array_comp   = p_scan_int_array.kernel_ptr(KernelType.complete_int_multi_block);
-        k_scan_int_single_block          = new ScanIntSingleBlock_k(cmd_queue, k_ptr_scan_int_array_single);
-        k_scan_int_multi_block           = new ScanIntMultiBlock_k(cmd_queue, k_ptr_scan_int_array_multi);
-        k_complete_int_multi_block       = new CompleteIntMultiBlock_k(cmd_queue, k_ptr_scan_int_array_comp);
+        k_scan_int_single_block          = new ScanIntSingleBlock_k(cmd_queue, p_scan_int_array);
+        k_scan_int_multi_block           = new ScanIntMultiBlock_k(cmd_queue, p_scan_int_array);
+        k_complete_int_multi_block       = new CompleteIntMultiBlock_k(cmd_queue, p_scan_int_array);
     }
 
     public void scan_int(long data_ptr, int n)

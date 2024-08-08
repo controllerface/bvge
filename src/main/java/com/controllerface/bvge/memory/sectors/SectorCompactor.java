@@ -96,8 +96,7 @@ public class SectorCompactor implements GPUResource
         b_delete_partial_1  = new TransientBuffer(cmd_queue, cl_int2.size(), delete_init);
         b_delete_partial_2  = new TransientBuffer(cmd_queue, cl_int4.size(), delete_init);
 
-        long k_ptr_scan_deletes_single_block_out = p_scan_deletes.kernel_ptr(KernelType.scan_deletes_single_block_out);
-        k_scan_deletes_single_block_out = new ScanDeletesSingleBlockOut_k(cmd_queue, k_ptr_scan_deletes_single_block_out)
+        k_scan_deletes_single_block_out = new ScanDeletesSingleBlockOut_k(cmd_queue, p_scan_deletes)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.sz,               ptr_delete_sizes)
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.entity_flags,     sector_buffers.buffer(ENTITY_FLAG))
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables,      sector_buffers.buffer(ENTITY_HULL_TABLE))
@@ -106,8 +105,7 @@ public class SectorCompactor implements GPUResource
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.edge_tables,      sector_buffers.buffer(HULL_EDGE_TABLE))
             .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_bone_tables, sector_buffers.buffer(HULL_BONE_TABLE));
 
-        long k_ptr_scan_deletes_multi_block_out = p_scan_deletes.kernel_ptr(KernelType.scan_deletes_multi_block_out);
-        k_scan_deletes_multi_block_out = new ScanDeletesMultiBlockOut_k(cmd_queue, k_ptr_scan_deletes_multi_block_out)
+        k_scan_deletes_multi_block_out = new ScanDeletesMultiBlockOut_k(cmd_queue, p_scan_deletes)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.part1,             b_delete_partial_1)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.part2,             b_delete_partial_2)
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.entity_flags,      sector_buffers.buffer(ENTITY_FLAG))
@@ -117,8 +115,7 @@ public class SectorCompactor implements GPUResource
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.edge_tables,       sector_buffers.buffer(HULL_EDGE_TABLE))
             .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_bone_tables,  sector_buffers.buffer(HULL_BONE_TABLE));
 
-        long k_ptr_complete_deletes_multi_block_out = p_scan_deletes.kernel_ptr(KernelType.complete_deletes_multi_block_out);
-        k_complete_deletes_multi_block_out = new CompleteDeletesMultiBlockOut_k(cmd_queue, k_ptr_complete_deletes_multi_block_out)
+        k_complete_deletes_multi_block_out = new CompleteDeletesMultiBlockOut_k(cmd_queue, p_scan_deletes)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.sz,                ptr_delete_sizes)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part1,             b_delete_partial_1)
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part2,             b_delete_partial_2)
@@ -129,8 +126,7 @@ public class SectorCompactor implements GPUResource
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.edge_tables,       sector_buffers.buffer(HULL_EDGE_TABLE))
             .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_bone_tables,  sector_buffers.buffer(HULL_BONE_TABLE));
 
-        long k_ptr_compact_entities = p_scan_deletes.kernel_ptr(KernelType.compact_entities);
-        k_compact_entities = new CompactEntities_k(cmd_queue, k_ptr_compact_entities)
+        k_compact_entities = new CompactEntities_k(cmd_queue, p_scan_deletes)
             .buf_arg(CompactEntities_k.Args.entities,                   sector_buffers.buffer(ENTITY))
             .buf_arg(CompactEntities_k.Args.entity_masses,              sector_buffers.buffer(ENTITY_MASS))
             .buf_arg(CompactEntities_k.Args.entity_root_hulls,          sector_buffers.buffer(ENTITY_ROOT_HULL))
@@ -162,8 +158,7 @@ public class SectorCompactor implements GPUResource
             .buf_arg(CompactEntities_k.Args.hull_shift,                 b_hull_shift)
             .buf_arg(CompactEntities_k.Args.entity_bone_shift,          b_entity_bone_shift);
 
-        long k_ptr_compact_hulls = p_scan_deletes.kernel_ptr(KernelType.compact_hulls);
-        k_compact_hulls = new CompactHulls_k(cmd_queue, k_ptr_compact_hulls)
+        k_compact_hulls = new CompactHulls_k(cmd_queue, p_scan_deletes)
             .buf_arg(CompactHulls_k.Args.hull_shift,            b_hull_shift)
             .buf_arg(CompactHulls_k.Args.hulls,                 sector_buffers.buffer(HULL))
             .buf_arg(CompactHulls_k.Args.hull_scales,           sector_buffers.buffer(HULL_SCALE))
@@ -182,16 +177,14 @@ public class SectorCompactor implements GPUResource
             .buf_arg(CompactHulls_k.Args.hull_aabb_index,       sector_buffers.buffer(HULL_AABB_INDEX))
             .buf_arg(CompactHulls_k.Args.hull_aabb_key_table,   sector_buffers.buffer(HULL_AABB_KEY_TABLE));
 
-        long k_ptr_compact_edges = p_scan_deletes.kernel_ptr(KernelType.compact_edges);
-        k_compact_edges = new CompactEdges_k(cmd_queue, k_ptr_compact_edges)
+        k_compact_edges = new CompactEdges_k(cmd_queue, p_scan_deletes)
             .buf_arg(CompactEdges_k.Args.edge_shift,            b_edge_shift)
             .buf_arg(CompactEdges_k.Args.edges,                 sector_buffers.buffer(EDGE))
             .buf_arg(CompactEdges_k.Args.edge_lengths,          sector_buffers.buffer(EDGE_LENGTH))
             .buf_arg(CompactEdges_k.Args.edge_flags,            sector_buffers.buffer(EDGE_FLAG))
             .buf_arg(CompactEdges_k.Args.edge_pins,             sector_buffers.buffer(EDGE_PIN));
 
-        long k_ptr_compact_points = p_scan_deletes.kernel_ptr(KernelType.compact_points);
-        k_compact_points = new CompactPoints_k(cmd_queue, k_ptr_compact_points)
+        k_compact_points = new CompactPoints_k(cmd_queue, p_scan_deletes)
             .buf_arg(CompactPoints_k.Args.point_shift,              b_point_shift)
             .buf_arg(CompactPoints_k.Args.points,                   sector_buffers.buffer(POINT))
             .buf_arg(CompactPoints_k.Args.anti_gravity,             sector_buffers.buffer(POINT_ANTI_GRAV))
@@ -202,15 +195,13 @@ public class SectorCompactor implements GPUResource
             .buf_arg(CompactPoints_k.Args.point_hit_counts,         sector_buffers.buffer(POINT_HIT_COUNT))
             .buf_arg(CompactPoints_k.Args.bone_tables,              sector_buffers.buffer(POINT_BONE_TABLE));
 
-        long k_ptr_compact_hull_bones = p_scan_deletes.kernel_ptr(KernelType.compact_hull_bones);
-        k_compact_hull_bones = new CompactHullBones_k(cmd_queue, k_ptr_compact_hull_bones)
+        k_compact_hull_bones = new CompactHullBones_k(cmd_queue, p_scan_deletes)
             .buf_arg(CompactHullBones_k.Args.hull_bone_shift,               b_hull_bone_shift)
             .buf_arg(CompactHullBones_k.Args.hull_bones,                    sector_buffers.buffer(HULL_BONE))
             .buf_arg(CompactHullBones_k.Args.hull_bind_pose_indices,        sector_buffers.buffer(HULL_BONE_BIND_POSE))
             .buf_arg(CompactHullBones_k.Args.hull_inv_bind_pose_indices,    sector_buffers.buffer(HULL_BONE_INV_BIND_POSE));
 
-        long k_ptr_compact_armature_bones = p_scan_deletes.kernel_ptr(KernelType.compact_entity_bones);
-        k_compact_armature_bones = new CompactEntityBones_k(cmd_queue, k_ptr_compact_armature_bones)
+        k_compact_armature_bones = new CompactEntityBones_k(cmd_queue, p_scan_deletes)
             .buf_arg(CompactEntityBones_k.Args.entity_bone_shift,           b_entity_bone_shift)
             .buf_arg(CompactEntityBones_k.Args.entity_bones,                sector_buffers.buffer(ENTITY_BONE))
             .buf_arg(CompactEntityBones_k.Args.entity_bone_reference_ids,   sector_buffers.buffer(ENTITY_BONE_REFERENCE_ID))

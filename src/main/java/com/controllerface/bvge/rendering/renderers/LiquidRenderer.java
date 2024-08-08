@@ -89,8 +89,7 @@ public class LiquidRenderer extends GameSystem
         ptr_vbo_transform = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_transform);
         ptr_vbo_color = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_color);
 
-        long k_ptr_prepare_liquids = p_prepare_liquids.kernel_ptr(KernelType.prepare_liquids);
-        k_prepare_liquids = (new PrepareLiquids_k(GPGPU.compute.render_queue, k_ptr_prepare_liquids))
+        k_prepare_liquids = new PrepareLiquids_k(GPGPU.compute.render_queue, p_prepare_liquids)
             .buf_arg(PrepareLiquids_k.Args.transforms_out, ptr_vbo_transform)
             .buf_arg(PrepareLiquids_k.Args.colors_out, ptr_vbo_color)
             .buf_arg(PrepareLiquids_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
@@ -100,13 +99,11 @@ public class LiquidRenderer extends GameSystem
             .buf_arg(PrepareLiquids_k.Args.hull_uv_offsets, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_UV_OFFSET))
             .buf_arg(PrepareLiquids_k.Args.point_hit_counts, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_HIT_COUNT));
 
-        long k_ptr_root_hull_filter = p_root_hull_filter.kernel_ptr(KernelType.root_hull_filter);
-        k_root_hull_filter = new RootHullFilter_k(GPGPU.compute.render_queue, k_ptr_root_hull_filter)
+        k_root_hull_filter = new RootHullFilter_k(GPGPU.compute.render_queue, p_root_hull_filter)
             .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
             .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
 
-        long k_ptr_root_hull_count = p_root_hull_filter.kernel_ptr(KernelType.root_hull_count);
-        k_root_hull_count = new RootHullCount_k(GPGPU.compute.render_queue, k_ptr_root_hull_count)
+        k_root_hull_count = new RootHullCount_k(GPGPU.compute.render_queue, p_root_hull_filter)
             .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
     }
 

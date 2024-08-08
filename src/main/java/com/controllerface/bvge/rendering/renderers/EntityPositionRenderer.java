@@ -57,8 +57,7 @@ public class EntityPositionRenderer extends GameSystem
         p_prepare_entities.init();
         ptr_vbo_vertex = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_vertex);
 
-        long k_ptr_prepare_entities = p_prepare_entities.kernel_ptr(KernelType.prepare_entities);
-        k_prepare_entities = new PrepareEntities_k(GPGPU.compute.render_queue, k_ptr_prepare_entities)
+        k_prepare_entities = new PrepareEntities_k(GPGPU.compute.render_queue, p_prepare_entities)
             .buf_arg(PrepareEntities_k.Args.vertex_vbo, ptr_vbo_vertex)
             .buf_arg(PrepareEntities_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY));
     }

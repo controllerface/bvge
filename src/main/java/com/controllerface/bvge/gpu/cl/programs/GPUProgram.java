@@ -3,16 +3,14 @@ package com.controllerface.bvge.gpu.cl.programs;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.kernels.CL_Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.lwjgl.opencl.CL12.clReleaseProgram;
 
 /**
  * An abstraction for general-purpose GPU programs. Implementations of various programs that
@@ -89,7 +87,7 @@ public abstract class GPUProgram implements GPUResource
     /**
      * After init is called, this will contain all the Open CL kernels that are defined in the program
      */
-    protected Map<KernelType, Long> kernels = new HashMap<>();
+    protected Map<KernelType, CL_Kernel> kernels = new HashMap<>();
 
     /**
      * Contains the raw source data of the program, in compilation order.
@@ -119,7 +117,7 @@ public abstract class GPUProgram implements GPUResource
      */
     protected void load_kernel(KernelType kernel)
     {
-        this.kernels.put(kernel, CLUtils.cl_k(program.ptr(), kernel.name()));
+        this.kernels.put(kernel, GPU.CL.new_kernel(program, kernel.name()));
     }
 
     /**
@@ -128,13 +126,13 @@ public abstract class GPUProgram implements GPUResource
     public void release()
     {
         program.release();
-        for (long kernel_ptr : kernels.values())
+        for (var kernel : kernels.values())
         {
-            GPGPU.cl_release_kernel(kernel_ptr);
+            kernel.release();
         }
     }
 
-    public long kernel_ptr(KernelType kernel)
+    public CL_Kernel get_kernel(KernelType kernel)
     {
         return kernels.get(kernel);
     }
