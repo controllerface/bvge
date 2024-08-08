@@ -2,7 +2,7 @@ package com.controllerface.bvge.memory.types;
 
 import com.controllerface.bvge.gpu.cl.buffers.BufferType;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.*;
 
 public enum RenderBufferType implements BufferType
 {

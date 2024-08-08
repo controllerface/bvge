@@ -1,6 +1,6 @@
 package com.controllerface.bvge.memory.groups;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.*;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class UnorderedCoreBufferGroup extends CoreBufferGroup

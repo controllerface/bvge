@@ -10,7 +10,7 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEntities_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
-import com.controllerface.bvge.gpu.cl.programs.PrepareEntities;
+import com.controllerface.bvge.gpu.cl.programs.rendering.PrepareEntities;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -57,7 +57,7 @@ public class EntityPositionRenderer extends GameSystem
         ptr_vbo_vertex = GPGPU.share_memory(vbo_vertex.id());
 
         long k_ptr_prepare_entities = p_prepare_entities.kernel_ptr(KernelType.prepare_entities);
-        k_prepare_entities = new PrepareEntities_k(GPGPU.ptr_render_queue, k_ptr_prepare_entities)
+        k_prepare_entities = new PrepareEntities_k(GPGPU.compute.render_queue.ptr(), k_ptr_prepare_entities)
             .ptr_arg(PrepareEntities_k.Args.vertex_vbo, ptr_vbo_vertex)
             .buf_arg(PrepareEntities_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY));
     }
@@ -74,12 +74,12 @@ public class EntityPositionRenderer extends GameSystem
         for (int remaining = GPGPU.core_memory.last_entity(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            int count_size = GPGPU.calculate_preferred_global_size(count);
+            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
             k_prepare_entities
                 .share_mem(ptr_vbo_vertex)
                 .set_arg(PrepareEntities_k.Args.offset, offset)
                 .set_arg(PrepareEntities_k.Args.max_entity, count)
-                .call(arg_long(count_size), GPGPU.preferred_work_size);
+                .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

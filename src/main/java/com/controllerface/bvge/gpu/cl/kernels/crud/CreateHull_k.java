@@ -1,12 +1,11 @@
 package com.controllerface.bvge.gpu.cl.kernels.crud;
 
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.*;
 
 public class CreateHull_k extends GPUKernel
 {

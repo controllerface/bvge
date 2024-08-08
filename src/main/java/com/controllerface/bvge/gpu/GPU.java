@@ -4,6 +4,11 @@ import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.events.EventBus;
 import com.controllerface.bvge.game.InputSystem;
+import com.controllerface.bvge.gpu.cl.CL_ComputeController;
+import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
+import com.controllerface.bvge.gpu.cl.contexts.CL_Context;
+import com.controllerface.bvge.gpu.cl.devices.CL_Device;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.gl.GL_GraphicsController;
@@ -37,6 +42,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
@@ -47,6 +53,12 @@ import java.util.stream.Collectors;
 
 import static com.controllerface.bvge.game.Constants.Rendering.*;
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opencl.AMDDeviceAttributeQuery.CL_DEVICE_WAVEFRONT_WIDTH_AMD;
+import static org.lwjgl.opencl.CL10.*;
+import static org.lwjgl.opencl.CL11.CL_DEVICE_HOST_UNIFIED_MEMORY;
+import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
+import static org.lwjgl.opencl.KHRGLSharing.CL_WGL_HDC_KHR;
+import static org.lwjgl.opencl.NVDeviceAttributeQuery.CL_DEVICE_WARP_SIZE_NV;
 import static org.lwjgl.opengl.GL11.GL_NEAREST;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
@@ -57,6 +69,8 @@ import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL20C.*;
 import static org.lwjgl.opengl.GL30C.*;
 import static org.lwjgl.opengl.GL45C.*;
+import static org.lwjgl.opengl.WGL.wglGetCurrentContext;
+import static org.lwjgl.opengl.WGL.wglGetCurrentDC;
 import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.util.freetype.FreeType.*;
 import static org.lwjgl.util.harfbuzz.HarfBuzz.*;
@@ -679,6 +693,177 @@ public class GPU
                 matrix.m30(), matrix.m31(), matrix.m32(), matrix.m33());
         }
 
+        public static CL_Device init_device()
+        {
+            int result;
+
+            int[] numPlatformsArray = new int[1];
+            result = clGetPlatformIDs(null, numPlatformsArray);
+            if (result != CL_SUCCESS)
+            {
+                throw new RuntimeException("Error: clGetPlatformIDs(): " + result);
+            }
+
+            int numPlatforms = numPlatformsArray[0];
+            var platform_buffer = MemoryUtil.memAllocPointer(numPlatforms);
+            result = clGetPlatformIDs(platform_buffer, (IntBuffer) null);
+            if (result != CL_SUCCESS)
+            {
+                throw new RuntimeException("Error: clGetPlatformIDs(): " + result);
+            }
+
+            var platform = platform_buffer.get();
+            MemoryUtil.memFree(platform_buffer);
+            int[] numDevicesArray = new int[1];
+            result = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, null, numDevicesArray);
+            if (result != CL_SUCCESS)
+            {
+                throw new RuntimeException("Error: clGetDeviceIDs(): " + result);
+            }
+
+            int numDevices = numDevicesArray[0];
+            var device_buffer = MemoryUtil.memAllocPointer(numDevices);
+            result = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, device_buffer, (IntBuffer) null);
+            if (result != CL_SUCCESS)
+            {
+                throw new RuntimeException("Error: clGetDeviceIDs(): " + result);
+            }
+
+            long device = device_buffer.get();
+            MemoryUtil.memFree(device_buffer);
+            return new CL_Device(device, platform);
+        }
+
+        public static CL_Context new_context(CL_Device device)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var dc = wglGetCurrentDC();
+                var ctx = wglGetCurrentContext();
+                var ctx_props_buffer = stack.mallocPointer(7);
+                var return_code = stack.mallocInt(1);
+                ctx_props_buffer.put(CL_CONTEXT_PLATFORM)
+                    .put(device.platform())
+                    .put(CL_GL_CONTEXT_KHR)
+                    .put(ctx)
+                    .put(CL_WGL_HDC_KHR)
+                    .put(dc)
+                    .put(0L)
+                    .flip();
+
+                // todo: the above code is windows specific add linux code path,
+                //  should look something like this:
+                // var ctx = glXGetCurrentContext();
+                // var dc = glXGetCurrentDrawable(); OR glfwGetX11Display();
+                // contextProperties.addProperty(CL_GLX_DISPLAY_KHR, dc);
+
+                long ptr_context = clCreateContext(ctx_props_buffer, device.ptr(), null, 0L, return_code);
+                int result = return_code.get(0);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clCreateContext(): " + result);
+                }
+                return new CL_Context(ptr_context);
+            }
+        }
+
+        public static CL_CommandQueue new_command_queue(CL_Context context, CL_Device device)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var return_code = stack.mallocInt(1);
+                var queue_ptr = clCreateCommandQueue(context.ptr(), device.ptr(), 0, return_code);
+                int result = return_code.get(0);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clCreateCommandQueue(): " + result);
+                }
+                return new CL_CommandQueue(queue_ptr);
+            }
+        }
+
+        public static CL_ComputeController init_cl()
+        {
+            var device = init_device();
+            var context = new_context(device);
+            var compute_queue = new_command_queue(context, device);
+            var render_queue = new_command_queue(context, device);
+            var sector_queue = new_command_queue(context, device);
+
+
+            LOGGER.log(Level.INFO, "-------- OPEN CL DEVICE -----------");
+            LOGGER.log(Level.INFO, get_device_string(device.ptr(), CL_DEVICE_VENDOR));
+            LOGGER.log(Level.INFO, get_device_string(device.ptr(), CL_DEVICE_NAME));
+            LOGGER.log(Level.INFO, get_device_string(device.ptr(), CL_DRIVER_VERSION));
+            LOGGER.log(Level.INFO, "-----------------------------------");
+
+            long max_local_buffer_size = get_device_long(device.ptr(), CL_DEVICE_LOCAL_MEM_SIZE);
+            long current_max_group_size = get_device_long(device.ptr(), CL_DEVICE_MAX_WORK_GROUP_SIZE);
+            long compute_unit_count = get_device_long(device.ptr(), CL_DEVICE_MAX_COMPUTE_UNITS);
+            long wavefront_width = get_device_long(device.ptr(), CL_DEVICE_WAVEFRONT_WIDTH_AMD);
+            long warp_width = get_device_long(device.ptr(), CL_DEVICE_WARP_SIZE_NV);
+
+            long[] preferred_work_size = arg_long(wavefront_width != -1
+                ? wavefront_width
+                : warp_width != -1
+                    ? warp_width
+                    : 32);
+
+            int preferred_work_size_int = (int) preferred_work_size[0];
+
+            long current_max_block_size = current_max_group_size * 2;
+
+            long max_mem = get_device_long(device.ptr(), CL_DEVICE_MAX_MEM_ALLOC_SIZE);
+            long sz_char = get_device_long(device.ptr(), CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR);
+            long sz_flt = get_device_long(device.ptr(), CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT);
+            boolean non_uniform = get_device_boolean(device.ptr(), CL_DEVICE_HOST_UNIFIED_MEMORY);
+
+
+            LOGGER.log(Level.FINE, "------ OPEN CL Attributes ---------");
+
+            LOGGER.log(Level.FINE, "CL_DEVICE_MAX_COMPUTE_UNITS: " + compute_unit_count);
+            LOGGER.log(Level.FINE, "CL_DEVICE_WAVEFRONT_WIDTH_AMD: " + wavefront_width);
+            LOGGER.log(Level.FINE, "CL_DEVICE_WARP_SIZE_NV: " + warp_width);
+
+            LOGGER.log(Level.FINE, "CL_DEVICE_LOCAL_MEM_SIZE: " + max_local_buffer_size);
+            LOGGER.log(Level.FINE, "CL_DEVICE_MAX_WORK_GROUP_SIZE: " + current_max_group_size);
+            LOGGER.log(Level.FINE, "CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT: " + non_uniform);
+
+            LOGGER.log(Level.FINE, "CL_DEVICE_MAX_MEM_ALLOC_SIZE: " + max_mem);
+            LOGGER.log(Level.FINE, "preferred float: " + sz_flt);
+            LOGGER.log(Level.FINE, "preferred char: " + sz_char);
+
+            LOGGER.log(Level.FINE, "-----------------------------------");
+
+            long int2_max = CL_DataTypes.cl_int2.size() * current_max_block_size;
+            long int4_max = CL_DataTypes.cl_int4.size() * current_max_block_size;
+            long size_cap = int2_max + int4_max;
+
+            while (size_cap >= max_local_buffer_size)
+            {
+                current_max_group_size /= 2;
+                current_max_block_size = current_max_group_size * 2;
+                int2_max = CL_DataTypes.cl_int2.size() * current_max_block_size;
+                int4_max = CL_DataTypes.cl_int4.size() * current_max_block_size;
+                size_cap = int2_max + int4_max;
+            }
+
+            long max_work_group_size = current_max_group_size;
+            long max_scan_block_size = current_max_block_size;
+            long[] local_work_default = arg_long(max_work_group_size);
+
+            return new CL_ComputeController(max_work_group_size,
+                max_scan_block_size,
+                preferred_work_size,
+                preferred_work_size_int,
+                local_work_default,
+                device,
+                context,
+                compute_queue,
+                render_queue,
+                sector_queue);
+        }
+
         public static String read_src(String file)
         {
             try (var stream = GPU.class.getResourceAsStream("/cl/" + file))
@@ -799,6 +984,78 @@ public class GPU
             src.append("\t}\n");
             src.append("}\n\n");
             return src.toString();
+        }
+
+        private static boolean get_device_boolean(long device_ptr, int param_code)
+        {
+            var size_buffer = MemoryUtil.memAllocPointer(1);
+            clGetDeviceInfo(device_ptr, param_code, (long[]) null, size_buffer);
+            long size = size_buffer.get();
+            var value_buffer = MemoryUtil.memAlloc((int) size);
+            clGetDeviceInfo(device_ptr, param_code, value_buffer, null);
+            var result = value_buffer.get();
+
+            MemoryUtil.memFree(size_buffer);
+            MemoryUtil.memFree(value_buffer);
+            return result == 1;
+        }
+
+        private static long get_device_long(long device_ptr, int param_code)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                int result;
+
+                var size_buffer = stack.mallocPointer(1);
+                result = clGetDeviceInfo(device_ptr, param_code, (long[]) null, size_buffer);
+                if (result != CL_SUCCESS)
+                {
+                    return -1;
+                }
+
+                long size = size_buffer.get();
+                var value_buffer = MemoryUtil.memAlloc((int) size);
+                result = clGetDeviceInfo(device_ptr, param_code, value_buffer, null);
+                if (result != CL_SUCCESS)
+                {
+                    return -1;
+                }
+
+                long value = size == 4
+                    ? value_buffer.getInt(0)
+                    : value_buffer.getLong(0);
+
+                MemoryUtil.memFree(value_buffer);
+                return value;
+            }
+        }
+
+        private static String get_device_string(long device_ptr, int param_code)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                int result;
+
+                var size_buffer = stack.mallocPointer(1);
+                result = clGetDeviceInfo(device_ptr, param_code, (long[]) null, size_buffer);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clGetDeviceInfo(): " + result);
+                }
+
+                long size = size_buffer.get();
+                var value_buffer = MemoryUtil.memAlloc((int) size);
+                byte[] bytes = new byte[(int) size];
+                result = clGetDeviceInfo(device_ptr, param_code, value_buffer, null);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clGetDeviceInfo(): " + result);
+                }
+
+                value_buffer.get(bytes);
+                MemoryUtil.memFree(value_buffer);
+                return new String(bytes, 0, bytes.length - 1);
+            }
         }
     }
 }

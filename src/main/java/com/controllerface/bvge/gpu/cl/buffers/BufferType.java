@@ -1,7 +1,5 @@
 package com.controllerface.bvge.gpu.cl.buffers;
 
-import com.controllerface.bvge.gpu.cl.CL_DataTypes;
-
 public interface BufferType
 {
     /**

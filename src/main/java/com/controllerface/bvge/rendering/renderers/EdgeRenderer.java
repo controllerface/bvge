@@ -10,7 +10,7 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEdges_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
-import com.controllerface.bvge.gpu.cl.programs.PrepareEdges;
+import com.controllerface.bvge.gpu.cl.programs.rendering.PrepareEdges;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -67,7 +67,7 @@ public class EdgeRenderer extends GameSystem
         ptr_vbo_flag = GPGPU.share_memory(vbo_flag.id());
 
         long k_ptr_prepare_edges = p_prepare_edges.kernel_ptr(KernelType.prepare_edges);
-        k_prepare_edges = new PrepareEdges_k(GPGPU.ptr_render_queue, k_ptr_prepare_edges)
+        k_prepare_edges = new PrepareEdges_k(GPGPU.compute.render_queue.ptr(), k_ptr_prepare_edges)
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)
             .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT))
@@ -88,13 +88,13 @@ public class EdgeRenderer extends GameSystem
         for (int remaining = GPGPU.core_memory.last_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            int count_size = GPGPU.calculate_preferred_global_size(count);
+            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
             k_prepare_edges
                 .share_mem(ptr_vbo_edge)
                 .share_mem(ptr_vbo_flag)
                 .set_arg(PrepareEdges_k.Args.offset, offset)
                 .set_arg(PrepareEdges_k.Args.max_edge, count)
-                .call(arg_long(count_size), GPGPU.preferred_work_size);
+                .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
 
             glDrawArrays(GL_LINES, 0, count * 2);
             offset += count;

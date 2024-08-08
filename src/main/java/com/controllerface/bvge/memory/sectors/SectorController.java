@@ -11,7 +11,7 @@ import com.controllerface.bvge.memory.SectorContainer;
 import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
 import static com.controllerface.bvge.gpu.GPU.CL.*;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.*;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class SectorController implements SectorContainer, GPUResource
@@ -294,10 +294,10 @@ public class SectorController implements SectorContainer, GPUResource
     {
         GPGPU.cl_zero_buffer(this.ptr_queue, ptr_egress_sizes, EGRESS_COUNTERS_SIZE);
         int entity_count = next_entity();
-        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
+        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
         k_count_egress_entities
             .set_arg(CountEgressEntities_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
         return GPGPU.cl_read_pinned_int_buffer(this.ptr_queue, ptr_egress_sizes, cl_int.size(), EGRESS_COUNTERS);
     }
 

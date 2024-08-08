@@ -6,14 +6,14 @@ import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.egress.EgressBroken_k;
-import com.controllerface.bvge.gpu.cl.programs.GPUCrud;
+import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.types.BrokenBufferType;
 
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_float;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class BrokenObjectBuffer implements GPUResource
@@ -50,13 +50,13 @@ public class BrokenObjectBuffer implements GPUResource
     public void egress(int entity_count, int egress_count)
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int.size());
-        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
+        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
         broken_group.buffer(BrokenBufferType.BROKEN_POSITIONS).ensure_capacity(egress_count);
         broken_group.buffer(BrokenBufferType.BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);
         broken_group.buffer(BrokenBufferType.BROKEN_MODEL_IDS).ensure_capacity(egress_count);
         k_egress_broken
             .set_arg(EgressBroken_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
     }
 
     public void unload(BrokenObjectBuffer.Raw raw, int count)

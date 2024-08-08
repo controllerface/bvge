@@ -8,7 +8,7 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.CL_DataTypes;
+import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
@@ -16,8 +16,8 @@ import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareTransforms_k;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.RootHullCount_k;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.RootHullFilter_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
-import com.controllerface.bvge.gpu.cl.programs.PrepareTransforms;
-import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
+import com.controllerface.bvge.gpu.cl.programs.rendering.PrepareTransforms;
+import com.controllerface.bvge.gpu.cl.programs.rendering.RootHullFilter;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -75,7 +75,7 @@ public class MouseRenderer extends GameSystem
         svm_atomic_counter = GPGPU.cl_new_pinned_int();
 
         long ptr = prepare_transforms.kernel_ptr(KernelType.prepare_transforms);
-        k_prepare_transforms = (new PrepareTransforms_k(GPGPU.ptr_render_queue, ptr))
+        k_prepare_transforms = (new PrepareTransforms_k(GPGPU.compute.render_queue.ptr(), ptr))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transforms)
             .set_arg(PrepareTransforms_k.Args.max_hull, 1)
             .set_arg(PrepareTransforms_k.Args.offset, 0)
@@ -84,12 +84,12 @@ public class MouseRenderer extends GameSystem
             .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
 
         long root_hull_filter_ptr = root_hull_filter.kernel_ptr(KernelType.root_hull_filter);
-        k_root_hull_filter = new RootHullFilter_k(GPGPU.ptr_render_queue, root_hull_filter_ptr)
+        k_root_hull_filter = new RootHullFilter_k(GPGPU.compute.render_queue.ptr(), root_hull_filter_ptr)
             .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
             .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
 
         long root_hull_count_ptr =  root_hull_filter.kernel_ptr(KernelType.root_hull_count);
-        k_root_hull_count = new RootHullCount_k(GPGPU.ptr_render_queue, root_hull_count_ptr)
+        k_root_hull_count = new RootHullCount_k(GPGPU.compute.render_queue.ptr(), root_hull_count_ptr)
             .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
     }
 
@@ -98,13 +98,13 @@ public class MouseRenderer extends GameSystem
         GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CL_DataTypes.cl_int.size());
 
         int entity_count = GPGPU.core_memory.sector_container().next_entity();
-        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
+        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
 
         k_root_hull_count
             .ptr_arg(RootHullCount_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .set_arg(RootHullCount_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
 
         int final_count =  GPGPU.cl_read_pinned_int(queue_ptr, svm_atomic_counter);
 
@@ -123,7 +123,7 @@ public class MouseRenderer extends GameSystem
             .ptr_arg(RootHullFilter_k.Args.counter, svm_atomic_counter)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
 
         return new HullIndexData(hulls_out, final_count);
     }
@@ -135,7 +135,7 @@ public class MouseRenderer extends GameSystem
         {
             GPGPU.cl_release_buffer(cursor_hulls.indices());
         }
-        cursor_hulls = hull_filter(GPGPU.ptr_render_queue, ModelRegistry.CURSOR);
+        cursor_hulls = hull_filter(GPGPU.compute.render_queue.ptr(), ModelRegistry.CURSOR);
 
         if (cursor_hulls.count() == 0) return;
 

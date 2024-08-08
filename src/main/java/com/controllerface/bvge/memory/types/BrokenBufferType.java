@@ -1,10 +1,10 @@
 package com.controllerface.bvge.memory.types;
 
-import com.controllerface.bvge.gpu.cl.CL_DataTypes;
+import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.buffers.BufferType;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float2;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_float2;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
 
 public enum BrokenBufferType implements BufferType
 {

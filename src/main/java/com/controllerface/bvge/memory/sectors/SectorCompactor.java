@@ -2,19 +2,19 @@ package com.controllerface.bvge.memory.sectors;
 
 import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.gpu.cl.GPUScanVectorInt2;
-import com.controllerface.bvge.gpu.cl.GPUScanVectorInt4;
+import com.controllerface.bvge.gpu.cl.programs.scan.GPUScanVectorInt2;
+import com.controllerface.bvge.gpu.cl.programs.scan.GPUScanVectorInt4;
 import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.buffers.TransientBuffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.compact.*;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
-import com.controllerface.bvge.gpu.cl.programs.ScanDeletes;
+import com.controllerface.bvge.gpu.cl.programs.scan.ScanDeletes;
 import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.*;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.*;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class SectorCompactor implements GPUResource
@@ -217,11 +217,11 @@ public class SectorCompactor implements GPUResource
     private void linearize_kernel(GPUKernel kernel, int object_count)
     {
         int offset = 0;
-        for (long remaining = object_count; remaining > 0; remaining -= GPGPU.max_work_group_size)
+        for (long remaining = object_count; remaining > 0; remaining -= GPGPU.compute.max_work_group_size)
         {
-            int count = (int) Math.min(GPGPU.max_work_group_size, remaining);
-            var sz = count == GPGPU.max_work_group_size
-                ? GPGPU.local_work_default
+            int count = (int) Math.min(GPGPU.compute.max_work_group_size, remaining);
+            var sz = count == GPGPU.compute.max_work_group_size
+                ? GPGPU.compute.local_work_default
                 : arg_long(count);
             kernel.call(sz, sz, arg_long(offset));
             offset += count;
@@ -230,8 +230,8 @@ public class SectorCompactor implements GPUResource
 
     private int[] scan_single_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n)
     {
-        long local_buffer_size = cl_int2.size() * GPGPU.max_scan_block_size;
-        long local_buffer_size2 = cl_int4.size() * GPGPU.max_scan_block_size;
+        long local_buffer_size = cl_int2.size() * GPGPU.compute.max_scan_block_size;
+        long local_buffer_size2 = cl_int4.size() * GPGPU.compute.max_scan_block_size;
 
         GPGPU.cl_zero_buffer(ptr_queue, ptr_delete_sizes, DELETE_COUNTERS_SIZE);
 
@@ -241,17 +241,17 @@ public class SectorCompactor implements GPUResource
             .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer, local_buffer_size)
             .loc_arg(ScanDeletesSingleBlockOut_k.Args.buffer2, local_buffer_size2)
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
-            .call(GPGPU.local_work_default, GPGPU.local_work_default);
+            .call(GPGPU.compute.local_work_default, GPGPU.compute.local_work_default);
 
         return GPGPU.cl_read_pinned_int_buffer(ptr_queue, ptr_delete_sizes, cl_int.size(), DELETE_COUNTERS);
     }
 
     private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
     {
-        long local_buffer_size = cl_int2.size() * GPGPU.max_scan_block_size;
-        long local_buffer_size2 = cl_int4.size() * GPGPU.max_scan_block_size;
+        long local_buffer_size = cl_int2.size() * GPGPU.compute.max_scan_block_size;
+        long local_buffer_size2 = cl_int4.size() * GPGPU.compute.max_scan_block_size;
 
-        long gx = k * GPGPU.max_scan_block_size;
+        long gx = k * GPGPU.compute.max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
 
@@ -264,7 +264,7 @@ public class SectorCompactor implements GPUResource
             .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer1, local_buffer_size)
             .loc_arg(ScanDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
             .set_arg(ScanDeletesMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, GPGPU.local_work_default);
+            .call(global_work_size, GPGPU.compute.local_work_default);
 
         // note the partial buffers are scanned and updated in-place
         gpu_int2_scan.scan_int2(b_delete_partial_1.pointer(), part_size);
@@ -278,14 +278,14 @@ public class SectorCompactor implements GPUResource
             .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer1, local_buffer_size)
             .loc_arg(CompleteDeletesMultiBlockOut_k.Args.buffer2, local_buffer_size2)
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
-            .call(global_work_size, GPGPU.local_work_default);
+            .call(global_work_size, GPGPU.compute.local_work_default);
 
         return GPGPU.cl_read_pinned_int_buffer(ptr_queue, ptr_delete_sizes, cl_int.size(), DELETE_COUNTERS);
     }
 
     public int[] scan_deletes(long o1_data_ptr, long o2_data_ptr, int n)
     {
-        int k = GPGPU.work_group_count(n);
+        int k = GPGPU.compute.work_group_count(n);
         if (k == 1)
         {
             return scan_single_block_deletes_out(o1_data_ptr, o2_data_ptr, n);

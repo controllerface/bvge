@@ -141,7 +141,7 @@ public abstract class GPUKernel
 
     public void call_task()
     {
-        call(GPGPU.global_single_size, GPGPU.global_single_size);
+        call(GPGPU.compute.global_single_size, GPGPU.compute.global_single_size);
     }
 
     public void call(long[] global_work_size, long[] local_work_size)

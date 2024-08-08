@@ -19,8 +19,8 @@ import java.util.Objects;
 
 import static com.controllerface.bvge.game.Constants.EntityFlags.*;
 import static com.controllerface.bvge.game.InputBinding.*;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_float;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
 
 public class PlayerController implements GPUResource
 {
@@ -70,11 +70,11 @@ public class PlayerController implements GPUResource
     {
         player_inventory = playerInventory;
 
-        b_control_point_flags        = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int.size(), 1);
-        b_control_point_indices      = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int.size(), 1);
-        b_control_point_linear_mag   = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float.size(), 1);
-        b_control_point_jump_mag     = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_float.size(), 1);
-        b_control_point_tick_budgets = new PersistentBuffer(GPGPU.ptr_compute_queue, cl_int.size(), 1);
+        b_control_point_flags        = new PersistentBuffer(GPGPU.compute.compute_queue.ptr(), cl_int.size(), 1);
+        b_control_point_indices      = new PersistentBuffer(GPGPU.compute.compute_queue.ptr(), cl_int.size(), 1);
+        b_control_point_linear_mag   = new PersistentBuffer(GPGPU.compute.compute_queue.ptr(), cl_float.size(), 1);
+        b_control_point_jump_mag     = new PersistentBuffer(GPGPU.compute.compute_queue.ptr(), cl_float.size(), 1);
+        b_control_point_tick_budgets = new PersistentBuffer(GPGPU.compute.compute_queue.ptr(), cl_int.size(), 1);
 
         this.entity_id       = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
         this.position        = ComponentType.Position.forEntity(ecs, Constants.PLAYER_ID);

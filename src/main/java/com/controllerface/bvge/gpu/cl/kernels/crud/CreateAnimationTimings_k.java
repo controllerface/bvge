@@ -1,13 +1,12 @@
 package com.controllerface.bvge.gpu.cl.kernels.crud;
 
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_float;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
 
 public class CreateAnimationTimings_k extends GPUKernel
 {

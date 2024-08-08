@@ -10,7 +10,7 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareBounds_k;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
-import com.controllerface.bvge.gpu.cl.programs.PrepareBounds;
+import com.controllerface.bvge.gpu.cl.programs.rendering.PrepareBounds;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
@@ -66,7 +66,7 @@ public class BoundingBoxRenderer extends GameSystem
         ptr_vbo_position = GPGPU.share_memory(vbo_position.id());
 
         long k_ptr_prepare_bounds = p_prepare_bounds.kernel_ptr(KernelType.prepare_bounds);
-        k_prepare_bounds = new PrepareBounds_k(GPGPU.ptr_render_queue, k_ptr_prepare_bounds)
+        k_prepare_bounds = new PrepareBounds_k(GPGPU.compute.render_queue.ptr(), k_ptr_prepare_bounds)
             .ptr_arg(PrepareBounds_k.Args.vbo, ptr_vbo_position)
             .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_AABB));
     }
@@ -83,7 +83,7 @@ public class BoundingBoxRenderer extends GameSystem
         for (int remaining = GPGPU.core_memory.last_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            int count_size = GPGPU.calculate_preferred_global_size(count);
+            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
 
             // todo: see if a uniform can be set that sets a max_count, and vertices can bail if beyond max
             int[] o_ = new int[count];
@@ -95,7 +95,7 @@ public class BoundingBoxRenderer extends GameSystem
                 .share_mem(ptr_vbo_position)
                 .set_arg(PrepareBounds_k.Args.offset, offset)
                 .set_arg(PrepareBounds_k.Args.max_bound, count)
-                .call(arg_long(count_size), GPGPU.preferred_work_size);
+                .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
 
             glMultiDrawArrays(GL_LINE_LOOP, o_, c_);
 

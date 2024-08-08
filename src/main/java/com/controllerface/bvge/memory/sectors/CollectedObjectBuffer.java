@@ -6,14 +6,14 @@ import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.egress.EgressCollected_k;
-import com.controllerface.bvge.gpu.cl.programs.GPUCrud;
+import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.types.CollectedBufferType;
 import com.controllerface.bvge.memory.types.CoreBufferType;
 
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
-import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
 
 public class CollectedObjectBuffer implements GPUResource
 {
@@ -44,10 +44,10 @@ public class CollectedObjectBuffer implements GPUResource
     {
         GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int.size());
         collected_group.buffer(CollectedBufferType.TYPES).ensure_capacity(egress_count);
-        int entity_size  = GPGPU.calculate_preferred_global_size(entity_count);
+        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
         k_egress_collected
             .set_arg(EgressCollected_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.preferred_work_size);
+            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
     }
 
     public void unload(CollectedObjectBuffer.Raw raw, int count)
