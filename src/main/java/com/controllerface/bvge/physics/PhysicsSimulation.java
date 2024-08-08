@@ -560,7 +560,7 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(ScanBoundsSingleBlock_k.Args.n, n)
             .call(GPGPU.compute.local_work_default, GPGPU.compute.local_work_default);
 
-        return GPGPU.cl_read_pinned_int(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr());
+        return GPU.CL.read_pinned_int(GPGPU.compute.compute_queue, atomic_counter);
     }
 
     private int scan_bounds_multi_block(long data_ptr, int n, int k)
@@ -616,7 +616,7 @@ public class PhysicsSimulation extends GameSystem
         s = Editor.ACTIVE
             ? System.nanoTime()
             : 0;
-        int r = GPGPU.cl_read_pinned_int(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr());
+        int r = GPU.CL.read_pinned_int(GPGPU.compute.compute_queue, atomic_counter);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -699,7 +699,7 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(LocateInBounds_k.Args.max_bound, hull_count)
             .call(arg_long(hull_size), GPGPU.compute.preferred_work_size);
 
-        candidate_buffer_count = GPGPU.cl_read_pinned_int(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr());
+        candidate_buffer_count = GPU.CL.read_pinned_int(GPGPU.compute.compute_queue, atomic_counter);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -738,7 +738,7 @@ public class PhysicsSimulation extends GameSystem
             .set_arg(ScanCandidatesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.compute.local_work_default, GPGPU.compute.local_work_default);
 
-        return GPGPU.cl_read_pinned_int(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr());
+        return GPU.CL.read_pinned_int(GPGPU.compute.compute_queue, atomic_counter);
     }
 
     private int scan_multi_block_candidates_out(long data_ptr, long o_data_ptr, int n, int k)
@@ -774,7 +774,7 @@ public class PhysicsSimulation extends GameSystem
 
         p_data.release();
 
-        return GPGPU.cl_read_pinned_int(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr());
+        return GPU.CL.read_pinned_int(GPGPU.compute.compute_queue, atomic_counter);
     }
 
     private int scan_key_candidates(long data_ptr, long o_data_ptr, int n)
@@ -818,7 +818,7 @@ public class PhysicsSimulation extends GameSystem
         k_aabb_collide
             .set_arg(AABBCollide_k.Args.max_index, (int) candidate_buffer_count)
             .call(arg_long(candidate_size), GPGPU.compute.preferred_work_size);
-        candidate_count = GPGPU.cl_read_pinned_int(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr());
+        candidate_count = GPU.CL.read_pinned_int(GPGPU.compute.compute_queue, atomic_counter);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;
@@ -884,7 +884,7 @@ public class PhysicsSimulation extends GameSystem
         k_sat_collide
             .set_arg(SatCollide_k.Args.max_index, candidate_pair_size)
             .call(arg_long(candidate_size), GPGPU.compute.preferred_work_size);
-        reaction_count = GPGPU.cl_read_pinned_int(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr());
+        reaction_count = GPU.CL.read_pinned_int(GPGPU.compute.compute_queue, atomic_counter);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - s;

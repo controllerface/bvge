@@ -237,7 +237,7 @@ public class SectorCompactor implements GPUResource
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(GPGPU.compute.local_work_default, GPGPU.compute.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(cmd_queue.ptr(), ptr_delete_sizes.ptr(), cl_int.size(), DELETE_COUNTERS);
+        return GPU.CL.read_pinned_int_buffer(cmd_queue, ptr_delete_sizes, cl_int.size(), DELETE_COUNTERS);
     }
 
     private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
@@ -274,7 +274,7 @@ public class SectorCompactor implements GPUResource
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPGPU.compute.local_work_default);
 
-        return GPGPU.cl_read_pinned_int_buffer(cmd_queue.ptr(), ptr_delete_sizes.ptr(), cl_int.size(), DELETE_COUNTERS);
+        return GPU.CL.read_pinned_int_buffer(cmd_queue, ptr_delete_sizes, cl_int.size(), DELETE_COUNTERS);
     }
 
     public int[] scan_deletes(long o1_data_ptr, long o2_data_ptr, int n)

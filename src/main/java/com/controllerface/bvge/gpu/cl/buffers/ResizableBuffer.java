@@ -72,17 +72,17 @@ public abstract class ResizableBuffer
 
     public void transfer_out_int(int[] ints, long size, int count)
     {
-        GPGPU.cl_map_read_int_buffer(this.cmd_queue.ptr(), this.buffer.ptr(), size, count, ints);
+        GPU.CL.map_read_int_buffer(this.cmd_queue, this.buffer, size, count, ints);
     }
 
     public void transfer_out_float(float[] floats, long size, int count)
     {
-        GPGPU.cl_map_read_float_buffer(this.cmd_queue.ptr(), this.buffer.ptr(), size, count, floats);
+        GPU.CL.map_read_float_buffer(this.cmd_queue, this.buffer, size, count, floats);
     }
 
     public void transfer_out_short(short[] shorts, long size, int count)
     {
-        GPGPU.cl_map_read_short_buffer(this.cmd_queue.ptr(), this.buffer.ptr(), size, count, shorts);
+        GPU.CL.map_read_short_buffer(this.cmd_queue, this.buffer, size, count, shorts);
     }
 
     public long debug_data()

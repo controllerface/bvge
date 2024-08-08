@@ -170,7 +170,7 @@ public class LiquidRenderer extends GameSystem
             .set_arg(RootHullCount_k.Args.max_entity, entity_count)
             .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
 
-        int final_count = GPGPU.cl_read_pinned_int(cmd_queue.ptr(), atomic_counter.ptr());
+        int final_count = GPU.CL.read_pinned_int(cmd_queue, atomic_counter);
 
         if (final_count == 0)
         {

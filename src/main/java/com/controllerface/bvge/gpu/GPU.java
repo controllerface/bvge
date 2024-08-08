@@ -1121,6 +1121,230 @@ public class GPU
             if (result != CL_SUCCESS) throw new RuntimeException("Error: clEnqueueFillBuffer(-1): " + result);
         }
 
+        public static void transfer_buffer(CL_CommandQueue queue, CL_Buffer src, CL_Buffer dst, long size)
+        {
+            int result = clEnqueueCopyBuffer(queue.ptr(), src.ptr(), dst.ptr(), 0, 0, size, null, null);
+            if (result != CL_SUCCESS)
+            {
+                throw new RuntimeException("Error: clEnqueueCopyBuffer(): " + result);
+            }
+        }
+
+        public static void map_read_int_buffer(CL_CommandQueue queue, CL_Buffer buffer, long size, int count, int[] output)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                var out = clEnqueueMapBuffer(queue.ptr(),
+                    buffer.ptr(),
+                    true,
+                    CL_MAP_READ,
+                    0,
+                    size * (long) count,
+                    null,
+                    null,
+                    status,
+                    null);
+
+                assert out != null;
+                int result = status.get(0);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueMapBuffer(): " + result);
+                }
+
+                var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+                for (int i = 0; i < count; i++)
+                {
+                    output[i] = int_buffer.get(i);
+                }
+                result = clEnqueueUnmapMemObject(queue.ptr(), buffer.ptr(), out, null, null);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueUnmapMemObject(): " + result);
+                }
+            }
+        }
+
+        public static void map_read_float_buffer(CL_CommandQueue queue, CL_Buffer buffer, long size, int count, float[] output)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                var out = clEnqueueMapBuffer(queue.ptr(),
+                    buffer.ptr(),
+                    true,
+                    CL_MAP_READ,
+                    0,
+                    size * (long) count,
+                    null,
+                    null,
+                    status,
+                    null);
+
+                assert out != null;
+
+                int result = status.get(0);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueMapBuffer(): " + result);
+                }
+
+                var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+                for (int i = 0; i < count; i++)
+                {
+                    output[i] = float_buffer.get(i);
+                }
+                result = clEnqueueUnmapMemObject(queue.ptr(), buffer.ptr(), out, null, null);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueUnmapMemObject(): " + result);
+                }
+            }
+        }
+
+        public static void map_read_short_buffer(CL_CommandQueue queue, CL_Buffer buffer, long size, int count, short[] output)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                var out = clEnqueueMapBuffer(queue.ptr(),
+                    buffer.ptr(),
+                    true,
+                    CL_MAP_READ,
+                    0,
+                    size * (long) count,
+                    null,
+                    null,
+                    status,
+                    null);
+
+                assert out != null;
+                int result = status.get(0);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueMapBuffer(): " + result);
+                }
+
+                var short_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+                for (int i = 0; i < count; i++)
+                {
+                    output[i] = short_buffer.get(i);
+                }
+                result = clEnqueueUnmapMemObject(queue.ptr(), buffer.ptr(), out, null, null);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueUnmapMemObject(): " + result);
+                }
+            }
+        }
+
+        public static int read_pinned_int(CL_CommandQueue queue, CL_Buffer buffer)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                var out = clEnqueueMapBuffer(queue.ptr(),
+                    buffer.ptr(),
+                    true,
+                    CL_MAP_READ,
+                    0,
+                    cl_int.size(),
+                    null,
+                    null,
+                    status,
+                    null);
+
+                assert out != null;
+
+                int result = status.get(0);
+                if (result != CL_SUCCESS) throw new RuntimeException("Error: clEnqueueMapBuffer(): " + result);
+
+                int value = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(0);
+                result = clEnqueueUnmapMemObject(queue.ptr(), buffer.ptr(), out, null, null);
+                if (result != CL_SUCCESS) throw new RuntimeException("Error: clEnqueueUnmapMemObject(): " + result);
+
+                return value;
+            }
+        }
+
+        public static int[] read_pinned_int_buffer(CL_CommandQueue queue, CL_Buffer buffer, long size, int count)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                var out = clEnqueueMapBuffer(queue.ptr(),
+                    buffer.ptr(),
+                    true,
+                    CL_MAP_READ,
+                    0,
+                    size * (long) count,
+                    null,
+                    null,
+                    status,
+                    null);
+
+                assert out != null;
+                int result = status.get(0);
+                if (result != CL_SUCCESS) throw new RuntimeException("Error: clEnqueueMapBuffer(): " + result);
+
+                int[] value = new int[count];
+                var int_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+                for (int i = 0; i < count; i++)
+                {
+                    value[i] = int_buffer.get(i);
+                }
+                result = clEnqueueUnmapMemObject(queue.ptr(), buffer.ptr(), out, null, null);
+                if (result != CL_SUCCESS) throw new RuntimeException("Error: clEnqueueUnmapMemObject(): " + result);
+
+                return value;
+            }
+        }
+
+        public static float[] read_pinned_float_buffer(CL_CommandQueue queue, CL_Buffer buffer, long size, int count)
+        {
+            return read_pinned_float_buffer(queue, buffer, size, count, new float[count]);
+        }
+
+        public static float[] read_pinned_float_buffer(CL_CommandQueue queue, CL_Buffer buffer, long size, int count, float[] output)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                var out = clEnqueueMapBuffer(queue.ptr(),
+                    buffer.ptr(),
+                    true,
+                    CL_MAP_READ,
+                    0,
+                    size * (long) count,
+                    null,
+                    null,
+                    status,
+                    null);
+
+                assert out != null;
+
+                int result = status.get(0);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueMapBuffer(): " + result);
+                }
+
+                var float_buffer = out.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
+                for (int i = 0; i < count; i++)
+                {
+                    output[i] = float_buffer.get(i);
+                }
+                result = clEnqueueUnmapMemObject(queue.ptr(), buffer.ptr(), out, null, null);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueUnmapMemObject(): " + result);
+                }
+
+                return output;
+            }
+        }
+
         //#endregion
 
         //#region Kernel Source Utils

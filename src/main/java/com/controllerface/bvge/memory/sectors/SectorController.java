@@ -238,7 +238,7 @@ public class SectorController implements SectorContainer, GPUResource
             .set_arg(ReadPosition_k.Args.target, entity_index)
             .call_task();
 
-        return GPGPU.cl_read_pinned_float_buffer(this.cmd_queue.ptr(), position_buf.ptr(), cl_float.size(), 2);
+        return GPU.CL.read_pinned_float_buffer(this.cmd_queue, position_buf, cl_float.size(), 2);
     }
 
     public void read_entity_info(int entity_index, float[] output)
@@ -250,7 +250,7 @@ public class SectorController implements SectorContainer, GPUResource
             .set_arg(ReadEntityInfo_k.Args.target, entity_index)
             .call_task();
 
-        GPGPU.cl_read_pinned_float_buffer(this.cmd_queue.ptr(), info_buf.ptr(), cl_float.size(), ENTITY_INFO_WIDTH, output);
+        GPU.CL.read_pinned_float_buffer(this.cmd_queue, info_buf, cl_float.size(), ENTITY_INFO_WIDTH, output);
     }
 
     public void write_entity_info(int target,
@@ -284,7 +284,7 @@ public class SectorController implements SectorContainer, GPUResource
         k_count_egress_entities
             .set_arg(CountEgressEntities_k.Args.max_entity, entity_count)
             .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
-        return GPGPU.cl_read_pinned_int_buffer(this.cmd_queue.ptr(), egress_sizes_buf.ptr(), cl_int.size(), EGRESS_COUNTERS);
+        return GPU.CL.read_pinned_int_buffer(this.cmd_queue, egress_sizes_buf, cl_int.size(), EGRESS_COUNTERS);
     }
 
     public void update_mouse_position(int entity_index, float x, float y)
