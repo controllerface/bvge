@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl.renderers;
+package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
@@ -13,6 +13,7 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PreparePoints;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
@@ -35,8 +36,8 @@ public class PointRenderer extends GameSystem
     private final GPUProgram prepare_points = new PreparePoints();
 
     private GL_VertexArray vao;
-    private int vertex_vbo;
-    private int color_vbo;
+    private GL_VertexBuffer vertex_vbo;
+    private GL_VertexBuffer color_vbo;
     private long vertex_vbo_ptr;
     private long color_vbo_ptr;
 
@@ -54,16 +55,16 @@ public class PointRenderer extends GameSystem
     {
         shader = GPU.GL.new_shader("point_shader.glsl", GL_ShaderType.TWO_STAGE);
         vao = GPU.GL.new_vao();
-        vertex_vbo = GLUtils.new_buffer_vec2(vao.gl_id(), POSITION_ATTRIBUTE, POSITION_BATCH_SIZE);
-        color_vbo = GLUtils.new_buffer_vec4(vao.gl_id(), COLOR_ATTRIBUTE, COLOR_BATCH_SIZE);
+        vertex_vbo = GPU.GL.new_buffer_vec2(vao, POSITION_ATTRIBUTE, POSITION_BATCH_SIZE);
+        color_vbo = GPU.GL.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BATCH_SIZE);
         vao.enable_attribute(POSITION_ATTRIBUTE);
         vao.enable_attribute(COLOR_ATTRIBUTE);
     }
 
     private void init_CL()
     {
-        vertex_vbo_ptr = GPGPU.share_memory(vertex_vbo);
-        color_vbo_ptr = GPGPU.share_memory(color_vbo);
+        vertex_vbo_ptr = GPGPU.share_memory(vertex_vbo.id());
+        color_vbo_ptr = GPGPU.share_memory(color_vbo.id());
 
         prepare_points.init();
 
@@ -109,7 +110,7 @@ public class PointRenderer extends GameSystem
     public void shutdown()
     {
         vao.release();
-        glDeleteBuffers(vertex_vbo);
+        vertex_vbo.release();
         shader.release();
         prepare_points.release();
         GPGPU.cl_release_buffer(vertex_vbo_ptr);

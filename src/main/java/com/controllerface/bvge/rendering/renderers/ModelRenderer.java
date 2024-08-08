@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl.renderers;
+package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
@@ -19,7 +19,10 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.MeshQuery;
 import com.controllerface.bvge.gpu.cl.programs.ScanIntArrayOut;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.buffers.GL_CommandBuffer;
+import com.controllerface.bvge.gpu.gl.buffers.GL_ElementBuffer;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
@@ -61,12 +64,12 @@ public class ModelRenderer extends GameSystem
     private GPUScanVectorInt2 gpu_int2_scan;
 
     private GL_VertexArray vao;
-    private int ebo;
-    private int cbo;
-    private int vbo_position;
-    private int vbo_texture_uv;
-    private int vbo_color;
-    private int vbo_texture_slot;
+    private GL_ElementBuffer ebo;
+    private GL_CommandBuffer cbo;
+    private GL_VertexBuffer vbo_position;
+    private GL_VertexBuffer vbo_texture_uv;
+    private GL_VertexBuffer vbo_color;
+    private GL_VertexBuffer vbo_texture_slot;
 
     private long ptr_command_buffer;
     private long ptr_element_buffer;
@@ -153,13 +156,13 @@ public class ModelRenderer extends GameSystem
         }
 
         vao = GPU.GL.new_vao();
-        ebo = GLUtils.dynamic_element_buffer(vao.gl_id(), ELEMENT_BUFFER_SIZE);
-        cbo = GLUtils.dynamic_command_buffer(vao.gl_id(), COMMAND_BUFFER_SIZE);
+        ebo = GPU.GL.dynamic_element_buffer(vao, ELEMENT_BUFFER_SIZE);
+        cbo = GPU.GL.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
 
-        vbo_position     = GLUtils.new_buffer_vec4(vao.gl_id(), POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
-        vbo_texture_uv   = GLUtils.new_buffer_vec2(vao.gl_id(), UV_COORD_ATTRIBUTE, UV_BUFFER_SIZE);
-        vbo_color        = GLUtils.new_buffer_vec4(vao.gl_id(), COLOR_ATTRIBUTE, COLOR_BUFFER_SIZE);
-        vbo_texture_slot = GLUtils.new_buffer_float(vao.gl_id(), TEXTURE_ATTRIBUTE, TEXTURE_BUFFER_SIZE);
+        vbo_position     = GPU.GL.new_buffer_vec4(vao, POSITION_ATTRIBUTE, VERTEX_BUFFER_SIZE);
+        vbo_texture_uv   = GPU.GL.new_buffer_vec2(vao, UV_COORD_ATTRIBUTE, UV_BUFFER_SIZE);
+        vbo_color        = GPU.GL.new_buffer_vec4(vao, COLOR_ATTRIBUTE, COLOR_BUFFER_SIZE);
+        vbo_texture_slot = GPU.GL.new_buffer_float(vao, TEXTURE_ATTRIBUTE, TEXTURE_BUFFER_SIZE);
 
         vao.enable_attribute(POSITION_ATTRIBUTE);
         vao.enable_attribute(UV_COORD_ATTRIBUTE);
@@ -169,12 +172,12 @@ public class ModelRenderer extends GameSystem
 
     private void init_CL()
     {
-        ptr_command_buffer = GPGPU.share_memory(cbo);
-        ptr_element_buffer = GPGPU.share_memory(ebo);
-        ptr_vertex_buffer  = GPGPU.share_memory(vbo_position);
-        ptr_uv_buffer      = GPGPU.share_memory(vbo_texture_uv);
-        ptr_color_buffer   = GPGPU.share_memory(vbo_color);
-        ptr_slot_buffer    = GPGPU.share_memory(vbo_texture_slot);
+        ptr_command_buffer = GPGPU.share_memory(cbo.id());
+        ptr_element_buffer = GPGPU.share_memory(ebo.id());
+        ptr_vertex_buffer  = GPGPU.share_memory(vbo_position.id());
+        ptr_uv_buffer      = GPGPU.share_memory(vbo_texture_uv.id());
+        ptr_color_buffer   = GPGPU.share_memory(vbo_color.id());
+        ptr_slot_buffer    = GPGPU.share_memory(vbo_texture_slot.id());
         svm_total          = GPGPU.cl_new_pinned_int();
         ptr_query          = GPGPU.new_mutable_buffer(raw_query);
         ptr_counters       = GPGPU.new_empty_buffer(GPGPU.ptr_render_queue, mesh_size);
@@ -355,7 +358,7 @@ public class ModelRenderer extends GameSystem
     private void tick_GL(BatchData batch_data)
     {
         vao.bind();
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
+        cbo.bind();
 
         shader.use();
         for (int i  = 0; i < textures.length; i++)
@@ -456,12 +459,12 @@ public class ModelRenderer extends GameSystem
     public void shutdown()
     {
         vao.release();
-        glDeleteBuffers(cbo);
-        glDeleteBuffers(ebo);
-        glDeleteBuffers(vbo_position);
-        glDeleteBuffers(vbo_texture_uv);
-        glDeleteBuffers(vbo_color);
-        glDeleteBuffers(vbo_texture_slot);
+        cbo.release();
+        ebo.release();
+        vbo_position.release();
+        vbo_texture_uv.release();
+        vbo_color.release();
+        vbo_texture_slot.release();
 
         gpu_int_scan_out.release();
         gpu_int2_scan.release();

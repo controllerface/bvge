@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl.renderers;
+package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
@@ -17,6 +17,7 @@ import com.controllerface.bvge.gpu.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
@@ -43,7 +44,7 @@ public class CircleRenderer extends GameSystem
     private GL_Shader shader;
 
     private GL_VertexArray vao;
-    private int vbo_transform;
+    private GL_VertexBuffer vbo_transform;
     private long ptr_vbo_transform;
     private long svm_atomic_counter;
 
@@ -60,7 +61,7 @@ public class CircleRenderer extends GameSystem
     {
         shader = GPU.GL.new_shader("circle_shader.glsl", GL_ShaderType.THREE_STAGE);
         vao = GPU.GL.new_vao();
-        vbo_transform = GLUtils.new_buffer_vec4(vao.gl_id(), TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
+        vbo_transform = GPU.GL.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, CIRCLES_BUFFER_SIZE);
         vao.enable_attribute(TRANSFORM_ATTRIBUTE);
     }
 
@@ -68,7 +69,7 @@ public class CircleRenderer extends GameSystem
     {
         p_prepare_transforms.init();
         p_root_hull_filter.init();
-        ptr_vbo_transform = GPGPU.share_memory(vbo_transform);
+        ptr_vbo_transform = GPGPU.share_memory(vbo_transform.id());
         svm_atomic_counter = GPGPU.cl_new_pinned_int();
 
         long k_ptr_prepare_transforms = p_prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
@@ -163,7 +164,7 @@ public class CircleRenderer extends GameSystem
     public void shutdown()
     {
         vao.release();
-        glDeleteBuffers(vbo_transform);
+        vbo_transform.release();
         shader.release();
         p_prepare_transforms.release();
         p_root_hull_filter.release();

@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl.renderers;
+package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
@@ -13,6 +13,7 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareBounds;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
@@ -37,7 +38,7 @@ public class BoundingBoxRenderer extends GameSystem
     private GL_Shader shader;
 
     private GL_VertexArray vao;
-    private int vbo_position;
+    private GL_VertexBuffer vbo_position;
     private long ptr_vbo_position;
 
     private final int[] offsets = new int[Constants.Rendering.MAX_BATCH_SIZE];
@@ -59,14 +60,14 @@ public class BoundingBoxRenderer extends GameSystem
     {
         shader = GPU.GL.new_shader("bounding_outline.glsl", GL_ShaderType.TWO_STAGE);
         vao = GPU.GL.new_vao();
-        vbo_position = GLUtils.new_buffer_vec2(vao.gl_id(), POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        vbo_position = GPU.GL.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         vao.enable_attribute(POSITION_ATTRIBUTE);
     }
 
     private void init_CL()
     {
         p_prepare_bounds.init();
-        ptr_vbo_position = GPGPU.share_memory(vbo_position);
+        ptr_vbo_position = GPGPU.share_memory(vbo_position.id());
 
         long k_ptr_prepare_bounds = p_prepare_bounds.kernel_ptr(Kernel.prepare_bounds);
         k_prepare_bounds = new PrepareBounds_k(GPGPU.ptr_render_queue, k_ptr_prepare_bounds)
@@ -113,7 +114,7 @@ public class BoundingBoxRenderer extends GameSystem
     public void shutdown()
     {
         vao.release();
-        glDeleteBuffers(vbo_position);
+        vbo_position.release();
         shader.release();
         p_prepare_bounds.release();
         GPGPU.cl_release_buffer(ptr_vbo_position);

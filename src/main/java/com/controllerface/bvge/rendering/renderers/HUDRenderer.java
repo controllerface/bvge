@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl.renderers;
+package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
@@ -8,7 +8,9 @@ import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
+import com.controllerface.bvge.gpu.gl.buffers.GL_CommandBuffer;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
@@ -37,10 +39,10 @@ public class HUDRenderer extends GameSystem
     private static final int ID_ATTRIBUTE = 2;
 
     private GL_VertexArray vao;
-    private int position_vbo;
-    private int uv_vbo;
-    private int id_vbo;
-    private int cbo;
+    private GL_VertexBuffer position_vbo;
+    private GL_VertexBuffer uv_vbo;
+    private GL_VertexBuffer id_vbo;
+    private GL_CommandBuffer cbo;
 
     private GL_Texture2D texture;
     private GL_Shader shader;
@@ -131,17 +133,17 @@ public class HUDRenderer extends GameSystem
         shader = GPU.GL.new_shader("text_shader.glsl", GL_ShaderType.TWO_STAGE);
 
         vao = GPU.GL.new_vao();
-        position_vbo = GLUtils.new_buffer_vec2(vao.gl_id(), POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
-        uv_vbo = GLUtils.new_buffer_vec2(vao.gl_id(), UV_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
-        id_vbo = GLUtils.new_buffer_float(vao.gl_id(), ID_ATTRIBUTE, SCALAR_FLOAT_SIZE * MAX_BATCH_SIZE);
+        position_vbo = GPU.GL.new_buffer_vec2(vao, POSITION_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
+        uv_vbo = GPU.GL.new_buffer_vec2(vao, UV_ATTRIBUTE, VECTOR_FLOAT_2D_SIZE * VERTICES_PER_LETTER * MAX_BATCH_SIZE);
+        id_vbo = GPU.GL.new_buffer_float(vao, ID_ATTRIBUTE, SCALAR_FLOAT_SIZE * MAX_BATCH_SIZE);
 
         vao.enable_attribute(POSITION_ATTRIBUTE);
         vao.enable_attribute(UV_ATTRIBUTE);
         vao.enable_attribute(ID_ATTRIBUTE);
         vao.instance_attribute(ID_ATTRIBUTE, 1);
 
-        cbo = GLUtils.dynamic_command_buffer(vao.gl_id(), COMMAND_BUFFER_SIZE);
-        glNamedBufferSubData(cbo, 0, raw_cmd);
+        cbo = GPU.GL.dynamic_command_buffer(vao, COMMAND_BUFFER_SIZE);
+        cbo.load_int_sub_data(raw_cmd, 0);
         texture = GPU.GL.build_character_map(TEXTURE_SIZE, "/font/Inconsolata-Light.ttf", character_map);
     }
 
@@ -200,9 +202,9 @@ public class HUDRenderer extends GameSystem
         int uv_offset = 0;
         int id_offset = 0;
 
-        var pos_buf = Objects.requireNonNull(glMapNamedBuffer(position_vbo, GL_WRITE_ONLY)).asFloatBuffer();
-        var uv_buf  = Objects.requireNonNull(glMapNamedBuffer(uv_vbo, GL_WRITE_ONLY)).asFloatBuffer();
-        var id_buf  = Objects.requireNonNull(glMapNamedBuffer(id_vbo, GL_WRITE_ONLY)).asFloatBuffer();
+        var pos_buf = position_vbo.map_as_float_buffer();//Objects.requireNonNull(glMapNamedBuffer(position_vbo, GL_WRITE_ONLY)).asFloatBuffer();
+        var uv_buf  = uv_vbo.map_as_float_buffer();//Objects.requireNonNull(glMapNamedBuffer(uv_vbo, GL_WRITE_ONLY)).asFloatBuffer();
+        var id_buf  = id_vbo.map_as_float_buffer();//Objects.requireNonNull(glMapNamedBuffer(id_vbo, GL_WRITE_ONLY)).asFloatBuffer();
 
         var text_containers = new ArrayList<TextContainer>();
         text_containers.addAll(text_boxes.values());
@@ -272,9 +274,9 @@ public class HUDRenderer extends GameSystem
             }
         }
 
-        glUnmapNamedBuffer(position_vbo);
-        glUnmapNamedBuffer(uv_vbo);
-        glUnmapNamedBuffer(id_vbo);
+        position_vbo.unmap_buffer();
+        uv_vbo.unmap_buffer();
+        id_vbo.unmap_buffer();
 
         dirty = false;
     }
@@ -313,7 +315,7 @@ public class HUDRenderer extends GameSystem
         shader.uploadInt("uTexture", 0);
         shader.uploadMat4f("projection", Window.get().camera().get_screen_matrix());
         texture.bind(0);
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
+        cbo.bind();
         render_hud();
         vao.unbind();
         shader.detach();
@@ -323,8 +325,9 @@ public class HUDRenderer extends GameSystem
     public void shutdown()
     {
         vao.release();
-        glDeleteBuffers(position_vbo);
-        glDeleteBuffers(uv_vbo);
+        position_vbo.release();
+        uv_vbo.release();
+        id_vbo.release();
         shader.release();
     }
 }

@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl.renderers;
+package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
@@ -13,6 +13,7 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.PrepareEntities;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
@@ -34,7 +35,7 @@ public class EntityPositionRenderer extends GameSystem
     private GL_Shader shader;
 
     private GL_VertexArray vao;
-    private int vbo_vertex;
+    private GL_VertexBuffer vbo_vertex;
     private long ptr_vbo_vertex;
 
     public EntityPositionRenderer(ECS ecs)
@@ -48,14 +49,14 @@ public class EntityPositionRenderer extends GameSystem
     {
         shader = GPU.GL.new_shader("entity_position_shader.glsl", GL_ShaderType.TWO_STAGE);
         vao = GPU.GL.new_vao();
-        vbo_vertex = GLUtils.new_buffer_vec2(vao.gl_id(), POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
+        vbo_vertex = GPU.GL.new_buffer_vec2(vao, POSITION_ATTRIBUTE, BATCH_BUFFER_SIZE);
         vao.enable_attribute(POSITION_ATTRIBUTE);
     }
 
     private void init_CL()
     {
         p_prepare_entities.init();
-        ptr_vbo_vertex = GPGPU.share_memory(vbo_vertex);
+        ptr_vbo_vertex = GPGPU.share_memory(vbo_vertex.id());
 
         long k_ptr_prepare_entities = p_prepare_entities.kernel_ptr(Kernel.prepare_entities);
         k_prepare_entities = new PrepareEntities_k(GPGPU.ptr_render_queue, k_ptr_prepare_entities)
@@ -94,7 +95,7 @@ public class EntityPositionRenderer extends GameSystem
     public void shutdown()
     {
         vao.release();
-        glDeleteBuffers(vbo_vertex);
+        vbo_vertex.release();
         shader.release();
         p_prepare_entities.release();
         GPGPU.cl_release_buffer(ptr_vbo_vertex);

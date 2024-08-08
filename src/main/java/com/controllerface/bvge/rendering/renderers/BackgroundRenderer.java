@@ -1,10 +1,11 @@
-package com.controllerface.bvge.gpu.gl.renderers;
+package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
@@ -19,8 +20,8 @@ public class BackgroundRenderer extends GameSystem
     private static final int UV_ATTRIBUTE = 1;
 
     private GL_VertexArray vao;
-    private int position_vbo;
-    private int uv_vbo;
+    private GL_VertexBuffer position_vbo;
+    private GL_VertexBuffer uv_vbo;
 
     private GL_Texture2D texture;
     private GL_Shader shader;
@@ -62,8 +63,8 @@ public class BackgroundRenderer extends GameSystem
 
         shader = GPU.GL.new_shader("bg_shader.glsl", GL_ShaderType.TWO_STAGE);
         shader.uploadInt("uTexture", 0);
-        position_vbo = GLUtils.fill_buffer_vec2(vao.gl_id(), POSITION_ATTRIBUTE, vertices);
-        uv_vbo = GLUtils.fill_buffer_vec2(vao.gl_id(), UV_ATTRIBUTE, uvs);
+        position_vbo = GPU.GL.new_vec2_buffer_static(vao, POSITION_ATTRIBUTE, vertices);
+        uv_vbo = GPU.GL.new_vec2_buffer_static(vao, UV_ATTRIBUTE, uvs);
     }
 
 
@@ -82,8 +83,8 @@ public class BackgroundRenderer extends GameSystem
     public void shutdown()
     {
         vao.release();
-        glDeleteBuffers(position_vbo);
-        glDeleteBuffers(uv_vbo);
+        position_vbo.release();
+        uv_vbo.release();
         shader.release();
     }
 }

@@ -1,4 +1,4 @@
-package com.controllerface.bvge.gpu.gl.renderers;
+package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
@@ -20,6 +20,7 @@ import com.controllerface.bvge.gpu.cl.programs.PrepareTransforms;
 import com.controllerface.bvge.gpu.cl.programs.RootHullFilter;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
@@ -48,7 +49,7 @@ public class MouseRenderer extends GameSystem
     private GL_Shader shader;
 
     private GL_VertexArray vao;
-    private int vbo_transforms;
+    private GL_VertexBuffer vbo_transforms;
     private long ptr_vbo_transforms;
     private long svm_atomic_counter;
 
@@ -65,7 +66,7 @@ public class MouseRenderer extends GameSystem
     {
         shader = GPU.GL.new_shader("mouse_shader.glsl", GL_ShaderType.THREE_STAGE);
         vao = GPU.GL.new_vao();
-        vbo_transforms = GLUtils.new_buffer_vec4(vao.gl_id(), TRANSFORM_ATTRIBUTE, VECTOR_FLOAT_4D_SIZE * 2);
+        vbo_transforms = GPU.GL.new_buffer_vec4(vao, TRANSFORM_ATTRIBUTE, VECTOR_FLOAT_4D_SIZE * 2);
         vao.enable_attribute(TRANSFORM_ATTRIBUTE);
     }
 
@@ -73,7 +74,7 @@ public class MouseRenderer extends GameSystem
     {
         prepare_transforms.init();
         root_hull_filter.init();
-        ptr_vbo_transforms = GPGPU.share_memory(vbo_transforms);
+        ptr_vbo_transforms = GPGPU.share_memory(vbo_transforms.id());
         svm_atomic_counter = GPGPU.cl_new_pinned_int();
 
         long ptr = prepare_transforms.kernel_ptr(Kernel.prepare_transforms);
@@ -167,7 +168,7 @@ public class MouseRenderer extends GameSystem
             .ptr_arg(PrepareTransforms_k.Args.indices, cursor_hulls.indices())
             .call_task();
 
-        glNamedBufferSubData(vbo_transforms, VECTOR_FLOAT_4D_SIZE, mouse_loc);
+        vbo_transforms.load_float_sub_data(mouse_loc, VECTOR_FLOAT_4D_SIZE);
         glDrawArrays(GL_POINTS, 0, 2);
 
         shader.detach();
@@ -178,7 +179,7 @@ public class MouseRenderer extends GameSystem
     public void shutdown()
     {
         vao.release();
-        glDeleteBuffers(vbo_transforms);
+        vbo_transforms.release();
         shader.release();
         GPGPU.cl_release_buffer(ptr_vbo_transforms);
         prepare_transforms.release();

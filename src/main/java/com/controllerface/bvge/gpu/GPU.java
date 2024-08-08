@@ -5,7 +5,10 @@ import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.events.EventBus;
 import com.controllerface.bvge.game.InputSystem;
 import com.controllerface.bvge.gpu.gl.GL_GraphicsController;
+import com.controllerface.bvge.gpu.gl.buffers.GL_CommandBuffer;
+import com.controllerface.bvge.gpu.gl.buffers.GL_ElementBuffer;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
+import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.ThreeStageShader;
 import com.controllerface.bvge.gpu.gl.shaders.TwoStageShader;
@@ -36,6 +39,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.controllerface.bvge.game.Constants.Rendering.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.GL_NEAREST;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
@@ -57,6 +61,9 @@ public class GPU
 
     public static class GL
     {
+        private static final int DEFAULT_OFFSET = 0;
+        private static final int DEFAULT_STRIDE = 0;
+
         public static final String[] character_set =
             {
                 "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
@@ -152,6 +159,146 @@ public class GPU
         {
             int vao = glCreateVertexArrays();
             return new GL_VertexArray(vao);
+        }
+
+        public static GL_VertexBuffer new_buffer_float(GL_VertexArray vao,
+                                                       int bind_index,
+                                                       int buffer_size)
+        {
+            return dynamic_float_buffer(vao, bind_index, buffer_size, SCALAR_LENGTH, SCALAR_FLOAT_SIZE);
+        }
+
+        public static GL_VertexBuffer new_buffer_vec2(GL_VertexArray vao,
+                                                      int bind_index,
+                                                      int buffer_size)
+        {
+            return dynamic_float_buffer(vao, bind_index, buffer_size, VECTOR_2D_LENGTH, VECTOR_FLOAT_2D_SIZE);
+        }
+
+        public static GL_VertexBuffer new_buffer_vec4(GL_VertexArray vao,
+                                                      int bind_index,
+                                                      int buffer_size)
+        {
+            return dynamic_float_buffer(vao, bind_index, buffer_size, VECTOR_4D_LENGTH, VECTOR_FLOAT_4D_SIZE);
+        }
+
+        public static GL_VertexBuffer new_vec2_buffer_static(GL_VertexArray vao,
+                                                             int bind_index,
+                                                             float[] buffer_data)
+        {
+            return static_float_buffer(vao, bind_index, VECTOR_2D_LENGTH, VECTOR_FLOAT_2D_SIZE, buffer_data);
+        }
+
+
+        private static GL_VertexBuffer static_float_buffer(GL_VertexArray vao,
+                                                           int bind_index,
+                                                           int data_count,
+                                                           int data_size,
+                                                           float[] buffer_data)
+        {
+            return create_vertex_buffer_float(vao,
+                DEFAULT_OFFSET,
+                bind_index,
+                bind_index,
+                GL_FLOAT,
+                data_count,
+                data_size,
+                DEFAULT_STRIDE,
+                GL_STATIC_DRAW,
+                buffer_data);
+        }
+
+        private static GL_VertexBuffer dynamic_float_buffer(GL_VertexArray vao,
+                                                            int bind_index,
+                                                            int buffer_size,
+                                                            int data_count,
+                                                            int data_size)
+        {
+            return create_vertex_buffer(vao,
+                DEFAULT_OFFSET,
+                bind_index,
+                bind_index,
+                buffer_size,
+                GL_FLOAT,
+                data_count,
+                data_size,
+                DEFAULT_STRIDE,
+                GL_DYNAMIC_DRAW);
+        }
+
+        private static GL_VertexBuffer create_vertex_buffer_float(GL_VertexArray vao,
+                                                                  int buffer_offset,
+                                                                  int bind_index,
+                                                                  int attribute_index,
+                                                                  int data_type,
+                                                                  int data_count,
+                                                                  int data_size,
+                                                                  int data_stride,
+                                                                  int flags,
+                                                                  float[] buffer_data)
+        {
+            int vbo = glCreateBuffers();
+            glNamedBufferData(vbo, buffer_data, flags);
+            glVertexArrayVertexBuffer(vao.gl_id(), bind_index, vbo, buffer_offset, data_size);
+            glVertexArrayAttribFormat(vao.gl_id(), bind_index, data_count, data_type, false, data_stride);
+            glVertexArrayAttribBinding(vao.gl_id(), attribute_index, bind_index);
+            return new GL_VertexBuffer(vbo);
+        }
+
+        private static GL_VertexBuffer create_vertex_buffer(GL_VertexArray vao,
+                                                            int buffer_offset,
+                                                            int bind_index,
+                                                            int attribute_index,
+                                                            int buffer_size,
+                                                            int data_type,
+                                                            int data_count,
+                                                            int data_size,
+                                                            int data_stride,
+                                                            int flags)
+        {
+            int vbo = glCreateBuffers();
+            glNamedBufferData(vbo, buffer_size, flags);
+            glVertexArrayVertexBuffer(vao.gl_id(), bind_index, vbo, buffer_offset, data_size);
+            glVertexArrayAttribFormat(vao.gl_id(), bind_index, data_count, data_type, false, data_stride);
+            glVertexArrayAttribBinding(vao.gl_id(), attribute_index, bind_index);
+            return new GL_VertexBuffer(vbo);
+        }
+
+        public static GL_ElementBuffer dynamic_element_buffer(GL_VertexArray vao, int buffer_size)
+        {
+            int ebo = glCreateBuffers();
+            glNamedBufferData(ebo, buffer_size, GL_DYNAMIC_DRAW);
+            glVertexArrayElementBuffer(vao.gl_id(), ebo);
+            return new GL_ElementBuffer(ebo);
+        }
+
+        public static GL_CommandBuffer dynamic_command_buffer(GL_VertexArray vao, int buffer_size)
+        {
+            int cbo = glCreateBuffers();
+            glNamedBufferData(cbo, buffer_size, GL_DYNAMIC_DRAW);
+            glBindVertexArray(vao.gl_id());
+            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cbo);
+            glBindVertexArray(0);
+            return new GL_CommandBuffer(cbo);
+        }
+
+        private static GL_VertexBuffer create_vertex_buffer(int vao,
+                                                            int buffer_offset,
+                                                            int bind_index,
+                                                            int attribute_index,
+                                                            int buffer_size,
+                                                            int data_type,
+                                                            int data_count,
+                                                            int data_size,
+                                                            int data_stride,
+                                                            int flags)
+        {
+            int vbo = glCreateBuffers();
+            glNamedBufferData(vbo, buffer_size, flags);
+            glVertexArrayVertexBuffer(vao, bind_index, vbo, buffer_offset, data_size);
+            glVertexArrayAttribFormat(vao, bind_index, data_count, data_type, false, data_stride);
+            glVertexArrayAttribBinding(vao, attribute_index, bind_index);
+            return new GL_VertexBuffer(vbo);
         }
 
         public static GL_GraphicsController init_gl(String title, EventBus event_bus, InputSystem inputSystem)
