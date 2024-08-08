@@ -1,8 +1,7 @@
 package com.controllerface.bvge.cl.kernels.crud;
 
+import com.controllerface.bvge.gpu.cl.kernels.crud.CreateBoneRef_k;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class CreateBoneRef_kTest
 {

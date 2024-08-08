@@ -1,8 +1,7 @@
 package com.controllerface.bvge.cl.kernels.crud;
 
+import com.controllerface.bvge.gpu.cl.kernels.crud.CreateMeshReference_k;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class CreateMeshReference_kTest
 {

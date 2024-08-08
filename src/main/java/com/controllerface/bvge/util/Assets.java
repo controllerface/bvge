@@ -1,9 +1,9 @@
 package com.controllerface.bvge.util;
 
-import com.controllerface.bvge.gl.Shader;
-import com.controllerface.bvge.gl.ThreeStageShader;
-import com.controllerface.bvge.gl.TwoStageShader;
-import com.controllerface.bvge.gl.Texture;
+import com.controllerface.bvge.gpu.gl.Shader;
+import com.controllerface.bvge.gpu.gl.ThreeStageShader;
+import com.controllerface.bvge.gpu.gl.TwoStageShader;
+import com.controllerface.bvge.gpu.gl.Texture;
 import org.lwjgl.assimp.AITexture;
 
 import java.util.HashMap;

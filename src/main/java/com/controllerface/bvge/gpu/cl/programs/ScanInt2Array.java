@@ -1,0 +1,22 @@
+package com.controllerface.bvge.gpu.cl.programs;
+
+import com.controllerface.bvge.gpu.cl.CLUtils;
+import com.controllerface.bvge.gpu.cl.kernels.Kernel;
+
+public class ScanInt2Array extends GPUProgram
+{
+    @Override
+    public GPUProgram init()
+    {
+        src.add(func_exclusive_scan);
+        src.add(CLUtils.read_src("programs/scan_int2_array.cl"));
+
+        make_program();
+
+        load_kernel(Kernel.scan_int2_single_block);
+        load_kernel(Kernel.scan_int2_multi_block);
+        load_kernel(Kernel.complete_int2_multi_block);
+
+        return this;
+    }
+}

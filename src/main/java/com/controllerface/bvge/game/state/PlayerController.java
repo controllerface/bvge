@@ -1,23 +1,24 @@
 package com.controllerface.bvge.game.state;
 
-import com.controllerface.bvge.cl.GPGPU;
-import com.controllerface.bvge.cl.buffers.Destroyable;
-import com.controllerface.bvge.cl.buffers.PersistentBuffer;
-import com.controllerface.bvge.cl.buffers.ResizableBuffer;
+import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.Destroyable;
+import com.controllerface.bvge.gpu.cl.buffers.PersistentBuffer;
+import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
-import com.controllerface.bvge.game.world.sectors.SectorController;
+import com.controllerface.bvge.game.PlayerInput;
+import com.controllerface.bvge.memory.sectors.SectorController;
 import com.controllerface.bvge.physics.*;
-import com.controllerface.bvge.util.Constants;
-import com.controllerface.bvge.window.Window;
-import com.controllerface.bvge.window.events.Event;
+import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.core.Window;
+import com.controllerface.bvge.events.Event;
 
 import java.util.Objects;
 
-import static com.controllerface.bvge.cl.CLData.cl_float;
-import static com.controllerface.bvge.cl.CLData.cl_int;
-import static com.controllerface.bvge.ecs.components.InputBinding.*;
-import static com.controllerface.bvge.util.Constants.EntityFlags.*;
+import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_float;
+import static com.controllerface.bvge.gpu.cl.CL_DataTypes.cl_int;
+import static com.controllerface.bvge.game.InputBinding.*;
+import static com.controllerface.bvge.game.Constants.EntityFlags.*;
 
 public class PlayerController implements Destroyable
 {

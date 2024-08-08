@@ -1,5 +1,6 @@
 package com.controllerface.bvge.cl.kernels.crud;
 
+import com.controllerface.bvge.gpu.cl.kernels.crud.CreateEdge_k;
 import org.junit.jupiter.api.Test;
 
 class CreateEdge_kTest

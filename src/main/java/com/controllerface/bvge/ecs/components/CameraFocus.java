@@ -1,3 +1,6 @@
 package com.controllerface.bvge.ecs.components;
 
-public record CameraFocus() implements GameComponent { }
+import com.controllerface.bvge.ecs.GameComponent;
+
+public record CameraFocus() implements GameComponent
+{ }

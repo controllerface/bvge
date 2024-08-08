@@ -1,8 +1,7 @@
 package com.controllerface.bvge.cl.kernels.crud;
 
+import com.controllerface.bvge.gpu.cl.kernels.crud.CreateBoneBindPose_k;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class CreateBoneBindPose_kTest
 {

@@ -1,6 +1,6 @@
 package com.controllerface.bvge.physics;
 
-import com.controllerface.bvge.geometry.UnloadedEntity;
+import com.controllerface.bvge.models.geometry.UnloadedEntity;
 import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
 

@@ -1,5 +1,6 @@
 package com.controllerface.bvge.ecs.components;
 
+import com.controllerface.bvge.ecs.GameComponent;
 import com.controllerface.bvge.substances.Solid;
 
 public class BlockCursor implements GameComponent

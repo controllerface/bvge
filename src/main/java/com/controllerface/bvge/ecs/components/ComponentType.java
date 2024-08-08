@@ -1,6 +1,8 @@
 package com.controllerface.bvge.ecs.components;
 
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.GameComponent;
+import com.controllerface.bvge.game.PlayerInput;
 
 public enum ComponentType
 {

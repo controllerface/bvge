@@ -1,13 +1,12 @@
 package com.controllerface.bvge.game.world;
 
-import com.controllerface.bvge.game.world.sectors.Sector;
+import com.controllerface.bvge.memory.sectors.Sector;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.util.Constants;
-import com.controllerface.bvge.util.FastNoiseLite;
-import com.controllerface.bvge.util.MathEX;
+import com.controllerface.bvge.game.Constants;
+import com.controllerface.bvge.core.MathEX;
 
 import java.util.Random;
 
@@ -231,7 +230,7 @@ public class EarthLikeWorld implements WorldType
         int block = map_to_block(n, block_range_floor, (float)block_pallette.length);
         var solid = block_pallette[block];
         batch.new_block(world_x_block, world_y_block, UniformGrid.BLOCK_SIZE, 90f, 0.03f, 0.0003f, 0,
-            Constants.HullFlags.IS_STATIC.bits | Constants.HullFlags.OUT_OF_BOUNDS.bits, solid, hits);
+            Constants.HullFlags.IS_STATIC.bits, solid, hits);
     }
 
     private void underground(PhysicsEntityBatch batch, float world_x_block, float world_y_block, float world_y)
@@ -267,7 +266,6 @@ public class EarthLikeWorld implements WorldType
             }
 
             int flags = Constants.HullFlags.IS_STATIC.bits;
-            flags |= Constants.HullFlags.OUT_OF_BOUNDS.bits;
 
             float mn_below = noise.GetNoise(block_x, block_y - 1);
             boolean underside = mn_below < block_range_floor && mn_below > shard_range_floor;
@@ -338,17 +336,17 @@ public class EarthLikeWorld implements WorldType
                 }
 
                 if (layer == 0 && (shard || flip_shard)) batch.new_shard(false, flip_shard, world_x_block, world_y_block,  sz_solid, 0,
-                    Constants.HullFlags.IS_STATIC.bits | Constants.HullFlags.OUT_OF_BOUNDS.bits,
+                    Constants.HullFlags.IS_STATIC.bits,
                     .1f, 0.05f, 0.005f, solid);
                 else
 
                     batch.new_block(world_x_block, world_y_block, sz_solid, 90f, 0.5f, 0.0003f, 0,
-                        Constants.HullFlags.IS_STATIC.bits | Constants.HullFlags.OUT_OF_BOUNDS.bits, solid, hits);
+                        Constants.HullFlags.IS_STATIC.bits, solid, hits);
             }
         }
         else if (n < water_range_floor)
         {
-            int hull_flags = Constants.HullFlags.IS_LIQUID.bits | Constants.HullFlags.OUT_OF_BOUNDS.bits;
+            int hull_flags = Constants.HullFlags.IS_LIQUID.bits;
             int point_flags = flip
                 ? Constants.PointFlags.FLOW_LEFT.bits
                 : 0;
@@ -357,7 +355,7 @@ public class EarthLikeWorld implements WorldType
         }
         else if (n < shard_range_floor)
         {
-            batch.new_shard(true, false, world_x_block, world_y_block,  sz_solid, 0, Constants.HullFlags.OUT_OF_BOUNDS.bits,50f, 0.00f, 0.005f, Solid.BASALT);
+            batch.new_shard(true, false, world_x_block, world_y_block,  sz_solid, 0, 0,50f, 0.00f, 0.005f, Solid.BASALT);
         }
     }
 }

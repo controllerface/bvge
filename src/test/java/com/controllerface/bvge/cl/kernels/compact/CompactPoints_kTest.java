@@ -1,8 +1,7 @@
 package com.controllerface.bvge.cl.kernels.compact;
 
+import com.controllerface.bvge.gpu.cl.kernels.compact.CompactPoints_k;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class CompactPoints_kTest
 {

@@ -1,7 +1,5 @@
 package com.controllerface.bvge.game.state;
 
-import com.controllerface.bvge.physics.StateOutput;
-
 public class PlayerState
 {
     private static BaseState base_state     = BaseState.IDLE;

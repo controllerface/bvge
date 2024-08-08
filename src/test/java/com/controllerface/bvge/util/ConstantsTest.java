@@ -1,5 +1,6 @@
 package com.controllerface.bvge.util;
 
+import com.controllerface.bvge.game.Constants;
 import org.junit.jupiter.api.Test;
 
 class ConstantsTest

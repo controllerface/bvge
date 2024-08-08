@@ -1,17 +1,17 @@
 package com.controllerface.bvge.physics;
 
-import com.controllerface.bvge.animation.BoneBindPose;
-import com.controllerface.bvge.cl.CLUtils;
-import com.controllerface.bvge.game.world.sectors.SectorContainer;
+import com.controllerface.bvge.models.bones.BoneBindPose;
+import com.controllerface.bvge.gpu.cl.CLUtils;
+import com.controllerface.bvge.memory.SectorContainer;
 import com.controllerface.bvge.game.state.AnimationState;
-import com.controllerface.bvge.geometry.Mesh;
-import com.controllerface.bvge.geometry.ModelRegistry;
-import com.controllerface.bvge.geometry.UnloadedEntity;
-import com.controllerface.bvge.geometry.Vertex;
+import com.controllerface.bvge.models.geometry.Mesh;
+import com.controllerface.bvge.models.geometry.ModelRegistry;
+import com.controllerface.bvge.models.geometry.UnloadedEntity;
+import com.controllerface.bvge.models.geometry.Vertex;
 import com.controllerface.bvge.substances.Liquid;
 import com.controllerface.bvge.substances.Solid;
 import com.controllerface.bvge.substances.SubstanceTools;
-import com.controllerface.bvge.util.MathEX;
+import com.controllerface.bvge.core.MathEX;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
@@ -19,9 +19,9 @@ import org.joml.Vector4f;
 import java.util.*;
 import java.util.stream.IntStream;
 
-import static com.controllerface.bvge.geometry.ModelRegistry.*;
+import static com.controllerface.bvge.models.geometry.ModelRegistry.*;
 
-import static com.controllerface.bvge.util.Constants.*;
+import static com.controllerface.bvge.game.Constants.*;
 
 /**
  * This is the core "factory" class for all physics based objects. It contains named archetype

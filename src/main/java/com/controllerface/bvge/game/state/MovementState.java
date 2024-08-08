@@ -1,10 +1,8 @@
 package com.controllerface.bvge.game.state;
 
-import com.controllerface.bvge.ecs.components.PlayerInput;
-import com.controllerface.bvge.physics.StateInput;
-import com.controllerface.bvge.physics.StateOutput;
+import com.controllerface.bvge.game.PlayerInput;
 
-import static com.controllerface.bvge.ecs.components.InputBinding.*;
+import static com.controllerface.bvge.game.InputBinding.*;
 
 public enum MovementState
 {

@@ -1,22 +1,19 @@
 package com.controllerface.bvge.game;
 
-import com.controllerface.bvge.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.ecs.ECS;
+import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.*;
-import com.controllerface.bvge.ecs.systems.CameraTracking;
-import com.controllerface.bvge.ecs.systems.GameSystem;
-import com.controllerface.bvge.ecs.systems.InventorySystem;
 import com.controllerface.bvge.game.state.PlayerController;
-import com.controllerface.bvge.game.world.sectors.Sector;
+import com.controllerface.bvge.gpu.gl.renderers.*;
+import com.controllerface.bvge.memory.sectors.Sector;
 import com.controllerface.bvge.game.world.WorldLoader;
 import com.controllerface.bvge.game.world.WorldUnloader;
 import com.controllerface.bvge.game.state.PlayerInventory;
-import com.controllerface.bvge.geometry.MeshRegistry;
-import com.controllerface.bvge.geometry.ModelRegistry;
-import com.controllerface.bvge.gl.renderers.*;
+import com.controllerface.bvge.models.geometry.MeshRegistry;
+import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.*;
 import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.util.Constants;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -26,7 +23,7 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 
-import static com.controllerface.bvge.geometry.ModelRegistry.*;
+import static com.controllerface.bvge.models.geometry.ModelRegistry.*;
 
 public class TestGame extends GameMode
 {
@@ -55,7 +52,7 @@ public class TestGame extends GameMode
 //            ,RenderType.POINTS
 //            ,RenderType.ENTITIES
 //            ,RenderType.BOUNDS
-            ,RenderType.GRID
+//            ,RenderType.GRID
         );
 
     private final UniformGrid uniformGrid = new UniformGrid(GRID_WIDTH, GRID_HEIGHT);
@@ -175,8 +172,8 @@ public class TestGame extends GameMode
     public void init()
     {
         float player_size = 1f;
-        float player_spawn_x = -250;
-        float player_spawn_y = 1500;
+        float player_spawn_x = 0;
+        float player_spawn_y = 550;
         gen_player(player_size, player_spawn_x, player_spawn_y);
         //gen_test_wall(500, 0, 500);
         load_systems(player_spawn_x, player_spawn_y);

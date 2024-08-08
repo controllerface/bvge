@@ -1,6 +1,6 @@
 package com.controllerface.bvge.game.world;
 
-import com.controllerface.bvge.game.world.sectors.Sector;
+import com.controllerface.bvge.memory.sectors.Sector;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 
 /**

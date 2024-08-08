@@ -1,8 +1,6 @@
 package com.controllerface.bvge.ecs;
 
 import com.controllerface.bvge.ecs.components.ComponentType;
-import com.controllerface.bvge.ecs.components.GameComponent;
-import com.controllerface.bvge.ecs.systems.GameSystem;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
