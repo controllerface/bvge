@@ -66,7 +66,7 @@ public class BoundingBoxRenderer extends GameSystem
         ptr_vbo_position = GPGPU.share_memory(vbo_position.id());
 
         long k_ptr_prepare_bounds = p_prepare_bounds.kernel_ptr(KernelType.prepare_bounds);
-        k_prepare_bounds = new PrepareBounds_k(GPGPU.compute.render_queue.ptr(), k_ptr_prepare_bounds)
+        k_prepare_bounds = new PrepareBounds_k(GPGPU.compute.render_queue, k_ptr_prepare_bounds)
             .ptr_arg(PrepareBounds_k.Args.vbo, ptr_vbo_position)
             .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_AABB));
     }

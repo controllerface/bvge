@@ -2,7 +2,9 @@ package com.controllerface.bvge.gpu.cl.kernels;
 
 import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
@@ -15,13 +17,13 @@ import static org.lwjgl.opencl.CL20.clSetKernelArgSVMPointer;
 
 public abstract class GPUKernel
 {
-    final long command_queue_ptr;
+    final CL_CommandQueue cmd_queue;
     final long kernel_ptr;
     final List<Long> shared_memory_ptrs = new ArrayList<>();
 
-    public GPUKernel(long command_queue_ptr, long kernel_ptr)
+    public GPUKernel(CL_CommandQueue cmd_queue, long kernel_ptr)
     {
-        this.command_queue_ptr = command_queue_ptr;
+        this.cmd_queue = cmd_queue;
         this.kernel_ptr = kernel_ptr;
     }
 
@@ -35,6 +37,16 @@ public abstract class GPUKernel
     {
         buffer.register(this, arg);
         return ptr_arg(arg, buffer.pointer());
+    }
+
+    public GPUKernel buf_arg(Enum<?> arg, CL_Buffer buffer)
+    {
+        try (var mem_stack = MemoryStack.stackPush())
+        {
+            var pointerBuffer = mem_stack.callocPointer(1).put(0, buffer.ptr());
+            clSetKernelArg(this.kernel_ptr, arg.ordinal(), pointerBuffer);
+        }
+        return this;
     }
 
     public GPUKernel ptr_arg(Enum<?> arg, long pointer)
@@ -153,14 +165,14 @@ public abstract class GPUKernel
     {
         if (!shared_memory_ptrs.isEmpty())
         {
-            CLUtils.gl_acquire(command_queue_ptr, shared_memory_ptrs);
+            CLUtils.gl_acquire(cmd_queue.ptr(), shared_memory_ptrs);
         }
 
-        k_call(command_queue_ptr, kernel_ptr, global_work_size, local_work_size, global_work_offset);
+        k_call(cmd_queue.ptr(), kernel_ptr, global_work_size, local_work_size, global_work_offset);
 
         if (!shared_memory_ptrs.isEmpty())
         {
-            CLUtils.gl_release(command_queue_ptr, shared_memory_ptrs);
+            CLUtils.gl_release(cmd_queue.ptr(), shared_memory_ptrs);
         }
 
         shared_memory_ptrs.clear();

@@ -2,6 +2,7 @@ package com.controllerface.bvge.memory.sectors;
 
 import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.crud.*;
@@ -33,14 +34,14 @@ public class OrderedSectorInput implements SectorContainer, GPUResource
     private final CoreBufferGroup buffers;
     private final SectorController controller;
 
-    public OrderedSectorInput(long ptr_queue, GPUCoreMemory core_memory)
+    public OrderedSectorInput(CL_CommandQueue cmd_queue, GPUCoreMemory core_memory)
     {
         this.p_gpu_crud = new GPUCrud().init();
-        this.buffers    = new CoreBufferGroup("Sector Ingress", ptr_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        this.controller = new SectorController(ptr_queue, this.p_gpu_crud, this.buffers);
+        this.buffers    = new CoreBufferGroup("Sector Ingress", cmd_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.controller = new SectorController(cmd_queue, this.p_gpu_crud, this.buffers);
 
         long k_ptr_merge_point = this.p_gpu_crud.kernel_ptr(KernelType.merge_point);
-        k_merge_point = new MergePoint_k(ptr_queue, k_ptr_merge_point)
+        k_merge_point = new MergePoint_k(cmd_queue, k_ptr_merge_point)
             .buf_arg(MergePoint_k.Args.points_in, buffers.buffer(CoreBufferType.POINT))
             .buf_arg(MergePoint_k.Args.point_vertex_references_in, buffers.buffer(CoreBufferType.POINT_VERTEX_REFERENCE))
             .buf_arg(MergePoint_k.Args.point_hull_indices_in, buffers.buffer(CoreBufferType.POINT_HULL_INDEX))
@@ -55,7 +56,7 @@ public class OrderedSectorInput implements SectorContainer, GPUResource
             .buf_arg(MergePoint_k.Args.point_bone_tables_out, core_memory.get_buffer(CoreBufferType.POINT_BONE_TABLE));
 
         long k_ptr_merge_edge = this.p_gpu_crud.kernel_ptr(KernelType.merge_edge);
-        k_merge_edge = new MergeEdge_k(ptr_queue, k_ptr_merge_edge)
+        k_merge_edge = new MergeEdge_k(cmd_queue, k_ptr_merge_edge)
             .buf_arg(MergeEdge_k.Args.edges_in,         buffers.buffer(CoreBufferType.EDGE))
             .buf_arg(MergeEdge_k.Args.edge_lengths_in,  buffers.buffer(CoreBufferType.EDGE_LENGTH))
             .buf_arg(MergeEdge_k.Args.edge_flags_in,    buffers.buffer(CoreBufferType.EDGE_FLAG))
@@ -66,7 +67,7 @@ public class OrderedSectorInput implements SectorContainer, GPUResource
             .buf_arg(MergeEdge_k.Args.edge_pins_out,    core_memory.get_buffer(CoreBufferType.EDGE_PIN));
 
         long k_ptr_merge_hull = this.p_gpu_crud.kernel_ptr(KernelType.merge_hull);
-        k_merge_hull = new MergeHull_k(ptr_queue, k_ptr_merge_hull)
+        k_merge_hull = new MergeHull_k(cmd_queue, k_ptr_merge_hull)
             .buf_arg(MergeHull_k.Args.hulls_in, buffers.buffer(CoreBufferType.HULL))
             .buf_arg(MergeHull_k.Args.hull_scales_in, buffers.buffer(CoreBufferType.HULL_SCALE))
             .buf_arg(MergeHull_k.Args.hull_rotations_in, buffers.buffer(CoreBufferType.HULL_ROTATION))
@@ -95,7 +96,7 @@ public class OrderedSectorInput implements SectorContainer, GPUResource
             .buf_arg(MergeHull_k.Args.hull_integrity_out, core_memory.get_buffer(CoreBufferType.HULL_INTEGRITY));
 
         long k_ptr_merge_entity = this.p_gpu_crud.kernel_ptr(KernelType.merge_entity);
-        k_merge_entity = new MergeEntity_k(ptr_queue, k_ptr_merge_entity)
+        k_merge_entity = new MergeEntity_k(cmd_queue, k_ptr_merge_entity)
             .buf_arg(MergeEntity_k.Args.entities_in, buffers.buffer(CoreBufferType.ENTITY))
             .buf_arg(MergeEntity_k.Args.entity_animation_time_in, buffers.buffer(CoreBufferType.ENTITY_ANIM_TIME))
             .buf_arg(MergeEntity_k.Args.entity_previous_time_in, buffers.buffer(CoreBufferType.ENTITY_PREV_TIME))
@@ -126,7 +127,7 @@ public class OrderedSectorInput implements SectorContainer, GPUResource
             .buf_arg(MergeEntity_k.Args.entity_flags_out, core_memory.get_buffer(CoreBufferType.ENTITY_FLAG));
 
         long k_ptr_merge_hull_bone = this.p_gpu_crud.kernel_ptr(KernelType.merge_hull_bone);
-        k_merge_hull_bone = new MergeHullBone_k(ptr_queue, k_ptr_merge_hull_bone)
+        k_merge_hull_bone = new MergeHullBone_k(cmd_queue, k_ptr_merge_hull_bone)
             .buf_arg(MergeHullBone_k.Args.hull_bones_in, buffers.buffer(CoreBufferType.HULL_BONE))
             .buf_arg(MergeHullBone_k.Args.hull_bind_pose_indicies_in, buffers.buffer(CoreBufferType.HULL_BONE_BIND_POSE))
             .buf_arg(MergeHullBone_k.Args.hull_inv_bind_pose_indicies_in, buffers.buffer(CoreBufferType.HULL_BONE_INV_BIND_POSE))
@@ -135,7 +136,7 @@ public class OrderedSectorInput implements SectorContainer, GPUResource
             .buf_arg(MergeHullBone_k.Args.hull_inv_bind_pose_indicies_out, core_memory.get_buffer(CoreBufferType.HULL_BONE_INV_BIND_POSE));
 
         long k_ptr_merge_entity_bone = this.p_gpu_crud.kernel_ptr(KernelType.merge_entity_bone);
-        k_merge_entity_bone = new MergeEntityBone_k(ptr_queue, k_ptr_merge_entity_bone)
+        k_merge_entity_bone = new MergeEntityBone_k(cmd_queue, k_ptr_merge_entity_bone)
             .buf_arg(MergeEntityBone_k.Args.armature_bones_in, buffers.buffer(CoreBufferType.ENTITY_BONE))
             .buf_arg(MergeEntityBone_k.Args.armature_bone_reference_ids_in, buffers.buffer(CoreBufferType.ENTITY_BONE_REFERENCE_ID))
             .buf_arg(MergeEntityBone_k.Args.armature_bone_parent_ids_in, buffers.buffer(CoreBufferType.ENTITY_BONE_PARENT_ID))

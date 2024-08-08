@@ -1,8 +1,11 @@
 package com.controllerface.bvge.memory.sectors;
 
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.egress.EgressBroken_k;
@@ -21,22 +24,22 @@ public class BrokenObjectBuffer implements GPUResource
     private final GPUProgram p_gpu_crud;
     private final GPUKernel k_egress_broken;
     private final BufferGroup<BrokenBufferType> broken_group;
-    private final long ptr_queue;
-    private final long ptr_egress_size;
+    private final CL_CommandQueue cmd_queue;
+    private final CL_Buffer ptr_egress_size;
 
-    public BrokenObjectBuffer(String name, long ptr_queue, GPUCoreMemory core_memory)
+    public BrokenObjectBuffer(String name, CL_CommandQueue cmd_queue, GPUCoreMemory core_memory)
     {
         this.p_gpu_crud = new GPUCrud().init();
-        this.ptr_queue  = ptr_queue;
-        this.ptr_egress_size = GPGPU.cl_new_pinned_int();
+        this.cmd_queue = cmd_queue;
+        this.ptr_egress_size = GPU.CL.new_pinned_int(GPGPU.compute.context);
 
-        broken_group = new BufferGroup<>(BrokenBufferType.class, name, ptr_queue, true);
+        broken_group = new BufferGroup<>(BrokenBufferType.class, name, cmd_queue, true);
         broken_group.init_buffer(BrokenBufferType.BROKEN_POSITIONS,    100L);
         broken_group.init_buffer(BrokenBufferType.BROKEN_ENTITY_TYPES, 100L);
         broken_group.init_buffer(BrokenBufferType.BROKEN_MODEL_IDS,    100L);
 
         long k_ptr_egress_broken = this.p_gpu_crud.kernel_ptr(KernelType.egress_broken);
-        k_egress_broken = new EgressBroken_k(this.ptr_queue, k_ptr_egress_broken)
+        k_egress_broken = new EgressBroken_k(this.cmd_queue, k_ptr_egress_broken)
             .buf_arg(EgressBroken_k.Args.entities, core_memory.get_buffer(ENTITY))
             .buf_arg(EgressBroken_k.Args.entity_flags, core_memory.get_buffer(ENTITY_FLAG))
             .buf_arg(EgressBroken_k.Args.entity_types, core_memory.get_buffer(ENTITY_TYPE))
@@ -44,12 +47,12 @@ public class BrokenObjectBuffer implements GPUResource
             .buf_arg(EgressBroken_k.Args.positions, broken_group.buffer(BrokenBufferType.BROKEN_POSITIONS))
             .buf_arg(EgressBroken_k.Args.types, broken_group.buffer(BrokenBufferType.BROKEN_ENTITY_TYPES))
             .buf_arg(EgressBroken_k.Args.model_ids, broken_group.buffer(BrokenBufferType.BROKEN_MODEL_IDS))
-            .ptr_arg(EgressBroken_k.Args.counter, ptr_egress_size);
+            .buf_arg(EgressBroken_k.Args.counter, ptr_egress_size);
     }
 
     public void egress(int entity_count, int egress_count)
     {
-        GPGPU.cl_zero_buffer(ptr_queue, ptr_egress_size, cl_int.size());
+        GPGPU.cl_zero_buffer(cmd_queue.ptr(), ptr_egress_size.ptr(), cl_int.size());
         int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
         broken_group.buffer(BrokenBufferType.BROKEN_POSITIONS).ensure_capacity(egress_count);
         broken_group.buffer(BrokenBufferType.BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);
@@ -103,6 +106,6 @@ public class BrokenObjectBuffer implements GPUResource
     {
         p_gpu_crud.release();
         broken_group.release();
-        GPGPU.cl_release_buffer(ptr_egress_size);
+        ptr_egress_size.ptr();
     }
 }

@@ -169,48 +169,6 @@ public class GPGPU
         }
     }
 
-    public static long cl_new_buffer(long size)
-    {
-        try (var stack = MemoryStack.stackPush())
-        {
-            var status = stack.mallocInt(1);
-            long ptr = clCreateBuffer(compute.context.ptr(), FLAGS_WRITE_GPU, size, status);
-            int result = status.get(0);
-            if (result != CL_SUCCESS)
-            {
-                System.out.println("Error on new buffer creation : " + result);
-                throw new RuntimeException("Error on new buffer creation : " + result);
-            }
-            return ptr;
-        }
-    }
-
-    public static long cl_new_int_arg_buffer(int[] src)
-    {
-        int[] status = new int[1];
-        long ptr = clCreateBuffer(compute.context.ptr(), FLAGS_WRITE_CPU_COPY, src, status);
-        int result = status[0];
-        if (result != CL_SUCCESS)
-        {
-            System.out.println("Error on new int arg buffer creation : " + result);
-            throw new RuntimeException("Error on new int arg buffer creation : " + result);
-        }
-        return ptr;
-    }
-
-    public static long cl_new_cpu_copy_buffer(float[] src)
-    {
-        int[] status = new int[1];
-        long ptr = clCreateBuffer(compute.context.ptr(), FLAGS_READ_CPU_COPY, src, status);
-        int result = status[0];
-        if (result != CL_SUCCESS)
-        {
-            System.out.println("Error on new cpu copy buffer creation : " + result);
-            throw new RuntimeException("Error on new cpu copy buffer creation : " + result);
-        }
-        return ptr;
-    }
-
     public static void cl_zero_buffer(long queue_ptr, long buffer_ptr, long buffer_size)
     {
         int result = clEnqueueFillBuffer(queue_ptr,
@@ -240,23 +198,6 @@ public class GPGPU
         {
             System.out.println("Error on filling buffer with -1 int value: " + result);
             throw new RuntimeException("Error on filling buffer with -1 int value: " + result);
-        }
-    }
-
-    public static long cl_new_pinned_buffer(long size)
-    {
-        try (var stack = MemoryStack.stackPush())
-        {
-            var status = stack.mallocInt(1);
-            long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-            long ptr = clCreateBuffer(compute.context.ptr(), flags, size, status);
-            int result = status.get(0);
-            if (result != CL_SUCCESS)
-            {
-                System.out.println("Error on creating new pinned int buffer: " + result);
-                throw new RuntimeException("Error on creating new pinned int buffer: " + result);
-            }
-            return ptr;
         }
     }
 
@@ -457,23 +398,6 @@ public class GPGPU
         }
     }
 
-    public static long cl_new_pinned_int()
-    {
-        try (var stack = MemoryStack.stackPush())
-        {
-            var status = stack.mallocInt(1);
-            long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
-            long ptr = CL10.clCreateBuffer(compute.context.ptr(), flags, CL_DataTypes.cl_int.size(), status);
-            int result = status.get(0);
-            if (result != CL_SUCCESS)
-            {
-                System.out.println("Error on new pinned int creation: " + result);
-                throw new RuntimeException("Error on new pinned int creation: " + result);
-            }
-            return ptr;
-        }
-    }
-
     public static long cl_new_unpinned_int()
     {
         try (var stack = MemoryStack.stackPush())
@@ -625,9 +549,9 @@ public class GPGPU
 
     public static long new_empty_buffer(long queue_ptr, long size)
     {
-        var new_buffer_ptr = cl_new_buffer(size);
-        cl_zero_buffer(queue_ptr, new_buffer_ptr, size);
-        return new_buffer_ptr;
+        var new_buffer = GPU.CL.new_buffer(compute.context, size);
+        cl_zero_buffer(queue_ptr, new_buffer.ptr(), size);
+        return new_buffer.ptr();
     }
 
     public static void cl_release_buffer(long mem_ptr)

@@ -67,7 +67,7 @@ public class EdgeRenderer extends GameSystem
         ptr_vbo_flag = GPGPU.share_memory(vbo_flag.id());
 
         long k_ptr_prepare_edges = p_prepare_edges.kernel_ptr(KernelType.prepare_edges);
-        k_prepare_edges = new PrepareEdges_k(GPGPU.compute.render_queue.ptr(), k_ptr_prepare_edges)
+        k_prepare_edges = new PrepareEdges_k(GPGPU.compute.render_queue, k_ptr_prepare_edges)
             .ptr_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
             .ptr_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)
             .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT))

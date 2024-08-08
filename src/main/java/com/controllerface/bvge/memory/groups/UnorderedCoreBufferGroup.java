@@ -1,13 +1,15 @@
 package com.controllerface.bvge.memory.groups;
 
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
+
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.*;
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class UnorderedCoreBufferGroup extends CoreBufferGroup
 {
-    public UnorderedCoreBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public UnorderedCoreBufferGroup(String name, CL_CommandQueue cmd_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(name, ptr_queue, entity_init, hull_init, edge_init, point_init);
+        super(name, cmd_queue, entity_init, hull_init, edge_init, point_init);
     }
 
     public void unload_sectors(Raw raw, int[] counts)

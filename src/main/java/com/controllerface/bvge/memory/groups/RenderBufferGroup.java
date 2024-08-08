@@ -1,6 +1,7 @@
 package com.controllerface.bvge.memory.groups;
 
 import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.memory.types.CoreBufferType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 
@@ -14,9 +15,9 @@ import static com.controllerface.bvge.memory.types.RenderBufferType.*;
  */
 public class RenderBufferGroup extends BufferGroup<RenderBufferType>
 {
-    public RenderBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public RenderBufferGroup(String name, CL_CommandQueue cmd_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(RenderBufferType.class, name, ptr_queue, true);
+        super(RenderBufferType.class, name, cmd_queue, true);
 
         init_buffer(RENDER_ENTITY,                 entity_init);
         init_buffer(RENDER_ENTITY_FLAG,            entity_init);

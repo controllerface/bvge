@@ -8,8 +8,10 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.GPU;
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareTransforms_k;
@@ -48,7 +50,7 @@ public class MouseRenderer extends GameSystem
     private GL_VertexArray vao;
     private GL_VertexBuffer vbo_transforms;
     private long ptr_vbo_transforms;
-    private long svm_atomic_counter;
+    private CL_Buffer atomic_counter;
 
     private HullIndexData cursor_hulls;
 
@@ -72,10 +74,10 @@ public class MouseRenderer extends GameSystem
         prepare_transforms.init();
         root_hull_filter.init();
         ptr_vbo_transforms = GPGPU.share_memory(vbo_transforms.id());
-        svm_atomic_counter = GPGPU.cl_new_pinned_int();
+        atomic_counter     = GPU.CL.new_pinned_int(GPGPU.compute.context);
 
         long ptr = prepare_transforms.kernel_ptr(KernelType.prepare_transforms);
-        k_prepare_transforms = (new PrepareTransforms_k(GPGPU.compute.render_queue.ptr(), ptr))
+        k_prepare_transforms = (new PrepareTransforms_k(GPGPU.compute.render_queue, ptr))
             .ptr_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transforms)
             .set_arg(PrepareTransforms_k.Args.max_hull, 1)
             .set_arg(PrepareTransforms_k.Args.offset, 0)
@@ -84,43 +86,43 @@ public class MouseRenderer extends GameSystem
             .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
 
         long root_hull_filter_ptr = root_hull_filter.kernel_ptr(KernelType.root_hull_filter);
-        k_root_hull_filter = new RootHullFilter_k(GPGPU.compute.render_queue.ptr(), root_hull_filter_ptr)
+        k_root_hull_filter = new RootHullFilter_k(GPGPU.compute.render_queue, root_hull_filter_ptr)
             .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
             .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
 
         long root_hull_count_ptr =  root_hull_filter.kernel_ptr(KernelType.root_hull_count);
-        k_root_hull_count = new RootHullCount_k(GPGPU.compute.render_queue.ptr(), root_hull_count_ptr)
+        k_root_hull_count = new RootHullCount_k(GPGPU.compute.render_queue, root_hull_count_ptr)
             .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
     }
 
-    public HullIndexData hull_filter(long queue_ptr, int model_id)
+    public HullIndexData hull_filter(CL_CommandQueue cmd_queue, int model_id)
     {
-        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CL_DataTypes.cl_int.size());
+        GPGPU.cl_zero_buffer(cmd_queue.ptr(), atomic_counter.ptr(), CL_DataTypes.cl_int.size());
 
         int entity_count = GPGPU.core_memory.sector_container().next_entity();
         int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
 
         k_root_hull_count
-            .ptr_arg(RootHullCount_k.Args.counter, svm_atomic_counter)
+            .buf_arg(RootHullCount_k.Args.counter, atomic_counter)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .set_arg(RootHullCount_k.Args.max_entity, entity_count)
             .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
 
-        int final_count =  GPGPU.cl_read_pinned_int(queue_ptr, svm_atomic_counter);
+        int final_count =  GPGPU.cl_read_pinned_int(cmd_queue.ptr(), atomic_counter.ptr());
 
         if (final_count == 0)
         {
-            return new HullIndexData(-1, final_count);
+            return new HullIndexData(null, final_count);
         }
 
         long final_buffer_size = (long) CL_DataTypes.cl_int.size() * final_count;
-        var hulls_out =  GPGPU.cl_new_buffer(final_buffer_size);
+        var hulls_out = GPU.CL.new_buffer(GPGPU.compute.context, final_buffer_size);
 
-        GPGPU.cl_zero_buffer(queue_ptr, svm_atomic_counter, CL_DataTypes.cl_int.size());
+        GPGPU.cl_zero_buffer(cmd_queue.ptr(), atomic_counter.ptr(), CL_DataTypes.cl_int.size());
 
         k_root_hull_filter
-            .ptr_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
-            .ptr_arg(RootHullFilter_k.Args.counter, svm_atomic_counter)
+            .buf_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
+            .buf_arg(RootHullFilter_k.Args.counter, atomic_counter)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
             .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
@@ -131,11 +133,11 @@ public class MouseRenderer extends GameSystem
     @Override
     public void tick(float dt)
     {
-        if (cursor_hulls != null && cursor_hulls.indices() != -1)
+        if (cursor_hulls != null && cursor_hulls.indices() != null)
         {
-            GPGPU.cl_release_buffer(cursor_hulls.indices());
+            cursor_hulls.indices().release();
         }
-        cursor_hulls = hull_filter(GPGPU.compute.render_queue.ptr(), ModelRegistry.CURSOR);
+        cursor_hulls = hull_filter(GPGPU.compute.render_queue, ModelRegistry.CURSOR);
 
         if (cursor_hulls.count() == 0) return;
 
@@ -162,7 +164,7 @@ public class MouseRenderer extends GameSystem
 
         k_prepare_transforms
             .share_mem(ptr_vbo_transforms)
-            .ptr_arg(PrepareTransforms_k.Args.indices, cursor_hulls.indices())
+            .buf_arg(PrepareTransforms_k.Args.indices, cursor_hulls.indices())
             .call_task();
 
         vbo_transforms.load_float_sub_data(mouse_loc, VECTOR_FLOAT_4D_SIZE);
@@ -181,6 +183,6 @@ public class MouseRenderer extends GameSystem
         GPGPU.cl_release_buffer(ptr_vbo_transforms);
         prepare_transforms.release();
         root_hull_filter.release();
-        GPGPU.cl_release_buffer(svm_atomic_counter);
+        atomic_counter.release();
     }
 }

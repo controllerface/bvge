@@ -1,15 +1,16 @@
 package com.controllerface.bvge.memory.groups;
 
 import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.memory.types.CoreBufferType;
 
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class CoreBufferGroup extends BufferGroup<CoreBufferType>
 {
-    public CoreBufferGroup(String name, long ptr_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public CoreBufferGroup(String name, CL_CommandQueue cmd_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(CoreBufferType.class, name, ptr_queue, true);
+        super(CoreBufferType.class, name, cmd_queue, true);
 
         //#region Point Buffers
 

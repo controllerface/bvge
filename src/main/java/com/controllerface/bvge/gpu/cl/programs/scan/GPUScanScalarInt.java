@@ -1,9 +1,11 @@
 package com.controllerface.bvge.gpu.cl.programs.scan;
 
 import com.controllerface.bvge.editor.Editor;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.scan.CompleteIntMultiBlock_k;
@@ -21,16 +23,16 @@ public class GPUScanScalarInt implements GPUResource
     private final GPUKernel k_scan_int_multi_block;
     private final GPUKernel k_complete_int_multi_block;
 
-    public GPUScanScalarInt(long ptr_queue)
+    public GPUScanScalarInt(CL_CommandQueue cmd_queue)
     {
         p_scan_int_array.init();
 
         long k_ptr_scan_int_array_single = p_scan_int_array.kernel_ptr(KernelType.scan_int_single_block);
         long k_ptr_scan_int_array_multi  = p_scan_int_array.kernel_ptr(KernelType.scan_int_multi_block);
         long k_ptr_scan_int_array_comp   = p_scan_int_array.kernel_ptr(KernelType.complete_int_multi_block);
-        k_scan_int_single_block          = new ScanIntSingleBlock_k(ptr_queue, k_ptr_scan_int_array_single);
-        k_scan_int_multi_block           = new ScanIntMultiBlock_k(ptr_queue, k_ptr_scan_int_array_multi);
-        k_complete_int_multi_block       = new CompleteIntMultiBlock_k(ptr_queue, k_ptr_scan_int_array_comp);
+        k_scan_int_single_block          = new ScanIntSingleBlock_k(cmd_queue, k_ptr_scan_int_array_single);
+        k_scan_int_multi_block           = new ScanIntMultiBlock_k(cmd_queue, k_ptr_scan_int_array_multi);
+        k_complete_int_multi_block       = new CompleteIntMultiBlock_k(cmd_queue, k_ptr_scan_int_array_comp);
     }
 
     public void scan_int(long data_ptr, int n)
@@ -73,25 +75,25 @@ public class GPUScanScalarInt implements GPUResource
         int part_size = k * 2;
         long part_buf_size = ((long) CL_DataTypes.cl_int.size() * ((long) part_size));
 
-        var part_data = GPGPU.cl_new_buffer(part_buf_size);
+        var part_data = GPU.CL.new_buffer(GPGPU.compute.context, part_buf_size);
 
         k_scan_int_multi_block
             .ptr_arg(ScanIntMultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanIntMultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(ScanIntMultiBlock_k.Args.part, part_data)
+            .buf_arg(ScanIntMultiBlock_k.Args.part, part_data)
             .set_arg(ScanIntMultiBlock_k.Args.n, n)
             .call(global_work_size, GPGPU.compute.local_work_default);
 
-        scan_int(part_data, part_size);
+        scan_int(part_data.ptr(), part_size);
 
         k_complete_int_multi_block
             .ptr_arg(CompleteIntMultiBlock_k.Args.data, data_ptr)
             .loc_arg(CompleteIntMultiBlock_k.Args.buffer, local_buffer_size)
-            .ptr_arg(CompleteIntMultiBlock_k.Args.part, part_data)
+            .buf_arg(CompleteIntMultiBlock_k.Args.part, part_data)
             .set_arg(CompleteIntMultiBlock_k.Args.n, n)
             .call(global_work_size, GPGPU.compute.local_work_default);
 
-        GPGPU.cl_release_buffer(part_data);
+        part_data.release();
     }
 
     public void release()

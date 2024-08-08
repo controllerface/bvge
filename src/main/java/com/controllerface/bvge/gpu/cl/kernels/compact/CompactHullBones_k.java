@@ -2,6 +2,7 @@ package com.controllerface.bvge.gpu.cl.kernels.compact;
 
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
@@ -26,7 +27,7 @@ public class CompactHullBones_k extends GPUKernel
         public String cl_type() { return cl_type; }
     }
 
-    public CompactHullBones_k(long command_queue_ptr, long kernel_ptr)
+    public CompactHullBones_k(CL_CommandQueue command_queue_ptr, long kernel_ptr)
     {
         super(command_queue_ptr, kernel_ptr);
     }

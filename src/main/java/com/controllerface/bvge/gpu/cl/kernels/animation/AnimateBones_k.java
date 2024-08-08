@@ -1,5 +1,6 @@
 package com.controllerface.bvge.gpu.cl.kernels.animation;
 
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 
 public class AnimateBones_k extends GPUKernel
@@ -14,7 +15,7 @@ public class AnimateBones_k extends GPUKernel
         max_hull_bone,
     }
 
-    public AnimateBones_k(long command_queue_ptr, long kernel_ptr)
+    public AnimateBones_k(CL_CommandQueue command_queue_ptr, long kernel_ptr)
     {
         super(command_queue_ptr, kernel_ptr);
     }

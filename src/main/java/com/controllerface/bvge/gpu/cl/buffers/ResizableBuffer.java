@@ -1,6 +1,8 @@
 package com.controllerface.bvge.gpu.cl.buffers;
 
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 
 public abstract class ResizableBuffer
@@ -8,21 +10,21 @@ public abstract class ResizableBuffer
     protected static final long DEFAULT_ITEM_CAPACITY = 1024L;
 
     protected final int item_size;
-    protected final long queue_pointer;
+    protected final CL_CommandQueue cmd_queue;
 
     protected long byte_capacity;
-    protected long buffer_pointer;
+    protected CL_Buffer buffer;
 
     private RegisteredKernel[] registered_kernels = new RegisteredKernel[0];
 
     private record RegisteredKernel(GPUKernel kernel, Enum<?> arg) { }
 
-    public ResizableBuffer(long queue_ptr, int item_size, long item_capacity)
+    public ResizableBuffer(CL_CommandQueue cmd_queue, int item_size, long item_capacity)
     {
         this.item_size = item_size;
-        this.queue_pointer = queue_ptr;
+        this.cmd_queue = cmd_queue;
         this.byte_capacity = this.item_size * item_capacity;
-        this.buffer_pointer = GPGPU.cl_new_buffer(this.byte_capacity);
+        this.buffer = GPU.CL.new_buffer(GPGPU.compute.context, this.byte_capacity);
     }
 
     abstract public void ensure_capacity(long total_item_capacity);
@@ -36,13 +38,13 @@ public abstract class ResizableBuffer
     {
         for (var registered : registered_kernels)
         {
-            registered.kernel.ptr_arg(registered.arg, this.buffer_pointer);
+            registered.kernel.buf_arg(registered.arg, this.buffer);
         }
     }
 
     public long pointer()
     {
-        return buffer_pointer;
+        return buffer.ptr();
     }
 
     public void register(GPUKernel kernel, Enum<?> arg)
@@ -55,32 +57,32 @@ public abstract class ResizableBuffer
 
     public void clear()
     {
-        GPGPU.cl_zero_buffer(this.queue_pointer, this.buffer_pointer, this.byte_capacity);
+        GPGPU.cl_zero_buffer(this.cmd_queue.ptr(), this.buffer.ptr(), this.byte_capacity);
     }
 
     public void clear_negative()
     {
-        GPGPU.cl_negative_one_buffer(this.queue_pointer, this.buffer_pointer, this.byte_capacity);
+        GPGPU.cl_negative_one_buffer(this.cmd_queue.ptr(), this.buffer.ptr(), this.byte_capacity);
     }
 
     public void release()
     {
-        GPGPU.cl_release_buffer(this.buffer_pointer);
+        GPGPU.cl_release_buffer(this.buffer.ptr());
     }
 
     public void transfer_out_int(int[] ints, long size, int count)
     {
-        GPGPU.cl_map_read_int_buffer(this.queue_pointer, this.buffer_pointer, size, count, ints);
+        GPGPU.cl_map_read_int_buffer(this.cmd_queue.ptr(), this.buffer.ptr(), size, count, ints);
     }
 
     public void transfer_out_float(float[] floats, long size, int count)
     {
-        GPGPU.cl_map_read_float_buffer(this.queue_pointer, this.buffer_pointer, size, count, floats);
+        GPGPU.cl_map_read_float_buffer(this.cmd_queue.ptr(), this.buffer.ptr(), size, count, floats);
     }
 
     public void transfer_out_short(short[] shorts, long size, int count)
     {
-        GPGPU.cl_map_read_short_buffer(this.queue_pointer, this.buffer_pointer, size, count, shorts);
+        GPGPU.cl_map_read_short_buffer(this.cmd_queue.ptr(), this.buffer.ptr(), size, count, shorts);
     }
 
     public long debug_data()

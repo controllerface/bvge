@@ -1,15 +1,16 @@
 package com.controllerface.bvge.memory.groups;
 
 import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.memory.types.ReferenceBufferType;
 
 import static com.controllerface.bvge.memory.types.ReferenceBufferType.*;
 
 public class ReferenceBufferGroup extends BufferGroup<ReferenceBufferType>
 {
-    public ReferenceBufferGroup(String name, long ptr_queue)
+    public ReferenceBufferGroup(String name, CL_CommandQueue cmd_queue)
     {
-        super(ReferenceBufferType.class, name, ptr_queue, true);
+        super(ReferenceBufferType.class, name, cmd_queue, true);
 
         // bone animation channels
 

@@ -5,6 +5,7 @@ import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.events.EventBus;
 import com.controllerface.bvge.game.InputSystem;
 import com.controllerface.bvge.gpu.cl.CL_ComputeController;
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.contexts.CL_Context;
@@ -52,10 +53,12 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static com.controllerface.bvge.game.Constants.Rendering.*;
+import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opencl.AMDDeviceAttributeQuery.CL_DEVICE_WAVEFRONT_WIDTH_AMD;
 import static org.lwjgl.opencl.CL10.*;
 import static org.lwjgl.opencl.CL11.CL_DEVICE_HOST_UNIFIED_MEMORY;
+import static org.lwjgl.opencl.CL12.CL_MEM_HOST_READ_ONLY;
 import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
 import static org.lwjgl.opencl.KHRGLSharing.CL_WGL_HDC_KHR;
 import static org.lwjgl.opencl.NVDeviceAttributeQuery.CL_DEVICE_WARP_SIZE_NV;
@@ -637,8 +640,14 @@ public class GPU
 
     public static class CL
     {
+        private static final long FLAGS_WRITE_GPU = CL_MEM_READ_WRITE;
+        private static final long FLAGS_WRITE_CPU_COPY = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+        private static final long FLAGS_READ_CPU_COPY = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
+
         public static final String BUFFER_PREFIX = "__global";
         public static final String BUFFER_SUFFIX = "*";
+
+        //#region Argument Helpers
 
         public static short[] arg_short2(short x, short y)
         {
@@ -693,6 +702,9 @@ public class GPU
                 matrix.m30(), matrix.m31(), matrix.m32(), matrix.m33());
         }
 
+        //#endregion
+
+        //#region CL Initialization Methods
         public static CL_Device init_device()
         {
             int result;
@@ -864,6 +876,69 @@ public class GPU
                 sector_queue);
         }
 
+        //#endregion
+
+        public static CL_Buffer new_buffer(CL_Context context, long size)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                long ptr = clCreateBuffer(context.ptr(), FLAGS_WRITE_GPU, size, status);
+                int result = status.get(0);
+                if (result != CL_SUCCESS) throw new RuntimeException("Error: clCreateBuffer(): " + result);
+                return new CL_Buffer(ptr);
+            }
+        }
+
+        public static CL_Buffer new_pinned_buffer(CL_Context context, long size)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+                long ptr = clCreateBuffer(context.ptr(), flags, size, status);
+                int result = status.get(0);
+                if (result != CL_SUCCESS) throw new RuntimeException("Error: clCreateBuffer(): " + result);
+                return new CL_Buffer(ptr);
+            }
+        }
+
+        public static CL_Buffer new_pinned_int(CL_Context context)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                long flags = CL_MEM_HOST_READ_ONLY | CL_MEM_ALLOC_HOST_PTR;
+                long ptr = clCreateBuffer(context.ptr(), flags, cl_int.size(), status);
+                int result = status.get(0);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clCreateBuffer(): " + result);
+                }
+                return new CL_Buffer(ptr);
+            }
+        }
+
+        public static CL_Buffer new_int_arg_buffer(CL_Context context, int[] src)
+        {
+            int[] status = new int[1];
+            long ptr = clCreateBuffer(context.ptr(), FLAGS_WRITE_CPU_COPY, src, status);
+            int result = status[0];
+            if (result != CL_SUCCESS) throw new RuntimeException("Error: clCreateBuffer(): " + result);
+            return new CL_Buffer(ptr);
+        }
+
+        public static CL_Buffer new_cpu_copy_buffer(CL_Context context, float[] src)
+        {
+            int[] status = new int[1];
+            long ptr = clCreateBuffer(context.ptr(), FLAGS_READ_CPU_COPY, src, status);
+            int result = status[0];
+            if (result != CL_SUCCESS) throw new RuntimeException("Error: clCreateBuffer(): " + result);
+            return new CL_Buffer(ptr);
+        }
+
+        //#region Kernel Source Utils
+
         public static String read_src(String file)
         {
             try (var stream = GPU.class.getResourceAsStream("/cl/" + file))
@@ -986,6 +1061,10 @@ public class GPU
             return src.toString();
         }
 
+        //#endregion
+
+        //#region CL Debug Utils
+
         private static boolean get_device_boolean(long device_ptr, int param_code)
         {
             var size_buffer = MemoryUtil.memAllocPointer(1);
@@ -1057,5 +1136,7 @@ public class GPU
                 return new String(bytes, 0, bytes.length - 1);
             }
         }
+
+        //#endregion
     }
 }

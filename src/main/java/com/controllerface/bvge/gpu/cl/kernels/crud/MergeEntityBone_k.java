@@ -1,5 +1,6 @@
 package com.controllerface.bvge.gpu.cl.kernels.crud;
 
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 
 public class MergeEntityBone_k extends GPUKernel
@@ -16,7 +17,7 @@ public class MergeEntityBone_k extends GPUKernel
         max_entity_bone,
     }
 
-    public MergeEntityBone_k(long command_queue_ptr, long kernel_ptr)
+    public MergeEntityBone_k(CL_CommandQueue command_queue_ptr, long kernel_ptr)
     {
         super(command_queue_ptr, kernel_ptr);
     }

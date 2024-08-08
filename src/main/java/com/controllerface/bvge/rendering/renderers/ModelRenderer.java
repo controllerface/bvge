@@ -8,6 +8,7 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.GPU;
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.programs.scan.GPUScanScalarIntOut;
@@ -80,7 +81,7 @@ public class ModelRenderer extends GameSystem
     private long ptr_counters;
     private long ptr_offsets;
     private long ptr_mesh_transfer;
-    private long svm_total;
+    private CL_Buffer total_buf;
 
     private int[] raw_query;
     private int mesh_count;
@@ -177,7 +178,7 @@ public class ModelRenderer extends GameSystem
         ptr_uv_buffer      = GPGPU.share_memory(vbo_texture_uv.id());
         ptr_color_buffer   = GPGPU.share_memory(vbo_color.id());
         ptr_slot_buffer    = GPGPU.share_memory(vbo_texture_slot.id());
-        svm_total          = GPGPU.cl_new_pinned_int();
+        total_buf          = GPU.CL.new_pinned_int(GPGPU.compute.context);
         ptr_query          = GPGPU.new_mutable_buffer(raw_query);
         ptr_counters       = GPGPU.new_empty_buffer(GPGPU.compute.render_queue.ptr(), mesh_size);
         ptr_offsets        = GPGPU.new_empty_buffer(GPGPU.compute.render_queue.ptr(), mesh_size);
@@ -186,14 +187,14 @@ public class ModelRenderer extends GameSystem
         p_mesh_query.init();
         p_scan_int_array_out.init();
 
-        gpu_int2_scan    = new GPUScanVectorInt2(GPGPU.compute.render_queue.ptr());
-        gpu_int_scan_out = new GPUScanScalarIntOut(GPGPU.compute.render_queue.ptr());
+        gpu_int2_scan    = new GPUScanVectorInt2(GPGPU.compute.render_queue);
+        gpu_int_scan_out = new GPUScanScalarIntOut(GPGPU.compute.render_queue);
 
         long k_ptr_count_instances = p_mesh_query.kernel_ptr(KernelType.count_mesh_instances);
-        k_count_mesh_instances = new CountMeshInstances_k(GPGPU.compute.render_queue.ptr(), k_ptr_count_instances)
+        k_count_mesh_instances = new CountMeshInstances_k(GPGPU.compute.render_queue, k_ptr_count_instances)
             .ptr_arg(CountMeshInstances_k.Args.counters, ptr_counters)
             .ptr_arg(CountMeshInstances_k.Args.query, ptr_query)
-            .ptr_arg(CountMeshInstances_k.Args.total, svm_total)
+            .buf_arg(CountMeshInstances_k.Args.total, total_buf)
             .set_arg(CountMeshInstances_k.Args.count, mesh_count)
             .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
             .buf_arg(CountMeshInstances_k.Args.hull_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
@@ -201,7 +202,7 @@ public class ModelRenderer extends GameSystem
             .buf_arg(CountMeshInstances_k.Args.entity_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG));
 
         long k_ptr_write_details = p_mesh_query.kernel_ptr(KernelType.write_mesh_details);
-        k_write_mesh_details = new WriteMeshDetails_k(GPGPU.compute.render_queue.ptr(), k_ptr_write_details)
+        k_write_mesh_details = new WriteMeshDetails_k(GPGPU.compute.render_queue, k_ptr_write_details)
             .ptr_arg(WriteMeshDetails_k.Args.counters, ptr_counters)
             .ptr_arg(WriteMeshDetails_k.Args.query, ptr_query)
             .ptr_arg(WriteMeshDetails_k.Args.offsets, ptr_offsets)
@@ -214,19 +215,19 @@ public class ModelRenderer extends GameSystem
             .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE));
 
         long k_ptr_count_batches = p_mesh_query.kernel_ptr(KernelType.count_mesh_batches);
-        k_count_mesh_batches = new CountMeshBatches_k(GPGPU.compute.render_queue.ptr(), k_ptr_count_batches)
-            .ptr_arg(CountMeshBatches_k.Args.total, svm_total)
+        k_count_mesh_batches = new CountMeshBatches_k(GPGPU.compute.render_queue, k_ptr_count_batches)
+            .buf_arg(CountMeshBatches_k.Args.total, total_buf)
             .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
 
         long k_ptr_calc_offsets = p_mesh_query.kernel_ptr(KernelType.calculate_batch_offsets);
-        k_calculate_batch_offsets = new CalculateBatchOffsets_k(GPGPU.compute.render_queue.ptr(), k_ptr_calc_offsets);
+        k_calculate_batch_offsets = new CalculateBatchOffsets_k(GPGPU.compute.render_queue, k_ptr_calc_offsets);
 
         long k_ptr_transfer_detail = p_mesh_query.kernel_ptr(KernelType.transfer_detail_data);
-        k_transfer_detail_data = new TransferDetailData_k(GPGPU.compute.render_queue.ptr(), k_ptr_transfer_detail)
+        k_transfer_detail_data = new TransferDetailData_k(GPGPU.compute.render_queue, k_ptr_transfer_detail)
             .ptr_arg(TransferDetailData_k.Args.mesh_transfer, ptr_mesh_transfer);
 
         long k_ptr_transfer_render = p_mesh_query.kernel_ptr(KernelType.transfer_render_data);
-        k_transfer_render_data = new TransferRenderData_k(GPGPU.compute.render_queue.ptr(), k_ptr_transfer_render)
+        k_transfer_render_data = new TransferRenderData_k(GPGPU.compute.render_queue, k_ptr_transfer_render)
             .ptr_arg(TransferRenderData_k.Args.command_buffer, ptr_command_buffer)
             .ptr_arg(TransferRenderData_k.Args.element_buffer, ptr_element_buffer)
             .ptr_arg(TransferRenderData_k.Args.vertex_buffer, ptr_vertex_buffer)
@@ -259,7 +260,7 @@ public class ModelRenderer extends GameSystem
 
         GPGPU.cl_zero_buffer(GPGPU.compute.render_queue.ptr(), ptr_counters, mesh_size);
         GPGPU.cl_zero_buffer(GPGPU.compute.render_queue.ptr(), ptr_offsets, mesh_size);
-        GPGPU.cl_zero_buffer(GPGPU.compute.render_queue.ptr(), svm_total, CL_DataTypes.cl_int.size());
+        GPGPU.cl_zero_buffer(GPGPU.compute.render_queue.ptr(), total_buf.ptr(), CL_DataTypes.cl_int.size());
         GPGPU.cl_zero_buffer(GPGPU.compute.render_queue.ptr(), ptr_mesh_transfer, ELEMENT_BUFFER_SIZE * 2);
 
         int hull_count = GPGPU.core_memory.sector_container().next_hull();
@@ -278,7 +279,7 @@ public class ModelRenderer extends GameSystem
 
         gpu_int_scan_out.scan_int_out(ptr_counters, ptr_offsets, mesh_count);
 
-        int total_instances = GPGPU.cl_read_pinned_int(GPGPU.compute.render_queue.ptr(), svm_total);
+        int total_instances = GPGPU.cl_read_pinned_int(GPGPU.compute.render_queue.ptr(), total_buf.ptr());
         if (total_instances == 0)
         {
             return null;
@@ -317,18 +318,18 @@ public class ModelRenderer extends GameSystem
             Editor.queue_event("render_model_count_batches", String.valueOf(e));
         }
 
-        int total_batches = GPGPU.cl_read_pinned_int(GPGPU.compute.render_queue.ptr(), svm_total);
+        int total_batches = GPGPU.cl_read_pinned_int(GPGPU.compute.render_queue.ptr(), total_buf.ptr());
         if (Editor.ACTIVE)
         {
             Editor.queue_event("render_batch_count", String.valueOf(total_batches));
         }
         long batch_index_size = (long) total_batches * CL_DataTypes.cl_int.size();
 
-        var mesh_offset_ptr = GPGPU.cl_new_pinned_buffer(batch_index_size);
+        var mesh_offset_buf = GPU.CL.new_pinned_buffer(GPGPU.compute.context, batch_index_size);
 
         si = Editor.ACTIVE ? System.nanoTime() : 0;
         k_calculate_batch_offsets
-            .ptr_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offset_ptr)
+            .buf_arg(CalculateBatchOffsets_k.Args.mesh_offsets, mesh_offset_buf)
             .ptr_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CalculateBatchOffsets_k.Args.count, total_instances)
             .call_task();
@@ -339,8 +340,8 @@ public class ModelRenderer extends GameSystem
         }
 
         si = Editor.ACTIVE ? System.nanoTime() : 0;
-        int[] raw_offsets = GPGPU.cl_read_pinned_int_buffer(GPGPU.compute.render_queue.ptr(), mesh_offset_ptr, CL_DataTypes.cl_int.size(), total_batches);
-        GPGPU.cl_release_buffer(mesh_offset_ptr);
+        int[] raw_offsets = GPGPU.cl_read_pinned_int_buffer(GPGPU.compute.render_queue.ptr(), mesh_offset_buf.ptr(), CL_DataTypes.cl_int.size(), total_batches);
+        mesh_offset_buf.release();
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;
@@ -475,7 +476,7 @@ public class ModelRenderer extends GameSystem
         GPGPU.cl_release_buffer(ptr_vertex_buffer);
         GPGPU.cl_release_buffer(ptr_command_buffer);
         GPGPU.cl_release_buffer(ptr_uv_buffer);
-        GPGPU.cl_release_buffer(svm_total);
+        total_buf.release();
         GPGPU.cl_release_buffer(ptr_query);
         GPGPU.cl_release_buffer(ptr_counters);
         GPGPU.cl_release_buffer(ptr_offsets);

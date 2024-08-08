@@ -1,20 +1,22 @@
 package com.controllerface.bvge.gpu.cl.buffers;
 
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_float16;
 
 public class PersistentBuffer extends ResizableBuffer
 {
-    public PersistentBuffer(long queue_ptr, int item_size, long initial_capacity)
+    public PersistentBuffer(CL_CommandQueue cmd_queue, int item_size, long initial_capacity)
     {
-        super(queue_ptr, item_size, initial_capacity);
+        super(cmd_queue, item_size, initial_capacity);
         clear();
     }
 
-    public PersistentBuffer(long queue_ptr, int item_size)
+    public PersistentBuffer(CL_CommandQueue cmd_queue, int item_size)
     {
-        this(queue_ptr, item_size, DEFAULT_ITEM_CAPACITY);
+        this(cmd_queue, item_size, DEFAULT_ITEM_CAPACITY);
     }
 
     public void ensure_capacity(long total_item_capacity)
@@ -30,12 +32,12 @@ public class PersistentBuffer extends ResizableBuffer
             else this.byte_capacity += (long)this.item_size * 32768L;
         }
 
-        long new_pointer = GPGPU.cl_new_buffer(this.byte_capacity);
-        GPGPU.cl_zero_buffer(queue_pointer, new_pointer, this.byte_capacity);
-        GPGPU.cl_transfer_buffer(queue_pointer, this.buffer_pointer, new_pointer, previous_capacity);
+        var new_buffer = GPU.CL.new_buffer(GPGPU.compute.context, this.byte_capacity);
+        GPGPU.cl_zero_buffer(cmd_queue.ptr(), new_buffer.ptr(), this.byte_capacity);
+        GPGPU.cl_transfer_buffer(cmd_queue.ptr(), this.buffer.ptr(), new_buffer.ptr(), previous_capacity);
 
         release();
-        this.buffer_pointer = new_pointer;
+        this.buffer = new_buffer;
         update_registered_kernels();
     }
 
@@ -44,9 +46,9 @@ public class PersistentBuffer extends ResizableBuffer
     {
         release();
         this.byte_capacity = source.byte_capacity;
-        long new_pointer = GPGPU.cl_new_buffer(this.byte_capacity);
-        GPGPU.cl_transfer_buffer(queue_pointer, source.buffer_pointer, new_pointer, source.byte_capacity);
-        this.buffer_pointer = new_pointer;
+        var new_buffer = GPU.CL.new_buffer(GPGPU.compute.context, this.byte_capacity);
+        GPGPU.cl_transfer_buffer(cmd_queue.ptr(), source.buffer.ptr(), new_buffer.ptr(), source.byte_capacity);
+        this.buffer = new_buffer;
         update_registered_kernels();
     }
 }

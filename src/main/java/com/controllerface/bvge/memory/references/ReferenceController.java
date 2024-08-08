@@ -1,5 +1,6 @@
 package com.controllerface.bvge.memory.references;
 
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.crud.*;
@@ -37,61 +38,61 @@ public class ReferenceController implements ReferenceContainer
     private int bone_channel_index = 0;
     private int animation_index = 0;
 
-    public ReferenceController(long ptr_queue, GPUProgram p_gpu_crud, ReferenceBufferGroup reference_buffers)
+    public ReferenceController(CL_CommandQueue cmd_queue, GPUProgram p_gpu_crud, ReferenceBufferGroup reference_buffers)
     {
         this.reference_buffers = reference_buffers;
 
         long k_ptr_create_texture_uv = p_gpu_crud.kernel_ptr(KernelType.create_texture_uv);
-        k_create_texture_uv = new CreateTextureUV_k(ptr_queue, k_ptr_create_texture_uv)
+        k_create_texture_uv = new CreateTextureUV_k(cmd_queue, k_ptr_create_texture_uv)
             .buf_arg(CreateTextureUV_k.Args.texture_uvs, this.reference_buffers.buffer(VERTEX_TEXTURE_UV));
 
         long k_ptr_create_keyframe = p_gpu_crud.kernel_ptr(KernelType.create_keyframe);
-        k_create_keyframe = new CreateKeyFrame_k(ptr_queue, k_ptr_create_keyframe)
+        k_create_keyframe = new CreateKeyFrame_k(cmd_queue, k_ptr_create_keyframe)
             .buf_arg(CreateKeyFrame_k.Args.key_frames, this.reference_buffers.buffer(ANIM_KEY_FRAME))
             .buf_arg(CreateKeyFrame_k.Args.frame_times, this.reference_buffers.buffer(ANIM_FRAME_TIME));
 
         long k_ptr_create_vertex_reference = p_gpu_crud.kernel_ptr(KernelType.create_vertex_reference);
-        k_create_vertex_reference = new CreateVertexRef_k(ptr_queue, k_ptr_create_vertex_reference)
+        k_create_vertex_reference = new CreateVertexRef_k(cmd_queue, k_ptr_create_vertex_reference)
             .buf_arg(CreateVertexRef_k.Args.vertex_references, this.reference_buffers.buffer(VERTEX_REFERENCE))
             .buf_arg(CreateVertexRef_k.Args.vertex_weights, this.reference_buffers.buffer(VERTEX_WEIGHT))
             .buf_arg(CreateVertexRef_k.Args.uv_tables, this.reference_buffers.buffer(VERTEX_UV_TABLE));
 
         long k_ptr_create_bone_bind_pose = p_gpu_crud.kernel_ptr(KernelType.create_bone_bind_pose);
-        k_create_bone_bind_pose = new CreateBoneBindPose_k(ptr_queue, k_ptr_create_bone_bind_pose)
+        k_create_bone_bind_pose = new CreateBoneBindPose_k(cmd_queue, k_ptr_create_bone_bind_pose)
             .buf_arg(CreateBoneBindPose_k.Args.bone_bind_poses, this.reference_buffers.buffer(BONE_BIND_POSE))
             .buf_arg(CreateBoneBindPose_k.Args.bone_layers, this.reference_buffers.buffer(BONE_LAYER));
 
         long k_ptr_create_bone_reference = p_gpu_crud.kernel_ptr(KernelType.create_bone_reference);
-        k_create_bone_reference = new CreateBoneRef_k(ptr_queue, k_ptr_create_bone_reference)
+        k_create_bone_reference = new CreateBoneRef_k(cmd_queue, k_ptr_create_bone_reference)
             .buf_arg(CreateBoneRef_k.Args.bone_references, this.reference_buffers.buffer(BONE_REFERENCE));
 
         long k_ptr_create_bone_channel = p_gpu_crud.kernel_ptr(KernelType.create_bone_channel);
-        k_create_bone_channel = new CreateBoneChannel_k(ptr_queue, k_ptr_create_bone_channel)
+        k_create_bone_channel = new CreateBoneChannel_k(cmd_queue, k_ptr_create_bone_channel)
             .buf_arg(CreateBoneChannel_k.Args.animation_timing_indices, this.reference_buffers.buffer(ANIM_TIMING_INDEX))
             .buf_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, this.reference_buffers.buffer(ANIM_POS_CHANNEL))
             .buf_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, this.reference_buffers.buffer(ANIM_ROT_CHANNEL))
             .buf_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, this.reference_buffers.buffer(ANIM_SCL_CHANNEL));
 
         long k_ptr_create_model_transform = p_gpu_crud.kernel_ptr(KernelType.create_model_transform);
-        k_create_model_transform = new CreateModelTransform_k(ptr_queue, k_ptr_create_model_transform)
+        k_create_model_transform = new CreateModelTransform_k(cmd_queue, k_ptr_create_model_transform)
             .buf_arg(CreateModelTransform_k.Args.model_transforms, this.reference_buffers.buffer(MODEL_TRANSFORM));
 
         long k_ptr_create_mesh_reference = p_gpu_crud.kernel_ptr(KernelType.create_mesh_reference);
-        k_create_mesh_reference = new CreateMeshReference_k(ptr_queue, k_ptr_create_mesh_reference)
+        k_create_mesh_reference = new CreateMeshReference_k(cmd_queue, k_ptr_create_mesh_reference)
             .buf_arg(CreateMeshReference_k.Args.mesh_vertex_tables, this.reference_buffers.buffer(MESH_VERTEX_TABLE))
             .buf_arg(CreateMeshReference_k.Args.mesh_face_tables, this.reference_buffers.buffer(MESH_FACE_TABLE));
 
         long k_ptr_create_mesh_face = p_gpu_crud.kernel_ptr(KernelType.create_mesh_face);
-        k_create_mesh_face = new CreateMeshFace_k(ptr_queue, k_ptr_create_mesh_face)
+        k_create_mesh_face = new CreateMeshFace_k(cmd_queue, k_ptr_create_mesh_face)
             .buf_arg(CreateMeshFace_k.Args.mesh_faces, this.reference_buffers.buffer(MESH_FACE));
 
         long k_ptr_create_animation_timings = p_gpu_crud.kernel_ptr(KernelType.create_animation_timings);
-        k_create_animation_timings = new CreateAnimationTimings_k(ptr_queue, k_ptr_create_animation_timings)
+        k_create_animation_timings = new CreateAnimationTimings_k(cmd_queue, k_ptr_create_animation_timings)
             .buf_arg(CreateAnimationTimings_k.Args.animation_durations, this.reference_buffers.buffer(ANIM_DURATION))
             .buf_arg(CreateAnimationTimings_k.Args.animation_tick_rates, this.reference_buffers.buffer(ANIM_TICK_RATE));
 
         long k_ptr_set_bone_channel_table = p_gpu_crud.kernel_ptr(KernelType.set_bone_channel_table);
-        k_set_bone_channel_table = new SetBoneChannelTable_k(ptr_queue, k_ptr_set_bone_channel_table)
+        k_set_bone_channel_table = new SetBoneChannelTable_k(cmd_queue, k_ptr_set_bone_channel_table)
             .buf_arg(SetBoneChannelTable_k.Args.bone_channel_tables, this.reference_buffers.buffer(BONE_ANIM_CHANNEL_TABLE));
     }
 
