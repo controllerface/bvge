@@ -6,6 +6,7 @@ import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEdges_k;
@@ -40,8 +41,8 @@ public class EdgeRenderer extends GameSystem
     private GL_VertexArray vao;
     private GL_VertexBuffer vbo_edge;
     private GL_VertexBuffer vbo_flag;
-    private long ptr_vbo_edge;
-    private long ptr_vbo_flag;
+    private CL_Buffer ptr_vbo_edge;
+    private CL_Buffer ptr_vbo_flag;
 
     public EdgeRenderer(ECS ecs)
     {
@@ -63,13 +64,13 @@ public class EdgeRenderer extends GameSystem
     private void inti_CL()
     {
         p_prepare_edges.init();
-        ptr_vbo_edge = GPGPU.share_memory(vbo_edge.id());
-        ptr_vbo_flag = GPGPU.share_memory(vbo_flag.id());
+        ptr_vbo_edge = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_edge);
+        ptr_vbo_flag = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_flag);
 
         long k_ptr_prepare_edges = p_prepare_edges.kernel_ptr(KernelType.prepare_edges);
         k_prepare_edges = new PrepareEdges_k(GPGPU.compute.render_queue, k_ptr_prepare_edges)
-            .ptr_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
-            .ptr_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)
+            .buf_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
+            .buf_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)
             .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT))
             .buf_arg(PrepareEdges_k.Args.point_hull_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_HULL_INDEX))
             .buf_arg(PrepareEdges_k.Args.hull_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
@@ -112,7 +113,7 @@ public class EdgeRenderer extends GameSystem
         vbo_flag.release();
         shader.release();
         p_prepare_edges.release();
-        GPGPU.cl_release_buffer(ptr_vbo_edge);
-        GPGPU.cl_release_buffer(ptr_vbo_flag);
+        ptr_vbo_edge.release();
+        ptr_vbo_flag.release();
     }
 }

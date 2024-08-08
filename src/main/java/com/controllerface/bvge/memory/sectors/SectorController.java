@@ -248,7 +248,7 @@ public class SectorController implements SectorContainer, GPUResource
 
     public float[] read_position(int entity_index)
     {
-        GPGPU.cl_zero_buffer(this.cmd_queue.ptr(), position_buf.ptr(), cl_float2.size());
+        GPU.CL.zero_buffer(this.cmd_queue, position_buf, cl_float2.size());
 
         k_read_position
             .buf_arg(ReadPosition_k.Args.output, position_buf)
@@ -260,7 +260,7 @@ public class SectorController implements SectorContainer, GPUResource
 
     public void read_entity_info(int entity_index, float[] output)
     {
-        GPGPU.cl_zero_buffer(this.cmd_queue.ptr(), info_buf.ptr(), cl_float2.size());
+        GPU.CL.zero_buffer(this.cmd_queue, info_buf, cl_float2.size());
 
         k_read_entity_info
             .buf_arg(ReadEntityInfo_k.Args.output, info_buf)
@@ -295,7 +295,7 @@ public class SectorController implements SectorContainer, GPUResource
 
     public int[] count_egress_entities()
     {
-        GPGPU.cl_zero_buffer(this.cmd_queue.ptr(), egress_sizes_buf.ptr(), EGRESS_COUNTERS_SIZE);
+        GPU.CL.zero_buffer(this.cmd_queue, egress_sizes_buf, EGRESS_COUNTERS_SIZE);
         int entity_count = next_entity();
         int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
         k_count_egress_entities

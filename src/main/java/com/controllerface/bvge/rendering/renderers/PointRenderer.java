@@ -6,6 +6,7 @@ import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PreparePoints_k;
@@ -36,8 +37,8 @@ public class PointRenderer extends GameSystem
     private GL_VertexArray vao;
     private GL_VertexBuffer vertex_vbo;
     private GL_VertexBuffer color_vbo;
-    private long vertex_vbo_ptr;
-    private long color_vbo_ptr;
+    private CL_Buffer vertex_buf;
+    private CL_Buffer color_buf;
 
     private GL_Shader shader;
     private GPUKernel k_prepare_points;
@@ -61,15 +62,15 @@ public class PointRenderer extends GameSystem
 
     private void init_CL()
     {
-        vertex_vbo_ptr = GPGPU.share_memory(vertex_vbo.id());
-        color_vbo_ptr = GPGPU.share_memory(color_vbo.id());
+        vertex_buf = GPU.CL.gl_share_memory(GPGPU.compute.context, vertex_vbo);
+        color_buf =GPU.CL.gl_share_memory(GPGPU.compute.context, color_vbo);
 
         prepare_points.init();
 
         long ptr = prepare_points.kernel_ptr(KernelType.prepare_points);
         k_prepare_points = new PreparePoints_k(GPGPU.compute.render_queue, ptr)
-            .ptr_arg(PreparePoints_k.Args.vertex_vbo, vertex_vbo_ptr)
-            .ptr_arg(PreparePoints_k.Args.color_vbo, color_vbo_ptr)
+            .buf_arg(PreparePoints_k.Args.vertex_vbo, vertex_buf)
+            .buf_arg(PreparePoints_k.Args.color_vbo, color_buf)
             .buf_arg(PreparePoints_k.Args.anti_gravity, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_ANTI_GRAV))
             .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT));
     }
@@ -90,8 +91,8 @@ public class PointRenderer extends GameSystem
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
             int count_size = GPGPU.compute.calculate_preferred_global_size(count);
             k_prepare_points
-                .share_mem(vertex_vbo_ptr)
-                .share_mem(color_vbo_ptr)
+                .share_mem(vertex_buf)
+                .share_mem(color_buf)
                 .set_arg(PreparePoints_k.Args.offset, offset)
                 .set_arg(PreparePoints_k.Args.max_point, count)
                 .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
@@ -111,6 +112,7 @@ public class PointRenderer extends GameSystem
         vertex_vbo.release();
         shader.release();
         prepare_points.release();
-        GPGPU.cl_release_buffer(vertex_vbo_ptr);
+        vertex_buf.release();
+        color_buf.release();
     }
 }

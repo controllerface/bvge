@@ -49,7 +49,7 @@ public class MouseRenderer extends GameSystem
 
     private GL_VertexArray vao;
     private GL_VertexBuffer vbo_transforms;
-    private long ptr_vbo_transforms;
+    private CL_Buffer transforms_buf;
     private CL_Buffer atomic_counter;
 
     private HullIndexData cursor_hulls;
@@ -73,12 +73,12 @@ public class MouseRenderer extends GameSystem
     {
         prepare_transforms.init();
         root_hull_filter.init();
-        ptr_vbo_transforms = GPGPU.share_memory(vbo_transforms.id());
-        atomic_counter     = GPU.CL.new_pinned_int(GPGPU.compute.context);
+        transforms_buf = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_transforms);
+        atomic_counter = GPU.CL.new_pinned_int(GPGPU.compute.context);
 
         long ptr = prepare_transforms.kernel_ptr(KernelType.prepare_transforms);
         k_prepare_transforms = (new PrepareTransforms_k(GPGPU.compute.render_queue, ptr))
-            .ptr_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transforms)
+            .buf_arg(PrepareTransforms_k.Args.transforms_out, transforms_buf)
             .set_arg(PrepareTransforms_k.Args.max_hull, 1)
             .set_arg(PrepareTransforms_k.Args.offset, 0)
             .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
@@ -97,7 +97,7 @@ public class MouseRenderer extends GameSystem
 
     public HullIndexData hull_filter(CL_CommandQueue cmd_queue, int model_id)
     {
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), atomic_counter.ptr(), CL_DataTypes.cl_int.size());
+        GPU.CL.zero_buffer(cmd_queue, atomic_counter, CL_DataTypes.cl_int.size());
 
         int entity_count = GPGPU.core_memory.sector_container().next_entity();
         int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
@@ -118,7 +118,7 @@ public class MouseRenderer extends GameSystem
         long final_buffer_size = (long) CL_DataTypes.cl_int.size() * final_count;
         var hulls_out = GPU.CL.new_buffer(GPGPU.compute.context, final_buffer_size);
 
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), atomic_counter.ptr(), CL_DataTypes.cl_int.size());
+        GPU.CL.zero_buffer(cmd_queue, atomic_counter, CL_DataTypes.cl_int.size());
 
         k_root_hull_filter
             .buf_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
@@ -163,7 +163,7 @@ public class MouseRenderer extends GameSystem
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         k_prepare_transforms
-            .share_mem(ptr_vbo_transforms)
+            .share_mem(transforms_buf)
             .buf_arg(PrepareTransforms_k.Args.indices, cursor_hulls.indices())
             .call_task();
 
@@ -180,7 +180,7 @@ public class MouseRenderer extends GameSystem
         vao.release();
         vbo_transforms.release();
         shader.release();
-        GPGPU.cl_release_buffer(ptr_vbo_transforms);
+        transforms_buf.release();
         prepare_transforms.release();
         root_hull_filter.release();
         atomic_counter.release();

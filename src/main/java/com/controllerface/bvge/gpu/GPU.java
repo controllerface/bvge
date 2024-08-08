@@ -12,6 +12,7 @@ import com.controllerface.bvge.gpu.cl.contexts.CL_Context;
 import com.controllerface.bvge.gpu.cl.devices.CL_Device;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
+import com.controllerface.bvge.gpu.cl.programs.CL_Program;
 import com.controllerface.bvge.gpu.gl.GL_GraphicsController;
 import com.controllerface.bvge.gpu.gl.buffers.GL_CommandBuffer;
 import com.controllerface.bvge.gpu.gl.buffers.GL_ElementBuffer;
@@ -24,6 +25,7 @@ import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.rendering.TextGlyph;
 import org.joml.Matrix4f;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.AITexture;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -46,6 +48,7 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -57,8 +60,10 @@ import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opencl.AMDDeviceAttributeQuery.CL_DEVICE_WAVEFRONT_WIDTH_AMD;
 import static org.lwjgl.opencl.CL10.*;
+import static org.lwjgl.opencl.CL10GL.*;
 import static org.lwjgl.opencl.CL11.CL_DEVICE_HOST_UNIFIED_MEMORY;
 import static org.lwjgl.opencl.CL12.CL_MEM_HOST_READ_ONLY;
+import static org.lwjgl.opencl.CL12.clEnqueueFillBuffer;
 import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
 import static org.lwjgl.opencl.KHRGLSharing.CL_WGL_HDC_KHR;
 import static org.lwjgl.opencl.NVDeviceAttributeQuery.CL_DEVICE_WARP_SIZE_NV;
@@ -647,6 +652,15 @@ public class GPU
         public static final String BUFFER_PREFIX = "__global";
         public static final String BUFFER_SUFFIX = "*";
 
+        private static final ByteBuffer ZERO_PATTERN_BUFFER = BufferUtils.createByteBuffer(4).order(ByteOrder.nativeOrder());
+        private static final ByteBuffer NEGATIVE_ONE_PATTERN_BUFFER = BufferUtils.createByteBuffer(4).order(ByteOrder.nativeOrder());
+
+        static
+        {
+            ZERO_PATTERN_BUFFER.putInt(0,0);
+            NEGATIVE_ONE_PATTERN_BUFFER.putInt(0, -1);
+        }
+
         //#region Argument Helpers
 
         public static short[] arg_short2(short x, short y)
@@ -878,6 +892,25 @@ public class GPU
 
         //#endregion
 
+        //#region Kernel/Program Creation Methods
+
+        public static CL_Program new_program(CL_Context context, CL_Device device, List<String> src_strings)
+        {
+            String[] src = src_strings.toArray(new String[]{});
+            long ptr = clCreateProgramWithSource(context.ptr(), src, null);
+            int result = clBuildProgram(ptr, device.ptr(), "-cl-finite-math-only -cl-denorms-are-zero -cl-mad-enable -cl-fast-relaxed-math", null, 0);
+            if (result != CL_SUCCESS)
+            {
+                log_build_error(ptr, device.ptr());
+                throw new RuntimeException("Error: clBuildProgram(): " + result);
+            }
+            return new CL_Program(ptr);
+        }
+
+        //#endregion
+
+        //#region Buffer Creation Methods
+
         public static CL_Buffer new_buffer(CL_Context context, long size)
         {
             try (var stack = MemoryStack.stackPush())
@@ -888,6 +921,22 @@ public class GPU
                 if (result != CL_SUCCESS) throw new RuntimeException("Error: clCreateBuffer(): " + result);
                 return new CL_Buffer(ptr);
             }
+        }
+
+        public static CL_Buffer new_empty_buffer(CL_Context context, CL_CommandQueue queue_ptr, long size)
+        {
+            var new_buffer_ptr = new_buffer(context, size);
+            zero_buffer(queue_ptr, new_buffer_ptr, size);
+            return new_buffer_ptr;
+        }
+
+        public static CL_Buffer new_mutable_buffer(CL_Context context, int[] src)
+        {
+            int[] status = new int[1];
+            long ptr = clCreateBuffer(context.ptr(), FLAGS_READ_CPU_COPY, src, status);
+            int result = status[0];
+            if (result != CL_SUCCESS) throw new RuntimeException("Error: clCreateBuffer(): " + result);
+            return new CL_Buffer(ptr);
         }
 
         public static CL_Buffer new_pinned_buffer(CL_Context context, long size)
@@ -936,6 +985,98 @@ public class GPU
             if (result != CL_SUCCESS) throw new RuntimeException("Error: clCreateBuffer(): " + result);
             return new CL_Buffer(ptr);
         }
+
+        //#endregion
+
+        //#region GL Interop
+
+        public static CL_Buffer gl_share_memory(CL_Context context, GL_ElementBuffer ebo)
+        {
+            return gl_share_memory(context, ebo.id());
+        }
+
+        public static CL_Buffer gl_share_memory(CL_Context context, GL_CommandBuffer cbo)
+        {
+            return gl_share_memory(context, cbo.id());
+        }
+
+        public static CL_Buffer gl_share_memory(CL_Context context, GL_VertexBuffer vbo)
+        {
+            return gl_share_memory(context, vbo.id());
+        }
+
+        private static CL_Buffer gl_share_memory(CL_Context context, int vboID)
+        {
+            try (var stack = MemoryStack.stackPush())
+            {
+                var status = stack.mallocInt(1);
+                long ptr = clCreateFromGLBuffer(context.ptr(), FLAGS_WRITE_GPU, vboID, status);
+                int result = status.get(0);
+                if (result != CL_SUCCESS) throw new RuntimeException("Error: clCreateFromGLBuffer(): " + result);
+                return new CL_Buffer(ptr);
+            }
+        }
+
+        public static void gl_acquire(CL_CommandQueue command_queue, List<CL_Buffer> mem)
+        {
+            try (var mem_stack = MemoryStack.stackPush())
+            {
+                var buffer = mem_to_buffer(mem_stack, mem);
+                int result = clEnqueueAcquireGLObjects(command_queue.ptr(), buffer, null, null);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueAcquireGLObjects(): " + result);
+                }
+            }
+        }
+
+        public static void gl_release(CL_CommandQueue command_queue, List<CL_Buffer> mem)
+        {
+            try (var mem_stack = MemoryStack.stackPush())
+            {
+                var buffer = mem_to_buffer(mem_stack, mem);
+                int result = clEnqueueReleaseGLObjects(command_queue.ptr(), buffer, null, null);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clEnqueueReleaseGLObjects(): " + result);
+                }
+            }
+        }
+
+        //#endregion
+
+        //#region Buffer Read/Write Methods
+
+        public static void zero_buffer(CL_CommandQueue queue, CL_Buffer buffer, long buffer_size)
+        {
+            int result = clEnqueueFillBuffer(queue.ptr(),
+                buffer.ptr(),
+                ZERO_PATTERN_BUFFER,
+                0,
+                buffer_size,
+                null,
+                null);
+
+            if (result != CL_SUCCESS)
+            {
+                throw new RuntimeException("Error: clEnqueueFillBuffer(0): " + result);
+            }
+        }
+
+        public static void negative_one_buffer(CL_CommandQueue queue, CL_Buffer buffer, long buffer_size)
+        {
+            int result = clEnqueueFillBuffer(queue.ptr(),
+                buffer.ptr(),
+                NEGATIVE_ONE_PATTERN_BUFFER,
+                0,
+                buffer_size,
+                null,
+                null);
+
+            if (result != CL_SUCCESS) throw new RuntimeException("Error: clEnqueueFillBuffer(-1): " + result);
+        }
+
+        //#endregion
 
         //#region Kernel Source Utils
 
@@ -1063,6 +1204,28 @@ public class GPU
 
         //#endregion
 
+        //#region CL Memory Utils
+
+        private static PointerBuffer int_to_buffer(MemoryStack mem_stack, long[] int_array)
+        {
+            return int_array == null
+                ? null
+                : mem_stack.callocPointer(1).put(0, int_array[0]);
+        }
+
+        private static PointerBuffer mem_to_buffer(MemoryStack mem_stack, List<CL_Buffer> mem)
+        {
+            Objects.requireNonNull(mem);
+            var pointer_buffer = mem_stack.callocPointer(mem.size());
+            for (int i = 0; i < mem.size(); i++)
+            {
+                pointer_buffer.put(i, mem.get(i).ptr());
+            }
+            return pointer_buffer;
+        }
+
+        //#endregion
+
         //#region CL Debug Utils
 
         private static boolean get_device_boolean(long device_ptr, int param_code)
@@ -1134,6 +1297,37 @@ public class GPU
                 value_buffer.get(bytes);
                 MemoryUtil.memFree(value_buffer);
                 return new String(bytes, 0, bytes.length - 1);
+            }
+        }
+
+        private static void log_build_error(long program, long device_id_ptr)
+        {
+            try (var mem_stack = MemoryStack.stackPush())
+            {
+                int result;
+
+                var size_buffer = mem_stack.callocPointer(1);
+                result = clGetProgramBuildInfo(program, device_id_ptr, CL_PROGRAM_BUILD_LOG, (int[]) null, size_buffer);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clGetProgramBuildInfo(): " + result);
+                }
+
+                int size = (int) size_buffer.get(0);
+                var message_buffer = mem_stack.calloc(size);
+                result = clGetProgramBuildInfo(program, device_id_ptr, CL_PROGRAM_BUILD_LOG, message_buffer, null);
+                if (result != CL_SUCCESS)
+                {
+                    throw new RuntimeException("Error: clGetProgramBuildInfo(): " + result);
+                }
+
+                byte[] bytes = new byte[size];
+                for (int i = 0; i < size; i++)
+                {
+                    bytes[i] = message_buffer.get();
+                }
+                var message = new String(bytes);
+                LOGGER.log(Level.SEVERE, message);
             }
         }
 

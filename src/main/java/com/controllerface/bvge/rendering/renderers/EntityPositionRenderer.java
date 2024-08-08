@@ -6,6 +6,7 @@ import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEntities_k;
@@ -34,7 +35,7 @@ public class EntityPositionRenderer extends GameSystem
 
     private GL_VertexArray vao;
     private GL_VertexBuffer vbo_vertex;
-    private long ptr_vbo_vertex;
+    private CL_Buffer ptr_vbo_vertex;
 
     public EntityPositionRenderer(ECS ecs)
     {
@@ -54,11 +55,11 @@ public class EntityPositionRenderer extends GameSystem
     private void init_CL()
     {
         p_prepare_entities.init();
-        ptr_vbo_vertex = GPGPU.share_memory(vbo_vertex.id());
+        ptr_vbo_vertex = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_vertex);
 
         long k_ptr_prepare_entities = p_prepare_entities.kernel_ptr(KernelType.prepare_entities);
         k_prepare_entities = new PrepareEntities_k(GPGPU.compute.render_queue, k_ptr_prepare_entities)
-            .ptr_arg(PrepareEntities_k.Args.vertex_vbo, ptr_vbo_vertex)
+            .buf_arg(PrepareEntities_k.Args.vertex_vbo, ptr_vbo_vertex)
             .buf_arg(PrepareEntities_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY));
     }
 
@@ -96,6 +97,6 @@ public class EntityPositionRenderer extends GameSystem
         vbo_vertex.release();
         shader.release();
         p_prepare_entities.release();
-        GPGPU.cl_release_buffer(ptr_vbo_vertex);
+        ptr_vbo_vertex.release();
     }
 }

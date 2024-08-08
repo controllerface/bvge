@@ -31,7 +31,6 @@ import java.util.concurrent.SynchronousQueue;
 
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.*;
-import static org.lwjgl.opencl.CL10.clFinish;
 
 public class PhysicsSimulation extends GameSystem
 {
@@ -576,7 +575,7 @@ public class PhysicsSimulation extends GameSystem
     {
         long local_buffer_size = cl_int.size() * GPGPU.compute.max_scan_block_size;
 
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, atomic_counter, cl_int.size());
 
         k_scan_bounds_single_block
             .ptr_arg(ScanBoundsSingleBlock_k.Args.bounds_bank_data, data_ptr)
@@ -616,7 +615,7 @@ public class PhysicsSimulation extends GameSystem
 
         gpu_int_scan.scan_int(p_data.ptr(), part_size);
 
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, atomic_counter, cl_int.size());
 
         s = Editor.ACTIVE
             ? System.nanoTime()
@@ -678,7 +677,7 @@ public class PhysicsSimulation extends GameSystem
         int hull_size = GPGPU.compute.calculate_preferred_global_size(hull_count);
 
         key_buffers.buffer(PhysicsBufferType.KEY_BANK).ensure_capacity(uniform_grid.get_key_bank_size());
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), ptr_counts_data.ptr(), grid_buffer_size);
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, ptr_counts_data, grid_buffer_size);
         k_build_key_bank
             .set_arg(BuildKeyBank_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
             .set_arg(BuildKeyBank_k.Args.max_hull, hull_count)
@@ -698,7 +697,7 @@ public class PhysicsSimulation extends GameSystem
         key_buffers.buffer(PhysicsBufferType.KEY_MAP).ensure_capacity(uniform_grid.getKey_map_size());
         int hull_count = GPGPU.core_memory.sector_container().next_hull();
         int hull_size = GPGPU.compute.calculate_preferred_global_size(hull_count);
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), ptr_counts_data.ptr(), grid_buffer_size);
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, ptr_counts_data, grid_buffer_size);
         k_build_key_map
             .set_arg(BuildKeyMap_k.Args.max_hull, hull_count)
             .call(arg_long(hull_size), GPGPU.compute.preferred_work_size);
@@ -717,7 +716,7 @@ public class PhysicsSimulation extends GameSystem
         int hull_count = GPGPU.core_memory.sector_container().next_hull();
         int hull_size = GPGPU.compute.calculate_preferred_global_size(hull_count);
         candidate_buffers.buffer(PhysicsBufferType.IN_BOUNDS).ensure_capacity(hull_count);
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, atomic_counter, cl_int.size());
 
         k_locate_in_bounds
             .buf_arg(LocateInBounds_k.Args.counter, atomic_counter)
@@ -753,7 +752,7 @@ public class PhysicsSimulation extends GameSystem
     {
         long local_buffer_size = cl_int.size() * GPGPU.compute.max_scan_block_size;
 
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, atomic_counter, cl_int.size());
 
         k_scan_candidates_single_block_out
             .ptr_arg(ScanCandidatesSingleBlockOut_k.Args.input, data_ptr)
@@ -786,7 +785,7 @@ public class PhysicsSimulation extends GameSystem
 
         gpu_int_scan.scan_int(p_data.ptr(), part_size);
 
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, atomic_counter, cl_int.size());
 
         k_complete_candidates_multi_block_out
             .ptr_arg(CompleteCandidatesMultiBlockOut_k.Args.input, data_ptr)
@@ -839,7 +838,7 @@ public class PhysicsSimulation extends GameSystem
         int candidate_size = GPGPU.compute.calculate_preferred_global_size((int) candidate_buffer_count);
         match_buffers.buffer(PhysicsBufferType.MATCHES).ensure_capacity(match_buffer_count);
         match_buffers.buffer(PhysicsBufferType.MATCHES_USED).ensure_capacity(candidate_buffer_count);
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, atomic_counter, cl_int.size());
         k_aabb_collide
             .set_arg(AABBCollide_k.Args.max_index, (int) candidate_buffer_count)
             .call(arg_long(candidate_size), GPGPU.compute.preferred_work_size);
@@ -895,7 +894,7 @@ public class PhysicsSimulation extends GameSystem
             : 0;
         int candidate_pair_size = (int) candidate_buffer_size / cl_int2.size();
         int candidate_size = GPGPU.compute.calculate_preferred_global_size(candidate_pair_size);
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), atomic_counter.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, atomic_counter, cl_int.size());
 
         long max_point_count = candidate_buffer_size
             * 2  // there are two bodies per collision pair
@@ -1156,7 +1155,7 @@ public class PhysicsSimulation extends GameSystem
         // After keys are generated, the next step is to calculate the space needed for the key map. This is
         // a similar process to calculating the bank offsets. The buffer is zeroed before use to clear out
         // data that is present after the previous tick.
-        GPGPU.cl_zero_buffer(GPGPU.compute.compute_queue.ptr(), ptr_offsets_data.ptr(), grid_buffer_size);
+        GPU.CL.zero_buffer(GPGPU.compute.compute_queue, ptr_offsets_data, grid_buffer_size);
         gpu_int_scan_out.scan_int_out(ptr_counts_data.ptr(), ptr_offsets_data.ptr(), uniform_grid.directory_length);
 
         // Now, the keymap itself is built. This is the structure that provides the ability to query

@@ -4,6 +4,7 @@ import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
+import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opencl.CL10;
@@ -182,22 +183,6 @@ public class GPGPU
         {
             System.out.println("Error on filling buffer with 0 int value: " + result);
             throw new RuntimeException("Error on filling buffer with 0 int value: " + result);
-        }
-    }
-
-    public static void cl_negative_one_buffer(long queue_ptr, long buffer_ptr, long buffer_size)
-    {
-        int result = clEnqueueFillBuffer(queue_ptr,
-            buffer_ptr,
-            NEGATIVE_ONE_PATTERN_BUFFER,
-            0,
-            buffer_size,
-            null,
-            null);
-        if (result != CL_SUCCESS)
-        {
-            System.out.println("Error on filling buffer with -1 int value: " + result);
-            throw new RuntimeException("Error on filling buffer with -1 int value: " + result);
         }
     }
 
@@ -506,53 +491,7 @@ public class GPGPU
 
     //#endregion
 
-    //#region GL Interop
-
-    public static long share_memory(int vboID)
-    {
-        try (var stack = MemoryStack.stackPush())
-        {
-            var status = stack.mallocInt(1);
-            long ptr = clCreateFromGLBuffer(compute.context.ptr(), FLAGS_WRITE_GPU, vboID, status);
-            int result = status.get(0);
-            if (result != CL_SUCCESS)
-            {
-                System.out.println("Error on GL memory share: " + result);
-                throw new RuntimeException("Error on GL memory share: " + result);
-            }
-            return ptr;
-        }
-    }
-
-    //#endregion
-
     //#region Misc. Public API
-
-    public static long build_gpu_program(List<String> src_strings)
-    {
-        String[] src = src_strings.toArray(new String[]{});
-        return CLUtils.cl_p(compute.context.ptr(), compute.device.ptr(), src);
-    }
-
-    public static long new_mutable_buffer(int[] src)
-    {
-        int[] status = new int[1];
-        long ptr = clCreateBuffer(compute.context.ptr(), FLAGS_READ_CPU_COPY, src, status);
-        int result = status[0];
-        if (result != CL_SUCCESS)
-        {
-            System.out.println("Error on mutable buffer creation: " + result);
-            throw new RuntimeException("Error on mutable buffer creation: " + result);
-        }
-        return ptr;
-    }
-
-    public static long new_empty_buffer(long queue_ptr, long size)
-    {
-        var new_buffer = GPU.CL.new_buffer(compute.context, size);
-        cl_zero_buffer(queue_ptr, new_buffer.ptr(), size);
-        return new_buffer.ptr();
-    }
 
     public static void cl_release_buffer(long mem_ptr)
     {

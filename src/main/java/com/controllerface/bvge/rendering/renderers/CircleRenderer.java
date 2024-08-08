@@ -45,7 +45,7 @@ public class CircleRenderer extends GameSystem
 
     private GL_VertexArray vao;
     private GL_VertexBuffer vbo_transform;
-    private long ptr_vbo_transform;
+    private CL_Buffer ptr_vbo_transform;
     private CL_Buffer atomic_counter;
 
     private HullIndexData circle_hulls;
@@ -69,12 +69,12 @@ public class CircleRenderer extends GameSystem
     {
         p_prepare_transforms.init();
         p_root_hull_filter.init();
-        ptr_vbo_transform = GPGPU.share_memory(vbo_transform.id());
+        ptr_vbo_transform = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_transform);
         atomic_counter    = GPU.CL.new_pinned_int(GPGPU.compute.context);
 
         long k_ptr_prepare_transforms = p_prepare_transforms.kernel_ptr(KernelType.prepare_transforms);
         k_prepare_transforms = (new PrepareTransforms_k(GPGPU.compute.render_queue, k_ptr_prepare_transforms))
-            .ptr_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transform)
+            .buf_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transform)
             .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
             .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
             .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
@@ -90,7 +90,7 @@ public class CircleRenderer extends GameSystem
 
     public HullIndexData hull_filter(CL_CommandQueue cmd_queue, int mesh_id)
     {
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), atomic_counter.ptr(), CL_DataTypes.cl_int.size());
+        GPU.CL.zero_buffer(cmd_queue, atomic_counter, CL_DataTypes.cl_int.size());
 
         int hull_count = GPGPU.core_memory.sector_container().next_hull();
         int hull_size  = GPGPU.compute.calculate_preferred_global_size(hull_count);
@@ -111,7 +111,7 @@ public class CircleRenderer extends GameSystem
         long final_buffer_size = (long) CL_DataTypes.cl_int.size() * final_count;
         var hulls_out = GPU.CL.new_buffer(GPGPU.compute.context, final_buffer_size);
 
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), atomic_counter.ptr(), CL_DataTypes.cl_int.size());
+        GPU.CL.zero_buffer(cmd_queue, atomic_counter, CL_DataTypes.cl_int.size());
 
         k_root_hull_filter
             .buf_arg(HullFilter_k.Args.hulls_out, hulls_out)
@@ -168,7 +168,7 @@ public class CircleRenderer extends GameSystem
         shader.release();
         p_prepare_transforms.release();
         p_root_hull_filter.release();
-        GPGPU.cl_release_buffer(ptr_vbo_transform);
+        ptr_vbo_transform.release();
         atomic_counter.release();
     }
 }

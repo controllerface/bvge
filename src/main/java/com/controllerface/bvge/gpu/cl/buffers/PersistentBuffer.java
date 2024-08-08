@@ -33,7 +33,7 @@ public class PersistentBuffer extends ResizableBuffer
         }
 
         var new_buffer = GPU.CL.new_buffer(GPGPU.compute.context, this.byte_capacity);
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), new_buffer.ptr(), this.byte_capacity);
+        GPU.CL.zero_buffer(cmd_queue, new_buffer, this.byte_capacity);
         GPGPU.cl_transfer_buffer(cmd_queue.ptr(), this.buffer.ptr(), new_buffer.ptr(), previous_capacity);
 
         release();

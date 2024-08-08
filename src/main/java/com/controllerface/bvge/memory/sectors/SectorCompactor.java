@@ -236,7 +236,7 @@ public class SectorCompactor implements GPUResource
         long local_buffer_size = cl_int2.size() * GPGPU.compute.max_scan_block_size;
         long local_buffer_size2 = cl_int4.size() * GPGPU.compute.max_scan_block_size;
 
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), ptr_delete_sizes.ptr(), DELETE_COUNTERS_SIZE);
+        GPU.CL.zero_buffer(cmd_queue, ptr_delete_sizes, DELETE_COUNTERS_SIZE);
 
         k_scan_deletes_single_block_out
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
@@ -273,7 +273,7 @@ public class SectorCompactor implements GPUResource
         gpu_int2_scan.scan_int2(b_delete_partial_1.pointer(), part_size);
         gpu_int4_scan.scan_int4(b_delete_partial_2.pointer(), part_size);
 
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), ptr_delete_sizes.ptr(), DELETE_COUNTERS_SIZE);
+        GPU.CL.zero_buffer(cmd_queue, ptr_delete_sizes, DELETE_COUNTERS_SIZE);
 
         k_complete_deletes_multi_block_out
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output1, o1_data_ptr)

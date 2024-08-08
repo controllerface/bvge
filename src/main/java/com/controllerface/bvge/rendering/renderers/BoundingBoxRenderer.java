@@ -6,6 +6,7 @@ import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareBounds_k;
@@ -35,7 +36,7 @@ public class BoundingBoxRenderer extends GameSystem
 
     private GL_VertexArray vao;
     private GL_VertexBuffer vbo_position;
-    private long ptr_vbo_position;
+    private CL_Buffer ptr_vbo_position;
 
     private final int[] offsets = new int[Constants.Rendering.MAX_BATCH_SIZE];
     private final int[] counts = new int[Constants.Rendering.MAX_BATCH_SIZE];
@@ -63,11 +64,11 @@ public class BoundingBoxRenderer extends GameSystem
     private void init_CL()
     {
         p_prepare_bounds.init();
-        ptr_vbo_position = GPGPU.share_memory(vbo_position.id());
+        ptr_vbo_position = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_position);
 
         long k_ptr_prepare_bounds = p_prepare_bounds.kernel_ptr(KernelType.prepare_bounds);
         k_prepare_bounds = new PrepareBounds_k(GPGPU.compute.render_queue, k_ptr_prepare_bounds)
-            .ptr_arg(PrepareBounds_k.Args.vbo, ptr_vbo_position)
+            .buf_arg(PrepareBounds_k.Args.vbo, ptr_vbo_position)
             .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_AABB));
     }
 
@@ -113,6 +114,6 @@ public class BoundingBoxRenderer extends GameSystem
         vbo_position.release();
         shader.release();
         p_prepare_bounds.release();
-        GPGPU.cl_release_buffer(ptr_vbo_position);
+        ptr_vbo_position.release();
     }
 }

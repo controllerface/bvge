@@ -52,7 +52,7 @@ public class BrokenObjectBuffer implements GPUResource
 
     public void egress(int entity_count, int egress_count)
     {
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), ptr_egress_size.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(cmd_queue, ptr_egress_size, cl_int.size());
         int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
         broken_group.buffer(BrokenBufferType.BROKEN_POSITIONS).ensure_capacity(egress_count);
         broken_group.buffer(BrokenBufferType.BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);

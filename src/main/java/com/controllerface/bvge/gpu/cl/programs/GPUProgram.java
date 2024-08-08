@@ -84,7 +84,7 @@ public abstract class GPUProgram implements GPUResource
     /**
      * This is the backing Open CL program the implementation class wraps.
      */
-    protected long program_ptr;
+    protected CL_Program program;
 
     /**
      * After init is called, this will contain all the Open CL kernels that are defined in the program
@@ -106,7 +106,7 @@ public abstract class GPUProgram implements GPUResource
      */
     protected void make_program()
     {
-        this.program_ptr = GPGPU.build_gpu_program(this.src);
+        this.program = GPU.CL.new_program(GPGPU.compute.context, GPGPU.compute.device, this.src);
     }
 
     /**
@@ -119,7 +119,7 @@ public abstract class GPUProgram implements GPUResource
      */
     protected void load_kernel(KernelType kernel)
     {
-        this.kernels.put(kernel, CLUtils.cl_k(program_ptr, kernel.name()));
+        this.kernels.put(kernel, CLUtils.cl_k(program.ptr(), kernel.name()));
     }
 
     /**
@@ -127,7 +127,7 @@ public abstract class GPUProgram implements GPUResource
      */
     public void release()
     {
-        clReleaseProgram(program_ptr);
+        program.release();
         for (long kernel_ptr : kernels.values())
         {
             GPGPU.cl_release_kernel(kernel_ptr);

@@ -191,7 +191,7 @@ public class UnorderedSectorOutput implements GPUResource
 
     public void egress(int entity_count, int[] egress_counts)
     {
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), egress_sizes_buf.ptr(), (long)cl_int.size() * 6);
+        GPU.CL.zero_buffer(cmd_queue, egress_sizes_buf, (long)cl_int.size() * 6);
         int entity_capacity        = egress_counts[0];
         int hull_capacity          = egress_counts[1];
         int point_capacity         = egress_counts[2];

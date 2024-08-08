@@ -1,5 +1,6 @@
 package com.controllerface.bvge.gpu.cl.kernels;
 
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.CLUtils;
 import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
@@ -19,7 +20,7 @@ public abstract class GPUKernel
 {
     final CL_CommandQueue cmd_queue;
     final long kernel_ptr;
-    final List<Long> shared_memory_ptrs = new ArrayList<>();
+    final List<CL_Buffer> shared_memory_ptrs = new ArrayList<>();
 
     public GPUKernel(CL_CommandQueue cmd_queue, long kernel_ptr)
     {
@@ -27,7 +28,7 @@ public abstract class GPUKernel
         this.kernel_ptr = kernel_ptr;
     }
 
-    public GPUKernel share_mem(long mem_ptr)
+    public GPUKernel share_mem(CL_Buffer mem_ptr)
     {
         shared_memory_ptrs.add(mem_ptr);
         return this;
@@ -165,14 +166,14 @@ public abstract class GPUKernel
     {
         if (!shared_memory_ptrs.isEmpty())
         {
-            CLUtils.gl_acquire(cmd_queue.ptr(), shared_memory_ptrs);
+            GPU.CL.gl_acquire(cmd_queue, shared_memory_ptrs);
         }
 
         k_call(cmd_queue.ptr(), kernel_ptr, global_work_size, local_work_size, global_work_offset);
 
         if (!shared_memory_ptrs.isEmpty())
         {
-            CLUtils.gl_release(cmd_queue.ptr(), shared_memory_ptrs);
+            GPU.CL.gl_release(cmd_queue, shared_memory_ptrs);
         }
 
         shared_memory_ptrs.clear();

@@ -56,8 +56,8 @@ public class LiquidRenderer extends GameSystem
     private GL_VertexArray vao;
     private GL_VertexBuffer vbo_transform;
     private GL_VertexBuffer vbo_color;
-    private long ptr_vbo_transform;
-    private long ptr_vbo_color;
+    private CL_Buffer ptr_vbo_transform;
+    private CL_Buffer ptr_vbo_color;
     private CL_Buffer atomic_counter;
 
     private HullIndexData circle_hulls;
@@ -86,13 +86,13 @@ public class LiquidRenderer extends GameSystem
         p_prepare_liquids.init();
         p_root_hull_filter.init();
         atomic_counter = GPU.CL.new_pinned_int(GPGPU.compute.context);
-        ptr_vbo_transform = GPGPU.share_memory(vbo_transform.id());
-        ptr_vbo_color = GPGPU.share_memory(vbo_color.id());
+        ptr_vbo_transform = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_transform);
+        ptr_vbo_color = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_color);
 
         long k_ptr_prepare_liquids = p_prepare_liquids.kernel_ptr(KernelType.prepare_liquids);
         k_prepare_liquids = (new PrepareLiquids_k(GPGPU.compute.render_queue, k_ptr_prepare_liquids))
-            .ptr_arg(PrepareLiquids_k.Args.transforms_out, ptr_vbo_transform)
-            .ptr_arg(PrepareLiquids_k.Args.colors_out, ptr_vbo_color)
+            .buf_arg(PrepareLiquids_k.Args.transforms_out, ptr_vbo_transform)
+            .buf_arg(PrepareLiquids_k.Args.colors_out, ptr_vbo_color)
             .buf_arg(PrepareLiquids_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
             .buf_arg(PrepareLiquids_k.Args.hull_scales, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
             .buf_arg(PrepareLiquids_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION))
@@ -162,7 +162,7 @@ public class LiquidRenderer extends GameSystem
 
     private HullIndexData GL_hull_filter(CL_CommandQueue cmd_queue, int model_id)
     {
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), atomic_counter.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(cmd_queue, atomic_counter, cl_int.size());
 
         int entity_count = GPGPU.core_memory.sector_container().next_entity();
         int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
@@ -183,7 +183,7 @@ public class LiquidRenderer extends GameSystem
         long final_buffer_size = (long) cl_int.size() * final_count;
         var hulls_out = GPU.CL.new_buffer(GPGPU.compute.context, final_buffer_size);
 
-        GPGPU.cl_zero_buffer(cmd_queue.ptr(), atomic_counter.ptr(), cl_int.size());
+        GPU.CL.zero_buffer(cmd_queue, atomic_counter, cl_int.size());
 
         k_root_hull_filter
             .buf_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
@@ -200,8 +200,11 @@ public class LiquidRenderer extends GameSystem
     {
         vao.release();
         vbo_transform.release();
+        vbo_color.release();
         shader.release();
         p_prepare_liquids.release();
-        GPGPU.cl_release_buffer(ptr_vbo_transform);
+        ptr_vbo_transform.release();
+        ptr_vbo_color.release();
+        atomic_counter.release();
     }
 }
