@@ -21,7 +21,6 @@ import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.MeshRegistry;
 import com.controllerface.bvge.rendering.HullIndexData;
-import com.controllerface.bvge.util.Assets;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
 import static com.controllerface.bvge.gpu.cl.CLUtils.arg_long;

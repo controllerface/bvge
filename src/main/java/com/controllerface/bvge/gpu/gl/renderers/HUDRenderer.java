@@ -10,10 +10,9 @@ import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.gpu.gl.textures.Texture;
+import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.rendering.TextGlyph;
 import com.controllerface.bvge.substances.Solid;
-import com.controllerface.bvge.util.Assets;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -42,7 +41,7 @@ public class HUDRenderer extends GameSystem
     private int id_vbo;
     private int cbo;
 
-    private Texture texture;
+    private GL_Texture2D texture;
     private GL_Shader shader;
     private final PlayerInventory player_inventory;
 

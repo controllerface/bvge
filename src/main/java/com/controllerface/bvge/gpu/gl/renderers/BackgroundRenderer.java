@@ -6,8 +6,7 @@ import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.gpu.gl.textures.Texture;
-import com.controllerface.bvge.util.Assets;
+import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
@@ -22,7 +21,7 @@ public class BackgroundRenderer extends GameSystem
     private int position_vbo;
     private int uv_vbo;
 
-    private Texture texture;
+    private GL_Texture2D texture;
     private GL_Shader shader;
 
     public BackgroundRenderer(ECS ecs)
@@ -53,7 +52,7 @@ public class BackgroundRenderer extends GameSystem
                 0.0f, 1.0f,
             };
 
-        texture = new Texture();
+        texture = new GL_Texture2D();
         texture.init("/img/cave_bg.png");
         vao = glCreateVertexArrays();
 

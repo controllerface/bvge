@@ -9,6 +9,8 @@ import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.ThreeStageShader;
 import com.controllerface.bvge.gpu.gl.shaders.TwoStageShader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
+import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
+import org.lwjgl.assimp.AITexture;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.glfw.GLFWWindowSizeCallbackI;
@@ -45,6 +47,20 @@ public class GPU
             };
             shader.compile();
             return shader;
+        }
+
+        public static GL_Texture2D new_texture(AITexture textureData)
+        {
+            GL_Texture2D texture = new GL_Texture2D();
+            texture.init(textureData);
+            return texture;
+        }
+
+        public static GL_Texture2D new_texture(String resourceName)
+        {
+            GL_Texture2D texture = new GL_Texture2D();
+            texture.init(resourceName);
+            return texture;
         }
 
         public static GL_GraphicsController init_gl(String title, EventBus event_bus, InputSystem inputSystem)

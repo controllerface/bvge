@@ -1,6 +1,6 @@
 package com.controllerface.bvge.models.geometry;
 
-import com.controllerface.bvge.gpu.gl.textures.Texture;
+import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.models.bones.BoneBindPose;
 import com.controllerface.bvge.models.bones.BoneOffset;
 import org.joml.Matrix4f;
@@ -14,7 +14,7 @@ public record Model(Mesh[] meshes,
                     Map<String, Matrix4f> bone_transforms,
                     Map<String, Integer> bone_indices,
                     Map<Integer, BoneBindPose> bind_poses,
-                    List<Texture> textures,
+                    List<GL_Texture2D> textures,
                     int root_index,
                     int root_transform_index)
 {
@@ -30,7 +30,7 @@ public record Model(Mesh[] meshes,
             -1);
     }
 
-    public static Model fromBasicMesh(Mesh mesh, Texture texture)
+    public static Model fromBasicMesh(Mesh mesh, GL_Texture2D texture)
     {
         return new Model(new Mesh[]{ mesh },
             new Matrix4f(),

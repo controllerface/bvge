@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gpu.gl;
 
-import com.controllerface.bvge.gpu.gl.textures.Texture;
+import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.rendering.TextGlyph;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -339,12 +339,12 @@ public class GLUtils
         MemoryUtil.memFree(image);
     }
 
-    public static Texture build_character_map(int texture_size, String font_file, Map<Character, TextGlyph> character_map)
+    public static GL_Texture2D build_character_map(int texture_size, String font_file, Map<Character, TextGlyph> character_map)
     {
         return build_character_map(texture_size, font_file, character_set, character_map);
     }
 
-    public static Texture build_character_map(int texture_size, String font_file, String[] character_set, Map<Character, TextGlyph> character_map)
+    public static GL_Texture2D build_character_map(int texture_size, String font_file, String[] character_set, Map<Character, TextGlyph> character_map)
     {
         long ft_library = initFreeType();
         FT_Face ft_face = loadFontFace(ft_library, font_file);
@@ -352,7 +352,7 @@ public class GLUtils
         FT_Set_Pixel_Sizes(ft_face, texture_size, texture_size);
         var font = hb_ft_font_create_referenced(ft_face.address());
         var face = hb_ft_face_create_referenced(ft_face.address());
-        var texture_3d = new Texture();
+        var texture_3d = new GL_Texture2D();
         texture_3d.init_array();
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

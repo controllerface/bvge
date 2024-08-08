@@ -15,7 +15,6 @@ import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
-import com.controllerface.bvge.util.Assets;
 
 import static com.controllerface.bvge.game.Constants.Rendering.SCALAR_LENGTH;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_2D_LENGTH;

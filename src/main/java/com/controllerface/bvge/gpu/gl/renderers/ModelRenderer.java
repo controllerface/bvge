@@ -21,13 +21,12 @@ import com.controllerface.bvge.gpu.cl.programs.ScanIntArrayOut;
 import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.gpu.gl.textures.Texture;
+import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.memory.types.ReferenceBufferType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.Model;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
-import com.controllerface.bvge.util.Assets;
 
 import java.util.LinkedHashSet;
 import java.util.Objects;
@@ -84,7 +83,7 @@ public class ModelRenderer extends GameSystem
     private int mesh_count;
     private long mesh_size;
 
-    private Texture[] textures;
+    private GL_Texture2D[] textures;
     private GL_Shader shader;
 
     private GPUKernel k_count_mesh_instances;
@@ -123,7 +122,7 @@ public class ModelRenderer extends GameSystem
         mesh_size = (long)mesh_count * CL_DataTypes.cl_int.size();
         raw_query = new int[mesh_count * 2]; // int2
 
-        var texture_buffer = new LinkedHashSet<Texture>();
+        var texture_buffer = new LinkedHashSet<GL_Texture2D>();
 
         int query_index = 0;
         for (var model : models)
@@ -145,7 +144,7 @@ public class ModelRenderer extends GameSystem
             }
         }
 
-        textures = new Texture[texture_buffer.size()];
+        textures = new GL_Texture2D[texture_buffer.size()];
         int texture_index = 0;
         for (var texture : texture_buffer)
         {

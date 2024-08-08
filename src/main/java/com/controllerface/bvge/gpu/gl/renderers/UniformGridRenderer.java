@@ -11,7 +11,6 @@ import com.controllerface.bvge.gpu.gl.GLUtils;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.physics.UniformGrid;
-import com.controllerface.bvge.util.Assets;
 
 import java.util.Objects;
 

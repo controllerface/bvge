@@ -3,15 +3,15 @@ package com.controllerface.bvge.models.geometry;
 import com.controllerface.bvge.core.MathEX;
 import com.controllerface.bvge.game.InventorySystem;
 import com.controllerface.bvge.game.state.AnimationState;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
-import com.controllerface.bvge.gpu.gl.textures.Texture;
+import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.models.SceneNode;
 import com.controllerface.bvge.models.bones.BoneBindPose;
 import com.controllerface.bvge.models.bones.BoneChannel;
 import com.controllerface.bvge.models.bones.BoneOffset;
 import com.controllerface.bvge.models.bones.NamedBone;
 import com.controllerface.bvge.physics.PhysicsObjects;
-import com.controllerface.bvge.util.Assets;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.lwjgl.PointerBuffer;
@@ -92,7 +92,7 @@ public class ModelRegistry
         var node_map = new HashMap<String, SceneNode>();
 
         // if textures are present in the model, they are loaded into this list
-        var textures = new ArrayList<Texture>();
+        var textures = new ArrayList<GL_Texture2D>();
 
         // maps each bone to a calculated bind pose transformation matrix
         var bone_transforms = new HashMap<String, Matrix4f>();
@@ -687,7 +687,7 @@ public class ModelRegistry
         });
     }
 
-    private static void load_textures(AIScene aiScene, List<Texture> textures)
+    private static void load_textures(AIScene aiScene, List<GL_Texture2D> textures)
     {
         if (aiScene.mNumTextures() <= 0)
         {
@@ -702,7 +702,7 @@ public class ModelRegistry
             // todo: add diffuse/normal/specular map name checks and tag/sort accordingly
             //System.out.println("texture name: " + raw_texture.mFilename().dataString());
 
-            textures.add(Assets.load_texture(raw_texture));
+            textures.add(GPU.GL.new_texture(raw_texture));
         }
     }
 
@@ -803,7 +803,7 @@ public class ModelRegistry
 
     public static void init()
     {
-        var texture = Assets.load_texture("/img/blocks.png");
+        var texture = GPU.GL.new_texture("/img/blocks.png");
         loaded_models.put(CURSOR, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
         loaded_models.put(CIRCLE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.CIRCLE_MESH)));
         loaded_models.put(LINE_PARTICLE, Model.fromBasicMesh(MeshRegistry.get_mesh_by_index(MeshRegistry.LINE_MESH)));

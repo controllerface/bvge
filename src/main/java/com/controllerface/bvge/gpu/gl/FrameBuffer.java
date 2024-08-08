@@ -1,6 +1,6 @@
 package com.controllerface.bvge.gpu.gl;
 
-import com.controllerface.bvge.gpu.gl.textures.Texture;
+import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 
 import static org.lwjgl.opengl.GL11.GL_DEPTH_COMPONENT;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
@@ -9,7 +9,7 @@ import static org.lwjgl.opengl.GL30.*;
 public class FrameBuffer
 {
     private int fboId = 0;
-    private Texture texture = null;
+    private GL_Texture2D texture = null;
     public FrameBuffer(int width, int height)
     {
         // generate framebuffer
@@ -17,7 +17,7 @@ public class FrameBuffer
         glBindFramebuffer(GL_FRAMEBUFFER, fboId);
 
         // create texture/ attach to buffer
-        this.texture = new Texture(width, height);
+        this.texture = new GL_Texture2D(width, height);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this.texture.getTex_id(), 0);
 
         // create render buffer

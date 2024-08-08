@@ -28,7 +28,7 @@ import static org.lwjgl.opengl.GL45C.glPixelStorei;
 import static org.lwjgl.opengl.GL45C.*;
 import static org.lwjgl.stb.STBImage.*;
 
-public class Texture implements GPUResource
+public class GL_Texture2D implements GPUResource
 {
     private String filepath;
     private int tex_id;
@@ -36,7 +36,7 @@ public class Texture implements GPUResource
     private int height;
     private int channels;
 
-    public Texture()
+    public GL_Texture2D()
     {
         tex_id = -1;
         width = -1;
@@ -44,7 +44,7 @@ public class Texture implements GPUResource
         channels = -1;
     }
 
-    public Texture(int width, int height)
+    public GL_Texture2D(int width, int height)
     {
         this.filepath = "generated";
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
@@ -131,7 +131,7 @@ public class Texture implements GPUResource
         stbi_set_flip_vertically_on_load(true);
 
         ByteBuffer buf;
-        var stream = Texture.class.getResourceAsStream(resource_path);
+        var stream = GL_Texture2D.class.getResourceAsStream(resource_path);
         try
         {
             var bytes = stream.readAllBytes();
@@ -208,7 +208,7 @@ public class Texture implements GPUResource
             return false;
         }
 
-        Texture texture = (Texture) o;
+        GL_Texture2D texture = (GL_Texture2D) o;
 
         if (tex_id != texture.tex_id)
         {

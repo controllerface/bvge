@@ -24,7 +24,6 @@ import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.rendering.HullIndexData;
-import com.controllerface.bvge.util.Assets;
 
 import java.util.Objects;
 
