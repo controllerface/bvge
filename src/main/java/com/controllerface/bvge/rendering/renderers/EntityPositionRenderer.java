@@ -1,8 +1,6 @@
 package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
@@ -16,6 +14,7 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
+import com.controllerface.bvge.rendering.Renderer;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
@@ -23,7 +22,7 @@ import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL45C.glPointSize;
 
-public class EntityPositionRenderer extends GameSystem
+public class EntityPositionRenderer implements Renderer
 {
     private static final int BATCH_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
     private static final int POSITION_ATTRIBUTE = 0;
@@ -36,9 +35,8 @@ public class EntityPositionRenderer extends GameSystem
     private GL_VertexBuffer vbo_vertex;
     private CL_Buffer ptr_vbo_vertex;
 
-    public EntityPositionRenderer(ECS ecs)
+    public EntityPositionRenderer()
     {
-        super(ecs);
         init_GL();
         init_CL();
     }
@@ -62,7 +60,7 @@ public class EntityPositionRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         vao.bind();
         glPointSize(3);
@@ -89,7 +87,7 @@ public class EntityPositionRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         vbo_vertex.release();

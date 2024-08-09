@@ -27,6 +27,7 @@ import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.rendering.HullIndexData;
+import com.controllerface.bvge.rendering.Renderer;
 
 import java.util.Objects;
 
@@ -35,7 +36,7 @@ import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 
-public class MouseRenderer extends GameSystem
+public class MouseRenderer implements Renderer
 {
     private static final int TRANSFORM_ATTRIBUTE = 0;
 
@@ -52,10 +53,11 @@ public class MouseRenderer extends GameSystem
     private CL_Buffer atomic_counter;
 
     private HullIndexData cursor_hulls;
+    private final ECS ecs;
 
     public MouseRenderer(ECS ecs)
     {
-        super(ecs);
+        this.ecs = ecs;
         init_GL();
         init_CL();
     }
@@ -127,7 +129,7 @@ public class MouseRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         if (cursor_hulls != null && cursor_hulls.indices() != null)
         {
@@ -171,7 +173,7 @@ public class MouseRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         vbo_transforms.release();

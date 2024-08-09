@@ -2,7 +2,6 @@ package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
@@ -26,6 +25,7 @@ import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.rendering.HullIndexData;
+import com.controllerface.bvge.rendering.Renderer;
 
 import java.util.Objects;
 
@@ -36,7 +36,7 @@ import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 
-public class LiquidRenderer extends GameSystem
+public class LiquidRenderer implements Renderer
 {
     private final UniformGrid uniformGrid;
 
@@ -60,10 +60,11 @@ public class LiquidRenderer extends GameSystem
     private CL_Buffer atomic_counter;
 
     private HullIndexData circle_hulls;
+    private final ECS ecs;
 
     public LiquidRenderer(ECS ecs, UniformGrid uniformGrid)
     {
-        super(ecs);
+        this.ecs = ecs;
         this.uniformGrid = uniformGrid;
 
         init_GL();
@@ -106,14 +107,49 @@ public class LiquidRenderer extends GameSystem
             .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
     }
 
+    private HullIndexData hull_filter(CL_CommandQueue cmd_queue, int model_id)
+    {
+        GPU.CL.zero_buffer(cmd_queue, atomic_counter, cl_int.size());
+
+        int entity_count = GPGPU.core_memory.sector_container().next_entity();
+        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
+
+        k_root_hull_count
+            .buf_arg(RootHullCount_k.Args.counter, atomic_counter)
+            .set_arg(RootHullCount_k.Args.model_id, model_id)
+            .set_arg(RootHullCount_k.Args.max_entity, entity_count)
+            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
+
+        int final_count = GPU.CL.read_pinned_int(cmd_queue, atomic_counter);
+
+        if (final_count == 0)
+        {
+            return new HullIndexData(null, final_count);
+        }
+
+        long final_buffer_size = (long) cl_int.size() * final_count;
+        var hulls_out = GPU.CL.new_buffer(GPGPU.compute.context, final_buffer_size);
+
+        GPU.CL.zero_buffer(cmd_queue, atomic_counter, cl_int.size());
+
+        k_root_hull_filter
+            .buf_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
+            .buf_arg(RootHullFilter_k.Args.counter, atomic_counter)
+            .set_arg(RootHullFilter_k.Args.model_id, model_id)
+            .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
+            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
+
+        return new HullIndexData(hulls_out, final_count);
+    }
+
     @Override
-    public void tick(float dt)
+    public void render()
     {
         if (circle_hulls != null && circle_hulls.indices() != null)
         {
             circle_hulls.indices().release();
         }
-        circle_hulls = GL_hull_filter(GPGPU.compute.render_queue, ModelRegistry.CIRCLE_PARTICLE);
+        circle_hulls = hull_filter(GPGPU.compute.render_queue, ModelRegistry.CIRCLE_PARTICLE);
 
 
         if (Editor.ACTIVE)
@@ -156,43 +192,8 @@ public class LiquidRenderer extends GameSystem
         vao.unbind();
     }
 
-    private HullIndexData GL_hull_filter(CL_CommandQueue cmd_queue, int model_id)
-    {
-        GPU.CL.zero_buffer(cmd_queue, atomic_counter, cl_int.size());
-
-        int entity_count = GPGPU.core_memory.sector_container().next_entity();
-        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
-
-        k_root_hull_count
-            .buf_arg(RootHullCount_k.Args.counter, atomic_counter)
-            .set_arg(RootHullCount_k.Args.model_id, model_id)
-            .set_arg(RootHullCount_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
-
-        int final_count = GPU.CL.read_pinned_int(cmd_queue, atomic_counter);
-
-        if (final_count == 0)
-        {
-            return new HullIndexData(null, final_count);
-        }
-
-        long final_buffer_size = (long) cl_int.size() * final_count;
-        var hulls_out = GPU.CL.new_buffer(GPGPU.compute.context, final_buffer_size);
-
-        GPU.CL.zero_buffer(cmd_queue, atomic_counter, cl_int.size());
-
-        k_root_hull_filter
-            .buf_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
-            .buf_arg(RootHullFilter_k.Args.counter, atomic_counter)
-            .set_arg(RootHullFilter_k.Args.model_id, model_id)
-            .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
-
-        return new HullIndexData(hulls_out, final_count);
-    }
-
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         vbo_transform.release();

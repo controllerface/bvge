@@ -1,8 +1,6 @@
 package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
@@ -23,13 +21,14 @@ import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.MeshRegistry;
 import com.controllerface.bvge.rendering.HullIndexData;
+import com.controllerface.bvge.rendering.Renderer;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL11C.glDrawArrays;
 import static org.lwjgl.opengl.GL15C.GL_POINTS;
 
-public class CircleRenderer extends GameSystem
+public class CircleRenderer implements Renderer
 {
     public static final int CIRCLES_BUFFER_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
 
@@ -49,9 +48,8 @@ public class CircleRenderer extends GameSystem
 
     private HullIndexData circle_hulls;
 
-    public CircleRenderer(ECS ecs)
+    public CircleRenderer()
     {
-        super(ecs);
         init_GL();
         init_CL();
     }
@@ -120,7 +118,7 @@ public class CircleRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         if (circle_hulls != null && circle_hulls.indices() != null)
         {
@@ -157,7 +155,7 @@ public class CircleRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         vbo_transform.release();

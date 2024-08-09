@@ -1,8 +1,6 @@
 package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
@@ -16,6 +14,7 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
+import com.controllerface.bvge.rendering.Renderer;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_SIZE;
@@ -24,7 +23,7 @@ import static org.lwjgl.opengl.GL15C.GL_POINTS;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL45C.glPointSize;
 
-public class PointRenderer extends GameSystem
+public class PointRenderer implements Renderer
 {
     private static final int POSITION_BATCH_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_2D_SIZE;
     private static final int COLOR_BATCH_SIZE = Constants.Rendering.MAX_BATCH_SIZE * VECTOR_FLOAT_4D_SIZE;
@@ -42,9 +41,8 @@ public class PointRenderer extends GameSystem
     private GL_Shader shader;
     private GPUKernel k_prepare_points;
 
-    public PointRenderer(ECS ecs)
+    public PointRenderer()
     {
-        super(ecs);
         init_GL();
         init_CL();
     }
@@ -74,7 +72,7 @@ public class PointRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         vao.bind();
 
@@ -104,7 +102,7 @@ public class PointRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         vertex_vbo.release();

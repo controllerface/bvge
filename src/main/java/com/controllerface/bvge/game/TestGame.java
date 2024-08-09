@@ -1,7 +1,6 @@
 package com.controllerface.bvge.game;
 
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.*;
 import com.controllerface.bvge.game.state.PlayerController;
 import com.controllerface.bvge.game.state.PlayerInventory;
@@ -15,14 +14,13 @@ import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.PhysicsObjects;
 import com.controllerface.bvge.physics.PhysicsSimulation;
 import com.controllerface.bvge.physics.UniformGrid;
-import com.controllerface.bvge.rendering.renderers.*;
+import com.controllerface.bvge.rendering.RenderingSystem;
 import com.controllerface.bvge.substances.Solid;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.EnumSet;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
@@ -31,7 +29,7 @@ import static com.controllerface.bvge.models.geometry.ModelRegistry.*;
 
 public class TestGame extends GameMode
 {
-    private final GameSystem blanking_system;
+    private final Runnable window_upkeep;
     private final int GRID_WIDTH = 3840;
     private final int GRID_HEIGHT = 2160;
 
@@ -41,35 +39,13 @@ public class TestGame extends GameMode
     private final PlayerInventory player_inventory;
     private PlayerController player_controller;
 
-    private enum RenderType
-    {
-        GAME,       // normal objects
-        HULLS,      // physics hulls
-        BOUNDS,     // bounding boxes
-        POINTS,     // model vertices
-        ENTITIES,   // entity roots
-        GRID,       // uniform grid
-    }
-
-    private static final EnumSet<RenderType> ACTIVE_RENDERERS = EnumSet.of(RenderType.GAME
-//            ,RenderType.HULLS
-//            ,RenderType.POINTS
-//            ,RenderType.ENTITIES
-//            ,RenderType.BOUNDS
-//            ,RenderType.GRID
-        );
-
     private final UniformGrid uniformGrid = new UniformGrid(GRID_WIDTH, GRID_HEIGHT);
 
-
-    public TestGame(ECS ecs, GameSystem blanking_system)
+    public TestGame(ECS ecs, Runnable window_upkeep)
     {
         super(ecs);
 
-        MeshRegistry.init();
-        ModelRegistry.init();
-
-        this.blanking_system = blanking_system;
+        this.window_upkeep = window_upkeep;
         this.load_queue = new LinkedBlockingDeque<>();
         this.unload_queue = new LinkedBlockingDeque<>();
         this.player_inventory = new PlayerInventory();
@@ -80,6 +56,8 @@ public class TestGame extends GameMode
             .expireAfterAccess(Duration.of(1, ChronoUnit.HOURS))
             .build();
 
+        MeshRegistry.init();
+        ModelRegistry.init();
     }
 
     private void gen_player(float size, float x, float y)
@@ -123,53 +101,12 @@ public class TestGame extends GameMode
     private void load_systems(float x, float y)
     {
         var world_permit = new Semaphore(0);
-
-
         ecs.register_system(new WorldLoader(ecs, uniformGrid, sector_cache, load_queue, unload_queue, world_permit));
         ecs.register_system(new PhysicsSimulation(ecs, uniformGrid, player_controller));
         ecs.register_system(new WorldUnloader(ecs, sector_cache, load_queue, unload_queue, world_permit));
         ecs.register_system(new CameraTracking(ecs, uniformGrid, x, y));
         ecs.register_system(new InventorySystem(ecs, player_inventory));
-        ecs.register_system(blanking_system);
-
-        ecs.register_system(new BackgroundRenderer(ecs));
-        ecs.register_system(new MouseRenderer(ecs));
-        ecs.register_system(new HUDRenderer(ecs, player_inventory));
-
-        if (ACTIVE_RENDERERS.contains(RenderType.GAME))
-        {
-            int[] model_ids = new int[]{ PLAYER_MODEL_INDEX, BASE_BLOCK_INDEX, BASE_SPIKE_INDEX, R_SHARD_INDEX, L_SHARD_INDEX };
-            ecs.register_system(new ModelRenderer(ecs, uniformGrid, model_ids));
-            ecs.register_system(new LiquidRenderer(ecs, uniformGrid));
-        }
-        
-        // debug renderers
-
-        if (ACTIVE_RENDERERS.contains(RenderType.HULLS))
-        {
-            ecs.register_system(new EdgeRenderer(ecs));
-            ecs.register_system(new CircleRenderer(ecs));
-        }
-
-        if (ACTIVE_RENDERERS.contains(RenderType.BOUNDS))
-        {
-            ecs.register_system(new BoundingBoxRenderer(ecs));
-        }
-
-        if (ACTIVE_RENDERERS.contains(RenderType.POINTS))
-        {
-            ecs.register_system(new PointRenderer(ecs));
-        }
-
-        if (ACTIVE_RENDERERS.contains(RenderType.GRID))
-        {
-            ecs.register_system(new UniformGridRenderer(ecs, uniformGrid));
-        }
-
-        if (ACTIVE_RENDERERS.contains(RenderType.ENTITIES))
-        {
-            ecs.register_system(new EntityPositionRenderer(ecs));
-        }
+        ecs.register_system(new RenderingSystem(ecs, player_inventory, uniformGrid, window_upkeep));
     }
 
     @Override

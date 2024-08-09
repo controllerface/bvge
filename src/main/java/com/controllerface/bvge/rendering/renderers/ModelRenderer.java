@@ -30,6 +30,7 @@ import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.Model;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.rendering.Renderer;
 
 import java.util.LinkedHashSet;
 import java.util.Objects;
@@ -38,7 +39,7 @@ import static com.controllerface.bvge.game.Constants.Rendering.*;
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL45C.*;
 
-public class ModelRenderer extends GameSystem
+public class ModelRenderer implements Renderer
 {
     private final UniformGrid uniformGrid;
 
@@ -98,10 +99,11 @@ public class ModelRenderer extends GameSystem
 
     private final int[] model_ids;
     private final String shader_file;
+    private final ECS ecs;
 
     public ModelRenderer(ECS ecs, UniformGrid uniformGrid, int ... model_ids)
     {
-        super(ecs);
+        this.ecs = ecs;
         this.uniformGrid = uniformGrid;
         this.shader_file = "block_model.glsl";
         this.model_ids = model_ids;
@@ -429,7 +431,7 @@ public class ModelRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
 
@@ -449,7 +451,7 @@ public class ModelRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         cbo.release();

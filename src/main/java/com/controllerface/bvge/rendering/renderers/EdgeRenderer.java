@@ -1,8 +1,6 @@
 package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
@@ -16,6 +14,7 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
+import com.controllerface.bvge.rendering.Renderer;
 
 import static com.controllerface.bvge.game.Constants.Rendering.SCALAR_LENGTH;
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_2D_LENGTH;
@@ -23,7 +22,7 @@ import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL15C.GL_LINES;
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 
-public class EdgeRenderer extends GameSystem
+public class EdgeRenderer implements Renderer
 {
     private static final int DATA_POINTS_PER_EDGE = 2;
     private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * DATA_POINTS_PER_EDGE * VECTOR_2D_LENGTH;
@@ -43,9 +42,8 @@ public class EdgeRenderer extends GameSystem
     private CL_Buffer ptr_vbo_edge;
     private CL_Buffer ptr_vbo_flag;
 
-    public EdgeRenderer(ECS ecs)
+    public EdgeRenderer()
     {
-        super(ecs);
         init_GL();
         inti_CL();
     }
@@ -77,7 +75,7 @@ public class EdgeRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         vao.bind();
         shader.use();
@@ -104,7 +102,7 @@ public class EdgeRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         vbo_edge.release();

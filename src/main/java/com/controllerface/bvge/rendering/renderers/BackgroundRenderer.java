@@ -1,18 +1,17 @@
 package com.controllerface.bvge.rendering.renderers;
 
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
+import com.controllerface.bvge.rendering.Renderer;
 
 import static org.lwjgl.opengl.GL15C.glDrawArrays;
 import static org.lwjgl.opengl.GL45C.GL_TRIANGLE_STRIP;
 
-public class BackgroundRenderer extends GameSystem
+public class BackgroundRenderer implements Renderer
 {
     private static final int XY_ATTRIBUTE = 0;
     private static final int UV_ATTRIBUTE = 1;
@@ -23,9 +22,8 @@ public class BackgroundRenderer extends GameSystem
     private final GL_Texture2D texture;
     private final GL_Shader shader;
 
-    public BackgroundRenderer(ECS ecs)
+    public BackgroundRenderer()
     {
-        super(ecs);
         vao     = GPU.GL.new_vao();
         texture = GPU.GL.new_texture("/img/cave_bg.png");
         shader  = GPU.GL.new_shader("bg_shader.glsl", GL_ShaderType.TWO_STAGE);
@@ -36,7 +34,7 @@ public class BackgroundRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         vao.bind();
         shader.use();
@@ -47,7 +45,7 @@ public class BackgroundRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         xy_vbo.release();

@@ -12,6 +12,7 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.physics.UniformGrid;
+import com.controllerface.bvge.rendering.Renderer;
 
 import java.util.Objects;
 
@@ -20,7 +21,7 @@ import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_4D_S
 import static org.lwjgl.opengl.GL45C.GL_LINE_LOOP;
 import static org.lwjgl.opengl.GL45C.glMultiDrawArrays;
 
-public class UniformGridRenderer extends GameSystem
+public class UniformGridRenderer implements Renderer
 {
     private static final int VERTICES_PER_BOX = 4;
     private static final int POSITION_ATTRIBUTE = 0;
@@ -39,12 +40,14 @@ public class UniformGridRenderer extends GameSystem
 
     private GL_Shader shader;
 
+    private final ECS ecs;
+
     private record GridPoint(float x, float y, float r, float g, float b, float a) { }
     private record GridBounds(GridPoint p0, GridPoint p1, GridPoint p2, GridPoint p3) { }
 
     public UniformGridRenderer(ECS ecs, UniformGrid uniformGrid)
     {
-        super(ecs);
+        this.ecs = ecs;
         this.uniformGrid = uniformGrid;
         init_GL();
     }
@@ -353,7 +356,7 @@ public class UniformGridRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         GridData grid_data = load_grid_data();
         vao.bind();
@@ -367,7 +370,7 @@ public class UniformGridRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         shader.release();
         vao.release();

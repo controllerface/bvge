@@ -1,8 +1,6 @@
 package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.state.PlayerInventory;
@@ -13,6 +11,7 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
+import com.controllerface.bvge.rendering.Renderer;
 import com.controllerface.bvge.rendering.TextGlyph;
 import com.controllerface.bvge.substances.Solid;
 
@@ -26,7 +25,7 @@ import static com.controllerface.bvge.game.Constants.Rendering.*;
 import static org.lwjgl.opengl.GL45C.GL_TRIANGLE_STRIP;
 import static org.lwjgl.opengl.GL45C.glMultiDrawArraysIndirect;
 
-public class HUDRenderer extends GameSystem
+public class HUDRenderer implements Renderer
 {
     private static final float INVENTORY_TEXT_SCALE = .5f;
     private static final int COMMAND_BUFFER_SIZE = MAX_BATCH_SIZE * Integer.BYTES * 4;
@@ -70,9 +69,8 @@ public class HUDRenderer extends GameSystem
 
     private record TextContainer(SnapPosition snap, String message, float x, float y, float scale) { }
 
-    public HUDRenderer(ECS ecs, PlayerInventory player_inventory)
+    public HUDRenderer(PlayerInventory player_inventory)
     {
-        super(ecs);
         this.player_inventory = player_inventory;
         Window.get().event_bus().register(event_queue, Event.Type.WINDOW_RESIZE, Event.Type.ITEM_CHANGE, Event.Type.ITEM_PLACING);
         build_cmd();
@@ -277,7 +275,7 @@ public class HUDRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         Event next_event;
         while ((next_event = event_queue.poll()) != null)
@@ -311,7 +309,7 @@ public class HUDRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         cbo.release();

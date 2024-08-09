@@ -119,29 +119,9 @@ public class Window
         gl_window = GPU.GL.init_gl(this.title, event_bus, input_system);
     }
 
-    /**
-     * A simple utility system that just blanks the screen, getting it ready to render. This is used
-     * instead of just calling it at the top of the loop, so that the screen clear can happen s late
-     * as possible, just before rendering. todo: it may be better to use a framebuffer of some kind
-     */
-    private class BlankSystem extends GameSystem
-    {
-        public BlankSystem(ECS ecs)
-        {
-            super(ecs);
-        }
-
-        @Override
-        public void tick(float dt)
-        {
-            window_upkeep();
-        }
-    }
-
     public void init_game_mode()
     {
-        var blanking_system = new BlankSystem(null);
-        game_mode = new TestGame(ecs, blanking_system);
+        game_mode = new TestGame(ecs, this::window_upkeep);
         game_mode.init();
         camera.projection_size().set(this.width, this.height);
         ecs.register_system(input_system);

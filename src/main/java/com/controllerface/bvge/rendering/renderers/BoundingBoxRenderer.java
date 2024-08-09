@@ -1,8 +1,6 @@
 package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
-import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.GPGPU;
@@ -16,13 +14,14 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.memory.types.RenderBufferType;
+import com.controllerface.bvge.rendering.Renderer;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_2D_LENGTH;
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static org.lwjgl.opengl.GL11C.GL_LINE_LOOP;
 import static org.lwjgl.opengl.GL15C.glMultiDrawArrays;
 
-public class BoundingBoxRenderer extends GameSystem
+public class BoundingBoxRenderer implements Renderer
 {
     private static final int DATA_POINTS_PER_BOX = 4;
     private static final int BATCH_VERTEX_COUNT = Constants.Rendering.MAX_BATCH_SIZE * DATA_POINTS_PER_BOX * VECTOR_2D_LENGTH;
@@ -40,9 +39,8 @@ public class BoundingBoxRenderer extends GameSystem
     private final int[] offsets = new int[Constants.Rendering.MAX_BATCH_SIZE];
     private final int[] counts = new int[Constants.Rendering.MAX_BATCH_SIZE];
 
-    public BoundingBoxRenderer(ECS ecs)
+    public BoundingBoxRenderer()
     {
-        super(ecs);
         for (int i = 0; i < Constants.Rendering.MAX_BATCH_SIZE; i++)
         {
             offsets[i] = i * 4;
@@ -71,7 +69,7 @@ public class BoundingBoxRenderer extends GameSystem
     }
 
     @Override
-    public void tick(float dt)
+    public void render()
     {
         vao.bind();
 
@@ -106,7 +104,7 @@ public class BoundingBoxRenderer extends GameSystem
     }
 
     @Override
-    public void shutdown()
+    public void destroy()
     {
         vao.release();
         vbo_position.release();
