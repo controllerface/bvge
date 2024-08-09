@@ -6,6 +6,7 @@ import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.events.Event;
+import com.controllerface.bvge.events.EventBus;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPUResource;
 import com.controllerface.bvge.gpu.cl.CL_ComputeController;
@@ -87,27 +88,27 @@ public class GPUCoreMemory implements GPUResource
     private final ECS ecs;
     private final CL_ComputeController compute;
 
-    public GPUCoreMemory(CL_ComputeController compute, ECS ecs)
+    public GPUCoreMemory(CL_ComputeController compute, ECS ecs, EventBus event_bus)
     {
         this.compute = compute;
         this.ecs = ecs;
-        Window.get().event_bus().register(event_queue, Event.Type.SELECT_BLOCK);
+        event_bus.register(event_queue, Event.Type.SELECT_BLOCK);
 
         p_gpu_crud.init();
 
-        this.sector_buffers       = new CoreBufferGroup(BUF_NAME_SECTOR, compute.compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        this.sector_controller    = new SectorController(compute.compute_queue, this.p_gpu_crud, this.sector_buffers);
-        this.render_buffers       = new RenderBufferGroup(BUF_NAME_RENDER, compute.compute_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        this.reference_buffers    = new ReferenceBufferGroup(BUF_NAME_REFERENCE, compute.compute_queue);
-        this.reference_controller = new ReferenceController(compute.compute_queue, this.p_gpu_crud, this.reference_buffers);
-        this.sector_compactor     = new SectorCompactor(compute.compute_queue, sector_controller, sector_buffers, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT, DELETE_INIT);
+        this.sector_buffers       = new CoreBufferGroup(compute.physics_queue, BUF_NAME_SECTOR, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.sector_controller    = new SectorController(compute.physics_queue, this.p_gpu_crud, this.sector_buffers);
+        this.render_buffers       = new RenderBufferGroup(compute.physics_queue, BUF_NAME_RENDER, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        this.reference_buffers    = new ReferenceBufferGroup(compute.physics_queue, BUF_NAME_REFERENCE);
+        this.reference_controller = new ReferenceController(compute.physics_queue, this.p_gpu_crud, this.reference_buffers);
+        this.sector_compactor     = new SectorCompactor(compute.physics_queue, sector_controller, sector_buffers, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT, DELETE_INIT);
 
-        var sector_egress_a = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_A, compute.sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        var sector_egress_b = new UnorderedSectorOutput(BUF_NAME_SECTOR_EGRESS_B, compute.sector_queue, this, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
-        var broken_egress_a = new BrokenObjectBuffer(BUF_NAME_BROKEN_EGRESS_A, compute.sector_queue, this);
-        var broken_egress_b = new BrokenObjectBuffer(BUF_NAME_BROKEN_EGRESS_B, compute.sector_queue, this);
-        var object_egress_a = new CollectedObjectBuffer(BUF_NAME_OBJECT_EGRESS_A, compute.sector_queue, this);
-        var object_egress_b = new CollectedObjectBuffer(BUF_NAME_OBJECT_EGRESS_B, compute.sector_queue, this);
+        var sector_egress_a = new UnorderedSectorOutput(compute.sector_queue, this, BUF_NAME_SECTOR_EGRESS_A, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        var sector_egress_b = new UnorderedSectorOutput(compute.sector_queue, this, BUF_NAME_SECTOR_EGRESS_B, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
+        var broken_egress_a = new BrokenObjectBuffer(compute.sector_queue, this, BUF_NAME_BROKEN_EGRESS_A);
+        var broken_egress_b = new BrokenObjectBuffer(compute.sector_queue, this, BUF_NAME_BROKEN_EGRESS_B);
+        var object_egress_a = new CollectedObjectBuffer(compute.sector_queue, this, BUF_NAME_OBJECT_EGRESS_A);
+        var object_egress_b = new CollectedObjectBuffer(compute.sector_queue, this, BUF_NAME_OBJECT_EGRESS_B);
 
         this.sector_ingress_buffer = new OrderedSectorInput(compute.sector_queue, this);
         this.sector_egress_buffer  = new FlippableContainer<>(sector_egress_a, sector_egress_b);
@@ -282,7 +283,7 @@ public class GPUCoreMemory implements GPUResource
 
         if (checksum == 0) return;
 
-        compute.compute_queue.finish();
+        compute.physics_queue.finish();
         if (next_egress_counts[0] > 0)
         {
             sector_egress_buffer.front().egress(sector_controller.next_entity(), next_egress_counts);
@@ -365,7 +366,7 @@ public class GPUCoreMemory implements GPUResource
                 hull_bone_capacity,
                 armature_bone_capacity);
 
-        compute.compute_queue.finish();
+        compute.physics_queue.finish();
         sector_ingress_buffer.merge_into(this.sector_controller);
         compute.sector_queue.finish();
 

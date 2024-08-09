@@ -8,7 +8,7 @@ import static com.controllerface.bvge.memory.types.ReferenceBufferType.*;
 
 public class ReferenceBufferGroup extends BufferGroup<ReferenceBufferType>
 {
-    public ReferenceBufferGroup(String name, CL_CommandQueue cmd_queue)
+    public ReferenceBufferGroup(CL_CommandQueue cmd_queue, String name)
     {
         super(ReferenceBufferType.class, name, cmd_queue, true);
 

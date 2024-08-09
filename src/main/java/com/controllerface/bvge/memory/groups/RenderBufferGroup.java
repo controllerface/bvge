@@ -15,7 +15,7 @@ import static com.controllerface.bvge.memory.types.RenderBufferType.*;
  */
 public class RenderBufferGroup extends BufferGroup<RenderBufferType>
 {
-    public RenderBufferGroup(String name, CL_CommandQueue cmd_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public RenderBufferGroup(CL_CommandQueue cmd_queue, String name, long entity_init, long hull_init, long edge_init, long point_init)
     {
         super(RenderBufferType.class, name, cmd_queue, true);
 

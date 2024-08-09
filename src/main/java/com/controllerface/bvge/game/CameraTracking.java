@@ -6,7 +6,7 @@ import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.ecs.components.EntityIndex;
 import com.controllerface.bvge.ecs.components.Position;
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.physics.UniformGrid;
 
 import java.util.Objects;
@@ -54,7 +54,7 @@ public class CameraTracking extends GameSystem
         Position entity_pos = ComponentType.Position.forEntity(ecs, Constants.PLAYER_ID);
         Objects.requireNonNull(entity_id);
         Objects.requireNonNull(entity_pos);
-        float[] pos = GPGPU.core_memory.read_entity_position(entity_id.index());
+        float[] pos = GPU.memory.read_entity_position(entity_id.index());
         float pos_x = pos[0];
         float pos_y = pos[1];
         update_position(pos_x, pos_y);

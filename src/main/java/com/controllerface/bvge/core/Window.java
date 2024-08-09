@@ -1,14 +1,12 @@
 package com.controllerface.bvge.core;
 
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.events.EventBus;
 import com.controllerface.bvge.game.GameMode;
 import com.controllerface.bvge.game.InputSystem;
 import com.controllerface.bvge.game.TestGame;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.gl.GL_GraphicsController;
 import com.controllerface.bvge.rendering.Camera;
 import org.joml.Vector2f;
 
@@ -28,11 +26,8 @@ public class Window
 
     private int width;
     private int height;
-    private final String title;
 
     private static Window INSTANCE = null;
-
-    private GL_GraphicsController gl_window;
 
     public float r, g, b, a;
 
@@ -42,16 +37,13 @@ public class Window
 
     private boolean closing = false;
 
-    private final EventBus event_bus;
+    private EventBus event_bus;
     private InputSystem input_system;
 
     private Window()
     {
-        this.event_bus = new EventBus();
-
         this.width = 1920;
         this.height = 1080;
-        this.title = "BVGE Test";
 
         camera = new Camera(new Vector2f(0, 0), height, width);
 
@@ -90,14 +82,12 @@ public class Window
         return closing;
     }
 
-    public void run()
+    public void show()
     {
-        gl_window.show_window();
+        GPU.graphics.show_window();
         loop();
 
         closing = true;
-
-        gl_window.release();
 
         glfwTerminate();
         try (var error_cb = glfwSetErrorCallback(null))
@@ -113,11 +103,11 @@ public class Window
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    public void init(ECS ecs)
+    public void init(ECS ecs, EventBus event_bus, InputSystem input_system)
     {
         this.ecs = ecs;
-        this.input_system = new InputSystem(ecs);
-        gl_window = GPU.GL.init_gl(this.title, event_bus, input_system);
+        this.event_bus = event_bus;
+        this.input_system = input_system;
     }
 
     public void init_game_mode()
@@ -145,14 +135,14 @@ public class Window
         int fps;
         int frameCount = 0;
 
-        while (!gl_window.should_close() && dt < MAX_DT)
+        while (GPU.graphics.should_update() && dt < MAX_DT)
         {
             glfwPollEvents();
 
             if (dt >= 0)
             {
                 ecs.tick(dt);
-                gl_window.swap_buffers();
+                GPU.graphics.update();
             }
 
             currentTime = (float) glfwGetTime();

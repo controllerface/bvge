@@ -2,7 +2,6 @@ package com.controllerface.bvge.memory.sectors;
 
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.BufferGroup;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
@@ -26,11 +25,11 @@ public class BrokenObjectBuffer implements GPUResource
     private final CL_CommandQueue cmd_queue;
     private final CL_Buffer ptr_egress_size;
 
-    public BrokenObjectBuffer(String name, CL_CommandQueue cmd_queue, GPUCoreMemory core_memory)
+    public BrokenObjectBuffer(CL_CommandQueue cmd_queue, GPUCoreMemory core_memory, String name)
     {
         this.p_gpu_crud = new GPUCrud().init();
         this.cmd_queue = cmd_queue;
-        this.ptr_egress_size = GPU.CL.new_pinned_int(GPGPU.compute.context);
+        this.ptr_egress_size = GPU.CL.new_pinned_int(GPU.compute.context);
 
         broken_group = new BufferGroup<>(BrokenBufferType.class, name, cmd_queue, true);
         broken_group.init_buffer(BrokenBufferType.BROKEN_POSITIONS,    100L);
@@ -51,13 +50,13 @@ public class BrokenObjectBuffer implements GPUResource
     public void egress(int entity_count, int egress_count)
     {
         GPU.CL.zero_buffer(cmd_queue, ptr_egress_size, cl_int.size());
-        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
+        int entity_size  = GPU.compute.calculate_preferred_global_size(entity_count);
         broken_group.buffer(BrokenBufferType.BROKEN_POSITIONS).ensure_capacity(egress_count);
         broken_group.buffer(BrokenBufferType.BROKEN_ENTITY_TYPES).ensure_capacity(egress_count);
         broken_group.buffer(BrokenBufferType.BROKEN_MODEL_IDS).ensure_capacity(egress_count);
         k_egress_broken
             .set_arg(EgressBroken_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(entity_size), GPU.compute.preferred_work_size);
     }
 
     public void unload(BrokenObjectBuffer.Raw raw, int count)

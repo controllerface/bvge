@@ -3,7 +3,6 @@ package com.controllerface.bvge.gpu.cl.programs;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.kernels.CL_Kernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 
@@ -104,7 +103,7 @@ public abstract class GPUProgram implements GPUResource
      */
     protected void make_program()
     {
-        this.program = GPU.CL.new_program(GPGPU.compute.context, GPGPU.compute.device, this.src);
+        this.program = GPU.CL.new_program(GPU.compute.context, GPU.compute.device, this.src);
     }
 
     /**

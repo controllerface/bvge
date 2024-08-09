@@ -14,14 +14,14 @@ public class GL_GraphicsController implements GPUResource
         window_handle = windowHandle;
     }
 
-    public void swap_buffers()
+    public void update()
     {
         glfwSwapBuffers(window_handle);
     }
 
-    public boolean should_close()
+    public boolean should_update()
     {
-        return glfwWindowShouldClose(window_handle);
+        return !glfwWindowShouldClose(window_handle);
     }
 
     public void show_window()

@@ -1,6 +1,6 @@
 package com.controllerface.bvge.models.geometry;
 
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.models.SceneNode;
 import com.controllerface.bvge.models.bones.BoneOffset;
 import com.controllerface.bvge.physics.PhysicsObjects;
@@ -84,18 +84,18 @@ public class MeshRegistry
         {
             var channel = uv_channel.get(uv_index);
             uv_list.add(channel);
-            var uv_ref_1 = GPGPU.core_memory.reference_container().new_texture_uv(channel.x, channel.y);
+            var uv_ref_1 = GPU.memory.reference_container().new_texture_uv(channel.x, channel.y);
             if (uv_table[0] == -1) { uv_table[0] = uv_ref_1; }
             uv_table[1] = uv_ref_1;
         }
-        int v1 = GPGPU.core_memory.reference_container().new_vertex_reference(x, y, new float[4], uv_table);
+        int v1 = GPU.memory.reference_container().new_vertex_reference(x, y, new float[4], uv_table);
         return new Vertex(v1, x, y, uv_list, new String[0], new float[0]);
     }
 
     private static Face face(int p0, int p1, int p2)
     {
-        int[] raw_face_1 = new int[]{ p0, p1, p2, GPGPU.core_memory.reference_container().next_mesh() };
-        int face_id_1 = GPGPU.core_memory.reference_container().new_mesh_face(raw_face_1);
+        int[] raw_face_1 = new int[]{ p0, p1, p2, GPU.memory.reference_container().next_mesh() };
+        int face_id_1 = GPU.memory.reference_container().new_mesh_face(raw_face_1);
         return new Face(face_id_1, p0, p1, p2);
     }
 
@@ -120,7 +120,7 @@ public class MeshRegistry
 
     private static Mesh generate_circle_mesh()
     {
-        var vert_ref_id = GPGPU.core_memory.reference_container().new_vertex_reference(0,0, new float[4], new int[2]);
+        var vert_ref_id = GPU.memory.reference_container().new_vertex_reference(0,0, new float[4], new int[2]);
         var vertices = new Vertex[]{ new Vertex(vert_ref_id, 0,0, Collections.emptyList(), new String[0], new float[0]) };
         var faces = new Face[]{ new Face(-1,0, 0, 0) };
         var hull = new int[]{ 0 };
@@ -142,7 +142,7 @@ public class MeshRegistry
         var vert_table   = new int[]{ verts[0].index(), verts[3].index() };
         var face_table   = new int[]{ faces[0].index(), faces[1].index() };
         var hull         = PhysicsObjects.calculate_convex_hull_table(verts);
-        int mesh_id      = GPGPU.core_memory.reference_container().new_mesh_reference(vert_table, face_table);
+        int mesh_id      = GPU.memory.reference_container().new_mesh_reference(vert_table, face_table);
 
         return new Mesh("block", mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
@@ -161,7 +161,7 @@ public class MeshRegistry
         var vert_table   = new int[]{ verts[0].index(), verts[2].index() };
         var face_table   = new int[]{ faces[0].index(), faces[0].index() };
         var hull         = PhysicsObjects.calculate_convex_hull_table(verts);
-        int mesh_id      = GPGPU.core_memory.reference_container().new_mesh_reference(vert_table, face_table);
+        int mesh_id      = GPU.memory.reference_container().new_mesh_reference(vert_table, face_table);
 
         return new Mesh(name, mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
@@ -177,15 +177,15 @@ public class MeshRegistry
         var vert_table   = new int[]{ verts[0].index(), verts[2].index() };
         var face_table   = new int[]{ faces[0].index(), faces[0].index() };
         var hull         = PhysicsObjects.calculate_convex_hull_table(verts);
-        int mesh_id      = GPGPU.core_memory.reference_container().new_mesh_reference(vert_table, face_table);
+        int mesh_id      = GPU.memory.reference_container().new_mesh_reference(vert_table, face_table);
 
         return new Mesh("spike", mesh_id, verts, faces, List.of(BoneOffset.IDENTITY), SceneNode.empty(), hull);
     }
 
     private static Mesh generate_line_mesh()
     {
-        var vert_ref_id1 = GPGPU.core_memory.reference_container().new_vertex_reference(LINE[0], LINE[1], new float[4], new int[2]);
-        var vert_ref_id2 = GPGPU.core_memory.reference_container().new_vertex_reference(LINE[2], LINE[3], new float[4], new int[2]);
+        var vert_ref_id1 = GPU.memory.reference_container().new_vertex_reference(LINE[0], LINE[1], new float[4], new int[2]);
+        var vert_ref_id2 = GPU.memory.reference_container().new_vertex_reference(LINE[2], LINE[3], new float[4], new int[2]);
         var vertices = new Vertex[]
             {
                 new Vertex(vert_ref_id1, LINE[0], LINE[1], Collections.emptyList(), new String[0], new float[0]),

@@ -3,7 +3,6 @@ package com.controllerface.bvge.rendering.renderers;
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
@@ -66,34 +65,34 @@ public class CircleRenderer implements Renderer
     {
         p_prepare_transforms.init();
         p_root_hull_filter.init();
-        ptr_vbo_transform = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_transform);
-        atomic_counter    = GPU.CL.new_pinned_int(GPGPU.compute.context);
+        ptr_vbo_transform = GPU.CL.gl_share_memory(GPU.compute.context, vbo_transform);
+        atomic_counter    = GPU.CL.new_pinned_int(GPU.compute.context);
 
-        k_prepare_transforms = (new PrepareTransforms_k(GPGPU.compute.render_queue, p_prepare_transforms))
+        k_prepare_transforms = (new PrepareTransforms_k(GPU.compute.render_queue, p_prepare_transforms))
             .buf_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transform)
-            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
-            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
-            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
+            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL))
+            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
+            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
 
-        k_root_hull_filter = new HullFilter_k(GPGPU.compute.render_queue, p_root_hull_filter)
-            .buf_arg(HullFilter_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
+        k_root_hull_filter = new HullFilter_k(GPU.compute.render_queue, p_root_hull_filter)
+            .buf_arg(HullFilter_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
 
-        k_root_hull_count = new HullCount_k(GPGPU.compute.render_queue, p_root_hull_filter)
-            .buf_arg(HullCount_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
+        k_root_hull_count = new HullCount_k(GPU.compute.render_queue, p_root_hull_filter)
+            .buf_arg(HullCount_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
     }
 
     public HullIndexData hull_filter(CL_CommandQueue cmd_queue, int mesh_id)
     {
         GPU.CL.zero_buffer(cmd_queue, atomic_counter, CL_DataTypes.cl_int.size());
 
-        int hull_count = GPGPU.core_memory.sector_container().next_hull();
-        int hull_size  = GPGPU.compute.calculate_preferred_global_size(hull_count);
+        int hull_count = GPU.memory.sector_container().next_hull();
+        int hull_size  = GPU.compute.calculate_preferred_global_size(hull_count);
 
         k_root_hull_count
             .buf_arg(HullCount_k.Args.counter, atomic_counter)
             .set_arg(HullCount_k.Args.mesh_id, mesh_id)
             .set_arg(HullCount_k.Args.max_hull, hull_count)
-            .call(arg_long(hull_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(hull_size), GPU.compute.preferred_work_size);
 
         int final_count = GPU.CL.read_pinned_int(cmd_queue, atomic_counter);
 
@@ -103,7 +102,7 @@ public class CircleRenderer implements Renderer
         }
 
         long final_buffer_size = (long) CL_DataTypes.cl_int.size() * final_count;
-        var hulls_out = GPU.CL.new_buffer(GPGPU.compute.context, final_buffer_size);
+        var hulls_out = GPU.CL.new_buffer(GPU.compute.context, final_buffer_size);
 
         GPU.CL.zero_buffer(cmd_queue, atomic_counter, CL_DataTypes.cl_int.size());
 
@@ -112,7 +111,7 @@ public class CircleRenderer implements Renderer
             .buf_arg(HullFilter_k.Args.counter, atomic_counter)
             .set_arg(HullFilter_k.Args.mesh_id, mesh_id)
             .set_arg(HullFilter_k.Args.max_hull, hull_count)
-            .call(arg_long(hull_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(hull_size), GPU.compute.preferred_work_size);
 
         return new HullIndexData(hulls_out, final_count);
     }
@@ -125,7 +124,7 @@ public class CircleRenderer implements Renderer
             circle_hulls.indices().release();
         }
 
-        circle_hulls = hull_filter(GPGPU.compute.render_queue, MeshRegistry.CIRCLE_MESH);
+        circle_hulls = hull_filter(GPU.compute.render_queue, MeshRegistry.CIRCLE_MESH);
 
         if (circle_hulls.count() == 0) return;
 
@@ -138,13 +137,13 @@ public class CircleRenderer implements Renderer
         for (int remaining = circle_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
+            int count_size = GPU.compute.calculate_preferred_global_size(count);
             k_prepare_transforms
                 .share_mem(ptr_vbo_transform)
                 .buf_arg(PrepareTransforms_k.Args.indices, circle_hulls.indices())
                 .set_arg(PrepareTransforms_k.Args.offset, offset)
                 .set_arg(PrepareTransforms_k.Args.max_hull, count)
-                .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
+                .call(arg_long(count_size), GPU.compute.preferred_work_size);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

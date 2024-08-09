@@ -6,7 +6,7 @@ import com.controllerface.bvge.game.state.PlayerController;
 import com.controllerface.bvge.game.state.PlayerInventory;
 import com.controllerface.bvge.game.world.WorldLoader;
 import com.controllerface.bvge.game.world.WorldUnloader;
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.memory.sectors.Sector;
 import com.controllerface.bvge.models.geometry.MeshRegistry;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
@@ -64,15 +64,15 @@ public class TestGame extends GameMode
     {
         var player = ecs.register_entity(Constants.PLAYER_ID);
 
-        var entity_id = PhysicsObjects.wrap_model(GPGPU.core_memory.sector_container(),
+        var entity_id = PhysicsObjects.wrap_model(GPU.memory.sector_container(),
                 PLAYER_MODEL_INDEX, x, y, size,
                 100.5f, 0.05f, 0, 0,
                 Constants.EntityFlags.CAN_COLLECT.bits);
 
-        var cursor_id = PhysicsObjects.circle_cursor(GPGPU.core_memory.sector_container(),
+        var cursor_id = PhysicsObjects.circle_cursor(GPU.memory.sector_container(),
                 0, 0, 10, entity_id[1]);
 
-        var block_cursor = PhysicsObjects.block_cursor(GPGPU.core_memory.sector_container(), x, y);
+        var block_cursor = PhysicsObjects.block_cursor(GPU.memory.sector_container(), x, y);
 
         ecs.attach_component(player, ComponentType.Position,      new Position(x, y));
         ecs.attach_component(player, ComponentType.EntityId,      new EntityIndex(entity_id[0]));
@@ -92,7 +92,7 @@ public class TestGame extends GameMode
         float y_offset = 0;
         for (int i = 0; i <= height; i++)
         {
-            PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
+            PhysicsObjects.base_block(GPU.memory.sector_container(),
                 x, y + y_offset, size, 100, 0, 0, 0, Constants.HullFlags.IS_STATIC.bits, Solid.OBSIDIAN, new int[4]);
             y_offset+=size;
         }

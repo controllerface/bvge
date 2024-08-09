@@ -3,7 +3,6 @@ package com.controllerface.bvge.rendering.renderers;
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEntities_k;
@@ -52,11 +51,11 @@ public class EntityPositionRenderer implements Renderer
     private void init_CL()
     {
         p_prepare_entities.init();
-        ptr_vbo_vertex = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_vertex);
+        ptr_vbo_vertex = GPU.CL.gl_share_memory(GPU.compute.context, vbo_vertex);
 
-        k_prepare_entities = new PrepareEntities_k(GPGPU.compute.render_queue, p_prepare_entities)
+        k_prepare_entities = new PrepareEntities_k(GPU.compute.render_queue, p_prepare_entities)
             .buf_arg(PrepareEntities_k.Args.vertex_vbo, ptr_vbo_vertex)
-            .buf_arg(PrepareEntities_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY));
+            .buf_arg(PrepareEntities_k.Args.points, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY));
     }
 
     @Override
@@ -68,15 +67,15 @@ public class EntityPositionRenderer implements Renderer
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         int offset = 0;
-        for (int remaining = GPGPU.core_memory.last_entity(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPU.memory.last_entity(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
+            int count_size = GPU.compute.calculate_preferred_global_size(count);
             k_prepare_entities
                 .share_mem(ptr_vbo_vertex)
                 .set_arg(PrepareEntities_k.Args.offset, offset)
                 .set_arg(PrepareEntities_k.Args.max_entity, count)
-                .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
+                .call(arg_long(count_size), GPU.compute.preferred_work_size);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

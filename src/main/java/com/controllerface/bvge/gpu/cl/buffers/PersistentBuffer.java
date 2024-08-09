@@ -1,7 +1,6 @@
 package com.controllerface.bvge.gpu.cl.buffers;
 
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_float16;
@@ -32,7 +31,7 @@ public class PersistentBuffer extends ResizableBuffer
             else this.byte_capacity += (long)this.item_size * 32768L;
         }
 
-        var new_buffer = GPU.CL.new_buffer(GPGPU.compute.context, this.byte_capacity);
+        var new_buffer = GPU.CL.new_buffer(GPU.compute.context, this.byte_capacity);
         GPU.CL.zero_buffer(cmd_queue, new_buffer, this.byte_capacity);
         GPU.CL.transfer_buffer(cmd_queue, this.buffer, new_buffer, previous_capacity);
 
@@ -46,7 +45,7 @@ public class PersistentBuffer extends ResizableBuffer
     {
         release();
         this.byte_capacity = source.byte_capacity;
-        var new_buffer = GPU.CL.new_buffer(GPGPU.compute.context, this.byte_capacity);
+        var new_buffer = GPU.CL.new_buffer(GPU.compute.context, this.byte_capacity);
         GPU.CL.transfer_buffer(cmd_queue, source.buffer, new_buffer, source.byte_capacity);
         this.buffer = new_buffer;
         update_registered_kernels();

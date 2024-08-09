@@ -9,7 +9,7 @@ public class UnorderedCoreBufferGroup extends CoreBufferGroup
 {
     public UnorderedCoreBufferGroup(String name, CL_CommandQueue cmd_queue, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(name, cmd_queue, entity_init, hull_init, edge_init, point_init);
+        super(cmd_queue, name, entity_init, hull_init, edge_init, point_init);
     }
 
     public void unload_sectors(Raw raw, int[] counts)

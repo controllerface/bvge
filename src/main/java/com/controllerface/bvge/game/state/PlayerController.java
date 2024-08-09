@@ -7,8 +7,8 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.PersistentBuffer;
 import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.memory.sectors.SectorController;
@@ -71,11 +71,11 @@ public class PlayerController implements GPUResource
     {
         player_inventory = playerInventory;
 
-        b_control_point_flags        = new PersistentBuffer(GPGPU.compute.compute_queue, cl_int.size(), 1);
-        b_control_point_indices      = new PersistentBuffer(GPGPU.compute.compute_queue, cl_int.size(), 1);
-        b_control_point_linear_mag   = new PersistentBuffer(GPGPU.compute.compute_queue, cl_float.size(), 1);
-        b_control_point_jump_mag     = new PersistentBuffer(GPGPU.compute.compute_queue, cl_float.size(), 1);
-        b_control_point_tick_budgets = new PersistentBuffer(GPGPU.compute.compute_queue, cl_int.size(), 1);
+        b_control_point_flags        = new PersistentBuffer(GPU.compute.physics_queue, cl_int.size(), 1);
+        b_control_point_indices      = new PersistentBuffer(GPU.compute.physics_queue, cl_int.size(), 1);
+        b_control_point_linear_mag   = new PersistentBuffer(GPU.compute.physics_queue, cl_float.size(), 1);
+        b_control_point_jump_mag     = new PersistentBuffer(GPU.compute.physics_queue, cl_float.size(), 1);
+        b_control_point_tick_budgets = new PersistentBuffer(GPU.compute.physics_queue, cl_int.size(), 1);
 
         this.entity_id       = ComponentType.EntityId.forEntity(ecs, Constants.PLAYER_ID);
         this.position        = ComponentType.Position.forEntity(ecs, Constants.PLAYER_ID);
@@ -128,11 +128,11 @@ public class PlayerController implements GPUResource
         float world_x = player.get_screen_target().x * Window.get().camera().get_zoom() + Window.get().camera().position().x;
         float world_y = (Window.get().height() - player.get_screen_target().y) * Window.get().camera().get_zoom() + Window.get().camera().position().y;
 
-        GPGPU.core_memory.update_mouse_position(mouse_cursor_id.index(), world_x, world_y);
+        GPU.memory.update_mouse_position(mouse_cursor_id.index(), world_x, world_y);
 
         // todo: allow non-static/un-snapped placement using key-combo or mode switch of some kind
         snap_block_cursor(world_x, world_y);
-        GPGPU.core_memory.update_block_position(block_cursor_id.index(), block_cursor_pos[0], block_cursor_pos[1]);
+        GPU.memory.update_block_position(block_cursor_id.index(), block_cursor_pos[0], block_cursor_pos[1]);
 
         if (player.pressed(MOUSE_PRIMARY)
             && block_cursor.is_active()
@@ -145,11 +145,11 @@ public class PlayerController implements GPUResource
             {
                 resource_count -= 4;
                 player_inventory.solid_counts().put(block_cursor.block(), resource_count);
-                int new_block_id = PhysicsObjects.base_block(GPGPU.core_memory.sector_container(),
+                int new_block_id = PhysicsObjects.base_block(GPU.memory.sector_container(),
                     world_x, world_y, 32, 90, 0.0f, 0.0f,
                     0, Constants.HullFlags.IS_STATIC.bits,
                     block_cursor.block(), empty_block_hits);
-                GPGPU.core_memory.place_block(block_cursor_id.index(), new_block_id);
+                GPU.memory.place_block(block_cursor_id.index(), new_block_id);
             }
 
             Window.get().event_bus().emit_event(Event.inventory(Event.Type.ITEM_CHANGE));
@@ -171,7 +171,7 @@ public class PlayerController implements GPUResource
     {
         handle_input_states();
 
-        GPGPU.core_memory.read_entity_info(entity_id.index(), entity_info_buffer);
+        GPU.memory.read_entity_info(entity_id.index(), entity_info_buffer);
 
         entity[0]        = entity_info_buffer[0];
         entity[1]        = entity_info_buffer[1];
@@ -409,7 +409,7 @@ public class PlayerController implements GPUResource
         if (anim_layers[2]==-1) anim_layers[2] =0;
         if (anim_layers[3]==-1) anim_layers[3] =0;
 
-        GPGPU.core_memory.write_entity_info(entity_id.index(),
+        GPU.memory.write_entity_info(entity_id.index(),
             accel,
             current_time,
             prev_time,

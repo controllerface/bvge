@@ -2,7 +2,6 @@ package com.controllerface.bvge.memory.sectors;
 
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.buffers.TransientBuffer;
@@ -43,9 +42,9 @@ public class UnorderedSectorOutput implements GPUResource
     private final ResizableBuffer b_hull_shift;
     private final ResizableBuffer b_point_shift;
 
-    public UnorderedSectorOutput(String name,
-                                 CL_CommandQueue cmd_queue,
+    public UnorderedSectorOutput(CL_CommandQueue cmd_queue,
                                  GPUCoreMemory core_memory,
+                                 String name,
                                  long entity_init,
                                  long hull_init,
                                  long edge_init,
@@ -53,7 +52,7 @@ public class UnorderedSectorOutput implements GPUResource
     {
         this.cmd_queue = cmd_queue;
         this.core_memory       = core_memory;
-        this.egress_sizes_buf  = GPU.CL.new_pinned_buffer(GPGPU.compute.context, (long)cl_int.size() * 6);
+        this.egress_sizes_buf  = GPU.CL.new_pinned_buffer(GPU.compute.context, (long)cl_int.size() * 6);
         this.sector_buffers    = new UnorderedCoreBufferGroup(name, this.cmd_queue, ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.p_gpu_crud        = new GPUCrud().init();
 
@@ -192,7 +191,7 @@ public class UnorderedSectorOutput implements GPUResource
         int hull_bone_capacity     = egress_counts[4];
         int entity_bone_capacity   = egress_counts[5];
 
-        int entity_size = GPGPU.compute.calculate_preferred_global_size(entity_count);
+        int entity_size = GPU.compute.calculate_preferred_global_size(entity_count);
 
         int hull_count        = core_memory.sector_container().next_hull();
         int edge_count        = core_memory.sector_container().next_edge();
@@ -200,11 +199,11 @@ public class UnorderedSectorOutput implements GPUResource
         int hull_bone_count   = core_memory.sector_container().next_hull_bone();
         int entity_bone_count = core_memory.sector_container().next_entity_bone();
 
-        int hull_size        = GPGPU.compute.calculate_preferred_global_size(hull_count);
-        int edge_size        = GPGPU.compute.calculate_preferred_global_size(edge_count);
-        int point_size       = GPGPU.compute.calculate_preferred_global_size(point_count);
-        int hull_bone_size   = GPGPU.compute.calculate_preferred_global_size(hull_bone_count);
-        int entity_bone_size = GPGPU.compute.calculate_preferred_global_size(entity_bone_count);
+        int hull_size        = GPU.compute.calculate_preferred_global_size(hull_count);
+        int edge_size        = GPU.compute.calculate_preferred_global_size(edge_count);
+        int point_size       = GPU.compute.calculate_preferred_global_size(point_count);
+        int hull_bone_size   = GPU.compute.calculate_preferred_global_size(hull_bone_count);
+        int entity_bone_size = GPU.compute.calculate_preferred_global_size(entity_bone_count);
 
         b_hull_shift.ensure_capacity(hull_count);
         b_edge_shift.ensure_capacity(edge_count);
@@ -221,27 +220,27 @@ public class UnorderedSectorOutput implements GPUResource
         sector_buffers.ensure_capacity_all(point_capacity, edge_capacity, hull_capacity, entity_capacity, hull_bone_capacity, entity_bone_capacity);
         k_egress_entities
             .set_arg(EgressEntities_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(entity_size), GPU.compute.preferred_work_size);
 
         k_egress_hulls
             .set_arg(EgressHulls_k.Args.max_hull, hull_count)
-            .call(arg_long(hull_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(hull_size), GPU.compute.preferred_work_size);
 
         k_egress_edges
             .set_arg(EgressEdges_k.Args.max_edge, edge_count)
-            .call(arg_long(edge_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(edge_size), GPU.compute.preferred_work_size);
 
         k_egress_points
             .set_arg(EgressPoints_k.Args.max_point, point_count)
-            .call(arg_long(point_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(point_size), GPU.compute.preferred_work_size);
 
         k_egress_hull_bones
             .set_arg(EgressHullBones_k.Args.max_hull_bone, hull_bone_count)
-            .call(arg_long(hull_bone_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(hull_bone_size), GPU.compute.preferred_work_size);
 
         k_egress_entity_bones
             .set_arg(EgressEntityBones_k.Args.max_entity_bone, entity_bone_count)
-            .call(arg_long(entity_bone_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(entity_bone_size), GPU.compute.preferred_work_size);
     }
 
     public void unload(UnorderedCoreBufferGroup.Raw raw_sectors, int[] counts)

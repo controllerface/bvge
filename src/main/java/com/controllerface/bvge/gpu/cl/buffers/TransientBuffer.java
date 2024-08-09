@@ -1,7 +1,6 @@
 package com.controllerface.bvge.gpu.cl.buffers;
 
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 
 public class TransientBuffer extends ResizableBuffer
@@ -18,7 +17,7 @@ public class TransientBuffer extends ResizableBuffer
 
         this.byte_capacity = required_capacity * 2;
         release();
-        this.buffer = GPU.CL.new_buffer(GPGPU.compute.context, this.byte_capacity);
+        this.buffer = GPU.CL.new_buffer(GPU.compute.context, this.byte_capacity);
         update_registered_kernels();
     }
 }

@@ -20,7 +20,7 @@ public class CL_ComputeController implements GPUResource
 
     public final CL_Device device;
     public final CL_Context context;
-    public final CL_CommandQueue compute_queue;
+    public final CL_CommandQueue physics_queue;
     public final CL_CommandQueue render_queue;
     public final CL_CommandQueue sector_queue;
 
@@ -33,7 +33,7 @@ public class CL_ComputeController implements GPUResource
                                 long[] local_work_default,
                                 CL_Device device,
                                 CL_Context context,
-                                CL_CommandQueue compute_queue,
+                                CL_CommandQueue physics_queue,
                                 CL_CommandQueue render_queue,
                                 CL_CommandQueue sector_queue)
     {
@@ -44,13 +44,13 @@ public class CL_ComputeController implements GPUResource
         this.local_work_default = local_work_default;
         this.device = device;
         this.context = context;
-        this.compute_queue = compute_queue;
+        this.physics_queue = physics_queue;
         this.render_queue = render_queue;
         this.sector_queue = sector_queue;
 
         resources.add(device);
         resources.add(context);
-        resources.add(compute_queue);
+        resources.add(physics_queue);
         resources.add(render_queue);
         resources.add(sector_queue);
     }

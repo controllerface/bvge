@@ -1,7 +1,6 @@
 package com.controllerface.bvge.gpu.cl.kernels;
 
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
@@ -109,7 +108,7 @@ public abstract class GPUKernel
 
     public void call_task()
     {
-        call(GPGPU.compute.global_single_size, GPGPU.compute.global_single_size);
+        call(GPU.compute.global_single_size, GPU.compute.global_single_size);
     }
 
     public void call(long[] global_work_size, long[] local_work_size)

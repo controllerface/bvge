@@ -1,6 +1,7 @@
 package com.controllerface.bvge.gpu;
 
 import com.controllerface.bvge.core.Window;
+import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.events.EventBus;
 import com.controllerface.bvge.game.InputSystem;
@@ -24,6 +25,7 @@ import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.shaders.ThreeStageShader;
 import com.controllerface.bvge.gpu.gl.shaders.TwoStageShader;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
+import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.rendering.TextGlyph;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
@@ -113,6 +115,32 @@ public class GPU
         LOGGER.setLevel(Level.FINE);
     }
 
+    //#region Global Access
+
+    public static GPUCoreMemory memory;
+    public static CL_ComputeController compute;
+    public static GL_GraphicsController graphics;
+
+    public static void startup(ECS ecs, EventBus event_bus, InputSystem input_system, String title)
+    {
+        graphics = GPU.GL.init_gl(title, event_bus, input_system);
+        compute  = GPU.CL.init_cl();
+        memory   = new GPUCoreMemory(compute, ecs, event_bus);
+    }
+
+    public static void shutdown()
+    {
+        memory.release();
+        compute.release();
+        graphics.release();
+
+        graphics = null;
+        compute  = null;
+        memory   = null;
+    }
+
+    //#endregion
+
     public static class GL
     {
         //#region GL Constants
@@ -191,7 +219,7 @@ public class GPU
         public static GL_Texture2D build_character_map(int texture_size, String font_file, String[] character_set, Map<Character, TextGlyph> character_map)
         {
             long ft_library = initFreeType();
-            FT_Face ft_face = loadFontFace(ft_library, font_file);
+            var ft_face = loadFontFace(ft_library, font_file);
             Objects.requireNonNull(ft_face);
             FT_Set_Pixel_Sizes(ft_face, texture_size, texture_size);
             var font = hb_ft_font_create_referenced(ft_face.address());
@@ -370,7 +398,7 @@ public class GPU
 
         //#region GL Initialization Methods
 
-        public static GL_GraphicsController init_gl(String title, EventBus event_bus, InputSystem inputSystem)
+        private static GL_GraphicsController init_gl(String title, EventBus event_bus, InputSystem inputSystem)
         {
             GLFWErrorCallback.createPrint(System.err).set();
 
@@ -864,11 +892,11 @@ public class GPU
             }
         }
 
-        public static CL_ComputeController init_cl()
+        private static CL_ComputeController init_cl()
         {
             var device = init_device();
             var context = new_context(device);
-            var compute_queue = new_command_queue(context, device);
+            var physics_queue = new_command_queue(context, device);
             var render_queue = new_command_queue(context, device);
             var sector_queue = new_command_queue(context, device);
 
@@ -951,7 +979,7 @@ public class GPU
                 local_work_default,
                 device,
                 context,
-                compute_queue,
+                physics_queue,
                 render_queue,
                 sector_queue);
         }

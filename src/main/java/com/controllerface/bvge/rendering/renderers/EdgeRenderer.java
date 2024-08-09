@@ -3,7 +3,6 @@ package com.controllerface.bvge.rendering.renderers;
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareEdges_k;
@@ -61,17 +60,17 @@ public class EdgeRenderer implements Renderer
     private void inti_CL()
     {
         p_prepare_edges.init();
-        ptr_vbo_edge = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_edge);
-        ptr_vbo_flag = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_flag);
+        ptr_vbo_edge = GPU.CL.gl_share_memory(GPU.compute.context, vbo_edge);
+        ptr_vbo_flag = GPU.CL.gl_share_memory(GPU.compute.context, vbo_flag);
 
-        k_prepare_edges = new PrepareEdges_k(GPGPU.compute.render_queue, p_prepare_edges)
+        k_prepare_edges = new PrepareEdges_k(GPU.compute.render_queue, p_prepare_edges)
             .buf_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
             .buf_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)
-            .buf_arg(PrepareEdges_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT))
-            .buf_arg(PrepareEdges_k.Args.point_hull_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_HULL_INDEX))
-            .buf_arg(PrepareEdges_k.Args.hull_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
-            .buf_arg(PrepareEdges_k.Args.edges, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_EDGE))
-            .buf_arg(PrepareEdges_k.Args.edge_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_EDGE_FLAG));
+            .buf_arg(PrepareEdges_k.Args.points, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT))
+            .buf_arg(PrepareEdges_k.Args.point_hull_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_HULL_INDEX))
+            .buf_arg(PrepareEdges_k.Args.hull_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
+            .buf_arg(PrepareEdges_k.Args.edges, GPU.memory.get_buffer(RenderBufferType.RENDER_EDGE))
+            .buf_arg(PrepareEdges_k.Args.edge_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_EDGE_FLAG));
     }
 
     @Override
@@ -82,16 +81,16 @@ public class EdgeRenderer implements Renderer
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         int offset = 0;
-        for (int remaining = GPGPU.core_memory.last_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPU.memory.last_edge(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
+            int count_size = GPU.compute.calculate_preferred_global_size(count);
             k_prepare_edges
                 .share_mem(ptr_vbo_edge)
                 .share_mem(ptr_vbo_flag)
                 .set_arg(PrepareEdges_k.Args.offset, offset)
                 .set_arg(PrepareEdges_k.Args.max_edge, count)
-                .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
+                .call(arg_long(count_size), GPU.compute.preferred_work_size);
 
             glDrawArrays(GL_LINES, 0, count * 2);
             offset += count;

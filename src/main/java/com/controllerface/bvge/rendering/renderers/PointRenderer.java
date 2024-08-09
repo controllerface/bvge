@@ -3,7 +3,6 @@ package com.controllerface.bvge.rendering.renderers;
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PreparePoints_k;
@@ -59,16 +58,16 @@ public class PointRenderer implements Renderer
 
     private void init_CL()
     {
-        vertex_buf = GPU.CL.gl_share_memory(GPGPU.compute.context, vertex_vbo);
-        color_buf =GPU.CL.gl_share_memory(GPGPU.compute.context, color_vbo);
+        vertex_buf = GPU.CL.gl_share_memory(GPU.compute.context, vertex_vbo);
+        color_buf =GPU.CL.gl_share_memory(GPU.compute.context, color_vbo);
 
         prepare_points.init();
 
-        k_prepare_points = new PreparePoints_k(GPGPU.compute.render_queue, prepare_points)
+        k_prepare_points = new PreparePoints_k(GPU.compute.render_queue, prepare_points)
             .buf_arg(PreparePoints_k.Args.vertex_vbo, vertex_buf)
             .buf_arg(PreparePoints_k.Args.color_vbo, color_buf)
-            .buf_arg(PreparePoints_k.Args.anti_gravity, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_ANTI_GRAV))
-            .buf_arg(PreparePoints_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT));
+            .buf_arg(PreparePoints_k.Args.anti_gravity, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_ANTI_GRAV))
+            .buf_arg(PreparePoints_k.Args.points, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT));
     }
 
     @Override
@@ -82,16 +81,16 @@ public class PointRenderer implements Renderer
         glPointSize(5);
 
         int offset = 0;
-        for (int remaining = GPGPU.core_memory.last_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPU.memory.last_point(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
+            int count_size = GPU.compute.calculate_preferred_global_size(count);
             k_prepare_points
                 .share_mem(vertex_buf)
                 .share_mem(color_buf)
                 .set_arg(PreparePoints_k.Args.offset, offset)
                 .set_arg(PreparePoints_k.Args.max_point, count)
-                .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
+                .call(arg_long(count_size), GPU.compute.preferred_work_size);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

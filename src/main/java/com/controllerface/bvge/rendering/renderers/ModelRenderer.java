@@ -2,13 +2,11 @@ package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
@@ -173,56 +171,56 @@ public class ModelRenderer implements Renderer
 
     private void init_CL()
     {
-        command_buf        = GPU.CL.gl_share_memory(GPGPU.compute.context, cbo);
-        element_buf        = GPU.CL.gl_share_memory(GPGPU.compute.context, ebo);
-        vertex_buf         = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_position);
-        uv_buf             = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_texture_uv);
-        color_buf          = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_color);
-        slot_buf           = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_texture_slot);
-        total_buf          = GPU.CL.new_pinned_int(GPGPU.compute.context);
-        query_buf          = GPU.CL.new_mutable_buffer(GPGPU.compute.context, raw_query);
-        counter_buf        = GPU.CL.new_empty_buffer(GPGPU.compute.context, GPGPU.compute.render_queue, mesh_size);
-        offset_buf         = GPU.CL.new_empty_buffer(GPGPU.compute.context, GPGPU.compute.render_queue, mesh_size);
-        mesh_transfer_buf  = GPU.CL.new_empty_buffer(GPGPU.compute.context, GPGPU.compute.render_queue, ELEMENT_BUFFER_SIZE * 2);
+        command_buf        = GPU.CL.gl_share_memory(GPU.compute.context, cbo);
+        element_buf        = GPU.CL.gl_share_memory(GPU.compute.context, ebo);
+        vertex_buf         = GPU.CL.gl_share_memory(GPU.compute.context, vbo_position);
+        uv_buf             = GPU.CL.gl_share_memory(GPU.compute.context, vbo_texture_uv);
+        color_buf          = GPU.CL.gl_share_memory(GPU.compute.context, vbo_color);
+        slot_buf           = GPU.CL.gl_share_memory(GPU.compute.context, vbo_texture_slot);
+        total_buf          = GPU.CL.new_pinned_int(GPU.compute.context);
+        query_buf          = GPU.CL.new_mutable_buffer(GPU.compute.context, raw_query);
+        counter_buf        = GPU.CL.new_empty_buffer(GPU.compute.context, GPU.compute.render_queue, mesh_size);
+        offset_buf         = GPU.CL.new_empty_buffer(GPU.compute.context, GPU.compute.render_queue, mesh_size);
+        mesh_transfer_buf  = GPU.CL.new_empty_buffer(GPU.compute.context, GPU.compute.render_queue, ELEMENT_BUFFER_SIZE * 2);
 
         p_mesh_query.init();
         p_scan_int_array_out.init();
 
-        gpu_int2_scan    = new GPUScanVectorInt2(GPGPU.compute.render_queue);
-        gpu_int_scan_out = new GPUScanScalarIntOut(GPGPU.compute.render_queue);
+        gpu_int2_scan    = new GPUScanVectorInt2(GPU.compute.render_queue);
+        gpu_int_scan_out = new GPUScanScalarIntOut(GPU.compute.render_queue);
 
-        k_count_mesh_instances = new CountMeshInstances_k(GPGPU.compute.render_queue, p_mesh_query)
+        k_count_mesh_instances = new CountMeshInstances_k(GPU.compute.render_queue, p_mesh_query)
             .buf_arg(CountMeshInstances_k.Args.counters, counter_buf)
             .buf_arg(CountMeshInstances_k.Args.query, query_buf)
             .buf_arg(CountMeshInstances_k.Args.total, total_buf)
             .set_arg(CountMeshInstances_k.Args.count, mesh_count)
-            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
-            .buf_arg(CountMeshInstances_k.Args.hull_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
-            .buf_arg(CountMeshInstances_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
-            .buf_arg(CountMeshInstances_k.Args.entity_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG));
+            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
+            .buf_arg(CountMeshInstances_k.Args.hull_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
+            .buf_arg(CountMeshInstances_k.Args.hull_entity_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
+            .buf_arg(CountMeshInstances_k.Args.entity_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG));
 
-        k_write_mesh_details = new WriteMeshDetails_k(GPGPU.compute.render_queue, p_mesh_query)
+        k_write_mesh_details = new WriteMeshDetails_k(GPU.compute.render_queue, p_mesh_query)
             .buf_arg(WriteMeshDetails_k.Args.counters, counter_buf)
             .buf_arg(WriteMeshDetails_k.Args.query, query_buf)
             .buf_arg(WriteMeshDetails_k.Args.offsets, offset_buf)
             .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
-            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
-            .buf_arg(WriteMeshDetails_k.Args.hull_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
-            .buf_arg(WriteMeshDetails_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
-            .buf_arg(WriteMeshDetails_k.Args.entity_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG))
-            .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
-            .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE));
+            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
+            .buf_arg(WriteMeshDetails_k.Args.hull_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
+            .buf_arg(WriteMeshDetails_k.Args.hull_entity_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
+            .buf_arg(WriteMeshDetails_k.Args.entity_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG))
+            .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPU.memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
+            .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPU.memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE));
 
-        k_count_mesh_batches = new CountMeshBatches_k(GPGPU.compute.render_queue, p_mesh_query)
+        k_count_mesh_batches = new CountMeshBatches_k(GPU.compute.render_queue, p_mesh_query)
             .buf_arg(CountMeshBatches_k.Args.total, total_buf)
             .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
 
-        k_calculate_batch_offsets = new CalculateBatchOffsets_k(GPGPU.compute.render_queue, p_mesh_query);
+        k_calculate_batch_offsets = new CalculateBatchOffsets_k(GPU.compute.render_queue, p_mesh_query);
 
-        k_transfer_detail_data = new TransferDetailData_k(GPGPU.compute.render_queue, p_mesh_query)
+        k_transfer_detail_data = new TransferDetailData_k(GPU.compute.render_queue, p_mesh_query)
             .buf_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_buf);
 
-        k_transfer_render_data = new TransferRenderData_k(GPGPU.compute.render_queue, p_mesh_query)
+        k_transfer_render_data = new TransferRenderData_k(GPU.compute.render_queue, p_mesh_query)
             .buf_arg(TransferRenderData_k.Args.command_buffer, command_buf)
             .buf_arg(TransferRenderData_k.Args.element_buffer, element_buf)
             .buf_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buf)
@@ -230,21 +228,21 @@ public class ModelRenderer implements Renderer
             .buf_arg(TransferRenderData_k.Args.color_buffer, color_buf)
             .buf_arg(TransferRenderData_k.Args.slot_buffer, slot_buf)
             .buf_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_buf)
-            .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_POINT_TABLE))
-            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
-            .buf_arg(TransferRenderData_k.Args.hull_entity_ids, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
-            .buf_arg(TransferRenderData_k.Args.hull_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
-            .buf_arg(TransferRenderData_k.Args.hull_uv_offsets, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_UV_OFFSET))
-            .buf_arg(TransferRenderData_k.Args.hull_integrity, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_INTEGRITY))
-            .buf_arg(TransferRenderData_k.Args.entity_flags, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG))
-            .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
-            .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE))
-            .buf_arg(TransferRenderData_k.Args.mesh_faces, GPGPU.core_memory.get_buffer(ReferenceBufferType.MESH_FACE))
-            .buf_arg(TransferRenderData_k.Args.points, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT))
-            .buf_arg(TransferRenderData_k.Args.point_hit_counts, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_HIT_COUNT))
-            .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_VERTEX_REFERENCE))
-            .buf_arg(TransferRenderData_k.Args.uv_tables, GPGPU.core_memory.get_buffer(ReferenceBufferType.VERTEX_UV_TABLE))
-            .buf_arg(TransferRenderData_k.Args.texture_uvs, GPGPU.core_memory.get_buffer(ReferenceBufferType.VERTEX_TEXTURE_UV));
+            .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_POINT_TABLE))
+            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
+            .buf_arg(TransferRenderData_k.Args.hull_entity_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
+            .buf_arg(TransferRenderData_k.Args.hull_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
+            .buf_arg(TransferRenderData_k.Args.hull_uv_offsets, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_UV_OFFSET))
+            .buf_arg(TransferRenderData_k.Args.hull_integrity, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_INTEGRITY))
+            .buf_arg(TransferRenderData_k.Args.entity_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG))
+            .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPU.memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
+            .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPU.memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE))
+            .buf_arg(TransferRenderData_k.Args.mesh_faces, GPU.memory.get_buffer(ReferenceBufferType.MESH_FACE))
+            .buf_arg(TransferRenderData_k.Args.points, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT))
+            .buf_arg(TransferRenderData_k.Args.point_hit_counts, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_HIT_COUNT))
+            .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_VERTEX_REFERENCE))
+            .buf_arg(TransferRenderData_k.Args.uv_tables, GPU.memory.get_buffer(ReferenceBufferType.VERTEX_UV_TABLE))
+            .buf_arg(TransferRenderData_k.Args.texture_uvs, GPU.memory.get_buffer(ReferenceBufferType.VERTEX_TEXTURE_UV));
     }
 
     private record BatchData(int[] raw_offsets, int total_instances, CL_Buffer mesh_details_buf, CL_Buffer mesh_texture_buf) { }
@@ -253,19 +251,19 @@ public class ModelRenderer implements Renderer
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
 
-        GPU.CL.zero_buffer(GPGPU.compute.render_queue, counter_buf, mesh_size);
-        GPU.CL.zero_buffer(GPGPU.compute.render_queue, offset_buf, mesh_size);
-        GPU.CL.zero_buffer(GPGPU.compute.render_queue, total_buf, CL_DataTypes.cl_int.size());
-        GPU.CL.zero_buffer(GPGPU.compute.render_queue, mesh_transfer_buf, ELEMENT_BUFFER_SIZE * 2);
+        GPU.CL.zero_buffer(GPU.compute.render_queue, counter_buf, mesh_size);
+        GPU.CL.zero_buffer(GPU.compute.render_queue, offset_buf, mesh_size);
+        GPU.CL.zero_buffer(GPU.compute.render_queue, total_buf, CL_DataTypes.cl_int.size());
+        GPU.CL.zero_buffer(GPU.compute.render_queue, mesh_transfer_buf, ELEMENT_BUFFER_SIZE * 2);
 
-        int hull_count = GPGPU.core_memory.sector_container().next_hull();
-        int hull_size = GPGPU.compute.calculate_preferred_global_size(hull_count);
+        int hull_count = GPU.memory.sector_container().next_hull();
+        int hull_size = GPU.compute.calculate_preferred_global_size(hull_count);
         long[] hull_global_size = arg_long(hull_size);
 
         long si = Editor.ACTIVE ? System.nanoTime() : 0;
         k_count_mesh_instances
             .set_arg(CountMeshInstances_k.Args.max_hull, hull_count)
-            .call(hull_global_size, GPGPU.compute.preferred_work_size);
+            .call(hull_global_size, GPU.compute.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;
@@ -274,7 +272,7 @@ public class ModelRenderer implements Renderer
 
         gpu_int_scan_out.scan_int_out(counter_buf.ptr(), offset_buf.ptr(), mesh_count);
 
-        int total_instances = GPU.CL.read_pinned_int(GPGPU.compute.render_queue, total_buf);
+        int total_instances = GPU.CL.read_pinned_int(GPU.compute.render_queue, total_buf);
         if (total_instances == 0)
         {
             return null;
@@ -287,15 +285,15 @@ public class ModelRenderer implements Renderer
 
         long details_size = (long)total_instances * CL_DataTypes.cl_int4.size();
         long texture_size = (long)total_instances * CL_DataTypes.cl_int.size();
-        var mesh_details_ptr = GPU.CL.new_empty_buffer(GPGPU.compute.context, GPGPU.compute.render_queue, details_size);
-        var mesh_texture_ptr = GPU.CL.new_empty_buffer(GPGPU.compute.context, GPGPU.compute.render_queue, texture_size);
+        var mesh_details_ptr = GPU.CL.new_empty_buffer(GPU.compute.context, GPU.compute.render_queue, details_size);
+        var mesh_texture_ptr = GPU.CL.new_empty_buffer(GPU.compute.context, GPU.compute.render_queue, texture_size);
 
         si = Editor.ACTIVE ? System.nanoTime() : 0;
         k_write_mesh_details
             .buf_arg(WriteMeshDetails_k.Args.mesh_details, mesh_details_ptr)
             .buf_arg(WriteMeshDetails_k.Args.mesh_texture, mesh_texture_ptr)
             .set_arg(WriteMeshDetails_k.Args.max_hull, hull_count)
-            .call(hull_global_size, GPGPU.compute.preferred_work_size);
+            .call(hull_global_size, GPU.compute.preferred_work_size);
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;
@@ -313,14 +311,14 @@ public class ModelRenderer implements Renderer
             Editor.queue_event("render_model_count_batches", String.valueOf(e));
         }
 
-        int total_batches = GPU.CL.read_pinned_int(GPGPU.compute.render_queue, total_buf);
+        int total_batches = GPU.CL.read_pinned_int(GPU.compute.render_queue, total_buf);
         if (Editor.ACTIVE)
         {
             Editor.queue_event("render_batch_count", String.valueOf(total_batches));
         }
         long batch_index_size = (long) total_batches * CL_DataTypes.cl_int.size();
 
-        var mesh_offset_buf = GPU.CL.new_pinned_buffer(GPGPU.compute.context, batch_index_size);
+        var mesh_offset_buf = GPU.CL.new_pinned_buffer(GPU.compute.context, batch_index_size);
 
         si = Editor.ACTIVE ? System.nanoTime() : 0;
         k_calculate_batch_offsets
@@ -335,7 +333,7 @@ public class ModelRenderer implements Renderer
         }
 
         si = Editor.ACTIVE ? System.nanoTime() : 0;
-        int[] raw_offsets = GPU.CL.read_pinned_int_buffer(GPGPU.compute.render_queue, mesh_offset_buf, CL_DataTypes.cl_int.size(), total_batches);
+        int[] raw_offsets = GPU.CL.read_pinned_int_buffer(GPU.compute.render_queue, mesh_offset_buf, CL_DataTypes.cl_int.size(), total_batches);
         mesh_offset_buf.release();
         if (Editor.ACTIVE)
         {
@@ -378,7 +376,7 @@ public class ModelRenderer implements Renderer
             int count = next_batch == batch_data.raw_offsets.length
                 ? batch_data.total_instances - offset
                 : batch_data.raw_offsets[next_batch] - offset;
-            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
+            int count_size = GPU.compute.calculate_preferred_global_size(count);
             long[] count_global_size = arg_long(count_size);
             long st = Editor.ACTIVE ? System.nanoTime() : 0;
 
@@ -386,7 +384,7 @@ public class ModelRenderer implements Renderer
                 .buf_arg(TransferDetailData_k.Args.mesh_details, batch_data.mesh_details_buf)
                 .set_arg(TransferDetailData_k.Args.offset, offset)
                 .set_arg(TransferDetailData_k.Args.max_mesh, count)
-                .call(count_global_size, GPGPU.compute.preferred_work_size);
+                .call(count_global_size, GPU.compute.preferred_work_size);
 
             if (Editor.ACTIVE)
             {
@@ -409,7 +407,7 @@ public class ModelRenderer implements Renderer
                 .buf_arg(TransferRenderData_k.Args.mesh_texture, batch_data.mesh_texture_buf)
                 .set_arg(TransferRenderData_k.Args.offset, offset)
                 .set_arg(TransferRenderData_k.Args.max_index, count)
-                .call(count_global_size, GPGPU.compute.preferred_work_size);
+                .call(count_global_size, GPU.compute.preferred_work_size);
 
             if (Editor.ACTIVE)
             {

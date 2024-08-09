@@ -7,7 +7,6 @@ import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
@@ -85,40 +84,40 @@ public class LiquidRenderer implements Renderer
     {
         p_prepare_liquids.init();
         p_root_hull_filter.init();
-        atomic_counter = GPU.CL.new_pinned_int(GPGPU.compute.context);
-        ptr_vbo_transform = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_transform);
-        ptr_vbo_color = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_color);
+        atomic_counter = GPU.CL.new_pinned_int(GPU.compute.context);
+        ptr_vbo_transform = GPU.CL.gl_share_memory(GPU.compute.context, vbo_transform);
+        ptr_vbo_color = GPU.CL.gl_share_memory(GPU.compute.context, vbo_color);
 
-        k_prepare_liquids = new PrepareLiquids_k(GPGPU.compute.render_queue, p_prepare_liquids)
+        k_prepare_liquids = new PrepareLiquids_k(GPU.compute.render_queue, p_prepare_liquids)
             .buf_arg(PrepareLiquids_k.Args.transforms_out, ptr_vbo_transform)
             .buf_arg(PrepareLiquids_k.Args.colors_out, ptr_vbo_color)
-            .buf_arg(PrepareLiquids_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
-            .buf_arg(PrepareLiquids_k.Args.hull_scales, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
-            .buf_arg(PrepareLiquids_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION))
-            .buf_arg(PrepareLiquids_k.Args.hull_point_tables, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_POINT_TABLE))
-            .buf_arg(PrepareLiquids_k.Args.hull_uv_offsets, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_UV_OFFSET))
-            .buf_arg(PrepareLiquids_k.Args.point_hit_counts, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_POINT_HIT_COUNT));
+            .buf_arg(PrepareLiquids_k.Args.hull_positions, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL))
+            .buf_arg(PrepareLiquids_k.Args.hull_scales, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
+            .buf_arg(PrepareLiquids_k.Args.hull_rotations, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION))
+            .buf_arg(PrepareLiquids_k.Args.hull_point_tables, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_POINT_TABLE))
+            .buf_arg(PrepareLiquids_k.Args.hull_uv_offsets, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_UV_OFFSET))
+            .buf_arg(PrepareLiquids_k.Args.point_hit_counts, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_HIT_COUNT));
 
-        k_root_hull_filter = new RootHullFilter_k(GPGPU.compute.render_queue, p_root_hull_filter)
-            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
+        k_root_hull_filter = new RootHullFilter_k(GPU.compute.render_queue, p_root_hull_filter)
+            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
+            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
 
-        k_root_hull_count = new RootHullCount_k(GPGPU.compute.render_queue, p_root_hull_filter)
-            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
+        k_root_hull_count = new RootHullCount_k(GPU.compute.render_queue, p_root_hull_filter)
+            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
     }
 
     private HullIndexData hull_filter(CL_CommandQueue cmd_queue, int model_id)
     {
         GPU.CL.zero_buffer(cmd_queue, atomic_counter, cl_int.size());
 
-        int entity_count = GPGPU.core_memory.sector_container().next_entity();
-        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
+        int entity_count = GPU.memory.sector_container().next_entity();
+        int entity_size  = GPU.compute.calculate_preferred_global_size(entity_count);
 
         k_root_hull_count
             .buf_arg(RootHullCount_k.Args.counter, atomic_counter)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .set_arg(RootHullCount_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(entity_size), GPU.compute.preferred_work_size);
 
         int final_count = GPU.CL.read_pinned_int(cmd_queue, atomic_counter);
 
@@ -128,7 +127,7 @@ public class LiquidRenderer implements Renderer
         }
 
         long final_buffer_size = (long) cl_int.size() * final_count;
-        var hulls_out = GPU.CL.new_buffer(GPGPU.compute.context, final_buffer_size);
+        var hulls_out = GPU.CL.new_buffer(GPU.compute.context, final_buffer_size);
 
         GPU.CL.zero_buffer(cmd_queue, atomic_counter, cl_int.size());
 
@@ -137,7 +136,7 @@ public class LiquidRenderer implements Renderer
             .buf_arg(RootHullFilter_k.Args.counter, atomic_counter)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(entity_size), GPU.compute.preferred_work_size);
 
         return new HullIndexData(hulls_out, final_count);
     }
@@ -149,7 +148,7 @@ public class LiquidRenderer implements Renderer
         {
             circle_hulls.indices().release();
         }
-        circle_hulls = hull_filter(GPGPU.compute.render_queue, ModelRegistry.CIRCLE_PARTICLE);
+        circle_hulls = hull_filter(GPU.compute.render_queue, ModelRegistry.CIRCLE_PARTICLE);
 
 
         if (Editor.ACTIVE)
@@ -174,7 +173,7 @@ public class LiquidRenderer implements Renderer
         for (int remaining = circle_hulls.count(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
+            int count_size = GPU.compute.calculate_preferred_global_size(count);
 
             k_prepare_liquids
                 .share_mem(ptr_vbo_transform)
@@ -182,7 +181,7 @@ public class LiquidRenderer implements Renderer
                 .buf_arg(PrepareLiquids_k.Args.indices, circle_hulls.indices())
                 .set_arg(PrepareLiquids_k.Args.offset, offset)
                 .set_arg(PrepareLiquids_k.Args.max_hull, count)
-                .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
+                .call(arg_long(count_size), GPU.compute.preferred_work_size);
 
             glDrawArrays(GL_POINTS, 0, count);
             offset += count;

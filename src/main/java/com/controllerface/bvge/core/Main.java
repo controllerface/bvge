@@ -2,7 +2,9 @@ package com.controllerface.bvge.core;
 
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.editor.Editor;
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.events.EventBus;
+import com.controllerface.bvge.game.InputSystem;
+import com.controllerface.bvge.gpu.GPU;
 import org.lwjgl.Version;
 import org.lwjgl.system.Configuration;
 import org.lwjgl.util.freetype.FreeType;
@@ -16,6 +18,7 @@ import java.util.logging.Logger;
 public class Main
 {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+    private static final String WINDOW_TITLE = "BVGE Prototype";
 
     public static void main(String[] args)
     {
@@ -60,22 +63,26 @@ public class Main
 
     private static void run()
     {
-
-        ECS ecs = new ECS();
         Window window = Window.get();
-        window.init(ecs);
-
-        GPGPU.init(ecs);
         Editor.init();
 
+        var ecs             = new ECS();
+        var event_bus       = new EventBus();
+        var input_system    = new InputSystem(ecs);
+
+        GPU.startup(ecs, event_bus, input_system, WINDOW_TITLE);
+        window.init(ecs, event_bus, input_system);
         window.init_game_mode();
-        try { window.run(); }
+
+        try { window.show(); }
         catch (Exception e) { throw new RuntimeException("Unexpected error", e); }
         finally
         {
-            Editor.destroy();
-            GPGPU.destroy();
+            GPU.shutdown();
+            input_system.shutdown();
+            event_bus.clear();
             ecs.shutdown();
+            Editor.destroy();
         }
     }
 }

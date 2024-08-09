@@ -8,7 +8,7 @@ import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class CoreBufferGroup extends BufferGroup<CoreBufferType>
 {
-    public CoreBufferGroup(String name, CL_CommandQueue cmd_queue, long entity_init, long hull_init, long edge_init, long point_init)
+    public CoreBufferGroup(CL_CommandQueue cmd_queue, String name, long entity_init, long hull_init, long edge_init, long point_init)
     {
         super(CoreBufferType.class, name, cmd_queue, true);
 

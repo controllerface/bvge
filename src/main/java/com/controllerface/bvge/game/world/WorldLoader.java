@@ -3,7 +3,7 @@ package com.controllerface.bvge.game.world;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.editor.Editor;
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.memory.sectors.Sector;
 import com.controllerface.bvge.physics.PhysicsEntityBatch;
 import com.controllerface.bvge.physics.UniformGrid;
@@ -59,7 +59,7 @@ public class WorldLoader extends GameSystem
                 {
                     load_sectors(next_sector_bounds.take());
                     world_permit.release(1);
-                    GPGPU.core_memory.await_world_barrier();
+                    GPU.memory.await_world_barrier();
                 }
                 catch (InterruptedException e)
                 {
@@ -98,7 +98,7 @@ public class WorldLoader extends GameSystem
                 {
                     new_loaded_sectors.add(sector);
                     var sector_batch = sector_cache.get(sector, world::generate_sector);
-                    GPGPU.core_memory.load_entity_batch(sector_batch);
+                    GPU.memory.load_entity_batch(sector_batch);
                 }
             }
         }
@@ -118,7 +118,7 @@ public class WorldLoader extends GameSystem
         PhysicsEntityBatch batch;
         while ((batch = load_queue.poll()) != null)
         {
-            GPGPU.core_memory.load_entity_batch(batch);
+            GPU.memory.load_entity_batch(batch);
         }
     }
 

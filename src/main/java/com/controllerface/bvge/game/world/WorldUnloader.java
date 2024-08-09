@@ -3,7 +3,7 @@ package com.controllerface.bvge.game.world;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.game.Constants;
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.memory.groups.UnorderedCoreBufferGroup;
 import com.controllerface.bvge.memory.sectors.BrokenObjectBuffer;
 import com.controllerface.bvge.memory.sectors.Sector;
@@ -59,11 +59,11 @@ public class WorldUnloader extends GameSystem
                     float dt = next_dt.take();
                     if ((dt != -1f))
                     {
-                        int[] last_counts = GPGPU.core_memory.last_egress_counts();
+                        int[] last_counts = GPU.memory.last_egress_counts();
                         unload_sectors(last_counts);
                         unload_broken(last_counts);
                     }
-                    GPGPU.core_memory.await_world_barrier();
+                    GPU.memory.await_world_barrier();
                 }
                 catch (InterruptedException e)
                 {
@@ -78,7 +78,7 @@ public class WorldUnloader extends GameSystem
         int entity_count = last_counts[0];
         if (entity_count > 0)
         {
-            GPGPU.core_memory.unload_sectors(raw_sectors, last_counts);
+            GPU.memory.unload_sectors(raw_sectors, last_counts);
             for (int entity_offset = 0; entity_offset < entity_count; entity_offset++)
             {
                 int entity_4_x = entity_offset * 4;
@@ -314,7 +314,7 @@ public class WorldUnloader extends GameSystem
         if (broken_count > 0)
         {
             var batch = new PhysicsEntityBatch();
-            GPGPU.core_memory.unload_broken(raw_broken, broken_count);
+            GPU.memory.unload_broken(raw_broken, broken_count);
             int offset_2 = 0;
             int offset_1 = 0;
             for (int type : raw_broken.entity_types)

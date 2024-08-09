@@ -1,7 +1,6 @@
 package com.controllerface.bvge.gpu.cl.buffers;
 
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 
@@ -24,7 +23,7 @@ public abstract class ResizableBuffer
         this.item_size = item_size;
         this.cmd_queue = cmd_queue;
         this.byte_capacity = this.item_size * item_capacity;
-        this.buffer = GPU.CL.new_buffer(GPGPU.compute.context, this.byte_capacity);
+        this.buffer = GPU.CL.new_buffer(GPU.compute.context, this.byte_capacity);
     }
 
     abstract public void ensure_capacity(long total_item_capacity);

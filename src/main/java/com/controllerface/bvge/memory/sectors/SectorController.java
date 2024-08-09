@@ -2,7 +2,6 @@ package com.controllerface.bvge.memory.sectors;
 
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
@@ -59,9 +58,9 @@ public class SectorController implements SectorContainer, GPUResource
         this.cmd_queue = cmd_queue;
         this.sector_buffers = sector_buffers;
 
-        position_buf     = GPU.CL.new_pinned_buffer(GPGPU.compute.context, cl_float2.size());
-        info_buf         = GPU.CL.new_pinned_buffer(GPGPU.compute.context, (long)cl_float.size() * ENTITY_INFO_WIDTH);
-        egress_sizes_buf = GPU.CL.new_pinned_buffer(GPGPU.compute.context, EGRESS_COUNTERS_SIZE);
+        position_buf     = GPU.CL.new_pinned_buffer(GPU.compute.context, cl_float2.size());
+        info_buf         = GPU.CL.new_pinned_buffer(GPU.compute.context, (long)cl_float.size() * ENTITY_INFO_WIDTH);
+        egress_sizes_buf = GPU.CL.new_pinned_buffer(GPU.compute.context, EGRESS_COUNTERS_SIZE);
 
         k_create_point = new CreatePoint_k(this.cmd_queue, p_gpu_crud)
             .buf_arg(CreatePoint_k.Args.points,                         this.sector_buffers.buffer(POINT))
@@ -279,10 +278,10 @@ public class SectorController implements SectorContainer, GPUResource
     {
         GPU.CL.zero_buffer(this.cmd_queue, egress_sizes_buf, EGRESS_COUNTERS_SIZE);
         int entity_count = next_entity();
-        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
+        int entity_size  = GPU.compute.calculate_preferred_global_size(entity_count);
         k_count_egress_entities
             .set_arg(CountEgressEntities_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(entity_size), GPU.compute.preferred_work_size);
         return GPU.CL.read_pinned_int_buffer(this.cmd_queue, egress_sizes_buf, cl_int.size(), EGRESS_COUNTERS);
     }
 

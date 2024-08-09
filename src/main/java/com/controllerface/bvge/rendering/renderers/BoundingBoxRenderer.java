@@ -3,7 +3,6 @@ package com.controllerface.bvge.rendering.renderers;
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.rendering.PrepareBounds_k;
@@ -61,11 +60,11 @@ public class BoundingBoxRenderer implements Renderer
     private void init_CL()
     {
         p_prepare_bounds.init();
-        ptr_vbo_position = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_position);
+        ptr_vbo_position = GPU.CL.gl_share_memory(GPU.compute.context, vbo_position);
 
-        k_prepare_bounds = new PrepareBounds_k(GPGPU.compute.render_queue, p_prepare_bounds)
+        k_prepare_bounds = new PrepareBounds_k(GPU.compute.render_queue, p_prepare_bounds)
             .buf_arg(PrepareBounds_k.Args.vbo, ptr_vbo_position)
-            .buf_arg(PrepareBounds_k.Args.bounds, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_AABB));
+            .buf_arg(PrepareBounds_k.Args.bounds, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_AABB));
     }
 
     @Override
@@ -77,10 +76,10 @@ public class BoundingBoxRenderer implements Renderer
         shader.uploadMat4f("uVP", Window.get().camera().get_uVP());
 
         int offset = 0;
-        for (int remaining = GPGPU.core_memory.last_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
+        for (int remaining = GPU.memory.last_hull(); remaining > 0; remaining -= Constants.Rendering.MAX_BATCH_SIZE)
         {
             int count = Math.min(Constants.Rendering.MAX_BATCH_SIZE, remaining);
-            int count_size = GPGPU.compute.calculate_preferred_global_size(count);
+            int count_size = GPU.compute.calculate_preferred_global_size(count);
 
             // todo: see if a uniform can be set that sets a max_count, and vertices can bail if beyond max
             int[] o_ = new int[count];
@@ -92,7 +91,7 @@ public class BoundingBoxRenderer implements Renderer
                 .share_mem(ptr_vbo_position)
                 .set_arg(PrepareBounds_k.Args.offset, offset)
                 .set_arg(PrepareBounds_k.Args.max_bound, count)
-                .call(arg_long(count_size), GPGPU.compute.preferred_work_size);
+                .call(arg_long(count_size), GPU.compute.preferred_work_size);
 
             glMultiDrawArrays(GL_LINE_LOOP, o_, c_);
 

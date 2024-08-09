@@ -3,7 +3,6 @@ package com.controllerface.bvge.gpu.cl.programs.scan;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.GPUResource;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
@@ -35,7 +34,7 @@ public class GPUScanVectorInt2 implements GPUResource
     {
         long s = Editor.ACTIVE ? System.nanoTime() : 0;
 
-        int k = GPGPU.compute.work_group_count(n);
+        int k = GPU.compute.work_group_count(n);
         if (k == 1)
         {
             scan_single_block_int2(data_ptr, n);
@@ -54,31 +53,31 @@ public class GPUScanVectorInt2 implements GPUResource
 
     private void scan_single_block_int2(long data_ptr, int n)
     {
-        long local_buffer_size = CL_DataTypes.cl_int2.size() * GPGPU.compute.max_scan_block_size;
+        long local_buffer_size = CL_DataTypes.cl_int2.size() * GPU.compute.max_scan_block_size;
 
         k_scan_int2_single_block
             .ptr_arg(ScanInt2SingleBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt2SingleBlock_k.Args.buffer, local_buffer_size)
             .set_arg(ScanInt2SingleBlock_k.Args.n, n)
-            .call(GPGPU.compute.local_work_default, GPGPU.compute.local_work_default);
+            .call(GPU.compute.local_work_default, GPU.compute.local_work_default);
     }
 
     private void scan_multi_block_int2(long data_ptr, int n, int k)
     {
-        long local_buffer_size = CL_DataTypes.cl_int2.size() * GPGPU.compute.max_scan_block_size;
-        long gx = k * GPGPU.compute.max_scan_block_size;
+        long local_buffer_size = CL_DataTypes.cl_int2.size() * GPU.compute.max_scan_block_size;
+        long gx = k * GPU.compute.max_scan_block_size;
         long[] global_work_size = arg_long(gx);
         int part_size = k * 2;
         long part_buf_size = ((long) CL_DataTypes.cl_int2.size() * ((long) part_size));
 
-        var part_data = GPU.CL.new_buffer(GPGPU.compute.context, part_buf_size);
+        var part_data = GPU.CL.new_buffer(GPU.compute.context, part_buf_size);
 
         k_scan_int2_multi_block
             .ptr_arg(ScanInt2MultiBlock_k.Args.data, data_ptr)
             .loc_arg(ScanInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .buf_arg(ScanInt2MultiBlock_k.Args.part, part_data)
             .set_arg(ScanInt2MultiBlock_k.Args.n, n)
-            .call(global_work_size, GPGPU.compute.local_work_default);
+            .call(global_work_size, GPU.compute.local_work_default);
 
         scan_int2(part_data.ptr(), part_size);
 
@@ -87,7 +86,7 @@ public class GPUScanVectorInt2 implements GPUResource
             .loc_arg(CompleteInt2MultiBlock_k.Args.buffer, local_buffer_size)
             .buf_arg(CompleteInt2MultiBlock_k.Args.part, part_data)
             .set_arg(CompleteInt2MultiBlock_k.Args.n, n)
-            .call(global_work_size, GPGPU.compute.local_work_default);
+            .call(global_work_size, GPU.compute.local_work_default);
 
         part_data.release();
     }

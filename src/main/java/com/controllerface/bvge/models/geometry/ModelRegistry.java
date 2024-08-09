@@ -4,7 +4,6 @@ import com.controllerface.bvge.core.MathEX;
 import com.controllerface.bvge.game.InventorySystem;
 import com.controllerface.bvge.game.state.AnimationState;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
 import com.controllerface.bvge.models.SceneNode;
 import com.controllerface.bvge.models.bones.BoneBindPose;
@@ -166,7 +165,7 @@ public class ModelRegistry
             int root_transform_index = -1;
             if (model_transform.get() != null)
             {
-                root_transform_index = GPGPU.core_memory.reference_container().new_model_transform(MathEX.raw_matrix(model_transform.get()));
+                root_transform_index = GPU.memory.reference_container().new_model_transform(MathEX.raw_matrix(model_transform.get()));
             }
             var model = new Model(meshes,
                 entity_transform.get(),
@@ -229,7 +228,7 @@ public class ModelRegistry
         if (raw_bone.mNumWeights() > 0)
         {
             var bone_node = node_map.get(bone_name);
-            int bone_ref_id = GPGPU.core_memory.reference_container().new_bone_reference(raw_matrix);
+            int bone_ref_id = GPU.memory.reference_container().new_bone_reference(raw_matrix);
             bone_offset = new BoneOffset(bone_ref_id, bone_name, offset, bone_node);
         }
         else
@@ -280,7 +279,7 @@ public class ModelRegistry
             raw_face[1] = indices.get(1);
             raw_face[2] = indices.get(2);
             raw_face[3] = mesh_id;
-            int face_id = GPGPU.core_memory.reference_container().new_mesh_face(raw_face);
+            int face_id = GPU.memory.reference_container().new_mesh_face(raw_face);
             mesh_faces[face_index++] = new Face(face_id, indices.get(0), indices.get(1), indices.get(2));
         }
         return mesh_faces;
@@ -370,7 +369,7 @@ public class ModelRegistry
             uv_table[0] = -1;
             vertex_uvs.forEach(uv ->
             {
-                var uv_ref = GPGPU.core_memory.reference_container().new_texture_uv(uv.x, uv.y);
+                var uv_ref = GPU.memory.reference_container().new_texture_uv(uv.x, uv.y);
                 if (uv_table[0] == -1)
                 {
                     uv_table[0] = uv_ref;
@@ -378,7 +377,7 @@ public class ModelRegistry
                 uv_table[1] = uv_ref;
             });
 
-            var vert_ref_id = GPGPU.core_memory.reference_container().new_vertex_reference(raw_vertex.x(), raw_vertex.y(), weights, uv_table);
+            var vert_ref_id = GPU.memory.reference_container().new_vertex_reference(raw_vertex.x(), raw_vertex.y(), weights, uv_table);
             mesh_vertices[this_vert] = new Vertex(vert_ref_id, raw_vertex.x(), raw_vertex.y(), vertex_uvs, names, weights);
         }
         return mesh_vertices;
@@ -399,7 +398,7 @@ public class ModelRegistry
                 + " ensure node and geometry names match in blender");
         }
 
-        int next_mesh = GPGPU.core_memory.reference_container().next_mesh();
+        int next_mesh = GPU.memory.reference_container().next_mesh();
         var bone_name_map = new HashMap<Integer, String[]>();
         var bone_weight_map = new HashMap<Integer, float[]>();
         var mesh_bones = load_mesh_bones(raw_mesh, node_map, bone_name_map, bone_weight_map);
@@ -412,7 +411,7 @@ public class ModelRegistry
         vertex_table[1] = mesh_vertices[mesh_vertices.length - 1].index();
         face_table[0] = mesh_faces[0].index();
         face_table[1] = mesh_faces[mesh_faces.length - 1].index();
-        var mesh_id = GPGPU.core_memory.reference_container().new_mesh_reference(vertex_table, face_table);
+        var mesh_id = GPU.memory.reference_container().new_mesh_reference(vertex_table, face_table);
 
         assert mesh_id == next_mesh : "Mesh alignment error";
 
@@ -583,7 +582,7 @@ public class ModelRegistry
             var raw_animation = entry.getValue();
 
             // store the timings so bone channels can use them
-            int anim_timing_id = GPGPU.core_memory.reference_container().new_animation_timings((float)raw_animation.mDuration(), (float)raw_animation.mTicksPerSecond());
+            int anim_timing_id = GPU.memory.reference_container().new_animation_timings((float)raw_animation.mDuration(), (float)raw_animation.mTicksPerSecond());
             animation_map.put(animation_state, animation_index);
 
 //            System.out.println("anim" + raw_animation.mName().dataString()
@@ -626,7 +625,7 @@ public class ModelRegistry
                     var pos_vector = raw_pos_key.mValue();
                     float[] frame_data = new float[]{ pos_vector.x(), pos_vector.y(), pos_vector.z(), 1.0f };
                     LOGGER.log(Level.FINEST,"DEBUG position key; index: " + current_pos_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
-                    int next_pos_key = GPGPU.core_memory.reference_container().new_keyframe(frame_data, (float)raw_pos_key.mTime());
+                    int next_pos_key = GPU.memory.reference_container().new_keyframe(frame_data, (float)raw_pos_key.mTime());
                     if (p_start == -1) p_start = next_pos_key;
                     p_end = next_pos_key;
                 }
@@ -637,7 +636,7 @@ public class ModelRegistry
                     var rot_quaternion = raw_rot_key.mValue();
                     float[] frame_data = new float[]{ rot_quaternion.x(), rot_quaternion.y(), rot_quaternion.z(), rot_quaternion.w() };
                     LOGGER.log(Level.FINEST,"DEBUG rotation key; index: " + current_rot_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
-                    int next_rot_key = GPGPU.core_memory.reference_container().new_keyframe(frame_data, (float)raw_rot_key.mTime());
+                    int next_rot_key = GPU.memory.reference_container().new_keyframe(frame_data, (float)raw_rot_key.mTime());
                     if (r_start == -1) r_start = next_rot_key;
                     r_end = next_rot_key;
                 }
@@ -648,7 +647,7 @@ public class ModelRegistry
                     var scale_vector = raw_scl_key.mValue();
                     float[] frame_data = new float[]{ scale_vector.x(), scale_vector.y(), scale_vector.z(), 1.0f };
                     LOGGER.log(Level.FINEST,"DEBUG scale key   ; index: " + current_scl_key + " name: " + raw_animation.mName().dataString() + " bone: " + bone_name + " raw: " + Arrays.toString(frame_data) );
-                    int next_scl_key = GPGPU.core_memory.reference_container().new_keyframe(frame_data, (float)raw_scl_key.mTime());
+                    int next_scl_key = GPU.memory.reference_container().new_keyframe(frame_data, (float)raw_scl_key.mTime());
                     if (s_start == -1) s_start = next_scl_key;
                     s_end = next_scl_key;
                 }
@@ -673,7 +672,7 @@ public class ModelRegistry
                     int[] rot_table = new int[]{ channel.rot_start(), channel.rot_end() };
                     int[] scl_table = new int[]{ channel.scl_start(), channel.scl_end() };
 
-                    int next_channel = GPGPU.core_memory.reference_container().new_bone_channel(channel.anim_timing_id(), pos_table, rot_table, scl_table);
+                    int next_channel = GPU.memory.reference_container().new_bone_channel(channel.anim_timing_id(), pos_table, rot_table, scl_table);
                     if (c_start == -1) c_start = next_channel;
                     c_end = next_channel;
                 }
@@ -683,7 +682,7 @@ public class ModelRegistry
                     throw new RuntimeException("Could not load animation data");
                 }
             }
-            GPGPU.core_memory.reference_container().set_bone_channel_table(bind_pose_id, new int[]{ c_start, c_end });
+            GPU.memory.reference_container().set_bone_channel_table(bind_pose_id, new int[]{ c_start, c_end });
         });
     }
 
@@ -784,7 +783,7 @@ public class ModelRegistry
             var raw_matrix = MathEX.raw_matrix(node_transform);
             var bind_pose = new BoneBindPose(parent, node_transform, name);
             var bone_name = NamedBone.fuzzy_match(name);
-            int bind_pose_id = GPGPU.core_memory.reference_container().new_bone_bind_pose(raw_matrix, bone_name.layer);
+            int bind_pose_id = GPU.memory.reference_container().new_bone_bind_pose(raw_matrix, bone_name.layer);
             bind_name_map.put(name, bind_pose_id);
             bind_pose_map.put(bind_pose_id, bind_pose);
             transforms.put(name, global_transform);

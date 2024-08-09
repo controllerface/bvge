@@ -8,7 +8,7 @@ import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.game.state.PlayerInventory;
-import com.controllerface.bvge.gpu.cl.GPGPU;
+import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.memory.sectors.CollectedObjectBuffer;
 import com.controllerface.bvge.substances.Solid;
 
@@ -56,10 +56,10 @@ public class InventorySystem extends GameSystem
                     float dt = next_dt.take();
                     if ((dt != -1f))
                     {
-                        int[] last_counts = GPGPU.core_memory.last_egress_counts();
+                        int[] last_counts = GPU.memory.last_egress_counts();
                         unload_collected(last_counts);
                     }
-                    GPGPU.core_memory.await_world_barrier();
+                    GPU.memory.await_world_barrier();
                 }
                 catch (InterruptedException e)
                 {
@@ -74,7 +74,7 @@ public class InventorySystem extends GameSystem
         int collected_count = last_counts[7];
         if (collected_count > 0)
         {
-            GPGPU.core_memory.unload_collected(raw_collected, collected_count);
+            GPU.memory.unload_collected(raw_collected, collected_count);
             for (int i = 0; i < collected_count; i++)
             {
                 int qty = 1; // todo: pull from world, possibly account for player stat mods

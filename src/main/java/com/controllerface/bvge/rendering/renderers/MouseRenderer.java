@@ -2,13 +2,11 @@ package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
 import com.controllerface.bvge.gpu.GPU;
-import com.controllerface.bvge.gpu.cl.GPGPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
@@ -74,37 +72,37 @@ public class MouseRenderer implements Renderer
     {
         prepare_transforms.init();
         root_hull_filter.init();
-        transforms_buf = GPU.CL.gl_share_memory(GPGPU.compute.context, vbo_transforms);
-        atomic_counter = GPU.CL.new_pinned_int(GPGPU.compute.context);
+        transforms_buf = GPU.CL.gl_share_memory(GPU.compute.context, vbo_transforms);
+        atomic_counter = GPU.CL.new_pinned_int(GPU.compute.context);
 
-        k_prepare_transforms = new PrepareTransforms_k(GPGPU.compute.render_queue, prepare_transforms)
+        k_prepare_transforms = new PrepareTransforms_k(GPU.compute.render_queue, prepare_transforms)
             .buf_arg(PrepareTransforms_k.Args.transforms_out, transforms_buf)
             .set_arg(PrepareTransforms_k.Args.max_hull, 1)
             .set_arg(PrepareTransforms_k.Args.offset, 0)
-            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL))
-            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
-            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
+            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL))
+            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
+            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
 
-        k_root_hull_filter = new RootHullFilter_k(GPGPU.compute.render_queue, root_hull_filter)
-            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
+        k_root_hull_filter = new RootHullFilter_k(GPU.compute.render_queue, root_hull_filter)
+            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
+            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
 
-        k_root_hull_count = new RootHullCount_k(GPGPU.compute.render_queue, root_hull_filter)
-            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPGPU.core_memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
+        k_root_hull_count = new RootHullCount_k(GPU.compute.render_queue, root_hull_filter)
+            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
     }
 
     public HullIndexData hull_filter(CL_CommandQueue cmd_queue, int model_id)
     {
         GPU.CL.zero_buffer(cmd_queue, atomic_counter, CL_DataTypes.cl_int.size());
 
-        int entity_count = GPGPU.core_memory.sector_container().next_entity();
-        int entity_size  = GPGPU.compute.calculate_preferred_global_size(entity_count);
+        int entity_count = GPU.memory.sector_container().next_entity();
+        int entity_size  = GPU.compute.calculate_preferred_global_size(entity_count);
 
         k_root_hull_count
             .buf_arg(RootHullCount_k.Args.counter, atomic_counter)
             .set_arg(RootHullCount_k.Args.model_id, model_id)
             .set_arg(RootHullCount_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(entity_size), GPU.compute.preferred_work_size);
 
         int final_count =  GPU.CL.read_pinned_int(cmd_queue, atomic_counter);
 
@@ -114,7 +112,7 @@ public class MouseRenderer implements Renderer
         }
 
         long final_buffer_size = (long) CL_DataTypes.cl_int.size() * final_count;
-        var hulls_out = GPU.CL.new_buffer(GPGPU.compute.context, final_buffer_size);
+        var hulls_out = GPU.CL.new_buffer(GPU.compute.context, final_buffer_size);
 
         GPU.CL.zero_buffer(cmd_queue, atomic_counter, CL_DataTypes.cl_int.size());
 
@@ -123,7 +121,7 @@ public class MouseRenderer implements Renderer
             .buf_arg(RootHullFilter_k.Args.counter, atomic_counter)
             .set_arg(RootHullFilter_k.Args.model_id, model_id)
             .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
-            .call(arg_long(entity_size), GPGPU.compute.preferred_work_size);
+            .call(arg_long(entity_size), GPU.compute.preferred_work_size);
 
         return new HullIndexData(hulls_out, final_count);
     }
@@ -135,7 +133,7 @@ public class MouseRenderer implements Renderer
         {
             cursor_hulls.indices().release();
         }
-        cursor_hulls = hull_filter(GPGPU.compute.render_queue, ModelRegistry.CURSOR);
+        cursor_hulls = hull_filter(GPU.compute.render_queue, ModelRegistry.CURSOR);
 
         if (cursor_hulls.count() == 0) return;
 
