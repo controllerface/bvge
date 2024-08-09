@@ -24,6 +24,7 @@ import static org.lwjgl.opengl.GL11C.*;
 public class Window
 {
     private static final Logger LOGGER = Logger.getLogger(Window.class.getName());
+    private static final float MAX_DT = 100.0f;
 
     private int width;
     private int height;
@@ -60,6 +61,15 @@ public class Window
         this.a = 1;
     }
 
+    public static Window get()
+    {
+        if (Window.INSTANCE == null)
+        {
+            Window.INSTANCE = new Window();
+        }
+        return Window.INSTANCE;
+    }
+
     public void update_width(int new_width)
     {
         this.width = new_width;
@@ -68,15 +78,6 @@ public class Window
     public void update_height(int new_height)
     {
         this.height = new_height;
-    }
-
-    public static Window get()
-    {
-        if (Window.INSTANCE == null)
-        {
-            Window.INSTANCE = new Window();
-        }
-        return Window.INSTANCE;
     }
 
     public EventBus event_bus()
@@ -131,8 +132,6 @@ public class Window
     {
         return camera;
     }
-
-    private static final float MAX_DT = 100.0f;
 
     // this is the main game loop
     public void loop()

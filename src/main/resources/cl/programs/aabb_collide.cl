@@ -20,14 +20,14 @@ __kernel void aabb_collide(__global float4 *bounds,
 {
     int gid = get_global_id(0);
     if (gid >= max_index) return;
-    int index = candidates[gid].x;
+    int target_hull = candidates[gid].x;
     int size = candidates[gid].y;
     int match_offset = match_offsets[gid];
 
-    float4 bound = bounds[index];
-    int2 bounds_bank = bounds_bank_data[index];
-    int flags = hull_flags[index];
-    int entity_id = hull_entity_ids[index];
+    float4 bound = bounds[target_hull];
+    int2 bounds_bank = bounds_bank_data[target_hull];
+    int flags = hull_flags[target_hull];
+    int entity_id = hull_entity_ids[target_hull];
 
     int spatial_index = bounds_bank.x * 2;
     int spatial_length = bounds_bank.y;
@@ -37,8 +37,8 @@ __kernel void aabb_collide(__global float4 *bounds,
     int current_offset = match_offset;
     int slots_used = 0;
 
-    bool is_static = (flags & IS_STATIC) !=0;
-    bool is_sensor = (flags & IS_SENSOR) !=0;
+    bool target_static = (flags & IS_STATIC) !=0;
+    bool target_sensor = (flags & IS_SENSOR) !=0;
 
     // loop through all the keys for this hull
     for (int bank_index = spatial_index; bank_index < end; bank_index++)
@@ -62,42 +62,38 @@ __kernel void aabb_collide(__global float4 *bounds,
         // loop through all the candidates at this key
         for (int map_index = key_offset; map_index < key_offset + count; map_index++)
         {
-            int next = key_map[map_index]; 
-
-            // todo: add layer check
-            // todo: add non-interact flag check
+            int candidate_hull = key_map[map_index];
+            int candidate_entity_id = hull_entity_ids[candidate_hull];
+            int candidate_flags = hull_flags[candidate_hull];
+            bool candidate_static = (candidate_flags & IS_STATIC) !=0;
+            bool candidate_sensor = (candidate_flags & IS_SENSOR) !=0;
 
             // no mirror or self-matches
-            if (index >= next)
+            if (target_hull >= candidate_hull)
             {
                 continue;
             }
 
-            // no collisions between hulls that are part of the same amrature
-            int candiate_entity_id = hull_entity_ids[next];
-            if (candiate_entity_id == entity_id)
+            // no collisions between hulls that are part of the same entity
+            if (candidate_entity_id == entity_id)
             {
                 continue;
             }
-
-            int candiate_flags = hull_flags[next];
-            bool is_static_c = (candiate_flags & IS_STATIC) !=0;
-            bool is_sensor_c = (candiate_flags & IS_SENSOR) !=0;
 
             // no static/static collision permitted
-            if (is_static && is_static_c)
+            if (target_static && candidate_static)
             {
                 continue;
             }
 
             //no sensor/sensor collision permitted
-            if (is_sensor && is_sensor_c)
+            if (target_sensor && candidate_sensor)
             {
                 continue;
             }
 
             // broad phase collision check
-            float4 candidate = bounds[next];
+            float4 candidate = bounds[candidate_hull];
             bool near = do_bounds_intersect(bound, candidate);
 
             // hulls are not near each other
@@ -114,7 +110,7 @@ __kernel void aabb_collide(__global float4 *bounds,
                 bool dupe = false;
                 for (int match_index = match_offset; match_index < current_offset; match_index++)
                 {
-                    if (matches[match_index] == next)
+                    if (matches[match_index] == candidate_hull)
                     {
                         dupe = true;
                         break;
@@ -127,7 +123,7 @@ __kernel void aabb_collide(__global float4 *bounds,
             }
 
             // broad phase collision detected
-            matches[current_offset++] = next;
+            matches[current_offset++] = candidate_hull;
             slots_used++;
         }
     }

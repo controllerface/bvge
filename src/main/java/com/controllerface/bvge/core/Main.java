@@ -69,14 +69,8 @@ public class Main
         Editor.init();
 
         window.init_game_mode();
-        try
-        {
-            window.run();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+        try { window.run(); }
+        catch (Exception e) { throw new RuntimeException("Unexpected error", e); }
         finally
         {
             Editor.destroy();

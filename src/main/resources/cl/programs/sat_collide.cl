@@ -354,7 +354,7 @@ __kernel void apply_reactions(__global float8 *reactions,
     // adjustment is subtle and does not overcome all rigid-body simulation errors, but helps
     // maintain stability with small numbers of stacked objects. 
     float2 heading = reaction.s23;
-    float ag = calculate_anti_gravity(g, heading);
+    float ag = is_liquid ? 0.0f : calculate_anti_gravity(g, heading);
 
     flags = ag > 0.0f 
         ? flags | HIT_FLOOR

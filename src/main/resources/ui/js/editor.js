@@ -28,6 +28,7 @@ var event_source = new EventSource("/events");
 event_source.addEventListener('dt', handle_event);
 event_source.addEventListener('fps', handle_event);
 event_source.addEventListener('phys', handle_event);
+event_source.addEventListener('player_position', handle_event);
 event_source.addEventListener('dropped', handle_event);
 event_source.addEventListener('phys_integrate', handle_event);
 event_source.addEventListener('phys_calculate_hull_aabb', handle_event);

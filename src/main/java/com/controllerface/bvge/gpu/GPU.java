@@ -115,6 +115,8 @@ public class GPU
 
     public static class GL
     {
+        //#region GL Constants
+
         private static final int DEFAULT_OFFSET = 0;
         private static final int DEFAULT_STRIDE = 0;
 
@@ -142,6 +144,16 @@ public class GPU
                 "{", "}", "|", ";", ":", "'", ",", "<", ".", ">", "/", "?", "~", "`", " ", "\\", "\""
             };
 
+        //#endregion
+
+        //#region GL Shader/Texture/VAO Methods
+
+        public static GL_VertexArray new_vao()
+        {
+            int vao = glCreateVertexArrays();
+            return new GL_VertexArray(vao);
+        }
+
         public static GL_Shader new_shader(String shader_file, GL_ShaderType shader_type)
         {
             GL_Shader shader = switch (shader_type)
@@ -166,6 +178,10 @@ public class GPU
             texture.init(resourceName);
             return texture;
         }
+
+        //#endregion
+
+        //#region Character Map Generation
 
         public static GL_Texture2D build_character_map(int texture_size, String font_file, Map<Character, TextGlyph> character_map)
         {
@@ -225,11 +241,9 @@ public class GPU
             return texture_3d;
         }
 
-        public static GL_VertexArray new_vao()
-        {
-            int vao = glCreateVertexArrays();
-            return new GL_VertexArray(vao);
-        }
+        //#endregion
+
+        //#region GL Buffer Creation Methods
 
         public static GL_VertexBuffer new_buffer_float(GL_VertexArray vao,
                                                        int bind_index,
@@ -352,24 +366,9 @@ public class GPU
             return new GL_CommandBuffer(cbo);
         }
 
-        private static GL_VertexBuffer create_vertex_buffer(int vao,
-                                                            int buffer_offset,
-                                                            int bind_index,
-                                                            int attribute_index,
-                                                            int buffer_size,
-                                                            int data_type,
-                                                            int data_count,
-                                                            int data_size,
-                                                            int data_stride,
-                                                            int flags)
-        {
-            int vbo = glCreateBuffers();
-            glNamedBufferData(vbo, buffer_size, flags);
-            glVertexArrayVertexBuffer(vao, bind_index, vbo, buffer_offset, data_size);
-            glVertexArrayAttribFormat(vao, bind_index, data_count, data_type, false, data_stride);
-            glVertexArrayAttribBinding(vao, attribute_index, bind_index);
-            return new GL_VertexBuffer(vbo);
-        }
+        //#endregion
+
+        //#region GL Initialization Methods
 
         public static GL_GraphicsController init_gl(String title, EventBus event_bus, InputSystem inputSystem)
         {
@@ -556,6 +555,10 @@ public class GPU
             //glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         }
 
+        //#endregion
+
+        //#region GL Font Utils
+
         private static long initFreeType()
         {
             try (MemoryStack stack = MemoryStack.stackPush())
@@ -643,6 +646,10 @@ public class GPU
             MemoryUtil.memFree(image);
         }
 
+        //#endregion
+
+        //#region GL Debug Utils
+
         public static String get_debug_source(int source)
         {
             return switch (source)
@@ -683,10 +690,14 @@ public class GPU
                 default -> APIUtil.apiUnknownToken(severity);
             };
         }
+
+        //#endregion
     }
 
     public static class CL
     {
+        //#region CL Constants
+
         private static final long FLAGS_WRITE_GPU = CL_MEM_READ_WRITE;
         private static final long FLAGS_WRITE_CPU_COPY = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
         private static final long FLAGS_READ_CPU_COPY = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
@@ -702,6 +713,8 @@ public class GPU
             ZERO_PATTERN_BUFFER.putInt(0,0);
             NEGATIVE_ONE_PATTERN_BUFFER.putInt(0, -1);
         }
+
+        //#endregion
 
         //#region Argument Helpers
 
@@ -761,6 +774,7 @@ public class GPU
         //#endregion
 
         //#region CL Initialization Methods
+
         public static CL_Device init_device()
         {
             int result;
@@ -857,7 +871,6 @@ public class GPU
             var compute_queue = new_command_queue(context, device);
             var render_queue = new_command_queue(context, device);
             var sector_queue = new_command_queue(context, device);
-
 
             LOGGER.log(Level.INFO, "-------- OPEN CL DEVICE -----------");
             LOGGER.log(Level.INFO, get_device_string(device.ptr(), CL_DEVICE_VENDOR));
@@ -1006,7 +1019,7 @@ public class GPU
 
         //#endregion
 
-        //#region Buffer Creation Methods
+        //#region CL Buffer Creation Methods
 
         public static CL_Buffer new_buffer(CL_Context context, long size)
         {
@@ -1653,7 +1666,6 @@ public class GPU
         }
 
         //#endregion
-
 
         //#region Misc
 

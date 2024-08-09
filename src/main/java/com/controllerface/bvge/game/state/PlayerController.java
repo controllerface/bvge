@@ -3,6 +3,7 @@ package com.controllerface.bvge.game.state;
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
 import com.controllerface.bvge.ecs.components.*;
+import com.controllerface.bvge.editor.Editor;
 import com.controllerface.bvge.events.Event;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
@@ -205,6 +206,11 @@ public class PlayerController implements GPUResource
         prev_layers[2]   = (int)entity_info_buffer[30];
         prev_layers[3]   = (int)entity_info_buffer[31];
         arm_flag         = (int)entity_info_buffer[32];
+
+        if (Editor.ACTIVE)
+        {
+            Editor.queue_event("player_position", "X:" + entity[0] + " Y:" + entity[1]);
+        }
 
         boolean can_jump   = (arm_flag & Constants.EntityFlags.CAN_JUMP.bits) !=0;
         boolean is_wet     = (arm_flag & Constants.EntityFlags.IS_WET.bits)   !=0;

@@ -2,22 +2,22 @@
 Handles collision between two circular hulls
  */
 void circle_collision(int hull_1_id, 
-                             int hull_2_id,
-                             __global float4 *hulls,
-                             __global float2 *hull_scales,
-                             __global float *hull_frictions,
-                             __global float *hull_restitutions,
-                             __global int *hull_entity_ids,
-                             __global int *hull_flags,
-                             __global int2 *hull_point_tables,
-                             __global float4 *points,
-                             __global int *point_flags,
-                             __global float8 *reactions,
-                             __global int *reaction_index,
-                             __global int *reaction_counts,
-                             __global float *masses,
-                             __global int *counter,
-                             float dt)
+                      int hull_2_id,
+                      __global float4 *hulls,
+                      __global float2 *hull_scales,
+                      __global float *hull_frictions,
+                      __global float *hull_restitutions,
+                      __global int *hull_entity_ids,
+                      __global int *hull_flags,
+                      __global int2 *hull_point_tables,
+                      __global float4 *points,
+                      __global int *point_flags,
+                      __global float8 *reactions,
+                      __global int *reaction_index,
+                      __global int *reaction_counts,
+                      __global float *masses,
+                      __global int *counter,
+                      float dt)
 {
     float4 hull_1 = hulls[hull_1_id];
     float4 hull_2 = hulls[hull_2_id];

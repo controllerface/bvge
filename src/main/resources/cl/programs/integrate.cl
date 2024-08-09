@@ -326,6 +326,7 @@ __kernel void calculate_hull_aabb(__global float4 *hulls,
     int start = point_table.x;
     int end   = point_table.y;
 
+    bool is_liquid     = (hull_1_flags & IS_LIQUID) !=0;
     bool is_cursor     = (hull_1_flags & IS_CURSOR) !=0;
     bool is_sensor     = (hull_1_flags & IS_SENSOR) !=0;
     bool is_ghost      = (hull_1_flags & GHOST_HULL) !=0;
@@ -406,10 +407,14 @@ __kernel void calculate_hull_aabb(__global float4 *hulls,
     // handle bounding boxes for circles
     if (is_circle)
     {
-        min_x = hull.x - hull_scale.y;
-        max_x = hull.x + hull_scale.y;
-        min_y = hull.y - hull_scale.y;
-        max_y = hull.y + hull_scale.y;
+        float size = is_liquid
+            ? hull_scale.y * 3
+            : hull_scale.y;
+
+        min_x = hull.x - size;
+        max_x = hull.x + size;
+        min_y = hull.y - size;
+        max_y = hull.y + size;
     }
 
     if (is_sensor)
