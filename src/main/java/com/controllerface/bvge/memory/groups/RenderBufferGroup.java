@@ -17,7 +17,7 @@ public class RenderBufferGroup extends BufferGroup<RenderBufferType>
 {
     public RenderBufferGroup(CL_CommandQueue cmd_queue, String name, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(RenderBufferType.class, name, cmd_queue, true);
+        super(cmd_queue, RenderBufferType.class, name, true);
 
         init_buffer(RENDER_ENTITY,                 entity_init);
         init_buffer(RENDER_ENTITY_FLAG,            entity_init);

@@ -6,9 +6,12 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.ReferenceBufferGroup;
 
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_float;
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
+import static com.controllerface.bvge.memory.types.ReferenceBufferType.ANIM_DURATION;
+import static com.controllerface.bvge.memory.types.ReferenceBufferType.ANIM_TICK_RATE;
 
 public class CreateAnimationTimings_k extends GPUKernel
 {
@@ -32,6 +35,12 @@ public class CreateAnimationTimings_k extends GPUKernel
     public CreateAnimationTimings_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.create_animation_timings));
+    }
+
+    public GPUKernel init(ReferenceBufferGroup reference_buffers)
+    {
+        return this.buf_arg(Args.animation_durations, reference_buffers.buffer(ANIM_DURATION))
+            .buf_arg(Args.animation_tick_rates, reference_buffers.buffer(ANIM_TICK_RATE));
     }
 
 }

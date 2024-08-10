@@ -10,7 +10,6 @@ import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.SectorContainer;
 import com.controllerface.bvge.memory.groups.CoreBufferGroup;
-import com.controllerface.bvge.memory.types.CoreBufferType;
 
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 
@@ -39,103 +38,12 @@ public class OrderedSectorInput implements SectorContainer, GPUResource
         this.buffers    = new CoreBufferGroup(cmd_queue, "Sector Ingress", ENTITY_INIT, HULL_INIT, EDGE_INIT, POINT_INIT);
         this.controller = new SectorController(cmd_queue, this.p_gpu_crud, this.buffers);
 
-        k_merge_point = new MergePoint_k(cmd_queue, this.p_gpu_crud)
-            .buf_arg(MergePoint_k.Args.points_in, buffers.buffer(CoreBufferType.POINT))
-            .buf_arg(MergePoint_k.Args.point_vertex_references_in, buffers.buffer(CoreBufferType.POINT_VERTEX_REFERENCE))
-            .buf_arg(MergePoint_k.Args.point_hull_indices_in, buffers.buffer(CoreBufferType.POINT_HULL_INDEX))
-            .buf_arg(MergePoint_k.Args.point_hit_counts_in, buffers.buffer(CoreBufferType.POINT_HIT_COUNT))
-            .buf_arg(MergePoint_k.Args.point_flags_in, buffers.buffer(CoreBufferType.POINT_FLAG))
-            .buf_arg(MergePoint_k.Args.point_bone_tables_in, buffers.buffer(CoreBufferType.POINT_BONE_TABLE))
-            .buf_arg(MergePoint_k.Args.points_out, core_memory.get_buffer(CoreBufferType.POINT))
-            .buf_arg(MergePoint_k.Args.point_vertex_references_out, core_memory.get_buffer(CoreBufferType.POINT_VERTEX_REFERENCE))
-            .buf_arg(MergePoint_k.Args.point_hull_indices_out, core_memory.get_buffer(CoreBufferType.POINT_HULL_INDEX))
-            .buf_arg(MergePoint_k.Args.point_hit_counts_out, core_memory.get_buffer(CoreBufferType.POINT_HIT_COUNT))
-            .buf_arg(MergePoint_k.Args.point_flags_out, core_memory.get_buffer(CoreBufferType.POINT_FLAG))
-            .buf_arg(MergePoint_k.Args.point_bone_tables_out, core_memory.get_buffer(CoreBufferType.POINT_BONE_TABLE));
-
-        k_merge_edge = new MergeEdge_k(cmd_queue, this.p_gpu_crud)
-            .buf_arg(MergeEdge_k.Args.edges_in,         buffers.buffer(CoreBufferType.EDGE))
-            .buf_arg(MergeEdge_k.Args.edge_lengths_in,  buffers.buffer(CoreBufferType.EDGE_LENGTH))
-            .buf_arg(MergeEdge_k.Args.edge_flags_in,    buffers.buffer(CoreBufferType.EDGE_FLAG))
-            .buf_arg(MergeEdge_k.Args.edge_pins_in,     buffers.buffer(CoreBufferType.EDGE_PIN))
-            .buf_arg(MergeEdge_k.Args.edges_out,        core_memory.get_buffer(CoreBufferType.EDGE))
-            .buf_arg(MergeEdge_k.Args.edge_lengths_out, core_memory.get_buffer(CoreBufferType.EDGE_LENGTH))
-            .buf_arg(MergeEdge_k.Args.edge_flags_out,   core_memory.get_buffer(CoreBufferType.EDGE_FLAG))
-            .buf_arg(MergeEdge_k.Args.edge_pins_out,    core_memory.get_buffer(CoreBufferType.EDGE_PIN));
-
-        k_merge_hull = new MergeHull_k(cmd_queue, this.p_gpu_crud)
-            .buf_arg(MergeHull_k.Args.hulls_in, buffers.buffer(CoreBufferType.HULL))
-            .buf_arg(MergeHull_k.Args.hull_scales_in, buffers.buffer(CoreBufferType.HULL_SCALE))
-            .buf_arg(MergeHull_k.Args.hull_rotations_in, buffers.buffer(CoreBufferType.HULL_ROTATION))
-            .buf_arg(MergeHull_k.Args.hull_frictions_in, buffers.buffer(CoreBufferType.HULL_FRICTION))
-            .buf_arg(MergeHull_k.Args.hull_restitutions_in, buffers.buffer(CoreBufferType.HULL_RESTITUTION))
-            .buf_arg(MergeHull_k.Args.hull_point_tables_in, buffers.buffer(CoreBufferType.HULL_POINT_TABLE))
-            .buf_arg(MergeHull_k.Args.hull_edge_tables_in, buffers.buffer(CoreBufferType.HULL_EDGE_TABLE))
-            .buf_arg(MergeHull_k.Args.hull_bone_tables_in, buffers.buffer(CoreBufferType.HULL_BONE_TABLE))
-            .buf_arg(MergeHull_k.Args.hull_entity_ids_in, buffers.buffer(CoreBufferType.HULL_ENTITY_ID))
-            .buf_arg(MergeHull_k.Args.hull_flags_in, buffers.buffer(CoreBufferType.HULL_FLAG))
-            .buf_arg(MergeHull_k.Args.hull_mesh_ids_in, buffers.buffer(CoreBufferType.HULL_MESH_ID))
-            .buf_arg(MergeHull_k.Args.hull_uv_offsets_in, buffers.buffer(CoreBufferType.HULL_UV_OFFSET))
-            .buf_arg(MergeHull_k.Args.hull_integrity_in, buffers.buffer(CoreBufferType.HULL_INTEGRITY))
-            .buf_arg(MergeHull_k.Args.hulls_out, core_memory.get_buffer(CoreBufferType.HULL))
-            .buf_arg(MergeHull_k.Args.hull_scales_out, core_memory.get_buffer(CoreBufferType.HULL_SCALE))
-            .buf_arg(MergeHull_k.Args.hull_rotations_out, core_memory.get_buffer(CoreBufferType.HULL_ROTATION))
-            .buf_arg(MergeHull_k.Args.hull_frictions_out, core_memory.get_buffer(CoreBufferType.HULL_FRICTION))
-            .buf_arg(MergeHull_k.Args.hull_restitutions_out, core_memory.get_buffer(CoreBufferType.HULL_RESTITUTION))
-            .buf_arg(MergeHull_k.Args.hull_point_tables_out, core_memory.get_buffer(CoreBufferType.HULL_POINT_TABLE))
-            .buf_arg(MergeHull_k.Args.hull_edge_tables_out, core_memory.get_buffer(CoreBufferType.HULL_EDGE_TABLE))
-            .buf_arg(MergeHull_k.Args.hull_bone_tables_out, core_memory.get_buffer(CoreBufferType.HULL_BONE_TABLE))
-            .buf_arg(MergeHull_k.Args.hull_entity_ids_out, core_memory.get_buffer(CoreBufferType.HULL_ENTITY_ID))
-            .buf_arg(MergeHull_k.Args.hull_flags_out, core_memory.get_buffer(CoreBufferType.HULL_FLAG))
-            .buf_arg(MergeHull_k.Args.hull_mesh_ids_out, core_memory.get_buffer(CoreBufferType.HULL_MESH_ID))
-            .buf_arg(MergeHull_k.Args.hull_uv_offsets_out, core_memory.get_buffer(CoreBufferType.HULL_UV_OFFSET))
-            .buf_arg(MergeHull_k.Args.hull_integrity_out, core_memory.get_buffer(CoreBufferType.HULL_INTEGRITY));
-
-        k_merge_entity = new MergeEntity_k(cmd_queue, this.p_gpu_crud)
-            .buf_arg(MergeEntity_k.Args.entities_in, buffers.buffer(CoreBufferType.ENTITY))
-            .buf_arg(MergeEntity_k.Args.entity_animation_time_in, buffers.buffer(CoreBufferType.ENTITY_ANIM_TIME))
-            .buf_arg(MergeEntity_k.Args.entity_previous_time_in, buffers.buffer(CoreBufferType.ENTITY_PREV_TIME))
-            .buf_arg(MergeEntity_k.Args.entity_motion_states_in, buffers.buffer(CoreBufferType.ENTITY_MOTION_STATE))
-            .buf_arg(MergeEntity_k.Args.entity_animation_layers_in, buffers.buffer(CoreBufferType.ENTITY_ANIM_LAYER))
-            .buf_arg(MergeEntity_k.Args.entity_previous_layers_in, buffers.buffer(CoreBufferType.ENTITY_PREV_LAYER))
-            .buf_arg(MergeEntity_k.Args.entity_hull_tables_in, buffers.buffer(CoreBufferType.ENTITY_HULL_TABLE))
-            .buf_arg(MergeEntity_k.Args.entity_bone_tables_in, buffers.buffer(CoreBufferType.ENTITY_BONE_TABLE))
-            .buf_arg(MergeEntity_k.Args.entity_masses_in, buffers.buffer(CoreBufferType.ENTITY_MASS))
-            .buf_arg(MergeEntity_k.Args.entity_root_hulls_in, buffers.buffer(CoreBufferType.ENTITY_ROOT_HULL))
-            .buf_arg(MergeEntity_k.Args.entity_model_indices_in, buffers.buffer(CoreBufferType.ENTITY_MODEL_ID))
-            .buf_arg(MergeEntity_k.Args.entity_model_transforms_in, buffers.buffer(CoreBufferType.ENTITY_TRANSFORM_ID))
-            .buf_arg(MergeEntity_k.Args.entity_types_in, buffers.buffer(CoreBufferType.ENTITY_TYPE))
-            .buf_arg(MergeEntity_k.Args.entity_flags_in, buffers.buffer(CoreBufferType.ENTITY_FLAG))
-            .buf_arg(MergeEntity_k.Args.entities_out, core_memory.get_buffer(CoreBufferType.ENTITY))
-            .buf_arg(MergeEntity_k.Args.entity_animation_time_out, core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_TIME))
-            .buf_arg(MergeEntity_k.Args.entity_previous_time_out, core_memory.get_buffer(CoreBufferType.ENTITY_PREV_TIME))
-            .buf_arg(MergeEntity_k.Args.entity_motion_states_out, core_memory.get_buffer(CoreBufferType.ENTITY_MOTION_STATE))
-            .buf_arg(MergeEntity_k.Args.entity_animation_layers_out, core_memory.get_buffer(CoreBufferType.ENTITY_ANIM_LAYER))
-            .buf_arg(MergeEntity_k.Args.entity_previous_layers_out, core_memory.get_buffer(CoreBufferType.ENTITY_PREV_LAYER))
-            .buf_arg(MergeEntity_k.Args.entity_hull_tables_out, core_memory.get_buffer(CoreBufferType.ENTITY_HULL_TABLE))
-            .buf_arg(MergeEntity_k.Args.entity_bone_tables_out, core_memory.get_buffer(CoreBufferType.ENTITY_BONE_TABLE))
-            .buf_arg(MergeEntity_k.Args.entity_masses_out, core_memory.get_buffer(CoreBufferType.ENTITY_MASS))
-            .buf_arg(MergeEntity_k.Args.entity_root_hulls_out, core_memory.get_buffer(CoreBufferType.ENTITY_ROOT_HULL))
-            .buf_arg(MergeEntity_k.Args.entity_model_indices_out, core_memory.get_buffer(CoreBufferType.ENTITY_MODEL_ID))
-            .buf_arg(MergeEntity_k.Args.entity_model_transforms_out, core_memory.get_buffer(CoreBufferType.ENTITY_TRANSFORM_ID))
-            .buf_arg(MergeEntity_k.Args.entity_types_out, core_memory.get_buffer(CoreBufferType.ENTITY_TYPE))
-            .buf_arg(MergeEntity_k.Args.entity_flags_out, core_memory.get_buffer(CoreBufferType.ENTITY_FLAG));
-
-        k_merge_hull_bone = new MergeHullBone_k(cmd_queue, this.p_gpu_crud)
-            .buf_arg(MergeHullBone_k.Args.hull_bones_in, buffers.buffer(CoreBufferType.HULL_BONE))
-            .buf_arg(MergeHullBone_k.Args.hull_bind_pose_indicies_in, buffers.buffer(CoreBufferType.HULL_BONE_BIND_POSE))
-            .buf_arg(MergeHullBone_k.Args.hull_inv_bind_pose_indicies_in, buffers.buffer(CoreBufferType.HULL_BONE_INV_BIND_POSE))
-            .buf_arg(MergeHullBone_k.Args.hull_bones_out, core_memory.get_buffer(CoreBufferType.HULL_BONE))
-            .buf_arg(MergeHullBone_k.Args.hull_bind_pose_indicies_out, core_memory.get_buffer(CoreBufferType.HULL_BONE_BIND_POSE))
-            .buf_arg(MergeHullBone_k.Args.hull_inv_bind_pose_indicies_out, core_memory.get_buffer(CoreBufferType.HULL_BONE_INV_BIND_POSE));
-
-        k_merge_entity_bone = new MergeEntityBone_k(cmd_queue, this.p_gpu_crud)
-            .buf_arg(MergeEntityBone_k.Args.armature_bones_in, buffers.buffer(CoreBufferType.ENTITY_BONE))
-            .buf_arg(MergeEntityBone_k.Args.armature_bone_reference_ids_in, buffers.buffer(CoreBufferType.ENTITY_BONE_REFERENCE_ID))
-            .buf_arg(MergeEntityBone_k.Args.armature_bone_parent_ids_in, buffers.buffer(CoreBufferType.ENTITY_BONE_PARENT_ID))
-            .buf_arg(MergeEntityBone_k.Args.armature_bones_out, core_memory.get_buffer(CoreBufferType.ENTITY_BONE))
-            .buf_arg(MergeEntityBone_k.Args.armature_bone_reference_ids_out, core_memory.get_buffer(CoreBufferType.ENTITY_BONE_REFERENCE_ID))
-            .buf_arg(MergeEntityBone_k.Args.armature_bone_parent_ids_out, core_memory.get_buffer(CoreBufferType.ENTITY_BONE_PARENT_ID));
+        k_merge_point       = new MergePoint_k(cmd_queue, p_gpu_crud).init(core_memory, buffers);
+        k_merge_edge        = new MergeEdge_k(cmd_queue, p_gpu_crud).init(core_memory, buffers);
+        k_merge_hull        = new MergeHull_k(cmd_queue, p_gpu_crud).init(core_memory, buffers);
+        k_merge_entity      = new MergeEntity_k(cmd_queue, p_gpu_crud).init(core_memory, buffers);
+        k_merge_hull_bone   = new MergeHullBone_k(cmd_queue, p_gpu_crud).init(core_memory, buffers);
+        k_merge_entity_bone = new MergeEntityBone_k(cmd_queue, p_gpu_crud).init(core_memory, buffers);
     }
 
     public void merge_into(SectorContainer target_container)

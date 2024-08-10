@@ -12,7 +12,6 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.rendering.Renderer;
 
 import static com.controllerface.bvge.game.Constants.Rendering.SCALAR_LENGTH;
@@ -62,15 +61,7 @@ public class EdgeRenderer implements Renderer
         p_prepare_edges.init();
         ptr_vbo_edge = GPU.CL.gl_share_memory(GPU.compute.context, vbo_edge);
         ptr_vbo_flag = GPU.CL.gl_share_memory(GPU.compute.context, vbo_flag);
-
-        k_prepare_edges = new PrepareEdges_k(GPU.compute.render_queue, p_prepare_edges)
-            .buf_arg(PrepareEdges_k.Args.vertex_vbo, ptr_vbo_edge)
-            .buf_arg(PrepareEdges_k.Args.flag_vbo, ptr_vbo_flag)
-            .buf_arg(PrepareEdges_k.Args.points, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT))
-            .buf_arg(PrepareEdges_k.Args.point_hull_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_HULL_INDEX))
-            .buf_arg(PrepareEdges_k.Args.hull_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
-            .buf_arg(PrepareEdges_k.Args.edges, GPU.memory.get_buffer(RenderBufferType.RENDER_EDGE))
-            .buf_arg(PrepareEdges_k.Args.edge_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_EDGE_FLAG));
+        k_prepare_edges = new PrepareEdges_k(GPU.compute.render_queue, p_prepare_edges).init(ptr_vbo_edge, ptr_vbo_flag);
     }
 
     @Override

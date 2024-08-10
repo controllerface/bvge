@@ -12,7 +12,6 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.rendering.Renderer;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
@@ -60,14 +59,8 @@ public class PointRenderer implements Renderer
     {
         vertex_buf = GPU.CL.gl_share_memory(GPU.compute.context, vertex_vbo);
         color_buf =GPU.CL.gl_share_memory(GPU.compute.context, color_vbo);
-
         prepare_points.init();
-
-        k_prepare_points = new PreparePoints_k(GPU.compute.render_queue, prepare_points)
-            .buf_arg(PreparePoints_k.Args.vertex_vbo, vertex_buf)
-            .buf_arg(PreparePoints_k.Args.color_vbo, color_buf)
-            .buf_arg(PreparePoints_k.Args.anti_gravity, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_ANTI_GRAV))
-            .buf_arg(PreparePoints_k.Args.points, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT));
+        k_prepare_points = new PreparePoints_k(GPU.compute.render_queue, prepare_points).init(vertex_buf, color_buf);
     }
 
     @Override

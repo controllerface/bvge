@@ -13,7 +13,7 @@ public class BufferGroup<E extends Enum<E> & BufferType> implements BufferSet<E>
     protected final CL_CommandQueue cmd_queue;
     protected Map<E, ResizableBuffer> buffers;
 
-    public BufferGroup(Class<E> type, String name, CL_CommandQueue cmd_queue, boolean persistent)
+    public BufferGroup(CL_CommandQueue cmd_queue, Class<E> type, String name, boolean persistent)
     {
         this.buffers = Collections.synchronizedMap(new EnumMap<>(type));
         this.name = name;

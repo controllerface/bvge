@@ -7,6 +7,7 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
@@ -56,5 +57,23 @@ public class CreateEntity_k extends GPUKernel
     public CreateEntity_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.create_entity));
+    }
+
+    public GPUKernel init(CoreBufferGroup core_buffers)
+    {
+        return this.buf_arg(Args.entities, core_buffers.buffer(ENTITY))
+            .buf_arg(Args.entity_root_hulls, core_buffers.buffer(ENTITY_ROOT_HULL))
+            .buf_arg(Args.entity_model_indices, core_buffers.buffer(ENTITY_MODEL_ID))
+            .buf_arg(Args.entity_model_transforms, core_buffers.buffer(ENTITY_TRANSFORM_ID))
+            .buf_arg(Args.entity_types, core_buffers.buffer(ENTITY_TYPE))
+            .buf_arg(Args.entity_flags, core_buffers.buffer(ENTITY_FLAG))
+            .buf_arg(Args.entity_hull_tables, core_buffers.buffer(ENTITY_HULL_TABLE))
+            .buf_arg(Args.entity_bone_tables, core_buffers.buffer(ENTITY_BONE_TABLE))
+            .buf_arg(Args.entity_masses, core_buffers.buffer(ENTITY_MASS))
+            .buf_arg(Args.entity_animation_layers, core_buffers.buffer(ENTITY_ANIM_LAYER))
+            .buf_arg(Args.entity_previous_layers, core_buffers.buffer(ENTITY_PREV_LAYER))
+            .buf_arg(Args.entity_animation_time, core_buffers.buffer(ENTITY_ANIM_TIME))
+            .buf_arg(Args.entity_previous_time, core_buffers.buffer(ENTITY_PREV_TIME))
+            .buf_arg(Args.entity_motion_states, core_buffers.buffer(ENTITY_MOTION_STATE));
     }
 }

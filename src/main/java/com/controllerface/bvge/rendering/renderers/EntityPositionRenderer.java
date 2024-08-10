@@ -12,7 +12,6 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.rendering.Renderer;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_FLOAT_2D_SIZE;
@@ -52,10 +51,7 @@ public class EntityPositionRenderer implements Renderer
     {
         p_prepare_entities.init();
         ptr_vbo_vertex = GPU.CL.gl_share_memory(GPU.compute.context, vbo_vertex);
-
-        k_prepare_entities = new PrepareEntities_k(GPU.compute.render_queue, p_prepare_entities)
-            .buf_arg(PrepareEntities_k.Args.vertex_vbo, ptr_vbo_vertex)
-            .buf_arg(PrepareEntities_k.Args.points, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY));
+        k_prepare_entities = new PrepareEntities_k(GPU.compute.render_queue, p_prepare_entities).init(ptr_vbo_vertex);
     }
 
     @Override

@@ -2,11 +2,13 @@ package com.controllerface.bvge.gpu.cl.kernels.compact;
 
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
+import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
@@ -32,5 +34,14 @@ public class CompactEdges_k extends GPUKernel
     public CompactEdges_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.compact_edges));
+    }
+
+    public GPUKernel init(CoreBufferGroup sector_buffers, ResizableBuffer b_edge_shift)
+    {
+        return this.buf_arg(Args.edge_shift, b_edge_shift)
+            .buf_arg(Args.edges, sector_buffers.buffer(EDGE))
+            .buf_arg(Args.edge_lengths, sector_buffers.buffer(EDGE_LENGTH))
+            .buf_arg(Args.edge_flags, sector_buffers.buffer(EDGE_FLAG))
+            .buf_arg(Args.edge_pins, sector_buffers.buffer(EDGE_PIN));
     }
 }

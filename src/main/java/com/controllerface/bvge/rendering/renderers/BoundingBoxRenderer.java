@@ -12,7 +12,6 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.rendering.Renderer;
 
 import static com.controllerface.bvge.game.Constants.Rendering.VECTOR_2D_LENGTH;
@@ -33,7 +32,7 @@ public class BoundingBoxRenderer implements Renderer
 
     private GL_VertexArray vao;
     private GL_VertexBuffer vbo_position;
-    private CL_Buffer ptr_vbo_position;
+    private CL_Buffer vbo_position_buf;
 
     private final int[] offsets = new int[Constants.Rendering.MAX_BATCH_SIZE];
     private final int[] counts = new int[Constants.Rendering.MAX_BATCH_SIZE];
@@ -60,11 +59,8 @@ public class BoundingBoxRenderer implements Renderer
     private void init_CL()
     {
         p_prepare_bounds.init();
-        ptr_vbo_position = GPU.CL.gl_share_memory(GPU.compute.context, vbo_position);
-
-        k_prepare_bounds = new PrepareBounds_k(GPU.compute.render_queue, p_prepare_bounds)
-            .buf_arg(PrepareBounds_k.Args.vbo, ptr_vbo_position)
-            .buf_arg(PrepareBounds_k.Args.bounds, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_AABB));
+        vbo_position_buf = GPU.CL.gl_share_memory(GPU.compute.context, vbo_position);
+        k_prepare_bounds = new PrepareBounds_k(GPU.compute.render_queue, p_prepare_bounds).init(vbo_position_buf);
     }
 
     @Override
@@ -88,7 +84,7 @@ public class BoundingBoxRenderer implements Renderer
             System.arraycopy(this.counts, 0, c_, 0, count);
 
             k_prepare_bounds
-                .share_mem(ptr_vbo_position)
+                .share_mem(vbo_position_buf)
                 .set_arg(PrepareBounds_k.Args.offset, offset)
                 .set_arg(PrepareBounds_k.Args.max_bound, count)
                 .call(arg_long(count_size), GPU.compute.preferred_work_size);
@@ -109,6 +105,6 @@ public class BoundingBoxRenderer implements Renderer
         vbo_position.release();
         shader.release();
         p_prepare_bounds.release();
-        ptr_vbo_position.release();
+        vbo_position_buf.release();
     }
 }

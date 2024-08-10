@@ -22,7 +22,6 @@ import com.controllerface.bvge.gpu.cl.programs.scan.ScanKeyBank;
 import com.controllerface.bvge.gpu.cl.programs.scan.ScanKeyCandidates;
 import com.controllerface.bvge.memory.types.CoreBufferType;
 import com.controllerface.bvge.memory.types.PhysicsBufferType;
-import com.controllerface.bvge.memory.types.ReferenceBufferType;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
@@ -107,8 +106,8 @@ public class PhysicsSimulation extends GameSystem
     //#region Buffers & Counters
 
     private final long grid_buffer_size;
-    private final CL_Buffer ptr_counts_data;
-    private final CL_Buffer ptr_offsets_data;
+    private final CL_Buffer counts_buf;
+    private final CL_Buffer offsets_buf;
     private final CL_Buffer atomic_counter;
 
     public final ResizableBuffer b_control_point_flags;
@@ -182,33 +181,34 @@ public class PhysicsSimulation extends GameSystem
         super(ecs);
         this.uniform_grid = uniform_grid;
         this.player_controller = player_controller;
+
         gpu_int_scan = new GPUScanScalarInt(GPU.compute.physics_queue);
         gpu_int_scan_out = new GPUScanScalarIntOut(GPU.compute.physics_queue, gpu_int_scan);
 
         grid_buffer_size = (long) cl_int.size() * this.uniform_grid.directory_length;
 
         atomic_counter = GPU.CL.new_pinned_int(GPU.compute.context);
-        ptr_counts_data    = GPU.CL.new_buffer(GPU.compute.context, grid_buffer_size);
-        ptr_offsets_data   = GPU.CL.new_buffer(GPU.compute.context, grid_buffer_size);
+        counts_buf = GPU.CL.new_buffer(GPU.compute.context, grid_buffer_size);
+        offsets_buf = GPU.CL.new_buffer(GPU.compute.context, grid_buffer_size);
 
-        reaction_buffers = new BufferGroup<>(PhysicsBufferType.class, REACTION_BUFFER_NAME, GPU.compute.physics_queue, false);
+        reaction_buffers = new BufferGroup<>(GPU.compute.physics_queue, PhysicsBufferType.class, REACTION_BUFFER_NAME, false);
         reaction_buffers.init_buffer(PhysicsBufferType.POINT_REACTION_COUNTS, INIT_BUFFER_SIZE);
         reaction_buffers.init_buffer(PhysicsBufferType.POINT_REACTION_OFFSETS, INIT_BUFFER_SIZE);
         reaction_buffers.init_buffer(PhysicsBufferType.REACTIONS_IN, INIT_BUFFER_SIZE);
         reaction_buffers.init_buffer(PhysicsBufferType.REACTIONS_OUT, INIT_BUFFER_SIZE);
         reaction_buffers.init_buffer(PhysicsBufferType.REACTION_INDEX, INIT_BUFFER_SIZE);
 
-        key_buffers = new BufferGroup<>(PhysicsBufferType.class, KEY_BANK_BUFFER_NAME, GPU.compute.physics_queue, false);
+        key_buffers = new BufferGroup<>(GPU.compute.physics_queue, PhysicsBufferType.class, KEY_BANK_BUFFER_NAME, false);
         key_buffers.init_buffer(PhysicsBufferType.KEY_MAP, INIT_BUFFER_SIZE);
         key_buffers.init_buffer(PhysicsBufferType.KEY_BANK, INIT_BUFFER_SIZE);
 
-        candidate_buffers = new BufferGroup<>(PhysicsBufferType.class, CANDIDATE_BUFFER_NAME, GPU.compute.physics_queue, false);
+        candidate_buffers = new BufferGroup<>(GPU.compute.physics_queue, PhysicsBufferType.class, CANDIDATE_BUFFER_NAME, false);
         candidate_buffers.init_buffer(PhysicsBufferType.IN_BOUNDS, INIT_BUFFER_SIZE);
         candidate_buffers.init_buffer(PhysicsBufferType.CANDIDATES, INIT_BUFFER_SIZE);
         candidate_buffers.init_buffer(PhysicsBufferType.CANDIDATE_COUNTS, INIT_BUFFER_SIZE);
         candidate_buffers.init_buffer(PhysicsBufferType.CANDIDATE_OFFSETS, INIT_BUFFER_SIZE);
 
-        match_buffers = new BufferGroup<>(PhysicsBufferType.class, MATCH_BUFFER_NAME, GPU.compute.physics_queue, false);
+        match_buffers = new BufferGroup<>(GPU.compute.physics_queue, PhysicsBufferType.class, MATCH_BUFFER_NAME, false);
         match_buffers.init_buffer(PhysicsBufferType.MATCHES, INIT_BUFFER_SIZE);
         match_buffers.init_buffer(PhysicsBufferType.MATCHES_USED, INIT_BUFFER_SIZE);
 
@@ -232,206 +232,40 @@ public class PhysicsSimulation extends GameSystem
         p_animate_hulls.init();
         p_resolve_constraints.init();
 
-        k_integrate = new Integrate_k(GPU.compute.physics_queue, p_integrate)
-            .buf_arg(Integrate_k.Args.hull_point_tables, GPU.memory.get_buffer(CoreBufferType.HULL_POINT_TABLE))
-            .buf_arg(Integrate_k.Args.entity_accel,      GPU.memory.get_buffer(CoreBufferType.ENTITY_ACCEL))
-            .buf_arg(Integrate_k.Args.points,            GPU.memory.get_buffer(CoreBufferType.POINT))
-            .buf_arg(Integrate_k.Args.point_hit_counts,  GPU.memory.get_buffer(CoreBufferType.POINT_HIT_COUNT))
-            .buf_arg(Integrate_k.Args.point_flags,       GPU.memory.get_buffer(CoreBufferType.POINT_FLAG))
-            .buf_arg(Integrate_k.Args.hull_flags,        GPU.memory.get_buffer(CoreBufferType.HULL_FLAG))
-            .buf_arg(Integrate_k.Args.hull_entity_ids,   GPU.memory.get_buffer(CoreBufferType.HULL_ENTITY_ID))
-            .buf_arg(Integrate_k.Args.anti_gravity,      GPU.memory.get_buffer(CoreBufferType.POINT_ANTI_GRAV));
-
-        k_integrate_entities = new IntegrateEntities_k(GPU.compute.physics_queue, p_integrate)
-            .buf_arg(IntegrateEntities_k.Args.entities,          GPU.memory.get_buffer(CoreBufferType.ENTITY))
-            .buf_arg(IntegrateEntities_k.Args.entity_flags,      GPU.memory.get_buffer(CoreBufferType.ENTITY_FLAG))
-            .buf_arg(IntegrateEntities_k.Args.entity_root_hulls, GPU.memory.get_buffer(CoreBufferType.ENTITY_ROOT_HULL))
-            .buf_arg(IntegrateEntities_k.Args.entity_accel,      GPU.memory.get_buffer(CoreBufferType.ENTITY_ACCEL))
-            .buf_arg(IntegrateEntities_k.Args.hull_flags,        GPU.memory.get_buffer(CoreBufferType.HULL_FLAG));
-
-        k_calculate_hull_aabb = new CalculateHullAABB_k(GPU.compute.physics_queue, p_integrate)
-            .buf_arg(CalculateHullAABB_k.Args.hulls,             GPU.memory.get_buffer(CoreBufferType.HULL))
-            .buf_arg(CalculateHullAABB_k.Args.hull_scales,       GPU.memory.get_buffer(CoreBufferType.HULL_SCALE))
-            .buf_arg(CalculateHullAABB_k.Args.hull_point_tables, GPU.memory.get_buffer(CoreBufferType.HULL_POINT_TABLE))
-            .buf_arg(CalculateHullAABB_k.Args.hull_rotations,    GPU.memory.get_buffer(CoreBufferType.HULL_ROTATION))
-            .buf_arg(CalculateHullAABB_k.Args.points,            GPU.memory.get_buffer(CoreBufferType.POINT))
-            .buf_arg(CalculateHullAABB_k.Args.bounds,            GPU.memory.get_buffer(CoreBufferType.HULL_AABB))
-            .buf_arg(CalculateHullAABB_k.Args.bounds_index_data, GPU.memory.get_buffer(CoreBufferType.HULL_AABB_INDEX))
-            .buf_arg(CalculateHullAABB_k.Args.bounds_bank_data,  GPU.memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(CalculateHullAABB_k.Args.hull_flags,        GPU.memory.get_buffer(CoreBufferType.HULL_FLAG));
+        k_integrate = new Integrate_k(GPU.compute.physics_queue, p_integrate).init();
+        k_integrate_entities = new IntegrateEntities_k(GPU.compute.physics_queue, p_integrate).init();
+        k_calculate_hull_aabb = new CalculateHullAABB_k(GPU.compute.physics_queue, p_integrate).init();
 
         k_build_key_bank = new BuildKeyBank_k(GPU.compute.physics_queue, p_build_key_bank)
-            .buf_arg(BuildKeyBank_k.Args.hull_aabb_index,     GPU.memory.get_buffer(CoreBufferType.HULL_AABB_INDEX))
-            .buf_arg(BuildKeyBank_k.Args.hull_aabb_key_table, GPU.memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(BuildKeyBank_k.Args.key_bank,            key_buffers.buffer(PhysicsBufferType.KEY_BANK))
-            .buf_arg(BuildKeyBank_k.Args.key_counts,          ptr_counts_data)
-            .set_arg(BuildKeyBank_k.Args.x_subdivisions,      uniform_grid.x_subdivisions)
-            .set_arg(BuildKeyBank_k.Args.key_count_length,    uniform_grid.directory_length);
-
+            .init(key_buffers, counts_buf, uniform_grid);
 
         k_build_key_map = new BuildKeyMap_k(GPU.compute.physics_queue, p_build_key_map)
-            .buf_arg(BuildKeyMap_k.Args.hull_aabb_index,     GPU.memory.get_buffer(CoreBufferType.HULL_AABB_INDEX))
-            .buf_arg(BuildKeyMap_k.Args.hull_aabb_key_table, GPU.memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(BuildKeyMap_k.Args.key_map,             key_buffers.buffer(PhysicsBufferType.KEY_MAP))
-            .buf_arg(BuildKeyMap_k.Args.key_offsets,         ptr_offsets_data)
-            .buf_arg(BuildKeyMap_k.Args.key_counts,          ptr_counts_data)
-            .set_arg(BuildKeyMap_k.Args.x_subdivisions,      uniform_grid.x_subdivisions)
-            .set_arg(BuildKeyMap_k.Args.key_count_length,    uniform_grid.directory_length);
+            .init(key_buffers, offsets_buf, counts_buf, uniform_grid);
 
-        k_locate_in_bounds = (new LocateInBounds_k(GPU.compute.physics_queue, p_locate_in_bounds))
-            .buf_arg(LocateInBounds_k.Args.in_bounds,        candidate_buffers.buffer(PhysicsBufferType.IN_BOUNDS))
-            .buf_arg(LocateInBounds_k.Args.bounds_bank_data, GPU.memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE));
+        k_locate_in_bounds = (new LocateInBounds_k(GPU.compute.physics_queue, p_locate_in_bounds)).init(candidate_buffers);
 
         k_count_candidates = new CountCandidates_k(GPU.compute.physics_queue, p_locate_in_bounds)
-            .buf_arg(CountCandidates_k.Args.candidates,       candidate_buffers.buffer(PhysicsBufferType.CANDIDATE_COUNTS))
-            .buf_arg(CountCandidates_k.Args.key_bank,         key_buffers.buffer(PhysicsBufferType.KEY_BANK))
-            .buf_arg(CountCandidates_k.Args.in_bounds,        candidate_buffers.buffer(PhysicsBufferType.IN_BOUNDS))
-            .buf_arg(CountCandidates_k.Args.bounds_bank_data, GPU.memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(CountCandidates_k.Args.key_counts,       ptr_counts_data)
-            .set_arg(CountCandidates_k.Args.x_subdivisions,   uniform_grid.x_subdivisions)
-            .set_arg(CountCandidates_k.Args.key_count_length, uniform_grid.directory_length);
+            .init(candidate_buffers, key_buffers, counts_buf, uniform_grid);
 
         k_aabb_collide = new AABBCollide_k(GPU.compute.physics_queue, p_aabb_collide)
-            .buf_arg(AABBCollide_k.Args.used,             match_buffers.buffer(PhysicsBufferType.MATCHES_USED))
-            .buf_arg(AABBCollide_k.Args.matches,          match_buffers.buffer(PhysicsBufferType.MATCHES))
-            .buf_arg(AABBCollide_k.Args.match_offsets,    candidate_buffers.buffer(PhysicsBufferType.CANDIDATE_OFFSETS))
-            .buf_arg(AABBCollide_k.Args.candidates,       candidate_buffers.buffer(PhysicsBufferType.CANDIDATE_COUNTS))
-            .buf_arg(AABBCollide_k.Args.key_map,          key_buffers.buffer(PhysicsBufferType.KEY_MAP))
-            .buf_arg(AABBCollide_k.Args.key_bank,         key_buffers.buffer(PhysicsBufferType.KEY_BANK))
-            .buf_arg(AABBCollide_k.Args.bounds,           GPU.memory.get_buffer(CoreBufferType.HULL_AABB))
-            .buf_arg(AABBCollide_k.Args.bounds_bank_data, GPU.memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(AABBCollide_k.Args.hull_entity_ids,  GPU.memory.get_buffer(CoreBufferType.HULL_ENTITY_ID))
-            .buf_arg(AABBCollide_k.Args.hull_flags,       GPU.memory.get_buffer(CoreBufferType.HULL_FLAG))
-            .buf_arg(AABBCollide_k.Args.key_counts,       ptr_counts_data)
-            .buf_arg(AABBCollide_k.Args.key_offsets,      ptr_offsets_data)
-            .buf_arg(AABBCollide_k.Args.counter, atomic_counter)
-            .set_arg(AABBCollide_k.Args.x_subdivisions,   uniform_grid.x_subdivisions)
-            .set_arg(AABBCollide_k.Args.key_count_length, uniform_grid.directory_length);
+            .init(match_buffers, candidate_buffers, key_buffers, counts_buf, offsets_buf, atomic_counter, uniform_grid);
 
         k_finalize_candidates = new FinalizeCandidates_k(GPU.compute.physics_queue, p_locate_in_bounds)
-            .buf_arg(FinalizeCandidates_k.Args.used,             match_buffers.buffer(PhysicsBufferType.MATCHES_USED))
-            .buf_arg(FinalizeCandidates_k.Args.matches,          match_buffers.buffer(PhysicsBufferType.MATCHES))
-            .buf_arg(FinalizeCandidates_k.Args.match_offsets,    candidate_buffers.buffer(PhysicsBufferType.CANDIDATE_OFFSETS))
-            .buf_arg(FinalizeCandidates_k.Args.input_candidates, candidate_buffers.buffer(PhysicsBufferType.CANDIDATE_COUNTS))
-            .buf_arg(FinalizeCandidates_k.Args.final_candidates, candidate_buffers.buffer(PhysicsBufferType.CANDIDATES));
+            .init(match_buffers, candidate_buffers);
 
         k_sat_collide = new SatCollide_k(GPU.compute.physics_queue, p_sat_collide)
-            .buf_arg(SatCollide_k.Args.hulls,                   GPU.memory.get_buffer(CoreBufferType.HULL))
-            .buf_arg(SatCollide_k.Args.hull_scales,             GPU.memory.get_buffer(CoreBufferType.HULL_SCALE))
-            .buf_arg(SatCollide_k.Args.hull_frictions,          GPU.memory.get_buffer(CoreBufferType.HULL_FRICTION))
-            .buf_arg(SatCollide_k.Args.hull_restitutions,       GPU.memory.get_buffer(CoreBufferType.HULL_RESTITUTION))
-            .buf_arg(SatCollide_k.Args.hull_integrity,          GPU.memory.get_buffer(CoreBufferType.HULL_INTEGRITY))
-            .buf_arg(SatCollide_k.Args.hull_point_tables,       GPU.memory.get_buffer(CoreBufferType.HULL_POINT_TABLE))
-            .buf_arg(SatCollide_k.Args.hull_edge_tables,        GPU.memory.get_buffer(CoreBufferType.HULL_EDGE_TABLE))
-            .buf_arg(SatCollide_k.Args.hull_entity_ids,         GPU.memory.get_buffer(CoreBufferType.HULL_ENTITY_ID))
-            .buf_arg(SatCollide_k.Args.hull_flags,              GPU.memory.get_buffer(CoreBufferType.HULL_FLAG))
-            .buf_arg(SatCollide_k.Args.point_flags,             GPU.memory.get_buffer(CoreBufferType.POINT_FLAG))
-            .buf_arg(SatCollide_k.Args.points,                  GPU.memory.get_buffer(CoreBufferType.POINT))
-            .buf_arg(SatCollide_k.Args.edges,                   GPU.memory.get_buffer(CoreBufferType.EDGE))
-            .buf_arg(SatCollide_k.Args.edge_flags,              GPU.memory.get_buffer(CoreBufferType.EDGE_FLAG))
-            .buf_arg(SatCollide_k.Args.masses,                  GPU.memory.get_buffer(CoreBufferType.ENTITY_MASS))
-            .buf_arg(SatCollide_k.Args.entity_model_transforms, GPU.memory.get_buffer(CoreBufferType.ENTITY_TRANSFORM_ID))
-            .buf_arg(SatCollide_k.Args.entity_flags,            GPU.memory.get_buffer(CoreBufferType.ENTITY_FLAG))
-            .buf_arg(SatCollide_k.Args.candidates,              candidate_buffers.buffer(PhysicsBufferType.CANDIDATES))
-            .buf_arg(SatCollide_k.Args.reactions,               reaction_buffers.buffer(PhysicsBufferType.REACTIONS_IN))
-            .buf_arg(SatCollide_k.Args.reaction_index,          reaction_buffers.buffer(PhysicsBufferType.REACTION_INDEX))
-            .buf_arg(SatCollide_k.Args.point_reactions,         reaction_buffers.buffer(PhysicsBufferType.POINT_REACTION_COUNTS))
-            .buf_arg(SatCollide_k.Args.counter, atomic_counter)
-            .set_arg(SatCollide_k.Args.dt,                      FIXED_TIME_STEP);
+            .init(candidate_buffers, reaction_buffers, atomic_counter, FIXED_TIME_STEP);
 
-        k_sort_reactions = new SortReactions_k(GPU.compute.physics_queue, p_sat_collide)
-            .buf_arg(SortReactions_k.Args.reactions_in,    reaction_buffers.buffer(PhysicsBufferType.REACTIONS_IN))
-            .buf_arg(SortReactions_k.Args.reactions_out,   reaction_buffers.buffer(PhysicsBufferType.REACTIONS_OUT))
-            .buf_arg(SortReactions_k.Args.reaction_index,  reaction_buffers.buffer(PhysicsBufferType.REACTION_INDEX))
-            .buf_arg(SortReactions_k.Args.point_reactions, reaction_buffers.buffer(PhysicsBufferType.POINT_REACTION_COUNTS))
-            .buf_arg(SortReactions_k.Args.point_offsets,   reaction_buffers.buffer(PhysicsBufferType.POINT_REACTION_OFFSETS));
+        k_sort_reactions = new SortReactions_k(GPU.compute.physics_queue, p_sat_collide).init(reaction_buffers);
+        k_apply_reactions = new ApplyReactions_k(GPU.compute.physics_queue, p_sat_collide).init(reaction_buffers);
 
-        k_apply_reactions = new ApplyReactions_k(GPU.compute.physics_queue, p_sat_collide)
-            .buf_arg(ApplyReactions_k.Args.reactions,          reaction_buffers.buffer(PhysicsBufferType.REACTIONS_OUT))
-            .buf_arg(ApplyReactions_k.Args.point_reactions,    reaction_buffers.buffer(PhysicsBufferType.POINT_REACTION_COUNTS))
-            .buf_arg(ApplyReactions_k.Args.point_offsets,      reaction_buffers.buffer(PhysicsBufferType.POINT_REACTION_OFFSETS))
-            .buf_arg(ApplyReactions_k.Args.points,             GPU.memory.get_buffer(CoreBufferType.POINT))
-            .buf_arg(ApplyReactions_k.Args.anti_gravity,       GPU.memory.get_buffer(CoreBufferType.POINT_ANTI_GRAV))
-            .buf_arg(ApplyReactions_k.Args.point_flags,        GPU.memory.get_buffer(CoreBufferType.POINT_FLAG))
-            .buf_arg(ApplyReactions_k.Args.point_hit_counts,   GPU.memory.get_buffer(CoreBufferType.POINT_HIT_COUNT))
-            .buf_arg(ApplyReactions_k.Args.point_hull_indices, GPU.memory.get_buffer(CoreBufferType.POINT_HULL_INDEX))
-            .buf_arg(ApplyReactions_k.Args.hull_flags,         GPU.memory.get_buffer(CoreBufferType.HULL_FLAG));
+        k_move_hulls = new MoveHulls_k(GPU.compute.physics_queue, p_sat_collide).init();
+        k_move_entities = new MoveEntities_k(GPU.compute.physics_queue, p_sat_collide).init(FIXED_TIME_STEP);
 
-        k_move_hulls = new MoveHulls_k(GPU.compute.physics_queue, p_sat_collide)
-            .buf_arg(MoveHulls_k.Args.hulls,             GPU.memory.get_buffer(CoreBufferType.HULL))
-            .buf_arg(MoveHulls_k.Args.hull_point_tables, GPU.memory.get_buffer(CoreBufferType.HULL_POINT_TABLE))
-            .buf_arg(MoveHulls_k.Args.points,            GPU.memory.get_buffer(CoreBufferType.POINT));
-
-        k_move_entities = new MoveEntities_k(GPU.compute.physics_queue, p_sat_collide)
-            .buf_arg(MoveEntities_k.Args.hulls,                GPU.memory.get_buffer(CoreBufferType.HULL))
-            .buf_arg(MoveEntities_k.Args.entities,             GPU.memory.get_buffer(CoreBufferType.ENTITY))
-            .buf_arg(MoveEntities_k.Args.entity_flags,         GPU.memory.get_buffer(CoreBufferType.ENTITY_FLAG))
-            .buf_arg(MoveEntities_k.Args.entity_motion_states, GPU.memory.get_buffer(CoreBufferType.ENTITY_MOTION_STATE))
-            .buf_arg(MoveEntities_k.Args.entity_hull_tables,   GPU.memory.get_buffer(CoreBufferType.ENTITY_HULL_TABLE))
-            .buf_arg(MoveEntities_k.Args.hull_point_tables,    GPU.memory.get_buffer(CoreBufferType.HULL_POINT_TABLE))
-            .buf_arg(MoveEntities_k.Args.hull_integrity,       GPU.memory.get_buffer(CoreBufferType.HULL_INTEGRITY))
-            .buf_arg(MoveEntities_k.Args.hull_flags,           GPU.memory.get_buffer(CoreBufferType.HULL_FLAG))
-            .buf_arg(MoveEntities_k.Args.point_flags,          GPU.memory.get_buffer(CoreBufferType.POINT_FLAG))
-            .buf_arg(MoveEntities_k.Args.point_hit_counts,     GPU.memory.get_buffer(CoreBufferType.POINT_HIT_COUNT))
-            .buf_arg(MoveEntities_k.Args.points,               GPU.memory.get_buffer(CoreBufferType.POINT))
-            .set_arg(MoveEntities_k.Args.dt,                   FIXED_TIME_STEP);
-
-        k_animate_entities = new AnimateEntities_k(GPU.compute.physics_queue, p_animate_hulls)
-            .buf_arg(AnimateEntities_k.Args.armature_bones,            GPU.memory.get_buffer(CoreBufferType.ENTITY_BONE))
-            .buf_arg(AnimateEntities_k.Args.bone_bind_poses,           GPU.memory.get_buffer(ReferenceBufferType.BONE_BIND_POSE))
-            .buf_arg(AnimateEntities_k.Args.bone_layers,               GPU.memory.get_buffer(ReferenceBufferType.BONE_LAYER))
-            .buf_arg(AnimateEntities_k.Args.model_transforms,          GPU.memory.get_buffer(ReferenceBufferType.MODEL_TRANSFORM))
-            .buf_arg(AnimateEntities_k.Args.entity_flags,              GPU.memory.get_buffer(CoreBufferType.ENTITY_FLAG))
-            .buf_arg(AnimateEntities_k.Args.entity_bone_reference_ids, GPU.memory.get_buffer(CoreBufferType.ENTITY_BONE_REFERENCE_ID))
-            .buf_arg(AnimateEntities_k.Args.entity_bone_parent_ids,    GPU.memory.get_buffer(CoreBufferType.ENTITY_BONE_PARENT_ID))
-            .buf_arg(AnimateEntities_k.Args.bone_channel_tables,       GPU.memory.get_buffer(ReferenceBufferType.BONE_ANIM_CHANNEL_TABLE))
-            .buf_arg(AnimateEntities_k.Args.bone_pos_channel_tables,   GPU.memory.get_buffer(ReferenceBufferType.ANIM_POS_CHANNEL))
-            .buf_arg(AnimateEntities_k.Args.bone_rot_channel_tables,   GPU.memory.get_buffer(ReferenceBufferType.ANIM_ROT_CHANNEL))
-            .buf_arg(AnimateEntities_k.Args.bone_scl_channel_tables,   GPU.memory.get_buffer(ReferenceBufferType.ANIM_SCL_CHANNEL))
-            .buf_arg(AnimateEntities_k.Args.entity_model_transforms,   GPU.memory.get_buffer(CoreBufferType.ENTITY_TRANSFORM_ID))
-            .buf_arg(AnimateEntities_k.Args.entity_bone_tables,        GPU.memory.get_buffer(CoreBufferType.ENTITY_BONE_TABLE))
-            .buf_arg(AnimateEntities_k.Args.key_frames,                GPU.memory.get_buffer(ReferenceBufferType.ANIM_KEY_FRAME))
-            .buf_arg(AnimateEntities_k.Args.frame_times,               GPU.memory.get_buffer(ReferenceBufferType.ANIM_FRAME_TIME))
-            .buf_arg(AnimateEntities_k.Args.animation_timing_indices,  GPU.memory.get_buffer(ReferenceBufferType.ANIM_TIMING_INDEX))
-            .buf_arg(AnimateEntities_k.Args.animation_durations,       GPU.memory.get_buffer(ReferenceBufferType.ANIM_DURATION))
-            .buf_arg(AnimateEntities_k.Args.animation_tick_rates,      GPU.memory.get_buffer(ReferenceBufferType.ANIM_TICK_RATE))
-            .buf_arg(AnimateEntities_k.Args.entity_animation_layers,   GPU.memory.get_buffer(CoreBufferType.ENTITY_ANIM_LAYER))
-            .buf_arg(AnimateEntities_k.Args.entity_previous_layers,    GPU.memory.get_buffer(CoreBufferType.ENTITY_PREV_LAYER))
-            .buf_arg(AnimateEntities_k.Args.entity_animation_time,     GPU.memory.get_buffer(CoreBufferType.ENTITY_ANIM_TIME))
-            .buf_arg(AnimateEntities_k.Args.entity_previous_time,      GPU.memory.get_buffer(CoreBufferType.ENTITY_PREV_TIME))
-            .buf_arg(AnimateEntities_k.Args.entity_animation_blend,    GPU.memory.get_buffer(CoreBufferType.ENTITY_ANIM_BLEND));
-
-        k_animate_bones = new AnimateBones_k(GPU.compute.physics_queue, p_animate_hulls)
-            .buf_arg(AnimateBones_k.Args.bones,                       GPU.memory.get_buffer(CoreBufferType.HULL_BONE))
-            .buf_arg(AnimateBones_k.Args.bone_references,             GPU.memory.get_buffer(ReferenceBufferType.BONE_REFERENCE))
-            .buf_arg(AnimateBones_k.Args.armature_bones,              GPU.memory.get_buffer(CoreBufferType.ENTITY_BONE))
-            .buf_arg(AnimateBones_k.Args.hull_bind_pose_indicies,     GPU.memory.get_buffer(CoreBufferType.HULL_BONE_BIND_POSE))
-            .buf_arg(AnimateBones_k.Args.hull_inv_bind_pose_indicies, GPU.memory.get_buffer(CoreBufferType.HULL_BONE_INV_BIND_POSE));
-
-        k_animate_points = new AnimatePoints_k(GPU.compute.physics_queue, p_animate_hulls)
-            .buf_arg(AnimatePoints_k.Args.points,                  GPU.memory.get_buffer(CoreBufferType.POINT))
-            .buf_arg(AnimatePoints_k.Args.hull_scales,             GPU.memory.get_buffer(CoreBufferType.HULL_SCALE))
-            .buf_arg(AnimatePoints_k.Args.hull_entity_ids,         GPU.memory.get_buffer(CoreBufferType.HULL_ENTITY_ID))
-            .buf_arg(AnimatePoints_k.Args.hull_flags,              GPU.memory.get_buffer(CoreBufferType.HULL_FLAG))
-            .buf_arg(AnimatePoints_k.Args.point_vertex_references, GPU.memory.get_buffer(CoreBufferType.POINT_VERTEX_REFERENCE))
-            .buf_arg(AnimatePoints_k.Args.point_hull_indices,      GPU.memory.get_buffer(CoreBufferType.POINT_HULL_INDEX))
-            .buf_arg(AnimatePoints_k.Args.bone_tables,             GPU.memory.get_buffer(CoreBufferType.POINT_BONE_TABLE))
-            .buf_arg(AnimatePoints_k.Args.vertex_weights,          GPU.memory.get_buffer(ReferenceBufferType.VERTEX_WEIGHT))
-            .buf_arg(AnimatePoints_k.Args.entities,                GPU.memory.get_buffer(CoreBufferType.ENTITY))
-            .buf_arg(AnimatePoints_k.Args.vertex_references,       GPU.memory.get_buffer(ReferenceBufferType.VERTEX_REFERENCE))
-            .buf_arg(AnimatePoints_k.Args.bones,                   GPU.memory.get_buffer(CoreBufferType.HULL_BONE));
-
-        k_resolve_constraints = new ResolveConstraints_k(GPU.compute.physics_queue, p_resolve_constraints)
-            .buf_arg(ResolveConstraints_k.Args.hulls,            GPU.memory.get_buffer(CoreBufferType.HULL))
-            .buf_arg(ResolveConstraints_k.Args.hull_flags,       GPU.memory.get_buffer(CoreBufferType.HULL_FLAG))
-            .buf_arg(ResolveConstraints_k.Args.entities,         GPU.memory.get_buffer(CoreBufferType.ENTITY))
-            .buf_arg(ResolveConstraints_k.Args.hull_edge_tables, GPU.memory.get_buffer(CoreBufferType.HULL_EDGE_TABLE))
-            .buf_arg(ResolveConstraints_k.Args.bounds_bank_data, GPU.memory.get_buffer(CoreBufferType.HULL_AABB_KEY_TABLE))
-            .buf_arg(ResolveConstraints_k.Args.points,           GPU.memory.get_buffer(CoreBufferType.POINT))
-            .buf_arg(ResolveConstraints_k.Args.edges,            GPU.memory.get_buffer(CoreBufferType.EDGE))
-            .buf_arg(ResolveConstraints_k.Args.edge_lengths,     GPU.memory.get_buffer(CoreBufferType.EDGE_LENGTH))
-            .buf_arg(ResolveConstraints_k.Args.edge_flags,       GPU.memory.get_buffer(CoreBufferType.EDGE_FLAG))
-            .buf_arg(ResolveConstraints_k.Args.edge_pins,        GPU.memory.get_buffer(CoreBufferType.EDGE_PIN));
+        k_animate_entities = new AnimateEntities_k(GPU.compute.physics_queue, p_animate_hulls).init();
+        k_animate_bones = new AnimateBones_k(GPU.compute.physics_queue, p_animate_hulls).init();
+        k_animate_points = new AnimatePoints_k(GPU.compute.physics_queue, p_animate_hulls).init();
+        k_resolve_constraints = new ResolveConstraints_k(GPU.compute.physics_queue, p_resolve_constraints).init();
 
         k_scan_bounds_single_block = new ScanBoundsSingleBlock_k(GPU.compute.physics_queue, p_scan_key_bank);
         k_scan_bounds_multi_block = new ScanBoundsMultiBlock_k(GPU.compute.physics_queue, p_scan_key_bank);
@@ -652,7 +486,7 @@ public class PhysicsSimulation extends GameSystem
         int hull_size = GPU.compute.calculate_preferred_global_size(hull_count);
 
         key_buffers.buffer(PhysicsBufferType.KEY_BANK).ensure_capacity(uniform_grid.get_key_bank_size());
-        GPU.CL.zero_buffer(GPU.compute.physics_queue, ptr_counts_data, grid_buffer_size);
+        GPU.CL.zero_buffer(GPU.compute.physics_queue, counts_buf, grid_buffer_size);
         k_build_key_bank
             .set_arg(BuildKeyBank_k.Args.key_bank_length, uniform_grid.get_key_bank_size())
             .set_arg(BuildKeyBank_k.Args.max_hull, hull_count)
@@ -672,7 +506,7 @@ public class PhysicsSimulation extends GameSystem
         key_buffers.buffer(PhysicsBufferType.KEY_MAP).ensure_capacity(uniform_grid.getKey_map_size());
         int hull_count = GPU.memory.sector_container().next_hull();
         int hull_size = GPU.compute.calculate_preferred_global_size(hull_count);
-        GPU.CL.zero_buffer(GPU.compute.physics_queue, ptr_counts_data, grid_buffer_size);
+        GPU.CL.zero_buffer(GPU.compute.physics_queue, counts_buf, grid_buffer_size);
         k_build_key_map
             .set_arg(BuildKeyMap_k.Args.max_hull, hull_count)
             .call(arg_long(hull_size), GPU.compute.preferred_work_size);
@@ -1133,8 +967,8 @@ public class PhysicsSimulation extends GameSystem
         // After keys are generated, the next step is to calculate the space needed for the key map. This is
         // a similar process to calculating the bank offsets. The buffer is zeroed before use to clear out
         // data that is present after the previous tick.
-        GPU.CL.zero_buffer(GPU.compute.physics_queue, ptr_offsets_data, grid_buffer_size);
-        gpu_int_scan_out.scan_int_out(ptr_counts_data.ptr(), ptr_offsets_data.ptr(), uniform_grid.directory_length);
+        GPU.CL.zero_buffer(GPU.compute.physics_queue, offsets_buf, grid_buffer_size);
+        gpu_int_scan_out.scan_int_out(counts_buf.ptr(), offsets_buf.ptr(), uniform_grid.directory_length);
 
         // Now, the keymap itself is built. This is the structure that provides the ability to query
         // objects within the uniform grid structure.
@@ -1247,7 +1081,7 @@ public class PhysicsSimulation extends GameSystem
 
         this.time_accumulator += dt;
         int sub_ticks = 0;
-        float dropped_time = 0.0f;
+        float dropped_time;
         while (this.time_accumulator >= TICK_RATE)
         {
             for (int i = 0; i < TARGET_SUB_STEPS; i++)
@@ -1451,8 +1285,8 @@ public class PhysicsSimulation extends GameSystem
         debug();
 
         atomic_counter.release();
-        ptr_counts_data.release();
-        ptr_offsets_data.release();
+        counts_buf.release();
+        offsets_buf.release();
     }
 
     //#endregion

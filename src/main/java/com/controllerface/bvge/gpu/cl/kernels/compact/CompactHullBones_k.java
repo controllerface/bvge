@@ -2,11 +2,13 @@ package com.controllerface.bvge.gpu.cl.kernels.compact;
 
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
+import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
@@ -31,5 +33,13 @@ public class CompactHullBones_k extends GPUKernel
     public CompactHullBones_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.compact_hull_bones));
+    }
+
+    public GPUKernel init(CoreBufferGroup sector_buffers, ResizableBuffer b_hull_bone_shift)
+    {
+        return this.buf_arg(Args.hull_bone_shift, b_hull_bone_shift)
+            .buf_arg(Args.hull_bones, sector_buffers.buffer(HULL_BONE))
+            .buf_arg(Args.hull_bind_pose_indices, sector_buffers.buffer(HULL_BONE_BIND_POSE))
+            .buf_arg(Args.hull_inv_bind_pose_indices, sector_buffers.buffer(HULL_BONE_INV_BIND_POSE));
     }
 }

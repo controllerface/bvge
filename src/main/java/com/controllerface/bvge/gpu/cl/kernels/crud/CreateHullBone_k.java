@@ -7,6 +7,9 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
+
+import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class CreateHullBone_k extends GPUKernel
 {
@@ -32,5 +35,12 @@ public class CreateHullBone_k extends GPUKernel
     public CreateHullBone_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.create_hull_bone));
+    }
+
+    public GPUKernel init(CoreBufferGroup core_buffers)
+    {
+        return this.buf_arg(Args.hull_bones, core_buffers.buffer(HULL_BONE))
+            .buf_arg(Args.hull_bind_pose_indicies, core_buffers.buffer(HULL_BONE_BIND_POSE))
+            .buf_arg(Args.hull_inv_bind_pose_indicies, core_buffers.buffer(HULL_BONE_INV_BIND_POSE));
     }
 }

@@ -7,6 +7,10 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.ReferenceBufferGroup;
+
+import static com.controllerface.bvge.memory.types.ReferenceBufferType.ANIM_FRAME_TIME;
+import static com.controllerface.bvge.memory.types.ReferenceBufferType.ANIM_KEY_FRAME;
 
 public class CreateKeyFrame_k extends GPUKernel
 {
@@ -30,5 +34,11 @@ public class CreateKeyFrame_k extends GPUKernel
     public CreateKeyFrame_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.create_keyframe));
+    }
+
+    public GPUKernel init(ReferenceBufferGroup reference_buffers)
+    {
+        return this.buf_arg(Args.key_frames, reference_buffers.buffer(ANIM_KEY_FRAME))
+            .buf_arg(Args.frame_times, reference_buffers.buffer(ANIM_FRAME_TIME));
     }
 }

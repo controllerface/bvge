@@ -2,11 +2,13 @@ package com.controllerface.bvge.gpu.cl.kernels.compact;
 
 import com.controllerface.bvge.gpu.GPU;
 import com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes;
+import com.controllerface.bvge.gpu.cl.buffers.ResizableBuffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
 import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
@@ -44,5 +46,26 @@ public class CompactHulls_k extends GPUKernel
     public CompactHulls_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.compact_hulls));
+    }
+
+    public GPUKernel init(CoreBufferGroup sector_buffers, ResizableBuffer b_hull_shift)
+    {
+        return this.buf_arg(Args.hull_shift, b_hull_shift)
+            .buf_arg(Args.hulls, sector_buffers.buffer(HULL))
+            .buf_arg(Args.hull_scales, sector_buffers.buffer(HULL_SCALE))
+            .buf_arg(Args.hull_mesh_ids, sector_buffers.buffer(HULL_MESH_ID))
+            .buf_arg(Args.hull_uv_offsets, sector_buffers.buffer(HULL_UV_OFFSET))
+            .buf_arg(Args.hull_rotations, sector_buffers.buffer(HULL_ROTATION))
+            .buf_arg(Args.hull_frictions, sector_buffers.buffer(HULL_FRICTION))
+            .buf_arg(Args.hull_restitutions, sector_buffers.buffer(HULL_RESTITUTION))
+            .buf_arg(Args.hull_integrity, sector_buffers.buffer(HULL_INTEGRITY))
+            .buf_arg(Args.hull_bone_tables, sector_buffers.buffer(HULL_BONE_TABLE))
+            .buf_arg(Args.hull_entity_ids, sector_buffers.buffer(HULL_ENTITY_ID))
+            .buf_arg(Args.hull_flags, sector_buffers.buffer(HULL_FLAG))
+            .buf_arg(Args.hull_point_tables, sector_buffers.buffer(HULL_POINT_TABLE))
+            .buf_arg(Args.hull_edge_tables, sector_buffers.buffer(HULL_EDGE_TABLE))
+            .buf_arg(Args.hull_aabb, sector_buffers.buffer(HULL_AABB))
+            .buf_arg(Args.hull_aabb_index, sector_buffers.buffer(HULL_AABB_INDEX))
+            .buf_arg(Args.hull_aabb_key_table, sector_buffers.buffer(HULL_AABB_KEY_TABLE));
     }
 }

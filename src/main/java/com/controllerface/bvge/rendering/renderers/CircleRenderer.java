@@ -17,7 +17,6 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.MeshRegistry;
 import com.controllerface.bvge.rendering.HullIndexData;
 import com.controllerface.bvge.rendering.Renderer;
@@ -68,17 +67,11 @@ public class CircleRenderer implements Renderer
         ptr_vbo_transform = GPU.CL.gl_share_memory(GPU.compute.context, vbo_transform);
         atomic_counter    = GPU.CL.new_pinned_int(GPU.compute.context);
 
-        k_prepare_transforms = (new PrepareTransforms_k(GPU.compute.render_queue, p_prepare_transforms))
-            .buf_arg(PrepareTransforms_k.Args.transforms_out, ptr_vbo_transform)
-            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL))
-            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
-            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
+        k_root_hull_filter = new HullFilter_k(GPU.compute.render_queue, p_root_hull_filter).init();
+        k_root_hull_count  = new HullCount_k(GPU.compute.render_queue, p_root_hull_filter).init();
 
-        k_root_hull_filter = new HullFilter_k(GPU.compute.render_queue, p_root_hull_filter)
-            .buf_arg(HullFilter_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
-
-        k_root_hull_count = new HullCount_k(GPU.compute.render_queue, p_root_hull_filter)
-            .buf_arg(HullCount_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID));
+        k_prepare_transforms = new PrepareTransforms_k(GPU.compute.render_queue, p_prepare_transforms)
+            .init(ptr_vbo_transform);
     }
 
     public HullIndexData hull_filter(CL_CommandQueue cmd_queue, int mesh_id)

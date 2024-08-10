@@ -25,7 +25,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 
-import static com.controllerface.bvge.models.geometry.ModelRegistry.*;
+import static com.controllerface.bvge.models.geometry.ModelRegistry.PLAYER_MODEL_INDEX;
 
 public class TestGame extends GameMode
 {

@@ -20,7 +20,6 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.rendering.HullIndexData;
@@ -88,25 +87,14 @@ public class LiquidRenderer implements Renderer
         ptr_vbo_transform = GPU.CL.gl_share_memory(GPU.compute.context, vbo_transform);
         ptr_vbo_color = GPU.CL.gl_share_memory(GPU.compute.context, vbo_color);
 
+        k_root_hull_filter = new RootHullFilter_k(GPU.compute.render_queue, p_root_hull_filter).init();
+        k_root_hull_count  = new RootHullCount_k(GPU.compute.render_queue, p_root_hull_filter).init();
+
         k_prepare_liquids = new PrepareLiquids_k(GPU.compute.render_queue, p_prepare_liquids)
-            .buf_arg(PrepareLiquids_k.Args.transforms_out, ptr_vbo_transform)
-            .buf_arg(PrepareLiquids_k.Args.colors_out, ptr_vbo_color)
-            .buf_arg(PrepareLiquids_k.Args.hull_positions, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL))
-            .buf_arg(PrepareLiquids_k.Args.hull_scales, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
-            .buf_arg(PrepareLiquids_k.Args.hull_rotations, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION))
-            .buf_arg(PrepareLiquids_k.Args.hull_point_tables, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_POINT_TABLE))
-            .buf_arg(PrepareLiquids_k.Args.hull_uv_offsets, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_UV_OFFSET))
-            .buf_arg(PrepareLiquids_k.Args.point_hit_counts, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_HIT_COUNT));
-
-        k_root_hull_filter = new RootHullFilter_k(GPU.compute.render_queue, p_root_hull_filter)
-            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
-
-        k_root_hull_count = new RootHullCount_k(GPU.compute.render_queue, p_root_hull_filter)
-            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
+            .init(ptr_vbo_transform, ptr_vbo_color);
     }
 
-    private HullIndexData hull_filter(CL_CommandQueue cmd_queue, int model_id)
+    private HullIndexData hull_filter(CL_CommandQueue cmd_queue)
     {
         GPU.CL.zero_buffer(cmd_queue, atomic_counter, cl_int.size());
 
@@ -115,7 +103,7 @@ public class LiquidRenderer implements Renderer
 
         k_root_hull_count
             .buf_arg(RootHullCount_k.Args.counter, atomic_counter)
-            .set_arg(RootHullCount_k.Args.model_id, model_id)
+            .set_arg(RootHullCount_k.Args.model_id, ModelRegistry.CIRCLE_PARTICLE)
             .set_arg(RootHullCount_k.Args.max_entity, entity_count)
             .call(arg_long(entity_size), GPU.compute.preferred_work_size);
 
@@ -134,7 +122,7 @@ public class LiquidRenderer implements Renderer
         k_root_hull_filter
             .buf_arg(RootHullFilter_k.Args.hulls_out, hulls_out)
             .buf_arg(RootHullFilter_k.Args.counter, atomic_counter)
-            .set_arg(RootHullFilter_k.Args.model_id, model_id)
+            .set_arg(RootHullFilter_k.Args.model_id, ModelRegistry.CIRCLE_PARTICLE)
             .set_arg(RootHullFilter_k.Args.max_entity, entity_count)
             .call(arg_long(entity_size), GPU.compute.preferred_work_size);
 
@@ -148,7 +136,7 @@ public class LiquidRenderer implements Renderer
         {
             circle_hulls.indices().release();
         }
-        circle_hulls = hull_filter(GPU.compute.render_queue, ModelRegistry.CIRCLE_PARTICLE);
+        circle_hulls = hull_filter(GPU.compute.render_queue);
 
 
         if (Editor.ACTIVE)

@@ -15,7 +15,6 @@ import com.controllerface.bvge.memory.types.BrokenBufferType;
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_float;
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
-import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class BrokenObjectBuffer implements GPUResource
 {
@@ -31,20 +30,12 @@ public class BrokenObjectBuffer implements GPUResource
         this.cmd_queue = cmd_queue;
         this.ptr_egress_size = GPU.CL.new_pinned_int(GPU.compute.context);
 
-        broken_group = new BufferGroup<>(BrokenBufferType.class, name, cmd_queue, true);
+        broken_group = new BufferGroup<>(cmd_queue, BrokenBufferType.class, name, true);
         broken_group.init_buffer(BrokenBufferType.BROKEN_POSITIONS,    100L);
         broken_group.init_buffer(BrokenBufferType.BROKEN_ENTITY_TYPES, 100L);
         broken_group.init_buffer(BrokenBufferType.BROKEN_MODEL_IDS,    100L);
 
-        k_egress_broken = new EgressBroken_k(this.cmd_queue, this.p_gpu_crud)
-            .buf_arg(EgressBroken_k.Args.entities, core_memory.get_buffer(ENTITY))
-            .buf_arg(EgressBroken_k.Args.entity_flags, core_memory.get_buffer(ENTITY_FLAG))
-            .buf_arg(EgressBroken_k.Args.entity_types, core_memory.get_buffer(ENTITY_TYPE))
-            .buf_arg(EgressBroken_k.Args.entity_model_ids, core_memory.get_buffer(ENTITY_MODEL_ID))
-            .buf_arg(EgressBroken_k.Args.positions, broken_group.buffer(BrokenBufferType.BROKEN_POSITIONS))
-            .buf_arg(EgressBroken_k.Args.types, broken_group.buffer(BrokenBufferType.BROKEN_ENTITY_TYPES))
-            .buf_arg(EgressBroken_k.Args.model_ids, broken_group.buffer(BrokenBufferType.BROKEN_MODEL_IDS))
-            .buf_arg(EgressBroken_k.Args.counter, ptr_egress_size);
+        k_egress_broken = new EgressBroken_k(cmd_queue, p_gpu_crud).init(core_memory, broken_group, ptr_egress_size);
     }
 
     public void egress(int entity_count, int egress_count)
@@ -103,6 +94,6 @@ public class BrokenObjectBuffer implements GPUResource
     {
         p_gpu_crud.release();
         broken_group.release();
-        ptr_egress_size.ptr();
+        ptr_egress_size.release();
     }
 }

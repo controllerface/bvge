@@ -16,7 +16,6 @@ import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.*;
-import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class SectorCompactor implements GPUResource
 {
@@ -60,7 +59,7 @@ public class SectorCompactor implements GPUResource
     private final ResizableBuffer b_delete_partial_1;
     private final ResizableBuffer b_delete_partial_2;
 
-    private final CL_Buffer ptr_delete_sizes;
+    private final CL_Buffer delete_sizes_buf;
     private final SectorController controller;
 
     private final GPUScanVectorInt2 gpu_int2_scan;
@@ -82,7 +81,7 @@ public class SectorCompactor implements GPUResource
         this.gpu_int2_scan = new GPUScanVectorInt2(cmd_queue);
         this.gpu_int4_scan = new GPUScanVectorInt4(cmd_queue);
         this.controller = controller;
-        ptr_delete_sizes    = GPU.CL.new_pinned_buffer(GPU.compute.context, DELETE_COUNTERS_SIZE);
+        delete_sizes_buf = GPU.CL.new_pinned_buffer(GPU.compute.context, DELETE_COUNTERS_SIZE);
 
         b_hull_shift        = new TransientBuffer(cmd_queue, cl_int.size(),  hull_init);
         b_edge_shift        = new TransientBuffer(cmd_queue, cl_int.size(),  edge_init);
@@ -95,115 +94,31 @@ public class SectorCompactor implements GPUResource
         b_delete_partial_2  = new TransientBuffer(cmd_queue, cl_int4.size(), delete_init);
 
         k_scan_deletes_single_block_out = new ScanDeletesSingleBlockOut_k(cmd_queue, p_scan_deletes)
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.sz,               ptr_delete_sizes)
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.entity_flags,     sector_buffers.buffer(ENTITY_FLAG))
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_tables,      sector_buffers.buffer(ENTITY_HULL_TABLE))
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.bone_tables,      sector_buffers.buffer(ENTITY_BONE_TABLE))
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.point_tables,     sector_buffers.buffer(HULL_POINT_TABLE))
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.edge_tables,      sector_buffers.buffer(HULL_EDGE_TABLE))
-            .buf_arg(ScanDeletesSingleBlockOut_k.Args.hull_bone_tables, sector_buffers.buffer(HULL_BONE_TABLE));
+            .init(sector_buffers, delete_sizes_buf);
 
         k_scan_deletes_multi_block_out = new ScanDeletesMultiBlockOut_k(cmd_queue, p_scan_deletes)
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.part1,             b_delete_partial_1)
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.part2,             b_delete_partial_2)
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.entity_flags,      sector_buffers.buffer(ENTITY_FLAG))
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_tables,       sector_buffers.buffer(ENTITY_HULL_TABLE))
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.bone_tables,       sector_buffers.buffer(ENTITY_BONE_TABLE))
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.point_tables,      sector_buffers.buffer(HULL_POINT_TABLE))
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.edge_tables,       sector_buffers.buffer(HULL_EDGE_TABLE))
-            .buf_arg(ScanDeletesMultiBlockOut_k.Args.hull_bone_tables,  sector_buffers.buffer(HULL_BONE_TABLE));
+            .init(sector_buffers, b_delete_partial_1, b_delete_partial_2);
 
         k_complete_deletes_multi_block_out = new CompleteDeletesMultiBlockOut_k(cmd_queue, p_scan_deletes)
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.sz,                ptr_delete_sizes)
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part1,             b_delete_partial_1)
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.part2,             b_delete_partial_2)
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.entity_flags,      sector_buffers.buffer(ENTITY_FLAG))
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_tables,       sector_buffers.buffer(ENTITY_HULL_TABLE))
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.bone_tables,       sector_buffers.buffer(ENTITY_BONE_TABLE))
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.point_tables,      sector_buffers.buffer(HULL_POINT_TABLE))
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.edge_tables,       sector_buffers.buffer(HULL_EDGE_TABLE))
-            .buf_arg(CompleteDeletesMultiBlockOut_k.Args.hull_bone_tables,  sector_buffers.buffer(HULL_BONE_TABLE));
+            .init(sector_buffers, delete_sizes_buf, b_delete_partial_1, b_delete_partial_2);
 
         k_compact_entities = new CompactEntities_k(cmd_queue, p_scan_deletes)
-            .buf_arg(CompactEntities_k.Args.entities,                   sector_buffers.buffer(ENTITY))
-            .buf_arg(CompactEntities_k.Args.entity_masses,              sector_buffers.buffer(ENTITY_MASS))
-            .buf_arg(CompactEntities_k.Args.entity_root_hulls,          sector_buffers.buffer(ENTITY_ROOT_HULL))
-            .buf_arg(CompactEntities_k.Args.entity_model_indices,       sector_buffers.buffer(ENTITY_MODEL_ID))
-            .buf_arg(CompactEntities_k.Args.entity_model_transforms,    sector_buffers.buffer(ENTITY_TRANSFORM_ID))
-            .buf_arg(CompactEntities_k.Args.entity_types,               sector_buffers.buffer(ENTITY_TYPE))
-            .buf_arg(CompactEntities_k.Args.entity_flags,               sector_buffers.buffer(ENTITY_FLAG))
-            .buf_arg(CompactEntities_k.Args.entity_animation_layers,    sector_buffers.buffer(ENTITY_ANIM_LAYER))
-            .buf_arg(CompactEntities_k.Args.entity_previous_layers,     sector_buffers.buffer(ENTITY_PREV_LAYER))
-            .buf_arg(CompactEntities_k.Args.entity_animation_time,      sector_buffers.buffer(ENTITY_ANIM_TIME))
-            .buf_arg(CompactEntities_k.Args.entity_previous_time,       sector_buffers.buffer(ENTITY_PREV_TIME))
-            .buf_arg(CompactEntities_k.Args.entity_animation_blend,     sector_buffers.buffer(ENTITY_ANIM_BLEND))
-            .buf_arg(CompactEntities_k.Args.entity_motion_states,       sector_buffers.buffer(ENTITY_MOTION_STATE))
-            .buf_arg(CompactEntities_k.Args.entity_entity_hull_tables,  sector_buffers.buffer(ENTITY_HULL_TABLE))
-            .buf_arg(CompactEntities_k.Args.entity_bone_tables,         sector_buffers.buffer(ENTITY_BONE_TABLE))
-            .buf_arg(CompactEntities_k.Args.hull_bone_tables,           sector_buffers.buffer(HULL_BONE_TABLE))
-            .buf_arg(CompactEntities_k.Args.hull_entity_ids,            sector_buffers.buffer(HULL_ENTITY_ID))
-            .buf_arg(CompactEntities_k.Args.hull_point_tables,          sector_buffers.buffer(HULL_POINT_TABLE))
-            .buf_arg(CompactEntities_k.Args.hull_edge_tables,           sector_buffers.buffer(HULL_EDGE_TABLE))
-            .buf_arg(CompactEntities_k.Args.points,                     sector_buffers.buffer(POINT))
-            .buf_arg(CompactEntities_k.Args.point_hull_indices,         sector_buffers.buffer(POINT_HULL_INDEX))
-            .buf_arg(CompactEntities_k.Args.point_bone_tables,          sector_buffers.buffer(POINT_BONE_TABLE))
-            .buf_arg(CompactEntities_k.Args.entity_bone_parent_ids,     sector_buffers.buffer(ENTITY_BONE_PARENT_ID))
-            .buf_arg(CompactEntities_k.Args.hull_bind_pose_indices,     sector_buffers.buffer(HULL_BONE_BIND_POSE))
-            .buf_arg(CompactEntities_k.Args.edges,                      sector_buffers.buffer(EDGE))
-            .buf_arg(CompactEntities_k.Args.hull_bone_shift,            b_hull_bone_shift)
-            .buf_arg(CompactEntities_k.Args.point_shift,                b_point_shift)
-            .buf_arg(CompactEntities_k.Args.edge_shift,                 b_edge_shift)
-            .buf_arg(CompactEntities_k.Args.hull_shift,                 b_hull_shift)
-            .buf_arg(CompactEntities_k.Args.entity_bone_shift,          b_entity_bone_shift);
+            .init(sector_buffers, b_entity_bone_shift, b_hull_bone_shift, b_edge_shift, b_hull_shift, b_point_shift);
 
         k_compact_hulls = new CompactHulls_k(cmd_queue, p_scan_deletes)
-            .buf_arg(CompactHulls_k.Args.hull_shift,            b_hull_shift)
-            .buf_arg(CompactHulls_k.Args.hulls,                 sector_buffers.buffer(HULL))
-            .buf_arg(CompactHulls_k.Args.hull_scales,           sector_buffers.buffer(HULL_SCALE))
-            .buf_arg(CompactHulls_k.Args.hull_mesh_ids,         sector_buffers.buffer(HULL_MESH_ID))
-            .buf_arg(CompactHulls_k.Args.hull_uv_offsets,       sector_buffers.buffer(HULL_UV_OFFSET))
-            .buf_arg(CompactHulls_k.Args.hull_rotations,        sector_buffers.buffer(HULL_ROTATION))
-            .buf_arg(CompactHulls_k.Args.hull_frictions,        sector_buffers.buffer(HULL_FRICTION))
-            .buf_arg(CompactHulls_k.Args.hull_restitutions,     sector_buffers.buffer(HULL_RESTITUTION))
-            .buf_arg(CompactHulls_k.Args.hull_integrity,        sector_buffers.buffer(HULL_INTEGRITY))
-            .buf_arg(CompactHulls_k.Args.hull_bone_tables,      sector_buffers.buffer(HULL_BONE_TABLE))
-            .buf_arg(CompactHulls_k.Args.hull_entity_ids,       sector_buffers.buffer(HULL_ENTITY_ID))
-            .buf_arg(CompactHulls_k.Args.hull_flags,            sector_buffers.buffer(HULL_FLAG))
-            .buf_arg(CompactHulls_k.Args.hull_point_tables,     sector_buffers.buffer(HULL_POINT_TABLE))
-            .buf_arg(CompactHulls_k.Args.hull_edge_tables,      sector_buffers.buffer(HULL_EDGE_TABLE))
-            .buf_arg(CompactHulls_k.Args.hull_aabb,             sector_buffers.buffer(HULL_AABB))
-            .buf_arg(CompactHulls_k.Args.hull_aabb_index,       sector_buffers.buffer(HULL_AABB_INDEX))
-            .buf_arg(CompactHulls_k.Args.hull_aabb_key_table,   sector_buffers.buffer(HULL_AABB_KEY_TABLE));
+            .init(sector_buffers, b_hull_shift);
 
         k_compact_edges = new CompactEdges_k(cmd_queue, p_scan_deletes)
-            .buf_arg(CompactEdges_k.Args.edge_shift,            b_edge_shift)
-            .buf_arg(CompactEdges_k.Args.edges,                 sector_buffers.buffer(EDGE))
-            .buf_arg(CompactEdges_k.Args.edge_lengths,          sector_buffers.buffer(EDGE_LENGTH))
-            .buf_arg(CompactEdges_k.Args.edge_flags,            sector_buffers.buffer(EDGE_FLAG))
-            .buf_arg(CompactEdges_k.Args.edge_pins,             sector_buffers.buffer(EDGE_PIN));
+            .init(sector_buffers, b_edge_shift);
 
         k_compact_points = new CompactPoints_k(cmd_queue, p_scan_deletes)
-            .buf_arg(CompactPoints_k.Args.point_shift,              b_point_shift)
-            .buf_arg(CompactPoints_k.Args.points,                   sector_buffers.buffer(POINT))
-            .buf_arg(CompactPoints_k.Args.anti_gravity,             sector_buffers.buffer(POINT_ANTI_GRAV))
-            .buf_arg(CompactPoints_k.Args.anti_time,                sector_buffers.buffer(POINT_ANTI_TIME))
-            .buf_arg(CompactPoints_k.Args.point_vertex_references,  sector_buffers.buffer(POINT_VERTEX_REFERENCE))
-            .buf_arg(CompactPoints_k.Args.point_hull_indices,       sector_buffers.buffer(POINT_HULL_INDEX))
-            .buf_arg(CompactPoints_k.Args.point_flags,              sector_buffers.buffer(POINT_FLAG))
-            .buf_arg(CompactPoints_k.Args.point_hit_counts,         sector_buffers.buffer(POINT_HIT_COUNT))
-            .buf_arg(CompactPoints_k.Args.bone_tables,              sector_buffers.buffer(POINT_BONE_TABLE));
+            .init(sector_buffers, b_point_shift);
 
         k_compact_hull_bones = new CompactHullBones_k(cmd_queue, p_scan_deletes)
-            .buf_arg(CompactHullBones_k.Args.hull_bone_shift,               b_hull_bone_shift)
-            .buf_arg(CompactHullBones_k.Args.hull_bones,                    sector_buffers.buffer(HULL_BONE))
-            .buf_arg(CompactHullBones_k.Args.hull_bind_pose_indices,        sector_buffers.buffer(HULL_BONE_BIND_POSE))
-            .buf_arg(CompactHullBones_k.Args.hull_inv_bind_pose_indices,    sector_buffers.buffer(HULL_BONE_INV_BIND_POSE));
+            .init(sector_buffers, b_hull_bone_shift);
 
         k_compact_armature_bones = new CompactEntityBones_k(cmd_queue, p_scan_deletes)
-            .buf_arg(CompactEntityBones_k.Args.entity_bone_shift,           b_entity_bone_shift)
-            .buf_arg(CompactEntityBones_k.Args.entity_bones,                sector_buffers.buffer(ENTITY_BONE))
-            .buf_arg(CompactEntityBones_k.Args.entity_bone_reference_ids,   sector_buffers.buffer(ENTITY_BONE_REFERENCE_ID))
-            .buf_arg(CompactEntityBones_k.Args.entity_bone_parent_ids,      sector_buffers.buffer(ENTITY_BONE_PARENT_ID));
+            .init(sector_buffers, b_entity_bone_shift);
     }
 
     private void linearize_kernel(GPUKernel kernel, int object_count)
@@ -225,7 +140,7 @@ public class SectorCompactor implements GPUResource
         long local_buffer_size = cl_int2.size() * GPU.compute.max_scan_block_size;
         long local_buffer_size2 = cl_int4.size() * GPU.compute.max_scan_block_size;
 
-        GPU.CL.zero_buffer(cmd_queue, ptr_delete_sizes, DELETE_COUNTERS_SIZE);
+        GPU.CL.zero_buffer(cmd_queue, delete_sizes_buf, DELETE_COUNTERS_SIZE);
 
         k_scan_deletes_single_block_out
             .ptr_arg(ScanDeletesSingleBlockOut_k.Args.output, o1_data_ptr)
@@ -235,7 +150,7 @@ public class SectorCompactor implements GPUResource
             .set_arg(ScanDeletesSingleBlockOut_k.Args.n, n)
             .call(GPU.compute.local_work_default, GPU.compute.local_work_default);
 
-        return GPU.CL.read_pinned_int_buffer(cmd_queue, ptr_delete_sizes, cl_int.size(), DELETE_COUNTERS);
+        return GPU.CL.read_pinned_int_buffer(cmd_queue, delete_sizes_buf, cl_int.size(), DELETE_COUNTERS);
     }
 
     private int[] scan_multi_block_deletes_out(long o1_data_ptr, long o2_data_ptr, int n, int k)
@@ -262,7 +177,7 @@ public class SectorCompactor implements GPUResource
         gpu_int2_scan.scan_int2(b_delete_partial_1.pointer(), part_size);
         gpu_int4_scan.scan_int4(b_delete_partial_2.pointer(), part_size);
 
-        GPU.CL.zero_buffer(cmd_queue, ptr_delete_sizes, DELETE_COUNTERS_SIZE);
+        GPU.CL.zero_buffer(cmd_queue, delete_sizes_buf, DELETE_COUNTERS_SIZE);
 
         k_complete_deletes_multi_block_out
             .ptr_arg(CompleteDeletesMultiBlockOut_k.Args.output1, o1_data_ptr)
@@ -272,7 +187,7 @@ public class SectorCompactor implements GPUResource
             .set_arg(CompleteDeletesMultiBlockOut_k.Args.n, n)
             .call(global_work_size, GPU.compute.local_work_default);
 
-        return GPU.CL.read_pinned_int_buffer(cmd_queue, ptr_delete_sizes, cl_int.size(), DELETE_COUNTERS);
+        return GPU.CL.read_pinned_int_buffer(cmd_queue, delete_sizes_buf, cl_int.size(), DELETE_COUNTERS);
     }
 
     public int[] scan_deletes(long o1_data_ptr, long o2_data_ptr, int n)
@@ -333,7 +248,7 @@ public class SectorCompactor implements GPUResource
 
     public void release()
     {
-        ptr_delete_sizes.release();
+        delete_sizes_buf.release();
         p_scan_deletes.release();
         gpu_int2_scan.release();
         gpu_int4_scan.release();

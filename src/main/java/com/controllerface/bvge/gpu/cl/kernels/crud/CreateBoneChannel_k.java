@@ -7,10 +7,13 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.ReferenceBufferGroup;
+
+import static com.controllerface.bvge.memory.types.ReferenceBufferType.*;
 
 public class CreateBoneChannel_k extends GPUKernel
 {
-    public static final String kernel_source = GPU.CL.crud_create_k_src(KernelType.create_bone_channel, Args.class);;
+    public static final String kernel_source = GPU.CL.crud_create_k_src(KernelType.create_bone_channel, Args.class);
 
     public enum Args implements KernelArg
     {
@@ -34,5 +37,13 @@ public class CreateBoneChannel_k extends GPUKernel
     public CreateBoneChannel_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.create_bone_channel));
+    }
+
+    public GPUKernel init(ReferenceBufferGroup reference_buffers)
+    {
+        return this.buf_arg(Args.animation_timing_indices, reference_buffers.buffer(ANIM_TIMING_INDEX))
+            .buf_arg(Args.bone_pos_channel_tables, reference_buffers.buffer(ANIM_POS_CHANNEL))
+            .buf_arg(Args.bone_rot_channel_tables, reference_buffers.buffer(ANIM_ROT_CHANNEL))
+            .buf_arg(Args.bone_scl_channel_tables, reference_buffers.buffer(ANIM_SCL_CHANNEL));
     }
 }

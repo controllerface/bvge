@@ -4,6 +4,9 @@ import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
+
+import static com.controllerface.bvge.memory.types.CoreBufferType.ENTITY_ACCEL;
 
 public class UpdateAccel_k extends GPUKernel
 {
@@ -11,11 +14,16 @@ public class UpdateAccel_k extends GPUKernel
     {
         entity_accel,
         target,
-        new_value;
+        new_value,
     }
 
     public UpdateAccel_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.update_accel));
+    }
+
+    public GPUKernel init(CoreBufferGroup core_buffers)
+    {
+        return this.buf_arg(Args.entity_accel, core_buffers.buffer(ENTITY_ACCEL));
     }
 }

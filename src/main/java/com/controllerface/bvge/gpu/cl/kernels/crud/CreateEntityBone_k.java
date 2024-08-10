@@ -7,6 +7,9 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
+
+import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class CreateEntityBone_k extends GPUKernel
 {
@@ -32,5 +35,12 @@ public class CreateEntityBone_k extends GPUKernel
     public CreateEntityBone_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.create_entity_bone));
+    }
+
+    public GPUKernel init(CoreBufferGroup core_buffers)
+    {
+        return this.buf_arg(Args.entity_bones, core_buffers.buffer(ENTITY_BONE))
+            .buf_arg(Args.entity_bone_reference_ids, core_buffers.buffer(ENTITY_BONE_REFERENCE_ID))
+            .buf_arg(Args.entity_bone_parent_ids, core_buffers.buffer(ENTITY_BONE_PARENT_ID));
     }
 }

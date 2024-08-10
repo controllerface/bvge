@@ -6,9 +6,11 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.ReferenceBufferGroup;
 
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int2;
+import static com.controllerface.bvge.memory.types.ReferenceBufferType.BONE_ANIM_CHANNEL_TABLE;
 
 public class SetBoneChannelTable_k extends GPUKernel
 {
@@ -30,5 +32,10 @@ public class SetBoneChannelTable_k extends GPUKernel
     public SetBoneChannelTable_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.set_bone_channel_table));
+    }
+
+    public GPUKernel init(ReferenceBufferGroup reference_buffers)
+    {
+        return this.buf_arg(Args.bone_channel_tables, reference_buffers.buffer(BONE_ANIM_CHANNEL_TABLE));
     }
 }

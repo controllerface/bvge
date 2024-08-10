@@ -23,8 +23,6 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
 import com.controllerface.bvge.gpu.gl.textures.GL_Texture2D;
-import com.controllerface.bvge.memory.types.ReferenceBufferType;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.Model;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
@@ -189,60 +187,22 @@ public class ModelRenderer implements Renderer
         gpu_int2_scan    = new GPUScanVectorInt2(GPU.compute.render_queue);
         gpu_int_scan_out = new GPUScanScalarIntOut(GPU.compute.render_queue);
 
-        k_count_mesh_instances = new CountMeshInstances_k(GPU.compute.render_queue, p_mesh_query)
-            .buf_arg(CountMeshInstances_k.Args.counters, counter_buf)
-            .buf_arg(CountMeshInstances_k.Args.query, query_buf)
-            .buf_arg(CountMeshInstances_k.Args.total, total_buf)
-            .set_arg(CountMeshInstances_k.Args.count, mesh_count)
-            .buf_arg(CountMeshInstances_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
-            .buf_arg(CountMeshInstances_k.Args.hull_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
-            .buf_arg(CountMeshInstances_k.Args.hull_entity_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
-            .buf_arg(CountMeshInstances_k.Args.entity_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG));
-
-        k_write_mesh_details = new WriteMeshDetails_k(GPU.compute.render_queue, p_mesh_query)
-            .buf_arg(WriteMeshDetails_k.Args.counters, counter_buf)
-            .buf_arg(WriteMeshDetails_k.Args.query, query_buf)
-            .buf_arg(WriteMeshDetails_k.Args.offsets, offset_buf)
-            .set_arg(WriteMeshDetails_k.Args.count, mesh_count)
-            .buf_arg(WriteMeshDetails_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
-            .buf_arg(WriteMeshDetails_k.Args.hull_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
-            .buf_arg(WriteMeshDetails_k.Args.hull_entity_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
-            .buf_arg(WriteMeshDetails_k.Args.entity_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG))
-            .buf_arg(WriteMeshDetails_k.Args.mesh_vertex_tables, GPU.memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
-            .buf_arg(WriteMeshDetails_k.Args.mesh_face_tables, GPU.memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE));
-
-        k_count_mesh_batches = new CountMeshBatches_k(GPU.compute.render_queue, p_mesh_query)
-            .buf_arg(CountMeshBatches_k.Args.total, total_buf)
-            .set_arg(CountMeshBatches_k.Args.max_per_batch, Constants.Rendering.MAX_BATCH_SIZE);
-
         k_calculate_batch_offsets = new CalculateBatchOffsets_k(GPU.compute.render_queue, p_mesh_query);
 
+        k_count_mesh_instances = new CountMeshInstances_k(GPU.compute.render_queue, p_mesh_query)
+            .init(counter_buf, query_buf, total_buf, mesh_count);
+
+        k_write_mesh_details = new WriteMeshDetails_k(GPU.compute.render_queue, p_mesh_query)
+            .init(counter_buf, query_buf, offset_buf, mesh_count);
+
+        k_count_mesh_batches = new CountMeshBatches_k(GPU.compute.render_queue, p_mesh_query)
+            .init(total_buf, MAX_BATCH_SIZE);
+
         k_transfer_detail_data = new TransferDetailData_k(GPU.compute.render_queue, p_mesh_query)
-            .buf_arg(TransferDetailData_k.Args.mesh_transfer, mesh_transfer_buf);
+            .init(mesh_transfer_buf);
 
         k_transfer_render_data = new TransferRenderData_k(GPU.compute.render_queue, p_mesh_query)
-            .buf_arg(TransferRenderData_k.Args.command_buffer, command_buf)
-            .buf_arg(TransferRenderData_k.Args.element_buffer, element_buf)
-            .buf_arg(TransferRenderData_k.Args.vertex_buffer, vertex_buf)
-            .buf_arg(TransferRenderData_k.Args.uv_buffer, uv_buf)
-            .buf_arg(TransferRenderData_k.Args.color_buffer, color_buf)
-            .buf_arg(TransferRenderData_k.Args.slot_buffer, slot_buf)
-            .buf_arg(TransferRenderData_k.Args.mesh_transfer, mesh_transfer_buf)
-            .buf_arg(TransferRenderData_k.Args.hull_point_tables, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_POINT_TABLE))
-            .buf_arg(TransferRenderData_k.Args.hull_mesh_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_MESH_ID))
-            .buf_arg(TransferRenderData_k.Args.hull_entity_ids, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ENTITY_ID))
-            .buf_arg(TransferRenderData_k.Args.hull_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_FLAG))
-            .buf_arg(TransferRenderData_k.Args.hull_uv_offsets, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_UV_OFFSET))
-            .buf_arg(TransferRenderData_k.Args.hull_integrity, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_INTEGRITY))
-            .buf_arg(TransferRenderData_k.Args.entity_flags, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_FLAG))
-            .buf_arg(TransferRenderData_k.Args.mesh_vertex_tables, GPU.memory.get_buffer(ReferenceBufferType.MESH_VERTEX_TABLE))
-            .buf_arg(TransferRenderData_k.Args.mesh_face_tables, GPU.memory.get_buffer(ReferenceBufferType.MESH_FACE_TABLE))
-            .buf_arg(TransferRenderData_k.Args.mesh_faces, GPU.memory.get_buffer(ReferenceBufferType.MESH_FACE))
-            .buf_arg(TransferRenderData_k.Args.points, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT))
-            .buf_arg(TransferRenderData_k.Args.point_hit_counts, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_HIT_COUNT))
-            .buf_arg(TransferRenderData_k.Args.point_vertex_references, GPU.memory.get_buffer(RenderBufferType.RENDER_POINT_VERTEX_REFERENCE))
-            .buf_arg(TransferRenderData_k.Args.uv_tables, GPU.memory.get_buffer(ReferenceBufferType.VERTEX_UV_TABLE))
-            .buf_arg(TransferRenderData_k.Args.texture_uvs, GPU.memory.get_buffer(ReferenceBufferType.VERTEX_TEXTURE_UV));
+            .init(command_buf, element_buf, vertex_buf, uv_buf, color_buf, slot_buf, mesh_transfer_buf);
     }
 
     private record BatchData(int[] raw_offsets, int total_instances, CL_Buffer mesh_details_buf, CL_Buffer mesh_texture_buf) { }
@@ -264,6 +224,7 @@ public class ModelRenderer implements Renderer
         k_count_mesh_instances
             .set_arg(CountMeshInstances_k.Args.max_hull, hull_count)
             .call(hull_global_size, GPU.compute.preferred_work_size);
+
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;
@@ -326,6 +287,7 @@ public class ModelRenderer implements Renderer
             .buf_arg(CalculateBatchOffsets_k.Args.mesh_details, mesh_details_ptr)
             .set_arg(CalculateBatchOffsets_k.Args.count, total_instances)
             .call_task();
+
         if (Editor.ACTIVE)
         {
             long e = System.nanoTime() - si;

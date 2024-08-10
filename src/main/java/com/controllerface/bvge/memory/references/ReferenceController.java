@@ -8,7 +8,6 @@ import com.controllerface.bvge.memory.ReferenceContainer;
 import com.controllerface.bvge.memory.groups.ReferenceBufferGroup;
 
 import static com.controllerface.bvge.gpu.GPU.CL.arg_float2;
-import static com.controllerface.bvge.memory.types.ReferenceBufferType.*;
 
 public class ReferenceController implements ReferenceContainer
 {
@@ -41,47 +40,17 @@ public class ReferenceController implements ReferenceContainer
     {
         this.reference_buffers = reference_buffers;
 
-        k_create_texture_uv = new CreateTextureUV_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateTextureUV_k.Args.texture_uvs, this.reference_buffers.buffer(VERTEX_TEXTURE_UV));
-
-        k_create_keyframe = new CreateKeyFrame_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateKeyFrame_k.Args.key_frames, this.reference_buffers.buffer(ANIM_KEY_FRAME))
-            .buf_arg(CreateKeyFrame_k.Args.frame_times, this.reference_buffers.buffer(ANIM_FRAME_TIME));
-
-        k_create_vertex_reference = new CreateVertexRef_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateVertexRef_k.Args.vertex_references, this.reference_buffers.buffer(VERTEX_REFERENCE))
-            .buf_arg(CreateVertexRef_k.Args.vertex_weights, this.reference_buffers.buffer(VERTEX_WEIGHT))
-            .buf_arg(CreateVertexRef_k.Args.uv_tables, this.reference_buffers.buffer(VERTEX_UV_TABLE));
-
-        k_create_bone_bind_pose = new CreateBoneBindPose_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateBoneBindPose_k.Args.bone_bind_poses, this.reference_buffers.buffer(BONE_BIND_POSE))
-            .buf_arg(CreateBoneBindPose_k.Args.bone_layers, this.reference_buffers.buffer(BONE_LAYER));
-
-        k_create_bone_reference = new CreateBoneRef_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateBoneRef_k.Args.bone_references, this.reference_buffers.buffer(BONE_REFERENCE));
-
-        k_create_bone_channel = new CreateBoneChannel_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateBoneChannel_k.Args.animation_timing_indices, this.reference_buffers.buffer(ANIM_TIMING_INDEX))
-            .buf_arg(CreateBoneChannel_k.Args.bone_pos_channel_tables, this.reference_buffers.buffer(ANIM_POS_CHANNEL))
-            .buf_arg(CreateBoneChannel_k.Args.bone_rot_channel_tables, this.reference_buffers.buffer(ANIM_ROT_CHANNEL))
-            .buf_arg(CreateBoneChannel_k.Args.bone_scl_channel_tables, this.reference_buffers.buffer(ANIM_SCL_CHANNEL));
-
-        k_create_model_transform = new CreateModelTransform_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateModelTransform_k.Args.model_transforms, this.reference_buffers.buffer(MODEL_TRANSFORM));
-
-        k_create_mesh_reference = new CreateMeshReference_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateMeshReference_k.Args.mesh_vertex_tables, this.reference_buffers.buffer(MESH_VERTEX_TABLE))
-            .buf_arg(CreateMeshReference_k.Args.mesh_face_tables, this.reference_buffers.buffer(MESH_FACE_TABLE));
-
-        k_create_mesh_face = new CreateMeshFace_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateMeshFace_k.Args.mesh_faces, this.reference_buffers.buffer(MESH_FACE));
-
-        k_create_animation_timings = new CreateAnimationTimings_k(cmd_queue, p_gpu_crud)
-            .buf_arg(CreateAnimationTimings_k.Args.animation_durations, this.reference_buffers.buffer(ANIM_DURATION))
-            .buf_arg(CreateAnimationTimings_k.Args.animation_tick_rates, this.reference_buffers.buffer(ANIM_TICK_RATE));
-
-        k_set_bone_channel_table = new SetBoneChannelTable_k(cmd_queue, p_gpu_crud)
-            .buf_arg(SetBoneChannelTable_k.Args.bone_channel_tables, this.reference_buffers.buffer(BONE_ANIM_CHANNEL_TABLE));
+        k_create_texture_uv        = new CreateTextureUV_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_create_keyframe          = new CreateKeyFrame_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_create_vertex_reference  = new CreateVertexRef_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_create_bone_bind_pose    = new CreateBoneBindPose_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_create_bone_reference    = new CreateBoneRef_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_create_bone_channel      = new CreateBoneChannel_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_create_model_transform   = new CreateModelTransform_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_create_mesh_reference    = new CreateMeshReference_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_create_mesh_face         = new CreateMeshFace_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_create_animation_timings = new CreateAnimationTimings_k(cmd_queue, p_gpu_crud).init(reference_buffers);
+        k_set_bone_channel_table   = new SetBoneChannelTable_k(cmd_queue, p_gpu_crud).init(reference_buffers);
     }
 
     @Override

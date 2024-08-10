@@ -6,8 +6,10 @@ import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelArg;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
 import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
+import com.controllerface.bvge.memory.groups.CoreBufferGroup;
 
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.*;
+import static com.controllerface.bvge.memory.types.CoreBufferType.*;
 
 public class CreateHull_k extends GPUKernel
 {
@@ -46,12 +48,29 @@ public class CreateHull_k extends GPUKernel
         ;
 
         private final String cl_type;
-        Args(String clType) {cl_type = clType;}
+        Args(String clType) { cl_type = clType; }
         public String cl_type() { return cl_type; }
     }
 
     public CreateHull_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.create_hull));
+    }
+
+    public GPUKernel init(CoreBufferGroup core_buffers)
+    {
+        return this.buf_arg(Args.hulls, core_buffers.buffer(HULL))
+            .buf_arg(Args.hull_scales, core_buffers.buffer(HULL_SCALE))
+            .buf_arg(Args.hull_rotations, core_buffers.buffer(HULL_ROTATION))
+            .buf_arg(Args.hull_frictions, core_buffers.buffer(HULL_FRICTION))
+            .buf_arg(Args.hull_restitutions, core_buffers.buffer(HULL_RESTITUTION))
+            .buf_arg(Args.hull_point_tables, core_buffers.buffer(HULL_POINT_TABLE))
+            .buf_arg(Args.hull_edge_tables, core_buffers.buffer(HULL_EDGE_TABLE))
+            .buf_arg(Args.hull_bone_tables, core_buffers.buffer(HULL_BONE_TABLE))
+            .buf_arg(Args.hull_entity_ids, core_buffers.buffer(HULL_ENTITY_ID))
+            .buf_arg(Args.hull_flags, core_buffers.buffer(HULL_FLAG))
+            .buf_arg(Args.hull_mesh_ids, core_buffers.buffer(HULL_MESH_ID))
+            .buf_arg(Args.hull_uv_offsets, core_buffers.buffer(HULL_UV_OFFSET))
+            .buf_arg(Args.hull_integrity, core_buffers.buffer(HULL_INTEGRITY));
     }
 }

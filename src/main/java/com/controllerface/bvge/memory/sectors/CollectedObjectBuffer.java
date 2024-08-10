@@ -11,7 +11,6 @@ import com.controllerface.bvge.gpu.cl.programs.GPUProgram;
 import com.controllerface.bvge.gpu.cl.programs.crud.GPUCrud;
 import com.controllerface.bvge.memory.GPUCoreMemory;
 import com.controllerface.bvge.memory.types.CollectedBufferType;
-import com.controllerface.bvge.memory.types.CoreBufferType;
 
 import static com.controllerface.bvge.gpu.GPU.CL.arg_long;
 import static com.controllerface.bvge.gpu.cl.buffers.CL_DataTypes.cl_int;
@@ -30,14 +29,10 @@ public class CollectedObjectBuffer implements GPUResource
         this.cmd_queue = cmd_queue;
         this.ptr_egress_size = GPU.CL.new_pinned_int(GPU.compute.context);
 
-        collected_group = new BufferGroup<>(CollectedBufferType.class, name, cmd_queue, true);
+        collected_group = new BufferGroup<>(cmd_queue, CollectedBufferType.class, name, true);
         collected_group.init_buffer(CollectedBufferType.TYPES, 100L);
 
-        k_egress_collected = new EgressCollected_k(this.cmd_queue, this.p_gpu_crud)
-            .buf_arg(EgressCollected_k.Args.entity_flags, core_memory.get_buffer(CoreBufferType.ENTITY_FLAG))
-            .buf_arg(EgressCollected_k.Args.entity_types, core_memory.get_buffer(CoreBufferType.ENTITY_TYPE))
-            .buf_arg(EgressCollected_k.Args.types, collected_group.buffer(CollectedBufferType.TYPES))
-            .buf_arg(EgressCollected_k.Args.counter, ptr_egress_size);
+        k_egress_collected = new EgressCollected_k(cmd_queue, p_gpu_crud).init(core_memory, collected_group, ptr_egress_size);
     }
 
     public void egress(int entity_count, int egress_count)

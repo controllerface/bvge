@@ -1,5 +1,6 @@
 package com.controllerface.bvge.gpu.cl.kernels.rendering;
 
+import com.controllerface.bvge.gpu.cl.buffers.CL_Buffer;
 import com.controllerface.bvge.gpu.cl.contexts.CL_CommandQueue;
 import com.controllerface.bvge.gpu.cl.kernels.GPUKernel;
 import com.controllerface.bvge.gpu.cl.kernels.KernelType;
@@ -18,5 +19,10 @@ public class TransferDetailData_k extends GPUKernel
     public TransferDetailData_k(CL_CommandQueue command_queue_ptr, GPUProgram program)
     {
         super(command_queue_ptr, program.get_kernel(KernelType.transfer_detail_data));
+    }
+
+    public GPUKernel init(CL_Buffer mesh_transfer_buf)
+    {
+        return this.buf_arg(Args.mesh_transfer, mesh_transfer_buf);
     }
 }

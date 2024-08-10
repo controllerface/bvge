@@ -10,7 +10,7 @@ public class CoreBufferGroup extends BufferGroup<CoreBufferType>
 {
     public CoreBufferGroup(CL_CommandQueue cmd_queue, String name, long entity_init, long hull_init, long edge_init, long point_init)
     {
-        super(CoreBufferType.class, name, cmd_queue, true);
+        super(cmd_queue, CoreBufferType.class, name, true);
 
         //#region Point Buffers
 

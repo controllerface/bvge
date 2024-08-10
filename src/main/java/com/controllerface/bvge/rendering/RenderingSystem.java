@@ -33,7 +33,7 @@ public class RenderingSystem extends GameSystem
 //            RenderType.HULLS,
 //            RenderType.POINTS,
 //            RenderType.ENTITIES,
-            RenderType.BOUNDS,
+//            RenderType.BOUNDS,
 //            RenderType.GRID
         };
 

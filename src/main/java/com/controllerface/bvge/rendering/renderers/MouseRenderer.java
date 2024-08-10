@@ -21,7 +21,6 @@ import com.controllerface.bvge.gpu.gl.buffers.GL_VertexArray;
 import com.controllerface.bvge.gpu.gl.buffers.GL_VertexBuffer;
 import com.controllerface.bvge.gpu.gl.shaders.GL_Shader;
 import com.controllerface.bvge.gpu.gl.shaders.GL_ShaderType;
-import com.controllerface.bvge.memory.types.RenderBufferType;
 import com.controllerface.bvge.models.geometry.ModelRegistry;
 import com.controllerface.bvge.physics.UniformGrid;
 import com.controllerface.bvge.rendering.HullIndexData;
@@ -75,20 +74,13 @@ public class MouseRenderer implements Renderer
         transforms_buf = GPU.CL.gl_share_memory(GPU.compute.context, vbo_transforms);
         atomic_counter = GPU.CL.new_pinned_int(GPU.compute.context);
 
+        k_root_hull_filter = new RootHullFilter_k(GPU.compute.render_queue, root_hull_filter).init();
+        k_root_hull_count  = new RootHullCount_k(GPU.compute.render_queue, root_hull_filter).init();
+
         k_prepare_transforms = new PrepareTransforms_k(GPU.compute.render_queue, prepare_transforms)
-            .buf_arg(PrepareTransforms_k.Args.transforms_out, transforms_buf)
+            .init(transforms_buf)
             .set_arg(PrepareTransforms_k.Args.max_hull, 1)
-            .set_arg(PrepareTransforms_k.Args.offset, 0)
-            .buf_arg(PrepareTransforms_k.Args.hull_positions, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL))
-            .buf_arg(PrepareTransforms_k.Args.hull_scales, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_SCALE))
-            .buf_arg(PrepareTransforms_k.Args.hull_rotations, GPU.memory.get_buffer(RenderBufferType.RENDER_HULL_ROTATION));
-
-        k_root_hull_filter = new RootHullFilter_k(GPU.compute.render_queue, root_hull_filter)
-            .buf_arg(RootHullFilter_k.Args.entity_root_hulls, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_ROOT_HULL))
-            .buf_arg(RootHullFilter_k.Args.entity_model_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
-
-        k_root_hull_count = new RootHullCount_k(GPU.compute.render_queue, root_hull_filter)
-            .buf_arg(RootHullCount_k.Args.entity_model_indices, GPU.memory.get_buffer(RenderBufferType.RENDER_ENTITY_MODEL_ID));
+            .set_arg(PrepareTransforms_k.Args.offset, 0);
     }
 
     public HullIndexData hull_filter(CL_CommandQueue cmd_queue, int model_id)

@@ -2,7 +2,6 @@ package com.controllerface.bvge.rendering.renderers;
 
 import com.controllerface.bvge.core.Window;
 import com.controllerface.bvge.ecs.ECS;
-import com.controllerface.bvge.ecs.GameSystem;
 import com.controllerface.bvge.ecs.components.ComponentType;
 import com.controllerface.bvge.game.Constants;
 import com.controllerface.bvge.game.PlayerInput;
